@@ -19,8 +19,8 @@
 @container vb-board (max-width: 1200px) { .vb-folder-chip:not([data-tier] *) { max-width: 11ch; } }
 @container vb-board (max-width: 860px) { .vb-folder-chip-name:not([data-tier] *) { display: none; } }
 @container vb-board (max-width: 1000px) {
-  .vb-toolbar[data-menu]:has(.vb-folder-chip) > #board { min-width: 125px; }
-  .vb-toolbar[data-menu]:has(.vb-folder-chip) > select:is(#version, #containers) { width: 5em; }
+  .vb-toolbar[data-menu]:has(.vb-folder-chip) > :is(#board, [id$='-board']) { min-width: 125px; }
+  .vb-toolbar[data-menu]:has(.vb-folder-chip) > select:is(#version, #containers, [id$='-version'], [id$='-containers']) { width: 5em; }
 }
 
 /* The "⋯" menu's line under Open folder…: plain text, not a row. */

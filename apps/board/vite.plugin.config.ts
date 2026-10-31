@@ -36,6 +36,21 @@ export const embedFormatFiles = (): Plugin => {
   };
 };
 
+/** The tokens set `color-scheme` on `:root` and on `[data-theme]`, which is the standalone page's to say: under a host it
+ *  would turn the host's own fields and scrollbars dark (the board's own is on its root, plugin/color-scheme.css). The
+ *  lowered `--lightningcss-*` they leave beside it are what the colours run on, and stay. Three rules, or the build stops. */
+export const hostKeepsColorScheme = (): Plugin => ({
+  name: 'host-keeps-color-scheme',
+  enforce: 'post',
+  generateBundle(_, bundle) {
+    const sheet = Object.values(bundle).find((f) => f.type === 'asset' && f.fileName.endsWith('.css'));
+    if (sheet?.type !== 'asset') throw new Error('the view bundle has no stylesheet');
+    let taken = 0;
+    sheet.source = String(sheet.source).replace(/((?::root|\[data-theme=(?:light|dark)\])\{(?:--lightningcss-[a-z]+:[^;}]*;)+)color-scheme:[^;}]+;?/g, (_all, before: string) => { taken += 1; return before; });
+    if (taken !== 3) throw new Error(`the tokens' color-scheme: expected 3 rules, took ${taken}`);
+  },
+});
+
 const common = (outDir: string, watch: boolean) => ({
   configFile: false as const, root: ROOT, logLevel: 'warn' as const,
   build: { outDir, emptyOutDir: false, copyPublicDir: false, sourcemap: false, reportCompressedSize: false, ...(watch && { watch: {} }) },
@@ -45,7 +60,7 @@ const common = (outDir: string, watch: boolean) => ({
 export const viewBuild = (outDir: string, watch = false): InlineConfig => {
   const base = common(path.join(outDir, 'view'), watch);
   return {
-    ...base, plugins: [svelte({ configFile: here('svelte.config.js') })],
+    ...base, plugins: [svelte({ configFile: here('svelte.config.js') }), hostKeepsColorScheme()],
     build: {
       ...base.build, target: 'es2022', cssCodeSplit: false,
       lib: { entry: here('plugin/view.ts'), formats: ['es'], fileName: () => 'board.js', cssFileName: 'board' },

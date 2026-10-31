@@ -17,6 +17,7 @@ import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from 
 import { keep, kept, pageStore } from './kept.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
 import { askConfirm, shell, toast } from './shell.svelte.ts';
+import * as pageHelpWords from './words/page-help.ts';
 
 /** The standalone host, and how its page tells the board a setting changed (the "⋯" menu's Centre cards). */
 export interface PageHost extends BoardHost {
@@ -95,6 +96,7 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
       },
       restart: reloadOnto,
       parts,
+      help: { waiting: pageHelpWords.npmRunBoardServesYour, unreachable: pageHelpWords.couldNotReachTheBoard, reply: { lead: pageHelpWords.pasteItIntoChatOr, command: pageHelpWords.nodeAppsBoardBinReply } },
       person: asPerson,
     },
   };

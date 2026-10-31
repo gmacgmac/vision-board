@@ -7,7 +7,7 @@
 // nothing outlives `unmount`: every listener on the document or the window goes, the image view goes,
 // and `root` is emptied and given back as it was. Each mount has its own calls (io.ts), status and
 // controller, so two boards on one page work apart.
-import { boardChip, numberOf } from '#actions';
+import { boardChip } from '#actions';
 import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
 import { memoryStore } from './host.ts';
@@ -17,6 +17,7 @@ import { createBoard } from './controller.ts';
 import { takeIdPrefix } from './mount-ids.ts';
 import type { Status } from './status.ts';
 import { createStatus, initialStatus } from './status.ts';
+import { finishAll } from './teardown.ts';
 import * as boardWords from './words/board.ts';
 
 /** The class a host's root takes: the board's scope and its `@container vb-board` (D-061). */
@@ -71,10 +72,16 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   const added = root.classList.contains(BOARD_ROOT) ? [] : [BOARD_ROOT];
   root.classList.add(...added);
   const status = createStatus();
-  const ids = takeIdPrefix();
+  const ids = takeIdPrefix(!!host.page);
   const store = host.store ?? memoryStore();
   let board!: Board;
-  const send = () => host.chat.send(() => board.send());
+  /** Send to agent. A host's `send` that rejects (a `fetch` that failed) is Send's error state, as words it answers are. */
+  const send = async (): Promise<string | null> => {
+    try { return (await host.chat.send(() => board.send())) ?? null; } catch (err) {
+      console.error(err);
+      return boardWords.theChatCouldNotSend;
+    }
+  };
   const chrome = mountChrome(root, host, { status, ids: ids.prefix, store, board: () => board, send });
   const stage = chrome.stage;
   // A modal of the board's (a dialog, the zoomed image) closes on the browser's own Esc, which a
@@ -100,11 +107,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     board = createBoard(els, { host, io, status, say, page, ids: ids.prefix, store });
     void board.boot();
   };
-  const stop = () => {
-    board.destroy();
-    els.world.remove();
-    els.message.remove();
-  };
+  const stop = () => finishAll([board.destroy, () => els.world.remove(), () => els.message.remove()]);
   function restart() {
     stop();
     status.set(initialStatus());
@@ -116,13 +119,8 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   /** Bring into view, on the board open now, the cards, the card `n` or the note `seq` (`reveal`). */
   function show({ n, seq, cards }: Parameters<BoardView['reveal']>[0]) {
     if (cards) return board.zoomToCards(cards);
-    if (n !== undefined) return board.go.to(n);
-    const s = board.ledger();
-    const ask = seq === undefined ? undefined : s?.asks.get(seq);
-    if (!s || !ask || seq === undefined || ask.region !== undefined) return; // a container's note: its board is enough
-    const at = numberOf(s, ask.nodes?.[0] ?? ask.id);
-    board.go.to(at);
-    board.showNote(String(at), seq);
+    if (n !== undefined) return board.revealCard(n);
+    if (seq !== undefined) board.revealNote(seq);
   }
 
   return {
@@ -146,13 +144,8 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
       void (board.ledger()?.boards.has(to) ? board.switchTo(to) : board.jump(to)).then((ok) => { if (ok && board.id() === to) show(ref); });
     },
     unmount() {
-      stop();
-      ids.release();
-      stage.removeEventListener('pointerup', takeFocus);
-      root.removeEventListener('keydown', keepModalKeys);
-      chrome.unmount();
-      root.replaceChildren();
-      root.classList.remove(...added);
+      finishAll([stop, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
+        chrome.unmount, () => root.replaceChildren(), () => root.classList.remove(...added)]);
     },
   };
 }

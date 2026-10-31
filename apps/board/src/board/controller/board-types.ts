@@ -40,7 +40,10 @@ export interface Board {
   /** Open a board now when it is held, else once its line arrives; a note's unsaved words ask first. False on Cancel. */
   jump(id: string): Promise<boolean>;
   /** Show note `seq` on card `id` in its bubble. */
-  showNote(id: string, seq: number): void;
+  /** Bring card `n` into view; not there to go to, say so through the host's notice (`BoardView.reveal`). */
+  revealCard(n: number): void;
+  /** Bring note `seq` into view, on its card; not there, say so the same way. */
+  revealNote(seq: number): void;
   /** A note holds changed words not yet saved; and the question before they are lost (host.ts `BoardView`). */
   unsaved(): boolean;
   leave(): Promise<boolean>;

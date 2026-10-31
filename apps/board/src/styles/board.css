@@ -64,8 +64,8 @@
 @container vb-board (max-width: 1000px) {
   .vb-toolbar[data-menu]:not([data-tier]), .vb-toolbar[data-menu]:not([data-tier]) :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
   .vb-toolbar[data-menu]:not([data-tier]) .vb-brand { display: none; }
-  .vb-toolbar[data-menu]:not([data-tier]) > #board { min-width: 150px; }
-  .vb-toolbar[data-menu]:not([data-tier]) > select:is(#version, #containers) { width: 6em; flex-shrink: 0; }
+  .vb-toolbar[data-menu]:not([data-tier]) > :is(#board, [id$='-board']) { min-width: 150px; }
+  .vb-toolbar[data-menu]:not([data-tier]) > select:is(#version, #containers, [id$='-version'], [id$='-containers']) { width: 6em; flex-shrink: 0; }
   .vb-toolbar[data-menu]:not([data-tier]) .vb-counts .vb-chip { justify-content: center; min-width: var(--vb-control-target); padding: 0 var(--vb-space-1); }
 }
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
@@ -81,7 +81,7 @@
 /* The container finder (navigation FE_02): a menu that shows its name, not the longest container. */
 /* The board picker gives up room first, as the title did (ellipsis), but never under 220px; the other
    dropdowns keep their text whole. The end group makes room by showing icons (below). */
-.vb-toolbar > #board { min-width: 220px; }
+.vb-toolbar > :is(#board, [id$='-board']) { min-width: 220px; }
 .vb-select-menu { width: 8.5em; flex-shrink: 0; }
 /* "N flagged" (cardFlag flag) is a chip that is a button (#ui base/chip.css `.vb-chip-btn`); its flag
    is decoration in --vb-state-flag (APCA Lc 65.1 light, -55.5 dark on the chip; 58.7, -53.6 hovered). */
@@ -141,8 +141,8 @@
 /* Wires and lanes */
 .vb-wire { fill: none; stroke: var(--vb-wire); stroke-width: var(--vb-wire-w); stroke-linecap: round; }
 .vb-wire.hot { stroke: var(--vb-wire-hot); stroke-width: 2.4px; }
-.vb-wires marker#arrow path { fill: var(--vb-wire); }
-.vb-wires marker#arrow-hot path { fill: var(--vb-wire-hot); }
+.vb-wires marker:is(#arrow, [id$='-arrow']) path { fill: var(--vb-wire); }
+.vb-wires marker:is(#arrow-hot, [id$='-arrow-hot']) path { fill: var(--vb-wire-hot); }
 .vb-wires.settling .vb-wire { opacity: 0; }
 .vb-wire { transition: opacity var(--vb-motion-fast) linear; }
 .vb-wire-label { font: var(--vb-text-xs) var(--vb-font); fill: var(--vb-ink-subtle); paint-order: stroke; stroke: var(--vb-surface-canvas); stroke-width: 4px; }
@@ -220,8 +220,8 @@
 
 /* Reply panel (the panel surface, #ui base/surface.css, is its look) */
 .vb-reply {
-  position: fixed; top: calc(var(--vb-toolbar-h) + var(--vb-space-3)); right: calc(var(--vb-chat-w, 0px) + var(--vb-space-3)); bottom: var(--vb-space-3);
-  width: min(420px, 92vw); z-index: var(--vb-z-panel); display: flex; flex-direction: column; gap: var(--vb-space-2);
+  position: absolute; top: calc(var(--vb-toolbar-h) + var(--vb-space-3)); right: calc(var(--vb-chat-w, 0px) + var(--vb-space-3)); bottom: var(--vb-space-3);
+  width: min(420px, 92cqw); z-index: var(--vb-z-panel); display: flex; flex-direction: column; gap: var(--vb-space-2);
   padding: var(--vb-space-4);
 }
 .vb-reply header { display: flex; align-items: center; gap: var(--vb-space-2); }

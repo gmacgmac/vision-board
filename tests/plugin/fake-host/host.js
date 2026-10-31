@@ -26,11 +26,19 @@ function hostFor(o = {}) {
   const settingsHeard = new Set();
   const heardBoard = new Set();
   const kept = new Map();
-  let muted = false;
+  let muted = !!o.muted;
+  let badRead = o.firstRead;
   const made = createChat(o);
   const record = { notices: [], confirms: [], answer: true, calls: [], refused: [] };
   const host = {
     async api(path, init) {
+      if (badRead && path.startsWith('ledger')) {
+        const how = badRead;
+        badRead = undefined;
+        record.calls.push(`${init.method ?? 'GET'} ${path}`);
+        if (how === 'reject') throw new Error('The engine is starting');
+        return how === 'html' ? new Response('<html></html>', { headers: { 'content-type': 'text/html' } }) : new Response('{}', { status: how });
+      }
       const r = await fetch(`/api/board/${path.replace(/^\/+/, '')}`, init);
       record.calls.push(`${init.method ?? 'GET'} ${path}`);
       if (!r.ok) record.refused.push(`${r.status} ${path}`);
@@ -44,7 +52,11 @@ function hostFor(o = {}) {
     chat: made.chat,
     settings: {
       get: (key) => settings[key],
-      on(listener) { settingsHeard.add(listener); return () => settingsHeard.delete(listener); },
+      on(listener) {
+        if (o.plainOn) return undefined;
+        settingsHeard.add(listener);
+        return o.offThrows ? () => { throw new Error('This host\'s unsubscribe fails'); } : () => settingsHeard.delete(listener);
+      },
     },
     notify(text, tone) { record.notices.push({ text, ...(tone && { tone }) }); },
     async confirm(ask) { record.confirms.push(ask); return record.answer; },
@@ -76,6 +88,7 @@ function open(o = {}) {
     drawPane(document.getElementById('host'), {
       chat: parts.made, board: () => view,
       onroot(root) {
+        if (o.position) root.style.position = o.position;
         if (o.size) Object.assign(root.style, { width: `${o.size[0]}px`, height: `${o.size[1]}px` });
         const start = () => {
           view = mount(root, parts.host);

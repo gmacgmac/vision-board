@@ -91,6 +91,8 @@ export interface GoTo {
   step(dir: 1 | -1): void;
   /** The board was drawn again: search the words again, staying on the current match if it still matches. */
   refresh(): void;
+  /** Why card `n` can't be gone to now, in words; undefined when it can. */
+  why(n: number): string | undefined;
   /** Go to card `n` chosen elsewhere (the toolbar's open list, open-list FE_01) as Enter would for
    *  the box holding it: an open box closes; not there, the box opens saying why. */
   to(n: number): void;
@@ -223,6 +225,10 @@ export function createGoTo(d: GoDeps): GoTo {
       if (!matches || !box || !isWords(box.text)) return;
       matches.run(box.text, matches.current(), true);
       show(matches.said(box.text));
+    },
+    why(n) {
+      const t = d.find(n);
+      return t.to === 'card' ? undefined : SAYS[t.to](n);
     },
     to(n) {
       stop();

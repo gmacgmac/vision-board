@@ -31,7 +31,7 @@ export const FLAGS = {
   keepView: {
     // On by default (maintainer, 2026-10-07, found-in-use FE_02); ?flags=-keepView turns it off.
     default: true,
-    description: 'Each board\'s zoom and position are kept in sessionStorage (vb.view.<board>) and restored when the board opens, so a reload keeps the view; off, a board always fits on open.',
+    description: 'Each board\'s zoom and position are kept in the host\'s store (standalone: sessionStorage, vb.view.<board>) and restored when the board opens, so a reload keeps the view; off, a board always fits on open.',
   },
   titleTip: {
     // On by default (maintainer, 2026-10-07, found-in-use FE_03); ?flags=-titleTip turns it off.

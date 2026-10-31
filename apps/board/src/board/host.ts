@@ -51,6 +51,8 @@ export interface BoardPage {
   restart(): void;
   /** The page's own controls in the board's header. A host has none, and the header reflows. */
   parts?: BoardPageParts;
+  /** Help a person on this page can act on: its commands. A host's person has none, and the board's words say only what is general. */
+  help?: { waiting: string; unreachable: string; reply: { lead: string; command: string } };
   /** Runs a person's call: the standalone page reloads once for a fresh cookie when one is refused
    * as `forbidden` (shell/page-io.ts `asPerson`). */
   person?<T>(run: () => Promise<T>): Promise<T>;

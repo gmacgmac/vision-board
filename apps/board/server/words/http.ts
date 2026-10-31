@@ -32,6 +32,7 @@ export const theChipNamesNothingOn = 'The chip names nothing on the board.';
 // ---- operations.ts
 export const theInThePath = (PATH_WORDS: string): string => `The ${PATH_WORDS} in the path`;
 export const theQueryParameter = (name: string): string => `The query parameter \`${name}\``;
+export const theBodyCouldNotBeRead = 'The request\'s body could not be read: send it as JSON.';
 export const theInThePathIs = (PATH_WORDS: string): string => `The ${PATH_WORDS} in the path is not valid percent-encoding.`;
 export const itTakesNoQueryParameters = 'It takes no query parameters.';
 export const unknownQueryParameter = (name: string, takes: string): string => `Unknown query parameter \`${name}\`. ${takes}`;

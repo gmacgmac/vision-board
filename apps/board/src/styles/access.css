@@ -10,7 +10,15 @@
 }
 .vb-access[data-placement='board'] {
   position: absolute; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: var(--vb-z-chrome);
-  max-height: 40vh; overflow-y: auto;
+  max-height: 40cqh; overflow-y: auto;
+}
+/* A narrow pane: the strip stacks, as the header does by the root's width, its words whole and its buttons under them. */
+@container vb-board (max-width: 560px) {
+  .vb-access[data-placement='board'], .vb-access[data-placement='board'] :is(.vb-access-row, .vb-access-text, .vb-access-bot) { flex-direction: column; align-items: stretch; gap: var(--vb-space-1); }
+  .vb-access[data-placement='board'] :is(.vb-access-ask, .vb-access-reason) { white-space: normal; overflow-wrap: anywhere; }
+  .vb-access[data-placement='board'] .vb-access-actions { flex-wrap: wrap; }
+  .vb-access[data-placement='board'] .vb-access-note { width: 100%; }
+  .vb-access[data-placement='board'] .vb-access-group > .vb-access-list { padding-left: 0; }
 }
 .vb-access[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
 .vb-access-title {

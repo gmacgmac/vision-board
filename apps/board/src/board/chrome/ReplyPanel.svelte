@@ -5,11 +5,16 @@
   import { tick } from 'svelte';
   import { useChrome } from './chrome.svelte.ts';
 
-  const { state: shown, id, notify } = useChrome();
+  const { state: shown, id, notify, root, help } = useChrome();
   let text: HTMLElement;
+  let panel: HTMLElement;
 
   $effect(() => {
     if (shown.replyOpen) void tick().then(() => text.focus());
+  });
+  // Closing with the focus inside: it goes to the stage, so the next key still reaches the board.
+  $effect.pre(() => {
+    if (!shown.replyOpen && panel?.contains(document.activeElement)) root.querySelector<HTMLElement>(':scope > .vb-stage')?.focus({ preventScroll: true });
   });
 
   async function copy() {
@@ -22,14 +27,14 @@
   }
 </script>
 
-<aside id={id('reply')} class="vb-reply vb-surface-panel" aria-label={replyWords.yourReply} hidden={!shown.replyOpen}>
+<aside id={id('reply')} class="vb-reply vb-surface-panel" bind:this={panel} aria-label={replyWords.yourReply} hidden={!shown.replyOpen}>
   <header>
     <h2>{replyWords.yourReply}</h2>
     <button type="button" class="vb-btn vb-btn-primary" id={id('copy')} onclick={copy}>{chromeCommonWords.copy}</button>
     <button type="button" class="vb-btn" id={id('reply-close')} aria-label={replyWords.closeReply}
       onclick={() => { shown.replyOpen = false; }}>✕</button>
   </header>
-  <p class="vb-reply-hint">{replyWords.pasteItIntoChatOr} <code>{replyWords.nodeAppsBoardBinReply}</code>.</p>
+  <p class="vb-reply-hint">{#if help?.reply}{help.reply.lead} <code>{help.reply.command}</code>.{:else}{replyWords.pasteItIntoChat}{/if}</p>
   <!-- Focusable so keyboard users can scroll a long reply (WCAG 2.1.1). -->
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <pre id={id('reply-text')} tabindex="0" bind:this={text}>{shown.replyText}</pre>

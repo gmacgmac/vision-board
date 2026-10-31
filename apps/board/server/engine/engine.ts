@@ -82,6 +82,19 @@ export interface Engine {
 
 const OPS: Partial<Record<OperationId, Op>> = { ...READS, ...WRITES };
 
+/** The caller a host passed, as the operations may trust it: an agent with no id is no caller, so a host's lost id
+ * refuses as no caller does and never writes a line that names nobody. */
+const namedCaller = (caller: Caller | undefined): Caller | undefined =>
+  (caller?.by === 'agent' && (typeof caller.agent !== 'string' || !caller.agent) ? undefined : caller);
+
+/** A host's body reader: what it throws, but a problem of its own, is a request that can't be read. */
+async function readBody(read: (limit?: number) => Promise<unknown>, limit?: number): Promise<unknown> {
+  try { return await read(limit); } catch (err) {
+    if (err instanceof ProblemError) throw err;
+    throw problem('bad-request', httpWords.theBodyCouldNotBeRead);
+  }
+}
+
 /** An operation the engine serves. */
 export type EngineOperation = keyof typeof READS | keyof typeof WRITES;
 
@@ -104,12 +117,13 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = ()
   /** Run operation `id`: the caller checked, then its handler; a problem is the reply. */
   async function run(id: OperationId, input: { params: Record<string, unknown>; body: unknown; caller: Caller | undefined; signal: AbortSignal | undefined }) {
     try {
-      checkCaller(id, input.caller);
+      const caller = namedCaller(input.caller);
+      checkCaller(id, caller);
       ledger.refresh();
       const read = input.body;
       return await OPS[id]!({
-        params: withDefaults(id, input.params), caller: input.caller, signal: input.signal, ledger, agents: getAgents, name, onSend,
-        body: typeof read === 'function' ? (limit) => (read as (limit?: number) => Promise<unknown>)(limit) : async () => read,
+        params: withDefaults(id, input.params), caller, signal: input.signal, ledger, agents: getAgents, name, onSend,
+        body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
     } catch (err) { return toReply(err); }
   }

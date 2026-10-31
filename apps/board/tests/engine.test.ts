@@ -13,7 +13,7 @@ import { answersChip, roundOf, selectionChip } from '#actions';
 import { boardWriteSummary } from '#agent';
 import { IMAGES_DIR } from '#format';
 import { FIXTURES_DIR, TOOLS_FILE } from '#format/files';
-import { descriptionEdits } from '../server/words/plugin-tools.ts';
+import { descriptionEdits, inputEdits } from '../server/words/plugin-tools.ts';
 import { createMcpServer, INSTRUCTIONS_JOINED, MODERN } from '#mcp';
 import type { Caller, Engine, EngineChange } from '../server/engine/index.ts';
 import { createEngine, TOOL_CHANGE } from '../server/engine/index.ts';
@@ -149,7 +149,8 @@ test('tools: one per tool the table marks for a plugin (x-hosts), listed in MCP\
   for (const t of listed) {
     const row = table.find((r) => r.name === t.name)!;
     const words = descriptionEdits.filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replace(from, to), row.description);
-    assert.deepEqual([t.description, t.inputSchema], [words, row.input], `${t.name}: the table's words (less what only the standalone bot has, words/plugin-tools.ts) and JSON Schema`);
+    const input: unknown = JSON.parse(inputEdits.filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replaceAll(from, to), JSON.stringify(row.input)));
+    assert.deepEqual([t.description, t.inputSchema], [words, input], `${t.name}: the table's words (less what only the standalone bot has, words/plugin-tools.ts) and JSON Schema`);
   }
   const inputs: Record<string, Record<string, unknown>> = {
     list_boards: {}, get_board: { board: 'plans' }, show_node: { board: 'plans', n: 1 }, show_container: { board: 'plans', region: 'now' },

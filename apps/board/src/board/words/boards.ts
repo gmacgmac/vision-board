@@ -11,11 +11,10 @@ export const noBoardIsOpenToArchive = 'No board is open to archive.';
 export const noBoardIsOpenToLock = 'No board is open to lock.';
 
 // ---- boards.ts
-export const noBoardsYetWaitingFor = 'No boards yet. Waiting for an agent to draw.\n';
-export const npmRunBoardServesYour = '(npm run board serves your project; npm run dev the example boards.)';
+export const noBoardsYetWaitingFor = 'No boards yet. Waiting for an agent to draw.';
 export const thereIsNoBoard = (id: string): string => `There is no board "${id}".`;
 export const archivedRestoreOneFromThe = (WAITING: string, archived: number): string => `${WAITING}\n${archived} archived: restore one from the board picker.`;
-export const couldNotReachTheBoard = 'Could not reach the board server. Start it with: npm run board';
+export const couldNotReadTheBoard = 'Could not read the board.';
 
 // ---- board-edit.ts
 export const createdLastUpdatedAgentsWon = (dayOf: string, dayOf2: string): string => `Created ${dayOf}, last updated ${dayOf2}. Agents won't see it; you can restore it from the board picker.`;

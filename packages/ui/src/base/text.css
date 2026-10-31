@@ -1,7 +1,7 @@
 /* Text recipes (UI_01): a key (kbd) as a small outlined cap, and code in the mono face, wherever the
    board shows them (the note bubble draws its keys larger: note-bubble.css). Tokens only. */
-:where([class*='vb-']) kbd {
+:where([class*='vb-']) kbd:not(html) {
   font: var(--vb-text-xs) var(--vb-font-mono); padding: 0 4px; border-radius: 4px;
   border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
 }
-:where([class*='vb-']) code { font-family: var(--vb-font-mono); }
+:where([class*='vb-']) code:not(html) { font-family: var(--vb-font-mono); }

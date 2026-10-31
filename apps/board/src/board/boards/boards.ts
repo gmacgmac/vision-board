@@ -23,6 +23,8 @@ import type { Live } from '../live.ts';
 import type { Selection } from '../selection/index.ts';
 import type { Viewport } from '../canvas/index.ts';
 import type { Status } from '../status.ts';
+import { ApiError } from '../io.ts';
+import { finishAll } from '../teardown.ts';
 import { work } from '../work.ts';
 import * as boardsWords from '../words/boards.ts';
 
@@ -64,9 +66,6 @@ export interface Boards {
   stop(): void;
 }
 
-const WAITING = boardsWords.noBoardsYetWaitingFor
-  + boardsWords.npmRunBoardServesYour;
-
 export function createBoards(d: BoardsDeps): Boards {
   let unwatch: (() => void) | null = null;
   /** Boot has read the ledger: from then on the first board drawn into an empty project opens. */
@@ -74,6 +73,11 @@ export function createBoards(d: BoardsDeps): Boards {
   let drawn = false;
   /** A board to open as soon as it is held (`jump`). */
   let pending: string | null = null;
+  /** The first read failed: the boards the page wants, for the read that works (`listed`). */
+  let retrying: Promise<readonly string[]> | null = null;
+  /** Stopped while the first read was on its way (`unmount`): it opens nothing, and nothing follows. */
+  let stopped = false;
+  const waiting = [boardsWords.noBoardsYetWaitingFor, ...(d.page.help?.waiting ? [d.page.help.waiting] : [])].join('\n');
   const kept = createKeptView(d.vp, d.id, d.keepView, d.store);
   const { status } = d;
 
@@ -105,9 +109,35 @@ export function createBoards(d: BoardsDeps): Boards {
     open(id);
   }
 
+  /** The ledger is read: list its boards and open the first. */
+  function begin(wanted: readonly string[]) {
+    const s = d.live.state!;
+    const list = boardList(s);
+    booted = true;
+    status.set({ boards: list, ...(d.archiving && { archived: archivedBoards(s) }) });
+    if (!list.length) {
+      status.set({ noBoards: true });
+      const archived = archivedBoards(s).length;
+      d.say(archived ? boardsWords.archivedRestoreOneFromThe(waiting, archived) : waiting);
+      return;
+    }
+    const [named = '', ...lasts] = wanted;
+    const ids = list.map((b) => b.board);
+    const order = [...s.boards.keys()];
+    const last = lasts.find((x) => order.includes(x)) ?? null;
+    switchTo(startBoard(ids, named, last, order));
+  }
+
   function listed() {
     const s = d.live.state;
-    if (!s || !booted) return;
+    if (!s) return;
+    if (!booted) {
+      // The read after a failed one worked (`boot`).
+      const wanted = retrying;
+      retrying = null;
+      void wanted?.catch(() => []).then((names) => { if (!stopped) begin(names); });
+      return;
+    }
     const before = status.now.boards.map((b) => b.board);
     const list = boardList(s);
     status.set({ boards: list, ...(d.archiving && { archived: archivedBoards(s) }) });
@@ -133,36 +163,29 @@ export function createBoards(d: BoardsDeps): Boards {
 
   return {
     async boot() {
+      const wanted = Promise.resolve(d.page.wanted());
       try {
-        const [, wanted] = await Promise.all([d.live.load(), d.page.wanted()]);
-        const s = d.live.state!;
-        const list = boardList(s);
-        booted = true;
-        status.set({ boards: list, ...(d.archiving && { archived: archivedBoards(s) }) });
-        unwatch = d.live.watch();
-        if (!list.length) {
-          status.set({ noBoards: true });
-          const archived = archivedBoards(s).length;
-          d.say(archived ? boardsWords.archivedRestoreOneFromThe(WAITING, archived) : WAITING);
-          return;
-        }
-        const [named = '', ...lasts] = wanted;
-        const ids = list.map((b) => b.board);
-        const order = [...s.boards.keys()];
-        const last = lasts.find((x) => order.includes(x)) ?? null;
-        switchTo(startBoard(ids, named, last, order));
+        await d.live.load();
+        const names = await wanted;
+        if (stopped) return;
+        begin(names);
       } catch (err) {
-        d.fail(err);
-        d.say(boardsWords.couldNotReachTheBoard);
+        if (stopped) return;
+        // An engine still starting is ordinary for a host, and a reload is not its to give: the board says
+        // so, and the next change event reads again, with no retry of its own (`listed`).
+        d.fail(err instanceof ApiError ? err : new ApiError(boardsWords.couldNotReadTheBoard));
+        d.say(d.page.help?.unreachable ?? boardsWords.couldNotReadTheBoard);
+        retrying = wanted;
       }
+      unwatch = d.live.watch(d.fail);
     },
     switchTo,
     jump,
     listed,
     moved: kept.moved,
     stop() {
-      unwatch?.();
-      kept.destroy();
+      stopped = true;
+      finishAll([unwatch, kept.destroy]);
     },
   };
 }

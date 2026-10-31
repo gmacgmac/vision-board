@@ -16,7 +16,7 @@ test('a board-to-chat round trip through the seam alone', async ({ page, host })
   await expect.poll(async () => (await drive(page, 'record')).chips.map((c: { kind: string }) => c.kind).sort()).toEqual(['answers', 'selection']);
 
   // Send: one message, each chip's text from the engine.
-  await page.locator('.host-root #send').click();
+  await page.locator('.host-root #vb1-send').click();
   await expect.poll(() => host.messages.length).toBe(1);
   const texts = host.messages[0]!.blocks.map((b) => b.text).join('\n');
   expect(texts).toContain('1 (question): ✓');

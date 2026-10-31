@@ -5,6 +5,7 @@
 import '#tokens/styles.css';
 import '../src/styles/sheets.css';
 import './theme.css';
+import './color-scheme.css';
 import type { BoardHost, BoardView, MountedBoard } from '../src/board/index.ts';
 import { mount as mountBoard } from '../src/board/index.ts';
 

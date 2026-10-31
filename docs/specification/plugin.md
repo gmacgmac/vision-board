@@ -59,9 +59,9 @@ dialogs, search and help. There is no second element to give and no control a ho
 | Member | Promise | Left out | Proven by |
 |---|---|---|---|
 | `api(path, init)` | Calls the engine's routes: `path` is relative (`ledger?after=0`); resolves the `fetch` `Response`, as the person (§ The engine) | Required | `view-hooks.spec.ts` "api and events" |
-| `events(listener)` | Calls `listener({ plugin, ref: { board?, head? } })` for every change to the data, from anyone; returns the unsubscribe. A `ref` with no `head` says "you may have missed changes": the board catches up. Say one each time your stream opens | Required | `view-hooks.spec.ts` "api and events", "events: a ref with no head" |
+| `events(listener)` | Calls `listener({ plugin, ref: { board?, head? } })` for every change to the data, from anyone; returns the unsubscribe. A `ref` with no `head` says "you may have missed changes": the board catches up. Say one each time your stream opens. **A first read that fails** (`api` answers a problem or rejects, an engine still starting) says so through `notify` and over the stage, keeps listening and reads again on the next call of `listener`, with no retry of its own: so say one when your engine is up | Required | `view-hooks.spec.ts` "api and events", "events: a ref with no head", "events: a first read that fails" |
 | `chat` | § The chat | Required: give the three lines there if you have no chat | `view-hooks.spec.ts` "a host with no chat at all" |
-| `settings.get(key)`, `settings.on(listener)` | Each flag by name, a boolean, and `align` (`center` or `start`). A value you don't give reads as the flag's default. Flags are read once, at mount; `on` is for `align`, which lays out again | Required | `view-hooks.spec.ts` "settings: a flag comes" |
+| `settings.get(key)`, `settings.on(listener)` | Each flag by name, a boolean, and `align` (`center` or `start`). A value you don't give reads as the flag's default. Flags are read once, at mount; `on` is for `align`, which lays out again, and returns the unsubscribe | Required | `view-hooks.spec.ts` "settings: a flag comes" |
 | `notify(text, tone?)` | A short notice outside the board; `tone` `error` for a refusal | Required | `view-hooks.spec.ts` "notify and confirm" |
 | `confirm(ask)` | Your own dialog. `ask` is `{ heading, body, confirm, list? }`, `confirm` being the button's words, `list` `{ items, skipped? }` of `{ ref, text }`. Resolves true when confirmed | Required | `view-hooks.spec.ts` "notify and confirm" |
 | `store.get(key)`, `store.set(key, value)` | The viewer's conveniences, as strings: each board's zoom (`view.<board>`), whether the proposals notice is hidden. May lose anything. Give each data folder its own store: the keys name only what is on the board | Kept for the mount | `view-hooks.spec.ts` "store:", "store left out" |
@@ -77,13 +77,13 @@ off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags`
 
 | Member | Promise | Proven by |
 |---|---|---|
-| `unmount()` | Removes every listener it added, an open menu's or tip's too, takes back its chips, empties `root` and gives it back as it was. Never asks, so call `leave()` first | `view-gives.spec.ts` "unmount: every listener", "unmount with a tip open" |
+| `unmount()` | Removes every listener it added, an open menu's or tip's too, takes back its chips, empties `root` and gives it back as it was. Never asks, so call `leave()` first. Each step runs whatever another does: an unsubscribe of yours that isn't a function is passed over, and one that throws goes to the console (`apps/board/src/board/teardown.ts` `finishAll`) | `view-gives.spec.ts` "unmount: every listener", "unmount with a tip open", "unmount finishes" |
 | `unsaved()` | Synchronous: a note holds changed words. For your `beforeunload` or your own question | `view-gives.spec.ts` "unsaved and leave" |
 | `leave()` | True at once when nothing is unsaved; else asks through `confirm`. True: the words are discarded and you unmount. False: the board stays, focus in the words | `view-gives.spec.ts` "unsaved and leave" |
 | `pageChip()` | The chip for the board on show, for your own Add to chat; null with none | `view-gives.spec.ts` "pageChip" |
-| `reveal({ board?, n?, seq?, cards? })` | Brings into view a board, a card, a note, or several cards. `cards` zooms and selects nothing. Not on the board: says so through `notify`. Another board may ask through `confirm` first. A board not yet in the ledger opens when its first line arrives, which is how a bot's first board opens | `view-gives.spec.ts` "reveal" |
+| `reveal({ board?, n?, seq?, cards? })` | Brings into view a board, a card, a note, or several cards. `cards` zooms and selects nothing. Not on the board, or a card hidden or removed: says so through `notify`, and takes no focus. Another board may ask through `confirm` first. A board not yet in the ledger opens when its first line arrives, which is how a bot's first board opens | `view-gives.spec.ts` "reveal: a board", "reveal of what is not" |
 | `status.now`, `status.on(listener)` | What the board shows, read only: `boardId`, `title`, `counts`, `unsaved`, `chatWork` and more; `on` says each change | `view-gives.spec.ts` "status and send" |
-| `send()` | Send to agent, for a button of your own. The board's header has its own | `view-gives.spec.ts` "status and send" |
+| `send()` | Send to agent, for a button of your own. The board's header has its own. Resolves null, or the problem's words | `view-gives.spec.ts` "status and send" |
 
 Nothing else is there (`view-gives.spec.ts` "the view holds no more").
 
@@ -102,19 +102,23 @@ chat: {
 ```
 
 - **Chips.** A chip is `{ plugin, kind, ref, label, detail, preview? }` (`#actions` `Chip`): draw `label` and `detail`, keep the
-  rest unread. The board keeps two live, keys `selection` and `answers`, replaced as they change and removed at `unmount`.
-  A chip that went with a message is **spent until its key's `ref` changes**: the same `ref` may come again with new
-  words, and stays spent. Proven by `view-hooks.spec.ts` "chat.attach".
+  rest unread. `detail` names a board by its id, as `Board "pricing"`, not its title. The board keeps two live, keys `selection`
+  and `answers`, replaced as they change and removed at `unmount`. A chip that went with a message is **spent until its key's
+  `ref` changes**: the same `ref` may come again with new words, and stays spent. `attach(key, null)` does not end it, so
+  selecting the same card again stays spent; keep what is spent across a null, as `tests/plugin/fake-host/chat.js` does.
+  Proven by `view-hooks.spec.ts` "chat.attach".
 - **As a message goes**, call the engine's `resolve(chip.kind, chip.ref)` for every chip. `{ where, text }` is one block of
   the bot's prompt; no block when `text` is empty. `{ refused, reason }` stops the send: answer with your words. Proven by
   `view-hooks.spec.ts` "chat.send: Send sends", "chat.send: a chip the engine refuses".
 - **`send(record)`** sends what is staged, with no words, then answers `record()`, the board's own record of the Send: null,
   or the problem's words. Call it even when nothing was staged. Leave it out only when your own server recorded that Send
-  with the message (the `send` act). Resolves null when done or held for the bot's turn to end. Proven by the same.
+  with the message (the `send` act). Resolves null when done or held for the bot's turn to end. One that rejects, a `fetch` that
+  failed, is Send's error state, with the board's own words. Proven by the same, and "chat.send: a rejection".
 - **`status`** is read only. `now` (`idle`, `working`, `asking`) drives the board's working mark, and is all you must give.
   With only that, Send is enabled by an answer since the last Send, or by a chip of the board's own that hasn't gone with a
-  Send. `staged`: you hold what Send would carry. Given at all it has the full say, the board's chips included, so give it if your
-  chat holds more of its own, a file say, or drops the chips. `held`: Send waits for the bot's turn. `agent`: the id your chat talks to,
+  Send. `on` returns the unsubscribe. `staged`: you hold what Send would carry. Given at all it has the full say over the chips, the
+  board's included, so give it if your chat holds more of its own, a file say, or drops the chips. An answer since the last Send
+  enables Send either way. `held`: Send waits for the bot's turn. `agent`: the id your chat talks to,
   which scopes the answers chip to what it may read. Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
 - **`reveal` and `hasLine`** give a changed card's stepper its link to your chat. Without `reveal`, no link; with `reveal` and
   no `hasLine`, always a link. Proven by `view-hooks.spec.ts` "chat.reveal and chat.hasLine", "chat.reveal left out".
@@ -128,15 +132,24 @@ With no chat at all, where nothing carries a chip: `chat: { attach() {}, send: (
 - **Keys.** A key acts only when its target is in the root. Every key the board acts on is `preventDefault`ed before it
   leaves the root, so **skip a key whose `defaultPrevented` is true**. A capture-phase listener on the window or document
   runs before the board's, so it reads nothing marked: use one only for what you want to take first. A key in a modal of the
-  board's goes no further than the root. Proven by `guest.spec.ts` "keys", `tests/pages/board-guest.spec.ts` "every key the board acts on".
-- **Modals.** The board's dialogs and its zoomed picture are real `<dialog>` modals, inside the root: **the whole page is inert
-  while one is open**, your controls too. Proven by `guest.spec.ts` "the zoomed view is a real modal".
+  board's goes no further than the root. When what held the focus goes (a card hidden or taken away, a closed panel) the focus stays in the
+  stage, so the next key still acts. Proven by `guest.spec.ts` "keys", "focus stays in the root", `tests/pages/board-guest.spec.ts` "every key the board acts on".
+- **Modals.** The board's dialogs and its zoomed picture are real `<dialog>` modals, inside the root in the document but drawn
+  over the window: **the whole page is inert while one is open**, your controls too, and each centres on the window and caps by
+  it (`.vb-dialog` up to 480 wide, `.vb-archived-list`). Proven by `guest.spec.ts` "the zoomed view is a real modal".
 - **Layers.** The root makes no stacking context of its own, so the board's `z-index`es meet your page's; set `isolation: isolate`
   on `root` if yours would clash.
-- **Styles.** Your element rules reach in and the board stands: it sets every property it relies on. Its rules stay under its
-  own `vb-` names, but the sheet does set `--vb-*`, `--lightningcss-*` and `color-scheme: light dark` on `:root`, and selects
-  `vb-node` and `vb-region`. Proven by `guest.spec.ts` "a host's loud element rules", `tests/pages/host-styles.spec.ts`.
-- **Size.** What opens stays inside the root, by the root's size and not the window's. Proven by `short-pane.spec.ts`.
+- **Styles.** Your rules on a bare element reach in and the board stands: `button`, a field, a heading, `p`, `dialog`, `span`, `div`,
+  `a`, a list, `table`, `code`, `kbd`, the sectioning elements, `img` and `svg` each start again inside the root, under every
+  rule of the board's (`packages/ui/src/base/root.css`). `root` itself is yours, and the text properties it would hand down the board sets. What
+  doesn't hold: a rule of yours with a class or an id that matches inside, one with `!important`, one on an element not named
+  there or on an svg's inner shapes, a less usual property on `span` or `div` (the sheet lists what it takes back; `all` costs a big
+  board too much), or a `width` or `height` on an `svg` or `img` that carries its own. The board's rules stay under its own `vb-` names, but the sheet does
+  set `--vb-*` and `--lightningcss-*` on `:root` and on `[data-theme]`, registers `--vb-root-w`, and selects `vb-node` and `vb-region`. A
+  `color-scheme` of yours stays yours: the board's is on its root. Proven by `guest.spec.ts` "a host's loud element rules",
+  "a picture stands too", "a host's color-scheme", `tests/pages/host-styles.spec.ts`.
+- **Size.** What opens stays inside the root, by the root's size and not the window's, but for a modal (above). The Reply panel and the
+  requests strip too; the strip stacks when the root is narrow. Proven by `short-pane.spec.ts`.
 - **Your CSP.** It must allow `img-src` for `imageRoute` and for `data:` (a picture's blank, `packages/ui/src/markdown/markdown.css`
   `.vb-md-img`), and `connect-src` for `api`, `imageRoute` and your stream. No inline script or style is needed. Every spec
   here runs under `CSP`, `tests/plugin/fake-host/server.ts`. The PDF frame's `frame-src` matters only to a host of the
@@ -144,6 +157,9 @@ With no chat at all, where nothing carries a chip: `chat: { attach() {}, send: (
 - **Your Svelte.** The bundle's runtime is its own, and a host's beside it, the board nested in its tree, is untouched. Proven by
   `guest.spec.ts` "a second Svelte".
 - **Two boards.** Mounts in one page work apart: no id twice, each its own calls and state. Proven by `guest.spec.ts` "two mounts".
+- **Ids.** Every id in the root carries its mount's prefix (`vb1-`, `vb2-`, `apps/board/src/board/mount-ids.ts`), so your own `board` or
+  `send` stays yours, and a `label` or `aria-controls` in the root finds its own. Don't select by them: they aren't part of this
+  page. Proven by `guest.spec.ts` "a host's own ids".
 - **No storage, no address.** Nothing touches the page's storage or address (`view-hooks.spec.ts` "store:",
   `apps/board/tests/board-no-page.test.ts`).
 
@@ -159,8 +175,8 @@ hashes and `images/`. `name()` is the folder as the person reads it (`list_board
 
 | Member | Promise | Proven by |
 |---|---|---|
-| `route(req, { caller, signal })` | One request, with no HTTP. `req` is `{ method, path, query?, body? }`, `path` as `api` got it, `query` a `URLSearchParams`, `body` the value or a function the engine calls for it. Answers `{ status, body, headers? }`, a problem as a reply, or null for a path not its own. **It trusts `caller`**: `{ by: 'person' }` for your person's door, never your bot's. `signal` ends a held read | `engine-hooks.spec.ts` "route:", "route and tools.call" |
-| `image({ method, path, ifNoneMatch? })` | Answers `imageRoute`: `path` is the text after the prefix, as the request wrote it. `GET` or `HEAD` of a picture in `dir`'s `images/` and only there, held to the same checks as standalone's route (`images.md`). `body` is its bytes or null. Send `headers` as given: they carry the type, the no-sniff and the svg's policy | `engine-hooks.spec.ts` "image:" |
+| `route(req, { caller, signal })` | One request, with no HTTP. `req` is `{ method, path, query?, body? }`. Split what `api` got: `path` is the part before the `?` (`ledger`), `query` the rest as a `URLSearchParams`; a `path` holding its query answers null. `body` is the JSON value, or a function the engine calls for it when the operation reads one (one that throws is a 400); leave it out when there is none. Answers `{ status, body, headers? }`, `body` to send as JSON, a problem as a reply, or null for a path not its own. **It trusts `caller`**: `{ by: 'person' }` for your person's door, never your bot's; `{ by: 'agent' }` with no id is refused, as no caller is. `signal` ends a held read | `engine-hooks.spec.ts` "route:", "route and tools.call", "route: a body", `tools.spec.ts` "tools.call: a caller of an agent" |
+| `image({ method, path, ifNoneMatch? })` | Answers `imageRoute`: `path` is the text after the prefix, as the request wrote it. `GET` or `HEAD` of a picture in `dir`'s `images/` and only there, held to the same checks as standalone's route (`images.md`). A card names a picture relative to that folder: `![Flow](flow.png)` is `<dir>/images/flow.png`, and `images/flow.png` is missing. `body` is its bytes or null. Send `headers` as given: they carry the type, the no-sniff and the svg's policy | `engine-hooks.spec.ts` "image:" |
 | `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`. Never throws | `engine-hooks.spec.ts` "resolve:" |
 | `tools.list()`, `tools.call(name, input, ctx)` | § Tools | `tools.spec.ts` |
 | `watch(onChange)` | `{ board?, head }` for every ledger change, this engine's or another writer's on `dir`. Returns the stop. Turn each into an `events` call | `engine-hooks.spec.ts` "watch:" |
@@ -169,9 +185,10 @@ Nothing else is there (`engine-hooks.spec.ts` "createEngine and the engine hold 
 
 ## The bot
 
-**The host names its bot.** Register it once, `route({ method: 'POST', path: 'agents', body: { label } })`, keep the `agent` it
-answers, and ignore the secret: no call takes one. Pass `{ caller: { by: 'agent', agent } }` on every tool call. The id
-lives in `dir`, so don't register again on a restart (`tools.spec.ts` "the bot").
+**The host names its bot.** Register it once, `route({ method: 'POST', path: 'agents', body: { label } })`, with no second argument and
+not through your person's door, which answers 403. Keep the `agent` it answers, and ignore the secret: no call takes one. Pass
+`{ caller: { by: 'agent', agent } }` on every tool call. **Keep the id yourself**, with the bot's own data: no call of the engine's
+gives it back. It holds on another engine over the same `dir`, so don't register again on a restart (`tools.spec.ts` "the bot").
 
 **Words differ per host.** `skill.md` and the engine's tool descriptions are standalone's less what a bot under a host doesn't
 have: `join` and its secret, the chat panel, attachments, apps and the images folder (`apps/board/plugin/words/skill-edits.ts`,
@@ -259,7 +276,7 @@ The standalone page and server are a host, but these are theirs alone. A host of
 | What | Why it is there |
 |---|---|
 | `MountedBoard.board`, `BoardControls` (`apps/board/src/board/mount.ts`) | `#board`'s `mount` gives it for `App.svelte`'s page door (`rebuild`, `idle`) and `tests/pages/` |
-| `BoardHost.page`, `BoardPage`, `BoardPageParts` (`host.ts`) | Its address, the board last looked at, its folder, theme and Chat button in the header. Left out, the board opens its first board and the header reflows |
+| `BoardHost.page`, `BoardPage`, `BoardPageParts` (`host.ts`) | Its address, the board last looked at, its folder, theme and Chat button in the header, and help naming this repo's commands. Left out, the board opens its first board, the header reflows, and its words say only what any person can act on (`engine-hooks.spec.ts` "the folder: nothing") |
 | `EngineOptions.ledger`, `EngineOptions.onSend`, `Engine.ledger`, `Engine.agents`, `Engine.dir` (`apps/board/server/engine/engine.ts`) | Its server opens the ledger under its own lock and runs chat sessions and the app host beside the engine |
 
 ## Not covered
@@ -295,9 +312,9 @@ For the maintainer's review (D-074 rule 7). Each is decided for now, and each is
    this repo, does not: `App.svelte` needs its test door.
 7. **The root is a size container** (`apps/board/src/styles/board.css`), so `100cqh` caps a menu by the pane. It asks a host for a definite
    size, which its absolute children needed already.
-8. **The sheet touches `:root`**: the tokens and `color-scheme: light dark`, whose lowered form makes `data-theme` work only there.
-   Scoping the tokens to `.vb-board` would let two boards differ, and leave a host's `color-scheme` alone, but it moves every
-   token and risks the screenshots. Keep until a host minds.
+8. **The sheet still touches `:root`**: the tokens, whose lowered form makes `data-theme` work only there. `color-scheme` left it for the
+   board's root (`apps/board/vite.plugin.config.ts` `hostKeepsColorScheme`), so a host's fields stay its own. Scoping the tokens to
+   `.vb-board` too would let two boards differ, but it moves every token and risks the screenshots. Keep until a host minds.
 9. **No types in the folder.** A TypeScript host writes `declare module` from this page. **Recommendation:** add a generated
     `plugin.d.ts` when the first host asks: `PluginView` and `PluginEngine` are already plain types.
 10. **No seam version.** `manifest.version` is the API's, which moves with routes, not with this page, so a host can't tell whether

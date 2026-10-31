@@ -23,6 +23,28 @@ test('events: a ref with no head makes the board catch up on what it missed', as
   await expect(page.locator('.host-root vb-node')).toHaveCount(4);
 });
 
+for (const firstRead of [500, 404, 'reject', 'html'] as const) {
+  test(`events: a first read that fails (${firstRead}) waits for the next events, with no retry of its own, then the board comes`, async ({ page, host }) => {
+    await drawPlans(host);
+    await openHost(page, host, { firstRead, muted: true });
+    const message = page.locator('.host-root .vb-message');
+    await expect(message).toBeVisible();
+    await expect(message, 'no command of this repo').not.toContainText('npm');
+    expect(await drive(page, 'subscribers'), 'it listens').toBeGreaterThan(0);
+    const { notices } = await drive(page, 'record');
+    expect(notices).toHaveLength(1);
+    expect(notices[0].tone).toBe('error');
+    expect(notices[0].text, 'no raw error').not.toMatch(/TypeError|undefined/);
+    await page.waitForTimeout(300);
+    expect((await drive(page, 'record')).calls.filter((c: string) => c.includes('ledger')), 'no busy retry').toHaveLength(1);
+    await drive(page, 'catchUp');
+    await drawn(page);
+    await expect(message).toBeHidden();
+    await page.locator('.host-root vb-node').first().click();
+    await expect(page.locator('#host-chips li'), 'and it works').toHaveCount(1);
+  });
+}
+
 test('settings: a flag comes from settings.get, and settings.on hears a change of align', async ({ page, host }) => {
   // A row of two cards of different heights: the alignment shows in the shorter one's place.
   const long = Array.from({ length: 12 }, (_, i) => `Line ${i} of a long card.`).join('\n\n');
@@ -55,9 +77,9 @@ test('a host with no chat at all: three lines of it, and Send only records', asy
   await openHost(page, host, { noChat: true });
   await drawn(page);
   await page.locator('.host-root vb-node').nth(1).click();
-  await expect(page.locator('.host-root #send'), 'a selection has nowhere to go').toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('.host-root #vb1-send'), 'a selection has nowhere to go').toHaveAttribute('aria-disabled', 'true');
   await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
-  await page.locator('.host-root #send').click();
+  await page.locator('.host-root #vb1-send').click();
   await expect.poll(async () => (await drive(page, 'record')).calls.filter((c: string) => c === 'POST boards/plans/act').length).toBe(2);
 });
 
@@ -66,8 +88,8 @@ test('notify and confirm: a notice goes through notify with its tone; a decision
   await openHost(page, host);
   await drawn(page);
   await drive(page, 'answer', false);
-  await page.locator('.host-root #toolbar-menu').click();
-  await page.locator('.host-root #archive-board').click();
+  await page.locator('.host-root #vb1-toolbar-menu').click();
+  await page.locator('.host-root #vb1-archive-board').click();
   await expect.poll(async () => (await drive(page, 'record')).confirms.length).toBe(1);
   expect((await drive(page, 'record')).confirms[0]).toEqual(expect.objectContaining({ heading: expect.any(String), body: expect.any(String), confirm: expect.any(String) }));
   await drive(page, 'reveal', { cards: [99] });
@@ -140,7 +162,7 @@ test('chat.send: Send sends what is staged with no words, each chip resolved by 
   await drawn(page);
   await page.locator('.host-root vb-node').first().click();
   await expect(page.locator('#host-chips li')).toHaveCount(1);
-  await page.locator('.host-root #send').click();
+  await page.locator('.host-root #vb1-send').click();
   await expect.poll(() => host.messages.length).toBe(1);
   const message = host.messages[0]!;
   expect(message.chips.map((c) => c.kind)).toEqual(['selection']);
@@ -173,6 +195,22 @@ test.describe('a refused chip', () => {
   });
 });
 
+test.describe('a chat.send that rejects', () => {
+  test.use({ expected: { problems: [/A fetch that failed/] } });
+  test('chat.send: a rejection is Send\'s error state, with words; nothing is unhandled', async ({ page, host }) => {
+    await drawPlans(host);
+    await openHost(page, host, { sendFails: true });
+    await drawn(page);
+    await page.locator('.host-root vb-node').first().click();
+    const send = page.locator('.host-root #vb1-send');
+    await send.click();
+    await expect(send).toHaveAttribute('data-state', 'error');
+    expect(await send.getAttribute('title')).toBeTruthy();
+    expect(await send.getAttribute('aria-disabled')).toBe(null);
+    expect(await drive(page, 'send'), 'a host\'s own button hears the words').toEqual(expect.any(String));
+  });
+});
+
 test('chat.status: now drives the working mark; held and staged drive Send; agent scopes the answers chip', async ({ page, host }) => {
   await drawPlans(host);
   await openHost(page, host);
@@ -195,7 +233,7 @@ test('chat.status: with no staged, Send is enabled by the board\'s own chip unti
   await drawPlans(host);
   await openHost(page, host);
   await drawn(page);
-  const send = page.locator('.host-root #send');
+  const send = page.locator('.host-root #vb1-send');
   await expect(send, 'nothing yet').toHaveAttribute('aria-disabled', 'true');
   await page.locator('.host-root vb-node').first().click();
   await expect(send, 'a selection alone can be sent').not.toHaveAttribute('aria-disabled', 'true');

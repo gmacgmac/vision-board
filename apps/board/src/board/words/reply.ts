@@ -6,5 +6,4 @@ export const replyCopied = 'Reply copied';
 export const copyFailedSelectTheText = 'Copy failed: select the text and copy it by hand';
 export const yourReply = 'Your reply';
 export const closeReply = 'Close reply';
-export const pasteItIntoChatOr = 'Paste it into chat, or let the agent run';
-export const nodeAppsBoardBinReply = 'node apps/board/bin/reply.ts <board>';
+export const pasteItIntoChat = 'Paste it into chat.';

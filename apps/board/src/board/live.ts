@@ -28,8 +28,8 @@ export interface Live {
   /** An act the page sent to `board`: its answer (cards by board number, card-numbers.ts) applied
    * in place when it is the next line, else read with the rest. */
   own(line: LedgerLine, board: string): Promise<void>;
-  /** Follow the host's change events; a stop function. */
-  watch(): () => void;
+  /** Follow the host's change events; a stop function. A read they start that fails goes to `failed`, and the next one reads again. */
+  watch(failed: (err: unknown) => void): () => void;
   /** Resolves when no read is in flight. */
   settled(): Promise<void>;
 }
@@ -112,9 +112,9 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
       if (state && !reading && line.seq === state.seq + 1 && apply([answerEvent(state, board, line)])) return;
       await sync();
     },
-    watch() {
+    watch(failed) {
       // A head past the one held, or no head (catch up on anything appended while not following).
-      return d.events(({ ref }) => { if (!state || ref.head === undefined || ref.head > state.seq) void sync(); });
+      return d.events(({ ref }) => { if (!state || ref.head === undefined || ref.head > state.seq) sync().catch(failed); });
     },
     settled: async () => { while (reading) await reading; },
   };

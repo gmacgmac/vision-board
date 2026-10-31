@@ -12,3 +12,8 @@ button { background: rgb(255 200 0); border: 3px solid rgb(0 0 255); border-radi
 input, select, textarea { background: rgb(255 255 200); border: 3px solid rgb(0 0 255); border-radius: 12px; padding: 10px; font: 18px/2 serif;
   color: rgb(0 0 255); height: 48px; margin: 4px; }
 dialog { padding: 40px; border: 5px solid rgb(0 0 255); background: rgb(255 255 200); color: rgb(0 0 255); border-radius: 0; font-family: serif; max-width: 200px; }
+span { color: rgb(255 120 0); font-size: 30px; font-weight: 900; letter-spacing: .3em; padding: 9px; background: rgb(0 255 0); }
+div { line-height: 3; letter-spacing: 2px; text-align: right; color: rgb(10 200 10); }
+svg { display: none; margin: 9px; }
+img { max-width: 5px; border: 8px solid red; padding: 7px; }
+a, ul, li, label, code, kbd { color: rgb(255 0 255); font: 900 26px/3 serif; margin: 9px; padding: 9px; border: 3px solid red; }

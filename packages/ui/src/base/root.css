@@ -7,8 +7,12 @@
 .vb-board {
   font: var(--vb-weight-regular) var(--vb-text-md) / 1.45 var(--vb-font);
   color: var(--vb-ink);
+  letter-spacing: normal; word-spacing: normal; text-align: start; text-indent: 0; text-transform: none; white-space: normal;
   container: vb-board / inline-size;
 }
+/* The root's width, in pixels, for what sits in a nearer container (a tip in a container's frame) and so can't ask `cqw`. */
+@property --vb-root-w { syntax: '<length>'; inherits: true; initial-value: 100000px; }
+.vb-board > * { --vb-root-w: 100cqw; }
 :where([class*='vb-'], [class*='vb-'] *) { box-sizing: border-box; }
 /* Author display rules (flex, grid) beat the browser's [hidden]; this keeps hidden hidden. */
 :where([class*='vb-'], [class*='vb-'] *)[hidden] { display: none !important; }
@@ -20,3 +24,22 @@
   all: revert;
   box-sizing: border-box;
 }
+/* The same for what a host's rule on a bare element reaches otherwise (`span`, `div`, a link, a list), and only inside
+   the root: the root is the host's own element. The properties a page's element rule sets, one by one: there are
+   thousands of these elements on a big board, and `all` costs each one every property there is (perf.spec.ts). */
+:is(span, div, a, ul, ol, li, label, b, strong, em, i, code, pre, kbd, small, time, header, aside, section, main, nav, footer, details, summary, h4, h5, h6, table, thead, tbody, tr, th, td, blockquote, hr):where(.vb-board *):not(html) {
+  display: revert; float: revert; position: revert; vertical-align: revert; opacity: revert; transform: revert;
+  width: revert; height: revert; min-width: revert; min-height: revert; max-width: revert; max-height: revert;
+  margin: revert; padding: revert; border: revert; border-radius: revert; outline: revert; background: revert; box-shadow: revert;
+  color: revert; font: revert; letter-spacing: revert; word-spacing: revert; text-align: revert; text-indent: revert;
+  text-transform: revert; text-decoration: revert; white-space: revert; list-style: revert; cursor: revert;
+  box-sizing: border-box;
+}
+/* An svg or a picture carries its size, and an svg its paint, as attributes, which `all: revert` would take away: so
+   the properties a host's rule on them might set, one by one (a Tailwind-like reset's `display`, `max-width`, `height`). */
+:is(svg, img):where(.vb-board *):not(html) {
+  display: revert; vertical-align: revert; margin: 0; padding: 0; border: 0; max-width: none; max-height: none; min-width: 0; min-height: 0;
+  float: none; opacity: revert; filter: none; transform: none; box-shadow: none; background: none; position: revert;
+}
+:is(svg, img):where(.vb-board *):not(html):where(:not([width])) { width: revert; }
+:is(svg, img):where(.vb-board *):not(html):where(:not([height])) { height: revert; }

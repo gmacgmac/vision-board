@@ -12,7 +12,7 @@ export function createChat(flags) {
   const refOf = (chip) => JSON.stringify(chip.ref);
   const status = {
     now: 'idle',
-    on(listener) { statusHeard.add(listener); return () => statusHeard.delete(listener); },
+    on(listener) { statusHeard.add(listener); return flags.plainOn ? undefined : () => statusHeard.delete(listener); },
   };
   const chat = {
     attach(key, chip) {
@@ -22,6 +22,7 @@ export function createChat(flags) {
       say();
     },
     async send(record) {
+      if (flags.sendFails) throw new Error('A fetch that failed');
       log.sends += 1;
       const going = [...chips.entries()];
       const r = await fetch('/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chips: going.map(([, chip]) => chip) }) });

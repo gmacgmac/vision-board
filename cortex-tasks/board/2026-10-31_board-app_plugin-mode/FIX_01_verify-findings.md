@@ -14,13 +14,71 @@ Fix VERIFY_01's findings so a host gets what the spec promises. F1 and F2 block 
 
 ## Validation
 
-- [ ] `npm run test:plugin` and `npm test` pass; no screenshot changes; each finding has an outcome in the notes: fixed, stated in the spec, or left, with why
+- [ ] `npm run test:plugin` and `npm test` pass (the timing half of `npm test` didn't, see Run log); no screenshot changes; each finding has an outcome in the notes: fixed, stated in the spec, or left, with why
 
 ## Implementation Notes
 
-_To be completed by agent after task completion._
+**Status**: Completed · **Completed**: 2026-10-31
 
-**Status**: Pending · **Completed**:
+Port 7200. Bug fixes each started from a failing test in `tests/plugin/` (20 failed before, then none).
+
+### Outcome of each finding
+
+| Finding | Outcome | What |
+|---|---|---|
+| F1 Reply outside `root` | Fixed | `.vb-reply` is absolute in the root, `92cqw`; its place on the standalone page is the same, since the root fills the window there. `short-pane.spec.ts` |
+| F2 `unmount` throws | Fixed, both ways | The spec says `settings.on` and `chat.status.on` return the unsubscribe; `teardown.ts` `finishAll` runs every step whatever one does (not a function: passed over; throws: `console.error`, the rest run). Used by `mount`, `controller`, `chat-side`, `boards` |
+| F3 repo commands | Fixed | Board words are general ("Paste it into chat.", "Could not read the board."); the commands moved to `shell/words/page-help.ts`, through the new `BoardPage.help`, so standalone reads as before. `words.json` and `view/board.js` hold neither `npm run` nor `apps/board/bin`. Left: `theBoardServerIsNot`, "The board server is not reachable. Is it running?", names no command, and a host's person may read it |
+| F4 no recovery | Fixed | A failed first read notifies once, says so over the stage and subscribes; the next `events` reads again, with no retry of its own. A later read that fails goes to `fail`, where it was an unhandled rejection. No raw `TypeError` |
+| F5 `chat.send` rejects | Fixed | `mount.ts` `send` answers words (`theChatCouldNotSend`), so Send's error state and a host's own `view.send()` both get them; `console.error` keeps the cause. A send resolving undefined reads as null |
+| F6 focus falls out | Fixed | Any draw that takes the focused card away (H, a bot's `retire`, an answer landing with Hide answered on): `controller.ts` `redraw`. Reply: `ReplyPanel.svelte`, by Esc or by ✕. All to the stage |
+| F7 `reveal` | Fixed | `n` and `seq` not on the board, hidden or removed: `notify`, no field, no focus taken. `go.why`, `Board.revealCard`, `revealNote`. Standalone never calls `reveal` with `n` or `seq` (`chat-bridge.ts`), so nothing changes there |
+| F8 ids | Fixed | Every id under a host carries a prefix, first mount `vb1-`; only the first mount with `host.page` stays bare. CSS on ids keeps its specificity through `:is(#board, [id$='-board'])`, which also fixes the second mount's picker width and arrowheads. `tests/pages` fake-host specs and `tests/plugin` updated |
+| F9 element rules | Fixed, and the sentence narrowed to what's true | `base/root.css` takes back `span`, `div`, `a`, lists, tables, sectioning and more, and `svg`, `img`; the root sets the text properties it would inherit. `host.css` now carries those loud rules, so every plugin spec runs under them. Not `all: revert` for these: it put first draw of 1000 cards at 640 to 980 ms against 520 to 550 at HEAD. Named properties: about 570. The spec lists what doesn't hold |
+| F10 window caps | Fixed; a modal stated as the exception | `.vb-access` `40cqh`; `.vb-tip` by the new `--vb-root-w`, because a tip sits in a container's frame, where `cqw` means the frame and would move screenshots. `.vb-dialog` and `.vb-archived-list` stay by the window, as a modal does; § Modals and § Size agree |
+| F11 access strip | Fixed | Stacks under 560 of the root's width, for `data-placement='board'` only, so the gallery's screenshots stay |
+| F12 agent with no id | Fixed | `engine.ts` `namedCaller`: no id, an empty one or a non-string is no caller, in `route` and `tools.call`. See below |
+| F13 spec gaps | Stated, A to H | A, B, C, D, E, F, G, H are lines in `plugin.md`. C also a fix: a `body` function that throws is 400. G differs from VERIFY_01's wording: `agents.json` does hold the id with the hash, but no call gives it back, so the spec says that |
+| F14 `color-scheme` | Fixed for the folder | The build takes it off `:root` and `[data-theme]` (`hostKeepsColorScheme`, three rules or the build stops); `plugin/color-scheme.css` puts it on the board's root. The tokens are untouched, so standalone is the same. Open point 8 reworded. A host's `<input>` stays its own |
+| F15 small | `app` item fixed; rest left | `write_board`'s input no longer names `.visionboard` (`inputEdits`). `keepView`'s note is `flags.ts`: a request. The region-note observers: left, no real leak (VERIFY_01 measured) and the pattern has no teardown to hang it on. Bundle comments: left, not a fault |
+
+### F12: what could have been written before the fix
+
+Probed on the built engine at `b6228d5` (`temp/fix-01/f12.mjs`), caller `{ by: 'agent' }`:
+
+- `write_board` with a `board` item on a board that didn't exist: a `board` line, `by: agent`, no `agent`. So a board nobody holds, which every agent then has to ask for.
+- `request_grant`, on any board, the person's too: a `grant-request` line with no `agent`.
+- Nothing else: `region` and `node` failed `needs-grant`, `propose` and `reply` found no card, a title on a person's board failed the ledger's own check, and `act` was refused 403. So no ✓, ✗ or approval, and no line was editable. Lines already written stay, the ledger being append-only; a host that lost its id before this fix may hold such lines.
+
+### Decisions, for the maintainer
+
+1. **F8**: `vb1-` under a host and bare only on the board's own page, by `host.page`. It changes every id a host could see, and `plugin.md` tells a host not to select by them.
+2. **F3**: `BoardPage.help` is a new standalone-only member. Standalone's wording stays word for word.
+3. **F14**: a build step editing the emitted sheet, because the tokens are protected and shared. If the maintainer would rather move `color-scheme` out of `tokens.css`, the step goes.
+4. **F9**: named properties, not `all`, for cost. So an unusual property on `span` or `div` still reaches in, and the spec says so.
+5. **F2**: a step that throws is reported on the console and `unmount` still returns. Rethrowing would stop a host's own teardown after it.
+6. **Beyond the list**: `unmount` while the first read was on its way left a subscription: found while changing `boot`, fixed, `view-gives.spec.ts` "unmount while the first read". VERIFY_01 had this as safe.
+
+### Two flakes that aren't this task's
+
+Both reproduced on an export of `b6228d5`, or named at an earlier gate. Neither moved a screenshot.
+
+- `host-styles.spec.ts` "the gallery's samples": target 190, a mini board, differs by 3 against a limit of 2. HEAD: 2 of 6 runs.
+- `host-styles.spec.ts` "the board in a 550px pane": the zoom's hidden status text, seen or not yet (wave 3's gate has it). A timing of the test, not a layout.
+
+### Run log
+
+The machine sat at a load average of 50 to 58 for the whole run, from other sessions.
+
+- `test:plugin`: 142 passed on `--repeat-each=2` (71 tests), on the final code.
+- `verify` (30 warnings, none new), `check`, `gen-api --check`: clean.
+- `npm test`: the unit half 2187 of 2187. **`test:timing` did not pass:** 3 of 14, then 5 of 14 on a rerun, a different set each time (server start, layout, Markdown, search). None of them is code this task touched. VERIFY_01 had it at 14 of 14: run it again on a quiet machine.
+- Page specs, on the last CSS: every spec with a screenshot, plus `board-chrome`, `board-host`, `board-guest`, `host-styles`, `live-boards`, `toolbar`, `focus-ring`, `perf`: 477 passed, 3 failed, none on a screenshot. The two `host-styles` flakes above, and `perf.spec.ts` "first draw of 1000 cards" at 1305 ms.
+- After `redraw` took on the focus: `focus-ring`, `select`, `board-host`, `board-chrome`, `board-guest`, `hide`, `toolbar`, `go-to-card`, `send-access`: 93 passed. The screenshot specs were not run again after that one change, which draws nothing.
+- **The first-draw budget is load, by comparison:** back to back on an export of HEAD and this change, 948, 962, 1221 ms against 980, 1064, 1245 ms. In a lighter spell earlier, measured one after the other and not interleaved, 520 to 550 against about 570. About 3 to 9% slower, the cost of the element rules (F9). Under load both sides pass 1000 ms: the set gate should judge it on a quiet machine.
+- `perf.spec.ts`' other 10 budgets passed.
+- `git status`: no file under `__screenshots__` changed. Nothing re-baselined.
+- A look in a browser, light and dark, in a 360 by 560 pane (`temp/fix-01/look-*.png`): the strip stacks, Reply sits in the pane, its hint reads "Paste it into chat." Not looked at under real standalone after the last CSS; the screenshot specs stand for it.
 
 ## On Completion
 

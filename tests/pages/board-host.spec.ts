@@ -37,13 +37,14 @@ test('the board mounts in a fake host: it draws, Send goes through the chat with
     const all = [...document.querySelectorAll('[id]')].map((e) => e.id);
     const own = (root: string) => [...document.querySelectorAll(`#${root} [aria-controls], #${root} [aria-describedby]`)].flatMap((e) =>
       [e.getAttribute('aria-controls'), e.getAttribute('aria-describedby')].filter((r): r is string => !!r).map((r) => (document.getElementById(r)?.closest(`#${root}`) ?? null) !== null));
-    return { duplicates: all.filter((id, i) => all.indexOf(id) !== i), a: own('a'), b: own('b'), second: [...document.querySelectorAll('#b [id]')].map((e) => e.id) };
+    return { duplicates: all.filter((id, i) => all.indexOf(id) !== i), a: own('a'), b: own('b'), first: [...document.querySelectorAll('#a [id]')].map((e) => e.id), second: [...document.querySelectorAll('#b [id]')].map((e) => e.id) };
   });
   expect(ids.duplicates).toEqual([]);
   expect(ids.a.length).toBeGreaterThan(0);
   expect([...ids.a, ...ids.b]).not.toContain(false);
   expect(ids.second.length).toBeGreaterThan(0);
   expect(ids.second.every((id) => id.startsWith('vb2-'))).toBe(true);
+  expect(ids.first.every((id) => id.startsWith('vb1-')), 'no bare word a host could use too').toBe(true);
 
   // The board on show is the page's chip: the board, and the head it was added at.
   const pageChip = await call(page, (h) => h.pageChip('a'));

@@ -204,7 +204,7 @@ host; nclite's pane will be another.
   back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
   status and controller, so two boards on one page work apart. The ids inside cards and frames (popovers, step
   section, app menu, a frame's menus, the connectors' arrowheads) carry the mount's prefix
-  (`board/mount-ids.ts` `takeIdPrefix`: none for the first live mount, `vb2-`, `vb3-` after it;
+  (`board/mount-ids.ts` `takeIdPrefix`: `vb1-`, `vb2-`, ..., none only for the first mount on the board's own page;
   `NodeTemplateOptions.idPrefix`, `RegionFrameOptions.idPrefix`), so no id repeats on a page and an
   `aria-controls` never points into another board. `pageChip` is `#actions` `boardChip` for the board on
   show (null with none shown, or an archived one). Proven by `tests/pages/board-host.spec.ts` (a fake
@@ -279,7 +279,7 @@ host; nclite's pane will be another.
   no head means "catch up"), `chat`, `settings` (`get`, `on`: each flag by name, and `align`),
   `notify(text, tone)`, `confirm({ heading, body, confirm, list })` and, for a page that is the board's
   own, `page` (`BoardPage`: which board opens first, the board opened, starting again, the person's
-  cookie, and `parts`, the page's own controls in the header). Without `page` the first board opens and, with
+  cookie, `parts`, the page's own controls in the header, and `help`, the page's own words naming this repo's commands). Without `page` the first board opens and, with
   none left, the board starts again in place.
 - **The board's controls** (`board/chrome/`, tracker M8, M27): `mount` draws the whole board in
   `root`: the header, the strips, the reply panel, search, help and the New board, Rename and Archived dialogs

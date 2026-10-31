@@ -19,6 +19,13 @@ test('the folder: its parts are where the manifest says; no settings, no icon', 
   expect(m.chips.map((c: { kind: string }) => c.kind).sort()).toEqual(['answers', 'board', 'card', 'note', 'selection']);
 });
 
+test('the folder: nothing a host\'s person reads names a command of this repo', () => {
+  const m = manifest();
+  const words = readFileSync(path.join(FOLDER, m.words), 'utf8');
+  const view = readFileSync(path.join(FOLDER, m.view.module), 'utf8');
+  for (const text of [words, view]) for (const command of ['npm run', 'apps/board/bin']) expect(text).not.toContain(command);
+});
+
 test('createEngine and the engine hold no more than the spec says: no way round the seam in the folder', async ({ host }) => {
   const mod = await loadEngine();
   expect(Object.keys(mod)).toEqual(['createEngine']);
@@ -37,6 +44,8 @@ test('route: a person\'s read and write by the caller it is given; null for a pa
   expect(boards!.status).toBe(200);
   expect((boards!.body as { project: string }).project).toBe('The host\'s folder');
   expect(await host.engine.route({ method: 'GET', path: 'nothing/here' })).toBe(null);
+  expect(await host.engine.route({ method: 'GET', path: 'ledger?after=0' }, { caller: PERSON }), 'a path holding its query is not a path').toBe(null);
+  expect((await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams('after=0') }, { caller: PERSON }))!.status).toBe(200);
   const made = await host.engine.route({ method: 'PUT', path: 'boards/ideas', body: { title: 'Ideas' } }, { caller: PERSON });
   expect(made!.status).toBe(201);
   const nobody = await host.engine.route({ method: 'PUT', path: 'boards/more', body: { title: 'More' } });
@@ -46,6 +55,12 @@ test('route: a person\'s read and write by the caller it is given; null for a pa
   expect(byBot!.status, 'an answer is the person\'s: a bot through route is refused').toBe(403);
   const read = await host.engine.route({ method: 'PUT', path: 'boards/read', body: async () => ({ title: 'Read when asked' }) }, { caller: PERSON });
   expect(read!.status).toBe(201);
+});
+
+test('route: a body that can\'t be read is the request\'s fault, a 400 and no 500', async ({ host }) => {
+  const reply = await host.engine.route({ method: 'PUT', path: 'boards/ideas', body: async () => { throw new SyntaxError('Unexpected token'); } }, { caller: PERSON });
+  expect(reply!.status).toBe(400);
+  expect(reply!.headers!['Content-Type']).toContain('problem+json');
 });
 
 test('route and tools.call: signal ends a held read', async ({ host }) => {

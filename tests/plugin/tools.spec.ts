@@ -56,8 +56,32 @@ test('tools.call: an input that does not fit, an unknown tool and a refusal are 
   expect(wrote._meta!['vb/change']).toEqual({ board: 'plans', cards: [4], head: expect.any(Number) });
 });
 
+test('tools.call: a caller of an agent with no id is refused as no caller is, and nothing is written', async ({ host }) => {
+  await drawPlans(host);
+  const head = async () => ((await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams() }, { caller: { by: 'person' } }))!.body as { head: number }).head;
+  const before = await head();
+  for (const caller of [{ by: 'agent' }, { by: 'agent', agent: '' }, { by: 'agent', agent: 7 }, { by: 'agent', agent: null }]) {
+    const wrote = await host.engine.tools.call('write_board', { board: 'nobodys', items: [{ type: 'board', key: 'x', title: 'Nobody\'s' }] }, { caller: caller as never });
+    expect(wrote.isError, JSON.stringify(caller)).toBe(true);
+    const asked = await host.engine.tools.call('request_grant', { board: 'plans', reason: 'From nobody.' }, { caller: caller as never });
+    expect(asked.isError, JSON.stringify(caller)).toBe(true);
+    const put = await host.engine.route({ method: 'POST', path: 'boards/plans/grants', body: { reason: 'From nobody.' } }, { caller: caller as never });
+    expect(put === null || put.status >= 400).toBe(true);
+  }
+  expect(await head(), 'not a line').toBe(before);
+  const noCaller = await host.engine.tools.call('write_board', { board: 'nobodys', items: [{ type: 'board', title: 'Nobody\'s' }] });
+  const idless = await host.engine.tools.call('write_board', { board: 'nobodys', items: [{ type: 'board', title: 'Nobody\'s' }] }, { caller: { by: 'agent' } as never });
+  expect(idless.structuredContent ?? idless.content, 'the same refusal').toEqual(noCaller.structuredContent ?? noCaller.content);
+});
+
+test('tools.list: an input\'s words name no folder of the standalone app', ({ host }) => {
+  expect(JSON.stringify(host.engine.tools.list())).not.toContain('.visionboard');
+});
+
 test('the bot: registered once through route, its id holds on another engine over the same folder', async ({ host }) => {
   await drawPlans(host);
+  const byPerson = await host.engine.route({ method: 'POST', path: 'agents', body: { label: 'Through the person' } }, { caller: { by: 'person' } });
+  expect(byPerson!.status, 'not through the person\'s door').toBe(403);
   const again = (await loadEngine()).createEngine({ dir: host.dir, warn: () => {} });
   const out = await again.tools.call('write_board', { board: 'plans', items: [{ type: 'node', node: { region: 'now', kind: 'question', title: 'Still mine?' } }] }, { caller: host.bot });
   expect(out.isError, JSON.stringify(out)).toBe(false);

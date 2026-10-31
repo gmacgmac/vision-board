@@ -5,6 +5,11 @@
 // Keys: board.plugin-tools.<name>. Plain code: no imports.
 export interface DescriptionEdit { tool: string; from: string; to: string }
 
+/** The same for a tool's input, whose words the format's schemas hold: `from` must occur in it. */
+export const inputEdits: readonly DescriptionEdit[] = [
+  { tool: 'write_board', from: "The app's folder name in `.visionboard/apps/`", to: "The app's id" },
+];
+
 export const descriptionEdits: readonly DescriptionEdit[] = [
   { tool: 'list_open', from: 'With your secret, only the containers you hold,', to: 'Only the containers you hold,' },
   { tool: 'check_responses', from: 'With your secret, only the containers you hold.', to: 'Only the containers you hold.' },

@@ -7,6 +7,8 @@ export const showInTheChat = 'Show in the chat';
 // ---- controller.ts
 export const theAgentDrewV = (version: number | null): string => `The agent drew v${version}`;
 export const thoseCardsAreNoLonger = 'Those cards are no longer on the board.';
+export const thatNoteIsNoLonger = 'That note is no longer on the board.';
+export const theChatCouldNotSend = 'The chat could not send this.';
 
 // ---- io.ts
 export const theBoardServerIsNot = 'The board server is not reachable. Is it running?';

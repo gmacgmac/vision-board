@@ -5,7 +5,7 @@
 import { getContext, setContext } from 'svelte';
 import type { BoardActionId } from '#actions';
 import type { FlagName } from '#format';
-import type { BoardHost, BoardPageParts, BoardStore } from '../host.ts';
+import type { BoardHost, BoardPage, BoardPageParts, BoardStore } from '../host.ts';
 import { flagOf, memoryStore } from '../host.ts';
 import { initialStatus } from '../status.ts';
 
@@ -41,6 +41,8 @@ export interface Chrome {
   store: BoardStore;
   /** The page's own controls in the header; a host has none. */
   parts: BoardPageParts;
+  /** Help only the board's own page can give (`BoardPage.help`). */
+  help: BoardPage['help'];
   /** The board has its own page: `?` is heard outside its root too (keys.ts `pageWide`). */
   pageWide: boolean;
 }
@@ -49,7 +51,7 @@ export interface Chrome {
 export function createChrome(host: Pick<BoardHost, 'settings' | 'notify' | 'page'>, root: HTMLElement, ids: string, store: BoardStore = memoryStore(), state = chromeState()): Chrome {
   return {
     state, root, ids, flag: (f) => flagOf(host, f), id: (name) => `${ids}${name}`, notify: (text, tone) => host.notify(text, tone),
-    store, parts: host.page?.parts ?? {}, pageWide: !!host.page,
+    store, parts: host.page?.parts ?? {}, help: host.page?.help, pageWide: !!host.page,
   };
 }
 

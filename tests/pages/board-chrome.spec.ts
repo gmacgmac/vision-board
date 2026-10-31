@@ -19,14 +19,14 @@ test('a host gets the whole board inside its root, and nothing that is the page\
   const [box, bar, stage] = await Promise.all([root, root.locator('> header.vb-toolbar'), root.locator('> .vb-stage')].map((l) => l.boundingBox()));
   expect(bar).toMatchObject({ x: box!.x, y: box!.y, width: box!.width });
   expect(stage).toMatchObject({ x: box!.x, y: box!.y + bar!.height, width: box!.width, height: box!.height - bar!.height });
-  await expect(root.locator('#board')).toBeAttached();
-  await expect(root.locator('#send')).toBeVisible();
+  await expect(root.locator('#vb1-board')).toBeAttached();
+  await expect(root.locator('#vb1-send')).toBeVisible();
   // What is the page's is not there, and the bar has no hole for it.
-  await expect(page.locator('#chat-toggle, .vb-folder-chip, .vb-part, .vb-path-sep:first-child')).toHaveCount(0);
-  await root.locator('#toolbar-menu').click();
-  await expect(root.locator('#hide')).toBeVisible();
-  await expect(page.locator('#theme, #align, #open-folder')).toHaveCount(0);
-  await expect(root.locator('#toolbar-menu')).not.toHaveAttribute('title', /Theme|Open folder/);
+  await expect(page.locator('#vb1-chat-toggle, .vb-folder-chip, .vb-part, .vb-path-sep:first-child')).toHaveCount(0);
+  await root.locator('#vb1-toolbar-menu').click();
+  await expect(root.locator('#vb1-hide')).toBeVisible();
+  await expect(page.locator('#vb1-theme, #vb1-align, #vb1-open-folder')).toHaveCount(0);
+  await expect(root.locator('#vb1-toolbar-menu')).not.toHaveAttribute('title', /Theme|Open folder/);
   await page.keyboard.press('Escape');
 
   // `/` opens the search inside the root, from the board, and is the host's in its own field (M27).
@@ -53,22 +53,22 @@ test('a host gets the whole board inside its root, and nothing that is the page\
   await page.keyboard.press('Escape');
 
   // New board opens its dialog inside the root; Cancel closes it.
-  await root.locator('#board').selectOption(':new-board');
-  await expect(root.locator('dialog#board-dialog')).toBeVisible();
-  await root.locator('#board-cancel').click();
-  await expect(root.locator('dialog#board-dialog')).toBeHidden();
+  await root.locator('#vb1-board').selectOption(':new-board');
+  await expect(root.locator('dialog#vb1-board-dialog')).toBeVisible();
+  await root.locator('#vb1-board-cancel').click();
+  await expect(root.locator('dialog#vb1-board-dialog')).toBeHidden();
 
   // Reply: its panel is inside the root, and Copy's word goes through the host's `notify`.
-  await root.locator('#toolbar-menu').click();
-  await root.locator('#reply-toggle').click();
-  await expect(root.locator('#reply')).toBeVisible();
-  await root.locator('#copy').click();
+  await root.locator('#vb1-toolbar-menu').click();
+  await root.locator('#vb1-reply-toggle').click();
+  await expect(root.locator('#vb1-reply')).toBeVisible();
+  await root.locator('#vb1-copy').click();
   await expect.poll(async () => (await call(page, (h) => h.record('a'))).notices.length).toBe(1);
-  await root.locator('#reply-close').click();
+  await root.locator('#vb1-reply-close').click();
 
   // Archive board… asks the host's `confirm`; the host's answer is no, so nothing happens.
-  await root.locator('#toolbar-menu').click();
-  await root.locator('#archive-board').click();
+  await root.locator('#vb1-toolbar-menu').click();
+  await root.locator('#vb1-archive-board').click();
   await expect.poll(async () => (await call(page, (h) => h.record('a'))).confirms.length).toBe(1);
 
   await call(page, (h) => h.unmount('a'));

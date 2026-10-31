@@ -1,0 +1,6 @@
+/* The board's `color-scheme`, on its own root, for its own controls and scrollbars. A host's page keeps its own: the
+   build takes the tokens' off `:root` and `[data-theme]` (vite.plugin.config.ts `hostKeepsColorScheme`). The standalone
+   page, which is the board's own, has the tokens' as they are, and does not load this. */
+.vb-board { color-scheme: light dark; }
+:root[data-theme='light'] .vb-board { color-scheme: light; }
+:root[data-theme='dark'] .vb-board { color-scheme: dark; }

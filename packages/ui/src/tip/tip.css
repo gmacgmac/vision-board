@@ -4,7 +4,7 @@
    helper sets is on; the bridge above it keeps the pointer inside while it crosses the gap
    (WCAG 1.4.13: hoverable). z 4 draws it above a pattern's own buttons (the region's mode row is z 3). */
 .vb-tip {
-  display: none; position: absolute; z-index: var(--vb-z-open); width: max-content; max-width: min(var(--vb-card-w), 80vw);
+  display: none; position: absolute; z-index: var(--vb-z-open); width: max-content; max-width: min(var(--vb-card-w), 80vw, var(--vb-root-w) * 0.8);
   padding: var(--vb-space-1) var(--vb-space-3); border-radius: var(--vb-radius-md); cursor: default;
   border: 1px solid var(--vb-line-contrast); background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
   font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font); line-height: 1.4; color: var(--vb-ink-strong);

@@ -13,11 +13,12 @@
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
 import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
-import { answeredIds, boardData, boardSearchDocs, goTarget, placedView, retiredCounts } from '#actions';
+import { answeredIds, boardData, boardSearchDocs, goTarget, numberOf, placedView, retiredCounts } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, flagOf, markdownOf } from './host.ts';
 import { bindChat, cardIds, chatSource } from './chat-side.ts';
+import { finishAll } from './teardown.ts';
 import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
 import { createAttention, createFlagFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
@@ -127,7 +128,11 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     selection.keep(view().nodes.map((n) => n.id));
     proposals.refresh(); updates.refresh(); parking.refresh();
     status.set({ title: view().title, summary: view().summary ?? '', ...(!versionView && { version: view().version }) });
+    const held = stage.contains(document.activeElement);
     drawing.draw(full);
+    // A card that held the focus went (hidden, removed): it stays in the stage, so the next key still reaches the board.
+    const at = document.activeElement;
+    if (held && (!at || at === document.body || !at.checkVisibility())) stage.focus({ preventScroll: true });
     regionNotes.apply(drawing.frames);
     renderCounts();
     notes.place();
@@ -262,7 +267,22 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   return {
     boot: boards.boot, switchTo: (id) => switchTo(id), showVersion, command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer(finding, id),
-    toggleHide, id: () => S.id, ledger: () => live.state, showNote: (id, seq) => notes.show(id, seq),
+    revealCard(n) {
+      const why = go.why(n);
+      if (why) toast(why); else go.to(n);
+    },
+    revealNote(seq) {
+      const s = live.state;
+      const ask = s?.asks.get(seq);
+      if (!s || !ask) return toast(boardWords.thatNoteIsNoLonger);
+      if (ask.region !== undefined) return; // a container's note: its board is enough
+      const n = numberOf(s, ask.nodes?.[0] ?? ask.id);
+      const why = go.why(n);
+      if (why) return toast(why);
+      go.to(n);
+      notes.show(String(n), seq);
+    },
+    toggleHide, id: () => S.id, ledger: () => live.state,
     zoomToCards(cards) {
       if (!S.data) return;
       const ids = cardIds(S.data, cards);
@@ -276,6 +296,6 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),
-    destroy: () => { cancelAnimationFrame(S.frame); [unchat, boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle].forEach((f) => f()); },
+    destroy: () => { cancelAnimationFrame(S.frame); finishAll([unchat, boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle]); },
   };
 }

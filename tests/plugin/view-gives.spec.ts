@@ -97,7 +97,7 @@ test('unmount: every listener goes, the chips and subscriptions go, nothing stay
   await expect(page.locator('#host-chips li')).toHaveCount(1);
   expect(await drive(page, 'subscribers')).toBeGreaterThan(0);
   // A menu open: it goes too.
-  await page.locator('.host-root #toolbar-menu').click();
+  await page.locator('.host-root #vb1-toolbar-menu').click();
   await drive(page, 'unmount');
   await expect(page.locator('#host-chips li'), 'its chips taken back').toHaveCount(0);
   expect(await drive(page, 'subscribers')).toBe(0);
@@ -105,6 +105,67 @@ test('unmount: every listener goes, the chips and subscriptions go, nothing stay
   expect(after.filter((l) => !baseline.includes(l)), 'nothing of the board\'s is left').toEqual([]);
   expect(await drive(page, 'rootState')).toEqual({ children: 0, classes: 'host-root', attrs: expect.not.arrayContaining(['tabindex', 'aria-label']) });
   expect(await page.evaluate(() => document.querySelectorAll('[class*="vb-"], vb-image-view, dialog[open]').length)).toBe(0);
+});
+
+test('unmount finishes whatever one step does: a host\'s `on` that returns nothing', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host, { plainOn: true });
+  await drawn(page);
+  await page.locator('.host-root vb-node').first().click();
+  await expect(page.locator('#host-chips li')).toHaveCount(1);
+  await drive(page, 'unmount');
+  await expect(page.locator('#host-chips li'), 'its chips taken back').toHaveCount(0);
+  expect(await drive(page, 'rootState')).toEqual({ children: 0, classes: 'host-root', attrs: expect.not.arrayContaining(['tabindex']) });
+  expect(await page.evaluate(() => document.querySelectorAll('[class*="vb-"]').length)).toBe(0);
+});
+
+test('unmount while the first read is on its way leaves nothing listening', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host, { hold: true });
+  await page.evaluate(() => { const h = window.fakeHost; h.mountHeld!(); h.unmount!(); });
+  await expect.poll(async () => (await drive(page, 'record')).calls.length).toBeGreaterThan(0);
+  await page.waitForTimeout(300);
+  expect(await drive(page, 'subscribers')).toBe(0);
+  expect(await drive(page, 'rootState')).toEqual({ children: 0, classes: 'host-root', attrs: expect.not.arrayContaining(['tabindex']) });
+});
+
+test.describe('an unsubscribe that throws', () => {
+  test.use({ expected: { problems: [/This host's unsubscribe fails/] } });
+  test('unmount finishes whatever one step does: a host\'s unsubscribe that throws is reported, and the rest still runs', async ({ page, host }) => {
+    await drawPlans(host);
+    await openHost(page, host, { offThrows: true });
+    await drawn(page);
+    await drive(page, 'unmount');
+    expect(await drive(page, 'rootState')).toEqual({ children: 0, classes: 'host-root', attrs: expect.not.arrayContaining(['tabindex']) });
+    expect(await drive(page, 'subscribers'), 'only the one that threw is left: the steps after it ran').toBe(1);
+  });
+});
+
+test('reveal of what is not on the board says so through notify, and takes no focus', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host);
+  await drawn(page);
+  await page.locator('#host-input').focus();
+  const said = async () => (await drive(page, 'record')).notices.map((n: { text: string }) => n.text);
+  await drive(page, 'reveal', { n: 999 });
+  await expect.poll(said).toHaveLength(1);
+  expect((await said())[0]).toContain('999');
+  await drive(page, 'reveal', { seq: 99999 });
+  await expect.poll(said).toHaveLength(2);
+  await drive(page, 'reveal', { cards: [996] });
+  await expect.poll(said).toHaveLength(3);
+  await expect(page.locator('#host-input'), 'the host keeps its focus').toBeFocused();
+  await expect(page.locator('.host-root .vb-go'), 'no field opened').toHaveCount(0);
+  await drive(page, 'reveal', { n: 2 });
+  await expect(page.locator('.host-root vb-node[data-id="2"]'), 'a card that is there still goes').toBeFocused();
+  // A card hidden with Hide answered, or one that went: said, and not gone to.
+  await page.locator('.host-root vb-node[data-id="1"] button[data-act="ack"]').click();
+  await page.locator('.host-root .vb-stage').focus();
+  await page.keyboard.press('h');
+  await page.locator('#host-input').focus();
+  await drive(page, 'reveal', { n: 1 });
+  await expect.poll(async () => (await said()).at(-1)).toContain('hidden');
+  await expect(page.locator('#host-input')).toBeFocused();
 });
 
 /** A long title in a narrow container, and a link with words that have no room on their line. */

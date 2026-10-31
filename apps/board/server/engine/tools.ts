@@ -19,7 +19,7 @@ import { problem } from '../problem.ts';
 import { toolRows } from '../format-files.ts';
 import { foreignSchemas } from '../schema.ts';
 import * as httpWords from '../words/http.ts';
-import { descriptionEdits } from '../words/plugin-tools.ts';
+import { descriptionEdits, inputEdits } from '../words/plugin-tools.ts';
 
 /** One row of the tool table, as the engine reads it. */
 interface ToolRow {
@@ -61,6 +61,16 @@ function forPlugin(row: ToolRow): string {
   }, row.description);
 }
 
+/** A tool's input as a plugin bot reads it: its words edited the same way; what it accepts is the table's. */
+function inputForPlugin(row: ToolRow): Record<string, unknown> {
+  const edits = inputEdits.filter((e) => e.tool === row.name);
+  if (!edits.length) return row.input;
+  return JSON.parse(edits.reduce((text, { from, to }) => {
+    if (!text.includes(from)) throw new Error(`${row.name}'s input must hold ${JSON.stringify(from)}`);
+    return text.replaceAll(from, () => to);
+  }, JSON.stringify(row.input))) as Record<string, unknown>;
+}
+
 /** A board write's result, with what it changed. */
 function withChange(name: string, input: Record<string, unknown>, result: ToolResult): ToolResult {
   if (name !== BOARD_WRITE || result.isError) return result;
@@ -71,7 +81,7 @@ function withChange(name: string, input: Record<string, unknown>, result: ToolRe
 export function makeTools(serves: (id: string) => id is OperationId, run: RunOp): EngineTools {
   const check = foreignSchemas();
   const rows = new Map(ROWS.flatMap((row) => (row.hosts.includes('plugin') && serves(row.name) ? [[row.name as string, { row, id: row.name, problems: check(row.input) }] as const] : [])));
-  const listed: readonly ListedTool[] = [...rows.values()].map(({ row }) => ({ name: row.name, title: row.title, description: forPlugin(row), inputSchema: row.input }));
+  const listed: readonly ListedTool[] = [...rows.values()].map(({ row }) => ({ name: row.name, title: row.title, description: forPlugin(row), inputSchema: inputForPlugin(row) }));
   return {
     list: () => listed,
     async call(name, input, { caller, signal } = {}) {
