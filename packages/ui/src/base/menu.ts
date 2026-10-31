@@ -46,6 +46,8 @@ export interface OpenMenuOptions {
   within?: (target: Node) => boolean;
   /** A key the menu handles before its own keys (e.g. a row's shortcut); true when handled. */
   key?: (e: KeyboardEvent) => boolean;
+  /** What its keys move between (default: its menu items), for a surface that also holds other controls. */
+  items?: () => HTMLElement[];
   /** Hide the menu: it closed. */
   onClose(): void;
 }
@@ -60,9 +62,10 @@ export function openMenu(o: OpenMenuOptions): OpenMenu {
   const back = o.opener ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   let open = true;
   const within = o.within ?? ((t: Node) => o.menu.contains(t) || !!o.opener?.contains(t));
+  const items = o.items ?? (() => menuItems(o.menu));
   const onKey = (e: KeyboardEvent) => {
     if (o.key?.(e)) return;
-    menuKeydown(e, menuItems(o.menu), close);
+    menuKeydown(e, items(), close);
   };
   const stop = dismissable({ within, dismiss: (why) => close(focusBackOn(why)) });
   function close(focusBack = true): void {
@@ -76,6 +79,6 @@ export function openMenu(o: OpenMenuOptions): OpenMenu {
   }
   o.menu.addEventListener('keydown', onKey);
   o.opener?.setAttribute('aria-expanded', 'true');
-  firstItem(menuItems(o.menu))?.focus({ preventScroll: true });
+  firstItem(items())?.focus({ preventScroll: true });
   return { close };
 }

@@ -5,17 +5,21 @@
      "· updated" (board/find/finder.ts `openRow`), and choosing one goes to it as Go to card does
      (board/find/go-to-card.ts `to`). With no cards (or `cards` empty: the flag off) it is the plain chip.
      The count stays on a narrow toolbar, the word for screen readers (board.css). The toolbar and
-     the gallery both draw this. -->
+     the gallery both draw this. With `row` (adaptiveHeader flag, the narrowest bar) it is a row of the "⋯"
+     menu with `row` as its face, a plain line while it has no cards to list. -->
 <script lang="ts">
   import * as shellGoToCardWords from './words/shell-go-to-card.ts';
   import MenuSelect from './MenuSelect.svelte';
+  import type { Snippet } from 'svelte';
   import type { RowCard } from '../board/find/index.ts';
   import { openRow } from '../board/find/index.ts';
 
   let {
     count, cards, onpick, id = 'open-cards', look, word = 'open', tone = 'open', label = shellGoToCardWords.goToAnOpenCard,
-    title = shellGoToCardWords.openItemsChooseOneTo, plainTitle = shellGoToCardWords.openItems,
+    title = shellGoToCardWords.openItemsChooseOneTo, plainTitle = shellGoToCardWords.openItems, row,
   }: {
+    /** Draw it as a row of the "⋯" menu, with this face. */
+    row?: Snippet;
     count: number;
     /** The cards to list, by board number; none draws the plain chip. */
     cards: readonly RowCard[];
@@ -42,7 +46,9 @@
 
 {#if rows.length}
   <MenuSelect {id} {label} name="{count} {word}" {rows} onpick={(v) => onpick(Number(v))}
-    {face} {look} {tone} {title} />
+    face={row ?? face} kind={row ? 'vb-menu-item' : 'vb-chip'} {look} {tone} {title} />
+{:else if row}
+  <p class="vb-menu-line" title={plainTitle}>{@render row()}</p>
 {:else}
   <span class="vb-chip" data-tone={tone} title={plainTitle}>{@render face()}</span>
 {/if}

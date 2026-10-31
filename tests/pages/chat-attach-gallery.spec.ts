@@ -112,7 +112,7 @@ test('the section is there only with chatPanel and chatAttachments on; the chat 
   }
   await page.goto('/gallery.html');
   await expect(page.locator('section[data-feature="chatPanel"] .chat-cmp-attach')).toHaveCount(0);
-  await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'chatAttachments');
+  await expect(page.locator('main > section[data-feature="chatAttachments"]')).toHaveCount(1);
   await page.goto('/gallery.html?flags=-readAttachment');
   await expect(page.locator('.g-attach-sample[data-state="sent"]')).toBeVisible();
   await expect(page.locator('.g-attach-sample[data-state="reading"]')).toHaveCount(0);

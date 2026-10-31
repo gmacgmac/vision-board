@@ -116,6 +116,7 @@ test('in a past version it lists that version\'s open cards, goes to one and sen
   await expect.poll(() => texts(page)).toEqual(['2 open', '2 · Card 2', '3 · Card 3']);
   const sent: string[] = [];
   page.on('request', (r) => { if (r.method() === 'POST') sent.push(r.url()); });
+  await page.locator('#toolbar-menu').click(); // at this width the version is a row of "⋯" (adaptiveHeader flag)
   await page.locator('#version').selectOption({ index: 1 });
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect.poll(() => texts(page)).toEqual(['2 open', '1 · Card 1', '2 · Card 2']);

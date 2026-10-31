@@ -5,7 +5,8 @@
 // Theme, Hide answered and Reply sit in a "⋯" menu, and Agents, Send to agent and Chat shrink to
 // icons on a narrow window; every control is named, has a tooltip and passes axe. Off, the toolbar
 // is as it was. It runs on the worker's empty project (EMPTY_BASE), fresh for this file
-// (servers.ts): it adds one board, opened by its id. Then the gallery's toolbar section.
+// (servers.ts): it adds one board, opened by its id. Then the gallery's toolbar section. The widths' test is the
+// bar with -adaptiveHeader; on, header-tiers.spec.ts holds it down to 400px.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -65,7 +66,7 @@ async function controls(page: Page) {
 for (const width of WIDTHS) {
   test(`at ${width}px a long title leaves every toolbar control whole and inside the window`, async ({ page, request }) => {
     await page.setViewportSize({ width, height: 800 });
-    await open(page, request);
+    await open(page, request, '-adaptiveHeader');
     await expect(page.locator('#boards-updated')).toBeVisible();
     const picker = (await page.locator('#board').boundingBox())!;
     if (width >= PICKER_WIDE) expect(picker.width, 'the picker').toBeGreaterThanOrEqual(220);

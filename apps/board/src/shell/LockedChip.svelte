@@ -1,6 +1,7 @@
 <!-- "Locked" beside the board's name (N40 ruling 4, board/boards/lock-flow.ts): the open board is read-only
      for everyone until the person unlocks it from the "⋯" menu. A chip, not a button (unlocking is the
-     menu's); a padlock and the word, never shortened on a narrow toolbar; its title gives the reason
+     menu's); a padlock and the word (with the adaptiveHeader flag, on the narrowest bars the padlock alone, the word for
+     screen readers: styles/header.css); its title gives the reason
      the board's controls are paused. Beside it, out of the toolbar's flow, a polite live region that is
      always there, so a lock from another tab is announced. The toolbar and the gallery both draw this. -->
 <script lang="ts">
@@ -12,6 +13,6 @@
 </script>
 
 {#if locked}
-  <span {id} class="vb-chip vb-chip-locked" title={toolbarWords.theMenu(LOCKED_PERSON)}><ButtonIcon name="lock" />{toolbarWords.locked}</span>
+  <span {id} class="vb-chip vb-chip-locked" title={toolbarWords.theMenu(LOCKED_PERSON)}><ButtonIcon name="lock" /><span class="vb-chip-word">{toolbarWords.locked}</span></span>
 {/if}
 <span class="vb-visually-hidden" role="status">{locked ? toolbarWords.thisBoardIsLocked(LOCKED_PERSON) : ''}</span>

@@ -32,13 +32,13 @@ async function open(page: Page, flags = '') {
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
 }
 /** The long-named folder, which has no board yet: make one as the person does, then open it. */
-async function openLong(page: Page) {
+async function openLong(page: Page, flags = '') {
   await srv.open(long, true);
   await page.goto(`${srv.base}/?vbwork`);
   await expect(chip(page)).toBeVisible();
   const made = await page.request.put(`${srv.base}/api/boards/long-board`, { data: { title: 'A board in a folder with a long name', summary: 'For the chip.' } });
   expect([200, 201]).toContain(made.status());
-  await open(page);
+  await open(page, flags);
 }
 const chip = (page: Page) => page.locator('#folder-chip');
 const current = (page: Page) => page.locator('.vb-menu-current');
@@ -74,10 +74,11 @@ test('at 768px the chip gives way to its icon alone, the whole path still in its
   expect((await chip(page).boundingBox())!.width).toBeLessThanOrEqual(40);
 });
 
-for (const width of [1500, 1100, 1024]) {
-  test(`at ${width}px a long folder name is cut with an ellipsis and the toolbar stays whole`, async ({ page }) => {
+// The bar's full form down to its last width, then the bar as it was, which has no half form.
+for (const [width, flags] of [[1500, ''], [1300, ''], [1100, '-adaptiveHeader'], [1024, '-adaptiveHeader']] as const) {
+  test(`at ${width}px${flags && ` (${flags})`} a long folder name is cut with an ellipsis and the toolbar stays whole`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
-    await openLong(page);
+    await openLong(page, flags);
     await expect(chip(page)).toHaveAttribute('title', `~/projects/${LONG_NAME}`);
     const shown = await page.evaluate(() => {
       const bar = document.querySelector('.vb-toolbar') as HTMLElement;

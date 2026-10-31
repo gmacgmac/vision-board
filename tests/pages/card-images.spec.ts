@@ -281,7 +281,7 @@ for (const theme of THEMES) {
     await zoomedBox(page);
     await expectNoAxeViolations(page);
     // Behind the backdrop, the toolbar's version (and what sits after it) depends on the boards drawn before.
-    await page.locator('#version, #containers, #counts').evaluateAll((els) => { for (const e of els) (e as HTMLElement).style.visibility = 'hidden'; });
+    await page.locator('#version, #containers, #counts').evaluateAll((els) => { for (const e of els) ((e.closest('.vb-menu-face') ?? e) as HTMLElement).style.visibility = 'hidden'; });
     await expect(page).toHaveScreenshot(`zoomed-${theme}.png`);
   });
 }

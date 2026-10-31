@@ -10,3 +10,5 @@ export const create = 'Create';
 
 // ---- FolderPicker.svelte
 export const copy = 'Copy';
+/** A count's word: "3 new", on the toolbar's chip and the chat's replies. */
+export const newWord = 'new';

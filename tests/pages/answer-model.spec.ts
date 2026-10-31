@@ -206,7 +206,7 @@ test('on a narrow toolbar (1470px) every count chip still looks different from e
   const d = await draw(request);
   await open(page, d);
   await act(page, d, { action: 'comment', n: d.decision, ver: 1, text: 'Who pays for it?' });
-  await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-narrow');
+  await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', 'full');
   await expect(page.locator('#boards-updated')).toBeVisible();
   await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toBeVisible();
   for (const theme of THEMES) {

@@ -14,3 +14,4 @@ import './folder-dialog.css';
 import './archived-dialog.css';
 import './lock.css';
 import './current-folder.css';
+import './header.css';

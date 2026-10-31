@@ -5,9 +5,11 @@
      Open folder… (a folder); in the folder picker, a cloud storage place (a cloud); with the cardFlag flag,
      the "N flagged" chip (a flag, its cloth filled); with the alignSetting flag, Centre cards (three cards
      of different heights centred on a line); with the archiveBoard flag, Archive board… (a box with its lid); with
-     the lockBoard flag, Lock board and the toolbar's Locked (a padlock, shut) and Unlock board (a padlock, open). -->
+     the lockBoard flag, Lock board and the toolbar's Locked (a padlock, shut) and Unlock board (a padlock, open); with
+     the adaptiveHeader flag, a dropdown's mark (a chevron) and the "⋯" menu's Version (a clock), Containers (two frames),
+     Open cards (a ring), New cards (a four-point star) and Zoom (a magnifier). -->
 <script lang="ts">
-  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' | 'align' | 'archive' | 'lock' | 'unlock' } = $props();
+  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' | 'align' | 'archive' | 'lock' | 'unlock' | 'chevron' | 'version' | 'containers' | 'open' | 'new' | 'zoom' } = $props();
 </script>
 <svg class="vb-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -40,6 +42,18 @@
     <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3 M12 15v2" />
   {:else if name === 'unlock'}
     <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 7.75-1.4 M12 15v2" />
+  {:else if name === 'chevron'}
+    <path d="M6 9l6 6 6-6" stroke-width="2.4" />
+  {:else if name === 'version'}
+    <circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" />
+  {:else if name === 'containers'}
+    <rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="14" width="18" height="6" rx="2" />
+  {:else if name === 'open'}
+    <circle cx="12" cy="12" r="7.5" />
+  {:else if name === 'new'}
+    <path d="M12 3c.8 5 3.5 8 9 9-5.5 1-8.2 4-9 9-.8-5-3.5-8-9-9 5.5-1 8.2-4 9-9z" />
+  {:else if name === 'zoom'}
+    <circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5L21 21" />
   {:else if name === 'cloud'}
     <path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a4.25 4.25 0 0 1-.5 8.5z" />
   {:else}

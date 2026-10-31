@@ -58,8 +58,28 @@ export const zoom = (percent: number): string => `Zoom ${percent}%`;
 
 // ---- ToolbarMenu.svelte
 /** The More button's tooltip: what its menu holds, now. */
-export const moreTitle = (o: { centre: boolean; lock: boolean; locked: boolean; archive: boolean; folder: boolean }): string =>
-  `More: Theme, Hide answered${o.centre ? ', Centre cards' : ''}, Reply${o.lock ? `, ${o.locked ? 'Unlock' : 'Lock'} board` : ''}${o.archive ? ', Archive board' : ''}${o.folder ? ', Open folder' : ''}`;
+export const moreTitle = (o: { centre: boolean; lock: boolean; locked: boolean; archive: boolean; folder: boolean; also?: readonly string[] }): string =>
+  `More: ${moreAlso(o.also ?? [])}Theme, Hide answered${o.centre ? ', Centre cards' : ''}, Reply${o.lock ? `, ${o.locked ? 'Unlock' : 'Lock'} board` : ''}${o.archive ? ', Archive board' : ''}${o.folder ? ', Open folder' : ''}`;
+
+// ---- The adaptive header (adaptiveHeader flag: Toolbar.svelte, HeaderFields.svelte, ZoomMenu.svelte)
+export const whereYouAre = 'Where you are';
+export const containers = 'Containers';
+export const folder = 'Folder';
+export const openCards = 'Open cards';
+export const newCards = 'New cards';
+export const flagged = 'Flagged';
+export const openWord = 'open';
+export const freshCount = (fresh: number): string => `${fresh} new`;
+export const goToNewCard = 'Go to a new or updated card';
+export const boardsUpdatedRow = (updated: number): string => `Board${updated === 1 ? '' : 's'} updated`;
+/** The group of controls above the "⋯" menu's rows. */
+export const moreControls = 'Moved from the bar';
+/** The zoom menu's button: the level is its face, so its name says it too. */
+export const zoomMenu = (percent: number): string => `Zoom ${percent}%, more zoom controls`;
+/** The compact count's tooltip at the narrowest width. */
+export const compactCount = (open: number, fresh: number): string => `${open} open${fresh ? `, ${fresh} new` : ''}: the lists are in the "⋯" menu`;
+/** What "⋯" also holds at a width, for its tooltip. */
+export const moreAlso = (also: readonly string[]): string => (also.length ? `${also.join(', ')}, ` : '');
 
 // ---- LockedChip.svelte
-export const thisBoardIsLocked = (LOCKED_PERSON: string | number): string => `This board is locked. ${LOCKED_PERSON}.`;
+export const thisBoardIsLocked =(LOCKED_PERSON: string | number): string => `This board is locked. ${LOCKED_PERSON}.`;

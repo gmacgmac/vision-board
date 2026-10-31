@@ -9,6 +9,7 @@
      gallery passes `work`, `news` and `placement` 'gallery' (no ids). -->
 <script lang="ts">
   import * as chatWords from './words/chat.ts';
+  import * as shellCommonWords from './words/shell-common.ts';
   import * as toolbarWords from './words/toolbar.ts';
   import { shell } from './shell.svelte.ts';
   import type { AgentWork } from './chat-news.ts';
@@ -39,7 +40,7 @@
     <span class="vb-chat-mark"><span class="vb-chat-dot" aria-hidden="true"></span><span class="vb-chat-mark-word">{MARK[mark]}</span></span>
   {/if}
   {#if count > 0}
-    <span class="vb-chat-news">{count}<span class="vb-chat-news-word">{` ${chatWords.newRepliesWord}`}</span></span>
+    <span class="vb-chat-news">{count}<span class="vb-chat-news-word">{` ${shellCommonWords.newWord}`}</span></span>
   {/if}
 </button>
 {#if board}

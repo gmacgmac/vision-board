@@ -750,7 +750,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
 3. **The key bubble** (`keyBubble` flag). The round "?" at the bottom left lists every key. It is
    generated from `COMMANDS` and the registry `ACTIONS`, never written twice (see 3_FE_02 item 6).
    Code: `apps/board/src/board/input/key-help.ts`, `shell/KeyHelp.svelte`, `styles/key-help.css`.
-4. **The toolbar keeps its room** (verification fix). The board picker never goes under 220px from a
+4. **The toolbar keeps its room** (verification fix; with the `adaptiveHeader` flag on, § the header by its own
+   width below takes over, and this and § 5's widths describe the flag off). The board picker never goes under 220px from a
    1024px window up (its title truncates inside). At 1500px and below the toolbar carries
    `data-narrow` (`shell/Toolbar.svelte`, a `MediaQuery`): the end group's text buttons show an icon
    only (`shell/ButtonIcon.svelte`) and the counts, with the "boards updated" chip, show their
@@ -772,6 +773,27 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    toolbar is as it was. `tests/pages/toolbar.spec.ts` checks 1500, 1440, 1280, 1200, 1100, 1024,
    900 and 768px (with that chip showing): nothing clipped, overlapping or scrolling, every control
    named with a tooltip, the open menu inside the window, axe light and dark.
+
+   **The header by its own width** (`adaptiveHeader` flag, on by default, needs `versionView` and `toolbarMenu`;
+   maintainer's approved mock-up, 2026-10-31). The bar takes one of three forms by its own width, not the window's
+   (`shell/Toolbar.svelte`, a `ResizeObserver`; the window's width only as the first guess, so a page opens in its form),
+   so it holds in a host's pane. `shell/header-tier.ts` is the one table: `headerTier` (full from `FULL_MIN` 1300px, half
+   from `HALF_MIN` 620px, else a third), `inBar`, `inMenu`. One copy of each control, in the bar or as a row of "⋯".
+   Full: the app icon, the path "folder / board ▾ / version ▾" (`<nav>`), Containers, "N open" and "N new", − 47% + and Fit,
+   Agents, Send to agent, Chat, "⋯". Half: the folder's icon, the board's name cut with "…", the counts, the zoom as a small
+   menu (`shell/ZoomMenu.svelte`: − and + leave it open, Fit closes it), Agents, Send and Chat as icons; Version and
+   Containers are rows of "⋯". A third: the board's name, Locked as its padlock, one compact count (a dot while there are
+   new cards), Send, Chat, "⋯"; the folder, version, containers, the open and new lists, Flagged, the zoom row, Agents and
+   the boards-updated line are in "⋯" (Replied goes). The board's name in the path is the title: the `h1` stays,
+   visually hidden, as the page's heading, and the closed picker and version show one fact each
+   (`shell/BoardPicker.svelte`, `shell/VersionPicker.svelte`: native selects unseen over a face, `.vb-menu-face`).
+   What moved is `shell/HeaderFields.svelte`: the same controls as rows (`MenuSelect`, `OpenChip`, `FolderChip`,
+   `FlaggedChip`, `BoardAgents`), beside the `role="menu"` and not in it, since a select is not a menu item; the menu's
+   keys walk both (`#ui` `openMenu` `items`), and Enter on a select opens its list. The chips that come and go are bare
+   up to 1500px; under 900px a half bar holding any of them bares "N open", "N new" and Locked too
+   (`styles/header.css`). Tests: `apps/board/tests/header-tier.test.ts`; `tests/pages/header-tiers.spec.ts` (nothing cut
+   off down to 400px, quiet and crowded; every action reachable at a third; the bar's own width; no other form first on
+   load; axe and APCA, light and dark; the gallery's section, `gallery/header-section.ts`). Off, the toolbar is as § 4 and § 5 say.
 6. **The folder picker** (`openFolder` flag, on by default; task
    `cortex-tasks/board/2026-10-09_board-app_open-folder.md`, api.md 109-113). The "⋯" menu ends with
    Open folder… (its tooltip names the open folder, as the page title does). It opens

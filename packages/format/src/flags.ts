@@ -268,6 +268,11 @@ export const FLAGS = {
     default: false,
     description: 'The toolbar shows the Answered and Later counts. Off, they are hidden and still counted.',
   },
+  adaptiveHeader: {
+    // On by default (maintainer, 2026-10-31, approved mock-up); ?flags=-adaptiveHeader turns it off.
+    default: true,
+    description: 'The header takes one of three forms by its own width, not the window\'s (shell/header-tier.ts; needs versionView and toolbarMenu): full, one path "folder / board / version" and everything with its words; half, Version and Containers in "⋯" and the zoom as a small menu; a third, the board\'s name, a compact count, Send, Chat and "⋯", which holds the rest. Off, the toolbar is as it was.',
+  },
   readAttachment: {
     // On by default (maintainer, 2026-10-30, points 361-368, D-071; read-attachment). Read on the page and the server (VB_FLAGS).
     default: true,

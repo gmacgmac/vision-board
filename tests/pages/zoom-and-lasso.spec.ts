@@ -206,7 +206,7 @@ test('the header zoom buttons: zoom out, Fit and zoom in, as one group', async (
   const fit = await view(page);
   const zoom = page.getByRole('group', { name: 'Zoom' });
   const names = await zoom.getByRole('button').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label') ?? e.textContent?.trim()));
-  expect(names).toEqual(['Zoom out', 'Fit', 'Zoom in']);
+  expect(names).toEqual(['Zoom out', 'Zoom in', 'Fit']);
   await zoom.getByRole('button', { name: 'Zoom in' }).click();
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(fit.k);
   await zoom.getByRole('button', { name: 'Fit' }).click();

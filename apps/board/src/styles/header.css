@@ -1,0 +1,89 @@
+/* The header by its own width (adaptiveHeader flag; shell/header-tier.ts holds what sits where): `data-tier` on the
+   toolbar, a size container so its parts follow the bar and not the window, in a host's pane too. Tokens only. */
+.vb-toolbar[data-tier] { container: vb-bar / inline-size; gap: var(--vb-space-2); padding-inline: var(--vb-space-3); }
+[data-tier] :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-2); align-items: center; flex-shrink: 0; }
+.vb-toolbar[data-tier]:not([data-tier='full']) { gap: var(--vb-space-1); padding-inline: var(--vb-space-2); }
+[data-tier]:not([data-tier='full']) :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
+
+/* The path: folder / board ▾ / version ▾. The folder gives up room first, then the board's name, cut with "…";
+   a part is plain words on the bar, darkening under the pointer; the select lies unseen over it (.vb-menu-face). */
+.vb-path { display: flex; align-items: center; gap: 2px; min-width: 0; flex: 0 1 auto; }
+[data-tier]:not([data-tier='full']) .vb-path { flex: 1 1 0; }
+.vb-path-sep { flex: none; color: var(--vb-ink-subtle); font-size: var(--vb-ui-text-sm); }
+.vb-bar-rule { flex: none; width: 1px; height: 20px; margin-inline: var(--vb-space-1); background: var(--vb-line-strong); }
+.vb-path-part {
+  display: inline-flex; align-items: center; gap: var(--vb-space-1); flex: none; height: var(--vb-control-h); padding: 0 var(--vb-space-2);
+  border-radius: var(--vb-radius-sm); color: var(--vb-ink); font-size: var(--vb-ui-text-sm); white-space: nowrap;
+}
+.vb-path-part:hover, .vb-path-part[data-look='hover'] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+.vb-path-part[data-look='pressed'] { background: var(--vb-surface-sunken); }
+.vb-path-part .vb-btn-icon, .vb-zoom-btn .vb-btn-icon { display: block; width: 12px; height: 12px; }
+.vb-path-board { flex: 0 1 auto; min-width: 100px; color: var(--vb-ink-strong); font-weight: var(--vb-weight-bold); }
+[data-tier]:not([data-tier='full']) .vb-path-board { flex: 1 1 0; min-width: 80px; }
+.vb-path-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* The folder in the path: plain, on the bar's own colour; half and a third, its icon alone (the name is in its tooltip and name).
+   A long board name is cut before the folder's is, while there is room (1400px up); under that they share the cut. */
+.vb-path .vb-folder-chip { flex: 0 1 auto; height: var(--vb-control-h); border-radius: var(--vb-radius-sm); background: var(--vb-surface-region); color: var(--vb-ink); font-size: var(--vb-ui-text-sm); }
+.vb-path .vb-folder-chip:hover, .vb-path .vb-folder-chip[data-look='hover'] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+.vb-path .vb-folder-chip[data-look='pressed'] { background: var(--vb-surface-sunken); }
+@container vb-bar (min-width: 1400px) { .vb-path .vb-folder-chip { flex-shrink: 0; } }
+[data-tier='half'] .vb-path .vb-folder-chip { flex: none; justify-content: center; width: var(--vb-control-h); min-width: 0; padding: 0; }
+[data-tier='half'] .vb-folder-chip-name { display: none; }
+
+/* The counts: "14 open" and "3 new" keep their words at full and half; the chips that come and go are bare
+   up to 1500px; a crowded half gives up those words and Locked's word too, and a third draws one compact count. */
+@container vb-bar (max-width: 1500px) {
+  .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face) .vb-chip-word, .vb-toolbar-end :is(.vb-chat-mark-word, .vb-chat-news-word) {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .vb-counts .vb-chip[data-tone='agent'] .vb-btn-icon { display: block; width: 14px; height: 14px; }
+}
+@container vb-bar (max-width: 1400px) {
+  .vb-toolbar[data-tier='full']:has(.vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) .vb-chip-locked .vb-chip-word {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+@container vb-bar (max-width: 900px) {
+  .vb-toolbar[data-tier='half']:has(.vb-chip-locked, .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) :is(.vb-counts :is([data-tone='open'], .vb-menu-face), .vb-chip-locked) .vb-chip-word {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
+[data-tier='third'] .vb-chip-locked .vb-chip-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.vb-count { gap: var(--vb-space-1); }
+.vb-count-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--vb-accent); }
+
+/* The zoom as a small menu, half width: the level at a fixed width, so the button does not shift as its digits change. */
+.vb-btn.vb-zoom-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--vb-space-1); padding: 0 var(--vb-space-2); font-variant-numeric: tabular-nums; }
+.vb-zoom-btn > span { min-width: 4ch; text-align: right; }
+.vb-zoom-menu .vb-menu-list { min-width: 180px; }
+.vb-toolbar:has(.vb-zoom-btn[aria-expanded='true']) { z-index: var(--vb-z-chrome-open); }
+
+/* "⋯" with what moved out of the bar: one surface holding the fields and the menu, inside the bar's width and the
+   window's height. Without fields the surface draws nothing and the menu is as it was. */
+.vb-menu-surface { display: contents; }
+.vb-menu-surface[data-fields] {
+  display: grid; position: absolute; z-index: var(--vb-z-menu); right: 0; top: calc(100% + var(--vb-space-1)); padding: 3px;
+  width: min(320px, calc(100cqw - 2 * var(--vb-space-2))); max-height: calc(100dvh - var(--vb-toolbar-h) - var(--vb-space-3)); overflow-y: auto;
+}
+.vb-menu-surface[data-fields] .vb-menu-list { position: static; min-width: 0; max-width: none; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.vb-menu-fields { display: grid; }
+.vb-menu-fields:empty { display: none; }
+.vb-menu-fields:not(:empty) + .vb-menu-list { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--vb-line); }
+.vb-menu-rule { height: 1px; margin: 3px var(--vb-space-2); background: var(--vb-line); }
+.vb-menu-value { flex: none; max-width: 50%; overflow: hidden; text-overflow: ellipsis; color: var(--vb-ink); font-size: var(--vb-text-sm); font-weight: var(--vb-weight-regular); font-variant-numeric: tabular-nums; }
+/* A row with a select over it: its ring is inset like a row's, and the row answers the select's focus. */
+.vb-menu-item.vb-menu-face:has(.vb-menu-over:focus-visible:not([data-pointer-focus])), .vb-menu-item.vb-menu-face[data-look='focus'] { outline-offset: var(--vb-focus-offset-inset); background: var(--vb-surface-sunken); }
+/* A line that only says (no cards to list, boards updated): a row's place and words, no press. */
+.vb-menu-line { display: flex; align-items: center; gap: var(--vb-space-2); min-height: var(--vb-control-h); margin: 0; padding: var(--vb-space-1) var(--vb-space-3);
+  color: var(--vb-ink-strong); font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); white-space: nowrap; }
+.vb-menu-line:not(:has(.vb-btn-icon)) { padding-left: calc(var(--vb-space-3) + 18px + var(--vb-space-2)); }
+.vb-menu-line .vb-btn-icon { display: block; }
+.vb-menu-zoom { display: flex; align-items: center; gap: var(--vb-space-1); min-height: var(--vb-control-h); padding: var(--vb-space-1) var(--vb-space-3); color: var(--vb-ink-strong); font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); }
+.vb-menu-zoom .vb-menu-label { margin-right: var(--vb-space-1); padding-left: var(--vb-space-1); }
+.vb-menu-zoom-level { min-width: 5ch; text-align: center; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-regular); color: var(--vb-ink); font-variant-numeric: tabular-nums; }
+.vb-menu-zoom .vb-btn-small { flex: none; min-width: var(--vb-control-h-small); }
+/* The Agents row: its list opens in place, in the surface's flow. */
+.vb-menu-fields .vb-agents > summary { display: flex; gap: var(--vb-space-2); }
+.vb-menu-fields .vb-agents[open] > summary { background: var(--vb-surface-sunken); }
+.vb-menu-fields .vb-agents-panel { position: static; min-width: 0; padding: var(--vb-space-2) var(--vb-space-3); border: 0; box-shadow: none; background: none; }

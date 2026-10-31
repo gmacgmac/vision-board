@@ -38,7 +38,6 @@ export const thisBoardIsArchivedSo = 'This board is archived, so its agent can\'
 export const agentWorking = 'Agent working';
 export const waitingForYourOk = 'Waiting for your OK';
 export const theAgentIsWaitingFor = 'The agent is waiting for your OK in the chat.';
-export const newRepliesWord = 'new';
 
 // ---- App.svelte (workAlongside flag: the toast when a reply lands out of sight)
 export const theAgentReplied = 'The agent replied';

@@ -22,12 +22,13 @@
 .vb-toolbar-end .vb-btn { white-space: nowrap; }
 /* The zoom group (3_FE_02 ruling 5): three buttons with no gap between, like a segmented control. */
 .vb-btn-icon { display: none; width: 18px; height: 18px; flex-shrink: 0; }
-/* A narrow toolbar (a window of 1500px or less: Toolbar.svelte sets data-narrow; a gallery sample sets it
+/* A narrow toolbar (a window of 1500px or less, with the adaptiveHeader flag a bar at half or a third of its width
+   (styles/header.css, where "N open" and "N new" keep their words): Toolbar.svelte sets data-narrow; a gallery sample sets it
    itself): the end group's text buttons (Hide answered, Theme, Reply; with the toolbarMenu flag Agents, Send to
    agent and Chat) show their icon only, and the counts their numbers; the words stay for screen readers and
    the title tooltip says them too. Agents keeps its count beside the icon. */
 [data-narrow] .vb-toolbar-end .vb-btn-icon { display: block; }
-[data-narrow] :is(.vb-toolbar-end .vb-btn-text, .vb-counts .vb-chip-word) {
+[data-narrow] :is(.vb-toolbar-end .vb-btn-text, .vb-counts .vb-chip:not([data-tier] :is([data-tone='open'], .vb-menu-face)) .vb-chip-word) {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
 /* "Replied" (with the agent, D-046) shares "board updated"'s pink, so on a narrow toolbar it keeps the agent's mark, the
@@ -38,18 +39,18 @@
 /* A board under 1200px wide with every toolbar control showing (Chat, Send to agent): the gaps and side padding
    tighten so the toolbar stays whole; the board picker keeps its 220px. */
 @container vb-board (max-width: 1200px) {
-  .vb-toolbar { gap: var(--vb-space-2); padding-inline: var(--vb-space-2); }
+  .vb-toolbar:not([data-tier]) { gap: var(--vb-space-2); padding-inline: var(--vb-space-2); }
 }
 /* A board of 1000px or less with the toolbarMenu flag (data-menu): every control still shows down to 768px,
    the smallest supported width. The gaps tighten, the app icon steps aside, the board picker may go to 150px,
    the version and containers dropdowns show their choice cut to a set width (their lists still open whole),
    and the count chips draw closer. */
 @container vb-board (max-width: 1000px) {
-  .vb-toolbar[data-menu], .vb-toolbar[data-menu] :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
-  .vb-toolbar[data-menu] .vb-brand { display: none; }
-  .vb-toolbar[data-menu] > #board { min-width: 150px; }
-  .vb-toolbar[data-menu] > select:is(#version, #containers) { width: 6em; flex-shrink: 0; }
-  .vb-toolbar[data-menu] .vb-counts .vb-chip { justify-content: center; min-width: var(--vb-control-target); padding: 0 var(--vb-space-1); }
+  .vb-toolbar[data-menu]:not([data-tier]), .vb-toolbar[data-menu]:not([data-tier]) :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
+  .vb-toolbar[data-menu]:not([data-tier]) .vb-brand { display: none; }
+  .vb-toolbar[data-menu]:not([data-tier]) > #board { min-width: 150px; }
+  .vb-toolbar[data-menu]:not([data-tier]) > select:is(#version, #containers) { width: 6em; flex-shrink: 0; }
+  .vb-toolbar[data-menu]:not([data-tier]) .vb-counts .vb-chip { justify-content: center; min-width: var(--vb-control-target); padding: 0 var(--vb-space-1); }
 }
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
 .vb-zoom .vb-btn { border: 0; border-radius: 0; }

@@ -112,6 +112,13 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
   border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
 .g-folder-narrow { width: 160px; }
 .g-toolbar[data-menu-open] { padding-bottom: calc(var(--vb-space-6) * 5); align-items: flex-start; }
+/* The header at a set width (header-section.ts): the board's own bar, in the page flow; an open menu keeps its room. */
+.g-header { max-width: 100%; position: relative; border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
+.g-header + .g-header { margin-top: var(--vb-space-3); }
+.g-header .vb-toolbar { position: relative; inset: auto; border-radius: var(--vb-radius-md); }
+.g-header[data-open='zoom'] { min-height: 200px; }
+.g-header[data-open='half'] { min-height: 420px; }
+.g-header[data-open='third'] { min-height: 620px; }
 /* The archive and lock sections' "⋯" alone (archive-section.ts, lock-section.ts): at the strip's right end, as in the toolbar, so its menu hangs inside. */
 .g-archive-menu { justify-content: flex-end; }
 .g-archive-menu[data-menu-open] { padding-bottom: calc(var(--vb-space-6) * 7); }
