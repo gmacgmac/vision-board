@@ -5,7 +5,7 @@
 // stall the page. pdf.js parses in a worker of its own, made from text inside this script, as nothing here can load a file; it
 // draws on OffscreenCanvas, with no fonts added to a page, and eval stays off, in pdf.js and by the policy.
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { getDocument, GlobalWorkerOptions, VerbosityLevel } from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions, OPS, VerbosityLevel } from 'pdfjs-dist';
 import workerText from 'pdfjs-dist/build/pdf.worker.min.mjs?raw';
 import jbig2 from 'pdfjs-dist/wasm/jbig2.wasm?url&inline';
 import openjpeg from 'pdfjs-dist/wasm/openjpeg.wasm?url&inline';
@@ -19,13 +19,19 @@ const SMALLER_BY = 0.75;
 const JPEG_QUALITY = [0.85, 0.7];
 const INPUT_MOST = 10 * 1024 * 1024;
 
-const WASM: Record<string, string> = { 'jbig2.wasm': jbig2, 'openjpeg.wasm': openjpeg };
+const inlined = (urls: Record<string, string>) => Object.fromEntries(Object.entries(urls).map(([at, url]) => [at.slice(at.lastIndexOf('/') + 1), url]));
+/** All pdf.js fetches, by file name, inside this script: CJK text is read through a predefined CMap, and a font a PDF doesn't embed drawn from these, on any machine. */
+const DATA: Record<string, Record<string, string>> = {
+  wasmUrl: { 'jbig2.wasm': jbig2, 'openjpeg.wasm': openjpeg },
+  cMapUrl: inlined(import.meta.glob<string>('../../../../node_modules/pdfjs-dist/cmaps/*.bcmap', { query: '?url&inline', import: 'default', eager: true })),
+  standardFontDataUrl: inlined(import.meta.glob<string>('../../../../node_modules/pdfjs-dist/standard_fonts/*.{pfb,ttf}', { query: '?url&inline', import: 'default', eager: true })),
+};
 const fromDataUrl = (url: string) => Uint8Array.from(atob(url.slice(url.indexOf(',') + 1)), (c) => c.charCodeAt(0));
 
-/** pdf.js's source of binary data, by the name it calls: the two image decoders, from inside this script. Nothing here reaches a network. */
+/** pdf.js's source of binary data, by the name it calls: from inside this script. Nothing here reaches a network. */
 class BinaryData {
   fetch = ({ kind, filename }: { kind: string; filename: string }): Promise<Uint8Array> => {
-    const url = kind === 'wasmUrl' ? WASM[filename] : undefined;
+    const url = DATA[kind]?.[filename];
     return url ? Promise.resolve(fromDataUrl(url)) : Promise.reject(new Error(`no ${kind} here`));
   };
 }
@@ -54,6 +60,9 @@ class NoFilters {
   destroy() {}
 }
 
+/** Where pdf.js is told its data is: never asked, as `BinaryData` answers by file name. */
+const INSIDE = 'https://inside.invalid/';
+
 let doc: PDFDocumentProxy | undefined;
 let limits: FrameLimits = { bytes: 0, edge: 0 };
 
@@ -63,7 +72,8 @@ async function open(bytes: ArrayBuffer): Promise<void> {
   try {
     doc = await getDocument({
       data: new Uint8Array(bytes), isEvalSupported: false, enableXfa: false, verbosity: VerbosityLevel.ERRORS,
-      BinaryDataFactory: BinaryData, CanvasFactory: Canvases, FilterFactory: NoFilters, wasmUrl: 'https://inside.invalid/', useWorkerFetch: false,
+      BinaryDataFactory: BinaryData, CanvasFactory: Canvases, FilterFactory: NoFilters, useWorkerFetch: false,
+      wasmUrl: INSIDE, cMapUrl: INSIDE, cMapPacked: true, standardFontDataUrl: INSIDE,
       disableFontFace: true, useSystemFonts: false, disableAutoFetch: true, disableStream: true,
     } as Parameters<typeof getDocument>[0]).promise;
     answer({ kind: 'opened', pages: doc.numPages });
@@ -72,7 +82,14 @@ async function open(bytes: ArrayBuffer): Promise<void> {
   }
 }
 
-/** One page as a PNG within the limits, smaller if need be. */
+/** Whether a whole page came out white. */
+function blank(canvas: OffscreenCanvas): boolean {
+  const { data } = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < data.length; i += 4) if (data[i]! < 250 || data[i + 1]! < 250 || data[i + 2]! < 250) return false;
+  return true;
+}
+
+/** One page as a PNG within the limits, smaller if need be; said to be `blank` when it has text and nothing was drawn, as when no font could. */
 async function page(n: number): Promise<void> {
   try {
     const it = await doc!.getPage(n);
@@ -82,12 +99,13 @@ async function page(n: number): Promise<void> {
       const viewport = it.getViewport({ scale });
       const canvas = new OffscreenCanvas(Math.floor(viewport.width), Math.floor(viewport.height));
       await it.render({ canvas: canvas as unknown as HTMLCanvasElement, viewport, background: 'white' }).promise;
+      const noText = !blank(canvas) || !(await it.getOperatorList()).fnArray.includes(OPS.showText);
       const png = await canvas.convertToBlob({ type: 'image/png' });
       canvas.width = canvas.height = 0;
       if (png.size <= limits.bytes) {
         const bytes = await png.arrayBuffer();
         it.cleanup();
-        return answer({ kind: 'page', page: n, png: bytes }, [bytes]);
+        return answer({ kind: 'page', page: n, png: bytes, ...(!noText && { blank: true }) }, [bytes]);
       }
     }
   } catch { /* a page that can't be drawn: the rest still may */ }

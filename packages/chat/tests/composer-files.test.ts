@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ComposerFile, ComposerFileWords } from '../src/index.ts';
 import {
-  applyEvents, attachTemplate, chipsTemplate, composerView, dropTemplate, EMPTY_CHAT, filesSaid, fileChipTemplate, fileTemplate, onlyDoingMoved,
+  applyEvents, attachTemplate, chipsTemplate, composerView, dropTemplate, EMPTY_CHAT, filesSaid, fileChipTemplate, fileTemplate, onlyDoingMoved, whyFilesHold,
   messageTemplate, newestFile, pastedFiles, sendIntent,
 } from '../src/index.ts';
 
@@ -147,4 +147,15 @@ test('work starting and ending is said; only its count going up is neither said 
   assert.equal(onlyDoingMoved([one], [a]), false);
   assert.equal(onlyDoingMoved([a], [{ ...a, note: 'x' }]), false);
   assert.equal(onlyDoingMoved([one], [two, a]), false);
+});
+
+test('Send waits for a ready file that holds it, with the host\'s words for why; not for one only doing work', () => {
+  const view = { send: true };
+  const ready = { id: 'a', name: 'a', state: 'ready' as const };
+  assert.equal(sendIntent('words', view, true, [ready]), 'send');
+  assert.equal(sendIntent('words', view, true, [{ ...ready, doing: 'Reading pages…' }]), 'send');
+  assert.equal(sendIntent('words', view, true, [{ ...ready, holds: 'Waiting.' }]), 'skip');
+  assert.equal(whyFilesHold([ready, { ...ready, holds: 'Waiting.' }]), 'Waiting.');
+  assert.equal(whyFilesHold([ready]), undefined);
+  assert.equal(onlyDoingMoved([{ ...ready, doing: 'x', holds: 'Waiting.' }], [{ ...ready, doing: 'x' }]), false, 'the line and Send must follow');
 });

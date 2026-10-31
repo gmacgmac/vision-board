@@ -30,7 +30,7 @@ export type FrameAnswer =
   | { kind: 'ready' }
   | { kind: 'opened'; pages: number }
   | { kind: 'refused'; why: FrameRefusal }
-  | { kind: 'page'; page: number; png: ArrayBuffer }
+  | { kind: 'page'; page: number; png: ArrayBuffer; blank?: true }
   | { kind: 'no-page'; page: number }
   | { kind: 'fits' }
   | { kind: 'fitted'; bytes: ArrayBuffer; picture: PictureKind };
@@ -91,11 +91,16 @@ export function checkedAnswer(data: unknown, waiting: Awaiting, limits: FrameLim
     case 'page':
       if (m.page !== waiting.page) return undefined;
       if (m.kind === 'no-page') return { kind: 'no-page', page: waiting.page };
-      return m.kind === 'page' && goodPng(m.png, limits) ? { kind: 'page', page: waiting.page, png: m.png } : undefined;
+      return m.kind === 'page' && goodPng(m.png, limits) ? { kind: 'page', page: waiting.page, png: m.png, ...(m.blank === true && { blank: true as const }) } : undefined;
     case 'fit':
       if (m.kind === 'fits') return { kind: 'fits' };
       return m.kind === 'fitted' && goodPicture(m.bytes, m.picture, limits) ? { kind: 'fitted', bytes: m.bytes as ArrayBuffer, picture: m.picture as PictureKind } : undefined;
   }
+}
+
+/** Whether a picture's own header says it is within the limits, so needs no copy and no frame: only a PNG's or a JPEG's, read by arithmetic on its bytes with nothing decoded. Any other needs the frame to tell. */
+export function headerWithin(bytes: Uint8Array, limits: FrameLimits = LIMITS): boolean {
+  return bytes.length <= limits.bytes && within(pngSize(bytes) ?? jpegSize(bytes), limits);
 }
 
 /** A PDF, by the type the browser reports or by its name: the frame then finds out what it really is. */

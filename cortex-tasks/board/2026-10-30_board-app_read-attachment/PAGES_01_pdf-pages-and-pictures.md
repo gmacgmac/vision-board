@@ -87,6 +87,27 @@ _To be completed by agent after task completion. Re-run? Add a `### Run N` block
 ### Deviations from Plan
 - 
 
+### Run 2 (2026-10-31)
+
+**CJK**: failing test first (a real PDF, `UniGB-UTF16-H` and `UniKS-UTF16-H`, no embedded font: a white page). All 168 CMaps are now inside the worker (`DATA`, `import.meta.glob`, `BinaryData` by file name). A page looked at: 中文测试 draws. **Standard fonts: bundled too**: 816 KB is cheap beside the CMaps' 1.6 MB, and a PDF relying on Helvetica or Times then draws the same on any machine. The frame's script is 4.8 MB (was 2.2), read from localhost, and most pictures no longer load it (below). `chat-lazy` holds: the first chunk has none of it.
+**A page with text that drew nothing**: the worker marks it `blank` (all white, a `showText` in its operators); it is saved, and the chip says the pictures may be incomplete (`pagesMayBeIncomplete`). Tested with a CMap that exists nowhere, a real font failure.
+**Send waits for a fitted copy**: `ComposerFile.holds`, the host's words for the line; held from the moment the file is ready until the copy is saved, or fails, or the frame's deadline (30 s), and then the chip says so and the original goes. A PDF never holds it.
+
+Design choices:
+- **A PNG or JPEG whose own header says it is within the limits gets no frame and holds nothing** (`headerWithin`, reusing `pngSize`, `jpegSize`: arithmetic on bytes, nothing decoded). Otherwise every picture would stop Send for a moment and flicker the line. Any other kind (WebP, GIF, BMP, AVIF, or a header that doesn't read) holds until the frame answers, showing "Fitting…" for that moment.
+- **Pictures have their own queue**: behind a long PDF they would have held Send for it.
+- `pictureNotFitted` now shows on any failed fit, not only over 5 MB: only a picture that needed one, or couldn't be told, reaches the frame. A small picture with a broken header says so too.
+- `filesStillUploading` reworded (key kept): the board's Send now also means a copy is being made.
+
+Caught Beyond the Brief:
+- **Run 1's "40-page PDF" failure had a real cause, not only load**: 40 small pages go by faster than the test's look at the moving count. It failed at 1 worker here. The test now holds page 12 and looks. The gallery screenshots: passed at 1 worker and in a 5-worker run of the attach and lazy specs, then failed in the 5-worker run of all `chat*` specs, by 4 pixels of about 4.9 million, same size, both themes' runs. Which pixels and why not established; not chased, as asked.
+- **CJK glyphs come from the system's fonts**, as pdf.js bundles none: a machine with no CJK font draws boxes, which the `blank` check can't see (a box isn't white). macOS and Windows have them; not established on a bare Linux.
+- **`blank` catches a wholly white page only**: a page whose picture draws and whose caption doesn't says nothing. And a page of only invisible text (`3 Tr`) would say "may be incomplete", wrongly but harmlessly.
+- **The agent isn't told a page is blank**: only the person is, on the chip. The prompt comes from the disk, which doesn't hold that.
+- **A hostile picture can hold Send for up to 30 s**, and ten of them, one after another, for five minutes; the person can take the chip off, which stops it.
+- Registers: `pdfjs-dist/cmaps` and `standard_fonts` carry their own licences (`standard_fonts/LICENSE_FOXIT`, `LICENSE_LIBERATION`, `cmaps/LICENSE`): see Requests.
+- `chat-attach-pages.spec.ts` is about 400 lines (warn): its helpers could move out.
+
 ## On Completion
 
 Notes; your row in TASK-STATUS.md; one LOG line (`[board-app] PAGES_01: …` → this file, one line ending in a newline); the Return Contract with `REQUESTS` for anything outside your files.

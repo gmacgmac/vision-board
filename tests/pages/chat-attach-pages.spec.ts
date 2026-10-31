@@ -5,7 +5,7 @@
 import type { Frame, Page, Request } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
-import { pdf, png, RED_JP2, redPicture } from './chat-attach-pages-fixtures.ts';
+import { CHINESE, KOREAN, pdf, png, RED_JP2, redPicture, UNREADABLE } from './chat-attach-pages-fixtures.ts';
 import { expect, expectNoAxeViolations, test } from './helpers.ts';
 import { side, text, toggle } from './chat-page.ts';
 
@@ -93,11 +93,13 @@ test('a one-page PDF: the chip says it reads, then ready; the agent is told the 
 
 test('a 40-page PDF: 30 pictures, the chip counts them and says so at the end, and the agent is told 30 of 40', async ({ page }) => {
   const copies = watchCopies(page);
+  const release = await holdCopies(page, (of) => of.page === 12); // small pages go by faster than a look at them: this one waits
   await open(page);
   await attach(page, file('long.pdf', pdf(Array.from({ length: 40 }, () => ({})))));
   const c = chip(page, 'long.pdf');
-  await expect(c.locator('.chat-chip-s')).toContainText(/Reading pages… \d+ of 30/);
+  await expect(c.locator('.chat-chip-s')).toHaveText('Reading pages… 12 of 30');
   await expect(composer(page).getByRole('status')).toContainText('Reading pages…');
+  release();
   await expect(c.locator('.chat-chip-why')).toHaveText('The agent gets 30 of its 40 pages as pictures.', { timeout: 60_000 });
   await expect(composer(page).getByRole('status')).toContainText('30 of its 40 pages');
   expect(copies.map((x) => x.of.page)).toEqual(Array.from({ length: 30 }, (_, i) => i + 1));
@@ -116,6 +118,26 @@ test('a PDF with only a picture on its page reaches the agent as that picture; s
   await expect.poll(() => copies.length, { timeout: 30_000 }).toBe(2);
   for (const copy of copies) expect(isRed((await look(page, copy.bytes)).middle), copy.of.path).toBe(true);
   await expect.poll(() => page.locator(FRAME).count()).toBe(0);
+  await sent(page);
+});
+
+test('CJK in a font the PDF doesn\'t embed draws, by a predefined CMap inside the frame, with no network', async ({ page }) => {
+  const copies = watchCopies(page);
+  await open(page);
+  await attach(page, file('chinese.pdf', pdf([{ font: CHINESE }])), file('korean.pdf', pdf([{ font: KOREAN }])));
+  await expect.poll(() => copies.length, { timeout: 30_000 }).toBe(2);
+  for (const copy of copies) expect((await look(page, copy.bytes)).dark, copy.of.path).toBeGreaterThan(200);
+  await expect.poll(() => page.locator(FRAME).count()).toBe(0);
+  await expect(composer(page).locator('.chat-chip-why')).toHaveCount(0);
+  await sent(page);
+});
+
+test('a page with text that drew nothing says the picture may be incomplete; the file still goes', async ({ page }) => {
+  await open(page);
+  await attach(page, file('unreadable.pdf', pdf([{ font: UNREADABLE }])));
+  const c = chip(page, 'unreadable.pdf');
+  await expect(c.locator('.chat-chip-why')).toContainText('may be incomplete', { timeout: 15_000 });
+  await expect(c).toHaveAttribute('data-state', 'ready');
   await sent(page);
 });
 
@@ -324,4 +346,74 @@ test('a short window: the eleventh file\'s reason reads whole, the box is there,
   await expectNoAxeViolations(page);
   await composer(page).locator('.chat-chip[data-state="refused"] .chat-chip-x').click();
   await expect(reason).toHaveCount(0);
+});
+
+const sendButton = (page: Page) => composer(page).getByRole('button', { name: 'Send', exact: true });
+const line = (page: Page) => composer(page).locator('.chat-cmp-line');
+/** Hold each upload of a copy that `which` picks, until the returned release. */
+async function holdCopies(page: Page, which: (of: Copy['of']) => boolean) {
+  let release = () => {};
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  await page.route('**/api/chat/files', async (route) => {
+    const { of } = route.request().postDataJSON() as { of?: Copy['of'] };
+    if (of && which(of)) await gate;
+    await route.continue().catch(() => {});
+  });
+  return release;
+}
+
+test('Send waits for a fitted copy and the line says why; then the agent is told the copy', async ({ page }) => {
+  const release = await holdCopies(page, (of) => of.page === undefined);
+  await open(page);
+  await attach(page, file('photo.png', png(1500, 1400, 'noise'), 'image/png'));
+  const c = chip(page, 'photo.png');
+  await expect(c.locator('.chat-chip-s')).toHaveText('Fitting…');
+  await expect(c).toHaveAttribute('data-state', 'ready');
+  await expect(line(page)).toHaveText('Send waits until a copy of the picture that fits is ready.');
+  await text(page).fill('Look at this');
+  await expect(sendButton(page)).toBeDisabled();
+  await text(page).press('Enter');
+  await page.waitForTimeout(100);
+  expect(srv.fake.given().length, 'nothing went').toBe(runs);
+  await expect(text(page)).toHaveValue('Look at this');
+  release();
+  await expect(sendButton(page)).toBeEnabled({ timeout: 15_000 });
+  await expect(line(page)).toContainText('Enter');
+  expect(await sent(page)).toMatch(/\d+-photo\.png\n {2}A copy that fits: \S+-photo-fitted\/fitted\./);
+});
+
+test('a picture within the limits holds nothing and gets no frame; a PDF ahead holds no picture, and a long PDF holds no Send', async ({ page }) => {
+  const asked: string[] = [];
+  page.on('request', (r) => asked.push(r.url()));
+  const release = await holdCopies(page, (of) => of.page !== undefined);
+  await open(page);
+  await attach(page, file('small.png', png(40, 40), 'image/png'));
+  await expect(sendButton(page)).toBeEnabled();
+  expect(asked.filter((u) => u.endsWith('/pdf-frame'))).toEqual([]);
+  await attach(page, file('long.pdf', pdf([{}, {}, {}])));
+  await expect(chip(page, 'long.pdf').locator('.chat-chip-s')).toContainText('1 of 3');
+  await expect(sendButton(page)).toBeEnabled();
+  await attach(page, file('wide.png', png(3000, 200), 'image/png'));
+  await expect(sendButton(page)).toBeEnabled({ timeout: 15_000 }); // the copy was made with the PDF's page still held
+  expect(await sent(page)).toMatch(/\d+-wide\.png\n {2}A copy that fits:/);
+  release();
+});
+
+test.describe('a copy that can\'t be saved', () => {
+  test.use({ expected: { problems: [/^response 409: POST \S*\/api\/chat\/files/, /Failed to load resource/] } });
+
+  test('Send frees, the chip says so, and the original goes', async ({ page }) => {
+    await page.route('**/api/chat/files', async (route) => {
+      if (!(route.request().postDataJSON() as { of?: unknown }).of) return route.continue();
+      return route.fulfill({ status: 409, contentType: 'application/problem+json', body: JSON.stringify({ type: 'about:blank', title: 'Conflict', status: 409, code: 'conflict', detail: 'No.' }) });
+    });
+    await open(page);
+    await attach(page, file('refused.png', png(3000, 200), 'image/png'));
+    const c = chip(page, 'refused.png');
+    await expect(c.locator('.chat-chip-why')).toContainText('It still goes as it is', { timeout: 15_000 });
+    await expect(sendButton(page)).toBeEnabled();
+    const prompt = await sent(page);
+    expect(prompt).toMatch(/\d+-refused\.png/);
+    expect(prompt).not.toContain('A copy that fits');
+  });
 });

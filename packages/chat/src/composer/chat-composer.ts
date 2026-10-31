@@ -12,7 +12,7 @@ import { CHAT_CHIP_REMOVE_EVENT, CHAT_FILE_REMOVE_EVENT, CHAT_SEND_EVENT, TEXT_M
 import type { ChatFileRemoveDetail } from './composer-attach.ts';
 import { announcer, drawAttaching, drawDoing, dropArea, removeButton, wireAttaching } from './composer-attach.ts';
 import type { ComposerContext, ComposerFile, ComposerView } from './composer-core.ts';
-import { chipKey, COMPOSER_KEYS, filesReady, filesUploading, newestFile, onlyDoingMoved, sendIntent, withoutChip } from './composer-core.ts';
+import { chipKey, COMPOSER_KEYS, filesReady, filesUploading, newestFile, onlyDoingMoved, sendIntent, whyFilesHold, withoutChip } from './composer-core.ts';
 import { chipsTemplate, composerTemplate, lineTemplate, previewTemplate } from './composer-template.ts';
 
 export const CHAT_COMPOSER_TAG = 'chat-composer';
@@ -130,7 +130,8 @@ export function defineChatComposer(): void {
     private drawLine(): void {
       const v = this.view;
       const line = this.querySelector<HTMLElement>('.chat-cmp-line')!;
-      line.innerHTML = lineTemplate(v.files && !v.shut && filesUploading(this.files) ? { ...v, hint: v.files.waits } : v);
+      const waits = v.files && !v.shut ? (filesUploading(this.files) ? v.files.waits : whyFilesHold(this.files)) : undefined;
+      line.innerHTML = lineTemplate(waits ? { ...v, hint: waits } : v);
       line.hidden = line.innerHTML === '';
     }
 

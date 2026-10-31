@@ -60,7 +60,10 @@ tracker: [M39]
 ## Implementation Notes
 
 ### Wave gates
+- Run 2: PAGES_01: CMaps and standard fonts inside the frame's script (4.8 MB), a chip note for a page with text that drew nothing, Send waits for a fitted copy, the skill's line (v3.23). Gallery baselines re-taken.
 - Wave 1 (READ_01, audit fixes, chat text 125%): 2078 unit, full page suite green; `host-styles` (M28) failed under load and passed alone, and `chat-attach-gallery` timed out once under load.
+
+- Wave 2 (PAGES_01 Runs 1, 2): 2100 unit, 787 page tests; `host-styles` (M28) failed under load, and it and the 10 tests in its file passed alone. `chat-attach-gallery` allows 12 pixels (fallback text, cause not established).
 
 ### Security
 - PAGES_01: `connect-src 'none'` is not "no network" in a frame: `RTCPeerConnection` sent a real STUN packet past it, Chromium has no `webrtc` directive, and a frame can navigate itself. So the stranger's file is read in a worker inside the frame, which has neither; the page's `frame-src 'self'` also stops the navigation. Tested in `chat-attach-pages.spec.ts`.
@@ -73,4 +76,6 @@ tracker: [M39]
 | PAGES_01 | `apps/board/server/app.ts`, `apps/board/vite.config.ts`, `apps/board/src/shell/chat-panel.ts`, `apps/board/server/chat.ts`, `apps/board/tests/openapi.test.ts`, `packages/chat/src/chat.css` | Changed, though not in the ownership row: the frame's route, its build entry, the flag's wiring, the handler, the version, the feed's share. Please review | Done |
 | PAGES_01 | `docs/specification/dependencies.md` | `pdfjs-dist`'s row: its `wasm/openjpeg.wasm` and `jbig2.wasm` are bundled into the frame (their own licences, `wasm/LICENSE_*`) | Open |
 | PAGES_01 | `docs/decisions.md` | D-071 ruling 3 to name the worker, and the frame's `wasm-unsafe-eval`, and that a fitted copy is made in the frame too | Open |
-| PAGES_01 | `skills/vision-board/SKILL.md` | Its line naming `pdftotext` for a PDF could say to open the pictures the message names first | Open |
+| PAGES_01 | `skills/vision-board/SKILL.md` | Its line naming `pdftotext` for a PDF could say to open the pictures the message names first | Done in Run 2 |
+| PAGES_01 Run 2 | `docs/specification/dependencies.md` | `pdfjs-dist`'s row: its `cmaps/` and `standard_fonts/` are bundled too, with their licences (`standard_fonts/LICENSE_FOXIT`, `LICENSE_LIBERATION`, `cmaps/LICENSE`) | Open |
+| PAGES_01 Run 2 | `docs/decisions.md` | D-071: Send waits for a fitted copy, never for a PDF's pages | Open |

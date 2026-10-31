@@ -2,12 +2,14 @@
 // when a picture over the limits is attached it gets a fitted copy, each saved beside the original through
 // `attach_chat_file`'s `of`. Every file gets a new frame of its own, removed when it is done or at a deadline, so one
 // hostile file touches no other; one at a time, so ten PDFs don't stall the page. The frame is asked for one thing at a time, and
-// `checkedAnswer` drops anything but that answer, whole. The chip says how far it got; a message may go meanwhile, with
-// what is saved, and the work then stops. The frame's code is never in the page's bundle (`pdf-pages-frame.ts`).
+// `checkedAnswer` drops anything but that answer, whole. The chip says how far it got. A message may go while a PDF is read, with
+// what is saved, and the work then stops: a long PDF holds no one up. Send waits for a fitted copy, as it does for an upload, since the
+// original may never reach the model; pictures have their own queue, so a PDF ahead doesn't hold them, and a failure or deadline frees it.
+// The frame's code is never in the page's bundle (`pdf-pages-frame.ts`).
 import { fileData } from './attached-file.ts';
 import type { AttachFileBody } from './chat-bridge.ts';
 import type { Awaiting, FrameAnswer, FrameAsk, FrameLimits, FrameRefusal } from './pdf-pages-core.ts';
-import { checkedAnswer, isPdf, isRaster, PAGES_MAX, PDF_FRAME_PATH, PICTURE_BYTES, PICTURE_EDGE } from './pdf-pages-core.ts';
+import { checkedAnswer, headerWithin, isPdf, isRaster, PAGES_MAX, PDF_FRAME_PATH, PICTURE_BYTES, PICTURE_EDGE } from './pdf-pages-core.ts';
 import * as chatWords from './words/chat.ts';
 
 const LIMITS: FrameLimits = { bytes: PICTURE_BYTES, edge: PICTURE_EDGE };
@@ -40,8 +42,8 @@ export const browserFrame: MakeFrame = (heard, loaded) => {
   };
 };
 
-/** What a file's work says: `doing`, short, while it goes; `note`, in full, when it ended short. */
-export interface CopyProgress { doing?: string | undefined; note?: string | undefined }
+/** What a file's work says: `doing`, short, while it goes; `note`, in full, when it ended short; `holds`, why Send waits for it. */
+export interface CopyProgress { doing?: string | undefined; note?: string | undefined; holds?: string | undefined }
 export interface CopySide { save(body: AttachFileBody): Promise<unknown>; progress(p: CopyProgress): void }
 /** Start the work on the file saved at `path`; what it returns stops it. None for a file that needs no copy. */
 export type MakeCopies = (file: File, path: string, side: CopySide) => (() => void) | undefined;
@@ -95,7 +97,9 @@ const saveBody = async (name: string, type: string, bytes: ArrayBuffer, of: NonN
 
 /** A PDF's pages, one at a time: nothing is asked until the last is saved, so a slow disk holds the frame back. */
 async function readPages(talk: Talk, file: File, path: string, side: CopySide): Promise<void> {
-  let [saved, want] = [0, 0];
+  let [saved, want, blank] = [0, 0, 0];
+  const incomplete = () => (blank > 0 ? chatWords.pagesMayBeIncomplete(blank) : undefined);
+  const said = (...lines: (string | undefined)[]) => lines.filter(Boolean).join(' ') || undefined;
   side.progress({ doing: chatWords.readingPages() });
   try {
     await talk.ready;
@@ -109,20 +113,25 @@ async function readPages(talk: Talk, file: File, path: string, side: CopySide): 
       if (got.kind !== 'page') continue;
       await side.save(await saveBody(`page-${page}.png`, 'image/png', got.png, { path, page, pages: opened.pages }));
       saved++;
+      if (got.blank) blank++;
     }
-    side.progress({ note: saved === want && want === opened.pages ? undefined : chatWords.onlySomePages(saved, opened.pages) });
+    side.progress({ note: said(saved === want && want === opened.pages ? undefined : chatWords.onlySomePages(saved, opened.pages), incomplete()) });
   } catch (err) {
     if (err instanceof Stopped) return;
-    side.progress({ note: !(err instanceof Late) ? chatWords.copiesNotSaved : want > 0 ? chatWords.pagesTookTooLong(saved, want) : chatWords.pagesNotOpened });
+    side.progress({ note: said(!(err instanceof Late) ? chatWords.copiesNotSaved : want > 0 ? chatWords.pagesTookTooLong(saved, want) : chatWords.pagesNotOpened, incomplete()) });
   }
 }
 
-/** A picture's fitted copy, when it needs one. Only one known to be over its bytes says anything on its chip: most need nothing, and
- *  one that is only wide was seen as it is when measured (D-071). */
+/** Whether a picture needs the frame at all: one whose own header says it is within the limits does not. */
+async function headerSaysFine(file: File): Promise<boolean> {
+  if (file.size > PICTURE_BYTES) return false;
+  try { return headerWithin(new Uint8Array(await file.arrayBuffer())); } catch { return false; }
+}
+
+/** A picture's fitted copy, when it needs one; `fits` from the frame, for a kind whose header isn't read here, and nothing is made. Whatever ends it frees Send. */
 async function fitPicture(talk: Talk, file: File, path: string, side: CopySide): Promise<void> {
-  const over = file.size > PICTURE_BYTES;
-  const failed = { note: over ? chatWords.pictureNotFitted : undefined };
-  if (over) side.progress({ doing: chatWords.fittingPicture });
+  side.progress({ doing: chatWords.fittingPicture, holds: chatWords.sendWaitsForCopy });
+  const failed = { note: chatWords.pictureNotFitted };
   try {
     await talk.ready;
     const bytes = await file.arrayBuffer();
@@ -134,20 +143,27 @@ async function fitPicture(talk: Talk, file: File, path: string, side: CopySide):
   }
 }
 
-/** The work for the files a person attaches, one file at a time, in the order they came. */
+/** The work for the files a person attaches, one file at a time in each queue, in the order they came: a PDF's, and a picture's, which Send may be waiting for. */
 export function createCopies(make: MakeFrame = browserFrame, times = { step: STEP_MS, file: FILE_MS }): MakeCopies {
-  let queue: Promise<void> = Promise.resolve();
+  const queues = { pdf: Promise.resolve(), picture: Promise.resolve() };
   return (file, path, side) => {
-    const work = isPdf(file) ? readPages : isRaster(file) ? fitPicture : undefined;
-    if (!work) return undefined;
+    const kind = isPdf(file) ? 'pdf' : isRaster(file) ? 'picture' : undefined;
+    if (!kind) return undefined;
     let talk: Talk | undefined;
     let stopped = false;
-    queue = queue.then(async () => {
-      if (stopped) return;
-      talk = talkTo(make, times);
-      await work(talk, file, path, side);
-      talk.end();
-    });
+    const inQueue = () => {
+      queues[kind] = queues[kind].then(async () => {
+        if (stopped) return;
+        talk = talkTo(make, times);
+        await (kind === 'pdf' ? readPages : fitPicture)(talk, file, path, side);
+        talk.end();
+      });
+    };
+    if (kind === 'pdf') inQueue();
+    else {
+      side.progress({ holds: chatWords.sendWaitsForCopy }); // from now, in the same moment the file is ready: its header takes a moment to read
+      void headerSaysFine(file).then((fine) => { if (fine) side.progress({}); else inQueue(); });
+    }
     return () => { stopped = true; talk?.stop(); };
   };
 }

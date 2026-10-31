@@ -1005,3 +1005,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   agent); a Node renderer in a child process (needs a native canvas, and script there reaches the disk); plain text
   from Excel (loses formulas and shape); lifting KiroCrew's code whole (Python; the zip guard and the Word logic are ported, Apache 2.0).
 - **Task**: cortex-tasks/board/2026-10-30_board-app_read-attachment/TASK-STATUS.md
+
+## D-072 A PDF's sandbox: a worker inside the frame (amends D-071)
+- **Date**: 2026-10-31 · **Status**: Accepted (the rulings the maintainer delegated 2026-10-30, to decide by the principles and report back) · **From**: read-attachment PAGES_01
+- **Decision**: D-071's ruling on PDFs holds, and goes further:
+  1. A file is read in a worker inside the sandboxed frame, not in the frame itself. Measured: `connect-src 'none'` does not stop WebRTC, and a real STUN packet left a frame; Chromium has no directive for it. A worker has no `RTCPeerConnection`, no `location` to navigate, no document.
+  2. The page's `frame-src 'self'` stops a frame navigating itself to carry data out. A host's page needs the same.
+  3. The fitted copy of a picture is made in the frame too, not in the page as D-071 said: a stranger's picture decoded in the board's own origin is what the frame exists to avoid.
+  4. The frame's policy adds `wasm-unsafe-eval` (never `unsafe-eval`) for pdf.js's JPEG 2000 and JBIG2 decoders, inside its script, so a scanned page is not silently blank. Character maps go inside it too, for the same reason.
+  5. Send waits for a fitted copy, which takes a moment; it does not wait for a PDF's pages, which can take minutes. The agent is told only what is saved.
+- **Why**: a claim of "no network" has to be measured. A person who pastes a big picture and presses Enter must not send the one thing the provider will reject.
+- **Not established**: Chromium is all the suite runs. Safari and Firefox are not tested; a frame that doesn't work says "can't be read here" on the chip, and the file still goes.
+- **Task**: cortex-tasks/board/2026-10-30_board-app_read-attachment/TASK-STATUS.md (PAGES_01)

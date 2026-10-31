@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { deflateSync } from 'node:zlib';
 import type { Awaiting, FrameAsk } from '../src/shell/pdf-pages-core.ts';
-import { checkedAnswer, isPdf, isRaster, jpegSize, PAGES_MAX, pngSize, PICTURE_BYTES, PICTURE_EDGE } from '../src/shell/pdf-pages-core.ts';
+import { checkedAnswer, headerWithin, isPdf, isRaster, jpegSize, PAGES_MAX, pngSize, PICTURE_BYTES, PICTURE_EDGE } from '../src/shell/pdf-pages-core.ts';
 import type { CopyProgress, MakeFrame } from '../src/shell/pdf-pages.ts';
 import { createCopies } from '../src/shell/pdf-pages.ts';
 
@@ -170,24 +170,84 @@ test('stopping removes the frame at once and says nothing; a refusal says why; a
   await until(() => locked.state.ended > 0);
 });
 
-test('a picture: within the limits nothing shows and nothing is saved; a copy goes with `of` alone; one known to be over says so meanwhile', async () => {
-  const small = run(new File(['x'], 'a.png', { type: 'image/png' }));
+test('a picture: Send waits from the first moment; a PNG whose header says it fits frees it with no frame; any other asks the frame', async () => {
+  const fine = new File([png(40, 40)], 'a.png', { type: 'image/png' });
+  const small = run(fine);
+  assert.ok(small.said[0]!.holds, 'at once, before anything is read');
+  await until(() => small.said.length === 2);
+  assert.deepEqual(small.said[1], {});
+  assert.equal(small.state.ended, 0);
+  assert.deepEqual(small.asks, []);
+  const unknown = run(new File(['x'], 'a.webp', { type: 'image/webp' }));
+  await until(() => unknown.said.length === 2);
+  assert.ok(unknown.said[1]!.doing && unknown.said[1]!.holds);
   await tick(1);
-  assert.deepEqual(small.said, []);
-  small.state.heard({ kind: 'ready' });
-  await until(() => small.asks.length === 1);
-  assert.equal(small.asks[0]!.kind, 'fit');
-  small.state.heard({ kind: 'fits' });
-  await until(() => small.state.ended > 0);
-  assert.deepEqual(small.saves, []);
-  const big = run(new File([new Uint8Array(PICTURE_BYTES + 1)], 'a.png', { type: 'image/png' }));
-  await until(() => big.said.length > 0);
-  assert.ok(big.said[0]!.doing);
+  unknown.state.heard({ kind: 'ready' });
+  await until(() => unknown.asks.length === 1);
+  unknown.state.heard({ kind: 'fits' });
+  await until(() => unknown.state.ended > 0);
+  assert.deepEqual(unknown.said.at(-1), {});
+  assert.deepEqual(unknown.saves, []);
+  assert.equal(createCopies(fakeFrame().make)(new File(['x'], 'a.txt'), 'p', { save: () => Promise.resolve(), progress() {} }), undefined, 'a text file needs none');
+});
+
+test('over the limits: a copy goes with `of` alone, and Send frees after it is saved; a refusal or the deadline frees it too, and says so', async () => {
+  const big = run(new File([png(PICTURE_EDGE + 1, 10)], 'a.png', { type: 'image/png' }));
+  await until(() => big.said.length === 2);
   await tick(1);
   big.state.heard({ kind: 'ready' });
   await until(() => big.asks.length === 1);
   big.state.heard({ kind: 'fitted', bytes: jpeg(10, 10), picture: 'jpeg' });
   await until(() => big.saves.length === 1);
   assert.deepEqual(big.saves[0]!.of, { path: '.visionboard/attachments/2026-10-30/1-a.pdf' });
-  assert.equal(createCopies(fakeFrame().make)(new File(['x'], 'a.txt'), 'p', { save: () => Promise.resolve(), progress() {} }), undefined, 'a text file needs none');
+  await until(() => big.said.at(-1)!.holds === undefined);
+  assert.deepEqual(big.said.at(-1), {});
+  const late = run(new File([new Uint8Array(PICTURE_BYTES + 1)], 'a.png', { type: 'image/png' }), { step: 20, file: 5000 });
+  assert.ok(late.said[0]!.holds);
+  await until(() => late.state.ended > 0);
+  await until(() => late.said.at(-1)!.holds === undefined);
+  assert.match(late.said.at(-1)!.note!, /It still goes/);
+  const no = run(new File([png(PICTURE_EDGE + 1, 10)], 'a.png', { type: 'image/png' }));
+  await until(() => no.said.length === 2);
+  await tick(1);
+  no.state.heard({ kind: 'ready' });
+  await until(() => no.asks.length === 1);
+  no.state.heard({ kind: 'refused', why: 'damaged' });
+  await until(() => no.said.at(-1)!.note !== undefined);
+  assert.equal(no.said.at(-1)!.holds, undefined);
+});
+
+test('a PDF never holds Send; a page with text that drew nothing is saved, and the chip says the pictures may be incomplete; a picture does not wait behind a PDF', async () => {
+  const frames: ReturnType<typeof fakeFrame>[] = [];
+  const make: MakeFrame = (heard, loaded) => { const f = fakeFrame(); frames.push(f); return f.make(heard, loaded); };
+  const copies = createCopies(make, { step: 1000, file: 5000 });
+  const said: CopyProgress[] = [];
+  const saved: unknown[] = [];
+  const side = { save: (b: { of?: unknown }) => { saved.push(b.of); return Promise.resolve(); }, progress: (p: CopyProgress) => said.push(p) };
+  copies(pdfFile(), 'p/1-a.pdf', side);
+  await until(() => frames.length === 1);
+  const wide: CopyProgress[] = [];
+  copies(new File([png(PICTURE_EDGE + 1, 10)], 'b.png', { type: 'image/png' }), 'p/2-b.png', { save: () => Promise.resolve(), progress: (p) => wide.push(p) });
+  await until(() => frames.length === 2); // with the PDF's frame still going
+  const [f] = frames;
+  await tick(1);
+  f!.state.heard({ kind: 'ready' });
+  await until(() => f!.asks.length === 1);
+  f!.state.heard({ kind: 'opened', pages: 1 });
+  await until(() => f!.asks.length === 2);
+  f!.state.heard({ kind: 'page', page: 1, png: png(10, 10), blank: true });
+  await until(() => saved.length === 1);
+  await until(() => /may be incomplete/.test(said.at(-1)?.note ?? ''));
+  assert.ok(said.every((p) => p.holds === undefined));
+  frames[1]!.state.heard({ kind: 'ready' });
+});
+
+test('a PNG or JPEG whose header says it is within the limits needs no frame; over, or unread, it does; a blank mark is only ever true', () => {
+  assert.equal(headerWithin(new Uint8Array(png(40, 40))), true);
+  assert.equal(headerWithin(new Uint8Array(jpeg(40, 40))), true);
+  assert.equal(headerWithin(new Uint8Array(png(PICTURE_EDGE + 1, 40))), false);
+  assert.equal(headerWithin(new Uint8Array(jpeg(40, PICTURE_EDGE + 1))), false);
+  assert.equal(headerWithin(new TextEncoder().encode('RIFFxxxxWEBP')), false);
+  assert.equal((checkedAnswer({ kind: 'page', page: 1, png: png(10, 10), blank: 'yes' }, page1) as { blank?: true }).blank, undefined);
+  assert.equal((checkedAnswer({ kind: 'page', page: 1, png: png(10, 10), blank: true }, page1) as { blank?: true }).blank, true);
 });

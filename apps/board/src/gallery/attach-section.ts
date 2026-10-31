@@ -10,7 +10,7 @@ import { applyEvents, composerView, EMPTY_CHAT } from '#chat';
 import type { FlagOverrides } from '#format';
 import { flagOn } from '#format';
 import { renderMarkdown } from '#ui';
-import { attachingFiles, fileIsTooBig, fittingPicture, onlySomePages, pagesTookTooLong, pdfHasAPassword, pdfIsDamaged, pictureNotFitted, readingPages, tooManyFiles } from '../shell/words/chat.ts';
+import { attachingFiles, fileIsTooBig, fittingPicture, onlySomePages, pagesMayBeIncomplete, pagesTookTooLong, pdfHasAPassword, pdfIsDamaged, pictureNotFitted, readingPages, sendWaitsForCopy, tooManyFiles } from '../shell/words/chat.ts';
 import { el, group } from './dom.ts';
 
 const SESSION = '5d2c8e41-7a36-4f0b-9c1d-3e6a8b2f4d70';
@@ -42,10 +42,10 @@ const noted = (id: number, name: string, note: string): ComposerFile => ({ ...fi
 const PAGES_SAMPLES: Sample[] = [
   { state: 'reading', caption: 'A PDF\'s pages being read in the sandbox: ready already, so Send may go with those saved so far; the count moves in place', height: 330,
     files: [reading(1, 'network-design.pdf', readingPages(12, 30)), reading(2, 'scan.pdf', readingPages())] },
-  { state: 'fitting', caption: 'A picture over 5 MB getting a fitted copy; one under says nothing, unless it is over 2000 px, and then a copy just appears', height: 330,
-    files: [reading(1, 'whiteboard-photo.jpg', fittingPicture)] },
-  { state: 'pages-short', caption: 'What a chip says when pages fall short: a row of its own, no alarm, as the file still goes', height: 760,
-    files: [noted(1, 'long-report.pdf', onlySomePages(30, 40)), noted(2, 'slow.pdf', pagesTookTooLong(12, 30)), noted(3, 'locked.pdf', pdfHasAPassword), noted(4, 'broken.pdf', pdfIsDamaged), noted(5, 'huge.png', pictureNotFitted)] },
+  { state: 'fitting', caption: 'A picture over the limits getting a fitted copy: Send waits for it, as the original may never reach the model, and the line says why', height: 350,
+    files: [{ ...reading(1, 'whiteboard-photo.jpg', fittingPicture), holds: sendWaitsForCopy }] },
+  { state: 'pages-short', caption: 'What a chip says when pages fall short: a row of its own, no alarm, as the file still goes', height: 900,
+    files: [noted(1, 'long-report.pdf', onlySomePages(30, 40)), noted(6, 'cjk-scan.pdf', pagesMayBeIncomplete(1)), noted(2, 'slow.pdf', pagesTookTooLong(12, 30)), noted(3, 'locked.pdf', pdfHasAPassword), noted(4, 'broken.pdf', pdfIsDamaged), noted(5, 'huge.png', pictureNotFitted)] },
 ];
 
 const SAMPLES: Sample[] = [

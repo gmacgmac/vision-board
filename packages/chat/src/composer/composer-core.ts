@@ -40,6 +40,8 @@ export interface ComposerFile {
   count?: number;
   /** Work still going on a file that is ready and can go as it is, in a few words: "Reading pages… 12 of 30". */
   doing?: string | undefined;
+  /** Why Send waits for this file though it is ready, in the host's words: the line under the box says so. */
+  holds?: string | undefined;
   /** What to know about a file that is ready and still goes, shown in full: "Its pages can't be read". */
   note?: string | undefined;
 }
@@ -93,12 +95,14 @@ export function composerView(s: ChatState, host: ChatHost = {}, placeholder = 'M
 /** What Send does: words go while the chat lets them; with `attached` (chips or the context) and a
  *  host that holds them, a message goes with no words, and while the agent works. */
 export function sendIntent(text: string, v: Pick<ComposerView, 'send' | 'attach' | 'shut'>, attached = false, files: readonly ComposerFile[] = []): 'send' | 'skip' {
-  if (v.shut !== undefined || filesUploading(files)) return 'skip';
+  if (v.shut !== undefined || filesUploading(files) || whyFilesHold(files)) return 'skip';
   if (v.attach && attached) return 'send';
   return v.send && (text.trim() !== '' || filesReady(files)) ? 'send' : 'skip';
 }
 
 export const filesUploading = (files: readonly ComposerFile[]): boolean => files.some((f) => f.state === 'uploading');
+/** Why Send waits for a file that is ready; none when it doesn't. */
+export const whyFilesHold = (files: readonly ComposerFile[]): string | undefined => files.find((f) => f.holds)?.holds;
 export const filesReady = (files: readonly ComposerFile[]): boolean => files.some((f) => f.state === 'ready');
 
 /** More files than this moving at once are said as counts, not one by one. */
@@ -121,7 +125,7 @@ export function filesSaid(was: readonly ComposerFile[], now: readonly ComposerFi
 export function onlyDoingMoved(was: readonly ComposerFile[], now: readonly ComposerFile[]): boolean {
   return was.length === now.length && now.every((f, i) => {
     const before = was[i]!;
-    return f.id === before.id && f.state === before.state && f.note === before.note && f.name === before.name && !!f.doing === !!before.doing;
+    return f.id === before.id && f.state === before.state && f.note === before.note && f.holds === before.holds && f.name === before.name && !!f.doing === !!before.doing;
   });
 }
 

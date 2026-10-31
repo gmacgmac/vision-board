@@ -84,6 +84,8 @@ export const pdfIsDamaged = 'Its pages can\'t be read, as it is damaged or is no
 export const onlySomePages = (saved: number, pages: number): string => `The agent gets ${saved} of its ${pages} pages as pictures.`;
 export const pagesTookTooLong = (saved: number, want: number): string => `Stopped at ${saved} of ${want} pages, as reading it took too long. The agent gets those, and the PDF itself.`;
 export const pagesNotOpened = 'Its pages can\'t be read here. The file itself still goes.';
+export const sendWaitsForCopy = 'Send waits until a copy of the picture that fits is ready.';
+export const pagesMayBeIncomplete = (n: number): string => `${n === 1 ? 'A page has' : `${n} pages have`} text that could not be drawn, as a font is missing, so the pictures may be incomplete. The PDF itself still goes.`;
 export const copiesNotSaved = 'Its pictures could not be saved. The file itself still goes.';
-export const pictureNotFitted = 'No copy that fits could be made, so the agent may not see this picture. It still goes.';
-export const filesStillUploading = 'The files are still uploading. Send again once they are ready.';
+export const pictureNotFitted = 'No copy that fits could be made, so the agent may not see this picture. It still goes as it is.';
+export const filesStillUploading = 'The files aren\'t ready yet. Send again once they are.';

@@ -2,7 +2,17 @@
 // PNGs of a size. A PDF is plain text with an offset table, so what each one holds can be read below.
 import { deflateSync } from 'node:zlib';
 
-type Page = { text?: string; image?: { width: number; height: number; filter?: string; bytes: Buffer } };
+/** `hex` shown in a font no file holds, as a word processor writes CJK to save space: it is read only through a predefined CMap. */
+type NotEmbedded = { encoding: string; baseFont: string; ordering: string; subtype: 'CIDFontType0' | 'CIDFontType2'; hex: string };
+type Page = { text?: string; image?: { width: number; height: number; filter?: string; bytes: Buffer }; font?: NotEmbedded };
+
+const notEmbedded = ({ encoding, baseFont, ordering, subtype }: NotEmbedded) => `<< /Type /Font /Subtype /Type0 /BaseFont /${baseFont} /Encoding /${encoding} /DescendantFonts [<< /Type /Font /Subtype /${subtype} /BaseFont /${baseFont} /CIDSystemInfo << /Registry (Adobe) /Ordering (${ordering}) /Supplement 2 >> /FontDescriptor << /Type /FontDescriptor /FontName /${baseFont} /Flags 6 /FontBBox [-25 -254 1000 880] /ItalicAngle 0 /Ascent 880 /Descent -120 /CapHeight 880 /StemV 80 >> >>] >>`;
+/** Chinese in a font not in the file, by its Unicode encoding. */
+export const CHINESE: NotEmbedded = { encoding: 'UniGB-UTF16-H', baseFont: 'STSong-Light', ordering: 'GB1', subtype: 'CIDFontType0', hex: '4E2D65876D4B8BD5' };
+/** Korean, the same way. */
+export const KOREAN: NotEmbedded = { encoding: 'UniKS-UTF16-H', baseFont: 'HYGoThic-Medium', ordering: 'Korea1', subtype: 'CIDFontType0', hex: 'D55CAE00D14CC2A4D2B8' };
+/** A CMap that exists nowhere, so the font can't be read at all: nothing can draw these. */
+export const UNREADABLE: NotEmbedded = { encoding: 'NoSuchCMap-H', baseFont: 'NoSuchFont', ordering: 'Identity', subtype: 'CIDFontType0', hex: '0102030405060708' };
 export interface PdfOptions { script?: string; encrypted?: boolean }
 
 const stream = (dict: string, bytes: Buffer) => Buffer.concat([Buffer.from(`<< ${dict} /Length ${bytes.length} >>\nstream\n`), bytes, Buffer.from('\nendstream')]);
@@ -19,8 +29,8 @@ export function pdf(pages: Page[], options: PdfOptions = {}): Buffer {
   add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
   pages.forEach((p, i) => {
     const n = first + i * 3;
-    add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 3 0 R >> /XObject << /Im0 ${n + 2} 0 R >> >> /Contents ${n + 1} 0 R >>`);
-    const drawn = p.image ? 'q 360 0 0 500 30 50 cm /Im0 Do Q' : `BT /F1 28 Tf 40 500 Td (${p.text ?? `Page ${i + 1}`}) Tj ET`;
+    add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 3 0 R${p.font ? ` /F2 ${notEmbedded(p.font)}` : ''} >> /XObject << /Im0 ${n + 2} 0 R >> >> /Contents ${n + 1} 0 R >>`);
+    const drawn = p.font ? `BT /F2 48 Tf 40 400 Td <${p.font.hex}> Tj ET` : p.image ? 'q 360 0 0 500 30 50 cm /Im0 Do Q' : `BT /F1 28 Tf 40 500 Td (${p.text ?? `Page ${i + 1}`}) Tj ET`;
     add(stream('', Buffer.from(drawn)));
     const image = p.image ?? { width: 1, height: 1, bytes: Buffer.from([255, 255, 255]) };
     add(stream(`/Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height}${image.filter ? ` /Filter /${image.filter}` : ' /ColorSpace /DeviceRGB /BitsPerComponent 8'}`, image.bytes));

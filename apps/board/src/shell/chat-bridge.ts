@@ -114,7 +114,7 @@ export interface ChatBridge {
   removeFile(id: string): void;
   /** The ready files, for the next message. */
   files(): MessageFile[];
-  /** Whether a file is still uploading: no message goes until it is settled. */
+  /** Whether a file is still uploading, or having a copy made that it needs: no message goes until it is settled. */
   uploading(): boolean;
   /** The server refused the message that named `files`: mark each file a problem points to (`/files/<i>`) refused, with why. */
   refuseSent(files: readonly MessageFile[], pointers: readonly PointerError[]): void;
@@ -213,7 +213,7 @@ export function createChatBridge(): ChatBridge {
       const { file: saved } = await c!.upload({ name, type: file.type, data });
       const label = fileLabel(name);
       settle(id, { state: 'ready', saved: { path: saved.path, ...(label && { label }) } });
-      const stop = c?.copies?.(file, saved.path, { save: (body) => c!.upload(body), progress: ({ doing, note }) => settle(id, { doing, note }) });
+      const stop = c?.copies?.(file, saved.path, { save: (body) => c!.upload(body), progress: ({ doing, note, holds }) => settle(id, { doing, note, holds }) });
       if (stop) making.set(id, stop);
     } catch (err) { refused(chatWords.fileRefused((err as Error).message)); }
   }
@@ -266,7 +266,7 @@ export function createChatBridge(): ChatBridge {
     attachFiles,
     removeFile,
     files: () => held.flatMap((f) => (f.state === 'ready' && f.saved ? [f.saved] : [])),
-    uploading: () => held.some((f) => f.state === 'uploading'),
+    uploading: () => held.some((f) => f.state === 'uploading' || f.holds !== undefined),
     refuseSent(files, pointers) {
       const why = new Map(pointers.flatMap(({ pointer, detail }) => {
         const file = files[Number(/^\/files\/(\d+)$/.exec(pointer)?.[1] ?? -1)];
