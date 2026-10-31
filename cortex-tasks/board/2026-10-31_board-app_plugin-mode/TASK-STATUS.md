@@ -1,8 +1,8 @@
 ---
 task_name: Plugin Mode
 created: 2026-10-31
-completed:
-status: in-progress
+completed: 2026-10-31
+status: completed
 categories: [board-app, board-agent, board-ui]
 skills: [cortex-architecture, cortex-docs]
 tracker: [M8, M12, M13, M14, M15, M21, M22, M27]
@@ -73,6 +73,9 @@ tracker: [M8, M12, M13, M14, M15, M21, M22, M27]
 - Wave 4 gate (normal tier, standalone's build byte-identical, so the page suite waits for wave 6): map, verify, check, gen-api, unit.
 - Wave 5 gate: map, verify, check, gen-api, unit, test:plugin 51 clean; full page suite 842 passed, 1 failed (`perf.spec.ts` selecting 50, tracker M29, under the full run); budgets then re-run alone. No screenshot re-baselined.
 - After wave 5: `boardChromeInMount` and its off branch removed before VERIFY_01, so it checks the final code (check, verify, unit, test:plugin 51, 8 page specs 96). `perf.spec.ts` selecting 50 given 90 s: the test takes about 26 s alone at low priority against the default 30 s, and its budget is the counts (M29's cause).
+- After VERIFY_01: FIX_01 Run 1 and 2, then VERIFY_01's re-check: F1 and F2 hold, 0 blocking.
+- Wave 7 and set gate, 5a78e33, quiet machine: map, verify (31 warnings), check, gen-api, unit and test:timing, test:plugin 74, full page suite 842 passed with budgets, none failed. No screenshot re-baselined.
+- Live look: standalone in Chromium, light, dark, narrow; real Kiro on Sonnet drew one card and answered; picker confirmed, cancelled and fresh all reach the agent.
 
 ### Security
 - PROOF_01, `x-hosts` (M15): `engine.tools` gives exactly what the table marks `plugin`. `join` is `standalone`: the host names its bot and `tools.call` takes the caller only from `ctx`, so a minted secret is useless and all `join` could do is write ledger lines naming agents, with a label the bot chooses. `request_grant` is for both: `needs-grant` happens under any host, it only asks, and granting is the person's click. `list_apps` is `standalone`: the app host stays with the standalone server. `read_attachment` is `standalone` (D-068 ruling 6). No tool edits the ledger directly or answers ✓, ✗ or an approval: those are `x-agent: false`, and `x-hosts` on one stops the build.
@@ -91,20 +94,20 @@ tracker: [M8, M12, M13, M14, M15, M21, M22, M27]
 | SEAM_01 | `docs/specification/api.md` (159) | `tools` is now `list` and `call` in MCP's shapes, with `_meta` `vb/change` | Done, Run 2 |
 | SEAM_01 | `docs/specification/components.md`, `chat.md` | Their `BoardSide` and `addToChat` claims, once the view half lands | Done, Run 2 |
 | SEAM_01 | `docs/specification/plugin.md` | Standalone-only ways round the seam left after SEAM_01 (`MountedBoard.board`, `EngineOptions.onSend`, `engine.ledger`, `engine.agents`): state or remove | Done (CONTRACT_01) |
-| CHROME_01 | `docs/specification/modules.md` | `npm run map`: `board/chrome/` and the moved files | Open (orchestrator) |
-| CHROME_01 | `packages/format/src/flags.ts` | `adaptiveHeader`'s description names `shell/header-tier.ts`; it is `board/chrome/header-tier.ts` | Open (orchestrator) |
-| CHROME_01 | `.kiro/steering/svelte-conventions.md` | § Where Svelte is used says "only the app around the board"; `board/chrome/` is Svelte inside the board (protected, propose) | Open (orchestrator) |
-| PROOF_01 | `docs/specification/modules.md` | `npm run map`: `shell/kept.ts` moved, `#ui`'s public API changed (`setMarkdown*` gone, `MarkdownOptions` in) | Open (orchestrator) |
-| PROOF_01 | `packages/format/src/flags.ts` | `svgImages`'s description names `setMarkdownSvg`; say "by the board's Markdown, as its host's settings say" | Open (orchestrator) |
-| PROOF_01 | `docs/specification/images.md` | Row "Off (`svgImages`)": the page's flag reaches the renderer through `renderMarkdown`'s `svg`, not `setMarkdownSvg`; § the route: another host answers it with the engine's `image` | Open (orchestrator) |
-| PROOF_01 | `apps/board/README.md` | § the renderer (125, 126) names `setMarkdownImages` and `setMarkdownSvg`: the flags now reach it per board, `board/host.ts` `markdownOf` | Open (orchestrator) |
-| PROOF_01 | `apps/board/src/styles/{header,key-help,proposals}.css` | Window-sized caps in a host's pane: `100dvh` and `100vh` caps (`.vb-menu-surface`, `.vb-keys-body`) need the root's height (the root's container is inline-size only, so no `cqh`), and `100vw` in `key-help.css` and `proposals.css` can be `100cqw` | Open, non-blocking |
-| PROOF_01 | `scripts/gen-tools.mjs` | `x-hosts` could move from `gen-api.mjs` into `toolTable` | Open, non-blocking |
+| CHROME_01 | `docs/specification/modules.md` | `npm run map`: `board/chrome/` and the moved files | Done (gates) |
+| CHROME_01 | `packages/format/src/flags.ts` | `adaptiveHeader`'s description names `shell/header-tier.ts`; it is `board/chrome/header-tier.ts` | Done |
+| CHROME_01 | `.kiro/steering/svelte-conventions.md` | § Where Svelte is used says "only the app around the board"; `board/chrome/` is Svelte inside the board (protected, propose) | Proposal for the maintainer |
+| PROOF_01 | `docs/specification/modules.md` | `npm run map`: `shell/kept.ts` moved, `#ui`'s public API changed (`setMarkdown*` gone, `MarkdownOptions` in) | Done (gates) |
+| PROOF_01 | `packages/format/src/flags.ts` | `svgImages`'s description names `setMarkdownSvg`; say "by the board's Markdown, as its host's settings say" | Done |
+| PROOF_01 | `docs/specification/images.md` | Row "Off (`svgImages`)": the page's flag reaches the renderer through `renderMarkdown`'s `svg`, not `setMarkdownSvg`; § the route: another host answers it with the engine's `image` | Done |
+| PROOF_01 | `apps/board/README.md` | § the renderer (125, 126) names `setMarkdownImages` and `setMarkdownSvg`: the flags now reach it per board, `board/host.ts` `markdownOf` | Done |
+| PROOF_01 | `apps/board/src/styles/{header,key-help,proposals}.css` | Window-sized caps in a host's pane: `100dvh` and `100vh` caps (`.vb-menu-surface`, `.vb-keys-body`) need the root's height (the root's container is inline-size only, so no `cqh`), and `100vw` in `key-help.css` and `proposals.css` can be `100cqw` | Done (CONTRACT_01, FIX_01) |
+| PROOF_01 | `scripts/gen-tools.mjs` | `x-hosts` could move from `gen-api.mjs` into `toolTable` | Tracker M49 |
 | SEAM_01 | `apps/board/plugin/**`, `scripts/build-plugin.mjs` | The engine imports `#agent` and `#mcp` by their roots (tree-shaking); `TOOLS_FILE` is read from disk beside its module | Routed to BUILD_01 |
 | PROOF_01 | `docs/specification/modules.md` | `npm run map` | Done (wave 3 gate) |
 | PROOF_01 | `flags.ts`, `apps/board/README.md`, `docs/specification/images.md` (the `setMarkdownSvg` row) | Stale names of the removed switches | Done (orchestrator) |
 | PROOF_01 | `docs/specification/images.md` § The route | Another host answers it with the engine's `image` | Done (CONTRACT_01) |
-| PROOF_01 | `apps/board/src/styles/{header,key-help,proposals}.css` | `100dvh`, `100vh`, `100vw` caps assume the window: a host's pane needs the root's size (`100cqw`; the height needs the root's height, since its container is inline-size only) | Done (CONTRACT_01) |
+| PROOF_01 | `apps/board/src/styles/{header,key-help,proposals}.css` | `100dvh`, `100vh`, `100vw` caps assume the window: a host's pane needs the root's size (`100cqw`; the height needs the root's height, since its container is inline-size only) | Done (CONTRACT_01, FIX_01) |
 | PROOF_01 | `scripts/gen-tools.mjs` | Move the `x-hosts` reader from `gen-api.mjs` | Closed: it works, a test holds it, tidy only |
 | PROOF_01 | `docs/decisions.md` | Draft entry for `x-hosts`, `store`, `imageRoute`, `engine.image` | For the maintainer in the morning (new entries need their yes) |
 | PROOF_01 | `cortex-tasks/tracker.md` | M12, M13, M15, M21, M22 done | Orchestrator, at set close |
@@ -112,7 +115,7 @@ tracker: [M8, M12, M13, M14, M15, M21, M22, M27]
 | PROOF_01 | `docs/specification/plugin.md` | A host sets `appCards` off unless it hosts apps; skips a key with `defaultPrevented`; a capture-phase listener runs first; its CSP must allow `imageRoute`; a page holds one version of the plugin (custom elements are global); the zoomed view is a real modal, so the page is inert while open | Done (CONTRACT_01) |
 | SEAM_01 | `apps/board/plugin/**`, `scripts/build-plugin.mjs` | The engine bundle depends on tree-shaking; `TOOLS_FILE` read beside its module | Done (BUILD_01): `treeshake.moduleSideEffects: false`, `server/format-files.ts` swapped for embedded data; a test runs the engine alone under Node's permission model |
 | PROOF_01 | the skill and tool descriptions | `join`, `list_apps`, "with your secret" are wrong for a plugin bot | Done (BUILD_01): `skill.md` and the engine's tool list are per host (`plugin/words/skill-edits.ts`, `server/words/plugin-tools.ts`); standalone's words untouched; `plugin-skill.test.ts` |
-| BUILD_01 | `docs/specification/modules.md` | `npm run map`: `#board` names, `board/index.ts`, `bin/build-plugin.ts`, `plugin/`, `server/format-files.ts` | Open (orchestrator) |
+| BUILD_01 | `docs/specification/modules.md` | `npm run map`: `#board` names, `board/index.ts`, `bin/build-plugin.ts`, `plugin/`, `server/format-files.ts` | Done (gates) |
 | BUILD_01 | `docs/specification/plugin.md` | State: the folder's parts and exports; the manifest has no `settings` or `icon` (the board declares none); the theme's three `--host-*` properties and that colours follow `color-scheme`; the plugin skill and tool words differ from standalone's; a page holds one built version | Done (CONTRACT_01) |
 | BUILD_01 | `plugin.md`, the plugin skill | Pictures: the plugin skill has no Images section, since a bot cannot be told the folder `engine.image` reads (`<dir>/images`) and a host's bot may not reach it. A host that wants pictures needs a way to tell its bot where to put one | For the maintainer (a decision), CONTRACT_01 states it |
 | BUILD_01 | `docs/decisions.md` | Draft: **the plugin folder is built from `apps/board/bin/build-plugin.ts`; what a plugin bot is told is the standalone words less listed edits, held by a test** (`skill-edits.ts`, `plugin-tools.ts`) | For the maintainer in the morning |
@@ -129,8 +132,8 @@ tracker: [M8, M12, M13, M14, M15, M21, M22, M27]
 | CONTRACT_01 | `packages/ui/src/selection-bar/selection-bar.css` | The "1 selected" pill paints over "⋯" and the key help when they overlap, seen in a short pane | Done (CONTRACT_01 Run 2): `--vb-z-open` |
 | CONTRACT_01 | `docs/specification/api.md` (160) | Name what the folder's `createEngine` takes: `dir`, `name`, `warn`, `flags`; `ledger` and `onSend` are standalone's | Done (CONTRACT_01 Run 2) |
 | CONTRACT_01 | `docs/decisions.md` | Draft: **the folder's entries give a host exactly what `plugin.md` says, and the root is a size container, so what opens caps by the pane**; text in the task's Run 2 notes | For the maintainer in the morning |
-| CONTRACT_01 | `docs/specification/modules.md` | `npm run map`: `plugin/view.ts`, `plugin/engine.ts` | Open (orchestrator) |
-| CONTRACT_01 | VERIFY_01, set gate | Add `npm run test:plugin` (the page suite does not run it) | Open (orchestrator) |
+| CONTRACT_01 | `docs/specification/modules.md` | `npm run map`: `plugin/view.ts`, `plugin/engine.ts` | Done (gates) |
+| CONTRACT_01 | VERIFY_01, set gate | Add `npm run test:plugin` (the page suite does not run it) | Done (gate.sh) |
 | CONTRACT_01 | `packages/tokens/src/tokens.css` | `--vb-z-selection` is now unused, and the `--vb-z-lasso` comment lists the selection bar (protected: propose removing it and fixing the comment) | For the maintainer, non-blocking |
 | CONTRACT_01 | `packages/tokens/src/tokens.css` | `--vb-z-selection` unused; `--vb-z-lasso`'s comment | For the maintainer (protected) |
 | CONTRACT_01 | `docs/decisions.md` | Draft in the task's Run 2 notes | For the maintainer in the morning |
