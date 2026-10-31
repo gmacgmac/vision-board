@@ -29,13 +29,23 @@ The live look with the real Kiro on Sonnet, with tiny files, is the orchestrator
 
 ## Validation
 
-- [ ] Each finding has the steps to reproduce, what happened, what should, and blocking or not
+- [x] Each finding has the steps to reproduce, what happened, what should, and blocking or not
 
 ## Implementation Notes
 
-_To be completed by agent after task completion._
+**Status**: Completed · **Completed**: 2026-10-31
 
-**Status**: Pending · **Completed**:
+Findings: [VERIFY_01_findings.md](./VERIFY_01_findings.md). Blocking: F1 (a good PDF and a big picture fail on a full Chromium build; a race in `pdf-pages.ts`), F2 (SmartArt, charts, drawn shapes, EMF and Excel's pictures vanish with no word), F3 (Word's heading and list numbers dropped or wrong). A hostile file reached nothing.
+
+### Changes Made
+- `VERIFY_01_findings.md` (new); this file; my row in TASK-STATUS.md; one LOG line. No code. Throwaway scripts and files in `temp/verify-01/`.
+
+### Caught Beyond the Brief
+- The suite's browser is the headless shell, which doesn't show F1. `temp/verify-01/pw-full.config.ts` runs the spec on a full build.
+- 5 MB raw is over Bedrock's 5 MB base64 limit (the caps section); `temp/verify-01/docs/about-4.5mb.png` is for the live look.
+
+### Deviations from Plan
+- None. Step 1 used the page's paperclip, composer drop and paste; a drop on the board was left to its spec. Numbers and Pages were tried as real writers, gave no answer in 45 s, and I stopped both, having started them. openpyxl and python-docx came from a local image already here, run with no network.
 
 ## On Completion
 

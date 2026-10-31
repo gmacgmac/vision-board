@@ -35,7 +35,9 @@ tracker: [M39]
 |---|-----|------|-------|---------|------|--------|-------|
 | 1 | READ_01 | 1 | strong | Security engineer who reviews document parsers — every file is hostile until read, a declared size is a claim until counted, and a parser's hang is as bad as its crash. | [The reader and the tool](./READ_01_reader-and-tool.md) | Completed | port 6100. The handler is the server's beside the chat, not the engine's; off, the tool stays listed and answers `not-found` (request below) |
 | 2 | PAGES_01 | 2 | strong | Browser security engineer who builds sandboxes — code that parses a stranger's file gets no origin, no network and nothing to reach, and whatever it hands back is checked again. | [PDF pages and fitted pictures](./PAGES_01_pdf-pages-and-pictures.md) | Completed | port 6200. The file is read in a worker inside the frame: a frame's `connect-src` does not stop WebRTC (measured: a STUN packet left) |
-| 3 | VERIFY_01 | 3 | strong | Solutions architect new to this project, handed real customer documents and the board — does the agent actually see the diagram, the formula, the table, and does a hostile file reach anything? | [Verification](./VERIFY_01_read-attachment-verification.md) | Pending | port 6300 |
+| 3 | VERIFY_01 | 3 | strong | Solutions architect new to this project, handed real customer documents and the board — does the agent actually see the diagram, the formula, the table, and does a hostile file reach anything? | [Verification](./VERIFY_01_read-attachment-verification.md) | Completed | port 6300. [Findings](./VERIFY_01_findings.md): blocking F1 (full Chromium build: a race, no PDF pages or copies), F2 (diagrams vanish unsaid), F3 (Word numbers). A hostile file reached nothing |
+| 4 | FIX_PAGES | 4 | strong | Browser security engineer who builds sandboxes (PAGES_01's). | F1, the picture cap, a blank page told to the agent; `PAGES_01` Run 3 | Pending | port 6200 |
+| 5 | FIX_DOCS | 4 | strong | Security engineer who reviews document parsers (READ_01's). | F2 to F9; `READ_01` Run 2 | Pending | port 6100 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -64,6 +66,8 @@ tracker: [M39]
 - Wave 1 (READ_01, audit fixes, chat text 125%): 2078 unit, full page suite green; `host-styles` (M28) failed under load and passed alone, and `chat-attach-gallery` timed out once under load.
 
 - Wave 2 (PAGES_01 Runs 1, 2): 2100 unit, 787 page tests; `host-styles` (M28) failed under load, and it and the 10 tests in its file passed alone. `chat-attach-gallery` allows 12 pixels (fallback text, cause not established).
+
+- Live 2026-10-31, Kiro CLI 2.35.2 (v2, Sonnet 5.5): a 4.3 MB PNG is rejected by the provider, a 3.5 MB PNG is seen. So the cap on a picture is 3.5 MB, not 5 (the provider's 5 MB is on the base64 size).
 
 ### Security
 - PAGES_01: `connect-src 'none'` is not "no network" in a frame: `RTCPeerConnection` sent a real STUN packet past it, Chromium has no `webrtc` directive, and a frame can navigate itself. So the stranger's file is read in a worker inside the frame, which has neither; the page's `frame-src 'self'` also stops the navigation. Tested in `chat-attach-pages.spec.ts`.
