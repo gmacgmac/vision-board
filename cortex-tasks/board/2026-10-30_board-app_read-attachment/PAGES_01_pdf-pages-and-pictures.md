@@ -108,6 +108,22 @@ Caught Beyond the Brief:
 - Registers: `pdfjs-dist/cmaps` and `standard_fonts` carry their own licences (`standard_fonts/LICENSE_FOXIT`, `LICENSE_LIBERATION`, `cmaps/LICENSE`): see Requests.
 - `chat-attach-pages.spec.ts` is about 400 lines (warn): its helpers could move out.
 
+### Run 3 (2026-10-31, row FIX_PAGES)
+
+**F1**: reproduced first: the first test failed on Chrome for Testing 149 and Chromium 152. The `load` check is gone, with `load` itself: a frame gets `READY_MS` (15 s) for its `ready`. **Builds run**: headless shell 1243 (the suite's), Chrome for Testing 149 (`ms-playwright/chromium-1228`), Chromium 152 (`/Applications/Chromium.app`): the whole spec passes on each (18), and the `@full-build` tests 5 times over on both full builds (20 of 20). Not run: Google Chrome, Chromium 156 on Linux. `tests/pages/full-builds.ts` finds full builds; each gets a `full-*` project running tests tagged `@full-build` (the one-page PDF and the fitted copy). Each run prints which it found, or plainly that none is there. `--project=chromium` leaves them out: the gate must not name a project.
+
+**The cap**: `PICTURE_BYTES` is 3,500,000 bytes, in `packages/format/src/attachments.ts`, citing the measurement: the page, the server and `read_attachment` all use that one (`chat-files.ts` re-exports it, so `chat-read.ts` is untouched). Decimal, as "3.5 MB seen" may be either and this is the lower. Tested with a real 4.3 MB PNG, and a page of heavy noise, each within it.
+
+**A blank page**: `of.blank` (`info.version` 1.35.0) puts it in the name, `besideOf` reads it back, and `pagesDrewNothing` goes under the pages' line.
+
+**Docs**: F10's rows on my area, in chat.md, api.md, `chat-files.ts`, dependencies.md. Not mine: `read_attachment`'s description for a file from a zip (F5).
+
+Caught Beyond the Brief:
+- **With the load check gone, a server with the flag off and a page with it on takes 15 s to say "can't be read here"**, and holds Send that long on a picture over the limits. It was instant, by the same guess that broke F1. Rare: both flags come off together by default. A response status can't be read from a frame.
+- `apps/board/tests/chat-read.test.ts`: one word changed (the note's "3.5 MB"), in the other agent's file.
+- At 3.5 MB a dense PNG page steps down further: a heavy page came out near 1100 px. A scan's fine print may suffer; it stays a PNG by the ruling. F9's A0 poster is no better.
+- Fitting a JPEG source now happens more often, and the agent sees the copy, not the original: right by the measurement, but worth a look at quality in the live look.
+
 ## On Completion
 
 Notes; your row in TASK-STATUS.md; one LOG line (`[board-app] PAGES_01: …` → this file, one line ending in a newline); the Return Contract with `REQUESTS` for anything outside your files.

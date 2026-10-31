@@ -279,7 +279,7 @@ test('a PDF\'s pages go through the operation; the prompt names a folder and a c
   const agent = await h.join('Pages agent');
   await h.fails('attach_chat_file', { body: { name: 'x', type: '', data: PNG, of: { path: file.path } } }, 403, 'forbidden', agent.client);
   const dir = saved.file.path.slice(0, saved.file.path.lastIndexOf('/'));
-  const told = filesBlock({ files: [file], beside: { [file.path]: { kind: 'pages', folder: dir, first: 'page-001-of-040.png', last: 'page-001-of-040.png', saved: 1, total: 40 } } }).split('\n');
+  const told = filesBlock({ files: [file], beside: { [file.path]: { kind: 'pages', folder: dir, first: 'page-001-of-040.png', last: 'page-001-of-040.png', saved: 1, total: 40, blank: [] } } }).split('\n');
   assert.equal(told[1], file.path);
   assert.equal(told[2], `  Its pages as pictures, 1 of 40: ${dir}/page-001-of-040.png to page-001-of-040.png`);
   assert.match(told[3]!, /^Open the pictures named under a file/);

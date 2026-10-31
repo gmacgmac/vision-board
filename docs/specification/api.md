@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-31 (a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1565,21 +1565,27 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `info.version` becomes 1.33.0. The standalone
     server's, beside the chat, not the engine's: attachments are its host's (D-068 ruling 6). `path` must pass
     `attachedFile` (165), which also takes a file inside a plain folder of the saved shape, each further step a name with no
-    leading dot and no link at any step (`INSIDE`); only `saveBeside` makes such folders, as the agent can't write there. The
+    leading dot and no link at any step (`INSIDE`); only `saveBeside` and `saveCopy` make such folders, unless the person says yes to a command the rules can't judge (`mkdir`, `unzip -o -d`): the agent's file tools can't write there, and a link is refused either way. The
     kind goes by the file's extension (`KINDS`), and then the reader checks what it really is. **Answers**, each with
     `untrusted` (`attachedFilesAreUntrusted`): `workbook`, `sheet`, `document`, `folder`
     (`api/read-attachment-response`). Anything saved goes in a new folder beside the file, by `mkdir`, so nothing is
     written over or through, and every step's name is the board's own (`attachmentName`), a taken one numbered.
+    `info.version` becomes 1.36.0 (VERIFY_01 F2-F9). **What it reaches**: Word's numbers from `w:start`, `w:numFmt` and `w:lvlText`, headings too
+    (`docx-numbering.ts` `readNumbering`); a drawing stands as a marker with its words, links, titles and stored figures (`ooxml-drawing.ts`), an EMF or an
+    embedded object named as not seen, and `note` says each kind (`foundNotes`). Excel's defined names and external links come with the list, a sheet's pictures
+    saved by the list, its comments and drawings with a range (`xlsx-parts.ts`). **Size**: one answer is held to `LIMITS.answerChars`: a Word file's rest goes
+    in `document.md` beside it (`wholeText`), and `cut.next` (with `cut.then` when it only finishes a row) always moves on (`goingOn`). A sheet's XML is read as a
+    stream, so a big one can't hide the list; `scanBytes` says how much is counted for it, and a sheet past that has `counted: false`.
     **Refusals**: `invalid` at `/path`, `/sheet` or `/range`, in `refusedBecause`'s words, with no text from the file, and
     nothing is left; too many reads at once (`READS_AT_ONCE`), `conflict`; the flag off, `not-found`. The reader runs in a
     worker (`chat-read.ts` `inWorker`) with no environment, stopped at `READ_DEADLINE_MS` or when the caller goes
     away. Held by `apps/board/tests/chat-read.test.ts`, `api-read-attachment.test.ts`, `packages/documents/tests/`.
 168. **`attach_chat_file` `of`** (D-071): a picture the page made of a file already attached. `openapi.json` `info.version` becomes
-    1.34.0. `{ path, page, pages }` for a PDF's page, `{ path }` for a picture's fitted copy; `name` and `type` are not used. The server
-    (`chat-files.ts` `saveCopy`) names it, `<n>-<stem>-pages/page-001-of-040.png` or `<n>-<stem>-fitted/fitted.png|jpg`,
+    1.34.0, and with `blank` 1.35.0. `{ path, page, pages, blank? }` for a PDF's page, `{ path }` for a picture's fitted copy; `name` and `type` are not used. The server
+    (`chat-files.ts` `saveCopy`) names it, `<n>-<stem>-pages/page-001-of-040.png` (`page-003-of-040-blank.png` when it has text and drew nothing) or `<n>-<stem>-fitted/fitted.png|jpg`,
     beside the file, by a plain `mkdir` and `wx`. **Refusals**: `of.path` not itself an attached file (not one inside a folder), `invalid` at `/of/path`; a page past
-    `pages`, at `/of/page`; not a PNG (a page) or a PNG or JPEG (a copy), at `/data`; over `PICTURE_BYTES` (5 MB), `too-large`; saved already, or a link where its folder goes,
+    `pages`, at `/of/page`; not a PNG (a page) or a PNG or JPEG (a copy), at `/data`; over `PICTURE_BYTES` (`#format`, 3.5 MB, measured live on Kiro: a 4.3 MB PNG rejected, a 3.5 MB one seen), `too-large`; saved already, or a link where its folder goes,
     `conflict`; the `readAttachment` flag off, `not-found`. A copy takes no place among a message's 10 files: `send_chat` names only the original, and when the message goes
-    `checked` reads what is beside each file (`besideOf`), so the prompt (`filesBlock`) says only what is saved: one line a file, `Its pages as pictures, 30 of 40: <folder>/page-001-of-040.png to page-030-of-040.png`
+    `checked` reads what is beside each file (`besideOf`), so the prompt (`filesBlock`) says only what is saved: one line a file, `Its pages as pictures, 30 of 40: <folder>/page-001-of-040.png to page-030-of-040.png`, with `pagesDrewNothing` under it for any `-blank` page,
     or `A copy that fits: <path>`, then `openThesePictures`, then the untrusted line. **The frame**: `GET /pdf-frame` (`pdf-frame.ts`), not an operation: the built script inside the page, its policy naming it by hash,
-    `sandbox allow-scripts`, `default-src 'none'`, `connect-src 'none'`, no `unsafe-eval`; 404 with the flag off, with that policy's shape. Held by `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `pdf-pages.test.ts`, `tests/pages/chat-attach-pages.spec.ts`.
+    `sandbox allow-scripts`, `default-src 'none'`, `connect-src 'none'`, `wasm-unsafe-eval` for the image decoders inside it, no `unsafe-eval`; 404 with the flag off, with that policy's shape. Held by `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `pdf-pages.test.ts`, and `tests/pages/chat-attach-pages.spec.ts` on the headless shell, its `@full-build` tests also on each full build found.

@@ -203,7 +203,7 @@ test('F5, D-069 ruling 3: the board keeps attachments out of the project\'s git,
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
-const copy = (bytes: Buffer, of: { path: string; page?: number; pages?: number }) => ({ data: bytes.toString('base64'), of });
+const copy = (bytes: Buffer, of: { path: string; page?: number; pages?: number; blank?: boolean }) => ({ data: bytes.toString('base64'), of });
 const code = (run: () => unknown, want: string) => assert.throws(run, (e: { code?: string }) => e.code === want, want);
 
 test('a page goes in a folder beside its PDF, named by the server, read back by `attachedFile`, and counted from the disk', () => {
@@ -214,13 +214,23 @@ test('a page goes in a folder beside its PDF, named by the server, read back by 
   assert.deepEqual(one, { name: 'page-001-of-040.png', path: `.visionboard/attachments/${DAY}/1-design-pages/page-001-of-040.png`, size: PNG.length });
   assert.equal(attachedFile(folder, one.path)?.size, PNG.length);
   saveCopy(folder, copy(PNG, { path: pdf, page: 2, pages: 40 }));
-  assert.deepEqual(besideOf(folder, pdf), { kind: 'pages', folder: `.visionboard/attachments/${DAY}/1-design-pages`, first: 'page-001-of-040.png', last: 'page-002-of-040.png', saved: 2, total: 40 });
+  assert.deepEqual(besideOf(folder, pdf), { kind: 'pages', folder: `.visionboard/attachments/${DAY}/1-design-pages`, first: 'page-001-of-040.png', last: 'page-002-of-040.png', saved: 2, total: 40, blank: [] });
   code(() => saveCopy(folder, copy(PNG, { path: pdf, page: 1, pages: 40 })), 'conflict');
   assert.equal(saveAttachment(folder, input('next.txt'), NOW).path, `.visionboard/attachments/${DAY}/2-next.txt`, 'the folder takes no number of its own');
   const message: { files: AttachedFile[]; beside?: Record<string, Beside> } = { files: [{ name: 'design.pdf', path: pdf, size: 5 }] };
   const { msg } = checked(folder, message);
   assert.equal(msg.beside?.[pdf]?.kind, 'pages');
   assert.deepEqual(Object.keys(msg.files![0]!).sort(), ['name', 'path', 'size'], 'nothing more goes on the message\'s file');
+});
+
+test('a page that drew nothing says so in its name, which the prompt\'s line comes from', () => {
+  const { folder } = folders();
+  const { path: pdf } = saveAttachment(folder, input('a.pdf'), NOW);
+  saveCopy(folder, copy(PNG, { path: pdf, page: 1, pages: 40 }));
+  const blank = saveCopy(folder, copy(PNG, { path: pdf, page: 3, pages: 40, blank: true }));
+  assert.equal(blank.name, 'page-003-of-040-blank.png');
+  assert.ok(attachedFile(folder, blank.path));
+  assert.deepEqual(besideOf(folder, pdf), { kind: 'pages', folder: `.visionboard/attachments/${DAY}/1-a-pages`, first: 'page-001-of-040.png', last: 'page-003-of-040-blank.png', saved: 2, total: 40, blank: [3] });
 });
 
 test('a fitted copy: a PNG or a JPEG, one, beside the picture; the longest name still passes', () => {
@@ -234,7 +244,7 @@ test('a fitted copy: a PNG or a JPEG, one, beside the picture; the longest name 
   assert.match(saveCopy(folder, copy(PNG, { path: other })).path, /2-b-fitted\/fitted\.png$/);
 });
 
-test('a copy is refused unless what it came from is an attached file itself, and it is the picture it says, within 5 MB', () => {
+test('a copy is refused unless what it came from is an attached file itself, and it is the picture it says, within the cap', () => {
   const { folder, outside } = folders();
   const { path: pdf } = saveAttachment(folder, input('a.pdf'), NOW);
   const { path: page } = saveCopy(folder, copy(PNG, { path: pdf, page: 1, pages: 1 }));

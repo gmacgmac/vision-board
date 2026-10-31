@@ -982,6 +982,7 @@ type ChatFileRequest = {
     path: string;
     page?: number;
     pages?: number;
+    blank?: boolean;
   };
 };
 type ChatFileResponse = {
@@ -997,15 +998,39 @@ type ReadAttachmentResponseWorkbook = {
   kind: "workbook";
   untrusted: string;
   note?: string;
+  folder?: string;
+  pictures?: ReadAttachmentResponseSavedFile[];
+  names?: {
+    name: string;
+    refersTo: string;
+    sheet?: string;
+    hidden?: true;
+  }[];
+  links?: {
+    index: number;
+    file?: string;
+    sheets: string[];
+  }[];
   sheets: {
     name: string;
     hidden: boolean;
-    rows: number;
-    columns: number;
-    cells: number;
-    formulas: number;
+    counted?: false;
+    rows?: number;
+    columns?: number;
+    cells?: number;
+    formulas?: number;
     used?: string;
+    pictures?: number;
+    charts?: number;
+    diagrams?: number;
+    shapes?: number;
+    comments?: number;
   }[];
+};
+type ReadAttachmentResponseSavedFile = {
+  path: string;
+  size: number;
+  from?: string;
 };
 type ReadAttachmentResponseSheet = {
   kind: "sheet";
@@ -1014,16 +1039,30 @@ type ReadAttachmentResponseSheet = {
   sheet: string;
   range: string;
   merged: string[];
+  comments?: {
+    address: string;
+    text: string;
+  }[];
+  drawings?: {
+    kind: "picture" | "chart" | "diagram" | "shapes";
+    at?: string;
+    text?: string;
+    file?: string;
+    unseeable?: true;
+  }[];
   cut?: {
     shown: number;
     next: string;
+    then?: string;
   };
   cells: {
     address: string;
-    type: "number" | "text" | "boolean" | "date" | "error";
+    type: "number" | "text" | "boolean" | "date" | "error" | "empty";
     value: string | number | boolean | null;
     formula?: string;
     serial?: number;
+    format?: string;
+    hidden?: true;
     truncated?: true;
     merged?: string;
   }[];
@@ -1033,13 +1072,9 @@ type ReadAttachmentResponseDocument = {
   untrusted: string;
   note?: string;
   markdown: string;
+  wholeText?: string;
   folder?: string;
   pictures: ReadAttachmentResponseSavedFile[];
-};
-type ReadAttachmentResponseSavedFile = {
-  path: string;
-  size: number;
-  from?: string;
 };
 type ReadAttachmentResponseFolder = {
   kind: "folder";

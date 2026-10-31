@@ -4,11 +4,12 @@
 // is special (`.env`, `CON`). Every step from the data folder down must be a plain folder, never a
 // link, so a file's real path is the path written. A path a page sends back is believed only when
 // `attachedFile`, the one check, finds a file of that exact shape there, or inside a plain folder of
-// that shape, which only the board makes (`saveBeside`, `saveCopy`, D-071). The board never serves these
+// that shape, which the board makes (`saveBeside`, `saveCopy`, D-071); the agent's file tools can't, a command the rules can't judge asks, and a link is refused either way. The board never serves these
 // files: no route reads them; the agent does, with its own tools (`ACCESS_RULES`). They stay out of the
 // project's git: the board's own `.gitignore` names the folder (D-069 ruling 3).
 import fs from 'node:fs';
 import path from 'node:path';
+import { PICTURE_BYTES } from '#format';
 import { ignoreInGit } from './agents.ts';
 import { writeFileAtomic } from './atomic-file.ts';
 import { KIB } from './body.ts';
@@ -35,11 +36,10 @@ export const ATTACHMENT_BYTES = 10 * KIB * KIB;
 /** `attach_chat_file`'s body limit: that file as base64, and room for its name and type. */
 export const ATTACHMENT_BODY_BYTES = Math.ceil(ATTACHMENT_BYTES / 3) * 4 + 4 * KIB;
 
-/** The largest picture the agent's provider took when measured, and the most a copy may be (D-071). */
-export const PICTURE_BYTES = 5 * KIB * KIB;
+export { PICTURE_BYTES };
 const PAGES_SUFFIX = '-pages';
 const FITTED_SUFFIX = '-fitted';
-const PAGE_FILE = /^page-(\d{3})-of-(\d+)\.png$/;
+const PAGE_FILE = /^page-(\d{3})-of-(\d+)(-blank)?\.png$/;
 const FITTED_FILE = /^fitted\.(?:png|jpg)$/;
 const PNG_START = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const JPEG_START = [0xff, 0xd8, 0xff];
@@ -172,8 +172,8 @@ export function checked<M extends { files?: AttachedFile[]; beside?: Record<stri
 /** `text`, then the line `checked` gave; the line alone when the message has nothing else to say. */
 export const withSaid = (text: string, line: string | undefined, alone = false): string => (alone && line ? line : [text, line].filter(Boolean).join('\n\n'));
 
-/** What the page made of an attached file, by what is on disk now: a PDF's pages (`first` to `last`, `saved` of `total`), or a picture's fitted copy. */
-export type Beside = { kind: 'pages'; folder: string; first: string; last: string; saved: number; total: number } | { kind: 'fitted'; path: string };
+/** What the page made of an attached file, by what is on disk now: a PDF's pages (`first` to `last`, `saved` of `total`, `blank`: those with text that drew nothing), or a picture's fitted copy. */
+export type Beside = { kind: 'pages'; folder: string; first: string; last: string; saved: number; total: number; blank: number[] } | { kind: 'fitted'; path: string };
 
 const startsWith = (bytes: Uint8Array, start: number[]) => start.every((b, i) => bytes[i] === b);
 
@@ -189,8 +189,8 @@ const notACopy = (pointer: string, detail: string) => problem('invalid', serverC
  * A picture the page made of the attached file `of.path`, a PDF's page or a fitted copy, in a folder beside it. The page checked it
  * when the sandboxed frame handed it over, and it is checked again here. The server names it, nothing is written over anything, and no step is a link.
  */
-export function saveCopy(folder: string, input: { data: string; of: { path: string; page?: number | undefined; pages?: number | undefined } }): AttachedFile {
-  const { path: rel, page, pages } = input.of;
+export function saveCopy(folder: string, input: { data: string; of: { path: string; page?: number | undefined; pages?: number | undefined; blank?: boolean | undefined } }): AttachedFile {
+  const { path: rel, page, pages, blank } = input.of;
   const bytes = decoded(input.data);
   if (bytes.length > PICTURE_BYTES) throw problem('too-large', serverChatWords.thisCopyIsOverThe);
   if (!attachedFile(folder, rel) || rel.split('/').length !== 4) throw notACopy('/of/path', serverChatWords.thisIsNotAFile);
@@ -201,7 +201,7 @@ export function saveCopy(folder: string, input: { data: string; of: { path: stri
   const at = path.join(folder, dir);
   try { fs.mkdirSync(at, { mode: 0o700 }); } catch { /* there already, for the page before: the check below says what it is */ }
   if (!plain(at, 'folder')) throw problem('conflict', serverChatWords.theNewFolderCouldNot);
-  const name = page === undefined ? `fitted.${png ? 'png' : 'jpg'}` : `page-${String(page).padStart(3, '0')}-of-${String(pages).padStart(3, '0')}.png`;
+  const name = page === undefined ? `fitted.${png ? 'png' : 'jpg'}` : `page-${String(page).padStart(3, '0')}-of-${String(pages).padStart(3, '0')}${blank ? '-blank' : ''}.png`;
   try { fs.writeFileSync(path.join(at, name), bytes, { flag: 'wx', mode: 0o600 }); } catch { throw problem('conflict', serverChatWords.thisCopyIsAlreadySaved); }
   return { name, path: `${dir}/${name}`, size: bytes.length };
 }
@@ -216,7 +216,7 @@ export function besideOf(folder: string, rel: string): Beside | undefined {
   const dir = copiesFolder(rel, PAGES_SUFFIX);
   const saved = plainIn(dir, PAGE_FILE);
   const [first, last] = [saved[0], saved[saved.length - 1]];
-  return first && last ? { kind: 'pages', folder: dir, first, last, saved: saved.length, total: Number(PAGE_FILE.exec(first)![2]) } : undefined;
+  return first && last ? { kind: 'pages', folder: dir, first, last, saved: saved.length, total: Number(PAGE_FILE.exec(first)![2]), blank: saved.filter((n) => PAGE_FILE.exec(n)![3]).map((n) => Number(PAGE_FILE.exec(n)![1])) } : undefined;
 }
 
 /** One file `saveBeside` saved: `from` is its name in what it came from, untrusted, when the saved name differs. */

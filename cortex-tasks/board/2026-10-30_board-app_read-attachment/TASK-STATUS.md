@@ -36,8 +36,8 @@ tracker: [M39]
 | 1 | READ_01 | 1 | strong | Security engineer who reviews document parsers — every file is hostile until read, a declared size is a claim until counted, and a parser's hang is as bad as its crash. | [The reader and the tool](./READ_01_reader-and-tool.md) | Completed | port 6100. The handler is the server's beside the chat, not the engine's; off, the tool stays listed and answers `not-found` (request below) |
 | 2 | PAGES_01 | 2 | strong | Browser security engineer who builds sandboxes — code that parses a stranger's file gets no origin, no network and nothing to reach, and whatever it hands back is checked again. | [PDF pages and fitted pictures](./PAGES_01_pdf-pages-and-pictures.md) | Completed | port 6200. The file is read in a worker inside the frame: a frame's `connect-src` does not stop WebRTC (measured: a STUN packet left) |
 | 3 | VERIFY_01 | 3 | strong | Solutions architect new to this project, handed real customer documents and the board — does the agent actually see the diagram, the formula, the table, and does a hostile file reach anything? | [Verification](./VERIFY_01_read-attachment-verification.md) | Completed | port 6300. [Findings](./VERIFY_01_findings.md): blocking F1 (full Chromium build: a race, no PDF pages or copies), F2 (diagrams vanish unsaid), F3 (Word numbers). A hostile file reached nothing |
-| 4 | FIX_PAGES | 4 | strong | Browser security engineer who builds sandboxes (PAGES_01's). | F1, the picture cap, a blank page told to the agent; `PAGES_01` Run 3 | Pending | port 6200 |
-| 5 | FIX_DOCS | 4 | strong | Security engineer who reviews document parsers (READ_01's). | F2 to F9; `READ_01` Run 2 | Pending | port 6100 |
+| 4 | FIX_PAGES | 4 | strong | Browser security engineer who builds sandboxes (PAGES_01's). | F1, the picture cap, a blank page told to the agent; `PAGES_01` Run 3 | Completed | port 6200 |
+| 5 | FIX_DOCS | 4 | strong | Security engineer who reviews document parsers (READ_01's). | F2 to F9; `READ_01` Run 2 | Completed | port 6100 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -62,6 +62,8 @@ tracker: [M39]
 ## Implementation Notes
 
 ### Wave gates
+- Run 2: READ_01 (FIX_DOCS): F2-F9: diagrams stand as markers with their words and links, and `note` says what wasn't reached; Word's numbers worked out; Excel's names, links, comments and pictures; one answer under 40,000 characters; `cut.next` moves on; the list survives a big sheet.
+- Run 3: PAGES_01 (FIX_PAGES): a frame gets a real deadline for `ready`, so good PDFs draw on the full builds; `PICTURE_BYTES` 3.5 MB, one constant in `#format`; a blank page in its name and the prompt; `@full-build` tests on each full build found.
 - Run 2: PAGES_01: CMaps and standard fonts inside the frame's script (4.8 MB), a chip note for a page with text that drew nothing, Send waits for a fitted copy, the skill's line (v3.23). Gallery baselines re-taken.
 - Wave 1 (READ_01, audit fixes, chat text 125%): 2078 unit, full page suite green; `host-styles` (M28) failed under load and passed alone, and `chat-attach-gallery` timed out once under load.
 
@@ -83,3 +85,4 @@ tracker: [M39]
 | PAGES_01 | `skills/vision-board/SKILL.md` | Its line naming `pdftotext` for a PDF could say to open the pictures the message names first | Done in Run 2 |
 | PAGES_01 Run 2 | `docs/specification/dependencies.md` | `pdfjs-dist`'s row: its `cmaps/` and `standard_fonts/` are bundled too, with their licences (`standard_fonts/LICENSE_FOXIT`, `LICENSE_LIBERATION`, `cmaps/LICENSE`) | Open |
 | PAGES_01 Run 2 | `docs/decisions.md` | D-071: Send waits for a fitted copy, never for a PDF's pages | Open |
+| PAGES_01 Run 3 | `docs/decisions.md` | D-072 "Chromium is all the suite runs": the headless shell, with `@full-build` tests on full builds. D-071 ruling 3's "5 MB": 3.5 MB, measured. D-069 ruling 4 "the agent cannot write there": a yes to a command the rules can't judge can | Open |

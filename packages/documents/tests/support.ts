@@ -70,7 +70,7 @@ export function xlsx(sheets: Record<string, string>, extra: { hidden?: string[];
   const book = `<workbook ${S}>${extra.pr ?? ''}<sheets>${names.map((n, i) => `<sheet name="${n}" sheetId="${i + 1}"${extra.hidden?.includes(n) ? ' state="hidden"' : ''} r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>`;
   const entries: RawEntry[] = [
     { name: 'xl/workbook.xml', data: book },
-    { name: 'xl/_rels/workbook.xml.rels', data: rels(names.map((_, i) => ({ id: `rId${i + 1}`, target: `worksheets/sheet${i + 1}.xml` }))) },
+    ...(extra.parts?.['xl/_rels/workbook.xml.rels'] ? [] : [{ name: 'xl/_rels/workbook.xml.rels', data: rels(names.map((_, i) => ({ id: `rId${i + 1}`, target: `worksheets/sheet${i + 1}.xml` }))) }]),
     ...names.map((n, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: `<worksheet ${S}>${sheets[n]}</worksheet>` })),
     ...Object.entries(extra.parts ?? {}).map(([name, data]) => ({ name, data })),
   ];

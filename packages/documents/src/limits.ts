@@ -16,15 +16,24 @@ export const LIMITS = {
   xmlDepth: 256,
   xmlNodes: 2_000_000,
   xmlAttributes: 256,
-  /** Word: the Markdown that goes back, the columns of one table, the pictures of one document. */
-  markdownChars: 200_000,
+  /** One answer's text, well under what an agent's tool takes (Claude Code saves text over 50,000 characters to a file). */
+  answerChars: 40_000,
+  /** Word: the whole Markdown made (a host shows `answerChars` of it), the columns of one table, the pictures of one document. */
+  markdownChars: 2_000_000,
   tableColumns: 64,
   pictures: 200,
-  /** Excel: sheets listed, cells and characters in one answer, one cell's text, merged ranges kept, shared strings. */
+  /** A drawing: the things named in one marker, a chart's series and each one's points. */
+  markerItems: 100,
+  chartSeries: 16,
+  chartPoints: 32,
+  /** Excel: sheets listed, a sheet's name, the sheet XML counted for the list, cells in one answer, one cell's text, merged ranges kept, shared strings, names, and a name's or a link's text. */
   sheets: 256,
+  sheetNameChars: 255,
+  scanBytes: 128 * MIB,
   cells: 2000,
-  sheetChars: 256 * 1024,
   cellChars: 8192,
+  definedNames: 500,
+  nameChars: 512,
   mergedRanges: 1000,
   sharedStrings: 2_000_000,
 } as const;

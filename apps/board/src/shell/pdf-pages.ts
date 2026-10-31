@@ -14,17 +14,19 @@ import * as chatWords from './words/chat.ts';
 
 const LIMITS: FrameLimits = { bytes: PICTURE_BYTES, edge: PICTURE_EDGE };
 
-/** How long one step may take (opening, one page, a fit), and all of one file. */
+/** How long a frame may take to say it is ready: a process of its own may start slowly, and its `ready` comes when it comes, before or after its `load`.
+ *  How long one step may take (opening, one page, a fit), and all of one file. */
+export const READY_MS = 15_000;
 export const STEP_MS = 30_000;
 export const FILE_MS = 180_000;
 
 /** One frame: what to ask it, and removing it. */
 export interface FrameLink { send(m: FrameAsk, transfer?: Transferable[]): void; end(): void }
-/** Makes a frame: `heard` gets what its window posts and no other's, `loaded` when its page has loaded. */
-export type MakeFrame = (heard: (data: unknown) => void, loaded: () => void) => FrameLink;
+/** Makes a frame: `heard` gets what its window posts and no other's. */
+export type MakeFrame = (heard: (data: unknown) => void) => FrameLink;
 
 /** A hidden frame with no origin: only its own window's messages are heard, whose sandbox gives them the origin "null". */
-export const browserFrame: MakeFrame = (heard, loaded) => {
+export const browserFrame: MakeFrame = (heard) => {
   const frame = document.createElement('iframe');
   frame.setAttribute('sandbox', 'allow-scripts');
   frame.referrerPolicy = 'no-referrer';
@@ -33,7 +35,6 @@ export const browserFrame: MakeFrame = (heard, loaded) => {
   frame.dataset.vbPdfFrame = '';
   const onMessage = (e: MessageEvent) => { if (e.source === frame.contentWindow && e.origin === 'null') heard(e.data); };
   window.addEventListener('message', onMessage);
-  frame.addEventListener('load', loaded);
   frame.src = PDF_FRAME_PATH;
   document.body.append(frame);
   return {
@@ -48,11 +49,13 @@ export interface CopySide { save(body: AttachFileBody): Promise<unknown>; progre
 /** Start the work on the file saved at `path`; what it returns stops it. None for a file that needs no copy. */
 export type MakeCopies = (file: File, path: string, side: CopySide) => (() => void) | undefined;
 
+interface Times { ready: number; step: number; file: number }
+
 class Stopped extends Error {}
 class Late extends Error {}
 
 /** One frame's conversation: one ask, one checked answer. A deadline or a stop removes the frame at once, and whatever is waiting, or asks next, gets `Late` or `Stopped`. */
-function talkTo(make: MakeFrame, times: { step: number; file: number }) {
+function talkTo(make: MakeFrame, times: Times) {
   let waiting: Awaiting = { for: 'ready' };
   let settle: { take(a: FrameAnswer): void; fail(e: Error): void } | undefined;
   let step: ReturnType<typeof setTimeout> | undefined;
@@ -65,14 +68,14 @@ function talkTo(make: MakeFrame, times: { step: number; file: number }) {
     settle = undefined;
     s.take(answer);
   };
-  const expect = (next: Awaiting) => new Promise<FrameAnswer>((take, reject) => {
+  const expect = (next: Awaiting, ms = times.step) => new Promise<FrameAnswer>((take, reject) => {
     if (over) return reject(over);
     waiting = next;
     settle = { take, fail: reject };
-    step = setTimeout(() => finish(new Late()), times.step);
+    step = setTimeout(() => finish(new Late()), ms);
   });
-  const ready = expect({ for: 'ready' });
-  const link = make(heard, () => setTimeout(() => { if (waiting.for === 'ready' && settle) finish(new Late()); })); // its page came with no script that ran
+  const ready = expect({ for: 'ready' }, times.ready);
+  const link = make(heard);
   const whole = setTimeout(() => finish(new Late()), times.file);
   function finish(why: Error) {
     over ??= why;
@@ -111,7 +114,7 @@ async function readPages(talk: Talk, file: File, path: string, side: CopySide): 
       side.progress({ doing: chatWords.readingPages(page, want) });
       const got = await talk.ask({ kind: 'page', page }, { for: 'page', page });
       if (got.kind !== 'page') continue;
-      await side.save(await saveBody(`page-${page}.png`, 'image/png', got.png, { path, page, pages: opened.pages }));
+      await side.save(await saveBody(`page-${page}.png`, 'image/png', got.png, { path, page, pages: opened.pages, ...(got.blank && { blank: true }) }));
       saved++;
       if (got.blank) blank++;
     }
@@ -144,7 +147,7 @@ async function fitPicture(talk: Talk, file: File, path: string, side: CopySide):
 }
 
 /** The work for the files a person attaches, one file at a time in each queue, in the order they came: a PDF's, and a picture's, which Send may be waiting for. */
-export function createCopies(make: MakeFrame = browserFrame, times = { step: STEP_MS, file: FILE_MS }): MakeCopies {
+export function createCopies(make: MakeFrame = browserFrame, times: Times = { ready: READY_MS, step: STEP_MS, file: FILE_MS }): MakeCopies {
   const queues = { pdf: Promise.resolve(), picture: Promise.resolve() };
   return (file, path, side) => {
     const kind = isPdf(file) ? 'pdf' : isRaster(file) ? 'picture' : undefined;

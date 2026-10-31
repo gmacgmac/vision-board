@@ -3,11 +3,12 @@
 // written, so nothing is believed until `checkedAnswer` has read it: the shape, the page that was asked for, the
 // size, and that the bytes are the picture they say they are. Pure, with no DOM. The frame's own code
 // imports only the types, so it shares no chunk with the board.
+import { PICTURE_BYTES } from '#format';
 
 /** At most this many pages become pictures (D-071; the schema's `of.page` holds the server to the same). */
 export const PAGES_MAX = 30;
-/** A picture's limits: over either, it gets a fitted copy, and no copy is over them (D-071). */
-export const PICTURE_BYTES = 5 * 1024 * 1024;
+/** A picture's limits: over either, it gets a fitted copy, and no copy is over them (D-071; the bytes, `#format`). */
+export { PICTURE_BYTES };
 export const PICTURE_EDGE = 2000;
 /** The frame's path, held equal to the server's by chat-attach.test.ts. */
 export const PDF_FRAME_PATH = '/pdf-frame';

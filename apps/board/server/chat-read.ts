@@ -6,8 +6,8 @@
 // (D-068 ruling 6), and a host like nclite takes `packages/documents`.
 import path from 'node:path';
 import { Worker } from 'node:worker_threads';
-import type { DocxDocument, ExpandedZip, SheetAnswer, WorkbookSummary } from '#documents';
-import { LIMITS } from '#documents';
+import type { DocxDocument, DocxFound, ExpandedZip, SheetAnswer, WorkbookSummary } from '#documents';
+import { LIMITS, canBeSeen } from '#documents';
 import type { OperationInput, OperationOutput } from '#format';
 import type { SavedFile } from './chat-files.ts';
 import { attachedBytes, attachedFile, PICTURE_BYTES, saveBeside } from './chat-files.ts';
@@ -25,7 +25,13 @@ const WORKER_HEAP_MB = 1024;
 export const FILES_LISTED = 500;
 /** The pictures over the limit named in one answer. */
 const OVER_NAMED = 10;
-const PICTURE = /\.(?:png|jpe?g|gif|webp|bmp|tiff?|avif|heic)$/i;
+/** Files named in one line of a note. */
+const NOTE_NAMES = 10;
+const WHOLE_TEXT_FILE = 'document.md';
+const PDF = /\.pdf$/i;
+/** How deep a saved file's path starts: `.visionboard/attachments/<day>/<n>-<name>`. Past that it came from an archive. */
+const TOP_STEPS = 4;
+const PICTURE = /\.(?:png|jpe?g|gif|webp|bmp|tiff?|avif|heic|emf|wmf|svg)$/i;
 
 type ReadInput = OperationInput<'read_attachment'>['body'];
 type ReadAnswer = OperationOutput<'read_attachment'>;
@@ -78,7 +84,7 @@ function jobFor(folder: string, input: ReadInput): ReadJob {
   const file = attachedFile(folder, input.path);
   if (!file) throw refusal('/path', serverChatWords.thisIsNotAFile);
   const kind = KINDS[path.posix.extname(file.name).toLowerCase()];
-  if (!kind) throw refusal('/path', serverChatWords.useYourOwnReadTool);
+  if (!kind) throw refusal('/path', PDF.test(file.name) && file.path.split('/').length > TOP_STEPS ? serverChatWords.aPdfInAFolder : serverChatWords.useYourOwnReadTool);
   if (kind !== 'xlsx' && input.sheet !== undefined) throw refusal('/sheet', serverChatWords.onlyAnExcelFileHas);
   if (kind !== 'xlsx' && input.range !== undefined) throw refusal('/range', serverChatWords.onlyAnExcelFileHas);
   if (input.range !== undefined && input.sheet === undefined) throw refusal('/range', serverChatWords.aRangeNeedsASheet);
@@ -87,7 +93,7 @@ function jobFor(folder: string, input: ReadInput): ReadJob {
   return { kind, bytes, sheet: input.sheet, range: input.range };
 }
 
-const notes = (...lines: (string | false | undefined)[]) => {
+const notes = (...lines: (string | false | 0 | undefined)[]) => {
   const said = lines.filter(Boolean).join(' ');
   return said ? { note: said } : {};
 };
@@ -98,31 +104,101 @@ function overTheLimit(files: readonly SavedFile[]): string | false {
   return over.length > 0 && serverChatWords.picturesOverTheLimit(over.slice(0, OVER_NAMED), Math.max(0, over.length - OVER_NAMED));
 }
 
+/** What a note says of what the document holds beyond its plain words: nothing vanishes with no word (VERIFY_01 F2). */
+function foundNotes(found: DocxFound): (string | false)[] {
+  const drawn = found.smartArt + found.charts + found.shapes + found.connectors + found.otherDrawings;
+  return [
+    drawn > 0 && serverChatWords.drawingsInTheDocument(found),
+    found.unseeable.length > 0 && serverChatWords.picturesAModelCantBeShown(found.unseeable.slice(0, NOTE_NAMES)),
+    found.embedded.length > 0 && serverChatWords.embeddedNotRead(found.embedded.slice(0, NOTE_NAMES)),
+    found.hiddenRuns > 0 && serverChatWords.hiddenTextInTheDocument(found.hiddenRuns),
+    found.trackedChanges && serverChatWords.trackedChangesInTheDocument,
+  ];
+}
+
+/** The start of `text` within the answer's cap, cut between blocks. */
+function beginning(text: string): string {
+  if (text.length <= LIMITS.answerChars) return text;
+  const block = text.lastIndexOf('\n\n', LIMITS.answerChars);
+  return text.slice(0, block > 0 ? block : LIMITS.answerChars);
+}
+
 function documentAnswer(folder: string, rel: string, read: DocxDocument): ReadAnswer {
-  const pictures = read.pictures.map((p) => ({ path: p.name, bytes: p.bytes }));
-  const saved = pictures.length > 0 ? saveBeside(folder, rel, '-pictures', pictures) : undefined;
+  const markdown = beginning(read.markdown);
+  const long = markdown.length < read.markdown.length;
+  const files = [...read.pictures.map((p) => ({ path: p.name, bytes: p.bytes })), ...(long ? [{ path: WHOLE_TEXT_FILE, bytes: new TextEncoder().encode(read.markdown) }] : [])];
+  const saved = files.length > 0 ? saveBeside(folder, rel, read.pictures.length > 0 ? '-pictures' : '-text', files) : undefined;
+  const pictures = (saved?.files ?? []).filter((f) => !f.path.endsWith(`/${WHOLE_TEXT_FILE}`)).map(({ path: p, size }): SavedFile => ({ path: p, size }));
+  const wholeText = long ? `${saved!.folder}/${WHOLE_TEXT_FILE}` : undefined;
   return {
-    kind: 'document', untrusted: serverChatWords.attachedFilesAreUntrusted, markdown: read.markdown,
-    ...(saved && { folder: saved.folder }), pictures: (saved?.files ?? []).map(({ path: p, size }): SavedFile => ({ path: p, size })),
-    ...notes(read.cut && serverChatWords.theDocumentWasCut, read.notRead.length > 0 && serverChatWords.notReadFromTheDocument(read.notRead), overTheLimit(saved?.files ?? [])),
+    kind: 'document', untrusted: serverChatWords.attachedFilesAreUntrusted, markdown,
+    ...(saved && { folder: saved.folder }), pictures, ...(wholeText !== undefined && { wholeText }),
+    ...notes(
+      wholeText !== undefined && serverChatWords.theDocumentIsLong(markdown.length, read.markdown.length, wholeText), read.cut && serverChatWords.theDocumentWasCut,
+      read.notRead.length > 0 && serverChatWords.notReadFromTheDocument(read.notRead), ...foundNotes(read.found), overTheLimit(pictures),
+    ),
   };
+}
+
+/** As many of `files` as the answer's cap has room for: the agent can list the rest. */
+function listedFiles(files: SavedFile[]): SavedFile[] {
+  let left = LIMITS.answerChars;
+  const out: SavedFile[] = [];
+  for (const f of files.slice(0, FILES_LISTED)) {
+    left -= JSON.stringify(f).length + 1;
+    if (left < 0) break;
+    out.push(f);
+  }
+  return out;
+}
+
+/** What to do with the PDFs and pictures that came out of an archive (VERIFY_01 F5): the page made nothing for them. */
+function archiveNotes(files: readonly SavedFile[]): (string | false)[] {
+  const pdfs = files.filter((f) => PDF.test(f.path)).map((f) => f.path);
+  const pictures = files.filter((f) => PICTURE.test(f.path));
+  const unseeable = pictures.filter((f) => !canBeSeen(f.path)).map((f) => f.path);
+  return [
+    pdfs.length > 0 && serverChatWords.pdfsInTheFolder(pdfs.slice(0, NOTE_NAMES), Math.max(0, pdfs.length - NOTE_NAMES)),
+    pictures.length > unseeable.length && serverChatWords.picturesInTheFolder(pictures.length - unseeable.length),
+    unseeable.length > 0 && serverChatWords.picturesAModelCantBeShown(unseeable.slice(0, NOTE_NAMES)),
+  ];
 }
 
 function folderAnswer(folder: string, rel: string, read: ExpandedZip): ReadAnswer {
   const saved = saveBeside(folder, rel, '', read.files);
+  const files = listedFiles(saved.files);
   return {
-    kind: 'folder', untrusted: serverChatWords.attachedFilesAreUntrusted, folder: saved.folder, count: saved.files.length, files: saved.files.slice(0, FILES_LISTED),
-    ...notes(saved.files.length > FILES_LISTED && serverChatWords.moreFilesThanListed(FILES_LISTED, saved.folder), read.skipped > 0 && serverChatWords.macFilesLeftOut(read.skipped), overTheLimit(saved.files)),
+    kind: 'folder', untrusted: serverChatWords.attachedFilesAreUntrusted, folder: saved.folder, count: saved.files.length, files,
+    ...notes(saved.files.length > files.length && serverChatWords.moreFilesThanListed(files.length, saved.folder), read.skipped > 0 && serverChatWords.macFilesLeftOut(read.skipped), ...archiveNotes(saved.files), overTheLimit(saved.files)),
   };
 }
 
-function workbookAnswer(read: WorkbookSummary): ReadAnswer {
-  return { kind: 'workbook', untrusted: serverChatWords.attachedFilesAreUntrusted, sheets: read.sheets, ...notes(read.cut && serverChatWords.moreSheetsThanListed(read.sheets.length)) };
+function workbookAnswer(folder: string, rel: string, read: WorkbookSummary): ReadAnswer {
+  const saved = read.pictures.length > 0 ? saveBeside(folder, rel, '-pictures', read.pictures.map((p) => ({ path: p.name, bytes: p.bytes }))) : undefined;
+  const pictures = (saved?.files ?? []).map(({ path: p, size }): SavedFile => ({ path: p, size }));
+  const uncounted = read.sheets.filter((s) => s.counted === false).map((s) => s.name);
+  const unseeable = read.pictures.map((p) => p.name).filter((n) => !canBeSeen(n));
+  return {
+    kind: 'workbook', untrusted: serverChatWords.attachedFilesAreUntrusted, sheets: read.sheets,
+    ...(saved && { folder: saved.folder, pictures }), ...(read.names.length > 0 && { names: read.names }), ...(read.links.length > 0 && { links: read.links }),
+    ...notes(
+      read.cut && serverChatWords.moreSheetsThanListed(read.sheets.length), uncounted.length > 0 && serverChatWords.sheetsNotCounted(uncounted.slice(0, NOTE_NAMES)),
+      read.sheets.some((s) => s.pictures || s.charts || s.diagrams || s.shapes) && serverChatWords.sheetsHoldDrawings, saved && serverChatWords.sheetPicturesSavedIn(saved.folder),
+      unseeable.length > 0 && serverChatWords.picturesAModelCantBeShown(unseeable.slice(0, NOTE_NAMES)), read.namesCut && serverChatWords.namesWereCut(read.names.length), overTheLimit(pictures),
+    ),
+  };
 }
 
-const sheetAnswer = ({ kind, ...read }: SheetAnswer): ReadAnswer => ({
-  kind, untrusted: serverChatWords.attachedFilesAreUntrusted, ...read, ...notes(read.cut && serverChatWords.theCellsWereCut(read.cut.shown, read.cut.next)),
-});
+const sheetAnswer = ({ kind, uncalculated, comments, drawings, ...read }: SheetAnswer): ReadAnswer => {
+  const hidden = read.cells.filter((c) => c.hidden).length;
+  return {
+    kind, untrusted: serverChatWords.attachedFilesAreUntrusted, ...read, ...(comments.length > 0 && { comments }), ...(drawings.length > 0 && { drawings }),
+    ...notes(
+      read.cut && serverChatWords.theCellsWereCut(read.cut.shown, read.cut.next, read.cut.then), drawings.length > 0 && serverChatWords.drawingsOnThisSheet,
+      uncalculated > 0 && serverChatWords.uncalculatedCells(uncalculated), hidden > 0 && serverChatWords.hiddenCellsHere(hidden),
+    ),
+  };
+};
 
 /** Run `read_attachment` for the board folder `folder`. */
 export async function readAttachment(folder: string, input: ReadInput, options: ReadOptions = {}): Promise<ReadAnswer> {
@@ -130,5 +206,5 @@ export async function readAttachment(folder: string, input: ReadInput, options: 
   if (job.kind === 'docx') return documentAnswer(folder, input.path, await inWorker<DocxDocument>(job, options));
   if (job.kind === 'zip') return folderAnswer(folder, input.path, await inWorker<ExpandedZip>(job, options));
   const read = await inWorker<WorkbookSummary | SheetAnswer>(job, options);
-  return read.kind === 'workbook' ? workbookAnswer(read) : sheetAnswer(read);
+  return read.kind === 'workbook' ? workbookAnswer(folder, input.path, read) : sheetAnswer(read);
 }

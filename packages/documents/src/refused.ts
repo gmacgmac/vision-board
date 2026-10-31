@@ -3,7 +3,7 @@
 // from the file, since a name in a hostile archive is a place to put words for the agent to read.
 export type RefusalCode =
   | 'notZip' | 'malformed' | 'zip64' | 'encrypted' | 'method' | 'tooMany' | 'tooBig' | 'badName' | 'link' | 'bomb'
-  | 'xmlDoctype' | 'xmlMalformed' | 'xmlLimit' | 'notDocument' | 'noSheet' | 'badRange';
+  | 'xmlDoctype' | 'xmlMalformed' | 'xmlLimit' | 'notDocument' | 'protected' | 'noSheet' | 'badRange';
 
 export class DocumentRefused extends Error {
   readonly code: RefusalCode;

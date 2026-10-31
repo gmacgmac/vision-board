@@ -83,9 +83,9 @@ test('what gets a frame: a PDF by type or name; a picture a browser can draw, no
 /** A frame the test answers by hand. */
 function fakeFrame() {
   const asks: FrameAsk[] = [];
-  const state = { ended: 0, heard: (_: unknown) => {}, loaded: () => {} };
-  const make: MakeFrame = (heard, loaded) => {
-    Object.assign(state, { heard, loaded });
+  const state = { ended: 0, heard: (_: unknown) => {} };
+  const make: MakeFrame = (heard) => {
+    Object.assign(state, { heard });
     return { send: (m) => asks.push(m), end() { state.ended++; } };
   };
   return { asks, state, make };
@@ -93,7 +93,7 @@ function fakeFrame() {
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
 const until = async (done: () => boolean) => { for (let i = 0; i < 200 && !done(); i++) await tick(1); assert.ok(done()); };
 
-function run(file: File, times = { step: 1000, file: 5000 }) {
+function run(file: File, times = { ready: 1000, step: 1000, file: 5000 }) {
   const frame = fakeFrame();
   const saves: { of: unknown }[] = [];
   const said: CopyProgress[] = [];
@@ -130,8 +130,19 @@ test('pages go one at a time; a bad answer while one is waited for is dropped, a
   assert.equal(f.said.at(-1)!.doing, undefined);
 });
 
-test('a frame that never answers is removed at the deadline, and the chip says how far it got; one with no script at its load', async () => {
-  const f = run(pdfFile(), { step: 20, file: 5000 });
+test('a frame in its own process says it is ready when it can: a late ready is not a missing one', async () => {
+  const f = run(pdfFile(), { ready: 500, step: 20, file: 5000 });
+  await until(() => f.said.length > 0);
+  await tick(60); // past a step, within its own deadline
+  assert.equal(f.state.ended, 0, 'still there');
+  f.state.heard({ kind: 'ready' });
+  await until(() => f.asks.length === 1);
+  assert.equal(f.asks[0]!.kind, 'open');
+  f.stop();
+});
+
+test('a frame that never answers is removed at the deadline, and the chip says how far it got; one that is never ready, at its own', async () => {
+  const f = run(pdfFile(), { ready: 1000, step: 20, file: 5000 });
   await until(() => f.said.length > 0);
   await tick(1);
   f.state.heard({ kind: 'ready' });
@@ -141,10 +152,7 @@ test('a frame that never answers is removed at the deadline, and the chip says h
   f.state.heard({ kind: 'page', page: 1, png: png(10, 10) });
   await until(() => f.state.ended > 0); // page 2 never comes
   await until(() => /Stopped at 1 of 3/.test(f.said.at(-1)?.note ?? ''));
-  const none = run(pdfFile());
-  await until(() => none.said.length > 0);
-  await tick(1);
-  none.state.loaded();
+  const none = run(pdfFile(), { ready: 20, step: 1000, file: 5000 });
   await until(() => none.state.ended > 0);
   assert.match(none.said.at(-1)!.note!, /can't be read here/);
 });
@@ -202,7 +210,7 @@ test('over the limits: a copy goes with `of` alone, and Send frees after it is s
   assert.deepEqual(big.saves[0]!.of, { path: '.visionboard/attachments/2026-10-30/1-a.pdf' });
   await until(() => big.said.at(-1)!.holds === undefined);
   assert.deepEqual(big.said.at(-1), {});
-  const late = run(new File([new Uint8Array(PICTURE_BYTES + 1)], 'a.png', { type: 'image/png' }), { step: 20, file: 5000 });
+  const late = run(new File([new Uint8Array(PICTURE_BYTES + 1)], 'a.png', { type: 'image/png' }), { ready: 20, step: 20, file: 5000 });
   assert.ok(late.said[0]!.holds);
   await until(() => late.state.ended > 0);
   await until(() => late.said.at(-1)!.holds === undefined);
@@ -219,8 +227,8 @@ test('over the limits: a copy goes with `of` alone, and Send frees after it is s
 
 test('a PDF never holds Send; a page with text that drew nothing is saved, and the chip says the pictures may be incomplete; a picture does not wait behind a PDF', async () => {
   const frames: ReturnType<typeof fakeFrame>[] = [];
-  const make: MakeFrame = (heard, loaded) => { const f = fakeFrame(); frames.push(f); return f.make(heard, loaded); };
-  const copies = createCopies(make, { step: 1000, file: 5000 });
+  const make: MakeFrame = (heard) => { const f = fakeFrame(); frames.push(f); return f.make(heard); };
+  const copies = createCopies(make, { ready: 1000, step: 1000, file: 5000 });
   const said: CopyProgress[] = [];
   const saved: unknown[] = [];
   const side = { save: (b: { of?: unknown }) => { saved.push(b.of); return Promise.resolve(); }, progress: (p: CopyProgress) => said.push(p) };

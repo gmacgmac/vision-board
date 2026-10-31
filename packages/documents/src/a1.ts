@@ -29,8 +29,9 @@ export function readAddress(text: string): Cell | undefined {
 
 /** `B2:F20` or `B2`, either way round; refused when it is neither. */
 export function readRange(text: string): Range {
-  const [a, b, ...rest] = text.split(':').map(readAddress);
-  if (!a || rest.length > 0 || (text.includes(':') && !b)) return refuse('badRange');
+  const plain = text.replace(/\$/g, ''); // as formulas write it: `$F$20`
+  const [a, b, ...rest] = plain.split(':').map(readAddress);
+  if (!a || rest.length > 0 || (plain.includes(':') && !b)) return refuse('badRange');
   const other = b ?? a;
   return {
     from: { col: Math.min(a.col, other.col), row: Math.min(a.row, other.row) },

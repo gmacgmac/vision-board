@@ -1017,3 +1017,13 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: a claim of "no network" has to be measured. A person who pastes a big picture and presses Enter must not send the one thing the provider will reject.
 - **Not established**: Chromium is all the suite runs. Safari and Firefox are not tested; a frame that doesn't work says "can't be read here" on the chip, and the file still goes.
 - **Task**: cortex-tasks/board/2026-10-30_board-app_read-attachment/TASK-STATUS.md (PAGES_01)
+
+## D-073 Corrections after reading attachments was checked (amends D-069, D-071, D-072)
+- **Date**: 2026-10-31 · **Status**: Accepted (the rulings the maintainer delegated 2026-10-30, to decide by the principles and report back) · **From**: read-attachment VERIFY_01
+- **Decision**:
+  1. A picture's cap is 3.5 MB, not the 5 MB of D-071. Measured live on Kiro CLI 2.35.2 (v2, Sonnet 5.5): 4.3 MB is rejected by the provider, 3.5 MB is seen. The provider's 5 MB is on the base64 size. `PICTURE_BYTES`, one constant in `#format`.
+  2. D-072's "Chromium is all the suite runs" means its headless shell, which hid a real fault: a frame in its own process says it is ready after `load`. Tests tagged `@full-build` also run on any full Chromium build installed, and the run says which it found. Google Chrome, Firefox and Windows are not established.
+  3. D-069's "the agent cannot write there" holds for what the rules recognise. A command they can't judge asks, and a yes to it could.
+  4. A diagram never vanishes with no word. Where a Word or Excel file holds one, the agent gets a marker, the words in its shapes and SmartArt, what connectors join, a chart's kind, title, series and figures, and a `note`. Its look and layout are not read, and arrow direction is reported as drawn.
+- **Why**: each was found by checking rather than by the first build. The real use is customers' architecture documents, where a silently missing diagram gives a confident wrong answer.
+- **Task**: cortex-tasks/board/2026-10-30_board-app_read-attachment/TASK-STATUS.md (VERIFY_01, FIX_PAGES, FIX_DOCS)

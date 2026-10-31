@@ -30,20 +30,57 @@
         "kind": {"const": "workbook", "description": "An Excel file's sheets."},
         "untrusted": {"$ref": "https://vision-board.invalid/schema/api/read-attachment-response.schema.json#/$defs/untrusted"},
         "note": {"$ref": "https://vision-board.invalid/schema/api/read-attachment-response.schema.json#/$defs/note"},
+        "folder": {"type": "string", "description": "The new folder the pictures on its sheets were saved in; left out when it has none."},
+        "pictures": {"type": "array", "items": {"$ref": "https://vision-board.invalid/schema/api/read-attachment-response.schema.json#/$defs/savedFile"}, "description": "Those pictures; left out when none. A sheet's `drawings` says which is where."},
+        "names": {
+          "type": "array",
+          "description": "The defined names a formula can use, each with what it refers to; left out when none.",
+          "items": {
+            "type": "object",
+            "required": ["name", "refersTo"],
+            "properties": {
+              "name": {"type": "string", "description": "The name, such as `TaxRate`."},
+              "refersTo": {"type": "string", "description": "What it stands for, such as `Rates!$B$2`."},
+              "sheet": {"type": "string", "description": "The one sheet it belongs to; left out when it is the workbook's."},
+              "hidden": {"const": true, "description": "The person doesn't see it in Excel's list; left out otherwise."}
+            },
+            "unevaluatedProperties": false
+          }
+        },
+        "links": {
+          "type": "array",
+          "description": "The other workbooks a formula's `[1]` means; left out when none. Never opened.",
+          "items": {
+            "type": "object",
+            "required": ["index", "sheets"],
+            "properties": {
+              "index": {"type": "integer", "minimum": 1, "description": "The number a formula writes in brackets."},
+              "file": {"type": "string", "description": "Where the workbook says it is, untrusted; left out when it doesn't."},
+              "sheets": {"type": "array", "items": {"type": "string"}, "description": "Its sheets, as the workbook recorded them."}
+            },
+            "unevaluatedProperties": false
+          }
+        },
         "sheets": {
           "type": "array",
           "description": "The sheets in order, with sizes counted from their cells.",
           "items": {
             "type": "object",
-            "required": ["name", "hidden", "rows", "columns", "cells", "formulas"],
+            "required": ["name", "hidden"],
             "properties": {
               "name": {"type": "string", "description": "The sheet's name, untrusted."},
               "hidden": {"type": "boolean", "description": "Whether the person doesn't see it when they open the file."},
+              "counted": {"const": false, "description": "Its sizes aren't here: too much to count for a list, or damaged. A `range` may still read it. Left out when counted."},
               "rows": {"type": "integer", "minimum": 0, "description": "Rows with a cell that holds something."},
               "columns": {"type": "integer", "minimum": 0, "description": "Columns from the first such cell to the last."},
               "cells": {"type": "integer", "minimum": 0, "description": "Cells that hold something."},
               "formulas": {"type": "integer", "minimum": 0, "description": "Of those, the ones with a formula."},
-              "used": {"type": "string", "description": "The range they span, such as `B2:F20`; left out on an empty sheet."}
+              "used": {"type": "string", "description": "The range they span, such as `B2:F20`; left out on an empty sheet."},
+              "pictures": {"type": "integer", "minimum": 1, "description": "Pictures on the sheet; left out when none. A sheet can hold these and no cells."},
+              "charts": {"type": "integer", "minimum": 1, "description": "Charts on the sheet; left out when none."},
+              "diagrams": {"type": "integer", "minimum": 1, "description": "SmartArt on the sheet; left out when none."},
+              "shapes": {"type": "integer", "minimum": 1, "description": "1 when the sheet has drawn shapes; left out when none."},
+              "comments": {"type": "integer", "minimum": 1, "description": "Comments on the sheet, given with a range; left out when none."}
             },
             "unevaluatedProperties": false
           }
@@ -61,13 +98,43 @@
         "sheet": {"type": "string", "description": "The sheet's name, untrusted."},
         "range": {"type": "string", "description": "The range read, such as `B2:F20`."},
         "merged": {"type": "array", "items": {"type": "string"}, "description": "The merged ranges that touch it."},
+        "comments": {
+          "type": "array",
+          "description": "The comments on cells in the range, empty cells too; left out when none.",
+          "items": {
+            "type": "object",
+            "required": ["address", "text"],
+            "properties": {
+              "address": {"type": "string", "description": "The cell it is on."},
+              "text": {"type": "string", "description": "What it says, untrusted."}
+            },
+            "unevaluatedProperties": false
+          }
+        },
+        "drawings": {
+          "type": "array",
+          "description": "What is drawn on the sheet, whichever range was asked; left out when nothing is. What it looks like was not seen.",
+          "items": {
+            "type": "object",
+            "required": ["kind"],
+            "properties": {
+              "kind": {"enum": ["picture", "chart", "diagram", "shapes"], "description": "`diagram` is SmartArt; `shapes` is every drawn shape on the sheet, with what its connectors join."},
+              "at": {"type": "string", "description": "The cell its corner sits on; left out when it has none."},
+              "text": {"type": "string", "description": "The words read from it: a picture's alt text, a chart's kind, title, series and stored figures."},
+              "file": {"type": "string", "description": "A picture's name in the folder the call with no `sheet` saves."},
+              "unseeable": {"const": true, "description": "A picture in a format a model can't be shown; left out otherwise."}
+            },
+            "unevaluatedProperties": false
+          }
+        },
         "cut": {
           "type": "object",
           "required": ["shown", "next"],
           "description": "The cap stopped it; left out when every cell is here.",
           "properties": {
             "shown": {"type": "integer", "minimum": 0, "description": "The cells in this answer."},
-            "next": {"type": "string", "description": "The `range` to ask for next: it starts at the row of the first cell not given, so that row's earlier cells come again."}
+            "next": {"type": "string", "description": "The `range` to ask for next. It always moves on: from the row of the first cell not given, or along that row when it is the first asked."},
+            "then": {"type": "string", "description": "The `range` after `next`, when `next` only finishes one row; left out otherwise."}
           },
           "unevaluatedProperties": false
         },
@@ -79,10 +146,12 @@
             "required": ["address", "type", "value"],
             "properties": {
               "address": {"type": "string", "description": "Such as `B2`."},
-              "type": {"enum": ["number", "text", "boolean", "date", "error"], "description": "What `value` is."},
-              "value": {"anyOf": [{"type": "string"}, {"type": "number"}, {"type": "boolean"}, {"type": "null"}], "description": "What the file last stored for the cell; nothing is calculated. Null for a formula with nothing stored. A date is ISO text."},
+              "type": {"enum": ["number", "text", "boolean", "date", "error", "empty"], "description": "What `value` is. `empty` is a formula with nothing stored: the file was never calculated."},
+              "value": {"anyOf": [{"type": "string"}, {"type": "number"}, {"type": "boolean"}, {"type": "null"}], "description": "What the file last stored for the cell; nothing is calculated. A date is ISO text."},
               "formula": {"type": "string", "description": "The cell's formula, with no leading `=`; left out when it has none."},
               "serial": {"type": "number", "description": "A date's number, as Excel keeps it; left out otherwise."},
+              "format": {"type": "string", "description": "A number's format, when it says what the number is: `\"GBP \"#,##0.00`, `0.00%`, `[h]:mm`; left out otherwise."},
+              "hidden": {"const": true, "description": "Its row or column is hidden, so the person doesn't see it; left out otherwise."},
               "truncated": {"const": true, "description": "The text was over the limit and this is its beginning; left out otherwise."},
               "merged": {"type": "string", "description": "The merged range it stands in; left out otherwise."}
             },
@@ -99,8 +168,9 @@
         "kind": {"const": "document", "description": "A Word file."},
         "untrusted": {"$ref": "https://vision-board.invalid/schema/api/read-attachment-response.schema.json#/$defs/untrusted"},
         "note": {"$ref": "https://vision-board.invalid/schema/api/read-attachment-response.schema.json#/$defs/note"},
-        "markdown": {"type": "string", "description": "Headings, lists and tables as Markdown. A merged table cell's text is repeated in each place it covers. A picture stands as `![alt](name)`, its name a file in `folder`."},
-        "folder": {"type": "string", "description": "The new folder its pictures were saved in; left out when it has none."},
+        "markdown": {"type": "string", "description": "Headings, lists and tables as Markdown, with Word's own numbers. A merged table cell's text is repeated in each place it covers. A picture stands as `![alt](name)`, its name a file in `folder`. Anything else drawn stands as a marker in square brackets: `[SmartArt: ...]`, `[chart: ...]`, `[drawing: ...]`, `[embedded ..., not read]`; hidden text as `[hidden: ...]`."},
+        "wholeText": {"type": "string", "description": "A file holding all of the Markdown, when `markdown` is only its beginning; left out otherwise. Open it with your own read tool, a part at a time."},
+        "folder": {"type": "string", "description": "The new folder its pictures, and any `wholeText`, were saved in; left out when there is nothing to save."},
         "pictures": {"type": "array", "items": {"$ref": "https://vision-board.invalid/schema/api/read-attachment-response.schema.json#/$defs/savedFile"}, "description": "The pictures saved, with their sizes."}
       },
       "unevaluatedProperties": false

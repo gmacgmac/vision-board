@@ -19,7 +19,7 @@ test('headings come from the style, by id or by name, and through what it is bas
 
 test('lists: bullets, numbers counted per level, numbering from the style, and 0 cancels it', () => {
   const out = md(para('a', `${numbered('7')}`) + para('first', numbered('5')) + para('sub', numbered('5', 1)) + para('sub2', numbered('5', 1)) + para('second', numbered('5')) + para('sub3', numbered('5', 1)) + para('styled', '<w:pStyle w:val="ListBullet"/>') + para('cancelled', `<w:pStyle w:val="ListBullet"/>${numbered('0')}`), parts);
-  assert.equal(out, ['- a', '1. first', '  1. sub', '  2. sub2', '2. second', '  1. sub3', '- styled', 'cancelled'].join('\n\n'));
+  assert.equal(out, ['- a', '1. first', '  a. sub', '  b. sub2', '2. second', '  a. sub3', '- styled', 'cancelled'].join('\n\n'));
 });
 
 test('a table reads as Markdown; gridSpan and vMerge repeat the merged text in every place it covers', () => {
@@ -43,7 +43,7 @@ test('a picture comes back as bytes with a new name and its marker stands where 
   const drawing = '<w:p><w:r><w:t>See </w:t><w:drawing><wp:inline xmlns:wp="p"><wp:docPr id="1" descr="The [network]"/><a:graphic><a:blip r:embed="rId4"/></a:graphic></wp:inline></w:drawing></w:r></w:p>';
   const image = new Uint8Array([1, 2, 3, 4]);
   const { markdown, pictures } = readDocx(docx(drawing + drawing, { 'word/_rels/document.xml.rels': rels([{ id: 'rId4', target: 'media/../media/evil name.PNG' }]), 'word/media/evil name.png': image }));
-  assert.equal(markdown, 'See ![The  network](picture-1.png)\n\nSee ![The  network](picture-1.png)');
+  assert.equal(markdown, 'See ![The network](picture-1.png)\n\nSee ![The network](picture-1.png)');
   assert.deepEqual(pictures.map((p) => [p.name, [...p.bytes]]), [['picture-1.png', [1, 2, 3, 4]]]);
 });
 

@@ -88,6 +88,24 @@ _To be completed by agent after task completion. Re-run? Add a `### Run N` block
 - None from D-071. PLAN Key Change 3's "handler in the engine" is above: the server's handler, as the orchestrator's brief pointed to.
 - The branch lacked the set-up commit: I fast-forwarded `feat/read-attachment` to `main` (12ffe2a), no commit made, and copied `fflate` and `pdfjs-dist` from the main checkout's `node_modules` into this worktree's (npm ci would have brought `@napi-rs/canvas`).
 
+### Run 2 (FIX_DOCS: VERIFY_01 F2-F10)
+
+**Status**: Completed · **Completed**: 2026-10-31
+
+**F2.** `ooxml-drawing.ts` reads Word's `w:drawing` and Excel's anchors alike. SmartArt's boxes and links, a chart's kind, title, series, stored figures and source range, shapes' words and what their connectors join: each stands as a marker where it was, and `found` (Word) or the sheet's `drawings` (Excel) lets `chat-read.ts` say so in `note`. An EMF and the like are saved, marked and named; an embedded object is named, not opened; a drawing of no known kind and a damaged part still leave a marker. Excel's pictures are saved by the call with no `sheet`, its comments and drawings come with a range, a sheet of only a picture says so.
+**Reached**: words, links, titles, stored figures. **Not reached**: a drawing's look and layout, an arrow's direction (a connector reads start to end), a chart drawn, a `.vsdx`, Word's headers, footers, footnotes and comments (named).
+**F3.** `docx-numbering.ts`: `w:start`, `w:numFmt`, `w:lvlText`, `w:isLgl`, `w:lvlRestart` 0, `w:startOverride`, a level's own override, `w:pStyle` on a level, `w:numStyleLink`; nums on one abstractNum share a count; headings and table cells count too. Checked on VERIFY_01's `solution-design.docx` and `python-docx.docx`: `# 2. Network Design`, `## 2.1 Zones`, `(c)`, `5.`, `5.1`, `I.`.
+**F4.** `names` and `links` in the workbook answer. **F5.** The folder's `note` names PDFs and pictures and what to do; `read_attachment` on a PDF from a folder says so plainly. **F6.** `LIMITS.answerChars` 40,000: a Word file's rest in `document.md` beside it (`wholeText`), a sheet's cells cut with `cut.next`, a folder's list cut with a note. **F7.** `goingOn`: `next` always moves on, with `then` when it only finishes a row. **F8.** A sheet is a stream, not held to `xmlNodes`; the list counts smallest first up to `scanBytes` (128 MiB), and a sheet past that or damaged has `counted: false` and still reads by range.
+**F9, done**: date formats 27-36 and 50-58; `[h]:mm` a number; `_x000D_`; `format` on a number; `empty` for an uncalculated formula, and a note; `$F$20`; hidden cells and Word's hidden text marked, and a note; tracked changes noted; a link keeps its URL; a password-protected or old Office file says so.
+**F9, for the tracker**: HEIC, TIFF and BMP attached directly (the page's); a poster-size PDF's page (the page's); Word's headers, footnotes and comments as text.
+**F10, done**: the tool's description, api.md 167, chat.md § Attaching, the README, the skill's line (v3.24), `info.version` 1.36.0.
+
+**Failing test first, not quite**: I wrote the code and the tests in the same pass, then ran the new test files against the code as committed before this run (20 of 20 failed, some at import because `formatNumber` didn't exist). The tests themselves found real faults: `dgm:t` holding paragraphs, nums through a list style not sharing a count, connectors across Excel anchors.
+
+**Design choices**: `w:start` left out counts from 1, against the schema's 0 [INFERENCE: no real Word here]. `document.md` over paging: `read_attachment` would otherwise make a new picture folder on each page. Pictures are saved only by the call with no `sheet`, so paging through a sheet makes no folders. Markers are labels in the Markdown and stay in `packages/documents`; sentences are the host's. The tool-size budget in `tools.test.ts` went to 2450 on purpose.
+
+**Caught Beyond the Brief**: the worry in Run 1 about disk stands, and a `-pictures` folder per list call adds to it. A connector's text says `A → B` for start and end as drawn, so a person's arrow the other way reads wrong: the note says so. Alt text and names from the file reach the agent as markers: the untrusted line covers them, and they can't close a marker.
+
 ## On Completion
 
 Notes; your row in TASK-STATUS.md; one LOG line (`[board-agent] READ_01: …` → this file, one line ending in a newline); the Return Contract with `REQUESTS` for anything outside your files.

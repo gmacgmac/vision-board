@@ -1,6 +1,7 @@
 // A Word file as Markdown: headings, lists and tables, merged cells included, and its pictures as bytes,
 // named, with a marker where each stood. It writes nothing. A merged cell's text is repeated in every
 // place it covers, so each row reads on its own: Markdown has no merging, and a blank would read as empty.
+// A drawing stands as a marker: `ooxml-drawing.ts` says what it reads of one, `found` says what the host should tell.
 // Ported in part from KiroCrew (`src/kiro_crew/doc_blocks.py`, Apache-2.0, see this package's NOTICE):
 // heading styles, numbering through `numId` and `abstractNum`, a style's own numbering, `w:numId` 0 as
 // cancelling it, reaching through `w:sdt` and `w:customXml`, and a budget that stops at a whole unit and
@@ -8,8 +9,11 @@
 // boxes, tracked changes, list levels and counting are ours; a style's heading also comes from its name.
 import type { Limits } from './limits.ts';
 import { LIMITS } from './limits.ts';
-import type { OoxmlPackage } from './ooxml.ts';
+import type { OoxmlPackage, OoxmlRelationship } from './ooxml.ts';
 import { openPackage } from './ooxml.ts';
+import type { Numbering } from './docx-numbering.ts';
+import { readNumbering } from './docx-numbering.ts';
+import { canBeSeen, chartText, markerSafe, pictureName, readDrawing, shapesText, smartArtText } from './ooxml-drawing.ts';
 import type { XmlNode } from './xml.ts';
 import { childNamed, childrenNamed, directText, xmlTree } from './xml.ts';
 
@@ -21,6 +25,23 @@ export interface DocxDocument {
   pictures: DocxPicture[];
   /** Parts with words this reader leaves out, by kind. */
   notRead: string[];
+  found: DocxFound;
+}
+
+/** What the document holds that a reader of its Markdown should be told of: each stands as a marker too. */
+export interface DocxFound {
+  smartArt: number;
+  charts: number;
+  shapes: number;
+  connectors: number;
+  /** Drawings of a kind this reader has nothing for. */
+  otherDrawings: number;
+  /** Saved pictures in a format a model can't be shown. */
+  unseeable: string[];
+  /** Embedded objects' kinds (`Visio.Drawing.15`). */
+  embedded: string[];
+  hiddenRuns: number;
+  trackedChanges: boolean;
 }
 
 const HEADING_ID = /^heading[ _-]?([1-9])$/i;
@@ -28,23 +49,21 @@ const TITLE = /^title$/i;
 /** A style's heading level by what it is called: a writer may leave out its definition. */
 const headingNamed = (name: string) => (TITLE.test(name) ? 1 : Number(HEADING_ID.exec(name)?.[1] ?? 0) || undefined);
 const NOT_READ: Record<string, RegExp> = { headers: /^word\/header\d*\.xml$/, footers: /^word\/footer\d*\.xml$/, footnotes: /^word\/footnotes\.xml$/, endnotes: /^word\/endnotes\.xml$/, comments: /^word\/comments\.xml$/ };
-const PICTURE_EXTENSION = /\.(?:png|jpe?g|gif|bmp|tiff?|webp|svg|emf|wmf)$/i;
 /** Not on the page, or not the current text. */
 const LEFT_OUT = new Set(['rPr', 'pPr', 'del', 'moveFrom', 'delText', 'instrText', 'Fallback', 'tblPr', 'tblGrid', 'tcPr', 'trPr', 'sectPr', 'docPr']);
 /** Wrappers around what they hold. */
 const WRAPPERS = new Set(['sdt', 'sdtContent', 'customXml', 'ins', 'moveTo', 'smartTag', 'AlternateContent', 'Choice']);
 
-interface Style { heading?: number | undefined; numId?: string | undefined; basedOn?: string | undefined }
+interface Style { heading?: number | undefined; numId?: string | undefined; level?: number | undefined; basedOn?: string | undefined }
 
 interface Walk {
   file: OoxmlPackage;
   limits: Limits;
   styles: Map<string, Style>;
-  /** Per `numId`, the format of each level. */
-  numbering: Map<string, string[]>;
-  relationships: Map<string, { type: string; target: string }>;
+  numbering: Numbering;
+  relationships: Map<string, OoxmlRelationship>;
   pictures: Map<string, DocxPicture>;
-  counters: Map<string, number[]>;
+  found: DocxFound;
   chars: number;
   cut: boolean;
 }
@@ -62,35 +81,19 @@ function readStyles(file: OoxmlPackage, limits: Limits): Map<string, Style> {
     const pr = childNamed(s, 'pPr');
     const outline = childNamed(pr, 'outlineLvl')?.attrs['val'];
     const level = named ?? (outline !== undefined && /^[0-8]$/.test(outline) ? Number(outline) + 1 : undefined);
-    out.set(id, { heading: level, numId: childNamed(childNamed(pr, 'numPr'), 'numId')?.attrs['val'], basedOn: childNamed(s, 'basedOn')?.attrs['val'] });
-  }
-  return out;
-}
-
-function readNumbering(file: OoxmlPackage, limits: Limits): Map<string, string[]> {
-  const out = new Map<string, string[]>();
-  const xml = file.text('word/numbering.xml');
-  if (xml === undefined) return out;
-  const root = xmlTree(xml, limits);
-  const abstract = new Map(childrenNamed(root, 'abstractNum').map((a) => [a.attrs['abstractNumId'], childrenNamed(a, 'lvl')]));
-  for (const num of childrenNamed(root, 'num')) {
-    const levels = abstract.get(childNamed(num, 'abstractNumId')?.attrs['val']) ?? [];
-    const formats: string[] = [];
-    for (const lvl of levels) {
-      const at = Number(lvl.attrs['ilvl'] ?? 0);
-      if (at >= 0 && at <= 8) formats[at] = childNamed(lvl, 'numFmt')?.attrs['val'] ?? 'bullet';
-    }
-    if (num.attrs['numId'] !== undefined) out.set(num.attrs['numId'], formats);
+    const numPr = childNamed(pr, 'numPr');
+    const numLevel = childNamed(numPr, 'ilvl')?.attrs['val'];
+    out.set(id, { heading: level, numId: childNamed(numPr, 'numId')?.attrs['val'], level: numLevel === undefined ? undefined : Number(numLevel), basedOn: childNamed(s, 'basedOn')?.attrs['val'] });
   }
   return out;
 }
 
 /** The style's own value of `key`, or the nearest it is based on: a style names its parent, so a loop is possible and stopped. */
-function inherited<K extends 'heading' | 'numId'>(w: Walk, id: string, key: K): Style[K] {
+function inherited<K extends 'heading' | 'numId' | 'level'>(styles: Map<string, Style>, id: string, key: K): Style[K] {
   const seen = new Set<string>();
-  for (let at: string | undefined = id; at !== undefined && !seen.has(at); at = w.styles.get(at)?.basedOn) {
+  for (let at: string | undefined = id; at !== undefined && !seen.has(at); at = styles.get(at)?.basedOn) {
     seen.add(at);
-    const value = w.styles.get(at)?.[key];
+    const value = styles.get(at)?.[key];
     if (value !== undefined) return value;
   }
   return undefined;
@@ -103,56 +106,91 @@ function pictureMarker(w: Walk, id: string | undefined, alt: string): string {
   let picture = w.pictures.get(target);
   if (!picture) {
     if (w.pictures.size >= w.limits.pictures) { w.cut = true; return ''; }
-    const extension = PICTURE_EXTENSION.exec(target)?.[0].toLowerCase() ?? '.bin';
-    picture = { name: `picture-${w.pictures.size + 1}${extension}`, bytes: w.file.bytes(target) };
+    picture = { name: pictureName(w.pictures.size + 1, target), bytes: w.file.bytes(target) };
     w.pictures.set(target, picture);
+    if (!canBeSeen(picture.name)) w.found.unseeable.push(picture.name);
   }
-  return `![${alt.replace(/[\]\[\r\n]+/g, ' ').trim()}](${picture.name})`;
+  return `![${markerSafe(alt)}](${picture.name})${canBeSeen(picture.name) ? '' : ' [picture in a format a model can\'t be shown]'}`;
 }
 
-/** The alt text a drawing gives itself, one or two levels down. */
-function altOf(drawing: XmlNode): string {
-  const direct = childNamed(drawing, 'docPr') ?? elements(drawing).map((c) => childNamed(c, 'docPr')).find(Boolean);
-  return direct?.attrs['descr'] ?? '';
+/** A `w:drawing` as its markers: nothing in it goes with no word. */
+function drawingMarkers(w: Walk, node: XmlNode): string {
+  const d = readDrawing(node);
+  const out = d.pictures.map((p) => pictureMarker(w, p.rel, p.alt)).filter(Boolean);
+  for (const rel of d.diagrams) {
+    w.found.smartArt++;
+    out.push(`[SmartArt: ${markerSafe(smartArtText(w.file, w.relationships.get(rel), w.limits)) || 'its words could not be read'}]`);
+  }
+  for (const rel of d.charts) {
+    w.found.charts++;
+    out.push(`[chart: ${markerSafe(chartText(w.file, w.relationships.get(rel), w.limits)) || 'its words could not be read'}]`);
+  }
+  if (d.shapes.length + d.connectors.length > 0) {
+    w.found.shapes += d.shapes.length;
+    w.found.connectors += d.connectors.length;
+    out.push(`[drawing: ${markerSafe(shapesText(d, w.limits))}]`);
+  }
+  if (out.length === 0) {
+    w.found.otherDrawings++;
+    out.push('[drawing of a kind not read]');
+  }
+  return out.join(' ');
 }
 
-/** A paragraph's or a run's text, in order, with the pictures and text boxes inside it. */
-function inline(w: Walk, node: XmlNode, alt = ''): string {
+/** An old-style drawing (VML): any picture or words, and a marker that a shape stood here. */
+function oldDrawing(w: Walk, node: XmlNode): string {
+  const text = inline(w, node).trim();
+  if (text.startsWith('!') || text.startsWith('[embedded')) return text;
+  w.found.shapes++;
+  return text ? `[drawing: ${markerSafe(text)}]` : '[drawing of a kind not read]';
+}
+
+/** An embedded object: only its kind, from the file's own words, made plain. */
+function embedded(w: Walk, node: XmlNode): string {
+  const kind = (node.attrs['ProgID'] ?? 'object').replace(/[^A-Za-z0-9._-]+/g, '').slice(0, 64) || 'object';
+  if (!w.found.embedded.includes(kind)) w.found.embedded.push(kind);
+  return `[embedded ${kind}, not read]`;
+}
+
+/** A link keeps where it goes, when that is outside the document. */
+function hyperlink(w: Walk, node: XmlNode): string {
+  const text = inline(w, node);
+  const rel = w.relationships.get(node.attrs['id'] ?? '');
+  return rel?.external && text ? `[${markerSafe(text)}](${rel.target.replace(/[\s()]+/g, '')})` : text;
+}
+
+const isOn = (node: XmlNode | undefined) => node !== undefined && !['0', 'false', 'off'].includes(node.attrs['val'] ?? '');
+
+/** A paragraph's or a run's text, in order, with what stands inside it. */
+function inline(w: Walk, node: XmlNode): string {
   let out = '';
   for (const c of elements(node)) {
+    if (c.name === 'del' || c.name === 'moveFrom' || c.name === 'ins' || c.name === 'moveTo') w.found.trackedChanges = true;
     if (LEFT_OUT.has(c.name)) continue;
     if (c.name === 't') out += directText(c);
     else if (c.name === 'tab' || c.name === 'ptab') out += ' ';
     else if (c.name === 'br' || c.name === 'cr') out += '\n';
     else if (c.name === 'noBreakHyphen') out += '-';
-    else if (c.name === 'drawing' || c.name === 'pict' || c.name === 'object') out += inline(w, c, altOf(c));
-    else if (c.name === 'blip') out += pictureMarker(w, c.attrs['embed'], alt);
-    else if (c.name === 'imagedata') out += pictureMarker(w, c.attrs['id'], c.attrs['title'] ?? alt);
-    else if (c.name === 'p' || c.name === 'tbl') out += ` ${inline(w, c, alt)} `;
-    else out += inline(w, c, alt);
+    else if (c.name === 'drawing') out += drawingMarkers(w, c);
+    else if (c.name === 'pict') out += oldDrawing(w, c);
+    else if (c.name === 'imagedata') out += pictureMarker(w, c.attrs['id'], c.attrs['title'] ?? '');
+    else if (c.name === 'OLEObject') out += ` ${embedded(w, c)}`;
+    else if (c.name === 'hyperlink') out += hyperlink(w, c);
+    else if (c.name === 'r' && isOn(childNamed(childNamed(c, 'rPr'), 'vanish'))) { w.found.hiddenRuns++; out += `[hidden: ${markerSafe(inline(w, c))}]`; }
+    else if (c.name === 'p' || c.name === 'tbl') out += ` ${inline(w, c)} `;
+    else out += inline(w, c);
   }
   return out;
 }
 
-/** `numId` and level of a paragraph's list item: direct numbering outranks its style's, and 0 cancels it. */
+/** `numId` and level of a paragraph's number: direct numbering outranks its style's, and 0 cancels it. */
 function listOf(w: Walk, pr: XmlNode | undefined): { numId: string; level: number } | undefined {
   const direct = childNamed(pr, 'numPr');
   const style = childNamed(pr, 'pStyle')?.attrs['val'];
-  const numId = direct ? childNamed(direct, 'numId')?.attrs['val'] : style === undefined ? undefined : inherited(w, style, 'numId');
+  const numId = direct ? childNamed(direct, 'numId')?.attrs['val'] : style === undefined ? undefined : inherited(w.styles, style, 'numId');
   if (numId === undefined || numId === '0') return undefined;
-  const level = Number(childNamed(direct, 'ilvl')?.attrs['val'] ?? 0);
-  return { numId, level: level >= 0 && level <= 8 ? level : 0 };
-}
-
-/** One list item's marker: `-`, or the item's number at its level, counted since its level last began. */
-function marker(w: Walk, { numId, level }: { numId: string; level: number }): string {
-  const format = w.numbering.get(numId)?.[level] ?? 'bullet';
-  if (format === 'bullet' || format === 'none') return '-';
-  const counts = w.counters.get(numId) ?? [];
-  counts[level] = (counts[level] ?? 0) + 1;
-  counts.length = level + 1;
-  w.counters.set(numId, counts);
-  return `${counts[level]}.`;
+  const given = Number(childNamed(direct, 'ilvl')?.attrs['val'] ?? (style === undefined ? undefined : inherited(w.styles, style, 'level') ?? w.numbering.levelOfStyle(numId, style)) ?? 0);
+  return { numId, level: given >= 0 && given <= 8 ? given : 0 };
 }
 
 function paragraph(w: Walk, p: XmlNode): string {
@@ -160,10 +198,12 @@ function paragraph(w: Walk, p: XmlNode): string {
   if (!text) return '';
   const pr = childNamed(p, 'pPr');
   const style = childNamed(pr, 'pStyle')?.attrs['val'];
-  const heading = style === undefined ? undefined : inherited(w, style, 'heading') ?? headingNamed(style);
-  if (heading !== undefined) return `${'#'.repeat(heading)} ${text.replace(/\s*\n\s*/g, ' ')}`;
+  const heading = style === undefined ? undefined : inherited(w.styles, style, 'heading') ?? headingNamed(style);
   const list = listOf(w, pr);
-  return list ? `${'  '.repeat(list.level)}${marker(w, list)} ${text.replace(/\s*\n\s*/g, ' ')}` : text;
+  const marker = list ? w.numbering.next(list.numId, list.level) : '';
+  const line = text.replace(/\s*\n\s*/g, ' ');
+  if (heading !== undefined) return `${'#'.repeat(heading)} ${marker && marker !== '-' ? `${marker} ` : ''}${line}`;
+  return list && marker ? `${'  '.repeat(list.level)}${marker} ${line}` : text;
 }
 
 /** `parent`'s children named `name`, reaching through wrappers, never into a nested table. */
@@ -179,7 +219,7 @@ function charge(w: Walk, n: number): boolean {
 }
 
 const cellText = (w: Walk, tc: XmlNode) =>
-  elements(tc).filter((c) => !LEFT_OUT.has(c.name)).map((c) => inline(w, c).trim()).filter(Boolean).join('\n');
+  elements(tc).filter((c) => !LEFT_OUT.has(c.name)).map((c) => (c.name === 'p' ? paragraph(w, c) : inline(w, c)).trim()).filter(Boolean).join('\n');
 
 /** The table's rows as a grid, spans and merges filled in, a column past the limit and a hostile span cut to it. */
 function tableGrid(w: Walk, tbl: XmlNode): string[][] {
@@ -240,10 +280,13 @@ export function readDocx(bytes: Uint8Array, limits: Limits = LIMITS): DocxDocume
   const file = openPackage(bytes, limits);
   const part = file.main('word/document.xml');
   const root = xmlTree(file.text(part)!, limits);
-  const w: Walk = { file, limits, styles: readStyles(file, limits), numbering: readNumbering(file, limits), relationships: file.relationships(part), pictures: new Map(), counters: new Map(), chars: 0, cut: false };
+  const styles = readStyles(file, limits);
+  const numbering = readNumbering(file, limits, (style) => inherited(styles, style, 'numId'));
+  const found: DocxFound = { smartArt: 0, charts: 0, shapes: 0, connectors: 0, otherDrawings: 0, unseeable: [], embedded: [], hiddenRuns: 0, trackedChanges: false };
+  const w: Walk = { file, limits, styles, numbering, relationships: file.relationships(part), pictures: new Map(), found, chars: 0, cut: false };
   const out: string[] = [];
   blocks(w, childNamed(root, 'body') ?? root, out);
   const names = file.names();
   const notRead = Object.keys(NOT_READ).filter((kind) => names.some((n) => NOT_READ[kind]!.test(n)));
-  return { markdown: out.join('\n\n'), cut: w.cut, pictures: [...w.pictures.values()], notRead };
+  return { markdown: out.join('\n\n'), cut: w.cut, pictures: [...w.pictures.values()], notRead, found };
 }

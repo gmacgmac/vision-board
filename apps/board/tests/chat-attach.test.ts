@@ -4,9 +4,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ComposerFile } from '#chat';
-import { ATTACHMENT_BYTES, PICTURE_BYTES as SERVER_PICTURE_BYTES } from '../server/chat-files.ts';
+import { ATTACHMENT_BYTES } from '../server/chat-files.ts';
 import { PDF_FRAME_PATH as SERVER_FRAME_PATH } from '../server/pdf-frame.ts';
-import { PAGES_MAX, PDF_FRAME_PATH, PICTURE_BYTES } from '../src/shell/pdf-pages-core.ts';
+import { PAGES_MAX, PDF_FRAME_PATH } from '../src/shell/pdf-pages-core.ts';
 import { SCHEMA_BASE, schemaFiles, schemaProblems } from '../server/schema.ts';
 import type { AttachFileBody, ChatSide } from '../src/shell/chat-bridge.ts';
 import { attachedName, FILE_BYTES, FILE_COUNT, fileData, fileLabel } from '../src/shell/attached-file.ts';
@@ -50,7 +50,6 @@ test('the page\'s limits are the server\'s', () => {
   assert.equal(FILE_BYTES, ATTACHMENT_BYTES);
   const { schema } = schemaFiles().find((f) => f.schema.$id === REQUEST)!;
   assert.equal(FILE_COUNT, (schema as unknown as { properties: { files: { maxItems: number } } }).properties.files.maxItems);
-  assert.equal(PICTURE_BYTES, SERVER_PICTURE_BYTES);
   assert.equal(PDF_FRAME_PATH, SERVER_FRAME_PATH);
   const attach = schemaFiles().find((f) => f.schema.$id === `${SCHEMA_BASE}schema/api/chat-file-request.schema.json`)!.schema as unknown as { properties: { of: { properties: { page: { maximum: number } } } } };
   assert.equal(PAGES_MAX, attach.properties.of.properties.page.maximum);

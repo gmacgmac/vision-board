@@ -219,9 +219,9 @@ test('a picture out of a zip that is over the provider\'s limit is named as such
   const folder = board();
   const rel = attach(folder, 'pictures.zip', zipSync({ 'big.png': new Uint8Array(PICTURE_BYTES + 1), 'small.png': enc('x'), 'big.bin': new Uint8Array(PICTURE_BYTES + 1) }, { level: 1 }));
   const read = await readAttachment(folder, { path: rel }) as { note?: string };
-  assert.match(read.note!, /Over 5 MB, so you may not see this picture/);
+  assert.match(read.note!, /Over 3.5 MB, so you may not see this picture/);
   assert.match(read.note!, /big\.png/);
   assert.doesNotMatch(read.note!, /small\.png|big\.bin/);
   const fine = await readAttachment(folder, { path: attach(folder, 'fine.zip', zipSync({ 'small.png': enc('x') })) }) as { note?: string };
-  assert.equal(fine.note, undefined);
+  assert.doesNotMatch(fine.note!, /Over|may not see/);
 });

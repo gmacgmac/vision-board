@@ -7,7 +7,10 @@ import type { Limits } from './limits.ts';
 import { refuse } from './refused.ts';
 import { xmlEvents } from './xml.ts';
 
-export type CellType = 'number' | 'text' | 'boolean' | 'date' | 'error';
+export type CellType = 'number' | 'text' | 'boolean' | 'date' | 'error' | 'empty';
+
+/** One style's meaning for a number: a date, and the format the person sees it in. */
+export interface CellStyle { date: boolean; format?: string | undefined }
 
 export interface SheetCell extends Cell {
   type: CellType;
@@ -17,14 +20,19 @@ export interface SheetCell extends Cell {
   serial?: number | undefined;
   /** Its text was over the limit, and what is here is the beginning. */
   truncated?: boolean | undefined;
+  /** The number format: all that says `1000` is pounds or `0.31` a percent. */
+  format?: string | undefined;
+  /** Its row or column is hidden: the person doesn't see it. */
+  hidden?: boolean | undefined;
 }
 
 export interface SheetContext {
   sharedStrings: string[];
-  /** By style index, whether a number in that style is a date. */
-  dateStyles: boolean[];
+  styles: CellStyle[];
   date1904: boolean;
   limits: Limits;
+  /** Only counting: what a cell holds doesn't matter, so no string is looked up. */
+  counting?: boolean | undefined;
 }
 
 const FIRST_REAL_DATE = 61; // Excel counts a 29 Feb 1900 that never was, at 60
@@ -42,14 +50,22 @@ function dateText(serial: number, date1904: boolean): string | undefined {
   return Number.isInteger(serial) ? iso.slice(0, 10) : iso.slice(0, 19);
 }
 
+/** `_xHHHH_` is how a workbook writes a character XML can't hold; `_x005F_` is a plain underscore. */
+const ESCAPED = /_x([0-9A-Fa-f]{4})_/g;
+const unescaped = (s: string) => (s.includes('_x') ? s.replace(ESCAPED, (_, hex: string) => String.fromCharCode(Number.parseInt(hex, 16))) : s);
+
 interface Raw { address: string | undefined; t: string | undefined; s: number; v: string; inline: string; f: string; fAttrs: Readonly<Record<string, string>> | undefined }
 
 /** The cell's value and type from what its XML said; nothing when it holds nothing. */
-function valueOf(raw: Raw, ctx: SheetContext): Pick<SheetCell, 'type' | 'value' | 'serial' | 'truncated'> | undefined {
-  const text = (s: string) => (s.length > ctx.limits.cellChars ? { type: 'text' as const, value: s.slice(0, ctx.limits.cellChars), truncated: true } : { type: 'text' as const, value: s });
-  if (raw.t === 'inlineStr') return text(raw.inline);
+function valueOf(raw: Raw, ctx: SheetContext): Pick<SheetCell, 'type' | 'value' | 'serial' | 'truncated' | 'format'> | undefined {
+  const text = (raw: string) => {
+    const s = unescaped(raw);
+    return s.length > ctx.limits.cellChars ? { type: 'text' as const, value: s.slice(0, ctx.limits.cellChars), truncated: true } : { type: 'text' as const, value: s };
+  };
+  if (raw.t === 'inlineStr') return raw.inline === '' ? undefined : text(raw.inline);
   if (raw.v === '') return undefined;
   if (raw.t === 's') {
+    if (ctx.counting) return { type: 'text', value: '' };
     const shared = ctx.sharedStrings[Number(raw.v)];
     return shared === undefined ? refuse('malformed') : text(shared);
   }
@@ -58,8 +74,10 @@ function valueOf(raw: Raw, ctx: SheetContext): Pick<SheetCell, 'type' | 'value' 
   if (raw.t === 'e') return { type: 'error', value: raw.v };
   const number = Number(raw.v);
   if (!Number.isFinite(number)) return text(raw.v); // JSON has no Infinity
-  const date = ctx.dateStyles[raw.s] ? dateText(number, ctx.date1904) : undefined;
-  return date === undefined ? { type: 'number', value: number } : { type: 'date', value: date, serial: number };
+  const style = ctx.styles[raw.s];
+  const date = style?.date ? dateText(number, ctx.date1904) : undefined;
+  if (date !== undefined) return { type: 'date', value: date, serial: number };
+  return { type: 'number', value: number, ...(style?.format !== undefined && { format: style.format }) };
 }
 
 export interface SheetRead {
@@ -74,6 +92,8 @@ export function readSheet(xml: string, ctx: SheetContext): SheetRead {
   return { merged, cells: walk(xml, ctx, merged) };
 }
 
+const isTrue = (v: string | undefined) => v === '1' || v === 'true';
+
 function* walk(xml: string, ctx: SheetContext, merged: string[]): Generator<SheetCell> {
   const shared = new Map<string, { formula: string; from: Cell }>();
   const cap = ctx.limits.cellChars + 1;
@@ -82,13 +102,19 @@ function* walk(xml: string, ctx: SheetContext, merged: string[]): Generator<Shee
   let raw: Raw | undefined;
   let into: 'v' | 'f' | 'inline' | undefined;
   let phonetic = 0;
-  for (const e of xmlEvents(xml, ctx.limits)) {
+  let rowHidden = false;
+  const hiddenColumns: { min: number; max: number }[] = [];
+  // A stream keeps nothing, so a sheet's size costs only time, and the host's deadline has that.
+  for (const e of xmlEvents(xml, { ...ctx.limits, xmlNodes: Infinity })) {
     if (e.type === 'text') {
       if (raw && into && phonetic === 0 && raw[into].length < cap) raw[into] += e.text.slice(0, cap - raw[into].length);
     } else if (e.type === 'open') {
       if (e.name === 'row') {
         row = e.attrs['r'] === undefined ? row + 1 : Number(e.attrs['r']);
         col = 0;
+        rowHidden = isTrue(e.attrs['hidden']);
+      } else if (e.name === 'col') {
+        if (isTrue(e.attrs['hidden']) && hiddenColumns.length < ctx.limits.mergedRanges) hiddenColumns.push({ min: Number(e.attrs['min']), max: Number(e.attrs['max']) });
       } else if (e.name === 'c') {
         raw = { address: e.attrs['r'], t: e.attrs['t'], s: Number(e.attrs['s'] ?? 0), v: '', inline: '', f: '', fAttrs: undefined };
       } else if (raw && e.name === 'v') into = 'v';
@@ -104,7 +130,7 @@ function* walk(xml: string, ctx: SheetContext, merged: string[]): Generator<Shee
       col = at!.col;
       const cell = finished(raw, at!, ctx, shared);
       raw = undefined;
-      if (cell) yield cell;
+      if (cell) yield rowHidden || hiddenColumns.some((h) => col >= h.min && col <= h.max) ? { ...cell, hidden: true } : cell;
     }
   }
 }
@@ -122,5 +148,5 @@ function finished(raw: Raw, at: Cell, ctx: SheetContext, shared: Map<string, { f
     }
   }
   if (!value && !formula) return undefined;
-  return { ...at, ...(value ?? { type: 'text' as const, value: null }), ...(formula && { formula: formula.slice(0, ctx.limits.cellChars) }) };
+  return { ...at, ...(value ?? { type: 'empty' as const, value: null }), ...(formula && { formula: formula.slice(0, ctx.limits.cellChars) }) };
 }

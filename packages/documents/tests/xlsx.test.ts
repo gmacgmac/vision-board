@@ -18,7 +18,7 @@ test('with no sheet: the sheets and their real sizes, a hidden one marked', () =
     Empty: '',
   }, { hidden: ['Secret'], parts });
   assert.deepEqual(readWorkbook(file), {
-    kind: 'workbook', cut: false,
+    kind: 'workbook', cut: false, names: [], namesCut: false, links: [], pictures: [], picturesCut: false,
     sheets: [
       { name: 'Data', hidden: false, rows: 2, columns: 3, cells: 3, formulas: 1, used: 'B2:D5' },
       { name: 'Secret', hidden: true, rows: 1, columns: 1, cells: 1, formulas: 0, used: 'A1:A1' },
@@ -42,7 +42,7 @@ test('a range gives each cell its address, value and formula, both, whatever the
     '<c r="F2" t="e"><f>1/0</f><v>#DIV/0!</v></c>', '<c r="G2" t="str"><f>"a"&amp;"b"</f><v>ab</v></c>', '<c r="H2" t="inlineStr"><is><t>in</t></is></c>',
   ), row(30, '<c r="B30"><v>1</v></c>')) }, { parts });
   assert.deepEqual(readCells(file, 'S', 'B2:H20'), {
-    kind: 'sheet', sheet: 'S', range: 'B2:H20', merged: [],
+    kind: 'sheet', sheet: 'S', range: 'B2:H20', merged: [], comments: [], drawings: [], uncalculated: 0,
     cells: [
       { address: 'B2', type: 'number', value: 7.5, formula: 'SUM(C2:D2)' },
       { address: 'C2', type: 'text', value: 'Region' },
@@ -94,7 +94,8 @@ test('long text is cut: one cell says so, and characters count toward the cap', 
   const file = xlsx({ S: sheetData(row(1, `<c r="A1" t="inlineStr"><is><t>${long}</t></is></c>`, '<c r="B1"><v>1</v></c>')) });
   const cut = readCells(file, 'S', 'A1:B1', { ...LIMITS, cellChars: 10 });
   assert.deepEqual([cut.cells[0]!.value, cut.cells[0]!.truncated], ['x'.repeat(10), true]);
-  assert.deepEqual(readCells(file, 'S', 'A1:B1', { ...LIMITS, sheetChars: 50 }).cut, { shown: 0, next: 'A1:B1' });
+  const small = readCells(xlsx({ S: sheetData(row(1, '<c r="A1"><v>1</v></c>', '<c r="B1"><v>2</v></c>')) }), 'S', 'A1:B1', { ...LIMITS, answerChars: 60 });
+  assert.deepEqual(small.cut, { shown: 1, next: 'B1:B1' });
 });
 
 test('a sheet asked for by name, in either case; a sheet or range that is not there is refused', () => {
@@ -104,16 +105,18 @@ test('a sheet asked for by name, in either case; a sheet or range that is not th
   for (const bad of ['', 'A', 'A1:', ':A1', 'A1:B2:C3', 'XFE1', 'A1048577', 'A0', '1:2', 'SUM(A1)']) refusedWith('badRange', () => readCells(file, 'Plan', bad));
 });
 
-test('a cell address that is none, or a shared string that is not there, is refused; cells with no address are counted in place', () => {
-  refusedWith('malformed', () => readWorkbook(xlsx({ S: sheetData(row(1, '<c r="ZZZZ1"><v>1</v></c>')) })));
-  refusedWith('malformed', () => readWorkbook(xlsx({ S: sheetData(row(1, '<c r="A1" t="s"><v>5</v></c>')) })));
+test('a cell address that is none, or a shared string that is not there, is refused where the cells are read; the list still says the sheet is there', () => {
+  const badAddress = xlsx({ S: sheetData(row(1, '<c r="ZZZZ1"><v>1</v></c>')) });
+  refusedWith('malformed', () => readCells(badAddress, 'S', undefined));
+  assert.deepEqual(readWorkbook(badAddress).sheets, [{ name: 'S', hidden: false, counted: false }]);
+  refusedWith('malformed', () => readCells(xlsx({ S: sheetData(row(1, '<c r="A1" t="s"><v>5</v></c>')) }), 'S', undefined));
   const noAddress = xlsx({ S: sheetData('<row><c><v>1</v></c><c><v>2</v></c></row>', '<row><c><v>3</v></c></row>') });
   assert.deepEqual(readCells(noAddress, 'S', undefined).cells.map((c) => c.address), ['A1', 'B1', 'A2']);
 });
 
 test('a hostile sheet name is cut, so one attribute can\'t fill the answer', () => {
   const name = 'n'.repeat(100);
-  const [sheet] = readWorkbook(xlsx({ [name]: '' }), { ...LIMITS, cellChars: 10 }).sheets;
+  const [sheet] = readWorkbook(xlsx({ [name]: '' }), { ...LIMITS, sheetNameChars: 10 }).sheets;
   assert.equal(sheet!.name, 'n'.repeat(10));
 });
 

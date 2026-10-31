@@ -4,7 +4,7 @@ import { deflateSync } from 'node:zlib';
 
 /** `hex` shown in a font no file holds, as a word processor writes CJK to save space: it is read only through a predefined CMap. */
 type NotEmbedded = { encoding: string; baseFont: string; ordering: string; subtype: 'CIDFontType0' | 'CIDFontType2'; hex: string };
-type Page = { text?: string; image?: { width: number; height: number; filter?: string; bytes: Buffer }; font?: NotEmbedded };
+type Page = { text?: string; image?: { width: number; height: number; filter?: string; bytes: Buffer }; font?: NotEmbedded; box?: [number, number] };
 
 const notEmbedded = ({ encoding, baseFont, ordering, subtype }: NotEmbedded) => `<< /Type /Font /Subtype /Type0 /BaseFont /${baseFont} /Encoding /${encoding} /DescendantFonts [<< /Type /Font /Subtype /${subtype} /BaseFont /${baseFont} /CIDSystemInfo << /Registry (Adobe) /Ordering (${ordering}) /Supplement 2 >> /FontDescriptor << /Type /FontDescriptor /FontName /${baseFont} /Flags 6 /FontBBox [-25 -254 1000 880] /ItalicAngle 0 /Ascent 880 /Descent -120 /CapHeight 880 /StemV 80 >> >>] >>`;
 /** Chinese in a font not in the file, by its Unicode encoding. */
@@ -29,8 +29,8 @@ export function pdf(pages: Page[], options: PdfOptions = {}): Buffer {
   add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
   pages.forEach((p, i) => {
     const n = first + i * 3;
-    add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 3 0 R${p.font ? ` /F2 ${notEmbedded(p.font)}` : ''} >> /XObject << /Im0 ${n + 2} 0 R >> >> /Contents ${n + 1} 0 R >>`);
-    const drawn = p.font ? `BT /F2 48 Tf 40 400 Td <${p.font.hex}> Tj ET` : p.image ? 'q 360 0 0 500 30 50 cm /Im0 Do Q' : `BT /F1 28 Tf 40 500 Td (${p.text ?? `Page ${i + 1}`}) Tj ET`;
+    add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${p.box?.[0] ?? 420} ${p.box?.[1] ?? 595}] /Resources << /Font << /F1 3 0 R${p.font ? ` /F2 ${notEmbedded(p.font)}` : ''} >> /XObject << /Im0 ${n + 2} 0 R >> >> /Contents ${n + 1} 0 R >>`);
+    const drawn = p.font ? `BT /F2 48 Tf 40 400 Td <${p.font.hex}> Tj ET` : p.image ? `q ${(p.box?.[0] ?? 420) - 60} 0 0 ${(p.box?.[1] ?? 595) - 95} 30 50 cm /Im0 Do Q` : `BT /F1 28 Tf 40 500 Td (${p.text ?? `Page ${i + 1}`}) Tj ET`;
     add(stream('', Buffer.from(drawn)));
     const image = p.image ?? { width: 1, height: 1, bytes: Buffer.from([255, 255, 255]) };
     add(stream(`/Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height}${image.filter ? ` /Filter /${image.filter}` : ' /ColorSpace /DeviceRGB /BitsPerComponent 8'}`, image.bytes));
@@ -54,6 +54,14 @@ function assemble(objects: Buffer[], trailer: string): Buffer {
   parts.push(Buffer.from(`xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${table}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R${trailer} >>\nstartxref\n${at}\n%%EOF\n`));
   return Buffer.concat(parts);
 }
+
+/** `width` x `height` of noise that won't compress, as a PDF's raw picture: a page of it draws to a heavy PNG. */
+export const noisePicture = (width: number, height: number) => {
+  const bytes = Buffer.alloc(width * height * 3);
+  let x = 2463534242;
+  for (let i = 0; i < bytes.length; i++) { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; bytes[i] = x & 255; }
+  return { width, height, bytes };
+};
 
 /** `width` x `height` of one red, as a PDF's raw picture. */
 export const redPicture = (width: number, height: number) => ({ width, height, bytes: Buffer.alloc(width * height * 3, Buffer.from([220, 20, 20])) });

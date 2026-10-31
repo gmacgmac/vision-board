@@ -1,5 +1,6 @@
 // Front door of packages/format (`#format`, D-016, D-059): code outside imports from here only.
 // Node-side file paths (schemas, the OpenAPI spec, fixtures) are `#format/files`.
+export * from './attachments.ts';
 export * from './view.ts';
 export * from './validate.ts';
 export * from './ledger.ts';

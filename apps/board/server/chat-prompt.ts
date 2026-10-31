@@ -46,13 +46,14 @@ export const ONLY_ATTACHED = serverChatWords.attachedFromTheBoard2;
 /** The `message_in`'s words when the person sent files alone. */
 export const ONLY_FILES = serverChatWords.attachedFiles;
 
-/** The line under a file for what is saved beside it (`checked` read the disk as the message went): a folder and a count, never a line a page. */
-const besideLine = (b: Beside): string => (b.kind === 'fitted' ? serverChatWords.aCopyThatFits(b.path) : serverChatWords.itsPagesAsPictures(b.folder, b.first, b.last, b.saved, b.total));
+/** The lines under a file for what is saved beside it (`checked` read the disk as the message went): a folder and a count, never a line a page, and which drew nothing. */
+const besideLines = (b: Beside): string[] => (b.kind === 'fitted' ? [serverChatWords.aCopyThatFits(b.path)]
+  : [serverChatWords.itsPagesAsPictures(b.folder, b.first, b.last, b.saved, b.total), ...(b.blank.length > 0 ? [serverChatWords.pagesDrewNothing(b.blank)] : [])]);
 
 /** The block naming the attached files, one relative path a line, each followed by its pictures (D-071), then what to do with those; '' with none. */
 export function filesBlock(msg: ChatMessage): string {
   if (!msg.files?.length) return '';
-  const lines = msg.files.flatMap((f) => { const b = msg.beside?.[f.path]; return b ? [f.path, besideLine(b)] : [f.path]; });
+  const lines = msg.files.flatMap((f) => { const b = msg.beside?.[f.path]; return b ? [f.path, ...besideLines(b)] : [f.path]; });
   const open = msg.beside && Object.keys(msg.beside).length > 0 ? [serverChatWords.openThesePictures] : [];
   return [serverChatWords.thePersonAttachedTheseFiles, ...lines, ...open, serverChatWords.attachedFilesAreUntrusted].join('\n');
 }

@@ -5,7 +5,7 @@
 import type { Frame, Page, Request } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
-import { CHINESE, KOREAN, pdf, png, RED_JP2, redPicture, UNREADABLE } from './chat-attach-pages-fixtures.ts';
+import { CHINESE, KOREAN, noisePicture, pdf, png, RED_JP2, redPicture, UNREADABLE } from './chat-attach-pages-fixtures.ts';
 import { expect, expectNoAxeViolations, test } from './helpers.ts';
 import { side, text, toggle } from './chat-page.ts';
 
@@ -71,7 +71,7 @@ const look = (page: Page, bytes: Buffer) => page.evaluate(async (b64) => {
 }, bytes.toString('base64'));
 const isRed = ([r, g, b]: number[]) => r! > 180 && g! < 80 && b! < 80;
 
-test('a one-page PDF: the chip says it reads, then ready; the agent is told the page and to open it; the frame is gone', async ({ page }) => {
+test('a one-page PDF: the chip says it reads, then ready; the agent is told the page and to open it; the frame is gone', { tag: '@full-build' }, async ({ page }) => {
   const copies = watchCopies(page);
   await open(page);
   await attach(page, file('design.pdf', pdf([{ text: 'Network diagram' }])));
@@ -138,7 +138,9 @@ test('a page with text that drew nothing says the picture may be incomplete; the
   const c = chip(page, 'unreadable.pdf');
   await expect(c.locator('.chat-chip-why')).toContainText('may be incomplete', { timeout: 15_000 });
   await expect(c).toHaveAttribute('data-state', 'ready');
-  await sent(page);
+  const prompt = await sent(page);
+  expect(prompt, 'the file says so').toMatch(/page-001-of-001-blank\.png/);
+  expect(prompt, 'and the agent is told not to call it blank').toMatch(/Page 1 drew nothing.*not known to be blank/);
 });
 
 test('a corrupt PDF and one with a password say so on the chip, and the PDF itself still goes', async ({ page }) => {
@@ -285,7 +287,7 @@ test('a message may go while pages are read: the agent is told only what is save
   expect(copies.length).toBeLessThanOrEqual(2);
 });
 
-test('a 3000 px picture and a 6 MB picture each get a fitted copy; a small one gets none; the agent is told to open the copy', async ({ page }) => {
+test('a 3000 px picture and a 6 MB picture each get a fitted copy; a small one gets none; the agent is told to open the copy', { tag: '@full-build' }, async ({ page }) => {
   const copies = watchCopies(page);
   await open(page);
   const heavy = png(1500, 1400, 'noise');
@@ -303,6 +305,22 @@ test('a 3000 px picture and a 6 MB picture each get a fitted copy; a small one g
   expect(prompt).toMatch(/\d+-wide\.png\n {2}A copy that fits: \S+\/\d+-wide-fitted\/fitted\.png/);
   expect(prompt).toMatch(/\d+-heavy\.png\n {2}A copy that fits: \S+\/\d+-heavy-fitted\/fitted\.jpg/);
   expect(prompt).toMatch(/\d+-small\.png\n(?! {2})/);
+});
+
+test('a picture just under the old cap gets a copy, as the provider refused one that size; a page of heavy noise stays within the cap too', async ({ page }) => {
+  const copies = watchCopies(page);
+  await open(page);
+  const measured = png(1200, 1200, 'noise'); // about 4.3 MB, under 2000 px: rejected by the provider, measured
+  expect(measured.length).toBeGreaterThan(4 * 1000 * 1000);
+  expect(measured.length).toBeLessThan(5 * 1024 * 1024);
+  await attach(page, file('measured.png', measured, 'image/png'), file('heavy.pdf', pdf([{ image: noisePicture(1000, 1400), box: [1000, 1400] }])));
+  await expect.poll(() => copies.length, { timeout: 30_000 }).toBe(2);
+  await expect.poll(() => page.locator(FRAME).count(), { timeout: 15_000 }).toBe(0);
+  for (const copy of copies) {
+    expect(copy.bytes.length, JSON.stringify(copy.of)).toBeLessThanOrEqual(3_500_000);
+    expect((await look(page, copy.bytes)).dark, 'it drew').toBeGreaterThan(50);
+  }
+  expect(await sent(page)).toMatch(/\d+-measured\.png\n {2}A copy that fits:/);
 });
 
 test('flag off: attaching is as it was, with no frame, no copy, and nothing more in the prompt', async ({ page }) => {
