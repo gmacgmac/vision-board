@@ -1,7 +1,8 @@
 // The board in any host (ARCH_03; principles § The board is a plugin; nclite's plugin contract,
 // docs/plugins.md § The view and its host): `mount(root, host)` with a fake host, no Svelte and no
-// server. The board draws a fixture board from the host's `api`; Send hands the selected card to
-// `addToChat`; a removal asks the host's `confirm` first; a change event redraws; two boards on one
+// server. The board draws a fixture board from the host's `api`; the selection is a chip through
+// `chat.attach`, replaced as it changes; Send goes through `chat.send`; `reveal({ cards })` zooms and
+// selects nothing; `chat.status` drives the board's mark; a removal asks the host's `confirm` first; a change event redraws; two boards on one
 // page work apart; and after `unmount` each root is empty and given back as it was, with no listener
 // left on the document or the window and none on the host. A host's Close asks the board first
 // (`leave`, M11): only a note with changed words makes the host's confirm ask. The fixture (board-host-fixture.ts) is
@@ -49,18 +50,18 @@ async function open(page: Page): Promise<void> {
 
 type Host = {
   listeners(): number; mount(id: string, lines: object[], shown: number): void; idle(id: string): Promise<void>;
-  send(id: string): Promise<string | null>; status(id: string): { selection: string; hide: boolean; boardId: string; go?: unknown };
-  record(id: string): { chips: { kind: string; ref: { board: string; n: number } }[]; confirms: { heading: string; list?: unknown }[];
+  send(id: string): Promise<string | null>; status(id: string): { selection: string; hide: boolean; boardId: string; zoom: number; chatWork: string; sendWaiting: boolean; chatAttached: boolean; go?: unknown };
+  record(id: string): { chips: Record<string, { plugin: string; kind: string; ref: { board: string; cards: number[] }; label: string; preview?: string }>; attaches: { key: string; chip: { ref: { cards?: number[] } } | null }[]; sends: { kind: string }[][]; confirms: { heading: string; list?: unknown }[];
     notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };
   pageChip(id: string): { plugin: string; kind: string; ref: { board: string; head: number }; label: string; detail: string } | null;
   addHostControls(parentId: string): void; addClose(parentId: string, id: string): void; unsaved(id: string): boolean;
-  reveal(id: string, ref: { board?: string; n?: number; seq?: number }): void;
+  reveal(id: string, ref: { board?: string; n?: number; seq?: number; cards?: number[] }): void; work(id: string, w: string): void;
   answer(id: string, ok: boolean): void; appendRest(id: string): void; unmount(id: string): void;
 };
 const call = <T>(page: Page, fn: (h: Host, ...args: never[]) => T, ...args: unknown[]) =>
   page.evaluate(({ src, args }) => (new Function('h', 'args', `return (${src})(h, ...args)`) as (h: unknown, a: unknown[]) => T)((window as unknown as { vbHost: unknown }).vbHost, args), { src: fn.toString(), args });
 
-test('the board mounts in a fake host: it draws, Send reaches addToChat, a removal asks confirm, an event redraws, two boards work apart, and unmount leaves nothing', async ({ page }) => {
+test('the board mounts in a fake host: it draws, Send goes through the chat with the selection as its chip, a removal asks confirm, an event redraws, two boards work apart, and unmount leaves nothing', async ({ page }) => {
   await open(page);
   const baseline = await call(page, (h) => h.listeners());
   const bodyKids = await page.evaluate(() => document.body.querySelectorAll('*').length);
@@ -92,17 +93,18 @@ test('the board mounts in a fake host: it draws, Send reaches addToChat, a remov
   const pageChip = await call(page, (h) => h.pageChip('a'));
   expect(pageChip).toEqual({ plugin: 'board', kind: 'board', ref: { board: 'roadmap', head: SHOWN }, label: expect.any(String), detail: 'Board "roadmap"' });
 
-  // Send: the selected card goes to the host's chat as a chip, then the send act goes through `api`.
+  // Send: the selected card is the chat's chip already; Send goes through it, then the send act through `api`.
   await a.first().click();
   await expect.poll(() => call(page, (h) => h.status('a').selection)).toMatch(/1 card selected/);
   expect(await call(page, (h) => h.status('b').selection), 'the other board keeps its own selection').toBe('');
   const problem = await call(page, (h) => h.send('a'));
   const rec = await call(page, (h) => h.record('a'));
-  expect(rec.chips).toEqual([expect.objectContaining({ plugin: 'board', kind: 'card', ref: expect.objectContaining({ board: 'roadmap' }) })]);
+  expect(rec.chips.selection).toEqual(expect.objectContaining({ plugin: 'board', kind: 'selection', ref: expect.objectContaining({ board: 'roadmap' }), label: '1 selected' }));
+  expect(rec.sends).toEqual([expect.arrayContaining([expect.objectContaining({ kind: 'selection' })])]);
   expect(rec.calls).toContain('POST boards/roadmap/act');
   expect(problem).toBe('The fake host refuses it.');
   expect(rec.notices).toContainEqual({ text: 'The fake host refuses it.', tone: 'error' });
-  expect((await call(page, (h) => h.record('b'))).chips, 'nothing went from the other board').toEqual([]);
+  expect((await call(page, (h) => h.record('b'))).chips.selection, 'nothing selected on the other board').toBeUndefined();
 
   // A removal asks the host first; cancelled, nothing is sent.
   await a.first().focus();
@@ -119,14 +121,54 @@ test('the board mounts in a fake host: it draws, Send reaches addToChat, a remov
   await call(page, (h) => h.appendRest('a'));
   await expect(a).toHaveCount(nodesUpTo(Infinity));
 
-  // Unmount: each root empty and given back; no listener on the document or window, none on the host.
+  // Unmount: each root empty and given back; its chips taken back; no listener on the document or window, none on the host.
   await call(page, (h) => { h.unmount('a'); h.unmount('b'); });
+  expect((await call(page, (h) => h.record('a'))).chips, 'no chip outlives the board').toEqual({});
   for (const id of ['a', 'b']) {
     expect(await page.evaluate((r) => { const el = document.getElementById(r)!; return [el.childElementCount, el.className, el.getAttribute('tabindex')]; }, id)).toEqual([0, '', null]);
     expect((await call(page, (h, r: string) => h.record(r), id)).subscribers).toBe(0);
   }
   expect(await call(page, (h) => h.listeners())).toBe(baseline);
   expect(await page.evaluate(() => document.body.querySelectorAll('*').length)).toBe(bodyKids);
+});
+
+test('the chat seam: the live chip is replaced as the selection changes, `reveal({ cards })` zooms and selects nothing, `chat.status` drives the mark', async ({ page }) => {
+  await open(page);
+  await call(page, (h, lines: object[]) => { h.mount('a', lines, lines.length); h.mount('b', lines, lines.length); }, LINES);
+  const a = page.locator('#a vb-node');
+  await expect(a).toHaveCount(nodesUpTo(Infinity));
+  await call(page, (h) => h.idle('a'));
+  const ids = await a.evaluateAll((els) => els.slice(0, 2).map((e) => Number((e as HTMLElement).dataset.id)));
+
+  // One chip under one key: added, replaced, removed.
+  const cardsNow = async () => (await call(page, (h) => h.record('a'))).chips.selection?.ref.cards;
+  const [first, second] = [a.nth(0), a.nth(1)];
+  await first.click();
+  await expect.poll(cardsNow).toEqual([ids[0]]);
+  await second.click({ modifiers: ['Shift'] });
+  await expect.poll(cardsNow).toEqual(ids);
+  const preview = (await call(page, (h) => h.record('a'))).chips.selection!.preview;
+  expect(preview).toContain('The person selected these cards:');
+  await page.keyboard.press('Escape');
+  await expect.poll(cardsNow).toBeUndefined();
+  const attaches = (await call(page, (h) => h.record('a'))).attaches.filter((x) => (x as unknown as { key: string }).key === 'selection');
+  expect(attaches.map((x) => x.chip?.ref.cards ?? null)).toEqual([[ids[0]], ids, null]);
+
+  // A change chip: the view zooms to its cards and selects nothing.
+  const before = await call(page, (h) => h.status('a').zoom);
+  await call(page, (h, c: number[]) => h.reveal('a', { cards: c }), [ids[0]!]);
+  await expect.poll(() => call(page, (h) => h.status('a').zoom)).not.toBe(before);
+  expect(await call(page, (h) => h.status('a').selection), 'selects nothing').not.toMatch(/selected$/);
+  expect(await cardsNow()).toBeUndefined();
+  await call(page, (h) => h.reveal('a', { cards: [999] }));
+  await expect.poll(async () => (await call(page, (h) => h.record('a'))).notices).toContainEqual({ text: 'Those cards are no longer on the board.' });
+
+  // What the host's chat says of its agent is the board's mark, this board's alone; held and staged stay off.
+  expect(await call(page, (h) => h.status('a').chatWork)).toBe('idle');
+  await call(page, (h) => h.work('a', 'working'));
+  expect(await call(page, (h) => [h.status('a').chatWork, h.status('b').chatWork, h.status('a').sendWaiting, h.status('a').chatAttached])).toEqual(['working', 'idle', false, false]);
+  await call(page, (h) => h.work('a', 'asking'));
+  expect(await call(page, (h) => h.status('a').chatWork)).toBe('asking');
 });
 
 test('keys stay inside the board: a host control hears its own keys, and a click inside the board gives the board its keys', async ({ page }) => {

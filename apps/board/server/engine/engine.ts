@@ -7,8 +7,8 @@
 import path from 'node:path';
 import type { LedgerEvent, OperationId } from '#format';
 import { OPERATIONS, ROUTE_PREFIX } from '#format';
-import type { BoardRef, CardRef, ChipRefusal, ChipText, NoteRef, Round } from '#actions';
-import { eventBoard, resolveChip, turnOf } from '#actions';
+import type { AnswersRef, AnswersText, BoardRef, CardRef, ChipRefusal, ChipText, NoteRef, SelectionRef } from '#actions';
+import { eventBoard, resolveChip } from '#actions';
 import type { Agents } from '../agents.ts';
 import { openAgents } from '../agents.ts';
 import type { Caller, Ledger } from '../ledger.ts';
@@ -17,19 +17,23 @@ import { ProblemError, problem, serverError } from '../problem.ts';
 import type { EngineReply, Op } from './operations.ts';
 import { checkCaller, matchRoute, readParams, withDefaults } from './operations.ts';
 import { READS } from './reads.ts';
-import type { EngineTool } from './tools.ts';
+import type { EngineTools } from './tools.ts';
 import { makeTools } from './tools.ts';
 import { WRITES } from './writes.ts';
 import * as httpWords from '../words/http.ts';
 
 /** One request, as the host has it: the path relative to the board's prefix (`boards/plans`), the
- * query, the body (its value, or a reader the engine calls with the operation's byte limit), the
- * caller the host vouches for, and a signal that ends a held read when the caller goes away. */
+ * query, and the body (its value, or a reader the engine calls with the operation's byte limit). */
 export interface EngineRequest {
   method: string;
   path: string;
   query?: URLSearchParams;
   body?: unknown;
+}
+
+/** Who a call is from and how long it lasts: the caller the host vouches for, and a signal that ends a
+ * held read when the caller goes away. `route` and `tools.call` take the same. */
+export interface EngineContext {
   caller?: Caller | undefined;
   signal?: AbortSignal | undefined;
 }
@@ -54,14 +58,14 @@ export interface EngineOptions {
 export interface Engine {
   readonly dir: string;
   /** Answer one request; null when no operation of the engine's has its path. */
-  route(req: EngineRequest): Promise<EngineReply | null>;
-  /** What a chip says now, or why it can't be sent (`resolveChip`). */
+  route(req: EngineRequest, ctx?: EngineContext): Promise<EngineReply | null>;
+  /** What a chip says now, or why it can't be sent (`resolveChip`). A host calls it for every chip as
+   * its message goes, the answers chip included: its text is '' when nothing was answered since, and
+   * nothing need go for it. */
+  resolve(kind: 'answers', ref: AnswersRef): AnswersText | ChipRefusal;
   resolve(kind: string, ref: unknown): ChipText | ChipRefusal;
-  /** The person's answers on `board` since ledger line `since`, as `agent` may read them: the block a
-   * host adds to the bot's next message (`turnOf`); none when nothing was answered. */
-  turn(q: { board: string; since: number; agent?: string | undefined }): Round | ChipRefusal | undefined;
-  /** One tool per agent operation the engine serves, by the tool table's names. */
-  readonly tools: Readonly<Record<string, EngineTool>>;
+  /** One tool per agent operation the engine serves, by the tool table's names, in MCP's shapes. */
+  readonly tools: EngineTools;
   /** Every change to the ledger, from anyone (this engine, or another writer on `dir`). Returns a stop. */
   watch(onChange: (change: EngineChange) => void): () => void;
   /** The standalone host's, for the parts it runs beside the engine (chat sessions, the app host). */
@@ -107,7 +111,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = ()
     dir,
     ledger,
     agents: getAgents,
-    async route({ method, path: rel, query = new URLSearchParams(), body, caller, signal }) {
+    async route({ method, path: rel, query = new URLSearchParams(), body }, { caller, signal } = {}) {
       const match = matchRoute(method, `${ROUTE_PREFIX}${rel.replace(/^\/+/, '')}`);
       if (match === null) return null;
       if ('allow' in match) {
@@ -119,19 +123,17 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = ()
       try { params = readParams(match.id, match.raw, query); } catch (err) { return toReply(err); }
       return run(match.id, { params, body, caller, signal });
     },
-    resolve(kind, ref) {
+    resolve: ((kind: string, ref: unknown): ChipText | ChipRefusal => {
       ledger.refresh();
       const s = ledger.state();
       if (typeof ref !== 'object' || ref === null) return { refused: 'gone', reason: httpWords.theChipNamesNothingOn };
       if (kind === 'card') return resolveChip(s, 'card', ref as CardRef);
       if (kind === 'note') return resolveChip(s, 'note', ref as NoteRef);
       if (kind === 'board') return resolveChip(s, 'board', ref as BoardRef);
+      if (kind === 'selection') return Array.isArray((ref as SelectionRef).cards) ? resolveChip(s, 'selection', ref as SelectionRef) : { refused: 'gone', reason: httpWords.theChipNamesNothingOn };
+      if (kind === 'answers') return resolveChip(s, 'answers', ref as AnswersRef);
       return { refused: 'gone', reason: httpWords.theBoardHasNo(kind) };
-    },
-    turn({ board, since, agent }) {
-      ledger.refresh();
-      return turnOf(ledger.state(), board, since, agent);
-    },
+    }) as Engine['resolve'],
     tools: makeTools(servesOperation, run),
     watch(onChange) {
       const tell = (e: LedgerEvent) => {

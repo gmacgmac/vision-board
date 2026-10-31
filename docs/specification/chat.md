@@ -101,22 +101,23 @@ stays on the same session there. The composer shows one chip for everything the 
 from the board (composer-one-chip ruling 1), "3 answers · 2 selected" (either part alone), not
 removable; there is no chip per card, and to leave a card out the person deselects it. Hovering it, or
 click, Enter or Space, opens a preview over the feed of exactly the text the agent receives from the
-board (`chat-bridge.ts` `boardContext`: packages/actions `boardBlocks` and `roundOf` with the session's
-`agentId`, the server's own writer, so only what its agent is told; with no session yet, every
-answer); hover keeps it while the pointer is on the chip or the preview, a click holds it until
+board (`chat-bridge.ts` `composerContext`, joining the board's two live chips, packages/actions
+`selectionChip` and `answersChip` with the session's `agentId`, the server's own writer `boardBlocks`
+word for word, so only what its agent is told; with no session yet, every answer); hover keeps it while the pointer is on the chip or the preview, a click holds it until
 clicked again, and Esc closes it with focus on the chip. The page tells the composer it holds
 what is attached (`ChatHost.holds`): with a chip or the answers it sends with no words, and while the
-agent works (held; the line under the box says so). Send to agent goes through the panel
-(`boardSend`): with the board's session and something attached it is the composer's message with no
-words (`sendsInChat`), so the two are enabled and disabled together (`shell.chatAttached` beside
-`board.unsent`); otherwise it is the `send` act, as with no session. Held either way, the button shows
+agent works (held; the line under the box says so). Send to agent goes through the host's chat
+(`board/host.ts` `BoardChat.send`; `chat-panel.ts` `boardSend`): with the board's session and something attached it is the composer's message with no
+words (`sendsInChat`), which the server records as the Send, so the two are enabled and disabled together (`shell.chatAttached` beside
+`board.unsent`, the status's own, from `BoardChat.status`); otherwise it is the board's `send` act, as with no session. Held either way, the button shows
 "Waiting for agent" until the next `message_in` ("Queued" with the `workAlongside` flag, below).
 
 **Working alongside the agent** (flag `workAlongside`, point 328). While the agent works the person keeps
 working on the board, and the board shows it: the toolbar's Chat button (`shell/ChatButton.svelte`) is
 the board's one mark of the chat's agent, "Agent working" while its turn runs and "Waiting for your OK"
 while a question waits for the person (that one also said in a polite live region), read from the chat's
-own conditions table (`shell/chat-news.ts` `agentWork`). Send to agent pressed meanwhile reads "Queued"
+own conditions table (`shell/chat-news.ts` `agentWork`) and reaching the mark as any host's would, through
+`BoardChat.status` and the board's status (`chatWork`). Send to agent pressed meanwhile reads "Queued"
 (`SendButton.svelte` `queue`), and the answers given until the turn ends go with it, as the server builds a
 held message when it goes (§ The pieces, 5). A reply (the `message_out` a turn ends on) that lands while
 the chat is closed or scrolled away from the latest is counted on the Chat button ("1 new") and brings a
@@ -131,9 +132,11 @@ while a question waits (that one is then released, unanswered); the line under t
 `tests/pages/chat-alongside.spec.ts`, `chat-folder.spec.ts` (every state in the gallery, light and dark; with the flag off, as before).
 The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
 ids for Kiro, see § Kiro).
-`shell/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
-as the composer's one chip (the cards a message took are spent until the selection changes); a change chip zooms to its cards and selects nothing, so nothing goes with the next message
-(opening their board first); a changed card's stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
+The chat reaches the board only through the host contract (D-074; `board/host.ts` `BoardChat`, `BoardView`), and
+`shell/chat-bridge.ts` is the standalone chat's side of it (`createChatBridge` `host`): the board attaches its selected cards and the answers,
+drawn as the composer's one chip (a selection a message took is spent until its `ref` changes); a change chip is `BoardView.reveal({ board, cards })`, which zooms and selects nothing, so nothing goes with the next message
+(opening their board first); a changed card's stepper links back to the write in the chat (`BoardChat.reveal`, `hasLine`; `board/chat-side.ts`, `CardUpdates.source` in `packages/ui`). Held by
+`apps/board/tests/chat-bridge.test.ts`, with no other part of the board, and `tests/pages/board-host.spec.ts` "the chat seam".
 
 **The drawing loads the first time the panel opens.** The session, its events, the waiting and attached
 states and the bridge run from the page's start with the panel closed (`shell/chat-panel.ts`

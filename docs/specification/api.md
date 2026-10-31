@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-31 (a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1057,7 +1057,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     session, `send_chat` builds one message (`chat-prompt.ts` `promptFor`, the one builder; the
     board's Send uses it too): the person's words (`text`, now optional: left out when they wrote
     nothing), then the attached files' block (165), then "Attached from the board:" with each note and card, then the Send message of 121
-    for what the session's agent was not yet told (packages/actions `turnOf`, from the last Send,
+    for what the session's agent was not yet told (the answers chip as the engine's `resolve` says it, from the last Send,
     `chat-round.ts` `previousSend`; left out when there is nothing), then `Board: <id>`. Its `message_in` shows the words and the answers, with the
     chips; with neither, "Attached from the board.". It is recorded as the board's Send when it
     goes, so 121's "send_chat records the Send without this message" no longer holds. Nothing at
@@ -1072,7 +1072,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     required), the agent id the session's agent writes as, never a secret, so the page can show
     the same answer lines the message carries (`replyScope` with that agent, 41).
     A note is sent once (chat-no-double-note): a note chip whose note is among the answers the
-    message carries (`turnOf`, whose `notes` are the ones `replyLines` wrote) is
+    message carries (the answers chip's `notes`, the ones `replyLines` wrote) is
     still checked (`invalid` when it is not on the board) but left out of "Attached" and of the
     `message_in` chips; a note the agent is told no answer for stays attached. A card stays
     attached as `- Card n: title` even when answered, with nothing of its answer. The page no
@@ -1084,11 +1084,13 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     packages/actions `boardBlocks` (the selection, then the notes, then `roundOf`, which moved there
     from `chat-round.ts`): the server's prompt and the page's preview of it (the composer's one chip,
     "3 answers · 2 selected", ruling 2) read the same function. No route or schema changes.
-    Each card and note is made a chip and read back as the engine's `resolve` reads it (2026-10-27,
-    `chat-prompt.ts` `promptFor` over packages/actions `cardChip`, `noteChip`, `resolveChip`): a card
+    Each card and note is made a chip and read back through the engine's `resolve` (`chat-prompt.ts`
+    `promptFor` over packages/actions `cardChip`, `noteChip`; `chat-sessions.ts` `ChatOptions.resolve`), and
+    the answers too (`unsaid`, D-074 rule 6), the path any host takes: a card
     or note the chip refuses is `invalid` at its pointer with the chip's reason, so a removed card, a
     note on a removed card or container, and a hidden note are refused, not sent. Held by
-    `apps/board/tests/api-chat-context.test.ts` and `api-chat-sessions.test.ts`.
+    `apps/board/tests/api-chat-context.test.ts` (a `resolve` given to a session is what it reads, word
+    for word) and `api-chat-sessions.test.ts`.
 
 ## Ledger v13: card widths, `show_layout` (field-report batch 3 BE_01)
 
@@ -1486,12 +1488,18 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     front door; docs/principles.md § The board is a plugin; nclite's draft contract,
     `~/ai/nclite/docs/plugins.md` § Where each part runs). Its host gives it the board's data folder
     (`dir`) and passes the caller with every call; it opens no socket, reads no environment and
-    looks for no folder. It gives `route(req)` (method, the path relative to the API prefix, query,
-    body, caller, signal; a reply of status, body and a problem's headers, or null for a path that
-    is not the engine's), `resolve(kind, ref)` (`resolveChip`: a card, a note, or a board, ref
-    `{ board, head }`, refused when gone or archived, never as changed), `turn({ board, since, agent })`
-    (`turnOf`), `tools` (one per agent operation it serves, from the generated tool table, input
-    checked against that table's JSON Schema, the caller passed in) and `watch(onChange)`
+    looks for no folder. It gives `route(req, { caller, signal })` (`req`: method, the path relative to
+    the API prefix, query, body; a reply of status, body and a problem's headers, or null for a path that
+    is not the engine's), `resolve(kind, ref)` (`resolveChip`: a card, a note, a board, ref
+    `{ board, head }`, refused when gone or archived, never as changed; `selection`, ref `{ board, cards }`,
+    refused when a card is gone; `answers`, ref `{ board, since, agent? }`, the person's answers since that
+    line as that agent may read them, with `count` and `notes`, its text '' when there are none or the
+    board is locked), `tools` (`engine/tools.ts` `EngineTools`, in MCP's shapes: `list()` gives one
+    `{ name, title, description, inputSchema }` per agent operation it serves, from the generated tool table;
+    `call(name, input, { caller, signal })` checks the input against that table's JSON Schema and gives MCP's
+    `CallToolResult`, its text the operation's JSON; a problem, an input that does not fit or a tool it has not
+    is `isError` with words, and never throws; a board write adds `_meta` `TOOL_CHANGE`, `vb/change`,
+    `{ board, cards, head }`, what a change chip needs) and `watch(onChange)`
     (`{ board, head }` for every ledger change, this engine's or another writer's on `dir`). It
     serves `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`,
     `check_responses`, `read_ledger`, `act`, `mark_seen`, `put_board`, `retire_cards`, `join`,
@@ -1516,12 +1524,16 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     the agent's process, and an engine there would be a second writer on a folder the standalone
     server holds the lock for, found by the MCP's upward search. Its tool list and the engine's
     `tools` come from the one table (`TOOLS_FILE`), so they name the same tools with the same input.
+    `createMcpServer` serves any `ToolHost` (`packages/mcp/src/call-tool.ts`): its own `httpTools`, or a
+    host's, the engine's `tools` as they are with the caller added, so another host's MCP server is one
+    line (`engine.test.ts` "the MCP server serves the engine's tools"). A CLI's stream carries only a tool's
+    text, so the agent adapters read a change from it (`#agent` `boardWriteSummary`), the same facts as `vb/change`.
 163. **Where the engine differs from nclite's draft (v0.1)**, asked of nclite: tool inputs are full
     JSON Schema (`write_board` takes a list of items); `route` and the tools return promises (a body
     read, `check_responses` waiting up to 60 s) and take a signal; a reply carries a problem's
-    headers; a tool answers `{ ok, result }` or `{ ok: false, problem }` (the operation's JSON or its
-    problem document) where the draft has a summary and a ref; `turn` is the board's addition, the
-    person's answers since the bot's last message; a chip's `ref` is JSON and a refusal is
+    headers; a tool answers MCP's `CallToolResult` where the draft has a summary and a ref; the
+    person's answers since the bot's last message are a chip the view attaches and `resolve` says, with no
+    hook of their own (D-074 rule 6); a chip's `ref` is JSON and a refusal is
     `{ refused, reason }`; the watch event is `{ board, head }`; and the host passes the caller.
 
 ## Attached files (chat-attachments FILES_01, D-068)

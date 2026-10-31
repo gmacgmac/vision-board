@@ -53,6 +53,54 @@ export interface BoardPage {
   person?<T>(run: () => Promise<T>): Promise<T>;
 }
 
+/** What the chat's agent is doing: nothing, its turn running, or waiting for the person's OK. */
+export type ChatWork = 'idle' | 'working' | 'asking';
+
+/** What the board may read of the host's chat. Read only; `on` says when any of it changes. `now` is
+ * all a host need give: the rest is optional, and a board with none of it works, with Send enabled
+ * only by what the board itself holds. */
+export interface ChatStatus {
+  /** Drives the board's working mark (the status's `chatWork`). A host with no agent to speak of says `idle`. */
+  readonly now: ChatWork;
+  /** The id, on this board's ledger, of the agent the chat talks to on the open board. With it the answers
+   *  chip holds only what that agent may read; without it, every answer (a host with one bot). */
+  readonly agent?: string | undefined;
+  /** The Send the person pressed waits for the agent's turn to end (the status's `sendWaiting`). */
+  readonly held?: boolean | undefined;
+  /** The chat holds what Send would carry, a file of its own say: Send is enabled for it (the status's `chatAttached`). */
+  readonly staged?: boolean | undefined;
+  on(listener: () => void): () => void;
+}
+
+/** A card on a board, as the chat's line that changed it is asked for. */
+export interface ChatLine { board: string; n: number }
+
+/** The host's chat, as the board reaches it: the only way it does. */
+export interface BoardChat {
+  /** Adds, replaces or removes (null) the chip under `key`, for the next message. The board keeps two
+   *  live, `selection` and `answers`, one chip each, replaced as they change and removed at `unmount`;
+   *  a host may draw them apart or as one. A chip's `kind` and `ref` go back to the engine's `resolve`
+   *  as its message goes, and a host may pass the rest through unread, whatever the kind.
+   *  A chip that went with a message is spent until its key's `ref` changes: the same `ref` may come
+   *  again with new words (a card's title changed), and it stays spent. An answers chip's `ref` changes
+   *  once the Send is recorded. */
+  attach(key: string, chip: Chip | null): void;
+  /** Send to agent: sends what is staged, with no words, and has the Send recorded. `record` is the
+   *  board's own record of it (the `send` act, which marks the answers handed over): null when recorded,
+   *  else the problem's words. A host calls it once per Send, after the message has gone, and answers
+   *  with what it answered. It leaves `record` out only when its own server recorded that Send with the
+   *  message (the standalone server does, for a message on the board's session), and it still calls it
+   *  when nothing was staged, or the chat has no session to send through. A host with no server of its
+   *  own sends through its chat, then answers `record()`; with no chat at all, `send: (record) => record()`.
+   *  Resolves null once done or held for the agent's turn to end, else the problem's words. */
+  send(record: () => Promise<string | null>): Promise<string | null>;
+  readonly status: ChatStatus;
+  /** Shows the chat's line that last changed this card (a changed card's stepper links to it). */
+  reveal?(ref: ChatLine): void;
+  /** Whether there is such a line: the stepper shows its link only then. Left out, with `reveal` given, it always shows. */
+  hasLine?(ref: ChatLine): boolean;
+}
+
 /** What the board needs of whoever hosts it. */
 export interface BoardHost {
   /** Calls the board's own routes: `path` is relative to its route prefix (the typed client's
@@ -60,8 +108,8 @@ export interface BoardHost {
   api: Transport;
   /** Every change to the board's data, from anyone; returns the unsubscribe. */
   events(listener: (e: BoardEvent) => void): () => void;
-  /** Puts a chip in the chat's composer (Send to agent hands the selected cards). */
-  addToChat(chip: Chip): void;
+  /** The host's chat: the selection and the answers go to it as chips, Send through it. */
+  chat: BoardChat;
   settings: BoardSettings;
   /** A short notice outside the board; `error` for a refusal or a failure. */
   notify(text: string, tone?: 'info' | 'error'): void;
@@ -97,8 +145,11 @@ export interface BoardView {
   leave(): Promise<boolean>;
   /** The chip for the board on show (what a pane header's Add to chat sends); null when no board is shown (or the one shown is archived). */
   pageChip(): Chip | null;
-  /** Brings into view what a chip or a change names: a board, a card (`n`) or a note (`seq`). Another
-   *  board may ask first, through `confirm`, while a note holds unsaved words (as `leave()` does): the
-   *  card or note shows once that board has opened, and Cancel leaves everything as it was. */
-  reveal(ref: { board?: string; n?: number; seq?: number }): void;
+  /** Brings into view what a chip or a change names: a board, a card (`n`), a note (`seq`), or several
+   *  cards by number (`cards`), which it zooms to and selects nothing, so nothing goes with the next
+   *  message; none of them on the board, it says so through `notify`. Another board may ask first,
+   *  through `confirm`, while a note holds unsaved words (as `leave()` does): what `ref` names shows once
+   *  that board has opened, and Cancel leaves everything as it was. A board not yet in the ledger opens
+   *  once its first line arrives (an agent's first board). */
+  reveal(ref: { board?: string; n?: number; seq?: number; cards?: readonly number[] }): void;
 }

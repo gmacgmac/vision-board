@@ -37,20 +37,19 @@
   let stage: HTMLElement;
   let view = $state<MountedBoard | null>(null);
   const board = $derived(view?.board ?? null);
-  const host = createPageHost();
+  /** The chat beside the board (chatPanel flag, chat-panel FE_02): the page's chat as the board's host gives it. */
+  const bridge = createChatBridge();
+  const host = createPageHost(bridge.host);
   const keyBubble = flagOn('keyBubble', pageFlags());
   const openFolder = flagOn('openFolder', pageFlags());
   /** A tab close, a reload and another folder ask while a note holds unsaved words (M11). */
   const leavePrompt = flagOn('leavePrompt', pageFlags());
   const archiving = flagOn('archiveBoard', pageFlags());
-  /** The chat beside the board (chatPanel flag, chat-panel FE_02): the bridge joins its two sides. */
   shell.chatPanel = flagOn('chatPanel', pageFlags());
-  const bridge = shell.chatPanel ? createChatBridge() : undefined;
   /** Working alongside the agent (workAlongside flag, point 328): the chat button's mark and count, Send queued, a reply announced. */
   shell.workAlongside = shell.chatPanel && flagOn('workAlongside', pageFlags());
   const alongside = shell.workAlongside ? {
     isOpen: () => shell.chatOpen,
-    work: (w: typeof shell.chatWork) => { shell.chatWork = w; },
     news: (n: number) => { shell.chatNews = n; },
     announce: (open: () => void) => toast(chatWords.theAgentReplied, 'info', { label: chatWords.openChat, run: open }),
   } : {};
@@ -71,18 +70,12 @@
     void shell.align;
     untrack(() => host.settingsChanged());
   });
-  /** Send to agent; with the chat, it is the chat's message with no words when the board's session has
-   *  something attached, and waits while the agent is mid-turn (chat-panel.ts `boardSend`). */
-  const send = (v: MountedBoard) => (chat ? chat.boardSend(v.send) : v.send());
-
   function hostChat(panel: HTMLElement) {
     const c = createChatPanel(panel, {
-      bridge: bridge!, confirm: askConfirm, toast,
+      bridge, confirm: askConfirm, toast,
       boardName: (id) => shell.boards.find((b) => b.board === id)?.title ?? id,
       archived: (id) => shell.archived.some((b) => b.board === id),
       open: async () => { shell.chatOpen = true; await tick(); },
-      waiting: (on) => { shell.sendWaiting = on; },
-      attached: (on) => { shell.chatAttached = on; },
       view: (state) => { shell.chatView = state; },
       ...alongside,
     });
@@ -95,16 +88,16 @@
     // What the page shows of the board is its status, mirrored into the page's state.
     Object.assign(shell, v.status.now);
     const unmirror = v.status.on((patch) => Object.assign(shell, patch));
-    // The chat's side of the board: what it attaches, refreshed on every draw.
-    const unbridge = bridge?.board(v.board.side);
-    const unrefresh = bridge ? v.status.on((patch) => { if ('drawn' in patch) bridge.refresh(); }) : undefined;
+    // The chat reaches the board through its view; it draws again on every draw.
+    const unbridge = bridge.board(v);
+    const unrefresh = v.status.on((patch) => { if ('drawn' in patch) bridge.refresh(); });
     // A tab close or reload asks while a note holds unsaved words (leavePrompt flag, M11).
     const unguard = leavePrompt ? guardLeave(v.status) : undefined;
     // A dragged file never replaces the board (chatAttachments flag, point 357).
-    const unguardDrops = bridge && flagOn('chatAttachments', pageFlags()) ? guardFileDrops(document) : undefined;
+    const unguardDrops = shell.chatPanel && flagOn('chatAttachments', pageFlags()) ? guardFileDrops(document) : undefined;
     if (new URLSearchParams(location.search).has('vbwork')) exposeWork({ rebuild: () => v.board.rebuild(), idle: () => v.board.idle() });
     view = v;
-    return () => { unguardDrops?.(); unguard?.(); unrefresh?.(); unbridge?.(); unmirror(); v.unmount(); };
+    return () => { unguardDrops?.(); unguard?.(); unrefresh(); unbridge(); unmirror(); v.unmount(); };
   });
 </script>
 
@@ -116,7 +109,7 @@
   onopen={(n) => board?.go.to(n)}
   oncommand={(id) => board?.command(id)}
   onhide={() => board?.toggleHide()}
-  onsend={() => (view ? send(view) : Promise.resolve(shellBoardWords.theBoardIsNotReady))}
+  onsend={() => view?.send() ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)}
   onrevoke={(agent) => board?.access.revoke(undefined, agent) ?? Promise.resolve()}
   onflagged={() => board?.nextFlagged()}
   onarchive={() => void board?.boardEdit.archive()}
@@ -145,7 +138,7 @@
   <GoToCard box={shell.go} search={board?.go.words ?? false} onedit={(text) => board?.go.edit(text)} onenter={() => board?.go.enter()}
     onclose={() => board?.go.close()} onpast={() => void board?.go.openPast()} onstep={(dir) => board?.go.step(dir)} />
 {/if}
-{#if bridge}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
+{#if shell.chatPanel}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
 
 <Toast />
 

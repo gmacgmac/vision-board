@@ -80,7 +80,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   const getEngine = () => (engine ??= createEngine({ dir: data(), ledger, name: () => displayName(o.home, getDir()), onSend }));
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({
-    ledger, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
+    ledger, resolve: getEngine().resolve, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
     approvalHold: o.chat?.approvalHold, strictAccess: o.chat?.strictAccess, attachments: o.chat?.attachments, readAttachment: o.chat?.readAttachment,
   }));
   const onSend = (board: string, seq: number) => {

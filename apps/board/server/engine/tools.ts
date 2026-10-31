@@ -1,13 +1,21 @@
-// The engine's tools (nclite's plugin contract, plugins.md § Where each part runs): one per agent
-// operation in the generated tool table (`TOOLS_FILE`, gen-tools.mjs, from openapi.json), named as
-// the MCP server names them. A tool checks its input against the table's JSON Schema, splits it back
-// into the operation's path, query and body by the table's `route`, and runs the operation with the
-// caller its host passes (a host that knows the agent, nclite's run ticket, passes it; no secret,
-// no `join`). It answers the operation's JSON, or its problem. Tools whose operation the engine does
-// not serve (`list_apps`, the standalone app host's; `read_attachment`, beside its chat) are left out.
+// The engine's tools, in MCP's shapes (D-074 rule 4): `list()` is one tool per agent operation in the
+// generated tool table (`TOOLS_FILE`, gen-tools.mjs, from openapi.json), named as the MCP server names
+// them, and `call(name, input, ctx)` answers MCP's `CallToolResult`, so each host chooses its transport
+// (`createMcpServer({ tools })` serves it as is; a host's own MCP server can wrap it). A call checks its
+// input against the table's JSON Schema, splits it back into the operation's path, query and body by the
+// table's `route`, and runs the operation with the caller its host passes (a host that knows the agent,
+// nclite's run ticket, passes it; no secret, no `join`). Its text is the operation's JSON, and a problem
+// is `isError` with words, as `vb-mcp` answers them (`answerResult`, `problemResult`). A board write also
+// says what it changed in `_meta` (`TOOL_CHANGE`), the one shape any host reads for a change chip; a CLI's
+// stream, which carries only the text, reads the same facts from it (#agent `boardWriteSummary`). Tools
+// whose operation the engine does not serve (`list_apps`, the standalone app host's; `read_attachment`,
+// beside its chat) are left out.
 import fs from 'node:fs';
+import { BOARD_WRITE, boardWriteSummary } from '#agent';
 import type { OperationId, ProblemDocument } from '#format';
 import { TOOLS_FILE } from '#format/files';
+import type { ListedTool, ToolResult } from '#mcp';
+import { answerResult, problemResult, unknownToolResult } from '#mcp';
 import type { Caller } from '../ledger.ts';
 import { problem } from '../problem.ts';
 import { foreignSchemas } from '../schema.ts';
@@ -16,16 +24,26 @@ import * as httpWords from '../words/http.ts';
 /** One row of the tool table, as the engine reads it. */
 interface ToolRow {
   name: string;
+  title: string;
+  description: string;
   input: Record<string, unknown>;
   route: { path: string[]; query: string[]; body: string[] };
 }
 
-/** What a tool did: the operation's answer, or its problem (a refused input is `invalid`). */
-export type ToolOutcome = { ok: true; result: unknown } | { ok: false; problem: ProblemDocument };
+/** The `_meta` key of what a board write changed: `{ board, cards, head }`, the card numbers it drew
+ * or changed and the ledger's head after it. */
+export const TOOL_CHANGE = 'vb/change';
 
-/** A tool: its input as the table's schema takes it, the caller from the host, and a signal that
- * ends a held read (`check_responses` with `wait`). */
-export type EngineTool = (input: Record<string, unknown>, caller?: Caller, opts?: { signal?: AbortSignal }) => Promise<ToolOutcome>;
+/** What a call runs with: the caller from the host, and a signal that ends a held read
+ * (`check_responses` with `wait`). */
+export interface ToolContext { caller?: Caller | undefined; signal?: AbortSignal | undefined }
+
+/** The engine's tools, in MCP's shapes. An error is a result with `isError`: `call` does not throw. */
+export interface EngineTools {
+  /** Each tool's name, words and input as JSON Schema. */
+  list(): readonly ListedTool[];
+  call(name: string, input: Record<string, unknown>, ctx?: ToolContext): Promise<ToolResult>;
+}
 
 /** Run operation `id` with plain inputs: the engine's one way in, under both `route` and the tools. */
 export type RunOp = (id: OperationId, input: {
@@ -34,26 +52,29 @@ export type RunOp = (id: OperationId, input: {
 
 const ROWS: readonly ToolRow[] = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: ToolRow[] }).tools;
 
-const refused = (errors: { pointer: string; detail: string }[], name: string): ToolOutcome =>
-  ({ ok: false, problem: problem('invalid', httpWords.theInputDoesNotFit(name), { errors }).body });
+/** A board write's result, with what it changed. */
+function withChange(name: string, input: Record<string, unknown>, result: ToolResult): ToolResult {
+  if (name !== BOARD_WRITE || result.isError) return result;
+  return { ...result, _meta: { [TOOL_CHANGE]: { board: input.board, ...boardWriteSummary(result.content) } } };
+}
 
 /** The tools for the operations `serves` holds, each running through `run`. */
-export function makeTools(serves: (id: string) => id is OperationId, run: RunOp): Record<string, EngineTool> {
+export function makeTools(serves: (id: string) => id is OperationId, run: RunOp): EngineTools {
   const check = foreignSchemas();
-  const tools: Record<string, EngineTool> = {};
-  for (const row of ROWS) {
-    if (!serves(row.name)) continue;
-    const id = row.name;
-    const problems = check(row.input);
-    tools[id] = async (input, caller, opts = {}) => {
-      const errors = problems(input);
-      if (errors.length) return refused(errors, id);
+  const rows = new Map(ROWS.flatMap((row) => (serves(row.name) ? [[row.name as string, { row, id: row.name, problems: check(row.input) }] as const] : [])));
+  const listed: readonly ListedTool[] = [...rows.values()].map(({ row }) => ({ name: row.name, title: row.title, description: row.description, inputSchema: row.input }));
+  return {
+    list: () => listed,
+    async call(name, input, { caller, signal } = {}) {
+      const tool = rows.get(name);
+      if (!tool) return unknownToolResult(name);
+      const errors = tool.problems(input);
+      if (errors.length) return problemResult(problem('invalid', httpWords.theInputDoesNotFit(name), { errors }).body);
       const pick = (names: readonly string[]) => Object.fromEntries(names.filter((n) => input[n] !== undefined).map((n) => [n, input[n]]));
-      const params = pick([...row.route.path, ...row.route.query]);
-      const body = row.route.body.length ? pick(row.route.body) : undefined;
-      const r = await run(id, { params, body, caller, signal: opts.signal });
-      return r.status < 400 ? { ok: true, result: r.body } : { ok: false, problem: r.body as ProblemDocument };
-    };
-  }
-  return tools;
+      const params = pick([...tool.row.route.path, ...tool.row.route.query]);
+      const body = tool.row.route.body.length ? pick(tool.row.route.body) : undefined;
+      const r = await run(tool.id, { params, body, caller, signal });
+      return r.status < 400 ? withChange(name, input, answerResult(r.body)) : problemResult(r.body as ProblemDocument);
+    },
+  };
 }

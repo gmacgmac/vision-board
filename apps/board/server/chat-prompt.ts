@@ -4,18 +4,19 @@
 // page's composer preview reads too, composer-one-chip ruling 2): the cards the person selected,
 // "The person selected these cards:", right after the words (ruling 3), then any note chip spelled
 // out (its words and the cards it is on), then the board's answers since the agent was last told
-// (`turnOf`), then the board id: one message for all of it (chat-board-context ruling 2), the one
+// (the answers chip, as the engine's `resolve` says it), then the board id: one message for all of it (chat-board-context ruling 2), the one
 // builder of it. A note that is one of those answers is sent once, there: its chip and its line are
 // left out (chat-no-double-note ruling 3); a card stays, with nothing of its answer (ruling 4). The
 // `message_in` shows the words and the answers, with the chips labelled for the panel; with neither,
 // `ONLY_ATTACHED`. A session with no board (started in the folder, panel-send ruling 2) takes no
-// chips, and its agent is told no board is open and it may create one. Pure: each card and note is
-// made a chip and read back as the engine's `resolve` reads it (packages/actions `cardChip`,
-// `noteChip`, `resolveChip`), so a card or note that is not on the board, was removed, or is hidden
+// chips, and its agent is told no board is open and it may create one. Pure but for `resolve`: each card
+// and note is made a chip (packages/actions `cardChip`, `noteChip`) and read back through the engine's
+// `resolve`, the path any host takes, so a card or note that is not on the board, was removed, or is hidden
 // is refused with the chip's reason. Cards come and go by their board number (api.md 125).
-import type { Chip as BoardChip, ChipRefusal, LedgerState, Round, SelectedCard } from '#actions';
-import { boardBlocks, cardChip, noteChip, resolveChip } from '#actions';
+import type { CardChip, ChipRefusal, LedgerState, NoteChip, Round, SelectedCard } from '#actions';
+import { boardBlocks, cardChip, noteChip } from '#actions';
 import type { AttachedFile, Beside } from './chat-files.ts';
+import type { Engine } from './engine/index.ts';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';
 import * as serverChatWords from './words/server-chat.ts';
@@ -31,9 +32,12 @@ export interface BuiltMessage { prompt: string; text: string; chips: Chip[] }
 /** A refusal's reason as a pointer error's detail, which starts lower case with no full stop. */
 const detailOf = (r: ChipRefusal): string => `${r.reason.charAt(0).toLowerCase()}${r.reason.slice(1).replace(/\.$/, '')}`;
 
+/** What a chip says now: the engine's `resolve`. */
+export type ResolveChip = Engine['resolve'];
+
 /** What a chip just made says now: its text. */
-function textOf(s: LedgerState, chip: BoardChip): string {
-  const now = chip.kind === 'card' ? resolveChip(s, 'card', chip.ref) : chip.kind === 'note' ? resolveChip(s, 'note', chip.ref) : resolveChip(s, 'board', chip.ref);
+function textOf(resolve: ResolveChip, chip: CardChip | NoteChip): string {
+  const now = resolve(chip.kind, chip.ref);
   return 'refused' in now ? '' : now.text;
 }
 
@@ -67,7 +71,7 @@ export const NO_BOARD = serverChatWords.noBoardIsOpenIn;
 /** One message: the words, the files, the selected cards, the notes, the board's answers (`round`) and the board; `invalid` for a
  * note or card a chip refuses (not on `board`, removed, or a hidden note), with its reason. A note among the `round`'s
  * answers is checked, then left out. */
-export function promptFor(s: LedgerState, board: string | undefined, msg: ChatMessage, round?: Round): BuiltMessage {
+export function promptFor(s: LedgerState, resolve: ResolveChip, board: string | undefined, msg: ChatMessage, round?: Round): BuiltMessage {
   if (board === undefined) return folderPrompt(msg);
   const errors: PointerError[] = [];
   const chips: Chip[] = [];
@@ -77,13 +81,13 @@ export function promptFor(s: LedgerState, board: string | undefined, msg: ChatMe
     const chip = noteChip(s, board, seq);
     if ('refused' in chip) return void errors.push({ pointer: `/notes/${i}`, detail: detailOf(chip) });
     if (round?.notes.has(seq)) return;
-    lines.push(`- ${chip.detail}: ${textOf(s, chip)}`);
+    lines.push(`- ${chip.detail}: ${textOf(resolve, chip)}`);
     chips.push({ kind: 'note', ref: seq, label: chip.label });
   });
   (msg.cards ?? []).forEach((n, i) => {
     const chip = cardChip(s, board, n);
     if ('refused' in chip) return void errors.push({ pointer: `/cards/${i}`, detail: detailOf(chip) });
-    cards.push({ n, title: textOf(s, chip) });
+    cards.push({ n, title: textOf(resolve, chip) });
     chips.push({ kind: 'card', ref: n, label: chip.label });
   });
   if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesNotesOr, { errors });

@@ -1,14 +1,14 @@
 // The board in any host (principles § The board is a plugin; host.ts): `mount(root, host)` builds
 // the board's elements inside `root` and gives back nclite's view (`unmount`, `pageChip`, `reveal`,
 // and `unsaved` and `leave`, which a host asks before it unmounts: `unmount` itself never asks),
-// plus what a host draws around the board: its status (status.ts) and its controls (controller.ts
-// `Board`). It adds no element outside `root` but the zoomed image view (a modal dialog's top layer),
+// plus what a host draws around the board: its status (status.ts) and, until they move inside, the
+// standalone page's toolbar and strips (`BoardControls`). It adds no element outside `root` but the
+// zoomed image view (a modal dialog's top layer),
 // no document id of its own (ids inside cards and frames carry the mount's prefix, mount-ids.ts), and
 // nothing outlives `unmount`: every listener on the document or the window goes, the image view goes,
 // and `root` is emptied and given back as it was. Each mount has its own calls (io.ts), status and
 // controller, so two boards on one page work apart.
-import type { Chip } from '#actions';
-import { boardChip, cardChip, numberOf } from '#actions';
+import { boardChip, numberOf } from '#actions';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
 import { createIo } from './io.ts';
 import type { Board, BoardElements } from './controller.ts';
@@ -25,14 +25,17 @@ export const BOARD_ROOT = 'vb-board';
 const ROOT_CLASSES = [BOARD_ROOT, 'vb-stage', 'vb-ground'];
 const SVG = 'http://www.w3.org/2000/svg';
 
+/** What the standalone page's own toolbar and strips call, until they move inside `mount`; and its
+ *  test door (`rebuild`, `idle`, work.ts). No chat goes through it: that is `BoardView` and `BoardChat`. */
+export type BoardControls = Pick<Board, 'switchTo' | 'showVersion' | 'goToContainer' | 'command' | 'toggleHide' | 'access' | 'proposals' | 'boardEdit' | 'nextFlagged' | 'go' | 'rebuild' | 'idle'>;
+
 /** What `mount` gives back: the view, and what a host draws around the board. */
 export interface MountedBoard extends BoardView {
   /** The board's controls: switching boards, versions, view commands, the toolbar's acts. */
-  readonly board: Board;
+  readonly board: BoardControls;
   /** What a host shows of the board (status.ts): read `now`, hear each change with `on`. */
   readonly status: Status;
-  /** Send to agent: hands the host the selected cards (`addToChat`), then records the `send` act;
-   *  null when recorded, else the problem's words. */
+  /** Send to agent, through the host's chat (`BoardChat.send`): null once done or held, else the problem's words. */
   send(): Promise<string | null>;
 }
 
@@ -106,23 +109,11 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   }
   start();
 
-  /** The selected cards as chips, in the order selected; none on a past version. */
-  function selectedChips(): Chip[] {
-    const { side } = board;
-    const s = side.ledger();
-    const d = side.data();
-    if (!s || !d || side.readOnly()) return [];
-    return side.selection.selected().flatMap((id) => {
-      const n = d.view.nodes.find((x) => x.id === id)?.n;
-      const chip = n === undefined ? undefined : cardChip(s, board.id(), n);
-      return chip && !('refused' in chip) ? [chip] : [];
-    });
-  }
-
-  /** Bring into view, on the board open now, the card `n` or the note `seq` (`reveal`). */
-  function show({ n, seq }: { n?: number; seq?: number }) {
+  /** Bring into view, on the board open now, the cards, the card `n` or the note `seq` (`reveal`). */
+  function show({ n, seq, cards }: Parameters<BoardView['reveal']>[0]) {
+    if (cards) return board.zoomToCards(cards);
     if (n !== undefined) return board.go.to(n);
-    const s = board.side.ledger();
+    const s = board.ledger();
     const ask = seq === undefined ? undefined : s?.asks.get(seq);
     if (!s || !ask || seq === undefined || ask.region !== undefined) return; // a container's note: its board is enough
     const at = numberOf(s, ask.nodes?.[0] ?? ask.id);
@@ -133,23 +124,22 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   return {
     get board() { return board; },
     status,
-    async send() {
-      for (const chip of selectedChips()) host.addToChat(chip);
-      return board.send();
-    },
+    send: () => host.chat.send(() => board.send()),
     unsaved: () => board.unsaved(),
     leave: () => board.leave(),
     pageChip() {
-      const s = board.side.ledger();
+      const s = board.ledger();
       const id = board.id();
       const chip = s && id ? boardChip(s, id) : undefined;
       return chip && !('refused' in chip) ? chip : null;
     },
     reveal(ref) {
-      // Another board opens first, and may ask (a note's unsaved words, `Board.switchTo`): the card
-      // or note is shown only once it has opened; Cancel shows nothing.
-      if (ref.board && ref.board !== board.id()) void board.switchTo(ref.board).then((ok) => { if (ok) show(ref); });
-      else show(ref);
+      // Another board opens first, and may ask (a note's unsaved words, `Board.switchTo`): what `ref`
+      // names is shown only once it has opened; Cancel shows nothing. One the ledger does not hold yet
+      // opens when its line arrives (`Board.jump`).
+      const to = ref.board;
+      if (!to || to === board.id()) return show(ref);
+      void (board.ledger()?.boards.has(to) ? board.switchTo(to) : board.jump(to)).then((ok) => { if (ok && board.id() === to) show(ref); });
     },
     unmount() {
       stop();

@@ -1,7 +1,7 @@
 // The tool list the server offers, read from tools.generated.json (api.md 46): one MCP tool per
 // x-agent operation of openapi.json, written by scripts/gen-api.mjs. `routes` says which of a
 // tool's arguments fill the path, the query and the body, and whether it takes the secret.
-import { readFileSync } from 'node:fs';
+import toolFile from './tools.generated.json' with { type: 'json' };
 
 /** A JSON Schema as the generator wrote it: plain 2020-12, no `$ref`. */
 export type JsonSchema = boolean | { readonly [keyword: string]: unknown };
@@ -32,7 +32,7 @@ export interface ToolFile {
   readonly routes: { readonly [tool: string]: Route };
 }
 
-export const TOOL_FILE: ToolFile = JSON.parse(readFileSync(new URL('./tools.generated.json', import.meta.url), 'utf8'));
+export const TOOL_FILE = toolFile as unknown as ToolFile;
 
 /** The tools by name, in the file's (deterministic) order. */
 export const TOOLS: ReadonlyMap<string, ToolDef> = new Map(TOOL_FILE.tools.map((t) => [t.name, t]));

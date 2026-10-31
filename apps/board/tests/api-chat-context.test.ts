@@ -3,7 +3,8 @@
 // the answers since the agent was last told, in that order, and is recorded as the board's Send when
 // it goes; with no words the context alone goes; with nothing at all, `invalid`. While the agent
 // works, a message waits, words alone too (one wait line, point 328), its words joined to any other
-// waiting, and goes when the turn ends, built then.
+// waiting, and goes when the turn ends, built then. The answers and the cards are read through the
+// engine's `resolve`, as any host reads a chip (D-074 rule 6).
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,6 +17,9 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, gone, readChat } from './chat-support.ts';
+import { createEngine } from '../server/engine/index.ts';
+import { openChats } from '../server/chat-sessions.ts';
+import { DEFAULT_SERVER } from '#format';
 import { makeTempDir } from '#format/testing';
 
 const config = makeTempDir('vb-chat-context-');
@@ -151,4 +155,37 @@ test('while the agent works: a message waits, words alone too, joined, and goes 
 test('a session in the folder takes words only; nothing is invalid', async () => {
   const folder = await h.ok('start_folder_chat', { body: { agent: 'claude' } });
   await h.fails('send_chat', { session: folder.session, body: {} }, 422, 'invalid');
+});
+
+test('a session reads the answers and the cards through the resolve it is given, and tells its agent exactly what that says', async () => {
+  const config2 = makeTempDir('vb-chat-resolve-');
+  const own = fakeChat(config2);
+  const dir = makeTempDir('vb-chat-resolve-data-');
+  const engine = createEngine({ dir, warn: () => {} });
+  const asked: string[] = [];
+  const resolve = ((kind: string, ref: unknown) => { asked.push(kind); return engine.resolve(kind, ref); }) as typeof engine.resolve;
+  const chats = openChats({ ledger: engine.ledger, resolve, agents: engine.agents, base: () => DEFAULT_SERVER, adapters: own.adapters });
+  try {
+    const person = { by: 'person' as const };
+    assert.equal((await engine.route({ method: 'PUT', path: 'boards/plans', body: { title: 'Plans' } }, { caller: person }))?.status, 201);
+    const started = await chats.start('plans', 'claude');
+    const agent = { by: 'agent' as const, agent: started.agentId };
+    const items = [{ type: 'region', region: { id: 'now', title: 'Now', mode: 'grid' } }, { type: 'node', node: { region: 'now', kind: 'question', title: 'Ship on Friday?' } }];
+    assert.equal((await engine.tools.call('write_board', { board: 'plans', items }, { caller: agent })).isError, false);
+    await engine.route({ method: 'POST', path: 'boards/plans/act', body: { type: 'act', action: 'comment', n: 1, ver: 1, text: 'Friday is fine.' } }, { caller: person });
+    const expected = engine.resolve('answers', { board: 'plans', since: 0, agent: started.agentId });
+    const said = 'refused' in expected ? assert.fail('refused') : expected.text;
+    assert.match(said, /Friday is fine\./);
+    asked.length = 0;
+    chats.tell(await chats.live(started.session), { text: 'Go on.', cards: [1] });
+    assert.deepEqual([...new Set(asked)].sort(), ['answers', 'card']);
+    const given = await own.run(1);
+    assert.equal(given.prompt.split('\n\n')[0], 'Go on.');
+    assert.ok(given.prompt.includes(said), 'the answers, word for word');
+    assert.ok(given.prompt.includes(`${SELECTED_HEAD}\n- Card 1: Ship on Friday?`), 'the card as `resolve` says it');
+  } finally {
+    chats.close();
+    fs.rmSync(config2, { recursive: true, force: true });
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

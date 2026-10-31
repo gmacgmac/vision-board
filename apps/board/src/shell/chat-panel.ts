@@ -10,11 +10,12 @@
 // version, an archived board, a refused start. In a folder with no board (board '') it talks in the folder (`start_folder_chat`); the first
 // board its agent draws opens, and the panel stays on that session (panel-send ruling 2). On a board
 // every message carries the selected cards and the answers since the last Send (the composer's one
-// chip, from the bridge, composer-one-chip ruling 1), and may go with no words when something is
+// chip, the board's own through the bridge, composer-one-chip ruling 1), and may go with no words when something is
 // attached, or while the agent works, held until its turn ends (chat-board-context rulings 1-3, 5:
-// `ChatHost.holds`). The board's Send goes through `boardSend`: with the board's session and something
-// attached it is that message with no words (ruling 4); else the `send` act, which waits while the
-// agent works (panel-send ruling 1). Held either way, Send shows it waiting until the next message.
+// `ChatHost.holds`). The board's Send comes through the bridge (`boardSend`, `BoardChat.send`): with the
+// board's session and something attached it is that message with no words, which the server records as
+// the Send (ruling 4); else the board's own record, which waits while the agent works (panel-send
+// ruling 1). Held either way, Send shows it waiting until the next message.
 // The feed follows the latest unless the person scrolls away; sending a message follows again (`feed.follow()`).
 // Only the drawing is lazy (`loadDrawing`, chat-view.ts): the session, its events, the waiting and
 // attached states and the bridge work from the page's start, with the panel closed; the header, feed and
@@ -22,8 +23,10 @@
 // the panel holds, with the context the bridge gave the composer (`composerSide`).
 // The board's side (the cards, the answers, change chips, the stepper's link, opening a board) is the
 // bridge's (chat-bridge.ts); this file knows a board only by its id.
-// With the workAlongside flag (point 328) it tells the page what the agent is doing, for the board's mark,
-// and the replies that land while the person can't see them, with a way to them (chat-news.ts `panelNews`);
+// What the board reads of the chat goes through the bridge (`status`, `BoardChat.status`): the agent of the
+// session on the open board, whether Send waits, whether it has something to send. With the workAlongside
+// flag (point 328) so does what the agent is doing, for the board's mark, and it tells the page the replies
+// that land while the person can't see them, with a way to them (chat-news.ts `panelNews`);
 // the composer then sends words alone while the agent works (`ChatHost.queues`: the server queues them).
 // With the agentAccessRules flag the header lists what the person allowed "for this folder"
 // (`list_permissions`, read when the drawing comes, when the list opens and when a yes for the folder is
@@ -50,7 +53,7 @@ import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, message
 import * as chatWords from './words/chat.ts';
 import { createAllowed } from './chat-allowed.ts';
 import { createCopies } from './pdf-pages.ts';
-import { panelNews } from './chat-news.ts';
+import { agentWork, panelNews } from './chat-news.ts';
 
 const EMPTY = { board: chatWords.noMessagesYetAskThe, folder: chatWords.noBoardsHereYetAsk }; // the empty feed: on a board, in a folder with none
 const NEW_ASK = [chatWords.startANewSession, chatWords.theAgentStartsAgainWith, chatWords.newSession] as const;
@@ -83,16 +86,13 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   const attaching = flagOn('chatAttachments', pageFlags());
   const allowed = createAllowed({ confirm: d.confirm, fail: (err) => fail(err), changed: () => render() });
   let [unfollow, loads] = [() => {}, 0];
-  let [waitShown, attachedShown] = [false, false];
   const news = panelNews(d, { feed: () => view?.feed ?? null, reveal: () => d.open().then(loadDrawing), focus: () => view?.composer.focusText() });
   const inChat = () => sendsInChat(st.session, st.board, attachedNow());
   const current = (): Pick => shownPick(st.session, st.refused, st.pick);
 
   function render() {
     if (st.wait !== null && lastAsk(st.chat) !== st.wait) st.wait = null;
-    if (waitShown !== (st.wait !== null)) d.waiting((waitShown = st.wait !== null));
-    if (attachedShown !== inChat()) d.attached((attachedShown = inChat()));
-    news.show(st.chat);
+    d.bridge.statusChanged();
     const blocked = blockedReason(st.board, st.past, st.refused, !!st.board && d.archived?.(st.board) === true);
     // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
     const host: ChatHost = blocked ? { blocked } : { ...(st.board && { holds: true }), ...(queues && { queues: true }) };
@@ -139,7 +139,6 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     unfollow();
     Object.assign(st, { session: s, chat: EMPTY_CHAT, refused: undefined, wait: null });
     news.follow();
-    d.bridge.refresh();
     render();
     unfollow = watchChat(s.session, () => st.chat.seq, (e, first) => {
       const drew = firstBoard(st.session, e);
@@ -156,7 +155,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     unfollow = () => {};
     Object.assign(st, { session: null, chat: EMPTY_CHAT });
     news.follow();
-    d.bridge.refresh();
+    render();
   }
 
   /** The newest session on `board` ('' the folder). A session in the folder is followed on while its
@@ -173,7 +172,6 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
       if (at !== loads) return;
       if (moving && newest?.session === moving.session) {
         st.session = newest;
-        d.bridge.refresh();
         return render();
       }
       if (moving) { drop(); render(); }
@@ -278,7 +276,12 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
 
   const detach = d.bridge.chat({
     panel, composer: composerSide, setFiles: (files) => view?.composer.setFiles(files), upload: attachChatFile, copies: flagOn('readAttachment', pageFlags()) ? createCopies() : undefined, state: () => st.chat, changed: render,
-    agent: () => (st.session && st.session.board === st.board ? st.session.agentId : undefined),
+    status: () => ({
+      now: queues ? agentWork(st.chat) : 'idle',
+      agent: st.session && st.session.board === st.board ? st.session.agentId : undefined,
+      held: st.wait !== null, staged: inChat(),
+    }),
+    send: boardSend,
     reveal,
   });
   render();
@@ -289,7 +292,6 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
       st.past = past;
       render();
     },
-    boardSend,
     load: loadDrawing,
     focus: () => view?.composer.focusText(),
     opened: news.opened,

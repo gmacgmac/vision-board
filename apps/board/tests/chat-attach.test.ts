@@ -37,7 +37,8 @@ function bridged(copies?: MakeCopies) {
       });
     }),
     state: () => ({ seq: 0, entries: [], running: [], pending: [], busy: false }),
-    agent: () => undefined,
+    status: () => ({ now: 'idle' }),
+    send: (record) => record(),
     changed() {},
     reveal() {},
   };

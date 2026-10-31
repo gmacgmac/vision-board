@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 // The browser side of board-host.spec.ts: the board mounted by a fake host, with no Svelte and no
 // server (ARCH_03; nclite's plugin contract, docs/plugins.md § The view and its host). Each fake
-// host serves a ledger from memory through `api`, records every chip, confirmation and notice, and
-// can append lines and say so through `events`. Bundled by the spec (Vite, in memory) and run in a
+// host serves a ledger from memory through `api`, keeps a fake chat (`BoardChat`) that holds its chips
+// by key, records every Send, confirmation and notice, and can append lines and say so through `events`.
+// It imports nothing from `shell/`: the seam is all it has. Bundled by the spec (Vite, in memory) and run in a
 // blank page; `window.vbHost` is what the spec drives. The listeners on the document and the window
 // are counted, so the spec can see that `unmount` leaves none behind.
 import '#tokens/styles.css';
@@ -10,7 +11,7 @@ import '../../apps/board/src/styles/board.css';
 import '#ui/styles.css';
 import type { Chip } from '#actions';
 import { defineBoardElements } from '#ui';
-import type { BoardEvent, BoardHost, ConfirmAsk } from '../../apps/board/src/board/host.ts';
+import type { BoardEvent, BoardHost, ChatWork, ConfirmAsk } from '../../apps/board/src/board/host.ts';
 import { mount, type MountedBoard } from '../../apps/board/src/board/mount.ts';
 
 /** Listeners on the document and the window now: added minus removed, each (type, capture, function) once. */
@@ -45,11 +46,16 @@ function fakeHost(lines: readonly object[], shown: number) {
   let written = shown;
   const listeners = new Set<(e: BoardEvent) => void>();
   const settings = new Set<() => void>();
+  const hearing = new Set<() => void>();
   const record = {
-    chips: [] as Chip[], confirms: [] as ConfirmAsk[], notices: [] as { text: string; tone?: string }[], calls: [] as string[],
+    /** The chips staged now, by key; every `attach`; what each Send took. */
+    chips: {} as Record<string, Chip>, attaches: [] as { key: string; chip: Chip | null }[], sends: [] as Chip[][],
+    confirms: [] as ConfirmAsk[], notices: [] as { text: string; tone?: string }[], calls: [] as string[],
     /** What the fake confirm answers. */
     answer: false,
-    subscribers: () => listeners.size + settings.size,
+    /** What the fake chat says its agent is doing. */
+    work: 'idle' as ChatWork,
+    subscribers: () => listeners.size + settings.size + hearing.size,
   };
   const host: BoardHost = {
     async api(path, init) {
@@ -67,7 +73,21 @@ function fakeHost(lines: readonly object[], shown: number) {
       listeners.add(listener);
       return () => { listeners.delete(listener); };
     },
-    addToChat: (chip) => { record.chips.push(chip); },
+    chat: {
+      attach(key, chip) {
+        record.attaches.push({ key, chip });
+        if (chip) record.chips[key] = chip; else delete record.chips[key];
+      },
+      // A host with no server of its own: the message goes through its chat, then the board records the Send.
+      send(sendAct) {
+        record.sends.push(Object.values(record.chips));
+        return sendAct();
+      },
+      status: {
+        get now() { return record.work; },
+        on(listener) { hearing.add(listener); return () => { hearing.delete(listener); }; },
+      },
+    },
     settings: {
       get: () => undefined,
       on(listener) { settings.add(listener); return () => { settings.delete(listener); }; },
@@ -80,12 +100,17 @@ function fakeHost(lines: readonly object[], shown: number) {
     written = lines.length;
     for (const l of listeners) l({ plugin: 'board', ref: { board: 'roadmap', head: written } });
   };
-  return { host, record, appendRest };
+  /** The fake chat's agent turns to `w`. */
+  const work = (w: ChatWork) => {
+    record.work = w;
+    for (const l of hearing) l();
+  };
+  return { host, record, appendRest, work };
 }
 
 defineBoardElements();
 
-const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof fakeHost>['record']; appendRest(): void; root: HTMLElement }>();
+const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof fakeHost>['record']; appendRest(): void; work(w: ChatWork): void; root: HTMLElement }>();
 
 /** What the spec drives. */
 (window as unknown as { vbHost: unknown }).vbHost = {
@@ -93,7 +118,7 @@ const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof 
   mount(rootId: string, lines: object[], shown: number) {
     const root = document.getElementById(rootId)!;
     const fake = fakeHost(lines, shown);
-    mounted.set(rootId, { view: mount(root, fake.host), record: fake.record, appendRest: fake.appendRest, root });
+    mounted.set(rootId, { view: mount(root, fake.host), record: fake.record, appendRest: fake.appendRest, work: fake.work, root });
   },
   /** The host's own controls, outside both boards: a button and a text input (M10, keys stay inside the board). */
   addHostControls(parentId: string) {
@@ -118,11 +143,12 @@ const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof 
   status: (rootId: string) => ({ ...mounted.get(rootId)!.view.status.now }),
   record: (rootId: string) => {
     const r = mounted.get(rootId)!.record;
-    return { chips: r.chips, confirms: r.confirms, notices: r.notices, calls: r.calls, subscribers: r.subscribers() };
+    return { chips: r.chips, attaches: r.attaches, sends: r.sends, confirms: r.confirms, notices: r.notices, calls: r.calls, subscribers: r.subscribers() };
   },
   answer: (rootId: string, ok: boolean) => { mounted.get(rootId)!.record.answer = ok; },
   appendRest: (rootId: string) => mounted.get(rootId)!.appendRest(),
   pageChip: (rootId: string) => mounted.get(rootId)!.view.pageChip(),
-  reveal: (rootId: string, ref: { board?: string; n?: number; seq?: number }) => mounted.get(rootId)!.view.reveal(ref),
+  reveal: (rootId: string, ref: { board?: string; n?: number; seq?: number; cards?: number[] }) => mounted.get(rootId)!.view.reveal(ref),
+  work: (rootId: string, w: ChatWork) => mounted.get(rootId)!.work(w),
   unmount: (rootId: string) => mounted.get(rootId)!.view.unmount(),
 };

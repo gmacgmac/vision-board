@@ -3,14 +3,18 @@
 // adds `{ kind, ref, label, detail }`, the host adds the plugin, and on send every chip is resolved
 // by asking its plugin for its current text. A chip that is gone or has changed stops the send, with
 // the plugin's reason. These are the board's answers to both, from the folded ledger, with no I/O
-// (the engine's `resolve` and the chat prompt call them). A card's `ref` is its board and number and the
+// (the engine's `resolve` calls them). A card's `ref` is its board and number and the
 // version it was at when the chip was made; a note's, its board and sequence and the line that last
-// edited it, so a chip is refused when its own words changed and survives edits elsewhere. The
+// edited it, so a chip is refused when its own words changed and survives edits elsewhere. Two chips
+// follow the board live, one key each (D-074 rule 6, host.ts `BoardChat`): `selection`, the cards
+// selected, and `answers`, the person's answers since the last Send. Each may carry a `preview`, what
+// it says as the page sees it; `resolve` is what counts when the message goes. The
 // refusal sentences are the words of every refusal here, `turnOf`'s included (ARCH_05 re-homes them).
 import { cardId, clip, containerKey, latest } from '#format';
 import type { Ask } from '../notes.ts';
-import { roundOf } from '../board-message.ts';
-import type { Round } from '../board-message.ts';
+import { roundOf, selectionText } from '../board-message.ts';
+import type { Round, SelectedCard } from '../board-message.ts';
+import { boardLocked } from '../lock.ts';
 import { eventBoard } from '../references.ts';
 import type { LedgerState } from '../fold.ts';
 import { numberOf } from '../numbers.ts';
@@ -20,8 +24,8 @@ import * as actionsChipsWords from '../words/actions-chips.ts';
 
 /** This plugin's id in a chip. */
 export const CHIP_PLUGIN = 'board';
-/** What the board can add to the chat: a card, a note, or the board itself. */
-export type ChipKind = 'card' | 'note' | 'board';
+/** What the board can add to the chat: a card, a note, the board itself, the selected cards, or the answers. */
+export type ChipKind = 'card' | 'note' | 'board' | 'selection' | 'answers';
 
 /** A card chip's reference: the card's number on its board, and the version it was at (its text). */
 export interface CardRef { board: string; n: number; ver: number }
@@ -30,17 +34,31 @@ export interface NoteRef { board: string; seq: number; rev: number }
 /** A board chip's reference: the board, and the ledger's head when the chip was made. The head only
  * records when; a board always changes, so it is never a reason to refuse the chip. */
 export interface BoardRef { board: string; head: number }
-export type ChipRef = CardRef | NoteRef | BoardRef;
+/** A selection chip's reference: the cards by number, in the order selected. */
+export interface SelectionRef { board: string; cards: number[] }
+/** An answers chip's reference: the board, the ledger line they count from, and the agent they are
+ * for (only what it may read; every answer with none). */
+export interface AnswersRef { board: string; since: number; agent?: string | undefined }
+export type ChipRef = CardRef | NoteRef | BoardRef | SelectionRef | AnswersRef;
+
+interface ChipOf<K extends ChipKind, R> { plugin: typeof CHIP_PLUGIN; kind: K; ref: R; label: string; detail: string; preview?: string }
+export type CardChip = ChipOf<'card', CardRef>;
+export type NoteChip = ChipOf<'note', NoteRef>;
+export type BoardChip = ChipOf<'board', BoardRef>;
+export type SelectionChip = ChipOf<'selection', SelectionRef>;
+export type AnswersChip = ChipOf<'answers', AnswersRef>;
 
 /** The contract's chip, as the board makes it. `label` is the short line the composer draws; `detail`
- * where it is, under it. */
-export type Chip =
-  | { plugin: typeof CHIP_PLUGIN; kind: 'card'; ref: CardRef; label: string; detail: string }
-  | { plugin: typeof CHIP_PLUGIN; kind: 'note'; ref: NoteRef; label: string; detail: string }
-  | { plugin: typeof CHIP_PLUGIN; kind: 'board'; ref: BoardRef; label: string; detail: string };
+ * where it is, under it; `preview`, on the two live ones, what it says now. A host may pass any chip
+ * through unread: it goes back to `resolve` by its `kind` and `ref`. */
+export type Chip = CardChip | NoteChip | BoardChip | SelectionChip | AnswersChip;
 
 /** What a chip says now: `where` it is, then its `text`: one block of the bot's prompt. */
 export interface ChipText { where: string; text: string }
+
+/** What an answers chip says now: its text ('' when nothing was answered since, or the board is
+ * locked), how many answer lines, and the notes they carry, so a message attaches none of them again. */
+export type AnswersText = ChipText & Round;
 
 /** Why a chip, or the turn, is refused: nothing there (an unknown board, card or note, or a note
  * taken away), the card or container was removed (or the board archived), the note is hidden, or its
@@ -89,7 +107,7 @@ function noteNow(s: LedgerState, board: string, seq: number): ChipRefusal | { as
 }
 
 /** The chip for card `n` on `board` as it stands now; a refusal when it cannot be added. */
-export function cardChip(s: LedgerState, board: string, n: number): Chip | ChipRefusal {
+export function cardChip(s: LedgerState, board: string, n: number): CardChip | ChipRefusal {
   const card = cardNow(s, board, n);
   if ('refused' in card) return card;
   return {
@@ -99,7 +117,7 @@ export function cardChip(s: LedgerState, board: string, n: number): Chip | ChipR
 }
 
 /** The chip for note `seq` on `board` as it stands now; a refusal when it cannot be added. */
-export function noteChip(s: LedgerState, board: string, seq: number): Chip | ChipRefusal {
+export function noteChip(s: LedgerState, board: string, seq: number): NoteChip | ChipRefusal {
   const note = noteNow(s, board, seq);
   if ('refused' in note) return note;
   return {
@@ -117,12 +135,33 @@ function boardNow(s: LedgerState, board: string): ChipRefusal | { title: string 
 
 /** The chip for the board `board` as it stands now (the head records when it was added); a refusal
  * when it is not there or is archived. Its text is the whole board, read when the message is sent. */
-export function boardChip(s: LedgerState, board: string): Chip | ChipRefusal {
+export function boardChip(s: LedgerState, board: string): BoardChip | ChipRefusal {
   const now = boardNow(s, board);
   if ('refused' in now) return now;
   return {
     plugin: CHIP_PLUGIN, kind: 'board', ref: { board, head: s.seq },
     label: clip(now.title, CARD_LABEL) || board, detail: actionsChipsWords.board(board),
+  };
+}
+
+/** The chip for the cards selected on `board`, in the order selected; null with none. */
+export function selectionChip(board: string, cards: readonly SelectedCard[]): SelectionChip | null {
+  if (cards.length === 0) return null;
+  return {
+    plugin: CHIP_PLUGIN, kind: 'selection', ref: { board, cards: cards.map((c) => c.n) },
+    label: actionsChipsWords.selected(cards.length), detail: actionsChipsWords.board(board), preview: selectionText(cards),
+  };
+}
+
+/** The chip for the person's answers on `board` since its last Send, as `agent` may read them; null
+ * with none, and on a locked board, whose answers wait for the unlock. */
+export function answersChip(s: LedgerState, board: string, agent?: string): AnswersChip | null {
+  const since = s.lastSend.get(board) ?? 0;
+  const round = boardLocked(s, board) ? undefined : roundOf(s, board, since, agent);
+  if (!round) return null;
+  return {
+    plugin: CHIP_PLUGIN, kind: 'answers', ref: { board, since, ...(agent !== undefined && { agent }) },
+    label: actionsChipsWords.answers(round.count), detail: actionsChipsWords.board(board), preview: round.text,
   };
 }
 
@@ -132,7 +171,26 @@ export function boardChip(s: LedgerState, board: string): Chip | ChipRefusal {
 export function resolveChip(s: LedgerState, kind: 'card', ref: CardRef): ChipText | ChipRefusal;
 export function resolveChip(s: LedgerState, kind: 'note', ref: NoteRef): ChipText | ChipRefusal;
 export function resolveChip(s: LedgerState, kind: 'board', ref: BoardRef): ChipText | ChipRefusal;
+export function resolveChip(s: LedgerState, kind: 'selection', ref: SelectionRef): ChipText | ChipRefusal;
+export function resolveChip(s: LedgerState, kind: 'answers', ref: AnswersRef): AnswersText | ChipRefusal;
 export function resolveChip(s: LedgerState, kind: ChipKind, ref: ChipRef): ChipText | ChipRefusal {
+  if (kind === 'answers') {
+    const { board, since, agent } = ref as AnswersRef;
+    const turn = boardLocked(s, board) ? undefined : turnOf(s, board, since, agent);
+    if (turn && 'refused' in turn) return turn;
+    return { where: actionsChipsWords.board(board), ...(turn ?? { text: '', count: 0, notes: new Set<number>() }) };
+  }
+  if (kind === 'selection') {
+    const { board, cards } = ref as SelectionRef;
+    if (!s.index.boards.has(board)) return noBoard(board);
+    const now: SelectedCard[] = [];
+    for (const n of cards) {
+      const card = cardNow(s, board, n);
+      if ('refused' in card) return card;
+      now.push({ n, title: card.title });
+    }
+    return { where: actionsChipsWords.board(board), text: selectionText(now) };
+  }
   if (kind === 'board') {
     const { board } = ref as BoardRef;
     const now = boardNow(s, board);

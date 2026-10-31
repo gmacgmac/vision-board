@@ -4,12 +4,12 @@
 // viewer's alignment (align.ts), its notices the toast and its confirmations the shared dialog
 // (shell.svelte.ts). Its page part names the open board in the address, keeps the board last looked
 // at (per folder with the openFolder flag, folder.ts), reloads to start again and holds the person's
-// cookie. Its chat (chat-panel.ts) takes the board's selection and answers through its bridge
-// (chat-bridge.ts, board/chat-side.ts), so `addToChat` has nothing more to stage here. With the
+// cookie. Its chat is the chat panel's, through its bridge (chat-panel.ts, chat-bridge.ts `host`): the
+// board's selection and answers, Send and the agent's status all go through `BoardChat`. With the
 // leavePrompt flag it guards its own tab: a close or reload while a note holds unsaved words gets the
 // browser's "Leave site?" prompt (`guardLeave`).
 import { flagOn, isFlag } from '#format';
-import type { BoardHost, BoardEvent } from '../board/host.ts';
+import type { BoardChat, BoardHost, BoardEvent } from '../board/host.ts';
 import type { Status } from '../board/status.ts';
 import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
@@ -38,7 +38,7 @@ export function guardLeave(status: Pick<Status, 'now' | 'on'>): () => void {
 /** This board's id in a change event. */
 const PLUGIN = 'board';
 
-export function createPageHost(): PageHost {
+export function createPageHost(chat: BoardChat): PageHost {
   const flags = pageFlags();
   const openFolder = openFolderOn();
   const listeners = new Set<() => void>();
@@ -69,7 +69,7 @@ export function createPageHost(): PageHost {
   return {
     api: pageTransport,
     events,
-    addToChat() { /* the chat takes the selection through its bridge (chat-bridge.ts) */ },
+    chat,
     settings: {
       get: (key) => (key === 'align' ? shell.align : isFlag(key) ? flagOn(key, flags) : undefined),
       on(listener) {

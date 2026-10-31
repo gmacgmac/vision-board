@@ -28,8 +28,8 @@ const viaEngine = (id: OperationId): Handler => async ({ req, res, url, engine, 
   try {
     reply = await engine.route({
       method: req.method ?? 'GET', path: url.pathname.slice(ROUTE_PREFIX.length), query: url.searchParams,
-      body: (limit?: number) => readJson(req, limit), caller, signal: gone.signal,
-    });
+      body: (limit?: number) => readJson(req, limit),
+    }, { caller, signal: gone.signal });
   } finally {
     res.off('close', end);
     closed.removeEventListener('abort', end);

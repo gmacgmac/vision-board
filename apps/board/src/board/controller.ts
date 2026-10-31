@@ -9,7 +9,7 @@
 //   input/ (commands, keys, pointer, the stage's wiring)  find/ (container finder, Go to card)
 //   access/ (agent access)  apps/ (app cards: list_apps state, frames, Allow and Stop app)
 // and, beside this file, sender.ts (sending acts), toolbar-counts.ts (the toolbar's numbers) and
-// chat-side.ts (what a host's own chat reads of the board); controller/ holds the pieces split out of it.
+// chat-side.ts (the board's side of its host's chat); controller/ holds the pieces split out of it.
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
 import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
@@ -17,7 +17,7 @@ import { answeredIds, boardData, boardSearchDocs, goTarget, placedView, retiredC
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, flagOf } from './host.ts';
-import type { BoardSide } from './chat-side.ts';
+import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
 import { createAttention, createFlagFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
@@ -62,7 +62,6 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const toast = (text: string, tone?: 'info' | 'error') => host.notify(text, tone);
   /** The modules' confirm, as the host asks it. */
   const ask = (heading: string, body: string, confirm: string, list?: ConfirmList) => host.confirm({ heading, body, confirm, ...(list && { list }) });
-  let chatSource: ((n: number) => string | undefined) | null = null;
 
   const S = createBoardState();
 
@@ -154,7 +153,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     ver: (n) => S.data?.versions[String(n)], card: (id) => drawing.cards.get(id), record, run: (steps) => sender.run(steps), toast, status, confirm: (a) => host.confirm(a),
   });
   const updates = createUpdateFlow({ on: updating, stage, selection, state: () => live.state, board: () => S.id, unseen: () => attention.unseen(), newCards, fresh: () => attention.fresh(),
-    readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw(), source: (n) => chatSource?.(n) });
+    readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw(), source: (n) => chatSource(host.chat, S.id, n) });
   /** "Awaiting", the handover and the agent's replies under notes (parking.ts), from the state the board is drawn from. */
   const parking = createParking({ handover: on('handover'), replies: on('cardReplies'), state: () => versions.state ?? live.state, board: () => S.id,
     awaiting: () => attention.awaiting(), readOnly: () => !!versions.state, apart: on('groupNoteOnce') });
@@ -198,9 +197,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** Hide and show a card's notes, and the note highlight the history box calls (note-hide.ts, card-polish FE_02). */
   const noteHide = createNoteHide({ stage, vp, state: () => S.data?.state ?? null, card: (id) => drawing.cards.get(id), layout: () => drawing.layout, record });
   const history = createHistoryFlow({ stage, state: () => versions.state ?? live.state, board: () => S.id, highlight: (id, part) => noteHide.highlight(id, part) }); // the ⓘ's box (history-flow.ts, card-polish FE_03)
-  /** What a host's own chat reads of the board (chat-side.ts): the selection, the answers, a change chip's zoom. */
-  const side: BoardSide = { stage, data: () => S.data, ledger: () => live.state, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
-    zoom: (ids) => void flow.zoomTo(ids), switchTo: (id) => void switchTo(id), jump: (id) => void switchTo(id, () => boards.jump(id)), source: (link) => { chatSource = link; } };
+  /** The board's side of its host's chat (chat-side.ts): the selection and the answers as chips, its status, the stepper's link. */
+  const unchat = bindChat({ chat: host.chat, stage, selection, status, data: () => S.data, ledger: () => live.state, id: () => S.id, readOnly: () => !!versions.state });
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({ node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => status.now.hide, hidden: hiddenSet,
@@ -262,13 +260,20 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   return {
     boot: boards.boot, switchTo: (id) => switchTo(id), showVersion, command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer(finding, id),
-    toggleHide, id: () => S.id, side, showNote: (id, seq) => notes.show(id, seq),
+    toggleHide, id: () => S.id, ledger: () => live.state, showNote: (id, seq) => notes.show(id, seq),
+    zoomToCards(cards) {
+      if (!S.data) return;
+      const ids = cardIds(S.data, cards);
+      if (ids.length) flow.zoomTo(ids);
+      else toast(boardWords.thoseCardsAreNoLonger);
+    },
+    jump: (id) => switchTo(id, () => boards.jump(id)),
     async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
     access: accessFlow, proposals, go,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),
-    destroy: () => { cancelAnimationFrame(S.frame); [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle].forEach((f) => f()); },
+    destroy: () => { cancelAnimationFrame(S.frame); [unchat, boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle].forEach((f) => f()); },
   };
 }

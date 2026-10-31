@@ -10,10 +10,7 @@ export const theChatDidNotLoad = 'The chat did not load.';
 export const tryAgain = 'Try again';
 
 // ---- chat-bridge.ts
-export const showInTheChat = 'Show in the chat';
 export const card = (n: number): string => `Card ${n}`;
-export const selected = (count: number): string => `${count} selected`;
-export const thoseCardsAreNoLonger = 'Those cards are no longer on the board.';
 
 // ---- chat-panel.ts
 export const noMessagesYetAskThe = 'No messages yet. Ask the agent about this board.';

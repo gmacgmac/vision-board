@@ -6,14 +6,15 @@
 // the first board its agent creates (panel-send ruling 2). A board session's agent is handed the
 // person's answers since it was last told with every message (`tell`, chat-board-context ruling 2),
 // and the board's Send hands them on their own (`round`, panel-send ruling 1): one builder,
-// chat-prompt.ts `promptFor`. A message waits while a turn runs (ruling 5; words alone too, point
+// chat-prompt.ts `promptFor`. The answers and the cards are read as any host reads a chip, through the
+// engine's `resolve` (`ChatOptions.resolve`, D-074 rule 6). A message waits while a turn runs (ruling 5; words alone too, point
 // 328), joined with any already waiting. Each session's approvals are decided by the access rules of
 // the board's folder (D-066), with the folder's kept yeses (`chat-permissions.ts`); `approvalHold` and
 // `strictAccess` (the `agentAccessRules` flag off) come from the server's flags.
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Round } from '#actions';
-import { creatorOf, turnOf } from '#actions';
+import type { AnswersText } from '#actions';
+import { creatorOf } from '#actions';
 import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
@@ -21,7 +22,7 @@ import { checked, withSaid } from './chat-files.ts';
 import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, agentName, boardMcpServer, chatLabel, joinAndGrant, newIdentity, rekey } from './chat-access.ts';
 import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
-import type { ChatMessage } from './chat-prompt.ts';
+import type { ChatMessage, ResolveChip } from './chat-prompt.ts';
 import { promptFor, wordsOf } from './chat-prompt.ts';
 import { previousSend } from './chat-round.ts';
 import type { Permissions } from './chat-permissions.ts';
@@ -41,6 +42,8 @@ export const DEFAULT_ADAPTERS: ChatAdapters = { claude: () => createClaudeAdapte
 
 export interface ChatOptions {
   ledger: Ledger;
+  /** What a chip says now: the engine's `resolve`. */
+  resolve: ResolveChip;
   agents: () => Agents;
   /** This server's own address, such as `http://127.0.0.1:4466`. */
   base: () => string;
@@ -121,7 +124,7 @@ function joined(was: Held | undefined, next: Held): Held {
 }
 
 export function openChats(o: ChatOptions): Chats {
-  const { ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false, readAttachment = false } = o;
+  const { ledger, resolve, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false, readAttachment = false } = o;
   const dir = path.dirname(ledger.file);
   const cwd = path.dirname(dir);
   let kept: Permissions | undefined;
@@ -181,13 +184,12 @@ export function openChats(o: ChatOptions): Chats {
 
   const current = (board: Place) => entries().findLast((e) => e.board === board);
 
-  /** The answers on `board` the session's agent has not been told, as the round. None while the
-   * board is locked: it takes no Send, so they wait for the unlock (N40 ruling 7, api.md 139). */
-  function unsaid(live: LiveSession, board: string, before: number): Round | undefined {
-    const s = ledger.state();
-    if (isLocked(s, board)) return undefined;
-    const turn = turnOf(s, board, told.get(live.record.session) ?? previousSend(s, board, before), live.record.agentId);
-    return turn && 'refused' in turn ? undefined : turn;
+  /** The answers on `board` the session's agent has not been told, as its answers chip says them. None
+   * while the board is locked: it takes no Send, so they wait for the unlock (N40 ruling 7, api.md 139). */
+  function unsaid(live: LiveSession, board: string, before: number): AnswersText | undefined {
+    const since = told.get(live.record.session) ?? previousSend(ledger.state(), board, before);
+    const said = resolve('answers', { board, since, agent: live.record.agentId });
+    return 'refused' in said || !said.text ? undefined : said;
   }
 
   /** Hand `live`'s agent `held` on `board`: built when it goes, the Send recorded then if asked. */
@@ -196,10 +198,10 @@ export function openChats(o: ChatOptions): Chats {
     if (live.busy) waiting.set(id, held);
     return live.post(() => {
       waiting.delete(id);
-      const s = ledger.state();
       const round = unsaid(live, board, held.before);
+      const s = ledger.state();
       const { msg, said } = checked(cwd, held.msg);
-      const built = promptFor(s, board, msg, round);
+      const built = promptFor(s, resolve, board, msg, round);
       const files = msg.files;
       const empty = !round && !wordsOf(msg) && !built.chips.length && !files;
       if (empty && !said) return undefined;
@@ -219,7 +221,7 @@ export function openChats(o: ChatOptions): Chats {
     return live.post(() => {
       waiting.delete(id);
       const { msg, said } = checked(cwd, held.msg);
-      const built = promptFor(ledger.state(), undefined, msg);
+      const built = promptFor(ledger.state(), resolve, undefined, msg);
       return { prompt: withSaid(built.prompt, said?.agent), message: { kind: 'message_in', text: withSaid(built.text, said?.person, !wordsOf(msg) && !msg.files), ...(msg.files && { files: msg.files }) } };
     }, QUEUED_WORDS);
   }

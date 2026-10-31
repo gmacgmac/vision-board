@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { boardData, foldLedger, replyText } from '#actions';
-import { boardCards } from '../src/shell/chat-bridge.ts';
+import { selectedCards } from '../src/board/chat-side.ts';
 import type { ActFields } from '../src/board/io.ts';
 import { createFlagFlow, flagAct, flaggedIds, flaggedWords, nextFlagged } from '../src/board/cards/flag-flow.ts';
 import { lineMaker } from '#format/testing';
@@ -97,5 +97,5 @@ test('a flag never reaches the Send message or the chat chips', () => {
   assert.equal(message(flagged), message(plain));
   assert.match(message(flagged), /Why\?/, 'the message carries the comment');
   assert.doesNotMatch(message(flagged), /flag/i);
-  assert.deepEqual(boardCards(flagged, ['2', '4'], new Set()), boardCards(plain, ['2', '4'], new Set()));
+  assert.deepEqual(selectedCards(flagged, ['2', '4']), selectedCards(plain, ['2', '4']));
 });

@@ -1,8 +1,12 @@
 // Words: board. The board page's own text: its heading, status, empty states and errors.
 // Keys: board.board.<name>. Plain code: no imports but other words files and types.
 
+// ---- chat-side.ts
+export const showInTheChat = 'Show in the chat';
+
 // ---- controller.ts
 export const theAgentDrewV = (version: number | null): string => `The agent drew v${version}`;
+export const thoseCardsAreNoLonger = 'Those cards are no longer on the board.';
 
 // ---- io.ts
 export const theBoardServerIsNot = 'The board server is not reachable. Is it running?';

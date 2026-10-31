@@ -6,6 +6,7 @@ import type { AccessHolder, ArchivedBoard, BoardListItem, BoardMark, BoardRun, F
 import type { AccessRequestRow } from './access/index.ts';
 import type { ContainerRow } from './find/index.ts';
 import type { GoBox } from './find/index.ts';
+import type { ChatWork } from './host.ts';
 import * as boardWords from './words/board.ts';
 
 export interface BoardStatus {
@@ -70,8 +71,14 @@ export interface BoardStatus {
   locked: boolean;
   /** The Go to card box (goToCard flag, go-to-card.ts), open while set. */
   go: GoBox | null;
-  /** How many times the board was drawn: a host's chat refreshes what it attaches on each. */
+  /** How many times the board was drawn. */
   drawn: number;
+  /** What the host's chat says its agent is doing (`BoardChat.status`): the working mark. */
+  chatWork: ChatWork;
+  /** The Send the person pressed waits for the agent's turn to end (`held`): Send's waiting state. */
+  sendWaiting: boolean;
+  /** The host's chat holds what Send would carry (`staged`): Send is enabled for it. */
+  chatAttached: boolean;
   /** A note holds changed words not yet saved (host.ts `BoardView.unsaved`): set each time it turns,
    *  so a host can guard a close (the standalone page's `beforeunload`, leaveGuard flag). */
   unsaved: boolean;
@@ -83,7 +90,7 @@ export const initialStatus = (): BoardStatus => ({
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, flagged: 0,
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
-  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, go: null, drawn: 0, unsaved: false,
+  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, go: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
 });
 
 export interface Status {

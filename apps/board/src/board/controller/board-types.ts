@@ -1,11 +1,11 @@
 // What the board gives its host, and what it is made with (controller.ts `createBoard`). Split out
 // of controller.ts (ARCH_06): the board's whole public surface reads in one place.
+import type { LedgerState } from '#actions';
 import type { AccessFlow } from '../access/index.ts';
 import type { ProposalFlow } from '../cards/index.ts';
 import type { CommandId } from '../input/index.ts';
 import type { BoardEdit } from '../boards/index.ts';
 import type { GoTo } from '../find/index.ts';
-import type { BoardSide } from '../chat-side.ts';
 import type { BoardHost, BoardPage } from '../host.ts';
 import type { Io } from '../io.ts';
 import type { Status } from '../status.ts';
@@ -33,8 +33,12 @@ export interface Board {
   go: GoTo; // the Go to card box's typing, Enter, Esc and offer (goToCard flag, go-to-card.ts)
   /** The open board's id; '' before one opens. */
   id(): string;
-  /** What a host's own chat reads of the board (chat-side.ts). */
-  side: BoardSide;
+  /** The ledger as folded now; null before it is read. */
+  ledger(): LedgerState | null;
+  /** Zoom to these cards by number, selecting nothing; none on the board, the host is told so. */
+  zoomToCards(cards: readonly number[]): void;
+  /** Open a board now when it is held, else once its line arrives; a note's unsaved words ask first. False on Cancel. */
+  jump(id: string): Promise<boolean>;
   /** Show note `seq` on card `id` in its bubble. */
   showNote(id: string, seq: number): void;
   /** A note holds changed words not yet saved; and the question before they are lost (host.ts `BoardView`). */

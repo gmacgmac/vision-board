@@ -198,8 +198,8 @@ host; nclite's pane will be another.
   class is its `@container`, D-061) and gives back the contract's view (`board/host.ts` `BoardView`:
   `unmount`, `pageChip`, `reveal`, `unsaved`, `leave`) plus what a host draws around it: `status` (`board/status.ts`
   `Status`, a plain observable of `BoardStatus`: the counts, versions, open lists, picker) and `board`
-  (`controller.ts` `Board`, the controls). `send()` is Send to agent: the selected cards go to
-  `host.addToChat` as `#actions` `cardChip`s, then the `send` act. `unmount` removes every listener the
+  (`mount.ts` `BoardControls`: the standalone page's toolbar and strips call them until they move inside; no chat
+  goes through them). `send()` is Send to agent, through `host.chat.send`. `unmount` removes every listener the
   board added on the document or the window, takes the zoomed image view away (`card-images.ts`
   `destroy`; the one element outside `root`, a modal dialog's top layer) and empties `root`, giving it
   back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
@@ -260,17 +260,31 @@ host; nclite's pane will be another.
   server has moved, so only the browser's prompt asks.
 - **What a host supplies** (`board/host.ts` `BoardHost`): `api` (the typed client's `Transport`, paths
   relative to the route prefix), `events` (`BoardEvent`, `{ plugin, ref: { board, head } }`; a ref with
-  no head means "catch up"), `addToChat`, `settings` (`get`, `on`: each flag by name, and `align`),
+  no head means "catch up"), `chat`, `settings` (`get`, `on`: each flag by name, and `align`),
   `notify(text, tone)`, `confirm({ heading, body, confirm, list })` and, for a page that is the board's
   own, `page` (`BoardPage`: which board opens first, the board opened, starting again, the person's
   cookie). Without `page` the first board opens and, with none left, the board starts again in place.
+- **The host's chat** (`board/host.ts` `BoardChat`; the board's side is `board/chat-side.ts` `bindChat`, D-074). The
+  board keeps two live chips attached (`chat.attach(key, chip | null)`): `selection` and `answers`
+  (`#actions` `selectionChip`, `answersChip`), replaced as they change, none on a past version, taken back at
+  `unmount`. Each may carry `preview`; a host may pass any chip through unread, and its `kind` and `ref` go
+  to the engine's `resolve` as the message goes. A chip that went is spent until its key's `ref` changes.
+  `chat.send(record)` sends what is staged with no words and calls `record` (the `send` act), unless the
+  host's own server recorded that Send with the message; a host with no chat answers `record()`. `chat.status`
+  is read only: `now` (idle, working, asking) is all a host need give and drives the status's `chatWork`;
+  optional `agent` scopes the answers chip, `held` and `staged` drive `sendWaiting` and `chatAttached`.
+  Optional `chat.reveal` and `chat.hasLine` are a changed card's stepper link to the chat's line; without
+  `reveal` there is no link. `BoardView.reveal({ cards })` zooms to cards by number and selects nothing, and
+  a `board` the ledger does not hold yet opens when its first line arrives. Proven by
+  `apps/board/tests/chat-bridge.test.ts` (with a host that gives only `now`) and
+  `tests/pages/board-host.spec.ts` "the chat seam", whose fake host imports nothing from `shell/`.
 - **The standalone host** (`apps/board/src/shell/page-host.ts` `createPageHost`): `api` is `fetch` on
   the page's origin, `events` its project stream (`shell/page-io.ts` `watchProject`; a rebuilt page or
   another folder reloads it), `settings` its flags and the viewer's alignment, `notify` the toast,
   `confirm` the shared dialog, `page` its address and the board last looked at. `App.svelte` mounts the
   board in its `<main>` and mirrors the status into `shell.svelte.ts`. Its chat is its own
-  (`shell/chat-panel.ts`, `chat-bridge.ts`): it reads the board through `board/chat-side.ts` `BoardSide`,
-  so its `addToChat` stages nothing more. No file under `apps/board/src/board/` imports the page around
+  (`shell/chat-panel.ts`), and reaches the board only through `chat` and `BoardView`
+  (`chat-bridge.ts` `createChatBridge`). No file under `apps/board/src/board/` imports the page around
   it or Svelte: `scripts/verify.mjs` `checkBoardHost` fails it (`scripts/verify.test.mjs`).
   The board's folder is in feature folders (`canvas/`, `links/`, `cards/`, `notes/`, `selection/`, `input/`,
   `find/`, `boards/`, `access/`, `apps/`), each with one public file, `index.ts`: code outside a folder imports
@@ -282,7 +296,7 @@ host; nclite's pane will be another.
 - **Differences from nclite's draft** (the contract bends to the board, principles § The board is a
   plugin): `confirm` on the host (four actions ask first, one with a list); a change event whose `ref` is
   `{ board, head }`; `api` resolves to the `Response` (the client reads problems itself); `notify` takes a
-  tone (`error` for a refusal); the optional `page` part; the image route (`io.ts` `imageVersion`,
+  tone (`error` for a refusal); `chat` in place of `addToChat`, for chips that come and go, Send and the agent's status; the optional `page` part; the image route (`io.ts` `imageVersion`,
   `IMAGE_ROUTE`) is the page's own, not under `api`; and where the draft has `unmount()` save anything
   being written, the board asks instead: `leave()` asks the person first, then the host unmounts, and
   `unsaved()` serves the host's own question or `beforeunload` (the person decides whether
@@ -1025,7 +1039,7 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
 5. **The flag stays usable** (ruling 4): the person's private mark changes nothing an agent reads,
    so its button and Shift+F work on a locked board (`passesLock`).
 6. **The chat**: messages still go; the composer's chip carries no answers on a locked board
-   (`chat-bridge.ts` `boardContext`), as the server sends none (api.md 140).
+   (`#actions` `answersChip`), as the server sends none (api.md 140).
 7. Tests: `tests/pages/lock-board.spec.ts` (the menu row by mouse and keyboard, "Locked", every
    paused control aria-disabled, a press on a button, a key, a note, a layout and the selection bar
    saying why and writing nothing but seen lines, the flag by click and Shift+F, a lock from another

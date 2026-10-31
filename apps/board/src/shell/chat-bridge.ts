@@ -1,82 +1,52 @@
-// The bridge between the chat panel and the board (chat-panel FE_02 ruling 3, D-037): the only file
-// that knows both sides. Board to chat: the composer shows one chip for everything a message carries
-// from the board, "3 answers · 2 selected" (composer-one-chip ruling 1): the selected cards, in the
-// order selected, and the person's answers since the board's last Send. It opens a preview of
-// exactly that text, built by packages/actions `boardBlocks` and `roundOf`, the writer the server's
-// prompt uses (ruling 2). There is no chip per card: to leave one out, deselect it; the cards a
-// message carried are spent until the selection changes. Notes are among the answers, so they are
-// no chips: a note goes once, as its answer (chat-no-double-note ruling 2). Chat to board: a change
-// chip zooms to its cards and selects nothing, so nothing goes with the next message, opening their
-// board first when it is another one; a changed card's stepper links to the board write in the chat that last changed it; a
+// The bridge between the chat panel and the board (chat-panel FE_02 ruling 3, D-037; D-074): the
+// standalone chat as the board's host sees it (`host`, board/host.ts `BoardChat`), and the board as the
+// chat sees it (`board`, only its `BoardView.reveal`). It goes through nothing else, so what works here
+// works in any host. Board to chat: the board attaches its live chips, the selected cards and the
+// person's answers since its last Send, and the composer shows them as one chip, "3 answers · 2
+// selected" (composer-one-chip ruling 1), opening a preview of exactly that text, the chips' own
+// (packages/actions `selectionChip`, `answersChip`), the writer the server's prompt uses (ruling 2).
+// There is no chip per card: to leave one out, deselect it; the selection a message carried is spent
+// until its `ref` changes. Notes are among the answers, so they are no chips: a note goes once, as its
+// answer (chat-no-double-note ruling 2). Chat to board: a change chip zooms to its cards and selects
+// nothing, so nothing goes with the next message, opening their board first when it is another one; a
+// changed card's stepper links to the board write in the chat that last changed it (`host.reveal`); a
 // chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The board side
-// attaches from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
+// attaches from the page, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // It also holds the files attached to the next message (D-068 ruling 6: the composer takes them, the host
 // uploads): each goes up as it comes, its chip saying so, then ready with its path or refused with why;
 // the limits are checked here first and by the server again. Once ready, a PDF's pages and a big picture's fitted
 // copy are made (`ChatSide.copies`, pdf-pages.ts, D-071), which never holds Send. The pure parts are unit-tested under Node.
-import type { LedgerState, SelectedCard } from '#actions';
-import { boardBlocks, boardLocked, roundOf } from '#actions';
+import type { Chip as BoardChip } from '#actions';
 import type {
   ChangeEntry, ChatChangeDetail, ChatComposerElement, ChatFileRemoveDetail, ChatFilesDetail, ChatState, Chip, ComposerContext, ComposerFile,
 } from '#chat';
 import { CHAT_CHANGE_EVENT, CHAT_FILE_REMOVE_EVENT, CHAT_FILES_EVENT } from '#chat';
-import type { BoardData } from '#actions';
 import type { OperationInput, OperationOutput, PointerError } from '#format';
-import { clip } from '#format';
-import type { BoardSide } from '../board/chat-side.ts';
+import type { BoardChat, BoardView, ChatStatus } from '../board/host.ts';
 import { FILE_BYTES, FILE_COUNT, attachedName, fileData, fileLabel } from './attached-file.ts';
 import type { MakeCopies } from './pdf-pages.ts';
 import * as chatWords from './words/chat.ts';
-
-/** The words of the stepper's link to the chat (packages/ui `CardUpdates.source`). */
-export const SOURCE_LABEL = chatWords.showInTheChat;
-
-const LABEL_MAX = 80;
 
 /** One file the next message may carry: its body's item. */
 export type MessageFile = NonNullable<OperationInput<'send_chat'>['body']['files']>[number];
 export type AttachFileBody = OperationInput<'attach_chat_file'>['body'];
 
-/** The selected cards, in the order they were selected, by number and title; a node with no number is no card. */
-export function selectedCards(d: BoardData, ids: readonly string[]): SelectedCard[] {
-  return ids.flatMap((id): SelectedCard[] => {
-    const n = d.view.nodes.find((x) => x.id === id);
-    return n?.n === undefined ? [] : [{ n: n.n, title: n.title }];
-  });
+/** The composer's one chip for what the board attached: "3 answers · 2 selected" (either part alone),
+ *  opening to exactly what the next message carries from the board: the selected cards, then the
+ *  answers, a blank line apart as `boardBlocks` writes them. None when there is nothing. */
+export function composerContext(chips: readonly BoardChip[]): ComposerContext | null {
+  if (!chips.length) return null;
+  const answers = chips.filter((c) => c.kind === 'answers');
+  const rest = chips.filter((c) => c.kind !== 'answers');
+  return { label: [...answers, ...rest].map((c) => c.label).join(' · '), text: [...rest, ...answers].map((c) => c.preview ?? '').filter(Boolean).join('\n\n') };
 }
 
-/** The cards the next message carries: the selected ones, but those a message already took (`spent`). */
-export const boardCards = (d: BoardData, selected: readonly string[], spent: ReadonlySet<number>): SelectedCard[] =>
-  selectedCards(d, selected).filter((c) => !spent.has(c.n));
-
-/** A card as the message's chip: its body's `cards`, the label the feed shows. */
-export const cardChip = (c: SelectedCard): Chip => ({ kind: 'card', ref: c.n, label: clip(c.title, LABEL_MAX) || chatWords.card(c.n) });
-
-const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-
-/** The composer's one chip on `board`: "3 answers · 2 selected" (either part alone), opening to exactly
- *  what the next message carries from the board: `cards`, then the answers since the board's last
- *  Send as `agent` is told them (the session's agent: only what it may answer, as the server builds
- *  it; every answer with none); on a locked board no answers, which wait for the unlock as the server's
- *  do (api.md 140). None when there is nothing. */
-export function boardContext(s: LedgerState, board: string, cards: readonly SelectedCard[], agent?: string): ComposerContext | null {
-  const round = boardLocked(s, board) ? undefined : roundOf(s, board, s.lastSend.get(board) ?? 0, agent);
-  const parts = [round && count(round.count, 'answer'), cards.length > 0 && chatWords.selected(cards.length)].filter(Boolean);
-  return parts.length ? { label: parts.join(' · '), text: boardBlocks(cards, round) } : null;
-}
+/** The selection a message carries, as its chips: the body's `cards`. */
+export const cardChips = (cards: readonly number[]): Chip[] => cards.map((n) => ({ kind: 'card', ref: n, label: chatWords.card(n) }));
 
 /** The board write in the chat that last changed card `n` on `board`. */
 export const lastChange = (s: ChatState, board: string, n: number): ChangeEntry | undefined =>
   s.entries.findLast((e): e is ChangeEntry => e.type === 'change' && e.board === board && e.cards.includes(n));
-
-/** A change chip's cards that are on the board, as card ids. */
-export function cardIds(d: BoardData, cards: readonly number[]): string[] {
-  const on = new Set(d.view.nodes.map((n) => n.id));
-  return cards.map(String).filter((id) => on.has(id));
-}
-
-/** What the bridge needs of the board: the board's chat side (board/chat-side.ts). */
-export type { BoardSide } from '../board/chat-side.ts';
 
 /** What the bridge needs of the chat (chat-panel.ts). */
 export interface ChatSide {
@@ -91,8 +61,10 @@ export interface ChatSide {
   /** Pictures of what is attached, with the `readAttachment` flag on (pdf-pages.ts). */
   copies?: MakeCopies | undefined;
   state(): ChatState;
-  /** The agent id of the session on the open board, whose answers the context shows; undefined with none. */
-  agent(): string | undefined;
+  /** What the board reads of the chat (`BoardChat.status`). */
+  status(): Pick<ChatStatus, 'now' | 'agent' | 'held' | 'staged'>;
+  /** The board's Send: with the board's session and something attached, the message with no words; else `record`. */
+  send(record: () => Promise<string | null>): Promise<string | null>;
   /** What is attached changed. */
   changed(): void;
   /** Open the sidebar at feed entry `key`. */
@@ -100,14 +72,17 @@ export interface ChatSide {
 }
 
 export interface ChatBridge {
-  board(side: BoardSide): () => void;
+  /** The standalone chat as the board's host gives it (`BoardHost.chat`). */
+  readonly host: BoardChat;
+  /** The board as the chat reaches it: its view's `reveal`, and nothing else. */
+  board(view: Pick<BoardView, 'reveal'>): () => void;
   chat(side: ChatSide): () => void;
-  /** The board was drawn, or the chat's session changed: the cards and the answers may have. */
+  /** The board was drawn: the panel draws again. */
   refresh(): void;
+  /** The chat's side changed what `status` reads: the board hears when it differs. */
+  statusChanged(): void;
   /** The selected cards the next message carries, as its chips. */
   chips(): Chip[];
-  /** The stepper link's words for card `n`, when a board write in the chat changed it. */
-  source(n: number): string | undefined;
   /** Files the person attached (`chat-files`, heard on the panel): each is checked, then uploaded, and its chip says where it stands. */
   attachFiles(files: readonly File[], pasted: boolean): void;
   /** A file's chip was taken off (`chat-file-remove`): its file stays saved (D-068 ruling 4), an answer still on its way is dropped. */
@@ -125,10 +100,26 @@ export interface ChatBridge {
 }
 
 export function createChatBridge(): ChatBridge {
-  let b: BoardSide | null = null;
+  let v: Pick<BoardView, 'reveal'> | null = null;
   let c: ChatSide | null = null;
-  /** The cards a message already took, by number. */
-  const spent = new Set<number>();
+  /** What the board attached, by key. */
+  const attached = new Map<string, BoardChip>();
+  /** The `ref` of the selection a message already took, as text: spent until the selection's `ref` differs. */
+  let spent: string | null = null;
+  const refText = (chip: BoardChip | undefined) => JSON.stringify(chip?.ref ?? null);
+  const selection = () => [...attached.values()].find((x) => x.kind === 'selection');
+  /** What the next message carries from the board. */
+  const staged = () => [...attached.values()].filter((x) => x.kind !== 'selection' || refText(x) !== spent);
+  /** Who hears the status, and what it last said as text. */
+  const hearing = new Set<() => void>();
+  let said = '';
+  const statusNow = () => c?.status() ?? { now: 'idle' as const };
+  function statusChanged() {
+    const text = JSON.stringify(statusNow());
+    if (text === said) return;
+    said = text;
+    for (const l of hearing) l();
+  }
   /** The context last given to the composer, as text. */
   let shown = 'null';
   /** The files attached to the next message, with what the server answered for those it saved. */
@@ -140,26 +131,12 @@ export function createChatBridge(): ChatBridge {
     for (const [id, stop] of making) if (!keep(id)) { stop(); making.delete(id); }
   };
 
-  const cards = (): SelectedCard[] => {
-    const d = b?.data();
-    return !b || !d || b.readOnly() ? [] : boardCards(d, b.selection.selected(), spent);
-  };
-
   function attach() {
-    if (!b || !c || !b.data()) return;
-    const s = b.ledger();
-    const context = b.readOnly() || !s ? null : boardContext(s, b.id(), cards(), c.agent());
+    if (!c) return;
+    const context = composerContext(staged());
     const key = JSON.stringify(context);
     if (key !== shown) { shown = key; c.composer.setContext(context); }
     c.changed();
-  }
-
-  function zoomTo(cards: readonly number[]) {
-    const d = b?.data();
-    if (!b || !d) return;
-    const ids = cardIds(d, cards);
-    if (!ids.length) return b.toast(chatWords.thoseCardsAreNoLonger);
-    b.zoom(ids);
   }
 
   const drawFiles = () => c?.setFiles(held.map(({ saved: _, ...file }) => file));
@@ -220,30 +197,38 @@ export function createChatBridge(): ChatBridge {
 
   const onChange = (e: Event) => {
     const { board, cards } = (e as CustomEvent<ChatChangeDetail>).detail;
-    if (!b) return;
-    if (board !== b.id()) b.switchTo(board);
-    if (board === b.id()) zoomTo(cards);
+    v?.reveal({ board, cards });
   };
-  const source = (n: number) => (b && c && lastChange(c.state(), b.id(), n) ? SOURCE_LABEL : undefined);
-  /** The stepper's link on a changed card (packages/ui `stepMarkup`). */
-  const onStage = (e: MouseEvent) => {
-    const link = (e.target as Element).closest<HTMLElement>('vb-node [data-source]');
-    const n = Number(link?.closest<HTMLElement>('vb-node')?.dataset.id);
-    const entry = b && c && link ? lastChange(c.state(), b.id(), n) : undefined;
-    if (entry) void c!.reveal(entry.key);
+
+  const host: BoardChat = {
+    attach(key, chip) {
+      if (chip) attached.set(key, chip); else attached.delete(key);
+      if (spent !== null && refText(selection()) !== spent) spent = null;
+      attach();
+    },
+    send: (record) => (c ? c.send(record) : record()),
+    status: {
+      get now() { return statusNow().now; },
+      get agent() { return statusNow().agent; },
+      get held() { return statusNow().held; },
+      get staged() { return statusNow().staged; },
+      on(listener) {
+        hearing.add(listener);
+        return () => { hearing.delete(listener); };
+      },
+    },
+    reveal({ board, n }) {
+      const entry = c && lastChange(c.state(), board, n);
+      if (entry) void c!.reveal(entry.key);
+    },
+    hasLine: ({ board, n }) => !!c && !!lastChange(c.state(), board, n),
   };
 
   return {
-    board(side) {
-      b = side;
-      side.source(source);
-      side.stage.addEventListener('click', onStage);
-      const unlisten = side.selection.onChange(() => {
-        spent.clear();
-        attach();
-      });
-      attach();
-      return () => { side.source(null); side.stage.removeEventListener('click', onStage); unlisten(); b = null; };
+    host,
+    board(view) {
+      v = view;
+      return () => { v = null; };
     },
     chat(side) {
       c = side;
@@ -252,17 +237,22 @@ export function createChatBridge(): ChatBridge {
       side.panel.addEventListener(CHAT_FILES_EVENT, onFiles);
       side.panel.addEventListener(CHAT_FILE_REMOVE_EVENT, onFileRemove);
       attach();
+      statusChanged();
       return () => {
         side.panel.removeEventListener(CHAT_CHANGE_EVENT, onChange);
         side.panel.removeEventListener(CHAT_FILES_EVENT, onFiles);
         side.panel.removeEventListener(CHAT_FILE_REMOVE_EVENT, onFileRemove);
         stopMaking();
         c = null;
+        statusChanged();
       };
     },
     refresh: attach,
-    chips: () => cards().map(cardChip),
-    source,
+    statusChanged,
+    chips() {
+      const chip = selection();
+      return chip?.kind === 'selection' && refText(chip) !== spent ? cardChips(chip.ref.cards) : [];
+    },
     attachFiles,
     removeFile,
     files: () => held.flatMap((f) => (f.state === 'ready' && f.saved ? [f.saved] : [])),
@@ -279,7 +269,7 @@ export function createChatBridge(): ChatBridge {
       showFiles();
     },
     sent(took, files = []) {
-      for (const chip of took) if (chip.kind === 'card') spent.add(chip.ref);
+      if (took.some((chip) => chip.kind === 'card')) spent = refText(selection());
       // A refused file went with that message's chance: only one still uploading, or ready after it left, stays.
       const went = new Set(files.map((f) => f.path));
       held = held.filter((f) => f.state === 'uploading' || (f.saved && !went.has(f.saved.path)));
@@ -287,6 +277,6 @@ export function createChatBridge(): ChatBridge {
       drawFiles();
       attach();
     },
-    open: (board) => b?.jump(board),
+    open: (board) => v?.reveal({ board }),
   };
 }

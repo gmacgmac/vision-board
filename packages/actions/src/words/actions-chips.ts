@@ -16,6 +16,8 @@ export const cardOnBoard = (n: number, board: string): string => `Card ${n} on b
 export const noteOn = (seq: number, on: string): string => `Note ${seq} on ${on}`;
 export const boardIsArchived = (board: string): string => `Board "${board}" is archived.`;
 export const board = (board: string): string => `Board "${board}"`;
+export const selected = (count: number): string => `${count} selected`;
+export const answers = (count: number): string => `${count} ${count === 1 ? 'answer' : 'answers'}`;
 export const cardOnBoardChangedSince = (n: number, board: string): string => `Card ${n} on board "${board}" changed since you added it.`;
 export const boardCard = (board: string, n: number): string => `Board "${board}", card ${n}`;
 export const noteOnBoardChangedSince = (seq: number, board: string): string => `Note ${seq} on board "${board}" changed since you added it.`;

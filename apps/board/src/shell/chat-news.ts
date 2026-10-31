@@ -1,6 +1,7 @@
 // Working alongside the agent (workAlongside flag, point 328; agent-access-and-working WORK_01): what
-// the board's mark says of the chat's agent (`agentWork`, read from the chat's own conditions table:
-// working while its turn runs, asking while a question waits for the person), and the replies the
+// the chat says of its agent (`agentWork`, read from the chat's own conditions table: working while its
+// turn runs, asking while a question waits for the person; the board's mark hears it through
+// `BoardChat.status`, chat-bridge.ts), and the replies the
 // person has not seen (`createReplyNews`). A reply is the words a turn ended on (a `message_out` that
 // is not interim); it is news when it lands while the person can't see the latest of the feed (the
 // panel closed, or scrolled away from the latest), and only one that lands after the page began
@@ -8,9 +9,10 @@
 // cleared the moment the person can see the latest again. Pure but for the clock, which a test gives.
 import type { ChatEvent, ChatState } from '#chat';
 import { chatConditions } from '#chat';
+import type { ChatWork } from '../board/host.ts';
 
 /** What the board's mark shows: nothing, the agent working, or the agent waiting for the person's OK. */
-export type AgentWork = 'idle' | 'working' | 'asking';
+export type AgentWork = ChatWork;
 
 /** The mark from the chat's conditions: `waiting` (a question open) before `busy` (the turn runs). */
 export function agentWork(s: ChatState): AgentWork {
@@ -69,8 +71,6 @@ export function createReplyNews(d: ReplyNewsDeps): ReplyNews {
 export interface NewsHost {
   /** Whether the sidebar is open. */
   isOpen?(): boolean;
-  /** What the agent is doing changed: the board's mark. */
-  work?(w: AgentWork): void;
   /** The count of replies not seen changed. */
   news?(count: number): void;
   /** A reply landed out of sight: say so, with `open`, which opens the chat at it. */
@@ -87,17 +87,14 @@ export interface NewsPanel {
 }
 
 export interface PanelNews extends Pick<ReplyNews, 'follow' | 'event'> {
-  /** The chat's state as drawn: the mark follows it. */
-  show(s: ChatState): void;
   /** The feed was drawn: the person scrolling back to the latest sees the replies there. */
   drawn(feed: HTMLElement): void;
   /** The sidebar opened: with replies not seen, the feed goes to the latest. */
   opened(): void;
 }
 
-/** The chat panel's side of working alongside: the mark and the replies not seen, told to the page. */
+/** The chat panel's side of working alongside: the replies not seen, told to the page. */
 export function panelNews(host: NewsHost, panel: NewsPanel): PanelNews {
-  let shown: AgentWork = 'idle';
   const news = createReplyNews({
     seen: () => {
       const feed = panel.feed();
@@ -115,7 +112,6 @@ export function panelNews(host: NewsHost, panel: NewsPanel): PanelNews {
   return {
     follow: () => news.follow(),
     event: (e) => news.event(e),
-    show(s) { if (agentWork(s) !== shown) host.work?.((shown = agentWork(s))); },
     drawn: (feed) => new MutationObserver(() => news.check()).observe(feed, { attributeFilter: ['data-following'] }),
     opened() { if (news.count > 0) void toLatest(); },
   };
