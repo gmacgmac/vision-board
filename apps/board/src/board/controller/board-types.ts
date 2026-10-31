@@ -6,7 +6,7 @@ import type { ProposalFlow } from '../cards/index.ts';
 import type { CommandId } from '../input/index.ts';
 import type { BoardEdit } from '../boards/index.ts';
 import type { GoTo } from '../find/index.ts';
-import type { BoardHost, BoardPage } from '../host.ts';
+import type { BoardHost, BoardPage, BoardStore } from '../host.ts';
 import type { Io } from '../io.ts';
 import type { Status } from '../status.ts';
 
@@ -61,4 +61,6 @@ export interface BoardDeps {
   page: BoardPage;
   /** The mount's prefix for the ids its cards, frames and connectors set (mount-ids.ts); none for the first. */
   ids?: string;
+  /** Where the viewer's conveniences are kept (BoardHost.store, or the mount's own). */
+  store: BoardStore;
 }

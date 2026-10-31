@@ -5,11 +5,11 @@ import '../styles/page.ts';
 import '../styles/chat.ts';
 import './gallery.css';
 import { flagOn } from '#format';
-import { defineBoardElements, PATTERNS, setMarkdownImages, setMarkdownSvg } from '#ui';
+import { defineBoardElements, PATTERNS } from '#ui';
 import type { PatternInfo } from '#ui';
 import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
-import { keep, kept } from '../board/kept.ts';
+import { keep, kept } from '../shell/kept.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
@@ -166,8 +166,6 @@ function build(): void {
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }
 
-setMarkdownImages(flagOn('cardImages', pageFlags())); // images in Markdown (D-048), as the board's main.ts
-setMarkdownSvg(flagOn('svgImages', pageFlags())); // svg among them (D-064)
 defineBoardElements();
 defineChatElements();
 build();

@@ -1,8 +1,9 @@
-// A per-viewer convenience kept in the browser (board/kept.ts): read and kept through
-// localStorage, and nothing breaks when storage is absent or refuses.
+// A per-viewer convenience kept in the browser (shell/kept.ts): read and kept through
+// localStorage, and nothing breaks when storage is absent or refuses. `pageStore` is the board's store
+// on the standalone page: a view for this tab only, the rest as above, under the keys it always had.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keep, kept } from '../src/board/kept.ts';
+import { keep, kept, pageStore } from '../src/shell/kept.ts';
 
 const g = globalThis as { localStorage?: unknown };
 
@@ -52,4 +53,28 @@ test('keptAlign: centre once kept, else top and left (start), whatever storage h
   });
   const refuse = () => { throw new Error('SecurityError'); };
   withStorage({ getItem: refuse, setItem: refuse }, () => assert.equal(keptAlign(), 'start'));
+});
+
+test('pageStore: a board\'s view goes in sessionStorage, the rest in localStorage, each under `vb.`; refused, nothing kept', () => {
+  const local = new Map<string, string>();
+  const session = new Map<string, string>();
+  const area = (m: Map<string, string>) => ({ getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => m.set(k, v) });
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+  Object.defineProperty(globalThis, 'sessionStorage', { value: area(session), configurable: true, writable: true });
+  try {
+    withStorage(area(local), () => {
+      pageStore.set('view.plans', '{}');
+      pageStore.set('proposals-hidden', '1');
+      assert.deepEqual([...session], [['vb.view.plans', '{}']]);
+      assert.deepEqual([...local], [['vb.proposals-hidden', '1']]);
+      assert.equal(pageStore.get('view.plans'), '{}');
+    });
+    withStorage(undefined, () => {
+      assert.equal(pageStore.get('proposals-hidden'), null);
+      assert.doesNotThrow(() => pageStore.set('proposals-hidden', '1'));
+    });
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'sessionStorage', had);
+    else delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+  }
 });

@@ -1,10 +1,11 @@
 // Each board's zoom and position, kept across a reload (FE_02 ruling 5, keepView flag): saved per
-// board in sessionStorage (`vb.view.<board>`) a moment after the view stops moving, and at once when
-// the page goes or another board opens, and restored when that board opens again. Storage may be
-// refused (a private window's policy, as flags.ts allows for): then the board fits, as before.
+// board in the host's store (`view.<board>`, BoardHost.store) a moment after the view stops moving, and at
+// once when the page goes or another board opens, and restored when that board opens again. A store that
+// lost it, or holds something else: the board fits, as before.
+import type { BoardStore } from '../host.ts';
 import type { Viewport, ViewSnapshot } from '../canvas/index.ts';
 
-const KEY = 'vb.view.';
+const KEY = 'view.';
 /** How long the view must stay still before it is saved. */
 const QUIET_MS = 250;
 
@@ -21,7 +22,7 @@ export interface KeptView {
 const isView = (v: unknown): v is ViewSnapshot =>
   !!v && typeof v === 'object' && ['x', 'y', 'k'].every((k) => Number.isFinite((v as Record<string, unknown>)[k]));
 
-export function createKeptView(vp: Viewport, board: () => string, on: boolean): KeptView {
+export function createKeptView(vp: Viewport, board: () => string, on: boolean, store: BoardStore): KeptView {
   let timer = 0;
   let pending = false;
 
@@ -31,12 +32,7 @@ export function createKeptView(vp: Viewport, board: () => string, on: boolean): 
     pending = false;
     const id = board();
     // A view taken while the stage had no room (a hidden pane or tab) is not the person's.
-    if (!id || !vp.sized) return;
-    try {
-      sessionStorage.setItem(KEY + id, JSON.stringify(vp.snapshot()));
-    } catch {
-      // Storage refused: the view is simply not kept.
-    }
+    if (id && vp.sized) store.set(KEY + id, JSON.stringify(vp.snapshot()));
   }
 
   if (on) addEventListener('pagehide', flush);
@@ -52,9 +48,9 @@ export function createKeptView(vp: Viewport, board: () => string, on: boolean): 
       if (!on) return false;
       let saved: unknown = null;
       try {
-        saved = JSON.parse(sessionStorage.getItem(KEY + id) ?? 'null');
+        saved = JSON.parse(store.get(KEY + id) ?? 'null');
       } catch {
-        // Storage refused, or not JSON: fit instead.
+        // Not JSON: fit instead.
       }
       if (!isView(saved)) return false;
       vp.restore(saved);

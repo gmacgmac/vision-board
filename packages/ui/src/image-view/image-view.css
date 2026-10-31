@@ -1,7 +1,7 @@
 /* Image view pattern styles (packages/ui/src/image-view, D-048 rulings 22-23). Tokens only.
    An image on a card is a button that opens the zoomed view; the view is a modal dialog over the
-   board: a backdrop, the image at its zoomed size (placed by the element through the CSSOM), and an
-   × in the screen's top corner. Its motion is the element's (the board's motion token and easing). */
+   board's root (its box set by the element through the CSSOM, as the image's is): a backdrop, the image
+   at its zoomed size, and an × in its top corner. Its motion is the element's (the board's motion token and easing). */
 
 .vb-img {
   display: block; width: 100%; margin: 0; padding: 0; border: 0; border-radius: var(--vb-radius-md);

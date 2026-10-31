@@ -2,6 +2,9 @@
 // registry and the page's command table (commands.ts), so a new action or command with a key
 // works here without changes. A digit is one such command: it opens the Go to card box (go-to-card.ts);
 // `/` too, empty, for words (cardSearch flag), and only inside the board's root under a host (`route`).
+// Every key it acts on is `preventDefault`ed, so a host can tell the key was used; a key it leaves, Esc with
+// nothing to escape among them, stays the host's. Under a host it listens on the root, so the mark is there
+// before the key reaches any listener of the host's.
 import type { ActionId } from '#format';
 import { ACTIONS } from '#actions';
 import type { CommandId } from './commands.ts';
@@ -28,7 +31,8 @@ export interface KeyHandlers {
    *  apply now, so the key falls through (C on one card is that card's comment). */
   command(id: CommandId, key: string): boolean;
   toggleHide(): void;
-  escape(): void;
+  /** Esc: true when it had something to close or clear. */
+  escape(): boolean;
 }
 
 const NUDGE = 16;
@@ -72,8 +76,8 @@ function onCommand(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | n
   if (cmd && h.command(cmd, key)) { e.preventDefault(); return true; }
   if (id && BY_KEY.has(key)) { e.preventDefault(); h.act(id, BY_KEY.get(key)!); return true; }
   // R with no selection (a selection's R is Reset places, commands.ts): the focused card's reset.
-  if (id && key === 'r') { h.unpin(id); return true; }
-  if (key === 'h') { h.toggleHide(); return true; }
+  if (id && key === 'r') { e.preventDefault(); h.unpin(id); return true; }
+  if (key === 'h') { e.preventDefault(); h.toggleHide(); return true; }
   return false;
 }
 
@@ -85,8 +89,8 @@ function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement, pageWide = 
   const board = target.closest?.('.vb-board') ?? null;
   if (root && board !== root && (board || !pageWide)) return;
   // A card's popover box (its Accept, its Reject) takes no card shortcuts: A there is not Acknowledge.
-  if (e.defaultPrevented || target.closest('input, textarea, select, dialog, .vb-card-pop')) return;
-  if (e.key === 'Escape') return h.escape();
+  if (e.defaultPrevented || target.closest('input, textarea, select, dialog, [contenteditable], .vb-card-pop')) return;
+  if (e.key === 'Escape') { if (h.escape()) e.preventDefault(); return; }
   if (e.metaKey || e.ctrlKey) return;
   const id = target.closest<HTMLElement>('vb-node')?.dataset.id ?? null;
   /** The container whose title line (or one of its controls) has focus, outside every card. */
@@ -102,13 +106,14 @@ function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement, pageWide = 
   if (!onCard(h, e, key, id, target)) onCommand(h, e, key, id);
 }
 
-/** Listens on the document; returns the function that stops listening. A key acts only when its
- * target is inside this board's `root` (a `.vb-board`); a key in another board's root (two boards
- * on one page) is that board's. With `pageWide`, the board has its own page (the standalone app),
- * and a key outside every board still reaches it; under a host (nclite: "a view stays inside its
- * root") it never does, Esc included. */
+/** Listens on the root, or with `pageWide` on the document; returns the function that stops listening.
+ * A key acts only when its target is inside this board's `root` (a `.vb-board`); a key in another board's
+ * root (two boards on one page) is that board's. With `pageWide`, the board has its own page (the
+ * standalone app), and a key outside every board still reaches it; under a host (nclite: "a view stays
+ * inside its root") it never does, Esc included. */
 export function bindKeys(h: KeyHandlers, root?: HTMLElement, pageWide = false): () => void {
   const onKey = (e: KeyboardEvent) => route(h, e, root, pageWide);
-  document.addEventListener('keydown', onKey);
-  return () => document.removeEventListener('keydown', onKey);
+  const at: EventTarget = root && !pageWide ? root : document;
+  at.addEventListener('keydown', onKey as EventListener);
+  return () => at.removeEventListener('keydown', onKey as EventListener);
 }

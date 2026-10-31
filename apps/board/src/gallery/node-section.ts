@@ -8,6 +8,7 @@ import type { ItemStatus } from '#actions';
 import { statusOf } from '#actions';
 import type { CardConditions, VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
+import { pageMarkdown } from '../flags.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_KINDS, REGION_OTHER } from './fixture.ts';
@@ -42,7 +43,7 @@ const APP_READY: CardConditions['app'] = { info: { id: 'calculator', state: 'rea
  * draw their cards with it too; `state` is the notes board's for the note samples. */
 export function card(n: ViewNode, fx: Fixture, state = fx.state, c: CardConditions = {}, selected = SELECTED.has(n.title)): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n);
+  node.render(n, { markdown: pageMarkdown() });
   node.update(nodeState(n, state, undefined, selected, n.kind === 'app' && !c.app ? { ...c, app: APP_READY } : c));
   const live = LIVE_CLASS[n.title];
   if (live) node.classList.add(live);

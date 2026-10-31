@@ -31,7 +31,7 @@ element `<vb-node>` draws every card on the board and `<vb-region>` every contai
   is an app card's state view. Their sheets, `src/node/node-app.css` and
   `src/app-frame/app-frame.css`, are in `#ui/styles.css` (components.md § App card).
 - **Images in cards** (D-048): the Markdown renderer writes an image's one shape, or the box saying
-  why it is not shown (`src/markdown/image.ts`; `setMarkdownImages` is the page's cardImages flag);
+  why it is not shown (`src/markdown/image.ts`; `renderMarkdown`'s `images`, `svg` and `imageRoute` say whether and where, from whoever renders);
   `src/image-view/` is an image on a card as its button (`imageButton`, `showProblem`) and the zoomed
   view (`<vb-image-view>`, `fitImage`). Its sheet, `src/image-view/image-view.css`, is in `#ui/styles.css` (components.md
   § Images in cards, § Image view).

@@ -2,6 +2,7 @@
 // board. Split out of notes.ts so its whole public surface reads in one place.
 import type { NoteKind } from '#format';
 import type { BoardState } from '#actions';
+import type { MarkdownOptions } from '#ui';
 import type { ActFields } from '../io.ts';
 import type { Selection } from '../selection/index.ts';
 import type { AskDiscard } from './note-discard.ts';
@@ -21,6 +22,8 @@ export interface NoteDeps extends ViewDeps, AnchorDeps {
   toast(text: string): void;
   /** The bubble opened or closed (the selection bar hides while it is open, 3_FE_02 ruling 2). */
   changed(): void;
+  /** How the bubble's Markdown renders (the board's flags and image route). */
+  markdown?: MarkdownOptions;
   /** "Discard your changes?" (step 4G ruling 4); true to discard. */
   discard: AskDiscard;
   /** Hears each turn of the flow's `unsaved` (M11: the board's status tells its host). */

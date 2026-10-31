@@ -40,13 +40,13 @@ function decoded(raw: string): string {
   try { return decodeURIComponent(raw); } catch { throw problem('not-found', IMAGE_WORDS.chars); }
 }
 
-/** The real path of image `rel` in the project's images folder, which must hold it: a missing
+/** The real path of image `rel` in the images folder, which must hold it: a missing
  * folder or file is 404, and so is a link that leads out of the folder. */
-function locate(project: string, rel: string): string {
+function locate(images: string, rel: string): string {
   let root: string;
   let file: string;
   try {
-    root = fs.realpathSync(path.join(project, DATA_DIR, IMAGES_DIR));
+    root = fs.realpathSync(images);
     file = fs.realpathSync(path.join(root, rel));
   } catch { throw missing(); }
   if (!isUnder(root, file)) throw problem('not-found', IMAGE_WORDS.outside);
@@ -60,19 +60,23 @@ const etagOf = (stat: fs.Stats): string => `"${stat.size.toString(16)}-${Math.tr
 const matches = (header: string | undefined, etag: string): boolean =>
   header !== undefined && header.split(',').some((t) => { const v = t.trim().replace(/^W\//, ''); return v === '*' || v === etag; });
 
-/** Answer a request for image `raw` (the route's text after the prefix) in folder `project` (its real
- * path), under the server's `flags` (svgImages). */
-export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string, flags: FlagOverrides = {}): void {
-  if (req.method !== 'GET' && req.method !== 'HEAD') throw problem('method-not-allowed', httpWords.getAndHeadOnly, { headers: { Allow: 'GET, HEAD' } });
+/** The image, open and checked: what either way of answering needs. Throws the problem when it may not be shown. */
+interface OpenImage { fd: number; size: number; etag: string; contentType: string; headers: Record<string, string> }
+
+function onlyRead(method: string | undefined): void {
+  if (method !== 'GET' && method !== 'HEAD') throw problem('method-not-allowed', httpWords.getAndHeadOnly, { headers: { Allow: 'GET, HEAD' } });
+}
+
+/** Open image `raw` (the route's text after the prefix) in the images folder `images`, under `flags` (svgImages). */
+function openImage(raw: string, images: string, flags: FlagOverrides): OpenImage {
   const rel = decoded(raw);
   const why = imagePathProblem(rel, { svg: flagOn('svgImages', flags) });
   if (why) throw problem(TYPE_WORDS.has(why) ? 'unsupported-media-type' : 'not-found', why);
   const type = imageTypeByName(rel)!; // the check above passed, so the extension names a type
-  const file = locate(project, rel);
+  const file = locate(images, rel);
   // Opened without following a link at the last step, so the file read is the file checked.
   let fd: number;
   try { fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); } catch { throw missing(); }
-  let streaming = false;
   try {
     const stat = fs.fstatSync(fd);
     if (!stat.isFile()) throw missing();
@@ -84,16 +88,47 @@ export function serveImage(req: IncomingMessage, res: ServerResponse, raw: strin
     if (notShown) throw problem('unsupported-media-type', notShown);
     const etag = etagOf(stat);
     const headers = { ETag: etag, 'Cache-Control': 'no-cache', ...(type === 'svg' && { 'Content-Security-Policy': SVG_CSP }) };
+    return { fd, size: stat.size, etag, contentType: IMAGE_LIMITS.types[type].contentType, headers };
+  } catch (err) {
+    fs.closeSync(fd);
+    throw err;
+  }
+}
+
+/** Answer a request for image `raw` in folder `project` (its real path), under the server's `flags`. */
+export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string, flags: FlagOverrides = {}): void {
+  onlyRead(req.method);
+  const { fd, size, etag, contentType, headers } = openImage(raw, path.join(project, DATA_DIR, IMAGES_DIR), flags);
+  let streaming = false;
+  try {
     if (matches(req.headers['if-none-match'], etag)) {
       res.writeHead(304, headers);
       res.end();
       return;
     }
-    res.writeHead(200, { ...headers, 'Content-Type': IMAGE_LIMITS.types[type].contentType, 'Content-Length': stat.size });
+    res.writeHead(200, { ...headers, 'Content-Type': contentType, 'Content-Length': size });
     if (req.method === 'HEAD') { res.end(); return; }
     streaming = true;
-    pipeline(fs.createReadStream('', { fd, start: 0, end: stat.size - 1 }), res, () => {});
+    pipeline(fs.createReadStream('', { fd, start: 0, end: size - 1 }), res, () => {});
   } finally {
     if (!streaming) fs.closeSync(fd);
+  }
+}
+
+/** The same answer for a host with no socket of the board's (the engine's `image`), its bytes whole: at
+ * most the image's cap. A host's own server has no header of ours, so the no-sniff header comes with it. */
+export function imageReply(req: { method: string; ifNoneMatch?: string | undefined }, raw: string, images: string, flags: FlagOverrides = {}): { status: number; body: Buffer | null; headers: Record<string, string> } {
+  onlyRead(req.method);
+  const { fd, size, etag, contentType, headers } = openImage(raw, images, flags);
+  try {
+    const sent = { ...headers, 'X-Content-Type-Options': 'nosniff' };
+    if (matches(req.ifNoneMatch, etag)) return { status: 304, body: null, headers: sent };
+    const all = { ...sent, 'Content-Type': contentType, 'Content-Length': String(size) };
+    if (req.method === 'HEAD') return { status: 200, body: null, headers: all };
+    const body = Buffer.alloc(size);
+    fs.readSync(fd, body, 0, size, 0);
+    return { status: 200, body, headers: all };
+  } finally {
+    fs.closeSync(fd);
   }
 }

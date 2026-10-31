@@ -23,6 +23,11 @@ schema (`packages/format/schema/app/panel-state.schema.json`) and two operations
 example app is
 `skills/vision-board/examples/apps/calculator/`.
 
+The app host is the standalone app's: the engine has none, so `list_apps` is `x-hosts: standalone`
+(api.md 46) and a plugin bot is not given it. A host with no app host of its own turns the `appCards` flag
+off in its settings (`BoardHost.settings`): an app card is then a plain card saying so, and the board asks
+for nothing.
+
 ## The folder
 
 An app is one folder in the open project: `.visionboard/apps/<id>/`. The id is the folder's name,

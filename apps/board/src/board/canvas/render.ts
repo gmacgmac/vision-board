@@ -5,7 +5,7 @@
 import type { View, ViewNode } from '#format';
 import type { BoardLayout } from '#layout';
 import type { AccessHolder, BoardState, FreshCount, RetiredCount } from '#actions';
-import type { CardReply, VbRegionElement } from '#ui';
+import type { CardReply, MarkdownOptions, VbRegionElement } from '#ui';
 import { regionFresh, regionState, retiredMarker } from '#ui';
 import { LATER_REGION } from '#format';
 import { work } from '../work.ts';
@@ -35,7 +35,7 @@ export interface RegionSet {
 /** `widths`: every ordinary frame has the Match card widths switch (widthsControl flag); `remove`:
  * Remove container in its settings (personRemove flag, N24); `rail`: every frame, Later too, has its
  * tools in a rail on its left edge (toolRail flag); `idPrefix`: the mount's, before every id a frame sets. */
-export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean; rail?: boolean; idPrefix?: string } = {}): RegionSet {
+export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean; rail?: boolean; idPrefix?: string; markdown?: MarkdownOptions } = {}): RegionSet {
   const els = new Map<string, VbRegionElement>();
   const drawn = new Map<string, string>();
   const shown = new Map<string, { box: string; state: string }>();
@@ -60,8 +60,8 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         }
         if (drawn.get(r.id) !== key) {
           const rail = opts.rail === true;
-          const { idPrefix } = opts;
-          el.render(r, r.id === LATER_REGION ? { ...LATER_FRAME, rail, idPrefix } : { widths: opts.widths === true, remove: opts.remove === true, rail, idPrefix });
+          const { idPrefix, markdown } = opts;
+          el.render(r, r.id === LATER_REGION ? { ...LATER_FRAME, rail, idPrefix, markdown } : { widths: opts.widths === true, remove: opts.remove === true, rail, idPrefix, markdown });
           drawn.set(r.id, key);
           shown.delete(r.id);
         }

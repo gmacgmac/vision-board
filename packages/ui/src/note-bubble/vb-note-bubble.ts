@@ -5,6 +5,7 @@
 // cancels. The conversation (review polish ruling 6) opens at an entry: `reveal` scrolls to it and
 // `focusText` focuses it. Browser only: the class is created inside defineVbNoteBubble().
 import type { Kind } from '#format';
+import type { MarkdownOptions } from '../markdown/render.ts';
 import type { BubbleMode, BubblePhase, BubbleView, NoteDiscardDetail, Placement } from './note-bubble-core.ts';
 import { cancelIntent, isDirty, NOTE_DISCARD_EVENT, readOnlyMode } from './note-bubble-core.ts';
 import { noteBubbleTemplate } from './note-bubble-template.ts';
@@ -22,7 +23,7 @@ export interface VbNoteBubbleElement extends HTMLElement {
    *  so the neutral edge; no number chip) or a whole container (`line`: the container's frame
    *  colour from `regionColour`, which its edge wears; sets `data-on="container"`), with the view
    *  from `bubbleView`. */
-  show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }): void;
+  show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }, md?: MarkdownOptions): void;
   /** Put it beside its card (from `placeBubble`), in the coordinates of its offset parent. */
   place(p: Placement): void;
   /** `saving` disables the buttons; `error` shows `message` under the text and keeps it. */
@@ -64,7 +65,7 @@ export function defineVbNoteBubble(): void {
       this.grow();
     }
 
-    show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }): void {
+    show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }, md?: MarkdownOptions): void {
       this.setAttribute('role', 'dialog');
       this.setAttribute('aria-label', v.heading);
       this.dataset.mode = v.mode;
@@ -74,7 +75,7 @@ export function defineVbNoteBubble(): void {
       else this.style.removeProperty('--kind');
       if (card.line) this.dataset.on = 'container';
       else delete this.dataset.on;
-      this.innerHTML = noteBubbleTemplate(v, card.number);
+      this.innerHTML = noteBubbleTemplate(v, card.number, md);
       this.opened = v.text;
       this.at = null;
       this.setPhase('idle');

@@ -17,7 +17,7 @@
     "vb-img": "button (type button, aria-haspopup dialog) around a card body's .vb-md-img; its name is the image's alt text; not made inside a link, a note or a hover box",
     "vb-md-img": "the renderer's img: a sunken box at the card's width while it loads (16 by 10, or the width and height the page knows), then the picture at its own aspect ratio",
     "vb-md-noimg": "the box in an image's place: \"Image not found: <path>\", or \"Image not shown: <path> (<reason>)\" in IMAGE_WORDS' words",
-    "vb-iv": "the dialog (modal, aria-label = the alt text), the whole screen, no frame",
+    "vb-iv": "the dialog (modal, aria-label = the alt text), the whole of the board's root (with no root round it, the screen), no frame",
     "vb-iv-scrim": "the backdrop, --vb-scrim; a click on it closes",
     "vb-iv-img": "the image at fitImage's size in the middle of the screen (left, top, width and height through the CSSOM); its transform runs from the card's box and back",
     "vb-iv-x": "the × in the screen's top corner, named Close, tip \"Close · Esc\"; it has focus while the view is open"

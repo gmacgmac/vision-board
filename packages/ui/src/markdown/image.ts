@@ -5,19 +5,10 @@
 // for; no alt text is the path as plain text. The page sizes and versions the image once it knows it
 // (apps/board/src/board/cards/card-images.ts); the zoomed view is the image-view pattern's. An svg is
 // an image like any other here, and only ever an <img> (D-064): never inline markup, so its script
-// never runs; the page's svgImages flag (`setMarkdownSvg`) decides whether the path check allows it.
+// never runs; whoever renders says whether the path check allows it, and where the pictures are served.
 import { IMAGE_ROUTE, IMAGE_WORDS, flagOn, imagePathProblem } from '#format';
 import { esc } from './inline.ts';
 import * as markdownWords from '../words/markdown.ts';
-
-let svgImages = flagOn('svgImages');
-
-/** The page's svgImages flag (components.md § Feature flags), set once where the page starts, as
- * `setMarkdownImages` is; until then the flag's default. Off, an svg path is refused in the words of
- * the time before svg. */
-export function setMarkdownSvg(on: boolean): void {
-  svgImages = on;
-}
 
 /** What the box in an image's place begins with (ruling 23): a missing file, or anything else refused. */
 export const IMAGE_NOTE = { notFound: markdownWords.imageNotFound, notShown: markdownWords.imageNotShown } as const;
@@ -39,12 +30,14 @@ const plain = (html: string): string =>
 /** An image's markup from its destination and its description's rendered inlines (inline.ts calls it). */
 export type ImageWriter = (url: string, altHtml: string) => string;
 
-/** `![alt](path)` as the renderer writes it: `path` as the Markdown wrote it (backslash escapes
- * undone, nothing decoded), `altHtml` the description's rendered inlines. */
-export const imageMarkup: ImageWriter = (path, altHtml) => {
-  const why = imagePathProblem(path, { svg: svgImages });
+/** The writer of `![alt](path)`: `path` as the Markdown wrote it (backslash escapes undone, nothing
+ * decoded), `altHtml` the description's rendered inlines. `svg` is the svgImages flag (off, an svg path
+ * is refused in the words of the time before svg; default, the flag's default), and `route` where the
+ * pictures are served (default `IMAGE_ROUTE`). */
+export const imageMarkup = (svg = flagOn('svgImages'), route = IMAGE_ROUTE): ImageWriter => (path, altHtml) => {
+  const why = imagePathProblem(path, { svg });
   if (why) return imageNote(path, why);
   const alt = plain(altHtml);
   if (!alt) return esc(path);
-  return `<img class="vb-md-img" src="${esc(IMAGE_ROUTE + path)}" alt="${alt}" loading="lazy" decoding="async">`;
+  return `<img class="vb-md-img" src="${esc(route + path)}" alt="${alt}" loading="lazy" decoding="async">`;
 };

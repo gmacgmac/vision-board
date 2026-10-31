@@ -1,15 +1,15 @@
-// The engine's tools, in MCP's shapes (D-074 rule 4): `list()` is one tool per agent operation in the
-// generated tool table (`TOOLS_FILE`, gen-tools.mjs, from openapi.json), named as the MCP server names
-// them, and `call(name, input, ctx)` answers MCP's `CallToolResult`, so each host chooses its transport
+// The engine's tools, in MCP's shapes (D-074 rule 4): `list()` is one tool per agent operation the
+// generated tool table marks `plugin` (`TOOLS_FILE`, gen-api.mjs, from openapi.json's `x-hosts`: what a plugin
+// bot gets), named as the MCP server names them, and `call(name, input, ctx)` answers MCP's `CallToolResult`, so each host chooses its transport
 // (`createMcpServer({ tools })` serves it as is; a host's own MCP server can wrap it). A call checks its
 // input against the table's JSON Schema, splits it back into the operation's path, query and body by the
 // table's `route`, and runs the operation with the caller its host passes (a host that knows the agent,
 // nclite's run ticket, passes it; no secret, no `join`). Its text is the operation's JSON, and a problem
 // is `isError` with words, as `vb-mcp` answers them (`answerResult`, `problemResult`). A board write also
 // says what it changed in `_meta` (`TOOL_CHANGE`), the one shape any host reads for a change chip; a CLI's
-// stream, which carries only the text, reads the same facts from it (#agent `boardWriteSummary`). Tools
-// whose operation the engine does not serve (`list_apps`, the standalone app host's; `read_attachment`,
-// beside its chat) are left out.
+// stream, which carries only the text, reads the same facts from it (#agent `boardWriteSummary`). The tools
+// marked `standalone` alone are left out: `list_apps` (the app host's), `read_attachment` (beside its chat)
+// and `join` (the host says who is calling; its `route` still takes `join`, to register its bot once).
 import fs from 'node:fs';
 import { BOARD_WRITE, boardWriteSummary } from '#agent';
 import type { OperationId, ProblemDocument } from '#format';
@@ -28,6 +28,7 @@ interface ToolRow {
   description: string;
   input: Record<string, unknown>;
   route: { path: string[]; query: string[]; body: string[] };
+  hosts: string[];
 }
 
 /** The `_meta` key of what a board write changed: `{ board, cards, head }`, the card numbers it drew
@@ -58,10 +59,10 @@ function withChange(name: string, input: Record<string, unknown>, result: ToolRe
   return { ...result, _meta: { [TOOL_CHANGE]: { board: input.board, ...boardWriteSummary(result.content) } } };
 }
 
-/** The tools for the operations `serves` holds, each running through `run`. */
+/** The tools a plugin bot gets (`x-hosts`), each running through `run`; `serves` holds what the engine can run. */
 export function makeTools(serves: (id: string) => id is OperationId, run: RunOp): EngineTools {
   const check = foreignSchemas();
-  const rows = new Map(ROWS.flatMap((row) => (serves(row.name) ? [[row.name as string, { row, id: row.name, problems: check(row.input) }] as const] : [])));
+  const rows = new Map(ROWS.flatMap((row) => (row.hosts.includes('plugin') && serves(row.name) ? [[row.name as string, { row, id: row.name, problems: check(row.input) }] as const] : [])));
   const listed: readonly ListedTool[] = [...rows.values()].map(({ row }) => ({ name: row.name, title: row.title, description: row.description, inputSchema: row.input }));
   return {
     list: () => listed,

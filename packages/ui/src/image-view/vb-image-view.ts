@@ -1,7 +1,8 @@
 // Image view pattern, layer 3 (element): <vb-image-view>, in light DOM (components.md § Image view).
 // The zoomed view of an image on a card (D-048 ruling 22): a modal dialog over the board, named by the
-// image's alt text, with the image at `fitImage`'s size in the middle of the screen over a backdrop,
-// and an ×. It grows from the image's place on the card and shrinks back to it (`flipFrom`), for
+// image's alt text, with the image at `fitImage`'s size in the middle of the board's root (with no root
+// round it, a gallery's sample, of the screen) over a backdrop, and an ×. It is a real modal, so a host's
+// page is inert while it is open, but it draws only over the root: the top layer takes no more room. It grows from the image's place on the card and shrinks back to it (`flipFrom`), for
 // `motionMs` of the board's motion token and its easing, so reduced motion shows it without motion.
 // Esc, a click outside the image and the × close it; focus stays on the × while it is open and goes
 // back to the image's button after; keys and the wheel stay in the dialog, so the board neither pans
@@ -31,6 +32,12 @@ const rectOf = (el: Element): Rect => {
   return { x: r.left, y: r.top, w: r.width, h: r.height };
 };
 
+/** What the view fills: the board's root it sits in, else the window. */
+const areaOf = (el: Element): Rect => {
+  const root = el.closest('.vb-board');
+  return root ? rectOf(root) : { x: 0, y: 0, w: innerWidth, h: innerHeight };
+};
+
 export function defineVbImageView(): void {
   if (customElements.get(VB_IMAGE_VIEW_TAG)) return;
 
@@ -44,7 +51,9 @@ export function defineVbImageView(): void {
     private card: HTMLElement | null = null;
     private still = false;
     private closing = false;
-    /** Where the image is drawn while open, in the screen's pixels. */
+    /** What the view fills, in the screen's pixels. */
+    private area: Rect = { x: 0, y: 0, w: 0, h: 0 };
+    /** Where the image is drawn while open, in the view's pixels. */
     private box: Rect = { x: 0, y: 0, w: 0, h: 0 };
     private runs: Animation[] = [];
     private readonly refit = () => this.fit();
@@ -80,7 +89,7 @@ export function defineVbImageView(): void {
       this.fit();
       addEventListener('resize', this.refit);
       // Held over the card until the larger picture can be drawn, so its first frame is never empty.
-      const from = flipFrom(rectOf(img), this.box);
+      const from = flipFrom(this.inView(img), this.box);
       [this.pic.style.transform, this.scrim.style.opacity] = [from, '0'];
       void this.pic.decode().catch(() => undefined).then(() => {
         [this.pic.style.transform, this.scrim.style.opacity] = ['', ''];
@@ -99,14 +108,24 @@ export function defineVbImageView(): void {
       const card = this.shown;
       // From wherever it is now (an open still under way), back to the card, or in place if it went.
       const now = getComputedStyle(this.pic).transform;
-      const back = card?.isConnected && card.getClientRects().length ? flipFrom(rectOf(card), this.box) : now;
+      const back = card?.isConnected && card.getClientRects().length ? flipFrom(this.inView(card), this.box) : now;
       void this.move(now, back, Number(getComputedStyle(this.scrim).opacity), 0, 'forwards').then(() => dlg.close());
     }
 
-    /** The image at its zoomed size in the middle of the screen (and again when the window or the
-     * picture changes). */
+    /** Where `el` is, in the view's pixels. */
+    private inView(el: Element): Rect {
+      const r = rectOf(el);
+      return { ...r, x: r.x - this.area.x, y: r.y - this.area.y };
+    }
+
+    /** The view over what it fills, the image at its zoomed size in the middle (and again when the window
+     * or the picture changes). */
     private fit(): void {
-      const screen = { w: innerWidth, h: innerHeight };
+      this.area = areaOf(this);
+      const screen = { w: this.area.w, h: this.area.h };
+      const d = this.dlg!.style;
+      const inRoot = this.closest('.vb-board') !== null;
+      [d.left, d.top, d.width, d.height] = [this.area.x, this.area.y, this.area.w, this.area.h].map((v) => (inRoot ? `${v}px` : '')) as [string, string, string, string];
       const pic = this.pic.naturalWidth ? this.pic : this.shown;
       const natural = { w: pic?.naturalWidth ?? 0, h: pic?.naturalHeight ?? 0 };
       this.box = centred(fitImage(natural, screen), screen);
@@ -126,6 +145,13 @@ export function defineVbImageView(): void {
       const timing: KeyframeAnimationOptions = { duration, easing: css.getPropertyValue('--vb-ease').trim() || 'ease', fill };
       this.runs = [this.pic.animate([{ transform: from }, { transform: to }], timing), this.scrim.animate([{ opacity: fade0 }, { opacity: fade1 }], timing)];
       return this.runs[0]!.finished.then(() => undefined, () => undefined);
+    }
+
+    /** Taken out of the page (the board unmounts) while open: nothing of it stays on the window. */
+    disconnectedCallback(): void {
+      for (const a of this.runs) a.cancel();
+      this.runs = [];
+      removeEventListener('resize', this.refit);
     }
 
     /** The dialog closed (also when a second Esc closes it at once): nothing left moving, and focus

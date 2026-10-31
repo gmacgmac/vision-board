@@ -19,6 +19,11 @@ import { imageVersion } from '../io.ts';
 export interface CardImagesDeps {
   /** Where the cards are: the board's card layer, or a gallery section. */
   host: HTMLElement;
+  /** Where the pictures are served (BoardHost.imageRoute); default `IMAGE_ROUTE`. */
+  route?: string | undefined;
+  /** Where the zoomed view is put: inside the board's root, beside its stage, so its keys and pointer
+   *  never reach the stage. */
+  viewIn(): HTMLElement;
   /** Whether `card`'s images may load now (ruling 23). */
   near(card: HTMLElement): boolean;
   /** Cards whose height changed by itself (an image, an app panel's height): measure them again, and
@@ -34,8 +39,7 @@ export interface CardImages {
   place(): void;
   /** Cards just selected: ask whether their images have a newer version (ruling 21). */
   selected(cards: Iterable<HTMLElement>): void;
-  /** Take the zoomed view away (the board unmounts): it is the one element outside the board's
-   *  root, the top layer of a modal dialog. */
+  /** Take the zoomed view away (the board unmounts). */
   destroy(): void;
 }
 
@@ -44,11 +48,12 @@ interface Shown { etag: string; src: string }
 
 /** Where an image keeps its path once the page holds its loading back. */
 const PATH = 'data-path';
-const versioned = (path: string, etag: string) => `${IMAGE_ROUTE}${path}?v=${encodeURIComponent(etag.replace(/^W\/|"/g, ''))}`;
 /** Load `src` out of sight; settles once it can be drawn at once (or can't be drawn at all). */
 const loaded = (src: string): Promise<unknown> => { const pic = new Image(); pic.src = src; return pic.decode().catch(() => undefined); };
 
 export function createCardImages(d: CardImagesDeps): CardImages {
+  const route = d.route ?? IMAGE_ROUTE;
+  const versioned = (path: string, etag: string) => `${route}${path}?v=${encodeURIComponent(etag.replace(/^W\/|"/g, ''))}`;
   /** The version shown of each file, by path. */
   const shown = new Map<string, Shown>();
   /** Each loaded picture's size, by address, so an image drawn again keeps its card's height at once. */
@@ -103,7 +108,7 @@ export function createCardImages(d: CardImagesDeps): CardImages {
   function ask(path: string, etag?: string): Promise<void> {
     const was = asking.get(path);
     if (was) return was;
-    const run = imageVersion(path, etag).then(async (v) => {
+    const run = imageVersion(route, path, etag).then(async (v) => {
       if (v.problem !== undefined) return refuse(path, v.problem);
       if (v.same || !v.etag || v.etag === shown.get(path)?.etag) return;
       const next = { etag: v.etag, src: versioned(path, v.etag) };
@@ -120,8 +125,8 @@ export function createCardImages(d: CardImagesDeps): CardImages {
    * button that opens it (not in a link: a link is the control there). */
   function hold(img: HTMLImageElement): void {
     const src = img.getAttribute('src');
-    if (!src?.startsWith(IMAGE_ROUTE)) return;
-    const path = src.slice(IMAGE_ROUTE.length);
+    if (!src?.startsWith(route)) return;
+    const path = src.slice(route.length);
     img.setAttribute(PATH, path);
     img.removeAttribute('src');
     if (img.closest('.vb-node-body') && !img.closest('a')) imageButton(img);
@@ -143,7 +148,7 @@ export function createCardImages(d: CardImagesDeps): CardImages {
       });
       if (!ok || !img.isConnected) return;
     }
-    view ??= document.body.appendChild(document.createElement('vb-image-view') as VbImageViewElement);
+    view ??= d.viewIn().appendChild(document.createElement('vb-image-view') as VbImageViewElement);
     view.open(img);
     const s = shown.get(path);
     if (s) void ask(path, s.etag);
@@ -169,7 +174,7 @@ export function createCardImages(d: CardImagesDeps): CardImages {
     const img = e.target as HTMLImageElement;
     if (!img.matches?.(`img[${PATH}][src]`)) return;
     const path = img.getAttribute(PATH)!;
-    void imageVersion(path).then((v) => refuse(path, v.problem ?? imageNotReal(imageTypeByName(path)!)), () => undefined);
+    void imageVersion(route, path).then((v) => refuse(path, v.problem ?? imageNotReal(imageTypeByName(path)!)), () => undefined);
   }, true);
 
   return {

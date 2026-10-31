@@ -18,7 +18,7 @@ import type { LedgerState } from '#actions';
 import { archivedBoards, boardList, boardVisibility } from '#actions';
 import { createKeptView } from './kept-view.ts';
 import { nextBoard, startBoard } from './start-board.ts';
-import type { BoardPage } from '../host.ts';
+import type { BoardPage, BoardStore } from '../host.ts';
 import type { Live } from '../live.ts';
 import type { Selection } from '../selection/index.ts';
 import type { Viewport } from '../canvas/index.ts';
@@ -39,6 +39,8 @@ export interface BoardsDeps {
   fail(err: unknown): void;
   /** The keepView flag: a board opens where the person left it, else it fits. */
   keepView: boolean;
+  /** Where the view is kept (BoardHost.store). */
+  store: BoardStore;
   /** The archiveBoard flag: the picker's Archived list. */
   archiving: boolean;
   status: Status;
@@ -72,7 +74,7 @@ export function createBoards(d: BoardsDeps): Boards {
   let drawn = false;
   /** A board to open as soon as it is held (`jump`). */
   let pending: string | null = null;
-  const kept = createKeptView(d.vp, d.id, d.keepView);
+  const kept = createKeptView(d.vp, d.id, d.keepView, d.store);
   const { status } = d;
 
   /** Whether the picker shows board `id`: it exists and is not archived. */

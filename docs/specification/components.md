@@ -180,9 +180,9 @@ ships behind one. The pattern was defined by the first such task (U7, node size)
   `settings` and `board/host.ts` `flagOf`, a value the host does not give reading as the default; the
   gallery's entry point), and passed down as data (`render(n, { sizeControl })`, a tier for `nodeState`), so
   packages never read the address or storage. Pure packages (`layout`) take the result as input.
-  `cardImages` is set once at each entry point with `setMarkdownImages` (`apps/board/src/main.ts`,
-  the gallery's `main.ts`), because every surface that renders Markdown draws images (§ Images in cards);
-  `svgImages` the same way, with `setMarkdownSvg` (`packages/ui/src/markdown/image.ts`).
+  `cardImages` and `svgImages` are no different: `board/host.ts` `markdownOf` reads both from the host once
+  per board and passes them to every surface that renders Markdown (§ Images in cards); there is no
+  module switch (M12).
 - **Flag off means unchanged**: every existing page-test screenshot must still match with the
   flag off. A gallery section for flagged behaviour shows only with the flag on, with its own
   screenshots.
@@ -201,7 +201,7 @@ host; nclite's pane will be another.
   (`mount.ts` `BoardControls`: the standalone page's toolbar and strips call them until they move inside; no chat
   goes through them). `send()` is Send to agent, through `host.chat.send`. `unmount` removes every listener the
   board added on the document or the window, takes the zoomed image view away (`card-images.ts`
-  `destroy`; the one element outside `root`, a modal dialog's top layer) and empties `root`, giving it
+  `destroy`), and empties `root`, giving it
   back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
   status and controller, so two boards on one page work apart. The ids inside cards and frames (popovers, step
   section, app menu, a frame's menus, the connectors' arrowheads) carry the mount's prefix
@@ -221,13 +221,30 @@ host; nclite's pane will be another.
   pan) stops the browser moving focus, so `mount` gives the root focus on pointer release when focus
   is outside it (`preventScroll`): after any click on the board its keys work. Left page-wide on
   purpose: the pan key's hand cursor (`input/pointer.ts` `bindPanKey`, an attribute on its own stage)
-  and the keyboard-or-pointer reading (`canvas/pointer-focus.ts`, no action). One known exception, open
-  as tracker M21: while a board menu or popover is open, its Esc is caught page-wide
-  (`packages/ui/src/base/layer.ts` `dismissable`), so a host's own Esc then closes the board's menu, not the host's. The zoomed image view is
-  a modal dialog outside the root, which `route` ignores (its Esc and Tab are the browser's). Proven by
+  and the keyboard-or-pointer reading (`canvas/pointer-focus.ts`, no action). An open layer's Esc follows
+  the same rule (M21; `packages/ui/src/base/layer.ts` `dismissable`, `escapeIsOurs`): it takes Esc only
+  with focus in its board, or nowhere, so a tip under the pointer still closes; with focus in a host's own
+  control or another board, the Esc is theirs. Proven by
   `apps/board/tests/keys.test.ts` (inside, outside, another board, Esc, `pageWide`) and
   `tests/pages/board-host.spec.ts` "keys stay inside the board" (focus on a host button and field, then
-  a click, a Shift drag, a Cmd or Ctrl drag, a card and a container's title line).
+  a click, a Shift drag, a Cmd or Ctrl drag, a card and a container's title line), and
+  `tests/pages/board-guest.spec.ts` "an open layer takes Esc only".
+- **A key the board uses is marked used** (M22): `route` `preventDefault`s every key it acts on; a key it
+  leaves, Esc with nothing to escape among them (`StageHandlers.escape` says), stays the host's, and typing
+  includes `[contenteditable]`. Under a host it listens on the root, not the document, so the mark is there
+  before the key reaches any listener of the host's on the document or the window: **a host skips a key
+  whose `defaultPrevented` is true**. A modal's keys stop at the root (`mount.ts` `keepModalKeys`): its Esc
+  is the browser's, which a `preventDefault` would stop. Proven by `board-guest.spec.ts` "every key the board acts on".
+- **What it keeps goes through its host** (M13): `host.store` (`board/host.ts` `BoardStore`, strings under
+  keys the board names: `view.<board>`, `proposals-hidden`). The keys say only what is on the board, so a
+  host gives each folder or bot its own store, and two boards named "plans" never clash. Left out, the
+  board keeps them for as long as the mount (`memoryStore`). The standalone page keeps what it always kept
+  (`shell/kept.ts` `pageStore`: `vb.view.<board>` in sessionStorage, the rest in localStorage). Nothing
+  under `board/` touches the page's storage or address (`apps/board/tests/board-no-page.test.ts`).
+  Proven by `board-guest.spec.ts` "the saved view goes through the host".
+- **Its pictures come from its host's route**: `host.imageRoute`, the address a picture's path goes after,
+  what `<img src>` loads and `io/image.ts` `imageVersion` asks; the engine's `image` answers it (api.md 154,
+  159). Left out, `IMAGE_ROUTE` on the page's origin. Proven by `board-guest.spec.ts` "pictures load from the host's route".
 - **A host calls `leave()` before `unmount()`** (M11): `unmount` is a plain teardown that never asks,
   so a note's words go with it. `unsaved()` is true while a note bubble is open with changed words
   (`notes/note-discard.ts` `unsavedIn`); it is synchronous, for a host's `beforeunload` or its own
@@ -311,17 +328,13 @@ host; nclite's pane will be another.
 - **Differences from nclite's draft** (the contract bends to the board, principles § The board is a
   plugin): `confirm` on the host (four actions ask first, one with a list); a change event whose `ref` is
   `{ board, head }`; `api` resolves to the `Response` (the client reads problems itself); `notify` takes a
-  tone (`error` for a refusal); `chat` in place of `addToChat`, for chips that come and go, Send and the agent's status; the optional `page` part; the image route (`io.ts` `imageVersion`,
-  `IMAGE_ROUTE`) is the page's own, not under `api`; and where the draft has `unmount()` save anything
+  tone (`error` for a refusal); `chat` in place of `addToChat`, for chips that come and go, Send and the agent's status; the optional `page` part, `store` and `imageRoute`; the image route is not
+  under `api`, since a browser loads a picture by its address; and where the draft has `unmount()` save anything
   being written, the board asks instead: `leave()` asks the person first, then the host unmounts, and
   `unsaved()` serves the host's own question or `beforeunload` (the person decides whether
   half-written words are kept, not the plugin).
-- **Not covered**: the toolbar, strips,
-  dialogs and reply panel are the standalone page's Svelte, so a host draws its own from the status;
-  the work counters (`work.ts`) and the input-modality reading (`pointer-focus.ts`) are the page's, shared
-  by every board on it. Open (VERIFY_01, tracker M12–M13): card images
-  follow the page's `setMarkdownImages`, not `host.settings`; the saved view
-  (`boards/kept-view.ts`) writes `sessionStorage` itself, keyed by board id only.
+- **Shared by every board on a page**: the work counters (`work.ts`), and the custom elements, whose
+  `vb-` names are global by nature (`defineBoardElements` defines each once).
 
 ## Node size (D-030, tracker U7)
 
@@ -1397,11 +1410,12 @@ draws an image. Three patterns share the work, behind the `cardImages` flag.
    description's words, marks dropped. With images off it is its source text, as before. An svg is
    this same `<img>`, never inline markup, so its script never runs (D-064, images.md § SVG); with
    the `svgImages` flag off its path is refused ("only png, jpeg, webp or gif").
-2. **Images on or off.** `renderMarkdown`'s `images` option, else the page's choice: `setMarkdownImages`
-   (render.ts), called once by `apps/board/src/main.ts` and the gallery's `main.ts` with the `cardImages`
-   flag, so every surface that renders Markdown agrees (card bodies, notes and replies, the note bubble,
-   parking text, the chat). `setMarkdownSvg` (image.ts) is set beside it with the `svgImages` flag;
-   until then it reads the flag's default.
+2. **Images on or off.** `renderMarkdown`'s `images` and `svg` options, with `imageRoute`: whoever renders
+   passes them, so two boards on one page can differ, and left out each reads its flag's default. The board
+   reads them from its host once (`host.ts` `markdownOf`) and gives them to every surface it draws (card
+   bodies, notes and replies, the note bubble, parking text: `NodeTemplateOptions.markdown`,
+   `RegionFrameOptions.markdown`, `VbNoteBubbleElement.show`); the standalone chat and the gallery read
+   the page's (`flags.ts` `pageMarkdown`).
 3. **Its look** (`markdown.css`): never wider than what holds it, its own aspect ratio, at most 1.5 card
    widths tall (`--vb-card-w-s`; the zoomed view shows it whole), centred. Until its size is known it is
    a sunken box at the full width, 16 by 10, with nothing drawn in it (a transparent picture stands in
@@ -1439,9 +1453,12 @@ the gallery shows its section only with the flag on).
    the image, named by its alt text, in the card's tab order; hover, pressed and focus are drawn on the
    picture (which may be narrower than the card). A click (the pointer gives it no gesture: it is a
    control), Enter or Space opens the view. `showProblem(img, path, reason)` puts the box in its place.
-2. **The view** is `<vb-image-view>` (the page appends one to the body), a native modal `<dialog>`
+2. **The view** is `<vb-image-view>` (the board puts one in its root, beside the stage, so its keys and
+   pointer never reach the stage; a gallery sample, on the body), a native modal `<dialog>`
    named by the image's alt text: a backdrop (`--vb-scrim`, the board behind softly blurred), the image,
-   and the × in the screen's top corner (named Close, tip "Close · Esc", 40px).
+   and the × in its top corner (named Close, tip "Close · Esc", 40px). It fills the board's root, not the
+   window: the "screen" below is the root's box, on the standalone page the whole window. It stays a real
+   modal, the one thing a host feels: its page is inert while the view is open (Esc, a click anywhere else or the × close it).
 3. **Its size** is `fitImage(natural, screen)`: a wide image's width is `ZOOM_SHARE` (70%) of the screen's
    width, a tall image's height 70% of the screen's height, a square's side 70% of the shorter side;
    small images are scaled up to that; the other side is held to the screen. `centred` puts it in the
@@ -1462,11 +1479,12 @@ the gallery shows its section only with the flag on).
    motion and without it (`open(img, true)`).
 7. **Kept true by**: `packages/ui/tests/markdown-images.test.ts` (the shape, subfolders and the depth
    limit, the alt text, no alt text, every refused path with its reason, the box, links, every block,
-   images off and `setMarkdownImages`), `markdown-safety.test.ts` ("an image cannot break out of its
+   images off, each flag by its call, the route it is given), `markdown-safety.test.ts` ("an image cannot break out of its
    shape…"), `markdown-adversarial.ts` `IMG_SHAPE` (no `<img>` but the fixed shape),
    `markdown-commonmark.test.ts` ("CommonMark: Images"), `image-view-core.test.ts` (`fitImage` at
    1600×1000 and 1470×956, small, square, held to the screen; `flipFrom`; `motionMs`),
    `packages/format/tests/flags.test.ts` (cardImages on by default). In a browser:
+   `tests/pages/board-guest.spec.ts` (under a host: its flags, its route, inside its root, gone with `unmount`),
    `tests/pages/card-images.spec.ts` (at the card's width and measured with it; 70% by click and by
    keyboard for a wide and a tall image at both screens; Esc, a click outside and the ×, focus back, Tab
    kept, no pan or zoom; a replaced image after select, the conditional request, nothing on a timer;

@@ -8,6 +8,7 @@
 import type { Mode, Region } from '#format';
 import { MODES } from '#format';
 import { esc } from '../node/node-template.ts';
+import type { MarkdownOptions } from '../markdown/render.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 import { svgIcon, ACTION_ICON } from '../node/node-icons.ts';
 import type { RegionHolder } from './region-core.ts';
@@ -76,9 +77,9 @@ const noteBlock = (id: string, title: string, prefix?: string): string => {
 /** The agent's replies under the note block's text (FE_03 ruling 3): "Agent reply · label" over
  * the words as Markdown, each cut at three lines like the note until the block's "Show all". Each
  * is a tab stop: a click, Enter or Space opens the exchange (popovers-larger-thread ruling 2). */
-export const nblockRepliesMarkup = (replies: readonly ReplyEntry[]): string => replies.map((r) =>
+export const nblockRepliesMarkup = (replies: readonly ReplyEntry[], md?: MarkdownOptions): string => replies.map((r) =>
   `<div class="vb-nblock-reply" data-reply="${r.seq}" tabindex="0"><span class="vb-nblock-who">${esc(r.who)}</span>`
-  + `<div class="vb-nblock-reply-text">${renderMarkdown(r.text)}</div></div>`).join('');
+  + `<div class="vb-nblock-reply-text">${renderMarkdown(r.text, md)}</div></div>`).join('');
 
 /** One layout icon: a radio in the row's radiogroup, out of the tab order until `update` makes the
  * checked one the row's single Tab stop. `data-mode` / `data-region` are the page's click wiring. */
@@ -133,7 +134,7 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, prefix?:
  * instead of on the top line (toolRail flag, container tool rail Design 1); the top line then holds
  * the label alone. A fixed frame's rail holds only the cog. `idPrefix`: put before every id the frame
  * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; idPrefix?: string }
+export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = regionWords.everythingHereIsAnswered;

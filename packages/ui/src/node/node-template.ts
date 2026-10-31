@@ -14,6 +14,7 @@ import { panelSize } from '../app-frame/app-frame-core.ts';
 import { buttonLabel, FLAG_KEY, flagLabel, isItem, isNoteEntry, offers, SIZE_LETTER } from './node-core.ts';
 import { ACTION_ICON, FLAG_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
+import type { MarkdownOptions } from '../markdown/render.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 import { fullTime, noteTime } from './node-time.ts';
 import { HISTORY, historyBox, historyButton } from './node-history.ts';
@@ -64,21 +65,21 @@ function timeMarkup(at: string, now: Date): string {
  * `data-at`, its time (`timeMarkup`), and is a tab stop (Enter opens it, `VbNode`). Each also holds
  * the note in full as a hover tip (found-in-use FE_04, `bindNoteTip`): hidden for screen readers,
  * which read the note itself, and shown only when the note is cut and the notePreview flag is on. */
-export function notesMarkup(v: NotesView, now = new Date()): string {
+export function notesMarkup(v: NotesView, now = new Date(), md?: MarkdownOptions): string {
   if (v.hidden !== undefined) return notesHead(v);
   return notesHead(v) + v.entries.map((x) => {
-    if (!isNoteEntry(x)) return replyMarkup(x, now);
-    const text = renderMarkdown(x.text);
+    if (!isNoteEntry(x)) return replyMarkup(x, now, md);
+    const text = renderMarkdown(x.text, md);
     return `<div class="vb-node-note" data-note="${x.seq}" data-at="${esc(x.at)}"${x.sent ? ' data-sent' : ''} tabindex="0">`
       + `<span class="vb-node-note-who">${esc(x.who)}</span>${timeMarkup(x.at, now)}<div class="vb-node-note-text">${text}</div>`
-      + `<div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>${(x.replies ?? []).map((r) => replyMarkup(r, now)).join('')}`;
+      + `<div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>${(x.replies ?? []).map((r) => replyMarkup(r, now, md)).join('')}`;
   }).join('');
 }
 
 /** An agent's reply under the note it answers (FE_03 ruling 3): the note's shape, clamp and time,
  * read-only, and a tab stop so focus shows its full text in the same tip (`bindNoteTip`). */
-function replyMarkup(r: ReplyEntry, now: Date): string {
-  const text = renderMarkdown(r.text);
+function replyMarkup(r: ReplyEntry, now: Date, md?: MarkdownOptions): string {
+  const text = renderMarkdown(r.text, md);
   return `<div class="vb-node-reply" data-reply="${r.seq}" data-at="${esc(r.at)}" tabindex="0"><span class="vb-node-note-who">${esc(r.who)}</span>`
     + `${timeMarkup(r.at, now)}<div class="vb-node-note-text">${text}</div><div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>`;
 }
@@ -147,14 +148,14 @@ export const stepsId = (n: ViewNode, prefix = ''): string => `${prefix}vb-steps-
 /** The step section's contents (FE_02 ruling 3, mockup 03 Part B option B): the version, when and
  * who; the change chips; what the text gained; a link to where the change came from (`data-source`,
  * the page's chat). Past the last step, "You're up to date". */
-export function stepMarkup(v: UpdatesView): string {
+export function stepMarkup(v: UpdatesView, md?: MarkdownOptions): string {
   if (!v.step) return v.done ? '<p class="vb-step-done">' + nodeWords.youReUpToDate + '</p>' : '';
   const { head, chips, lines, source } = v.step;
   const link = source ? `<button type="button" class="vb-step-src" data-source>${esc(source)}</button>` : '';
   const list = chips.length
     ? `<ul class="vb-step-chips" aria-label="${nodeWords.changes}">${chips.map((c) => `<li data-change="${c.change}">${esc(c.text)}</li>`).join('')}</ul>` : '';
   // What the text gained is Markdown like the body it joins (D-023); the renderer escapes it.
-  return `<p class="vb-step-head">${esc(head)}</p>${list}${lines.map((l) => `<div class="vb-step-line">${renderMarkdown(l)}</div>`).join('')}${link}`;
+  return `<p class="vb-step-head">${esc(head)}</p>${list}${lines.map((l) => `<div class="vb-step-line">${renderMarkdown(l, md)}</div>`).join('')}${link}`;
 }
 
 /** The tabs on the bottom border (FE_01 ruling 2): each popover's, opening its box beside the card
@@ -200,11 +201,11 @@ export function proposalsMarkup(v: ProposalsView, prefix = ''): string {
 
 /** The handover box's contents (FE_03 ruling 2): situation, background, assessment and recommendation
  * as headed Markdown sections, then the sources as a list. */
-export function handoverMarkup(v: HandoverView): string {
+export function handoverMarkup(v: HandoverView, md?: MarkdownOptions): string {
   const sources = v.sources.length
     ? `<section class="vb-hand"><h4 class="vb-hand-head">${nodeWords.sources}</h4><ul class="vb-hand-sources">${v.sources.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : '';
   return v.sections.map((x) => `<section class="vb-hand"><h4 class="vb-hand-head">${esc(x.head)}</h4>`
-    + `<div class="vb-hand-text">${renderMarkdown(x.text)}</div></section>`).join('') + sources;
+    + `<div class="vb-hand-text">${renderMarkdown(x.text, md)}</div></section>`).join('') + sources;
 }
 
 export interface NodeTemplateOptions {
@@ -219,6 +220,8 @@ export interface NodeTemplateOptions {
   /** Put before every id the card sets (its popovers, step section, app menu), so two boards on one page
    * repeat none: each mount has its own (the board's `mount`). Empty for the first, and for the gallery. */
   idPrefix?: string;
+  /** How this card's Markdown renders: the flags and the image route its board was given. */
+  markdown?: MarkdownOptions;
 }
 
 const SIZE_PICKS: readonly NodeSize[] = ['s', 'm', 'l'];
@@ -267,8 +270,8 @@ function appSlot(n: ViewNode): string {
 /** The content under the title: an app card's slot (or, with the flag off, a line saying so), else
  * the body as Markdown (D-023; the renderer escapes every text run, so its output is safe markup). */
 function bodyMarkup(n: ViewNode, opts: NodeTemplateOptions): string {
-  if (n.kind === 'app') return isAppSlot(n, opts) ? appSlot(n) : `<div class="vb-node-body">${renderMarkdown(APPS_OFF)}</div>`;
-  return n.body ? `<div class="vb-node-body">${renderMarkdown(n.body)}</div>` : '';
+  if (n.kind === 'app') return isAppSlot(n, opts) ? appSlot(n) : `<div class="vb-node-body">${renderMarkdown(APPS_OFF, opts.markdown)}</div>`;
+  return n.body ? `<div class="vb-node-body">${renderMarkdown(n.body, opts.markdown)}</div>` : '';
 }
 
 export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): string {

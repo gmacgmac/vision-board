@@ -122,8 +122,8 @@ zoom is not far (ruling 23), asks the route which version each is through `io.ts
 asks again when a card is selected or an image is opened (no timer), swaps a newer one in, shows the
 box saying why for a refused file, has a card measured again when its image changed its height, and
 opens the zoomed view (`<vb-image-view>`, components.md § Images in cards and § Image view). The
-`cardImages` flag reaches the renderer once, through `setMarkdownImages` in `src/main.ts`, and the
-`svgImages` flag through `setMarkdownSvg` (`packages/ui/src/markdown/image.ts`).
+`cardImages` and `svgImages` flags reach the renderer per board, from the host's settings, through
+`markdownOf` (`src/board/host.ts`) and `renderMarkdown`'s `images` and `svg`.
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `#format/gallery.ledger.jsonl` (`packages/format/fixtures/gallery.ledger.jsonl`, imported `?raw`: a real ledger in the real schema) through the

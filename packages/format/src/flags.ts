@@ -191,7 +191,7 @@ export const FLAGS = {
   svgImages: {
     // On by default with the maintainer's yes to D-064 (host-fixes-and-svg SVG_01); ?flags=-svgImages turns it off.
     default: true,
-    description: 'With cardImages, an svg in the project\'s `.visionboard/images/` is a picture like a png (D-064): drawn only through <img>, so its CSS and SMIL animation play and its script never runs, and served under its own policy (no script, sandboxed) at its own address; at most 1 MB, and it must say its size (a viewBox, or a width and height). Off, an svg is refused as before ("only png, jpeg, webp or gif") by the page\'s Markdown (`setMarkdownSvg`) and by the server\'s route (its own flags).',
+    description: 'With cardImages, an svg in the project\'s `.visionboard/images/` is a picture like a png (D-064): drawn only through <img>, so its CSS and SMIL animation play and its script never runs, and served under its own policy (no script, sandboxed) at its own address; at most 1 MB, and it must say its size (a viewBox, or a width and height). Off, an svg is refused as before ("only png, jpeg, webp or gif") by the page\'s Markdown (`renderMarkdown`\'s `svg`, from the host\'s settings) and by the server\'s route (its own flags).',
   },
   leavePrompt: {
     // On by default (maintainer, point 310; host-fixes-and-svg M11_01: words lost is the worse failure); ?flags=-leavePrompt turns it off.

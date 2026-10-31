@@ -16,7 +16,7 @@ import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
 import { answeredIds, boardData, boardSearchDocs, goTarget, placedView, retiredCounts } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
-import { alignOf, flagOf } from './host.ts';
+import { alignOf, flagOf, markdownOf } from './host.ts';
 import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
@@ -49,6 +49,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const { stage, world } = els;
   const { host, io, status } = b;
   const on = (f: FlagName) => flagOf(host, f);
+  /** How this board's Markdown renders, on every surface that draws it. */
+  const markdown = markdownOf(host);
   const vp = new Viewport(stage, world, on('hideControlsZoomedOut')); // N13, rule 12
   // Behind flags (rule 12): card size tiers and their control (nodeSize, D-030); grant requests, holders and Send (agentAccess, D-027);
   // connectors behind frames and cards (wireLayers, D-032); the agent's proposals (proposals, FE_01); changed cards and seen (cardUpdates,
@@ -83,7 +85,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
-    els, vp, ids: b.ids, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    els, vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), fresh: () => attention.freshIn(),
     facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n) }), appCards: apping, placed: () => apps.place(),
   });
@@ -162,7 +164,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     stage, world, selection, groups: on('groupNoteOnce'), vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
     region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id), regionReplies: () => parking.containers(),
     replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; }, ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
-    discard: () => ask(...DISCARD_ASK), paused: lock.paused, unsaved: (on) => status.set({ unsaved: on }), // a host's leave guard (M11)
+    markdown, discard: () => ask(...DISCARD_ASK), paused: lock.paused, unsaved: (on) => status.set({ unsaved: on }), // a host's leave guard (M11)
   });
   /** A container's note preview and block: Edit, Remove, Show in container (region-notes.ts). */
   const regionNotes = createRegionNotes({
@@ -231,7 +233,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** Boot, and switching boards (boards.ts). */
   const boards = createBoards({
     live, vp, selection, id: () => S.id, setId: (id) => { const from = S.id; S.id = id; versions.reset(); lock.apply(); attention.switched(from); }, redraw, layout: () => drawing.layout, fail,
-    keepView: on('keepView'), archiving: on('archiveBoard'), // the view kept across a reload (FE_02 ruling 5); the Archived list (N39)
+    keepView: on('keepView'), store: b.store, archiving: on('archiveBoard'), // the view kept across a reload (FE_02 ruling 5); the Archived list (N39)
     status, say: b.say, page: b.page,
   });
   // The viewer's alignment changed (the standalone page's "⋯" menu, alignSetting flag): lay out again.

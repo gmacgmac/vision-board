@@ -12,8 +12,10 @@ export interface DismissOptions {
   within(target: Node): boolean;
   /** The layer should close: `escape` (only with `escape` on) or `outside`. */
   dismiss(reason: DismissReason): void;
-  /** Esc anywhere on the page dismisses; it is stopped there, so nothing else hears it. */
-  escape?: boolean;
+  /** Esc dismisses; it is stopped and marked used there, so nothing else hears it. Given an element (the
+   *  layer's own, or what holds it), only an Esc that is this board's (`escapeIsOurs`), so a host's own
+   *  Esc stays the host's; `true` hears it anywhere on the page. */
+  escape?: boolean | Element;
   /** Only a click outside dismisses: a press that travels this many px or more before it lifts (a pan
    * or a lasso) leaves the layer open. Without it, the press itself dismisses. */
   clickWithin?: number;
@@ -23,6 +25,14 @@ export interface DismissOptions {
 
 /** Capture phase, as an options object (a bare `true` is not matched on removal by every EventTarget). */
 const CAPTURE = { capture: true } as const;
+
+/** Whether an Esc at `target` belongs to the board that holds `at`: focus is in that board, or nowhere (the
+ *  page's body, so a tip under the pointer still closes, WCAG 1.4.13). With focus in a host's own control
+ *  or in another board, it is theirs. With no board round it (a gallery's sample), the page is its own. */
+export function escapeIsOurs(at: Element, target: Node): boolean {
+  const board = at.closest('.vb-board');
+  return !board || board.contains(target) || target === at.ownerDocument.body || target === at.ownerDocument.documentElement;
+}
 
 /** Start listening for what dismisses a layer; returns the stop (call it when the layer closes). */
 export function dismissable(o: DismissOptions): () => void {
@@ -43,6 +53,8 @@ export function dismissable(o: DismissOptions): () => void {
   };
   const onKey = (e: Event) => {
     if ((e as KeyboardEvent).key !== 'Escape') return;
+    if (typeof o.escape === 'object' && !escapeIsOurs(o.escape, e.target as Node)) return;
+    e.preventDefault();
     e.stopPropagation();
     o.dismiss('escape');
   };

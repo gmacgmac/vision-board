@@ -11,6 +11,7 @@ import type { Transport } from '#client';
 import type { FlagName } from '#format';
 import { flagOn } from '#format';
 import type { Align } from '#layout';
+import type { MarkdownOptions } from '#ui';
 
 /** One line of a confirm step's list: a card's number and what is done to it. */
 export interface ConfirmItem { ref: string; text: string }
@@ -127,6 +128,15 @@ export interface BoardChat {
   hasLine?(ref: ChatLine): boolean;
 }
 
+/** The viewer's small conveniences the board keeps: each board's zoom and position (`view.<board>`) and
+ * whether the proposals notice is hidden (`proposals-hidden`), as strings under keys the board names.
+ * The board's own keys say only what is on its board, so a host gives each folder or bot its own store
+ * and two boards named "plans" never clash. A store may lose anything, whenever it likes. */
+export interface BoardStore {
+  get(key: string): string | null;
+  set(key: string, value: string): void;
+}
+
 /** What the board needs of whoever hosts it. */
 export interface BoardHost {
   /** Calls the board's own routes: `path` is relative to its route prefix (the typed client's
@@ -141,6 +151,12 @@ export interface BoardHost {
   notify(text: string, tone?: 'info' | 'error'): void;
   /** Asks the person first, the host's own dialog; resolves true when confirmed. */
   confirm(ask: ConfirmAsk): Promise<boolean>;
+  /** Where the board keeps the viewer's conveniences. Left out, it keeps them for as long as this mount. */
+  store?: BoardStore;
+  /** The address a picture's path goes after: what `<img src>` loads and the version is asked at, on the
+   *  browser's own cookies (a picture can't go through `api`). A host answers it with the engine's `image`.
+   *  Left out, `IMAGE_ROUTE` on the page's origin. */
+  imageRoute?: string;
   /** The standalone page's own part; a host leaves it out. */
   page?: BoardPage;
 }
@@ -150,6 +166,16 @@ export const flagOf = (host: Pick<BoardHost, 'settings'>, f: FlagName): boolean 
   const v = host.settings.get(f);
   return flagOn(f, typeof v === 'boolean' ? { [f]: v } : {});
 };
+
+/** How the board's Markdown renders under this host, for every surface that draws it. */
+export const markdownOf = (host: Pick<BoardHost, 'settings' | 'imageRoute'>): MarkdownOptions =>
+  ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute });
+
+/** A store for one mount, for a host that gives none. */
+export function memoryStore(): BoardStore {
+  const held = new Map<string, string>();
+  return { get: (key) => held.get(key) ?? null, set(key, value) { held.set(key, value); } };
+}
 
 /** The viewer's alignment (alignSetting flag): `center` when the host says so, else `start`. */
 export const alignOf = (host: Pick<BoardHost, 'settings'>): Align => (host.settings.get('align') === 'center' ? 'center' : 'start');

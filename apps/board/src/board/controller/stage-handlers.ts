@@ -66,13 +66,16 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
       if (region !== undefined) f.container!.mark(region);
     },
     ...(f.container && { zoomRegion: f.container.zoom }),
-    // Esc closes an open bubble first, then the open selection bar (FE_02), then leaves a past version, else clears the selection (ruling 1).
+    // Esc closes an open bubble first, then the open selection bar (FE_02), then leaves a past version, else
+    // clears the selection (ruling 1). True when there was something to do: a host's own Esc is the host's otherwise.
     escape: () => {
-      if (notes.open) return notes.close();
-      if (flow.collapse()) return;
-      if (versions.state) return void versions.show(null);
+      if (notes.open) { notes.close(); return true; }
+      if (flow.collapse()) return true;
+      if (versions.state) { void versions.show(null); return true; }
+      const used = f.status.now.replyOpen || selection.selected().length > 0;
       f.status.set({ replyOpen: false });
       flow.dismissArea(); selection.clear();
+      return used;
     },
   };
 }

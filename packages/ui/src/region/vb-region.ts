@@ -58,10 +58,12 @@ export function defineVbRegion(): void {
     /** The holders last drawn, so an unchanged list keeps its buttons (and their focus). */
     private holdersKey = '';
     private readonly row: ModeRow = bindModeRow(this);
-    private readonly note: NoteParts = bindNoteParts(this);
+    private markdown: RegionFrameOptions['markdown'];
+    private readonly note: NoteParts = bindNoteParts(this, () => this.markdown);
     private readonly titleTip = bindTitleTip(this);
 
     render(r: Region, opts: RegionFrameOptions = {}): void {
+      this.markdown = opts.markdown;
       this.row.close();
       this.titleTip.close();
       this.dataset.region = r.id;

@@ -2,7 +2,7 @@
 // with `fetch` on the page's own origin, its change events are the project's live stream
 // (`watch_project`), its header's own controls the page's parts (page-parts.ts), its settings are the page's flags (`?flags=` and `vb.flags`, flags.ts) and the
 // viewer's alignment (align.ts), its notices the toast and its confirmations the shared dialog
-// (shell.svelte.ts). Its page part names the open board in the address, keeps the board last looked
+// (shell.svelte.ts), its store this browser's storage (kept.ts `pageStore`). Its page part names the open board in the address, keeps the board last looked
 // at (per folder with the openFolder flag, folder.ts), reloads to start again and holds the person's
 // cookie. Its chat is the chat panel's, through its bridge (chat-panel.ts, chat-bridge.ts `host`): the
 // board's selection and answers, Send and the agent's status all go through `BoardChat`. With the
@@ -14,7 +14,7 @@ import type { Status } from '../board/status.ts';
 import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
-import { keep, kept } from '../board/kept.ts';
+import { keep, kept, pageStore } from './kept.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
 import { askConfirm, shell, toast } from './shell.svelte.ts';
 
@@ -80,6 +80,7 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     settingsChanged() { for (const l of listeners) l(); },
     notify: (text, tone) => toast(text, tone),
     confirm: ({ heading, body, confirm, list }) => askConfirm(heading, body, confirm, list),
+    store: pageStore,
     page: {
       async wanted() {
         const folder = openFolder ? await loadFolder() : null;

@@ -2,7 +2,9 @@
 // bodies and notes now; replies, the chat and parking bundles later). Source to safe HTML with
 // the pattern's CSS hooks (markdown.css); no inline styles, no DOM, so it runs under node --test.
 // blocks.ts splits the lines into blocks; inline.ts renders each block's text, escaped; image.ts
-// writes `![alt](path)` (D-048), unless images are off (the page's cardImages flag, `setMarkdownImages`).
+// writes `![alt](path)` (D-048), unless images are off. No switch of its own: whoever renders passes the
+// flags it was given (`MarkdownOptions`), so two boards on one page can differ; left out, each flag's default.
+import { flagOn } from '#format';
 import { parseBlocks } from './blocks.ts';
 import type { Block } from './blocks.ts';
 import type { ImageWriter } from './image.ts';
@@ -12,17 +14,12 @@ import { esc, renderInline } from './inline.ts';
 export interface MarkdownOptions {
   /** aria-level of a `#` label (1 to 6). Default 4: the card title is an h3. */
   headingLevel?: number;
-  /** Draw `![alt](path)` as its image (D-048); false keeps its source text. Default: the page's
-   * choice (`setMarkdownImages`), on until it says otherwise. */
+  /** Draw `![alt](path)` as its image (D-048); false keeps its source text. The cardImages flag; default, its default. */
   images?: boolean;
-}
-
-let pageImages = true;
-
-/** The page's cardImages flag (components.md § Feature flags), set once where the page starts, so
- * every surface that renders Markdown agrees on images without each one being told. */
-export function setMarkdownImages(on: boolean): void {
-  pageImages = on;
+  /** Allow an svg among them (D-064). The svgImages flag; default, its default. */
+  svg?: boolean;
+  /** Where the pictures are served: a path goes after it. Default `IMAGE_ROUTE`. */
+  imageRoute?: string | undefined;
 }
 
 /** Longer input is cut here with an ellipsis (2c_FE_01, Safety). */
@@ -72,6 +69,6 @@ export function renderMarkdown(src: string, opts: MarkdownOptions = {}): string 
   }
   const h = opts.headingLevel;
   const level = h !== undefined && Number.isInteger(h) && h >= 1 && h <= 6 ? h : 4;
-  const image = (opts.images ?? pageImages) ? imageMarkup : undefined;
+  const image = (opts.images ?? flagOn('cardImages')) ? imageMarkup(opts.svg, opts.imageRoute) : undefined;
   return kids(parseBlocks(text), { level, lists: 0, tight: false, image });
 }

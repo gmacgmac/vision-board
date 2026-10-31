@@ -23,7 +23,7 @@
   "methods": {
     "openMenu({ menu, opener?, within?, key?, onClose })": "a menu the caller drew open: its keys, a press outside, aria-expanded, first row focused; returns { close(focusBack?) }",
     "menuKeydown(e, items, close, { back?, stop? })": "the keys alone, for a menu that hears its keys itself",
-    "dismissable({ within, dismiss, escape?, clickWithin? })": "listen for Esc and a press or click outside; returns the stop",
+    "dismissable({ within, dismiss, escape?, clickWithin? })": "listen for Esc (`escape`: true for the whole page, or an element: only when focus is in its board or nowhere, escapeIsOurs) and a press or click outside; returns the stop",
     "syncModal(dialog, wants, opened?)": "show the dialog modal or close it, following its state",
     "backdropClick(close)": "a click handler: a click on the backdrop closes it",
     "whenShut(shut)": "a close-event handler taken only while the dialog is still shut"

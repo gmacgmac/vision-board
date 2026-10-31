@@ -58,7 +58,7 @@
       onanswer={(seq, a, text) => board()?.access.answer(seq, a, text) ?? Promise.resolve(false)}
       onallowall={(seqs) => board()?.access.answerAll(seqs) ?? Promise.resolve(false)} />
   {/if}
-  <ProposalsBar rows={shown.proposals} news={shown.proposalNews} {ids}
+  <ProposalsBar rows={shown.proposals} news={shown.proposalNews} {ids} store={chrome.store}
     onreview={(n) => board()?.proposals.review(n)} onacceptall={() => void board()?.proposals.acceptAll()} />
 {/if}
 

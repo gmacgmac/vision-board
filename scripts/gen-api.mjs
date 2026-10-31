@@ -3,7 +3,7 @@
 // tools and vb read instead of openapi.json, with the problem codes, gen-contract.mjs),
 // packages/format/src/api-types.generated.ts (each operation's input and output type, gen-types.mjs), packages/cli/src/commands.generated.ts (one `vb`
 // command per x-agent operation, with its inputs), packages/format/src/tools.generated.json (the tool
-// table: what a declared tool needs, per x-agent operation, gen-tools.mjs) and
+// table: what a declared tool needs, per x-agent operation, gen-tools.mjs, and which hosts give it, `x-hosts`) and
 // packages/mcp/src/tools.generated.json (the MCP tool list made from that table, gen-mcp.mjs) and docs/specification/api-reference.md (the
 // human-readable reference, from gen-reference.mjs). Run: npm run gen. `--check` exits 1 if a
 // file would change.
@@ -70,6 +70,28 @@ export function operationsOf(doc) {
     }
   }
   return out;
+}
+
+/** Who gives an agent tool (`x-hosts`, M15). `standalone`: the standalone app, over `vb-mcp`; `plugin`: any
+ * host of the plugin, from `engine.tools`, so a plugin bot gets only these. */
+export const TOOL_HOSTS = ['standalone', 'plugin'];
+
+/** The tool table with each row's `hosts`: every x-agent operation says, and nothing else does. */
+export function toolTableWithHosts(doc, schemas) {
+  const hosts = new Map();
+  for (const item of Object.values(doc.paths ?? {})) {
+    for (const op of METHODS.flatMap((m) => item[m] ?? [])) {
+      const said = op['x-hosts'];
+      if (op['x-agent'] !== true) {
+        if (said !== undefined) throw new Error(`${op.operationId}: x-hosts is only for an x-agent operation`);
+        continue;
+      }
+      if (!Array.isArray(said) || said.length === 0 || said.some((h) => !TOOL_HOSTS.includes(h))) throw new Error(`${op.operationId}: x-hosts must list hosts among ${TOOL_HOSTS.join(', ')}`);
+      hosts.set(op.operationId, said);
+    }
+  }
+  const table = toolTable(doc, schemas);
+  return { ...table, tools: table.tools.map((row) => ({ ...row, hosts: hosts.get(row.name) })) };
 }
 
 const q = (s) => `'${s}'`;
@@ -199,7 +221,7 @@ export function renderCommands(doc, schemas) {
 function targets() {
   const doc = JSON.parse(readFileSync(SPEC, 'utf8'));
   const schemas = loadSchemas();
-  const table = toolTable(doc, schemas);
+  const table = toolTableWithHosts(doc, schemas);
   return [
     { file: OUT, text: render(doc, schemas) },
     { file: TYPES_OUT, text: renderTypes(doc, schemas) },

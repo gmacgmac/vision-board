@@ -58,8 +58,11 @@ export function defineVbNode(): void {
     private statusTip: HoverTip | undefined;
     /** An app card's state view last drawn (D-047). */
     private appSrc: string | undefined;
+    /** How `render` was told this card's Markdown renders; `update` draws by it too. */
+    private markdown: NodeTemplateOptions['markdown'];
 
     render(n: ViewNode, opts: NodeTemplateOptions = {}): void {
+      this.markdown = opts.markdown;
       for (const t of this.noteTips) t.close();
       this.noteTips = [];
       this.noteSrc = undefined;
@@ -134,7 +137,7 @@ export function defineVbNode(): void {
       this.handoverSrc = src;
       const box = this.querySelector<HTMLElement>('[data-pop="handover"]')!;
       // Markup from handoverMarkup, which escapes every text run and renders the Markdown safely.
-      box.innerHTML = v ? handoverMarkup(v) : '';
+      box.innerHTML = v ? handoverMarkup(v, this.markdown) : '';
       if (v) box.setAttribute('aria-label', v.box);
       else this.handoverPop?.close();
     }
@@ -154,7 +157,7 @@ export function defineVbNode(): void {
       section.hidden = !v?.open;
       if (v?.step) section.setAttribute('aria-label', v.step.label);
       else section.removeAttribute('aria-label');
-      const src = v?.open ? stepMarkup(v) : '';
+      const src = v?.open ? stepMarkup(v, this.markdown) : '';
       // Markup from stepMarkup, which escapes every text run.
       if (this.stepSrc !== src) section.innerHTML = src;
       this.stepSrc = src;
@@ -209,7 +212,7 @@ export function defineVbNode(): void {
         // The Hide or Show toggle had focus: the one drawn in its place takes it (card-polish FE_02).
         const toggled = block.contains(document.activeElement) && document.activeElement!.matches('[data-notes]');
         for (const t of this.noteTips) t.close();
-        block.innerHTML = v ? notesMarkup(v, now) : '';
+        block.innerHTML = v ? notesMarkup(v, now, this.markdown) : '';
         this.noteTips = [...block.querySelectorAll<HTMLElement>('.vb-node-note, .vb-node-reply')].map(bindNoteTip);
         if (toggled) block.querySelector<HTMLElement>('[data-notes]')?.focus({ preventScroll: true });
       }

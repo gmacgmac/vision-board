@@ -5,7 +5,7 @@
      applies before it does (proposal-flow.ts). With reviewList flag and proposals on more than one card,
      Review is a menu dropdown (MenuSelect, the open list's pattern) of those cards as "12 · title · what
      it proposes" in card order; choosing one goes to the card and opens its box. One card: Review goes straight to it. Hide, or Esc in the notice, collapses it to a pill in
-     the same place (just the number, "3"), which brings it back; the choice is kept per viewer (board/kept.ts).
+     the same place (just the number, "3"), which brings it back; the choice is kept per viewer (BoardHost.store).
      Page polish: the number (.vb-proposals-n) sits at the same spot in the pill and in the notice, so
      opening only grows the box down and to the right (proposals.css).
      A region landmark; a polite live region, always present so it is heard (the pill too), announces
@@ -19,11 +19,13 @@
   import { barWords, proposes } from '../cards/index.ts';
   import { reviewRows } from '../find/index.ts';
   import MenuSelect from './MenuSelect.svelte';
-  import { keep, kept } from '../kept.ts';
+  import type { BoardStore } from '../host.ts';
 
-  let { rows, news = [], onreview, onacceptall, placement = 'board', collapsed = false, look, ids = '' }: {
+  let { rows, news = [], onreview, onacceptall, placement = 'board', collapsed = false, look, ids = '', store }: {
     /** The mount's prefix for its ids (mount-ids.ts). */
     ids?: string;
+    /** Where the hidden choice is kept (BoardHost.store); a gallery sample has none, and keeps nothing. */
+    store?: BoardStore;
     rows: readonly ProposalRow[];
     /** The proposals to announce, by line: those that arrived while the page was open. */
     news?: readonly number[];
@@ -38,7 +40,7 @@
     look?: 'hover' | 'focus' | 'pressed';
   } = $props();
 
-  const HIDDEN_KEY = 'vb.proposals-hidden';
+  const HIDDEN_KEY = 'proposals-hidden';
   const onBoard = () => placement === 'board';
   const words = $derived(barWords(rows));
   const ready = $derived(acceptAllPlan(rows).apply.length);
@@ -47,7 +49,7 @@
   /** Review's list (board/find/finder.ts `reviewRows`): empty without titles (the reviewList flag) or with one card. */
   const list = $derived(reviewRows(rows, proposes));
 
-  const start = () => (onBoard() ? kept(HIDDEN_KEY) === '1' : collapsed);
+  const start = () => (onBoard() ? store?.get(HIDDEN_KEY) === '1' : collapsed);
   let hidden = $state(start());
   let pill: HTMLButtonElement | undefined = $state();
   let review: HTMLButtonElement | undefined = $state();
@@ -55,7 +57,7 @@
   /** Hide or show the notice; focus goes to what took its place (the pill, or Review). */
   async function show(on: boolean) {
     hidden = !on;
-    if (onBoard()) keep(HIDDEN_KEY, on ? '0' : '1');
+    if (onBoard()) store?.set(HIDDEN_KEY, on ? '0' : '1');
     await tick();
     (on ? review ?? document.getElementById(`${ids}${placement}-review`) : pill)?.focus();
   }

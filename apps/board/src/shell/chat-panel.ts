@@ -47,7 +47,7 @@ import type { ChatPanel, ChatPanelDeps, ChatViewLoader } from './chat-panel-type
 import type { ChatSessionInfo } from './page-io.ts';
 import { ApiError } from '../board/io.ts';
 import { answerApproval, attachChatFile, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
-import { pageFlags } from '../flags.ts';
+import { pageFlags, pageMarkdown } from '../flags.ts';
 import type { Agent, Pick } from './chat-rules.ts';
 import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, panelState, sendsInChat, shownPick } from './chat-rules.ts';
 import * as chatWords from './words/chat.ts';
@@ -73,7 +73,8 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   /** Whether the composer holds anything to send (a chip or the context): the context alone, before it exists. */
   const attachedNow = () => (view ? view.composer.attached : context !== null);
   let empty = '';
-  const feedOptions = () => ({ render: (src: string) => renderMarkdown(src), boardName: d.boardName, empty });
+  const markdown = pageMarkdown();
+  const feedOptions = () => ({ render: (src: string) => renderMarkdown(src, markdown), boardName: d.boardName, empty });
   const configure = (text: string) => {
     if (text === empty) return;
     empty = text;

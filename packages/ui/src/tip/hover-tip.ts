@@ -54,8 +54,9 @@ export function bindHoverTip(host: HTMLElement, o: HoverTipOptions): HoverTip {
   function show(on: boolean) {
     if (on !== host.hasAttribute(o.attr)) o.onToggle?.(on);
     host.toggleAttribute(o.attr, on);
-    // Esc and a press outside (the shared dismissable layer) are heard on the page only while the tip is open.
-    if (on) stopDismiss ??= dismissable({ within: inTip, escape: true, dismiss: step });
+    // Esc and a press outside (the shared dismissable layer) are heard on the page only while the tip is
+    // open, and an Esc only when it is this board's: a host's own stays the host's.
+    if (on) stopDismiss ??= dismissable({ within: inTip, escape: host, dismiss: step });
     else {
       stopDismiss?.();
       stopDismiss = null;

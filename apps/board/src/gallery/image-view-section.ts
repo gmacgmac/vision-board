@@ -77,7 +77,7 @@ export function imageViewSamples(body: HTMLElement, fx: Fixture): void {
   const still = new Set(samples.filter((s) => s.still || s.problem).map((s) => s.id));
   // Its height in whole pixels, so the sections under it stay on the pixel grid (their screenshots).
   wholePixels(body);
-  const images = createCardImages({ host: body, near: (c) => !still.has(c.dataset.id!), grown: () => wholePixels(body) });
+  const images = createCardImages({ host: body, viewIn: () => document.body, near: (c) => !still.has(c.dataset.id!), grown: () => wholePixels(body) });
   body.append(group('In a card', 'At the card\'s width, its own shape. Loading is a sunken box; a missing or refused file, or a path outside the images folder, says why in its place. No alt text shows the path.',
     cardList('Images in cards', ...cards)));
   const view = document.body.appendChild(document.createElement('vb-image-view') as VbImageViewElement);

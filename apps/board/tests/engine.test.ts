@@ -11,6 +11,7 @@ import path from 'node:path';
 import type { AnswersText, ChipRefusal } from '#actions';
 import { answersChip, roundOf, selectionChip } from '#actions';
 import { boardWriteSummary } from '#agent';
+import { IMAGES_DIR } from '#format';
 import { FIXTURES_DIR, TOOLS_FILE } from '#format/files';
 import { createMcpServer, INSTRUCTIONS_JOINED, MODERN } from '#mcp';
 import type { Caller, Engine, EngineChange } from '../server/engine/index.ts';
@@ -49,7 +50,8 @@ async function tool(engine: Engine, name: string, input: Record<string, unknown>
 /** An engine with an agent that made board `plans` (a region and two questions). */
 async function withPlans() {
   const engine = open();
-  const joined = await tool(engine, 'join', { label: 'Engine test' });
+  // A host registers its bot once, through `route`: `join` is no tool of a plugin bot's.
+  const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: 'Engine test' } }))!.body as { agent: string; secret: string };
   const agent: Caller = { by: 'agent', agent: joined.agent };
   const items = [
     { type: 'board', title: 'Plans' },
@@ -137,11 +139,12 @@ test('resolve: the selection chip names its cards as they stand, in the order se
   assert.equal((engine.resolve('selection', { board: 'plans' }) as ChipRefusal).refused, 'gone');
 });
 
-test('tools: one per agent operation the engine serves, listed in MCP\'s shape; each runs with the caller passed in', async () => {
+test('tools: one per tool the table marks for a plugin (x-hosts), listed in MCP\'s shape; each runs with the caller passed in', async () => {
   const { engine, agent } = await withPlans();
-  const table = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: { name: string; description: string; input: unknown }[] }).tools;
+  const table = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: { name: string; description: string; input: unknown; hosts: string[] }[] }).tools;
   const listed = engine.tools.list();
-  assert.deepEqual(listed.map((t) => t.name).sort(), table.map((t) => t.name).filter((n) => n !== 'list_apps' && n !== 'read_attachment').sort(), 'list_apps is the app host\'s, read_attachment is beside its chat');
+  assert.deepEqual(listed.map((t) => t.name).sort(), table.filter((t) => t.hosts.includes('plugin')).map((t) => t.name).sort(), 'the engine gives exactly what the table marks: a manifest made from it never declares a tool the engine has not');
+  for (const gone of ['list_apps', 'read_attachment', 'join']) assert.equal((await engine.tools.call(gone, {})).isError, true, `${gone} is the standalone app's`);
   for (const t of listed) {
     const row = table.find((r) => r.name === t.name)!;
     assert.deepEqual([t.description, t.inputSchema], [row.description, row.input], `${t.name}: the table's words and JSON Schema`);
@@ -149,7 +152,7 @@ test('tools: one per agent operation the engine serves, listed in MCP\'s shape; 
   const inputs: Record<string, Record<string, unknown>> = {
     list_boards: {}, get_board: { board: 'plans' }, show_node: { board: 'plans', n: 1 }, show_container: { board: 'plans', region: 'now' },
     show_layout: { board: 'plans', region: 'now' }, list_open: { board: 'plans' }, check_responses: { board: 'plans', after: 0 },
-    join: { label: 'Second agent' }, request_grant: { board: 'roadmap', region: 'review', reason: 'For the test.' },
+    request_grant: { board: 'roadmap', region: 'review', reason: 'For the test.' },
     write_board: { board: 'plans', items: [{ type: 'node', node: { region: 'now', kind: 'question', title: 'Which day?' } }] },
   };
   assert.deepEqual(Object.keys(inputs).sort(), listed.map((t) => t.name).sort(), 'every tool is tried');
@@ -229,4 +232,32 @@ test('a held check_responses ends when its host\'s signal does, and answers as a
   setTimeout(() => gone.abort(), 20);
   const r = await held;
   assert.deepEqual([r?.status, (r?.body as { responses: unknown[] }).responses], [200, []]);
+});
+
+test('image: the route a host points `imageRoute` at answers as the standalone route does: a picture and its ETag, 304, HEAD, an svg under its own policy, and only what is in the images folder', async () => {
+  const dir = dataDir();
+  const engine = open(dir);
+  fs.mkdirSync(path.join(dir, IMAGES_DIR, 'shots'), { recursive: true });
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEBgIApD5fRAAAAABJRU5ErkJggg==', 'base64');
+  fs.writeFileSync(path.join(dir, IMAGES_DIR, 'shots', 'a.png'), png);
+  fs.writeFileSync(path.join(dir, IMAGES_DIR, 'p.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>');
+  fs.writeFileSync(path.join(dir, 'secret.png'), png);
+
+  const got = engine.image({ method: 'GET', path: 'shots/a.png' });
+  assert.equal(got.status, 200);
+  assert.deepEqual(got.body, png);
+  assert.equal(got.headers!['Content-Type'], 'image/png');
+  assert.equal(got.headers!['X-Content-Type-Options'], 'nosniff');
+  const same = engine.image({ method: 'HEAD', path: 'shots/a.png', ifNoneMatch: got.headers!.ETag });
+  assert.deepEqual([same.status, same.body], [304, null]);
+  const head = engine.image({ method: 'HEAD', path: 'shots/a.png' });
+  assert.deepEqual([head.status, head.body, head.headers!.ETag], [200, null, got.headers!.ETag]);
+  assert.match(engine.image({ method: 'GET', path: 'p.svg' }).headers!['Content-Security-Policy']!, /sandbox/);
+
+  assert.equal(engine.image({ method: 'GET', path: '../secret.png' }).status, 404, 'out of the folder');
+  assert.equal(engine.image({ method: 'GET', path: '..%2Fsecret.png' }).status, 404, 'encoded, the same');
+  assert.equal(engine.image({ method: 'GET', path: 'none.png' }).status, 404);
+  assert.equal(engine.image({ method: 'POST', path: 'shots/a.png' }).status, 405);
+  const off = createEngine({ dir, flags: { svgImages: false } });
+  assert.equal(off.image({ method: 'GET', path: 'p.svg' }).status, 415, 'the flag, as the host gave it');
 });

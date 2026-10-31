@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { focusBackOn, isClick } from '../src/base/layer-core.ts';
-import { dismissable } from '../src/base/layer.ts';
+import { dismissable, escapeIsOurs } from '../src/base/layer.ts';
 import type { DismissReason } from '../src/base/layer-core.ts';
 
 const ev = (type: string, fields: Record<string, unknown> = {}) => Object.assign(new Event(type), fields);
@@ -73,4 +73,29 @@ test('the stop removes every listener', () => {
   h.doc.dispatchEvent(ev('pointerup', { clientX: 0, clientY: 0 }));
   h.doc.dispatchEvent(ev('keydown', { key: 'Escape' }));
   assert.deepEqual(h.got, []);
+});
+
+test('an Esc given a board: only when focus is in that board or nowhere; a host\'s own control keeps it, unstopped and unmarked', () => {
+  const inBoard = { nodeType: 1 } as unknown as Node;
+  const body = { nodeType: 1 } as unknown as Node;
+  const hosts = { nodeType: 1 } as unknown as Node;
+  const board = { contains: (t: Node) => t === inBoard };
+  const at = { closest: () => board, ownerDocument: { body, documentElement: {} } } as unknown as Element;
+  const doc = new EventTarget();
+  const got: DismissReason[] = [];
+  const stop = dismissable({ doc, within: () => true, escape: at, dismiss: (r) => got.push(r) });
+  const press = (target: Node) => {
+    const e = Object.assign(new Event('keydown', { cancelable: true }), { key: 'Escape' });
+    Object.defineProperty(e, 'target', { value: target });
+    doc.dispatchEvent(e);
+    return e.defaultPrevented;
+  };
+  assert.equal(press(hosts), false);
+  assert.deepEqual(got, []);
+  assert.equal(press(inBoard), true);
+  assert.equal(press(body), true);
+  assert.deepEqual(got, ['escape', 'escape']);
+  stop();
+  const alone = { closest: () => null, ownerDocument: { body, documentElement: {} } } as unknown as Element;
+  assert.equal(escapeIsOurs(alone, hosts), true, 'with no board round it, the page is its own');
 });

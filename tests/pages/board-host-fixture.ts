@@ -40,8 +40,16 @@ for (const target of [document, window] as EventTarget[]) {
 const json = (body: unknown, status = 200, type = 'application/json') =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': type } });
 
+/** What a spec may vary in one host: its settings, where it serves pictures, and its folder, whose store
+ *  outlives a mount, as a host's own place for a board would (two folders: two stores, one board name). */
+interface HostOptions { settings?: Record<string, unknown>; imageRoute?: string; folder?: string }
+
+/** Each folder's store (`BoardHost.store`), and every key the hosts' documents heard. */
+const stores = new Map<string, Map<string, string>>();
+const heard: { key: string; prevented: boolean }[] = [];
+
 /** A fake host over `lines` (the ledger's JSON lines), of which the first `shown` are written. */
-function fakeHost(lines: readonly object[], shown: number) {
+function fakeHost(lines: readonly object[], shown: number, o: HostOptions = {}) {
   let written = shown;
   const listeners = new Set<(e: BoardEvent) => void>();
   const settings = new Set<() => void>();
@@ -88,11 +96,13 @@ function fakeHost(lines: readonly object[], shown: number) {
       },
     },
     settings: {
-      get: () => undefined,
+      get: (key) => o.settings?.[key],
       on(listener) { settings.add(listener); return () => { settings.delete(listener); }; },
     },
     notify: (text, tone) => { record.notices.push({ text, ...(tone && { tone }) }); },
     confirm: async (ask) => { record.confirms.push(ask); return record.answer; },
+    ...(o.imageRoute && { imageRoute: o.imageRoute }),
+    ...(o.folder && { store: storeOf(o.folder) }),
   };
   /** Write the rest of the lines, and say so as one change event. */
   const appendRest = () => {
@@ -109,14 +119,21 @@ function fakeHost(lines: readonly object[], shown: number) {
 
 defineBoardElements();
 
+/** The store of folder `name`, made when first asked for. */
+function storeOf(name: string): NonNullable<BoardHost['store']> {
+  const kept = stores.get(name) ?? new Map<string, string>();
+  stores.set(name, kept);
+  return { get: (key) => kept.get(key) ?? null, set: (key, value) => { kept.set(key, value); } };
+}
+
 const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof fakeHost>['record']; appendRest(): void; work(w: ChatWork): void; root: HTMLElement }>();
 
 /** What the spec drives. */
 (window as unknown as { vbHost: unknown }).vbHost = {
   listeners: () => live.count,
-  mount(rootId: string, lines: object[], shown: number) {
+  mount(rootId: string, lines: object[], shown: number, o?: HostOptions) {
     const root = document.getElementById(rootId)!;
-    const fake = fakeHost(lines, shown);
+    const fake = fakeHost(lines, shown, o);
     mounted.set(rootId, { view: mount(root, fake.host), record: fake.record, appendRest: fake.appendRest, work: fake.work, root });
   },
   /** The host's own controls, outside both boards: a button and a text input (M10, keys stay inside the board). */
@@ -127,6 +144,10 @@ const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof 
     input.setAttribute('aria-label', 'Host input');
     parent.append(button, input);
   },
+  /** The host's own shortcut keys: what its document hears, and whether the board marked it used (M22). */
+  hearKeys() { document.addEventListener('keydown', (e) => heard.push({ key: e.key, prevented: e.defaultPrevented })); },
+  heard: () => heard.splice(0),
+  store: (folder: string) => Object.fromEntries(stores.get(folder) ?? []),
   /** The host's Close for one board, outside both (M11): it asks the board first, then unmounts. */
   addClose(parentId: string, rootId: string) {
     const close = Object.assign(document.createElement('button'), { id: `close-${rootId}`, textContent: `Close ${rootId}` });

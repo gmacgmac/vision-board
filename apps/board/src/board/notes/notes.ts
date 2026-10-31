@@ -66,7 +66,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (at instanceof HTMLElement && (o.region ? d.frame(o.region)?.contains(at) : o.at && at.matches(o.at))) o.back = at;
     if (open) mark(open, false);
     open = o;
-    bubble.show(view.v, view.on);
+    bubble.show(view.v, view.on, d.markdown);
     if (o.mode === 'thread') bubble.reveal(o.part);
     mark(o, true);
     place();

@@ -1,6 +1,6 @@
 // The page's theme (system, light or dark; the "⋯" menu's Theme, ThemeControl.svelte), kept in this
 // browser. The page's own: a host has its theme, and the board reads tokens.
-import { keep, kept } from '../board/kept.ts';
+import { keep, kept } from './kept.ts';
 
 const THEMES = ['system', 'light', 'dark'] as const;
 export type Theme = (typeof THEMES)[number];

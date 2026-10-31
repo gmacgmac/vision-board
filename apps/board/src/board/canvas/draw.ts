@@ -12,7 +12,7 @@
 import type { NodeSize, ViewNode } from '#format';
 import type { Align, BoardLayout, Size } from '#layout';
 import { widthsOf } from '#format';
-import type { CardConditions, CardReply, VbNodeElement, VbRegionElement } from '#ui';
+import type { CardConditions, CardReply, MarkdownOptions, VbNodeElement, VbRegionElement } from '#ui';
 import { holdersOf } from '../access/index.ts';
 import { createCardImages } from '../cards/index.ts';
 import { createCardSet } from '../cards/index.ts';
@@ -58,6 +58,8 @@ export interface DrawDeps {
   rail?: boolean;
   /** The mount's id prefix (mount-ids.ts): before every id the cards, frames and connectors set. */
   ids?: string;
+  /** How the cards' and frames' Markdown renders (the board's flags and image route). */
+  markdown?: MarkdownOptions;
   /** The viewer's alignment (ruling 4; `start` without the alignSetting flag). */
   align?(): Align;
   data(): BoardData;
@@ -104,7 +106,7 @@ export interface Drawing {
   wiresFor(layout: BoardLayout, focus: string | null): void;
   /** Hide the connectors as for a relayout (a container was dropped; its draw is on its way). */
   settle(): void;
-  /** Take away what the drawing put outside the board (the image view). */
+  /** Take away what the drawing put beside the stage (the image view). */
   destroy(): void;
 }
 
@@ -113,8 +115,8 @@ const SETTLE_MS = 380;
 
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
-  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids });
-  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, idPrefix: d.ids });
+  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown });
+  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, idPrefix: d.ids, markdown: d.markdown });
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids);
   const cache = createLayoutCache();
   const sizes = new Map<string, Size>();
@@ -122,7 +124,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   let settle = 0;
   // A card's images load while it is within a screen of the visible stage and the zoom is not far (ruling 23).
   const images = createCardImages({
-    host: els.cards, grown: (ids) => resized(ids),
+    host: els.cards, route: d.markdown?.imageRoute, viewIn: () => els.stage.parentElement!, grown: (ids) => resized(ids),
     near: (el) => { const b = layout?.nodes.get(el.dataset.id!); return !!b && !isFar(d.vp.k) && !outside(b, viewBounds(d.vp, els.stage)); },
   });
 

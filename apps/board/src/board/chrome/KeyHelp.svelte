@@ -31,15 +31,16 @@
     if (placement === 'gallery') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== '?' || e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement).closest('input, textarea, select, dialog, [contenteditable]')) return;
-      if (!pageWide && !root.contains(e.target as Node)) return; // under a host, a key outside the board is the host's
       e.preventDefault();
       if (host.hasAttribute(OPEN)) return tip.close();
       // Focus opens the tip; from a button that already has focus (after Esc), start again.
       button.blur();
       button.focus();
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    // Under a host, on the root: the key is marked used before it reaches any listener of the host's.
+    const at: EventTarget = pageWide ? document : root;
+    at.addEventListener('keydown', onKey as EventListener);
+    return () => at.removeEventListener('keydown', onKey as EventListener);
   });
 </script>
 

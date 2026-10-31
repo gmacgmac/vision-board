@@ -37,7 +37,8 @@ export async function open(page: Page): Promise<void> {
 }
 
 export type Host = {
-  listeners(): number; mount(id: string, lines: object[], shown: number): void; idle(id: string): Promise<void>;
+  listeners(): number; mount(id: string, lines: object[], shown: number, o?: { settings?: Record<string, unknown>; imageRoute?: string; folder?: string }): void;
+  hearKeys(): void; heard(): { key: string; prevented: boolean }[]; store(folder: string): Record<string, string>; idle(id: string): Promise<void>;
   send(id: string): Promise<string | null>; status(id: string): { selection: string; hide: boolean; boardId: string; zoom: number; chatWork: string; sendWaiting: boolean; chatAttached: boolean; go?: unknown };
   record(id: string): { chips: Record<string, { plugin: string; kind: string; ref: { board: string; cards: number[] }; label: string; preview?: string }>; attaches: { key: string; chip: { ref: { cards?: number[] } } | null }[]; sends: { kind: string }[][]; confirms: { heading: string; list?: unknown }[];
     notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };

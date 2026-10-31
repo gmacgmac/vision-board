@@ -5,12 +5,13 @@
 // (the standalone server turns its secrets and cookie into one; nclite takes the bot from its run
 // ticket). The ledger and the agents' hashes live in `dir`; the engine never looks for a folder.
 import path from 'node:path';
-import type { LedgerEvent, OperationId } from '#format';
-import { OPERATIONS, ROUTE_PREFIX } from '#format';
+import type { FlagOverrides, LedgerEvent, OperationId } from '#format';
+import { IMAGES_DIR, OPERATIONS, ROUTE_PREFIX } from '#format';
 import type { AnswersRef, AnswersText, BoardRef, CardRef, ChipRefusal, ChipText, NoteRef, SelectionRef } from '#actions';
 import { eventBoard, resolveChip } from '#actions';
 import type { Agents } from '../agents.ts';
 import { openAgents } from '../agents.ts';
+import { imageReply } from '../images.ts';
 import type { Caller, Ledger } from '../ledger.ts';
 import { LEDGER_FILE, openLedger } from '../ledger.ts';
 import { ProblemError, problem, serverError } from '../problem.ts';
@@ -53,12 +54,18 @@ export interface EngineOptions {
   onSend?: ((board: string, seq: number) => void) | undefined;
   /** Where the ledger's warnings go (a bad line); default stderr. */
   warn?: ((message: string) => void) | undefined;
+  /** The flags the engine reads itself (svgImages, for `image`); default, each flag's default. */
+  flags?: FlagOverrides | undefined;
 }
 
 export interface Engine {
   readonly dir: string;
   /** Answer one request; null when no operation of the engine's has its path. */
   route(req: EngineRequest, ctx?: EngineContext): Promise<EngineReply | null>;
+  /** Answers the board's image route, what `BoardHost.imageRoute` points at (`images.md`): `path` is the
+   *  route's text after the prefix, as the request wrote it. A GET or HEAD of a picture in `dir`'s images
+   *  folder and only there, each checked as the standalone route checks it; `body` is its bytes, or null. */
+  image(req: { method: string; path: string; ifNoneMatch?: string | undefined }): EngineReply;
   /** What a chip says now, or why it can't be sent (`resolveChip`). A host calls it for every chip as
    * its message goes, the answers chip included: its text is '' when nothing was answered since, and
    * nothing need go for it. */
@@ -89,7 +96,7 @@ const toReply = (err: unknown): EngineReply => {
   return { status: p.status, body: p.body, headers: { ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8' } };
 };
 
-export function createEngine({ dir, ledger: given, name = () => dir, onSend = () => {}, warn }: EngineOptions): Engine {
+export function createEngine({ dir, ledger: given, name = () => dir, onSend = () => {}, warn, flags = {} }: EngineOptions): Engine {
   const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn);
   let agents: Agents | undefined;
   const getAgents = () => (agents ??= openAgents(dir));
@@ -122,6 +129,9 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = ()
       let params: Record<string, unknown>;
       try { params = readParams(match.id, match.raw, query); } catch (err) { return toReply(err); }
       return run(match.id, { params, body, caller, signal });
+    },
+    image({ method, path: raw, ifNoneMatch }) {
+      try { return imageReply({ method, ifNoneMatch }, raw, path.join(dir, IMAGES_DIR), flags); } catch (err) { return toReply(err); }
     },
     resolve: ((kind: string, ref: unknown): ChipText | ChipRefusal => {
       ledger.refresh();

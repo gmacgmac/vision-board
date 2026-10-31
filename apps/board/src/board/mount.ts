@@ -4,15 +4,14 @@
 // plus what a host shows of the board: its status (status.ts). `root` holds the whole board: its header,
 // strips, dialogs and search (chrome/, boardChromeInMount flag) round the stage the cards draw in; off, `root`
 // is the stage and the standalone page draws the controls (`BoardControls`). It adds no element outside
-// `root` but the zoomed image view (a modal dialog's top layer), every id it sets carries the mount's
-// prefix (mount-ids.ts), and
+// `root`, every id it sets carries the mount's prefix (mount-ids.ts), a modal's keys stop at the root, and
 // nothing outlives `unmount`: every listener on the document or the window goes, the image view goes,
 // and `root` is emptied and given back as it was. Each mount has its own calls (io.ts), status and
 // controller, so two boards on one page work apart.
 import { boardChip, numberOf } from '#actions';
 import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
-import { flagOf } from './host.ts';
+import { flagOf, memoryStore } from './host.ts';
 import { createIo } from './io.ts';
 import type { Board, BoardElements } from './controller.ts';
 import { createBoard } from './controller.ts';
@@ -81,10 +80,16 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   if (own.includes('aria-label')) root.setAttribute('aria-label', commonWords.board);
   const status = createStatus();
   const ids = takeIdPrefix();
+  const store = host.store ?? memoryStore();
   let board!: Board;
   const send = () => host.chat.send(() => board.send());
-  const chrome = inMount ? mountChrome(root, host, { status, ids: ids.prefix, board: () => board, send }) : null;
+  const chrome = inMount ? mountChrome(root, host, { status, ids: ids.prefix, store, board: () => board, send }) : null;
   const stage = chrome?.stage ?? root;
+  // A modal of the board's (a dialog, the zoomed image) closes on the browser's own Esc, which a
+  // `preventDefault` would stop: so a key pressed in one goes no further than the root, and a host never
+  // acts on it as well.
+  const keepModalKeys = (e: KeyboardEvent) => { if ((e.target as Element).closest('dialog')) e.stopPropagation(); };
+  root.addEventListener('keydown', keepModalKeys);
   const io = createIo(host.api, host.page?.person);
 
   // A press the board handles itself (a lasso, a Cmd or Ctrl pan) stops the browser moving focus, so
@@ -100,7 +105,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     els.message.hidden = text === null;
   };
   const start = () => {
-    board = createBoard(els, { host, io, status, say, page, ids: ids.prefix });
+    board = createBoard(els, { host, io, status, say, page, ids: ids.prefix, store });
     void board.boot();
   };
   const stop = () => {
@@ -152,6 +157,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
       stop();
       ids.release();
       stage.removeEventListener('pointerup', takeFocus);
+      root.removeEventListener('keydown', keepModalKeys);
       chrome?.unmount();
       root.replaceChildren();
       root.classList.remove(...added);

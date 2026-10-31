@@ -309,6 +309,14 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     - logs go to stderr; no `notifications/message` unless the request set a log level
 46. The tool list is generated from the `x-agent` operations into
     `packages/mcp/src/tools.generated.json`; a test regenerates it and fails on any difference.
+    Each of them also says who gives it, `x-hosts` beside `x-agent` (M15; `scripts/gen-api.mjs`
+    `toolTableWithHosts`, which stops the build without one), into the tool table's `hosts`: `standalone`,
+    the standalone app over `vb-mcp`, gives every tool; `plugin`, any host of the plugin from the engine's
+    `tools` (159), gives what a plugin bot gets, which leaves out `join` (the host says who is calling; no
+    secret to mint, no second identity for a bot), `read_attachment` (the chat's, beside its files, D-068)
+    and `list_apps` (the app host's, which stays with the standalone host, 161). `request_grant` stays for
+    both: a board a person made, or another agent's, answers `needs-grant` under any host, and a request
+    only asks, for the person's click (`gen-tools.test.mjs` "x-hosts says").
 47. Each tool's input is the operation's path, query and body inputs merged into one plain
     object. The generator inlines every referenced schema (no `$ref` at all, for clients that do
     not resolve refs), flattens composed objects into `properties` plus
@@ -1411,7 +1419,9 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     there is nothing for a security requirement to describe. It is therefore not in `openapi.json`,
     `OPERATIONS`, the MCP tools or the `vb` commands, and the route table has no row for it. Agents
     do not call it: they save files in `.visionboard/images/` (images.md § The folder) and write
-    `![alt](path)`. The Host check applies; no cookie is needed or set.
+    `![alt](path)`. The Host check applies; no cookie is needed or set. Another host serves it at an
+    address of its own (`BoardHost.imageRoute`, components.md § The board's host interface), answered by
+    the engine's `image` (159), which holds a picture to the same checks (`images.ts` `openImage`).
 155. **Its refusals are problems** with the codes of the Errors table (40): `not-found` (a refused
     path, a missing file, a link out of the folder), `unsupported-media-type` (an extension that is not
     png, jpeg, webp, gif or svg (svg with the svgImages flag, D-064), bytes that are not the type the
@@ -1495,20 +1505,22 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     refused when a card is gone; `answers`, ref `{ board, since, agent? }`, the person's answers since that
     line as that agent may read them, with `count` and `notes`, its text '' when there are none or the
     board is locked), `tools` (`engine/tools.ts` `EngineTools`, in MCP's shapes: `list()` gives one
-    `{ name, title, description, inputSchema }` per agent operation it serves, from the generated tool table;
+    `{ name, title, description, inputSchema }` per tool the generated table marks `plugin` (46);
     `call(name, input, { caller, signal })` checks the input against that table's JSON Schema and gives MCP's
     `CallToolResult`, its text the operation's JSON; a problem, an input that does not fit or a tool it has not
     is `isError` with words, and never throws; a board write adds `_meta` `TOOL_CHANGE`, `vb/change`,
-    `{ board, cards, head }`, what a change chip needs) and `watch(onChange)`
-    (`{ board, head }` for every ledger change, this engine's or another writer's on `dir`). It
+    `{ board, cards, head }`, what a change chip needs), `image({ method, path, ifNoneMatch })` (the image
+    route's answer, 154: its status, headers and bytes, a problem as a reply; only `dir`'s images folder) and
+    `watch(onChange)` (`{ board, head }` for every ledger change, this engine's or another writer's on `dir`). A
+    host registers its bot once by `route`'s `join` and passes its id as the caller; `join` is no tool. It
     serves `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`,
     `check_responses`, `read_ledger`, `act`, `mark_seen`, `put_board`, `retire_cards`, `join`,
     `request_grant` and `write_board` (`ENGINE_OPERATIONS`); a caller the operation does not take
     is refused (`operations.ts` `checkCaller`). Held by `apps/board/tests/engine.test.ts`.
 160. **What the host supplies.** `dir`; optionally the ledger already opened in it (the standalone
     server opens it under its lock, `lock.ts`), the folder's name as the person reads it
-    (`list_boards` and `join` answer it as `project`), `onSend` (told after the person's Send) and
-    where warnings go. The ledger's appends by another writer are read in before every operation
+    (`list_boards` and `join` answer it as `project`), `onSend` (told after the person's Send), the flags
+    it reads itself (`svgImages`, for `image`) and where warnings go. The ledger's appends by another writer are read in before every operation
     and append, and polled while anyone watches (`ledger.ts` `refresh`, `follow`), so two engines on
     one folder never repeat a `seq`. Held by `engine.test.ts` (watch: the event, the fold, the next `seq`).
 161. **The standalone server is one host.** `dispatch.ts` keeps the HTTP edge: Host and Origin

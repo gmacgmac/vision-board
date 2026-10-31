@@ -11,6 +11,7 @@ import { PREVIEW_CLOSED, previewShown, previewStep } from './region-preview.ts';
 import { nblockRepliesMarkup, regionIdsOf } from './region-template.ts';
 import { closeGrace } from '../tip/close-grace.ts';
 import { dismissable } from '../base/layer.ts';
+import type { MarkdownOptions } from '../markdown/render.ts';
 import * as regionNoteWords from '../words/region-note.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
 
@@ -39,7 +40,7 @@ export interface NoteParts {
   close(): void;
 }
 
-export function bindNoteParts(host: HTMLElement): NoteParts {
+export function bindNoteParts(host: HTMLElement, markdown: () => MarkdownOptions | undefined = () => undefined): NoteParts {
   const q = <T extends HTMLElement>(s: string) => host.querySelector<T>(s);
   let state = PREVIEW_CLOSED;
   let note: RegionNoteState | undefined;
@@ -204,7 +205,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     const src = JSON.stringify(next?.replies ?? []);
     if (replies && repliesSrc !== src) {
       repliesSrc = src;
-      replies.innerHTML = nblockRepliesMarkup(next?.replies ?? []);
+      replies.innerHTML = nblockRepliesMarkup(next?.replies ?? [], markdown());
     }
     for (const b of host.querySelectorAll<HTMLButtonElement>('.vb-region-note-block [data-note-act]')) b.hidden = !next?.editable;
     const edit = q('.vb-note-pop [data-note-act="edit"]');

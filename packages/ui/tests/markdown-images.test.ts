@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS } from '#format';
-import { imageNote, renderMarkdown, setMarkdownImages } from '../src/index.ts';
+import { imageNote, renderMarkdown } from '../src/index.ts';
 import { IMG, IMGS, assertSafe } from './markdown-adversarial.ts';
 
 const md = (src: string, images?: boolean) => renderMarkdown(src, images === undefined ? {} : { images });
@@ -103,17 +103,18 @@ test('with images off (the cardImages flag off) an image is its source text, exa
   }
 });
 
-test('the page sets the default once (setMarkdownImages); an explicit option wins over it', () => {
-  try {
-    setMarkdownImages(false);
-    assert.equal(renderMarkdown('![F](f.png)'), '<p class="vb-md-p">![F](f.png)</p>');
-    assert.match(renderMarkdown('![F](f.png)', { images: true }), IMG);
-    setMarkdownImages(true);
-    assert.match(renderMarkdown('![F](f.png)'), IMG);
-    assert.equal(renderMarkdown('![F](f.png)', { images: false }), '<p class="vb-md-p">![F](f.png)</p>');
-  } finally {
-    setMarkdownImages(true);
-  }
+test('each flag comes in with the call, its default when left out, and no call changes another: two boards on one page can differ', () => {
+  assert.match(renderMarkdown('![F](f.png)'), IMG, 'cardImages is on by default');
+  assert.equal(renderMarkdown('![F](f.png)', { images: false }), '<p class="vb-md-p">![F](f.png)</p>');
+  assert.match(renderMarkdown('![F](f.png)'), IMG, 'the call before it changed nothing');
+  assert.match(renderMarkdown('![F](f.svg)'), /<img /, 'svgImages is on by default');
+  assert.ok(renderMarkdown('![F](f.svg)', { svg: false }).includes(IMAGE_WORDS.typeNoSvg));
+  assert.match(renderMarkdown('![F](f.svg)'), /<img /);
+});
+
+test('an image goes under the route it is given, and only the board\'s path check decides what follows it', () => {
+  assert.equal(renderMarkdown('![F](f.png)', { imageRoute: '/plugins/board/images/' }), `<p class="vb-md-p">${img('f.png', 'F').replace(IMAGE_ROUTE, '/plugins/board/images/')}</p>`);
+  assert.doesNotMatch(renderMarkdown('![F](../f.png)', { imageRoute: '/plugins/board/images/' }), /<img/);
 });
 
 test('many images in one body each get the shape', () => {
