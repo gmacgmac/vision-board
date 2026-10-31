@@ -1,8 +1,8 @@
 ---
 task_name: Read Attachment
 created: 2026-10-30
-completed:
-status: in-progress
+completed: 2026-10-31
+status: completed
 categories: [board-agent, board-security, board-app]
 skills: [cortex-architecture, cortex-docs]
 tracker: [M39]
@@ -70,6 +70,8 @@ tracker: [M39]
 - Wave 2 (PAGES_01 Runs 1, 2): 2100 unit, 787 page tests; `host-styles` (M28) failed under load, and it and the 10 tests in its file passed alone. `chat-attach-gallery` allows 12 pixels (fallback text, cause not established).
 
 - Live 2026-10-31, Kiro CLI 2.35.2 (v2, Sonnet 5.5): a 4.3 MB PNG is rejected by the provider, a 3.5 MB PNG is seen. So the cap on a picture is 3.5 MB, not 5 (the provider's 5 MB is on the base64 size).
+
+- Close: 2138 unit, 14 timing (quiet machine), 792 page tests; `host-styles` (M28) fails under load and passes alone. Live on Kiro Sonnet (v2) in a full Chromium build, real page: a Word section and its diagram, an Excel formula and name, a diagram-only PDF, a 3000 px and a 4.3 MB picture all read right, no approvals.
 
 ### Security
 - PAGES_01: `connect-src 'none'` is not "no network" in a frame: `RTCPeerConnection` sent a real STUN packet past it, Chromium has no `webrtc` directive, and a frame can navigate itself. So the stranger's file is read in a worker inside the frame, which has neither; the page's `frame-src 'self'` also stops the navigation. Tested in `chat-attach-pages.spec.ts`.
