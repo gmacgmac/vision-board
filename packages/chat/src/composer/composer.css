@@ -35,7 +35,7 @@ chat-composer .chat-cmp-box {
 chat-composer .chat-cmp-box:focus-within { border-color: var(--_focus); box-shadow: 0 0 0 1px var(--_focus); }
 chat-composer .chat-cmp-text {
   flex: 1; min-width: 0; min-height: 3em; max-height: min(180px, 25vh); field-sizing: content; padding: var(--_space-2) 0; resize: none;
-  font: var(--_text) / 1.45 var(--_font); color: var(--_ink-strong); background: none; border: 0; outline: 0;
+  font: var(--_text-sm) / 1.45 var(--_font); color: var(--_ink-strong); background: none; border: 0; outline: 0;
 }
 chat-composer .chat-cmp-text::placeholder { color: var(--_ink-subtle); }
 chat-composer .chat-cmp-send {
