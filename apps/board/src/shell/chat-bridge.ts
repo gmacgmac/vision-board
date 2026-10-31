@@ -113,7 +113,7 @@ export function createChatBridge(): ChatBridge {
   /** Who hears the status, and what it last said as text. */
   const hearing = new Set<() => void>();
   let said = '';
-  const statusNow = () => c?.status() ?? { now: 'idle' as const };
+  const statusNow = () => c?.status() ?? { now: 'idle' as const, staged: false };
   function statusChanged() {
     const text = JSON.stringify(statusNow());
     if (text === said) return;

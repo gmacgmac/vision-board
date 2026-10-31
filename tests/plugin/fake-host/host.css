@@ -1,0 +1,14 @@
+/* The fake host's own sheet, loaded after the plugin's: its layout, then every element rule a page might set, in
+   loud values (docs/specification/plugin.md § Styles: a host's element rules reach in, and the board stands). */
+body { margin: 0; font-family: serif; }
+#host-bar, .host-pane-head, .host-chat { padding: 8px; }
+#host { display: flex; gap: 8px; }
+.host-root { width: 900px; height: 700px; }
+.plain-root { width: 500px; height: 400px; }
+h1, h2, h3 { font: 300 11px/2 serif; text-transform: uppercase; letter-spacing: .08em; margin: 20px 0; padding: 3px; color: rgb(200 0 0); border-bottom: 2px solid rgb(255 0 0); }
+p { margin: 1.5em 0; padding: 4px; line-height: 2; font-size: 17px; font-family: serif; color: rgb(0 120 0); text-indent: 1em; }
+button { background: rgb(255 200 0); border: 3px solid rgb(0 0 255); border-radius: 0; padding: 12px 24px; font: 800 18px/2 serif;
+  text-transform: uppercase; letter-spacing: .1em; color: rgb(0 0 255); box-shadow: 0 0 0 4px rgb(255 0 255); min-height: 44px; margin: 4px; }
+input, select, textarea { background: rgb(255 255 200); border: 3px solid rgb(0 0 255); border-radius: 12px; padding: 10px; font: 18px/2 serif;
+  color: rgb(0 0 255); height: 48px; margin: 4px; }
+dialog { padding: 40px; border: 5px solid rgb(0 0 255); background: rgb(255 255 200); color: rgb(0 0 255); border-radius: 0; font-family: serif; max-width: 200px; }

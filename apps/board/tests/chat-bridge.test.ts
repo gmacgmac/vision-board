@@ -137,7 +137,7 @@ function bridged() {
   const offChat = bindChat({ chat: bridge.host, stage: new EventTarget() as HTMLElement, selection, status, data: () => data[open]!, ledger: () => s, id: () => open, readOnly: () => false });
   bridge.chat({
     panel: panel as HTMLElement, composer: composer as unknown as ChatComposerElement, setFiles() {}, upload: () => Promise.reject(new Error('no upload here')), state: () => chat,
-    status: () => ({ now: 'idle', agent }),
+    status: () => ({ now: 'idle', agent, staged: false }),
     send: (record) => record(),
     changed: () => log.push('changed'), reveal: (key) => { log.push(`line ${key}`); },
   });
@@ -231,7 +231,11 @@ test('the board\'s side: it hears the status, and takes its chips back when it p
   assert.deepEqual([t.status.now.chatWork, t.status.now.sendWaiting, t.status.now.chatAttached], ['idle', false, false]);
 });
 
-test('a host that gives only what the agent is doing still gets a working board: every answer, Send enabled by the board alone', () => {
+test('the standalone chat keeps the say over Send: no panel yet, staged is false, so a selection alone enables nothing', () => {
+  assert.equal(createChatBridge().host.status.staged, false);
+});
+
+test('a host that gives only what the agent is doing still gets a working board: every answer, Send enabled by the board\'s own chips', () => {
   const attached = new Map<string, Chip2 | null>();
   let now: ChatWork = 'idle';
   const hearing = new Set<() => void>();
@@ -247,7 +251,7 @@ test('a host that gives only what the agent is doing still gets a working board:
   assert.deepEqual(attached.get('selection')?.ref, { board: 'b', cards: [2] });
   now = 'asking';
   for (const l of hearing) l();
-  assert.deepEqual([status.now.chatWork, status.now.sendWaiting, status.now.chatAttached], ['asking', false, false], 'the mark follows; the rest stays off');
+  assert.deepEqual([status.now.chatWork, status.now.sendWaiting, status.now.chatAttached], ['asking', false, true], 'the mark follows; its own chips enable Send, with no `staged`');
   assert.equal(chatSource({ attach() {}, send: (r) => r(), status: { now: 'idle', on: () => () => {} } }, 'b', 1), undefined, 'no reveal, no link');
   off();
   assert.equal(hearing.size, 0, 'it stops hearing');

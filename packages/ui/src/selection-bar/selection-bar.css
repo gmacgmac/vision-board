@@ -2,10 +2,11 @@
    box. Scoped by the tag, light DOM; tokens only. Architect `.selbar` and `.lasso`
    (architect-extract/architect.css, README §1 point 6): a glass bar, surface at 72% behind a 16px
    blur, a strong hairline and a large shadow; the lasso a dashed accent box over an 8% accent wash.
-   The page places both in stage pixels, above the cards: they move nothing (3_FE_02 rulings 1-2). */
+   The page places both in stage pixels, above the cards: they move nothing (3_FE_02 rulings 1-2). The bar is above the
+   cards and under the board's controls: the stage makes no stacking context, so it meets the header and the key help. */
 
 vb-selection-bar {
-  position: absolute; z-index: var(--vb-z-selection); left: 0; top: 0;
+  position: absolute; z-index: var(--vb-z-open); left: 0; top: 0;
   display: flex; align-items: center; gap: var(--vb-space-2); padding: 5px 5px 5px var(--vb-space-3);
   border: 1px solid color-mix(in srgb, var(--vb-line-strong) 80%, transparent); border-radius: 12px;
   background: color-mix(in srgb, var(--vb-surface-raised) 72%, transparent);

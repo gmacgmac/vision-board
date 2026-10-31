@@ -36,6 +36,15 @@ export interface HoverTip {
   close(): void;
 }
 
+/** Calls `gone` once `el` has left its page, for as long as a tip is open: nothing is told when a tip's host goes
+ *  (a card redrawn, a board unmounted), and what an open tip holds on the document must not outlive it. A move in one
+ *  task (a host's pane changing place) is no leaving. Returns the stop. */
+function whenGone(el: Element, gone: () => void): () => void {
+  const watch = new MutationObserver(() => { if (!el.isConnected) gone(); });
+  watch.observe(el.getRootNode(), { childList: true, subtree: true });
+  return () => watch.disconnect();
+}
+
 export function bindHoverTip(host: HTMLElement, o: HoverTipOptions): HoverTip {
   const group = o.group ?? o.anchor;
   let state = PREVIEW_CLOSED;
@@ -56,13 +65,24 @@ export function bindHoverTip(host: HTMLElement, o: HoverTipOptions): HoverTip {
     host.toggleAttribute(o.attr, on);
     // Esc and a press outside (the shared dismissable layer) are heard on the page only while the tip is
     // open, and an Esc only when it is this board's: a host's own stays the host's.
-    if (on) stopDismiss ??= dismissable({ within: inTip, escape: host, dismiss: step });
-    else {
+    if (on) {
+      stopDismiss ??= dismissable({ within: inTip, escape: host, dismiss: step });
+      stopWatch ??= whenGone(host, drop);
+    } else {
       stopDismiss?.();
       stopDismiss = null;
+      stopWatch?.();
+      stopWatch = null;
     }
   }
+  /** The host went with the tip open: its listeners and any close that waits go too. */
+  function drop() {
+    grace.cancel();
+    state = PREVIEW_CLOSED;
+    show(false);
+  }
   let stopDismiss: (() => void) | null = null;
+  let stopWatch: (() => void) | null = null;
 
   const hovering = (e: PointerEvent) => e.pointerType !== 'touch';
   host.addEventListener('pointerover', (e) => {

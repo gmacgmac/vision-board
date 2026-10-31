@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-18
-updated: 2026-10-27
+updated: 2026-10-31
 scope: Images in cards — the images folder, path rules, types and limits, svg as a picture, the route and its headers, updates by ETag
 ---
 
@@ -138,6 +138,10 @@ For each request it decodes the path once, holds it to `imagePathProblem`, finds
 inside the real images folder, opens the file once, and reads everything after from that open file:
 its size, then its first bytes, which must be the type the extension names (`imageHeadProblem`),
 then the body. Only then does it answer, so a refused file never gets a 304.
+
+Another host answers the same checks with the engine's `image` (`openImage`, `imageReply` in the same file; `engine.image` in
+`apps/board/server/engine/engine.ts`), at the address it gives as `BoardHost.imageRoute`; `docs/specification/plugin.md` § The
+engine, held by `tests/plugin/engine-hooks.spec.ts` "image:".
 
 ### Headers
 

@@ -198,8 +198,8 @@ host; nclite's pane will be another.
   class is its `@container`, D-061) and gives back the contract's view (`board/host.ts` `BoardView`:
   `unmount`, `pageChip`, `reveal`, `unsaved`, `leave`) plus what a host draws around it: `status` (`board/status.ts`
   `Status`, a plain observable of `BoardStatus`: the counts, versions, open lists, picker) and `board`
-  (`mount.ts` `BoardControls`: the standalone page's toolbar and strips call them until they move inside; no chat
-  goes through them). `send()` is Send to agent, through `host.chat.send`. `unmount` removes every listener the
+  (`mount.ts` `BoardControls`: the standalone page's own door, what its controls call with `boardChromeInMount` off and its
+  test door; no chat goes through them, and the plugin's folder leaves it out, `plugin/view.ts`, `docs/specification/plugin.md`). `send()` is Send to agent, through `host.chat.send`. `unmount` removes every listener the
   board added on the document or the window, takes the zoomed image view away (`card-images.ts`
   `destroy`), and empties `root`, giving it
   back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
@@ -303,7 +303,8 @@ host; nclite's pane will be another.
   `chat.send(record)` sends what is staged with no words and calls `record` (the `send` act), unless the
   host's own server recorded that Send with the message; a host with no chat answers `record()`. `chat.status`
   is read only: `now` (idle, working, asking) is all a host need give and drives the status's `chatWork`;
-  optional `agent` scopes the answers chip, `held` and `staged` drive `sendWaiting` and `chatAttached`.
+  optional `agent` scopes the answers chip, `held` drives `sendWaiting`, and `staged` has the full say over `chatAttached`; with no
+  `staged`, a chip of the board's own that hasn't gone with a Send enables it (`chat-side.ts` `markAttached`).
   Optional `chat.reveal` and `chat.hasLine` are a changed card's stepper link to the chat's line; without
   `reveal` there is no link. `BoardView.reveal({ cards })` zooms to cards by number and selects nothing, and
   a `board` the ledger does not hold yet opens when its first line arrives. Proven by
@@ -325,6 +326,7 @@ host; nclite's pane will be another.
   A function over about 50 lines of its own warns (`scripts/verify-functions.mjs`
   `checkFunctionLength`, proved in `verify-functions.test.mjs`), unless its header says why
   (`verify: long-function <reason>`): `createBoard` does, as the board's composition root.
+- **What a host of the built folder implements** is `docs/specification/plugin.md`, which `tests/plugin/` holds on the folder itself.
 - **Differences from nclite's draft** (the contract bends to the board, principles § The board is a
   plugin): `confirm` on the host (four actions ask first, one with a list); a change event whose `ref` is
   `{ board, head }`; `api` resolves to the `Response` (the client reads problems itself); `notify` takes a

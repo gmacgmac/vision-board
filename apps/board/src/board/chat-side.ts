@@ -54,24 +54,42 @@ export function bindChat(d: ChatSideDeps): () => void {
   const { chat, stage, selection, status } = d;
   /** Each key's chip as last attached, as text: the same chip is not attached twice. */
   const shown = new Map<string, string>();
+  /** Each attached chip's `ref`, as text, and the `ref` under each key that last went with a Send: spent until it changes. */
+  const live = new Map<string, string>();
+  const spent = new Map<string, string>();
+  let lastSend: number | undefined;
   const put = (key: string, chip: Chip | null) => {
+    if (chip) live.set(key, JSON.stringify(chip.ref)); else live.delete(key);
     const text = JSON.stringify(chip);
     if ((shown.get(key) ?? 'null') === text) return;
     shown.set(key, text);
     chat.attach(key, chip);
   };
+  /** Send is enabled for what the chat holds: the host's say, with `staged`; with none, a chip of the board's own that hasn't gone. */
+  function markAttached() {
+    const attached = chat.status.staged ?? [...live].some(([key, ref]) => spent.get(key) !== ref);
+    if (status.now.chatAttached !== attached) status.set({ chatAttached: attached });
+  }
 
   function attach() {
     const data = d.data();
     if (!data) return;
     const s = d.readOnly() ? null : d.ledger();
+    // A Send line on this board: what was attached went with it, whoever recorded it.
+    const sent = s?.lastSend.get(d.id());
+    if (s && sent !== lastSend) {
+      lastSend = sent;
+      for (const [key, ref] of live) spent.set(key, ref);
+    }
     put(SELECTION_KEY, s && selectionChip(d.id(), selectedCards(data, selection.selected())));
     put(ANSWERS_KEY, s && answersChip(s, d.id(), chat.status.agent));
+    markAttached();
   }
 
   function hear() {
-    status.set({ chatWork: chat.status.now, sendWaiting: chat.status.held === true, chatAttached: chat.status.staged === true });
+    status.set({ chatWork: chat.status.now, sendWaiting: chat.status.held === true });
     attach();
+    markAttached();
   }
 
   /** The stepper's link on a changed card (packages/ui `stepMarkup`). */

@@ -17,7 +17,7 @@
 }
 .vb-proposals[data-placement='board'] {
   position: absolute; z-index: var(--vb-z-open); left: var(--vb-space-3); top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-space-2));
-  max-width: calc(100vw - var(--vb-chat-w, 0px) - 2 * var(--vb-space-3));
+  max-width: calc(100cqw - var(--vb-chat-w, 0px) - 2 * var(--vb-space-3));
 }
 .vb-proposals[data-placement='gallery'] { position: absolute; left: var(--vb-space-3); top: var(--vb-space-3); }
 .vb-proposals[data-hidden] { width: auto; padding: 0; flex-direction: row; }

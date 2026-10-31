@@ -77,7 +77,8 @@ export interface BoardStatus {
   chatWork: ChatWork;
   /** The Send the person pressed waits for the agent's turn to end (`held`): Send's waiting state. */
   sendWaiting: boolean;
-  /** The host's chat holds what Send would carry (`staged`): Send is enabled for it. */
+  /** The host's chat holds what Send would carry: Send is enabled for it. `staged` when the host gives it; with none, a
+   *  chip of the board's own is attached and hasn't gone with a Send (chat-side.ts). */
   chatAttached: boolean;
   /** A note holds changed words not yet saved (host.ts `BoardView.unsaved`): set each time it turns,
    *  so a host can guard a close (the standalone page's `beforeunload`, leaveGuard flag). */

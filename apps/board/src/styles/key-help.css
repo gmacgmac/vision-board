@@ -17,11 +17,11 @@
 .vb-keys[data-keys-open] .vb-keys-btn { background: var(--vb-accent-soft); border-color: var(--vb-accent); color: var(--vb-accent); }
 /* Above the button: the bridge fills the gap under the box so the pointer stays inside it. */
 .vb-keys .vb-keys-tip {
-  left: 0; bottom: calc(100% + var(--vb-space-1)); width: max-content; max-width: min(44rem, calc(100vw - 2 * var(--vb-space-4)));
+  left: 0; bottom: calc(100% + var(--vb-space-1)); width: max-content; max-width: min(44rem, calc(100cqw - 2 * var(--vb-space-4)));
   padding: var(--vb-space-3) var(--vb-space-4);
 }
-/* The list scrolls inside the box on a short window; the box itself clips nothing, so its bridge works. */
-.vb-keys-body { max-height: calc(100vh - var(--vb-toolbar-h) - 6 * var(--vb-space-5)); overflow-y: auto; columns: 2 15rem; column-gap: var(--vb-space-5); }
+/* The list scrolls inside the box on a short root (a host's pane, board.css); the box itself clips nothing, so its bridge works. */
+.vb-keys-body { max-height: calc(100cqh - var(--vb-toolbar-h) - 6 * var(--vb-space-5)); overflow-y: auto; columns: 2 15rem; column-gap: var(--vb-space-5); }
 .vb-keys .vb-keys-tip::before { top: 100%; bottom: auto; }
 .vb-keys[data-keys-open] .vb-keys-tip { display: block; }
 .vb-keys-group { break-inside: avoid; margin-bottom: var(--vb-space-3); }

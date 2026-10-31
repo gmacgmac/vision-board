@@ -1520,7 +1520,8 @@ headers and answers) is [images.md](./images.md); this section is what the API s
 160. **What the host supplies.** `dir`; optionally the ledger already opened in it (the standalone
     server opens it under its lock, `lock.ts`), the folder's name as the person reads it
     (`list_boards` and `join` answer it as `project`), `onSend` (told after the person's Send), the flags
-    it reads itself (`svgImages`, for `image`) and where warnings go. The ledger's appends by another writer are read in before every operation
+    it reads itself (`svgImages`, for `image`) and where warnings go. The plugin folder's `createEngine` takes `dir`, `name`,
+    `warn` and `flags` (`apps/board/plugin/engine.ts`, plugin.md): the opened ledger and `onSend` are the standalone server's. The ledger's appends by another writer are read in before every operation
     and append, and polled while anyone watches (`ledger.ts` `refresh`, `follow`), so two engines on
     one folder never repeat a `seq`. Held by `engine.test.ts` (watch: the event, the fold, the next `seq`).
 161. **The standalone server is one host.** `dispatch.ts` keeps the HTTP edge: Host and Origin

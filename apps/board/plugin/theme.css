@@ -1,7 +1,8 @@
 /* How a host's own look reaches the board. A host sets any of these three custom properties on its page's
    root element (`:root` or `html`); the board reads them and falls back to its own values (the tokens,
    packages/tokens/src/tokens.css; ui-scale.css), so a host that sets none looks right. Colours are not on the
-   list: the board's are measured for contrast (D-009), and follow the page's `color-scheme` or `data-theme`.
+   list: the board's are measured for contrast (D-009). Light or dark follows the system, and `data-theme="light"` or
+   `"dark"` on the page's root forces one; a `color-scheme` of the host's does not move them.
      --host-font          the text face (a font-family list)
      --host-font-mono     the face of code and numbers (a font-family list)
      --host-text-scale    the text size around the cards, a number (1.25 is the board's own; ui-scale.css)

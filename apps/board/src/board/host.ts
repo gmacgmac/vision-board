@@ -85,7 +85,7 @@ export type ChatWork = 'idle' | 'working' | 'asking';
 
 /** What the board may read of the host's chat. Read only; `on` says when any of it changes. `now` is
  * all a host need give: the rest is optional, and a board with none of it works, with Send enabled
- * only by what the board itself holds. */
+ * by an answer since the last Send or by a chip of the board's own that hasn't gone. */
 export interface ChatStatus {
   /** Drives the board's working mark (the status's `chatWork`). A host with no agent to speak of says `idle`. */
   readonly now: ChatWork;
@@ -94,7 +94,8 @@ export interface ChatStatus {
   readonly agent?: string | undefined;
   /** The Send the person pressed waits for the agent's turn to end (the status's `sendWaiting`). */
   readonly held?: boolean | undefined;
-  /** The chat holds what Send would carry, a file of its own say: Send is enabled for it (the status's `chatAttached`). */
+  /** The chat holds what Send would carry, a file of its own say: Send is enabled for it (the status's `chatAttached`).
+   *  Given at all, it has the full say, the board's own chips included: false leaves Send to the answers alone. */
   readonly staged?: boolean | undefined;
   on(listener: () => void): () => void;
 }

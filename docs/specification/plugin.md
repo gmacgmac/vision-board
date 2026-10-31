@@ -1,0 +1,348 @@
+---
+category: project-docs
+type: specification
+status: draft
+created: 2026-10-31
+updated: 2026-10-31
+scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the manifest, tools over MCP, attachments, theme, and how an update travels
+keywords: [plugin, host, mount, engine, manifest, MCP, seam]
+---
+
+# The board as a plugin
+
+A plugin is the board built once as one folder, which a host takes and runs: the person sees the board in the host's
+page, and the host's bot works on the same board through tools. The standalone app is one host of it, through the same
+seam (D-074). This page is all a host needs. If it doesn't say it, a host may not rely on it.
+
+Every claim holds a symbol and a named test. "Proven by" names a spec in `tests/plugin/` (`npm run test:plugin`), where a
+fake host written from this page mounts the built folder, unless the path says otherwise. `tests/plugin/spec-truth.test.ts`
+(in `npm test`) checks that every test named here exists and every member of the seam is here.
+
+## The folder
+
+`npm run build:plugin` writes `dist/plugin/board/`, and only that (`apps/board/bin/build-plugin.ts` `buildPlugin`). A host
+links or copies the folder. It imports nothing else from this repo, and needs nothing installed: the same input gives
+the same bytes, and neither bundle imports anything a host must supply but Node's own modules in the engine.
+
+| Part | What it is |
+|---|---|
+| `manifest.json` | What the plugin is, read before anything loads (§ The manifest) |
+| `view/board.js` | Browser ES module, one export: `mount`. Its own Svelte is inside; no dynamic import, no chunk |
+| `view/board.css` | The one stylesheet, no `@import`, no address |
+| `engine/engine.js` | Node ES module, one export: `createEngine`. Reads and writes only the folder it is given |
+| `words.json` | The manifest's words keys, and the board's fixed words, by `board.<area>.<name>` |
+| `skill.md` | What the bot reads while the plugin is on (§ The bot) |
+
+To update: rebuild, and reload the page and restart the engine. `npm run build:plugin -- --out <folder>` writes elsewhere;
+`-- --watch` rebuilds the two bundles on a change, so a host linked to the folder picks them up on a reload. A page holds
+**one built version**: custom elements are global, so a second copy mounts, but with the first copy's elements. Keep two
+versions in separate pages.
+
+Proven by `apps/board/tests/plugin-build.test.ts` "a clean build writes exactly the folder", `engine-hooks.spec.ts` "the folder",
+`guest.spec.ts` "a page holds one built version".
+
+## The view
+
+```ts
+mount(root: HTMLElement, host: BoardHost): PluginView   // apps/board/plugin/view.ts `mount`
+```
+
+`root` is an element the host gives, empty, with **a definite size**: everything the board draws is placed against it, so
+it has no height of its own. Load `view/board.css` first. The board draws all of itself inside `root`: its header, strips,
+dialogs, search and help. There is no second element to give and no control a host must draw. A host's own `position` on
+`root` wins.
+
+### What the host gives
+
+`BoardHost`, `apps/board/src/board/host.ts`. Everything the board does outside `root` goes through it.
+
+| Member | Promise | Left out | Proven by |
+|---|---|---|---|
+| `api(path, init)` | Calls the engine's routes: `path` is relative (`ledger?after=0`); resolves the `fetch` `Response`, as the person (§ The engine) | Required | `view-hooks.spec.ts` "api and events" |
+| `events(listener)` | Calls `listener({ plugin, ref: { board?, head? } })` for every change to the data, from anyone; returns the unsubscribe. A `ref` with no `head` says "you may have missed changes": the board catches up. Say one each time your stream opens | Required | `view-hooks.spec.ts` "api and events", "events: a ref with no head" |
+| `chat` | § The chat | Required: give the three lines there if you have no chat | `view-hooks.spec.ts` "a host with no chat at all" |
+| `settings.get(key)`, `settings.on(listener)` | Each flag by name, a boolean, and `align` (`center` or `start`). A value you don't give reads as the flag's default. Flags are read once, at mount; `on` is for `align`, which lays out again | Required | `view-hooks.spec.ts` "settings: a flag comes" |
+| `notify(text, tone?)` | A short notice outside the board; `tone` `error` for a refusal | Required | `view-hooks.spec.ts` "notify and confirm" |
+| `confirm(ask)` | Your own dialog. `ask` is `{ heading, body, confirm, list? }`, `confirm` being the button's words, `list` `{ items, skipped? }` of `{ ref, text }`. Resolves true when confirmed | Required | `view-hooks.spec.ts` "notify and confirm" |
+| `store.get(key)`, `store.set(key, value)` | The viewer's conveniences, as strings: each board's zoom (`view.<board>`), whether the proposals notice is hidden. May lose anything. Give each data folder its own store: the keys name only what is on the board | Kept for the mount | `view-hooks.spec.ts` "store:", "store left out" |
+| `imageRoute` | The address a picture's path goes after: what `<img src>` loads and its version is asked at, on the browser's own cookies, so it can't carry a header. Answer it with the engine's `image` | `/board-images/` on the page's origin | `view-hooks.spec.ts` "imageRoute: under", "imageRoute left out" |
+
+**Flags a host needs to know.** Set `appCards` off unless you host apps: on, the board asks a route only an app host
+answers, and a bot has no `list_apps` to draw with (`view-hooks.spec.ts` "settings: appCards off"). `cardImages` and `svgImages`
+off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags` too. Leave the rest at their defaults.
+
+### What the view gives
+
+`PluginView`, `apps/board/plugin/view.ts`.
+
+| Member | Promise | Proven by |
+|---|---|---|
+| `unmount()` | Removes every listener it added, an open menu's or tip's too, takes back its chips, empties `root` and gives it back as it was. Never asks, so call `leave()` first | `view-gives.spec.ts` "unmount: every listener", "unmount with a tip open" |
+| `unsaved()` | Synchronous: a note holds changed words. For your `beforeunload` or your own question | `view-gives.spec.ts` "unsaved and leave" |
+| `leave()` | True at once when nothing is unsaved; else asks through `confirm`. True: the words are discarded and you unmount. False: the board stays, focus in the words | `view-gives.spec.ts` "unsaved and leave" |
+| `pageChip()` | The chip for the board on show, for your own Add to chat; null with none | `view-gives.spec.ts` "pageChip" |
+| `reveal({ board?, n?, seq?, cards? })` | Brings into view a board, a card, a note, or several cards. `cards` zooms and selects nothing. Not on the board: says so through `notify`. Another board may ask through `confirm` first. A board not yet in the ledger opens when its first line arrives, which is how a bot's first board opens | `view-gives.spec.ts` "reveal" |
+| `status.now`, `status.on(listener)` | What the board shows, read only: `boardId`, `title`, `counts`, `unsaved`, `chatWork` and more; `on` says each change | `view-gives.spec.ts` "status and send" |
+| `send()` | Send to agent, for a button of your own. The board's header has its own | `view-gives.spec.ts` "status and send" |
+
+Nothing else is there (`view-gives.spec.ts` "the view holds no more").
+
+### The chat
+
+`BoardChat`, `host.ts`: the only way the board reaches the host's chat.
+
+```ts
+chat: {
+  attach(key, chip | null),                  // add, replace or remove the chip under `key`
+  send(record),                              // Send to agent
+  status: { now, agent?, held?, staged?, on(listener) },
+  reveal?({ board, n }),                     // show the chat's line that last changed this card
+  hasLine?({ board, n }),                    // synchronous: is there such a line
+}
+```
+
+- **Chips.** A chip is `{ plugin, kind, ref, label, detail, preview? }` (`#actions` `Chip`): draw `label` and `detail`, keep the
+  rest unread. The board keeps two live, keys `selection` and `answers`, replaced as they change and removed at `unmount`.
+  A chip that went with a message is **spent until its key's `ref` changes**: the same `ref` may come again with new
+  words, and stays spent. Proven by `view-hooks.spec.ts` "chat.attach".
+- **As a message goes**, call the engine's `resolve(chip.kind, chip.ref)` for every chip. `{ where, text }` is one block of
+  the bot's prompt; no block when `text` is empty. `{ refused, reason }` stops the send: answer with your words. Proven by
+  `view-hooks.spec.ts` "chat.send: Send sends", "chat.send: a chip the engine refuses".
+- **`send(record)`** sends what is staged, with no words, then answers `record()`, the board's own record of the Send: null,
+  or the problem's words. Call it even when nothing was staged. Leave it out only when your own server recorded that Send
+  with the message (the `send` act). Resolves null when done or held for the bot's turn to end. Proven by the same.
+- **`status`** is read only. `now` (`idle`, `working`, `asking`) drives the board's working mark, and is all you must give.
+  With only that, Send is enabled by an answer since the last Send, or by a chip of the board's own that hasn't gone with a
+  Send. `staged`: you hold what Send would carry. Given at all it has the full say, the board's chips included, so give it if your
+  chat holds more of its own, a file say, or drops the chips. `held`: Send waits for the bot's turn. `agent`: the id your chat talks to,
+  which scopes the answers chip to what it may read. Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
+- **`reveal` and `hasLine`** give a changed card's stepper its link to your chat. Without `reveal`, no link; with `reveal` and
+  no `hasLine`, always a link. Proven by `view-hooks.spec.ts` "chat.reveal and chat.hasLine", "chat.reveal left out".
+- **A change chip.** A board write's tool result carries `_meta['vb/change']`, `{ board, cards, head }` (§ Tools). Draw it as a
+  line, and `view.reveal({ board, cards })` on a click. Proven by `round-trip.spec.ts` "a board-to-chat round trip".
+
+With no chat at all, where nothing carries a chip: `chat: { attach() {}, send: (record) => record(), status: { now: 'idle', staged: false, on: () => () => {} } }`.
+
+### A guest in the host's page
+
+- **Keys.** A key acts only when its target is in the root. Every key the board acts on is `preventDefault`ed before it
+  leaves the root, so **skip a key whose `defaultPrevented` is true**. A capture-phase listener on the window or document
+  runs before the board's, so it reads nothing marked: use one only for what you want to take first. A key in a modal of the
+  board's goes no further than the root. Proven by `guest.spec.ts` "keys", `tests/pages/board-guest.spec.ts` "every key the board acts on".
+- **Modals.** The board's dialogs and its zoomed picture are real `<dialog>` modals, inside the root: **the whole page is inert
+  while one is open**, your controls too. Proven by `guest.spec.ts` "the zoomed view is a real modal".
+- **Layers.** The root makes no stacking context of its own, so the board's `z-index`es meet your page's; set `isolation: isolate`
+  on `root` if yours would clash.
+- **Styles.** Your element rules reach in and the board stands: it sets every property it relies on. Its rules stay under its
+  own `vb-` names, but the sheet does set `--vb-*`, `--lightningcss-*` and `color-scheme: light dark` on `:root`, and selects
+  `vb-node` and `vb-region`. Proven by `guest.spec.ts` "a host's loud element rules", `tests/pages/host-styles.spec.ts`.
+- **Size.** What opens stays inside the root, by the root's size and not the window's. Proven by `short-pane.spec.ts`.
+- **Your CSP.** It must allow `img-src` for `imageRoute` and for `data:` (a picture's blank, `packages/ui/src/markdown/markdown.css`
+  `.vb-md-img`), and `connect-src` for `api`, `imageRoute` and your stream. No inline script or style is needed. Every spec
+  here runs under `CSP`, `tests/plugin/fake-host/server.ts`. The PDF frame's `frame-src` matters only to a host of the
+  standalone chat, whose frame it is; the folder has none.
+- **Your Svelte.** The bundle's runtime is its own, and a host's beside it, the board nested in its tree, is untouched. Proven by
+  `guest.spec.ts` "a second Svelte".
+- **Two boards.** Mounts in one page work apart: no id twice, each its own calls and state. Proven by `guest.spec.ts` "two mounts".
+- **No storage, no address.** Nothing touches the page's storage or address (`view-hooks.spec.ts` "store:",
+  `apps/board/tests/board-no-page.test.ts`).
+
+## The engine
+
+```ts
+createEngine({ dir, name?, warn?, flags? }): PluginEngine   // apps/board/plugin/engine.ts `createEngine`
+```
+
+`dir` is the board's data folder, one per bot or project, and the only place it reads or writes: the ledger, the agents'
+hashes and `images/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
+`warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself: `svgImages`.
+
+| Member | Promise | Proven by |
+|---|---|---|
+| `route(req, { caller, signal })` | One request, with no HTTP. `req` is `{ method, path, query?, body? }`, `path` as `api` got it, `query` a `URLSearchParams`, `body` the value or a function the engine calls for it. Answers `{ status, body, headers? }`, a problem as a reply, or null for a path not its own. **It trusts `caller`**: `{ by: 'person' }` for your person's door, never your bot's. `signal` ends a held read | `engine-hooks.spec.ts` "route:", "route and tools.call" |
+| `image({ method, path, ifNoneMatch? })` | Answers `imageRoute`: `path` is the text after the prefix, as the request wrote it. `GET` or `HEAD` of a picture in `dir`'s `images/` and only there, held to the same checks as standalone's route (`images.md`). `body` is its bytes or null. Send `headers` as given: they carry the type, the no-sniff and the svg's policy | `engine-hooks.spec.ts` "image:" |
+| `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`. Never throws | `engine-hooks.spec.ts` "resolve:" |
+| `tools.list()`, `tools.call(name, input, ctx)` | § Tools | `tools.spec.ts` |
+| `watch(onChange)` | `{ board?, head }` for every ledger change, this engine's or another writer's on `dir`. Returns the stop. Turn each into an `events` call | `engine-hooks.spec.ts` "watch:" |
+
+Nothing else is there (`engine-hooks.spec.ts` "createEngine and the engine hold no more").
+
+## The bot
+
+**The host names its bot.** Register it once, `route({ method: 'POST', path: 'agents', body: { label } })`, keep the `agent` it
+answers, and ignore the secret: no call takes one. Pass `{ caller: { by: 'agent', agent } }` on every tool call. The id
+lives in `dir`, so don't register again on a restart (`tools.spec.ts` "the bot").
+
+**Words differ per host.** `skill.md` and the engine's tool descriptions are standalone's less what a bot under a host doesn't
+have: `join` and its secret, the chat panel, attachments, apps and the images folder (`apps/board/plugin/words/skill-edits.ts`,
+`apps/board/server/words/plugin-tools.ts`). Give the bot `skill.md` while the plugin is on. Proven by
+`apps/board/tests/plugin-skill.test.ts` "the plugin skill names no tool".
+
+### Tools
+
+Tools reach any bot as MCP tools (D-074 rule 4). The engine gives both halves in MCP's shapes, and the transport is yours:
+
+- `tools.list()` gives `{ name, title, description, inputSchema }`, `inputSchema` being JSON Schema. It equals the manifest's `tools`.
+- `tools.call(name, input, { caller, signal })` gives a `CallToolResult`: `content` (one text, the answer's JSON),
+  `structuredContent`, `isError`. An input that doesn't fit, an unknown tool or a refusal is `isError` with words for the bot;
+  it never throws. The engine checks `input` against the schema itself, so a host need not. `signal` ends a held `check_responses`.
+- `_meta['vb/change']` on a board write is `{ board, cards, head }`.
+
+A bot under a host gets `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`, `check_responses`,
+`request_grant` and `write_board`, as `x-hosts` in `packages/format/schema/openapi.json` says. It does not get `join` (you name it),
+`list_apps` (the app host's) or `read_attachment` (the standalone chat's). No tool answers ✓ or ✗, or approves: those are the
+person's, through `route`, and refused to a bot. Proven by `tools.spec.ts` "tools.list", "tools.call: every listed tool",
+"tools.call: an input", `engine-hooks.spec.ts` "route:".
+
+**Two worked transports.**
+
+1. *Your own MCP server*, the whole of it (`tools.spec.ts` "a host's own MCP server"):
+
+   ```js
+   // tools/list
+   ({ tools: engine.tools.list() })
+   // tools/call
+   engine.tools.call(params.name, params.arguments ?? {}, { caller: { by: 'agent', agent } })
+   ```
+
+   If the bot runs elsewhere, one generic pass-through does it: the bot's MCP server lists and calls over your own door, which
+   calls the engine with the caller it knows. The engine never meets the bot.
+2. *Standalone's `vb-mcp`*: a stdio MCP server the CLI starts, calling the standalone server over HTTP with the agent's secret
+   (`packages/mcp/bin/vb-mcp.ts`). `createMcpServer({ tools })` (`#mcp`) also serves any host's `engine.tools` as they are, but
+   `#mcp` is not in the folder. Proven by `apps/board/tests/engine.test.ts` "the MCP server serves the engine's tools".
+
+## Attachments
+
+Attachments belong to the host's chat (D-068 ruling 6, D-074 rule 5). The plugin never sees a file: nothing in `BoardHost`
+takes one, and no tool reads one. Your chat attaches, uploads and tells the bot the path in its own message. Limits are yours.
+`read_attachment` and the PDF frame stay with the standalone chat, and `packages/documents` stays reusable. Standalone's own
+way is its chat's (`apps/board/server/chat-files.ts`; `docs/specification/chat.md`). Proven by `tools.spec.ts` "tools.list" (the absence).
+
+## Theme
+
+Set any of three properties on the page's root, or none (`apps/board/plugin/theme.css`):
+
+| Property | What it is | Without it |
+|---|---|---|
+| `--host-font` | The text face, a `font-family` list | The board's own |
+| `--host-font-mono` | The face of code and numbers, a list | The board's own |
+| `--host-text-scale` | The text size around the cards, a number | `1.25` |
+
+Colours are not on the list: they are measured for contrast (D-009). **Light or dark follows the system; `data-theme="light"` or
+`"dark"` on the page's root (`<html>`) forces one.** A `color-scheme` of yours doesn't move them, nor does `data-theme` on
+`root`, so two boards in a page share one theme. Proven by `guest.spec.ts` "theme", `apps/board/tests/plugin-theme.test.ts`.
+
+## The manifest
+
+`manifest.json`, checked at build by `apps/board/plugin/manifest.schema.json` (`apps/board/plugin/manifest.ts` `manifestOf`). Text is words keys, never the text.
+
+| Field | Means |
+|---|---|
+| `id` | `board` |
+| `name` | A words key |
+| `version` | The API's version (`info.version` in `openapi.json`), a string |
+| `view` | `{ module, styles, export }`: `view/board.js`, `[view/board.css]`, `mount` |
+| `engine` | `{ module, export }`: `engine/engine.js`, `createEngine` |
+| `chips` | Each `{ kind, words }`: `card`, `note`, `board`, `selection`, `answers` |
+| `tools` | Each `{ name, words, input, writes }`, exactly `tools.list()`; `input` is its JSON Schema; `writes` says it changes the ledger |
+| `skill`, `words` | The two files |
+
+It has **no `settings` and no `icon`**: the board declares no settings for a host to draw (flags and `align` come through
+`host.settings`), and an icon is a name in a host's own list. Proven by `engine-hooks.spec.ts` "the folder",
+`apps/board/tests/plugin-build.test.ts` "the manifest fits its schema".
+
+## Standalone's own, not in the folder
+
+The standalone page and server are a host, but these are theirs alone. A host of the folder can't reach them, as
+`view-gives.spec.ts` "the view holds no more" and `engine-hooks.spec.ts` "createEngine and the engine hold no more" hold.
+
+| What | Why it is there |
+|---|---|
+| `MountedBoard.board`, `BoardControls` (`apps/board/src/board/mount.ts`) | `#board`'s `mount` gives it for `App.svelte`'s page door (`rebuild`, `idle`) and `tests/pages/` |
+| `BoardHost.page`, `BoardPage`, `BoardPageParts` (`host.ts`) | Its address, the board last looked at, its folder, theme and Chat button in the header. Left out, the board opens its first board and the header reflows |
+| `EngineOptions.ledger`, `EngineOptions.onSend`, `Engine.ledger`, `Engine.agents`, `Engine.dir` (`apps/board/server/engine/engine.ts`) | Its server opens the ledger under its own lock and runs chat sessions and the app host beside the engine |
+
+## Not covered
+
+No test holds these:
+
+- A real bot or CLI: the fake bot is tool calls, and `skill.md`'s scenarios have not been run on one.
+- A host's routes on another origin than its page, a page in a frame, a phone's width.
+- App cards under a host: `appCards` stays off here.
+- `isolation: isolate` on `root` against a host's own layers.
+
+## Open points
+
+For the maintainer's review (D-074 rule 7). Each is decided for now, and each is cheap to change until a host depends on it.
+
+1. **Pictures for a bot under a host.** Today its skill has no Images section, because no folder can be named for it, and
+   `engine.image` reads `<dir>/images`: a host's bot may not reach `dir` at all. So a picture shows only if the host's code
+   puts the file there. **Recommendation:** one more tool, `put_image` (`path`, base64 bytes; `x-hosts` both or `plugin`), held to the
+   image route's checks (`imagePathProblem`, `imageHeadProblem`, the size limit). The skill's Images section then names a
+   tool, not a folder; a bot needs no path into `dir`, and the engine stays the only writer of its folder. Cost: bytes
+   through a tool's input. Until then a bot told nothing writes no pictures, and a card that names one shows it as missing.
+2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. It keeps the seam
+   small and uses the one path. Cost: a host could let the person drop them, and must resolve it like any chip. Keep, unless a
+   host wants them unremovable; then an engine `context(ctx)` hook is the alternative.
+3. **`chat.send(record)`, not `chat.send()`.** The host sends, then runs the board's record of the Send, so the board keeps the
+   act's outcome and a host with its own server may record it with the message. Cost: a callback in a seam otherwise plain.
+   Keep: it is what makes Send's wait and refusal the same on every host.
+4. **`chat.hasLine?`**: a synchronous question beside `chat.reveal?`, since the stepper asks it while drawing. The alternative is a
+   link always shown when `reveal` is given. Keep: a link that does nothing is worse.
+5. **`status` and `send` on the view**, beyond PLAN's list. Standalone's chat reads `status`, and a host may want a button of its
+   own. Keep; the status is wide, so only what this page names is promised.
+6. **`#board` still gives `board`.** The folder's `mount` leaves it out (`plugin/view.ts`), but the `#board` name, used inside
+   this repo, does not. It goes when `boardChromeInMount`'s off branch does, once `App.svelte` needs only its test door.
+7. **The root is a size container** (`apps/board/src/styles/board.css`), so `100cqh` caps a menu by the pane. It asks a host for a definite
+   size, which its absolute children needed already.
+8. **The sheet touches `:root`**: the tokens and `color-scheme: light dark`, whose lowered form makes `data-theme` work only there.
+   Scoping the tokens to `.vb-board` would let two boards differ, and leave a host's `color-scheme` alone, but it moves every
+   token and risks the screenshots. Keep until a host minds.
+9. **No types in the folder.** A TypeScript host writes `declare module` from this page. **Recommendation:** add a generated
+    `plugin.d.ts` when the first host asks: `PluginView` and `PluginEngine` are already plain types.
+10. **No seam version.** `manifest.version` is the API's, which moves with routes, not with this page, so a host can't tell whether
+    a new folder breaks it. **Recommendation:** a `seam` number in the manifest once a second host is live. Its contract test is the
+    guard until then.
+11. **The zoomed view stays a real modal**, inert page and all (PROOF_01). Non-modal means rebuilding its focus handling.
+
+## What nclite needs
+
+Against nclite's draft contract v0.1 (`docs/plugins.md`) and its spike (`prototypes/plugin-host/`), read and run in a copy under
+`temp/`; nothing was written in nclite. Run as it stands, the spike refuses the folder at `checkManifest`, naming the problems in
+rows 1 and 2. With a throwaway manifest and engine shim it loads, and `mount` stops at the first thing its `createAppHost` lacks:
+"Cannot read properties of undefined (reading 'status')", `host.chat`. Its CSP (`img-src 'self' data:`) already fits. Its Svelte
+(5.56.1, in `app/node_modules`) was the second runtime in `guest.spec.ts` "a second Svelte", beside the bundle's 5.57.1.
+
+| # | Gap | Why | Suggested change |
+|---|---|---|---|
+| 1 | Manifest: `icon`, `settings`, `data`, `view.dir`, `view.modules` required; `version` a whole number | The board has none of them, and a string `version` | Make those optional, `version` a string; add `engine: { module, export }` in place of the fixed `engine.ts` (`registry.ts`) |
+| 2 | Tool input is a flat object of strings and booleans, with `required` (`checkTool`, `checkInput`) | `write_board` takes nested arrays; numbers elsewhere; `list_boards` has no `required` | Real JSON Schema. The engine checks input itself, so the host may only pass it |
+| 3 | `route` and `tools[name]` are synchronous, with no caller and no signal | The board's are async, check the caller on every call, and `check_responses` holds | `route(req, { caller, signal })`, `tools.list()`, `tools.call(name, input, ctx)`; the caller from the run ticket |
+| 4 | Tool result `{ ok, summary, ref }`; `resolve` `{ ok, where, text }`; `createEngine(dir)` | Shapes differ | MCP's `CallToolResult`, the chat's line from `_meta['vb/change']`; `{ where, text } \| { refused, reason }`; `createEngine({ dir, name, warn, flags })` |
+| 5 | `addToChat` only adds | The selection and the answers come, change and go | `chat.attach(key, chip \| null)`, with a chip spent until its key's `ref` changes |
+| 6 | Nothing lets a view send | Send to agent makes the host's chat send | `chat.send(record)` |
+| 7 | Nothing says what the bot is doing | The board's working mark, Send's wait | `chat.status` |
+| 8 | No link back to a chat line; `reveal` takes one thing | A changed card links to the line; a change chip zooms to several cards and selects none | Optional `chat.reveal`, `chat.hasLine`; `reveal` with `cards` |
+| 9 | The spike's `api` answers the parsed body | The board's client reads status and problems | `api` resolves the `Response` |
+| 10 | No `confirm`, no tone on `notify`, no `store`, no `imageRoute` | Four acts ask first; a refusal is `error`; the saved view; a picture loads by address | Add them, a per-bot `store`, and a route answering `engine.image` |
+| 11 | `settings` from the manifest only; two types | The board reads flags by name and declares none | `settings.get` answers undefined for what isn't set, and nclite sets `appCards: false` |
+| 12 | `unmount()` saves anything being written | The person decides whether half-written words are kept | The pane's Close calls `leave()`, then `unmount()` |
+| 13 | "Framework-free view"; "every selector starts with its root class" | The board is Svelte inside, and its sheet selects `vb-node` and sets `:root` tokens | "Framework-free to the host: it only calls `mount`"; "every selector under the plugin's own prefix" |
+| 14 | The pane's header is the host's; nothing about a plugin's own | The board draws its own header in `root`, under the pane's | Say so; Add to chat stays the pane's, by `pageChip`. A short pane works |
+| 15 | One bot, no joins | The board's ledger names agents, and `request_grant` is for a person's board | Register the bot once at turn-on (`POST agents`), keep its id with the bot's plugin data; the grants strip is inside the board |
+| 16 | `prefers-color-scheme` and the app's theme | Colours follow the system or `data-theme` on `<html>` | Set `data-theme` on `<html>` if the app has a theme switch |
+| 17 | No `--host-*` | Fonts and text size | Set the three on the root, or leave them |
+
+**How the tools should reach its bot (recommended, its choice).** One generic plugin pass-through in the existing container MCP
+server: `tools/list` from the engine for the plugins on for this bot; `tools/call` becomes `POST /api/run/plugins/{id}/tools/{name}`
+with the run token, and the engine runs `engine.tools.call` with the run ticket's bot. The same pattern as `webFetchTool`: the call
+happens on the engine side, and the container learns no board code. It keeps one MCP server, one token, one ceiling and one approval
+path, and one tool list here. A board-specific server would need a second copy of the list; a tool the host serves directly isn't
+possible under `--strict-mcp-config`.
+
+Not settled there: whether `NCLITE_TOOLS` covers plugin tools by name; how a tool's name is spelled (`${plugin}.${tool}` in the spike,
+`mcp__nclite__<name>` for its own, and whether each CLI takes a `.`); the cap on a held run-door call against `check_responses`' 60 s;
+whether a `writes: true` tool asks the person.
+
+**Attachments there.** Its chat already uploads on submit and tells the bot the path, and the reader runs in its container: nothing
+to add for the board.
