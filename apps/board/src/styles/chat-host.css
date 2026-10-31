@@ -5,12 +5,9 @@
 :root {
   --chat-font: var(--vb-font);
   --chat-font-mono: var(--vb-font-mono);
-  /* The chat reads longer than the board's labels, so its text is the board's scale, larger (maintainer, 2026-10-30:
-     what two presses of the browser's zoom gave, 125%): whole pixels, 16, 15 and 14. Change this one number. */
-  --chat-text-scale: 1.25;
-  --chat-text: round(calc(var(--vb-text-md) * var(--chat-text-scale)), 1px);
-  --chat-text-sm: round(calc(var(--vb-text-sm) * var(--chat-text-scale)), 1px);
-  --chat-text-xs: round(calc(var(--vb-text-xs) * var(--chat-text-scale)), 1px);
+  --chat-text: var(--vb-ui-text-md);
+  --chat-text-sm: var(--vb-ui-text-sm);
+  --chat-text-xs: var(--vb-ui-text-xs);
   --chat-weight-medium: var(--vb-weight-medium);
   --chat-weight-bold: var(--vb-weight-bold);
 

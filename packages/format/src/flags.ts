@@ -263,6 +263,11 @@ export const FLAGS = {
     default: true,
     description: 'While the board\'s agent works the board says so (and "waiting for your OK" while it asks), the person keeps working and can send more, and a reply that lands while the chat is closed or scrolled away shows a count on the chat button and a toast that opens it. Off, Send holds as "Waiting for agent" and a reply is only in the chat.',
   },
+  answeredLaterChips: {
+    // Off by default (maintainer, 2026-10-31, point 371): the counts are still made, for later uses.
+    default: false,
+    description: 'The toolbar shows the Answered and Later counts. Off, they are hidden and still counted.',
+  },
   readAttachment: {
     // On by default (maintainer, 2026-10-30, points 361-368, D-071; read-attachment). Read on the page and the server (VB_FLAGS).
     default: true,

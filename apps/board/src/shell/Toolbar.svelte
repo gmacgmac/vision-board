@@ -88,6 +88,7 @@
 
   const boardEdit = flagOn('boardEdit', pageFlags());
   const toolbarMenu = flagOn('toolbarMenu', pageFlags());
+  const answeredLater = flagOn('answeredLaterChips', pageFlags());
   const archiving = flagOn('archiveBoard', pageFlags());
   const locking = flagOn('lockBoard', pageFlags());
   const openList = flagOn('openList', pageFlags());
@@ -172,8 +173,8 @@
           label="Go to a new or updated card" title={toolbarWords.newAndUpdatedCardsChoose} />
       {/if}
       {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title={toolbarWords.repliedItems}><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">{toolbarWords.replied}</span></span>{/if}
-      <span class="vb-chip" data-tone="answered" title={toolbarWords.answeredItems}><b>{shell.counts.answered}</b> <span class="vb-chip-word">{toolbarWords.answered}</span></span>
-      <span class="vb-chip" data-tone="later" title={toolbarWords.laterItems}><b>{shell.counts.later}</b> <span class="vb-chip-word">{toolbarWords.later}</span></span>
+      <span class="vb-chip" data-tone="answered" hidden={!answeredLater} title={toolbarWords.answeredItems}><b>{shell.counts.answered}</b> <span class="vb-chip-word">{toolbarWords.answered}</span></span>
+      <span class="vb-chip" data-tone="later" hidden={!answeredLater} title={toolbarWords.laterItems}><b>{shell.counts.later}</b> <span class="vb-chip-word">{toolbarWords.later}</span></span>
       {#if shell.flagged && !shell.past}
         <FlaggedChip id="flagged" count={shell.flagged} onclick={onflagged} />
       {/if}

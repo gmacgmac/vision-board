@@ -1,0 +1,11 @@
+/* The text size of everything around the cards: the chat, the toolbar, menus, dialogs, help, tips and the selection
+   bar (maintainer, 2026-10-30 and 31: what two presses of the browser's zoom gave, 125%). The one number is `--vb-ui-text-scale` in shell.css.
+   Whole pixels: 14, 15, 16, 19. Cards and containers keep the board's own scale: they are drawn on a canvas that zooms. */
+.vb-toolbar, .vb-toolbar-end, .vb-menu-list, .vb-select-menu, .vb-dialog, .vb-keys, .vb-keys-btn, .vb-go, .vb-banner, .vb-reply, .vb-access, .vb-proposals,
+.vb-tip, .vb-toast, vb-selection-bar {
+  --vb-text-xs: var(--vb-ui-text-xs);
+  --vb-text-sm: var(--vb-ui-text-sm);
+  --vb-text-md: var(--vb-ui-text-md);
+  --vb-text-lg: var(--vb-ui-text-lg);
+  font-size: var(--vb-text-md); /* what a control inherits (font: inherit); a part with its own size keeps it, as it loads later */
+}
