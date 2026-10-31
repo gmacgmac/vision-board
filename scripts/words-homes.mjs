@@ -11,6 +11,7 @@ import { scanFile } from './words-scan.mjs';
  * Parts of a group may import each other's words (shell reads board's); a sentence is said once per group. */
 export const PARTS = [
   { part: 'board', group: 'page', roots: ['apps/board/src/board', 'apps/board/src/main.ts', 'apps/board/src/flags.ts'], words: 'apps/board/src/board/words' },
+  { part: 'plugin', group: 'plugin', roots: ['apps/board/plugin'], words: 'apps/board/plugin/words' },
   { part: 'shell', group: 'page', roots: ['apps/board/src/shell'], words: 'apps/board/src/shell/words' },
   { part: 'format', group: 'format', roots: ['packages/format/src'], words: 'packages/format/src/words' },
   { part: 'actions', group: 'actions', roots: ['packages/actions/src'], words: 'packages/actions/src/words' },

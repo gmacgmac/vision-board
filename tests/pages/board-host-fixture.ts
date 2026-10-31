@@ -7,7 +7,7 @@
 // blank page; `window.vbHost` is what the spec drives. The listeners on the document and the window
 // are counted, so the spec can see that `unmount` leaves none behind.
 import '#tokens/styles.css';
-import '../../apps/board/src/styles/board-sheets.ts';
+import '#board/styles.css';
 import type { Chip } from '#actions';
 import { defineBoardElements } from '#ui';
 import type { BoardEvent, BoardHost, ChatWork, ConfirmAsk } from '../../apps/board/src/board/host.ts';

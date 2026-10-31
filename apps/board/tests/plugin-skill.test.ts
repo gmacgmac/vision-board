@@ -1,0 +1,71 @@
+// What the plugin tells a bot (BUILD_01; plugin/skill.ts, words/skill-edits.ts, server/words/plugin-tools.ts): a bot
+// that a host names has no `join`, no `list_apps`, no `read_attachment` and no secret to send, so neither its skill nor
+// its tool descriptions may tell it to use one. Prompts are code: this holds them, and holds that the standalone
+// bot reads its skill and its tool descriptions as it always did.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { OPERATIONS } from '#format';
+import { TOOLS } from '#mcp';
+import { makeTempDir } from '#format/testing';
+import { createEngine } from '../server/engine/index.ts';
+import { toolRows } from '../server/format-files.ts';
+import { skillFor } from '../plugin/skill.ts';
+import { skillEdits } from '../plugin/words/skill-edits.ts';
+import { descriptionEdits } from '../server/words/plugin-tools.ts';
+
+const SKILL_FILE = path.resolve(import.meta.dirname, '../../../skills/vision-board/SKILL.md');
+const source = fs.readFileSync(SKILL_FILE, 'utf8');
+const plugin = skillFor(source);
+const dir = makeTempDir('vb-plugin-skill-');
+const listed = createEngine({ dir }).tools.list();
+const given = new Set(listed.map((t) => t.name));
+/** Every word that names a tool: the table's names, whether or not a plugin bot has it. */
+const TOOL_NAMES = [...TOOLS.keys()];
+const GONE = ['join', 'list_apps', 'read_attachment'];
+
+test('the plugin skill names no tool the plugin bot does not have, and no secret, join, app, attachment or panel', () => {
+  assert.deepEqual(GONE.filter((g) => !given.has(g)), GONE, 'the three are the standalone host\'s');
+  const named = [...plugin.matchAll(/`([a-z]+(?:_[a-z]+)*)`/g)].map((m) => m[1]!).filter((w) => TOOL_NAMES.includes(w));
+  assert.deepEqual([...new Set(named)].filter((n) => !given.has(n)), [], 'only tools the engine gives');
+  for (const word of ['join', 'secret', 'list_apps', 'read_attachment', 'visionboard', 'chat panel', 'Board: <id>', 'attached', 'app card']) {
+    assert.ok(!plugin.toLowerCase().includes(word.toLowerCase()), `the plugin skill says "${word}"`);
+  }
+  assert.match(plugin, /^## Where you are running$/m);
+  assert.ok(!/^## Apps on the board$/m.test(plugin) && !/^### Images in cards$/m.test(plugin));
+});
+
+test('every tool a plugin bot has is in the skill, and its sentences about the person\'s answers are the standalone skill\'s own', () => {
+  for (const name of given) assert.ok(plugin.includes(`\`${name}\``), `${name} is in the plugin skill`);
+  for (const kept of ['"Waiting for your reply" is yours.', "**Don't fetch it again**", 'Never hold your turn open: no `check_responses` with `wait`.']) {
+    assert.ok(source.includes(kept) && plugin.includes(kept), kept);
+  }
+});
+
+test('each skill edit finds its place exactly once, and a change under one stops the build', () => {
+  assert.ok(skillEdits.length > 0);
+  for (const e of skillEdits) assert.ok(source.split(e.from).length === 2, `${JSON.stringify(e.from.slice(0, 50))} must occur once in SKILL.md`);
+  assert.throws(() => skillFor(source.replace('## Apps on the board', '## Other apps')), /exactly once/);
+  assert.throws(() => skillFor(`${source}\n${skillEdits[0]!.from}`), /exactly once/);
+});
+
+test('the standalone skill and the standalone bot\'s tool words are untouched: it still joins, holds a secret and has the app host', () => {
+  assert.ok(source.includes('Call `join` once') && source.includes('`list_apps`') && source.includes('## Apps on the board'));
+  assert.match(TOOLS.get('list_open')!.description, /With your secret, only the containers you hold/);
+  assert.match(TOOLS.get('check_responses')!.description, /With your secret, only the containers you hold\./);
+  assert.match(TOOLS.get('write_board')!.description, /from `list_apps`/);
+  assert.ok(TOOLS.has('join') && TOOLS.has('list_apps') && TOOLS.has('read_attachment'));
+});
+
+test('the plugin bot\'s tool descriptions are the tool table\'s (the MCP server adds its secret words) less what is not true for it, and say none of that', () => {
+  assert.deepEqual(descriptionEdits.map((e) => e.tool).filter((n) => !given.has(n)), [], 'an edit names a tool the plugin bot does not have');
+  for (const t of listed) {
+    const original = (toolRows() as { name: string; description: string }[]).find((r) => r.name === t.name)!.description;
+    assert.equal(t.description === original, !descriptionEdits.some((e) => e.tool === t.name), `${t.name}: edited exactly where an edit says`);
+    for (const { from } of descriptionEdits.filter((e) => e.tool === t.name)) assert.ok(original.includes(from) && !t.description.includes(from), `${t.name}: ${from}`);
+    assert.doesNotMatch(t.description, /your secret|\bjoin\b|list_apps|read_attachment|Authorization/i, `${t.name}'s words`);
+    assert.doesNotMatch(JSON.stringify(t.inputSchema), /your secret|list_apps|read_attachment/i, `${t.name}'s input`);
+  }
+  assert.ok(Object.keys(OPERATIONS).length > listed.length);
+});

@@ -11,8 +11,9 @@ import {
   ITEM_REMOVED, LIST_RENAMED, TIMESTAMP_PATTERN, WIDTHS, eventProblems, readLedger,
 } from '#format';
 import { FIXTURES_DIR, SCHEMA_DIR } from '#format/files';
+import { schemaFiles } from '../server/format-files.ts';
 import {
-  LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaFiles, schemaProblems,
+  LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaProblems,
 } from '../server/schema.ts';
 import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act, long, patch } from './schema-cases.ts';
 import { makeTempDir } from '#format/testing';

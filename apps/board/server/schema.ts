@@ -1,16 +1,13 @@
 // The ledger's JSON Schemas through ajv (D-026, api.md 12): the only module that imports ajv. It
-// loads every `*.schema.json` under the format's schemas (`#format/files` SCHEMA_DIR) and the chat
-// package's own contract (`#chat/files` CHAT_SCHEMA_DIR, api.md 98) by its `$id`, compiles with Ajv2020
+// loads every `*.schema.json` of the format and the chat package's own contract (api.md 98, format-files.ts)
+// by its `$id`, compiles with Ajv2020
 // (strict mode, all errors, the discriminator), and turns ajv's errors into plain-English
 // problems with a JSON Pointer each (api.md 38, 40). Server and tests only: the page never
 // imports it, so ajv never reaches the page bundle (rule 15).
-import fs from 'node:fs';
-import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
-import { CHAT_SCHEMA_DIR } from '#chat/files';
 import { LEDGER_FORMAT } from '#format';
-import { SCHEMA_DIR } from '#format/files';
+import { allSchemaFiles } from './format-files.ts';
 import * as schemaWords from './words/schema.ts';
 
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
@@ -22,22 +19,6 @@ export const CHAT_EVENT_ID = `${SCHEMA_BASE}schema/chat/1/chat-event.schema.json
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */
 export interface SchemaProblem { pointer: string; detail: string }
-
-type SchemaDoc = Record<string, unknown> & { $id: string };
-
-/** Every schema file under `dir`, read with `fs`. */
-export function schemaFiles(dir = SCHEMA_DIR): { file: string; schema: SchemaDoc }[] {
-  const out: { file: string; schema: SchemaDoc }[] = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const file = path.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...schemaFiles(file));
-    else if (entry.name.endsWith('.schema.json')) out.push({ file, schema: JSON.parse(fs.readFileSync(file, 'utf8')) });
-  }
-  return out.sort((a, b) => a.file.localeCompare(b.file));
-}
-
-/** Every schema the server knows: the format's and the chat package's. */
-export const allSchemaFiles = (): { file: string; schema: SchemaDoc }[] => [...schemaFiles(), ...schemaFiles(CHAT_SCHEMA_DIR)];
 
 let shared: Ajv2020 | undefined;
 /** Every schema by its `$id`, for the words a schema gives a field it refuses (`removedWords`). */

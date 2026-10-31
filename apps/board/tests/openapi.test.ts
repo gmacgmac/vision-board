@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { SCHEMA_DIR } from '#format/files';
 import { PROBLEMS } from '../server/problem.ts';
-import { SCHEMA_BASE, compileSchema, schemaFiles } from '../server/schema.ts';
+import { schemaFiles } from '../server/format-files.ts';
+import { SCHEMA_BASE, compileSchema } from '../server/schema.ts';
 import type { Rec } from './openapi-ajv.ts';
 import { COMPONENTS_ID, ajv, compileInline, deref, doc, ops, pointer, read } from './openapi-ajv.ts';
 

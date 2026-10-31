@@ -22,7 +22,8 @@ Exemptions, with its reason.
 
 A sentence's key is `board.<area>.<name>`: the area is the words file's name, the name is the
 export (an object's members are dotted on). Areas are unique across the homes, so a key is. The
-keys are what the plugin's one words file (nclite, `organizer.chip.task` style) is built from later;
+keys are what the plugin's one words file, `words.json`, is built from (`apps/board/bin/plugin-words.ts`: every
+fixed sentence of the board's, the patterns' and the plugin's words, and each tool's description as a bot reads it);
 this doc does not list them, the test does (`words.test.mjs`, "every sentence has a key").
 Keys are stable: reword a sentence in its file, keep its name.
 
@@ -63,6 +64,13 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/src/board/words/reply.ts` | `reply` | The reply panel. |
 | `apps/board/src/board/words/send.ts` | `send` | The Send button, its states and tooltips. |
 | `apps/board/src/board/words/toolbar.ts` | `toolbar` | The toolbar, its menu, zoom level, chips and the version banner. |
+
+### The plugin build (`apps/board/plugin`)
+
+| File | Area | Holds |
+|---|---|---|
+| `apps/board/plugin/words/plugin.ts` | `plugin` | The plugin's name and its chip kinds, as a host shows them (the manifest names them by key). |
+| `apps/board/plugin/words/skill-edits.ts` | `skill-edits` | The edits that make the skill a plugin's bot reads from the standalone skill: what it loses (join, the chat panel's permissions, pictures' folder, apps) and what it says instead. |
 
 ### The standalone page around the board
 
@@ -115,6 +123,7 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/server/words/apps-supervisor.ts` | `apps-supervisor` | The app supervisor's refusals: an app that crashed, timed out or was stopped, and the tool checks. |
 | `apps/board/server/words/bin.ts` | `bin` | The board's command-line tools. |
 | `apps/board/server/words/http.ts` | `http` | The refusals every call can meet: the path, method, body, caller and origin. |
+| `apps/board/server/words/plugin-tools.ts` | `plugin-tools` | The edits that make a tool's description true for a bot a host names (no secret, no `list_apps`); the standalone bot reads the table's words as they are. |
 | `apps/board/server/words/schema.ts` | `schema` | How a schema failure is told to the agent. |
 | `apps/board/server/words/server-chat.ts` | `server-chat` | The chat session: what the agent is told, and the refusals a chat call gets. |
 | `apps/board/server/words/server-common.ts` | `server-common` | Sentences more than one area of the server says, said once. |

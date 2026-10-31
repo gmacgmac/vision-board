@@ -1,5 +1,5 @@
 // The engine's tools, in MCP's shapes (D-074 rule 4): `list()` is one tool per agent operation the
-// generated tool table marks `plugin` (`TOOLS_FILE`, gen-api.mjs, from openapi.json's `x-hosts`: what a plugin
+// generated tool table marks `plugin` (`toolRows`, gen-api.mjs, from openapi.json's `x-hosts`: what a plugin
 // bot gets), named as the MCP server names them, and `call(name, input, ctx)` answers MCP's `CallToolResult`, so each host chooses its transport
 // (`createMcpServer({ tools })` serves it as is; a host's own MCP server can wrap it). A call checks its
 // input against the table's JSON Schema, splits it back into the operation's path, query and body by the
@@ -10,16 +10,16 @@
 // stream, which carries only the text, reads the same facts from it (#agent `boardWriteSummary`). The tools
 // marked `standalone` alone are left out: `list_apps` (the app host's), `read_attachment` (beside its chat)
 // and `join` (the host says who is calling; its `route` still takes `join`, to register its bot once).
-import fs from 'node:fs';
 import { BOARD_WRITE, boardWriteSummary } from '#agent';
 import type { OperationId, ProblemDocument } from '#format';
-import { TOOLS_FILE } from '#format/files';
 import type { ListedTool, ToolResult } from '#mcp';
 import { answerResult, problemResult, unknownToolResult } from '#mcp';
 import type { Caller } from '../ledger.ts';
 import { problem } from '../problem.ts';
+import { toolRows } from '../format-files.ts';
 import { foreignSchemas } from '../schema.ts';
 import * as httpWords from '../words/http.ts';
+import { descriptionEdits } from '../words/plugin-tools.ts';
 
 /** One row of the tool table, as the engine reads it. */
 interface ToolRow {
@@ -51,7 +51,15 @@ export type RunOp = (id: OperationId, input: {
   params: Record<string, unknown>; body: unknown; caller: Caller | undefined; signal: AbortSignal | undefined;
 }) => Promise<{ status: number; body: unknown }>;
 
-const ROWS: readonly ToolRow[] = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: ToolRow[] }).tools;
+const ROWS = toolRows() as readonly ToolRow[];
+
+/** A tool's description as a plugin bot reads it (words/plugin-tools.ts): what only the standalone bot has is taken out. */
+function forPlugin(row: ToolRow): string {
+  return descriptionEdits.filter((e) => e.tool === row.name).reduce((text, { from, to }) => {
+    if (text.split(from).length !== 2) throw new Error(`${row.name}'s description must hold ${JSON.stringify(from)} once`);
+    return text.replace(from, () => to);
+  }, row.description);
+}
 
 /** A board write's result, with what it changed. */
 function withChange(name: string, input: Record<string, unknown>, result: ToolResult): ToolResult {
@@ -63,7 +71,7 @@ function withChange(name: string, input: Record<string, unknown>, result: ToolRe
 export function makeTools(serves: (id: string) => id is OperationId, run: RunOp): EngineTools {
   const check = foreignSchemas();
   const rows = new Map(ROWS.flatMap((row) => (row.hosts.includes('plugin') && serves(row.name) ? [[row.name as string, { row, id: row.name, problems: check(row.input) }] as const] : [])));
-  const listed: readonly ListedTool[] = [...rows.values()].map(({ row }) => ({ name: row.name, title: row.title, description: row.description, inputSchema: row.input }));
+  const listed: readonly ListedTool[] = [...rows.values()].map(({ row }) => ({ name: row.name, title: row.title, description: forPlugin(row), inputSchema: row.input }));
   return {
     list: () => listed,
     async call(name, input, { caller, signal } = {}) {

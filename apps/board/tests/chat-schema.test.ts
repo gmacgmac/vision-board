@@ -4,7 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CHAT_SCHEMA_DIR } from '#chat/files';
-import { CHAT_EVENT_ID, SCHEMA_BASE, schemaFiles, schemaProblems } from '../server/schema.ts';
+import { schemaFiles } from '../server/format-files.ts';
+import { CHAT_EVENT_ID, SCHEMA_BASE, schemaProblems } from '../server/schema.ts';
 
 type Rec = Record<string, unknown>;
 /** Problems with `value` as JSON (a field set to undefined is left out, as on the wire). */

@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv/dist/2020.js';
 import { OPENAPI_FILE } from '#format/files';
-import { SCHEMA_BASE, allSchemaFiles } from '../server/schema.ts';
+import { allSchemaFiles } from '../server/format-files.ts';
+import { SCHEMA_BASE } from '../server/schema.ts';
 
 export type Rec = Record<string, any>;
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));

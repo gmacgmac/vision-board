@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/plugin/manifest.schema.json",
+  "title": "Plugin manifest",
+  "description": "manifest.json of the built plugin folder: what a host reads before it loads anything. Names of text are keys into words.json, never the text. Every path is relative to the folder.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "version", "view", "engine", "chips", "tools", "skill", "words"],
+  "properties": {
+    "id": { "description": "Lowercase letters and hyphens: the folder name, and the plugin's id in a chip and a change event.", "type": "string", "pattern": "^[a-z]+(-[a-z]+)*$" },
+    "name": { "$ref": "#/$defs/wordsKey" },
+    "version": { "description": "The board API's version (openapi.json info.version).", "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "view": {
+      "description": "The view: an ES module that exports `mount(root, host)`, and its one stylesheet.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module", "styles", "export"],
+      "properties": {
+        "module": { "$ref": "#/$defs/path" },
+        "styles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/path" } },
+        "export": { "const": "mount" }
+      }
+    },
+    "engine": {
+      "description": "The engine part: an ES module for Node that exports `createEngine({ dir })`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module", "export"],
+      "properties": { "module": { "$ref": "#/$defs/path" }, "export": { "const": "createEngine" } }
+    },
+    "chips": {
+      "description": "The kinds of chip the view adds to the chat, each with its label.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "words"],
+        "properties": { "kind": { "enum": ["card", "note", "board", "selection", "answers"] }, "words": { "$ref": "#/$defs/wordsKey" } }
+      }
+    },
+    "tools": {
+      "description": "The tools a bot gets, exactly the engine's `tools.list()`: its name, the key of its description, its input as JSON Schema and whether it writes.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "words", "input", "writes"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z]+(_[a-z]+)*$" },
+          "words": { "$ref": "#/$defs/wordsKey" },
+          "input": { "type": "object" },
+          "writes": { "type": "boolean" }
+        }
+      }
+    },
+    "skill": { "description": "The file the bot reads while the plugin is on.", "$ref": "#/$defs/path" },
+    "words": { "description": "The words file: every key above and the view's own text, as a flat JSON object.", "$ref": "#/$defs/path" }
+  },
+  "$defs": {
+    "path": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*(/[a-z0-9][a-z0-9_.-]*)*\\.[a-z]+$" },
+    "wordsKey": { "type": "string", "pattern": "^board\\.[a-z0-9-]+(\\.[A-Za-z0-9_]+)+$" }
+  }
+}

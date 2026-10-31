@@ -15,7 +15,8 @@ import { activityLine, applyEvents, CHAT_EVENT_KINDS, chatStatus, EMPTY_CHAT } f
 import { ROUND_HEAD } from '#actions';
 import { QUEUED } from '../server/chat-session.ts';
 import { CHAT_SCHEMA_DIR } from '#chat/files';
-import { CHAT_EVENT_ID, schemaFiles, schemaProblems } from '../server/schema.ts';
+import { schemaFiles } from '../server/format-files.ts';
+import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
 const SCENES = JSON.parse(read('../src/gallery/gallery.chat.json')) as Record<'session' | 'stopped' | 'error' | 'send', ChatEvent[]>;

@@ -2,10 +2,9 @@
 // parameters with their schemas and defaults, and its request body schema. The route table
 // (operations.generated.ts) says where an operation lives; this says what its inputs may hold.
 // Server only: it uses ajv through schema.ts, which never reaches the page (api.md 12).
-import fs from 'node:fs';
 import type { OperationAuth, OperationId } from '#format';
 import { OPERATIONS } from '#format';
-import { OPENAPI_FILE } from '#format/files';
+import { openapiDoc } from './format-files.ts';
 import type { SchemaProblem } from './schema.ts';
 import { compileSchema, schemaProblems } from './schema.ts';
 
@@ -38,7 +37,7 @@ export interface OperationSpec {
   example?: unknown;
 }
 
-const doc: Rec = JSON.parse(fs.readFileSync(OPENAPI_FILE, 'utf8'));
+const doc: Rec = openapiDoc();
 
 /** Follow a `#/...` reference inside openapi.json. */
 const local = (x: Rec): Rec => {

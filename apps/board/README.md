@@ -152,3 +152,14 @@ replaces them on purpose. The board's test support (`startTestBoard`, the API ha
   `npm run board:watch` is for working on the board: it rebuilds the page on save, restarts the
   server only when server code changes, and reloads the open page with its view kept (dev only;
   `npm run board` never reloads). `npm run watch` alone only rebuilds. `npm run check` type-checks `src/`.
+- **The plugin folder**: `npm run build:plugin` writes `dist/plugin/board/` (git-ignored), the board as
+  one folder for another host: `manifest.json` (checked by `plugin/manifest.schema.json`; its tools are
+  `engine.tools.list()`, its text keys into `words.json`), `view/board.js` (exports `mount`, carries its own
+  Svelte) with `view/board.css`, `engine/engine.js` (exports `createEngine`, imports only `node:` modules,
+  reads nothing beside itself), `words.json` and `skill.md` (the skill less what only the standalone host has:
+  `plugin/words/skill-edits.ts`; the tool descriptions likewise, `server/words/plugin-tools.ts`). It is
+  built by `bin/build-plugin.ts` and `vite.plugin.config.ts` from the entries in `plugin/`; the same input
+  gives the same bytes, and `-- --watch` rebuilds the two bundles on a change. A host sets `--host-font`,
+  `--host-font-mono` and `--host-text-scale` on its root to theme it (`plugin/theme.css`). The names a host
+  imports are `#board` (`mount`), `#board/styles.css` and `#board/engine`; inside the app the same files are
+  reached by path. The page is built from the same files, and its own build is unchanged.
