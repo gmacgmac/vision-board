@@ -12,9 +12,9 @@
      task). Every part is a native button, so Tab reaches each and Enter or Space chooses. -->
 <script lang="ts">
   import * as foldersWords from './words/folders.ts';
-  import * as shellCommonWords from './words/shell-common.ts';
+  import * as chromeCommonWords from '../board/words/chrome-common.ts';
   import type { FolderEntry, FolderInfo, FolderList } from './page-io.ts';
-  import ButtonIcon from './ButtonIcon.svelte';
+  import { ButtonIcon } from '../board/chrome/index.ts';
   import { folderPath } from './folder-path.ts';
 
   let { listing, current, here = null, uid, loading = false, problem = null, busy = false, onchoose, onaccept, oncancel }: {
@@ -62,7 +62,7 @@
     } catch { copied = 'failed'; }
     copiedTimer = window.setTimeout(() => { copied = null; }, 2000);
   }
-  const action = $derived(listing?.found || isHome ? (busy ? foldersWords.opening : foldersWords.open) : busy ? shellCommonWords.creating : shellCommonWords.create);
+  const action = $derived(listing?.found || isHome ? (busy ? foldersWords.opening : foldersWords.open) : busy ? chromeCommonWords.creating : chromeCommonWords.create);
 </script>
 
 {#snippet row(f: FolderEntry, icon: 'folder' | 'cloud' = 'folder')}
@@ -81,7 +81,7 @@
     <span class="vb-folder-current-label" id="{uid}-current">{foldersWords.currentFolder}</span>
     <code class="vb-folder-current-path">{folderPath(here)}</code>
     <button type="button" class="vb-btn vb-btn-small" id="{uid}-copy" data-done={copied === 'done' || undefined}
-      title={foldersWords.copyTheFullPath} onclick={() => void copyPath()}>{copied === 'done' ? foldersWords.copied : shellCommonWords.copy}</button>
+      title={foldersWords.copyTheFullPath} onclick={() => void copyPath()}>{copied === 'done' ? foldersWords.copied : chromeCommonWords.copy}</button>
     <span class="vb-visually-hidden" role="status">{copied === 'done' ? foldersWords.pathCopied : copied === 'failed' ? foldersWords.couldNotCopySelectThe : ''}</span>
   </div>
 {/if}
@@ -115,7 +115,7 @@
 <p class="vb-folder-status" role="status" data-found={listing?.found || undefined}>{status}</p>
 {#if problem}<p class="vb-dialog-problem" role="alert">{problem}</p>{/if}
 <div class="vb-dialog-actions">
-  <button type="button" class="vb-btn" id="{uid}-cancel" onclick={oncancel}>{shellCommonWords.cancel}</button>
+  <button type="button" class="vb-btn" id="{uid}-cancel" onclick={oncancel}>{chromeCommonWords.cancel}</button>
   <button type="button" class="vb-btn vb-btn-primary" id="{uid}-accept" disabled={!listing || isHome || isOpen || loading || busy}
     aria-busy={busy} onclick={onaccept}>{action}</button>
 </div>

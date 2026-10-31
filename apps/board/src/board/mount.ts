@@ -1,15 +1,18 @@
 // The board in any host (principles § The board is a plugin; host.ts): `mount(root, host)` builds
 // the board's elements inside `root` and gives back nclite's view (`unmount`, `pageChip`, `reveal`,
 // and `unsaved` and `leave`, which a host asks before it unmounts: `unmount` itself never asks),
-// plus what a host draws around the board: its status (status.ts) and, until they move inside, the
-// standalone page's toolbar and strips (`BoardControls`). It adds no element outside `root` but the
-// zoomed image view (a modal dialog's top layer),
-// no document id of its own (ids inside cards and frames carry the mount's prefix, mount-ids.ts), and
+// plus what a host shows of the board: its status (status.ts). `root` holds the whole board: its header,
+// strips, dialogs and search (chrome/, boardChromeInMount flag) round the stage the cards draw in; off, `root`
+// is the stage and the standalone page draws the controls (`BoardControls`). It adds no element outside
+// `root` but the zoomed image view (a modal dialog's top layer), every id it sets carries the mount's
+// prefix (mount-ids.ts), and
 // nothing outlives `unmount`: every listener on the document or the window goes, the image view goes,
 // and `root` is emptied and given back as it was. Each mount has its own calls (io.ts), status and
 // controller, so two boards on one page work apart.
 import { boardChip, numberOf } from '#actions';
+import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
+import { flagOf } from './host.ts';
 import { createIo } from './io.ts';
 import type { Board, BoardElements } from './controller.ts';
 import { createBoard } from './controller.ts';
@@ -21,17 +24,17 @@ import * as commonWords from './words/common.ts';
 
 /** The class a host's root takes: the board's scope and its `@container vb-board` (D-061). */
 export const BOARD_ROOT = 'vb-board';
-/** The classes the root takes as the board's stage. */
-const ROOT_CLASSES = [BOARD_ROOT, 'vb-stage', 'vb-ground'];
+/** The classes the root takes when it is the board's stage (boardChromeInMount flag off). */
+const STAGE_CLASSES = [BOARD_ROOT, 'vb-stage', 'vb-ground'];
 const SVG = 'http://www.w3.org/2000/svg';
 
-/** What the standalone page's own toolbar and strips call, until they move inside `mount`; and its
- *  test door (`rebuild`, `idle`, work.ts). No chat goes through it: that is `BoardView` and `BoardChat`. */
+/** What the board's controls call (chrome/), and the standalone page's test door (`rebuild`, `idle`,
+ *  work.ts). No chat goes through it: that is `BoardView` and `BoardChat`. */
 export type BoardControls = Pick<Board, 'switchTo' | 'showVersion' | 'goToContainer' | 'command' | 'toggleHide' | 'access' | 'proposals' | 'boardEdit' | 'nextFlagged' | 'go' | 'rebuild' | 'idle'>;
 
 /** What `mount` gives back: the view, and what a host draws around the board. */
 export interface MountedBoard extends BoardView {
-  /** The board's controls: switching boards, versions, view commands, the toolbar's acts. */
+  /** What the controls call: switching boards, versions, view commands, the toolbar's acts. */
   readonly board: BoardControls;
   /** What a host shows of the board (status.ts): read `now`, hear each change with `on`. */
   readonly status: Status;
@@ -39,8 +42,8 @@ export interface MountedBoard extends BoardView {
   send(): Promise<string | null>;
 }
 
-/** The board's layers inside `root`, as the standalone page drew them, with no ids. */
-function build(root: HTMLElement): BoardElements & { message: HTMLElement } {
+/** The board's layers inside the stage, with no ids. */
+function build(stage: HTMLElement): BoardElements & { message: HTMLElement } {
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, attrs: Record<string, string> = {}) => {
     const e = document.createElement(tag);
     e.className = cls;
@@ -64,28 +67,32 @@ function build(root: HTMLElement): BoardElements & { message: HTMLElement } {
   world.append(regions, wires, cards, wiresTop, marks);
   const message = el('div', 'vb-message', { role: 'status' });
   message.hidden = true;
-  root.append(world, message);
-  return { stage: root, world, regions, cards, wires, wiresTop, marks, message };
+  stage.append(world, message);
+  return { stage, world, regions, cards, wires, wiresTop, marks, message };
 }
 
 /** Mount the board in `root`, an element the host gives (empty, or holding only what it drew). */
 export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
-  const added = ROOT_CLASSES.filter((c) => !root.classList.contains(c));
+  const inMount = flagOf(host, 'boardChromeInMount');
+  const added = (inMount ? [BOARD_ROOT] : STAGE_CLASSES).filter((c) => !root.classList.contains(c));
   root.classList.add(...added);
-  const own = (['tabindex', 'aria-label'] as const).filter((a) => !root.hasAttribute(a));
+  const own = inMount ? [] : (['tabindex', 'aria-label'] as const).filter((a) => !root.hasAttribute(a));
   if (own.includes('tabindex')) root.tabIndex = -1;
   if (own.includes('aria-label')) root.setAttribute('aria-label', commonWords.board);
   const status = createStatus();
   const ids = takeIdPrefix();
+  let board!: Board;
+  const send = () => host.chat.send(() => board.send());
+  const chrome = inMount ? mountChrome(root, host, { status, ids: ids.prefix, board: () => board, send }) : null;
+  const stage = chrome?.stage ?? root;
   const io = createIo(host.api, host.page?.person);
 
   // A press the board handles itself (a lasso, a Cmd or Ctrl pan) stops the browser moving focus, so
   // a key would still go to whatever had it before, a host's button (keys.ts: keys stay inside the root).
-  const takeFocus = () => { if (!root.contains(document.activeElement)) root.focus({ preventScroll: true }); };
-  root.addEventListener('pointerup', takeFocus);
+  const takeFocus = () => { if (!stage.contains(document.activeElement)) stage.focus({ preventScroll: true }); };
+  stage.addEventListener('pointerup', takeFocus);
 
-  let els = build(root);
-  let board!: Board;
+  let els = build(stage);
   /** With no page of its own, the board starts again in place. */
   const page: BoardPage = host.page ?? { wanted: () => [], opened() {}, restart: () => queueMicrotask(restart) };
   const say = (text: string | null) => {
@@ -104,7 +111,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   function restart() {
     stop();
     status.set(initialStatus());
-    els = build(root);
+    els = build(stage);
     start();
   }
   start();
@@ -124,7 +131,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   return {
     get board() { return board; },
     status,
-    send: () => host.chat.send(() => board.send()),
+    send,
     unsaved: () => board.unsaved(),
     leave: () => board.leave(),
     pageChip() {
@@ -144,7 +151,8 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     unmount() {
       stop();
       ids.release();
-      root.removeEventListener('pointerup', takeFocus);
+      stage.removeEventListener('pointerup', takeFocus);
+      chrome?.unmount();
       root.replaceChildren();
       root.classList.remove(...added);
       for (const a of own) root.removeAttribute(a);

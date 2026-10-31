@@ -2,9 +2,8 @@
    own. Only here (and in chat-host.css) may a rule style html, body or a bare element: the board's
    sheets name vb- classes or elements, so they reach nothing in a host's page (scripts/verify-style.mjs
    checkScope). The board sets what it relies on itself (#ui/styles.css, base/root.css); these are
-   the page's defaults around it. The board's root is the stage (`main.vb-board`, board/mount.ts), its
-   own container, as a host's pane is in nclite; body is the page's toolbar's container (@container
-   vb-board). Tokens only. */
+   the page's defaults around it. The board's root fills the page (`body > .vb-board`, board/mount.ts), its
+   own container, as a host's pane is in nclite. Tokens only. */
 
 * { box-sizing: border-box; }
 /* Author display rules (flex, grid) beat the browser's [hidden]; this keeps hidden hidden. */
@@ -24,18 +23,8 @@ kbd {
   border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
 }
 code { font-family: var(--vb-font-mono); }
-/* Where the page puts the board: under the toolbar and any strip or banner, beside the chat. */
-/* --vb-strip-h: the requests strip's height while it shows (AccessRequests.svelte), else unset;
-   --vb-banner-h the same for the past-version banner (VersionBanner.svelte); --vb-chat-w the chat
-   sidebar's width while it is open (ChatSidebar.svelte, styles/chat-sidebar.css), so the stage
-   shrinks beside it. The proposals notice floats over the board and moves nothing (proposals.css). */
+/* Where the page puts the board: the whole window, the chat over its right edge (the root's stage shrinks by
+   --vb-chat-w, ChatSidebar.svelte, board.css). The root takes no z-index, so the header's menus still open over the chat.
+   With the boardChromeInMount flag off the page's <main> is the stage itself. */
+body > .vb-board:not(.vb-stage) { position: absolute; inset: 0; }
 body > .vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px)) var(--vb-chat-w, 0px) 0 0; }
-
-/* The text size of everything around the cards (ui-text.css): whole pixels, 14, 15, 16, 19. Change this one number. */
-:root {
-  --vb-ui-text-scale: 1.25;
-  --vb-ui-text-xs: round(calc(var(--vb-text-xs) * var(--vb-ui-text-scale)), 1px);
-  --vb-ui-text-sm: round(calc(var(--vb-text-sm) * var(--vb-ui-text-scale)), 1px);
-  --vb-ui-text-md: round(calc(var(--vb-text-md) * var(--vb-ui-text-scale)), 1px);
-  --vb-ui-text-lg: round(calc(var(--vb-text-lg) * var(--vb-ui-text-scale)), 1px);
-}

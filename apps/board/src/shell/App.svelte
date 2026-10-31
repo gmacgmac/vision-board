@@ -1,30 +1,22 @@
-<!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals notice (proposals
-     flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
-     the Go to card box while a digit typed on the board has it open (goToCard flag), or `/`, for words (cardSearch flag),
-     the chat sidebar (chatPanel flag), toast, the confirm dialog, the New board / Rename board dialog (boardEdit flag),
-     the Archived list (archiveBoard flag) and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes/notes.ts). The stage is the
-     board's root: the framework-free board (D-005) is mounted in it with this page as its host (board/mount.ts,
-     page-host.ts), and the page draws from the board's status. -->
+<!-- The standalone page, one host of the board (board/mount.ts, host.ts; page-host.ts): the board's root fills it
+     and holds the board's controls (board/chrome/), and the page keeps its own: the skip link, the chat sidebar
+     (chatPanel flag), toast, the confirm dialog, the folder picker (openFolder flag) and the parts it draws in the
+     board's header (page-parts.ts). With the boardChromeInMount flag off the page draws the same controls round
+     its own <main>, which is then the board's root. -->
 <script lang="ts">
   import * as commonWords from '../board/words/common.ts';
-  import * as shellBoardWords from './words/shell-board.ts';
+  import * as chromeBoardWords from '../board/words/chrome-board.ts';
   import { onMount, tick, untrack } from 'svelte';
+  import { BoardChrome, createChrome } from '../board/chrome/index.ts';
   import { mount, type MountedBoard } from '../board/mount.ts';
   import { exposeWork } from '../board/work.ts';
   import { askConfirm, shell, toast } from './shell.svelte.ts';
   import { createPageHost, guardLeave } from './page-host.ts';
-  import Toolbar from './Toolbar.svelte';
-  import ReplyPanel from './ReplyPanel.svelte';
+  import { pageParts } from './page-parts.ts';
+  import { applyTheme } from './theme.ts';
   import ConfirmDialog from './ConfirmDialog.svelte';
-  import BoardDialog from './BoardDialog.svelte';
-  import AccessRequests from './AccessRequests.svelte';
-  import ProposalsBar from './ProposalsBar.svelte';
-  import VersionBanner from './VersionBanner.svelte';
-  import KeyHelp from './KeyHelp.svelte';
-  import GoToCard from './GoToCard.svelte';
   import ChatSidebar from './ChatSidebar.svelte';
   import FolderDialog from './FolderDialog.svelte';
-  import ArchivedDialog from './ArchivedDialog.svelte';
   import Toast from './Toast.svelte';
   import * as chatWords from './words/chat.ts';
   import { createChatBridge } from './chat-bridge.ts';
@@ -34,18 +26,17 @@
   import { pageFlags } from '../flags.ts';
 
   /** The board's root: the page hosts the board in it (board/mount.ts), as nclite hosts it in a pane. */
-  let stage: HTMLElement;
+  let root = $state<HTMLElement>();
   let view = $state<MountedBoard | null>(null);
-  const board = $derived(view?.board ?? null);
   /** The chat beside the board (chatPanel flag, chat-panel FE_02): the page's chat as the board's host gives it. */
   const bridge = createChatBridge();
-  const host = createPageHost(bridge.host);
-  const keyBubble = flagOn('keyBubble', pageFlags());
+  shell.chatPanel = flagOn('chatPanel', pageFlags());
+  const host = createPageHost(bridge.host, pageParts());
+  /** Flag off: the page draws the board's controls round its own stage, with their state from the status. */
+  const pageChrome = flagOn('boardChromeInMount', pageFlags()) ? null : createChrome(host, document.documentElement, '');
   const openFolder = flagOn('openFolder', pageFlags());
   /** A tab close, a reload and another folder ask while a note holds unsaved words (M11). */
   const leavePrompt = flagOn('leavePrompt', pageFlags());
-  const archiving = flagOn('archiveBoard', pageFlags());
-  shell.chatPanel = flagOn('chatPanel', pageFlags());
   /** Working alongside the agent (workAlongside flag, point 328): the chat button's mark and count, Send queued, a reply announced. */
   shell.workAlongside = shell.chatPanel && flagOn('workAlongside', pageFlags());
   const alongside = shell.workAlongside ? {
@@ -65,6 +56,8 @@
   $effect(() => {
     if (shell.chatOpen) untrack(() => chat?.opened());
   });
+  // The page's theme, on the page and kept.
+  $effect(() => applyTheme(shell.theme));
   // The viewer's alignment (alignSetting flag, field report batch 3 ruling 4) changed in the "⋯" menu: a setting the board hears.
   $effect(() => {
     void shell.align;
@@ -84,10 +77,15 @@
   }
 
   onMount(() => {
-    const v = mount(stage, host);
+    const v = mount(root!, host);
     // What the page shows of the board is its status, mirrored into the page's state.
-    Object.assign(shell, v.status.now);
-    const unmirror = v.status.on((patch) => Object.assign(shell, patch));
+    const mirror = (patch: Partial<typeof v.status.now>) => { Object.assign(shell, patch); if (pageChrome) Object.assign(pageChrome.state, patch); };
+    mirror(v.status.now);
+    const unmirror = v.status.on(mirror);
+    // The chat keeps level with the stage's top, under the header and any strip.
+    const stage = document.getElementById('stage')!;
+    const level = new ResizeObserver(() => document.documentElement.style.setProperty('--vb-chat-top', `${stage.getBoundingClientRect().top}px`));
+    level.observe(stage);
     // The chat reaches the board through its view; it draws again on every draw.
     const unbridge = bridge.board(v);
     const unrefresh = v.status.on((patch) => { if ('drawn' in patch) bridge.refresh(); });
@@ -97,52 +95,21 @@
     const unguardDrops = shell.chatPanel && flagOn('chatAttachments', pageFlags()) ? guardFileDrops(document) : undefined;
     if (new URLSearchParams(location.search).has('vbwork')) exposeWork({ rebuild: () => v.board.rebuild(), idle: () => v.board.idle() });
     view = v;
-    return () => { unguardDrops?.(); unguard?.(); unrefresh(); unbridge(); unmirror(); v.unmount(); };
+    return () => { level.disconnect(); unguardDrops?.(); unguard?.(); unrefresh(); unbridge(); unmirror(); v.unmount(); };
   });
 </script>
 
-<a class="vb-skip" href="#stage">{shellBoardWords.skipToTheBoard}</a>
-<Toolbar
-  onboard={(id) => board?.switchTo(id)}
-  onversion={(seq) => board?.showVersion(seq) ?? Promise.resolve()}
-  ongo={(id) => board?.goToContainer(id)}
-  onopen={(n) => board?.go.to(n)}
-  oncommand={(id) => board?.command(id)}
-  onhide={() => board?.toggleHide()}
-  onsend={() => view?.send() ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)}
-  onrevoke={(agent) => board?.access.revoke(undefined, agent) ?? Promise.resolve()}
-  onflagged={() => board?.nextFlagged()}
-  onarchive={() => void board?.boardEdit.archive()}
-  onlock={() => void board?.boardEdit.lock()}
-/>
-{#if shell.past}
-  <VersionBanner run={shell.past} onback={() => void board?.showVersion(null)} />
+<a class="vb-skip" href="#stage">{chromeBoardWords.skipToTheBoard}</a>
+{#if pageChrome}
+  <BoardChrome chrome={pageChrome} board={() => view?.board ?? null} send={() => view?.send() ?? Promise.resolve(chromeBoardWords.theBoardIsNotReady)}>
+    {#snippet stage()}<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label={commonWords.board} bind:this={root}></main>{/snippet}
+  </BoardChrome>
 {:else}
-  {#if shell.agentAccess}
-    <AccessRequests requests={shell.requests} news={shell.requestNews}
-      onanswer={(seq, a, text) => board?.access.answer(seq, a, text) ?? Promise.resolve(false)}
-      onallowall={(seqs) => board?.access.answerAll(seqs) ?? Promise.resolve(false)} />
-  {/if}
-  <ProposalsBar rows={shell.proposals} news={shell.proposalNews}
-    onreview={(n) => board?.proposals.review(n)} onacceptall={() => void board?.proposals.acceptAll()} />
-{/if}
-
-<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label={commonWords.board} bind:this={stage}></main>
-<!-- The selection, perceivable without colour (3_FE_01 ruling 9): a polite live region. -->
-<p id="selection-status" class="vb-visually-hidden" role="status">{shell.selection}</p>
-
-<ReplyPanel />
-
-{#if keyBubble}<KeyHelp />{/if}
-{#if shell.go}
-  <GoToCard box={shell.go} search={board?.go.words ?? false} onedit={(text) => board?.go.edit(text)} onenter={() => board?.go.enter()}
-    onclose={() => board?.go.close()} onpast={() => void board?.go.openPast()} onstep={(dir) => board?.go.step(dir)} />
+  <div bind:this={root}></div>
 {/if}
 {#if shell.chatPanel}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
 
 <Toast />
 
 <ConfirmDialog />
-<BoardDialog onsave={(action, fields) => board?.boardEdit.save(action, fields) ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)} />
-{#if archiving}<ArchivedDialog onrestore={(id) => board?.boardEdit.restore(id) ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)} />{/if}
 {#if openFolder}<FolderDialog guard={leavePrompt ? view : null} />{/if}

@@ -1,4 +1,4 @@
-/* The header by its own width (adaptiveHeader flag; shell/header-tier.ts holds what sits where): `data-tier` on the
+/* The header by its own width (adaptiveHeader flag; board/chrome/header-tier.ts holds what sits where): `data-tier` on the
    toolbar, a size container so its parts follow the bar and not the window, in a host's pane too. Tokens only. */
 .vb-toolbar[data-tier] { container: vb-bar / inline-size; gap: var(--vb-space-2); padding-inline: var(--vb-space-3); }
 [data-tier] :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-2); align-items: center; flex-shrink: 0; }

@@ -12,7 +12,7 @@
   import * as chatWords from './words/chat.ts';
   import { onMount, untrack } from 'svelte';
   import { shell } from './shell.svelte.ts';
-  import { keep, kept } from './kept.ts';
+  import { keep, kept } from '../board/kept.ts';
 
   let { onhost, onload, view, onretry = () => location.reload(), placement = 'board' }: {
     /** Fill the panel; returns what undoes it. */

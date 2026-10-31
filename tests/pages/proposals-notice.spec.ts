@@ -74,7 +74,7 @@ test('the notice floats over the top left of the board: the stage is not pushed 
     const s = getComputedStyle(e);
     return { position: s.position, background: s.backgroundColor, blur: s.backdropFilter, radius: parseFloat(s.borderTopLeftRadius) };
   });
-  expect(look.position).toBe('fixed');
+  expect(look.position, 'placed against the root: it moves nothing').toBe('absolute');
   const alpha = Number(/[,/]\s*([\d.]+)\)$/.exec(look.background)?.[1] ?? 1);
   expect(alpha, `about half opaque: ${look.background}`).toBeGreaterThanOrEqual(0.4);
   expect(alpha).toBeLessThanOrEqual(0.65);

@@ -138,8 +138,11 @@ export function checkReferences(fromRel, text, names, layers = LAYERS) {
 /** The board's own folder: what any host mounts (board/mount.ts, ARCH_03). */
 export const BOARD_DIR = 'apps/board/src/board/';
 
+/** The board's controls, Svelte compiled inside the plugin's bundle (PLAN Decisions): only this folder may import it. */
+export const CHROME_DIR = `${BOARD_DIR}chrome/`;
+
 /** Principles § The board is a plugin: nothing under the board's folder imports the page around it
- * (the standalone shell, its flags, its gallery) or Svelte, so the board mounts in any host. */
+ * (the standalone shell, its flags, its gallery) or, outside `chrome/`, Svelte, so the board mounts in any host. */
 export function checkBoardHost(fromRel, text) {
   if (!fromRel.startsWith(BOARD_DIR)) return [];
   const out = [];
@@ -148,7 +151,7 @@ export function checkBoardHost(fromRel, text) {
     const target = spec.startsWith('.') ? path.posix.normalize(path.posix.join(path.posix.dirname(fromRel), spec)) : null;
     if (target?.startsWith('apps/board/src/') && !target.startsWith(BOARD_DIR)) {
       out.push(fail(fromRel, `imports its host (${spec}): the board takes what it needs from \`mount(root, host)\` (board/host.ts), never from the page around it`));
-    } else if (spec === 'svelte' || spec.startsWith('svelte/') || spec.endsWith('.svelte') || spec.includes('.svelte.')) {
+    } else if (!fromRel.startsWith(CHROME_DIR) && (spec === 'svelte' || spec.startsWith('svelte/') || spec.endsWith('.svelte') || spec.includes('.svelte.'))) {
       out.push(fail(fromRel, `imports Svelte (${spec}): the board is framework-free and hostable; no Svelte type crosses its host interface`));
     }
   }

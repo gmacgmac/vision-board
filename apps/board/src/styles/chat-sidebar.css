@@ -1,10 +1,10 @@
-/* The chat sidebar (chat-panel FE_02, chatPanel flag; shell/ChatSidebar.svelte): on the right, under
-   the toolbar and whatever strip shows (as the stage, board.css), as wide as the person set it
+/* The chat sidebar (chat-panel FE_02, chatPanel flag; shell/ChatSidebar.svelte): on the right, level with
+   the stage's top, under the toolbar and whatever strip shows (--vb-chat-top, App.svelte), as wide as the person set it
    (--vb-chat-w while open). The stage's right edge is the sidebar's left one. Its left edge is the
    grip: drag it, or focus it and use the arrow keys. The chat inside styles itself (chat-host.css). */
 .vb-chat {
   position: fixed; right: 0; bottom: 0; z-index: var(--vb-z-open); width: var(--vb-chat-w);
-  top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px));
+  top: var(--vb-chat-top, var(--vb-toolbar-h));
   display: flex; flex-direction: column; border-left: 1px solid var(--vb-line); background: var(--vb-surface-region);
 }
 .vb-chat > .chat-panel { flex: 1; min-height: 0; }

@@ -1,5 +1,5 @@
 // The open cards list's samples in the toolbar's gallery section (toolbar-section.ts; openList flag,
-// open-list FE_01): the toolbar's own "N open" chip (shell/OpenChip.svelte) over the fixture's main
+// open-list FE_01): the toolbar's own "N open" chip (board/chrome/OpenChip.svelte) over the fixture's main
 // board, its open cards worked out as the board does (`openCards`), at rest, hovered, focused and
 // pressed, on a narrow toolbar (the number only), and with nothing open (the plain chip). The list
 // itself is the browser's native one. Shown only with the flag on, so ?flags=-openList draws the
@@ -7,7 +7,7 @@
 import { mount } from 'svelte';
 import { openCards } from '#actions';
 import type { OpenCard } from '#actions';
-import OpenChip from '../shell/OpenChip.svelte';
+import { OpenChip } from '../board/chrome/index.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 

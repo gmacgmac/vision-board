@@ -9,7 +9,7 @@ import type { ItemStatus } from '#actions';
 import { statusOf } from '#actions';
 import type { VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
-import VersionBanner from '../shell/VersionBanner.svelte';
+import { VersionBanner } from '../board/chrome/index.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_KINDS } from './fixture.ts';

@@ -1,6 +1,6 @@
 // Go to a card by typing its number (cortex-tasks/board/2026-10-15_board-app_go-to-card-number.md,
 // goToCard flag). A digit typed on the board, outside a text field, opens the "Go to card" box
-// (shell/GoToCard.svelte) holding it (the `go-to-card` command, commands.ts, keys.ts); Enter goes,
+// (board/chrome/GoToCard.svelte) holding it (the `go-to-card` command, commands.ts, keys.ts); Enter goes,
 // Backspace edits, Esc closes. Nothing goes by itself; with the goAfterPause flag (off) a pause of
 // GO_PAUSE after the last digit goes (ruling 2). Going selects and focuses the card; the board
 // pans only by `revealPan`'s rule (the controller's `arrive`, ruling 3). A number the board never

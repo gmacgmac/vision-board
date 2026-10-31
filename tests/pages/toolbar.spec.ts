@@ -54,7 +54,7 @@ async function open(page: Page, request: APIRequestContext, flags = ''): Promise
 async function controls(page: Page) {
   return page.evaluate(() => {
     const bar = document.querySelector('.vb-toolbar') as HTMLElement;
-    const out = [...bar.querySelectorAll<HTMLElement>(':scope > *, .vb-toolbar-end > *')]
+    const out = [...bar.querySelectorAll<HTMLElement>(':scope > *, .vb-toolbar-end > *, .vb-part > *')]
       .filter((e) => !e.classList.contains('vb-visually-hidden') && !e.classList.contains('vb-toolbar-end')
         && e.getClientRects().length > 0)
       .map((e) => { const r = e.getBoundingClientRect(); return { id: e.id || (e.getAttribute('class') ?? ''), left: r.left, right: r.right, width: r.width }; });

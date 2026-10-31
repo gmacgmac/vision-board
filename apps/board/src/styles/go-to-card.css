@@ -1,4 +1,4 @@
-/* The Go to card box (shell/GoToCard.svelte, goToCard flag): a small box on the popover surface (`.vb-surface-pop`, #ui base/surface.css), at the board's
+/* The Go to card box (board/chrome/GoToCard.svelte, goToCard flag): a small box on the popover surface (`.vb-surface-pop`, #ui base/surface.css), at the board's
    bottom right, clear of the chat sidebar (--vb-chat-w); the gallery puts it in the page flow.
    States: typing, not found (what it found, on the problem's red edge), retired (the same, with
    the version to open). The field's hover and focus are the shared input look. Tokens only.
@@ -8,7 +8,7 @@
   display: grid; gap: var(--vb-space-1); width: 15rem; padding: var(--vb-space-3);
   color: var(--vb-ink); font: var(--vb-text-md) var(--vb-font);
 }
-.vb-go[data-placement='board'] { position: fixed; right: calc(var(--vb-chat-w, 0px) + var(--vb-space-4)); bottom: var(--vb-space-3); z-index: var(--vb-z-chrome); }
+.vb-go[data-placement='board'] { position: absolute; right: calc(var(--vb-chat-w, 0px) + var(--vb-space-4)); bottom: var(--vb-space-3); z-index: var(--vb-z-chrome); }
 .vb-go[data-placement='gallery'] { position: relative; }
 .vb-go-label { font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
 .vb-go-field {

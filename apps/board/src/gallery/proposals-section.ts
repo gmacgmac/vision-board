@@ -11,7 +11,7 @@ import { mount } from 'svelte';
 import type { ViewNode } from '#format';
 import type { VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
-import ProposalsBar from '../shell/ProposalsBar.svelte';
+import { ProposalsBar } from '../board/chrome/index.ts';
 import ConfirmList from '../shell/ConfirmList.svelte';
 import type { ProposalRow } from '#actions';
 import { acceptAllPlan } from '#actions';

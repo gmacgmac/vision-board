@@ -143,6 +143,7 @@ test('the board is hostable: a file under apps/board/src/board/ importing the pa
     assert.deepEqual(levels(r), ['fail'], spec);
     assert.match(r[0].message, /imports Svelte/);
   }
+  assert.deepEqual(checkBoardHost('apps/board/src/board/chrome/A.svelte', "import { tick } from 'svelte';\nimport B from './B.svelte';"), [], 'the controls are Svelte, inside the plugin');
   assert.deepEqual(checkBoardHost('apps/board/src/shell/a.ts', "import { s } from './shell.svelte.ts';\nimport { b } from '../board/mount.ts';"), [], 'the host may import the board');
 });
 

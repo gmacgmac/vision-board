@@ -65,7 +65,7 @@ async function mostApart(page: Page, a: Buffer, b: Buffer): Promise<number> {
  * (pixels would not do: a scaled board's edges rasterise a step apart at another place on the page). */
 function layoutOf(page: Page): Promise<string[]> {
   return page.evaluate(() => {
-    const root = document.querySelector('main.vb-board')!;
+    const root = document.querySelector('.vb-board')!;
     const at = root.getBoundingClientRect();
     const r = (n: number) => Math.round(n * 100) / 100;
     return [root, ...root.querySelectorAll('*')].map((e) => {
@@ -122,7 +122,7 @@ for (const theme of THEMES) {
   test(`the board in a 550px pane inside a 1600px page draws as in a 550px window, under the host's rules too (${theme})`, async ({ page }) => {
     const roadmap = await startRoadmapServer();
     try {
-      const board = page.locator('main.vb-board');
+      const board = page.locator('.vb-board');
       await setTheme(page, theme);
       await page.setViewportSize({ width: PANE, height: 1000 });
       await openBoard(page, { base: roadmap.base, query: '?flags=-chatPanel' });
@@ -130,7 +130,7 @@ for (const theme of THEMES) {
       // The same board as a pane at the left of a wide page: the page puts it there before it draws.
       await page.addInitScript((css) => {
         addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: css })));
-      }, `body > .vb-stage { right: ${WIDE - PANE}px; }`);
+      }, `body > .vb-board:not(.vb-stage) { right: ${WIDE - PANE}px; }`);
       await page.setViewportSize({ width: WIDE, height: 1000 });
       await openBoard(page, { base: roadmap.base, query: '?flags=-chatPanel' });
       expect((await board.boundingBox())?.width).toBe(PANE);

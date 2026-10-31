@@ -1,0 +1,9 @@
+/* The text size of everything around the cards (ui-text.css): whole pixels, 14, 15, 16, 19. Change this one number.
+   Custom properties only, as the tokens are: it reaches nothing in a host's page (verify-style.mjs). */
+:root {
+  --vb-ui-text-scale: 1.25;
+  --vb-ui-text-xs: round(calc(var(--vb-text-xs) * var(--vb-ui-text-scale)), 1px);
+  --vb-ui-text-sm: round(calc(var(--vb-text-sm) * var(--vb-ui-text-scale)), 1px);
+  --vb-ui-text-md: round(calc(var(--vb-text-md) * var(--vb-ui-text-scale)), 1px);
+  --vb-ui-text-lg: round(calc(var(--vb-text-lg) * var(--vb-ui-text-scale)), 1px);
+}

@@ -6,7 +6,7 @@
 // cardSearch flags on; last in the gallery, so no section above moves.
 import { mount } from 'svelte';
 import { boardSearchDocs } from '#actions';
-import GoToCard from '../shell/GoToCard.svelte';
+import { GoToCard } from '../board/chrome/index.ts';
 import type { GoBox, GoTo } from '../board/find/index.ts';
 import { createGoTo } from '../board/find/index.ts';
 import { el, group } from './dom.ts';

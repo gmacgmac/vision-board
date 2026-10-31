@@ -3,12 +3,13 @@
 // board's own Svelte component, mounted in the page flow. Shown only with the flag on, so
 // ?flags=-keyBubble draws the gallery as it was.
 import { mount } from 'svelte';
-import KeyHelp from '../shell/KeyHelp.svelte';
+import { KeyHelp } from '../board/chrome/index.ts';
+import { chromeSample } from './chrome-sample.ts';
 import { el, group } from './dom.ts';
 
 function sample(open: boolean): HTMLElement {
   const host = el('div', 'g-keys');
-  mount(KeyHelp, { target: host, props: { placement: 'gallery' } });
+  mount(KeyHelp, { target: host, context: chromeSample(), props: { placement: 'gallery' } });
   host.querySelector('.vb-keys')!.toggleAttribute('data-keys-open', open);
   return host;
 }

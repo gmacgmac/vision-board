@@ -9,7 +9,7 @@ import { defineBoardElements, PATTERNS, setMarkdownImages, setMarkdownSvg } from
 import type { PatternInfo } from '#ui';
 import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
-import { keep, kept } from '../shell/kept.ts';
+import { keep, kept } from '../board/kept.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';

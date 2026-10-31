@@ -1,5 +1,5 @@
 // The open cards list (open-list FE_01, openList flag, on by default): the toolbar's "N open" chip is
-// a menu dropdown (shell/MenuSelect.svelte, the Containers finder's pattern) listing the open cards
+// a menu dropdown (board/chrome/MenuSelect.svelte, the Containers finder's pattern) listing the open cards
 // as "number · title" in board order; choosing one goes to it as Go to card does (selected,
 // focused, panned in only when off screen). The chip keeps its look; with nothing open, or the flag
 // off, it is the plain chip. Reading, not acting: it works in a past version and sends nothing.

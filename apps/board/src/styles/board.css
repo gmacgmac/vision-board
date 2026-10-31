@@ -5,9 +5,21 @@
 .vb-skip { position: absolute; left: var(--vb-space-2); top: -100px; z-index: var(--vb-z-skip); }
 .vb-skip:focus { top: var(--vb-space-2); }
 
+/* The board's root holds its controls round the stage (chrome/BoardChrome.svelte), each placed against the
+   root, so a host's pane holds them as the window does. The stage keeps its own width to size by: beside a
+   chat, narrower than the root. A host's own `position` on its root wins (`:where`). */
+:where(.vb-board) { position: relative; }
+.vb-board > .vb-stage {
+  position: absolute; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px)) var(--vb-chat-w, 0px) 0 0;
+  container: vb-board / inline-size;
+}
+/* A control the standalone page draws in the header (host.ts `BoardPageParts`) takes no room of its own. */
+.vb-part { display: contents; }
+.vb-part:empty + .vb-path-sep { display: none; }
+
 /* Toolbar */
 .vb-toolbar {
-  position: fixed; inset: 0 0 auto 0; height: var(--vb-toolbar-h); z-index: var(--vb-z-chrome);
+  position: absolute; inset: 0 0 auto 0; height: var(--vb-toolbar-h); z-index: var(--vb-z-chrome);
   display: flex; align-items: center; gap: var(--vb-space-3); padding: 0 var(--vb-space-4);
   background: var(--vb-surface-region); border-bottom: 1px solid var(--vb-line);
 }
@@ -72,7 +84,7 @@
 /* The "N open" chip's face (MenuSelect.svelte): hovered over any tone. */
 .vb-chip.vb-menu-face:hover, .vb-chip.vb-menu-face[data-look='hover'] { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
 .vb-menu-face:active, .vb-menu-face[data-look='pressed'] { transform: translateY(1px); }
-/* A menu dropdown over a chip (shell/MenuSelect.svelte with a face: the "N open" chip, open-list FE_01):
+/* A menu dropdown over a chip (board/chrome/MenuSelect.svelte with a face: the "N open" chip, open-list FE_01):
    the select lies unseen over the chip, so a click or a key opens its list while the chip keeps its
    look; the chip draws the hover and pressed looks above and the focus ring the select would. */
 .vb-menu-face { position: relative; cursor: pointer; }
@@ -165,7 +177,7 @@
   display: flex; align-items: center; gap: var(--vb-space-3); padding: var(--vb-space-2) var(--vb-space-4);
   background: var(--vb-accent-soft); color: var(--vb-ink-strong); border-bottom: 1px solid var(--vb-line);
 }
-.vb-banner[data-placement='board'] { position: fixed; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: var(--vb-z-chrome); }
+.vb-banner[data-placement='board'] { position: absolute; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: var(--vb-z-chrome); }
 .vb-banner[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
 .vb-banner-text { margin: 0; font-size: var(--vb-text-sm); }
 .vb-banner-text b { font-weight: var(--vb-weight-bold); }

@@ -7,8 +7,9 @@
 import { mount } from 'svelte';
 import FolderChip from '../shell/FolderChip.svelte';
 import FolderPicker from '../shell/FolderPicker.svelte';
-import ToolbarMenu from '../shell/ToolbarMenu.svelte';
+import { ToolbarMenu } from '../board/chrome/index.ts';
 import type { FolderList } from '../shell/page-io.ts';
+import { chromeSample } from './chrome-sample.ts';
 import { el, group } from './dom.ts';
 
 const none = () => undefined;
@@ -31,7 +32,7 @@ function chip(folder: typeof SHORT, look?: 'hover' | 'focus' | 'pressed', narrow
 function menu(folder: typeof SHORT): HTMLElement {
   const host = el('div', 'g-toolbar g-archive-menu');
   host.toggleAttribute('data-menu-open', true);
-  mount(ToolbarMenu, { target: host, props: { theme: 'system', ontheme: none, onhide: none, folder, current: true, open: true, placement: 'gallery' } });
+  mount(ToolbarMenu, { target: host, context: chromeSample({ folder, current: true }), props: { onhide: none, open: true, placement: 'gallery' } });
   return host;
 }
 

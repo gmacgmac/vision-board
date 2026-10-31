@@ -1,9 +1,9 @@
-// The header's tiers (adaptiveHeader flag, shell/header-tier.ts): which tier a width is, what sits
+// The header's tiers (adaptiveHeader flag, board/chrome/header-tier.ts): which tier a width is, what sits
 // where, and that nothing a person can act on is ever out of reach.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FULL_MIN, HALF_MIN, HEADER_CONTROLS, headerTier, inBar, inMenu } from '../src/shell/header-tier.ts';
-import type { HeaderControl, HeaderTier } from '../src/shell/header-tier.ts';
+import { FULL_MIN, HALF_MIN, HEADER_CONTROLS, headerTier, inBar, inMenu } from '../src/board/chrome/header-tier.ts';
+import type { HeaderControl, HeaderTier } from '../src/board/chrome/header-tier.ts';
 
 const TIERS: HeaderTier[] = ['full', 'half', 'third'];
 const bar = (tier: HeaderTier) => HEADER_CONTROLS.filter((c) => inBar(tier, c));

@@ -1,5 +1,5 @@
 // The board in any host (ARCH_03; principles § The board is a plugin; nclite's plugin contract,
-// docs/plugins.md § The view and its host): `mount(root, host)` with a fake host, no Svelte and no
+// docs/plugins.md § The view and its host): `mount(root, host)` with a fake host and no
 // server. The board draws a fixture board from the host's `api`; the selection is a chip through
 // `chat.attach`, replaced as it changes; Send goes through `chat.send`; `reveal({ cards })` zooms and
 // selects nothing; `chat.status` drives the board's mark; a removal asks the host's `confirm` first; a change event redraws; two boards on one
@@ -7,59 +7,13 @@
 // left on the document or the window and none on the host. A host's Close asks the board first
 // (`leave`, M11): only a note with changed words makes the host's confirm ask. The fixture (board-host-fixture.ts) is
 // bundled here in memory with Vite and run in a blank page.
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import type { Page } from '@playwright/test';
-import { build } from 'vite';
-import { FIXTURES_DIR } from '#format/files';
 import { expect, test } from './helpers.ts';
+import { call, LINES, open } from './board-host-page.ts';
 
-const ROOT = path.resolve(import.meta.dirname, '../..');
-const LINES = readFileSync(path.join(FIXTURES_DIR, 'roadmap.ledger.jsonl'), 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l) as { seq: number; type: string });
 /** Board A starts with the ledger up to the line before the last card; the rest comes as one event. */
 const LAST_NODE = LINES.findLast((l) => l.type === 'node')!.seq;
 const SHOWN = LAST_NODE - 1;
 const nodesUpTo = (seq: number) => LINES.filter((l) => l.type === 'node' && l.seq <= seq).length;
-
-let bundle: { js: string; css: string } | null = null;
-
-/** The fixture as one script and one sheet. */
-async function fixture(): Promise<{ js: string; css: string }> {
-  if (bundle) return bundle;
-  const out = await build({
-    configFile: false, logLevel: 'silent', root: ROOT,
-    build: { write: false, target: 'es2022', cssCodeSplit: false, minify: false,
-      lib: { entry: path.join(ROOT, 'tests/pages/board-host-fixture.ts'), formats: ['es'], fileName: 'fixture' } },
-  });
-  const files = (Array.isArray(out) ? out : [out]).flatMap((o) => ('output' in o ? o.output : []));
-  const js = files.find((f) => f.type === 'chunk');
-  const css = files.find((f) => f.type === 'asset' && f.fileName.endsWith('.css'));
-  if (js?.type !== 'chunk' || css?.type !== 'asset') throw new Error('the fixture did not bundle');
-  bundle = { js: js.code, css: String(css.source) };
-  return bundle;
-}
-
-/** A blank page holding two empty roots, in a host's own layout, with the fixture loaded. */
-async function open(page: Page): Promise<void> {
-  const { js, css } = await fixture();
-  await page.setContent('<!doctype html><html lang="en"><head><title>Host</title></head><body><main class="host"><div id="host-bar"></div><div id="a"></div><div id="b"></div></main></body></html>');
-  await page.addStyleTag({ content: `${css}\n.host { display: flex; gap: 8px; } #a, #b { width: 620px; height: 560px; }` });
-  await page.addScriptTag({ content: js, type: 'module' });
-  await page.waitForFunction(() => 'vbHost' in window);
-}
-
-type Host = {
-  listeners(): number; mount(id: string, lines: object[], shown: number): void; idle(id: string): Promise<void>;
-  send(id: string): Promise<string | null>; status(id: string): { selection: string; hide: boolean; boardId: string; zoom: number; chatWork: string; sendWaiting: boolean; chatAttached: boolean; go?: unknown };
-  record(id: string): { chips: Record<string, { plugin: string; kind: string; ref: { board: string; cards: number[] }; label: string; preview?: string }>; attaches: { key: string; chip: { ref: { cards?: number[] } } | null }[]; sends: { kind: string }[][]; confirms: { heading: string; list?: unknown }[];
-    notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };
-  pageChip(id: string): { plugin: string; kind: string; ref: { board: string; head: number }; label: string; detail: string } | null;
-  addHostControls(parentId: string): void; addClose(parentId: string, id: string): void; unsaved(id: string): boolean;
-  reveal(id: string, ref: { board?: string; n?: number; seq?: number; cards?: number[] }): void; work(id: string, w: string): void;
-  answer(id: string, ok: boolean): void; appendRest(id: string): void; unmount(id: string): void;
-};
-const call = <T>(page: Page, fn: (h: Host, ...args: never[]) => T, ...args: unknown[]) =>
-  page.evaluate(({ src, args }) => (new Function('h', 'args', `return (${src})(h, ...args)`) as (h: unknown, a: unknown[]) => T)((window as unknown as { vbHost: unknown }).vbHost, args), { src: fn.toString(), args });
 
 test('the board mounts in a fake host: it draws, Send goes through the chat with the selection as its chip, a removal asks confirm, an event redraws, two boards work apart, and unmount leaves nothing', async ({ page }) => {
   await open(page);
@@ -71,9 +25,11 @@ test('the board mounts in a fake host: it draws, Send goes through the chat with
   await expect(a).toHaveCount(nodesUpTo(SHOWN));
   await expect(b).toHaveCount(nodesUpTo(Infinity));
 
-  // The board's elements are inside its root, with no ids of their own; the root is its stage.
-  await expect(page.locator('#a')).toHaveClass(/\bvb-board\b.*\bvb-stage\b/);
-  expect(await page.evaluate(() => document.querySelectorAll('#a > [id], #a .vb-world > [id]').length)).toBe(0);
+  // The board's elements are inside its root: the cards in its stage, among its controls, with no ids of their own.
+  await expect(page.locator('#a')).toHaveClass(/\bvb-board\b/);
+  await expect(page.locator('#a > .vb-toolbar')).toHaveCount(1);
+  await expect(page.locator('#a > .vb-stage > .vb-world')).toHaveCount(1);
+  expect(await page.evaluate(() => document.querySelectorAll('#a .vb-world > [id]').length)).toBe(0);
   expect(await page.evaluate(() => document.querySelectorAll('body > :not(main)').length)).toBe(0);
 
   // Two boards, one document: no id twice, and every aria-controls / aria-describedby points inside its own board.
@@ -225,26 +181,6 @@ test('keys stay inside the board: a host control hears its own keys, and a click
   await page.keyboard.press('h');
   await expect.poll(() => hidden('a')).toBe(true);
   expect(await hidden('b')).toBe(false);
-});
-
-// Search (cardSearch flag, SEARCH_02; VERIFY_01 F6): the search box is the standalone page's
-// (shell/GoToCard.svelte), so the board binds `/` only where the page draws it (`host.page`). Under a
-// host that draws no box, `/` opens nothing and is left to the host (not prevented); no search state
-// waits for the letters typed after it.
-test('under a host that draws no box, / opens no search and stays the host\'s', async ({ page }) => {
-  await open(page);
-  await call(page, (h, lines: object[]) => h.mount('a', lines, lines.length), LINES);
-  await expect(page.locator('#a vb-node')).toHaveCount(nodesUpTo(Infinity));
-  await page.evaluate(() => {
-    (window as unknown as { slash: boolean | null }).slash = null;
-    window.addEventListener('keydown', (e) => { if (e.key === '/') (window as unknown as { slash: boolean }).slash = e.defaultPrevented; });
-  });
-  const box = (await page.locator('#a').boundingBox())!;
-  await page.mouse.click(box.x + box.width - 12, box.y + box.height - 12);
-  await page.keyboard.press('/');
-  expect(await page.evaluate(() => (window as unknown as { slash: boolean | null }).slash), 'the host\'s: not prevented').toBe(false);
-  expect(await call(page, (h, id: string) => h.status(id).go ?? null, 'a'), 'no box state').toBe(null);
-  await expect(page.locator('#a vb-node[data-found], #a .vb-world[data-search]')).toHaveCount(0);
 });
 
 test('the host asks before words are lost: Close asks only while a note holds changed words; Cancel keeps them, OK unmounts', async ({ page }) => {

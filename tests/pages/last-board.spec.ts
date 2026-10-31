@@ -1,5 +1,5 @@
 // The last board (page-polish ruling B, board/boards/start-board.ts): the board a viewer last looked at is
-// kept in this browser (localStorage `vb.lastBoard`, shell/kept.ts); opening the page with no board
+// kept in this browser (localStorage `vb.lastBoard`, board/kept.ts); opening the page with no board
 // in its hash opens it again if it still exists, and a board in the hash always wins.
 // Each test draws its own boards through the API, as an agent would.
 import type { APIRequestContext, Page } from '@playwright/test';

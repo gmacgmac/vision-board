@@ -5,10 +5,11 @@
 // samples (open-list-section.ts). Shown only with the flag on, so ?flags=-toolbarMenu draws the
 // gallery as it was.
 import { mount } from 'svelte';
-import ToolbarEnd from '../shell/ToolbarEnd.svelte';
+import { ToolbarEnd } from '../board/chrome/index.ts';
 import { flagOn } from '#format';
 import { pageFlags } from '../flags.ts';
-import { FULL_MIN } from '../shell/header-tier.ts';
+import { FULL_MIN } from '../board/chrome/index.ts';
+import { chromeSample } from './chrome-sample.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { openListGroups } from './open-list-section.ts';
@@ -19,11 +20,12 @@ function sample(fx: Fixture, narrow: boolean, zoom: number, menuOpen = false): H
   host.toggleAttribute('data-menu-open', menuOpen);
   const none = () => undefined;
   mount(ToolbarEnd, {
+    context: chromeSample(),
     target: host,
     props: {
-      theme: 'system', ontheme: none, oncommand: none, onhide: none,
+      oncommand: none, onhide: none,
       onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(),
-      holders: fx.boardAgents, chat: flagOn('chatPanel', pageFlags()), menu: true, zoom, placement: 'gallery', menuOpen,
+      holders: fx.boardAgents, menu: true, zoom, placement: 'gallery', menuOpen,
       ...(flagOn('adaptiveHeader', pageFlags()) && { tier: narrow ? 'half' as const : 'full' as const }),
     },
   });

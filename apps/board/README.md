@@ -3,8 +3,9 @@
 The Vision Board app: the page in `src/` and the small local server (`server.ts`, `server/`) that
 serves the built page and reads and appends the project ledger
 (`<VB_PROJECT>/.visionboard/ledger.jsonl`, D-017) through `server/ledger.ts`. `src/shell/` is the
-Svelte shell (toolbar, reply panel, note dialog; D-012). `src/board/` is the framework-free canvas
-controller it mounts (layout, drawing, pointer, keys, I/O; D-005), in feature folders: `canvas/` (the draw, the viewport,
+standalone page, one host of the board (its chat, folder picker, toast and confirm dialog; D-012). `src/board/` is what any
+host mounts: the framework-free canvas controller (layout, drawing, pointer, keys, I/O; D-005) and, in `chrome/`, its controls
+(the toolbar, strips, reply panel, search and help, Svelte compiled inside), in feature folders: `canvas/` (the draw, the viewport,
 focus, places), `links/` (connectors and their labels), `cards/` (the card set, images, attention, the review
 buttons, the flag, proposals, updates, parking, Remove, a card's history), `notes/` (note bubbles, container notes,
 group pins), `selection/` (selection, lasso, bar, moves, container drags), `input/` (commands, keys, pointer, the
@@ -38,7 +39,7 @@ card identity, while everything it draws and sends names a card by its number on
 flag (`cards/flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retiredCounts`, retiredMarker
 flag), the person's Remove card and Remove container (`cards/remove-flow.ts`, whose words are
 `cardsWords` and `containerWords`, personRemove flag), the Go to card box (`find/go-to-card.ts` over `goTarget`,
-`src/shell/GoToCard.svelte`, goToCard flag)
+`src/board/chrome/GoToCard.svelte`, goToCard flag)
 and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field report batch
 3: `links/wires.ts` draws a link's label on its line where the layout found it room (`links/link-labels.ts`)
 and a marker that floats the label on hover and focus where it did not (`links/link-marks.ts`, linkLabels

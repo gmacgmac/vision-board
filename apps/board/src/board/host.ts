@@ -3,7 +3,7 @@
 // `mount(root, host)` (mount.ts): everything it does outside its own root goes through `BoardHost`,
 // in the contract's shape, and what a host shows of the board (counts, versions, the open lists)
 // comes out through the view's status (status.ts), never in through the host. Plain TypeScript: no
-// Svelte type crosses it. The standalone app is one host (shell/page-host.ts); a test's fake host
+// Svelte type crosses it (the board's own controls are Svelte, compiled inside it: chrome/, PLAN Decisions). The standalone app is one host (shell/page-host.ts); a test's fake host
 // is another (tests/pages/board-host.spec.ts). Each difference from nclite's draft is listed in
 // docs/specification/components.md § The board's host interface.
 import type { Chip } from '#actions';
@@ -48,9 +48,35 @@ export interface BoardPage {
   opened(id: string): void;
   /** Start the page again with no board named (the open board was archived and none is left). */
   restart(): void;
+  /** The page's own controls in the board's header. A host has none, and the header reflows. */
+  parts?: BoardPageParts;
   /** Runs a person's call: the standalone page reloads once for a fresh cookie when one is refused
    * as `forbidden` (shell/page-io.ts `asPerson`). */
   person?<T>(run: () => Promise<T>): Promise<T>;
+}
+
+/** What the header gives a part: its id and, on a gallery's sample, a state to draw; in the "⋯" menu, how
+ *  to close the menu and then act. */
+export interface PagePartArgs {
+  id?: string | undefined;
+  look?: 'hover' | 'focus' | 'pressed' | undefined;
+  choose?: ((run: () => void) => void) | undefined;
+}
+
+/** A control the page draws into `target`, an element of the header's that takes no room; it gives back
+ *  what undoes it. It may draw nothing for now (a folder not read yet). */
+export type PagePart = (target: HTMLElement, args: PagePartArgs) => () => void;
+
+/** What only the standalone page has in the board's header: its theme and alignment in "⋯", its folder
+ *  (a chip in the path, a row of "⋯" once the bar is narrow, Open folder… last in "⋯") and its Chat button. */
+export interface BoardPageParts {
+  /** A row of "⋯" given `choose`, else a button (toolbarMenu flag off). */
+  theme?: PagePart;
+  alignRow?: PagePart;
+  folderChip?: PagePart;
+  folderField?: PagePart;
+  folderRow?: PagePart;
+  chat?: PagePart;
 }
 
 /** What the chat's agent is doing: nothing, its turn running, or waiting for the person's OK. */

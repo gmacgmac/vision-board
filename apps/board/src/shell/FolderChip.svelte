@@ -8,7 +8,7 @@
      gallery's samples only. The toolbar and the gallery both draw this. -->
 <script lang="ts">
   import * as foldersWords from './words/folders.ts';
-  import ButtonIcon from './ButtonIcon.svelte';
+  import { ButtonIcon } from '../board/chrome/index.ts';
   import { folderName, folderPath } from './folder-path.ts';
   import type { FolderInfo } from './page-io.ts';
 

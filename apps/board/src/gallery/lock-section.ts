@@ -10,9 +10,10 @@ import type { BoardState } from '#actions';
 import { LOCKED_PERSON } from '#actions';
 import type { VbNodeElement, VbRegionElement } from '#ui';
 import { nodeState, regionState } from '#ui';
-import LockedChip from '../shell/LockedChip.svelte';
-import SendButton from '../shell/SendButton.svelte';
-import ToolbarMenu from '../shell/ToolbarMenu.svelte';
+import { LockedChip } from '../board/chrome/index.ts';
+import { SendButton } from '../board/chrome/index.ts';
+import { ToolbarMenu } from '../board/chrome/index.ts';
+import { chromeSample } from './chrome-sample.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
@@ -22,7 +23,7 @@ const none = () => undefined;
 function menu(locked: boolean): HTMLElement {
   const host = el('div', 'g-toolbar g-archive-menu');
   host.toggleAttribute('data-menu-open', true);
-  mount(ToolbarMenu, { target: host, props: { theme: 'system', ontheme: none, onhide: none, onlock: none, locked, open: true, placement: 'gallery' } });
+  mount(ToolbarMenu, { target: host, context: chromeSample(), props: { onhide: none, onlock: none, locked, open: true, placement: 'gallery' } });
   return host;
 }
 

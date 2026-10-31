@@ -4,7 +4,7 @@
 // the same state code the board uses (go-to-card.ts `createGoTo`), over fixed targets. Shown only
 // with the flag on, so ?flags=-goToCard draws the gallery as it was.
 import { mount } from 'svelte';
-import GoToCard from '../shell/GoToCard.svelte';
+import { GoToCard } from '../board/chrome/index.ts';
 import type { GoTarget } from '#actions';
 import type { GoBox } from '../board/find/index.ts';
 import { createGoTo } from '../board/find/index.ts';

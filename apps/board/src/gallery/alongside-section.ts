@@ -7,7 +7,7 @@
 // so no section above moves.
 import { mount } from 'svelte';
 import ChatButton from '../shell/ChatButton.svelte';
-import SendButton from '../shell/SendButton.svelte';
+import { SendButton } from '../board/chrome/index.ts';
 import Toast from '../shell/Toast.svelte';
 import type { AgentWork } from '../shell/chat-news.ts';
 import * as chatWords from '../shell/words/chat.ts';

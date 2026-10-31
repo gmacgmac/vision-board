@@ -8,12 +8,14 @@
 // the board does. With accessByBot a second section shows the strip with three bots, two of them
 // sharing a label.
 import { mount } from 'svelte';
+import { flagOn } from '#format';
+import { pageFlags } from '../flags.ts';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
-import AccessRequests from '../shell/AccessRequests.svelte';
-import SendButton from '../shell/SendButton.svelte';
-import BoardAgents from '../shell/BoardAgents.svelte';
-import type { SendState } from '../shell/shell.svelte.ts';
+import { AccessRequests } from '../board/chrome/index.ts';
+import { SendButton } from '../board/chrome/index.ts';
+import { BoardAgents } from '../board/chrome/index.ts';
+import type { SendState } from '../board/chrome/index.ts';
 import type { AccessRequestRow } from '../board/access/index.ts';
 import { requestRows } from '../board/access/index.ts';
 import type { BoardData } from '#actions';
@@ -56,7 +58,7 @@ function strip(fx: Fixture): HTMLElement {
   const rows = requestRows(asBoard(fx));
   mount(AccessRequests, {
     target: host,
-    props: { requests: rows, refusing: rows[1]?.seq ?? null, placement: 'gallery', onanswer: () => Promise.resolve(false) },
+    props: { requests: rows, refusing: rows[1]?.seq ?? null, placement: 'gallery', byBot: flagOn('accessByBot', pageFlags()), onanswer: () => Promise.resolve(false) },
   });
   return host;
 }

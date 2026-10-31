@@ -9,7 +9,7 @@
   background: var(--vb-surface-region); border-bottom: 1px solid var(--vb-line);
 }
 .vb-access[data-placement='board'] {
-  position: fixed; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: var(--vb-z-chrome);
+  position: absolute; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: var(--vb-z-chrome);
   max-height: 40vh; overflow-y: auto;
 }
 .vb-access[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }

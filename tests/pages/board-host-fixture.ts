@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-// The browser side of board-host.spec.ts: the board mounted by a fake host, with no Svelte and no
+// The browser side of board-host.spec.ts: the whole board, its controls too, mounted by a fake host, with no
 // server (ARCH_03; nclite's plugin contract, docs/plugins.md § The view and its host). Each fake
 // host serves a ledger from memory through `api`, keeps a fake chat (`BoardChat`) that holds its chips
 // by key, records every Send, confirmation and notice, and can append lines and say so through `events`.
@@ -7,8 +7,7 @@
 // blank page; `window.vbHost` is what the spec drives. The listeners on the document and the window
 // are counted, so the spec can see that `unmount` leaves none behind.
 import '#tokens/styles.css';
-import '../../apps/board/src/styles/board.css';
-import '#ui/styles.css';
+import '../../apps/board/src/styles/board-sheets.ts';
 import type { Chip } from '#actions';
 import { defineBoardElements } from '#ui';
 import type { BoardEvent, BoardHost, ChatWork, ConfirmAsk } from '../../apps/board/src/board/host.ts';

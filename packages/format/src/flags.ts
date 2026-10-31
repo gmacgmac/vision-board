@@ -236,7 +236,7 @@ export const FLAGS = {
   cardSearch: {
     // On by default (maintainer, 2026-10-28, points 317 and 322; tracker M7; search-and-finding SEARCH_02).
     default: true,
-    description: 'The Go to card box also searches: `/` opens it, letters find cards by their title, text, notes, replies and container (words in any order, part of a word, case and accents ignored, best first); matches ring and the rest dim, ↓ and ↑ step, Enter goes, Esc clears. Digits still go to a card by number. Only on the board\'s own page, which draws the box; under a host `/` stays the host\'s. Off, the box takes digits only.',
+    description: 'The Go to card box also searches: `/` opens it, letters find cards by their title, text, notes, replies and container (words in any order, part of a word, case and accents ignored, best first); matches ring and the rest dim, ↓ and ↑ step, Enter goes, Esc clears. Digits still go to a card by number. Under a host too: the box draws inside the board\'s root (M27). Off, the box takes digits only.',
   },
   reviewList: {
     // On by default (maintainer, 2026-10-28, point 319; search-and-finding REVIEW_01).
@@ -271,11 +271,11 @@ export const FLAGS = {
   adaptiveHeader: {
     // On by default (maintainer, 2026-10-31, approved mock-up); ?flags=-adaptiveHeader turns it off.
     default: true,
-    description: 'The header takes one of three forms by its own width, not the window\'s (shell/header-tier.ts; needs versionView and toolbarMenu): full, one path "folder / board / version" and everything with its words; half, Version and Containers in "⋯" and the zoom as a small menu; a third, the board\'s name, a compact count, Send, Chat and "⋯", which holds the rest. Off, the toolbar is as it was.',
+    description: 'The header takes one of three forms by its own width, not the window\'s (board/chrome/header-tier.ts; needs versionView and toolbarMenu): full, one path "folder / board / version" and everything with its words; half, Version and Containers in "⋯" and the zoom as a small menu; a third, the board\'s name, a compact count, Send, Chat and "⋯", which holds the rest. Off, the toolbar is as it was.',
   },
   boardChromeInMount: {
-    // Off until the move is proven, then on and removed (maintainer, 2026-10-31, point 373; plugin-mode CHROME_01).
-    default: false,
+    // On once the move held every page spec; removed at the plugin-mode set's close (maintainer, 2026-10-31, point 373; CHROME_01).
+    default: true,
     description: 'The board\'s controls (toolbar, strips, dialogs, search, help) draw inside `mount`\'s root, so any host gets the whole board and the standalone page holds only what is truly its own. Off, the page draws them around the board as before.',
   },
   readAttachment: {

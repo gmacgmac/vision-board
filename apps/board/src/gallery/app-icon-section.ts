@@ -1,7 +1,7 @@
 // Gallery entry for the app icon (navigation FE_05): the board's own AppIcon component at the
 // toolbar's size and enlarged, in the page's theme (the gallery's theme button shows the other).
 import { mount } from 'svelte';
-import AppIcon from '../shell/AppIcon.svelte';
+import { AppIcon } from '../board/chrome/index.ts';
 import { el, group } from './dom.ts';
 
 function sample(size: number): HTMLElement {

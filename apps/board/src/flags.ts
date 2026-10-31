@@ -4,7 +4,7 @@
 // old bookmark cannot break the page. Tests and the gallery's samples pass overrides directly.
 import type { FlagOverrides } from '#format';
 import { parseFlags } from '#format';
-import { kept } from './shell/kept.ts';
+import { kept } from './board/kept.ts';
 
 export const FLAGS_KEY = 'vb.flags';
 

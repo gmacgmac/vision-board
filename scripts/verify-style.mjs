@@ -73,6 +73,8 @@ export function checkIO(rel, text) {
 const BOARD_SHEETS = /^(?:packages\/ui\/src\/|apps\/board\/src\/styles\/).*\.css$/;
 /** The standalone page's own sheets, which may style the page (a host brings its own). */
 const STANDALONE = ['apps/board/src/styles/shell.css', 'apps/board/src/styles/chat-host.css'];
+/** The board's sheet of custom properties on `:root`, as the tokens are: nothing in a host's page reads them. */
+const PROPERTIES_ONLY = 'apps/board/src/styles/ui-scale.css';
 /** A selector that names a vb- class, a vb- element or a vb- class attribute. */
 const SCOPED = /\.vb-|(?:^|[\s>+~(,])vb-[a-z]|\[class[*~^|]?=\s*['"]?vb-/;
 const WINDOW_WIDTH = /\((?:min-|max-)?width\s*[:<>=]|\(\s*[\d.]+\w*\s*[<>]=?\s*width/;
@@ -80,7 +82,7 @@ const splitTop = (list) => list.split(/,(?![^(]*\))/).map((s) => s.trim()).filte
 
 /** Every rule in a board stylesheet names a vb- class or element, and no rule sizes by the window. */
 export function checkScope(rel, text) {
-  if (!BOARD_SHEETS.test(rel) || STANDALONE.includes(rel)) return [];
+  if (!BOARD_SHEETS.test(rel) || STANDALONE.includes(rel) || rel === PROPERTIES_ONLY) return [];
   const css = uncomment(text, true);
   const out = [];
   // The blocks open now: 'group' (@media, @container, @supports, @layer), 'skip' (@keyframes,

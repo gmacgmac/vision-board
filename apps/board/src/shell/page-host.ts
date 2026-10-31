@@ -1,6 +1,6 @@
 // The standalone page as the board's host (board/host.ts, ARCH_03): one host among any. Its calls go
 // with `fetch` on the page's own origin, its change events are the project's live stream
-// (`watch_project`), its settings are the page's flags (`?flags=` and `vb.flags`, flags.ts) and the
+// (`watch_project`), its header's own controls the page's parts (page-parts.ts), its settings are the page's flags (`?flags=` and `vb.flags`, flags.ts) and the
 // viewer's alignment (align.ts), its notices the toast and its confirmations the shared dialog
 // (shell.svelte.ts). Its page part names the open board in the address, keeps the board last looked
 // at (per folder with the openFolder flag, folder.ts), reloads to start again and holds the person's
@@ -9,12 +9,12 @@
 // leavePrompt flag it guards its own tab: a close or reload while a note holds unsaved words gets the
 // browser's "Leave site?" prompt (`guardLeave`).
 import { flagOn, isFlag } from '#format';
-import type { BoardChat, BoardHost, BoardEvent } from '../board/host.ts';
+import type { BoardChat, BoardHost, BoardEvent, BoardPageParts } from '../board/host.ts';
 import type { Status } from '../board/status.ts';
 import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
-import { keep, kept } from './kept.ts';
+import { keep, kept } from '../board/kept.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
 import { askConfirm, shell, toast } from './shell.svelte.ts';
 
@@ -38,7 +38,7 @@ export function guardLeave(status: Pick<Status, 'now' | 'on'>): () => void {
 /** This board's id in a change event. */
 const PLUGIN = 'board';
 
-export function createPageHost(chat: BoardChat): PageHost {
+export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): PageHost {
   const flags = pageFlags();
   const openFolder = openFolderOn();
   const listeners = new Set<() => void>();
@@ -93,6 +93,7 @@ export function createPageHost(chat: BoardChat): PageHost {
         if (lastKey !== LAST_BOARD_KEY) keep(LAST_BOARD_KEY, id);
       },
       restart: reloadOnto,
+      parts,
       person: asPerson,
     },
   };

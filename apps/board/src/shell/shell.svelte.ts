@@ -1,14 +1,12 @@
 // The standalone page's state: the board's status (board/status.ts), mirrored here after every change
-// so the Svelte shell redraws (App.svelte), and the page's own: its toast, dialogs, chat panel, open
-// folder and the viewer's alignment. The board never reads or writes this file (D-005: Svelte
-// arranges the page, the canvas stays framework-free; ARCH_03: the board is hostable). The toolbar,
-// reply panel, confirm dialog and toast read it.
-import type { BoardActionId } from '#actions';
+// so the chat and the page's parts redraw (App.svelte, page-parts.ts), and the page's own: its toast, confirm
+// dialog, chat panel, open folder, theme and the viewer's alignment. The board never reads or writes this file.
 import type { Align } from '#layout';
 import type { ConfirmList } from '../board/host.ts';
 import { initialStatus } from '../board/status.ts';
 import type { FolderInfo } from './page-io.ts';
 import { keptAlign } from './align.ts';
+import { keptTheme } from './theme.ts';
 import type { AgentWork } from './chat-news.ts';
 
 export type { AccessRequestRow } from '../board/access/index.ts';
@@ -29,25 +27,17 @@ export interface ConfirmRequest {
   resolve(ok: boolean): void;
 }
 
-/** The Send to agent button's own states; hover, focus and pressed are CSS. */
-export type SendState = 'idle' | 'sending' | 'sent' | 'error' | 'waiting' | 'disabled';
-
-/** The New board or Rename board dialog (BoardDialog), with the words it opens with. */
-export interface BoardDialogRequest { action: BoardActionId; title: string; summary: string }
-
 export const shell = $state({
   /** The board's status (board/status.ts), as it last said it. */
   ...initialStatus(),
-  /** The Archived list is open (ArchivedDialog.svelte). */
-  archivedDialog: false,
   /** The viewer's alignment (alignSetting flag, field report batch 3 ruling 4): the "⋯" menu's Centre
    *  cards; kept in this browser (align.ts). The board reads it as a setting (page-host.ts). */
   align: keptAlign() as Align,
+  /** The page's theme (theme.ts), kept in this browser. */
+  theme: keptTheme(),
   toast: null as Toast | null,
   confirm: null as ConfirmRequest | null,
-  /** The New board or Rename board dialog, open while set (navigation BE_01). */
-  boardDialog: null as BoardDialogRequest | null,
-  /** The chatPanel flag: the chat sidebar and its toolbar button (chat-panel FE_02). */
+  /** The chatPanel flag: the chat sidebar (chat-panel FE_02). */
   chatPanel: false,
   /** The chat sidebar is open (ChatSidebar.svelte keeps it per viewer). */
   chatOpen: false,

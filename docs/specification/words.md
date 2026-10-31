@@ -26,7 +26,7 @@ keys are what the plugin's one words file (nclite, `organizer.chip.task` style) 
 this doc does not list them, the test does (`words.test.mjs`, "every sentence has a key").
 Keys are stable: reword a sentence in its file, keep its name.
 
-Shared text lives in the `common` file of its part (`common.ts`, `shell-common.ts`, `ui-common.ts`,
+Shared text lives in the `common` file of its part (`common.ts`, `chrome-common.ts`, `ui-common.ts`,
 `server-common.ts`): a fixed sentence in two files of one group of parts (the board and the shell
 are one) fails the test. The parts are separate modules and may not import each other's words
 (D-016): the board, the shell, the patterns, the server, the action layer and the format each keep
@@ -44,6 +44,15 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/src/board/words/board.ts` | `board` | The board page's own text: its heading, status, empty states and errors. |
 | `apps/board/src/board/words/boards.ts` | `boards` | The board picker, rename, archive, lock and the archived list. |
 | `apps/board/src/board/words/cards.ts` | `cards` | Cards: flag, move, select, finder and history. |
+| `apps/board/src/board/words/chrome-access.ts` | `chrome-access` | Access requests and the revoke confirm: what an agent asks for and what the person is told. |
+| `apps/board/src/board/words/chrome-board.ts` | `chrome-board` | The board page's own text: its heading, status, empty states and errors. |
+| `apps/board/src/board/words/chrome-boards.ts` | `chrome-boards` | The board picker, rename, archive, lock and the archived list. |
+| `apps/board/src/board/words/chrome-common.ts` | `chrome-common` | Sentences more than one area of the page says, said once. |
+| `apps/board/src/board/words/chrome-confirm.ts` | `chrome-confirm` | The confirm dialog, its list and the discard-changes confirm. |
+| `apps/board/src/board/words/chrome-go-to-card.ts` | `chrome-go-to-card` | Go to card and the open-items chip. |
+| `apps/board/src/board/words/chrome-key-help.ts` | `chrome-key-help` | The key command list and its headings. |
+| `apps/board/src/board/words/chrome-proposals.ts` | `chrome-proposals` | Proposal counts, the accept-all confirm and its toast. |
+| `apps/board/src/board/words/chrome-send.ts` | `chrome-send` | The Send button, its states and tooltips. |
 | `apps/board/src/board/words/commands.ts` | `commands` | Tooltips of the board's commands (name and what they do). |
 | `apps/board/src/board/words/common.ts` | `common` | Sentences more than one area of the page says, said once. |
 | `apps/board/src/board/words/confirm.ts` | `confirm` | The confirm dialog, its list and the discard-changes confirm. |
@@ -51,7 +60,9 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/src/board/words/key-help.ts` | `key-help` | The key command list and its headings. |
 | `apps/board/src/board/words/notes.ts` | `notes` | Notes: the toasts for saving and removing, and the group pins. |
 | `apps/board/src/board/words/proposals.ts` | `proposals` | Proposal counts, the accept-all confirm and its toast. |
+| `apps/board/src/board/words/reply.ts` | `reply` | The reply panel. |
 | `apps/board/src/board/words/send.ts` | `send` | The Send button, its states and tooltips. |
+| `apps/board/src/board/words/toolbar.ts` | `toolbar` | The toolbar, its menu, zoom level, chips and the version banner. |
 
 ### The standalone page around the board
 
@@ -59,17 +70,6 @@ layer: its words import nothing, not even `node:`.
 |---|---|---|
 | `apps/board/src/shell/words/chat.ts` | `chat` | The chat panel's sentences that the page owns. |
 | `apps/board/src/shell/words/folders.ts` | `folders` | The folder picker, the folder chip and the page title that names the folder. |
-| `apps/board/src/shell/words/reply.ts` | `reply` | The reply panel. |
-| `apps/board/src/shell/words/shell-access.ts` | `shell-access` | Access requests and the revoke confirm: what an agent asks for and what the person is told. |
-| `apps/board/src/shell/words/shell-board.ts` | `shell-board` | The board page's own text: its heading, status, empty states and errors. |
-| `apps/board/src/shell/words/shell-boards.ts` | `shell-boards` | The board picker, rename, archive, lock and the archived list. |
-| `apps/board/src/shell/words/shell-common.ts` | `shell-common` | Sentences more than one area of the page says, said once. |
-| `apps/board/src/shell/words/shell-confirm.ts` | `shell-confirm` | The confirm dialog, its list and the discard-changes confirm. |
-| `apps/board/src/shell/words/shell-go-to-card.ts` | `shell-go-to-card` | Go to card and the open-items chip. |
-| `apps/board/src/shell/words/shell-key-help.ts` | `shell-key-help` | The key command list and its headings. |
-| `apps/board/src/shell/words/shell-proposals.ts` | `shell-proposals` | Proposal counts, the accept-all confirm and its toast. |
-| `apps/board/src/shell/words/shell-send.ts` | `shell-send` | The Send button, its states and tooltips. |
-| `apps/board/src/shell/words/toolbar.ts` | `toolbar` | The toolbar, its menu, zoom level, chips and the version banner. |
 
 ### The ledger format (`packages/format`, the bottom layer: its words import nothing)
 

@@ -5,9 +5,10 @@
 // ?flags=-archiveBoard draws the gallery as it was.
 import { mount } from 'svelte';
 import type { ArchivedBoard } from '#actions';
-import ArchivedList from '../shell/ArchivedList.svelte';
-import ToolbarMenu from '../shell/ToolbarMenu.svelte';
+import { ArchivedList } from '../board/chrome/index.ts';
+import { ToolbarMenu } from '../board/chrome/index.ts';
 import { archiveAsk } from '../board/boards/index.ts';
+import { chromeSample } from './chrome-sample.ts';
 import { el, group } from './dom.ts';
 
 const BOARDS: ArchivedBoard[] = [
@@ -30,7 +31,7 @@ function list(boards: readonly ArchivedBoard[], opts: { busy?: string; problem?:
 function menu(): HTMLElement {
   const host = el('div', 'g-toolbar g-archive-menu');
   host.toggleAttribute('data-menu-open', true);
-  mount(ToolbarMenu, { target: host, props: { theme: 'system', ontheme: none, onhide: none, onarchive: none, open: true, placement: 'gallery' } });
+  mount(ToolbarMenu, { target: host, context: chromeSample(), props: { onhide: none, onarchive: none, open: true, placement: 'gallery' } });
   return host;
 }
 

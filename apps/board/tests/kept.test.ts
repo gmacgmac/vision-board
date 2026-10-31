@@ -1,8 +1,8 @@
-// A per-viewer convenience kept in the browser (shell/kept.ts): read and kept through
+// A per-viewer convenience kept in the browser (board/kept.ts): read and kept through
 // localStorage, and nothing breaks when storage is absent or refuses.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keep, kept } from '../src/shell/kept.ts';
+import { keep, kept } from '../src/board/kept.ts';
 
 const g = globalThis as { localStorage?: unknown };
 

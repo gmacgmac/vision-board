@@ -1,4 +1,4 @@
-// The toolbar's finders, menu dropdowns (shell/MenuSelect.svelte) whose rows are `MenuRow`s. The
+// The toolbar's finders, menu dropdowns (board/chrome/MenuSelect.svelte) whose rows are `MenuRow`s. The
 // container finder (navigation FE_02, containerFinder flag): the board's containers in board order
 // with each one's card count, Later always last; Later with no card is listed but cannot be chosen
 // (it has no frame then, `placedView`); a choice zooms to it. The open list (open-list FE_01,

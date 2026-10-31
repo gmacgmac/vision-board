@@ -1,4 +1,4 @@
-// The header by its own width (adaptiveHeader flag, on by default; shell/header-tier.ts). Three forms with
+// The header by its own width (adaptiveHeader flag, on by default; board/chrome/header-tier.ts). Three forms with
 // one copy of each control: full, half and a third of the design's 1470px. Nothing is cut off down to a 400px
 // bar, with a long name and every chip that comes and goes; every action is reachable at a third, by
 // pointer and by keys; the bar reads its own width, not the window's, with no jump on load; axe and APCA,

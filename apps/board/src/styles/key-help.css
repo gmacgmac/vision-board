@@ -1,7 +1,7 @@
-/* The key commands bubble (navigation FE_04, keyBubble flag; shell/KeyHelp.svelte): a round "?" at
+/* The key commands bubble (navigation FE_04, keyBubble flag; board/chrome/KeyHelp.svelte): a round "?" at
    the board's bottom left and the box it opens above itself (the tip box and its open rules are
    tip/tip.css and tip/hover-tip.ts, which set data-keys-open on .vb-keys). Tokens only. */
-.vb-keys[data-placement='board'] { position: fixed; left: var(--vb-space-4); bottom: var(--vb-space-3); z-index: var(--vb-z-open); }
+.vb-keys[data-placement='board'] { position: absolute; left: var(--vb-space-4); bottom: var(--vb-space-3); z-index: var(--vb-z-open); }
 .vb-keys { --vb-keys-btn: var(--vb-control-h); }
 /* In the gallery the box is held inside the sample: the button sits at its foot, the box above it. */
 .vb-keys[data-placement='gallery'] { position: relative; display: flex; align-items: flex-end; }

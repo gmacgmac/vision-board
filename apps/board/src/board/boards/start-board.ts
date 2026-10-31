@@ -1,6 +1,6 @@
 // Which board the page opens (page-polish ruling B): the board named in the URL's hash always
 // wins; with none (or one that is not there), the board this viewer last looked at, kept in this
-// browser under LAST_BOARD_KEY (shell/kept.ts, a per-viewer convenience) if it still exists; else
+// browser under LAST_BOARD_KEY (board/kept.ts, a per-viewer convenience) if it still exists; else
 // the first board in the list, as before. An archived board is never opened by default (N39 ruling
 // 4): one the hash or the memory names gives way to the next board after it (`nextBoard`), as
 // archiving the open board does. Pure, so it is unit-tested under plain Node.

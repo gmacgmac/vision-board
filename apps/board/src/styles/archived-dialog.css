@@ -1,4 +1,4 @@
-/* The Archived list (archiveBoard flag, shell/ArchivedDialog.svelte, ArchivedList.svelte): the
+/* The Archived list (archiveBoard flag, board/chrome/ArchivedDialog.svelte, ArchivedList.svelte): the
    board's dialog look (board.css .vb-dialog); one row per archived board, its name and when it was
    last updated on the left, Restore on the right; the list scrolls inside a capped height. A Restore
    that waits while another board is restored is aria-disabled, so it keeps focus. */

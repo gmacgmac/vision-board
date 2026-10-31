@@ -1,6 +1,6 @@
 // What a host shows of the board (host.ts): the board's own status, one plain observable per
-// mounted board. The board's modules set it; a host reads `now` and hears each change (`on`) to draw
-// its toolbar, strips and lists (the standalone page mirrors it into its Svelte state, shell.svelte.ts).
+// mounted board. The board's modules set it; the board's controls draw from it (chrome/), and a host reads
+// `now` and hears each change (`on`) for what it shows of the board (the standalone page's chat, shell.svelte.ts).
 // Nothing in it is the host's: a host never writes it, and the board never reads the host's state.
 import type { AccessHolder, ArchivedBoard, BoardListItem, BoardMark, BoardRun, FreshCard, OpenCard, ProposalRow } from '#actions';
 import type { AccessRequestRow } from './access/index.ts';

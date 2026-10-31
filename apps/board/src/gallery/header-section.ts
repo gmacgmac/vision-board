@@ -4,9 +4,9 @@
 // path's parts and the menu's rows in every state. Shown only with the flag on (and versionView and
 // toolbarMenu), so ?flags=-adaptiveHeader draws the gallery as it was. Names are examples.
 import { mount } from 'svelte';
-import Toolbar from '../shell/Toolbar.svelte';
-import { shell } from '../shell/shell.svelte.ts';
-import { FULL_MIN, HALF_MIN, type HeaderTier } from '../shell/header-tier.ts';
+import { Toolbar } from '../board/chrome/index.ts';
+import { chromeState, type ChromeState, FULL_MIN, HALF_MIN, type HeaderTier } from '../board/chrome/index.ts';
+import { chromeSample } from './chrome-sample.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
@@ -16,13 +16,14 @@ const WIDTH: Record<HeaderTier, number> = { full: 1470, half: 735, third: 490 };
 const CARDS = [{ n: 12, title: 'Which role first?' }, { n: 14, title: 'Who pays for it?' }];
 const none = () => undefined;
 
-type Facts = typeof shell;
+type Facts = ChromeState;
+const start = chromeState();
+const FOLDER = { path: '/home/example/projects/atlas', name: '~/projects/atlas' };
 const facts = (more: Partial<Facts> = {}): Facts => ({
-  ...shell, title: NAME, boardId: 'atlas', boards: [{ board: 'atlas', title: NAME, seq: 37 }, { board: 'other', title: 'Another board', seq: 4 }] as Facts['boards'],
-  version: 37, versions: [{ seq: 36, at: '2026-10-30T09:00:00.000Z' }] as Facts['versions'], versionView: true, chatPanel: true, agentAccess: true, zoom: 47,
+  ...start, title: NAME, boardId: 'atlas', boards: [{ board: 'atlas', title: NAME, seq: 37 }, { board: 'other', title: 'Another board', seq: 4 }] as Facts['boards'],
+  version: 37, versions: [{ seq: 36, at: '2026-10-30T09:00:00.000Z' }] as Facts['versions'], versionView: true, agentAccess: true, zoom: 47,
   containers: [{ id: 'roles', title: 'Roles', count: 5, usable: true }, { id: 'budget', title: 'Budget', count: 9, usable: true }] as Facts['containers'],
-  counts: { ...shell.counts, open: 14 }, openCards: CARDS as Facts['openCards'], freshCards: CARDS.slice(0, 1) as Facts['freshCards'],
-  folder: { path: '/home/example/projects/atlas', name: '~/projects/atlas' } as Facts['folder'], ...more,
+  counts: { ...start.counts, open: 14 }, openCards: CARDS as Facts['openCards'], freshCards: CARDS.slice(0, 1) as Facts['freshCards'], ...more,
 });
 
 interface SampleOptions { facts?: Facts; menuOpen?: boolean; zoomOpen?: boolean; look?: 'hover' | 'focus' | 'pressed'; send?: 'disabled' }
@@ -31,6 +32,7 @@ function sample(fx: Fixture, form: HeaderTier, o: SampleOptions = {}): HTMLEleme
   frame.style.width = `${WIDTH[form]}px`;
   if (o.menuOpen || o.zoomOpen) frame.dataset.open = o.zoomOpen ? 'zoom' : form;
   mount(Toolbar, {
+    context: chromeSample({ chip: FOLDER, chat: true }),
     target: frame,
     props: {
       onboard: none, onversion: () => Promise.resolve(), ongo: none, onopen: none, oncommand: none, onhide: none,
@@ -44,7 +46,7 @@ function sample(fx: Fixture, form: HeaderTier, o: SampleOptions = {}): HTMLEleme
 
 /** Every form's chips that come and go, and the long name: the most the bar ever holds. */
 const crowded = (more: Partial<Facts> = {}): Facts => facts({
-  title: LONG, locked: true, flagged: 2, boardMarks: { other: 'new' }, counts: { ...shell.counts, open: 14, withAgent: 1 }, ...more,
+  title: LONG, locked: true, flagged: 2, boardMarks: { other: 'new' }, counts: { ...start.counts, open: 14, withAgent: 1 }, ...more,
 });
 
 export function headerSection(fx: Fixture): HTMLElement {

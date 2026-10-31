@@ -3,14 +3,14 @@
 // the board's own drawing, its cards' NEW and pink "N updates" tabs, its teal border and its
 // "1 new · 3 updated" pill, at 100% and zoomed out (the pill keeps its size); its frame alone on a
 // narrow line, where the pill leaves whole, and once engaged (plain border, no pill); and the
-// toolbar's "N new" chip (shell/OpenChip.svelte) at rest, hovered, focused, pressed and narrow. Every
+// toolbar's "N new" chip (board/chrome/OpenChip.svelte) at rest, hovered, focused, pressed and narrow. Every
 // number is worked out from the fixture ledger as the board does (packages/actions `pageConditions`).
 import { mount } from 'svelte';
 import type { ViewNode } from '#format';
 import type { CardConditions, VbRegionElement } from '#ui';
 import { regionFresh, regionState } from '#ui';
 import { pageConditions } from '#actions';
-import OpenChip from '../shell/OpenChip.svelte';
+import { OpenChip } from '../board/chrome/index.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { UPDATES_BOARD } from './fixture.ts';

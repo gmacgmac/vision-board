@@ -6,7 +6,7 @@
 import { mount } from 'svelte';
 import type { VbNodeElement } from '#ui';
 import { FLAG_KEY, nodeState } from '#ui';
-import FlaggedChip from '../shell/FlaggedChip.svelte';
+import { FlaggedChip } from '../board/chrome/index.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
