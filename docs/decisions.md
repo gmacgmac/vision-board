@@ -1065,3 +1065,13 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: the plugin will live in many apps; an exception on the board's own page would let what we test and what hosts get drift apart.
 - **Rejected**: plain ids on the board's own page (saves nothing, and the tests would check something hosts never get).
 - **Task**: cortex-tasks/board/2026-11-02_board-app_prefix-ids-everywhere.md
+
+## D-077 Under a host, the board folder lives in the bot's workspace
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, point 377.1; entry 374C) · **From**: board-agent plugin-skill-images
+- **Decision**:
+  1. In nclite each bot has its own board folder, whole, in its workspace (`bots/<id>/workspace/`).
+  2. A bot puts a picture in the `images/` folder of the board folder its host names; there is no `put_image` tool. The plugin skill's Images section says so.
+  3. An exception, for now: the bot can reach the ledger there, against "the ledger must never be editable by the agent". If that proves a problem, the ledger moves out of the workspace.
+- **Why**: the workspace is already mounted into the bot's container, so this needs no new tool and no new mount.
+- **Rejected**: a `put_image` tool (a new tool for what the bot can already do); moving the ledger out now (worth it only once the risk is real).
+- **Task**: cortex-tasks/board/2026-11-02_board-agent_plugin-skill-images.md
