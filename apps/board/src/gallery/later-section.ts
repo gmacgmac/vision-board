@@ -8,7 +8,7 @@ import { LATER, placedView } from '#actions';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
 import { LATER_FRAME } from '../board/canvas/index.ts';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 /** The empty sample's id: the gallery draws two Later frames, and frame ids must be unique. */
@@ -18,11 +18,11 @@ export function laterSamples(body: HTMLElement, fx: Fixture): void {
   const view = placedView(fx.view, fx.state);
   const later = view.regions.find((r) => r.id === LATER_REGION)!;
   const held = document.createElement('vb-region') as VbRegionElement;
-  held.render(later, LATER_FRAME);
+  held.render(later, { ...ownIds(), ...LATER_FRAME });
   held.update(regionState(later, view, fx.state, new Set(view.nodes.map((n) => n.id))));
   const empty = document.createElement('vb-region') as VbRegionElement;
   const blank = { ...LATER, id: EMPTY_LATER };
-  empty.render(blank, LATER_FRAME);
+  empty.render(blank, { ...ownIds(), ...LATER_FRAME });
   empty.update(regionState(blank, view, fx.state, new Set()));
   empty.setAttribute('data-drop', '');
   const frames = el('div', 'g-frames vb-ground');

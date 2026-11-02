@@ -17,13 +17,13 @@ import type { ProposalRow } from '#actions';
 import { acceptAllPlan } from '#actions';
 import { acceptAllWords, proposes } from '../board/cards/index.ts';
 import { reviewRows } from '../board/find/index.ts';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 function card(n: ViewNode, fx: Fixture, open: boolean): VbNodeElement {
   const { state, rows } = fx.proposals;
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n);
+  node.render(n, ownIds());
   node.update(nodeState(n, state, undefined, false, { proposals: rows.filter((r) => r.n === n.n) }));
   if (open) {
     node.querySelector('[data-pop="proposal"]')!.toggleAttribute('data-open', true);
@@ -38,7 +38,7 @@ function notice(fx: Fixture, n: ViewNode, collapsed: boolean, rows: readonly Pro
   const c = card(n, fx, false);
   c.style.transform = 'translate(48px, 18px)';
   stage.append(cardList(collapsed ? 'A card under the pill' : 'A card under the notice', c));
-  mount(ProposalsBar, { target: stage, props: { rows, placement: 'gallery', collapsed, ...(look && { look }), onreview: () => {}, onacceptall: () => {} } });
+  mount(ProposalsBar, { target: stage, props: { rows, placement: 'gallery', ids: ownIds().idPrefix, collapsed, ...(look && { look }), onreview: () => {}, onacceptall: () => {} } });
   return stage;
 }
 

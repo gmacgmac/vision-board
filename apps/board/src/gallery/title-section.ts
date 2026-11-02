@@ -10,7 +10,7 @@
 // 25% (the drawing again), where the tools have left the line.
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { miniBoard } from './mini-board.ts';
 
@@ -26,7 +26,7 @@ function slidFrame(fx: Fixture): HTMLElement {
   const { view, state } = fx.layout;
   const region = view.regions.find((r) => r.id === PLACED)!;
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render({ ...region, id: `${PLACED}-title-70` });
+  f.render({ ...region, id: `${PLACED}-title-70` }, ownIds());
   f.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id))));
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.style.width = 'calc(var(--vb-card-w) * 2.6)';
@@ -39,7 +39,7 @@ export function titleSamples(body: HTMLElement, fx: Fixture): void {
   const frames = el('div', 'g-frames vb-ground');
   for (const region of fx.view.regions.filter((r) => r.id.startsWith('title-'))) {
     const f = document.createElement('vb-region') as VbRegionElement;
-    f.render(region);
+    f.render(region, ownIds());
     f.update(regionState(region, fx.view, fx.state, new Set()));
     // The sample holds no cards, and its title is the subject: no "Everything here is answered."
     f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;

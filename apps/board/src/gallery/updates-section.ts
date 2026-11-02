@@ -6,7 +6,7 @@
 import type { ViewNode } from '#format';
 import type { CardUpdates, VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 function card(n: ViewNode, fx: Fixture, at?: (steps: number) => number): VbNodeElement {
@@ -14,7 +14,7 @@ function card(n: ViewNode, fx: Fixture, at?: (steps: number) => number): VbNodeE
   const u = cards.get(n.n!)!;
   const updates: CardUpdates = at ? { count: u.count, steps: u.steps, at: at(u.steps.length) } : { count: u.count };
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n);
+  node.render(n, ownIds());
   node.update(nodeState(n, state, undefined, false, { updates, proposals: rows.filter((r) => r.n === n.n) }));
   return node;
 }
@@ -22,7 +22,7 @@ function card(n: ViewNode, fx: Fixture, at?: (steps: number) => number): VbNodeE
 /** A card the agent added after the person first opened the board (`item.new`, newCards flag): NEW only. */
 function newCard(n: ViewNode, fx: Fixture): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n);
+  node.render(n, ownIds());
   node.update(nodeState(n, fx.updates.state, undefined, false, { new: fx.updates.fresh.has(n.n!) }));
   return node;
 }

@@ -14,7 +14,7 @@ import { LockedChip } from '../board/chrome/index.ts';
 import { SendButton } from '../board/chrome/index.ts';
 import { ToolbarMenu } from '../board/chrome/index.ts';
 import { chromeSample } from './chrome-sample.ts';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 const none = () => undefined;
@@ -41,11 +41,11 @@ function board(fx: Fixture, state: BoardState): HTMLElement[] {
   const { view } = fx.marks;
   const region = view.regions.find((r) => r.id === 'flagged')!;
   const frame = document.createElement('vb-region') as VbRegionElement;
-  frame.render(region);
+  frame.render(region, ownIds());
   frame.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id))));
   const cards = view.nodes.filter((n) => n.region === 'flagged').map((n) => {
     const node = document.createElement('vb-node') as VbNodeElement;
-    node.render(n, { flag: true, sizeControl: true });
+    node.render(n, { ...ownIds(), flag: true, sizeControl: true });
     node.update(nodeState(n, state, 'm'));
     return node;
   });

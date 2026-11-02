@@ -10,7 +10,7 @@ import { cardTimeRows } from '#actions';
 import type { VbNodeElement } from '#ui';
 import { HISTORY, historyMarkup, nodeState } from '#ui';
 import { idOf } from '../board/card-numbers.ts';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { NOTES_BOARD } from './fixture.ts';
 
@@ -21,7 +21,7 @@ const EMPTY = 'A note not yet sent';
 
 function card(n: ViewNode, fx: Fixture, rows?: readonly HistoryRow[]): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n, { history: true });
+  node.render(n, { ...ownIds(), history: true });
   node.update(nodeState(n, fx.notes.state, undefined, false, fx.notes.cards.get(n.n!)));
   if (rows) {
     const box = node.querySelector<HTMLElement>(`[data-pop="${HISTORY}"]`)!;

@@ -10,7 +10,7 @@ import { cardsWords, containerWords } from '#actions';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
 import ConfirmList from '../shell/ConfirmList.svelte';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { BOARD } from './fixture.ts';
 
@@ -25,7 +25,7 @@ function frame(fx: Fixture, state: BoardState): HTMLElement {
   const { view } = fx.marks;
   const region = view.regions.find((r) => r.id === REGION)!;
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render(region, { remove: true });
+  f.render(region, { ...ownIds(), remove: true });
   f.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id))));
   const frames = el('div', 'g-frames g-remove-frames vb-ground');
   frames.append(f);

@@ -10,7 +10,7 @@ import { statusOf } from '#actions';
 import type { VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
 import { VersionBanner } from '../board/chrome/index.ts';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_KINDS } from './fixture.ts';
 
@@ -22,7 +22,7 @@ function pastCards(fx: Fixture): HTMLElement {
   const drawn = (status: ItemStatus) => {
     const n = asks.find((x) => statusOf(fx.state, x.id) === status)!;
     const node = document.createElement('vb-node') as VbNodeElement;
-    node.render({ ...n, id: `${n.id}-past` });
+    node.render({ ...n, id: `${n.id}-past` }, ownIds());
     node.update(nodeState(n, fx.state));
     return node;
   };

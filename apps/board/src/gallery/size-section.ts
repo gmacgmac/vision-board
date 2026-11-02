@@ -7,7 +7,7 @@ import type { ViewNode } from '#format';
 import type { VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
 import { tierOf } from '../board/cards/index.ts';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_SIZES } from './fixture.ts';
 
@@ -19,7 +19,7 @@ const TIER_SAMPLES = 5;
 
 function sized(n: ViewNode, fx: Fixture): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n, { sizeControl: true });
+  node.render(n, { ...ownIds(), sizeControl: true });
   node.update(nodeState(n, fx.state, tierOf(n, fx.state)));
   if (OPEN.has(n.title)) {
     node.querySelector<HTMLElement>('.vb-size')!.dataset.open = '';

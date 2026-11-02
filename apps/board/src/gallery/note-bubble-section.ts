@@ -9,7 +9,7 @@ import type { ViewNode } from '#format';
 import type { BoardState } from '#actions';
 import type { BubbleInput, BubblePhase, NotesEntry, StageBox, VbNodeElement, VbNoteBubbleElement } from '#ui';
 import { bubbleView, conversation, isNoteEntry, nodeState, partAnchor, placeBubble } from '#ui';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import { containerBubbleSample } from './container-bubble.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
@@ -69,7 +69,7 @@ function cardOf(s: Sample, fx: Fixture): { n: ViewNode; c: VbNodeElement; state:
   const { view, state, cards } = fx.parking;
   const n = view.nodes.find((x) => x.title === s.title)!;
   const c = document.createElement('vb-node') as VbNodeElement;
-  c.render(n);
+  c.render(n, ownIds());
   c.update(nodeState(n, state, undefined, false, cards.get(n.n!)));
   const entries = conversation(state.items.get(n.id)?.notes ?? [], cards.get(n.n!)?.replies ?? []);
   const e = s.talk === 'latest' ? entries.at(-1)! : entries[0]!;

@@ -8,7 +8,7 @@ import type { Region, View } from '#format';
 import type { BoardState } from '#actions';
 import type { BubbleView, CardReply, VbNoteBubbleElement, VbRegionElement } from '#ui';
 import { bubbleView, conversation, placeBubble, regionColour, regionState, titleAnchor } from '#ui';
-import { el } from './dom.ts';
+import { el, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 // Wide enough (over 440px) that the frame's mode row does not collapse beside the bubble.
@@ -21,7 +21,7 @@ interface Shown { region: Region; frame: VbRegionElement; v: BubbleView; part?: 
 function frameOf(view: View, state: BoardState, id: string, owed?: ReadonlySet<string>, replies?: readonly CardReply[]) {
   const region = view.regions.find((r) => r.id === id)!;
   const frame = document.createElement('vb-region') as VbRegionElement;
-  frame.render({ ...region, id: `bubble-${id}` });
+  frame.render({ ...region, id: `bubble-${id}` }, ownIds());
   frame.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed, replies));
   return { region, frame };
 }

@@ -11,7 +11,7 @@
 // one element can hold them for real.
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Containers, Fixture } from './fixture.ts';
 
 type Look = 'hover' | 'focus' | 'pressed';
@@ -54,7 +54,7 @@ function frame(id: string, board: Containers): VbRegionElement {
   const { view, state, owed } = board;
   const region = view.regions.find((r) => r.id === id)!;
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render(region);
+  f.render(region, ownIds());
   f.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed));
   const extra = EXTRA[id] ?? {};
   if (extra.look) lookOf(f, extra.look);

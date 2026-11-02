@@ -419,3 +419,4 @@
 [[2026-11-02 17:35]] [board-app] Completed: Prefix The Board's Ids Everywhere → Task: [[cortex-tasks/board/2026-11-02_board-app_prefix-ids-everywhere.md]]
 [[2026-11-02 12:56]] [board-ui] Completed: Gallery Arrowheads On Prefixed Ids → Task: [[cortex-tasks/board/2026-11-02_board-ui_gallery-arrow-ids.md]]
 [[2026-11-02 13:15]] [board-actions] Completed: A Send Counts Only What Went → Task: [[cortex-tasks/board/2026-11-02_board-actions_send-counts-what-went.md]]
+[[2026-11-02 13:25]] [board-ui] Completed: Gallery Without Repeats → Task: [[cortex-tasks/board/2026-11-02_board-ui_gallery-no-repeats.md]]

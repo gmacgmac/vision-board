@@ -6,7 +6,7 @@
 // with the marker the board works out from the fixture ledger (packages/actions retired.ts, render.ts).
 import type { VbRegionElement } from '#ui';
 import { regionState, retiredMarker } from '#ui';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 const REGION = 'retired-here';
@@ -20,7 +20,7 @@ function frameOf(fx: Fixture, id: string): VbRegionElement {
   const region = view.regions.find((r) => r.id === id)!;
   const gone = retired.get(id)!;
   const frame = document.createElement('vb-region') as VbRegionElement;
-  frame.render(region);
+  frame.render(region, ownIds());
   frame.update({ ...regionState(region, view, state, new Set(view.nodes.map((n) => n.id))), retired: retiredMarker(gone.count, gone.version, gone.until) });
   return frame;
 }
