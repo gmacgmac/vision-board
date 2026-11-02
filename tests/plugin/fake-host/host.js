@@ -153,6 +153,8 @@ window.fakeHost = {
   setting: (key, value) => current.changeSetting(key, value),
   store: () => Object.fromEntries(current.kept),
   status: (patch) => current.made.setStatus(patch),
+  /** The person removes the chip under `key` from the next message. */
+  drop: (key) => current.made.drop(key),
   boardStatus: () => ({ ...current.view.status.now }),
   statusHeard: () => statusHeard,
   mute: () => current.mute(),

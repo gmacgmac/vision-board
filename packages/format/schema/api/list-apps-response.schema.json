@@ -15,7 +15,7 @@
       "type": "object",
       "required": ["id", "state", "tools", "allowed"],
       "properties": {
-        "id": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The app's id: its folder's name."},
+        "id": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id", "description": "The app's id: its folder's name."},
         "state": {"enum": ["missing", "invalid", "needs-approval", "ready", "broken"], "description": "`ready`: its panel shows and its tools run. `needs-approval`: it has tools and the person has not allowed this version of its code. `invalid`: fix the `problems`. `broken`: its tools crashed too often; change the code to try again. `missing`: a card names it, but no folder has it."},
         "title": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/title", "description": "The manifest's title."},
         "version": {"type": "string", "description": "The manifest's version."},
@@ -23,14 +23,14 @@
           "type": "object",
           "required": ["w", "h"],
           "properties": {
-            "w": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/appWidth"},
-            "h": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/appHeight"}
+            "w": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/appWidth"},
+            "h": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/appHeight"}
           },
           "unevaluatedProperties": false,
           "description": "The panel size for a card that sets none: the manifest's, else the default."
         },
         "tools": {"type": "array", "items": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/toolName"}, "description": "Its tools' names, once the person allowed this version and its tools first ran (nothing runs before that); empty until then, and for an app with a panel only."},
-        "hash": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/appHash", "description": "The SHA-256 of its code now (its manifest, then its tools file): the version the person allows."},
+        "hash": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/appHash", "description": "The SHA-256 of its code now (its manifest, then its tools file): the version the person allows."},
         "allowed": {"type": "boolean", "description": "True when the person allowed this `hash`. Only the person allows an app, on its card."},
         "changed": {"const": true, "description": "The person allowed an earlier version, and the code has changed since; the card asks again."},
         "problems": {"type": "array", "items": {"$ref": "https://vision-board.invalid/schema/api/list-apps-response.schema.json#/$defs/problem"}, "description": "What to fix, when its state is `invalid` or `broken`."}
@@ -43,7 +43,7 @@
       "properties": {
         "file": {"type": "string", "pattern": "\\S", "maxLength": 100, "description": "The file in the app's folder, such as `app.json`."},
         "pointer": {"type": "string", "pattern": "^(/([^/~]|~[01])*)*$", "description": "Where in `app.json`, as a JSON Pointer such as /csp/connectDomains/0."},
-        "detail": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/text", "description": "What is wrong and what to do."}
+        "detail": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/text", "description": "What is wrong and what to do."}
       },
       "unevaluatedProperties": false
     }

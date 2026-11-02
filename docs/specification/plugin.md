@@ -94,7 +94,7 @@ Nothing else is there (`view-gives.spec.ts` "the view holds no more").
 ```ts
 chat: {
   attach(key, chip | null),                  // add, replace or remove the chip under `key`
-  send(record),                              // Send to agent
+  send(record),                              // Send to agent; record(answers | null) once it went
   status: { now, agent?, held?, staged?, on(listener) },
   reveal?({ board, n }),                     // show the chat's line that last changed this card
   hasLine?({ board, n }),                    // synchronous: is there such a line
@@ -107,18 +107,28 @@ chat: {
   `ref` changes**, by value: each chip is a new object, so compare their JSON, not the objects. The same `ref` may come again with new
   words, and stays spent. `attach(key, null)` does not end it, so
   selecting the same card again stays spent; keep what is spent across a null, as `tests/plugin/fake-host/chat.js` does.
-  Proven by `view-hooks.spec.ts` "chat.attach".
+  A chip the person removes from a message is left out of that message only: stage it again for the next, since the
+  board attaches it again only when it changes. Proven by `view-hooks.spec.ts` "chat.attach"; `send-what-went.spec.ts` "removed chip".
 - **As a message goes**, call the engine's `resolve(chip.kind, chip.ref)` for every chip. `{ where, text }` is one block of
   the bot's prompt; no block when `text` is empty. `{ refused, reason }` stops the send: answer with your words. Proven by
   `view-hooks.spec.ts` "chat.send: Send sends", "chat.send: a chip the engine refuses".
-- **`send(record)`** sends what is staged, with no words, then answers `record()`, the board's own record of the Send: null,
-  or the problem's words. Call it even when nothing was staged. Leave it out only when your own server recorded that Send
-  with the message (the `send` act). Resolves null when done or held for the bot's turn to end. One that rejects, a `fetch` that
-  failed, is Send's error state, with the board's own words. Proven by the same, and "chat.send: a rejection".
+- **`send(record)`** sends what is staged, with no words, then answers `record(answers)`, the board's own record of the Send:
+  null, or the problem's words. **Only a message that carried the answers counts as their Send** (point 377): pass `record`
+  what `resolve` answered for the answers chip that went (the board reads its `head`: the answers it read count as sent,
+  one made after the read waits for the next Send), or `null` when the message went without one (none was staged, or the
+  person removed it): the Send then acknowledges nothing new, and the answers stay. Call `record` only once the message has
+  gone: one that failed records nothing, and a crash before the record sends the answers again (a duplicate, never a loss).
+  `record()` with nothing is for a Send no chat carried (no chat at all: the bot reads the board itself); it covers every
+  answer up to the Send's own line, as before. Call it even when nothing was staged. Leave it out only when your own server
+  recorded that Send with the message (the `send` act, with its `head`). The record goes to the board the Send was pressed
+  on. Resolves null when done or held for the bot's turn to end. One that rejects, a `fetch` that failed, is Send's error
+  state, with the board's own words. Behind the `sendCountsWhatWent` setting, on by default; off, every Send covers every
+  answer up to its own line. Proven by the same, "chat.send: a rejection", and `send-what-went.spec.ts` "removed chip",
+  "watermark", "at-least-once", "flag off"
 - **`status`** is read only. `now` (`idle`, `working`, `asking`) drives the board's working mark, and is all you must give.
-  With only that, Send is enabled by an answer since the last Send, or by a chip of the board's own that hasn't gone with a
+  With only that, Send is enabled by an answer no Send has carried, or by a chip of the board's own that hasn't gone with a
   Send. `on` returns the unsubscribe. `staged`: you hold what Send would carry. Given at all it has the full say over the chips, the
-  board's included, so give it if your chat holds more of its own, a file say, or drops the chips. An answer since the last Send
+  board's included, so give it if your chat holds more of its own, a file say, or drops the chips. An answer no Send has carried
   enables Send either way. `held`: Send waits for the bot's turn. `agent`: the id your chat talks to,
   which scopes the answers chip to what it may read. Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
 - **`reveal` and `hasLine`** give a changed card's stepper its link to your chat. Without `reveal`, no link; with `reveal` and
@@ -126,7 +136,7 @@ chat: {
 - **A change chip.** A board write's tool result carries `_meta['vb/change']`, `{ board, cards, head }` (§ Tools). Draw it as a
   line, and `view.reveal({ board, cards })` on a click. Proven by `round-trip.spec.ts` "a board-to-chat round trip".
 
-With no chat at all, where nothing carries a chip: `chat: { attach() {}, send: (record) => record(), status: { now: 'idle', staged: false, on: () => () => {} } }`.
+With no chat at all, where nothing carries a chip, and the bot reads the board itself: `chat: { attach() {}, send: (record) => record(), status: { now: 'idle', staged: false, on: () => () => {} } }`.
 
 ### A guest in the host's page
 
@@ -179,7 +189,7 @@ hashes and `images/`. `name()` is the folder as the person reads it (`list_board
 |---|---|---|
 | `route(req, { caller, signal })` | One request, with no HTTP. `req` is `{ method, path, query?, body? }`. Split what `api` got: `path` is the part before the `?` (`ledger`), `query` the rest as a `URLSearchParams`; a `path` holding its query answers null. `body` is the JSON value, or a function the engine calls for it when the operation reads one (one that throws is a 400); leave it out when there is none. Answers `{ status, body, headers? }`, `body` to send as JSON, a problem as a reply, or null for a path not its own. **It trusts `caller`**: `{ by: 'person' }` for your person's door, never your bot's; `{ by: 'agent' }` with no id is refused, as no caller is. `signal` ends a held read | `engine-hooks.spec.ts` "route:", "route and tools.call", "route: a body", `tools.spec.ts` "tools.call: a caller of an agent" |
 | `image({ method, path, ifNoneMatch? })` | Answers `imageRoute`: `path` is the text after the prefix, as the request wrote it. `GET` or `HEAD` of a picture in `dir`'s `images/` and only there, held to the same checks as standalone's route (`images.md`). A card names a picture relative to that folder: `![Flow](flow.png)` is `<dir>/images/flow.png`, and `images/flow.png` is missing. `body` is its bytes or null. Send `headers` as given: they carry the type, the no-sniff and the svg's policy | `engine-hooks.spec.ts` "image:" |
-| `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`. Never throws | `engine-hooks.spec.ts` "resolve:" |
+| `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`, and `head`, the ledger line it read through (what the Send's `record` is given, § The chat). Never throws | `engine-hooks.spec.ts` "resolve:" |
 | `tools.list()`, `tools.call(name, input, ctx)` | § Tools | `tools.spec.ts` |
 | `watch(onChange)` | `{ board?, head }` for every ledger change, this engine's or another writer's on `dir`. Returns the stop. Turn each into an `events` call | `engine-hooks.spec.ts` "watch:" |
 
@@ -300,12 +310,12 @@ For the maintainer's review (D-074 rule 7). Each is decided for now, and each is
    image route's checks (`imagePathProblem`, `imageHeadProblem`, the size limit). The skill's Images section then names a
    tool, not a folder; a bot needs no path into `dir`, and the engine stays the only writer of its folder. Cost: bytes
    through a tool's input. Until then a bot told nothing writes no pictures, and a card that names one shows it as missing.
-2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. It keeps the seam
-   small and uses the one path. Cost: a host could let the person drop them, and must resolve it like any chip. Keep, unless a
-   host wants them unremovable; then an engine `context(ctx)` hook is the alternative.
+2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. **Settled**
+   (point 377): a host may let the person drop them; the Send then counts only what went, by what `resolve` read
+   (`record(answers)`, § The chat), so nothing is lost and the seam stays small.
 3. **`chat.send(record)`, not `chat.send()`.** The host sends, then runs the board's record of the Send, so the board keeps the
    act's outcome and a host with its own server may record it with the message. Cost: a callback in a seam otherwise plain.
-   Keep: it is what makes Send's wait and refusal the same on every host.
+   Keep: it is what makes Send's wait and refusal the same on every host, and its argument is how the board knows what went.
 4. **`chat.hasLine?`**: a synchronous question beside `chat.reveal?`, since the stepper asks it while drawing. The alternative is a
    link always shown when `reveal` is given. Keep: a link that does nothing is worse.
 5. **`status` and `send` on the view**, beyond PLAN's list. Standalone's chat reads `status`, and a host may want a button of its

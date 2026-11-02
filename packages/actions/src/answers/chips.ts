@@ -57,8 +57,13 @@ export type Chip = CardChip | NoteChip | BoardChip | SelectionChip | AnswersChip
 export interface ChipText { where: string; text: string }
 
 /** What an answers chip says now: its text ('' when nothing was answered since, or the board is
- * locked), how many answer lines, and the notes they carry, so a message attaches none of them again. */
-export type AnswersText = ChipText & Round;
+ * locked), how many answer lines, the notes they carry, so a message attaches none of them again, and
+ * `head`, the ledger line it was read through: what the Send's record acknowledges (`sendHead`). */
+export type AnswersText = ChipText & Round & { head: number };
+
+/** What a host's `record` is given for the answers chip that went: its `resolve` answer, of which the
+ * board reads `head`; null when the message went without one; left out when no chat carried it. */
+export type AnswersRead = Pick<AnswersText, 'head'> | null | undefined;
 
 /** Why a chip, or the turn, is refused: nothing there (an unknown board, card or note, or a note
  * taken away), the card or container was removed (or the board archived), the note is hidden, or its
@@ -153,10 +158,10 @@ export function selectionChip(board: string, cards: readonly SelectedCard[]): Se
   };
 }
 
-/** The chip for the person's answers on `board` since its last Send, as `agent` may read them; null
+/** The chip for the person's answers on `board` no Send has carried (`sentHead`), as `agent` may read them; null
  * with none, and on a locked board, whose answers wait for the unlock. */
 export function answersChip(s: LedgerState, board: string, agent?: string): AnswersChip | null {
-  const since = s.lastSend.get(board) ?? 0;
+  const since = s.sentHead.get(board) ?? 0;
   const round = boardLocked(s, board) ? undefined : roundOf(s, board, since, agent);
   if (!round) return null;
   return {
@@ -178,7 +183,8 @@ export function resolveChip(s: LedgerState, kind: ChipKind, ref: ChipRef): ChipT
     const { board, since, agent } = ref as AnswersRef;
     const turn = boardLocked(s, board) ? undefined : turnOf(s, board, since, agent);
     if (turn && 'refused' in turn) return turn;
-    return { where: actionsChipsWords.board(board), ...(turn ?? { text: '', count: 0, notes: new Set<number>() }) };
+    const said: AnswersText = { where: actionsChipsWords.board(board), ...(turn ?? { text: '', count: 0, notes: new Set<number>() }), head: s.seq };
+    return said;
   }
   if (kind === 'selection') {
     const { board, cards } = ref as SelectionRef;
@@ -216,4 +222,14 @@ export function resolveChip(s: LedgerState, kind: ChipKind, ref: ChipRef): ChipT
  * (with the chips' words) for a board the ledger does not hold. */
 export function turnOf(s: LedgerState, board: string, since: number, agent?: string): Round | ChipRefusal | undefined {
   return s.index.boards.has(board) ? roundOf(s, board, since, agent) : noBoard(board);
+}
+
+/** The `head` the board's Send records for `read`, what the host says went (point 377): left out when no chat
+ * carried the answers (the Send covers every answer up to its own line, as before v19); what the answers chip
+ * was read through when it went; the board's watermark, acknowledging nothing new, when it did not (null), or
+ * when what was given names no line. */
+export function sendHead(s: LedgerState, board: string, read: AnswersRead): { head?: number } {
+  if (read === undefined) return {};
+  const head = read?.head;
+  return { head: Number.isInteger(head) && head! >= 0 ? head! : s.sentHead.get(board) ?? 0 };
 }

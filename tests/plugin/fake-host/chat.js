@@ -1,9 +1,12 @@
 // The fake host's chat, from docs/specification/plugin.md § The chat: it holds chips by key, spends what went, sends
-// through its own server (which resolves each chip, as a host must), and keeps the lines a tool's change made. It
-// uses only the seam: `attach`, `send(record)`, `status`, `reveal`, `hasLine`.
+// through its own server (which resolves each chip, as a host must), then records the Send with what the engine read
+// for the answers chip that went (null with none), and keeps the lines a tool's change made. A chip the person removes
+// (`drop`) is left out of that message only. It uses only the seam: `attach`, `send(record)`, `status`, `reveal`, `hasLine`.
 export function createChat(flags) {
   const chips = new Map();
   const spent = new Map();
+  /** Keys the person removed from the next message (its chip's ✕): that message goes without them. */
+  const dropped = new Set();
   const heard = new Set();
   const lines = [];
   const statusHeard = new Set();
@@ -24,16 +27,18 @@ export function createChat(flags) {
     async send(record) {
       if (flags.sendFails) throw new Error('A fetch that failed');
       log.sends += 1;
-      const going = [...chips.entries()];
+      const going = [...chips.entries()].filter(([key]) => !dropped.has(key));
       const r = await fetch('/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chips: going.map(([, chip]) => chip) }) });
       if (!r.ok) {
         const { reason } = await r.json();
         log.problems.push(reason);
         return reason;
       }
+      const { answers } = await r.json();
       for (const [key, chip] of going) { spent.set(key, refOf(chip)); chips.delete(key); }
+      dropped.clear();
       say();
-      return record();
+      return record(answers);
     },
     status,
     reveal(ref) { log.reveals.push(ref); },
@@ -46,7 +51,8 @@ export function createChat(flags) {
     chat: given,
     log,
     lines: () => [...lines],
-    chips: () => [...chips.values()],
+    chips: () => [...chips].filter(([key]) => !dropped.has(key)).map(([, chip]) => chip),
+    drop(key) { dropped.add(key); say(); },
     hear: (listener) => { heard.add(listener); listener(); },
     addLine(line) { lines.push(line); say(); },
     setStatus(patch) { Object.assign(status, patch); for (const l of statusHeard) l(); },

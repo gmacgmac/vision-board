@@ -92,6 +92,8 @@ export const requestTheSeqOfA = (a: string): string => `${a}: request, the seq o
 export const revokeRequired = (f: string): string => `revoke: ${f} required`;
 export const sizeOneOf = (join: string): string => `size: one of ${join}`;
 export const sendBoardRequired = 'send: board required';
+export const headOnlyOnASend = 'head: only a send says how far its answers were read';
+export const integerFrom0 = (f: string): string => `${f}: integer >= 0`;
 export const noteTheSeqOfThe = 'note: the seq of the comment or context act that made the note';
 export const proposalTheSeqOfThe = 'proposal: the seq of the propose event being turned down';
 export const nNamesNoNode = (a: string): string => `n: ${a} names no node`;

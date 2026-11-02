@@ -11,7 +11,7 @@ import type { Kind, Region, Widths } from './view.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 18;
+export const LEDGER_FORMAT = 19;
 /** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
  * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
@@ -28,8 +28,9 @@ export const LEDGER_FORMAT = 18;
  * `unlock` of a whole board (api.md 138). v16 lets the person write a `retire` line, removing cards or
  * a container (api.md 141). v17 adds the app card, kind `app` naming its app in `node.app`, and the
  * person's `app-allow` and `app-revoke` of an app's code (api.md 150, D-047). v18 adds the person's
- * `notes-hide` and `notes-show` of one card's notes (api.md 156). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] as const;
+ * `notes-hide` and `notes-show` of one card's notes (api.md 156). v19 adds a Send's `head`, the line its
+ * answers were read through (api.md 169). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
@@ -189,6 +190,8 @@ export interface ActEvent extends Base {
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode']; widths?: Widths;
   request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind; nodes?: number[];
   app?: string; hash?: string;
+  /** A Send's answers were read through this line (v19, api.md 169); left out, through the Send's own line. */
+  head?: number;
 }
 /** The person has seen version `ver` of card `id` (D-018), or, from v8, has looked at `board` up to
  * its line `head` (api.md 87). */

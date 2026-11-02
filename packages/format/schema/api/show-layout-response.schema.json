@@ -11,23 +11,23 @@
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
     "board": {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id",
       "description": "The board the container is on."
     },
     "region": {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id",
       "description": "The container's id."
     },
     "mode": {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/mode",
+      "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/mode",
       "description": "The mode the board shows: the person's choice when they made one, else the container's."
     },
     "widths": {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/widths",
+      "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/widths",
       "description": "The card widths in effect: the person's choice, else the container's, else the mode's default."
     },
     "lanes": {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/lanes",
+      "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/lanes",
       "description": "The lane names, top to bottom, in `lanes` mode; left out in every other mode."
     },
     "columns": {
@@ -68,7 +68,7 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumber"
         },
         "lane": {
-          "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/lane",
+          "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/lane",
           "description": "The lane the card is in, in `lanes` mode."
         },
         "column": {

@@ -76,8 +76,11 @@ export interface LedgerState extends DrawnState, AppAllows {
   modes: Map<string, Map<string, Mode>>;
   /** board -> region -> the person's card widths choice (api.md 132), folded like `modes`. */
   widths: Map<string, Map<string, Widths>>;
-  /** board -> `seq` of the person's latest Send. */
+  /** board -> `seq` of the person's latest Send line. */
   lastSend: Map<string, number>;
+  /** board -> the line the answers sent so far were read through: each Send's `head`, or its own `seq` on
+   * a line with none (every Send before v19), never lowered (point 377). What counts as sent. */
+  sentHead: Map<string, number>;
   /** board -> the lines since its last Send that the next Send carries, and card id -> its ✓, ✗, Later
    * or clear among them, so a newer one replaces it without a scan (unsent.ts): `board.unsent`. */
   unsent: Map<string, Set<number>>;
@@ -153,7 +156,7 @@ export const DRAWING_EVENTS: ReadonlySet<LedgerEvent['type']> = new Set(['board'
 
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
-  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), widths: new Map(), lastSend: new Map(), unsent: new Map(), unsentMarks: new Map(),
+  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), widths: new Map(), lastSend: new Map(), sentHead: new Map(), unsent: new Map(), unsentMarks: new Map(),
   keys: new Map(), seen: new Map(), looked: new Map(), clears: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
@@ -252,7 +255,10 @@ function applyAct(s: LedgerState, e: ActEvent): void {
       break;
     case 'size': if (e.size === 'auto') s.sizes.delete(e.id!); else s.sizes.set(e.id!, e.size!); break;
     case 'reject': endProposal(s.proposals.get(e.proposal!), e.seq, 'rejected'); break;
-    case 'send': s.lastSend.set(e.board!, e.seq); break;
+    case 'send':
+      s.lastSend.set(e.board!, e.seq);
+      s.sentHead.set(e.board!, Math.max(s.sentHead.get(e.board!) ?? 0, e.head ?? e.seq));
+      break;
     case 'deny': { const note = s.grantNotes.get(e.request!); if (note && e.text) note.text = e.text; break; }
     case 'grant': case 'revoke': break; // holders live in the index
     case 'app-allow': case 'app-revoke': foldAppAct(s, e); break;

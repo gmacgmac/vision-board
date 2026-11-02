@@ -15,7 +15,7 @@
       "description": "The cards to remove, by number on this board, each once."
     },
     "region": {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id",
       "description": "The container to remove, with every card in it now (the person's moves count), in place of `cards`."
     }
   },

@@ -90,13 +90,15 @@ export async function startHost(port: number, options: { flags?: Record<string, 
     if (at === '/chat' && req.method === 'POST') {
       const { chips } = await readJson(req)() as { chips: Message['chips'] };
       const blocks: Message['blocks'] = [];
+      let answers: unknown = null;
       for (const chip of chips) {
         const said = engine.resolve(chip.kind, chip.ref);
         if ('refused' in said) return void send(res, 409, { reason: said.reason });
         if (said.text) blocks.push({ where: said.where, text: said.text });
+        if (chip.kind === 'answers') answers = said; // what the Send's record acknowledges: the answers this read
       }
       messages.push({ chips, blocks });
-      return void send(res, 200, { blocks });
+      return void send(res, 200, { blocks, answers });
     }
     if (at.startsWith(API)) {
       const gone = new AbortController();

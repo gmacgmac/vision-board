@@ -60,6 +60,8 @@ export interface ChatOptions {
   attachments?: boolean | undefined;
   /** The `readAttachment` flag: the agent may read attached files with `read_attachment` (D-071). */
   readAttachment?: boolean | undefined;
+  /** The `sendCountsWhatWent` flag: a message's Send records `head`, the line its answers were read through (point 377). */
+  sendHead?: boolean | undefined;
 }
 
 /** Where a session is: a board, or `undefined` for the folder (a session on no board yet). */
@@ -124,7 +126,7 @@ function joined(was: Held | undefined, next: Held): Held {
 }
 
 export function openChats(o: ChatOptions): Chats {
-  const { ledger, resolve, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false, readAttachment = false } = o;
+  const { ledger, resolve, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false, readAttachment = false, sendHead = false } = o;
   const dir = path.dirname(ledger.file);
   const cwd = path.dirname(dir);
   let kept: Permissions | undefined;
@@ -205,10 +207,11 @@ export function openChats(o: ChatOptions): Chats {
       const files = msg.files;
       const empty = !round && !wordsOf(msg) && !built.chips.length && !files;
       if (empty && !said) return undefined;
-      // On a locked board the words and chips go alone: no round (unsaid), and no Send to record.
+      // On a locked board the words and chips go alone: no round (unsaid), and no Send to record. The round was
+      // read just now, through `s.seq`, and the Send is recorded in the same step, so it says so (`head`).
       if (!isLocked(s, board)) {
         told.set(id, s.seq);
-        if (held.record) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
+        if (held.record) ledger.append({ type: 'act', action: 'send', board, ...(sendHead && { head: s.seq }) }, { by: 'person' }, { board });
       }
       return { prompt: withSaid(built.prompt, said?.agent), message: { kind: 'message_in', text: withSaid(built.text, said?.person, empty), ...(built.chips.length > 0 && { chips: built.chips }), ...(files && { files }) } };
     }, wordsOf(held.msg) ? QUEUED_WORDS : QUEUED);

@@ -168,8 +168,12 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
         ? formatLedgerWords.regionContainerWasRetired(e.region) : formatLedgerWords.regionUnknownOnBoard(e.region, board));
       break;
     }
-    // Send, and the person's marks on a whole board (api.md 135, 138), name a board that exists.
-    case 'send': case 'archive': case 'restore': case 'lock': case 'unlock': if (!ix.boards.has(e.board!)) p.push(formatLedgerWords.boardUnknown(e.board)); break;
+    // Send, and the person's marks on a whole board (api.md 135, 138), name a board that exists; a Send's
+    // answers were read up to a line the ledger already holds (api.md 169).
+    case 'send': case 'archive': case 'restore': case 'lock': case 'unlock':
+      if (!ix.boards.has(e.board!)) p.push(formatLedgerWords.boardUnknown(e.board));
+      else if (e.head !== undefined && e.head > ix.seq) p.push(formatLedgerWords.headTheLedgerIsAt(ix.seq));
+      break;
     case 'grant': case 'deny': {
       const r = ix.requests.get(e.request!);
       if (!r) p.push(formatLedgerWords.requestNoGrantRequest(e.request));

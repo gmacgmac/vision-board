@@ -1,6 +1,7 @@
 // What the person's next Send carries on each board (conditions `board.unsent`, tracker N33), folded
-// from their acts (fold.ts `applyEvent`): the lines since the board's last Send that the Send
-// message is built from (pending.ts `replyScope` from that Send). A Send empties it; an answer
+// from their acts (fold.ts `applyEvent`): the lines since what the board's Sends carried (`sentHead`) that the Send
+// message is built from (pending.ts `replyScope` from there). A Send empties it of what it carried: the
+// answers after the line its answers were read through are folded again, for the next one (point 377); an answer
 // (registry.ts `isAnswer`) adds its line; a note removed before it was sent takes the note's line
 // out, and a change to a note is folded into the note, so neither counts on its own; a card's ✓,
 // ✗, Later and clear are folded to its latest, which counts only when it leaves the card otherwise
@@ -8,19 +9,18 @@
 // cards that have all left the board (a retire, the agent's or the person's) is no longer there to
 // send. Pure.
 import type { ActEvent, RetireEvent } from '#format';
+import { containerKey } from '#format';
 import type { LedgerState } from './fold.ts';
 import { cutOf } from './clears.ts';
 import { markOf } from './notes.ts';
+import { eventBoard } from './references.ts';
 import { isAnswer, MARK_ACTIONS } from './registry.ts';
 
 /** Fold one person act on `board`, after the fold applied it. */
 export function foldUnsent(s: LedgerState, board: string, e: ActEvent): void {
   const lines = s.unsent.get(board) ?? new Set<number>();
   s.unsent.set(board, lines);
-  if (e.action === 'send') {
-    lines.clear();
-    s.unsentMarks.delete(board);
-  }
+  if (e.action === 'send') sent(s, board, lines, e.seq);
   else if (e.action === 'note-remove') lines.delete(e.note!);
   else if (MARK_ACTIONS.has(e.action)) foldMark(s, board, lines, e);
   else if (e.action !== 'note-edit' && isAnswer(e.action)) lines.add(e.seq);
@@ -37,15 +37,41 @@ function foldMark(s: LedgerState, board: string, lines: Set<number>, e: ActEvent
   marks.delete(e.id!);
   const log = s.logs.get(e.id!)!;
   const cut = cutOf(s, e.id!);
-  if (markOf(log, cut) === markOf(log, cut, s.lastSend.get(board) ?? 0)) return;
+  if (markOf(log, cut) === markOf(log, cut, s.sentHead.get(board) ?? 0)) return;
   lines.add(e.seq);
   marks.set(e.id!, e.seq);
+}
+
+/** Send `seq` on `board` (fold.ts has raised `sentHead`): what it carried is sent. Answers made after its
+ * read and before it are folded again, against what was read, unless they are no longer on the board. */
+function sent(s: LedgerState, board: string, lines: Set<number>, seq: number): void {
+  lines.clear();
+  s.unsentMarks.delete(board);
+  const head = s.sentHead.get(board) ?? 0;
+  if (head >= seq - 1) return;
+  for (let i = firstAfter(s.acts, head); i < s.acts.length && s.acts[i]!.seq < seq; i++) {
+    const a = s.acts[i]!;
+    if (a.action !== 'send' && eventBoard(s, a) === board) foldUnsent(s, board, a);
+  }
+  for (const line of lines) if (gone(s, board, actAt(s.acts, line))) lines.delete(line);
 }
 
 /** The latest line the next Send on `board` carries; undefined when there is nothing new to send. */
 export function unsentOn(s: LedgerState, board: string): number | undefined {
   const lines = s.unsent.get(board);
   return lines?.size ? Math.max(...lines) : undefined;
+}
+
+/** The index of the first act after line `seq`, in `acts` (in `seq` order). */
+function firstAfter(acts: readonly ActEvent[], seq: number): number {
+  let lo = 0;
+  let hi = acts.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (acts[mid]!.seq <= seq) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
 }
 
 /** The person act at `seq`, from `acts` (in `seq` order). */
@@ -68,10 +94,12 @@ function actAt(acts: readonly ActEvent[], seq: number): ActEvent | undefined {
 export function dropRetired(s: LedgerState, e: RetireEvent): void {
   const lines = s.unsent.get(e.board);
   if (!lines?.size) return;
-  for (const seq of lines) {
-    const a = actAt(s.acts, seq);
-    const cards = a?.nodes ?? (a?.id === undefined ? [] : [a.id]);
-    const gone = cards.length > 0 ? cards.every((id) => s.index.retired.has(id)) : a?.region !== undefined && a.region === e.region;
-    if (gone) lines.delete(seq);
-  }
+  for (const seq of lines) if (gone(s, e.board, actAt(s.acts, seq))) lines.delete(seq);
+}
+
+/** Whether answer `a` on `board` is no longer there to send: its cards have all left the board, or its container did. */
+function gone(s: LedgerState, board: string, a: ActEvent | undefined): boolean {
+  const cards = a?.nodes ?? (a?.id === undefined ? [] : [a.id]);
+  if (cards.length > 0) return cards.every((id) => s.index.retired.has(id));
+  return a?.region !== undefined && s.retiredRegions.has(containerKey(board, a.region));
 }

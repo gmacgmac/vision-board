@@ -1614,3 +1614,20 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `checked` reads what is beside each file (`besideOf`), so the prompt (`filesBlock`) says only what is saved: one line a file, `Its pages as pictures, 30 of 40: <folder>/page-001-of-040.png to page-030-of-040.png`, with `pagesDrewNothing` under it for any `-blank` page,
     or `A copy that fits: <path>`, then `openThesePictures`, then the untrusted line. **The frame**: `GET /pdf-frame` (`pdf-frame.ts`), not an operation: the built script inside the page, its policy naming it by hash,
     `sandbox allow-scripts`, `default-src 'none'`, `connect-src 'none'`, `wasm-unsafe-eval` for the image decoders inside it, no `unsafe-eval`; 404 with the flag off, with that policy's shape. Held by `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `pdf-pages.test.ts`, and `tests/pages/chat-attach-pages.spec.ts` on the headless shell, its `@full-build` tests also on each full build found.
+
+## Ledger v19: a Send counts only what went (point 377, 2026-11-02)
+
+169. **A Send says how far its answers were read.** `LEDGER_FORMAT` becomes 19 and every ledger `$id` moves to
+    `.../schema/ledger/19/`; `openapi.json` `info.version` becomes 1.37.0. Only adds: v2 to v18 lines stay valid
+    (`schema-v19.test.ts` "old ledgers read unchanged"). A `send` act may carry `head`, an integer from 0: the ledger line its
+    answers were read through (`resolve('answers')` answers it, `#actions` `AnswersText.head`). Only the answers up to it
+    count as sent; a later one is the next Send's. Left out, the Send covers every answer up to its own line, as every
+    Send before v19 did and as a Send no chat carried still does. `head` on any other action is refused, as is one past
+    the ledger's last line, in the `seen` head's words (`ledger-index.ts`; `schema-v19.test.ts` "a send may carry head",
+    "a head past the ledger's last line"). The fold keeps the highest per board, never lowered (`LedgerState.sentHead`,
+    beside `lastSend`, the latest Send line): the answers chip, `board.unsent` and a note's history (`note-lock.ts`
+    `sentAfter`) count from it, and a Send whose `head` is below its own line folds the answers after it again
+    (`unsent.ts`; `send-head.test.ts`). The standalone server reads a message's answers and records its Send in one step,
+    so it writes `head` as the line it read (`chat-sessions.ts` `deliver`; `api-chat-send.test.ts` "one path"); a host
+    passes `record` what `resolve` read (plugin.md § The chat). Behind the `sendCountsWhatWent` flag, page and server;
+    off, no `head` is written. An agent sees `head` on a `send` in `check_responses`.

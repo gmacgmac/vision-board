@@ -384,7 +384,7 @@ type BoardStored = {
   key?: CommonKey;
 };
 type CommonStamp = {
-  v: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+  v: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19;
   seq: number;
   at: string;
   by: "person" | "agent";
@@ -568,6 +568,7 @@ type ActCore = {
   nodes?: CommonNodeNumbers;
   app?: string;
   hash?: string;
+  head?: number;
 };
 type CommonActSize = "s" | "m" | "l" | "auto";
 type CommonNodeNumbers = number[];
