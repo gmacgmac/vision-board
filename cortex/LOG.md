@@ -432,3 +432,4 @@
 [[2026-11-02 15:50]] [project-docs] plugin.md § The chat, status: with agent, only answers it may read light Send (point 384) → Notes: `docs/specification/plugin.md` (status) — Send follow-ups' request
 [[2026-11-02 21:55]] [board-app] The chat header is drawn once and updated in place; its pickers are no longer redrawn after opening (point 387) → Task: [[cortex-tasks/board/2026-11-02_board-app_chat-header-redraw.md]]
 [[2026-11-02 22:05]] [board-actions] A Send whose chat session can't be loaded answers 409 with why and records nothing (point 386; openapi 1.38.0) → Task: [[cortex-tasks/board/2026-11-02_board-actions_send-error-says-why.md]]
+[[2026-11-02 22:30]] [board-agent] Claude Code live test: attachments, access rules, drawing and Send passed; a busy Send on the page writes one ledger line, not two (evidence temp/cc-live/) → Task: [[cortex-tasks/board/2026-11-02_board-agent_claude-code-live-test.md]]
