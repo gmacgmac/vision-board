@@ -5,8 +5,9 @@
 // (composer-one-chip ruling 2). Pure: from the folded ledger.
 import type { LedgerState } from '#actions';
 
-/** The `seq` of the last Send on `board` before `before`, 0 when there is none. */
+/** Where the last Send on `board` before `before` left off: the line its answers were read through (its
+ * `head`, else its own `seq`, point 377), 0 when there is none. */
 export function previousSend(s: LedgerState, board: string, before: number): number {
   const e = s.acts.findLast((x) => x.action === 'send' && x.seq < before && x.board === board);
-  return e?.seq ?? 0;
+  return e?.head ?? e?.seq ?? 0;
 }

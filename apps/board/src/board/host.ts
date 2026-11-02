@@ -6,7 +6,7 @@
 // Svelte type crosses it (the board's own controls are Svelte, compiled inside it: chrome/, PLAN Decisions). The standalone app is one host (shell/page-host.ts); a test's fake host
 // is another (tests/pages/board-host.spec.ts). Each difference from nclite's draft is listed in
 // docs/specification/components.md § The board's host interface.
-import type { Chip } from '#actions';
+import type { AnswersRead, Chip } from '#actions';
 import type { Transport } from '#client';
 import type { FlagName } from '#format';
 import { flagOn } from '#format';
@@ -87,7 +87,7 @@ export type ChatWork = 'idle' | 'working' | 'asking';
 
 /** What the board may read of the host's chat. Read only; `on` says when any of it changes. `now` is
  * all a host need give: the rest is optional, and a board with none of it works, with Send enabled
- * by an answer since the last Send or by a chip of the board's own that hasn't gone. */
+ * by an answer no Send has carried or by a chip of the board's own that hasn't gone. */
 export interface ChatStatus {
   /** Drives the board's working mark (the status's `chatWork`). A host with no agent to speak of says `idle`. */
   readonly now: ChatWork;
@@ -113,17 +113,19 @@ export interface BoardChat {
    *  as its message goes, and a host may pass the rest through unread, whatever the kind.
    *  A chip that went with a message is spent until its key's `ref` changes: the same `ref` may come
    *  again with new words (a card's title changed), and it stays spent. An answers chip's `ref` changes
-   *  once the Send is recorded. */
+   *  once a Send carries the answers. */
   attach(key: string, chip: Chip | null): void;
   /** Send to agent: sends what is staged, with no words, and has the Send recorded. `record` is the
    *  board's own record of it (the `send` act, which marks the answers handed over): null when recorded,
-   *  else the problem's words. A host calls it once per Send, after the message has gone, and answers
-   *  with what it answered. It leaves `record` out only when its own server recorded that Send with the
-   *  message (the standalone server does, for a message on the board's session), and it still calls it
-   *  when nothing was staged, or the chat has no session to send through. A host with no server of its
-   *  own sends through its chat, then answers `record()`; with no chat at all, `send: (record) => record()`.
-   *  Resolves null once done or held for the agent's turn to end, else the problem's words. */
-  send(record: () => Promise<string | null>): Promise<string | null>;
+   *  else the problem's words. A host calls it once per Send, only after the message has gone (one that
+   *  failed records nothing), and answers with what it answered. It passes `record` what `resolve` answered
+   *  for the answers chip that went (the board reads its `head`: only the answers read count as sent), or
+   *  null when the message went without one; `record()`, as before, only when no chat carried the answers
+   *  (with no chat at all, `send: (record) => record()`, the bot reads the board itself). It leaves `record`
+   *  out only when its own server recorded that Send with the message (the standalone server does, for a
+   *  message on the board's session), and it still calls it when nothing was staged, or the chat has no
+   *  session to send through. Resolves null once done or held for the agent's turn to end, else the problem's words. */
+  send(record: (answers?: AnswersRead) => Promise<string | null>): Promise<string | null>;
   readonly status: ChatStatus;
   /** Shows the chat's line that last changed this card (a changed card's stepper links to it). */
   reveal?(ref: ChatLine): void;

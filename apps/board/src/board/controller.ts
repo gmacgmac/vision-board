@@ -13,7 +13,7 @@
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
 import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
-import { answeredIds, boardData, boardSearchDocs, goTarget, numberOf, placedView, retiredCounts } from '#actions';
+import { answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, retiredCounts, sendHead } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, flagOf, markdownOf } from './host.ts';
@@ -294,7 +294,10 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     jump: (id) => switchTo(id, () => boards.jump(id)),
     async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
     access: accessFlow, proposals, go,
-    send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
+    send(id, read) { // it greys the notes it sent at once (2e_FE_01 ruling 7); only what went counts (point 377)
+      const fields = { action: 'send' as const, ...(on('sendCountsWhatWent') && sendHead(live.state ?? emptyState(), id, read)) };
+      return id === S.id ? attempt(fields) : sender.actOn(id, fields);
+    },
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),

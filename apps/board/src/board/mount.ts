@@ -77,10 +77,12 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   let board!: Board;
   /** `unmount` ran: whatever a host keeps calling on the view does nothing. */
   let gone = false;
-  /** Send to agent. A host's `send` that rejects (a `fetch` that failed) is Send's error state, as words it answers are. */
+  /** Send to agent. A host's `send` that rejects (a `fetch` that failed) is Send's error state, as words it answers are.
+   *  The record goes to the board the Send was pressed on, with what the host says went (`BoardChat.send`). */
   const send = async (): Promise<string | null> => {
     if (gone) return null;
-    try { return (await host.chat.send(() => board.send())) ?? null; } catch (err) {
+    const id = board.id();
+    try { return (await host.chat.send((read) => board.send(id, read))) ?? null; } catch (err) {
       console.error(err);
       return boardWords.theChatCouldNotSend;
     }

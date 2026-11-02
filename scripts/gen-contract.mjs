@@ -7,7 +7,7 @@ import { lookup, resolveParam } from './openapi-refs.mjs';
 import { shape } from './schema-shape.mjs';
 
 export const PROBLEM_ID = 'https://vision-board.invalid/schema/api/problem.schema.json';
-export const LEDGER_EVENT_ID = 'https://vision-board.invalid/schema/ledger/18/ledger-event.schema.json';
+export const LEDGER_EVENT_ID = 'https://vision-board.invalid/schema/ledger/19/ledger-event.schema.json';
 export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
 /** A field that names one card: a card number, or (sent) a number or `{ key }`. */
 const ONE_CARD = /#\/\$defs\/(nodeNumber|nodeRef)$/;

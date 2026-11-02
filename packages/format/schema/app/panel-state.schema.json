@@ -8,7 +8,7 @@
   "required": ["v", "app", "state"],
   "properties": {
     "v": {"const": 1, "description": "The version of this file's shape (`APP_STATE_FORMAT`)."},
-    "app": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The app the card named when its panel saved. A card that now names another app gets no state."},
+    "app": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id", "description": "The app the card named when its panel saved. A card that now names another app gets no state."},
     "state": {"$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/value"}
   },
   "unevaluatedProperties": false,

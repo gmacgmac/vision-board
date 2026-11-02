@@ -7,10 +7,10 @@
   "type": "object",
   "allOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/events/seen.schema.json#/$defs/core"
+      "$ref": "https://vision-board.invalid/schema/ledger/19/events/seen.schema.json#/$defs/core"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/events/seen.schema.json#/$defs/rules"
+      "$ref": "https://vision-board.invalid/schema/ledger/19/events/seen.schema.json#/$defs/rules"
     }
   ],
   "unevaluatedProperties": false

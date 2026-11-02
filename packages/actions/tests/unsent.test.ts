@@ -19,9 +19,9 @@ const FIXTURES = Object.values(FIXTURE_LEDGERS);
 
 const unsent = (s: LedgerState, ctx: ConditionContext = { board: 'b' }) => conditionsOf(s, ctx).filter((c) => c.kind === 'board.unsent');
 
-/** What the Send message would carry on `board`: the cards and containers answered since its last Send. */
+/** What the Send message would carry on `board`: the cards and containers answered since what its Sends carried. */
 function carried(s: LedgerState, board: string): number {
-  const scope = replyScope(s, board, s.lastSend.get(board) ?? 0);
+  const scope = replyScope(s, board, s.sentHead.get(board) ?? 0);
   return scope.cards.size + scope.regions.size;
 }
 

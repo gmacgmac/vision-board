@@ -103,6 +103,8 @@ test('resolve: every chip kind says its text; a changed or gone one is refused w
   const answers = host.engine.resolve('answers', { board: 'plans', since: 0 });
   expect(answers.text).toContain('1 (question): ✓');
   expect(answers.count).toBe(1);
+  const head = ((await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams() }, { caller: PERSON }))!.body as { events: { seq: number }[] }).events.at(-1)!.seq;
+  expect(answers.head, 'the line it read through, what a Send acknowledges').toBe(head);
   expect(host.engine.resolve('answers', { board: 'plans', since: 999 }).text).toBe('');
   await host.engine.route({ method: 'POST', path: 'boards/plans/act', body: { type: 'act', action: 'comment', n: 2, ver: 1, text: 'Ask the team.' } }, { caller: PERSON });
   const lines = (await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams() }, { caller: PERSON }))!.body as { events: { seq: number; text?: string }[] };

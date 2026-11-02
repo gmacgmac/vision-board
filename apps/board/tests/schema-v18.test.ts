@@ -21,7 +21,7 @@ test('v17 lines still read: every event type and action, written one format earl
 });
 
 test('a v18 ledger with the pair reads whole, beside lines of the format before', () => {
-  assert.equal(LEDGER_FORMAT, 18);
+  assert.ok(LEDGER_FORMAT >= 18);
   const AT = '2026-10-19T09:00:00.000Z';
   const person = { by: 'person', at: AT };
   const agent = { by: 'agent', agent: 'a-abcd1234', at: AT, v: 17 };

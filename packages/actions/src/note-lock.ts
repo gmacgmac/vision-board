@@ -8,8 +8,8 @@ import type { LedgerState } from './fold.ts';
 import type { Ask, ItemNote } from './notes.ts';
 import { askVer, cardsOf } from './notes.ts';
 
-/** Whether a Send on `board` came after the act `seq` (fold.ts `lastSend`): its note is history. */
-export const sentAfter = (s: LedgerState, board: string, seq: number): boolean => (s.lastSend.get(board) ?? 0) > seq;
+/** Whether a Send on `board` carried the act `seq` (fold.ts `sentHead`: its answers were read past it): its note is history. */
+export const sentAfter = (s: LedgerState, board: string, seq: number): boolean => (s.sentHead.get(board) ?? 0) >= seq;
 
 /** Whether a `reply` names the ask `seq` in `to`: one on any card it is on (a note on a group,
  * api.md 64), or, for a note on a whole container, which is on no card, one on any node, since a

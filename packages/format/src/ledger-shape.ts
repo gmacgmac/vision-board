@@ -55,6 +55,8 @@ const agentId: Check = (v, f, p) => {
 const int = (msg = 'integer >= 1', max?: number): Check => (v, f, p) => {
   if (!Number.isInteger(v) || (v as number) < 1 || (max !== undefined && (v as number) > max)) p.push(`${f}: ${msg}`);
 };
+/** A ledger line a read went up to: 0 (nothing yet) or a line. */
+const line: Check = (v, f, p) => { if (!Number.isInteger(v) || (v as number) < 0) p.push(formatLedgerWords.integerFrom0(f)); };
 const oneOf = (values: readonly unknown[]): Check => (v, f, p) => {
   if (!values.includes(v)) p.push(formatLedgerWords.oneOf(f, values.join(', ')));
 };
@@ -140,7 +142,7 @@ const SHAPES: Record<EventType, Shape> = {
       proposal: int(formatLedgerWords.seqOfAProposeEvent), x: num, y: num, board: id, region: id, mode: oneOf(LINE_MODES),
       request: int(formatLedgerWords.seqOfAGrantRequest), holder: agentId, size: oneOf(ACT_SIZES),
       note: int(formatLedgerWords.seqOfTheCommentOr), kind: oneOf(NOTE_KINDS),
-      nodes: nodeNumbers, widths: oneOf(WIDTHS), app: id, hash: appHashProblems,
+      nodes: nodeNumbers, widths: oneOf(WIDTHS), app: id, hash: appHashProblems, head: line,
     },
   },
   seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, head: int(formatLedgerWords.seqOfALine) } },
@@ -214,6 +216,7 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'revoke') for (const f of ['holder', 'board']) need(f, formatLedgerWords.revokeRequired(f));
   if (a === 'size') need('size', formatLedgerWords.sizeOneOf(ACT_SIZES.join(', ')));
   if (a === 'send') need('board', formatLedgerWords.sendBoardRequired);
+  if (has('head') && a !== 'send') p.push(formatLedgerWords.headOnlyOnASend);
   if (ON_NOTE.has(a)) need('note', formatLedgerWords.noteTheSeqOfThe);
   if (a === 'note-edit') need('text', 'text: required');
   if (a === 'reject') need('proposal', formatLedgerWords.proposalTheSeqOfThe);

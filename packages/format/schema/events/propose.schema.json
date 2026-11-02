@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/18/events/propose.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/19/events/propose.schema.json",
   "title": "Propose event",
   "description": "The agent proposes a decision on version `ver`; only the person can make it.",
   "$comment": "Was: D-018",
@@ -9,10 +9,10 @@
       "type": "object",
       "required": ["ver", "action", "reason"],
       "properties": {
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/version", "description": "The node version you are proposing a decision on."},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/version", "description": "The node version you are proposing a decision on."},
         "action": {"enum": ["ack", "drop"], "description": "What you propose: `ack` (acknowledge) or `drop`. Only the person decides."},
-        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/longText", "description": "Why you propose this."},
-        "source": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/source", "description": "Where the evidence is, such as a file path or a link."}
+        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/longText", "description": "Why you propose this."},
+        "source": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/source", "description": "Where the evidence is, such as a file path or a link."}
       }
     },
     "sent": {
@@ -20,12 +20,12 @@
       "required": ["type", "n"],
       "properties": {
         "type": {"const": "propose"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeRef"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key"}
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/nodeRef"},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/key"}
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/18/events/propose.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/19/events/propose.schema.json#/$defs/core"
         }
       ],
       "unevaluatedProperties": false
@@ -35,20 +35,20 @@
       "required": ["type"],
       "properties": {"type": {"const": "propose"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/18/events/propose.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/19/events/propose.schema.json#/$defs/core"
         },
         {
           "type": "object",
           "required": ["n"],
           "properties": {
             "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "n": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key"}
+            "n": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/key"}
           }
         }
       ],

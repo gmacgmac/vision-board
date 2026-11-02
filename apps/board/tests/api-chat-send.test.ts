@@ -91,3 +91,28 @@ test('while a turn runs the Send waits, once, and goes when the turn ends with e
   assert.ok(!run.prompt.includes('Why per seat?'), 'nothing the agent was already told');
   assert.ok(Number(/head (\d+)\./.exec(run.prompt)![1]) > head);
 });
+
+// A Send counts only what went (point 377): the standalone server reads the answers and records the Send in one
+// step as the message goes, so its `head` is the line it read; an answer while the message waits goes with it, and
+// one after it went is the next round's.
+test('one path: a message records its Send through the line its answers were read at; a later answer stays unsent', async () => {
+  const { q, d } = h.seeded;
+  fake.mode('hang');
+  await h.ok('send_chat', { session, body: { text: 'Carry on.' } });
+  const busy = await fake.run(4);
+  await act({ action: 'comment', n: d, ver: 1, text: 'While you work.' });
+  await h.ok('send_chat', { session, body: { text: 'And this.' } });
+  await act({ action: 'comment', n: q, ver: 2, text: 'Held too.' });
+  fake.mode('replay');
+  await h.ok('stop_chat', { session });
+  await gone(busy.pid);
+  const run = await fake.run(5);
+  assert.ok(run.prompt.includes('While you work.') && run.prompt.includes('Held too.'), 'read when it went, with everything since');
+  const line = h.ledger.state().acts.findLast((e) => e.action === 'send')!;
+  assert.equal(line.head, line.seq - 1, 'through the line it read, written with the message');
+  const late = await act({ action: 'comment', n: d, ver: 1, text: 'After it went.' });
+  const unsent = await h.ok('get_board', { board: 'pricing' });
+  assert.ok(JSON.stringify(unsent).includes('After it went.'));
+  assert.equal(h.ledger.state().sentHead.get('pricing'), line.head);
+  assert.ok(late.seq > line.head!);
+});

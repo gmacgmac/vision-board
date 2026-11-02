@@ -10,7 +10,7 @@
   ],
   "properties": {
     "label": {
-      "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/agentLabel",
+      "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/agentLabel",
       "description": "Your working folder's name (not a path). The person sees it when you ask for access."
     }
   },
