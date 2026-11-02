@@ -18,6 +18,9 @@ Only the app around the board: the chat panel, the side panels, the toolbar and 
 (D-005, D-015). Nodes, links and regions are plain web components (`<vb-node>`, `<vb-link>`,
 `<vb-region>`) with a framework-free core. Svelte places them; it never reimplements them.
 
+The board's own controls (`apps/board/src/board/chrome/`) are Svelte inside the board, compiled into
+the plugin's bundle: a host only ever calls `mount` and never sees Svelte.
+
 ## Use (Svelte 5) / never use (Svelte 4)
 
 | Need | Use | Never |

@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.4 | **Updated**: 2026-10-27 (maintainer approved)
+> **Version**: 0.5 | **Updated**: 2026-11-02 (maintainer approved)
 
 # Vision Board — project rules
 
@@ -27,6 +27,7 @@ follow them where our documents are silent. If two of our documents disagree, ra
 | Patterns, their states and looks | each pattern's `pattern.json`; the gallery |
 | Module map and allowed layers | `docs/specification/modules.md`; `npm run verify` |
 | How each part is built | `docs/specification/` |
+| Using the board as a plugin in another app: the folder, `mount`, what a host gives and gets | `docs/specification/plugin.md` |
 | Svelte | `.kiro/steering/svelte-conventions.md` |
 | Where a sentence lives (screen text, refusals, what an agent is told) | `docs/specification/words.md` |
 | Work categories, doc surface | `cortex/PROFILE.md`, `cortex/REGISTRY.md` |

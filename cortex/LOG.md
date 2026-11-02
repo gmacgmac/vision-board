@@ -421,3 +421,6 @@
 [[2026-11-02 13:15]] [board-actions] Completed: A Send Counts Only What Went → Task: [[cortex-tasks/board/2026-11-02_board-actions_send-counts-what-went.md]]
 [[2026-11-02 13:25]] [board-ui] Completed: Gallery Without Repeats → Task: [[cortex-tasks/board/2026-11-02_board-ui_gallery-no-repeats.md]]
 [[2026-11-02 13:41]] [board-app] Chat picker width check waits out the header's redraw just after it opens → Notes: `tests/pages/chat-panel.spec.ts` (`fits`) — measured a picker on its way out; exposed by today's timing, header redraw predates it
+[[2026-11-02 13:43]] [project-docs] Steering: Sources of truth row for using the board as a plugin (point 381); svelte-conventions: the board's controls are Svelte inside the bundle (point 375A) → Notes: `.kiro/steering/vision-board-proj.md` (Sources of truth), `.kiro/steering/svelte-conventions.md` (Where Svelte is used) — maintainer approved
+[[2026-11-02 13:43]] [board-tokens] Removed unused --vb-z-selection; --vb-z-lasso comment names only the lasso (point 375B) → Notes: `packages/tokens/src/tokens.css` (`--vb-z-lasso`) — maintainer approved
+[[2026-11-02 13:43]] [project-docs] Principles: the board's rules style no element outside it and take back what they rely on (point 375C) → Notes: `docs/principles.md` (The board is a plugin) — maintainer approved

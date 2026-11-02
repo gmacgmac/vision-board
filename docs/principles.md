@@ -101,8 +101,9 @@ changes, not the board (maintainer, 2026-10-26).
 - **Its own storage.** Unlike Journal and Organizer (plain Markdown files), the board keeps its
   append-only JSONL ledger, in whatever folder the host gives it (`.visionboard/` standalone, the
   bot's `plugins/board/` in nclite).
-- **Lives in a host's page.** Its styles reach nothing outside it, it sets every property it relies
-  on, and it lays out by its own width, not the window's.
+- **Lives in a host's page.** Its rules style no element outside it (it does set its own `--vb-`
+  properties on the page's root), it takes back from a host's plain element rules what it relies on,
+  and it lays out by its own width, not the window's.
 - **Shared pieces are shared.** What a sibling plugin needs (the hover tip, menus, dialogs, search,
   ledger queries) lives in `packages/`, framework-free where it is UI, never only inside
   `apps/board/`.

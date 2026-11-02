@@ -60,8 +60,7 @@
   --vb-z-chrome-open: 7; /* the toolbar with a menu open */
   --vb-z-skip: 10;
   --vb-z-toast: 20;
-  --vb-z-lasso: 27; /* on the stage: the lasso, the selection bar, the menu, the note bubble */
-  --vb-z-selection: 28;
+  --vb-z-lasso: 27; /* on the stage: the lasso */
   --vb-z-menu: 29;
   --vb-z-bubble: 30;
 
