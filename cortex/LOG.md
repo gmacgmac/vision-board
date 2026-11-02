@@ -436,3 +436,4 @@
 [[2026-11-02 23:05]] [project-docs] D-075 appended (374A, maintainer yes); api.md 170: a busy Send on the page is one line, `act` writes two (389); tracker M50 Claude Code refusal text (390) → Notes: `docs/decisions.md` (D-075), `docs/specification/api.md` (170), `cortex-tasks/tracker.md` (M50)
 [[2026-11-02 23:15]] [project-docs] D-076 appended: every id the board owns is prefixed, on its own page too (374B, maintainer yes)
 [[2026-11-02 23:25]] [project-docs] D-077 appended: under a host the board folder lives in the bot's workspace (374C, maintainer yes)
+[[2026-11-02 23:35]] [project-docs] D-078 appended: the plugin folder ships its types and a seam version (374D, maintainer yes)

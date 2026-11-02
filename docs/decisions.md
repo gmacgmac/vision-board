@@ -1075,3 +1075,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: the workspace is already mounted into the bot's container, so this needs no new tool and no new mount.
 - **Rejected**: a `put_image` tool (a new tool for what the bot can already do); moving the ledger out now (worth it only once the risk is real).
 - **Task**: cortex-tasks/board/2026-11-02_board-agent_plugin-skill-images.md
+
+## D-078 The plugin folder ships its types and a seam version
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, points 377.4, 377.5; entry 374D) · **From**: board-app plugin-types-and-seam
+- **Decision**:
+  1. The folder carries `plugin.d.ts`, made at build from the code with the repo's own TypeScript, never written by hand (`apps/board/bin/plugin-types.ts`). A TypeScript host compiles against the file of the folder it ships.
+  2. `seam` in the manifest is one whole number from 1, with one home (`SEAM`, `apps/board/plugin/seam.ts`). It rises by one with any change a host built for the last number would not survive; never lowered, never reused.
+  3. `SEAM_TYPES`, a hash of the types, sits beside it: the build and the tests fail when the types change until it is set again, so the bump is decided, never forgotten.
+  4. A host reads `seam` before loading anything: the same number loads; any other keeps the folder it has and shows both numbers.
+  5. The rule in full is `docs/specification/plugin.md` § The types and the seam version.
+- **Why**: one plugin for every host: what the board gains, every host gets, and no host is broken by a folder it can't speak to.
+- **Rejected**: a hand-written types file (drifts from the code); the manifest's `version` as the seam number (it moves with routes and says nothing of the seam).
+- **Task**: cortex-tasks/board/2026-11-02_board-app_plugin-types-and-seam.md
