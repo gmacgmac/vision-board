@@ -1639,8 +1639,10 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     board and something new for its agent, the standalone server hands the answers over and records the Send in the
     same step, with `head` the line the message read (`chat-sessions.ts` `send`, `deliver`), as a message's Send is
     (169); a failure before that records nothing as sent, so the answers go with the next Send: a duplicate at worst,
-    never a loss. While the agent's turn runs, the press is recorded with `head` the board's watermark (acknowledging
-    nothing new) and the Send through what was read is recorded when the message goes. A session that can't be loaded
+    never a loss. While the agent's turn runs, an `act` `send` records the press with `head` the board's watermark
+    (acknowledging nothing new) and the Send through what was read when the message goes. The standalone page doesn't
+    use `act` then: with a session in use its Send is a message (`chat-panel.ts` `boardSend`), queued while the turn
+    runs and recorded once, when it goes (point 389, the Claude Code live test; D-075). A session that can't be loaded
     is answered to the person (point 386): `act` `send` is a 409 `conflict` whose detail says the chat could not be reached
     and why ("Send did not go: the chat could not be reached (Claude Code could not be started: …). Your answers are
     still unsent; press Send to try again.", `words/server-chat.ts` `theChatCouldNotBeReached`), and nothing is recorded,

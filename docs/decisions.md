@@ -1041,3 +1041,18 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: the board's destination is a plugin in nclite, built once and shared. Today a host gets the canvas and none of its controls, and our own chat goes around the contract in seven places, so "works here" doesn't mean "works there".
 - **Rejected**: rewriting the controls framework-free (2,500 lines rewritten for a gain no host sees, since nclite is Svelte too and only calls `mount`); an adapter written to nclite's draft contract (a draft, implemented only in a prototype, and it would tie the board to one host).
 - **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md
+
+## D-075 A Send counts only the answers that went
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, points 377, 383, 384, 386, 389; entry 374A) · **From**: board-actions send-counts-what-went
+- **Decision**:
+  1. A Send acknowledges the answers its message carried, as a consumer commits an offset: `resolve('answers')` answers `head`, the ledger line it read through; the host passes it to `record`; the `send` line keeps it (`head`, ledger v19).
+  2. `record(null)`: the message went without the answers chip; the Send is recorded and acknowledges nothing new. `record()`: no chat carried the answers (the bot reads the board); the Send covers up to its own line, as before.
+  3. The board's watermark is the highest `head` (own `seq` on a line with none), never lowered: the answers chip, `board.unsent` and a note's history count from it. Old ledgers fold unchanged.
+  4. A host records only after the message went: a failure records nothing; a crash before the record re-sends (a duplicate, never a loss). A chip the person removes is left out of that message only.
+  5. Behind `sendCountsWhatWent`, on by default.
+  6. On the standalone server, an `act` `send` is recorded once its chat session has the answers, with the head it read; pressed while the agent works, it is recorded acknowledging nothing new, and again when the message goes (point 383). The standalone page's own Send, with a session in use, is a message: queued while the agent works and recorded once, when it goes (point 389).
+  7. With the chat's agent known, Send lights only for answers that agent may read; the others read theirs with `check_responses` (point 384).
+  8. A Send that can't reach its chat session records nothing and says why to the person (`act` 409 `conflict`), so Send stays lit (point 386).
+- **Why**: a host that lets the person remove the answers chip, or an answer made between the read and the record, lost answers the bot never got.
+- **Rejected**: the chip's `ref` bounding the read (needs the board as of a past line); the engine remembering the last resolve (makes `resolve` stateful, and a failed message's read would be committed by the next Send: a silent loss); refusing a Send whose answers moved (re-sends the whole round); `record(null)` writing no line (chat-side and pull agents lose the Send signal); a v18 field without a bump (api.md 11).
+- **Task**: cortex-tasks/board/2026-11-02_board-actions_send-counts-what-went.md; cortex-tasks/board/2026-11-02_board-actions_send-follow-ups.md; cortex-tasks/board/2026-11-02_board-actions_send-error-says-why.md
