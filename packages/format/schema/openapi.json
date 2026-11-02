@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.37.0",
+    "version": "1.38.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -1256,7 +1256,7 @@
         "operationId": "act",
         "x-agent": false,
         "summary": "Record one action by the person",
-        "description": "Record one action by the person: ✓ (`ack`), ✗ (`drop`), a note (`comment`; an old `context` is still taken), edit or remove a note not yet sent, save for later, reopen, move, reset, change layout or card widths, resize, grant or deny a request, revoke, send, reject an agent's proposal, archive or restore the whole board, or lock or unlock it, put one card's notes away or bring them back; or allow an app's tools to run at one version of its code (`app-allow` with `app` and `hash`, from list_apps) or stop them (`app-revoke` with `app`), which are on the app, not the board, so a lock doesn't hold them. An archived board is gone for agents, as if it never existed, and every other action on it is refused until it is restored. A locked board is read-only for everyone: every action on it but the person's own marks (flag, unflag, notes-hide, notes-show, archive, restore, unlock) is refused with `locked` (423) until it is unlocked; agents see `locked` on `get_board` and `list_boards`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. It returns the stored ledger line.",
+        "description": "Record one action by the person: ✓ (`ack`), ✗ (`drop`), a note (`comment`; an old `context` is still taken), edit or remove a note not yet sent, save for later, reopen, move, reset, change layout or card widths, resize, grant or deny a request, revoke, send, reject an agent's proposal, archive or restore the whole board, or lock or unlock it, put one card's notes away or bring them back; or allow an app's tools to run at one version of its code (`app-allow` with `app` and `hash`, from list_apps) or stop them (`app-revoke` with `app`), which are on the app, not the board, so a lock doesn't hold them. An archived board is gone for agents, as if it never existed, and every other action on it is refused until it is restored. A locked board is read-only for everyone: every action on it but the person's own marks (flag, unflag, notes-hide, notes-show, archive, restore, unlock) is refused with `locked` (423) until it is unlocked; agents see `locked` on `get_board` and `list_boards`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. A `send` whose chat session can't be loaded is a `conflict` (409) whose detail says the chat could not be reached and why; nothing is recorded, so the answers stay unsent and Send can be pressed again. It returns the stored ledger line.",
         "security": [
           {
             "personCookie": []
@@ -1314,6 +1314,9 @@
           },
           "404": {
             "$ref": "#/components/responses/notFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/sendConflict"
           },
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
@@ -3698,6 +3701,22 @@
               "title": "Conflict",
               "status": 409,
               "detail": "The file could not be saved: .visionboard/attachments/ or the day's folder inside it is not a plain folder. Check it, then attach the file again."
+            }
+          }
+        }
+      },
+      "sendConflict": {
+        "description": "A `send` whose chat session could not be loaded: the chat could not be reached. Nothing was recorded, so the person's answers are still unsent and Send can be pressed again.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/conflict",
+              "title": "Conflict",
+              "status": 409,
+              "detail": "Send did not go: the chat could not be reached (Claude Code could not be started: the CLI is gone). Your answers are still unsent; press Send to try again."
             }
           }
         }

@@ -81,7 +81,7 @@ export interface Chats {
   /** The board's Send (the engine's `onSend`): hand the session in use on the board the person's answers since it was
    * last told and `record` the Send through what they were read at, in one step; while its turn runs, the press is
    * recorded acknowledging nothing new, and the answers go, and are recorded, when it ends. A session that can't be
-   * loaded hands over nothing, and the Send acknowledges nothing new. Recorded at once, as before, when the board has
+   * loaded is a `conflict` that says why (point 386): nothing is recorded, so Send stays lit. Recorded at once, as before, when the board has
    * no session or nothing new for its agent, and with the `sendCountsWhatWent` flag off (then handed over after). */
   send: SendHook;
   /** The person's message `msg` to `live`, on its board: the words, the chips and the answers since
@@ -298,8 +298,7 @@ export function openChats(o: ChatOptions): Chats {
       }
       if (!stored || starts.has(key(board))) return record();
       const pressed = () => record(headFor(ledger.state(), board, null).head);
-      const session = await live(stored.session).catch(notHandedOver);
-      if (!session) return pressed();
+      const session = await live(stored.session).catch((err) => { throw problem('conflict', serverChatWords.theChatCouldNotBeReached(reason(err))); });
       if (!unsaid(session, board, Infinity)) return record();
       let line: LedgerEvent | undefined = session.busy ? pressed() : undefined;
       const now = (head: number | undefined) => (line = record(head));

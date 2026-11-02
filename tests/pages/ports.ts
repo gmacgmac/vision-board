@@ -8,7 +8,7 @@ import { DEFAULT_PORT } from '#format';
 const BASE = Number(process.env.VB_TEST_PORT ?? 4468);
 const BLOCK = 10;
 /** Each server's place in the block. */
-const OFFSET = { main: 0, perf: 1, empty: 2, chat: 3, folder: 4, app: 5, appsOff: 6, roadmap: 7 } as const;
+const OFFSET = { main: 0, perf: 1, empty: 2, chat: 3, folder: 4, app: 5, appsOff: 6, roadmap: 7, chatAgain: 8 } as const;
 export type Server = keyof typeof OFFSET;
 /** The worker's own boards (servers.ts), fresh for every spec file. */
 export const BOARDS = ['main', 'perf', 'empty'] as const;

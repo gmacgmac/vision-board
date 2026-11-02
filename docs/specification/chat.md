@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-10-31
+updated: 2026-11-02 (a Send the chat can't take says why: api.md 170)
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -110,7 +110,7 @@ agent works (held; the line under the box says so). Send to agent goes through t
 (`board/host.ts` `BoardChat.send`; `chat-panel.ts` `boardSend`): with the board's session and something attached it is the composer's message with no
 words (`sendsInChat`), which the server records as the Send, so the two are enabled and disabled together (`shell.chatAttached` beside
 `board.unsent`, the status's own, from `BoardChat.status`, which counts only what the session's agent may read, api.md 170); otherwise it is the
-board's `send` act, as with no session, which the server records once it has handed the session's agent its answers (api.md 170). Held either way, the button shows
+board's `send` act, as with no session, which the server records once it has handed the session's agent its answers (api.md 170), or refuses with why when the session can't be loaded (point 386: a 409 `conflict`, nothing recorded, Send lit; `chat-send-error.spec.ts`). Held either way, the button shows
 "Waiting for agent" until the next `message_in` ("Queued" with the `workAlongside` flag, below).
 
 **Working alongside the agent** (flag `workAlongside`, point 328). While the agent works the person keeps

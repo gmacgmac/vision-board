@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -951,8 +951,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     restart it is the Send before. While a turn runs the message waits (one at most; the `system`
     line "Your answers go to the agent when it finishes this turn." says so once) and goes when the
     turn ends, however it ends, its text made then, so a second Send meanwhile is covered by the
-    same message. The `act` answer is not held for the turn; a session that can't be loaded hands over nothing
-    (since 170 the Send is recorded once the message went, and one that can't go acknowledges nothing new). A board
+    same message. The `act` answer is not held for the turn; a session that can't be loaded is a `conflict` that says why
+    (since 170 the Send is recorded once the message went, and one that can't go is refused and recorded as nothing). A board
     with no session: nothing changes. `send_chat` still records the Send
     without this message (its own text is the prompt).
 122. **A session in the folder** (ruling 2). `start_folder_chat` (`POST /api/chats`) starts a
@@ -1633,17 +1633,24 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     passes `record` what `resolve` read (plugin.md § The chat). Behind the `sendCountsWhatWent` flag, page and server;
     off, no `head` is written. An agent sees `head` on a `send` in `check_responses`.
 170. **The board's Send is recorded once its answers went; Send lights for the chat's agent** (points 383, 384). No
-    contract shape changes: `act` `send` still answers its stored line, and `openapi.json` is unchanged. The engine's
+    contract shape changes: `act` `send` still answers its stored line; its one new answer is 409 `conflict` (point 386,
+    below; `info.version` 1.38.0). The engine's
     `onSend` is given the Send to record (`operations.ts` `SendHook`, default: at once). With a chat session on the
     board and something new for its agent, the standalone server hands the answers over and records the Send in the
     same step, with `head` the line the message read (`chat-sessions.ts` `send`, `deliver`), as a message's Send is
     (169); a failure before that records nothing as sent, so the answers go with the next Send: a duplicate at worst,
     never a loss. While the agent's turn runs, the press is recorded with `head` the board's watermark (acknowledging
     nothing new) and the Send through what was read is recorded when the message goes. A session that can't be loaded
-    hands over nothing and the Send acknowledges nothing new (the error is logged). The `act` answer waits for a
+    is answered to the person (point 386): `act` `send` is a 409 `conflict` whose detail says the chat could not be reached
+    and why ("Send did not go: the chat could not be reached (Claude Code could not be started: …). Your answers are
+    still unsent; press Send to try again.", `words/server-chat.ts` `theChatCouldNotBeReached`), and nothing is recorded,
+    so the answers stay unsent and Send stays lit. The page shows it as it shows any failed act (the error toast, the
+    Send button's error state and tip: `sender.ts` `attempt`, `SendButton.svelte`). The flag-off path is as before (the
+    Send is recorded, the error logged). The `act` answer waits for a
     session to load and its message to go, never for the turn. No session, or nothing new for its agent: recorded at
     once, as before. Held by `api-chat-send.test.ts` ("with a session", "while a turn runs", "a hand-over that
-    fails"). `board.unsent` takes `sendTo` (`ConditionContext`), the agent of the person's chat on the board: only the
+    fails" is now "a chat that cannot be reached answers the Send with why, records nothing, …" and
+    `tests/pages/chat-send-error.spec.ts`). `board.unsent` takes `sendTo` (`ConditionContext`), the agent of the person's chat on the board: only the
     lines it may read count (`unsent.ts` `unsentOn`, by `permissions.ts` `concerns`, the test `check_responses` uses);
     the page passes `BoardChat.status.agent` and reads again when it changes (`attention.ts`); with no agent, every
     answer, as before. The other agents read theirs with `check_responses`. Held by `unsent.test.ts` ("with the chat's

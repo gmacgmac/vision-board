@@ -13,6 +13,7 @@ import { PORTS } from './ports.ts';
 
 export interface ChatServer {
   base: string;
+  project: string;
   fake: ReturnType<typeof fakeChat>;
   /** An agent's write on `board` (this server's test agent, or the agent whose `secret` is given); the results, each `ok`. */
   write(board: string, items: unknown[], secret?: string): Promise<{ n?: number }[]>;
@@ -23,22 +24,31 @@ export interface ChatServer {
   close(): Promise<void>;
 }
 
-export async function startChatServer(): Promise<ChatServer> {
+export interface ChatServerOptions {
+  /** A project folder to open (kept on close), such as a stopped server's: its chat sessions are on disk, not loaded. */
+  project?: string;
+  /** Every CLI start fails with this message: a session loaded again after a restart can't be (point 386). */
+  startError?: string;
+  /** The port: a server started again takes another, since the page-test process's keep-alive sockets still point at the stopped one. */
+  port?: number;
+}
+
+export async function startChatServer({ project, startError, port = PORTS.chat }: ChatServerOptions = {}): Promise<ChatServer> {
   let held: Promise<void> | null = null;
   let fake: ReturnType<typeof fakeChat> | undefined;
   const claude = (): AgentAdapter => {
     const inner = fake!.adapters.claude!();
-    return { agent: inner.agent, async start(o) { await held; return inner.start(o); } };
+    return { agent: inner.agent, async start(o) { await held; if (startError) throw new Error(startError); return inner.start(o); } };
   };
   // A Kiro that is the same fake process (only the picker and the session record are under test).
   const kiro = (): AgentAdapter => ({ ...claude(), agent: 'kiro' });
-  const board = await startTestBoard({ prefix: 'vb-chat-pages-', port: PORTS.chat, chat: { adapters: { claude, kiro } } });
+  const board = await startTestBoard({ prefix: 'vb-chat-pages-', port, ...(project && { project }), chat: { adapters: { claude, kiro } } });
   fake = fakeChat(fs.mkdtempSync(path.join(board.project, 'cli-')));
   const { base } = board;
   const cookie = await personCookie(base);
   const agent = await joinAgent(base, 'Page test agent');
   return {
-    base, fake,
+    base, project: board.project, fake,
     async write(board, items, as = agent.secret) {
       const r = await fetch(`${base}/api/boards/${board}/write`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${as}` }, body: JSON.stringify({ items }),
