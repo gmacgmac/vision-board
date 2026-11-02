@@ -430,3 +430,4 @@
 [[2026-11-02 15:29]] [board-agent] Completed: Plugin Skill Images Section (pictures go in the images/ folder of the board folder the host names; plugin.md open point 1 done) → Task: [[cortex-tasks/board/2026-11-02_board-agent_plugin-skill-images.md]]
 [[2026-11-02 15:50]] [board-actions] Completed: Send Follow-ups (383: the board's Send recorded once the session has the answers; 384: Send lights only for answers the chat's agent may read) → Task: [[cortex-tasks/board/2026-11-02_board-actions_send-follow-ups.md]]
 [[2026-11-02 15:50]] [project-docs] plugin.md § The chat, status: with agent, only answers it may read light Send (point 384) → Notes: `docs/specification/plugin.md` (status) — Send follow-ups' request
+[[2026-11-02 21:55]] [board-app] The chat header is drawn once and updated in place; its pickers are no longer redrawn after opening (point 387) → Task: [[cortex-tasks/board/2026-11-02_board-app_chat-header-redraw.md]]

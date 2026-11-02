@@ -2,9 +2,11 @@
 // `chat-new-session` (the host confirms first) and `chat-pick` (an agent or a model chosen for the
 // next session); it never calls the server. With a list of what was allowed for the folder it also draws
 // a button that opens it (`chat-allowed`: the host refreshes the list) and raises `chat-forget` for a yes
-// the person chose to forget (the host confirms, then forgets). The list stays where it is while the rest of the
-// header is redrawn; Esc, a press outside or the button closes it. Browser only.
+// the person chose to forget (the host confirms, then forgets). The rest of the header is drawn once and
+// updated in place (morph.ts), so a picker is never thrown away and drawn again while data arrives (point 387);
+// the list stays where it is; Esc, a press outside or the button closes it. Browser only.
 import { CHAT_ALLOWED_EVENT, CHAT_FORGET_EVENT, CHAT_NEW_SESSION_EVENT, CHAT_PICK_EVENT, CHAT_STOP_EVENT } from '../events.ts';
+import { morphNodes } from '../morph.ts';
 import type { AllowedItem, HeaderView } from './header-core.ts';
 import { allowedTemplate, headerTemplate } from './header-template.ts';
 
@@ -70,19 +72,23 @@ export function defineChatHeader(): void {
     disconnectedCallback(): void { document.removeEventListener('pointerdown', this.away); }
 
     show(v: HeaderView): void {
-      // Focus stays on a button that is redrawn (Stop turning off moves it to New session).
+      // Drawn once, then updated in place; focus on a control that is put in new (a picker becoming plain
+      // text, or back) goes to its new one, and from Stop turning off to New session.
       const focused = this.contains(document.activeElement) && !this.box?.contains(document.activeElement) ? (document.activeElement as HTMLElement) : null;
       const at = focused?.dataset.do ?? focused?.dataset.pick;
       this.dataset.status = v.status.kind;
       const main = document.createElement('template');
       main.innerHTML = headerTemplate(v);
-      for (const n of [...this.childNodes]) if (n !== this.box) n.remove();
-      this.prepend(...main.content.childNodes);
+      const now = [...this.childNodes].filter((n) => n !== this.box);
+      if (!morphNodes(now, [...main.content.childNodes])) {
+        for (const n of now) n.remove();
+        this.prepend(...main.content.childNodes);
+      }
       this.list(v.allowed);
       if (!at) return;
       const again = this.querySelector<HTMLElement>(`[data-do="${at}"]:not(:disabled), [data-pick="${at}"]`)
         ?? this.querySelector<HTMLElement>('[data-do="new"]');
-      again?.focus({ preventScroll: true });
+      if (again !== document.activeElement) again?.focus({ preventScroll: true });
     }
 
     /** Draw the list of what was allowed, only when it changed; none given, none drawn. */

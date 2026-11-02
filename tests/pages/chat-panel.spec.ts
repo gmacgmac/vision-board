@@ -5,7 +5,7 @@
 // its change chip, which zooms to the cards and selects nothing; a changed card's link back to the chat;
 // the session again after a reload; Allow and Deny on what the gate asks; Stop; a past version;
 // New session, a message sent while it starts, and the newest session after a reload (FIX_01);
-// axe light and dark. The server is this file's own (chat-server.ts) with the agent
+// the header's pickers, drawn once and wide enough for their labels; axe light and dark. The server is this file's own (chat-server.ts) with the agent
 // package's fake `claude`, never the real one: replaying the recorded turn that drew cards 1 and 2
 // on "scratch", or hanging so the gate can be asked by hand.
 import type { Page } from '@playwright/test';
@@ -204,6 +204,12 @@ test('New session asks first; confirmed, the agent starts again and the feed is 
   await toggle(page).click();
   await expect(log(page).locator('chat-message')).not.toHaveCount(0);
   const dialog = page.getByRole('dialog', { name: 'Start a new session?' });
+  // A model picked asks too; cancelled, the picker (updated in place, point 387) shows the session's again.
+  const model = side(page).getByRole('combobox', { name: 'Model' });
+  const was = await model.inputValue();
+  await model.selectOption({ label: 'Sonnet 5.5' });
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(model).toHaveValue(was);
   await side(page).getByRole('button', { name: 'New session' }).click();
   await dialog.getByRole('button', { name: 'Cancel' }).click();
   await expect(log(page).locator('chat-message')).not.toHaveCount(0);
@@ -266,24 +272,35 @@ test('at the default width, and the narrowest, the agent and model pickers show 
   await fits(page);
 });
 
-/** Each picker in the header is at least as wide as its label needs. The header draws its pickers again
- *  just after it opens, so a picker caught on its way out is measured again. */
+test('the header draws its pickers once: the session and the folder\'s list arriving update them in place (point 387)', async ({ page }) => {
+  await open(page);
+  // Every picker that leaves the page from the moment the panel opens, and when (ms after the click).
+  await page.evaluate(() => {
+    const w = Object.assign(window, { __vbGone: [] as string[], __vbAt: 0 });
+    new MutationObserver((rs) => rs.flatMap((r) => [...r.removedNodes]).filter((n) => n instanceof Element)
+      .flatMap((n) => [n, ...n.querySelectorAll('*')]).filter((e) => e.matches('[data-pick]'))
+      .forEach((s) => w.__vbGone.push(`${(s as HTMLElement).dataset.pick} at ${Math.round(performance.now() - w.__vbAt)} ms`)))
+      .observe(document.body, { childList: true, subtree: true });
+    document.querySelector('#chat-toggle')?.addEventListener('click', () => { w.__vbAt = performance.now(); }, { capture: true, once: true });
+  });
+  await toggle(page).click();
+  // The folder's list of what was allowed has come (the header is drawn again then).
+  await expect(side(page).getByRole('button', { name: /^Allowed for this folder/ })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __vbGone: string[] }).__vbGone)).toEqual([]);
+});
+
+/** Each picker in the header is at least as wide as its label needs. */
 async function fits(page: Page) {
   for (const name of ['Agent', 'Model']) {
-    const pick = side(page).getByRole('combobox', { name });
-    await expect(async () => {
-      // A copy of the picker on its own, out of the header's flow, is the width its label needs.
-      const [shown, needs] = await pick.evaluate((el) => {
-        const header = el.closest('chat-header');
-        if (!header) return [0, Infinity];
-        const copy = el.cloneNode(true) as HTMLSelectElement;
-        copy.style.position = 'absolute';
-        header.append(copy);
-        const w: [number, number] = [el.getBoundingClientRect().width, copy.getBoundingClientRect().width];
-        copy.remove();
-        return w;
-      });
-      expect(shown, `${name} picker`).toBeGreaterThanOrEqual(needs - 0.5);
-    }).toPass({ timeout: 5000 });
+    // A copy of the picker on its own, out of the header's flow, is the width its label needs.
+    const [shown, needs] = await side(page).getByRole('combobox', { name }).evaluate((el) => {
+      const copy = el.cloneNode(true) as HTMLSelectElement;
+      copy.style.position = 'absolute';
+      el.closest('chat-header')!.append(copy);
+      const w: [number, number] = [el.getBoundingClientRect().width, copy.getBoundingClientRect().width];
+      copy.remove();
+      return w;
+    });
+    expect(shown, `${name} picker`).toBeGreaterThanOrEqual(needs - 0.5);
   }
 }
