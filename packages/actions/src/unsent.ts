@@ -7,12 +7,13 @@
 // ✗, Later and clear are folded to its latest, which counts only when it leaves the card otherwise
 // than at the last Send (D-045 ruling 9: ✓ then cleared leaves nothing to send); an answer on
 // cards that have all left the board (a retire, the agent's or the person's) is no longer there to
-// send. Pure.
+// send. Read for the chat's agent, only the lines it may read count (permissions.ts `concerns`, point 384). Pure.
 import type { ActEvent, RetireEvent } from '#format';
 import { containerKey } from '#format';
 import type { LedgerState } from './fold.ts';
 import { cutOf } from './clears.ts';
 import { markOf } from './notes.ts';
+import { concerns } from './permissions.ts';
 import { eventBoard } from './references.ts';
 import { isAnswer, MARK_ACTIONS } from './registry.ts';
 
@@ -56,10 +57,11 @@ function sent(s: LedgerState, board: string, lines: Set<number>, seq: number): v
   for (const line of lines) if (gone(s, board, actAt(s.acts, line))) lines.delete(line);
 }
 
-/** The latest line the next Send on `board` carries; undefined when there is nothing new to send. */
-export function unsentOn(s: LedgerState, board: string): number | undefined {
-  const lines = s.unsent.get(board);
-  return lines?.size ? Math.max(...lines) : undefined;
+/** The latest line the next Send on `board` carries, of those `agent` may read when given (the chat's: the other
+ * agents read theirs with `check_responses`); undefined when there is nothing new to send. */
+export function unsentOn(s: LedgerState, board: string, agent?: string): number | undefined {
+  const lines = [...(s.unsent.get(board) ?? [])].filter((seq) => agent === undefined || concerns(s, actAt(s.acts, seq)!, agent));
+  return lines.length ? Math.max(...lines) : undefined;
 }
 
 /** The index of the first act after line `seq`, in `acts` (in `seq` order). */

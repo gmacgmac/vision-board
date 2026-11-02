@@ -109,7 +109,8 @@ what is attached (`ChatHost.holds`): with a chip or the answers it sends with no
 agent works (held; the line under the box says so). Send to agent goes through the host's chat
 (`board/host.ts` `BoardChat.send`; `chat-panel.ts` `boardSend`): with the board's session and something attached it is the composer's message with no
 words (`sendsInChat`), which the server records as the Send, so the two are enabled and disabled together (`shell.chatAttached` beside
-`board.unsent`, the status's own, from `BoardChat.status`); otherwise it is the board's `send` act, as with no session. Held either way, the button shows
+`board.unsent`, the status's own, from `BoardChat.status`, which counts only what the session's agent may read, api.md 170); otherwise it is the
+board's `send` act, as with no session, which the server records once it has handed the session's agent its answers (api.md 170). Held either way, the button shows
 "Waiting for agent" until the next `message_in` ("Queued" with the `workAlongside` flag, below).
 
 **Working alongside the agent** (flag `workAlongside`, point 328). While the agent works the person keeps

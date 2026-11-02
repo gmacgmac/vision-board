@@ -92,7 +92,8 @@ export interface ChatStatus {
   /** Drives the board's working mark (the status's `chatWork`). A host with no agent to speak of says `idle`. */
   readonly now: ChatWork;
   /** The id, on this board's ledger, of the agent the chat talks to on the open board. With it the answers
-   *  chip holds only what that agent may read; without it, every answer (a host with one bot). */
+   *  chip holds only what that agent may read, and only those light Send (point 384); without it, every answer
+   *  (a host with one bot). */
   readonly agent?: string | undefined;
   /** The Send the person pressed waits for the agent's turn to end (the status's `sendWaiting`). */
   readonly held?: boolean | undefined;

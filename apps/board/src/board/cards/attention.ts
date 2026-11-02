@@ -4,7 +4,8 @@
 // (`container.owed`), the requests the strip announces (`grant.requested` lines in the batch), the
 // proposals on the cards and the bar (`proposal.open`, `proposal.stale`; announced when their line
 // is in the batch), the changed cards (`item.unseen`, update-flow.ts), the cards awaiting a handover
-// (`item.awaiting`, parking.ts), whether Send to agent has anything to send (`board.unsent`) and the
+// (`item.awaiting`, parking.ts), whether Send to agent has anything to send (`board.unsent`: for the host's chat's
+// agent, only what it may read, read again when that agent changes, point 384) and the
 // "agent drew" toast (`board.drawn`, when its line is in the batch), and with the freshCards flag the
 // new and updated cards (the status's `freshCards`, the toolbar's "N new") and the fresh containers
 // (`container.fresh`, their border and pill), none while a past version shows. `pageConditions` (packages/actions, also the
@@ -17,8 +18,10 @@ import type { LedgerEvent } from '#format';
 import type { LedgerState } from '#actions';
 import type { FreshCount, ProposalFound } from '#actions';
 import { boardNews, pageConditions } from '#actions';
+import type { ChatStatus } from '../host.ts';
 import type { Io } from '../io.ts';
 import type { Status } from '../status.ts';
+import { hearUntilStopped } from '../teardown.ts';
 
 /** The least time between two board seen lines while a board stays open (api.md 87). */
 const SEEN_EVERY_MS = 60_000;
@@ -35,6 +38,8 @@ export interface AttentionDeps {
   status: Status;
   /** Records a board seen (io.ts). */
   markBoardSeen: Io['markBoardSeen'];
+  /** The host's chat (`BoardChat.status`): Send carries only what its agent may read. */
+  chat?: Pick<ChatStatus, 'agent' | 'on'> | undefined;
 }
 
 export interface Attention {
@@ -72,6 +77,8 @@ export function createAttention(d: AttentionDeps): Attention {
   let freshIn: ReadonlyMap<string, FreshCount> = new Map();
   const none: ReadonlyMap<string, FreshCount> = new Map();
   let timer = 0;
+  /** The chat's agent the conditions were last read for. */
+  let sendTo: string | undefined;
   let sentAt = 0;
   /** board -> the head last sent, so a board seen still on its way is not sent twice. */
   const sent = new Map<string, number>();
@@ -100,7 +107,8 @@ export function createAttention(d: AttentionDeps): Attention {
   function read(from: number): boolean {
     const s = d.state();
     if (!s) return false;
-    const c = pageConditions(s, d.board());
+    sendTo = d.chat?.agent;
+    const c = pageConditions(s, d.board(), sendTo);
     owed = c.owed;
     proposals = c.proposals;
     unseen = c.unseen;
@@ -122,6 +130,7 @@ export function createAttention(d: AttentionDeps): Attention {
 
   const leave = () => see(d.board(), true);
   addEventListener('pagehide', leave);
+  const unhear = d.chat ? hearUntilStopped((heard) => d.chat!.on(heard), () => { if (d.chat!.agent !== sendTo) read(Infinity); }) : () => {};
 
   return {
     batch(lines, full) {
@@ -146,6 +155,7 @@ export function createAttention(d: AttentionDeps): Attention {
     destroy() {
       clearTimeout(timer);
       removeEventListener('pagehide', leave);
+      unhear();
     },
   };
 }

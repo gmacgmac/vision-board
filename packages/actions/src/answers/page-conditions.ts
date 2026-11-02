@@ -41,14 +41,15 @@ export interface PageConditions {
 }
 
 /** The card rows name a card by its identity (`c.id`, conditions.ts); the page by its board number,
- * as the View does (api.md 125), so every card set here is in board numbers. */
-export function pageConditions(s: LedgerState, board: string): PageConditions {
+ * as the View does (api.md 125), so every card set here is in board numbers. `sendTo`: the chat's agent,
+ * whose Send carries only what it may read (`unsent`). */
+export function pageConditions(s: LedgerState, board: string, sendTo?: string): PageConditions {
   const n = (c: { id?: number }) => numberOf(s, c.id!);
   const out: PageConditions = {
     marks: {}, owed: new Set(), requests: [], proposals: [], fresh: new Set(), unseen: new Set(), awaiting: new Set(), owedCards: new Set(), unsent: false,
     freshCards: freshCards(s, board), freshIn: new Map(),
   };
-  for (const c of conditionsOf(s, { board })) {
+  for (const c of conditionsOf(s, { board, sendTo })) {
     if (c.kind === 'board.new' || c.kind === 'board.changed') out.marks[c.board] = c.kind === 'board.new' ? 'new' : 'changed';
     else if (c.kind === 'container.owed') out.owed.add(c.container!);
     else if (c.kind === 'grant.requested') out.requests.push(c.seq!);

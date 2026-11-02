@@ -41,7 +41,8 @@ call the same actions, and each one is recorded in the project ledger as an `act
   the new and updated cards the toolbar's "N new" list and the containers' pills read, and the
   containers they make fresh (`fresh.ts`, `container.fresh`); from where a board's cards are new,
   for `item.new`, is `rounds.ts` (`newFrom`); what the next Send carries, for
-  `board.unsent`, is `unsent.ts`, by `isAnswer` in the registry, the test `replyScope` uses too),
+  `board.unsent`, is `unsent.ts`, by `isAnswer` in the registry, the test `replyScope` uses too, and for the
+  chat's agent (`sendTo`) only what it may read, by `concerns` in `permissions.ts`),
   what an agent owes and the person's responses (`pendingItems`, `responsesAfter`, `replyScope`, in
   `pending.ts`), the API's read views (`nodeDetail`, `linkedDetails`, `containerDetail`,
   `openItems`, `openContainers`, `boardAccess`, `boardList`, in `reads.ts`), the numbered reply

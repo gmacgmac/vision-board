@@ -951,8 +951,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     restart it is the Send before. While a turn runs the message waits (one at most; the `system`
     line "Your answers go to the agent when it finishes this turn." says so once) and goes when the
     turn ends, however it ends, its text made then, so a second Send meanwhile is covered by the
-    same message. The `act` answer is not held for it; a session that can't be loaded leaves the Send
-    as it was. A board with no session: nothing changes. `send_chat` still records the Send
+    same message. The `act` answer is not held for the turn; a session that can't be loaded hands over nothing
+    (since 170 the Send is recorded once the message went, and one that can't go acknowledges nothing new). A board
+    with no session: nothing changes. `send_chat` still records the Send
     without this message (its own text is the prompt).
 122. **A session in the folder** (ruling 2). `start_folder_chat` (`POST /api/chats`) starts a
     session with no board; `list_folder_chats` (`GET /api/chats`) lists the sessions on no board,
@@ -1519,7 +1520,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     is refused (`operations.ts` `checkCaller`). Held by `apps/board/tests/engine.test.ts`.
 160. **What the host supplies.** `dir`; optionally the ledger already opened in it (the standalone
     server opens it under its lock, `lock.ts`), the folder's name as the person reads it
-    (`list_boards` and `join` answer it as `project`), `onSend` (told after the person's Send), the flags
+    (`list_boards` and `join` answer it as `project`), `onSend` (given the person's Send to record, 170), the flags
     it reads itself (`svgImages`, for `image`) and where warnings go. The plugin folder's `createEngine` takes `dir`, `name`,
     `warn` and `flags` (`apps/board/plugin/engine.ts`, plugin.md): the opened ledger and `onSend` are the standalone server's. The ledger's appends by another writer are read in before every operation
     and append, and polled while anyone watches (`ledger.ts` `refresh`, `follow`), so two engines on
@@ -1631,3 +1632,19 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     so it writes `head` as the line it read (`chat-sessions.ts` `deliver`; `api-chat-send.test.ts` "one path"); a host
     passes `record` what `resolve` read (plugin.md § The chat). Behind the `sendCountsWhatWent` flag, page and server;
     off, no `head` is written. An agent sees `head` on a `send` in `check_responses`.
+170. **The board's Send is recorded once its answers went; Send lights for the chat's agent** (points 383, 384). No
+    contract shape changes: `act` `send` still answers its stored line, and `openapi.json` is unchanged. The engine's
+    `onSend` is given the Send to record (`operations.ts` `SendHook`, default: at once). With a chat session on the
+    board and something new for its agent, the standalone server hands the answers over and records the Send in the
+    same step, with `head` the line the message read (`chat-sessions.ts` `send`, `deliver`), as a message's Send is
+    (169); a failure before that records nothing as sent, so the answers go with the next Send: a duplicate at worst,
+    never a loss. While the agent's turn runs, the press is recorded with `head` the board's watermark (acknowledging
+    nothing new) and the Send through what was read is recorded when the message goes. A session that can't be loaded
+    hands over nothing and the Send acknowledges nothing new (the error is logged). The `act` answer waits for a
+    session to load and its message to go, never for the turn. No session, or nothing new for its agent: recorded at
+    once, as before. Held by `api-chat-send.test.ts` ("with a session", "while a turn runs", "a hand-over that
+    fails"). `board.unsent` takes `sendTo` (`ConditionContext`), the agent of the person's chat on the board: only the
+    lines it may read count (`unsent.ts` `unsentOn`, by `permissions.ts` `concerns`, the test `check_responses` uses);
+    the page passes `BoardChat.status.agent` and reads again when it changes (`attention.ts`); with no agent, every
+    answer, as before. The other agents read theirs with `check_responses`. Held by `unsent.test.ts` ("with the chat's
+    agent") and `tests/pages/chat-send-scope.spec.ts`. Both behind `sendCountsWhatWent`; off, as before.

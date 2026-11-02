@@ -155,7 +155,7 @@ server, the page and (through the API) agents. Nothing in them is stored, so not
 On the page, one read (`pageConditions`, `packages/actions/src/answers/page-conditions.ts`, also the gallery's; `apps/board/tests/board-data.test.ts`)
 gives the picker marks, the container badges, the open requests, `board.drawn`, whether Send to
 agent has anything to send (`board.unsent`: without it the button is disabled, "Nothing new to
-send", api.md 123), and the new and updated cards with the fresh containers (`freshCards`,
+send", api.md 123; with the host's chat's agent, `BoardChat.status.agent`, only what it may read, api.md 170), and the new and updated cards with the fresh containers (`freshCards`,
 `container.fresh`, api.md 158);
 `attention.ts` runs it after every batch and on every switch, decides what is news (a request or a
 drawing line in the batch), and sends the board seen that ends the marks. Components only render.

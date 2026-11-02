@@ -49,8 +49,9 @@ export interface Condition { kind: ConditionKind; board: string; container?: str
 
 /** Who asks. `board`: the board asked about, or the board open on the page. `agent`: the asking
  * agent; its rows are scoped to what the permissions table lets it answer, and rows for the
- * person only are left out. Without `agent`, the person's view: every row, every agent's. */
-export interface ConditionContext { board?: string; agent?: string }
+ * person only are left out. Without `agent`, the person's view: every row, every agent's. `sendTo`:
+ * the agent the person's chat talks to on the board, whose Send carries only what it may read (`board.unsent`). */
+export interface ConditionContext { board?: string; agent?: string; sendTo?: string | undefined }
 
 /** A row: what it is about, who is told and where, when it holds and ends (read by the tests and
  * the docs), and how it is worked out. */
@@ -245,10 +246,10 @@ export const CONDITIONS: Rows = {
   },
   'board.unsent': {
     about: 'board', audience: 'person', shows: ['send'], clearedBy: [],
-    trueWhen: 'The open board has an answer of the person\'s since its last Send that the Send message carries (registry.ts `isAnswer`, unsent.ts): a card\'s ✓, ✗, Later or clear when it leaves the card otherwise than at the last Send (D-045), a note, a proposal turned down, a note on a whole container. A move into or out of Later counts through its Later or Reopen; arranging the board alone (pin, size, mode, a move between containers) and a note removed before Send do not. Send to agent is enabled only then (field report batch 1, ruling 1).',
+    trueWhen: 'The open board has an answer of the person\'s since its last Send that the Send message carries (registry.ts `isAnswer`, unsent.ts): a card\'s ✓, ✗, Later or clear when it leaves the card otherwise than at the last Send (D-045), a note, a proposal turned down, a note on a whole container. A move into or out of Later counts through its Later or Reopen; arranging the board alone (pin, size, mode, a move between containers) and a note removed before Send do not. Send to agent is enabled only then (field report batch 1, ruling 1). With the chat\'s agent (`sendTo`), only an answer it may read counts (point 384).',
     endsWhen: 'The person\'s Send on the board.',
     derive: (s, ctx) => {
-      const seq = ctx.board === undefined ? undefined : unsentOn(s, ctx.board);
+      const seq = ctx.board === undefined ? undefined : unsentOn(s, ctx.board, ctx.sendTo);
       return seq === undefined ? [] : [{ kind: 'board.unsent', board: ctx.board!, seq }];
     },
   },

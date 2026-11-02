@@ -6,7 +6,7 @@ import { isContainerAct } from '#format';
 import { conditionsOf } from './conditions.ts';
 import type { LedgerState } from './fold.ts';
 import { numberOf } from './numbers.ts';
-import { mayAnswer, mayAnswerIn } from './permissions.ts';
+import { concerns } from './permissions.ts';
 import { scopeOf } from './references.ts';
 import { cutOf } from './clears.ts';
 import { markOf } from './notes.ts';
@@ -34,20 +34,6 @@ export const pendingItems = (s: LedgerState, board: string, agent?: string): Pen
     const ask = s.asks.get(c.seq!);
     return [{ n: c.id === undefined ? 0 : numberOf(s, c.id), ...(c.container !== undefined && { region: c.container }), ...(ask ? { ask: { kind: ask.kind, seq: c.seq! } } : { later: c.seq! }) }];
   });
-
-/** Does this act concern `agent`? Send always; answers to its own requests and its own
- * removals; anything else in a container it may answer for, on any card it is on (api.md 41). */
-function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
-  // A note on or a place for a whole container: the agents that may answer on it (api.md 75).
-  if (isContainerAct(e)) return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
-  switch (e.action) {
-    case 'send': return true;
-    case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;
-    case 'revoke': return e.holder === agent;
-    case 'mode': case 'widths': return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
-    default: return scopeOf(s, e).cards.some((id) => mayAnswer(s, agent, id));
-  }
-}
 
 /** The person's acts on `board` after `seq` `after`, oldest first (`check_responses`), as the fold
  * holds them (cards by identity). With `agent`, only those that concern it, including the answers

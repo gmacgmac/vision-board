@@ -14,6 +14,7 @@ import { createAppHost } from './apps.ts';
 import type { ChatAdapters, ChatOptions, Chats } from './chat-sessions.ts';
 import { openChats } from './chat-sessions.ts';
 import type { Engine } from './engine/index.ts';
+import type { SendHook } from './engine/operations.ts';
 import { createEngine } from './engine/index.ts';
 import { displayName, hasBoard, isUnder, realPath } from './folders.ts';
 import type { Ledger } from './ledger.ts';
@@ -68,7 +69,7 @@ interface Held extends OpenFolder { readonly lock: Lock | undefined; close(): vo
 
 /** The folder's parts, each made on first use (the data folder, the real path and the engine too,
  * the engine on the ledger already opened under its lock). A Send through the engine hands the folder's chat session
- * the person's answers (api.md 121); a session that can't be loaded leaves the Send as it was. */
+ * the person's answers, and is recorded once it has them (api.md 121, chat-sessions.ts `send`). */
 function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   const data = () => path.dirname(ledger.file);
   let dir: string | undefined;
@@ -83,9 +84,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
     ledger, resolve: getEngine().resolve, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
     approvalHold: o.chat?.approvalHold, strictAccess: o.chat?.strictAccess, attachments: o.chat?.attachments, readAttachment: o.chat?.readAttachment, sendHead: o.chat?.sendHead,
   }));
-  const onSend = (board: string, seq: number) => {
-    getChats().round(board, seq).catch((err) => console.error(`chat: the Send's answers were not handed over: ${err instanceof Error ? err.message : String(err)}`));
-  };
+  const onSend: SendHook = (board, record) => getChats().send(board, record);
   return {
     get dir() { return getDir(); },
     get engine() { return getEngine(); },

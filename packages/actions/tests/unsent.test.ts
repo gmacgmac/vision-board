@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LATER_REGION, readLedger } from '#format';
 import type { ConditionContext, LedgerState } from '../src/index.ts';
-import { conditionsOf, foldLedger, replyScope } from '../src/index.ts';
+import { conditionsOf, foldLedger, pageConditions, replyScope } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';
 import { FIXTURE_LEDGERS } from '#format/testing';
 
@@ -102,6 +102,25 @@ test('the agent\'s own lines never make something new to send', () => {
   l.agent(A, { type: 'reply', n: 1, text: 'Because.', to: ask });
   l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
   assert.deepEqual(unsent(l.state()), []);
+});
+
+// Send lights only for what the chat's agent may read (point 384): with `sendTo` the row holds for the latest unsent
+// line that concerns that agent (permissions.ts `concerns`, as `check_responses` and the answers chip read it).
+test('with the chat\'s agent, an answer in another agent\'s container holds nothing; one of its own holds it', () => {
+  const l = v8();
+  const theirs = l.act({ action: 'ack', n: 2, ver: 1 });
+  const forA = { board: 'b', sendTo: A };
+  assert.deepEqual(unsent(l.state(), forA), [], 'only B\'s card answered');
+  assert.equal(pageConditions(l.state(), 'b', A).unsent, false);
+  assert.deepEqual(unsent(l.state()).map((c) => c.seq), [theirs], 'with no chat agent, every answer, as before');
+  const mine = l.act({ action: 'ack', n: 1, ver: 1 });
+  l.act({ action: 'drop', n: 2, ver: 1 });
+  assert.deepEqual(unsent(l.state(), forA).map((c) => c.seq), [mine], 'the latest line A may read');
+  assert.equal(pageConditions(l.state(), 'b', A).unsent, true);
+  const scope = replyScope(l.state(), 'b', 0, A);
+  assert.deepEqual([...scope.cards], [1], 'it agrees with what the answers chip carries for A');
+  l.act({ action: 'send', board: 'b' });
+  assert.deepEqual(unsent(l.state(), forA), []);
 });
 
 for (const file of FIXTURES) {

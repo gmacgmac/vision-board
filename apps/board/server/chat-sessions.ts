@@ -5,7 +5,7 @@
 // is stopped when the server closes. A session may start in the folder with no board; it moves to
 // the first board its agent creates (panel-send ruling 2). A board session's agent is handed the
 // person's answers since it was last told with every message (`tell`, chat-board-context ruling 2),
-// and the board's Send hands them on their own (`round`, panel-send ruling 1): one builder,
+// and the board's Send hands them on their own (`send`, panel-send ruling 1), recorded once they went (point 383): one builder,
 // chat-prompt.ts `promptFor`. The answers and the cards are read as any host reads a chip, through the
 // engine's `resolve` (`ChatOptions.resolve`, D-074 rule 6). A message waits while a turn runs (ruling 5; words alone too, point
 // 328), joined with any already waiting. Each session's approvals are decided by the access rules of
@@ -14,7 +14,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AnswersText } from '#actions';
-import { creatorOf } from '#actions';
+import { creatorOf, sendHead as headFor } from '#actions';
+import type { LedgerEvent } from '#format';
 import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
@@ -30,6 +31,7 @@ import { openPermissions } from './chat-permissions.ts';
 import type { ChatEvent, LiveSession } from './chat-session.ts';
 import { createLiveSession, hasToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
 import { newToken } from './secrets.ts';
+import type { SendHook } from './engine/operations.ts';
 import type { Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
 import { isLocked } from './visibility.ts';
@@ -76,10 +78,12 @@ export interface Chats {
   current(board: Place): StoredSession | undefined;
   /** Whether a new session is starting there (its current one then takes no message). */
   starting(board: Place): boolean;
-  /** The board's Send `send` (its `seq`): hand the session in use on the board the person's answers
-   * since it was last told, now or when its turn ends; nothing when the board has no session or
-   * there is nothing new for its agent. */
-  round(board: string, send: number): Promise<'sent' | 'queued' | undefined>;
+  /** The board's Send (the engine's `onSend`): hand the session in use on the board the person's answers since it was
+   * last told and `record` the Send through what they were read at, in one step; while its turn runs, the press is
+   * recorded acknowledging nothing new, and the answers go, and are recorded, when it ends. A session that can't be
+   * loaded hands over nothing, and the Send acknowledges nothing new. Recorded at once, as before, when the board has
+   * no session or nothing new for its agent, and with the `sendCountsWhatWent` flag off (then handed over after). */
+  send: SendHook;
   /** The person's message `msg` to `live`, on its board: the words, the chips and the answers since
    * its agent was last told, as one message, recording the board's Send when it goes. Sent now, or,
    * while a turn runs, held with any message already waiting and sent when the turn ends. In the
@@ -106,10 +110,11 @@ const notFound = (id: string) =>
   problem('not-found', serverChatWords.thereIsNoChatSession(id));
 
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
+const notHandedOver = (err: unknown): undefined => { console.error(`chat: the Send's answers were not handed over: ${reason(err)}`); };
 
-/** A message waiting for a turn to end: the person's words and chips, the Send it covers from, and
- * whether it records a Send when it goes (the board's Send recorded its own). */
-interface Held { msg: ChatMessage; before: number; record: boolean }
+/** A message waiting for a turn to end: the person's words and chips, the Send it covers from, and the
+ * board's Send it records when it goes, given the line its answers were read through (none: recorded already). */
+interface Held { msg: ChatMessage; before: number; record?: ((head: number | undefined) => unknown) | undefined }
 
 const union = (a: number[] = [], b: number[] = []) => [...new Set([...a, ...b])];
 
@@ -121,7 +126,7 @@ function joined(was: Held | undefined, next: Held): Held {
   const files = [...new Map([...(was.msg.files ?? []), ...(next.msg.files ?? [])].map((f) => [f.path, f])).values()];
   return {
     msg: { ...(text && { text }), ...(notes.length > 0 && { notes }), ...(cards.length > 0 && { cards }), ...(files.length > 0 && { files }) },
-    before: Math.min(was.before, next.before), record: was.record || next.record,
+    before: Math.min(was.before, next.before), record: next.record ?? was.record,
   };
 }
 
@@ -208,13 +213,20 @@ export function openChats(o: ChatOptions): Chats {
       const empty = !round && !wordsOf(msg) && !built.chips.length && !files;
       if (empty && !said) return undefined;
       // On a locked board the words and chips go alone: no round (unsaid), and no Send to record. The round was
-      // read just now, through `s.seq`, and the Send is recorded in the same step, so it says so (`head`).
+      // read just now, through `s.seq`, and the Send is recorded in the same step, so it says so (`head`); a record
+      // refused hands over nothing.
       if (!isLocked(s, board)) {
+        held.record?.(sendHead ? s.seq : undefined);
         told.set(id, s.seq);
-        if (held.record) ledger.append({ type: 'act', action: 'send', board, ...(sendHead && { head: s.seq }) }, { by: 'person' }, { board });
       }
       return { prompt: withSaid(built.prompt, said?.agent), message: { kind: 'message_in', text: withSaid(built.text, said?.person, empty), ...(built.chips.length > 0 && { chips: built.chips }), ...(files && { files }) } };
     }, wordsOf(held.msg) ? QUEUED_WORDS : QUEUED);
+  }
+
+  /** With the `sendCountsWhatWent` flag off, the Send already recorded (`send`): hand its answers over after, as before. */
+  async function handOver(stored: StoredSession, board: string, send: number): Promise<void> {
+    const session = await live(stored.session);
+    if (session.busy || unsaid(session, board, send)) deliver(session, board, joined(waiting.get(stored.session), { msg: {}, before: send }));
   }
 
   /** The words for a session in the folder (no board, so nothing else rides with them): now, or when the turn ends. */
@@ -277,21 +289,30 @@ export function openChats(o: ChatOptions): Chats {
     list: (board) => entries().filter((e) => e.board === board).reverse().map(publicSession),
     current,
     starting: (board) => starts.has(key(board)),
-    async round(board, send) {
-      const record = current(board);
-      if (!record || starts.has(key(board))) return undefined;
-      const session = await live(record.session);
-      if (!session.busy && !unsaid(session, board, send)) return undefined;
-      const e = deliver(session, board, joined(waiting.get(record.session), { msg: {}, before: send, record: false }));
-      return e === undefined ? undefined : e.kind === 'message_in' ? 'sent' : 'queued';
+    async send(board, record) {
+      const stored = current(board);
+      if (!sendHead) {
+        const line = record();
+        if (stored && !starts.has(key(board))) void handOver(stored, board, line.seq).catch(notHandedOver);
+        return line;
+      }
+      if (!stored || starts.has(key(board))) return record();
+      const pressed = () => record(headFor(ledger.state(), board, null).head);
+      const session = await live(stored.session).catch(notHandedOver);
+      if (!session) return pressed();
+      if (!unsaid(session, board, Infinity)) return record();
+      let line: LedgerEvent | undefined = session.busy ? pressed() : undefined;
+      const now = (head: number | undefined) => (line = record(head));
+      deliver(session, board, joined(waiting.get(stored.session), { msg: {}, before: Infinity, record: line ? record : now }));
+      return line ?? pressed();
     },
     tell(session, msg) {
       const { board, session: id } = session.record;
       const was = session.busy ? waiting.get(id) : undefined;
-      if (board === undefined) return wordsOf(msg) || msg.files ? inFolder(session, joined(was, { msg, before: Infinity, record: false })) : undefined;
+      if (board === undefined) return wordsOf(msg) || msg.files ? inFolder(session, joined(was, { msg, before: Infinity })) : undefined;
       const attached = Boolean(msg.notes?.length || msg.cards?.length || msg.files) || unsaid(session, board, Infinity) !== undefined;
       if (!attached && !wordsOf(msg)) return undefined;
-      return deliver(session, board, joined(was, { msg, before: Infinity, record: true }));
+      return deliver(session, board, joined(was, { msg, before: Infinity, record: (head) => ledger.append({ type: 'act', action: 'send', board, ...(head !== undefined && { head }) }, { by: 'person' }, { board }) }));
     },
     get permissions() { return permissions(); },
     attachments,
