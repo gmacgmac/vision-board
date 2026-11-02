@@ -10,7 +10,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROUND_HEAD } from '#actions';
+import type { AgentAdapter } from '#agent';
 import { QUEUED } from '../server/chat-session.ts';
+import { openLedger } from '../server/ledger.ts';
+import { personAct, personCookie, startTestBoard } from './test-board.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -52,9 +55,11 @@ test('with a session, Send hands it the answers in card order, ✓ and ✗ as ma
   assert.equal(lines[0], ROUND_HEAD);
   assert.match(lines[1]!, /^Board "Pricing options" \(v\d+\)$/);
   // The seed's comment on q and Later on d came before the Send in the first test: told then, so not again.
+  // Handed over first, then recorded with the head it read (point 383): the Send's own line comes after that head.
+  assert.equal(sent.head, sent.seq - 1, 'the Send records the line its message read through');
   assert.deepEqual(lines.slice(2), [
     `${q} (question): ✓`, 'Nothing left open.',
-    `These are the person's answers up to head ${sent.seq}. To read anything newer, call check_responses on board "pricing" with after ${sent.seq}.`,
+    `These are the person's answers up to head ${sent.head}. To read anything newer, call check_responses on board "pricing" with after ${sent.head}.`,
     '', 'Board: pricing',
   ]);
   const events = await readChat(h.base, h.cookie, session, turns(1));
@@ -71,10 +76,14 @@ test('while a turn runs the Send waits, once, and goes when the turn ends with e
   fake.mode('hang');
   await h.ok('send_chat', { session, body: { text: 'Keep going.' } });
   const busy = await fake.run(2);
+  const watermark = h.ledger.state().sentHead.get('pricing');
   await act({ action: 'comment', n: d, ver: 1, text: 'Too early.' });
-  await send();
+  const pressed = await send();
   await act({ action: 'comment', n: q, ver: 2, text: 'Per seat, then.' });
   await send();
+  // Point 383: a Send pressed while the turn runs is recorded, acknowledging nothing until its answers go.
+  assert.equal(pressed.head, watermark, 'the press acknowledges nothing new');
+  assert.equal(h.ledger.state().sentHead.get('pricing'), watermark, 'nothing counts as sent while the message waits');
   const waiting = await readChat(h.base, h.cookie, session, (ev) => ev.filter((e) => e.text === QUEUED).length >= 1);
   fake.mode('replay');
   assert.deepEqual(await h.ok('stop_chat', { session }), { stopped: true });
@@ -89,7 +98,10 @@ test('while a turn runs the Send waits, once, and goes when the turn ends with e
   assert.match(lines.find((l) => l.startsWith(`${q} `))!, /^\d+ \(question\): .*: Per seat, then\.$/);
   assert.match(lines.find((l) => l.startsWith(`${d} `))!, /^\d+ \(decision\): .*: Too early\.$/);
   assert.ok(!run.prompt.includes('Why per seat?'), 'nothing the agent was already told');
-  assert.ok(Number(/head (\d+)\./.exec(run.prompt)![1]) > head);
+  const read = Number(/head (\d+)\./.exec(run.prompt)![1]);
+  assert.ok(read > head);
+  assert.equal(h.ledger.state().acts.findLast((e) => e.action === 'send')!.head, read, 'recorded when it went, through what it read');
+  assert.equal(h.ledger.state().sentHead.get('pricing'), read);
 });
 
 // A Send counts only what went (point 377): the standalone server reads the answers and records the Send in one
@@ -115,4 +127,39 @@ test('one path: a message records its Send through the line its answers were rea
   assert.ok(JSON.stringify(unsent).includes('After it went.'));
   assert.equal(h.ledger.state().sentHead.get('pricing'), line.head);
   assert.ok(late.seq > line.head!);
+});
+
+// Point 383: the board's Send hands the answers over first and is recorded with the head it read, as a message is. A
+// hand-over that fails (here the session cannot be loaded after a restart) acknowledges nothing: the Send line says so
+// (its head is the watermark), and the answers go with the next Send. A duplicate at worst, never zero.
+test('a hand-over that fails counts nothing as sent; the answers go with the next Send', async () => {
+  const { q } = h.seeded;
+  const note = await act({ action: 'comment', n: q, ver: 2, text: 'Before the restart.' });
+  const watermark = h.ledger.state().sentHead.get('pricing');
+  let failing = true;
+  const claude = (): AgentAdapter => (failing ? { agent: 'claude', start: () => Promise.reject(new Error('the CLI is gone')) } : fake.adapters.claude!());
+  const board = await startTestBoard({ ledger: openLedger(h.ledger.file, () => {}), dist: h.dist, chat: { adapters: { claude } } });
+  const quiet = console.error;
+  console.error = () => {};
+  try {
+    const cookie = await personCookie(board.base);
+    await personAct(board.base, cookie, 'pricing', { action: 'send', board: 'pricing' });
+    h.ledger.refresh();
+    const failed = h.ledger.state().acts.findLast((e) => e.action === 'send')!;
+    assert.equal(failed.head, watermark, 'the Send is recorded, acknowledging nothing new');
+    assert.equal(h.ledger.state().sentHead.get('pricing'), watermark);
+    assert.ok(h.ledger.state().unsent.get('pricing')?.has(note.seq), 'the note is still unsent');
+    failing = false;
+    const runs = fake.given().length;
+    await personAct(board.base, cookie, 'pricing', { action: 'send', board: 'pricing' });
+    const run = await fake.run(runs + 1);
+    assert.ok(run.prompt.includes('Before the restart.'), 'the next Send carries it');
+    h.ledger.refresh();
+    const went = h.ledger.state().acts.findLast((e) => e.action === 'send')!;
+    assert.equal(went.head, Number(/head (\d+)\./.exec(run.prompt)![1]));
+    assert.equal(h.ledger.state().unsent.get('pricing')?.size ?? 0, 0);
+  } finally {
+    console.error = quiet;
+    await board.close();
+  }
 });

@@ -15,7 +15,7 @@ import { imageReply } from '../images.ts';
 import type { Caller, Ledger } from '../ledger.ts';
 import { LEDGER_FILE, openLedger } from '../ledger.ts';
 import { ProblemError, problem, serverError } from '../problem.ts';
-import type { EngineReply, Op } from './operations.ts';
+import type { EngineReply, Op, SendHook } from './operations.ts';
 import { checkCaller, matchRoute, readParams, withDefaults } from './operations.ts';
 import { READS } from './reads.ts';
 import type { EngineTools } from './tools.ts';
@@ -50,8 +50,9 @@ export interface EngineOptions {
   ledger?: Ledger | undefined;
   /** The board's folder as the person reads it (`list_boards`, `join` answer `project`); default `dir`. */
   name?: (() => string) | undefined;
-  /** Told after the person's Send is stored (the standalone server hands its chat session the answers). */
-  onSend?: ((board: string, seq: number) => void) | undefined;
+  /** Given the person's Send to record (`SendHook`): the standalone server records it once its chat session has the
+   *  answers. Default: recorded at once. */
+  onSend?: SendHook | undefined;
   /** Where the ledger's warnings go (a bad line); default stderr. */
   warn?: ((message: string) => void) | undefined;
   /** The flags the engine reads itself (svgImages, for `image`); default, each flag's default. */
@@ -109,7 +110,7 @@ const toReply = (err: unknown): EngineReply => {
   return { status: p.status, body: p.body, headers: { ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8' } };
 };
 
-export function createEngine({ dir, ledger: given, name = () => dir, onSend = () => {}, warn, flags = {} }: EngineOptions): Engine {
+export function createEngine({ dir, ledger: given, name = () => dir, onSend = (_, record) => record(), warn, flags = {} }: EngineOptions): Engine {
   const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn);
   let agents: Agents | undefined;
   const getAgents = () => (agents ??= openAgents(dir));

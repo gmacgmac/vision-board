@@ -6,10 +6,11 @@
 // (`LedgerState.index`). Only what exists is judged: an unknown board, region or node is left to the
 // context check, so the agent is told what is wrong rather than to ask for a grant it cannot get.
 // Pure.
-import { accessKey, latest } from '#format';
+import type { ActEvent } from '#format';
+import { accessKey, isContainerAct, latest } from '#format';
 import type { LedgerState } from './fold.ts';
 import type { Container } from './references.ts';
-import { placeOf } from './references.ts';
+import { placeOf, scopeOf } from './references.ts';
 
 /** One write item as the server holds it after resolving it: keys and board numbers turned into
  * card identities, the board taken from the path (api.md 34, 35, 125), a retire's cards filled in
@@ -101,3 +102,18 @@ export const mayAnswer = (s: LedgerState, agent: string, id: number): boolean =>
 export const mayAnswerIn = (s: LedgerState, agent: string, c: Container): boolean =>
   (s.index.boards.get(c.board)?.has(c.region) ?? false)
   && canWrite(s, agent, { type: 'region', board: c.board, region: { id: c.region } }) === 'ok';
+
+/** Does the person's act concern `agent` (`check_responses`, pending.ts; what Send carries, unsent.ts)? Send always;
+ * answers to its own requests and its own removals; anything else in a container it may answer for, on any card it
+ * is on (api.md 41). */
+export function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
+  // A note on or a place for a whole container: the agents that may answer on it (api.md 75).
+  if (isContainerAct(e)) return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
+  switch (e.action) {
+    case 'send': return true;
+    case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;
+    case 'revoke': return e.holder === agent;
+    case 'mode': case 'widths': return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
+    default: return scopeOf(s, e).cards.some((id) => mayAnswer(s, agent, id));
+  }
+}

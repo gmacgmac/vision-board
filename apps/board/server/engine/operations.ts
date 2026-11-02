@@ -3,7 +3,7 @@
 // them, and the caller its host passes in must fit the operation's `auth`. The standalone edge
 // (dispatch.ts) uses the same matching to pick the caller check before anything is read. No HTTP
 // here: a handler gets plain values and answers a reply (status and body).
-import type { OperationId } from '#format';
+import type { LedgerEvent, OperationId } from '#format';
 import { OPERATIONS, PATH_WORDS } from '#format';
 import type { Agents } from '../agents.ts';
 import type { Caller, Ledger } from '../ledger.ts';
@@ -27,9 +27,14 @@ export interface OpCtx {
   agents(): Agents;
   /** The board's folder as the person reads it (`list_boards`, `join`). */
   name(): string;
-  /** A Send the person made (`act`), told to the host after the answer. */
-  onSend(board: string, seq: number): void;
+  /** A Send the person made (`act`), handed to the host to record (`SendHook`). */
+  onSend: SendHook;
 }
+
+/** The person's Send on `board`, given to the host with `record`, which appends its `send` line (with `head`: what its
+ * answers were read through) and answers that line. The host records when it may: at once, or after its chat has the
+ * answers (point 383); it answers the line recorded. */
+export type SendHook = (board: string, record: (head?: number) => LedgerEvent) => LedgerEvent | Promise<LedgerEvent>;
 
 export type Op = (ctx: OpCtx) => EngineReply | Promise<EngineReply>;
 

@@ -76,7 +76,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const hiddenSet = (): Set<string> => (status.now.hide && S.data ? answeredIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
 
   const live = createLive({ readLedger: io.readLedger, events: (l) => host.events(l) }, onLines);
-  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state, fresh: on('freshCards'), status, markBoardSeen: io.markBoardSeen });
+  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state, fresh: on('freshCards'), status, markBoardSeen: io.markBoardSeen, chat: on('sendCountsWhatWent') ? host.chat.status : undefined });
   /** The version dropdown and a past version, read-only (navigation FE_01), behind the versionView flag. */
   const versions = createVersions({
     world, on: versionView, live: () => live.state, board: () => S.id, fail, status, readLedger: io.readLedger,

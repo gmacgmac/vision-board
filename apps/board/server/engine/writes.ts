@@ -47,15 +47,15 @@ function agentOf(caller: OpCtx['caller']): string {
   return caller.agent;
 }
 
-/** One person action from the action registry, on the board in the path (rule 8). A Send is told
- * to the host after the answer (the standalone one hands the board's chat session the person's
- * answers, api.md 121). */
+/** One person action from the action registry, on the board in the path (rule 8). A Send is the
+ * host's to record (`onSend`): the standalone one records it once the board's chat session has the
+ * person's answers (api.md 121, point 383). */
 const act: Op = async (ctx) => {
   const { params, ledger } = ctx;
   const board = personBoard(ledger.state(), params.board);
   const e = cardsIn(ledger.state(), board, await body('act', ctx), 'act');
-  const stored = ledger.append(e, { by: 'person' }, { board });
-  if (stored.type === 'act' && stored.action === 'send') setImmediate(() => ctx.onSend(board, stored.seq));
+  const record = (head?: number) => ledger.append(head === undefined ? e : { ...e, head }, { by: 'person' }, { board });
+  const stored = e.action === 'send' ? await ctx.onSend(board, record) : record();
   return reply(201, eventOut(ledger.state(), stored));
 };
 

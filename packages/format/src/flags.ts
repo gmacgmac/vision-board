@@ -284,9 +284,10 @@ export const FLAGS = {
     description: 'The person attaches files to a chat message by dropping, pasting or the paperclip; each is saved under `.visionboard/attachments/` and the agent is told its path. Off, no paperclip, a dropped or pasted file does nothing new, the upload operation answers 404 and Send refuses `files`.',
   },
   sendCountsWhatWent: {
-    // Point 377 (2026-11-02). Read on the page (what a Send's record says went) and the server (VB_FLAGS: a message's Send).
+    // Point 377 (2026-11-02); points 383, 384. Read on the page (what a Send's record says went; Send lit for the chat's
+    // agent) and the server (VB_FLAGS: a message's Send, the board's Send recorded once its answers went).
     default: true,
-    description: 'A Send counts only the answers that went: a host records it with what the engine read for the answers chip that went (`chat.send(record)`), and the Send line says the line they were read through (`head`, ledger v19); a message without the chip leaves them for the next one, and an answer made after the read stays unsent. Off, every Send covers every answer up to its own line.',
+    description: 'A Send counts only the answers that went: a host records it with what the engine read for the answers chip that went (`chat.send(record)`), and the Send line says the line they were read through (`head`, ledger v19); a message without the chip leaves them for the next one, and an answer made after the read stays unsent. The standalone server records the board\'s Send only once its chat session has the answers, and Send lights only for answers the chat\'s agent may read. Off, every Send covers every answer up to its own line.',
   },
 } as const satisfies Record<string, FlagDef>;
 
