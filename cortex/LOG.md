@@ -417,3 +417,4 @@
 [[2026-10-31 22:20]] [board-app] FIX_01 Run 2: one notice per outage and no raw error on a later read, reveal of hidden cards notifies, a stopped mount ignores a host (hearUntilStopped), a host rule on svg fill and stroke held, plugin.md names two-element and * rules and ref by value; host-styles target 190 is raster timing, its check shoots off, on, off → Task: [[cortex-tasks/board/2026-10-31_board-app_plugin-mode/FIX_01_verify-findings.md]]
 [[2026-10-31 22:20]] [board-app] Completed set: Plugin Mode → Task: [[cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md]]
 [[2026-11-02 17:35]] [board-app] Completed: Prefix The Board's Ids Everywhere → Task: [[cortex-tasks/board/2026-11-02_board-app_prefix-ids-everywhere.md]]
+[[2026-11-02 12:56]] [board-ui] Completed: Gallery Arrowheads On Prefixed Ids → Task: [[cortex-tasks/board/2026-11-02_board-ui_gallery-arrow-ids.md]]

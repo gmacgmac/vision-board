@@ -1,8 +1,8 @@
 ---
 task_name: Gallery Arrowheads On Prefixed Ids
 created: 2026-11-02
-completed:
-status: pending
+completed: 2026-11-02
+status: completed
 categories: [board-ui]
 type: implementation
 model: standard
@@ -50,10 +50,16 @@ both. The gallery should draw them the way the board does, so the rules need onl
 
 ## Success Criteria
 
-- [ ] No bare `arrow` / `arrow-hot` id on the gallery page; `board.css` names only the prefixed form
-- [ ] Gates green, full page suite passes, no screenshot moved
-- [ ] Looked at in light and dark; notes filled below
+- [x] No bare `arrow` / `arrow-hot` id on the gallery page; `board.css` names only the prefixed form
+- [x] Gates green, full page suite passes, no screenshot moved
+- [x] Looked at in light and dark; notes filled below
 
 ## Implementation Notes
 
-_To be completed by the agent._
+- Cause: `apps/board/src/gallery/mini-board.ts` (`miniBoard`) built its drawing with no `ids`, so `createWires` (`board/links/wires.ts`) defaulted to the bare `arrow` / `arrow-hot`, repeated by every sample on the page.
+- Fix: `miniBoard` takes `takeIdPrefix().prefix` (`board/mount-ids.ts`) as the drawing's `ids`, the same call a mount makes. Each sample gets its own `vb<n>-` (never released: the gallery never unmounts one). No third name; the wires are drawn by the board's own code path.
+- `board.css`: the two marker rules now read `marker[id$='-arrow']` and `marker[id$='-arrow-hot']`.
+- Side effect (same field): `createDrawing`'s `ids` also prefixes each sample's card popover and frame ids, so those are unique across mini boards too. No spec named them.
+- Browser (port 5020, gallery Link labels, light and dark): 30 markers, `vb1-arrow` ... `vb15-arrow-hot`, none bare, none repeated; fills grey and pink in both themes (light rgb(138,138,149) / rgb(212,19,138); dark rgb(124,124,137) / rgb(255,92,190)).
+- Finding (not fixed, outside scope): the gallery page still has duplicate ids outside the mini boards (e.g. `vb-steps-83`, `vb-pop-proposal-83`: other samples that draw the same card twice). Zero duplicates inside mini boards.
+- Gates: map, verify (ok, warnings only as before), check (0 errors), `npm test` 2187 + 14 pass. The page-spec filter matched every spec (the worktree path contains "gallery"), so the run was the full suite: 843 passed, no screenshot moved, none re-baselined.

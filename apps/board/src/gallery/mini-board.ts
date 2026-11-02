@@ -9,6 +9,7 @@ import type { Align } from '#layout';
 import type { CardConditions } from '#ui';
 import { createDrawing, type Drawing } from '../board/canvas/index.ts';
 import { FAR_K, Viewport } from '../board/canvas/index.ts';
+import { takeIdPrefix } from '../board/mount-ids.ts';
 import { el } from './dom.ts';
 
 export interface MiniOptions {
@@ -70,7 +71,9 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
   const k = o.zoom ?? 1;
   const vp = new Viewport(stage, world, k < FAR_K);
   const drawing = createDrawing({
-    els: { stage, world, regions, cards, wires, wiresTop, marks }, vp, sizing: true, access: false, layers: true,
+    // A prefix of its own, as a mount takes one (mount-ids.ts): this drawing's arrowheads are on the page once. The page never
+    // unmounts a sample, so the prefix is never released.
+    els: { stage, world, regions, cards, wires, wiresTop, marks }, vp, sizing: true, access: false, layers: true, ids: takeIdPrefix().prefix,
     labels: o.labels === true, widthsControl: o.widths === true, align: () => o.align ?? 'start',
     data: () => ({ head: 0, view, state: board.state, versions: {}, access: { requests: [], holders: {} } }),
     hidden: () => new Set(), focus: () => null, selected: () => false, insets: () => new Map(), owed: () => new Set(),

@@ -141,8 +141,8 @@
 /* Wires and lanes */
 .vb-wire { fill: none; stroke: var(--vb-wire); stroke-width: var(--vb-wire-w); stroke-linecap: round; }
 .vb-wire.hot { stroke: var(--vb-wire-hot); stroke-width: 2.4px; }
-.vb-wires marker:is(#arrow, [id$='-arrow']) path { fill: var(--vb-wire); }
-.vb-wires marker:is(#arrow-hot, [id$='-arrow-hot']) path { fill: var(--vb-wire-hot); }
+.vb-wires marker[id$='-arrow'] path { fill: var(--vb-wire); }
+.vb-wires marker[id$='-arrow-hot'] path { fill: var(--vb-wire-hot); }
 .vb-wires.settling .vb-wire { opacity: 0; }
 .vb-wire { transition: opacity var(--vb-motion-fast) linear; }
 .vb-wire-label { font: var(--vb-text-xs) var(--vb-font); fill: var(--vb-ink-subtle); paint-order: stroke; stroke: var(--vb-surface-canvas); stroke-width: 4px; }
