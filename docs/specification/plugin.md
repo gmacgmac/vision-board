@@ -131,8 +131,9 @@ chat: {
   With only that, Send is enabled by an answer no Send has carried, or by a chip of the board's own that hasn't gone with a
   Send. `on` returns the unsubscribe. `staged`: you hold what Send would carry. Given at all it has the full say over the chips, the
   board's included, so give it if your chat holds more of its own, a file say, or drops the chips. An answer no Send has carried
-  enables Send either way. `held`: Send waits for the bot's turn. `agent`: the id your chat talks to,
-  which scopes the answers chip to what it may read. Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
+  enables Send either way; with `agent`, only one that agent may read. `held`: Send waits for the bot's turn. `agent`: the id your
+  chat talks to, which scopes the answers chip, and the answers that light Send, to what it may read; an answer only another agent
+  may read leaves Send off, and that agent reads it with `check_responses` (`chat-send-scope.spec.ts`). Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
 - **`reveal` and `hasLine`** give a changed card's stepper its link to your chat. Without `reveal`, no link; with `reveal` and
   no `hasLine`, always a link. Proven by `view-hooks.spec.ts` "chat.reveal and chat.hasLine", "chat.reveal left out".
 - **A change chip.** A board write's tool result carries `_meta['vb/change']`, `{ board, cards, head }` (§ Tools). Draw it as a
