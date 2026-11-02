@@ -347,7 +347,7 @@ No test holds these:
 
 ## Open points
 
-For the maintainer's review (D-074 rule 7). Each is decided for now, and each is cheap to change until a host depends on it.
+Reviewed by the maintainer (D-074 rule 7): all settled, 2026-11-02. Each is still cheap to change until a host depends on it.
 
 1. **Pictures for a bot under a host.** **Settled** (point 377): no `put_image`. A bot writes a picture straight into the board's
    `images/` folder and the engine reads it with its usual checks (`engine.image`; `imagePathProblem`, `imageHeadProblem`, the size
@@ -358,23 +358,23 @@ For the maintainer's review (D-074 rule 7). Each is decided for now, and each is
 2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. **Settled**
    (point 377): a host may let the person drop them; the Send then counts only what went, by what `resolve` read
    (`record(answers)`, § The chat), so nothing is lost and the seam stays small.
-3. **`chat.send(record)`, not `chat.send()`.** The host sends, then runs the board's record of the Send, so the board keeps the
+3. **`chat.send(record)`, not `chat.send()`.** **Settled** (D-075): The host sends, then runs the board's record of the Send, so the board keeps the
    act's outcome and a host with its own server may record it with the message. Cost: a callback in a seam otherwise plain.
    Keep: it is what makes Send's wait and refusal the same on every host, and its argument is how the board knows what went.
-4. **`chat.hasLine?`**: a synchronous question beside `chat.reveal?`, since the stepper asks it while drawing. The alternative is a
+4. **`chat.hasLine?`.** **Settled** (point 391A): a synchronous question beside `chat.reveal?`, since the stepper asks it while drawing. The alternative is a
    link always shown when `reveal` is given. Keep: a link that does nothing is worse.
-5. **`status` and `send` on the view**, beyond PLAN's list. Standalone's chat reads `status`, and a host may want a button of its
+5. **`status` and `send` on the view**, beyond PLAN's list. **Settled** (point 391B). Standalone's chat reads `status`, and a host may want a button of its
    own. Keep; the status is wide, so the types promise only what this page names (`PluginStatus`).
-6. **`#board` still gives `board`.** The folder's `mount` leaves it out (`plugin/view.ts`), but the `#board` name, used inside
+6. **`#board` still gives `board`.** **Settled** (point 391C), until `boardChromeInMount`'s off branch goes: The folder's `mount` leaves it out (`plugin/view.ts`), but the `#board` name, used inside
    this repo, does not: `App.svelte` needs its test door.
-7. **The root is a size container** (`apps/board/src/styles/board.css`), so `100cqh` caps a menu by the pane. It asks a host for a definite
+7. **The root is a size container** (`apps/board/src/styles/board.css`). **Settled** (D-082): `100cqh` caps a menu by the pane. It asks a host for a definite
    size, which its absolute children needed already.
-8. **The sheet still touches `:root`**: the tokens, whose lowered form makes `data-theme` work only there. `color-scheme` left it for the
+8. **The sheet still touches `:root`.** **Settled** (point 391D), until a host needs two boards with different themes: the tokens, whose lowered form makes `data-theme` work only there. `color-scheme` left it for the
    board's root (`apps/board/vite.plugin.config.ts` `hostKeepsColorScheme`), so a host's fields stay its own. Scoping the tokens to
    `.vb-board` too would let two boards differ, but it moves every token and risks the screenshots. Keep until a host minds.
 9. **Types in the folder.** **Settled** (point 377): `plugin.d.ts`, generated at build (§ The types and the seam version).
 10. **A seam version.** **Settled** (point 377): `seam` in the manifest, with the rule for moving it (§ The types and the seam version).
-11. **The zoomed view stays a real modal**, inert page and all (PROOF_01). Non-modal means rebuilding its focus handling.
+11. **The zoomed view stays a real modal**, inert page and all (PROOF_01). Non-modal means rebuilding its focus handling. **Settled** (D-080).
 
 ## What nclite needs
 
