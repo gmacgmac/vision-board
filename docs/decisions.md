@@ -1097,3 +1097,40 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: 33 ms goes unnoticed; a board broken by a host's styles does not. One set of rules keeps the board's own page the same as the plugin.
 - **Rejected**: dropping the element rules (a host's styles would change the board); `all: revert` at the root (its cost); dropping them on the board's own page only (it would drift from the plugin).
 - **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md (FIX_01)
+
+## D-080 What a plugin bot gets, and what the board keeps through its host
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, PROOF_01 review; entry 374F) · **From**: board-app plugin-mode PROOF_01
+- **In short**: a bot inside another app gets only the board tools that make sense there, and the host tells the board who the bot is.
+- **Decision**:
+  1. `x-hosts` on each agent operation in `openapi.json` says who gives its tool; `engine.tools` is exactly those marked `plugin`. `join`, `list_apps` and `read_attachment` are standalone's; `request_grant` is both. A person-only operation marked for a bot stops the build.
+  2. A host registers its bot once through `route`; `join` is not an `engine.tools` tool.
+  3. `BoardHost` gains two optional parts: `store` (none: the view lives in memory) and `imageRoute`, an address, since a browser loads `<img src>` by address; the engine gains `image` to serve it.
+  4. The zoomed view is a real modal inside the board's root, so the host's page is inert while it is open.
+- **Why**: a host names its bot, so a bot needs no identity of its own; app cards and the chat's reader stay with the standalone host; a grant request only asks, and the person's click decides.
+- **Rejected**: every tool for a plugin bot (some mean nothing under a host).
+- **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md (PROOF_01)
+
+## D-081 How the plugin is built, and what a host may theme
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, BUILD_01 review; entry 374G) · **From**: board-app plugin-mode BUILD_01
+- **In short**: one script builds the plugin and stops if anything is wrong, and a host may change the board's fonts and text size, not its colours.
+- **Decision**:
+  1. The build lives in `apps/board/bin/build-plugin.ts`, not `scripts/` (`npm run verify` forbids a script importing an app).
+  2. Each host's tool words and skill edits must each match exactly once, or the build stops.
+  3. A host themes fonts and text scale only (`--host-font`, `--host-font-mono`, `--host-text-scale`); colours are the board's.
+  4. The manifest has no `settings` or `icon`.
+- **Why**: a build that half-applies an edit ships a plugin nobody checked; colours carry the board's contrast checks (D-009), which a host's palette would bypass.
+- **Rejected**: the build in `scripts/`; edits that apply where they can and skip the rest; themable colours.
+- **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md (BUILD_01)
+
+## D-082 The board sizes itself to its pane, and its teardown never stops a host's
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, CONTRACT_01 and FIX_01 reviews; entry 374H) · **From**: board-app plugin-mode CONTRACT_01, FIX_01
+- **In short**: the board sizes itself to the space the host gives it, not the whole window, and a few small safety choices from the last fixes are recorded.
+- **Decision**:
+  1. `mount`'s root is a size container (`100cqw`, `100cqh` for the caps that were the window's), so what opens is capped by the pane.
+  2. The folder's entries give a host exactly what `docs/specification/plugin.md` says: `board`, `onSend`, an opened `ledger`, `engine.ledger`, `engine.agents` and `dir` stay the standalone host's.
+  3. `chat.status` needs only `now`: with no `staged`, a chip of the board's own that hasn't gone enables Send; a `staged` given has the full say.
+  4. A step of `unmount` that throws goes to the console and `unmount` still returns (`teardown.ts` `finishAll`), so a host's own teardown after it still runs.
+  5. The repo's commands are standalone's only, through `BoardPage.help`; the board's own words name none.
+- **Why**: a pane is not the window; a host gets no way round the seam that it could come to depend on; a host's page must outlive the board's mistakes.
+- **Rejected**: a `ResizeObserver` writing the root's height (JavaScript for what CSS does); rethrowing from `unmount` (stops the host's teardown).
+- **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md (CONTRACT_01, FIX_01)

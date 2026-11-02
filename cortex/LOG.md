@@ -438,3 +438,4 @@
 [[2026-11-02 23:25]] [project-docs] D-077 appended: under a host the board folder lives in the bot's workspace (374C, maintainer yes)
 [[2026-11-02 23:35]] [project-docs] D-078 appended: the plugin folder ships its types and a seam version (374D, maintainer yes)
 [[2026-11-02 23:45]] [project-docs] D-079 appended: inside a host's page the board's styles hold their own (374E, maintainer yes)
+[[2026-11-02 23:59]] [project-docs] D-080, D-081, D-082 appended: plugin bot's tools, the build and theming, the board's size and teardown (374F-H, maintainer yes)
