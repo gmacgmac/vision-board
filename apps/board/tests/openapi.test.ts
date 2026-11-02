@@ -59,7 +59,7 @@ const validateOas = oas.compile(patchedOas());
 
 test('openapi.json validates against the vendored OpenAPI 3.2 schema', () => {
   assert.equal(doc.openapi, '3.2.0');
-  assert.equal(doc.info.version, '1.37.0');
+  assert.equal(doc.info.version, '1.38.0');
   assert.deepEqual(doc.servers.map((s: Rec) => s.url), ['http://127.0.0.1:4466']);
   assert.ok(validateOas(doc), JSON.stringify(validateOas.errors?.slice(0, 5)));
 });

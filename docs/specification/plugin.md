@@ -124,7 +124,7 @@ chat: {
   answer up to the Send's own line, as before. Call it even when nothing was staged. Leave it out only when your own server
   recorded that Send with the message (the `send` act, with its `head`). The record goes to the board the Send was pressed
   on. Resolves null when done or held for the bot's turn to end. One that rejects, a `fetch` that failed, is Send's error
-  state, with the board's own words. Behind the `sendCountsWhatWent` setting, on by default; off, every Send covers every
+  state, with the board's own words (the standalone server's own `send` act is that rejection, a 409 saying why, when its chat session can't be loaded: api.md 170). Behind the `sendCountsWhatWent` setting, on by default; off, every Send covers every
   answer up to its own line. Proven by the same, "chat.send: a rejection", and `send-what-went.spec.ts` "removed chip",
   "watermark", "at-least-once", "flag off"
 - **`status`** is read only. `now` (`idle`, `working`, `asking`) drives the board's working mark, and is all you must give.

@@ -133,6 +133,8 @@ export const couldNotBeStarted = (agentName: string, why: string): string => `${
 export const isNotAvailableOnThisServer = (agentName: string): string => `${agentName} is not available on this server.`;
 export const cannotBeStartedHereUse = (agent: string, keys: string): string => `${agent} cannot be started here; use one of: ${keys}`;
 export const couldNotBeStarted2 = (agentName: string): string => `${agentName} could not be started.`;
+export const theChatCouldNotBeReached = (why: string): string =>
+  `Send did not go: the chat could not be reached (${why}). Your answers are still unsent; press Send to try again.`;
 
 // ---- chat.ts
 export const theServerKnowsNoRunning = 'The server knows no running chat turn with this run token. Only a running session\'s gate asks.';

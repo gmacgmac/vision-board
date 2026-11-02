@@ -20,6 +20,7 @@ import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, gone, readChat } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
+import * as serverChatWords from '../server/words/server-chat.ts';
 
 const config = makeTempDir('vb-chat-send-');
 const fake = fakeChat(config);
@@ -130,9 +131,9 @@ test('one path: a message records its Send through the line its answers were rea
 });
 
 // Point 383: the board's Send hands the answers over first and is recorded with the head it read, as a message is. A
-// hand-over that fails (here the session cannot be loaded after a restart) acknowledges nothing: the Send line says so
-// (its head is the watermark), and the answers go with the next Send. A duplicate at worst, never zero.
-test('a hand-over that fails counts nothing as sent; the answers go with the next Send', async () => {
+// chat that cannot be reached (here the session cannot be loaded after a restart) is answered to the person (point 386):
+// the Send is a 409 that says why and records nothing, so the answers stay unsent, and the next Send carries them.
+test('a chat that cannot be reached answers the Send with why, records nothing, and the answers go with the next Send', async () => {
   const { q } = h.seeded;
   const note = await act({ action: 'comment', n: q, ver: 2, text: 'Before the restart.' });
   const watermark = h.ledger.state().sentHead.get('pricing');
@@ -143,10 +144,17 @@ test('a hand-over that fails counts nothing as sent; the answers go with the nex
   console.error = () => {};
   try {
     const cookie = await personCookie(board.base);
-    await personAct(board.base, cookie, 'pricing', { action: 'send', board: 'pricing' });
+    const sends = () => h.ledger.state().acts.filter((e) => e.action === 'send').length;
+    const before = sends();
+    const refused = await fetch(`${board.base}/api/boards/pricing/act`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify({ type: 'act', action: 'send', board: 'pricing' }),
+    });
+    assert.equal(refused.status, 409);
+    const why = await refused.json() as { type: string; detail: string };
+    assert.match(why.type, /\/conflict$/);
+    assert.equal(why.detail, serverChatWords.theChatCouldNotBeReached('Claude Code could not be started: the CLI is gone'));
     h.ledger.refresh();
-    const failed = h.ledger.state().acts.findLast((e) => e.action === 'send')!;
-    assert.equal(failed.head, watermark, 'the Send is recorded, acknowledging nothing new');
+    assert.equal(sends(), before, 'nothing is recorded');
     assert.equal(h.ledger.state().sentHead.get('pricing'), watermark);
     assert.ok(h.ledger.state().unsent.get('pricing')?.has(note.seq), 'the note is still unsent');
     failing = false;
