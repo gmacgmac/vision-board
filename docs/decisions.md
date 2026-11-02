@@ -1087,3 +1087,13 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: one plugin for every host: what the board gains, every host gets, and no host is broken by a folder it can't speak to.
 - **Rejected**: a hand-written types file (drifts from the code); the manifest's `version` as the seam number (it moves with routes and says nothing of the seam).
 - **Task**: cortex-tasks/board/2026-11-02_board-app_plugin-types-and-seam.md
+
+## D-079 Inside a host's page, the board's styles hold their own
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, points 379, 380; entry 374E) · **From**: board-app plugin-mode FIX_01
+- **Decision**:
+  1. `root.css` takes back from a host's plain element rules (`span`, `div`, `svg`) what the board relies on, by named properties, not `all: revert`. An unusual property in a host's rule can still reach in; `plugin.md` says so. Cost: about 33 ms on the first draw of 1000 cards, accepted (point 380). The board's own page keeps the same rules.
+  2. The host keeps its `color-scheme`: a build step takes it off the plugin's sheet (`hostKeepsColorScheme`, `plugin/color-scheme.css`), because the tokens are protected. The step goes if `color-scheme` moves out of `tokens.css`.
+  3. The host-styles check (`tests/pages/host-styles.spec.ts` `sameUnderHost`) shoots off, on, off on a first difference and judges the closer pair, so it no longer catches a rule whose effect outlives the sheet. Tracker M28 is the reminder to find why and go back to one pass (point 379).
+- **Why**: 33 ms goes unnoticed; a board broken by a host's styles does not. One set of rules keeps the board's own page the same as the plugin.
+- **Rejected**: dropping the element rules (a host's styles would change the board); `all: revert` at the root (its cost); dropping them on the board's own page only (it would drift from the plugin).
+- **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md (FIX_01)
