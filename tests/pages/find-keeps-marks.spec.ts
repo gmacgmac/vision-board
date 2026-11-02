@@ -6,7 +6,7 @@
 // Each test draws a board of its own through the API as a joined agent (agent-board.ts), opens it,
 // sees every card at version 1, then the agent adds card 4 (NEW) and changes card 3 (updated).
 import type { Page } from '@playwright/test';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, write } from './agent-board.ts';
 import { boardLines } from './board-lines.ts';
@@ -16,7 +16,7 @@ const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[da
 const updates = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="updates"]');
 const freshList = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
 const openList = (page: Page) => page.getByLabel('Go to an open card', { exact: true });
-const freshChip = (page: Page) => page.locator('#counts .vb-chip[data-tone="new"]:has(#fresh-cards)');
+const freshChip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="new"]:has(${bid('fresh-cards')})`);
 
 /** The card seen lines the person has sent on the board (a board seen line names no card). */
 const cardSeen = async (page: Page, d: Drawn) => (await boardLines(page, d.board)).filter((e) => e.type === 'seen' && e.n !== undefined).length;

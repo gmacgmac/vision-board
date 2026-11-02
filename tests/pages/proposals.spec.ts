@@ -8,7 +8,7 @@
 // proposal arrives live. Agent calls go through `request` (no person cookie); reading the ledger
 // goes through `page.request`, which carries the page's cookie.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { boardLines } from './board-lines.ts';
 import { card, head, selected } from './board-page.ts';
@@ -184,7 +184,7 @@ test('keyboard only: focus on the tab previews, Enter opens with focus in the bo
   const [n] = d.n as [number];
   await propose(request, d, n, 'check', 'settled in chat');
   await open(page, d);
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await tabTo(page, tab(page, n));
   await expect(box(page, n)).toBeVisible();
   await expect(tab(page, n)).toHaveAttribute('aria-expanded', 'true');

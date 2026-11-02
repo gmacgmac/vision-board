@@ -12,7 +12,7 @@ import type { Locator, Page } from '@playwright/test';
 import { APP_LIMITS, APP_SIZE } from '#format';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card as cardOf, head, panelOf } from './board-page.ts';
 
@@ -94,7 +94,7 @@ test('frozen (zoomed far), a panel keeps its last height; zoomed back in, the sa
   const panel = await panelOf(app);
   await panel.evaluate(() => (window as unknown as { rows(n: number): void }).rows(7));
   await expect.poll(() => frameSize(app)).toEqual([320, tall(7)]);
-  const stage = page.locator('#stage');
+  const stage = page.locator(bid('stage'));
   await app.focus();
   for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) !== 'far'; i += 1) await page.keyboard.press('-');
   await expect(app.locator('vb-app-frame')).toHaveAttribute('data-frozen', '');

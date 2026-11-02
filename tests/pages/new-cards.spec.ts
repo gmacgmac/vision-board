@@ -9,7 +9,7 @@
 // adds a card, so the card arrives live. Agent calls go through `request` (no person cookie);
 // reading the ledger goes through `page.request`.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { boardLines } from './board-lines.ts';
 import { card, head } from './board-page.ts';
@@ -112,7 +112,7 @@ test('after a Send and a new drawing, the older card stays NEW beside the newer 
   const note = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', action: 'comment', board: d.board, region: 'p', text: 'All of these?' } });
   expect(note.status(), await note.text()).toBe(201);
   await page.getByRole('button', { name: 'Send to agent' }).click();
-  await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
+  await expect(page.locator(bid('send'))).toHaveAttribute('data-state', 'sent');
   await expect(tag(page, older), 'a Send alone ends nothing').toBeVisible();
   const newer = await add(request, d, 'Card 3');
   await expect(tag(page, newer)).toBeVisible();
@@ -140,7 +140,7 @@ test('a past version shows no NEW tab', async ({ page, request }) => {
   await expect.poll(async () => (await seenAfter(page, 0, d.board)).length).toBeGreaterThan(0);
   await add(request, d, 'Card 3');
   await expect(page.locator('vb-node')).toHaveCount(3);
-  await page.locator('#version').selectOption({ index: 1 });
+  await page.locator(bid('version')).selectOption({ index: 1 });
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect(page.locator('.vb-node-btab[data-tab="new"]:visible')).toHaveCount(0);
   await page.keyboard.press('Escape');

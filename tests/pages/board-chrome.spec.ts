@@ -2,7 +2,7 @@
 // with nothing of `shell/` gets the whole board: the header in its pane, search, help and the dialogs; what is the
 // standalone page's (Theme, its folder, Chat) is absent and the header reflows. The standalone page has the
 // same controls in its root, the chat beside them.
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { call, LINES, open } from './board-host-page.ts';
 import { startRoadmapServer } from './roadmap-server.ts';
 import { openBoard } from './board-page.ts';
@@ -81,22 +81,22 @@ test('the standalone page holds the controls in the board\'s root, and the chat 
     await page.setViewportSize({ width: 1400, height: 900 });
     await openBoard(page, { base: roadmap.base });
     await expect(page.locator('body > .vb-board > header.vb-toolbar')).toBeVisible();
-    await expect(page.locator('body > .vb-board > main#stage')).toBeVisible();
+    await expect(page.locator(`body > .vb-board > main${bid('stage')}`)).toBeVisible();
     await expect(page.locator('body > aside#chat')).toBeAttached();
     await expect(page.locator('body > .vb-board #chat-toggle')).toBeVisible();
     await page.locator('#chat-toggle').click();
     await expect(page.locator('#chat')).toBeVisible();
     // The chat starts level with the stage, and the stage ends where it begins.
-    const [chat, stage] = await Promise.all([page.locator('#chat').boundingBox(), page.locator('#stage').boundingBox()]);
+    const [chat, stage] = await Promise.all([page.locator('#chat').boundingBox(), page.locator(bid('stage')).boundingBox()]);
     expect(chat!.y).toBe(stage!.y);
     expect(stage!.x + stage!.width).toBe(chat!.x);
     // "⋯" hangs over the chat, and is on top of it.
-    await page.locator('#toolbar-menu').click();
-    const hide = page.locator('#hide');
+    await page.locator(bid('toolbar-menu')).click();
+    const hide = page.locator(bid('hide'));
     await expect(hide).toBeVisible();
     const row = (await hide.boundingBox())!;
     expect(row.x + row.width).toBeGreaterThan(chat!.x);
-    expect(await page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.closest('button')?.id, [row.x + row.width - 4, row.y + row.height / 2])).toBe('hide');
+    expect(await page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.closest('button')?.id, [row.x + row.width - 4, row.y + row.height / 2])).toBe(bid('hide').slice(1));
   } finally {
     await roadmap.close();
   }

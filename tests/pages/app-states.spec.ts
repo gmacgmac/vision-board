@@ -12,7 +12,7 @@ import type { Page, Route } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
 import { addApp } from '#board/testing';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
@@ -119,7 +119,7 @@ for (const theme of THEMES) {
     await setTheme(page, theme);
     await open(page);
     await expectStates(page);
-    const stage = page.locator('#stage');
+    const stage = page.locator(bid('stage'));
     for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) !== 'far'; i += 1) await page.keyboard.press('-');
     await expect(stage).toHaveAttribute('data-zoom', 'far');
     await expect(page.locator('vb-app-frame[data-frozen][inert] iframe')).toHaveCount(3);
@@ -224,7 +224,7 @@ test('with the appTitle flag off, the title shows above the panel and the footer
 
 /** Pan the board by (dx, dy) screen pixels with the wheel, as a person scrolls. */
 async function panBy(page: Page, dx: number, dy: number): Promise<void> {
-  const box = (await page.locator('#stage').boundingBox())!;
+  const box = (await page.locator(bid('stage')).boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.wheel(-dx, -dy);
 }
@@ -235,7 +235,7 @@ for (const theme of THEMES) {
     await open(page);
     await expectStates(page);
     // Well past a screen away, the frames stay loaded, frozen.
-    const { width } = (await page.locator('#stage').boundingBox())!;
+    const { width } = (await page.locator(bid('stage')).boundingBox())!;
     await panBy(page, -3 * width, 0);
     await expect(page.locator('vb-app-frame[data-frozen] iframe')).toHaveCount(3);
     // Opened again where the person left it (the view is kept): nothing off screen loads.
@@ -267,7 +267,7 @@ for (const theme of THEMES) {
     await expect(calc.locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
     const box = () => calc.evaluate((c: HTMLElement) => [c.offsetWidth, c.offsetHeight]);
     const now = await box();
-    const version = page.locator('#version');
+    const version = page.locator(bid('version'));
     await expect(version.locator('option')).toHaveCount(2);
     await version.selectOption({ index: 1 });
     await expect(calc.locator('.vb-app')).toHaveAttribute('data-app-state', 'past');

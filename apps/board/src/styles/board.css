@@ -64,8 +64,8 @@
 @container vb-board (max-width: 1000px) {
   .vb-toolbar[data-menu]:not([data-tier]), .vb-toolbar[data-menu]:not([data-tier]) :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
   .vb-toolbar[data-menu]:not([data-tier]) .vb-brand { display: none; }
-  .vb-toolbar[data-menu]:not([data-tier]) > :is(#board, [id$='-board']) { min-width: 150px; }
-  .vb-toolbar[data-menu]:not([data-tier]) > select:is(#version, #containers, [id$='-version'], [id$='-containers']) { width: 6em; flex-shrink: 0; }
+  .vb-toolbar[data-menu]:not([data-tier]) > [id$='-board'] { min-width: 150px; }
+  .vb-toolbar[data-menu]:not([data-tier]) > select:is([id$='-version'], [id$='-containers']) { width: 6em; flex-shrink: 0; }
   .vb-toolbar[data-menu]:not([data-tier]) .vb-counts .vb-chip { justify-content: center; min-width: var(--vb-control-target); padding: 0 var(--vb-space-1); }
 }
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
@@ -81,7 +81,7 @@
 /* The container finder (navigation FE_02): a menu that shows its name, not the longest container. */
 /* The board picker gives up room first, as the title did (ellipsis), but never under 220px; the other
    dropdowns keep their text whole. The end group makes room by showing icons (below). */
-.vb-toolbar > :is(#board, [id$='-board']) { min-width: 220px; }
+.vb-toolbar > [id$='-board'] { min-width: 220px; }
 .vb-select-menu { width: 8.5em; flex-shrink: 0; }
 /* "N flagged" (cardFlag flag) is a chip that is a button (#ui base/chip.css `.vb-chip-btn`); its flag
    is decoration in --vb-state-flag (APCA Lc 65.1 light, -55.5 dark on the chip; 58.7, -53.6 hovered). */

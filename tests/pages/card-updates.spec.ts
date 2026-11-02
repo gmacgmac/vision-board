@@ -8,7 +8,7 @@
 // and its cards, the page opens, then the agent changes a card, so the change arrives live. Agent
 // calls go through `request` (no person cookie); reading the ledger goes through `page.request`.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { boardLines } from './board-lines.ts';
 import { card, head, tab } from './board-page.ts';
@@ -160,13 +160,13 @@ test('Send leaves the tabs; tabbing past and hovering send nothing', async ({ pa
   await open(page, d);
   const before = await head(page);
   await card(page, n).hover();
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await tabTo(page, tab(page, n));
   // Something to send that names no card (Send waits for an answer: field report batch 1, ruling 1).
   const note = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', action: 'comment', board: d.board, region: 'p', text: 'All of these?' } });
   expect(note.status(), await note.text()).toBe(201);
   await page.getByRole('button', { name: 'Send to agent' }).click();
-  await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
+  await expect(page.locator(bid('send'))).toHaveAttribute('data-state', 'sent');
   await expect(tab(page, n)).toHaveText('1 update');
   expect(await seenAfter(page, d.board, before)).toEqual([]);
 });
@@ -203,7 +203,7 @@ test('keyboard only: Enter on the tab opens with focus on Next, Esc folds back t
   await append(request, d, b, APPENDED);
   await open(page, d);
   const before = await head(page);
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await tabTo(page, tab(page, a));
   await page.keyboard.press('Enter');
   await expect(next(page, a)).toBeFocused();
@@ -235,7 +235,7 @@ test('a past version shows no tab and selecting there sends nothing', async ({ p
   await expect.poll(async () => (await seenAfter(page, d.board, 0)).length).toBe(1);
   await append(request, d, a, 'And the renewal date.');
   await expect(tab(page, a)).toHaveText('2 updates');
-  await page.locator('#version').selectOption({ index: 1 });
+  await page.locator(bid('version')).selectOption({ index: 1 });
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect(tab(page, a)).toBeHidden();
   const before = await head(page);

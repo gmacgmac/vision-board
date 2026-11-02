@@ -5,7 +5,7 @@
 // opens to edit from its Edit; a container's note and its replies do the same; the hover tip stays;
 // Esc closes and focus goes back; axe light and dark. Each test draws its own board through the API.
 import type { Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, reply, tabTo } from './agent-board.ts';
@@ -102,7 +102,7 @@ test('keyboard: Enter and Space on a reply open the exchange; the hover tip stil
   await expect(r.locator('.vb-note-tip')).toBeVisible();
   expect(await css(r.locator('.vb-note-tip'), 'width')).toBe('360px');
   expect(await css(r.locator('.vb-note-tip .vb-md-p').first(), 'font-size')).toBe(TEXT);
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await tabTo(page, r);
   await page.keyboard.press('Enter');
   await expect(page.getByRole('dialog', { name: `Conversation on ${n}` })).toBeVisible();

@@ -15,7 +15,7 @@ import type { Frame, Locator, Page } from '@playwright/test';
 import { tabTo } from './agent-board.ts';
 import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card as cardOf, control, panelOf } from './board-page.ts';
 
@@ -233,7 +233,7 @@ test('Z on the one app card fills 95% of the stage on its binding side (±1%), c
   const card = cardOf(page, n!);
   await panelOf(card);
   const fill = async (ids: number[]) => {
-    const stage = (await page.locator('#stage').boundingBox())!;
+    const stage = (await page.locator(bid('stage')).boundingBox())!;
     const boxes = await Promise.all(ids.map(async (id) => (await cardOf(page, id).boundingBox())!));
     const [x, y] = [Math.min(...boxes.map((b) => b.x)), Math.min(...boxes.map((b) => b.y))];
     const [r, b] = [Math.max(...boxes.map((v) => v.x + v.width)), Math.max(...boxes.map((v) => v.y + v.height))];

@@ -9,7 +9,7 @@
 // ledger lines. Agent calls go through `request` (no person cookie: agent routes refuse it);
 // person acts the test sets up go through `page.request`, which carries the page's cookie.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { head } from './board-page.ts';
 import { joinAgent } from './agent-board.ts';
@@ -223,7 +223,7 @@ test('gallery: three requests (one for the board) with one refusing note open, t
   await expect(s.locator('.vb-send[data-state="waiting"]')).not.toHaveAttribute('aria-disabled', 'true');
   await expect(s.locator('.vb-send[data-state="sending"] .vb-spinner')).toBeVisible();
   await expect(s.locator('.vb-send[data-state="sending"]')).toHaveAttribute('aria-disabled', 'true');
-  await expect(s.locator('#send')).toHaveCount(0);
+  await expect(s.locator(bid('send'))).toHaveCount(0);
 });
 
 for (const theme of THEMES) {
@@ -246,7 +246,7 @@ test('keyboard: Tab reaches Allow, and Enter allows', async ({ page, request }) 
   await expect(row(page, 'Keys allow chat')).toHaveCount(0);
   await expect(holderButton(page, 'Keys allow chat')).toBeVisible();
   // Focus lands on the board, not on the page body, once the strip is gone.
-  await expect(page.locator('#stage')).toBeFocused();
+  await expect(page.locator(bid('stage'))).toBeFocused();
   expect((await holdersNow(page)).map((h) => h.agent)).toContain(a.agent);
 });
 
@@ -300,10 +300,10 @@ test('keyboard: Tab reaches Send to agent, and Enter sends', async ({ page }) =>
   await answer(page);
   const before = await head(page);
   await openAccess(page);
-  await tabTo(page, page.locator('#send'));
+  await tabTo(page, page.locator(bid('send')));
   await page.keyboard.press('Enter');
-  await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
-  await expect(page.locator('#send')).toBeFocused();
+  await expect(page.locator(bid('send'))).toHaveAttribute('data-state', 'sent');
+  await expect(page.locator(bid('send'))).toBeFocused();
   expect((await ledgerAfter(page, before)).filter((e) => e.type === 'act')).toEqual([expect.objectContaining({ action: 'send', board: BOARD })]);
 });
 
@@ -369,13 +369,13 @@ test('Send records a send act on the board, read back through read_ledger', asyn
   const send = page.getByRole('button', { name: 'Send to agent' });
   await expect(send).toBeVisible();
   await send.click();
-  await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
-  await expect(page.locator('#send')).toHaveText(/Sent/);
+  await expect(page.locator(bid('send'))).toHaveAttribute('data-state', 'sent');
+  await expect(page.locator(bid('send'))).toHaveText(/Sent/);
   await expect(page.getByRole('status').filter({ hasText: 'Sent to the agent' })).toHaveCount(1);
   const lines = (await ledgerAfter(page, before)).filter((e) => e.type === 'act');
   expect(lines).toEqual([expect.objectContaining({ type: 'act', action: 'send', board: BOARD, by: 'person' })]);
   // "Sent" is brief; then nothing is new, so the button is disabled until the next answer.
-  await expect(page.locator('#send')).toHaveAttribute('data-state', 'disabled', { timeout: 5000 });
+  await expect(page.locator(bid('send'))).toHaveAttribute('data-state', 'disabled', { timeout: 5000 });
 });
 
 test('a request that arrives while the page is open shows in the strip and is announced', async ({ page, request }) => {
@@ -383,7 +383,7 @@ test('a request that arrives while the page is open shows in the strip and is an
   await expect(page.locator('.vb-access')).toHaveCount(0);
   const a = await ask(request, 'Late chat');
   await expect(row(page, 'Late chat')).toBeVisible();
-  await expect(page.locator('#board-request-0-announce')).toHaveText('Late chat asks for access to 1 container');
+  await expect(page.locator(bid('board-request-0-announce'))).toHaveText('Late chat asks for access to 1 container');
   await grant(page, a.seq);
   await expect(page.locator('.vb-access')).toHaveCount(0);
 });
@@ -391,7 +391,7 @@ test('a request that arrives while the page is open shows in the strip and is an
 test('the strip moves the board down instead of covering it, and back when it goes', async ({ page, request }) => {
   const a = await ask(request, 'Layout chat');
   await openAccess(page);
-  const stageTop = () => page.locator('#stage').evaluate((e) => e.getBoundingClientRect().top);
+  const stageTop = () => page.locator(bid('stage')).evaluate((e) => e.getBoundingClientRect().top);
   const stripBottom = await strip(page).evaluate((e) => e.getBoundingClientRect().bottom);
   expect(await stageTop()).toBeCloseTo(stripBottom, 0);
   await grant(page, a.seq);

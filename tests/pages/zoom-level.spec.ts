@@ -5,7 +5,7 @@
 // and the containers' icon rows hide below FAR_K, and nothing small is drawn, so axe excuses nothing at
 // the opening zoom. Read-only on the roadmap board, so it leaves the shared ledger as it found it.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { openBoard } from './board-page.ts';
 
@@ -108,10 +108,10 @@ test('card controls hide below the level and show above it, and focus never land
   // Zoom out until the stage is far, then back in: the controls follow the level.
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
   expect(await percent(page)).toBeLessThan(FAR_PERCENT);
-  await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
   await expect(page.locator(controls)).toHaveCount(0);
   // Tab through the page: it never stops on a control that is not drawn.
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   const stops = new Set<string>();
   for (let i = 0; i < 60; i += 1) {
     await page.keyboard.press('Tab');
@@ -121,10 +121,10 @@ test('card controls hide below the level and show above it, and focus never land
     }));
   }
   expect([...stops].filter((s) => s.startsWith('hidden control')), [...stops].join('\n')).toEqual([]);
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   for (let i = 0; i < 20 && (await percent(page)) < FAR_PERCENT; i += 1) await page.keyboard.press('+');
   expect(await percent(page)).toBeGreaterThanOrEqual(FAR_PERCENT);
-  await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
   await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
   await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
 });
@@ -132,7 +132,7 @@ test('card controls hide below the level and show above it, and focus never land
 test('the keyboard shortcuts for a card still work while its buttons are hidden', async ({ page }) => {
   await openBoard(page);
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
-  await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
   // C opens the focused card's note bubble (nothing is written until it is sent).
   await page.locator('vb-node[data-id="1"]').focus();
   await page.keyboard.press('c');
@@ -145,7 +145,7 @@ test('with -hideControlsZoomedOut every control stays visible at every zoom', as
   await openBoard(page, { query: '?flags=-hideControlsZoomedOut' });
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
   expect(await percent(page)).toBeLessThan(FAR_PERCENT);
-  await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
   await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
   await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
 });
@@ -208,7 +208,7 @@ test('a container title keeps one on-screen size at 20%, about 100% and 250%, an
 test('zoomed out, the controls, grip and retired marker leave the line, so the title takes their room', async ({ page }) => {
   await openBoard(page);
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
-  await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
   const gone = await page.locator('vb-region').evaluateAll((frames) => frames.flatMap((f) =>
     [...f.querySelectorAll<HTMLElement>('.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-holder')]
       .filter((e) => e.getBoundingClientRect().width > 0).map((e) => e.className)));

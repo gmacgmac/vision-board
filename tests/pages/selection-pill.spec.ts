@@ -5,7 +5,7 @@
 // with it closed; the Comment hover uses the accent hover fill in both themes; axe light and dark;
 // off, today's bar; the gallery's samples. A board of its own, written by an agent through the API.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { bar, scale as view } from './board-page.ts';
 
@@ -52,7 +52,7 @@ async function selectTwo(page: Page): Promise<void> {
 
 /** A point on the stage's own background, at its top right corner, clear of the cards. */
 async function background(page: Page): Promise<{ x: number; y: number }> {
-  const s = (await page.locator('#stage').boundingBox())!;
+  const s = (await page.locator(bid('stage')).boundingBox())!;
   return { x: s.x + s.width - 24, y: s.y + 24 };
 }
 

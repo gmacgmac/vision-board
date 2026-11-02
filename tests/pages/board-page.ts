@@ -3,7 +3,7 @@
 // worker's main board, servers.ts) has 17 cards. A board of its own drawn by an agent is
 // agent-board.ts's; the chat panel's parts are chat-page.ts's.
 import type { Frame, Locator, Page } from '@playwright/test';
-import { expect } from './helpers.ts';
+import { expect, bid } from './helpers.ts';
 
 /** The roadmap fixture's cards. */
 export const ROADMAP_CARDS = 17;
@@ -31,8 +31,8 @@ export type Point = { x: number; y: number };
 export const bar = (page: Page) => page.locator('vb-selection-bar');
 export const bubble = (page: Page) => page.locator('vb-note-bubble');
 export const toast = (page: Page) => page.locator('#toast');
-export const picker = (page: Page) => page.locator('#board');
-export const menuButton = (page: Page) => page.locator('#toolbar-menu');
+export const picker = (page: Page) => page.locator(bid('board'));
+export const menuButton = (page: Page) => page.locator(bid('toolbar-menu'));
 export const menu = (page: Page) => page.getByRole('menu', { name: 'More' });
 /** A card's replies, and its Updates tab. */
 export const replies = (page: Page, n: number) => card(page, n).locator('.vb-node-reply');
@@ -50,7 +50,7 @@ export const selectedIds = (page: Page) => page.locator('vb-node[data-selected]'
 
 // Where things are, and the board's zoom and pan.
 export const box = async (l: Locator) => (await l.boundingBox())!;
-export const stageBox = async (page: Page) => (await page.locator('#stage').boundingBox())!;
+export const stageBox = async (page: Page) => (await page.locator(bid('stage')).boundingBox())!;
 export const world = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
 export const scale = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 

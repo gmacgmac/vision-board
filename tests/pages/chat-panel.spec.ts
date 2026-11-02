@@ -12,7 +12,7 @@ import type { Page } from '@playwright/test';
 import { ask, gone } from '#board/testing';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card, log, side, status, text, toggle } from './chat-page.ts';
 
@@ -61,7 +61,7 @@ test('the panel: closed at first; the Chat button and T open and close it; the s
   await expect(side(page)).toBeVisible();
   await expect(text(page)).toBeFocused();
   await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
-  const [stage, chat] = await Promise.all([page.locator('#stage').boundingBox(), side(page).boundingBox()]);
+  const [stage, chat] = await Promise.all([page.locator(bid('stage')).boundingBox(), side(page).boundingBox()]);
   expect(Math.round(stage!.x + stage!.width)).toBe(Math.round(chat!.x));
   // T in the composer is a letter; elsewhere it opens and closes the panel.
   await text(page).press('t');
@@ -69,7 +69,7 @@ test('the panel: closed at first; the Chat button and T open and close it; the s
   await toggle(page).focus();
   await page.keyboard.press('t');
   await expect(side(page)).toBeHidden();
-  const full = await page.locator('#stage').boundingBox();
+  const full = await page.locator(bid('stage')).boundingBox();
   expect(Math.round(full!.width)).toBe(1600);
   await page.keyboard.press('t');
   await expect(side(page)).toBeVisible();
@@ -117,7 +117,7 @@ test('a message: the selected card goes with it; the agent\'s words show; its ch
   await expect(attached(page).filter({ hasText: 'selected' })).toHaveCount(0);
   await expect(text(page)).toHaveValue('');
   // The change chip: zoomed to, and nothing selected, so nothing goes with the next message.
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.keyboard.press('Escape');
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
   const before = await page.locator('.vb-world').getAttribute('style');
@@ -187,7 +187,7 @@ test('approvals: Allow once lets the file change through, Deny refuses the comma
 test('a past version: the composer is shut and says why; back to now, it opens again', async ({ page }) => {
   await open(page);
   await toggle(page).click();
-  const version = page.locator('#version');
+  const version = page.locator(bid('version'));
   const past = await version.locator('option').nth(1).getAttribute('value');
   await version.selectOption(past!);
   await expect(text(page)).toBeDisabled();

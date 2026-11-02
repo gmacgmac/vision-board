@@ -3,7 +3,7 @@
 // disabled while no selected card is pinned; with no selection R still resets the focused card;
 // a past version refuses it. A board of its own, written by an agent through the API.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { bar, idle } from './board-page.ts';
 import { joinAgent } from './agent-board.ts';
@@ -119,7 +119,7 @@ test('a past version has no Reset places, and R sends nothing there', async ({ p
   await expect(page.locator('vb-node')).toHaveCount(4);
   await expect(card(page, a)).toHaveAttribute('data-pinned', '');
 
-  await page.locator('#version').selectOption(String(second));
+  await page.locator(bid('version')).selectOption(String(second));
   await expect(page.locator('.vb-world')).toHaveAttribute('data-readonly', '');
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(card(page, a)).toHaveAttribute('data-pinned', '');

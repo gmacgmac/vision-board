@@ -6,7 +6,7 @@
 // locked board pauses both; the keyboard reaches both; axe passes light and dark with the confirm
 // open. Every board here is drawn after the roadmap's cards, so its card 1 is never the ledger's 1.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, zoomToControls } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, zoomToControls, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { bar, card, frame, head, idle, linesAfter, toast } from './board-page.ts';
 import { act, open } from './agent-board.ts';
@@ -120,7 +120,7 @@ test('a selection: Delete asks "Remove 2 cards?", warns of the owed one, Cancel 
   // The comment was owed an answer; nothing is now, and Send has nothing new to carry.
   const listed = await (await page.request.get(`/api/boards/${d.board}/open`)).json() as { items: { n: number }[] };
   expect(listed.items.map((x) => x.n)).toEqual([1]);
-  await expect(page.locator('#send')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
 });
 
 test('Remove container in the settings: "Remove container \'Findings\' and its card?"; the frame and its card leave', async ({ page, request }) => {
@@ -146,7 +146,7 @@ test('Remove container in the settings: "Remove container \'Findings\' and its c
   await expect(frame(page, 'q')).toHaveCount(0);
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(toast(page)).toHaveText('Removed container \'Findings\'');
-  await expect(page.locator('#stage')).toBeFocused();
+  await expect(page.locator(bid('stage'))).toBeFocused();
 });
 
 test('by keyboard: Space selects a focused card, Delete asks, Tab and Enter confirm; the cog\'s menu reaches Remove container', async ({ page, request }) => {

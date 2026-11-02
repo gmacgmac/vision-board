@@ -8,7 +8,7 @@
 // Each test draws its own board through the API, as an agent would; the person's setup acts go
 // through `page.request`, which carries the page's cookie.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { head } from './board-page.ts';
 import { act, tabTo } from './agent-board.ts';
@@ -52,7 +52,7 @@ async function open(page: Page, d: Drawn): Promise<void> {
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
-const send = (page: Page) => page.locator('#send');
+const send = (page: Page) => page.locator(bid('send'));
 
 /** Send is disabled with its reason, and still a named button. */
 async function expectNothingNew(page: Page): Promise<void> {
@@ -110,7 +110,7 @@ test('arranging the board alone does not enable Send; a note on a whole containe
 test('keyboard: Send stays in the tab order while disabled, Enter does nothing; after ✓ (A) Enter sends', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await tabTo(page, send(page));
   const before = await head(page);
   await page.keyboard.press('Enter');

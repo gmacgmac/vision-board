@@ -2,14 +2,14 @@
 // or on its title line makes it the one Z zooms to, as Z zooms to the selected cards. On the worker's
 // roadmap board, fresh for this file (servers.ts).
 import type { Page } from '@playwright/test';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { card, frame, openBoard } from './board-page.ts';
 
 const view = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
 
 /** How the container sits on the stage: the side it fills most, and how far its centre is from the stage's. */
 async function placed(page: Page, region: string): Promise<{ fill: number; dx: number; dy: number }> {
-  const [s, f] = [(await page.locator('#stage').boundingBox())!, (await frame(page, region).boundingBox())!];
+  const [s, f] = [(await page.locator(bid('stage')).boundingBox())!, (await frame(page, region).boundingBox())!];
   return {
     fill: Math.max(f.width / s.width, f.height / s.height),
     dx: Math.abs(f.x + f.width / 2 - (s.x + s.width / 2)),
@@ -78,7 +78,7 @@ test('a click, then Z: the title line has focus but draws no ring; focused by th
   await expect(frame(page, 'review').locator('.vb-region-head h2')).toBeFocused();
   expect(await ring(page)).toBe('none');
   // Focus that came by a key (the container finder chosen with the keyboard focuses it the same way).
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.keyboard.press('Shift');
   await frame(page, 'review').locator('.vb-region-head h2').evaluate((e: HTMLElement) => e.focus());
   expect(await ring(page)).not.toBe('none');

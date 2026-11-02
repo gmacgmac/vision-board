@@ -4,7 +4,7 @@
 // The list's content is tested against the command table and the registry in
 // apps/board/tests/key-help.test.ts; here the page shows it. Read-only, on the worker's roadmap board.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { openBoard } from './board-page.ts';
 
@@ -51,7 +51,7 @@ test('focus shows it, Esc closes it without anything else happening, and "?" ope
   await page.keyboard.press('?');
   await expect(list(page)).toBeHidden();
   // From the stage, "?" opens it and moves focus to the button.
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.keyboard.press('?');
   await expect(list(page)).toBeVisible();
   await expect(button(page)).toBeFocused();

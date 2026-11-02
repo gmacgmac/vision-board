@@ -10,7 +10,7 @@
 import type { Frame, Page } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 
 let s: AppServer;
 let board = '';
@@ -119,9 +119,9 @@ test('4j: a message to the board from any window but the card\'s own frame is ig
   const other = (await (await page.locator('#intruder').elementHandle())!.contentFrame())!;
   expect(await callFrom(other, 'other')).toEqual([]);
   // Its Esc doesn't move the person's focus either.
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await other.evaluate(() => parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/escape' }, '*'));
-  await expect(page.locator('#stage')).toBeFocused();
+  await expect(page.locator(bid('stage'))).toBeFocused();
   // Nor does the board's own window posting to itself.
   expect(await callFrom(page, 'self')).toEqual([]);
   // Its handshake stays unanswered: it still waits.

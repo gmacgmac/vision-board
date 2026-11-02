@@ -4,7 +4,7 @@
 // is the old button. Then the gallery's Review list section. Moved from proposals.spec.ts unchanged
 // (VERIFY_01 F11); the board and its helpers are proposals-board.ts.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { boardLines } from './board-lines.ts';
 import { card, idle, panBy, scale, selected, stageBox, world } from './board-page.ts';
@@ -48,7 +48,7 @@ async function farBoard(page: Page, request: APIRequestContext, query = '') {
   await propose(request, d, last, 'cross', 'it was a mistake');
   await propose(request, d, first, 'check', 'the draft is done');
   await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('3 proposals');
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   for (let i = 0; i < 12 && (await scale(page)) > 0.45; i += 1) await page.keyboard.press('-');
   expect(await scale(page), 'zoomed out past where controls show').toBeLessThan(0.55);
   // Pan until the last card is off the stage.
@@ -70,7 +70,7 @@ test('Review lists the cards with proposals in card order; choosing the off-scre
   expect(await scale(page), 'at a readable zoom: the controls show again').toBeGreaterThanOrEqual(0.55);
   expect(await selected(page)).toEqual([String(last)]);
   await expect(isNew(page, last), 'looking is not reading: NEW stays').toHaveText('NEW');
-  await expect(page.locator('#counts')).toContainText('1 new');
+  await expect(page.locator(bid('counts'))).toContainText('1 new');
   await idle(page);
   expect((await boardLines(page, d.board)).filter((e) => e.type === 'seen' && e.n !== undefined).length, 'no card seen line').toBe(was);
   // The list is whole again, ready for the next choice.

@@ -3,7 +3,7 @@
 // section. On the worker's roadmap board, fresh for this file (servers.ts); it leaves every size
 // pick it makes back on Auto, for the tests after it in this file.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card, openBoard, ROADMAP_CARDS, zoomToFull } from './board-page.ts';
 
@@ -17,8 +17,8 @@ const cssWidth = (page: Page, n: number) => card(page, n).evaluate((e) => (e as 
 
 /** Zoom in with + until the stage is no longer "far", so the size control shows (N8). */
 async function zoomIn(page: Page): Promise<void> {
-  for (let i = 0; i < 8 && (await page.locator('#stage[data-zoom="far"]').count()); i += 1) await page.keyboard.press('+');
-  await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+  for (let i = 0; i < 8 && (await page.locator(`${bid('stage')}[data-zoom="far"]`).count()); i += 1) await page.keyboard.press('+');
+  await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
 }
 
 const active = (page: Page) => page.evaluate(() => {

@@ -5,7 +5,7 @@
 // off, it is the plain chip. Reading, not acting: it works in a past version and sends nothing.
 // Each test draws a board of its own (agent-board.ts).
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, tabTo, write } from './agent-board.ts';
@@ -13,7 +13,7 @@ import { idle, selected, stageBox } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const list = (page: Page) => page.getByLabel('Go to an open card', { exact: true });
-const chip = (page: Page) => page.locator('#counts .vb-chip[data-tone="open"]');
+const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="open"]`);
 /** The rows' words: each option's `label` (MenuSelect puts its words there, so the counts' live region keeps its text). */
 const texts = (page: Page) => list(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
 
@@ -45,7 +45,7 @@ test('the chip lists the open cards by number and title in board order, keeps it
   await expect.poll(() => texts(page)).toEqual(['4 open', '1 · Card 1', '4 · Card 4', '5 · Card 5', '6 · Card 6']);
   await expect(chip(page)).toContainText('4 open');
   // The counts' live region says the counts only: the list adds no words to it.
-  await expect(page.locator('#counts')).toHaveText(/(^|\s)4 open\s+1 answered\s+1 later\s*$/);
+  await expect(page.locator(bid('counts'))).toHaveText(/(^|\s)4 open\s+1 answered\s+1 later\s*$/);
   // The select lies unseen over the chip: what shows is the chip.
   expect(await list(page).evaluate((e) => getComputedStyle(e).opacity)).toBe('0');
   const [c, l] = [(await chip(page).boundingBox())!, (await list(page).boundingBox())!];
@@ -116,8 +116,8 @@ test('in a past version it lists that version\'s open cards, goes to one and sen
   await expect.poll(() => texts(page)).toEqual(['2 open', '2 · Card 2', '3 · Card 3']);
   const sent: string[] = [];
   page.on('request', (r) => { if (r.method() === 'POST') sent.push(r.url()); });
-  await page.locator('#toolbar-menu').click(); // at this width the version is a row of "⋯" (adaptiveHeader flag)
-  await page.locator('#version').selectOption({ index: 1 });
+  await page.locator(bid('toolbar-menu')).click(); // at this width the version is a row of "⋯" (adaptiveHeader flag)
+  await page.locator(bid('version')).selectOption({ index: 1 });
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect.poll(() => texts(page)).toEqual(['2 open', '1 · Card 1', '2 · Card 2']);
   await list(page).selectOption('1');

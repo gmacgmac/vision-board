@@ -72,7 +72,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   const added = root.classList.contains(BOARD_ROOT) ? [] : [BOARD_ROOT];
   root.classList.add(...added);
   const status = createStatus();
-  const ids = takeIdPrefix(!!host.page);
+  const ids = takeIdPrefix();
   const store = host.store ?? memoryStore();
   let board!: Board;
   /** `unmount` ran: whatever a host keeps calling on the view does nothing. */

@@ -62,7 +62,7 @@ export interface BoardDeps {
   /** The message over the stage ("No boards yet"); null hides it. */
   say(text: string | null): void;
   page: BoardPage;
-  /** The mount's prefix for the ids its cards, frames and connectors set (mount-ids.ts); none for the first. */
+  /** The mount's prefix for the ids its cards, frames and connectors set (mount-ids.ts). */
   ids?: string;
   /** Where the viewer's conveniences are kept (BoardHost.store, or the mount's own). */
   store: BoardStore;

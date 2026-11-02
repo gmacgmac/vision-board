@@ -8,7 +8,7 @@
 // Each test draws its own board through the API as a joined agent, so the shared roadmap board is
 // never touched. Agent calls go through `request` (no person cookie); reads through `page.request`.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { bar, bubble, card } from './board-page.ts';
 
@@ -94,7 +94,7 @@ test('every card shows its number; the kind decides the buttons, and ✓ and ✗
 test('a plain card commented alone: its own note and pin, no status word, and counted nowhere', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
-  const counts = page.locator('#counts');
+  const counts = page.locator(bid('counts'));
   await expect(counts).toContainText('2 open');
   await expect(counts).toContainText('0 answered');
   const p = page.locator('vb-region[data-region="p"] .vb-region-count');
@@ -149,7 +149,7 @@ test('three mixed cards lassoed and commented once: one note on exactly those ca
   await expect(group).toHaveAttribute('aria-label', `Note 1 on items ${[...ids].sort((x, y) => x - y).join(', ')}. Edit it`);
   for (const n of [...ids, d.act, d.risk]) await expect(card(page, n).locator('.vb-note-pin')).toBeHidden();
   // A note never answers a card (D-045): the question stays open, and nothing is answered.
-  await expect(page.locator('#counts')).toContainText('0 answered');
+  await expect(page.locator(bid('counts'))).toContainText('0 answered');
   await expect(card(page, d.ask)).toHaveAttribute('data-status', 'commented');
   await expect(card(page, d.plain)).toHaveAttribute('data-status', 'commented');
 });
@@ -198,7 +198,7 @@ test('flag off: numbers and buttons only on cards that need an answer', async ({
   await card(page, d.plain).focus();
   await page.keyboard.press('c');
   await expect(bubble(page)).toBeHidden();
-  await expect(page.locator('#counts')).toContainText('2 open');
+  await expect(page.locator(bid('counts'))).toContainText('2 open');
 });
 
 for (const theme of THEMES) {

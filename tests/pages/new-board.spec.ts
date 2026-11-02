@@ -6,7 +6,7 @@
 // both themes. It runs on the worker's empty project (EMPTY_BASE), fresh for this file (servers.ts),
 // so the boards it makes never reach the roadmap board's screenshots.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
 import { idle, picker } from './board-page.ts';
@@ -31,7 +31,7 @@ async function open(page: Page): Promise<void> {
   await idle(page);
 }
 
-const dialog = (page: Page) => page.locator('#board-dialog');
+const dialog = (page: Page) => page.locator(bid('board-dialog'));
 const region = { type: 'region', region: { id: 'roles', title: 'Roles', mode: 'grid' } };
 
 test('New board makes a board the person owns and opens it; an agent then needs it granted', async ({ page, request }) => {
@@ -40,19 +40,19 @@ test('New board makes a board the person owns and opens it; an agent then needs 
   await picker(page).selectOption(':new-board');
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page).getByRole('heading')).toHaveText('New board');
-  await expect(page.locator('#board-title')).toBeFocused();
+  await expect(page.locator(bid('board-title'))).toBeFocused();
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await expectNoAxeViolations(page);
   }
-  await page.locator('#board-title').fill('Hiring plan');
-  await page.locator('#board-summary').fill('Who we hire next, and when.');
-  await page.locator('#board-save').click();
+  await page.locator(bid('board-title')).fill('Hiring plan');
+  await page.locator(bid('board-summary')).fill('Who we hire next, and when.');
+  await page.locator(bid('board-save')).click();
   await expect(dialog(page)).toBeHidden();
   await idle(page);
   await expect(picker(page)).toHaveValue('hiring-plan');
   await expect(picker(page).locator('option:checked')).toHaveText('Hiring plan');
-  await expect(page.locator('#title')).toHaveText('Hiring plan');
+  await expect(page.locator(bid('title'))).toHaveText('Hiring plan');
   await expect(picker(page)).toBeFocused(); // the dialog gives focus back to the picker
 
   // D-034: a board the person made has no agent creator, so an agent asks for it first.
@@ -69,8 +69,8 @@ test('Rename board opens with the board\'s words; the picker and title follow; C
   await idle(page);
   await picker(page).selectOption(':rename-board');
   await expect(dialog(page).getByRole('heading')).toHaveText('Rename board');
-  await expect(page.locator('#board-title')).toHaveValue('Hiring plan');
-  await expect(page.locator('#board-summary')).toHaveValue('Who we hire next, and when.');
+  await expect(page.locator(bid('board-title'))).toHaveValue('Hiring plan');
+  await expect(page.locator(bid('board-summary'))).toHaveValue('Who we hire next, and when.');
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await expectNoAxeViolations(page);
@@ -78,25 +78,25 @@ test('Rename board opens with the board\'s words; the picker and title follow; C
   await page.keyboard.press('Escape');
   await expect(dialog(page)).toBeHidden();
   await picker(page).selectOption(':rename-board');
-  await page.locator('#board-title').fill('Hiring 2027');
-  await page.locator('#board-cancel').click();
+  await page.locator(bid('board-title')).fill('Hiring 2027');
+  await page.locator(bid('board-cancel')).click();
   await expect(dialog(page)).toBeHidden();
   await expect(picker(page).locator('option:checked')).toHaveText('Hiring plan');
 
   await picker(page).selectOption(':rename-board');
-  await page.locator('#board-title').fill('Hiring 2027');
-  await page.locator('#board-title').press('Enter');
+  await page.locator(bid('board-title')).fill('Hiring 2027');
+  await page.locator(bid('board-title')).press('Enter');
   await expect(dialog(page)).toBeHidden();
   await idle(page);
   await expect(picker(page)).toHaveValue('hiring-plan');
   await expect(picker(page).locator('option[value="hiring-plan"]')).toHaveText('Hiring 2027');
-  await expect(page.locator('#title')).toHaveText('Hiring 2027');
+  await expect(page.locator(bid('title'))).toHaveText('Hiring 2027');
 });
 
 // A dialog closed without saving leaves nothing behind: New board always opens empty, Rename always
 // with the board's current title and summary (verification fix). Backdrop click closes it too.
 const CLOSE = {
-  Cancel: (page: Page) => page.locator('#board-cancel').click(),
+  Cancel: (page: Page) => page.locator(bid('board-cancel')).click(),
   Esc: (page: Page) => page.keyboard.press('Escape'),
   'a backdrop click': (page: Page) => page.mouse.click(4, 400),
 };
@@ -107,30 +107,30 @@ for (const [how, close] of Object.entries(CLOSE)) {
     await idle(page);
     await picker(page).selectOption(':new-board');
     await expect(dialog(page)).toBeVisible();
-    await page.locator('#board-title').fill('Typed and abandoned');
-    await page.locator('#board-summary').fill('Never saved.');
+    await page.locator(bid('board-title')).fill('Typed and abandoned');
+    await page.locator(bid('board-summary')).fill('Never saved.');
     await close(page);
     await expect(dialog(page)).toBeHidden();
     await picker(page).selectOption(':new-board');
     await expect(dialog(page)).toBeVisible();
-    await expect(page.locator('#board-title')).toHaveValue('');
-    await expect(page.locator('#board-summary')).toHaveValue('');
-    await page.locator('#board-title').fill('Typed again');
+    await expect(page.locator(bid('board-title'))).toHaveValue('');
+    await expect(page.locator(bid('board-summary'))).toHaveValue('');
+    await page.locator(bid('board-title')).fill('Typed again');
     await close(page);
     await expect(dialog(page)).toBeHidden();
 
     await picker(page).selectOption(':rename-board');
-    await expect(page.locator('#board-title')).toHaveValue('Hiring 2027');
-    await expect(page.locator('#board-summary')).toHaveValue('Who we hire next, and when.');
-    await page.locator('#board-title').fill('Typed over the title');
+    await expect(page.locator(bid('board-title'))).toHaveValue('Hiring 2027');
+    await expect(page.locator(bid('board-summary'))).toHaveValue('Who we hire next, and when.');
+    await page.locator(bid('board-title')).fill('Typed over the title');
     await close(page);
     await expect(dialog(page)).toBeHidden();
     await picker(page).selectOption(':rename-board');
-    await expect(page.locator('#board-title')).toHaveValue('Hiring 2027');
+    await expect(page.locator(bid('board-title'))).toHaveValue('Hiring 2027');
     await close(page);
     await expect(dialog(page)).toBeHidden();
     await picker(page).selectOption(':new-board');
-    await expect(page.locator('#board-title')).toHaveValue('');
+    await expect(page.locator(bid('board-title'))).toHaveValue('');
     await close(page);
     await expect(dialog(page)).toBeHidden();
   });
@@ -141,13 +141,13 @@ for (const [how, close] of Object.entries(CLOSE)) {
 test('words put in the fields without an input event are gone when New board opens again', async ({ page }) => {
   await open(page);
   await picker(page).selectOption(':new-board');
-  await page.locator('#board-title').evaluate((e: HTMLInputElement) => { e.value = 'Autofilled'; });
-  await page.locator('#board-summary').evaluate((e: HTMLTextAreaElement) => { e.value = 'Also autofilled'; });
+  await page.locator(bid('board-title')).evaluate((e: HTMLInputElement) => { e.value = 'Autofilled'; });
+  await page.locator(bid('board-summary')).evaluate((e: HTMLTextAreaElement) => { e.value = 'Also autofilled'; });
   await page.keyboard.press('Escape');
   await expect(dialog(page)).toBeHidden();
   await picker(page).selectOption(':new-board');
-  await expect(page.locator('#board-title')).toHaveValue('');
-  await expect(page.locator('#board-summary')).toHaveValue('');
+  await expect(page.locator(bid('board-title'))).toHaveValue('');
+  await expect(page.locator(bid('board-summary'))).toHaveValue('');
   await page.keyboard.press('Escape');
   await expect(dialog(page)).toBeHidden();
 });
@@ -169,8 +169,8 @@ test('in a past version New board and Rename board are off', async ({ page, requ
   const card = { type: 'node', node: { region: 'roles', kind: 'question', title: 'Which role first?' } };
   expect((await write(request, agent, 'hiring-plan', [card])).every((x) => x.ok)).toBe(true);
   await idle(page);
-  const past = page.locator('#version option').nth(1);
-  await page.locator('#version').selectOption(await past.getAttribute('value'));
+  const past = page.locator(`${bid('version')} option`).nth(1);
+  await page.locator(bid('version')).selectOption(await past.getAttribute('value'));
   await expect(page.locator('.vb-banner')).toBeVisible();
   for (const id of [':new-board', ':rename-board']) await expect(picker(page).locator(`option[value="${id}"]`)).toBeDisabled();
   await page.keyboard.press('Escape');

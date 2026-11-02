@@ -9,7 +9,7 @@
 // reads `board.drawn`. Agents write through the API with a Bearer secret, as in
 // send-access.spec.ts; the empty project has its own server (EMPTY_BASE, no seed).
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
 import { idle, openDrawn as open } from './board-page.ts';
@@ -34,8 +34,8 @@ const drawn = (title: string) => [
   card('Which idea goes first?'),
 ];
 
-const option = (page: Page, board: string) => page.locator(`#board option[value="${board}"]`);
-const chip = (page: Page) => page.locator('#boards-updated');
+const option = (page: Page, board: string) => page.locator(`${bid('board')} option[value="${board}"]`);
+const chip = (page: Page) => page.locator(bid('boards-updated'));
 
 /** The person has looked at every board (a board seen at each one's head), so no mark is left over
  * from the tests before; `page` must have loaded once, for the person cookie. */
@@ -69,10 +69,10 @@ test('an empty project waits, then opens the first board drawn, with no reload',
   // A mark on the window: it survives only if the page never reloads.
   await page.evaluate(() => { (window as unknown as { vbMark: number }).vbMark = 1; });
   await write(request, EMPTY_BASE, await joinAgent(request, 'First chat', EMPTY_BASE), 'first', drawn('The first board'));
-  await expect(page.locator('#title')).toHaveText('The first board');
+  await expect(page.locator(bid('title'))).toHaveText('The first board');
   await expect(page.locator('.vb-message')).toBeHidden();
   await expect(page.locator('.vb-cards vb-node')).toHaveCount(1);
-  await expect(page.locator('#board')).toHaveValue('first');
+  await expect(page.locator(bid('board'))).toHaveValue('first');
   await expect(chip(page)).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { vbMark?: number }).vbMark)).toBe(1);
 });
@@ -80,20 +80,20 @@ test('an empty project waits, then opens the first board drawn, with no reload',
 test('a board drawn later joins the picker as new, with a chip, and the open board stays', async ({ page, request }) => {
   await open(page, '/?vbwork#roadmap');
   await seeAll(page);
-  const title = await page.locator('#title').textContent();
+  const title = await page.locator(bid('title')).textContent();
   await write(request, '', await joinAgent(request, 'Later chat'), 'live-new', drawn('Drawn later'));
   await expect(option(page, 'live-new')).toHaveText('Drawn later · new');
   await expect(chip(page)).toHaveText('1 board updated');
-  await expect(page.locator('#board')).toHaveValue('roadmap');
-  await expect(page.locator('#title')).toHaveText(title!);
+  await expect(page.locator(bid('board'))).toHaveValue('roadmap');
+  await expect(page.locator(bid('title'))).toHaveText(title!);
   await expect(option(page, 'roadmap')).not.toContainText('new');
   // The chip passes axe in both themes, with nothing excused (the controls are not drawn zoomed out, N13).
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await expectNoAxeViolations(page);
   }
-  await page.locator('#board').selectOption('live-new');
-  await expect(page.locator('#title')).toHaveText('Drawn later');
+  await page.locator(bid('board')).selectOption('live-new');
+  await expect(page.locator(bid('title'))).toHaveText('Drawn later');
   await expect(option(page, 'live-new')).toHaveText('Drawn later');
   await expect(chip(page)).toHaveCount(0);
 });
@@ -107,7 +107,7 @@ test('a picker label is its board\'s title, and an append marks it changed', asy
   await expect(label).toHaveText('Label board');
   await write(request, '', a, 'live-label', [card('And which one waits?')]);
   await expect(label).toHaveText('Label board · changed');
-  await expect(page.locator('#board')).toHaveValue('roadmap');
+  await expect(page.locator(bid('board'))).toHaveValue('roadmap');
 });
 
 test('zoom and pan survive a reload; with keepView off the board fits again', async ({ page }) => {
@@ -152,9 +152,9 @@ test('a board an agent changed is marked "changed", after a reload and in anothe
     await setTheme(page, theme);
     await expectNoAxeViolations(page);
   }
-  await page.locator('#board').selectOption('live-changed');
-  await expect(page.locator('#title')).toHaveText('Changed elsewhere');
-  await page.locator('#board').selectOption('roadmap');
+  await page.locator(bid('board')).selectOption('live-changed');
+  await expect(page.locator(bid('title'))).toHaveText('Changed elsewhere');
+  await page.locator(bid('board')).selectOption('roadmap');
   await expect(mark).toHaveText('Changed elsewhere');
   await page.reload();
   await expect(mark).toHaveText('Changed elsewhere');

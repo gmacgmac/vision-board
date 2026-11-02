@@ -9,7 +9,7 @@
 // Each test draws its own board through the API as a joined agent (agent-board.ts), so the shared
 // roadmap board is never touched.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, open, reply, write } from './agent-board.ts';
@@ -62,9 +62,9 @@ test('✓ and ✗ are Check and Cross: lit in their colour, no word, the name sa
   expect(await q.evaluate((e) => getComputedStyle(e).opacity)).toBe('1');
   expect(await q.locator('.vb-node-title').evaluate((e) => getComputedStyle(e).textDecorationLine)).toBe('none');
   // The header and the container say "answered", never "decided".
-  await expect(page.locator('#counts')).toContainText('0 open');
-  await expect(page.locator('#counts')).toContainText('2 answered');
-  await expect(page.locator('#counts')).not.toContainText('decided');
+  await expect(page.locator(bid('counts'))).toContainText('0 open');
+  await expect(page.locator(bid('counts'))).toContainText('2 answered');
+  await expect(page.locator(bid('counts'))).not.toContainText('decided');
   await expect(page.locator('vb-region[data-region="p"] .vb-region-count')).toHaveAttribute('title', '2 of 2 answered');
 });
 
@@ -173,7 +173,7 @@ test('the agent\'s answer to a note clears an earlier ✓: open, unmarked, "1 up
 test('a note puts a card with the agent: "Replied" in its footer and the header; the agent\'s answer brings it back', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
-  const counts = page.locator('#counts');
+  const counts = page.locator(bid('counts'));
   const c = card(page, d.decision);
   await expect(counts).toContainText('2 open');
   await expect(counts).not.toContainText('replied');
@@ -182,7 +182,7 @@ test('a note puts a card with the agent: "Replied" in its footer and the header;
   await expect(c.locator('.vb-node-status')).toHaveText('Replied');
   await expect(c).toHaveAttribute('aria-label', `Item ${d.decision}, Decision: Keep the free tier, Replied`);
   await expect(counts).toHaveText(/1 open\s+1 replied\s+0 answered\s+0 later/);
-  await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toHaveAttribute('title', 'Replied items');
+  await expect(page.locator(`${bid('counts')} .vb-chip[data-tone="agent"]`)).toHaveAttribute('title', 'Replied items');
   await expect(page.locator('vb-region[data-region="p"] .vb-region-count')).toHaveAttribute('title', '0 of 2 answered');
   // A note on a card that informs changes no count.
   await act(page, d, { action: 'comment', n: d.finding, ver: 1, text: 'Which tier?' });
@@ -207,11 +207,11 @@ test('on a narrow toolbar (1470px) every count chip still looks different from e
   await open(page, d);
   await act(page, d, { action: 'comment', n: d.decision, ver: 1, text: 'Who pays for it?' });
   await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', 'full');
-  await expect(page.locator('#boards-updated')).toBeVisible();
-  await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toBeVisible();
+  await expect(page.locator(bid('boards-updated'))).toBeVisible();
+  await expect(page.locator(`${bid('counts')} .vb-chip[data-tone="agent"]`)).toBeVisible();
   for (const theme of THEMES) {
     await setTheme(page, theme);
-    const looks = await page.locator('#counts .vb-chip').evaluateAll((els) => els.map((e) => {
+    const looks = await page.locator(`${bid('counts')} .vb-chip`).evaluateAll((els) => els.map((e) => {
       const cs = getComputedStyle(e);
       const marks = [...e.querySelectorAll('svg')].filter((s) => s.checkVisibility({ visibilityProperty: true })).length;
       const words = [...e.querySelectorAll<HTMLElement>('.vb-chip-word')].some((w) => w.getBoundingClientRect().width > 1);
@@ -222,9 +222,9 @@ test('on a narrow toolbar (1470px) every count chip still looks different from e
     await expectNoAxeViolations(page);
   }
   // The words stay for screen readers and the tooltip; the agent's mark stays beside the number.
-  await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toHaveAttribute('title', 'Replied items');
-  await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toContainText('1 replied');
-  await expect(page.locator('#counts .vb-chip[data-tone="agent"] svg')).toBeVisible();
+  await expect(page.locator(`${bid('counts')} .vb-chip[data-tone="agent"]`)).toHaveAttribute('title', 'Replied items');
+  await expect(page.locator(`${bid('counts')} .vb-chip[data-tone="agent"]`)).toContainText('1 replied');
+  await expect(page.locator(`${bid('counts')} .vb-chip[data-tone="agent"] svg`)).toBeVisible();
 });
 
 test('selecting a card the agent\'s answer cleared marks it seen, and the tab goes', async ({ page, request }) => {

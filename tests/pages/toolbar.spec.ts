@@ -8,7 +8,7 @@
 // (servers.ts): it adds one board, opened by its id. Then the gallery's toolbar section. The widths' test is the
 // bar with -adaptiveHeader; on, header-tiers.spec.ts holds it down to 400px.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
 import { menu, menuButton } from './board-page.ts';
@@ -45,9 +45,9 @@ async function open(page: Page, request: APIRequestContext, flags = ''): Promise
   await page.goto(`${EMPTY_BASE}/?vbwork${flags && `&flags=${flags}`}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: unknown }).__vbWork !== undefined);
   if (!made) { await setUp(page, request); made = true; }
-  await page.locator('#board').selectOption(BOARD);
+  await page.locator(bid('board')).selectOption(BOARD);
   await page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
-  await expect(page.locator('#counts .vb-chip').first()).toBeVisible();
+  await expect(page.locator(`${bid('counts')} .vb-chip`).first()).toBeVisible();
 }
 
 /** Every visible control in the toolbar and its end group, in order, with its box. */
@@ -67,8 +67,8 @@ for (const width of WIDTHS) {
   test(`at ${width}px a long title leaves every toolbar control whole and inside the window`, async ({ page, request }) => {
     await page.setViewportSize({ width, height: 800 });
     await open(page, request, '-adaptiveHeader');
-    await expect(page.locator('#boards-updated')).toBeVisible();
-    const picker = (await page.locator('#board').boundingBox())!;
+    await expect(page.locator(bid('boards-updated'))).toBeVisible();
+    const picker = (await page.locator(bid('board')).boundingBox())!;
     if (width >= PICKER_WIDE) expect(picker.width, 'the picker').toBeGreaterThanOrEqual(220);
     const fit = await controls(page);
     console.log(width, JSON.stringify(fit.out.map((e) => [e.id, Math.round(e.left), Math.round(e.width)])));
@@ -76,7 +76,7 @@ for (const width of WIDTHS) {
     expect(fit.page, 'the page scrolls sideways').toBeLessThanOrEqual(0);
     // Always visible (ruling 3): the picker, version, containers, counts, zoom, Agents, Send, Chat and "⋯".
     for (const id of ['board', 'version', 'containers', 'counts', 'send', 'chat-toggle']) {
-      expect(fit.out.some((e) => e.id === id), `#${id} shows`).toBe(true);
+      expect(fit.out.some((e) => e.id === (id === 'chat-toggle' ? id : bid(id).slice(1))), `#${id} shows`).toBe(true);
     }
     for (const cls of ['vb-zoom', 'vb-agents', 'vb-menu']) expect(fit.out.some((e) => e.id.split(' ').includes(cls)), cls).toBe(true);
     // Nothing is cut off or overlaps its neighbour: in order, each ends before the next starts.
@@ -89,7 +89,7 @@ for (const width of WIDTHS) {
       expect(fit.out[i]!.left, `${fit.out[i]!.id} after ${fit.out[i - 1]!.id}`).toBeGreaterThanOrEqual(fit.out[i - 1]!.right - 0.5);
     }
     // Every control has a name and a title tooltip; the icon-only ones say their key there too.
-    for (const sel of ['#send', '#chat-toggle', '#toolbar-menu', '.vb-agents > summary']) {
+    for (const sel of [bid('send'), '#chat-toggle', bid('toolbar-menu'), '.vb-agents > summary']) {
       const b = page.locator(sel);
       await expect(b).toBeVisible();
       expect((await b.evaluate((e) => (e as HTMLElement).getAttribute('aria-label') ?? e.textContent ?? '')).trim().length, sel).toBeGreaterThan(0);
@@ -114,12 +114,12 @@ test('a narrow window shows Agents, Send to agent and Chat as icons, a wide one 
   await open(page, request);
   const words = (sel: string) => page.locator(`${sel} .vb-btn-text`).first();
   const icon = (sel: string) => page.locator(`${sel} .vb-btn-icon`).first();
-  for (const sel of ['#send', '#chat-toggle', '.vb-agents > summary']) {
+  for (const sel of [bid('send'), '#chat-toggle', '.vb-agents > summary']) {
     await expect(words(sel)).toBeVisible();
     await expect(icon(sel)).toBeHidden();
   }
   await page.setViewportSize({ width: 1200, height: 800 });
-  for (const sel of ['#send', '#chat-toggle', '.vb-agents > summary']) {
+  for (const sel of [bid('send'), '#chat-toggle', '.vb-agents > summary']) {
     await expect(icon(sel)).toBeVisible();
     expect((await words(sel).boundingBox())!.width, `${sel} words are for screen readers only`).toBeLessThanOrEqual(1);
   }
@@ -130,7 +130,7 @@ test('a narrow window shows Agents, Send to agent and Chat as icons, a wide one 
 
 test('the "⋯" menu: Theme, Hide answered and Reply as rows with their keys; a click opens it, a choice, Esc or a click outside closes it', async ({ page, request }) => {
   await open(page, request);
-  await expect(page.locator('.vb-toolbar #hide, .vb-toolbar #theme, .vb-toolbar #reply-toggle')).toHaveCount(3);
+  await expect(page.locator(`.vb-toolbar ${bid('hide')}, .vb-toolbar #theme, .vb-toolbar ${bid('reply-toggle')}`)).toHaveCount(3);
   await expect(menu(page)).toBeHidden();
   await expect(menuButton(page)).toHaveAttribute('aria-haspopup', 'menu');
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'false');
@@ -146,14 +146,14 @@ test('the "⋯" menu: Theme, Hide answered and Reply as rows with their keys; a 
   // Hide answered: a checkbox row; choosing it closes the menu and gives focus back to "⋯".
   await expect(menu(page).getByRole('menuitemcheckbox', { name: /Hide answered/ })).toHaveAttribute('aria-checked', 'false');
   // By id from here: getByRole does not find a row while the menu is closed.
-  const hide = page.locator('#hide');
+  const hide = page.locator(bid('hide'));
   await expect(hide).toHaveAttribute('aria-keyshortcuts', 'h');
   await hide.click();
   await expect(menu(page)).toBeHidden();
   await expect(menuButton(page)).toBeFocused();
   await expect(hide).toHaveAttribute('aria-checked', 'true');
   // The H key still works from the board, and the row follows it.
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.keyboard.press('h');
   await expect(hide).toHaveAttribute('aria-checked', 'false');
   // Theme cycles system, light, dark as the button did.
@@ -163,7 +163,7 @@ test('the "⋯" menu: Theme, Hide answered and Reply as rows with their keys; a 
   await menuButton(page).click();
   await expect(menu(page).getByRole('menuitem', { name: /Theme: light/ })).toBeVisible();
   // A click outside closes it, and nothing else happens.
-  await page.locator('#stage').click({ position: { x: 40, y: 300 } });
+  await page.locator(bid('stage')).click({ position: { x: 40, y: 300 } });
   await expect(menu(page)).toBeHidden();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   // Reply's panel still opens from the menu.
@@ -171,9 +171,9 @@ test('the "⋯" menu: Theme, Hide answered and Reply as rows with their keys; a 
   const reply = menu(page).getByRole('menuitem', { name: /Reply/ });
   await expect(reply).toHaveAttribute('aria-expanded', 'false');
   await reply.click();
-  await expect(page.locator('#reply')).toBeVisible();
-  await expect(page.locator('#reply-text')).toBeFocused();
-  await page.locator('#reply-close').click();
+  await expect(page.locator(bid('reply'))).toBeVisible();
+  await expect(page.locator(bid('reply-text'))).toBeFocused();
+  await page.locator(bid('reply-close')).click();
 });
 
 test('the "⋯" menu by keyboard: Enter opens it, arrows move, H chooses Hide answered, Esc closes it and Tab leaves it', async ({ page, request }) => {
@@ -198,7 +198,7 @@ test('the "⋯" menu by keyboard: Enter opens it, arrows move, H chooses Hide an
   await page.keyboard.press('Enter');
   await page.keyboard.press('h');
   await expect(menu(page)).toBeHidden();
-  await expect(page.locator('#hide')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator(bid('hide'))).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Enter');
   await expect(rows.nth(0)).toBeFocused();
   await page.keyboard.press('Tab');
@@ -219,8 +219,8 @@ test('with -toolbarMenu the toolbar is as it was: Hide answered, Theme and Reply
   await page.setViewportSize({ width: 1600, height: 800 });
   await open(page, request, '-toolbarMenu');
   await expect(menuButton(page)).toHaveCount(0);
-  for (const id of ['hide', 'theme', 'reply-toggle']) await expect(page.getByRole('button').and(page.locator(`#${id}`))).toBeVisible();
-  await expect(page.locator('#send .vb-btn-icon, .vb-agents .vb-btn-icon')).toHaveCount(0);
+  for (const sel of [bid('hide'), '#theme', bid('reply-toggle')]) await expect(page.getByRole('button').and(page.locator(sel))).toBeVisible();
+  await expect(page.locator(`${bid('send')} .vb-btn-icon, .vb-agents .vb-btn-icon`)).toHaveCount(0);
   await expect(page.locator('#theme')).toHaveText(/Theme: system/);
 });
 
@@ -235,7 +235,7 @@ test('gallery: the toolbar section shows by default, wide, narrow and with the m
   await expect(section(page).locator('.vb-toolbar-end')).toHaveCount(3);
   await expect(section(page).getByRole('menu', { name: 'More' })).toBeVisible();
   // No sample repeats the board's ids.
-  await expect(section(page).locator('[id="send"], [id="chat-toggle"], [id="toolbar-menu"], [id="hide"], [id="theme"], [id="reply-toggle"]')).toHaveCount(0);
+  await expect(section(page).locator(`${bid('send')}, [id="chat-toggle"], ${bid('toolbar-menu')}, ${bid('hide')}, [id="theme"], ${bid('reply-toggle')}`)).toHaveCount(0);
 });
 
 for (const theme of THEMES) {

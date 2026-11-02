@@ -10,7 +10,7 @@ import path from 'node:path';
 import type { FolderServer } from './folder-server.ts';
 import { startFolderServer } from './folder-server.ts';
 import { lc, pixel, resolved } from './apca.ts';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { folderDialog as dialog, menu, menuButton } from './board-page.ts';
 
@@ -40,7 +40,7 @@ async function openLong(page: Page, flags = '') {
   expect([200, 201]).toContain(made.status());
   await open(page, flags);
 }
-const chip = (page: Page) => page.locator('#folder-chip');
+const chip = (page: Page) => page.locator(bid('folder-chip'));
 const current = (page: Page) => page.locator('.vb-menu-current');
 const line = (page: Page) => dialog(page).getByRole('group', { name: 'Current folder' });
 const THEMES: Theme[] = ['light', 'dark'];
@@ -52,7 +52,7 @@ test('the chip is first in the toolbar, names the folder, gives the path in its 
   await expect(chip(page)).toHaveAccessibleName('Folder start: ~/projects/start. Open another folder');
   await expect(chip(page)).toHaveAttribute('aria-haspopup', 'dialog');
   // Before the board picker, to its left (after the app icon).
-  const [c, b] = [(await chip(page).boundingBox())!, (await page.locator('#board').boundingBox())!];
+  const [c, b] = [(await chip(page).boundingBox())!, (await page.locator(bid('board')).boundingBox())!];
   expect(c.x + c.width).toBeLessThanOrEqual(b.x);
   await chip(page).click();
   await expect(dialog(page)).toBeVisible();
@@ -80,10 +80,10 @@ for (const [width, flags] of [[1500, ''], [1300, ''], [1100, '-adaptiveHeader'],
     await page.setViewportSize({ width, height: 800 });
     await openLong(page, flags);
     await expect(chip(page)).toHaveAttribute('title', `~/projects/${LONG_NAME}`);
-    const shown = await page.evaluate(() => {
+    const shown = await page.evaluate((chipId) => {
       const bar = document.querySelector('.vb-toolbar') as HTMLElement;
-      const name = document.querySelector('#folder-chip .vb-folder-chip-name') as HTMLElement;
-      const box = (document.querySelector('#folder-chip') as HTMLElement).getBoundingClientRect();
+      const name = document.querySelector(`${chipId} .vb-folder-chip-name`) as HTMLElement;
+      const box = (document.querySelector(chipId) as HTMLElement).getBoundingClientRect();
       const ends = [...bar.querySelectorAll<HTMLElement>(':scope > *, .vb-toolbar-end > *')]
         .filter((e) => e.getClientRects().length > 0 && !e.classList.contains('vb-visually-hidden') && !e.classList.contains('vb-toolbar-end'))
         .map((e) => e.getBoundingClientRect());
@@ -92,7 +92,7 @@ for (const [width, flags] of [[1500, ''], [1300, ''], [1100, '-adaptiveHeader'],
         scroll: bar.scrollWidth - bar.clientWidth, page: document.documentElement.scrollWidth - innerWidth,
         inside: ends.every((r) => r.left >= 0 && r.right <= innerWidth),
       };
-    });
+    }, bid('folder-chip'));
     expect(shown.cut, 'the name is cut').toBe(true);
     expect(shown.ellipsis).toBe('ellipsis');
     expect(shown.width, 'the chip has room for its icon and an ellipsis').toBeGreaterThanOrEqual(36);
@@ -184,13 +184,13 @@ for (const theme of THEMES) {
     const paint = (css: string) => resolved(page, css).then((c) => pixel(page, c));
     const colour = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).color).then((c) => pixel(page, c));
     const back = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).backgroundColor).then((c) => pixel(page, c));
-    const chipBack = await back('#folder-chip');
-    const name = lc(await colour('#folder-chip .vb-folder-chip-name'), chipBack);
-    const icon = lc(await colour('#folder-chip .vb-btn-icon'), chipBack);
+    const chipBack = await back(bid('folder-chip'));
+    const name = lc(await colour(`${bid('folder-chip')} .vb-folder-chip-name`), chipBack);
+    const icon = lc(await colour(`${bid('folder-chip')} .vb-btn-icon`), chipBack);
     await chip(page).hover();
-    const hoverBack = await back('#folder-chip');
-    const nameHover = lc(await colour('#folder-chip .vb-folder-chip-name'), hoverBack);
-    const iconHover = lc(await colour('#folder-chip .vb-btn-icon'), hoverBack);
+    const hoverBack = await back(bid('folder-chip'));
+    const nameHover = lc(await colour(`${bid('folder-chip')} .vb-folder-chip-name`), hoverBack);
+    const iconHover = lc(await colour(`${bid('folder-chip')} .vb-btn-icon`), hoverBack);
     await menuButton(page).click();
     const menuBack = await back('.vb-menu-list');
     const word = lc(await colour('.vb-menu-current'), menuBack);
@@ -246,7 +246,7 @@ test('gallery: the section shows by default, and not with -currentFolder or -ope
   await expect(section(page).locator('.vb-folder-chip')).toHaveCount(5);
   await expect(section(page).locator('.vb-menu-current')).toHaveText(['Current: ~/projects/atlas', 'Current: ~/…/atlas-customer-research']);
   await expect(section(page).locator('.vb-folder-current')).toHaveCount(1);
-  await expect(section(page).locator('[id="folder-chip"], [id="toolbar-menu"], [id="open-folder"]')).toHaveCount(0);
+  await expect(section(page).locator(`${bid('folder-chip')}, ${bid('toolbar-menu')}, [id="open-folder"]`)).toHaveCount(0);
 });
 
 for (const theme of THEMES) {

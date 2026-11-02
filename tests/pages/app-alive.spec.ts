@@ -13,7 +13,7 @@ import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
 import { LIVE_PANELS } from '../../apps/board/src/board/apps/app-cards.ts';
 import { APP_LIMITS, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
-import { expect, expectNoAxeViolations, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, test, bid } from './helpers.ts';
 import { card as cardOf, panelOf } from './board-page.ts';
 
 let s: AppServer;
@@ -37,14 +37,14 @@ function countLoads(page: Page): string[] {
 /** Pan the board by (dx, dy) screen pixels with the wheel over its background (near the stage's
  * right edge: a wheel over a loaded panel scrolls the panel), as a person scrolls. */
 async function panBy(page: Page, dx: number, dy: number): Promise<void> {
-  const box = (await page.locator('#stage').boundingBox())!;
+  const box = (await page.locator(bid('stage')).boundingBox())!;
   await page.mouse.move(box.x + box.width - 40, box.y + box.height / 2);
   await page.mouse.wheel(-dx, -dy);
 }
 
 /** Zoom out with "-" until the stage is far, or back in with "+" until it is not. */
 async function zoomFar(page: Page, far: boolean): Promise<void> {
-  const stage = page.locator('#stage');
+  const stage = page.locator(bid('stage'));
   const key = far ? '-' : '+';
   for (let i = 0; i < 12 && ((await stage.getAttribute('data-zoom')) === 'far') !== far; i += 1) await page.keyboard.press(key);
   if (far) await expect(stage).toHaveAttribute('data-zoom', 'far');
@@ -85,7 +85,7 @@ test('a loaded panel keeps what it holds through a far zoom, a pan two screens a
   await live('back from the far zoom');
 
   // Two screens away and back: frozen while away, never unloaded.
-  const { width } = (await page.locator('#stage').boundingBox())!;
+  const { width } = (await page.locator(bid('stage')).boundingBox())!;
   await panBy(page, -3 * width, 0);
   await expect(frame).toHaveAttribute('data-frozen', '');
   await expect(iframe).toHaveCount(1);
@@ -159,7 +159,7 @@ test(`at most ${LIVE_PANELS} panels stay loaded: the next one unloads the least 
   await open(page, board, COUNT);
   const loaded = page.locator('vb-app-frame iframe');
   // The whole board shows zoomed far: nothing loads yet.
-  await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
   await expect(loaded).toHaveCount(0);
   for (const id of n) await visit(page, id);
   await expect(loaded).toHaveCount(LIVE_PANELS);

@@ -9,7 +9,7 @@ import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
 import type { FolderServer } from './folder-server.ts';
 import { startFolderServer } from './folder-server.ts';
-import { expect, expectNoAxeViolations, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, test, bid } from './helpers.ts';
 import { card, log, side, text, toggle } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
@@ -260,12 +260,12 @@ test('the board\'s Send: with a file ready it is the chat\'s message; while one 
   await expect(side(page).locator('.chat-hd-status')).toHaveText('Status: Ready');
   const release = await holdUploads(page);
   await pick(page, [upload('board-send.txt')]);
-  await page.locator('#send').evaluate((b) => (b as HTMLButtonElement).click()); // while nothing is attached it is disabled, so forced
+  await page.locator(bid('send')).evaluate((b) => (b as HTMLButtonElement).click()); // while nothing is attached it is disabled, so forced
   await page.waitForTimeout(50);
   expect(srv.fake.given().length, 'nothing went').toBe(runs);
   release();
   await ready(chip(page, 'board-send.txt'));
-  await page.locator('#send').click();
+  await page.locator(bid('send')).click();
   const given = await srv.fake.run(++runs);
   expect(given.prompt).toContain('The person attached these files:');
   expect(given.prompt).toMatch(/\.visionboard\/attachments\/[^\n]*board-send\.txt/);

@@ -8,7 +8,7 @@
 // gallery's banner sample. Agents write through the API with a Bearer secret, as in
 // live-boards.spec.ts, on the shared test server.
 import type { APIRequestContext, Page, Request } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { idle, openDrawn as open } from './board-page.ts';
 import { joinAgent } from './agent-board.ts';
@@ -44,15 +44,15 @@ function personWrites(page: Page): Request[] {
   return sent;
 }
 
-const version = (page: Page) => page.locator('#version');
+const version = (page: Page) => page.locator(bid('version'));
 const banner = (page: Page) => page.locator('.vb-banner');
 
 test('the picker holds titles only, the title heading is for screen readers, the dropdown starts at now', async ({ page, request }) => {
   await open(page, '/?vbwork#roadmap');
   const head = await headOf(page.request, 'roadmap');
-  await expect(page.locator('#board option[value="roadmap"]')).toHaveText('Where Vision Board goes from here');
+  await expect(page.locator(`${bid('board')} option[value="roadmap"]`)).toHaveText('Where Vision Board goes from here');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Where Vision Board goes from here');
-  expect((await page.locator('#title').boundingBox())!.width).toBeLessThanOrEqual(1);
+  expect((await page.locator(bid('title')).boundingBox())!.width).toBeLessThanOrEqual(1);
   await expect(version(page)).toHaveValue('now');
   await expect(version(page).locator('option').first()).toHaveText(`v${head} · now`);
   await expect(page.getByLabel('Version', { exact: true })).toBeVisible();
@@ -65,9 +65,9 @@ test('the picker holds titles only, the title heading is for screen readers, the
 
 test('with versionView off the toolbar is as it was: the title, the ledger\'s latest line, the picker\'s versions', async ({ page }) => {
   await open(page, '/?vbwork&flags=-versionView#roadmap');
-  await expect(page.locator('#title')).toBeVisible();
-  await expect(page.locator('#version.vb-chip')).toHaveText(/^v\d+$/);
-  await expect(page.locator('#board option[value="roadmap"]')).toHaveText(/^Where Vision Board goes from here · v\d+$/);
+  await expect(page.locator(bid('title'))).toBeVisible();
+  await expect(page.locator(`${bid('version')}.vb-chip`)).toHaveText(/^v\d+$/);
+  await expect(page.locator(`${bid('board')} option[value="roadmap"]`)).toHaveText(/^Where Vision Board goes from here · v\d+$/);
 });
 
 test('a past version shows the board as it was, read-only, and Back to now and Esc end it', async ({ page, request }) => {
@@ -96,7 +96,7 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   for (const control of ['.vb-act', '.vb-size', '.vb-region-grip', '.vb-region-tools', '.vb-note-pin']) {
     await expect(page.locator(`.vb-world ${control}:visible`), control).toHaveCount(0);
   }
-  await expect(page.locator('#send')).toHaveCount(0);
+  await expect(page.locator(bid('send'))).toHaveCount(0);
   // Selection still works; an act key, a note key and a nudge do nothing and send nothing.
   await old.locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
   await expect(old).toHaveAttribute('data-selected', '');
@@ -126,7 +126,7 @@ test('a past version shows the board as it was, read-only, and Back to now and E
 
   await version(page).selectOption(String(first));
   await expect(banner(page)).toBeVisible();
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.keyboard.press('Escape');
   await expect(banner(page)).toHaveCount(0);
   await expect(page.locator('vb-node')).toHaveCount(3);

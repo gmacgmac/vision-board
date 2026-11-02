@@ -2,7 +2,7 @@
 // 17 cards, every one numbered, 14 of them a question, decision or action that needs an answer). The tests run in this order on one server: read-only checks and
 // screenshots first, then the ones that answer items and change layouts, which change the ledger.
 import type { Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { startRoadmapServer } from './roadmap-server.ts';
 import { REGION_HEAD } from '#layout';
@@ -20,8 +20,28 @@ test('the board loads with every region and card', async ({ page }) => {
   for (const id of REGIONS) await expect(page.locator(`vb-region[data-region="${id}"]`)).toBeVisible();
   await expect(page.locator('vb-node:visible')).toHaveCount(ROADMAP_CARDS);
   // Only cards that need an answer count (every-node ruling 6): the finding, topic and risk don't.
-  await expect(page.locator('#counts')).toContainText('14 open');
-  await expect(page.locator('#counts')).toContainText('0 answered');
+  await expect(page.locator(bid('counts'))).toContainText('14 open');
+  await expect(page.locator(bid('counts'))).toContainText('0 answered');
+});
+
+test('on its own page the board\'s ids start vb1-, none twice, every reference points at one, and the skip link finds the stage', async ({ page }) => {
+  await openBoard(page);
+  const found = await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('[id]')].map((e) => e.id);
+    const refs = [...document.querySelectorAll('[for], [aria-controls], [aria-labelledby], [aria-describedby]')]
+      .flatMap((e) => ['for', 'aria-controls', 'aria-labelledby', 'aria-describedby'].flatMap((a) => (e.getAttribute(a) ?? '').split(' ').filter(Boolean)));
+    return { ids, twice: ids.filter((id, i) => ids.indexOf(id) !== i), dangling: refs.filter((r) => !document.getElementById(r)), skip: document.querySelector('.vb-skip')?.getAttribute('href') };
+  });
+  // The page's own ids (the shell's: its chat, theme and align buttons, toast, dialogs) are not the board's.
+  const shell = /^(chat-toggle|theme|align|chat|toast|open-folder|confirm-.+|folder-dialog.*)$/;
+  expect(found.ids.filter((id) => !id.startsWith('vb1-') && !shell.test(id)), 'an id the board owns without its prefix').toEqual([]);
+  expect(found.ids.filter((id) => id.startsWith('vb1-')).length).toBeGreaterThan(20);
+  expect(found.twice).toEqual([]);
+  expect(found.dangling).toEqual([]);
+  expect(found.skip).toBe(bid('stage'));
+  await page.getByRole('link', { name: 'Skip to the board' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator(bid('stage'))).toBeFocused();
 });
 
 test('Tab moves from card to card, in item number order', async ({ page }) => {
@@ -49,13 +69,13 @@ for (const theme of THEMES) {
   test(`axe passes with nothing excused at the opening zoom and at zoom 1 (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page);
-    await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+    await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
     await expect(page.locator('vb-node .vb-act:visible')).toHaveCount(0);
     await expect(page.locator('vb-node .vb-size-trig:visible')).toHaveCount(0);
     await expect(page.locator('vb-region .vb-mode-row:visible')).toHaveCount(0);
     await expectNoAxeViolations(page);
     await zoomToFull(page, { check: true });
-    await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+    await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
     await expectNoAxeViolations(page);
   });
 
@@ -64,7 +84,7 @@ for (const theme of THEMES) {
   test(`with -hideControlsZoomedOut the controls stay visible zoomed out; only target-size is excused (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page, { query: '?flags=-hideControlsZoomedOut' });
-    await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+    await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
     await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
     await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
     await expectNoAxeViolations(page, ['target-size']);
@@ -93,8 +113,8 @@ for (const theme of THEMES) {
 
 /** Zoom in with the + key until the stage is no longer "far", so the cards' buttons show (N8). */
 async function zoomToButtons(page: Page): Promise<void> {
-  for (let i = 0; i < 8 && (await page.locator('#stage[data-zoom="far"]').count()); i += 1) await page.keyboard.press('+');
-  await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+  for (let i = 0; i < 8 && (await page.locator(`${bid('stage')}[data-zoom="far"]`).count()); i += 1) await page.keyboard.press('+');
+  await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
 }
 
 /** Pan with the wheel (scroll pans the board) until `target` sits in the middle of the stage. A pick
@@ -146,9 +166,9 @@ test('✓, ✗ and a comment work and survive a reload', async ({ page }) => {
     await expect(card(page, 3).locator('.vb-node-note-who')).toHaveText('Your note 1');
     await expect(card(page, 3).locator('.vb-node-note-text')).toHaveText('Check the wording.');
     // Only ✓ and ✗ answer a card (D-045): the comment leaves action 3 open.
-    await expect(page.locator('#counts')).toContainText('2 answered');
+    await expect(page.locator(bid('counts'))).toContainText('2 answered');
     // Reply sits in the toolbar's "⋯" menu (toolbarMenu flag).
-    await page.locator('#toolbar-menu').click();
+    await page.locator(bid('toolbar-menu')).click();
     await expect(page.getByRole('menuitem', { name: 'Reply (3)' })).toBeVisible();
     await page.keyboard.press('Escape');
   };
@@ -245,7 +265,7 @@ test('the mode row by keyboard: one Tab stop, arrows move, Enter applies, Esc cl
   await page.keyboard.press('ArrowRight');
   expect(await active(page)).toEqual({ region: 'review', label: 'Flow' });
   const flow = review.getByRole('radio', { name: 'Flow', exact: true });
-  await expect(flow).toHaveAttribute('aria-describedby', 'region-review-modes');
+  await expect(flow).toHaveAttribute('aria-describedby', bid('region-review-modes').slice(1));
   await expect(pop.locator('.vb-mtile[data-hover]')).toHaveAttribute('data-tile', 'flow');
   await expect(review).toHaveAttribute('data-mode', 'grid');
   await page.keyboard.press('Enter');

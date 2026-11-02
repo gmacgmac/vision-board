@@ -5,7 +5,7 @@
 // an identity shows. Agents write through the API with a Bearer secret; the person's setup acts go
 // through `page.request`, which carries the page's cookie. Then the gallery's two new sections.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card, frame, head, idle, linesAfter } from './board-page.ts';
 import { act, joinAgent, open } from './agent-board.ts';
@@ -41,7 +41,7 @@ async function draw(request: APIRequestContext, cards = 3): Promise<Drawn> {
 }
 
 const flagOf = (page: Page, n: number) => card(page, n).locator('button[data-flag]');
-const chip = (page: Page) => page.locator('#flagged');
+const chip = (page: Page) => page.locator(bid('flagged'));
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
 test.beforeEach(async ({ page }) => { await page.goto('/gallery.html'); });
 
@@ -115,7 +115,7 @@ test('a flag is nothing new to send, and an agent never reads it', async ({ page
   await flagOf(page, 1).click();
   await expect(flagOf(page, 1)).toHaveAttribute('aria-pressed', 'true');
   await idle(page);
-  await expect(page.locator('#send')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
   const r = await request.get(`/api/boards/${d.board}/responses?after=${after}`, { headers: { Authorization: `Bearer ${d.agent.secret}` } });
   expect(r.status(), await r.text()).toBe(200);
   expect((await r.json() as { responses: unknown[] }).responses).toEqual([]);

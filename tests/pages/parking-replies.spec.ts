@@ -6,7 +6,7 @@
 //
 // Each test draws its own board through the API, as an agent would (agent-board.ts).
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, reply, tabTo, write } from './agent-board.ts';
@@ -145,7 +145,7 @@ test('keyboard only: Tab to the HANDOVER tab previews, Enter opens it with focus
   await park(request, d, n);
   await reply(request, d, n, 'Because.', note);
   await open(page, d);
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await tabTo(page, tab(page, n));
   await expect(box(page, n)).toBeVisible();
   await expect(tab(page, n)).toHaveAttribute('aria-expanded', 'true');

@@ -2,7 +2,7 @@
 // 2-8). On the worker's roadmap board, fresh for this file (servers.ts); every card it moves it
 // puts back in its own container, unpinned and open, for the tests after it in this file.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { api, card, drag, frame, openBoard, ROADMAP_CARDS, selectedIds } from './board-page.ts';
 
@@ -45,10 +45,10 @@ async function emptyIn(page: Page, region: string): Promise<Point> {
 /** A point on the board's own background, clear of every frame and card. */
 async function background(page: Page): Promise<Point> {
   return page.evaluate(() => {
-    const stage = document.getElementById('stage')!.getBoundingClientRect();
+    const stage = document.querySelector('.vb-stage')!.getBoundingClientRect();
     for (let y = stage.top + 40; y < stage.bottom - 40; y += 10) {
       for (let x = stage.left + 40; x < stage.right - 40; x += 10) {
-        if (document.elementFromPoint(x, y)?.id === 'stage') return { x, y };
+        if (document.elementFromPoint(x, y)?.classList.contains('vb-stage')) return { x, y };
       }
     }
     throw new Error('no background point on the stage');
@@ -142,7 +142,7 @@ test('Later shows while a card is dragged; a drop there saves it for later, and 
   await expect.poll(() => inFrame(page, 5, 'later')).toBe(true);
   await expect(card(page, 5)).toHaveAttribute('data-status', 'later');
   // Card 5 is a finding: Later takes any card, but only cards that need an answer count (every-node ruling 6).
-  await expect(page.locator('#counts [data-tone="later"] b')).toHaveText('0');
+  await expect(page.locator(`${bid('counts')} [data-tone="later"] b`)).toHaveText('0');
   expect(await regionOf(page, 5)).toBe('later');
   // Out of Later, into another container: moved there and reopened.
   await drag(page, await tabOf(page, 5), await emptyIn(page, 'review'));

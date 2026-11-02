@@ -13,7 +13,7 @@ import path from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
-import { expect, expectNoAxeViolations, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, test, bid } from './helpers.ts';
 import { card as cardOf, control } from './board-page.ts';
 
 /** The panel route's 404 for the folder that went: the frame asks once more before the card knows. */
@@ -39,7 +39,7 @@ const listApps = (page: Page, seen: string[]) =>
 /** Pan the board by (dx, dy) screen pixels with the wheel over its background (near the stage's
  * right edge: a wheel over a loaded panel scrolls the panel), as a person scrolls. */
 async function panBy(page: Page, dx: number, dy: number): Promise<void> {
-  const box = (await page.locator('#stage').boundingBox())!;
+  const box = (await page.locator(bid('stage')).boundingBox())!;
   await page.mouse.move(box.x + box.width - 80, box.y + box.height / 2);
   await page.mouse.wheel(-dx, -dy);
 }
@@ -127,7 +127,7 @@ test.describe('a deleted app folder', () => {
     try {
       // Panned well away and back, as in the finding: the panel stays loaded (D-050), so
       // nothing reads; selecting the card reads list_apps, and the panel goes.
-      const { width } = (await page.locator('#stage').boundingBox())!;
+      const { width } = (await page.locator(bid('stage')).boundingBox())!;
       await panBy(page, -3 * width, 0);
       await expect(page.locator('vb-app-frame[data-frozen] iframe')).toHaveCount(1);
       await page.keyboard.press('f');

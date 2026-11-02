@@ -6,7 +6,7 @@
 // All by keyboard as well, axe in both themes. It runs on the worker's empty project (EMPTY_BASE),
 // fresh for this file (servers.ts), on a board of its own, and leaves it unlocked between tests.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
 import { card, idle, menuButton, toast } from './board-page.ts';
@@ -20,7 +20,7 @@ async function open(page: Page, flags = ''): Promise<void> {
   await page.goto(`${EMPTY_BASE}/?vbwork${flags && `&flags=${flags}`}#${VAULT}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: unknown }).__vbWork !== undefined);
   await idle(page);
-  await expect(page.locator('#board')).toHaveValue(VAULT);
+  await expect(page.locator(bid('board'))).toHaveValue(VAULT);
 }
 
 let made = false;
@@ -54,8 +54,8 @@ const linesAfter = async (page: Page, after: number) =>
 /** The ledger's latest line. */
 const head = async (page: Page) => ((await (await page.request.get(`${EMPTY_BASE}/api/boards`)).json()) as { head: number }).head;
 
-const lockRow = (page: Page) => page.locator('#lock-board');
-const chip = (page: Page) => page.locator('#locked');
+const lockRow = (page: Page) => page.locator(bid('lock-board'));
+const chip = (page: Page) => page.locator(bid('locked'));
 const frame = (page: Page) => page.locator('vb-region[data-region="ideas"]');
 
 /** Every control a lock pauses on the board, and the flag, which it never does. */
@@ -85,8 +85,8 @@ test('"⋯" › Lock board pauses the board in place, says so beside its name, a
   expect(await paused.count()).toBeGreaterThan(10);
   for (const el of await paused.all()) await expect(el).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator('vb-node button[data-flag]').first()).not.toHaveAttribute('aria-disabled', 'true');
-  await expect(page.locator('#send')).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.locator('#send')).toHaveAttribute('title', REASON);
+  await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator(bid('send'))).toHaveAttribute('title', REASON);
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await expectNoAxeViolations(page);
@@ -151,7 +151,7 @@ test('locked, the flag still works: by its button and by Shift+F (it changes not
   await flag.click();
   await idle(page);
   await expect(flag).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#flagged')).toBeVisible();
+  await expect(page.locator(bid('flagged'))).toBeVisible();
   await card(page, 2).focus();
   await page.keyboard.press('Shift+F');
   await idle(page);
@@ -215,7 +215,7 @@ test('gallery: the lock section shows by default, and not with -lockBoard', asyn
   await expect(section(page).locator('.vb-chip-locked')).toHaveText('Locked');
   await expect(section(page).locator('vb-node button[data-act]').first()).toHaveAttribute('aria-disabled', 'true');
   await expect(section(page).locator('vb-node button[data-flag]').first()).not.toHaveAttribute('aria-disabled', 'true');
-  await expect(section(page).locator('[id="lock-board"], [id="locked"]')).toHaveCount(0);
+  await expect(section(page).locator(`${bid('lock-board')}, ${bid('locked')}`)).toHaveCount(0);
 });
 
 for (const theme of THEMES) {

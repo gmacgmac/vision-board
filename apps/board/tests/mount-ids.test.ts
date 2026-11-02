@@ -1,16 +1,15 @@
 // The id prefix each mounted board takes (board/mount-ids.ts): every live mount has its own, so no id is a bare word
-// a host's page may use too; the first mount on the board's own page has none, so the standalone page keeps its ids;
-// and a prefix given back is the next one's.
+// a host's page may use too, the board's own page included; and a prefix given back is the next one's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { prefixOf, takeIdPrefix } from '../src/board/mount-ids.ts';
 
-test('each live mount has its own prefix; on the board\'s own page the first has none', () => {
+test('each live mount has its own prefix, the first on the board\'s own page too', () => {
   const [a, b, c] = [takeIdPrefix(), takeIdPrefix(), takeIdPrefix()];
   assert.deepEqual([a.prefix, b.prefix, c.prefix], ['vb1-', 'vb2-', 'vb3-']);
   [a, b, c].forEach((m) => m.release());
-  const own = takeIdPrefix(true);
-  assert.equal(own.prefix, '');
+  const own = takeIdPrefix();
+  assert.equal(own.prefix, 'vb1-', 'the board\'s own page takes the prefix like any first mount');
   own.release();
 });
 
@@ -27,6 +26,5 @@ test('a prefix given back is taken again, and giving it back twice frees nothing
   assert.equal(third.prefix, 'vb3-', 'the old holder\'s second release took nothing from the new one');
   [again, next, third].forEach((m) => m.release());
   assert.equal(prefixOf(1), 'vb1-');
-  assert.equal(prefixOf(1, true), '');
-  assert.equal(prefixOf(2, true), 'vb2-');
+  assert.equal(prefixOf(2), 'vb2-');
 });

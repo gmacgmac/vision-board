@@ -4,7 +4,7 @@
 // tests count the work a change costs, not only its time: put back a whole-board rebuild and
 // they fail.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { BIG } from '#format/testing';
 import { PERF_BASE } from './ports.ts';
 
@@ -206,7 +206,7 @@ test('selecting 50 cards updates exactly those 50 and lays out none; clearing up
     await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
   }
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(50);
-  await expect(page.locator('#selection-status')).toHaveText('50 cards selected');
+  await expect(page.locator(bid('selection-status'))).toHaveText('50 cards selected');
   const c = await counts(page);
   console.log(`[3_FE_01] select 50: ${JSON.stringify({ ...c, containers: c.containers.join(',') })}`);
   expect([c.cardsUpdated, c.cardsMeasured, c.cardsPlaced, c.containersLaidOut, c.fullFetches]).toEqual([50, 0, 0, 0, 0]);
@@ -303,7 +303,7 @@ test('dragging 50 selected cards into another container updates those 50 and lay
   // Zoom out round the selection until a neighbouring container is wholly on the stage.
   await page.keyboard.press('z');
   const target = await page.evaluate(async (ids) => {
-    const stage = document.getElementById('stage')!.getBoundingClientRect();
+    const stage = document.querySelector('.vb-stage')!.getBoundingClientRect();
     const wait = () => new Promise((r) => setTimeout(r, 450));
     for (let i = 0; i < 8; i += 1) {
       for (const id of ids) {

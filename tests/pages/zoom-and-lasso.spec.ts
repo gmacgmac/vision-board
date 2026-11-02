@@ -2,7 +2,7 @@
 // 1-7). On the worker's roadmap board, fresh for this file (servers.ts); the group notes it writes
 // it takes back (note-remove), so every card is left as it was found for the tests after it.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { bar, bubble, card, frame, openBoard, selectedIds } from './board-page.ts';
 
@@ -39,9 +39,9 @@ async function lassoContainer(page: Page, region: string, keys = ['Shift']): Pro
 /** A point on the board's own background, clear of every frame and card, with room around it. */
 async function emptyPoint(page: Page): Promise<Point> {
   return page.evaluate(() => {
-    const stage = document.getElementById('stage')!.getBoundingClientRect();
+    const stage = document.querySelector('.vb-stage')!.getBoundingClientRect();
     const clear = (x: number, y: number) => [[0, 0], [30, 0], [0, 30], [30, 30]]
-      .every(([dx, dy]) => document.elementFromPoint(x + dx!, y + dy!)?.id === 'stage');
+      .every(([dx, dy]) => document.elementFromPoint(x + dx!, y + dy!)?.classList.contains('vb-stage'));
     for (let y = stage.top + 40; y < stage.bottom - 80; y += 10) {
       for (let x = stage.left + 40; x < stage.right - 80; x += 10) if (clear(x, y)) return { x, y };
     }
@@ -76,7 +76,7 @@ test('Shift+drag on a background draws the dashed lasso; the cards it touches re
   await page.keyboard.up('Shift');
   await expect(lasso(page)).toBeHidden();
   expect(await selectedIds(page)).toEqual(['1', '2', '3']);
-  await expect(page.locator('#selection-status')).toHaveText('3 cards selected');
+  await expect(page.locator(bid('selection-status'))).toHaveText('3 cards selected');
   expect(await page.evaluate(() => document.getSelection()?.toString() ?? '')).toBe('');
 });
 
@@ -139,7 +139,7 @@ test('the bar goes below the selection when there is no room above it', async ({
   await clickCard(page, 2, ['Shift']);
   // Pan the cards up to the stage's top edge.
   const sel = await boxOf(page, [1, 2]);
-  const stage = (await page.locator('#stage').boundingBox())!;
+  const stage = (await page.locator(bid('stage')).boundingBox())!;
   const p = await emptyPoint(page);
   await drag(page, p, { x: p.x, y: p.y - (sel.y - stage.y) + 4 });
   const after = await boxOf(page, [1, 2]);
@@ -155,7 +155,7 @@ test('Zoom (the bar\'s Zoom to the selection) fits the selected cards; Z does th
   await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Zoom to the selection · Z', exact: true }).click();
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(fit.k);
-  const stage = (await page.locator('#stage').boundingBox())!;
+  const stage = (await page.locator(bid('stage')).boundingBox())!;
   const sel = await boxOf(page, [12, 17]);
   expect(sel.x).toBeGreaterThanOrEqual(stage.x);
   expect(sel.r).toBeLessThanOrEqual(stage.x + stage.width);
@@ -169,7 +169,7 @@ test('Zoom (the bar\'s Zoom to the selection) fits the selected cards; Z does th
 /** After Z on `ids`: they sit centred on the stage and fill 75% of its width or height, whichever
  *  binds, unless the top zoom (250%) stopped them short (review-polish ruling 12). */
 async function expectZoomedTo(page: Page, ids: number[]): Promise<number> {
-  const [s, b, k] = [(await page.locator('#stage').boundingBox())!, await boxOf(page, ids), (await view(page)).k];
+  const [s, b, k] = [(await page.locator(bid('stage')).boundingBox())!, await boxOf(page, ids), (await view(page)).k];
   const fill = Math.max((b.r - b.x) / s.width, (b.b - b.y) / s.height);
   if (k < 2.5 - 1e-3) expect(fill).toBeCloseTo(0.75, 2);
   else expect(fill).toBeLessThan(0.75);

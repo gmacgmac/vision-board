@@ -33,7 +33,7 @@ export interface Chrome {
   /** Where the strips say their height (`--vb-strip-h`, `--vb-banner-h`), and what the controls search inside. */
   root: HTMLElement;
   flag(f: FlagName): boolean;
-  /** A control's document id: the mount's prefix (mount-ids.ts), none on the first. */
+  /** A control's document id: the mount's prefix (mount-ids.ts). */
   id(name: string): string;
   ids: string;
   notify: BoardHost['notify'];

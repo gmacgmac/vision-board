@@ -7,7 +7,7 @@
 // It runs on the worker's empty project (EMPTY_BASE), fresh for this file (servers.ts), adds two
 // boards of its own, and restores every board it archived, for the tests after it in this file.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
 import { idle, menuButton, picker } from './board-page.ts';
@@ -50,9 +50,9 @@ async function mark(page: Page, board: string, action: 'archive' | 'restore'): P
 const agentBoards = async (request: APIRequestContext) =>
   ((await (await request.get(`${EMPTY_BASE}/api/boards`)).json()) as { boards: { board: string }[] }).boards.map((b) => b.board);
 
-const archiveRow = (page: Page) => page.locator('#archive-board');
+const archiveRow = (page: Page) => page.locator(bid('archive-board'));
 const confirmDialog = (page: Page) => page.locator('#confirm-dialog');
-const archived = (page: Page) => page.locator('#archived-dialog');
+const archived = (page: Page) => page.locator(bid('archived-dialog'));
 
 test('Archive board… asks with the board\'s name and dates; Cancel and Esc change nothing', async ({ page, request }) => {
   await setUp(request);
@@ -98,7 +98,7 @@ test('archived by keyboard: it leaves the picker and every agent, and the next b
   await idle(page);
   await expect(picker(page).locator(`option[value="${ONE}"]`)).toHaveCount(0);
   await expect(picker(page)).toHaveValue(TWO); // the board after it in the picker
-  await expect(page.locator('#title')).toHaveText('Multi-bot plan');
+  await expect(page.locator(bid('title'))).toHaveText('Multi-bot plan');
   await expect(picker(page).locator('option[value=":archived"]')).toHaveText('Archived (1)…');
   expect(await agentBoards(request)).not.toContain(ONE);
   expect((await request.get(`${EMPTY_BASE}/api/boards/${ONE}`)).status()).toBe(404);
@@ -125,9 +125,9 @@ test('the picker\'s Archived list: Esc closes it; Restore brings the board back 
   // The race a full run used to lose (N40 step 5): Esc shuts the dialog and queues its close event,
   // and the entry is chosen again before that event fires. Played in one task, so the event always
   // lands after the dialog has opened again: it must close nothing.
-  expect(await page.evaluate(async () => {
-    const dialog = document.querySelector<HTMLDialogElement>('#archived-dialog')!;
-    const select = document.querySelector<HTMLSelectElement>('#board')!;
+  expect(await page.evaluate(async ([dialogId, boardId]: [string, string]) => {
+    const dialog = document.querySelector<HTMLDialogElement>(dialogId)!;
+    const select = document.querySelector<HTMLSelectElement>(boardId)!;
     dialog.close(); // as the shell had it shut: no-op
     select.value = ':archived';
     select.dispatchEvent(new Event('change', { bubbles: true })); // opens it
@@ -139,7 +139,7 @@ test('the picker\'s Archived list: Esc closes it; Restore brings the board back 
     select.dispatchEvent(new Event('change', { bubbles: true })); // chosen again first
     await new Promise((r) => setTimeout(r, 50)); // the queued close event has fired
     return dialog.open ? 'open' : 'closed by the stale close event';
-  })).toBe('open');
+  }, [bid('archived-dialog'), bid('board')] as [string, string])).toBe('open');
   await page.keyboard.press('Escape');
   await expect(archived(page)).toBeHidden();
   await picker(page).focus();
@@ -149,7 +149,7 @@ test('the picker\'s Archived list: Esc closes it; Restore brings the board back 
   await expect(archived(page)).toBeHidden();
   await idle(page);
   await expect(picker(page)).toHaveValue(ONE);
-  await expect(page.locator('#title')).toHaveText('Multi-bot');
+  await expect(page.locator(bid('title'))).toHaveText('Multi-bot');
   await expect(picker(page).locator('option[value=":archived"]')).toHaveCount(0);
   expect(await agentBoards(request)).toContain(ONE);
 });
@@ -229,7 +229,7 @@ test('gallery: the archive section shows by default, and not with -archiveBoard'
   await page.goto('/gallery.html');
   await expect(section(page).locator('.vb-archived-list')).toHaveCount(3);
   await expect(section(page).getByText('No archived boards.')).toBeVisible();
-  await expect(section(page).locator('[id="archive-board"], [id="archived-dialog"]')).toHaveCount(0);
+  await expect(section(page).locator(`${bid('archive-board')}, ${bid('archived-dialog')}`)).toHaveCount(0);
 });
 
 for (const theme of THEMES) {

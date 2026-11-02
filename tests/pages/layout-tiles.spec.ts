@@ -6,7 +6,7 @@
 import type { Page } from '@playwright/test';
 import { act, write } from './agent-board.ts';
 import { boardLines } from './board-lines.ts';
-import { expect, setTheme, test } from './helpers.ts';
+import { expect, setTheme, test, bid } from './helpers.ts';
 import { board, frame, iconOpacity, THEMES, zoomTo } from './rail-board.ts';
 
 const tile = (page: Page, mode: string) => frame(page).locator(`button.vb-mtile[data-tile="${mode}"]`);
@@ -87,9 +87,9 @@ test('a past version keeps the tiles inert: no tool is visible, and a click on o
   await act(page, d, { action: 'ack', n: Number(await page.locator('vb-node').first().getAttribute('data-id')), ver: 1 });
   await write(request, d, [{ type: 'node', node: { region: 'p', kind: 'question', title: 'One more' } }]);
   await expect(page.locator('vb-node')).toHaveCount(5);
-  const older = page.locator('#version option').last();
+  const older = page.locator(`${bid('version')} option`).last();
   const value = await older.getAttribute('value');
-  await page.locator('#version').selectOption(value!);
+  await page.locator(bid('version')).selectOption(value!);
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect(page.locator('.vb-world .vb-region-tools:visible')).toHaveCount(0);
   const sent: string[] = [];

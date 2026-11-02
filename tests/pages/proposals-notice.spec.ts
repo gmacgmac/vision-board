@@ -8,7 +8,7 @@
 //
 // Each test draws its own board through the API, as an agent would (as proposals.spec.ts does).
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { joinAgent } from './agent-board.ts';
 import type { Agent } from './agent-board.ts';
@@ -61,10 +61,10 @@ test.beforeEach(async ({ page }) => {
 test('the notice floats over the top left of the board: the stage is not pushed down, and it is see-through', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
-  const stage = await page.locator('#stage').boundingBox();
+  const stage = await page.locator(bid('stage')).boundingBox();
   await propose(request, d, d.n[0]!, 'the client declined');
   await expect(notice(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal');
-  expect(await page.locator('#stage').boundingBox(), 'the stage stays where it was').toEqual(stage);
+  expect(await page.locator(bid('stage')).boundingBox(), 'the stage stays where it was').toEqual(stage);
   expect(await page.evaluate(() => document.documentElement.style.getPropertyValue('--vb-proposals-h'))).toBe('');
   const box = (await notice(page).boundingBox())!;
   expect(box.y, 'under the toolbar, over the board').toBeGreaterThan(stage!.y);

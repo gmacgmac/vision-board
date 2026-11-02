@@ -10,7 +10,7 @@ import type { Page } from '@playwright/test';
 import { IMAGES, imagesDir, pngOf, put } from '#board/testing';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
-import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, zoomToControls, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card } from './board-page.ts';
 
@@ -103,7 +103,7 @@ const loaded = (page: Page, n: number) => card(page, n).locator('img').evaluate(
 test('zoomed out past FAR_K, an image is not loaded; zoomed in, it is', async ({ page }) => {
   const requests = asked(page);
   const n = await openAt(page, { x: 400, y: 300, k: 0.2 }, { kind: 'finding', title: 'Far', body: '![Flow](diagrams/flow.png)' });
-  await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
   await page.waitForTimeout(500);
   expect(requests).toEqual([]);
   expect(await loaded(page, n)).toBe(false);

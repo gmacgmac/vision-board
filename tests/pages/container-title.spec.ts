@@ -9,7 +9,7 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { draw, write } from './agent-board.ts';
 import type { Drawn } from './agent-board.ts';
-import { expect, setTheme, test } from './helpers.ts';
+import { expect, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { api, scale as zoom } from './board-page.ts';
@@ -118,7 +118,7 @@ test('a drag on the title moves the container and pins it, at 100% and zoomed ou
   await expect.poll(async () => (await acts(page, d, before)).length).toBe(2);
   // Zoomed out the grip leaves the line; the title still moves the container.
   await zoomTo(page, 0.4);
-  await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+  await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
   await expect(frame(page).locator('.vb-region-grip')).toBeHidden();
   const [p0, z0] = [(await pins(page, d)).p!, await boxOf(frame(page))];
   await drag(page, centre(await boxOf(title(page))), { x: 40, y: 30 });

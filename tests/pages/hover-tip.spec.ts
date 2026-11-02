@@ -6,7 +6,7 @@
 //
 // Each test draws its own board through the API, as an agent would (agent-board.ts).
 import type { Locator, Page } from '@playwright/test';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { act, card, draw, open, reply, write } from './agent-board.ts';
 import { box } from './board-page.ts';
 
@@ -57,7 +57,7 @@ for (const kind of ['reply', 'note'] as const) {
       const n = await drawn(page, request);
       if (zoom === 'zoomed out') {
         for (let i = 0; i < 2; i += 1) await page.keyboard.press('-');
-        await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+        await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
         await page.waitForTimeout(300);
       }
       const a = anchorOf(page, n, kind);

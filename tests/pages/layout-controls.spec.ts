@@ -5,7 +5,7 @@
 // only read here (the alignment is the viewer's own, in this browser); the widths acts go to the
 // performance server's mixed board, which same-picture.spec.ts changes at random anyway.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { PERF_BASE } from './ports.ts';
 import { card, frame, openBoard, zoomToFull } from './board-page.ts';
@@ -78,7 +78,7 @@ test('gallery: a marker floats its label on hover and on keyboard focus, Esc clo
 const centreCards = (page: Page) => page.getByRole('menuitemcheckbox', { name: 'Centre cards' });
 
 async function toggleCentre(page: Page): Promise<void> {
-  await page.locator('#toolbar-menu').click();
+  await page.locator(bid('toolbar-menu')).click();
   await centreCards(page).click();
   await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
@@ -89,7 +89,7 @@ test('alignment: Centre cards centres a row, is kept per viewer across a reload,
   const [five, six] = [await boxOf(page, 5), await boxOf(page, 6)];
   expect(six.h).toBeLessThan(five.h);
   expect(six.y).toBe(five.y);
-  await page.locator('#toolbar-menu').click();
+  await page.locator(bid('toolbar-menu')).click();
   await expect(centreCards(page)).toHaveAttribute('aria-checked', 'false');
   await page.keyboard.press('Escape');
   await toggleCentre(page);
@@ -98,7 +98,7 @@ test('alignment: Centre cards centres a row, is kept per viewer across a reload,
   await openBoard(page);
   const [a, b] = [await boxOf(page, 5), await boxOf(page, 6)];
   expect(Math.round(a.y + a.h / 2 - (b.y + b.h / 2))).toBe(0);
-  await page.locator('#toolbar-menu').click();
+  await page.locator(bid('toolbar-menu')).click();
   await expect(centreCards(page)).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Escape');
   await toggleCentre(page);
@@ -111,7 +111,7 @@ test('alignment off (?flags=-alignSetting): no Centre cards, and a kept centre i
   await page.evaluate(() => localStorage.setItem('vb.align', 'center'));
   await openBoard(page, { query: '?flags=-alignSetting' });
   expect((await boxOf(page, 6)).y).toBe((await boxOf(page, 5)).y);
-  await page.locator('#toolbar-menu').click();
+  await page.locator(bid('toolbar-menu')).click();
   await expect(page.getByRole('menuitem', { name: /Theme/ })).toBeVisible();
   await expect(centreCards(page)).toHaveCount(0);
   await page.keyboard.press('Escape');
@@ -211,7 +211,7 @@ for (const theme of THEMES) {
     await page.keyboard.press('ArrowRight');
     await expect(widthsSwitch(page, 'review')).toBeFocused();
     await expectNoAxeViolations(page);
-    await page.locator('#toolbar-menu').click();
+    await page.locator(bid('toolbar-menu')).click();
     await expect(centreCards(page)).toBeVisible();
     await expectNoAxeViolations(page);
     await page.keyboard.press('Escape');

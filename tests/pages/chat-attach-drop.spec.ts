@@ -9,7 +9,7 @@ import path from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { card, side, text, toggle } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
@@ -82,7 +82,7 @@ test('dropped on the board, the panel closed: nothing happens, and the page stay
   await open(page, '', false);
   await expect(side(page)).toBeHidden();
   await watchDrags(page);
-  await drag(page, page.locator('#stage'), { files: [file] });
+  await drag(page, page.locator(bid('stage')), { files: [file] });
   await stillTheBoard(page);
   await expect(side(page)).toBeHidden();
 });
@@ -90,7 +90,7 @@ test('dropped on the board, the panel closed: nothing happens, and the page stay
 test('dropped on the toolbar or a card, the panel open: nothing attaches, and the page stays the board', async ({ page }) => {
   await open(page);
   await watchDrags(page);
-  for (const at of [page.locator('vb-node').first(), page.locator('#send')]) {
+  for (const at of [page.locator('vb-node').first(), page.locator(bid('send'))]) {
     await drag(page, at, { files: [file] });
     await stillTheBoard(page);
   }
@@ -158,7 +158,7 @@ test('text drags as ever: into the words, and nothing stops it on the board', as
   await expect(text(page)).toHaveValue('dragged words');
   await expect(chips(page)).toHaveCount(0);
   await expect(composer(page)).not.toHaveAttribute('data-drop');
-  const stopped = await page.locator('#stage').evaluate((el) => {
+  const stopped = await page.locator(bid('stage')).evaluate((el) => {
     const data = new DataTransfer();
     data.setData('text/plain', 'words');
     const e = new DragEvent('dragover', { dataTransfer: data, bubbles: true, cancelable: true });
@@ -170,7 +170,7 @@ test('text drags as ever: into the words, and nothing stops it on the board', as
 
 test('flag off: a dragged file is left to the browser, on the board and on the panel, as today', async ({ page }) => {
   await open(page, '-chatAttachments');
-  for (const at of [page.locator('#stage'), side(page).locator('chat-feed'), composer(page)]) {
+  for (const at of [page.locator(bid('stage')), side(page).locator('chat-feed'), composer(page)]) {
     const stopped = await at.evaluate((el) => {
       const data = new DataTransfer();
       data.items.add(new File(['x'], 'off.txt', { type: 'text/plain' }));

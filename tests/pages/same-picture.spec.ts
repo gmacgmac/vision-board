@@ -4,7 +4,7 @@
 // the counts. The sequence mixes the person's acts (sent by the page itself and by "another tab"),
 // and an agent drawing: new cards, new versions, links and a container change (its mode or card widths).
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { PERF_BASE } from './ports.ts';
 import { seeded } from '#board/testing';
 import type { Random } from '#board/testing';
@@ -23,7 +23,7 @@ async function open(page: Page): Promise<void> {
 }
 
 /** Everything the board shows, once it is idle, in world coordinates (the viewport is left out). */
-const picture = (page: Page) => page.evaluate(async () => {
+const picture = (page: Page) => page.evaluate(async (counts) => {
   await (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle();
   (document.activeElement as HTMLElement | null)?.blur();
   await (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle();
@@ -42,9 +42,9 @@ const picture = (page: Page) => page.evaluate(async () => {
     cards: [...document.querySelectorAll<HTMLElement>('.vb-cards vb-node')].map((e) => ({ html: clean(e), w: e.offsetWidth, h: e.offsetHeight })),
     regions: [...document.querySelectorAll('.vb-regions vb-region')].map(clean),
     wires: clean(document.querySelector('.vb-wires:not(.vb-wires-top)')!),
-    counts: document.querySelector('#counts')!.textContent,
+    counts: document.querySelector(counts)!.textContent,
   };
-});
+}, bid('counts'));
 
 interface Agent { secret: string; own: number[]; region: string }
 

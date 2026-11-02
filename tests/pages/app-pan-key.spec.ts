@@ -5,7 +5,7 @@
 import type { Page } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { card as cardOf, panelOf } from './board-page.ts';
 
 let s: AppServer;
@@ -24,7 +24,7 @@ test('Cmd+wheel zooms and Cmd+drag pans over an app card; without Cmd the panel 
   const f = (await card.locator('vb-app-frame').boundingBox())!;
   const mid = { x: f.x + f.width / 2, y: f.y + f.height / 2 };
   // Focus on the board, as after a click on its canvas: the board hears the key.
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.mouse.move(mid.x, mid.y);
 
   // No key: the wheel is the panel's, the board stays put.
@@ -35,7 +35,7 @@ test('Cmd+wheel zooms and Cmd+drag pans over an app card; without Cmd the panel 
 
   // Cmd held: the wheel zooms the board.
   await page.keyboard.down(PAN_KEY);
-  await expect(page.locator('#stage')).toHaveAttribute('data-pan-key', '');
+  await expect(page.locator(bid('stage'))).toHaveAttribute('data-pan-key', '');
   await page.mouse.wheel(0, -200);
   await expect.poll(() => world(page)).not.toBe(still);
   const zoomed = await world(page);
@@ -47,5 +47,5 @@ test('Cmd+wheel zooms and Cmd+drag pans over an app card; without Cmd the panel 
   await page.mouse.up();
   await page.keyboard.up(PAN_KEY);
   await expect.poll(() => world(page)).not.toBe(zoomed);
-  await expect(page.locator('#stage')).not.toHaveAttribute('data-pan-key');
+  await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-pan-key');
 });

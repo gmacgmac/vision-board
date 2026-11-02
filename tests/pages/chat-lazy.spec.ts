@@ -8,7 +8,7 @@
 import type { Page } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
-import { expect, test } from './helpers.ts';
+import { expect, test, bid } from './helpers.ts';
 import { side, text, toggle } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
@@ -69,7 +69,7 @@ test('opening loads it once, focuses the composer, and a message goes; closing a
 
 test('T opens it and loads the drawing', async ({ page }) => {
   const seen = await open(page);
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.keyboard.press('t');
   await expect(text(page)).toBeFocused();
   expect(seen.length).toBeGreaterThan(0);

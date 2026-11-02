@@ -10,8 +10,12 @@ import type { Frame, Page } from '@playwright/test';
 import { MAIN_BASE } from './ports.ts';
 import type { WorkerBoards } from './servers.ts';
 import { workerBoards } from './servers.ts';
+import { prefixOf } from '../../apps/board/src/board/mount-ids.ts';
 
 export { expect };
+
+/** The selector of an id the board owns. Every one starts with its mount's prefix (`mount-ids.ts`), the page's one board being the first mount; the shell's own ids (`#chat-toggle`, `#toast`) have none. */
+export const bid = (id: string): string => `#${prefixOf(1)}${id}`;
 
 /**
  * axe-core is injected straight from node_modules; no Playwright wrapper package is installed.
@@ -123,7 +127,7 @@ export async function openSelectionBar(page: Page): Promise<void> {
 /** Zoom in with the + key until the board is no longer zoomed out, so the cards' buttons, the size control
  *  and the containers' icon rows are drawn (hideControlsZoomedOut flag, on by default, tracker N13). */
 export async function zoomToControls(page: Page): Promise<void> {
-  const stage = page.locator('#stage');
+  const stage = page.locator(bid('stage'));
   for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) === 'far'; i += 1) await page.keyboard.press('+');
   await expect(stage).not.toHaveAttribute('data-zoom', 'far');
 }

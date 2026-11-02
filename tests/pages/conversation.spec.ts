@@ -7,7 +7,7 @@
 // container's note block and its replies open the container's conversation. Each test draws its
 // own board through the API (agent-board.ts).
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, reply } from './agent-board.ts';
@@ -153,7 +153,7 @@ test('a click outside closes it, focus back to what was pressed; a drag outside 
   const note1 = card(page, t.n).locator(`.vb-node-note[data-note="${t.notes[0]}"]`);
   await note1.click();
   await expect(bubble(page)).toBeVisible();
-  const stage = (await page.locator('#stage').boundingBox())!;
+  const stage = (await page.locator(bid('stage')).boundingBox())!;
   const free = { x: stage.x + stage.width / 4, y: stage.y + stage.height - 30 };
   // A drag on the background pans the board and keeps the window, which follows its card.
   await page.mouse.move(free.x, free.y);

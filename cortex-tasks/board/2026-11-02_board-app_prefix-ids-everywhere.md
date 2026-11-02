@@ -1,8 +1,8 @@
 ---
 task_name: Prefix The Board's Ids Everywhere
 created: 2026-11-02
-completed:
-status: pending
+completed: 2026-11-02
+status: completed
 categories: [board-app]
 type: implementation
 model: standard
@@ -105,21 +105,25 @@ stay as they are.
 
 ## Implementation Notes
 
-_To be completed by agent after task execution._
-
-**Completed**: YYYY-MM-DD HH:MM
+**Completed**: 2026-11-02 17:30
 
 ### Changes Made
-- 
+- `mount-ids.ts`: `takeIdPrefix()` and `prefixOf(n)` lost the `ownPage` parameter; every mount, the board's own page included, takes `vb<n>-`. `mount.ts` calls `takeIdPrefix()`. Two stale comments ("none on the first") fixed in `chrome.svelte.ts` and `board-types.ts`.
+- `shell/App.svelte`: the page looked the stage up by its bare id (`getElementById('stage')`) and its skip link pointed at `#stage`. It now finds the stage by `.vb-stage` in its root and sets the skip link to `#<stage id>`.
+- CSS: dropped the bare alternatives `#board`, `#version`, `#containers` from the toolbar rules (`board.css`, `current-folder.css`); the `[id$='-…']` forms stay. The `#arrow` / `#arrow-hot` marker rules in `board.css` are kept: the gallery draws its connectors with bare ids (its linkLabels screenshot moved when they went).
+- Tests: `apps/board/tests/mount-ids.test.ts` (own-page first mount is `vb1-`; red first, then green). One home for selecting a board id: `bid(id)` in `tests/pages/helpers.ts` (`#` + `prefixOf(1)` + id, so it follows the code); about 300 selector lines in 73 page specs moved to it. In-browser code uses `.vb-stage` or arguments instead. A new page spec in `board.spec.ts`: on the own page every id the board owns starts `vb1-`, none twice, no dangling reference, the skip link focuses the stage.
+- Docs: `plugin.md` § Ids states one rule (every id the board owns starts `vb<n>-`, own page included); `components.md` lost "none only for the first mount on the board's own page".
 
 ### Issues & Resolutions
-- 
+- First full page run: 22 failures, all selectors that compared a bare id inside the browser (`?.id === 'stage'`, `e.id === id`, `main#stage`, `aria-describedby` text) plus the gallery arrow rule; each fixed in the spec or restored in CSS. Second full run: 843 passed, no screenshot touched.
+- Shell ids (`chat-toggle`, `theme`, `align`, `chat`, `toast`, `open-folder`, `confirm-*`, `folder-dialog*`) unchanged, as the task says. The gallery's "section has none of the board's ids" checks (`[id="send"]` and the like) now name the prefixed ids.
 
 ### Caught Beyond the Brief
-- None
+- The skip link and the shell's stage lookup were the only bare lookups of a board id in the source; both would have broken silently (a dead link, a `null` stage).
 
 ### Deviations from Plan
-- None
+- `docs/specification/components.md` edited too (step 5's audit of other docs said the exception).
+- `App.svelte` and the two CSS files are outside the Files table, but step 3 ("fix any code in `apps/board/src/` that looked a board id up bare") covers them.
 
 ---
 

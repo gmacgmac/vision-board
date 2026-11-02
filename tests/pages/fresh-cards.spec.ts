@@ -8,7 +8,7 @@
 // waits for the person's first board seen (NEW needs it), sees every card at version 1, then the
 // agent adds card 4 in "p" and changes card 3 in "q", so the changes arrive live.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { card, write } from './agent-board.ts';
@@ -23,7 +23,7 @@ const pill = (page: Page, id: string) => frame(page, id).locator('.vb-region-fre
 const said = (page: Page, id: string) => pill(page, id).locator('.vb-region-fresh-n');
 const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
 const list = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
-const chip = (page: Page) => page.locator('#counts .vb-chip[data-tone="new"]:has(#fresh-cards)');
+const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="new"]:has(${bid('fresh-cards')})`);
 /** The rows' words: each option's `label` (MenuSelect). */
 const texts = (page: Page) => list(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
 
@@ -156,7 +156,7 @@ test('"N new": choosing a card goes to it, selected and focused, and keeps its m
   await list(page).selectOption(String(n));
   await expect(card(page, n!)).toBeFocused();
   await card(page, n!).locator('.vb-node-title').click();
-  await expect(page.locator('#fresh-cards')).toHaveCount(0);
+  await expect(page.locator(bid('fresh-cards'))).toHaveCount(0);
   await expect(page.locator('vb-region[data-fresh]')).toHaveCount(0);
 });
 
@@ -191,7 +191,7 @@ test('the pill leaves a narrow title line whole, and stays zoomed out', async ({
     const r = e.getBoundingClientRect();
     return r.top >= slot.bottom - 1 || (r.left >= slot.left - 1 && r.right <= slot.right + 1);
   });
-  const stage = page.locator('#stage');
+  const stage = page.locator(bid('stage'));
   for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) !== 'far'; i += 1) {
     await page.keyboard.press('-');
     expect(await whole(), `zoom step ${i + 1}`).toBe(true);
@@ -207,20 +207,20 @@ test('flag off: the tab is grey at rest, no container is fresh and no "N new" ch
   expect(await colour(page, tab(page, d.n[2]!), 'color')).toEqual(await token(page, '--vb-ink-subtle'));
   await expect(page.locator('vb-region[data-fresh]')).toHaveCount(0);
   await expect(page.locator('.vb-region-fresh:visible')).toHaveCount(0);
-  await expect(page.locator('#fresh-cards')).toHaveCount(0);
+  await expect(page.locator(bid('fresh-cards'))).toHaveCount(0);
 });
 
 test('a past version shows no fresh container and no "N new" chip', async ({ page, request }) => {
   await fresh(page, request);
   await expect(page.locator('vb-region[data-fresh]')).toHaveCount(2);
-  await page.locator('#version').selectOption({ index: 1 });
+  await page.locator(bid('version')).selectOption({ index: 1 });
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect(page.locator('vb-region[data-fresh]')).toHaveCount(0);
-  await expect(page.locator('#fresh-cards')).toHaveCount(0);
+  await expect(page.locator(bid('fresh-cards'))).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('.vb-banner')).toBeHidden();
   await expect(page.locator('vb-region[data-fresh]')).toHaveCount(2);
-  await expect(page.locator('#fresh-cards')).toHaveCount(1);
+  await expect(page.locator(bid('fresh-cards'))).toHaveCount(1);
 });
 
 // ---- The gallery's section ----

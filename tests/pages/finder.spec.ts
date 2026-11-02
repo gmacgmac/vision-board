@@ -4,7 +4,7 @@
 // then); with a card it can be chosen. Zooming is no act, so it works in a past version too.
 // Boards of its own, written by an agent through the API on the shared test server.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { frame, idle, openDrawn as open } from './board-page.ts';
 import { joinAgent } from './agent-board.ts';
@@ -29,7 +29,7 @@ const texts = (page: Page) => finder(page).locator('option').evaluateAll((os) =>
 /** Whether the frame is inside the stage and its centre is the stage's centre (to a few pixels). */
 async function centred(page: Page, id: string): Promise<boolean> {
   const f = (await frame(page, id).boundingBox())!;
-  const s = (await page.locator('#stage').boundingBox())!;
+  const s = (await page.locator(bid('stage')).boundingBox())!;
   const inside = f.x >= s.x && f.y >= s.y && f.x + f.width <= s.x + s.width && f.y + f.height <= s.y + s.height;
   return inside && Math.abs(f.x + f.width / 2 - (s.x + s.width / 2)) < 4 && Math.abs(f.y + f.height / 2 - (s.y + s.height / 2)) < 4;
 }
@@ -46,7 +46,7 @@ test('the dropdown lists the containers in board order with counts, Later last a
   await expect(options.nth(1)).toBeEnabled();
   await expect(options.nth(3)).toBeDisabled();
   // Reachable by Tab, after the version dropdown.
-  await page.locator('#version').focus();
+  await page.locator(bid('version')).focus();
   await page.keyboard.press('Tab');
   await expect(finder(page)).toBeFocused();
   for (const theme of THEMES) {
@@ -100,7 +100,7 @@ test('it works in a past version, which lists that version\'s containers, and se
   await expect.poll(() => texts(page)).toEqual(['Containers', 'Ideas · 1 item', 'Plan · 1 item', 'Later · 0 items']);
   const sent: string[] = [];
   page.on('request', (r) => { if (r.method() === 'POST') sent.push(r.url()); });
-  await page.locator('#version').selectOption(String(first));
+  await page.locator(bid('version')).selectOption(String(first));
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect.poll(() => texts(page)).toEqual(['Containers', 'Ideas · 1 item', 'Later · 0 items']);
   await finder(page).selectOption('ideas');
@@ -111,6 +111,6 @@ test('it works in a past version, which lists that version\'s containers, and se
 
 test('with containerFinder off there is no dropdown', async ({ page }) => {
   await open(page, '/?vbwork&flags=-containerFinder#fin-list');
-  await expect(page.locator('#board')).toBeVisible();
+  await expect(page.locator(bid('board'))).toBeVisible();
   await expect(finder(page)).toHaveCount(0);
 });

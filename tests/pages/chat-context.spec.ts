@@ -10,7 +10,7 @@
 import type { Page } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card } from './board-page.ts';
 import { sendButton, side, status, text } from './chat-page.ts';
@@ -162,7 +162,7 @@ test('nothing at all: submit and Send are disabled together; a selected card ena
   expect(await previewText(page)).toBe(`${SELECTED_HEAD}\n- Card 1: Ship on Friday?`);
   await expect(submit(page)).toBeEnabled();
   await expect(sendButton(page)).not.toHaveAttribute('aria-disabled', 'true');
-  await page.locator('#stage').focus();
+  await page.locator(bid('stage')).focus();
   await page.keyboard.press('Escape');
   await expect(submit(page)).toBeDisabled();
   await expect(sendButton(page)).toHaveAttribute('aria-disabled', 'true');

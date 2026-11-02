@@ -4,7 +4,7 @@
 // Runs on the worker's roadmap board (servers.ts) and writes nothing to it. Focus never moves the board
 // (review-polish ruling 11): those tests draw a board of their own (agent-board.ts).
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, open, reply, write } from './agent-board.ts';
@@ -75,7 +75,7 @@ test('a clicked button shows no ring when a key is pressed; Tab to the next one 
 
 test('a clicked dropdown shows no ring when a modifier is pressed', async ({ page }) => {
   await openBoard(page);
-  await page.locator('#board').click();
+  await page.locator(bid('board')).click();
   await page.keyboard.press('Escape');
   await page.keyboard.press('Shift');
   expect(await ringOnFocused(page)).toBe('none');

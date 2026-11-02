@@ -24,6 +24,8 @@
 
   /** The board's root: the page hosts the board in it (board/mount.ts), as nclite hosts it in a pane. */
   let root = $state<HTMLElement>();
+  /** The skip link: it points at the board's stage, whose id the mount's prefix starts. */
+  let skip = $state<HTMLAnchorElement>();
   let view = $state<MountedBoard | null>(null);
   /** The chat beside the board (chatPanel flag, chat-panel FE_02): the page's chat as the board's host gives it. */
   const bridge = createChatBridge();
@@ -78,7 +80,8 @@
     mirror(v.status.now);
     const unmirror = v.status.on(mirror);
     // The chat keeps level with the stage's top, under the header and any strip.
-    const stage = document.getElementById('stage')!;
+    const stage = root!.querySelector<HTMLElement>('.vb-stage')!;
+    skip!.href = `#${stage.id}`;
     const level = new ResizeObserver(() => document.documentElement.style.setProperty('--vb-chat-top', `${stage.getBoundingClientRect().top}px`));
     level.observe(stage);
     // The chat reaches the board through its view; it draws again on every draw.
@@ -94,7 +97,7 @@
   });
 </script>
 
-<a class="vb-skip" href="#stage">{chromeBoardWords.skipToTheBoard}</a>
+<a class="vb-skip" href="#stage" bind:this={skip}>{chromeBoardWords.skipToTheBoard}</a>
 <div bind:this={root}></div>
 {#if shell.chatPanel}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
 

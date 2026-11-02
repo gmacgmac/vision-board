@@ -3,7 +3,7 @@
 // back (R), for the tests after it in this file. Cmd or Ctrl + drag
 // (review-polish ruling 13) draws a board of its own (agent-board.ts).
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, zoomToControls, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, open, reply, write } from './agent-board.ts';
@@ -11,7 +11,7 @@ import { card, openBoard, ROADMAP_CARDS, selectedIds, zoomToFull } from './board
 
 const THEMES: Theme[] = ['dark', 'light'];
 
-const live = (page: Page) => page.locator('#selection-status');
+const live = (page: Page) => page.locator(bid('selection-status'));
 const docSelection = (page: Page) => page.evaluate(() => document.getSelection()?.toString() ?? '');
 const worldAt = (page: Page) => page.locator('.vb-world').evaluate((e) => {
   const m = new DOMMatrix(getComputedStyle(e).transform);
@@ -40,10 +40,10 @@ async function drag(page: Page, from: { x: number; y: number }, dx: number, dy: 
 /** A point on the board's own background, clear of every frame and card. */
 async function backgroundPoint(page: Page): Promise<{ x: number; y: number }> {
   return page.evaluate(() => {
-    const stage = document.getElementById('stage')!.getBoundingClientRect();
+    const stage = document.querySelector('.vb-stage')!.getBoundingClientRect();
     for (let y = stage.top + 20; y < stage.bottom - 20; y += 10) {
       for (let x = stage.left + 20; x < stage.right - 20; x += 10) {
-        if (document.elementFromPoint(x, y)?.id === 'stage') return { x, y };
+        if (document.elementFromPoint(x, y)?.classList.contains('vb-stage')) return { x, y };
       }
     }
     throw new Error('no background point on the stage');

@@ -159,9 +159,9 @@ With no chat at all, where nothing carries a chip: `chat: { attach() {}, send: (
 - **Your Svelte.** The bundle's runtime is its own, and a host's beside it, the board nested in its tree, is untouched. Proven by
   `guest.spec.ts` "a second Svelte".
 - **Two boards.** Mounts in one page work apart: no id twice, each its own calls and state. Proven by `guest.spec.ts` "two mounts".
-- **Ids.** Every id in the root carries its mount's prefix (`vb1-`, `vb2-`, `apps/board/src/board/mount-ids.ts`), so your own `board` or
-  `send` stays yours, and a `label` or `aria-controls` in the root finds its own. Don't select by them: they aren't part of this
-  page. Proven by `guest.spec.ts` "a host's own ids".
+- **Ids.** Every id the board owns starts `vb<n>-` (`vb1-`, `vb2-`, `apps/board/src/board/mount-ids.ts` `takeIdPrefix`), the board's own page
+  included, so your own `board` or `send` stays yours, and a `label` or `aria-controls` in the root finds its own. Don't select by them:
+  they aren't part of this page. Proven by `guest.spec.ts` "a host's own ids", `apps/board/tests/mount-ids.test.ts`.
 - **No storage, no address.** Nothing touches the page's storage or address (`view-hooks.spec.ts` "store:",
   `apps/board/tests/board-no-page.test.ts`).
 
