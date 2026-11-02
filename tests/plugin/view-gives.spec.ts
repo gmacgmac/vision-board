@@ -186,7 +186,11 @@ test('reveal of what is not on the board says so through notify, and takes no fo
   await drive(page, 'reveal', { n: 2 });
   await expect(page.locator('.host-root vb-node[data-id="2"]'), 'a card that is there still goes').toBeFocused();
   // A card hidden with Hide answered, or one that went: said, and not gone to.
-  await page.locator('.host-root vb-node[data-id="1"] button[data-act="ack"]').click();
+  const ack = page.locator('.host-root vb-node[data-id="1"] button[data-act="ack"]');
+  await ack.click();
+  // The ✓ lands first: Hide answered hides what is answered when it draws, so until the ✓ is in, card 1
+  // is still open and on the board, and reveal rightly goes to it (the flake under load).
+  await expect(ack).toHaveAttribute('aria-pressed', 'true');
   await page.locator('.host-root .vb-stage').focus();
   await page.keyboard.press('h');
   await page.locator('#host-input').focus();

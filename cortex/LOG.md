@@ -424,3 +424,4 @@
 [[2026-11-02 13:43]] [project-docs] Steering: Sources of truth row for using the board as a plugin (point 381); svelte-conventions: the board's controls are Svelte inside the bundle (point 375A) → Notes: `.kiro/steering/vision-board-proj.md` (Sources of truth), `.kiro/steering/svelte-conventions.md` (Where Svelte is used) — maintainer approved
 [[2026-11-02 13:43]] [board-tokens] Removed unused --vb-z-selection; --vb-z-lasso comment names only the lasso (point 375B) → Notes: `packages/tokens/src/tokens.css` (`--vb-z-lasso`) — maintainer approved
 [[2026-11-02 13:43]] [project-docs] Principles: the board's rules style no element outside it and take back what they rely on (point 375C) → Notes: `docs/principles.md` (The board is a plugin) — maintainer approved
+[[2026-11-02 14:29]] [board-app] Completed: Reveal Of A Hidden Card Flake (test waited too little, not a product race) → Task: [[cortex-tasks/board/2026-11-02_board-app_reveal-flake.md]]

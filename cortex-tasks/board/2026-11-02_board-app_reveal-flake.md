@@ -1,8 +1,8 @@
 ---
 task_name: Reveal Of A Hidden Card Flake
 created: 2026-11-02
-completed:
-status: pending
+completed: 2026-11-02
+status: completed
 categories: [board-app]
 type: implementation
 model: strong
@@ -41,4 +41,24 @@ there is a real issue.
 
 ## Implementation Notes
 
-_To be completed by the agent: cause, can a person hit it, fix, proof._
+**Cause: a test that doesn't wait.** The ✓ goes through `createItemActs` (`apps/board/src/board/cards/item-acts.ts`)
+→ `sender.record` → `attempt` (`apps/board/src/board/sender.ts`): POST, then the stored line is applied and drawn,
+then the toast "1 ✓". H (`toggleHide`, `apps/board/src/board/controller.ts`) turns a mode on: `hiddenSet` works
+the answered cards out of `S.data` at every draw, so it follows answers that land later. `revealCard` asks
+`go.why(n)`, which reads what is drawn now. The spec pressed H and called `reveal({ n: 1 })` without waiting for
+the ✓ to land; under load the POST was still on its way, card 1 was still open and drawn, so reveal rightly went
+to it (no notice), and the "1 ✓" toast came after: the last notice, as reported.
+
+**Can a person hit it? No, not as a fault.** ✓ then H quickly: when the ✓ lands, card 1 hides anyway (the mode
+follows it), the same end state as H after the ✓. A reveal in that gap goes to a card that really is open on the
+board at that moment. Focus ends on the stage either way (a hidden card gives its focus to the stage in `redraw`).
+
+**Proof.** No failure in 10 runs unloaded (`--repeat-each 10`, 3 workers). A throwaway copy of the steps in
+`temp/reveal-flake/` holding the act's POST 800 ms (`page.route`) fails every time with the reported message
+(`Received string: "1 ✓"`), and card 1 is hidden once the ✓ lands; the same copy waiting for the ✓ first passes.
+
+**Fix (test only).** `tests/plugin/view-gives.spec.ts` "reveal of what is not on the board…": waits for card 1's
+✓ button to read `aria-pressed="true"` before pressing H, with a comment saying why.
+
+**Verified** (all `nice -n 15`, 3 workers, `VB_TEST_PORT=5210`): `view-gives.spec.ts --repeat-each 20`: 300 passed;
+`npm run test:plugin`: 78 passed; `npm test`: 2199 + 14 passed; `npm run verify`: ok. No page spec touched.
