@@ -11,7 +11,7 @@ import type { CardConditions, VbRegionElement } from '#ui';
 import { regionFresh, regionState } from '#ui';
 import { pageConditions } from '#actions';
 import { OpenChip } from '../board/chrome/index.ts';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { UPDATES_BOARD } from './fixture.ts';
 import { miniBoard } from './mini-board.ts';
@@ -28,7 +28,7 @@ function frame(fx: Fixture, suffix: string, width: string, fresh: boolean): HTML
   const count = pageConditions(fx.ledger, UPDATES_BOARD).freshIn.get(REGION);
   const pill = fresh && count ? regionFresh(count.added, count.updated) : undefined;
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render({ ...region, id: `${REGION}${suffix}` });
+  f.render({ ...region, id: `${REGION}${suffix}` }, ownIds());
   f.update({ ...regionState(region, view, state, new Set(view.nodes.map((n) => n.id))), ...(pill && { fresh: pill }) });
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.style.width = width;

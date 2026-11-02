@@ -9,7 +9,7 @@ import type { AppInfo, ViewNode } from '#format';
 import { APP_SIZE } from '#format';
 import type { AppCardInput, VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
 import invalidText from './gallery.apps.json?raw';
@@ -56,7 +56,7 @@ function frame(label: string, w: number, h: number, loading = false): HTMLElemen
 /** The plain card the appCards flag off draws (ruling 13), named as the board names it then. */
 function offCard(n: ViewNode, fx: Fixture): VbNodeElement {
   const c = document.createElement('vb-node') as VbNodeElement;
-  c.render(n, { appCards: false });
+  c.render(n, { ...ownIds(), appCards: false });
   c.update(nodeState(n, fx.state));
   return c;
 }

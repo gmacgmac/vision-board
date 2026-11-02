@@ -15,7 +15,7 @@ import { placedView } from '#actions';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
 import { LATER_FRAME } from '../board/canvas/index.ts';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { FRAME_PREFIX } from './fixture.ts';
 
@@ -37,7 +37,7 @@ interface Sample {
 /** Draw one frame of `region` (from `view` and `state`) under the sample id. */
 function frame(s: Sample, region: Region, view: View, state: BoardState, owed?: ReadonlySet<string>, fixed = false): VbRegionElement {
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render({ ...region, id: `rail-${s.id}` }, fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true });
+  f.render({ ...region, id: `rail-${s.id}` }, { ...ownIds(), ...(fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true }) });
   f.update({ ...regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed), ...(s.paused && { paused: true }) });
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.dataset.sample = s.height;

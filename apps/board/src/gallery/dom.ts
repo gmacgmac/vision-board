@@ -1,4 +1,10 @@
 // Small DOM helpers for the gallery page. Text goes in through textContent, never as markup.
+import { takeIdPrefix } from '../board/mount-ids.ts';
+
+/** The ids a sample's card or frame sets, taken as a board's mount takes them (mount-ids.ts), so no
+ *  id is on the gallery page twice however often a card or container is drawn. The page never
+ *  unmounts a sample, so the prefix is never released. Pass it as `idPrefix` to `render`. */
+export const ownIds = (): { idPrefix: string } => ({ idPrefix: takeIdPrefix().prefix });
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K, className?: string, text?: string,
 ): HTMLElementTagNameMap[K] {

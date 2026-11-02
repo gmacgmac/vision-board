@@ -133,6 +133,9 @@ Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.
   `apps/board/src/gallery/` drawn from `#format/gallery.ledger.jsonl` through the pattern's own core
   (`nodeState`, `regionState`), never hand-written markup. The gallery lists patterns from `#ui` `PATTERNS`
   (their `pattern.json` files, `packages/ui/src/patterns.ts`), and `tests/pages/gallery.spec.ts` fails for a pattern that has no samples.
+  A card or frame the gallery draws in more than one sample takes ids of its own, as a mount does
+  (`gallery/dom.ts` `ownIds`, passed as `idPrefix` to `render`; `mini-board.ts` and the proposals notice's `ids` likewise), so no id is on the page
+  twice; `gallery.spec.ts` "no id twice on the page" proves it, with every reference pointing at an id.
 
 ## Awareness tables (D-033)
 

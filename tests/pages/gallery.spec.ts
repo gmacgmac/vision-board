@@ -28,6 +28,18 @@ test('every pattern has a section with samples of its own element', async ({ pag
   }
 });
 
+test('no id twice on the page, and every reference points at one (a card or frame drawn in two samples takes ids of its own)', async ({ page }) => {
+  const found = await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('[id]')].map((e) => e.id);
+    const attrs = ['for', 'aria-controls', 'aria-labelledby', 'aria-describedby'];
+    const refs = attrs.flatMap((a) => [...document.querySelectorAll(`[${a}]`)].flatMap((e) => (e.getAttribute(a) ?? '').split(' ').filter(Boolean)));
+    return { count: ids.length, twice: [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))], dangling: refs.filter((r) => !document.getElementById(r)) };
+  });
+  expect(found.count).toBeGreaterThan(500);
+  expect(found.twice, 'an id on the page twice').toEqual([]);
+  expect(found.dangling, 'a reference to an id that is not on the page').toEqual([]);
+});
+
 test('node: every kind in every status it can reach, cards that ask apart from cards that tell', async ({ page }) => {
   const [asks, tells] = [page.locator('section[data-pattern="node"] .g-matrix').nth(0), page.locator('section[data-pattern="node"] .g-matrix').nth(1)];
   for (const kind of [...ASKS, ...TELLS]) {
@@ -133,7 +145,9 @@ test('region: the open samples: the popover wide and compact, and the settings m
   await expect(wide.locator('.vb-mtile small')).toHaveCount(6);
   await expect(wide.locator('.vb-mtile small').first()).toBeVisible();
   await expect(wide.locator('.vb-mode-line')).toBeHidden();
-  await expect(frame('frame-grid').getByRole('radio', { name: 'Flow' })).toHaveAttribute('aria-describedby', 'region-frame-grid-modes');
+  // The frame's ids carry its own prefix (the page draws no two with the same ids): the radio points at this popover.
+  await expect(wide).toHaveAttribute('id', /^vb\d+-region-frame-grid-modes$/);
+  await expect(frame('frame-grid').getByRole('radio', { name: 'Flow' })).toHaveAttribute('aria-describedby', (await wide.getAttribute('id'))!);
   // Under 600px of frame: icon and name only, and the highlighted layout's one-liner once.
   const compact = frame('frame-empty').getByRole('tooltip');
   await expect(compact).toBeVisible();

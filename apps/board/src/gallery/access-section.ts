@@ -19,7 +19,7 @@ import type { SendState } from '../board/chrome/index.ts';
 import type { AccessRequestRow } from '../board/access/index.ts';
 import { requestRows } from '../board/access/index.ts';
 import type { BoardData } from '#actions';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGIONS_HELD } from './fixture.ts';
 
@@ -45,7 +45,7 @@ const asBoard = (fx: Fixture): BoardData => ({ head: 0, view: fx.view, state: fx
 function frame(id: string, fx: Fixture): VbRegionElement {
   const region = fx.view.regions.find((r) => r.id === id)!;
   const node = document.createElement('vb-region') as VbRegionElement;
-  node.render(region);
+  node.render(region, ownIds());
   // The frame draws no cards (D-013); its node counts as drawn, so it shows the count, not the empty message.
   const placed = new Set(fx.view.nodes.filter((n) => n.region === id).map((n) => n.id));
   node.update(regionState(region, fx.view, fx.state, placed, fx.access.holders?.[id]));

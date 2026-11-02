@@ -8,13 +8,13 @@
 import type { ViewNode } from '#format';
 import type { VbNodeElement, VbRegionElement } from '#ui';
 import { nodeState, regionState } from '#ui';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 function card(n: ViewNode, fx: Fixture, look: 'tip' | 'box' | 'rest' = 'rest'): VbNodeElement {
   const { state, cards } = fx.parking;
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n);
+  node.render(n, ownIds());
   node.update(nodeState(n, state, undefined, false, cards.get(n.n!)));
   if (look === 'tip') node.toggleAttribute('data-status-tip-open', true);
   if (look === 'box') {
@@ -29,7 +29,7 @@ function answeredFrame(fx: Fixture): HTMLElement {
   const { view, state, owed } = fx.containerNotes;
   const region = view.regions.find((r) => r.id === 'n-answered')!;
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render(region);
+  f.render(region, ownIds());
   f.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed, fx.parking.containerReplies));
   f.noteShown = true;
   const box = el('div', 'g-frames vb-ground');

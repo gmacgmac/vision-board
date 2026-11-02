@@ -7,7 +7,7 @@
 import type { Mode } from '#format';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
-import { el, group } from './dom.ts';
+import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { FRAME_PREFIX } from './fixture.ts';
 import { containerSamples } from './container-section.ts';
@@ -29,7 +29,7 @@ function frame(id: string, fx: Fixture): VbRegionElement {
   const region = fx.view.regions.find((r) => r.id === id)!;
   const placed = new Set(id === DREW_NOTHING ? [] : fx.view.nodes.map((n) => n.id));
   const node = document.createElement('vb-region') as VbRegionElement;
-  node.render(region);
+  node.render(region, ownIds());
   node.update(regionState(region, fx.view, fx.state, placed));
   return node;
 }

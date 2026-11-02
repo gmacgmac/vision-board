@@ -7,14 +7,14 @@ import { mount } from 'svelte';
 import type { VbNodeElement } from '#ui';
 import { FLAG_KEY, nodeState } from '#ui';
 import { FlaggedChip } from '../board/chrome/index.ts';
-import { cardList, el, group } from './dom.ts';
+import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
 export function flagSection(fx: Fixture): HTMLElement {
   const { view, state } = fx.marks;
   const cards = view.nodes.filter((n) => n.region === 'flagged').map((n) => {
     const node = document.createElement('vb-node') as VbNodeElement;
-    node.render(n, { flag: true });
+    node.render(n, { ...ownIds(), flag: true });
     node.update(nodeState(n, state));
     return node;
   });
