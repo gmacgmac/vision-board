@@ -266,19 +266,24 @@ test('at the default width, and the narrowest, the agent and model pickers show 
   await fits(page);
 });
 
-/** Each picker in the header is at least as wide as its label needs. */
+/** Each picker in the header is at least as wide as its label needs. The header draws its pickers again
+ *  just after it opens, so a picker caught on its way out is measured again. */
 async function fits(page: Page) {
   for (const name of ['Agent', 'Model']) {
     const pick = side(page).getByRole('combobox', { name });
-    // A copy of the picker on its own, out of the header's flow, is the width its label needs.
-    const [shown, needs] = await pick.evaluate((el) => {
-      const copy = el.cloneNode(true) as HTMLSelectElement;
-      copy.style.position = 'absolute';
-      el.closest('chat-header')!.append(copy);
-      const w: [number, number] = [el.getBoundingClientRect().width, copy.getBoundingClientRect().width];
-      copy.remove();
-      return w;
-    });
-    expect(shown, `${name} picker`).toBeGreaterThanOrEqual(needs - 0.5);
+    await expect(async () => {
+      // A copy of the picker on its own, out of the header's flow, is the width its label needs.
+      const [shown, needs] = await pick.evaluate((el) => {
+        const header = el.closest('chat-header');
+        if (!header) return [0, Infinity];
+        const copy = el.cloneNode(true) as HTMLSelectElement;
+        copy.style.position = 'absolute';
+        header.append(copy);
+        const w: [number, number] = [el.getBoundingClientRect().width, copy.getBoundingClientRect().width];
+        copy.remove();
+        return w;
+      });
+      expect(shown, `${name} picker`).toBeGreaterThanOrEqual(needs - 0.5);
+    }).toPass({ timeout: 5000 });
   }
 }

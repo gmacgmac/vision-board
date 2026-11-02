@@ -420,3 +420,4 @@
 [[2026-11-02 12:56]] [board-ui] Completed: Gallery Arrowheads On Prefixed Ids → Task: [[cortex-tasks/board/2026-11-02_board-ui_gallery-arrow-ids.md]]
 [[2026-11-02 13:15]] [board-actions] Completed: A Send Counts Only What Went → Task: [[cortex-tasks/board/2026-11-02_board-actions_send-counts-what-went.md]]
 [[2026-11-02 13:25]] [board-ui] Completed: Gallery Without Repeats → Task: [[cortex-tasks/board/2026-11-02_board-ui_gallery-no-repeats.md]]
+[[2026-11-02 13:41]] [board-app] Chat picker width check waits out the header's redraw just after it opens → Notes: `tests/pages/chat-panel.spec.ts` (`fits`) — measured a picker on its way out; exposed by today's timing, header redraw predates it
