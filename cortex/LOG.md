@@ -425,3 +425,5 @@
 [[2026-11-02 13:43]] [board-tokens] Removed unused --vb-z-selection; --vb-z-lasso comment names only the lasso (point 375B) → Notes: `packages/tokens/src/tokens.css` (`--vb-z-lasso`) — maintainer approved
 [[2026-11-02 13:43]] [project-docs] Principles: the board's rules style no element outside it and take back what they rely on (point 375C) → Notes: `docs/principles.md` (The board is a plugin) — maintainer approved
 [[2026-11-02 14:29]] [board-app] Completed: Reveal Of A Hidden Card Flake (test waited too little, not a product race) → Task: [[cortex-tasks/board/2026-11-02_board-app_reveal-flake.md]]
+[[2026-11-02 15:26]] [board-app] Completed: Plugin Types And Seam Version (plugin.d.ts generated at build; manifest seam 1 with a types hash that fails the build when stale) → Task: [[cortex-tasks/board/2026-11-02_board-app_plugin-types-and-seam.md]]
+[[2026-11-02 15:26]] [project-docs] plugin.md: § The types and the seam version; § Where the board lives in nclite (point 377.1); open points 1, 9, 10 settled → Notes: `docs/specification/plugin.md` (The types and the seam version) — maintainer decisions 377.1, 377.4, 377.5

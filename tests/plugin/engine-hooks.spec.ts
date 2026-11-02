@@ -1,7 +1,7 @@
 // The engine seam (docs/specification/plugin.md § The engine and § Tools), on the built folder's engine alone: no page.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { FOLDER, loadEngine, manifest } from './fake-host/server.ts';
+import { FOLDER, SEAM_WRITTEN_FOR, loadEngine, manifest } from './fake-host/server.ts';
 import { drawPlans, expect, test } from './harness.ts';
 
 const PERSON = { by: 'person' } as const;
@@ -17,6 +17,15 @@ test('the folder: its parts are where the manifest says; no settings, no icon', 
   const words = JSON.parse(readFileSync(path.join(FOLDER, m.words), 'utf8'));
   for (const key of [m.name, ...m.chips.map((c: { words: string }) => c.words), ...m.tools.map((t: { words: string }) => t.words)]) expect(typeof words[key]).toBe('string');
   expect(m.chips.map((c: { kind: string }) => c.kind).sort()).toEqual(['answers', 'board', 'card', 'note', 'selection']);
+});
+
+test('the folder: a host reads the seam version before it loads anything, and the types are in the folder', () => {
+  const m = manifest();
+  expect(Number.isInteger(m.seam) && m.seam >= 1).toBe(true);
+  expect(m.seam, 'a host built for another seam refuses the folder here, naming both numbers').toBe(SEAM_WRITTEN_FOR);
+  const types = readFileSync(path.join(FOLDER, 'plugin.d.ts'), 'utf8');
+  expect(types).toMatch(/export declare function mount\(/);
+  expect(types).toMatch(/export declare function createEngine\(/);
 });
 
 test('the folder: nothing a host\'s person reads names a command of this repo', () => {

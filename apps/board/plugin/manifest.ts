@@ -4,6 +4,7 @@
 import type { ChipKind } from '#actions';
 import { CHIP_PLUGIN } from '#actions';
 import type { ListedTool } from '#mcp';
+import { SEAM } from './seam.ts';
 
 /** Every chip kind, once: the type makes a new kind in `ChipKind` stop this file until it is listed. */
 const CHIPS = { card: 1, note: 1, board: 1, selection: 1, answers: 1 } satisfies Record<ChipKind, 1>;
@@ -16,7 +17,7 @@ export const toolKey = (name: string): string => `board.tool.${name}`;
 
 export function manifestOf(version: string, tools: readonly ListedTool[], writes: ReadonlySet<string>) {
   return {
-    id: CHIP_PLUGIN, name: 'board.plugin.name', version,
+    id: CHIP_PLUGIN, name: 'board.plugin.name', version, seam: SEAM,
     view: { module: PARTS.view, styles: [PARTS.styles], export: 'mount' },
     engine: { module: PARTS.engine, export: 'createEngine' },
     chips: (Object.keys(CHIPS) as ChipKind[]).map((kind) => ({ kind, words: `board.plugin.chips.${kind}` })),

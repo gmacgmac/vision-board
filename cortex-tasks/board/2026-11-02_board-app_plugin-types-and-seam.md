@@ -1,8 +1,8 @@
 ---
 task_name: Plugin Types And Seam Version
 created: 2026-11-02
-completed:
-status: pending
+completed: 2026-11-02
+status: completed
 categories: [board-app]
 type: implementation
 model: standard
@@ -53,4 +53,38 @@ The aim is one plugin for every host: what the board gains, every host gets, saf
 
 ## Implementation Notes
 
-_To be completed by the agent._
+**Types.** `apps/board/bin/plugin-types.ts` `pluginTypes` makes `plugin.d.ts` with the repo's own TypeScript (no new dependency): it
+starts at the exported declarations of `plugin/view.ts` and `plugin/engine.ts`, follows every interface and type alias they reach
+(through `#` names too), and copies each as written with its comments. A `Pick`/`Omit` is opened to its members; a `typeof` is
+written out as its literal type; anything else (a class, an enum, an `import()` type) stops the build. Written into the folder by
+`textFiles()`; the sentences it prints are in `server/words/bin.ts`.
+
+**Changes to existing types so the seam is exactly what the spec promises** (all type-level; runtime unchanged):
+- `plugin/view.ts`: `mount(root, host: PluginHost)`, `PluginHost = Omit<BoardHost, 'page'>` (the file no longer carries `BoardPage`,
+  `BoardPageParts`, `PagePart`); `PluginView.status` is `PluginViewStatus`, whose `now` is `PluginStatus` = the five fields the spec
+  named (`boardId`, `title`, `counts`, `unsaved`, `chatWork`), not the wide `BoardStatus` (which would have put the ledger event
+  types in the seam). `BoardStatus` is now exported from `src/board/index.ts`.
+- `src/board/host.ts`: one comment named nclite (`BoardView`'s doc); reworded, because the folder may not name a host.
+
+**Seam version.** `apps/board/plugin/seam.ts`: `SEAM = 1`, `SEAM_TYPES` (sha256 of the types' tokens, comments and layout ignored),
+`TYPES_FILE`. `manifest.schema.json` then `manifest.ts`: `seam` required, integer >= 1. `build:plugin` fails with the rule when the
+hash is stale (`seamProblem`); `apps/board/tests/plugin-types.test.ts` does too. The hash catches every change to the types; it
+cannot tell breaking from additive, so the author decides (the message and `plugin.md` say how).
+
+**Tests.** `plugin-types.test.ts` (new): a host using every member compiles against the emitted file (own copy of the compiler
+program, libs cached); each of the ~150 members taken out in turn fails the compile (one survivor by construction: `Round.text`,
+also `ChipText.text` in the same intersection); the seam hash. Also `plugin-build.test.ts` (file list, `seam`, types equal
+`pluginTypes()`), `tests/plugin/engine-hooks.spec.ts` + fake host (`SEAM_WRITTEN_FOR`: a host reads `seam` first, `plugin.d.ts` is there),
+`spec-truth.test.ts` (names `PluginViewStatus` and the five status fields).
+
+**plugin.md.** New section "The types and the seam version" (what is breaking, when the number moves, what a host does); folder
+table, `mount` signature, `PluginHost`, status row and manifest table updated; open points 1, 9, 10 marked Settled (377); new
+subsection "Where the board lives in nclite" (377.1) under the last section, where nclite may be named.
+
+**Gates** (`nice -n 15`): `npm run map`, `verify` (ok, only existing warnings), `check`, `gen-api --check`, `npm test` (2204 + 14
+pass), `test:plugin` with `VB_TEST_WORKERS=3 VB_TEST_PORT=5010` (79 pass). Page suite not run: no page code changed beyond one type
+export and a comment.
+
+**Not done / for the maintainer.** The plugin's `skill.md` still has no Images section for a host (point 377.1 says a bot writes
+into `images/` itself): that is a change to `plugin/words/skill-edits.ts` and the skill, a separate task. `plugin.md` says so in
+open point 1.

@@ -14,8 +14,10 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { parseAst } from 'vite';
 import { makeTempDir } from '#format/testing';
 import { buildPlugin } from '../bin/build-plugin.ts';
+import { pluginTypes } from '../bin/plugin-types.ts';
+import { SEAM } from '../plugin/seam.ts';
 
-const FILES = ['engine/engine.js', 'manifest.json', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
+const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
 const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_layout', 'list_open', 'check_responses', 'request_grant', 'write_board'];
 /** Gzip budgets in bytes, a little over the size at the time (BUILD_01: view 164030, styles 18799, engine 210716). */
 const BUDGET: Record<string, number> = { 'view/board.js': 190_000, 'view/board.css': 22_000, 'engine/engine.js': 240_000 };
@@ -35,7 +37,7 @@ before(async () => {
 });
 after(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true }); });
 
-test('a clean build writes exactly the folder: manifest, view and styles, engine, words and skill', () => {
+test('a clean build writes exactly the folder: manifest, view and styles, engine, words, skill and types', () => {
   assert.deepEqual(filesOf(first), FILES);
 });
 
@@ -51,12 +53,16 @@ test('the manifest fits its schema and every file and words key it names exists'
   const fits = (value: object): boolean => check.validate(schema, value);
   assert.ok(fits(manifest), check.errorsText(check.errors));
   assert.equal(manifest.id, 'board');
+  assert.equal(manifest.seam, SEAM);
+  assert.equal(text(first, 'plugin.d.ts'), pluginTypes(), 'the types are the code\'s own');
   const words = JSON.parse(text(first, 'words.json')) as Record<string, string>;
   for (const f of [manifest.view.module, ...manifest.view.styles, manifest.engine.module, manifest.skill, manifest.words]) assert.ok(FILES.includes(f), `${f} is in the folder`);
   const keys = [manifest.name, ...manifest.chips.map((c: { words: string }) => c.words), ...manifest.tools.map((t: { words: string }) => t.words)];
   for (const k of keys) assert.equal(typeof words[k], 'string', `words.json has ${k}`);
   assert.ok(Object.keys(words).every((k) => /^board\.[a-z0-9-]+\.[A-Za-z0-9_.]+$/.test(k)), 'keys are board.<area>.<name>');
   assert.equal(fits({ ...manifest, engine: undefined }), false, 'a manifest without its engine is refused');
+  assert.equal(fits({ ...manifest, seam: undefined }), false, 'a manifest without its seam version is refused');
+  assert.equal(fits({ ...manifest, seam: 0 }), false, 'a seam version below 1 is refused');
   assert.equal(fits({ ...manifest, view: { ...manifest.view, module: '/etc/passwd' } }), false, 'a path that leaves the folder is refused');
 });
 

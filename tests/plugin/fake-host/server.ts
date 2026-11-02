@@ -22,6 +22,8 @@ const PICS = '/pics/';
 /** Where a picture goes when a host gives no `imageRoute` (plugin.md). */
 const DEFAULT_PICS = '/board-images/';
 
+/** The seam this fake host was written for (plugin.md § The types and the seam version): a folder whose `seam` differs is not loaded. */
+export const SEAM_WRITTEN_FOR = 1;
 export const manifest = () => JSON.parse(readFileSync(path.join(FOLDER, 'manifest.json'), 'utf8'));
 
 export interface Message { chips: { kind: string; ref: unknown }[]; blocks: { where: string; text: string }[] }

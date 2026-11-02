@@ -6,14 +6,27 @@ import '#tokens/styles.css';
 import '../src/styles/sheets.css';
 import './theme.css';
 import './color-scheme.css';
-import type { BoardHost, BoardView, MountedBoard } from '../src/board/index.ts';
+import type { BoardHost, BoardStatus, BoardView, MountedBoard } from '../src/board/index.ts';
 import { mount as mountBoard } from '../src/board/index.ts';
 
+/** What a host gives: `BoardHost` without `page`, which is the standalone page's own. */
+export type PluginHost = Omit<BoardHost, 'page'>;
+
+/** The fields of the board's status a host may rely on. The status holds more, which a host may read but is not promised. */
+export type PluginStatus = Pick<BoardStatus, 'boardId' | 'title' | 'counts' | 'unsaved' | 'chatWork'>;
+
+/** What a host shows of the board: read `now`, hear each change with `on`. */
+export interface PluginViewStatus {
+  readonly now: Readonly<PluginStatus>;
+  /** Hear every change, with what changed; returns the unsubscribe. */
+  on(listener: (patch: Partial<PluginStatus>) => void): () => void;
+}
+
 /** The view a host holds. */
-export type PluginView = BoardView & Pick<MountedBoard, 'status' | 'send'>;
+export type PluginView = BoardView & { readonly status: PluginViewStatus } & Pick<MountedBoard, 'send'>;
 
 /** The board inside `root`, in `host`. */
-export function mount(root: HTMLElement, host: BoardHost): PluginView {
+export function mount(root: HTMLElement, host: PluginHost): PluginView {
   const { unmount, unsaved, leave, pageChip, reveal, status, send } = mountBoard(root, host);
   return { unmount, unsaved, leave, pageChip, reveal, status, send };
 }

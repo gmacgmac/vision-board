@@ -41,6 +41,8 @@ test('every member of the view seam is in the spec', () => {
   for (const m of seam.filter((x) => x !== 'page')) assert.ok(SPEC.includes(m), `plugin.md names ${m}`);
   const view = read('apps/board/plugin/view.ts');
   for (const m of /Pick<MountedBoard, ([^>]+)>/.exec(view)![1]!.split('|').map((x) => x.trim().replaceAll("'", ''))) assert.ok(SPEC.includes(`\`${m}`), `plugin.md names ${m}`);
+  for (const m of [...members('apps/board/plugin/view.ts', ['PluginViewStatus']), 'status']) assert.ok(SPEC.includes(`\`${m}`), `plugin.md names ${m}`);
+  for (const m of /PluginStatus = Pick<BoardStatus, ([^>]+)>/.exec(view)![1]!.split('|').map((x) => x.trim().replaceAll("'", ''))) assert.ok(SPEC.includes(m), `plugin.md names status.${m}`);
 });
 
 test('every member of the engine seam is in the spec, and every option a host gives', () => {

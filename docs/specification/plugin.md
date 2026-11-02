@@ -3,9 +3,9 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-10-31
-scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the manifest, tools over MCP, attachments, theme, and how an update travels
-keywords: [plugin, host, mount, engine, manifest, MCP, seam]
+updated: 2026-11-02
+scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
+keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version]
 ---
 
 # The board as a plugin
@@ -32,6 +32,7 @@ the same bytes, and neither bundle imports anything a host must supply but Node'
 | `engine/engine.js` | Node ES module, one export: `createEngine`. Reads and writes only the folder it is given |
 | `words.json` | The manifest's words keys, and the board's fixed words, by `board.<area>.<name>` |
 | `skill.md` | What the bot reads while the plugin is on (§ The bot) |
+| `plugin.d.ts` | The seam's types for a TypeScript host (§ The types and the seam version) |
 
 To update: rebuild, and reload the page and restart the engine. `npm run build:plugin -- --out <folder>` writes elsewhere;
 `-- --watch` rebuilds the two bundles on a change, so a host linked to the folder picks them up on a reload. A page holds
@@ -44,7 +45,7 @@ Proven by `apps/board/tests/plugin-build.test.ts` "a clean build writes exactly 
 ## The view
 
 ```ts
-mount(root: HTMLElement, host: BoardHost): PluginView   // apps/board/plugin/view.ts `mount`
+mount(root: HTMLElement, host: PluginHost): PluginView   // apps/board/plugin/view.ts `mount`
 ```
 
 `root` is an element the host gives, empty, with **a definite size**: everything the board draws is placed against it, so
@@ -54,7 +55,8 @@ dialogs, search and help. There is no second element to give and no control a ho
 
 ### What the host gives
 
-`BoardHost`, `apps/board/src/board/host.ts`. Everything the board does outside `root` goes through it.
+`PluginHost` (`apps/board/plugin/view.ts`): `BoardHost` (`apps/board/src/board/host.ts`) without `page`, which is the standalone page's own
+(§ Standalone's own). Everything the board does outside `root` goes through it.
 
 | Member | Promise | Left out | Proven by |
 |---|---|---|---|
@@ -82,7 +84,7 @@ off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags`
 | `leave()` | True at once when nothing is unsaved; else asks through `confirm`. True: the words are discarded and you unmount. False: the board stays, focus in the words | `view-gives.spec.ts` "unsaved and leave" |
 | `pageChip()` | The chip for the board on show, for your own Add to chat; null with none | `view-gives.spec.ts` "pageChip" |
 | `reveal({ board?, n?, seq?, cards? })` | Brings into view a board, a card, a note, or several cards. `cards` zooms and selects nothing. Not on the board, or a card hidden or removed: says so through `notify`, and takes no focus. Another board may ask through `confirm` first. A board not yet in the ledger opens when its first line arrives, which is how a bot's first board opens | `view-gives.spec.ts` "reveal: a board", "reveal of what is not" |
-| `status.now`, `status.on(listener)` | What the board shows, read only: `boardId`, `title`, `counts`, `unsaved`, `chatWork` and more; `on` says each change | `view-gives.spec.ts` "status and send" |
+| `status.now`, `status.on(listener)` | What the board shows, read only: `boardId`, `title`, `counts`, `unsaved` and `chatWork`, which are all the types promise (`PluginStatus`: the status holds more, and a host may read it but not rely on it); `on` says each change, with the fields that changed | `view-gives.spec.ts` "status and send" |
 | `send()` | Send to agent, for a button of your own. The board's header has its own. Resolves null, or the problem's words | `view-gives.spec.ts` "status and send" |
 
 Nothing else is there (`view-gives.spec.ts` "the view holds no more").
@@ -261,6 +263,47 @@ Colours are not on the list: they are measured for contrast (D-009). **Light or 
 `"dark"` on the page's root (`<html>`) forces one.** A `color-scheme` of yours doesn't move them, nor does `data-theme` on
 `root`, so two boards in a page share one theme. Proven by `guest.spec.ts` "theme", `apps/board/tests/plugin-theme.test.ts`.
 
+## The types and the seam version
+
+**The types.** `plugin.d.ts`, at the root of the folder, is made at build from the code and is not written by hand
+(`apps/board/bin/plugin-types.ts` `pluginTypes`): the declarations of `apps/board/plugin/view.ts` and `engine.ts`, and every
+type they reach, copied as written with their comments. It is one module: `mount`, `createEngine`, `PluginHost`, `PluginView`,
+`PluginEngine`, `PluginEngineOptions` and what those take and give (`BoardChat`, `Chip`, `EngineReply` and the rest). A
+`Pick` or `Omit` is opened to its members, so what this page calls standalone's own (§ Standalone's own) is not in the file.
+It uses the DOM's types (`HTMLElement`, `Response`, `URLSearchParams`, `AbortSignal`) and nothing else outside itself. A
+TypeScript host compiles against the file of the folder it ships:
+
+```ts
+import type { PluginHost, PluginView } from './board/plugin.js';
+const { mount } = (await import(viewUrl)) as Pick<typeof import('./board/plugin.js'), 'mount'>;
+```
+
+Proven by `apps/board/tests/plugin-types.test.ts` "the types are the code's own", "a host that uses every member compiles against the types", "the file fails to compile against that host when any one member is taken out", `apps/board/tests/plugin-build.test.ts` "a clean build writes exactly the folder".
+
+**The seam version.** `seam` in `manifest.json` is one whole number, starting at 1, with one home: `SEAM` in
+`apps/board/plugin/seam.ts`. It is the version of the types above, and of what this page promises of the view and the engine:
+`manifest.version` is the API's and moves with routes, so it says nothing of the seam.
+
+*A breaking change* is one a host built for the last number would not survive, by its compiler or by its behaviour: a member
+taken out or renamed, or a part of the folder or its entry (`mount`, `createEngine`) moved; a member the host gives that is
+now required, or takes less than before; a member the host is given that now holds less; a promise on this page that now means
+something else, or happens at another moment. *Not breaking*: a member the host may leave out, a member the host is given
+and may ignore, a new tool or chip kind, a new flag that is off until a host turns it on, new words.
+
+*When the number moves.* `SEAM` is raised by one in the same change as the breaking change, never lowered, never reused. The
+types cannot tell a breaking change from an addition, and no tool can see a changed meaning, so the person making the change
+decides, and review checks. What the build does is make the decision unavoidable: `SEAM_TYPES` in `seam.ts` is the hash of the
+types (their tokens: a comment or a line break moves nothing), and the build and `npm test` fail with the hash and the
+rule until it is set again, whichever way the change goes. A change that does not touch the types leaves both alone.
+
+*What a host does with it.* Read `seam` before anything else is loaded, and compare it with the number it was built for. The
+same number: load. Any other: don't load that folder, keep the one it has, and say both numbers: a higher one means the host is
+the one to update (compile against the new `plugin.d.ts`), a lower one that the folder is old. A host never needs to
+read the types at run time.
+
+Proven by `apps/board/tests/plugin-types.test.ts` "the manifest holds the seam number", "the seam number cannot stay behind the types",
+`engine-hooks.spec.ts` "the folder: a host reads the seam version", `apps/board/tests/plugin-build.test.ts` "the manifest fits its schema".
+
 ## The manifest
 
 `manifest.json`, checked at build by `apps/board/plugin/manifest.schema.json` (`apps/board/plugin/manifest.ts` `manifestOf`). Text is words keys, never the text.
@@ -270,6 +313,7 @@ Colours are not on the list: they are measured for contrast (D-009). **Light or 
 | `id` | `board` |
 | `name` | A words key |
 | `version` | The API's version (`info.version` in `openapi.json`), a string |
+| `seam` | The seam's version, a whole number from 1 (§ The types and the seam version) |
 | `view` | `{ module, styles, export }`: `view/board.js`, `[view/board.css]`, `mount` |
 | `engine` | `{ module, export }`: `engine/engine.js`, `createEngine` |
 | `chips` | Each `{ kind, words }`: `card`, `note`, `board`, `selection`, `answers` |
@@ -304,12 +348,11 @@ No test holds these:
 
 For the maintainer's review (D-074 rule 7). Each is decided for now, and each is cheap to change until a host depends on it.
 
-1. **Pictures for a bot under a host.** Today its skill has no Images section, because no folder can be named for it, and
-   `engine.image` reads `<dir>/images`: a host's bot may not reach `dir` at all. So a picture shows only if the host's code
-   puts the file there. **Recommendation:** one more tool, `put_image` (`path`, base64 bytes; `x-hosts` both or `plugin`), held to the
-   image route's checks (`imagePathProblem`, `imageHeadProblem`, the size limit). The skill's Images section then names a
-   tool, not a folder; a bot needs no path into `dir`, and the engine stays the only writer of its folder. Cost: bytes
-   through a tool's input. Until then a bot told nothing writes no pictures, and a card that names one shows it as missing.
+1. **Pictures for a bot under a host.** **Settled** (point 377): no `put_image`. A bot writes a picture straight into the board's
+   `images/` folder and the engine reads it with its usual checks (`engine.image`; `imagePathProblem`, `imageHeadProblem`, the size
+   limit), so the engine stays the one reader and no bytes pass through a tool's input. That holds where the bot can reach the
+   folder: the last section says where it lives. Not done yet: the plugin's `skill.md` has no Images section for a host
+   (`apps/board/plugin/words/skill-edits.ts` takes the standalone one out), so until it has, a bot told nothing writes no pictures.
 2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. **Settled**
    (point 377): a host may let the person drop them; the Send then counts only what went, by what `resolve` read
    (`record(answers)`, § The chat), so nothing is lost and the seam stays small.
@@ -319,7 +362,7 @@ For the maintainer's review (D-074 rule 7). Each is decided for now, and each is
 4. **`chat.hasLine?`**: a synchronous question beside `chat.reveal?`, since the stepper asks it while drawing. The alternative is a
    link always shown when `reveal` is given. Keep: a link that does nothing is worse.
 5. **`status` and `send` on the view**, beyond PLAN's list. Standalone's chat reads `status`, and a host may want a button of its
-   own. Keep; the status is wide, so only what this page names is promised.
+   own. Keep; the status is wide, so the types promise only what this page names (`PluginStatus`).
 6. **`#board` still gives `board`.** The folder's `mount` leaves it out (`plugin/view.ts`), but the `#board` name, used inside
    this repo, does not: `App.svelte` needs its test door.
 7. **The root is a size container** (`apps/board/src/styles/board.css`), so `100cqh` caps a menu by the pane. It asks a host for a definite
@@ -327,11 +370,8 @@ For the maintainer's review (D-074 rule 7). Each is decided for now, and each is
 8. **The sheet still touches `:root`**: the tokens, whose lowered form makes `data-theme` work only there. `color-scheme` left it for the
    board's root (`apps/board/vite.plugin.config.ts` `hostKeepsColorScheme`), so a host's fields stay its own. Scoping the tokens to
    `.vb-board` too would let two boards differ, but it moves every token and risks the screenshots. Keep until a host minds.
-9. **No types in the folder.** A TypeScript host writes `declare module` from this page. **Recommendation:** add a generated
-    `plugin.d.ts` when the first host asks: `PluginView` and `PluginEngine` are already plain types.
-10. **No seam version.** `manifest.version` is the API's, which moves with routes, not with this page, so a host can't tell whether
-    a new folder breaks it. **Recommendation:** a `seam` number in the manifest once a second host is live. Its contract test is the
-    guard until then.
+9. **Types in the folder.** **Settled** (point 377): `plugin.d.ts`, generated at build (§ The types and the seam version).
+10. **A seam version.** **Settled** (point 377): `seam` in the manifest, with the rule for moving it (§ The types and the seam version).
 11. **The zoomed view stays a real modal**, inert page and all (PROOF_01). Non-modal means rebuilding its focus handling.
 
 ## What nclite needs
@@ -375,3 +415,12 @@ whether a `writes: true` tool asks the person.
 
 **Attachments there.** Its chat already uploads on submit and tells the bot the path, and the reader runs in its container: nothing
 to add for the board.
+
+### Where the board lives in nclite
+
+Decided (point 377.1); open point 1 rests on it:
+
+- **The whole board folder lives inside each bot's workspace**: `.visionboard`, with its ledger, its `images/` and its apps. That folder is the `dir` the host gives `createEngine`.
+- **Each bot has its own board**: one engine and one `dir` per bot, and the bot's id (§ The bot) is kept with that bot.
+- **A bot writes its pictures straight into the board's `images/` folder**, and `engine.image` reads them with its usual checks (§ The engine). There is no `put_image` tool.
+- **Accepted for now**: the bot can reach the ledger file (`.visionboard/ledger.jsonl`) because it is in the bot's workspace. Splitting the ledger out of the bot's reach is a later option.

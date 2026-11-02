@@ -5,11 +5,12 @@
   "description": "manifest.json of the built plugin folder: what a host reads before it loads anything. Names of text are keys into words.json, never the text. Every path is relative to the folder.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "name", "version", "view", "engine", "chips", "tools", "skill", "words"],
+  "required": ["id", "name", "version", "seam", "view", "engine", "chips", "tools", "skill", "words"],
   "properties": {
     "id": { "description": "Lowercase letters and hyphens: the folder name, and the plugin's id in a chip and a change event.", "type": "string", "pattern": "^[a-z]+(-[a-z]+)*$" },
     "name": { "$ref": "#/$defs/wordsKey" },
     "version": { "description": "The board API's version (openapi.json info.version).", "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "seam": { "description": "The version of the seam a host implements: the view's `mount` and its host, the engine's `createEngine` and what it gives back (plugin.d.ts). It moves only for a change a host built against the last one would not survive; a host compares it with the one it was built for before it loads the folder.", "type": "integer", "minimum": 1 },
     "view": {
       "description": "The view: an ES module that exports `mount(root, host)`, and its one stylesheet.",
       "type": "object",

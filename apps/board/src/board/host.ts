@@ -185,7 +185,7 @@ export function memoryStore(): BoardStore {
 /** The viewer's alignment (alignSetting flag): `center` when the host says so, else `start`. */
 export const alignOf = (host: Pick<BoardHost, 'settings'>): Align => (host.settings.get('align') === 'center' ? 'center' : 'start');
 
-/** What `mount` gives back: nclite's `PluginView`. */
+/** What `mount` gives back, the view a host holds (`PluginView`, apps/board/plugin/view.ts). */
 export interface BoardView {
   /** Removes every listener the board added and empties `root`. It never asks: words a note holds
    *  go with it, so a host calls `leave()` first. */

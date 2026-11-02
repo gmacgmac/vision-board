@@ -10,6 +10,7 @@ export type {
   BoardChat, BoardEvent, BoardHost, BoardPage, BoardPageParts, BoardSettings, BoardStore, BoardView, ChatStatus, ChatWork, ConfirmAsk,
 } from './host.ts';
 export type { MountedBoard } from './mount.ts';
+export type { BoardStatus } from './status.ts';
 
 /** The board inside `root`, in `host` (mount.ts). */
 export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
