@@ -1,8 +1,8 @@
 ---
 task_name: Plugin Skill Images Section
 created: 2026-11-02
-completed:
-status: pending
+completed: 2026-11-02
+status: completed
 categories: [board-agent]
 type: implementation
 model: standard
@@ -43,4 +43,12 @@ says "Not done yet".
 
 ## Implementation Notes
 
-_To be completed by the agent._
+- `apps/board/plugin/words/skill-edits.ts`: the Images edit now puts in `IMAGES` (the standalone section's words, the folder named
+  "the `images/` folder of the board folder your host names", paths inside `images/`, formats, 8 MB / 1 MB, 8 deep, alt text,
+  no internet address, overwrite to change, svg size and short CSS motion). Left out: `.visionboard/` and the app-card sentence.
+  The front matter keeps "It also shows pictures inside a card." `skill.ts` header comment updated.
+- `docs/specification/plugin.md`: open point 1 marked Done; "Words differ per host" no longer lists the images folder as taken out.
+- `apps/board/tests/plugin-skill.test.ts`: the old "no Images section" assertion removed; new test holds the section's wording, the
+  engine's `IMAGE_LIMITS` numbers, and that it names no host, `.visionboard`, app or upload tool.
+- Gates (nice 15): `npm run verify` ok (warnings only, none new), `npm run check` 0 errors, `npm test` 2205 pass, `npm run test:plugin` 79 pass (3 workers, port 5010).
+- Note: svg is told as available (the `svgImages` flag is on by default); a host that turns it off, which plugin.md already says to pass to `createEngine`, makes a bot's svg "Image not shown".

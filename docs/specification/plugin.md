@@ -205,7 +205,7 @@ not through your person's door, which answers 403. Keep the `agent` it answers, 
 gives it back. It holds on another engine over the same `dir`, so don't register again on a restart (`tools.spec.ts` "the bot").
 
 **Words differ per host.** `skill.md` and the engine's tool descriptions are standalone's less what a bot under a host doesn't
-have: `join` and its secret, the chat panel, attachments, apps and the images folder (`apps/board/plugin/words/skill-edits.ts`,
+have: `join` and its secret, the chat panel, attachments and apps; its pictures go in the board folder's `images/` (`apps/board/plugin/words/skill-edits.ts`,
 `apps/board/server/words/plugin-tools.ts`). Give the bot `skill.md` while the plugin is on. Proven by
 `apps/board/tests/plugin-skill.test.ts` "the plugin skill names no tool".
 
@@ -351,8 +351,9 @@ For the maintainer's review (D-074 rule 7). Each is decided for now, and each is
 1. **Pictures for a bot under a host.** **Settled** (point 377): no `put_image`. A bot writes a picture straight into the board's
    `images/` folder and the engine reads it with its usual checks (`engine.image`; `imagePathProblem`, `imageHeadProblem`, the size
    limit), so the engine stays the one reader and no bytes pass through a tool's input. That holds where the bot can reach the
-   folder: the last section says where it lives. Not done yet: the plugin's `skill.md` has no Images section for a host
-   (`apps/board/plugin/words/skill-edits.ts` takes the standalone one out), so until it has, a bot told nothing writes no pictures.
+   folder: the last section says where it lives. **Done**: the plugin's `skill.md` has its own Images section
+   (`apps/board/plugin/words/skill-edits.ts` `IMAGES`): the `images/` folder of the board folder the host names, the formats and
+   limits, and how a card names a picture, with no host named (`apps/board/tests/plugin-skill.test.ts` "the plugin skill has an Images section").
 2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. **Settled**
    (point 377): a host may let the person drop them; the Send then counts only what went, by what `resolve` read
    (`record(answers)`, § The chat), so nothing is lost and the seam stays small.

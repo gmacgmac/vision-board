@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { OPERATIONS } from '#format';
+import { IMAGE_LIMITS, OPERATIONS } from '#format';
 import { TOOLS } from '#mcp';
 import { makeTempDir } from '#format/testing';
 import { createEngine } from '../server/engine/index.ts';
@@ -33,7 +33,20 @@ test('the plugin skill names no tool the plugin bot does not have, and no secret
     assert.ok(!plugin.toLowerCase().includes(word.toLowerCase()), `the plugin skill says "${word}"`);
   }
   assert.match(plugin, /^## Where you are running$/m);
-  assert.ok(!/^## Apps on the board$/m.test(plugin) && !/^### Images in cards$/m.test(plugin));
+  assert.ok(!/^## Apps on the board$/m.test(plugin));
+});
+
+test('the plugin skill has an Images section: the board folder\'s images/, the engine\'s formats and limits, how a card names a picture, and no host', () => {
+  const section = plugin.match(/^### Images in cards\n([\s\S]*?)^## /m)?.[1] ?? '';
+  assert.ok(section, 'the section is there');
+  for (const want of ['`images/` folder of the board folder your host names', 'png, jpeg, webp or gif, at most 8 MB', 'svg, at most\n  1 MB', '`![What it shows](ui/settings.png)`', 'Alt text is required', 'Image not shown']) {
+    assert.ok(section.includes(want), want);
+  }
+  assert.deepEqual([IMAGE_LIMITS.maxBytes, IMAGE_LIMITS.svgMaxBytes, IMAGE_LIMITS.depth, Object.keys(IMAGE_LIMITS.types)], [8 * 1024 * 1024, 1024 * 1024, 8, ['png', 'jpeg', 'webp', 'gif', 'svg']], 'the numbers the section names are the engine\'s');
+  assert.ok(!/nclite|\.visionboard|\bapp\b|upload|put_image/i.test(section), 'it names no host, no standalone path, no app, no upload tool');
+  assert.ok(!/^### Images in cards$/m.test(source.replace(/^### Images in cards$/m, '')) , 'the standalone skill has its own, once');
+  assert.ok(source.includes('Keep it in the project\'s `.visionboard/images/`'), 'the standalone words are untouched');
+  assert.ok(plugin.includes('It also shows pictures inside a card.') && !plugin.includes('small apps you build'));
 });
 
 test('every tool a plugin bot has is in the skill, and its sentences about the person\'s answers are the standalone skill\'s own', () => {
