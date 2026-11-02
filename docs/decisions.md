@@ -1056,3 +1056,12 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: a host that lets the person remove the answers chip, or an answer made between the read and the record, lost answers the bot never got.
 - **Rejected**: the chip's `ref` bounding the read (needs the board as of a past line); the engine remembering the last resolve (makes `resolve` stateful, and a failed message's read would be committed by the next Send: a silent loss); refusing a Send whose answers moved (re-sends the whole round); `record(null)` writing no line (chat-side and pull agents lose the Send signal); a v18 field without a bump (api.md 11).
 - **Task**: cortex-tasks/board/2026-11-02_board-actions_send-counts-what-went.md; cortex-tasks/board/2026-11-02_board-actions_send-follow-ups.md; cortex-tasks/board/2026-11-02_board-actions_send-error-says-why.md
+
+## D-076 Every id the board owns is prefixed, on its own page too
+- **Date**: 2026-11-02 · **Status**: Accepted (maintainer, point 376; entry 374B) · **From**: board-app prefix-ids-everywhere
+- **Decision**:
+  1. Every id the board owns is `vb<n>-`, under a host and on its own page alike: one rule, no exception (`takeIdPrefix`, `prefixOf`).
+  2. Tests select the board's ids through `bid()` (`tests/pages/helpers.ts`); the gallery takes its prefix the same way (`ownIds()`, `miniBoard`).
+- **Why**: the plugin will live in many apps; an exception on the board's own page would let what we test and what hosts get drift apart.
+- **Rejected**: plain ids on the board's own page (saves nothing, and the tests would check something hosts never get).
+- **Task**: cortex-tasks/board/2026-11-02_board-app_prefix-ids-everywhere.md
