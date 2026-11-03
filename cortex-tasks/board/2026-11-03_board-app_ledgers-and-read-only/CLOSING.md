@@ -82,3 +82,11 @@ and FIX_01 Runs 2-3 left no blocking finding. Full gates with both on: `npm test
    ledger) is related but stays open: an agent can read another ledger now, the person cannot.
 3. **App process on a read-only ledger** (the LOG item above).
 4. **The person's read-only sentence under a plugin host** (`plugin.md` open point 12).
+
+## Your answers (2026-11-03)
+
+- 403: steering line changed (project rules v0.7).
+- 404: an app keeps running on a read-only ledger, as now; its saved state stays refused.
+- 405: a hook for a host's own read-only words: tracker N46.
+- 406: a plugin bot's own picture writes and keeping two writers apart stay the host's; one bot and one board per chat
+  in nclite; risks accepted, revisited at integration.

@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.6 | **Updated**: 2026-11-03 (maintainer approved, point 399)
+> **Version**: 0.7 | **Updated**: 2026-11-03 (maintainer approved, point 403)
 
 # Vision Board — project rules
 
@@ -103,7 +103,7 @@ person's comment on one or more cards) · answered (✓ or ✗; a note never ans
 ## Running
 
 - Board: `npm run board`, then http://localhost:4466 (`npm run board:watch` reloads on changes). It
-  opens `VB_PROJECT`, else the last folder opened from the board, else this repo. One server per ledger.
+  opens `VB_PROJECT`, else the last folder opened from the board, else this repo. One writing server per ledger; any number read it.
 - MCP server `vision-board`: `packages/mcp/README.md` has the client entries (Claude Code, Kiro).
 - Kiro in the chat panel runs as the `vision-board` agent, from this repo's
   `skills/vision-board/SKILL.md`; `~/.claude/skills/vision-board` and `~/.kiro/skills/vision-board`
