@@ -3,7 +3,7 @@
 // them, and the caller its host passes in must fit the operation's `auth`. The standalone edge
 // (dispatch.ts) uses the same matching to pick the caller check before anything is read. No HTTP
 // here: a handler gets plain values and answers a reply (status and body).
-import type { LedgerEvent, OperationId } from '#format';
+import type { FlagOverrides, LedgerEvent, OperationId } from '#format';
 import { OPERATIONS, PATH_WORDS } from '#format';
 import type { Agents } from '../agents.ts';
 import type { Caller, Ledger } from '../ledger.ts';
@@ -29,6 +29,8 @@ export interface OpCtx {
   name(): string;
   /** A Send the person made (`act`), handed to the host to record (`SendHook`). */
   onSend: SendHook;
+  /** The engine's flags (`botToolRules`: the reads' `owed` and `held`, a key conflict's words). */
+  flags: FlagOverrides;
 }
 
 /** The person's Send on `board`, given to the host with `record`, which appends its `send` line (with `head`: what its

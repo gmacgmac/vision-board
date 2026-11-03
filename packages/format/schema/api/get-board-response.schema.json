@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/get-board-response.schema.json",
   "title": "Board state",
-  "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`; with agents, also the open grant requests, the board's holders and each region's holders; `locked` while the person has it locked. `state` and `versions` are keyed by node id (the string form of the number).",
+  "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`; with agents, also the open grant requests, the board's holders and each region's holders; `locked` while the person has it locked; `held` when you hold it. `state` and `versions` are keyed by node id (the string form of the number).",
   "type": "object",
   "required": [
     "head",
@@ -135,6 +135,11 @@
       },
       "unevaluatedProperties": false,
       "description": "What the person has done on this board: each item's status, pins, chosen layout modes and card widths, sizes and moves, and the notes on and places of whole containers."
+    },
+    "held": {
+      "const": true,
+      "description": "Present, and true, when you hold this board: write on it without asking; `request_grant` would answer `held`. Left out otherwise.",
+      "$comment": "botToolRules flag (bot-quality TOOLS_01); api.md 171"
     },
     "versions": {
       "type": "object",

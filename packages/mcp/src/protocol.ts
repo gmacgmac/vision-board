@@ -6,7 +6,8 @@
 // Logs go to stderr only: no `notifications/message` is ever sent, so none is sent unasked.
 import type { CallContext, ToolHost } from './call-tool.ts';
 import { callTool, httpTools } from './call-tool.ts';
-import { CACHE, CAPABILITIES, INSTRUCTIONS, INSTRUCTIONS_JOINED, LEGACY, META, MODERN, SERVER_INFO, SUPPORTED_VERSIONS } from './info.ts';
+import { CACHE, CAPABILITIES, LEGACY, META, MODERN, SERVER_INFO, SUPPORTED_VERSIONS } from './info.ts';
+import { INSTRUCTIONS, INSTRUCTIONS_JOINED } from './instructions.ts';
 import type { RpcMessage, RpcResponse } from './rpc.ts';
 import { isRecord } from '#format';
 import { CODES, RpcError, errorResponse } from './rpc.ts';
@@ -14,7 +15,8 @@ import * as protocolWords from './words/protocol.ts';
 
 /** What the server serves: the board server over HTTP (`vb-mcp`: `base`, with VB_AGENT_SECRET as
  * `secret` and the folder it works in as `project`, sent as `VB-Project`), or a host's `tools`, the
- * board engine's in MCP's shapes (the host vouches for the caller: no `join`, no secret). */
+ * board engine's in MCP's shapes (the host vouches for the caller: no `join`, no secret), told with their
+ * own `instructions` when they carry them. */
 export type ServerOptions = (CallContext | { readonly tools: ToolHost }) & {
   /** Where log lines go (stderr in the executable). */
   readonly log?: (line: string) => void;
@@ -49,7 +51,7 @@ function checkEra(params: Readonly<Record<string, unknown>>, legacy: boolean): v
 export function createMcpServer(opts: ServerOptions): McpServer {
   const log = opts.log ?? (() => {});
   const tools = 'tools' in opts ? opts.tools : httpTools(opts);
-  const instructions = 'tools' in opts || opts.secret ? INSTRUCTIONS_JOINED : INSTRUCTIONS;
+  const instructions = 'tools' in opts ? opts.tools.instructions ?? INSTRUCTIONS_JOINED : opts.secret ? INSTRUCTIONS_JOINED : INSTRUCTIONS;
   /** Set by `initialize`: legacy semantics for this process (stdio is one client). */
   let legacy = false;
 

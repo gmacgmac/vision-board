@@ -13,7 +13,7 @@ import { answersChip, roundOf, selectionChip } from '#actions';
 import { boardWriteSummary } from '#agent';
 import { IMAGES_DIR } from '#format';
 import { FIXTURES_DIR, TOOLS_FILE } from '#format/files';
-import { descriptionEdits, inputEdits } from '../server/words/plugin-tools.ts';
+import { descriptionEdits, inputEdits, ruleEdits } from '../server/words/plugin-tools.ts';
 import { createMcpServer, INSTRUCTIONS_JOINED, MODERN } from '#mcp';
 import type { Caller, Engine, EngineChange } from '../server/engine/index.ts';
 import { createEngine, TOOL_CHANGE } from '../server/engine/index.ts';
@@ -142,14 +142,17 @@ test('resolve: the selection chip names its cards as they stand, in the order se
 
 test('tools: one per tool the table marks for a plugin (x-hosts), listed in MCP\'s shape; each runs with the caller passed in', async () => {
   const { engine, agent } = await withPlans();
-  const table = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: { name: string; description: string; input: unknown; hosts: string[] }[] }).tools;
+  const table = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: { name: string; description: string; input: any; hosts: string[]; inputHosts?: Record<string, string[]> }[] }).tools;
   const listed = engine.tools.list();
   assert.deepEqual(listed.map((t) => t.name).sort(), table.filter((t) => t.hosts.includes('plugin')).map((t) => t.name).sort(), 'the engine gives exactly what the table marks: a manifest made from it never declares a tool the engine has not');
   for (const gone of ['list_apps', 'read_attachment', 'join']) assert.equal((await engine.tools.call(gone, {})).isError, true, `${gone} is the standalone app's`);
   for (const t of listed) {
     const row = table.find((r) => r.name === t.name)!;
-    const words = descriptionEdits.filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replace(from, to), row.description);
-    const input: unknown = JSON.parse(inputEdits.filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replaceAll(from, to), JSON.stringify(row.input)));
+    const words = [...descriptionEdits, ...ruleEdits].filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replace(from, to), row.description);
+    // The botToolRules flag (on): an input the table gives other hosts only is not this host's (bot-tool-rules.test.ts).
+    const gone = Object.entries(row.inputHosts ?? {}).filter(([, hosts]) => !hosts.includes('plugin')).map(([name]) => name);
+    const given = { ...row.input, properties: Object.fromEntries(Object.entries(row.input.properties).filter(([name]) => !gone.includes(name))) };
+    const input: unknown = JSON.parse(inputEdits.filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replaceAll(from, to), JSON.stringify(given)));
     assert.deepEqual([t.description, t.inputSchema], [words, input], `${t.name}: the table's words (less what only the standalone bot has, words/plugin-tools.ts) and JSON Schema`);
   }
   const inputs: Record<string, Record<string, unknown>> = {
@@ -187,8 +190,11 @@ test('tools: a board write says what it changed, in one shape for any host, the 
   assert.equal((await engine.tools.call('get_board', { board: 'plans' }, { caller: agent }))._meta, undefined, 'a read changed nothing');
 });
 
-test('tools: a held call ends when its host\'s signal does', async () => {
-  const { engine, agent } = await withPlans();
+test('tools: a held call ends when its host\'s signal does (botToolRules off: on, a host\'s bot has no wait, bot-tool-rules.test.ts)', async () => {
+  const engine = createEngine({ dir: dataDir(), name: () => '~/example', warn: () => {}, flags: { botToolRules: false } });
+  const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: 'Engine test' } }))!.body as { agent: string };
+  const agent: Caller = { by: 'agent', agent: joined.agent };
+  await tool(engine, 'write_board', { board: 'plans', items: [{ type: 'board', title: 'Plans' }] }, agent);
   const gone = new AbortController();
   const held = engine.tools.call('check_responses', { board: 'plans', after: 9999, wait: 60 }, { caller: agent, signal: gone.signal });
   setTimeout(() => gone.abort(), 20);

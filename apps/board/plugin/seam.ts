@@ -7,6 +7,6 @@
 /** The seam a host implements. Raised by one for each breaking change to the types, never lowered. */
 export const SEAM = 1;
 /** sha256, in hex, of the seam's types (see above). */
-export const SEAM_TYPES = '5a81013547712fade60e7c80977ddb3bbd63f8bbf2333bd650c3a1e3aeec9e46';
+export const SEAM_TYPES = '054c27efdee5cf26318cc55b52efdfb1fb0064c3940fd253323557afa0545da3';
 /** The types' file in the plugin folder. */
 export const TYPES_FILE = 'plugin.d.ts';

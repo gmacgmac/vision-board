@@ -4,9 +4,10 @@
 // caller is scoped to that agent (`list_open`, `check_responses`, api.md 41). Every read naming a
 // board an agent may call names it through `requireBoard` (visibility.ts), so an archived board is
 // not found (api.md 136); `read_ledger` is the person's and names any board. The change streams are
-// the host's (the standalone server's streams.ts, from `watch`).
+// the host's (the standalone server's streams.ts, from `watch`). What a read tells its caller about itself (`owed`,
+// `held`; the `botToolRules` flag) is caller-marks.ts.
 import type { LedgerEvent } from '#format';
-import { boardView, containerKey, toLine, widthsOf } from '#format';
+import { boardView, containerKey, flagOn, toLine, widthsOf } from '#format';
 import type { LedgerState } from '#actions';
 import {
   boardData, boardJson, boardList, boardState, containerDetail, eventBoard, linkedDetails, nodeDetail, openContainers, openItems,
@@ -14,6 +15,7 @@ import {
 } from '#actions';
 import { structureOf } from '#layout';
 import { cardOn } from '../edge.ts';
+import { holds, markBoard, markDetail, marksFor, markNotes } from './caller-marks.ts';
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
@@ -26,19 +28,21 @@ function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true }
   return { list: list.slice(0, max), ...(list.length > max && { more: true as const }) };
 }
 
-const listBoards: Op = ({ ledger, name }) => {
+const listBoards: Op = ({ ledger, name, caller, flags }) => {
   const s = ledger.state();
-  return reply(200, { project: name(), boards: boardList(s), head: s.seq });
+  const rules = flagOn('botToolRules', flags);
+  const boards = boardList(s).map((b) => (rules && holds(s, b.board, caller) ? { ...b, held: true as const } : b));
+  return reply(200, { project: name(), boards, head: s.seq });
 };
 
-const getBoard: Op = ({ params, ledger }) => {
+const getBoard: Op = ({ params, ledger, caller, flags }) => {
   const s = ledger.state();
   const id = requireBoard(s, params.board);
   // The page draws the same `boardData`; `locked` is the server's (api.md 139): read-only for everyone until the person unlocks it.
-  return reply(200, { ...boardJson(boardData(s, id)), ...(isLocked(s, id) && { locked: true }) });
+  return reply(200, { ...markBoard(boardJson(boardData(s, id)), marksFor(s, id, caller, flags)), ...(isLocked(s, id) && { locked: true }) });
 };
 
-const showNode: Op = ({ params, ledger }) => {
+const showNode: Op = ({ params, ledger, caller, flags }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const n = Number(params.n);
@@ -47,16 +51,20 @@ const showNode: Op = ({ params, ledger }) => {
   if (id === undefined || !detail) {
     throw problem('not-found', writesWords.thereIsNoNodeOn(n, board));
   }
-  return reply(200, { head: s.seq, ...detail, ...(params.linked === true && { linked: linkedDetails(s, id) }) });
+  const m = marksFor(s, board, caller, flags);
+  const linked = params.linked === true ? linkedDetails(s, id).map((d) => (d.board === board ? markDetail(d, m) : d)) : undefined;
+  return reply(200, { head: s.seq, ...markDetail(detail, m), ...(linked && { linked }) });
 };
 
-const showContainer: Op = ({ params, ledger }) => {
+const showContainer: Op = ({ params, ledger, caller, flags }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const region = String(params.region);
   const detail = containerDetail(s, board, region);
   if (!detail) throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
-  return reply(200, { head: s.seq, ...detail });
+  const m = marksFor(s, board, caller, flags);
+  const marked = m ? { ...detail, notes: markNotes(detail.notes, m.regions.get(region)), nodes: detail.nodes.map((d) => markDetail(d, m)) } : detail;
+  return reply(200, { head: s.seq, ...marked });
 };
 
 /** How the board arranges one container (api.md 133), structure only: the cards in it now (the

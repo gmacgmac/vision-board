@@ -16,7 +16,8 @@ import { isRecord } from '#format';
 type Rec = Record<string, unknown>;
 
 /** One batch: the ledger, the writing agent, the path's board, and the keys of items that failed. */
-export interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string> }
+/** One `write_board` call's state; `keyHelp`: a key conflict's words say what the key holds (`botToolRules`). */
+export interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string>; keyHelp?: boolean }
 
 /** The top-level fields of an item of `type` that hold one card's board number or `{ key }` (api.md
  * 35), from the one card-reference table (`CARD_FIELDS`): a link's two ends, else `n`. A reply's

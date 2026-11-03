@@ -259,6 +259,7 @@ type ListBoardsResponse = {
     title: CommonTitle;
     seq: number;
     locked?: true;
+    held?: true;
   }[];
   head: number;
   project: string;
@@ -283,6 +284,7 @@ type GetBoardResponse = {
       y: number;
     }>;
   };
+  held?: true;
   versions: Record<string, number>;
   requests?: {
     seq: number;
@@ -362,6 +364,7 @@ type CommonNote = {
   sent?: true;
   locked?: true;
   nodes?: CommonCardNumbers;
+  owed?: true;
 };
 type CommonLongText = string;
 type CommonCardNumbers = number[];

@@ -2,7 +2,8 @@
 // call (`x-agent`), what a declared tool needs, from the one source: its name, its words (the
 // operation's description, D-056), its input schema (path, query and the body's top-level properties
 // merged into one object, refs inlined by mcp-schema.mjs so it stands alone), whether it writes, whether
-// it takes the agent's secret, and where each input goes back to. Written to
+// it takes the agent's secret, where each input goes back to, and the inputs only some hosts give (an input's own
+// `x-hosts`, beside the operation's: `inputHosts`, on a row that has one). Written to
 // packages/format/src/tools.generated.json by scripts/gen-api.mjs; gen-mcp.mjs makes the MCP tool list
 // from it, and a plugin manifest can be made from it too. How a host carries the secret is the host's,
 // so `secret` is a flag here, not an input. Pure.
@@ -14,11 +15,13 @@ const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 /** True when the operation accepts the agent's Bearer secret (required or optional). */
 export const takesSecret = (op) => (op.security ?? []).some((r) => 'agentSecret' in r);
 
-/** The merged input (path, then query, then the body's top-level properties) and where each goes. */
+/** The merged input (path, then query, then the body's top-level properties), where each goes, and the hosts that
+ * give a parameter that says (`x-hosts` on the parameter; the rest go wherever the tool goes). */
 function inputOf(op, doc, schemas) {
   const properties = {};
   const required = [];
   const route = { path: [], query: [], body: [] };
+  const hosts = {};
   const add = (name, where, schema, isRequired) => {
     if (name in properties) throw new Error(`${op.operationId}: input "${name}" is named twice once merged`);
     properties[name] = schema;
@@ -29,6 +32,7 @@ function inputOf(op, doc, schemas) {
     for (const p of (op.parameters ?? []).map((x) => resolveParam(doc, x)).filter((x) => x.in === where)) {
       const schema = flatten(p.schema ?? {}, doc, schemas);
       add(p.name, where, p.description ? { ...schema, description: p.description } : schema, where === 'path' || p.required === true);
+      if (p['x-hosts'] !== undefined) hosts[p.name] = p['x-hosts'];
     }
   }
   const body = op.requestBody?.content?.['application/json']?.schema;
@@ -37,7 +41,7 @@ function inputOf(op, doc, schemas) {
     if (!isObj(flat.properties)) throw new Error(`${op.operationId}: the body must be an object with properties`);
     for (const [name, schema] of Object.entries(flat.properties)) add(name, 'body', schema, (flat.required ?? []).includes(name));
   }
-  return { input: { type: 'object', properties, ...(required.length && { required }), additionalProperties: false }, route };
+  return { input: { type: 'object', properties, ...(required.length && { required }), additionalProperties: false }, route, hosts };
 }
 
 /** One row per `x-agent` operation, in document order. */
@@ -46,10 +50,10 @@ export function toolTable(doc, schemas) {
   for (const item of Object.values(doc.paths ?? {})) {
     for (const method of METHODS.filter((m) => item[m]?.['x-agent'] === true)) {
       const op = item[method];
-      const { input, route } = inputOf(op, doc, schemas);
+      const { input, route, hosts } = inputOf(op, doc, schemas);
       rows.push({
         name: op.operationId, title: op.summary ?? op.operationId, description: (op.description ?? op.summary ?? '').trim(),
-        input, writes: method !== 'get', secret: takesSecret(op), route,
+        input, writes: method !== 'get', secret: takesSecret(op), route, ...(Object.keys(hosts).length > 0 && { inputHosts: hosts }),
       });
     }
   }

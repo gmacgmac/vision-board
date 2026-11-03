@@ -10,6 +10,7 @@ export { checkArgs } from './check-args.ts';
 export type { Checked } from './check-args.ts';
 export { TOOL_FILE, TOOLS, routeOf } from './tools.ts';
 export type { JsonSchema, Route, ToolDef, ToolFile } from './tools.ts';
-export { CAPABILITIES, INSTRUCTIONS, INSTRUCTIONS_JOINED, LEGACY, MCP_BIN, MODERN, SERVER_INFO, SUPPORTED_VERSIONS } from './info.ts';
+export { CAPABILITIES, LEGACY, MCP_BIN, MODERN, SERVER_INFO, SUPPORTED_VERSIONS } from './info.ts';
+export { INSTRUCTIONS, INSTRUCTIONS_JOINED } from './instructions.ts';
 export { CODES, RpcError } from './rpc.ts';
 export type { Id, RpcMessage, RpcResponse } from './rpc.ts';

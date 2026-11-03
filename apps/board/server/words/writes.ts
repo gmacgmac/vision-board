@@ -24,6 +24,8 @@ export const boardIsLockedSoNo = (board: string): string => `Board "${board}" is
 export const theBodyWouldBeOver = (body: number): string => `the body would be over ${body} characters`;
 export const theKeyWasUsedBefore = (key: string): string => `The key "${key}" was used before for different content. Use a new key for new content, or resend the same content to get the first result.`;
 export const keyReusedForDifferentContent2 = 'key reused for different content';
+export const theKeyHoldsACard = (key: string, n: number, title: string, ver: number, fresh: string): string => `The key "${key}" already holds card ${n} "${title}" (version ${ver}), and a key names one item for good. To change that card, write it with \`n: ${n}\` and a new key; for a new item, use a new key, such as "${fresh}". Resending the same content gets the first result.`;
+export const theKeyHoldsALine = (key: string, type: string, seq: number, fresh: string): string => `The key "${key}" already holds a ${type} (line ${seq}), and a key names one item for good. For new content, use a new key, such as "${fresh}". Resending the same content gets the first result.`;
 export const nodeIsAtVersion = (n: number, ver: number): string => `node ${n} is at version ${ver}`;
 export const thisCallWritesBoardAnd = (board: string, n: number, board2: string): string => `This call writes board "${board}", and node ${n} is on board "${board2}". Send the item to that board's write_board.`;
 export const nodeIsOnBoardNot = (n: number, board: string, board2: string): string => `node ${n} is on board "${board}", not "${board2}"`;
