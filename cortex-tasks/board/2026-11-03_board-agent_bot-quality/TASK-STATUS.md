@@ -27,6 +27,7 @@ tracker: cortex-tasks/tracker.md#M48
 | 2 | TOOLS_01 | 1 | strong | API designer for agent tools — a rule an agent must not break is a missing field or a refusal, never a sentence it might skip; a read gives the agent the fact it needs, so it never has to guess. | [TOOLS_01_tools-enforce.md](./TOOLS_01_tools-enforce.md) | completed | `botToolRules`: no `wait` for a host's bot (refused), instructions per host, `owed`/`held` marks, helpful key conflicts; openapi 1.39.0; SEAM 1 (for review); D-083 draft |
 | 3 | KEY_01 | 1 | standard | Accessibility engineer — a keyboard user acts on the card the focus is on; anything else is a trap they can't see. | [KEY_01_note-key-target.md](./KEY_01_note-key-target.md) | completed | Cause: a focus steal after the ✓/✗ write, not the selection; `focusLeads` flag; seam hash reset by the orchestrator (SEAM 1) |
 | 4 | SKILL_01 | 2 | strong | Prompt engineer who treats instructions as code — every line earns its place by a scenario it fixes, and a change that helps one case and breaks another is reverted. | [SKILL_01_skill-wording.md](./SKILL_01_skill-wording.md) | completed | v3.25; eval 35/40 (both baselines) → 37/40, none regressed; flaky: picture done-only, refusals short-chat, answered-note; 24 runs, ≤ $2.04 |
+| 5 | TOOLS_02 | 3 | strong | API designer for agent tools — a fact the agent needs is stated, never left for it to infer from something missing. | [TOOLS_02_answered-mark.md](./TOOLS_02_answered-mark.md) | planned | Added by the orchestrator from SKILL_01's request 1 |
 
 ## Shared Foundations
 
