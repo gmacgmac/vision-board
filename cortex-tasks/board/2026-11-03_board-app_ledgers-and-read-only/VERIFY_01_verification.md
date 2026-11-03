@@ -60,12 +60,27 @@ temp folder, never the repo's own `.visionboard/`, never port 4466 (your block: 
 
 _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (Run 1, 2026-11-03)
 
 ### What was checked
--
+- Steps 1-8 all done, on scratch projects under the OS temp folder (removed), servers on 7110-7170, never 4466; no code
+  changed. Two computers = two servers on one folder with their own `HOME` and port (same host: `LockEnv` can't be set
+  from outside a test); a stale lock simulated by ageing its `beat`; an interrupted move by a folder that can't be
+  renamed (instead of a kill between renames).
+- Steps not done as written: a real chat CLI after Stop editing (F2, from the code: no sign-in under a temp `HOME`);
+  keyboard and axe by hand (the read-only and ledgers page specs cover them and pass).
+- CONSOLIDATE_01-R4: both defaults flipped in this worktree's `flags.ts` only, run, restored byte for byte, rebuilt;
+  `git status` clean.
+- Requests weighed: LEDGERS_01-R6 → F3 (blocking), READONLY_01-R6 → F2 (blocking), READONLY_UI_01-R2 → F6,
+  LEDGER_UI_01-R3 → F15 (tracker), CONSOLIDATE_01-R4 → F4 (21 unit as reported; 13 page, not 4).
 ### Findings summary
--
+- [VERIFY_01_findings.md](./VERIFY_01_findings.md): 15 findings, 4 blocking. F1 a watcher of an old-layout folder,
+  after another server moved it, shows nothing and its Edit forks a second ledger at the old place; F2 a chat keeps
+  writing `images/`/`apps/` after Stop editing, and into every ledger's folder; F3 chat sessions cross ledgers on
+  same-id boards and re-key an agent into the other ledger; F4 the flag-on test list. Not blocking: F5-F15 (a
+  flags-off server forks a moved folder; no `editing` event on a lost lock; a waking writer re-beats its lock; Edit on
+  an unwritable folder is a 500; the Edit menu under the access bar; enabled write controls; page flags separate from
+  the server's; reads after a switch; part-way move advice; last ledger by unresolved path; `pageStore`).
 
 ## On Completion
 
