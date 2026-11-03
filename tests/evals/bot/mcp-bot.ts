@@ -22,8 +22,10 @@ const post = async (what: string, body: unknown, signal?: AbortSignal) => {
 };
 
 const listed = await post('list', {});
+const { instructions } = (await post('instructions', {})) as { instructions: string | null };
 const server = createMcpServer({
   tools: {
+    ...(instructions ? { instructions } : {}),
     list: () => listed,
     async call(name, input, ctx = {}) {
       try { return await post('call', { name, arguments: input }, ctx.signal); } catch (e) {

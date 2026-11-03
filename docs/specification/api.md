@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -301,7 +301,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `chat-access.ts` `MCP_NAME`, held by `api-chat-kiro.test.ts`). It speaks MCP
     2026-07-28 and answers the 2025-11-25 handshake for clients that have not moved yet:
     - modern: `server/discover` (supported versions both, capabilities, `serverInfo`, and
-      `instructions`: join once, save the secret, write with keys, then `check_responses`);
+      `instructions`: join once, save the secret, write with keys, then `check_responses`; a host's tools that carry
+      their own `instructions` get those, 171);
       `tools/list` with `ttlMs` and `cacheScope`; `tools/call`; version and capabilities read
       from each request's `_meta`; an unknown version gets `UnsupportedProtocolVersionError`
       (-32022); every result carries `resultType: "complete"` and `serverInfo` in its `_meta`
@@ -1657,3 +1658,28 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     the page passes `BoardChat.status.agent` and reads again when it changes (`attention.ts`); with no agent, every
     answer, as before. The other agents read theirs with `check_responses`. Held by `unsent.test.ts` ("with the chat's
     agent") and `tests/pages/chat-send-scope.spec.ts`. Both behind `sendCountsWhatWent`; off, as before.
+171. **The tools keep a bot's rules; the reads give it the facts** (bot-quality TOOLS_01, points 393, 394; the plugin skill
+    live run's findings 1, 4 and 6a). `info.version` 1.39.0, adds only. Behind the `botToolRules` flag (on; the engine reads
+    it from its `flags`, and the standalone server passes `VB_FLAGS`); off, every part is as before
+    (`apps/board/tests/bot-tool-rules.test.ts`, each "flag off" test).
+    - *An input may say who gives it*: `x-hosts` on a parameter, as on an operation (46). The tool table carries it as the
+      row's `inputHosts` (`gen-tools.mjs`; `gen-api.mjs` `toolTableWithHosts` stops the build on an unknown host;
+      `gen-tools.test.mjs` "x-hosts on an input"). `check_responses`'s `wait` is `standalone`'s alone: the engine's
+      `tools` list it without `wait`, its words lose the offer (`words/plugin-tools.ts` `ruleEdits`), and a `wait` sent
+      anyway is refused at once, `invalid` with a `/wait` pointer, saying the person's Send brings the answers and to end
+      the turn (`inputRefusals`). Refused, not answered at once: the bot's schema has no `wait`, as with any input outside
+      a schema, and an answer that looks like a wait that ended invites a poll loop. `vb-mcp` and `route` keep `wait`.
+    - *Instructions per host*: `#mcp` `ToolHost` may carry `instructions`, and `createMcpServer({ tools })` sends them
+      (else `INSTRUCTIONS_JOINED`, as before). The engine's `tools.instructions` are `INSTRUCTIONS_JOINED` less `join`,
+      the secret, `wait` and the folder header (`instructionEdits`). The instructions moved to their own file
+      (`packages/mcp/src/instructions.ts`), so the engine bundle takes their words and none of the server's paths.
+    - *Reads mark what is true for the caller*, an agent's read only: a note it owes is `owed` (`common.schema.json`
+      `note`; in `get_board`'s `state.items` and `state.containerNotes`, `show_node` and its `linked`, `show_container`),
+      from the condition rows `list_open`'s `pending` and `containers` read (`item.owed`, `container.owed`), and a board
+      it holds is `held` (`list_boards`, `get_board`), by the test `request_grant` answers `held` by
+      (`apps/board/server/engine/caller-marks.ts`). The page's fold is unchanged: no person read is marked
+      (`board-data.test.ts`).
+    - *A key conflict says what the key holds*: a card by number, title and version (with how to change it: its `n`
+      and a new key), or the line's kind and `seq`, and a free key, the first `<key>-<i>` this agent has not used
+      (`write-replay.ts` `conflictWords`). The same key with the same content stays a quiet replay (29): a key names one
+      line for good (D-017), so other content under it stays a conflict rather than a success that drops it.

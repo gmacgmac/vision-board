@@ -130,6 +130,11 @@
         "nodes": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumbers",
           "description": "For a note on a group of cards: every item it is on. Left out for a note on one card."
+        },
+        "owed": {
+          "const": true,
+          "description": "This note waits for your answer: answer it with a `reply` whose `to` is its `seq`, or an `append`. The same rule as `list_open`'s `pending` and `containers`. A note without it needs nothing more from you: answered already (a reply, a newer version, or the person's ✓ or ✗ after it), or not yours to answer. Only an agent's read is marked.",
+          "$comment": "botToolRules flag (bot-quality TOOLS_01); api.md 171"
         }
       },
       "unevaluatedProperties": false

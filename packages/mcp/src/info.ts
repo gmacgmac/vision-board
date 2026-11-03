@@ -1,5 +1,5 @@
 // Who this server says it is and what it speaks (api.md 45): the two protocol versions, the
-// capabilities, `serverInfo`, and the instructions an agent reads before its first call.
+// capabilities and `serverInfo`. The instructions an agent reads before its first call are instructions.ts.
 import { fileURLToPath } from 'node:url';
 import { TOOL_FILE } from './tools.ts';
 import * as infoWords from './words/info.ts';
@@ -27,25 +27,3 @@ export const CAPABILITIES = { tools: {} } as const;
 /** How long a client may cache `tools/list` and `server/discover`: the list only changes when
  * the server is regenerated and restarted. */
 export const CACHE = { ttlMs: 3_600_000, cacheScope: 'public' } as const;
-
-const ABOUT = infoWords.visionBoardIsABoard;
-const REST = [
-  infoWords.writeWithWriteBoardAnd,
-  infoWords.toDrawOnABoard,
-  infoWords.thenCallCheckResponsesWith,
-  infoWords.joinAndListBoardsName,
-  infoWords.aBoardMarkedLockedList,
-];
-
-export const INSTRUCTIONS = [
-  ABOUT,
-  infoWords.callJoinOnceAndSave,
-  ...REST,
-].join(' ');
-
-/** When VB_AGENT_SECRET is set (a chat the board started): the identity is given, so nothing to save. */
-export const INSTRUCTIONS_JOINED = [
-  ABOUT,
-  infoWords.youAlreadyHaveAnIdentity,
-  ...REST,
-].join(' ');

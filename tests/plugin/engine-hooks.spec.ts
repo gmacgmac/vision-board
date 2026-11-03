@@ -72,14 +72,19 @@ test('route: a body that can\'t be read is the request\'s fault, a 400 and no 50
   expect(reply!.headers!['Content-Type']).toContain('problem+json');
 });
 
-test('route and tools.call: signal ends a held read', async ({ host }) => {
+test('route and tools.call: signal ends a held read; a host\'s bot is given no wait, and one sent is refused at once', async ({ host }) => {
   await drawPlans(host);
   const gone = new AbortController();
   const started = Date.now();
-  const held = host.engine.tools.call('check_responses', { board: 'plans', wait: 60 }, { caller: host.bot, signal: gone.signal });
+  const held = host.engine.route({ method: 'GET', path: 'boards/plans/responses', query: new URLSearchParams('after=9999&wait=60') }, { caller: host.bot, signal: gone.signal });
   setTimeout(() => gone.abort(), 200);
-  await held;
+  expect((await held)!.status).toBe(200);
   expect(Date.now() - started).toBeLessThan(5_000);
+  const tool = host.engine.tools.list().find((t) => t.name === 'check_responses')!;
+  expect(Object.keys((tool.inputSchema as { properties: object }).properties)).not.toContain('wait');
+  const refused = await host.engine.tools.call('check_responses', { board: 'plans', wait: 60 }, { caller: host.bot });
+  expect(refused.isError).toBe(true);
+  expect(refused.content[0]!.text).toContain('end your turn');
 });
 
 test('image: a picture in the images folder and only there, with its headers; a bad path is a refusal', async ({ host }) => {

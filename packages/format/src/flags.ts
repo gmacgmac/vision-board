@@ -294,6 +294,12 @@ export const FLAGS = {
     default: true,
     description: 'A Send counts only the answers that went: a host records it with what the engine read for the answers chip that went (`chat.send(record)`), and the Send line says the line they were read through (`head`, ledger v19); a message without the chip leaves them for the next one, and an answer made after the read stays unsent. The standalone server records the board\'s Send only once its chat session has the answers, and Send lights only for answers the chat\'s agent may read. Off, every Send covers every answer up to its own line.',
   },
+  botToolRules: {
+    // On by default (bot-quality TOOLS_01, points 393, 394; awaiting the maintainer's review). Read by the engine (its `flags`;
+    // the standalone server passes VB_FLAGS); ?flags= does not reach it.
+    default: true,
+    description: 'The tools keep the rules a bot must keep and give it the facts it needs: under a host, `check_responses` has no `wait` (one sent is refused at once, saying the Send brings the answers) and the engine\'s `tools.instructions` are the plugin\'s; `get_board`, `show_node` and `show_container` mark each note the caller owes (`owed`), `list_boards` and `get_board` a board it holds (`held`); a key conflict says what the key holds and names a free key. Off, as before.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

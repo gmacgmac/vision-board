@@ -37,6 +37,11 @@
             "const": true,
             "description": "Present, and true, while the person has the board locked: read it as usual, but every write on it is refused with `locked` until the person unlocks it.",
             "$comment": "Was: api.md 139"
+          },
+          "held": {
+            "const": true,
+            "description": "Present, and true, when you hold this board: write on it without asking; `request_grant` would answer `held`. Left out for a board you don't hold, or a container on it only.",
+            "$comment": "botToolRules flag (bot-quality TOOLS_01); api.md 171"
           }
         },
         "unevaluatedProperties": false

@@ -73,7 +73,7 @@ export async function useEngine(signal: AbortSignal): Promise<unknown[]> {
   const called = await engine.tools.call('list_boards', {}, { caller: { by: 'agent', agent: 'a1' }, signal });
   const stop = engine.watch((change) => void [change.board, change.head]);
   stop();
-  return [reply?.status, reply?.body, reply?.headers, picture.status, picture.body, text, other, listed, called.isError, called.content[0]?.type, called.content[0]?.text, whoOf({ by: 'person' }), called.structuredContent, called._meta];
+  return [reply?.status, reply?.body, reply?.headers, picture.status, picture.body, text, other, listed, called.isError, called.content[0]?.type, called.content[0]?.text, whoOf({ by: 'person' }), called.structuredContent, called._meta, engine.tools.instructions];
 }
 `;
 

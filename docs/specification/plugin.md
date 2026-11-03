@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-02
+updated: 2026-11-03 (the tools keep the bot's rules: § Tools, `tools.instructions`)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version]
 ---
@@ -193,7 +193,7 @@ hashes and `images/`. `name()` is the folder as the person reads it (`list_board
 | `route(req, { caller, signal })` | One request, with no HTTP. `req` is `{ method, path, query?, body? }`. Split what `api` got: `path` is the part before the `?` (`ledger`), `query` the rest as a `URLSearchParams`; a `path` holding its query answers null. `body` is the JSON value, or a function the engine calls for it when the operation reads one (one that throws is a 400); leave it out when there is none. Answers `{ status, body, headers? }`, `body` to send as JSON, a problem as a reply, or null for a path not its own. **It trusts `caller`**: `{ by: 'person' }` for your person's door, never your bot's; `{ by: 'agent' }` with no id is refused, as no caller is. `signal` ends a held read | `engine-hooks.spec.ts` "route:", "route and tools.call", "route: a body", `tools.spec.ts` "tools.call: a caller of an agent" |
 | `image({ method, path, ifNoneMatch? })` | Answers `imageRoute`: `path` is the text after the prefix, as the request wrote it. `GET` or `HEAD` of a picture in `dir`'s `images/` and only there, held to the same checks as standalone's route (`images.md`). A card names a picture relative to that folder: `![Flow](flow.png)` is `<dir>/images/flow.png`, and `images/flow.png` is missing. `body` is its bytes or null. Send `headers` as given: they carry the type, the no-sniff and the svg's policy | `engine-hooks.spec.ts` "image:" |
 | `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`, and `head`, the ledger line it read through (what the Send's `record` is given, § The chat). Never throws | `engine-hooks.spec.ts` "resolve:" |
-| `tools.list()`, `tools.call(name, input, ctx)` | § Tools | `tools.spec.ts` |
+| `tools.list()`, `tools.call(name, input, ctx)`, `tools.instructions` | § Tools | `tools.spec.ts`, `apps/board/tests/bot-tool-rules.test.ts` "the right instructions per host" |
 | `watch(onChange)` | `{ board?, head }` for every ledger change, this engine's or another writer's on `dir`. Returns the stop. Turn each into an `events` call | `engine-hooks.spec.ts` "watch:" |
 
 Nothing else is there (`engine-hooks.spec.ts` "createEngine and the engine hold no more").
@@ -208,7 +208,8 @@ gives it back. It holds on another engine over the same `dir`, so don't register
 **Words differ per host.** `skill.md` and the engine's tool descriptions are standalone's less what a bot under a host doesn't
 have: `join` and its secret, the chat panel, attachments and apps; its pictures go in the board folder's `images/` (`apps/board/plugin/words/skill-edits.ts`,
 `apps/board/server/words/plugin-tools.ts`). Give the bot `skill.md` while the plugin is on. Proven by
-`apps/board/tests/plugin-skill.test.ts` "the plugin skill names no tool".
+`apps/board/tests/plugin-skill.test.ts` "the plugin skill names no tool". The MCP instructions a bot reads before its first
+call are the plugin's too (`tools.instructions`, below).
 
 ### Tools
 
@@ -217,14 +218,30 @@ Tools reach any bot as MCP tools (D-074 rule 4). The engine gives both halves in
 - `tools.list()` gives `{ name, title, description, inputSchema }`, `inputSchema` being JSON Schema. It equals the manifest's `tools`.
 - `tools.call(name, input, { caller, signal })` gives a `CallToolResult`: `content` (one text, the answer's JSON),
   `structuredContent`, `isError`. An input that doesn't fit, an unknown tool or a refusal is `isError` with words for the bot;
-  it never throws. The engine checks `input` against the schema itself, so a host need not. `signal` ends a held `check_responses`.
+  it never throws. The engine checks `input` against the schema itself, so a host need not. `signal` ends a held call
+  (`check_responses` with `wait`, with the `botToolRules` flag off: on, a bot under a host has no `wait`, below).
 - `_meta['vb/change']` on a board write is `{ board, cards, head }`.
+- `tools.instructions` is what to tell the bot before its first call, MCP's server `instructions`: standalone's less `join`,
+  the secret, `wait` and the folder header (`words/plugin-tools.ts` `instructionEdits`). `createMcpServer({ tools })` sends it;
+  send it from your own MCP server too. Left out with the `botToolRules` flag off.
 
 A bot under a host gets `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`, `check_responses`,
 `request_grant` and `write_board`, as `x-hosts` in `packages/format/schema/openapi.json` says. It does not get `join` (you name it),
 `list_apps` (the app host's) or `read_attachment` (the standalone chat's). No tool answers ✓ or ✗, or approves: those are the
 person's, through `route`, and refused to a bot. Proven by `tools.spec.ts` "tools.list", "tools.call: every listed tool",
 "tools.call: an input", `engine-hooks.spec.ts` "route:".
+
+**The tools keep the bot's rules and tell it what it needs** (the `botToolRules` flag, on; off, as before; api.md 171):
+
+- *It cannot hold its turn.* `check_responses` is listed without `wait` (`x-hosts` on the `wait` parameter: the tool table's
+  `inputHosts`), and a `wait` sent anyway is refused at once, `invalid`, saying the person's Send brings their answers and to
+  end the turn. Your chat brings them. `route` keeps `wait`, as standalone's agents keep it.
+- *Reads say what is true for it.* A note it owes an answer is `owed` (`get_board`, `show_node`, `show_container`: the rule
+  `list_open`'s `pending` uses), and a board it holds is `held` (`list_boards`, `get_board`: what `request_grant` answers
+  `held` for), so it never answers a note twice or asks for a board it has.
+- *A key conflict says what the key holds* (a card by number, title and version, or the line's kind) and names a free key.
+
+Proven by `apps/board/tests/bot-tool-rules.test.ts` "no holding the turn", "reads tell the truth", "a key conflict helps", and `engine-hooks.spec.ts` "route and tools.call".
 
 **Two worked transports.**
 
@@ -235,13 +252,16 @@ person's, through `route`, and refused to a bot. Proven by `tools.spec.ts` "tool
    ({ tools: engine.tools.list() })
    // tools/call
    engine.tools.call(params.name, params.arguments ?? {}, { caller: { by: 'agent', agent } })
+   // initialize, server/discover
+   ({ instructions: engine.tools.instructions })
    ```
 
    If the bot runs elsewhere, one generic pass-through does it: the bot's MCP server lists and calls over your own door, which
    calls the engine with the caller it knows. The engine never meets the bot.
 2. *Standalone's `vb-mcp`*: a stdio MCP server the CLI starts, calling the standalone server over HTTP with the agent's secret
    (`packages/mcp/bin/vb-mcp.ts`). `createMcpServer({ tools })` (`#mcp`) also serves any host's `engine.tools` as they are, but
-   `#mcp` is not in the folder. Proven by `apps/board/tests/engine.test.ts` "the MCP server serves the engine's tools".
+   `#mcp` is not in the folder; it sends `tools.instructions` when they are given. Proven by `apps/board/tests/engine.test.ts`
+   "the MCP server serves the engine's tools", `apps/board/tests/bot-tool-rules.test.ts` "the right instructions per host".
 
 ## Attachments
 

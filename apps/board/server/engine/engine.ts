@@ -55,7 +55,8 @@ export interface EngineOptions {
   onSend?: SendHook | undefined;
   /** Where the ledger's warnings go (a bad line); default stderr. */
   warn?: ((message: string) => void) | undefined;
-  /** The flags the engine reads itself (svgImages, for `image`); default, each flag's default. */
+  /** The flags the engine reads itself (svgImages, for `image`; botToolRules, for its tools, reads and keys); default,
+   * each flag's default. */
   flags?: FlagOverrides | undefined;
 }
 
@@ -123,7 +124,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = (_
       ledger.refresh();
       const read = input.body;
       return await OPS[id]!({
-        params: withDefaults(id, input.params), caller, signal: input.signal, ledger, agents: getAgents, name, onSend,
+        params: withDefaults(id, input.params), caller, signal: input.signal, ledger, agents: getAgents, name, onSend, flags,
         body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
     } catch (err) { return toReply(err); }
@@ -159,7 +160,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = (_
       if (kind === 'answers') return resolveChip(s, 'answers', ref as AnswersRef);
       return { refused: 'gone', reason: httpWords.theBoardHasNo(kind) };
     }) as Engine['resolve'],
-    tools: makeTools(servesOperation, run),
+    tools: makeTools(servesOperation, run, flags),
     watch(onChange) {
       const tell = (e: LedgerEvent) => {
         const board = eventBoard(ledger.state(), e);

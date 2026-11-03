@@ -18,7 +18,8 @@ test('every agent operation has one row, and no row lacks an operation', () => {
 
 test('each row has a name, its words, a standalone input schema, whether it writes, and where inputs go', () => {
   for (const row of table.tools) {
-    assert.deepEqual(Object.keys(row), ['name', 'title', 'description', 'input', 'writes', 'secret', 'route', 'hosts'], row.name);
+    const keys = ['name', 'title', 'description', 'input', 'writes', 'secret', 'route', ...('inputHosts' in row ? ['inputHosts'] : []), 'hosts'];
+    assert.deepEqual(Object.keys(row), keys, row.name);
     assert.ok(row.description.length > 0, row.name);
     assert.equal(row.input.type, 'object', row.name);
     assert.ok(!JSON.stringify(row.input).includes('$ref'), `${row.name}: the input stands alone`);
@@ -50,4 +51,17 @@ test('x-hosts says what a plugin bot gets: never the agent\'s own identity, the 
   assert.throws(() => toolTableWithHosts(withOp({ 'x-agent': true }), loadSchemas()), /x: x-hosts must list/);
   assert.throws(() => toolTableWithHosts(withOp({ 'x-agent': true, 'x-hosts': ['nowhere'] }), loadSchemas()), /x: x-hosts must list/);
   assert.throws(() => toolTableWithHosts(withOp({ 'x-agent': false, 'x-hosts': ['plugin'] }), loadSchemas()), /only for an x-agent/);
+});
+
+test('x-hosts on an input says who gives it: check_responses\'s `wait` is standalone\'s alone, so a host\'s bot cannot hold its turn; a say on an unknown host stops the build', () => {
+  const limited = Object.fromEntries(table.tools.filter((t) => t.inputHosts).map((t) => [t.name, t.inputHosts]));
+  assert.deepEqual(limited, { check_responses: { wait: ['standalone'] } });
+  for (const row of table.tools.filter((t) => t.inputHosts)) {
+    for (const name of Object.keys(row.inputHosts)) assert.ok(name in row.input.properties, `${row.name}: ${name} is an input`);
+  }
+  const op = (hosts) => ({ paths: { '/x': { get: { operationId: 'x', 'x-agent': true, 'x-hosts': ['standalone', 'plugin'], responses: {},
+    parameters: [{ name: 'wait', in: 'query', schema: { type: 'integer' }, 'x-hosts': hosts }] } } } });
+  assert.deepEqual(toolTableWithHosts(op(['standalone']), loadSchemas()).tools[0].inputHosts, { wait: ['standalone'] });
+  assert.throws(() => toolTableWithHosts(op(['nowhere']), loadSchemas()), /x: input "wait": x-hosts must list/);
+  assert.throws(() => toolTableWithHosts(op([]), loadSchemas()), /x: input "wait": x-hosts must list/);
 });

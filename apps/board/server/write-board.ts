@@ -182,9 +182,10 @@ function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): W
   return append(b, i, key, item, e);
 }
 
-/** Write `items` for `agent` on `board`, in order, one result each (api.md 34). */
-export function writeItems(ledger: Ledger, agent: string, board: string, items: readonly unknown[]): WriteResult[] {
-  const b: Batch = { ledger, agent, board, failed: new Set() };
+/** Write `items` for `agent` on `board`, in order, one result each (api.md 34). `keyHelp`: a key conflict says what the
+ * key holds (write-replay.ts). */
+export function writeItems(ledger: Ledger, agent: string, board: string, items: readonly unknown[], keyHelp = false): WriteResult[] {
+  const b: Batch = { ledger, agent, board, failed: new Set(), keyHelp };
   return items.map((raw, i) => {
     const key = keyOf(raw);
     try {

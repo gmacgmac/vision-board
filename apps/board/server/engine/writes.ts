@@ -6,7 +6,7 @@
 // module's own checks as it appends. Answers name cards by board number.
 import { eventOut, holders, openContainers, openItems, retireCards as cardsOf } from '#actions';
 import type { OperationId } from '#format';
-import { openRequestOf } from '#format';
+import { flagOn, openRequestOf } from '#format';
 import { newToken } from '../secrets.ts';
 import { cardsIn } from '../edge.ts';
 import { bodyExample } from '../examples.ts';
@@ -159,7 +159,7 @@ const writeBoard: Op = async (ctx) => {
   const list = items as unknown[];
   const board = String(params.board);
   writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));
-  const results = writeItems(ledger, agent, board, list);
+  const results = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags));
   const s = ledger.state();
   const pending = s.boards.has(board) ? openItems(s, board, agent).filter((x) => x.pending !== undefined) : [];
   const containers = s.boards.has(board) ? openContainers(s, board, agent) : [];

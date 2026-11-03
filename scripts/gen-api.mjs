@@ -76,7 +76,11 @@ export function operationsOf(doc) {
  * host of the plugin, from `engine.tools`, so a plugin bot gets only these. */
 export const TOOL_HOSTS = ['standalone', 'plugin'];
 
-/** The tool table with each row's `hosts`: every x-agent operation says, and nothing else does. */
+/** True when `said` lists one host or more, each a known one. */
+const hostsOk = (said) => Array.isArray(said) && said.length > 0 && said.every((h) => TOOL_HOSTS.includes(h));
+
+/** The tool table with each row's `hosts`: every x-agent operation says, and nothing else does. An input that says
+ * (`inputHosts`, from a parameter's `x-hosts`) names known hosts. */
 export function toolTableWithHosts(doc, schemas) {
   const hosts = new Map();
   for (const item of Object.values(doc.paths ?? {})) {
@@ -86,11 +90,16 @@ export function toolTableWithHosts(doc, schemas) {
         if (said !== undefined) throw new Error(`${op.operationId}: x-hosts is only for an x-agent operation`);
         continue;
       }
-      if (!Array.isArray(said) || said.length === 0 || said.some((h) => !TOOL_HOSTS.includes(h))) throw new Error(`${op.operationId}: x-hosts must list hosts among ${TOOL_HOSTS.join(', ')}`);
+      if (!hostsOk(said)) throw new Error(`${op.operationId}: x-hosts must list hosts among ${TOOL_HOSTS.join(', ')}`);
       hosts.set(op.operationId, said);
     }
   }
   const table = toolTable(doc, schemas);
+  for (const row of table.tools) {
+    for (const [name, said] of Object.entries(row.inputHosts ?? {})) {
+      if (!hostsOk(said)) throw new Error(`${row.name}: input "${name}": x-hosts must list hosts among ${TOOL_HOSTS.join(', ')}`);
+    }
+  }
   return { ...table, tools: table.tools.map((row) => ({ ...row, hosts: hosts.get(row.name) })) };
 }
 

@@ -15,3 +15,44 @@ export const descriptionEdits: readonly DescriptionEdit[] = [
   { tool: 'check_responses', from: 'With your secret, only the containers you hold.', to: 'Only the containers you hold.' },
   { tool: 'write_board', from: '(`app: { id }`, from `list_apps`)', to: '(`app: { id }`), already in the folder; you cannot list apps here, so draw one only when the person names its id' },
 ];
+
+// ---- botToolRules (flag on; packages/format/src/flags.ts). A host's bot cannot hold its turn: `check_responses` is
+// listed without `wait` (the tool table's `inputHosts`), its words lose the offer, and a `wait` sent is refused with
+// `inputRefusals`. Off, none of these apply.
+
+/** Edits to a tool's description, made only with the flag on. */
+export const ruleEdits: readonly DescriptionEdit[] = [
+  {
+    tool: 'check_responses',
+    from: '; optional `limit`, and `wait` (0-60 seconds) to hold until the person presses Send or answers a request.',
+    to: '; optional `limit`. Your host brings the person\'s answers in their next message, when they press Send: this reads what they did, and never waits.',
+  },
+  { tool: 'check_responses', from: '; a wait that times out returns `{ responses: [], head }`.', to: '.' },
+];
+
+/** Why an input a host does not give is refused (`detail`) and its pointer's words, by `<tool>.<input>`: a test holds
+ * one for every input the tool table limits to other hosts. */
+export const inputRefusals: Readonly<Record<string, { detail: string; pointer: string }>> = {
+  'check_responses.wait': {
+    detail: '`check_responses` takes no `wait` here: your host brings the person\'s answers in their next message, when they press Send. Don\'t wait for them: end your turn.',
+    pointer: 'not given under a host',
+  },
+};
+
+/** The MCP server's instructions for a host's bot (`createMcpServer({ tools })`, from `tools.instructions`): the
+ * standalone joined text (`#mcp` `INSTRUCTIONS_JOINED`) less what a host's bot does not have (`join`, a secret, `wait`, a
+ * folder header), each `from` found once. */
+export const instructionEdits: readonly { from: string; to: string }[] = [
+  { from: 'You already have an identity on the board, set for you: do not call `join`, and leave `secret` out of every call. ', to: '' },
+  {
+    from: 'To draw on a board another agent made, call `request_grant`',
+    to: 'To draw on a board you don\'t hold (`list_boards` and `get_board` mark one you hold `held`), call `request_grant`',
+  },
+  { from: '(the board, or the board and region) and wait for the answer.', to: '(the board, or the board and region), and end your turn: the person answers it on the board.' },
+  {
+    from: 'Then call `check_responses` with the `head` you last saw (and `wait` up to 60 seconds) to read what the person did',
+    to: 'Your host brings the person\'s answers in their next message, when they press Send, so never hold your turn to wait for them; `check_responses` with the `head` you last saw reads what they did',
+  },
+  { from: 'Answer every note with a `reply` or an `append`,', to: 'Answer every note with a `reply` or an `append` (a note the reads show without `owed` needs nothing more),' },
+  { from: '`join` and `list_boards` name the folder the board has open (`project`). If a call answers `wrong-folder`, the board has another folder open: stop, tell the person what it says, and do not call `join`. ', to: '' },
+];

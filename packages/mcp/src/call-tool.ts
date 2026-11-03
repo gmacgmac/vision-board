@@ -42,10 +42,12 @@ export interface ListedTool {
   readonly annotations?: { readonly [hint: string]: boolean };
 }
 
-/** The tools a server serves, in MCP's shapes. `signal` ends a held call. */
+/** The tools a server serves, in MCP's shapes. `signal` ends a held call. `instructions`, when given, is what the
+ * server tells its client to do with them (a host's bot reads the plugin's, the board engine's `tools.instructions`). */
 export interface ToolHost {
   list(): readonly ListedTool[];
   call(name: string, input: Record<string, unknown>, ctx?: { signal?: AbortSignal }): Promise<ToolResult>;
+  readonly instructions?: string | undefined;
 }
 
 const text = (t: string, isError: boolean): ToolResult => ({ content: [{ type: 'text', text: t }], isError });

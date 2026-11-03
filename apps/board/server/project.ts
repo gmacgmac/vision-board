@@ -51,7 +51,7 @@ export interface ProjectOptions {
   port: () => number;
   base: () => string;
   chat?: Pick<ChatOptions, 'approvalTtlMs' | 'blocked' | 'approvalHold' | 'strictAccess' | 'attachments' | 'readAttachment' | 'sendHead'> & { adapters?: ChatAdapters | undefined } | undefined;
-  /** The server's flags and, for tests, shorter app limits (every folder's app host gets them). */
+  /** The server's flags (every folder's app host and engine get them) and, for tests, shorter app limits. */
   apps?: Pick<AppHostOptions, 'flags' | 'limits'> | undefined;
 }
 
@@ -78,7 +78,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   let engine: Engine | undefined;
   const abort = new AbortController();
   const getDir = () => (dir ??= realPath(path.dirname(data())));
-  const getEngine = () => (engine ??= createEngine({ dir: data(), ledger, name: () => displayName(o.home, getDir()), onSend }));
+  const getEngine = () => (engine ??= createEngine({ dir: data(), ledger, name: () => displayName(o.home, getDir()), onSend, flags: o.apps?.flags }));
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({
     ledger, resolve: getEngine().resolve, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,

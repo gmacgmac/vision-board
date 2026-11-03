@@ -75,6 +75,8 @@ export async function startEvalHost(o: { dir: string; port: number; dry: boolean
     void (async () => {
       const body = await readBody(req);
       if (req.url === '/list') return json(res, 200, engine.tools.list());
+      // The host's instructions for its bot (`EngineTools.instructions`, botToolRules), as a host wired from #mcp sends them.
+      if (req.url === '/instructions') return json(res, 200, { instructions: (engine.tools as { instructions?: string }).instructions ?? null });
       if (req.url === '/call') return json(res, 200, await botCall(String(body.name), body.arguments ?? {}));
       if (req.url === '/note') { if (typeof body.instructions === 'string') seen.instructions = body.instructions; return json(res, 200, {}); }
       json(res, 404, { title: 'No such door' });
