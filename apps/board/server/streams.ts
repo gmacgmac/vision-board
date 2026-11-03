@@ -1,5 +1,7 @@
 // The standalone server's change streams (api.md 44, 78-80): server-sent events built on the
-// engine's `watch`. A host like nclite sends the same changes through its own events instead.
+// engine's `watch`. A host like nclite sends the same changes through its own events instead. Besides `change`, a
+// `reset { seq }` when the ledger file was found replaced and read again (ledger.ts `onReset`, D-085 6), and an
+// `editing { readOnly }` when the person pressed Edit or Stop editing (editing.ts), so a page reads again.
 import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
 import { requireBoard } from './visibility.ts';
 
@@ -15,11 +17,15 @@ export function endWhenClosed(res: Ctx['res'], closed: AbortSignal): void {
 /** A server-sent event stream: `retry` first, `change { seq }` on every ledger change (`watch`), a
  * comment every 20 s. `more` adds other events and returns their off switches. It ends when the
  * folder closes (a switch, api.md 111), so the page reconnects to the new folder. */
-function stream({ res, engine, closed }: Ctx, more: (send: Send) => (() => void)[] = () => []): void {
+function stream({ res, engine, ledger, editing, closed }: Ctx, more: (send: Send) => (() => void)[] = () => []): void {
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
   res.write('retry: 2000\n\n');
-  const send: Send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-  const offs = [engine.watch(({ head }) => send('change', { seq: head })), ...more(send)];
+  // Nothing after the stream ended (the folder closing lets its lock go, which tells `editing`).
+  const send: Send = (event, data) => { if (!res.writableEnded) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); };
+  const offs = [
+    engine.watch(({ head }) => send('change', { seq: head })), ledger.onReset(() => send('reset', { seq: ledger.state().seq })),
+    editing.onChange((readOnly) => send('editing', { readOnly })), ...more(send),
+  ];
   const beat = setInterval(() => res.write(': beat\n\n'), 20000);
   endWhenClosed(res, closed);
   res.on('close', () => { for (const off of offs) off(); clearInterval(beat); });

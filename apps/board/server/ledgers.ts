@@ -1,13 +1,15 @@
 // A project's ledgers on disk (LEDGERS_01, D-084): the only module that lists or makes ledger folders
 // in `.visionboard/` (paths from data-folder.ts). A ledger is a folder whose name passes
 // `ledgerNameProblem` and that holds a ledger file; the old layout's one ledger sits in `.visionboard/`
-// itself. A new ledger's folder gets its own `.gitignore` (`ignoreInGit`): the agents' hashes, the lock
+// itself. That rule has one home, `#client` `ledgersIn`, which the agent's tools find their project with too
+// (LEDGERS_02-R1). A new ledger's folder gets its own `.gitignore` (`ignoreInGit`): the agents' hashes, the lock
 // and app state, or `*` when the person keeps it out of git (PLAN decision 8). Folders only: never a
 // file's contents but a ledger's, read to count its boards.
 import fs from 'node:fs';
 import { boardList } from '#actions';
+import { ledgersIn } from '#client';
 import {
-  AGENTS_FILE, APP_STATE_DIR, LOCK_FILE, MAIN_LEDGER, ledgerFiles, ledgerFolder, ledgerNameProblem, projectFiles,
+  AGENTS_FILE, APP_STATE_DIR, LOCK_FILE, MAIN_LEDGER, ledgerFiles, ledgerFolder,
 } from '#format';
 import { ignoreInGit } from './agents.ts';
 import { openLedger } from './ledger.ts';
@@ -22,16 +24,19 @@ const isFile = (file: string): boolean => {
   try { return fs.statSync(file, { throwIfNoEntry: false })?.isFile() ?? false; } catch { return false; }
 };
 
+/** The project's ledgers on disk, by the one rule (`ledgersIn`). */
+const layout = (project: string) => ledgersIn(project, { fs });
+
 /** The project is in the old layout: its ledger file sits in `.visionboard/` itself. */
-export const isOldLayout = (project: string): boolean => isFile(ledgerFiles(ledgerFolder(project)).ledger);
+export const isOldLayout = (project: string): boolean => layout(project).old;
 
 /** The names of the project's ledgers in the new layout, sorted; none when `.visionboard/` can't be read. */
-export function listLedgers(project: string): string[] {
-  let entries: fs.Dirent[];
-  try { entries = fs.readdirSync(projectFiles(project).root, { withFileTypes: true }); } catch { return []; }
-  return entries
-    .filter((e) => e.isDirectory() && ledgerNameProblem(e.name) === undefined && isFile(ledgerFiles(ledgerFolder(project, e.name)).ledger))
-    .map((e) => e.name).sort();
+export const listLedgers = (project: string): string[] => layout(project).ledgers;
+
+/** The project's ledger folders in either layout: the old layout's, then each named one's (LEDGERS_02-R2). */
+export function ledgerFoldersIn(project: string): string[] {
+  const { old, ledgers } = layout(project);
+  return [...(old ? [ledgerFolder(project)] : []), ...ledgers.map((name) => ledgerFolder(project, name))];
 }
 
 /** The project has a Vision Board in either layout. A home folder's `.visionboard/`, holding only

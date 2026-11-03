@@ -11,8 +11,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { OperationOutput } from '#format';
-import { ledgerFiles, ledgerFolder } from '#format';
-import { boardsIn, hasLedger, isOldLayout, listLedgers } from './ledgers.ts';
+import { ledgerFiles } from '#format';
+import { boardsIn, hasLedger, ledgerFoldersIn } from './ledgers.ts';
 import { problem } from './problem.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
 
@@ -51,8 +51,7 @@ export const hasBoard = (dir: string): boolean => hasLedger(dir);
 
 /** How many boards the folder's ledgers hold together, in either layout; undefined when none can be read. */
 export function countBoards(dir: string): number | undefined {
-  const folders = [...(isOldLayout(dir) ? [ledgerFolder(dir)] : []), ...listLedgers(dir).map((l) => ledgerFolder(dir, l))];
-  const counts = folders.map((f) => boardsIn(ledgerFiles(f).ledger)).filter((n) => n !== undefined);
+  const counts = ledgerFoldersIn(dir).map((f) => boardsIn(ledgerFiles(f).ledger)).filter((n) => n !== undefined);
   return counts.length ? counts.reduce((a, b) => a + b, 0) : undefined;
 }
 

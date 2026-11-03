@@ -7,9 +7,11 @@
 // the stage's handlers that act do nothing but say so (`guard`; the flag, the person's private mark,
 // is not among them and stays usable), the note bubble doesn't open, and sender.ts asks `refuse`
 // before every line it sends, so a path this file doesn't know is refused there too (the one funnel,
-// with the same `passesLock` the server asks). Selection, zoom, pan and the finder stay.
+// with the same `passesLock` the server asks). Selection, zoom, pan and the finder stay. A ledger open read-only
+// (D-085, `readOnly`) pauses the same controls with its own reason ("Read-only: press Edit to change it"); it is not
+// a lock (no "Locked", no `data-locked`), and its refusals are the sender's (controller.ts), the flag's too.
 import type { LedgerState } from '#actions';
-import { boardLocked, LOCKED_PERSON, passesLock } from '#actions';
+import { boardLocked, LOCKED_PERSON, passesLock, READ_ONLY_PERSON } from '#actions';
 import type { Outgoing } from '../sender.ts';
 import type { StageHandlers } from '../input/index.ts';
 import { ACTING } from './versions.ts';
@@ -24,10 +26,12 @@ export interface LockDeps {
   /** Say why a press did nothing (the error toast). */
   say(reason: string): void;
   status: Status;
+  /** The ledger is open read-only (D-085): the same controls pause, saying so. */
+  readOnly?(): boolean;
 }
 
 export interface LockFlow {
-  /** Why the open board can't change now, or null while it can. */
+  /** Why the open board can't change now (locked, or the ledger read-only), or null while it can. */
   paused(): string | null;
   /** Why `line` can't go to `board` now (it is locked and the line would change it), or null. */
   refuse(board: string, line: Outgoing): string | null;
@@ -47,13 +51,13 @@ export function createLockFlow(d: LockDeps): LockFlow {
     const s = d.state();
     return !!s && !!board && boardLocked(s, board);
   };
-  const paused = () => (locked(d.board()) ? LOCKED_PERSON : null);
+  const paused = () => (locked(d.board()) ? LOCKED_PERSON : d.readOnly?.() ? READ_ONLY_PERSON : null);
 
   return {
     paused,
     refuse: (board, line) => (locked(board) && !passesLock(line) ? LOCKED_PERSON : null),
     apply() {
-      const on = paused() !== null;
+      const on = locked(d.board());
       d.world.toggleAttribute('data-locked', on);
       d.status.set({ locked: on });
     },

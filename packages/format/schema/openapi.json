@@ -241,6 +241,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/readOnly"
+          },
           "413": {
             "$ref": "#/components/responses/tooLarge"
           },
@@ -765,7 +768,7 @@
         "operationId": "read_ledger",
         "x-agent": false,
         "summary": "Read raw ledger lines (the page)",
-        "description": "Read raw ledger lines after a position, oldest first, from every writer: the person's page reads the whole ledger once and folds it. Pass `after` (a `seq`, 0 for the start), `limit` (default 100, at most 500) and optionally `board` to keep only one board's lines. It returns JSON `{ events, head, more? }`, or just the lines as `application/jsonl` when you ask for that; a jsonl reader pages by the last line's `seq` and stops on an empty page. The lines are as the file holds them: a card is named by its ledger number, and the person's private flags are there. So it is the person's alone, not an agent operation: an agent reads `check_responses`, `get_board`, `show_node` and `list_open`, which name cards by their board number and never show a flag.",
+        "description": "Read raw ledger lines after a position, oldest first, from every writer: the person's page reads the whole ledger once and folds it. Pass `after` (a `seq`, 0 for the start), `limit` (default 100, at most 500) and optionally `board` to keep only one board's lines. It returns JSON `{ events, head, more?, readOnly? }` (`readOnly: true` while the ledger is open read-only), or just the lines as `application/jsonl` when you ask for that; a jsonl reader pages by the last line's `seq` and stops on an empty page. The lines are as the file holds them: a card is named by its ledger number, and the person's private flags are there. So it is the person's alone, not an agent operation: an agent reads `check_responses`, `get_board`, `show_node` and `list_open`, which name cards by their board number and never show a flag.",
         "security": [
           {
             "personCookie": []
@@ -936,7 +939,7 @@
             "$ref": "#/components/responses/methodNotAllowed"
           },
           "409": {
-            "$ref": "#/components/responses/wrongFolder"
+            "$ref": "#/components/responses/agentConflict"
           },
           "413": {
             "$ref": "#/components/responses/tooLarge"
@@ -1059,7 +1062,7 @@
             "$ref": "#/components/responses/methodNotAllowed"
           },
           "409": {
-            "$ref": "#/components/responses/wrongFolder"
+            "$ref": "#/components/responses/agentConflict"
           },
           "413": {
             "$ref": "#/components/responses/tooLarge"
@@ -1231,7 +1234,7 @@
             "$ref": "#/components/responses/methodNotAllowed"
           },
           "409": {
-            "$ref": "#/components/responses/wrongFolder"
+            "$ref": "#/components/responses/agentConflict"
           },
           "413": {
             "$ref": "#/components/responses/tooLarge"
@@ -1315,11 +1318,11 @@
           "404": {
             "$ref": "#/components/responses/notFound"
           },
-          "409": {
-            "$ref": "#/components/responses/sendConflict"
-          },
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/sendConflict"
           },
           "413": {
             "$ref": "#/components/responses/tooLarge"
@@ -1417,6 +1420,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/readOnly"
+          },
           "413": {
             "$ref": "#/components/responses/tooLarge"
           },
@@ -1509,6 +1515,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/readOnly"
+          },
           "413": {
             "$ref": "#/components/responses/tooLarge"
           },
@@ -1529,7 +1538,7 @@
         "operationId": "watch_board",
         "x-agent": false,
         "summary": "Watch a board for changes",
-        "description": "Stream a `change` event with `{ seq }`, the new ledger position, each time anything is appended to the ledger. Only the board page uses it, to know when to reload; agents call `check_responses` with `wait` instead. The connection stays open until the client closes it.",
+        "description": "Stream a `change` event with `{ seq }`, the new ledger position, each time anything is appended to the ledger. A `reset` event with `{ seq }` says the ledger file was replaced (a git pull, a sync), not only appended to, so the client reads it again from the start; an `editing` event with `{ readOnly }` says the person pressed Edit or Stop editing. Only the board page uses it, to know when to reload; agents call `check_responses` with `wait` instead. The connection stays open until the client closes it.",
         "security": [],
         "parameters": [
           {
@@ -1542,7 +1551,17 @@
             "content": {
               "text/event-stream": {
                 "itemSchema": {
-                  "$ref": "#/components/schemas/sseChange"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/sseChange"
+                    },
+                    {
+                      "$ref": "#/components/schemas/sseReset"
+                    },
+                    {
+                      "$ref": "#/components/schemas/sseEditing"
+                    }
+                  ]
                 },
                 "examples": {
                   "change": {
@@ -1552,6 +1571,22 @@
                       "data": "{\"seq\":53}"
                     },
                     "serializedValue": "event: change\ndata: {\"seq\":53}\n\n"
+                  },
+                  "reset": {
+                    "summary": "The ledger file was replaced; read it again from the start",
+                    "dataValue": {
+                      "event": "reset",
+                      "data": "{\"seq\":40}"
+                    },
+                    "serializedValue": "event: reset\ndata: {\"seq\":40}\n\n"
+                  },
+                  "editing": {
+                    "summary": "The person pressed Edit",
+                    "dataValue": {
+                      "event": "editing",
+                      "data": "{\"readOnly\":false}"
+                    },
+                    "serializedValue": "event: editing\ndata: {\"readOnly\":false}\n\n"
                   }
                 }
               }
@@ -1580,7 +1615,7 @@
         "operationId": "watch_project",
         "x-agent": false,
         "summary": "Watch the project for changes",
-        "description": "Stream a `change` event with `{ seq }`, the new ledger position, each time anything is appended to the ledger, for every board in the project. It answers on a project with no boards yet, so a client can wait for the first one. When the server runs in watch mode it also sends a `build` event with `{ build }` once on connect and again whenever the page is rebuilt or the server restarts; a client reloads when the value changes. Only the board page uses it; agents call `check_responses` with `wait` instead. The connection stays open until the client closes it.",
+        "description": "Stream a `change` event with `{ seq }`, the new ledger position, each time anything is appended to the ledger, for every board in the project. It answers on a project with no boards yet, so a client can wait for the first one. When the server runs in watch mode it also sends a `build` event with `{ build }` once on connect and again whenever the page is rebuilt or the server restarts; a client reloads when the value changes. A `reset` event with `{ seq }` says the ledger file was replaced (a git pull, a sync), not only appended to, so the client reads it again from the start; an `editing` event with `{ readOnly }` says the person pressed Edit or Stop editing. Only the board page uses it; agents call `check_responses` with `wait` instead. The connection stays open until the client closes it.",
         "security": [],
         "responses": {
           "200": {
@@ -1594,6 +1629,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/sseBuild"
+                    },
+                    {
+                      "$ref": "#/components/schemas/sseReset"
+                    },
+                    {
+                      "$ref": "#/components/schemas/sseEditing"
                     }
                   ]
                 },
@@ -1613,6 +1654,22 @@
                       "data": "{\"build\":\"mgfx0k2a-mgfx3n7q\"}"
                     },
                     "serializedValue": "event: build\ndata: {\"build\":\"mgfx0k2a-mgfx3n7q\"}\n\n"
+                  },
+                  "reset": {
+                    "summary": "The ledger file was replaced; read it again from the start",
+                    "dataValue": {
+                      "event": "reset",
+                      "data": "{\"seq\":40}"
+                    },
+                    "serializedValue": "event: reset\ndata: {\"seq\":40}\n\n"
+                  },
+                  "editing": {
+                    "summary": "The person pressed Edit",
+                    "dataValue": {
+                      "event": "editing",
+                      "data": "{\"readOnly\":false}"
+                    },
+                    "serializedValue": "event: editing\ndata: {\"readOnly\":false}\n\n"
                   }
                 }
               }
@@ -1749,6 +1806,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/readOnly"
+          },
           "413": {
             "$ref": "#/components/responses/tooLarge"
           },
@@ -1863,6 +1923,9 @@
           },
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/readOnly"
           },
           "413": {
             "$ref": "#/components/responses/tooLarge"
@@ -2562,7 +2625,7 @@
         "operationId": "get_project",
         "x-agent": false,
         "summary": "Show the open folder",
-        "description": "Show the folder the board server has open: its absolute path, its name as the person reads it (starting with `~` under the home folder), whether it has a Vision Board and how many boards that holds. Every other operation reads and writes this folder's ledger. With ledger folders it also names the ledger open now (`ledger`) and lists the folder's ledgers in `.visionboard/` (`ledgers`: each one's name, board count and whether it is kept out of git). Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "description": "Show the folder the board server has open: its absolute path, its name as the person reads it (starting with `~` under the home folder), whether it has a Vision Board and how many boards that holds. Every other operation reads and writes this folder's ledger. With ledger folders it also names the ledger open now (`ledger`) and lists the folder's ledgers in `.visionboard/` (`ledgers`: each one's name, board count and whether it is kept out of git). With read-only opening (`readOnlyStart`) it says `readOnly: true` while the open ledger is read-only, and `editing`: `{ here: true }` while this server holds the ledger's lock, or the computer that holds it live (`host`, `since`). Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
         "security": [
           {
             "personCookie": []
@@ -2603,7 +2666,7 @@
         "operationId": "open_project",
         "x-agent": false,
         "summary": "Open another folder",
-        "description": "Open another folder under the home folder in place of the one open now, on the same server and port. The server takes the folder's lock first and changes nothing if it can't; then it stops every running chat, ends every live stream (so every open page reloads onto the new folder), lets go of the old folder's lock, and keeps the folder in the recent list. A folder with no Vision Board is refused with `not-found` unless `create` is true, which makes `.visionboard/` and an empty ledger there. With ledger folders, `ledger` names the ledger to open (left out: the one this folder had open last, else `main`), so switching ledgers is opening the same folder with another `ledger`; the lock is the ledger's own, so another server may hold another ledger of the folder. With `create`, a ledger that is not there is made, and `keepOutOfGit` keeps it out of git; a name that is not a ledger name is refused with `invalid`. A folder still in the old layout (`.visionboard/ledger.jsonl`) is first moved into `.visionboard/main/`, by renaming its files, only while no other server holds it. Agents join again after a switch: each folder, and each ledger, keeps its own agents, so an old secret gets `not-authenticated`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the folder now open.",
+        "description": "Open another folder under the home folder in place of the one open now, on the same server and port. The server takes the folder's lock first and changes nothing if it can't; then it stops every running chat, ends every live stream (so every open page reloads onto the new folder), lets go of the old folder's lock, and keeps the folder in the recent list. A folder with no Vision Board is refused with `not-found` unless `create` is true, which makes `.visionboard/` and an empty ledger there. With ledger folders, `ledger` names the ledger to open (left out: the one this folder had open last, else `main`), so switching ledgers is opening the same folder with another `ledger`; the lock is the ledger's own, so another server may hold another ledger of the folder. With `create`, a ledger that is not there is made, and `keepOutOfGit` keeps it out of git; a name that is not a ledger name is refused with `invalid`. A folder still in the old layout (`.visionboard/ledger.jsonl`) is first moved into `.visionboard/main/`, by renaming its files, only while no other server holds it. With read-only opening (`readOnlyStart`, unless the server was started with `--edit`) the server takes no lock: the ledger opens read-only and any lock held before is let go; `create` takes the new ledger's lock only while making it. Agents join again after a switch: each folder, and each ledger, keeps its own agents, so an old secret gets `not-authenticated`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the folder now open.",
         "security": [
           {
             "personCookie": []
@@ -2674,6 +2737,97 @@
           },
           "422": {
             "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/project/edit": {
+      "post": {
+        "operationId": "edit_ledger",
+        "x-agent": false,
+        "summary": "Edit the open ledger",
+        "description": "Open the ledger for writing: the server takes the ledger's lock now, if no other board server holds it live, and every write is taken again. A lock another server holds live is refused with `conflict`, naming that computer, and the ledger stays read-only. Editing already: it answers as `get_project` does, and changes nothing. With read-only opening off, the ledger is always open for writing. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the open folder, as `get_project` does.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The open folder, its ledger now writable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/project"
+                },
+                "example": {
+                  "path": "/home/example/projects/example",
+                  "name": "~/projects/example",
+                  "found": true,
+                  "boards": 3,
+                  "editing": {
+                    "here": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/folderConflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "stop_editing",
+        "x-agent": false,
+        "summary": "Stop editing the open ledger",
+        "description": "Make the open ledger read-only again: the server lets go of its lock, so another computer may edit, and every write answers `read-only` until Edit. Read-only already: it changes nothing. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the open folder, as `get_project` does.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The open folder, its ledger now read-only.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/project"
+                },
+                "example": {
+                  "path": "/home/example/projects/example",
+                  "name": "~/projects/example",
+                  "found": true,
+                  "boards": 3,
+                  "readOnly": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
           },
           "500": {
             "$ref": "#/components/responses/serverError"
@@ -3093,6 +3247,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/readOnly"
+          },
           "413": {
             "description": "The state is over the limit.",
             "content": {
@@ -3207,6 +3364,12 @@
       },
       "sseBuild": {
         "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
+      },
+      "sseReset": {
+        "$ref": "https://vision-board.invalid/schema/api/sse-reset.schema.json"
+      },
+      "sseEditing": {
+        "$ref": "https://vision-board.invalid/schema/api/sse-editing.schema.json"
       },
       "board": {
         "$ref": "https://vision-board.invalid/schema/ledger/19/events/board.schema.json#/$defs/stored"
@@ -3707,7 +3870,7 @@
         }
       },
       "sendConflict": {
-        "description": "A `send` whose chat session could not be loaded: the chat could not be reached. Nothing was recorded, so the person's answers are still unsent and Send can be pressed again.",
+        "description": "A `send` whose chat session could not be loaded: the chat could not be reached. Nothing was recorded, so the person's answers are still unsent and Send can be pressed again. Or the ledger is open read-only (`read-only`): nothing was recorded until the person presses Edit.",
         "content": {
           "application/problem+json": {
             "schema": {
@@ -3926,6 +4089,38 @@
               "title": "Not found",
               "status": 404,
               "detail": "No permission \"pm-0123456789ab\" is kept for this folder. Call list_permissions to see them."
+            }
+          }
+        }
+      },
+      "readOnly": {
+        "description": "The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/read-only",
+              "title": "Read-only",
+              "status": 409,
+              "detail": "Read-only: press Edit to change it"
+            }
+          }
+        }
+      },
+      "agentConflict": {
+        "description": "The board server has another folder open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that they can press Edit. Nothing was written either way.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/read-only",
+              "title": "Read-only",
+              "status": 409,
+              "detail": "This ledger is open read-only, so nothing was written. Read it as usual; to write, tell the person in one line that they can press Edit, and wait for them."
             }
           }
         }

@@ -56,6 +56,10 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     const catchUp = () => listener({ plugin: PLUGIN, ref: {} });
     return watchProject({
       change: (seq) => listener({ plugin: PLUGIN, ref: { head: seq } }),
+      // The ledger file was replaced: a head of 0 reads it again from the start (live.ts). Edit or Stop editing: the
+      // board reads again and learns `readOnly` from the read.
+      reset: () => listener({ plugin: PLUGIN, ref: { head: 0 } }),
+      editing: catchUp,
       build: (id) => {
         if (build === null) build = id;
         else if (id !== build) location.reload();

@@ -3,7 +3,9 @@
 // environment. Its host gives it the board's data folder (`dir`: the standalone server passes
 // `<project>/.visionboard`, nclite the bot's `plugins/board/`), and passes the caller with every call
 // (the standalone server turns its secrets and cookie into one; nclite takes the bot from its run
-// ticket). The ledger and the agents' hashes live in `dir`; the engine never looks for a folder.
+// ticket). The ledger and the agents' hashes live in `dir`; the engine never looks for a folder. With `readOnly`
+// (D-085, the standalone host's read-only opening), every operation that writes answers `read-only` before anything
+// is read or written, and the reads say `readOnly: true`.
 import path from 'node:path';
 import type { FlagOverrides, LedgerEvent, OperationId } from '#format';
 import { IMAGES_DIR, LEDGER_FILE, OPERATIONS, ROUTE_PREFIX } from '#format';
@@ -15,6 +17,7 @@ import { imageReply } from '../images.ts';
 import type { Caller, Ledger } from '../ledger.ts';
 import { openLedger } from '../ledger.ts';
 import { ProblemError, problem, serverError } from '../problem.ts';
+import { READ_ONLY, READ_ONLY_PERSON } from '#actions';
 import type { EngineReply, Op, SendHook } from './operations.ts';
 import { checkCaller, matchRoute, readParams, withDefaults } from './operations.ts';
 import { READS } from './reads.ts';
@@ -61,6 +64,10 @@ export interface EngineOptions {
   /** The flags the engine reads itself (svgImages, for `image`; botToolRules, for its tools, reads and keys); default,
    * each flag's default. */
   flags?: FlagOverrides | undefined;
+  /** True while the ledger is open read-only (D-085): asked on every call, so a host can flip it (Edit, Stop editing).
+   *  Every write answers `read-only` and writes nothing, in `dir` or its ledger (`Ledger.gate`); reads carry
+   *  `readOnly: true`. Default never: a host with no read-only opening writes as before. */
+  readOnly?: (() => boolean) | undefined;
 }
 
 export interface Engine {
@@ -114,20 +121,24 @@ const toReply = (err: unknown): EngineReply => {
   return { status: p.status, body: p.body, headers: { ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8' } };
 };
 
-export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {} }: EngineOptions): Engine {
+export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {}, readOnly }: EngineOptions): Engine {
   const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn);
+  if (readOnly) ledger.gate(readOnly);
+  const closed = readOnly ?? (() => false);
   let agents: Agents | undefined;
-  const getAgents = () => (agents ??= openAgents(dir));
+  const getAgents = () => (agents ??= openAgents(dir, closed));
 
   /** Run operation `id`: the caller checked, then its handler; a problem is the reply. */
   async function run(id: OperationId, input: { params: Record<string, unknown>; body: unknown; caller: Caller | undefined; signal: AbortSignal | undefined }) {
     try {
       const caller = namedCaller(input.caller);
       checkCaller(id, caller);
+      // Read-only: a write is refused before its body is read (D-085 3, 4); `join` too, so no agents file is written.
+      if (OPERATIONS[id].method !== 'GET' && closed()) throw problem('read-only', caller?.by === 'person' ? READ_ONLY_PERSON : READ_ONLY);
       ledger.refresh();
       const read = input.body;
       return await OPS[id]!({
-        params: withDefaults(id, input.params), caller, signal: input.signal, ledger, agents: getAgents, name, ledgerName, onSend, flags,
+        params: withDefaults(id, input.params), caller, signal: input.signal, ledger, agents: getAgents, name, ledgerName, onSend, flags, readOnly: closed(),
         body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
     } catch (err) { return toReply(err); }

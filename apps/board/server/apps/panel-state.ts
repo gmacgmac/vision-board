@@ -7,9 +7,10 @@
 // one that doesn't fit, is too big, or was saved for another app reads as nothing saved. Person only
 // (openapi.json `personCookie`): no agent read opens these files. A removed card keeps its file.
 // A value can hold anything private, so the folder is named in the board's own `.gitignore` before the first is written.
+// Nothing is written while the ledger is open read-only (D-085 3): `read-only`, before the body is read.
 import fs from 'node:fs';
 import path from 'node:path';
-import { appOf } from '#actions';
+import { appOf, READ_ONLY_PERSON } from '#actions';
 import type { AppStateFile, AppStateValue } from '#format';
 import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, appStateBytes, appStateProblem, ledgerFiles } from '#format';
 import { ignoreInGit } from '../agents.ts';
@@ -96,6 +97,7 @@ const getPanelState: Handler = (ctx) => {
 /** `put_panel_state`: the value checked (schema, then size: `too-large`), kept whole for the card
  * and the app it names now, in place of the one before. */
 const putPanelState: Handler = async (ctx) => {
+  if (ctx.ledger.readOnly()) throw problem('read-only', READ_ONLY_PERSON);
   const card = appCard(ctx);
   const { state } = (await body('put_panel_state', ctx.req, WRAPPED_LIMIT)) as { state: AppStateValue };
   const why = appStateProblem(state);

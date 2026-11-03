@@ -85,7 +85,7 @@ export const REFERENCES = {
       [...regions].filter((region) => s.index.holders.get(containerKey(board, region))?.has(agent)).map((region) => ({ board, region }))),
   },
   app: {
-    to: [], meaning: 'An app is one folder in the project\'s .visionboard/apps/, on no board. App cards name it (node.app.id) and the person\'s allows are on it (api.md 150); a card whose app has no folder is an orphan until the folder is back.',
+    to: [], meaning: 'An app is one folder in the open ledger\'s apps/ (.visionboard/apps/, or .visionboard/<ledger>/apps/ with ledger folders), on no board. App cards name it (node.app.id) and the person\'s allows are on it (api.md 150); a card whose app has no folder is an orphan until the folder is back.',
     lookup: (s: LedgerState, app: string): number[] => appCards(s, app),
   },
 } satisfies Record<ReferenceKind, Reference>;

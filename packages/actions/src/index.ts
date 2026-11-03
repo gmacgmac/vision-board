@@ -14,6 +14,7 @@ export { archivedBoards, archivedProblem, boardVisibility, UNAVAILABLE, visibleT
 export type { ArchivedBoard, BoardDates, BoardVisibility } from './archive.ts';
 export { boardLocked, LOCKED, LOCKED_PERSON, lockedProblem, passesLock, writeProblem } from './lock.ts';
 export type { WriteRefusal } from './lock.ts';
+export { READ_ONLY, READ_ONLY_PERSON } from './read-only.ts';
 export { eventBoard, placeOf, REFERENCE_KINDS, REFERENCES, scopeOf } from './references.ts';
 export type { CardPlace, Container, ReferenceKind, Scope } from './references.ts';
 export { liveNotes } from './notes.ts';

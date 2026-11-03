@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/project.schema.json",
   "title": "The open folder",
-  "description": "`{ path, name, found, boards?, ledger?, ledgers? }`: the folder the board server has open, whose open ledger every other operation reads and writes. With ledger folders it also names that ledger and lists the folder's ledgers.",
+  "description": "`{ path, name, found, boards?, ledger?, ledgers?, readOnly?, editing? }`: the folder the board server has open, whose open ledger every other operation reads and writes. With ledger folders it also names that ledger and lists the folder's ledgers; with read-only opening, whether the ledger is read-only and who is writing it.",
   "$comment": "Was: api.md 109 (open-folder task, U12)",
   "type": "object",
   "required": ["path", "name", "found"],
@@ -18,10 +18,28 @@
       "items": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerEntry"},
       "description": "The folder's ledgers, by name. Given only with ledger folders.",
       "$comment": "ledgerFolders flag (LEDGERS_01, D-084)"
-    }
+    },
+    "readOnly": {"$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly", "description": "Present, and true, while the open ledger is read-only: nothing is written into its folder until Edit (`edit_ledger`)."},
+    "editing": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/editing"}
   },
   "unevaluatedProperties": false,
   "$defs": {
+    "editing": {
+      "description": "Who is writing the open ledger: `{ here: true }` when this board server holds its lock, or the computer that does (`host`) and since when (`since`) when another server holds it live. Left out when no one does.",
+      "$comment": "readOnlyStart flag (READONLY_01, D-085 2)",
+      "oneOf": [
+        {"type": "object", "required": ["here"], "properties": {"here": {"const": true, "description": "This board server holds the lock: the ledger is open for writing here."}}, "unevaluatedProperties": false},
+        {
+          "type": "object",
+          "required": ["host", "since"],
+          "properties": {
+            "host": {"type": "string", "minLength": 1, "maxLength": 255, "description": "The computer whose board server holds the lock, as it names itself."},
+            "since": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/timestamp", "description": "When that server took the lock."}
+          },
+          "unevaluatedProperties": false
+        }
+      ]
+    },
     "folderPath": {
       "type": "string",
       "minLength": 1,

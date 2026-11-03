@@ -13,11 +13,14 @@ export class ApiError extends Error {
   problems: string[];
   /** The same problems with where each is in the request (`/files/2`): the one to mark on the page. */
   pointers: PointerError[];
-  constructor(message: string, status = 0, problems: string[] = [], pointers: PointerError[] = []) {
+  /** The problem's code (`read-only`, `locked`…), when the server answered one. */
+  code: string | undefined;
+  constructor(message: string, status = 0, problems: string[] = [], pointers: PointerError[] = [], code?: string) {
     super(message);
     this.status = status;
     this.problems = problems;
     this.pointers = pointers;
+    this.code = code;
   }
 }
 
@@ -29,7 +32,7 @@ export async function asApiError<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
   } catch (err) {
-    if (err instanceof ApiProblem) throw new ApiError(err.detail, err.status, err.errors.map((e) => e.detail), err.errors);
+    if (err instanceof ApiProblem) throw new ApiError(err.detail, err.status, err.errors.map((e) => e.detail), err.errors, err.code);
     throw new ApiError(UNREACHABLE);
   }
 }

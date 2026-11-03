@@ -26,6 +26,11 @@
       "description": "The ledger's latest `seq`; 0 when it is empty",
       "$comment": "Was: api.md 31"
     },
+    "readOnly": {
+      "const": true,
+      "description": "Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing.",
+      "$comment": "readOnlyStart flag (READONLY_01, D-085 4)"
+    },
     "after": {
       "type": "integer",
       "minimum": 0,

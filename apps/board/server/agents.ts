@@ -2,12 +2,15 @@
 // a ledger folder's `agents.json` (`ledgerFiles(dir).agents`, data-folder.ts). It holds one SHA-256 per agent, never a secret, and the
 // file is git-ignored from the moment the first agent joins. A hash counts only once the ledger
 // has that agent's `join` event, so a hash written before a failed append is ignored. Lookups
-// compare every stored hash with `timingSafeEqual`.
+// compare every stored hash with `timingSafeEqual`. While the host's read-only check says so (D-085 3), `add` refuses
+// with `read-only` before the file or its `.gitignore` is touched: a new agent or a fresh secret waits for Edit.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { AGENTS_FILE, GITIGNORE_FILE, ledgerFiles } from '#format';
+import { READ_ONLY } from '#actions';
 import { writeFileAtomic } from './atomic-file.ts';
+import { problem } from './problem.ts';
 
 const AGENT_ID = /^a-[a-z0-9]{8}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
@@ -63,8 +66,9 @@ export function ignoreInGit(dir: string, name: string): void {
   fs.writeFileSync(file, `${text}${text && !text.endsWith('\n') ? '\n' : ''}${name}\n`);
 }
 
-/** The agents store in ledger folder `dir` (`ledgerFolder`). Read once, on first use. */
-export function openAgents(dir: string): Agents {
+/** The agents store in ledger folder `dir` (`ledgerFolder`). Read once, on first use. `readOnly`: the ledger's
+ * read-only check (default never). */
+export function openAgents(dir: string, readOnly: () => boolean = () => false): Agents {
   const file = ledgerFiles(dir).agents;
   let hashes: AgentHash[] | undefined;
   const all = () => (hashes ??= readHashes(file));
@@ -76,6 +80,7 @@ export function openAgents(dir: string): Agents {
       return id;
     },
     add(agent, secret) {
+      if (readOnly()) throw problem('read-only', READ_ONLY);
       const next = [...all(), { agent, sha256: sha256(secret).toString('hex') }];
       fs.mkdirSync(dir, { recursive: true });
       ignoreInGit(dir, AGENTS_FILE);

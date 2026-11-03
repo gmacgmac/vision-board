@@ -9,7 +9,7 @@
 // from another ledger of the open folder is `wrong-folder` naming both ledgers (api.md 115a).
 import type { IncomingMessage } from 'node:http';
 import { PROJECT_HEADER, ledgerFolder } from '#format';
-import { isOldLayout, listLedgers } from './ledgers.ts';
+import { ledgerFoldersIn, listLedgers } from './ledgers.ts';
 import { openAgents } from './agents.ts';
 import { displayName, isUnder, realPath } from './folders.ts';
 import { REALM } from './callers.ts';
@@ -58,10 +58,6 @@ export function checkFolder(req: IncomingMessage, env: FolderEnv): boolean {
   return true;
 }
 
-/** The ledger folders of project `dir` in either layout: the old layout's, then each named one's. */
-const ledgerDirs = (dir: string): string[] =>
-  [...(isOldLayout(dir) ? [ledgerFolder(dir)] : []), ...listLedgers(dir).map((name) => ledgerFolder(dir, name))];
-
 /** Ledger folder `dir`'s agents know `secret` (hashes only, read, never written). */
 function knows(dir: string, secret: string): boolean {
   try { return openAgents(dir).find(secret, () => true) !== undefined; } catch { return false; /* gone or not a valid agents file */ }
@@ -76,7 +72,7 @@ export function secretElsewhere(env: FolderEnv, secret: string, here = false): P
   if (sibling !== undefined) return wrongLedger(env, sibling);
   for (const folder of readRecent(env.home)) {
     if (realPath(folder) === env.dir) continue;
-    if (ledgerDirs(folder).some((dir) => knows(dir, secret))) return (here ? joinAgain : wrongFolder)(env, folder);
+    if (ledgerFoldersIn(folder).some((dir) => knows(dir, secret))) return (here ? joinAgain : wrongFolder)(env, folder);
   }
   return undefined;
 }

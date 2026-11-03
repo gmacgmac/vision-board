@@ -94,7 +94,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   function render() {
     if (st.wait !== null && lastAsk(st.chat) !== st.wait) st.wait = null;
     d.bridge.statusChanged();
-    const blocked = blockedReason(st.board, st.past, st.refused, !!st.board && d.archived?.(st.board) === true);
+    const blocked = blockedReason(st.board, st.past, st.refused, !!st.board && d.archived?.(st.board) === true, !st.session && st.readOnly);
     // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
     const host: ChatHost = blocked ? { blocked } : { ...(st.board && { holds: true }), ...(queues && { queues: true }) };
     const { agent, model } = current();
@@ -199,6 +199,11 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
       use(s);
       return s;
     } catch (err) {
+      // Read-only (D-085 3): the start would join the ledger. Said, not kept: after Edit the next message starts one.
+      if (err instanceof ApiError && err.code === 'read-only') {
+        d.toast(err.message, 'error');
+        return null;
+      }
       if (!(err instanceof ApiError) || err.status !== 422) throw err;
       Object.assign(st, { pick, refused: [err.message, ...err.problems].join(' ') });
       render();
@@ -288,9 +293,11 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   render();
 
   return {
-    show(board, past) {
+    /** `readOnly`: the ledger is open read-only (D-085): with no session in use, no message can go (a start would join). */
+    show(board, past, readOnly = false) {
       if (board !== null && board !== st.board) void load(board);
       st.past = past;
+      st.readOnly = readOnly;
       render();
     },
     load: loadDrawing,

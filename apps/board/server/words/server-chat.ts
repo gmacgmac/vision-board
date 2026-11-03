@@ -149,3 +149,8 @@ export const itsChatCanTTake = 'its chat can\'t take messages';
 
 // ---- chat-access.ts
 export const theKiroAgentFileCould = (kiroAgentFile: string, err: string): string => `The Kiro agent file ${kiroAgentFile} could not be written: ${err}. Check that folder's permissions, then restart the board.`;
+
+// ---- chat-sessions.ts (read-only opening, D-085)
+/** A chat that would write the ledger's agents file (a new agent, or a fresh secret for one after a restart). */
+export const noChatWhileReadOnly = (agent: string): string =>
+  `This ledger is open read-only, so ${agent} can't be started here: its agent would have to join the ledger. Press Edit first.`;

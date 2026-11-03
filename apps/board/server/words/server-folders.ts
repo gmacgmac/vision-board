@@ -50,3 +50,12 @@ export const noMainToUndo = (displayName: string, mainLedger: string): string =>
 export const oldLayoutAlready = (displayName: string, oldLedger: string, mainLedger: string): string =>
   `${displayName} has both ${oldLedger} and ${mainLedger}. Nothing was moved back. Keep the one you want (git has both), then try again.`;
 export const mainNotEmpty = (mainDir: string, names: string): string => `${mainDir}/ still holds ${names}, which are not the board's, so it was left in place.`;
+
+// ---- server.ts and editing.ts (read-only opening, D-085)
+/** The terminal's line at start when the ledger opens read-only. */
+export const openedReadOnly = (holder: string): string =>
+  `Opened read-only: nothing is written until you press Edit on the board (or start with --edit, or VB_EDIT=1).${holder}`;
+/** Beside it, when another server holds the ledger live: who. */
+export const editingElsewhere = (host: string, since: string): string => ` Computer "${host}" has been editing it since ${since}.`;
+/** A seed ledger is not copied into a ledger opened read-only. */
+export const seedNotCopied = (seed: string): string => `${seed} was not copied in: the ledger is open read-only. Start with --edit to seed it.`;
