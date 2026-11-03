@@ -25,9 +25,7 @@ export const ALLOWED = [
 const SAYS_IT = /\/words\/|\.schema\.json$|(?:^|\/)openapi\.json$|\.generated\.(?:ts|json)$/;
 
 /** Files not this task's to change yet: a warning each, until their owner moves them onto the module. */
-export const PENDING = [
-  { path: 'apps/board/src/gallery/attach-section.ts', why: 'a sample attachment path (PATHS_01 request R1: use projectFiles(\'\').attachments)' },
-];
+export const PENDING = [];
 
 /** Comments out, so a citation of the layout never counts (as verify-style.mjs `uncomment`). */
 const uncomment = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[\s;{}(,])\/\/.*$/gm, '$1');

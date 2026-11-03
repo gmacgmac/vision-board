@@ -3,7 +3,8 @@
      select lies unseen over a row (MenuSelect, VersionPicker, OpenChip), so its list, keys and reading are the
      browser's; a choice closes the menu first (`choose`). They sit beside the role="menu", not in it,
      because a select is not a menu item; the menu's keys walk them all the same (ToolbarMenu.svelte). The
-     zoom row keeps the menu open for − and +, so the level can be seen to change. -->
+     zoom row keeps the menu open for − and +, so the level can be seen to change. The page's folder and ledger rows
+     (`folderField`, `ledgerField`) come first, folder above ledger. -->
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
   import * as toolbarWords from '../words/toolbar.ts';
@@ -56,6 +57,9 @@
 
 {#if inMenu(tier, 'folder') && parts.folderField}
   <PagePart draw={parts.folderField} args={{ id: idOf('folder-chip'), choose }} />
+{/if}
+{#if inMenu(tier, 'ledger') && parts.ledgerField}
+  <PagePart draw={parts.ledgerField} args={{ id: idOf('ledger-chip'), choose }} />
 {/if}
 {#if inMenu(tier, 'version') && facts.version !== null}
   <VersionPicker {facts} {onversion} id={idOf('version')} face={versionRow} kind="vb-menu-item" onpicked={choose} />

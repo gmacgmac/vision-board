@@ -3,14 +3,15 @@
      archiveBoard flag (`onarchive` given) Archive board…, which asks, then archives the open board (N39
      ruling 5; off, aria-disabled, while no board is open or a past version shows), with the lockBoard flag (`onlock` given)
      Lock board, or on a locked board Unlock board (N40 ruling 4: no confirm, nothing is lost either way; off like Archive
-     board…), and the page's Open folder… (`folderRow`). A click or Enter on "⋯" opens it and focuses the
+     board…), the page's Open folder… (`folderRow`) and New ledger… (`ledgerRow`, ledgerFolders flag). A click or Enter on "⋯" opens it and focuses the
      first row; the keys and the press outside are the shared menu's (`#ui` `openMenu`): Up, Down, Home,
      End, Esc (focus back on "⋯"), Tab; a press outside or a choice closes it. H in the menu chooses Hide
      answered, as H does on the board (keys.ts). Its look is the shared menu's (#ui base/menu.css). The
      gallery passes `open`, `placement` 'gallery', which drops the board's ids, and `locked` to draw either row.
      With `fields` (adaptiveHeader flag, a narrow bar: HeaderFields.svelte) the surface also holds what moved out of the
      bar, above the role="menu" and beside it; the keys walk both. `also` names them in the tooltip, and with
-     `folderAbove` the Folder row above stands for Open folder… and its line. -->
+     `folderAbove` the Folder row above stands for Open folder… and its line, and with `ledgerAbove` the Ledger row above, whose
+     list ends in New ledger…, stands for New ledger…. -->
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
   import * as toolbarWords from '../words/toolbar.ts';
@@ -22,7 +23,7 @@
 
   const { state: view, parts, id: idIn } = useChrome();
 
-  let { onhide, onarchive, onlock, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false }: {
+  let { onhide, onarchive, onlock, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
     onhide: () => void;
     /** Archive board… (archiveBoard flag); left out, no such row. */
     onarchive?: (() => void) | undefined;
@@ -38,6 +39,8 @@
     also?: readonly string[] | undefined;
     /** The fields hold the Folder row: Open folder… and its line give way to it. */
     folderAbove?: boolean;
+    /** The fields hold the Ledger row: New ledger… gives way to it. */
+    ledgerAbove?: boolean;
   } = $props();
 
   const uid = $props.id();
@@ -114,6 +117,7 @@
       </button>
     {/if}
     {#if parts.folderRow && !folderAbove}<PagePart draw={parts.folderRow} args={{ choose }} />{/if}
+    {#if parts.ledgerRow && !ledgerAbove}<PagePart draw={parts.ledgerRow} args={{ choose }} />{/if}
   </div>
   </div>
 </div>

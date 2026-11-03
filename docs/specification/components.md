@@ -845,6 +845,11 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    (`styles/header.css`). Tests: `apps/board/tests/header-tier.test.ts`; `tests/pages/header-tiers.spec.ts` (nothing cut
    off down to 400px, quiet and crowded; every action reachable at a third; the bar's own width; no other form first on
    load; axe and APCA, light and dark; the gallery's section, `gallery/header-section.ts`). Off, the toolbar is as § 4 and § 5 say.
+   With the `ledgerFolders` flag the page's ledger is one more control of the table, `ledger` (§ 6, the ledger chip): in the
+   path after the folder at full ("folder / ledger ▾ / board ▾ / version ▾") and at half (its icon and its name), and a row of
+   "⋯" under the folder's at a third (`header-tier.ts` `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the page's folder and
+   ledger"). `FULL_MIN` and `HALF_MIN` hold with it: `tests/pages/ledgers.spec.ts` ("long folder, ledger and board names")
+   fits every form from 1470px to 400px with a 40-character ledger, a long folder and board name, a flagged card and Locked.
 6. **The folder picker** (`openFolder` flag, on by default; task
    `cortex-tasks/board/2026-10-09_board-app_open-folder.md`, api.md 109-113). The "⋯" menu ends with
    Open folder… (its tooltip names the open folder, as the page title does). It opens
@@ -878,6 +883,29 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    folder icon Lc 30 or more, light and dark. The gallery's own section is `gallery/current-folder-section.ts`;
    tests are `apps/board/tests/folder-path.test.ts` and `tests/pages/current-folder.spec.ts`. Off, the name is
    only in the page title and the Open folder… tooltip, and the dialog is as it was.
+
+   **The ledger chip and New ledger** (`ledgerFolders` flag, off by default, needs `openFolder`; D-084 7; task
+   `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/LEDGER_UI_01_ledger-chip.md`). The open folder's ledger is
+   the standalone page's, as the folder is (no seam change): three page parts, `board/host.ts` `BoardPageParts` `ledgerChip`,
+   `ledgerField` and `ledgerRow`, filled by `shell/page-parts.ts` `pageParts` once `shell/folder.ts` `ledgersOn`, and drawn
+   only while `get_project` names a ledger. `shell/LedgerPart.svelte` is the chip and the row, the board picker's pattern: a
+   native select unseen over a face (`.vb-menu-face`) listing the folder's ledgers as "name · N boards" ("· kept out of
+   git" for a throwaway one), the open one selected, then New ledger…. Choosing a ledger calls `open_project` with the folder
+   and the ledger (`shell/ledgers.ts` `openLedger`) and reloads onto it (`folder.ts` `reloadOnto`); the board last looked at
+   is kept per folder and ledger (`lastBoardKey`: `main` keeps the folder's own key), and another open page reloads when the
+   server's ledger changes too (`folderMoved`). While a ledger is on its way the face says "Opening name…" and the list is
+   shut; a refusal is a toast. A note's unsaved words ask first (`ledgers.ts` `mayLeave`, leavePrompt flag). In the path the
+   ledger keeps its room while the folder and the board's name give theirs (16ch, 12ch on a full bar under about 1385px, a
+   longer name cut with "…"); at half it gives way first, never under 44px (`styles/ledgers.css`). `shell/LedgerRow.svelte`
+   is New ledger… in "⋯" after Open folder…, left out at a third, where the Ledger row stands for it (`ToolbarMenu.svelte`
+   `ledgerAbove`). `shell/LedgerDialog.svelte` holds `shell/LedgerForm.svelte`, the board dialog's pattern: the name, shown as
+   an id as it is typed (`ledgers.ts` `typedLedgerName`) and checked as it is typed by `#format` `ledgerNameProblem` and
+   against the folder's ledgers, the problem replacing the rule's line (`aria-live`, `aria-invalid`), Create sending nothing
+   while there is one; "Keep out of git", off, sends `keepOutOfGit`; a refusal stays in the dialog in the server's words.
+   Words: `shell/words/ledgers.ts`. Reading text Lc 60 or more and the icon Lc 30 or more, light and dark. The gallery's
+   section is `gallery/ledger-section.ts`; the tests are `tests/pages/ledgers.spec.ts` (the path, half, a third, switching,
+   another tab following, create and kept out of git, refused names and a refusal, the flag off, fit, axe, APCA, the gallery).
+   Off, the header is as above.
 
 7. **The open cards list** (`openList` flag, on by default; task set
    `cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/`, FE_01). The toolbar's

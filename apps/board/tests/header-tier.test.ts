@@ -31,7 +31,7 @@ test('full: nothing moves, everything is in the bar', () => {
 test('half: version and containers move into "⋯", the app icon goes', () => {
   assert.deepEqual(moved('half'), ['version', 'containers']);
   assert.equal(inBar('half', 'app-icon'), false);
-  for (const c of ['folder', 'board', 'open', 'new', 'zoom', 'agents', 'send', 'chat', 'more', 'locked', 'boards-updated', 'replied', 'flagged'] as const) {
+  for (const c of ['folder', 'ledger', 'board', 'open', 'new', 'zoom', 'agents', 'send', 'chat', 'more', 'locked', 'boards-updated', 'replied', 'flagged'] as const) {
     assert.ok(inBar('half', c), c);
   }
 });
@@ -39,6 +39,12 @@ test('half: version and containers move into "⋯", the app icon goes', () => {
 test('a third: the bar is the board, Locked, Send, Chat and "⋯"', () => {
   assert.deepEqual(bar('third'), ['board', 'locked', 'send', 'chat', 'more']);
   assert.equal(inBar('third', 'replied'), false, 'Replied can go');
+});
+
+test('the page\'s folder and ledger (ledgerFolders flag) are in the path at full and half, rows of "⋯" at a third, folder first', () => {
+  for (const tier of ['full', 'half'] as const) for (const c of ['folder', 'ledger'] as const) assert.ok(inBar(tier, c), `${tier}: ${c}`);
+  assert.deepEqual(moved('third').slice(0, 2), ['folder', 'ledger']);
+  assert.deepEqual(HEADER_CONTROLS.slice(1, 4), ['folder', 'ledger', 'board'], 'the path\'s order: folder / ledger / board');
 });
 
 test('every control a person can act on is in the bar or in "⋯" at every tier, and never in both', () => {
