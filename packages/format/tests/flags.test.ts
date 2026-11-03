@@ -2,7 +2,7 @@
 // and unknown names refused rather than silently read as off.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { FLAG_DESCRIPTIONS, FLAGS, flagOn, parseFlags } from '../src/index.ts';
 import type { FlagName } from '../src/index.ts';
@@ -27,7 +27,9 @@ test('the descriptions stay out of the board page: FLAGS holds defaults only, an
   // The page is apps/board/src (the gallery is a page of its own) and the packages it imports (performance.md § Budgets).
   const page = [
     ...sources('apps/board/src').filter((f) => !f.startsWith('apps/board/src/gallery/')),
-    ...readdirSync(path.join(ROOT, 'packages')).flatMap((m) => sources(`packages/${m}/src`)),
+    ...readdirSync(path.join(ROOT, 'packages'), { withFileTypes: true })
+      .filter((m) => m.isDirectory() && existsSync(path.join(ROOT, 'packages', m.name, 'src')))
+      .flatMap((m) => sources(`packages/${m.name}/src`)),
   ].filter((f) => f !== 'packages/format/src/flags.ts');
   assert.deepEqual(page.filter((f) => /\bFLAG_DESCRIPTIONS\b/.test(readFileSync(path.join(ROOT, f), 'utf8'))), []);
 });
