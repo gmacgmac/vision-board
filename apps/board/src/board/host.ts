@@ -72,9 +72,10 @@ export type PagePart = (target: HTMLElement, args: PagePartArgs) => () => void;
 
 /** What only the standalone page has in the board's header: its theme and alignment in "⋯", its folder
  *  (a chip in the path, a row of "⋯" once the bar is narrow, Open folder… last in "⋯"), its ledger the same way
- *  (ledgerFolders flag, D-084 7: a chip after the folder in the path, a row of "⋯" under the folder's, New ledger… in
- *  "⋯" after Open folder…), its ledger's read-only state with Edit and Stop editing (readOnlyStart flag, D-085) and its
- *  Chat button. */
+ *  (D-084 7: a chip after the folder in the path, a row of "⋯" under the folder's, New ledger… in "⋯" after Open
+ *  folder…), its ledger's read-only state with Edit and Stop editing (readOnlyStart flag, D-085) and its Chat button.
+ *  A part may come and go while the board is mounted: the ledger's three are there only while the page's server names
+ *  a ledger (M51), so the header reads each where it draws it (Svelte tracks a getter that reads the page's state). */
 export interface BoardPageParts {
   /** A row of "⋯" given `choose`, else a button (toolbarMenu flag off). */
   theme?: PagePart;

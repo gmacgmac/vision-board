@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  FLAGS, IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, flagOn, imageCap, imageHeadProblem, imageNotReal, imagePathProblem,
+  FLAG_DESCRIPTIONS, IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, flagOn, imageCap, imageHeadProblem, imageNotReal, imagePathProblem,
   imageTypeByName, imageTypeOf, parseFlags, svgProblem,
 } from '../src/index.ts';
 
@@ -18,7 +18,7 @@ const svg = (s: string) => svgProblem(bytes(s));
 test('svgImages is on by default, and -svgImages turns it off', () => {
   assert.equal(flagOn('svgImages'), true);
   assert.equal(flagOn('svgImages', parseFlags('-svgImages').overrides), false);
-  assert.match(FLAGS.svgImages.description, /only png, jpeg, webp or gif/);
+  assert.match(FLAG_DESCRIPTIONS.svgImages, /only png, jpeg, webp or gif/);
 });
 
 test('the one table: svg is a type, its extension svg, its content type image/svg+xml, with its own cap and head', () => {

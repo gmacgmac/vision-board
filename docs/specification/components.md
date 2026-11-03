@@ -168,9 +168,10 @@ type error, and each table has a coverage test that fails when a row has no test
 A refactor that keeps the look and behaviour needs no flag. A new mode, node type or behaviour
 ships behind one. The pattern was defined by the first such task (U7, node size):
 
-- **One definition**: `packages/format/src/flags.ts` holds `FLAGS` (name → `{ default,
-  description }`). `format` because every layer may read it (D-016). Adding a flag is one entry;
-  removing it, when its behaviour becomes the default, is deleting the entry and its checks.
+- **One definition**: `packages/format/src/flags.ts` holds `FLAGS` (name → `{ default }`),
+  and the sentences are in `FLAG_DESCRIPTIONS` in the same file (typed `Record<FlagName, string>`, never imported by the page).
+  `format` because every layer may read it (D-016). Adding a flag is one entry in each table, and the type fails on a missing
+  name; removing it, when its behaviour becomes the default, is deleting both entries and its checks.
 - **One question**: `flagOn(name, overrides)` returns the override when there is one, else the
   default. An unknown name throws, so a typo never reads as "off".
 - **Overrides**: the standalone page reads them with `pageFlags()` (`apps/board/src/flags.ts`) from the
@@ -240,8 +241,14 @@ host; nclite's pane will be another.
 - **What it keeps goes through its host** (M13): `host.store` (`board/host.ts` `BoardStore`, strings under
   keys the board names: `view.<board>`, `proposals-hidden`). The keys say only what is on the board, so a
   host gives each folder or bot its own store, and two boards named "plans" never clash. Left out, the
-  board keeps them for as long as the mount (`memoryStore`). The standalone page keeps what it always kept
-  (`shell/kept.ts` `pageStore`: `vb.view.<board>` in sessionStorage, the rest in localStorage). Nothing
+  board keeps them for as long as the mount (`memoryStore`). The standalone page keeps them per folder and ledger, `main`
+  too (`shell/kept.ts` `pageStore`: `vb.view.<board>` in sessionStorage, the rest in localStorage, each key ending `:`
+  and `ledgerScope`: the folder's path for its `main` or old layout, the ledger's folder for another; it reads the folder
+  before the board mounts, `App.svelte`). A key from before, with no scope, is read once by `main` of the folder open and
+  kept under that folder's key from then on (PLAN decision 11). Proven by `apps/board/tests/kept.test.ts` "pageStore:
+  each folder's main and each ledger…" and "pageStore: a value from before is read once…", and
+  `tests/pages/ledger-memory.spec.ts` (boards `plan` of two ledgers and of two folders' `main`, and the keys from
+  before: zoom and the proposals notice). Nothing
   under `board/` touches the page's storage or address (`apps/board/tests/board-no-page.test.ts`).
   Proven by `board-guest.spec.ts` "the saved view goes through the host".
 - **Its pictures come from its host's route**: `host.imageRoute`, the address a picture's path goes after,
@@ -652,6 +659,14 @@ Held by `tests/pages/container-rail.spec.ts` (placement, the bounds at 100% to 5
 light and dark, collapse and expand, popovers, keys, flag off, touch) and
 `packages/ui/tests/region-template.test.ts` (the markup with and without `rail`).
 
+With the `railOnHover` flag (`controller.ts` reads it into the render option `railHover`; the frame carries `data-rail-hover` beside
+`data-rail`) the rail is drawn only on the container in use: `canvas/region-use.ts` `bindRegionUse` sets `data-use` on the frame under
+the pointer or focus, since the cards are a layer above the frames and a frame's own `:hover` does not see a pointer over its cards.
+Under `(hover: hover)` a `data-rail-hover` frame without `data-use`, `:hover`, `:focus-within`, `data-open`, `data-preview` or
+`data-note-open` draws the row at opacity 0 (its box too, so no empty pill); in use it is at `--vb-rail-rest`, on the rail itself at full
+strength; Comment's badge always shows, and a touch screen shows every rail. Gallery group "Only on the container in use"
+(`rail-section.ts`); held by `tests/pages/container-rail-hover.spec.ts`.
+
 ## The lasso, the selection bar and view commands (3_FE_02)
 
 The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lasso-and-zoom.md`).
@@ -846,7 +861,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    (`styles/header.css`). Tests: `apps/board/tests/header-tier.test.ts`; `tests/pages/header-tiers.spec.ts` (nothing cut
    off down to 400px, quiet and crowded; every action reachable at a third; the bar's own width; no other form first on
    load; axe and APCA, light and dark; the gallery's section, `gallery/header-section.ts`). Off, the toolbar is as § 4 and § 5 say.
-   With the `ledgerFolders` flag the page's ledger is one more control of the table, `ledger` (§ 6, the ledger chip): in the
+   While the page's server names a ledger the page's ledger is one more control of the table, `ledger` (§ 6, the ledger chip): in the
    path after the folder at full ("folder / ledger ▾ / board ▾ / version ▾") and at half (its icon and its name), and a row of
    "⋯" under the folder's at a third (`header-tier.ts` `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the page's folder and
    ledger"). `FULL_MIN` and `HALF_MIN` hold with it: `tests/pages/ledgers.spec.ts` ("long folder, ledger and board names")
@@ -857,6 +872,15 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the ledger's state"). `FULL_MIN` and `HALF_MIN` hold with them:
    `tests/pages/read-only.spec.ts` ("long folder, ledger and board names, Locked and flagged, read-only") fits every form
    from 1470px to 400px, the folder giving up its room for the state at full and the button giving way on a crowded bar.
+
+   **Write controls on a read-only ledger** (N44, D-085; task `cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/FE_01_read-only-controls.md`).
+   Every write control a person can press is paused and says why, in `READ_ONLY_PERSON`: `AccessRequests.svelte` (`readOnly`: Allow all,
+   Allow and Refuse), `BoardAgents.svelte` (`readOnly`, else the board's own state: Remove access), `ProposalsBar.svelte` (Accept all,
+   `data-paused`), and, in `#ui`, `paused.ts` `explainPaused` (every paused card control's title is the reason, its own tip back on Edit)
+   with the app card's Allow app and Stop app paused (`vb-node.ts`; `app-cards.ts` `press` toasts the reason and sends nothing). A paused
+   button takes `button.css` `.vb-btn[data-paused][aria-disabled='true']`: a quiet outline, no hover or press; an app card's footer
+   Allow takes `paused.css`. The gallery's last section, "Write controls on a read-only ledger" (`read-only-controls-section.ts`), shows
+   the strip, the Agents panel and an app card; held by `tests/pages/read-only-controls.spec.ts` and `packages/ui/tests/node-paused.test.ts`.
 6. **The folder picker** (`openFolder` flag, on by default; task
    `cortex-tasks/board/2026-10-09_board-app_open-folder.md`, api.md 109-113). The "⋯" menu ends with
    Open folder… (its tooltip names the open folder, as the page title does). It opens
@@ -891,15 +915,17 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    tests are `apps/board/tests/folder-path.test.ts` and `tests/pages/current-folder.spec.ts`. Off, the name is
    only in the page title and the Open folder… tooltip, and the dialog is as it was.
 
-   **The ledger chip and New ledger** (`ledgerFolders` flag, off by default, needs `openFolder`; D-084 7; task
-   `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/LEDGER_UI_01_ledger-chip.md`). The open folder's ledger is
+   **The ledger chip and New ledger** (the server's `ledgerFolders` flag; needs `openFolder`; D-084 7; tasks
+   `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/LEDGER_UI_01_ledger-chip.md` and, for M51 and M52,
+   `cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/FE_02_ledger-chip-and-memory.md`). The open folder's ledger is
    the standalone page's, as the folder is (no seam change): three page parts, `board/host.ts` `BoardPageParts` `ledgerChip`,
-   `ledgerField` and `ledgerRow`, filled by `shell/page-parts.ts` `pageParts` once `shell/folder.ts` `ledgersOn`, and drawn
-   only while `get_project` names a ledger. `shell/LedgerPart.svelte` is the chip and the row, the board picker's pattern: a
+   `ledgerField` and `ledgerRow`, which `shell/page-parts.ts` `pageParts` gives (getters) only while `get_project` names a
+   ledger, whatever the page's own flag (a gallery sample: the page's flag too); the header reads them where it draws, so
+   the path's "/", the "⋯" rows and the "⋯" tooltip follow (`Toolbar.svelte` `given`). `shell/LedgerPart.svelte` is the chip and the row, the board picker's pattern: a
    native select unseen over a face (`.vb-menu-face`) listing the folder's ledgers as "name · N boards" ("· kept out of
    git" for a throwaway one), the open one selected, then New ledger…. Choosing a ledger calls `open_project` with the folder
    and the ledger (`shell/ledgers.ts` `openLedger`) and reloads onto it (`folder.ts` `reloadOnto`); the board last looked at
-   is kept per folder and ledger (`lastBoardKey`: `main` keeps the folder's own key), and another open page reloads when the
+   is kept per folder and ledger (`lastBoardKey`: `main` keeps the folder's own key), through `shell/kept.ts` `pageStore` (`lastBoardKey` is its key there); one kept before folders (`vb.lastBoard`) is read once by `main` of the folder that is open, then kept under its key (`tests/pages/last-board.spec.ts`, "another folder never opens…" and "one kept before folders…"), and another open page reloads when the
    server's ledger changes too (`folderMoved`). While a ledger is on its way the face says "Opening name…" and the list is
    shut; a refusal is a toast. A note's unsaved words ask first (`ledgers.ts` `mayLeave`, leavePrompt flag). In the path the
    ledger keeps its room while the folder and the board's name give theirs (16ch, 12ch on a full bar under about 1385px, a
@@ -911,8 +937,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    while there is one; "Keep out of git", off, sends `keepOutOfGit`; a refusal stays in the dialog in the server's words.
    Words: `shell/words/ledgers.ts`. Reading text Lc 60 or more and the icon Lc 30 or more, light and dark. The gallery's
    section is `gallery/ledger-section.ts`; the tests are `tests/pages/ledgers.spec.ts` (the path, half, a third, switching,
-   another tab following, create and kept out of git, refused names and a refusal, the flag off, fit, axe, APCA, the gallery).
-   Off, the header is as above.
+   another tab following, create and kept out of git, refused names and a refusal, the page's flag off with a server that
+   names a ledger, a server that names none, fit, axe, APCA, the gallery). A server that names no ledger: the header is as above.
 
    **Read-only and Edit** (`readOnlyStart` flag, off by default, needs `openFolder`; D-085 2 and 5; task
    `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/READONLY_UI_01_edit-control.md`). Whether the open ledger
@@ -1059,13 +1085,13 @@ Task `cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md`.
 1. **Send to agent, disabled.** `SendButton.svelte` gains the `disabled` state (the shell's
    `unsent`, from `pageConditions`, `board.unsent`; api.md 123): a quiet outline in place of the
    accent fill (`--vb-surface-card`, `--vb-line-strong`, the words in `--vb-ink-subtle`: APCA light
-   Lc 76.2, dark 48.8, a short label at Lc 45), no hover or press, `aria-disabled` and still in the
+   Lc 76.2, dark 63.0 since point 415, a short label at Lc 45), no hover or press, `aria-disabled` and still in the
    tab order, its title "Nothing new to send". A click, Enter or Space records nothing. The gallery's
    Send row shows it after Waiting. Tests: `tests/pages/send-nothing-new.spec.ts`.
 2. **The "N updates" tab, smaller and quieter** (`packages/ui/src/node/node-steps.css`): lower case,
    medium weight, 18px tall with 4px sides (the other bottom tabs stay 20px, uppercase; 1px margins
    keep it centred on the edge beside them), `--vb-ink-subtle` on `--vb-surface-card` (a status
-   word: Lc 76.2 light, 48.8 dark). Hovered or open, its edge takes `--vb-state-context` and its
+   word: Lc 76.2 light, 63.0 dark). Hovered or open, its edge takes `--vb-state-context` and its
    words `--vb-ink`. Still a button with a 24px target, still opens the stepper.
 
 ## Archive a board (N39)

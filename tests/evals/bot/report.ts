@@ -8,8 +8,8 @@ import { sha } from './eval.ts';
 import { RUN_KILL_MS, RUN_TURNS, RUN_USD, WAIT_CLAMP_S } from './limits.ts';
 
 export interface ReportMeta {
-  started: string; dry: boolean; fake?: string; model: string; cli: string | null;
-  skill: { sha: string; lines: number } | null; flags: Record<string, boolean>;
+  started: string; dry: boolean; standalone?: boolean; fake?: string; model: string; cli: string | null;
+  skill: { sha: string; lines: number } | null; skillPath?: string; flags: Record<string, boolean>;
   maxRuns: number; maxUsd: number; repeat: number; instructions: 'server' | 'none';
   runs: number; spent: number; stopped: string | null;
 }
@@ -37,10 +37,10 @@ export function writeReport(out: string, meta: ReportMeta, results: RunResult[])
   const lines = [
     `# Bot eval, ${meta.started}`,
     '',
-    `- **Mode**: ${meta.dry ? `dry (fake bot, \`${meta.fake ?? 'good'}\`)` : 'real model'}`,
+    `- **Mode**: ${meta.dry ? `dry (fake bot, \`${meta.fake ?? 'good'}\`)` : 'real model'}; ${meta.standalone ? 'standalone (SKILL.md, the real `vb-mcp`, a test board server with `ledgerFolders` and `readOnlyStart` on, opened for editing; calls read from the stream, `wait` not clamped)' : 'the plugin\'s bot (the eval host\'s door)'}`,
     `- **Model**: asked \`${meta.model}\`; the CLI's init said: ${seen}${meta.cli ? `; CLI ${meta.cli}` : ''}`,
-    `- **Skill**: \`dist/plugin/board/skill.md\` ${meta.skill ? `sha256 ${meta.skill.sha}, ${meta.skill.lines} lines` : '(not built)'}`,
-    `- **Server instructions the bot got** (\`#mcp\` \`createMcpServer({ tools })\`, mode \`${meta.instructions}\`): ${said ? `sha256 ${sha(said)}, "${cell(said.slice(0, 160))}…"` : 'none'}`,
+    `- **Skill**: \`${meta.skillPath ?? 'dist/plugin/board/skill.md'}\` ${meta.skill ? `sha256 ${meta.skill.sha}, ${meta.skill.lines} lines` : '(not built)'}`,
+    `- **Server instructions the bot got** (${meta.standalone ? '`#mcp` `INSTRUCTIONS`, what `vb-mcp` sends with no secret' : `\`#mcp\` \`createMcpServer({ tools })\`, mode \`${meta.instructions}\``}): ${said ? `sha256 ${sha(said)}, "${cell(said.slice(0, 160))}…"` : 'none'}`,
     `- **Flags in force**: ${flagsInForce(meta.flags)}`,
     `- **Limits**: per run $${RUN_USD} (\`--max-budget-usd\`), ${RUN_TURNS} turns (\`--max-turns\`), kill at ${RUN_KILL_MS / 1000} s; \`wait\` clamped to ${WAIT_CLAMP_S} s at the door; this invocation \`--max-runs ${meta.maxRuns}\`, \`--max-usd ${meta.maxUsd}\`, \`--repeat ${meta.repeat}\``,
     `- **Runs**: ${meta.runs}; **spend** $${meta.spent.toFixed(4)}${costs.length ? ` = ${costs.join(' + ')}` : ''} (each run's last \`total_cost_usd\`; a run with no answer counts $${RUN_USD})`,

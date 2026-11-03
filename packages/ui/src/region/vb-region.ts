@@ -71,6 +71,7 @@ export function defineVbRegion(): void {
       else delete this.dataset.idPrefix;
       this.toggleAttribute('data-fixed', opts.fixed === true);
       this.toggleAttribute('data-rail', opts.rail === true);
+      this.toggleAttribute('data-rail-hover', opts.rail === true && opts.railHover === true);
       this.setAttribute('role', 'region');
       this.setAttribute('aria-labelledby', regionIds(r.id, opts.idPrefix).heading);
       this.style.setProperty('--region', regionColour(r));

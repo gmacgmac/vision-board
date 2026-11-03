@@ -5,3 +5,8 @@
 :is(vb-node, vb-region, .vb-group-notes) [data-paused][aria-disabled='true'] { cursor: not-allowed; }
 :is(vb-node, vb-region, .vb-group-notes) [data-paused][aria-disabled='true']:not([aria-pressed='true'], [aria-checked='true']) { color: var(--vb-ink-subtle); }
 :is(vb-node, vb-region, .vb-group-notes) [data-paused][aria-disabled='true']:is(:hover, :active) { background: none; transform: none; scale: none; }
+/* An app card's Allow, paused by a read-only ledger (FE_01): the accent fill at half strength leaves its word unreadable, so it
+   takes the quiet outline of the other paused buttons (button.css), at full strength. */
+vb-node .vb-app-status .vb-pop-primary[data-paused][aria-disabled='true'], vb-node .vb-app-status .vb-pop-primary[data-paused][aria-disabled='true']:hover {
+  opacity: 1; background: var(--vb-surface-raised); border-color: var(--vb-line-strong);
+}

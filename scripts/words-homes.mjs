@@ -42,7 +42,7 @@ export const NOT_SCANNED = [
 
 /** Text only a developer reads, so it stays in code and is not scanned (words.md § What stays in code). */
 export const DEVELOPER_TEXT = [
-  { path: 'packages/format/src/flags.ts', why: 'What each feature flag switches: read in the source and in the gallery\'s flag list, by the maintainer.' },
+  { path: 'packages/format/src/flags.ts', why: 'What each feature flag switches (`FLAG_DESCRIPTIONS`): read in the source, by the maintainer.' },
   { path: 'packages/actions/src/conditions.ts', why: 'When each condition is true and when it ends (`trueWhen`, `endsWhen`): documentation of the registry, not shown to the person or sent to an agent.' },
   { path: 'packages/actions/src/references.ts', why: 'What each reference edge means (`REFERENCES`): documentation of the registry, not shown or sent.' },
 ];

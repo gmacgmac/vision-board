@@ -29,6 +29,14 @@ either; the server starts on a 100,000-event ledger in about 330 ms, so it keeps
 (approach 7 waits until it is needed).
 A budget changes only with a reason in the PLAN of the task that changes it.
 
+**What the page leaves out of its start weight.** A budget is met by moving weight, never by moving
+the line. Two ways keep code out of the count: a chunk reached only by `import()` (the chat panel's
+drawing, D-049), and text no page code reads, which the build drops. Each flag's description is
+such text: `packages/format/src/flags.ts` keeps it in `FLAG_DESCRIPTIONS`, apart from `FLAGS` (the
+defaults, all the page reads), and `packages/format/tests/flags.test.ts` fails if `FLAGS` carries
+anything but `default` or a page file names `FLAG_DESCRIPTIONS`. On 2026-11-03 (T_03) that took the
+page from 200.6 KB to 192.3 KB gzip.
+
 ## Approach
 
 1. **Work in proportion to what changed.** An event updates only the cards it touches. Nothing

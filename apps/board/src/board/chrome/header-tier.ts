@@ -21,7 +21,7 @@ export const HEADER_CONTROLS: readonly HeaderControl[] = ['app-icon', 'folder', 
   'boards-updated', 'replied', 'flagged', 'zoom', 'agents', 'send', 'chat', 'more'];
 
 /** What moves into "⋯" at each tier: a row there does what the control does in the bar. The page's folder and
- *  ledger (ledgerFolders flag) sit in the path at full and half, and are rows of "⋯" at a third, the ledger's under the folder's.
+ *  ledger (once its server names one) sit in the path at full and half, and are rows of "⋯" at a third, the ledger's under the folder's.
  *  Edit or Stop editing (readOnlyStart flag) is a button at full and a row of "⋯" under them from half; the state chip's
  *  own menu holds it at every width. */
 const IN_MENU: Record<HeaderTier, readonly HeaderControl[]> = {

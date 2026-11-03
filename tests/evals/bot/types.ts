@@ -83,6 +83,34 @@ export interface Stage {
   botBoard(): string | undefined;
   /** Open the ledger read-only (true) or for writing (false), as a host's own control does (`readOnly`, plugin.md). */
   readOnly(on: boolean): void;
+  /** Standalone: open ledger `name` of the folder as the person does (`open_project`), made when it has none. */
+  ledger(name: string): Promise<void>;
+}
+
+/** Where the bot runs: the plugin's host (eval.ts `pluginHost`, over host.ts) or the standalone board server
+ * (standalone.ts). The eval's loop and the checks see only this. */
+export interface BotHost {
+  /** The board folder: the engine's data folder, or the open ledger's folder (`.visionboard/main`). */
+  dir: string;
+  /** The bot's working folder. */
+  cwd: string;
+  /** The bot's `vision-board` MCP server entry. */
+  mcp: { command: string; args: string[]; env: Record<string, string> };
+  /** The bot's instructions (a file), the line appended to them, and its built-in tools. */
+  bot: { skill: string; prompt: string; tools: string; addDir: string };
+  /** The bot's board tool calls: logged at the door as they happen, or (standalone) read from its stream. */
+  calls: Call[];
+  seen: { instructions: string | null };
+  tool: Stage['tool'];
+  person: Person;
+  setReadOnly: Stage['readOnly'];
+  openLedger: Stage['ledger'];
+  setTurn(n: number): void;
+  /** After the run: what the stream showed, for a host that has no door. */
+  record(turns: TurnRecord[]): void;
+  ledger(): Promise<RunRecord['ledger']>;
+  image(path: string): Promise<number>;
+  close(): Promise<void>;
 }
 
 /** One message from the host: the person's words, and/or what the person did on the board, then their Send. */

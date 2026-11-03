@@ -82,6 +82,15 @@ function layoutOf(page: Page): Promise<string[]> {
  * board moves far more. */
 const RASTER = 2;
 
+/** The box the check compares: the target's own box shrunk to whole pixels (near edges up, far edges down),
+ * so a row or column the box covers only in part never decides it. A rasteriser may draw that edge either
+ * way with no host sheet at all (FIX_01 Run 2, F16). Both shots of a target take the same clip. */
+async function wholePixels(t: Locator): Promise<{ x: number; y: number; width: number; height: number }> {
+  const b = (await t.boundingBox())!;
+  const [x, y] = [Math.ceil(b.x), Math.ceil(b.y)];
+  return { x, y, width: Math.max(1, Math.floor(b.x + b.width) - x), height: Math.max(1, Math.floor(b.y + b.height) - y) };
+}
+
 /** Each target's pixels on the page as it is, then under the host's sheet: they must not change. A
  * target that differs is shot again, the host's look between its own (the sheet off, on, off), and
  * judged on the closer pair: a rule that reaches the board differs from both, while what a first
@@ -91,7 +100,10 @@ const RASTER = 2;
  * no sheet at all (FIX_01 Run 2, F19). What this can't catch: a rule whose effect outlives the sheet,
  * such as a size the board measured under it and kept, since the look after then matches the host's. */
 async function sameUnderHost(page: Page, targets: Locator[]): Promise<void> {
-  const shot = (t: Locator) => t.screenshot({ animations: 'disabled' });
+  const shot = async (t: Locator) => {
+    await t.scrollIntoViewIfNeeded();
+    return page.screenshot({ animations: 'disabled', clip: await wholePixels(t) });
+  };
   const own = [];
   for (const t of targets) own.push(await shot(t));
   const sheet = await page.addStyleTag({ content: HOST });

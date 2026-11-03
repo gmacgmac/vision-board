@@ -725,3 +725,34 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   and `list_boards` name", it went straight to `.visionboard/main/images/` (1 run). Single runs, not rates.
 - 2026-11-03, agent: the `locked` instruction no longer calls a locked board "read-only", so the two states keep
   their own words (D-085 4).
+- 2026-11-03, agent (read-only follow-ups BOT_01, M53): `npm run eval:bot -- --standalone` now runs this skill as the
+  system prompt with the real `vb-mcp` against a test board server (ledger folders and read-only opening on, opened for
+  editing; calls read from the bot's stream), scored by the same checks. Scenarios 37 (`ledger-picture`), 38
+  (`other-ledger`) and 39 (`join-ledger`, new). Model `sonnet`, 9 runs over two invocations, skill v3.28 unchanged:
+  every check passed in 3 of 3 runs but one: 38's `done-only` passed 1 of 3. The bot read `scratch` with `ledger`,
+  left it byte-for-byte untouched and drew the summary on main every time, but then summed up the cards in the chat
+  (which were settled, which still open) in 2 runs. Likely from § Where you are running's own-chat line ("name the
+  board's title and id in the line saying what changed") meeting a summary that has things to explain; not changed
+  here (SKILL.md is not this task's file). 39: `scratch` named and nothing written, 3 of 3, but every run offered
+  `scratch` instead ("or tell me if `scratch` is the one you meant") in three or four sentences near the 300-character
+  cap, where The conversation asks one line and no offer for what the bot can't do; the eval does not score offers.
+
+## Skill v3.29 (no recap, one-sentence mismatch)
+
+- 2026-11-03, agent (read-only follow-ups BOT_02, decision 10, point 417): standalone baseline on v3.28, `--only
+  other-ledger,join-ledger --repeat 2`: 38's `done-only` 0 of 2 (one chat explained card 3's note, one listed what
+  was settled and open in bullets); 39's `short-chat` 1 of 2 (a four-sentence answer ending "If you want it in
+  `scratch`…"). $0.3643.
+- 2026-11-03, agent: three lines changed, all standalone-only (the plugin's skill is byte-for-byte the same, so
+  `skill-edits.ts` is untouched). § Where you are running, own chat: a drawn round is "Done." and the board's title
+  and id, never what its cards say (was "name the board's title and id in the line saying what changed", which read
+  as leave to explain). § Another ledger: what was settled and what is open go on the cards; the chat says "Done."
+  and names the board. `join` naming another folder or ledger: "stop: your whole reply is one sentence saying which
+  one is open, with no offer, not even to use it" (was "tell the person in one line and stop"). 39 gains a check,
+  `one-line`: one line, at most 200 characters, no offer (a narrow regex for the offers the runs showed).
+- 2026-11-03, agent: a first wording, "say in one sentence which one is open, and stop: offer nothing else", passed
+  `one-line` 1 of 2: the bot said the right sentence, then a second paragraph on what it hadn't done. "Your whole
+  reply is one sentence" held 2 of 2. On the final text, standalone: 38 3 of 3 for `done-only` (2 on the first
+  wording, whose 38 lines are the same, 1 on the final), 39 2 of 2, 37 2 of 2 (37's `no-folder-read` failed once on
+  the first wording, a `Glob` of `.visionboard/**` before writing the picture; 37's lines were not changed). Plugin
+  (skill unchanged): 47 of 48, `refusals/short-chat` once over two lines; re-run, 5 of 5. Model `sonnet`.

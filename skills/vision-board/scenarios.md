@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.28
+status: v3.29
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -54,7 +54,12 @@ v3.13 (skill v3.13, a note on a group answered once): 35 (a note on a selection 
 v3.28 (skill v3.28, ledgers and read-only, D-084 and D-085): 36 (a read-only ledger), 37 (a picture in a ledger
 folder) and 38 (bring a throwaway ledger into main) new; 9 also covers a `wrong-folder` naming another ledger. 36 is
 also run by `npm run eval:bot` (`tests/evals/bot/scenarios/read-only.ts`, the plugin's bot); 37 and 38 are
-standalone's only (a host's bot has one board folder and no `ledger` input), so the eval cannot run them.
+standalone's only (a host's bot has one board folder and no `ledger` input).
+v3.28, standalone eval (read-only follow-ups BOT_01, M53): `npm run eval:bot -- --standalone` runs this skill with the
+real `vb-mcp` against a test board server (`tests/evals/bot/standalone.ts`): 37 (`ledger-picture`), 38
+(`other-ledger`) and 39 (`join-ledger`, new: `join` names another ledger than the one the person means).
+v3.29 (skill v3.29, read-only follow-ups BOT_02, decision 10): 38 also fails on a recap of the cards in the chat; 39
+asks one sentence and no offer, scored by `join-ledger`'s `one-line`.
 
 ## 1. A review with 12 findings (panel)
 
@@ -798,7 +803,7 @@ write: "I have made it editable now. Add the projector card, please."
 - **Fails if** it retries the write, calls `request_grant` or `join`, says "Done." while nothing was
   written, or says more than a line or two.
 
-## 37. A picture in a ledger folder (own chat)
+## 37. A picture in a ledger folder (own chat; eval `--standalone` `ledger-picture`)
 
 **Situation.** The folder `~/projects/plans` uses ledger folders; `main` is open. The agent joins
 (`join` answers `"ledger": "main"`) and the person writes: "Put a small diagram of the shipping steps
@@ -811,7 +816,7 @@ write: "I have made it editable now. Add the projector card, please."
 - **Fails if** the picture lands outside `.visionboard/main/images/`, the card's path starts with
   `images/` or `.visionboard/`, or it reads the folder to find out where pictures go.
 
-## 38. Bring a throwaway ledger into main (own chat)
+## 38. Bring a throwaway ledger into main (own chat; eval `--standalone` `other-ledger`)
 
 **Situation.** `~/projects/plans` has ledgers `main` (open, board "Roadmap") and `scratch` (board
 "Release sketch": a decision marked ✓, a decision marked ✗, a question with the person's note "Two
@@ -825,4 +830,18 @@ Bring what we settled there into main: a summary board, one row of cards."
 - Nothing in `.visionboard/scratch/` changes: no line, no agents file, no lock.
 - Chat words: "Done." and the board's title and id.
 - **Fails if** it writes or tries to write to `scratch`, answers the note in `scratch`, asks for a
-  grant there, presents the noted question as decided, or uses a ledger the person did not name.
+  grant there, presents the noted question as decided, uses a ledger the person did not name, or recaps the cards
+  in the chat.
+
+## 39. Join names another ledger (own chat; eval `--standalone` `join-ledger`)
+
+**Situation.** `~/projects/plans` has ledgers `main` and `scratch`; the person left `scratch` open on the board.
+The agent has not joined yet. The person writes: "In our main ledger, start a board called Launch timing with one
+card asking whether the launch moves to May."
+
+**A good run**
+- Calls `join` (or `list_boards`), reads `"ledger": "scratch"`, and stops: one sentence saying the board has
+  `scratch` open, not main, so the person can open main. No offer (not "or tell me if `scratch` is the one you meant").
+- Writes nothing: no `write_board`, no `request_grant`.
+- **Fails if** it draws the board on `scratch`, says "Done.", asks for a grant, answers in more than one line, or offers to
+  use `scratch` instead.

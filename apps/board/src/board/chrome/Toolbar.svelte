@@ -22,7 +22,7 @@
      shows "Locked" after its name and version (LockedChip, N40 ruling 4); with the lockBoard flag the
      "⋯" menu has Lock board or Unlock board.
      The page's folder chip (`BoardPageParts.folderChip`), when it gives one, sits first, after the app icon, and its
-     ledger chip (`ledgerChip`, ledgerFolders flag) after it; a host has neither, and the bar reflows. After the path (or the
+     ledger chip (`ledgerChip`, while the page's server names a ledger) after it; a host has neither, and the bar reflows. After the path (or the
      title and version) the page's ledger state (`editChip`, readOnlyStart flag: Read-only or Editing, at every width) and,
      at full, its Edit or Stop editing button (`editButton`; a row of "⋯" from half, HeaderFields), then Locked.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
@@ -126,8 +126,8 @@
   /** What "⋯" also holds at this form, for its tooltip. */
   const ALSO: readonly (readonly [HeaderControl, string])[] = [['folder', toolbarWords.folder], ['ledger', chromeCommonWords.ledger], ['version', toolbarWords.version],
     ['containers', toolbarWords.containers], ['open', toolbarWords.openCards], ['new', toolbarWords.newCards], ['zoom', commonWords.zoom], ['agents', chromeBoardsWords.agents]];
-  /** A page part's row is there only when the page gives it. */
-  const given: Partial<Record<HeaderControl, boolean>> = { folder: !!parts.folderRow, ledger: !!parts.ledgerField };
+  /** A page part's row is there only when the page gives it; the ledger's comes and goes with the server's answer. */
+  const given: Partial<Record<HeaderControl, boolean>> = $derived({ folder: !!parts.folderRow, ledger: !!parts.ledgerField });
   const also = $derived(adaptive ? ALSO.filter(([c]) => inMenu(tier, c) && given[c] !== false).map(([, name]) => name) : []);
 </script>
 

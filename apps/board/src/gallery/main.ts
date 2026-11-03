@@ -46,6 +46,7 @@ import { folderSection } from './folder-section.ts';
 import { currentFolderSection } from './current-folder-section.ts';
 import { headerSection } from './header-section.ts';
 import { editingSection } from './editing-section.ts';
+import { readOnlyControlsSection } from './read-only-controls-section.ts';
 import { ledgerSection } from './ledger-section.ts';
 import { flagSection } from './flag-section.ts';
 import { archiveSection } from './archive-section.ts';
@@ -151,7 +152,7 @@ function build(): void {
   if (flagOn('cardHistory', flags)) main.append(historySection(fx));
   main.append(appIconSection());
   // Last, so the sections above keep their place (and their screenshots) with the flag on or off.
-  if (flagOn('toolRail', flags)) main.append(railSection(fx));
+  if (flagOn('toolRail', flags)) main.append(railSection(fx, flagOn('railOnHover', flags)));
   if (flagOn('freshCards', flags)) main.append(freshSection(fx)); // after the rail, so the sections above keep their place
   if (flagOn('groupNoteOnce', flags)) main.append(groupNotesSection(fx)); // last, so the sections above keep their place
   if (flagOn('openFolder', flags) && flagOn('currentFolder', flags)) main.append(currentFolderSection()); // last, so the sections above keep their place
@@ -166,6 +167,7 @@ function build(): void {
   if (flagOn('adaptiveHeader', flags) && flagOn('toolbarMenu', flags) && flagOn('versionView', flags)) main.append(headerSection(fx)); // after everything, so no section moves
   if (flagOn('ledgerFolders', flags) && flagOn('openFolder', flags) && flagOn('adaptiveHeader', flags) && flagOn('toolbarMenu', flags) && flagOn('versionView', flags)) main.append(ledgerSection(fx)); // after everything, so no section moves
   if (flagOn('readOnlyStart', flags) && flagOn('openFolder', flags) && flagOn('adaptiveHeader', flags) && flagOn('toolbarMenu', flags) && flagOn('versionView', flags)) main.append(editingSection(fx)); // after everything, so no section moves
+  if (flagOn('readOnlyStart', flags) && flagOn('agentAccess', flags) && flagOn('appCards', flags)) main.append(readOnlyControlsSection(fx)); // last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

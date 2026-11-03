@@ -1,4 +1,5 @@
-<!-- The page's open ledger in the board's header (ledgerFolders flag, D-084 7; LEDGER_UI_01), once the server names one:
+<!-- The page's open ledger in the board's header (D-084 7; LEDGER_UI_01), once the server names one, whatever the
+     page's own ledgerFolders flag (M51; page-parts.ts gives it only then):
      in the path after the folder (full: its icon, its name and a chevron; half: the same, the name cut with "…" first,
      styles/ledgers.css), or with `row` (a third of the width) a row of "⋯", which closes the menu first (`choose`).
      The board picker's pattern (board/chrome/BoardPicker.svelte): a native select lies unseen over the face
