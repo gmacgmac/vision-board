@@ -63,7 +63,7 @@ export async function useView(root: HTMLElement): Promise<unknown[]> {
 }
 
 export async function useEngine(signal: AbortSignal): Promise<unknown[]> {
-  const engine: PluginEngine = createEngine({ dir: '/data', name: () => 'plans', warn: (message) => void message, flags: { svgImages: true } });
+  const engine: PluginEngine = createEngine({ dir: '/data', name: () => 'plans', warn: (message) => void message, flags: { svgImages: true }, readOnly: () => false });
   const reply = await engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams('after=0'), body: {} }, { caller: { by: 'person' }, signal });
   const picture = engine.image({ method: 'GET', path: 'flow.png', ifNoneMatch: '"v1"' });
   const answers = engine.resolve('answers', { board: 'plans', since: 0, agent: 'a1' });
@@ -139,6 +139,12 @@ test('the file fails to compile against that host when any one member is taken o
   // `Round.text` is also `ChipText.text`, in the same intersection: taking one out changes nothing a host can see.
   const kept = cuts.filter((c) => problems(c.cut).length === 0).map((c) => c.name);
   assert.deepEqual(kept, ['Round.text'], 'a member the host above does not use: add its use to HOST');
+});
+
+test('an option a host may leave out is additive: a host written before readOnly compiles against the types as they are (D-085 7)', () => {
+  const before = HOST.replace(', readOnly: () => false', '');
+  assert.notEqual(before, HOST, 'the host above passes readOnly');
+  assert.deepEqual(problems(dts, before), []);
 });
 
 test('the manifest holds the seam number', () => {

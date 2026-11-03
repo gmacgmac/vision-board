@@ -5,17 +5,18 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test as base } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import type { FakeHost } from './fake-host/server.ts';
+import type { FakeHost, HostOptions } from './fake-host/server.ts';
 import { startHost } from './fake-host/server.ts';
 
 export { expect };
 
 const PORT = Number(process.env.VB_TEST_PORT ?? 4468);
 
-export const test = base.extend<{ host: FakeHost; expected: { problems: RegExp[] } }>({
+export const test = base.extend<{ host: FakeHost; hostOptions: HostOptions; expected: { problems: RegExp[] } }>({
   expected: [{ problems: [] }, { option: true }],
-  host: async ({}, use, info) => {
-    const host = await startHost(PORT + 10 * info.parallelIndex);
+  hostOptions: [{}, { option: true }],
+  host: async ({ hostOptions }, use, info) => {
+    const host = await startHost(PORT + 10 * info.parallelIndex, hostOptions);
     await use(host);
     await host.close();
   },

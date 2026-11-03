@@ -37,7 +37,7 @@ export interface PluginEngine {
   watch(onChange: (change: { board?: string; head: number }) => void): () => void;
 }
 
-interface EngineModule { createEngine(o: { dir: string; name?: () => string; warn?: (m: string) => void; flags?: Record<string, boolean> }): PluginEngine }
+interface EngineModule { createEngine(o: { dir: string; name?: () => string; warn?: (m: string) => void; flags?: Record<string, boolean>; readOnly?: () => boolean }): PluginEngine }
 let engineModule: Promise<EngineModule> | undefined;
 /** The folder's engine, by the manifest's path. */
 export const loadEngine = (): Promise<EngineModule> => (engineModule ??= import(pathToFileURL(path.join(FOLDER, manifest().engine.module)).href) as Promise<EngineModule>);
@@ -56,17 +56,25 @@ function send(res: ServerResponse, status: number, body: unknown, headers: Recor
   res.end(bytes);
 }
 
+/** `readOnly`: this host can open its board read-only (plugin.md § The engine), starting so when true; left out, it never
+ * passes the option. */
+export interface HostOptions { flags?: Record<string, boolean>; readOnly?: boolean }
+
 /** One fake host: its data folder, engine, bot and web server, on `port`. */
-export async function startHost(port: number, options: { flags?: Record<string, boolean> } = {}) {
+export async function startHost(port: number, options: HostOptions = {}) {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'vb-fake-host-'));
   const { createEngine } = await loadEngine();
-  const engine = createEngine({ dir, name: () => 'The host\'s folder', warn: () => {}, ...(options.flags && { flags: options.flags }) });
-  // The host names its bot, once, through `route` (plugin.md § The bot).
+  let readOnly = false;
+  const engine = createEngine({ dir, name: () => 'The host\'s folder', warn: () => {}, ...(options.flags && { flags: options.flags }), ...(options.readOnly !== undefined && { readOnly: () => readOnly }) });
+  // The host names its bot, once, through `route` (plugin.md § The bot): a write, so before it opens read-only.
   const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: 'The host\'s bot' } }))!.body as { agent: string };
   const bot: HostCaller = { by: 'agent', agent: joined.agent };
+  readOnly = options.readOnly === true;
   const streams = new Set<ServerResponse>();
   const messages: Message[] = [];
   const tell = (event: object) => { for (const s of streams) s.write(`data: ${JSON.stringify(event)}\n\n`); };
+  /** Read-only on or off: asked on the engine's next call; a ref with no head tells the view to read again (plugin.md § The engine). */
+  const setReadOnly = (on: boolean) => { readOnly = on; tell({ type: 'board', ref: {} }); };
   const stop = engine.watch(({ board, head }) => tell({ type: 'board', ref: { ...(board !== undefined && { board }), head } }));
 
   /** The bot calls a tool; a board write's change goes to the chat as a line (`_meta`, plugin.md § Tools). */
@@ -127,7 +135,7 @@ export async function startHost(port: number, options: { flags?: Record<string, 
   const server = createServer((req, res) => { answer(req, res).catch((err: unknown) => { console.error(err); if (!res.headersSent) send(res, 500, { title: String(err) }); }); });
   await new Promise<void>((done) => server.listen(port, '127.0.0.1', done));
   return {
-    url: `http://127.0.0.1:${port}/`, dir, engine, bot, tool, messages,
+    url: `http://127.0.0.1:${port}/`, dir, engine, bot, tool, messages, setReadOnly,
     async close() {
       stop();
       for (const s of streams) s.end();
