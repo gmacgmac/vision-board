@@ -91,3 +91,5 @@
 .vb-agents-row + .vb-agents-row { border-top: 1px solid var(--vb-line); padding-top: var(--vb-space-1); }
 .vb-agents-label { color: var(--vb-ink-strong); white-space: nowrap; }
 .vb-agents-note { color: var(--vb-ink-subtle); white-space: nowrap; }
+/* "Allow all" stays on one line at narrow widths (read-only follow-ups FE_01-R3). */
+.vb-access-allow-all { white-space: nowrap; }

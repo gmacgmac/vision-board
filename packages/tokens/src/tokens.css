@@ -98,7 +98,7 @@
   /* Ink (no hue in body text, rule 3) */
   --vb-ink-strong: light-dark(#18181b, #ededef);
   --vb-ink: light-dark(#3f3f46, #c7c7cc);
-  --vb-ink-subtle: light-dark(#6b6b74, #9e9ea6); /* dark nudged from #94949c */
+  --vb-ink-subtle: light-dark(#6b6b74, #b8b8c0); /* muted text is the reading tier: dark Lc 60+ on every surface it is text on (60.1 on deep); maintainer point 415 */
   --vb-ink-on-fill: light-dark(#ffffff, #1a0712);
 
   /* Lines (faint by design; not a contrast tier) */
