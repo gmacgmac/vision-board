@@ -52,7 +52,7 @@
   <VersionBanner run={shown.past} {root} onback={() => void board()?.showVersion(null)} />
 {:else}
   {#if shown.agentAccess}
-    <AccessRequests requests={shown.requests} news={shown.requestNews} byBot={flag('accessByBot')} {root} {ids}
+    <AccessRequests requests={shown.requests} news={shown.requestNews} byBot={flag('accessByBot')} {root} {ids} readOnly={shown.readOnly}
       onanswer={(seq, a, text) => board()?.access.answer(seq, a, text) ?? Promise.resolve(false)}
       onallowall={(seqs) => board()?.access.answerAll(seqs) ?? Promise.resolve(false)} />
   {/if}

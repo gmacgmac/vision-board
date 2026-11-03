@@ -15,12 +15,15 @@ import { handoverMarkup, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup 
 import { panelSize } from '../app-frame/app-frame-core.ts';
 import { AWAITING, isItem } from './node-core.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
-import { pauseControls } from '../paused/paused.ts';
+import { explainPaused, pauseControls } from '../paused/paused.ts';
+import { READ_ONLY_PERSON } from '#actions';
 
 /** The controls a locked board pauses on a card (N40 ruling 4): everything that changes it but the flag. */
 const PAUSED = 'button[data-act], .vb-size-trig, .vb-size-opt, .vb-note-pin, button[data-answer]';
 /** The flag, which a lock lets be but a read-only ledger pauses with the rest (D-085 3). */
 const FLAG = 'button[data-flag]';
+/** An app card's Allow and Stop app, which a read-only ledger pauses too (FE_01); "Allowed ▾" only opens the menu. */
+const APP = 'button[data-app-act="app-allow"], button[data-app-act="app-revoke"]';
 /** An out-of-date proposal's Accept is aria-disabled for its own reason, locked or not. */
 const staleAccept = (el: Element): boolean => el.matches('[data-answer="accept"]') && el.closest('.vb-prop[data-stale]') !== null;
 
@@ -125,6 +128,8 @@ export function defineVbNode(): void {
       if (fresh) fresh.hidden = st.fresh !== true;
       pauseControls(this, PAUSED, st.paused === true, staleAccept);
       pauseControls(this, FLAG, st.readOnly === true);
+      pauseControls(this, APP, st.readOnly === true);
+      explainPaused(this, `${PAUSED}, ${FLAG}, ${APP}`, st.readOnly === true ? READ_ONLY_PERSON : undefined);
     }
 
     /** The HANDOVER tab and its box (FE_03): rebuilt only when the handover changed, closed when none is left. */

@@ -84,6 +84,16 @@ function statusCards(n: ViewNode, fx: Fixture): VbNodeElement[] {
   return [busy!, refused!, open!];
 }
 
+/** On a read-only ledger (FE_01): Allow, and "Allowed ▾" with its menu open, whose Stop app is paused too; each says why as its tip. */
+export function readOnlyCards(n: ViewNode, fx: Fixture): VbNodeElement[] {
+  const asking = { info: { ...CALCULATOR, allowed: false, state: 'needs-approval' as const } };
+  const state = { ...fx.state, readOnly: true as const };
+  const [allow, stop] = [asking, { info: CALCULATOR }].map((app, i) => card({ ...n, id: `${n.id}-r${i}` }, fx, state, { app }));
+  stop!.querySelector('[data-app-menu]')!.setAttribute('aria-expanded', 'true');
+  stop!.querySelector<HTMLElement>('[role="menu"]')!.hidden = false;
+  return [allow!, stop!];
+}
+
 /** The window look (card-polish FE_04, the appTitle flag): the least panel size, its name cut in the
  * bar, with Allow and with "Allowed ▾", then a name too long for the bar with its tip open (as hover
  * or keyboard focus in the footer opens it), where list_apps knows no title, so the card's is the name. */

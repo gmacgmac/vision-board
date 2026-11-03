@@ -54,3 +54,23 @@ test('a read-only ledger pauses a card and its container as a lock does, and the
   assert.match(source, /const FLAG = 'button\[data-flag\]'/);
   assert.match(source, /pauseControls\(this, FLAG, st\.readOnly === true\)/);
 });
+
+// The reason as the paused controls' tooltip (FE_01): their own tip kept, then given back.
+test('explainPaused sets the reason as the title, keeps the control\'s own, and gives it back', async () => {
+  const { explainPaused } = await import('../src/paused/paused.ts');
+  const make = (title: string | null) => {
+    const attrs = new Map<string, string>(title === null ? [] : [['title', title]]);
+    return { dataset: {} as Record<string, string | undefined>, getAttribute: (k: string) => attrs.get(k) ?? null, setAttribute: (k: string, v: string) => void attrs.set(k, v), removeAttribute: (k: string) => void attrs.delete(k) };
+  };
+  const [a, none] = [make('Check · a'), make(null)];
+  const root = { querySelectorAll: () => [a, none] } as unknown as ParentNode;
+  explainPaused(root, 'button', 'Why');
+  explainPaused(root, 'button', 'Why'); // again: the stash is not overwritten by the reason
+  assert.equal(a.getAttribute('title'), 'Why');
+  assert.equal(none.getAttribute('title'), 'Why');
+  explainPaused(root, 'button', undefined);
+  assert.equal(a.getAttribute('title'), 'Check · a');
+  assert.equal(none.getAttribute('title'), null);
+  const source = fs.readFileSync(new URL('../src/node/vb-node.ts', import.meta.url), 'utf8');
+  assert.match(source, /explainPaused\(this, `\$\{PAUSED\}, \$\{FLAG\}, \$\{APP\}`/);
+});
