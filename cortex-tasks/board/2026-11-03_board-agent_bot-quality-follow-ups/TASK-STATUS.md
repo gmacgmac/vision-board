@@ -23,7 +23,7 @@ tracker: cortex-tasks/tracker.md#M48
 |---|----|------|-------|---------|------|--------|-------|
 | 1 | ANSWER_01 | 1 | standard | API designer for agent tools — a read carries the fact and its address, never a copy of what the address already holds. | [ANSWER_01_answered-no-words.md](./ANSWER_01_answered-no-words.md) | planned | |
 | 2 | SEAM_01 | 1 | standard | — | [SEAM_01_flags-out-of-seam.md](./SEAM_01_flags-out-of-seam.md) | planned | |
-| 3 | WT_01 | 1 | standard | — | [WT_01_worktree-script.md](./WT_01_worktree-script.md) | planned | |
+| 3 | WT_01 | 1 | standard | — | [WT_01_worktree-script.md](./WT_01_worktree-script.md) | completed | notes in task file |
 
 ## File Ownership
 
