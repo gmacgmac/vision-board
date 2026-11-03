@@ -78,3 +78,20 @@ As the previous set's PLAN § House Rules, with these differences:
 - [ ] Two ledgers' same-id boards keep their own zoom and proposals-hidden; nothing a person set is lost
 - [ ] `eval:bot` runs standalone with the three scenarios, and both modes pass
 - [ ] host-styles compares whole pixels; full gates green
+
+## Decisions added at wave 1 (maintainer, points 415-418)
+
+8. **415**: `--vb-ink-subtle: light-dark(#6b6b74, #b8b8c0);` — yes. T_01 Run 2 writes it (wave 3, last, so every
+   screenshot is re-taken once).
+9. **416**: a container's rail icons (and divider) show only on the container being interacted with: hidden while
+   neither the container nor its rail is hovered or holds focus; at the rest strength (`--vb-rail-rest`, 0.5,
+   unchanged) while the container is hovered or focused; full strength on the rail as today. Their colour and
+   strength are not changed. A touch screen (no hover) keeps them shown, as today. Comment's badge (an unsent or
+   waiting note) still shows: it tells the person something. Hidden icons stay focusable, so the keyboard can reach
+   them (focus shows them). Behind a new flag `railOnHover`, on. FE_03.
+10. **417**: SKILL.md wording: after drawing what was asked (a summary from another ledger included), the bot's line
+    says what changed and names the board, without repeating the cards; on a ledger mismatch, one line, no offer.
+    `eval:bot` passes in both modes before merge. BOT_02.
+11. **418**: the page's memory is per folder for `main` too (amends decision 4): every key carries folder and ledger;
+    a value under an old key is read once as the fallback for `main` of the folder open, then kept under the new key,
+    so nothing a person set is lost. FE_02 Run 2.

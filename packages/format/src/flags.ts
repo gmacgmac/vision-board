@@ -314,6 +314,11 @@ export const FLAGS = {
     default: true,
     description: 'Every ledger opens read-only and takes no lock; Edit takes the ledger\'s lock if no one else holds it, Stop editing gives it back. Read-only writes nothing into the ledger\'s folder; reads carry `readOnly: true` and writes answer `read-only` (D-085). `--edit` or `VB_EDIT=1` opens for editing. Off, the board opens for writing as before.',
   },
+  railOnHover: {
+    // On by default (maintainer, 2026-11-03, point 416; read-only follow-ups FE_03); ?flags=-railOnHover turns it off.
+    default: true,
+    description: 'A container\'s rail icons and divider show only on the container being hovered or holding focus (at the rail\'s rest strength, full on the rail itself); on every other container they are hidden, though still focusable. Comment\'s badge still shows, and a touch screen keeps them shown. Off, every container shows its rail icons dimmed at rest.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

@@ -28,7 +28,10 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 | 2 | FE_02 | 1 | strong | Front-end engineer who owns page state — what the server says decides what the page shows, and one person's settings never leak into another place. | [Ledger chip and page memory per ledger](./FE_02_ledger-chip-and-memory.md) | Completed | Ledger parts are getters over the server's folder (M51); `pageStore` keyed by `ledgerScope`, `main` keeps `vb.<key>`; the board mounts after the folder read (M52). 2 requests |
 | 3 | T_02 | 1 | standard | Test engineer — a check fails only for a real difference, never for how a pixel was rounded. | [Whole-pixel host-styles shots](./T_02_whole-pixel-shots.md) | Completed | Whole-pixel clip in sameUnderHost; 3 green runs, deliberate rule fails |
 | 4 | BOT_01 | 1 | strong | Evaluation engineer for agents — an instruction counts as working when a scored run shows it, not when one hand check did. | [Standalone bot eval](./BOT_01_standalone-eval.md) | Completed | `eval:bot -- --standalone`: 3 scenarios, standalone 52/54 over 9 runs (`other-ledger/done-only` 1/3: SKILL.md finding), plugin 48/48; $1.4685 |
-| 5 | T_01 | 2 | standard | Accessibility engineer — reading text reads, in every theme, on every surface it sits on. | [Subtle ink to the reading tier](./T_01_subtle-ink-contrast.md) | Run 1 done, BLOCKED for the maintainer's yes | Run 1: `--vb-ink-subtle` dark `#b8b8c0` (darkest same-hue at Lc 60 on every text surface; 60.1 on deep, 60.9 on the Note chip, 63.0 on card); light unchanged. Awaiting the yes for Run 2. |
+| 5 | T_01 | 3 | standard | Accessibility engineer — reading text reads, in every theme, on every surface it sits on. | [Subtle ink to the reading tier](./T_01_subtle-ink-contrast.md) | Run 1 done, BLOCKED for the maintainer's yes | Run 1: `--vb-ink-subtle` dark `#b8b8c0` (darkest same-hue at Lc 60 on every text surface; 60.1 on deep, 60.9 on the Note chip, 63.0 on card); light unchanged. Awaiting the yes for Run 2. |
+| 6 | FE_03 | 2 | standard | Interaction designer — a tool shows where the person is working, and stays reachable by keyboard everywhere else. | [Rail icons only on the container in use](./FE_03_rail-on-hover.md) | Pending | |
+| 7 | BOT_02 | 2 | strong | Prompt engineer who treats instructions as code — every line earns its place by a scenario, and a change that breaks another case is reverted. | [Bot wording: no recap, one-line mismatch](./BOT_02_skill-wording.md) | Pending | |
+| 8 | FE_02 Run 2 | 2 | strong | (FE_02's) | [`main` memory per folder (decision 11)](./FE_02_ledger-chip-and-memory.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -39,6 +42,7 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 | FE_01 | 6100 | BOT_01 | 6400 (eval's door: 6010) |
 | FE_02 | 6200 | T_01 | 6500 |
 | T_02 | 6300 | orchestrator | 7300 |
+| FE_03 | 6600 | BOT_02 | 6700 (eval's door: 6010) |
 
 ## Shared Foundations
 
@@ -57,7 +61,11 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 | 1 | FE_02 | `apps/board/src/shell/**`, `apps/board/src/board/host.ts`, `apps/board/src/board/chrome/{Toolbar,ToolbarEnd,ToolbarMenu,HeaderFields}.svelte`, `chrome/header-tier.ts`, `apps/board/src/gallery/ledger-section.ts`, `tests/pages/{ledgers,header-tiers,last-board}.spec.ts` and a new spec of its own, `tests/pages/{board-page,folder-server}.ts`, `docs/specification/{components,words}.md` |
 | 1 | T_02 | `tests/pages/host-styles.spec.ts` |
 | 1 | BOT_01 | `tests/evals/bot/**`, `skills/vision-board/scenarios.md`, `skills/vision-board/NOTES.md` |
-| 2 | T_01 | `packages/tokens/src/tokens.css` (after the maintainer's yes), `packages/tokens/README.md`, `packages/ui/src/base/dialog.css`, `tests/pages/__screenshots__/**` it must re-take, `docs/specification/components.md` (FE_01's doc requests) |
+| 2 | FE_03 | `packages/ui/src/region/**`, `apps/board/src/gallery/rail-section.ts`, `tests/pages/container-rail*.spec.ts` and a new spec of its own |
+| 2 | BOT_02 | `skills/vision-board/**`, `apps/board/plugin/words/skill-edits.ts`, `apps/board/tests/plugin-skill.test.ts`, `tests/evals/bot/**` |
+| 2 | FE_02 Run 2 | `apps/board/src/shell/{kept,page-host}.ts`, `apps/board/tests/kept.test.ts`, `tests/pages/ledger-memory.spec.ts`, `docs/specification/components.md` |
+| 3 | T_01 | as wave 2's row above, plus `apps/board/src/board/chrome/ProposalsBar.svelte`, `apps/board/src/styles/access.css`, `apps/board/src/gallery/ledger-section.ts`, every screenshot under `tests/pages/__screenshots__/**` that changes (FE_03's included) |
+| 3 (was 2) | T_01 | `packages/tokens/src/tokens.css` (after the maintainer's yes), `packages/tokens/README.md`, `packages/ui/src/base/dialog.css`, `tests/pages/__screenshots__/**` it must re-take, `docs/specification/components.md` (FE_01's doc requests) |
 
 ## Requests
 
