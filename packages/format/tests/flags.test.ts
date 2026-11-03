@@ -2,15 +2,34 @@
 // and unknown names refused rather than silently read as off.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FLAGS, flagOn, parseFlags } from '../src/index.ts';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { FLAG_DESCRIPTIONS, FLAGS, flagOn, parseFlags } from '../src/index.ts';
 import type { FlagName } from '../src/index.ts';
 
-test('every flag has a boolean default and a description', () => {
+const ROOT = path.resolve(import.meta.dirname, '../../..');
+
+test('every flag has a boolean default and a description, and no description names a flag that is not one', () => {
   assert.ok(Object.keys(FLAGS).length > 0);
   for (const [name, f] of Object.entries(FLAGS)) {
     assert.equal(typeof f.default, 'boolean', name);
-    assert.ok(f.description.trim().length > 0, name);
+    assert.ok(FLAG_DESCRIPTIONS[name as FlagName]?.trim().length > 0, name);
   }
+  assert.deepEqual(Object.keys(FLAG_DESCRIPTIONS).sort(), Object.keys(FLAGS).sort());
+});
+
+/** Every source file under `dir` (repo-relative), recursively. */
+const sources = (dir: string): string[] => readdirSync(path.join(ROOT, dir), { recursive: true, encoding: 'utf8' })
+  .filter((f) => /\.(?:ts|svelte|js|mjs)$/.test(f)).map((f) => path.join(dir, f));
+
+test('the descriptions stay out of the board page: FLAGS holds defaults only, and no page code names FLAG_DESCRIPTIONS', () => {
+  for (const [name, f] of Object.entries(FLAGS)) assert.deepEqual(Object.keys(f), ['default'], name);
+  // The page is apps/board/src (the gallery is a page of its own) and the packages it imports (performance.md § Budgets).
+  const page = [
+    ...sources('apps/board/src').filter((f) => !f.startsWith('apps/board/src/gallery/')),
+    ...readdirSync(path.join(ROOT, 'packages')).flatMap((m) => sources(`packages/${m}/src`)),
+  ].filter((f) => f !== 'packages/format/src/flags.ts');
+  assert.deepEqual(page.filter((f) => /\bFLAG_DESCRIPTIONS\b/.test(readFileSync(path.join(ROOT, f), 'utf8'))), []);
 });
 
 test('nodeSize is on by default (maintainer, 2026-10-05), and -nodeSize turns it off', () => {
