@@ -6,10 +6,17 @@
 // sits inside its frame, so CSS covers a pointer or focus on the rail with no help from here.
 import type { VbRegionElement } from '#ui';
 
-/** Listens on `stage`; returns the function that stops listening. `regionOf`: the region a card is in. */
-export function bindRegionUse(stage: HTMLElement, frames: () => ReadonlyMap<string, VbRegionElement>, regionOf: (card: string) => string | undefined): () => void {
+export interface RegionUse {
+  /** Read the pointer and the focus again and mark the frames (a draw can move a focused card to another frame). */
+  apply(): void;
+  /** Stop listening. */
+  stop(): void;
+}
+
+/** Listens on `stage`. `regionOf`: the region a card is in. Focus is read live, never kept, so a card
+ *  that moved frame or lost focus leaves no mark behind; a pointer move is applied on the next frame. */
+export function bindRegionUse(stage: HTMLElement, frames: () => ReadonlyMap<string, VbRegionElement>, regionOf: (card: string) => string | undefined): RegionUse {
   let pointer: { x: number; y: number } | null = null;
-  let focused: string | null = null;
   let frame = 0;
   const hovered = (): string | null => {
     if (!pointer) return null;
@@ -22,32 +29,32 @@ export function bindRegionUse(stage: HTMLElement, frames: () => ReadonlyMap<stri
     }
     return best;
   };
+  /** The frame holding focus: the focused card's, or the frame's own (its rail, its title). */
+  const focused = (): string | null => {
+    const t = stage.contains(document.activeElement) ? document.activeElement : null;
+    const card = t?.closest<HTMLElement>('vb-node');
+    return card ? regionOf(card.dataset.id ?? '') ?? null : t?.closest<HTMLElement>('vb-region')?.dataset.region ?? null;
+  };
   const apply = () => {
     frame = 0;
-    const over = hovered();
-    for (const [id, el] of frames()) el.toggleAttribute('data-use', id === over || id === focused);
+    const [over, held] = [hovered(), focused()];
+    for (const [id, el] of frames()) el.toggleAttribute('data-use', id === over || id === held);
   };
   const soon = () => { if (!frame) frame = requestAnimationFrame(apply); };
   const move = (e: PointerEvent) => { pointer = e.pointerType === 'mouse' || e.pointerType === 'pen' ? { x: e.clientX, y: e.clientY } : null; soon(); };
   const leave = () => { pointer = null; soon(); };
-  const focusIn = (e: FocusEvent) => {
-    const t = e.target as Element | null;
-    const card = t?.closest<HTMLElement>('vb-node');
-    focused = card ? regionOf(card.dataset.id ?? '') ?? null : t?.closest<HTMLElement>('vb-region')?.dataset.region ?? null;
-    soon();
-  };
-  const focusOut = () => { focused = null; soon(); };
   stage.addEventListener('pointermove', move);
   stage.addEventListener('pointerleave', leave);
   stage.addEventListener('wheel', soon, { passive: true }); // the board moved under a still pointer
-  stage.addEventListener('focusin', focusIn);
-  stage.addEventListener('focusout', focusOut);
-  return () => {
+  stage.addEventListener('focusin', apply);
+  const out = () => queueMicrotask(apply);
+  stage.addEventListener('focusout', out); // activeElement is the body until the next focus lands
+  return { apply, stop: () => {
     cancelAnimationFrame(frame);
     stage.removeEventListener('pointermove', move);
     stage.removeEventListener('pointerleave', leave);
     stage.removeEventListener('wheel', soon);
-    stage.removeEventListener('focusin', focusIn);
-    stage.removeEventListener('focusout', focusOut);
-  };
+    stage.removeEventListener('focusin', apply);
+    stage.removeEventListener('focusout', out);
+  } };
 }

@@ -120,7 +120,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
   const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown });
   const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, idPrefix: d.ids, markdown: d.markdown });
-  const unuse = d.rail && d.railHover ? bindRegionUse(els.stage, () => regions.els, (id) => d.data().view.nodes.find((n) => n.id === id)?.region) : undefined;
+  const use = d.rail && d.railHover ? bindRegionUse(els.stage, () => regions.els, (id) => d.data().view.nodes.find((n) => n.id === id)?.region) : undefined;
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids);
   const cache = createLayoutCache();
   const sizes = new Map<string, Size>();
@@ -193,6 +193,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     work.containers.push(...run.laidOut);
     layout = run.layout;
     const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed(), d.replies(), d.retired?.(), d.fresh?.());
+    use?.apply(); // a card that moved frame while it held focus
     if (cards.place(layout, sizes) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);
@@ -213,6 +214,6 @@ export function createDrawing(d: DrawDeps): Drawing {
     viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); images.place(); d.placed?.(); },
     wiresFor: (l, focus) => wires.draw(l, focus),
     settle: settleWires,
-    destroy: () => { clearTimeout(settle); images.destroy(); unuse?.(); },
+    destroy: () => { clearTimeout(settle); images.destroy(); use?.stop(); },
   };
 }
