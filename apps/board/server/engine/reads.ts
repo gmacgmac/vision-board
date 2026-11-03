@@ -5,7 +5,7 @@
 // board an agent may call names it through `requireBoard` (visibility.ts), so an archived board is
 // not found (api.md 136); `read_ledger` is the person's and names any board. The change streams are
 // the host's (the standalone server's streams.ts, from `watch`). What a read tells its caller about itself (`owed`,
-// `held`; the `botToolRules` flag) is caller-marks.ts.
+// `answered`, `held`; the `botToolRules` flag) is caller-marks.ts.
 import type { LedgerEvent } from '#format';
 import { boardView, containerKey, flagOn, toLine, widthsOf } from '#format';
 import type { LedgerState } from '#actions';
@@ -15,7 +15,7 @@ import {
 } from '#actions';
 import { structureOf } from '#layout';
 import { cardOn } from '../edge.ts';
-import { holds, markBoard, markDetail, marksFor, markNotes } from './caller-marks.ts';
+import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
@@ -63,7 +63,7 @@ const showContainer: Op = ({ params, ledger, caller, flags }) => {
   const detail = containerDetail(s, board, region);
   if (!detail) throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
   const m = marksFor(s, board, caller, flags);
-  const marked = m ? { ...detail, notes: markNotes(detail.notes, m.regions.get(region)), nodes: detail.nodes.map((d) => markDetail(d, m)) } : detail;
+  const marked = m ? { ...detail, notes: markRegionNotes(detail.notes, m, region), nodes: detail.nodes.map((d) => markDetail(d, m)) } : detail;
   return reply(200, { head: s.seq, ...marked });
 };
 

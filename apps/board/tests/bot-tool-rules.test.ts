@@ -14,6 +14,7 @@ import { createMcpServer, INSTRUCTIONS, INSTRUCTIONS_JOINED, MODERN } from '#mcp
 import type { Caller, Engine } from '../server/engine/index.ts';
 import { createEngine } from '../server/engine/index.ts';
 import { inputRefusals } from '../server/words/plugin-tools.ts';
+import { checkAnswer } from './openapi-ajv.ts';
 
 const PERSON: Caller = { by: 'person' };
 const OFF: FlagOverrides = { botToolRules: false };
@@ -104,6 +105,7 @@ test('the right instructions per host: a host\'s bot is told the plugin\'s, with
   assert.match(said, /never hold your turn/);
   assert.match(said, /Send/);
   assert.match(said, /`write_board`/);
+  assert.match(said, /marks `owed`.*marked `answered`/, 'which notes to answer, said positively (TOOLS_02)');
   const server = createMcpServer({ tools: engine.tools });
   const meta = { _meta: { 'io.modelcontextprotocol/protocolVersion': MODERN, 'io.modelcontextprotocol/clientCapabilities': {} } };
   const discover = (await server.handle({ jsonrpc: '2.0', id: 1, method: 'server/discover', params: meta })) as any;
@@ -143,6 +145,48 @@ test('reads tell the truth: a note the caller owes is `owed`, from the same rule
   assert.equal((await tool(engine, 'show_node', { board: 'plans', n: 1 }, bot)).notes[0].owed, undefined);
 });
 
+/** A note's marks as a read gives them: `[seq, owed, answered]`. */
+const marks = (notes: any[]) => notes.map((x) => [x.seq, x.owed === true, x.answered]);
+
+test('reads say what answered a note (TOOLS_02): a reply with its words, a newer version, or the person\'s ✓ after it; an earlier note, and one not yet answered on another bot\'s card, are neither', async () => {
+  const { engine, bot, other, act } = await withPlans();
+  const first = await act({ action: 'comment', n: 1, ver: 1, text: 'Friday is too soon.' });
+  await act({ action: 'send', board: 'plans' });
+  const latest =await act({ action: 'comment', n: 1, ver: 1, text: 'Unless the tests pass.' });
+  const onTwo = await act({ action: 'comment', n: 2, ver: 1, text: 'Who is free?' });
+  const onNow = await act({ action: 'comment', board: 'plans', region: 'now', text: 'Split this container.' });
+  assert.deepEqual(marks((await tool(engine, 'get_board', { board: 'plans' }, other)).state.items['1'].notes),
+    [[first, false, undefined], [latest, false, undefined]], 'not yet answered, and not the other bot\'s: neither');
+  const wrote = await tool(engine, 'write_board', { board: 'plans', items: [
+    { type: 'reply', n: 1, to: latest, text: 'Monday, then.', key: 'plans-reply-n1' },
+    { type: 'append', n: 2, text: 'Sam reviews.', key: 'plans-append-n2' },
+    { type: 'reply', n: 1, to: onNow, text: 'Split.', key: 'plans-reply-now' },
+  ] }, bot);
+  const [reply, , nowReply] = wrote.results.map((r: any) => r.seq);
+  const byReply = { kind: 'reply', seq: reply, text: 'Monday, then.' };
+  const byVersion = { kind: 'version', ver: 2 };
+  const nowAnswer = { kind: 'reply', seq: nowReply, text: 'Split.' };
+  const board = await tool(engine, 'get_board', { board: 'plans' }, bot);
+  assert.deepEqual(marks(board.state.items['1'].notes), [[first, false, undefined], [latest, false, byReply]], 'the latest answered by the reply; the earlier one stood behind it');
+  assert.deepEqual(marks(board.state.items['2'].notes), [[onTwo, false, byVersion]]);
+  assert.deepEqual(marks(board.state.containerNotes.now), [[onNow, false, nowAnswer]]);
+  assert.deepEqual((await tool(engine, 'show_node', { board: 'plans', n: 2 }, bot)).notes[0].answered, byVersion);
+  const shown = await tool(engine, 'show_container', { board: 'plans', region: 'now' }, bot);
+  assert.deepEqual([shown.notes[0].answered, shown.nodes[0].notes[1].answered], [nowAnswer, byReply]);
+  const fits = (id: string, body: unknown) => checkAnswer(id, { status: 200, headers: new Headers(), media: 'application/json', body });
+  fits('get_board', board);
+  fits('show_container', shown);
+  assert.deepEqual((await tool(engine, 'get_board', { board: 'plans' }, other)).state.items['1'].notes[1].answered, byReply, 'answered is a fact for every agent');
+  const again = await act({ action: 'comment', n: 2, ver: 2, text: 'And a second reviewer?' });
+  assert.deepEqual(marks((await tool(engine, 'get_board', { board: 'plans' }, bot)).state.items['2'].notes)[1], [again, true, undefined], 'owed, until...');
+  const check = await act({ action: 'ack', n: 2, ver: 2 });
+  assert.deepEqual(marks((await tool(engine, 'get_board', { board: 'plans' }, bot)).state.items['2'].notes),
+    [[onTwo, false, byVersion], [again, false, { kind: 'check', seq: check }]], '...the person\'s ✓ after it answers it');
+  fits('show_node', await tool(engine, 'show_node', { board: 'plans', n: 2 }, bot));
+  const person = (await engine.route({ method: 'GET', path: 'boards/plans' }, { caller: PERSON }))!;
+  assert.ok(person.status === 200 && !JSON.stringify(person.body).includes('"answered"'), 'a person\'s read is unmarked');
+});
+
 test('reads tell the truth: list_boards and get_board say `held` on a board the caller holds, the board request_grant answers `held` for', async () => {
   const { engine, bot, other } = await withPlans();
   const list = await tool(engine, 'list_boards', {}, bot);
@@ -155,11 +199,13 @@ test('reads tell the truth: list_boards and get_board say `held` on a board the 
   assert.equal(person.boards.some((b: any) => 'held' in b), false, 'the person holds no board');
 });
 
-test('reads, flag off: no `owed` and no `held`, as before', async () => {
+test('reads, flag off: no `owed`, no `answered` and no `held`, as before', async () => {
   const { engine, bot, act } = await withPlans(OFF);
-  await act({ action: 'comment', n: 1, ver: 1, text: 'Friday is too soon.' });
+  const note = await act({ action: 'comment', n: 1, ver: 1, text: 'Friday is too soon.' });
+  await act({ action: 'comment', n: 2, ver: 1, text: 'Who?' });
+  await tool(engine, 'write_board', { board: 'plans', items: [{ type: 'reply', n: 1, to: note, text: 'Monday.', key: 'plans-reply-n1' }] }, bot);
   const board = await tool(engine, 'get_board', { board: 'plans' }, bot);
-  assert.ok(!JSON.stringify(board).includes('"owed"') && !('held' in board));
+  assert.ok(!JSON.stringify(board).includes('"owed"') && !JSON.stringify(board).includes('"answered"') && !('held' in board));
   assert.ok(!JSON.stringify(await tool(engine, 'list_boards', {}, bot)).includes('"held"'));
   assert.ok(!JSON.stringify(await tool(engine, 'show_node', { board: 'plans', n: 1 }, bot)).includes('"owed"'));
 });

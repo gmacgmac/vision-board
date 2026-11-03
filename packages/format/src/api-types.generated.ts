@@ -365,9 +365,21 @@ type CommonNote = {
   locked?: true;
   nodes?: CommonCardNumbers;
   owed?: true;
+  answered?: CommonNoteAnswer;
 };
 type CommonLongText = string;
 type CommonCardNumbers = number[];
+type CommonNoteAnswer = {
+  kind: "reply";
+  seq: number;
+  text: CommonLongText;
+} | {
+  kind: "version";
+  ver: number;
+} | {
+  kind: "check" | "cross";
+  seq: number;
+};
 type CommonAgentLabel = string;
 type GetBoardResponseHolder = {
   agent: string;

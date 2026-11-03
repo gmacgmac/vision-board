@@ -4,7 +4,7 @@
 // answers an ask, api.md 36). This is the one derived state: the server's check (act.ts
 // `changeProblems`) and every read (`sentNotes`, which the page's `notes.ts` reads as `locked`) ask
 // `lockOf`, so they can't disagree. Pure.
-import type { LedgerState } from './fold.ts';
+import type { LedgerReply, LedgerState } from './fold.ts';
 import type { Ask, ItemNote } from './notes.ts';
 import { askVer, cardsOf } from './notes.ts';
 
@@ -14,9 +14,12 @@ export const sentAfter = (s: LedgerState, board: string, seq: number): boolean =
 /** Whether a `reply` names the ask `seq` in `to`: one on any card it is on (a note on a group,
  * api.md 64), or, for a note on a whole container, which is on no card, one on any node, since a
  * `seq` names one act (api.md 73). */
-export function replied(s: LedgerState, seq: number, cards: number[]): boolean {
+export const replied = (s: LedgerState, seq: number, cards: number[]): boolean => replyTo(s, seq, cards) !== undefined;
+
+/** The first `reply` naming the ask `seq` in `to`, where `replied` looks (note-answer.ts names it). */
+export function replyTo(s: LedgerState, seq: number, cards: number[]): LedgerReply | undefined {
   const on = cards.length ? cards.map((id) => s.replies.get(id) ?? []) : [...s.replies.values()];
-  return on.some((rs) => rs.some((r) => r.to === seq));
+  return on.flat().filter((r) => r.to === seq).sort((a, b) => a.seq - b.seq)[0];
 }
 
 /** Why note `a` on `board` is history: `sent` (a Send came after it), `answered` (a reply names it,

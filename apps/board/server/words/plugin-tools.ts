@@ -55,6 +55,6 @@ export const instructionEdits: readonly { from: string; to: string }[] = [
     from: 'Then call `check_responses` with the `head` you last saw (and `wait` up to 60 seconds) to read what the person did',
     to: 'Your host brings the person\'s answers in their next message, when they press Send, so never hold your turn to wait for them; `check_responses` with the `head` you last saw reads what they did',
   },
-  { from: 'Answer every note with a `reply` or an `append`,', to: 'Answer every note with a `reply` or an `append` (a note the reads show without `owed` needs nothing more),' },
+  { from: 'Answer every note with a `reply` or an `append`,', to: 'Answer every note a read marks `owed` with a `reply` or an `append` (one marked `answered` is answered already: never answer it again),' },
   { from: '`join` and `list_boards` name the folder the board has open (`project`). If a call answers `wrong-folder`, the board has another folder open: stop, tell the person what it says, and do not call `join`. ', to: '' },
 ];

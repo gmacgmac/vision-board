@@ -1683,3 +1683,13 @@ headers and answers) is [images.md](./images.md); this section is what the API s
       and a new key), or the line's kind and `seq`, and a free key, the first `<key>-<i>` this agent has not used
       (`write-replay.ts` `conflictWords`). The same key with the same content stays a quiet replay (29): a key names one
       line for good (D-017), so other content under it stays a conflict rather than a success that drops it.
+172. **A read says what answered a note** (bot-quality TOOLS_02, SKILL_01's request 1). `info.version` 1.40.0, adds only;
+    behind `botToolRules`, as 171. On an agent's read, a note not `owed` that something answered carries `answered`
+    (`common.schema.json` `noteAnswer`): `{ kind: "reply", seq, text }` for a reply naming it (its line and words),
+    `{ kind: "version", ver }` for the card's first version after it, or `{ kind: "check" | "cross", seq }` for the
+    person's ✓ or ✗ on the card after it while it stands; the reply first, then the version, then the mark. One rule:
+    `#actions` `noteAnswer` (`packages/actions/src/note-answer.ts`) is what ends owing, so `owedNote` (`item.owed`) and
+    `container.owed` owe the latest note it finds nothing for, and `caller-marks.ts` names what it found. A note with
+    neither mark is not the caller's to answer: on a card it may not answer, or an earlier note on a card whose latest
+    note carries the mark. A person's read and the page's fold stay unmarked (`apps/board/tests/bot-tool-rules.test.ts`
+    "reads say what answered a note", "reads, flag off").

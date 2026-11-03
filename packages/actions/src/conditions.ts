@@ -10,7 +10,8 @@
 import type { LedgerNode } from '#format';
 import { latest, NODE_TYPES, nodesOf } from '#format';
 import type { LedgerState } from './fold.ts';
-import { cardsOf, closedAfter, latestAsk } from './notes.ts';
+import { latestAsk } from './notes.ts';
+import { noteAnswer } from './note-answer.ts';
 import { unseenAnswer, unseenReply } from './clears.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
@@ -87,16 +88,14 @@ export { replied };
  * no park after it. A card closed with ✓ or ✗ owes no handover. */
 export const owedOn = (s: LedgerState, node: LedgerNode): number | undefined => owedNote(s, node) ?? awaitingPark(s, node.id);
 
-/** The `seq` of the person's latest note on a card (an old "needs context" is one) that no newer
- * version or reply answers. A note never answers a card, so it is owed on any card unless a ✓ or ✗
- * came after it (D-045). While it is owed, the card is with the agent (`cardStatus`, D-046). */
+/** The `seq` of the person's latest note on a card (an old "needs context" is one) that nothing
+ * answers (`noteAnswer`: a reply, a newer version, or a ✓ or ✗ after it). A note never answers a
+ * card, so it is owed on any card until then (D-045). While it is owed, the card is with the agent
+ * (`cardStatus`, D-046). */
 export function owedNote(s: LedgerState, node: LedgerNode): number | undefined {
   const ask = s.marks.get(node.id)?.ask;
-  if (!ask) return undefined;
-  const status = s.items.get(node.id)?.status ?? 'open';
-  const made = s.asks.get(ask.seq);
-  const closed = made ? closedAfter(s.logs.get(node.id)!, status, made) : CLOSED.has(status);
-  return !closed && latest(node).ver <= ask.ver && !replied(s, ask.seq, made ? cardsOf(made) : [node.id]) ? ask.seq : undefined;
+  const made = ask && s.asks.get(ask.seq);
+  return made && !noteAnswer(s, made, node.id) ? made.seq : undefined;
 }
 
 /** Where card `node` stands with the person (D-046), the one status every read gives: its ✓, ✗ or
@@ -166,7 +165,7 @@ export const CONDITIONS: Rows = {
       if (!s.index.boards.get(board)?.has(region)) return [];
       if (ctx.agent !== undefined && !mayAnswerIn(s, ctx.agent, { board, region })) return [];
       const ask = latestAsk(log);
-      return ask && !replied(s, ask.seq, cardsOf(ask)) ? [{ kind: 'container.owed' as const, board, container: region, seq: ask.seq }] : [];
+      return ask && !noteAnswer(s, ask) ? [{ kind: 'container.owed' as const, board, container: region, seq: ask.seq }] : [];
     })),
   },
   'item.new': {

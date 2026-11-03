@@ -133,11 +133,50 @@
         },
         "owed": {
           "const": true,
-          "description": "This note waits for your answer: answer it with a `reply` whose `to` is its `seq`, or an `append`. The same rule as `list_open`'s `pending` and `containers`. A note without it needs nothing more from you: answered already (a reply, a newer version, or the person's ✓ or ✗ after it), or not yours to answer. Only an agent's read is marked.",
+          "description": "This note waits for your answer: answer it with a `reply` whose `to` is its `seq`, or an `append`. The same rule as `list_open`'s `pending` and `containers`. A note without it needs nothing more from you: answered already (`answered` says by what), or not yours to answer. Only an agent's read is marked.",
           "$comment": "botToolRules flag (bot-quality TOOLS_01); api.md 171"
+        },
+        "answered": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/noteAnswer",
+          "description": "This note is answered already: leave it, since a second answer clears the person's ✓ or ✗ again. A note with neither this nor `owed` is not yours to answer: on a card you may not answer, or an earlier note on a card whose latest note carries the mark. Only an agent's read is marked.",
+          "$comment": "botToolRules flag (bot-quality TOOLS_02); api.md 172"
         }
       },
       "unevaluatedProperties": false
+    },
+    "noteAnswer": {
+      "description": "What answered a note, the first that holds of: a `reply` naming it, a newer version of the card than the one it was made on (an `append` or a redraw), or the person's ✓ (`check`) or ✗ (`cross`) on the card after it. The same rule that ends `owed`.",
+      "$comment": "bot-quality TOOLS_02 (`#actions` `noteAnswer`); api.md 172",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "seq", "text"],
+          "properties": {
+            "kind": { "const": "reply", "description": "A reply naming the note in `to`." },
+            "seq": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/seq", "description": "The reply's line." },
+            "text": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/longText", "description": "What the reply said." }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "ver"],
+          "properties": {
+            "kind": { "const": "version", "description": "A newer version of the card than the one the note was made on." },
+            "ver": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/version", "description": "The card's first version after the note." }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["kind", "seq"],
+          "properties": {
+            "kind": { "enum": ["check", "cross"], "description": "The person's ✓ (`check`) or ✗ (`cross`) on the card after the note." },
+            "seq": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/seq", "description": "The line of the person's mark." }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "itemState": {
       "type": "object",

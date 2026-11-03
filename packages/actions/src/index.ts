@@ -34,6 +34,8 @@ export { inCardOrder, responsesPage } from './response-order.ts';
 export type { ReportedAct } from './response-order.ts';
 export type { PendingItem } from './pending.ts';
 export { boardNews, clearsOnSelect, CONDITION_KINDS, CONDITIONS, conditionsOf, freshCards } from './conditions.ts';
+export type { NoteAnswer } from './note-answer.ts';
+export { noteAnswer } from './note-answer.ts';
 export { showsUpdates } from './fresh.ts';
 export type { FreshCard } from './fresh.ts';
 export type { Audience, ClearedBy, Condition, ConditionContext, ConditionKind, ConditionRow, SelectedBy, Shows } from './conditions.ts';

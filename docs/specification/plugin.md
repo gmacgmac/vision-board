@@ -237,11 +237,12 @@ person's, through `route`, and refused to a bot. Proven by `tools.spec.ts` "tool
   `inputHosts`), and a `wait` sent anyway is refused at once, `invalid`, saying the person's Send brings their answers and to
   end the turn. Your chat brings them. `route` keeps `wait`, as standalone's agents keep it.
 - *Reads say what is true for it.* A note it owes an answer is `owed` (`get_board`, `show_node`, `show_container`: the rule
-  `list_open`'s `pending` uses), and a board it holds is `held` (`list_boards`, `get_board`: what `request_grant` answers
-  `held` for), so it never answers a note twice or asks for a board it has.
+  `list_open`'s `pending` uses), a note already answered says what answered it, `answered` (a reply with its words, a
+  newer version, or the person's ✓ or ✗; api.md 172), and a board it holds is `held` (`list_boards`, `get_board`: what
+  `request_grant` answers `held` for), so it never answers a note twice or asks for a board it has.
 - *A key conflict says what the key holds* (a card by number, title and version, or the line's kind) and names a free key.
 
-Proven by `apps/board/tests/bot-tool-rules.test.ts` "no holding the turn", "reads tell the truth", "a key conflict helps", and `engine-hooks.spec.ts` "route and tools.call".
+Proven by `apps/board/tests/bot-tool-rules.test.ts` "no holding the turn", "reads tell the truth", "reads say what answered a note", "a key conflict helps", and `engine-hooks.spec.ts` "route and tools.call".
 
 **Two worked transports.**
 
