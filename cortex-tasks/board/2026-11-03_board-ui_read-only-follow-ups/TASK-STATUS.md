@@ -29,9 +29,11 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 | 3 | T_02 | 1 | standard | Test engineer — a check fails only for a real difference, never for how a pixel was rounded. | [Whole-pixel host-styles shots](./T_02_whole-pixel-shots.md) | Completed | Whole-pixel clip in sameUnderHost; 3 green runs, deliberate rule fails |
 | 4 | BOT_01 | 1 | strong | Evaluation engineer for agents — an instruction counts as working when a scored run shows it, not when one hand check did. | [Standalone bot eval](./BOT_01_standalone-eval.md) | Completed | `eval:bot -- --standalone`: 3 scenarios, standalone 52/54 over 9 runs (`other-ledger/done-only` 1/3: SKILL.md finding), plugin 48/48; $1.4685 |
 | 5 | T_01 | 3 | standard | Accessibility engineer — reading text reads, in every theme, on every surface it sits on. | [Subtle ink to the reading tier](./T_01_subtle-ink-contrast.md) | Run 1 done, BLOCKED for the maintainer's yes | Run 1: `--vb-ink-subtle` dark `#b8b8c0` (darkest same-hue at Lc 60 on every text surface; 60.1 on deep, 60.9 on the Note chip, 63.0 on card); light unchanged. Awaiting the yes for Run 2. |
-| 6 | FE_03 | 2 | standard | Interaction designer — a tool shows where the person is working, and stays reachable by keyboard everywhere else. | [Rail icons only on the container in use](./FE_03_rail-on-hover.md) | Pending | |
-| 7 | BOT_02 | 2 | strong | Prompt engineer who treats instructions as code — every line earns its place by a scenario, and a change that breaks another case is reverted. | [Bot wording: no recap, one-line mismatch](./BOT_02_skill-wording.md) | Pending | |
-| 8 | FE_02 Run 2 | 2 | strong | (FE_02's) | [`main` memory per folder (decision 11)](./FE_02_ledger-chip-and-memory.md) | Pending | |
+| 6 | FE_03 | 2 | standard | Interaction designer — a tool shows where the person is working, and stays reachable by keyboard everywhere else. | [Rail icons only on the container in use](./FE_03_rail-on-hover.md) | Completed | `railOnHover`: frame `data-rail-hover` + `data-use` (board's `bindRegionUse`, the cards are a layer above the frames); hidden = opacity 0 incl. the row's box; new spec `container-rail-hover.spec.ts` red first then green; touched files outside the wave-2 ownership row (request); `npm run verify` fails on 200.4 KB gzip (base 200.0, already failing) |
+| 7 | BOT_02 | 2 | strong | Prompt engineer who treats instructions as code — every line earns its place by a scenario, and a change that breaks another case is reverted. | [Bot wording: no recap, one-line mismatch](./BOT_02_skill-wording.md) | Completed | SKILL v3.29, 3 standalone-only lines (plugin skill byte-identical); `join-ledger` `one-line` check. Final text: `other-ledger/done-only` 3/3 (base 0/2), `join-ledger` 2/2 (base 1/2 short-chat); plugin 47/48 then `refusals` 5/5 on re-run (unchanged text); $1.9631 |
+| 8 | FE_02 Run 2 | 2 | strong | (FE_02's) | [`main` memory per folder (decision 11)](./FE_02_ledger-chip-and-memory.md) | Completed | Run 2: every `pageStore` key carries folder and ledger (`ledgerScope`: the path for `main`); an old `vb.<key>` is read once by `main` of the open folder, then moved. Last-board keys already follow; its global `vb.lastBoard` fallback doesn't (request). Base fails the page budget (200.0 KB) |
+| 9 | T_03 | 3 | strong | Performance engineer — the page loads what the person needs first; a budget is met by moving weight, never by moving the line. | [The board page back under its budget](./T_03_page-weight-headroom.md) | Pending | |
+| 10 | FE_02 Run 3 | 3 | strong | (FE_02's) | [Last board per folder, read once (FE_02-R3)](./FE_02_ledger-chip-and-memory.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -43,6 +45,7 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 | FE_02 | 6200 | T_01 | 6500 |
 | T_02 | 6300 | orchestrator | 7300 |
 | FE_03 | 6600 | BOT_02 | 6700 (eval's door: 6010) |
+| T_03 | 6800 | FE_02 Run 3 | 6200 |
 
 ## Shared Foundations
 
@@ -65,6 +68,8 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 | 2 | BOT_02 | `skills/vision-board/**`, `apps/board/plugin/words/skill-edits.ts`, `apps/board/tests/plugin-skill.test.ts`, `tests/evals/bot/**` |
 | 2 | FE_02 Run 2 | `apps/board/src/shell/{kept,page-host}.ts`, `apps/board/tests/kept.test.ts`, `tests/pages/ledger-memory.spec.ts`, `docs/specification/components.md` |
 | 3 | T_01 | as wave 2's row above, plus `apps/board/src/board/chrome/ProposalsBar.svelte`, `apps/board/src/styles/access.css`, `apps/board/src/gallery/ledger-section.ts`, every screenshot under `tests/pages/__screenshots__/**` that changes (FE_03's included) |
+| 3 | T_03 | `packages/format/src/flags.ts` (granted this wave), `docs/specification/performance.md`, and the page code the measurement points to: `apps/board/src/shell/**` except `page-host.ts` and `folder.ts`, `apps/board/src/board/**` except `chrome/ProposalsBar.svelte`, `packages/**` except `packages/tokens/**` and `packages/ui/src/base/dialog.css`; specs of what it moves |
+| 3 | FE_02 Run 3 | `apps/board/src/shell/{page-host,folder}.ts`, `tests/pages/last-board.spec.ts`, `apps/board/tests/kept.test.ts`, `tests/pages/ledger-memory.spec.ts` |
 | 3 (was 2) | T_01 | `packages/tokens/src/tokens.css` (after the maintainer's yes), `packages/tokens/README.md`, `packages/ui/src/base/dialog.css`, `tests/pages/__screenshots__/**` it must re-take, `docs/specification/components.md` (FE_01's doc requests) |
 
 ## Requests
@@ -77,6 +82,10 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 | FE_02-R1 | FE_02 | `apps/board/src/gallery/ledger-section.ts` meta line → "on by default · off with ?flags=-ledgerFolders"; re-take `tests/pages/__screenshots__/ledgers.spec.ts/ledgers-{light,dark}-darwin.png` | T_01 Run 2 (screenshots are its) | Open |
 | FE_02-R2 | FE_02 | `packages/format/src/flags.ts` `ledgerFolders` comment: the page reads it only for gallery samples | orchestrator | Done (wave 1 gate) |
 | BOT_01-R1 | BOT_01 | `skills/vision-board/SKILL.md`: after a summary from another ledger the standalone bot recaps the cards in the chat (other-ledger/done-only 1 of 3); on a ledger mismatch it offers the other ledger in 3-4 sentences (one line, no offer, is the rule); then `eval:bot -- --standalone` | maintainer (point 417) | Open |
+| FE_02-R3 | FE_02 Run 2 | `apps/board/src/shell/page-host.ts` (`opened`, `wanted`) and `folder.ts` `lastBoardKey`: the global `vb.lastBoard` is still written on every open and read as the last fallback, so folder B can open folder A's last board of the same id; make it read once into the folder's key, as `pageStore`; drop `lastBoardKey`'s `\|\| f.path`; `last-board.spec.ts` follows | FE_02 Run 3 (wave 3) | Open |
+| FE_02-R4 | FE_02 Run 2 | The board page is 200.0 KB gzip at the wave 2 base, over the 200 KB budget (`verify` fails) | T_03 (wave 3; 200.6 KB after wave 2) | Open |
+| FE_03-R1 | FE_03 | `docs/specification/components.md` tool-rail section: `railOnHover`, `data-rail-hover` (render option `railHover`), `data-use` from `bindRegionUse` (`apps/board/src/board/canvas/region-use.ts`); hidden unless in use, rest strength in use, full on the rail; badge shows; touch shows; held by `tests/pages/container-rail-hover.spec.ts` | T_01 Run 2 (wave 3) | Open |
+| FE_03-R2 | FE_03 | Screenshots `tests/pages/__screenshots__/container-rail-states.spec.ts/rail-{light,dark}-darwin.png` changed (the section grew) | T_01 Run 2 (wave 3) | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -85,7 +94,8 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 ### Wave gates (orchestrator)
 - Setup: `feat/ro-follow-ups` cut from `main` (after `ledgers/done` and the 403-406 commit). T_01 Run 1 (measure only, writes nothing but its notes) runs beside wave 1, so the maintainer's yes on the token value comes early; its Run 2 (the write) stays wave 2.
 - Wave 1: FE_01, FE_02, T_02, BOT_01 and T_01 Run 1 merged (no conflict). Orchestrator: `ledgerFolders` comment (FE_02-R2). `map` (no change), `verify` ok, `check` 0 errors, `gen --check` current, `build`, `npm test` 2365/0, `test:plugin` 83/83. Accepted: FE_01 touched `BoardChrome.svelte` (one prop) and one selector in `read-only.spec.ts`, unowned this wave; FE_02 read decision 4 literally (`main` keeps the old keys, so `main` boards of two folders still share as before; other ledgers keyed by folder and ledger). T_01 Run 1 proposes `#b8b8c0` (maintainer point 415). BOT_01 spend $1.47; two SKILL.md habits to the maintainer (417). Tag `ro-follow-ups/wave-1`.
-- Wave 2 and close:
+- Wave 2: FE_03, BOT_02, FE_02 Run 2 merged (no conflict). Gate order fixed from here: `build` before `verify` (earlier gates measured the previous build; `ledgers/done` and `ro-follow-ups/wave-1` re-measured fresh: both pass). `map` (no change), `check` 0 errors, `gen --check` current, `npm test` 2366/0, `test:plugin` 83/83; `verify` fails only on the page weight (200.6 KB; 200.0 at the base, tipped by the `railOnHover` description) → T_03. Accepted: FE_03 edited `board/canvas/{draw,render,region-use}.ts`, `controller.ts`, `gallery/main.ts` and two specs outside its row (the cards are a layer above the frames: hover needs `bindRegionUse`); BOT_02's SKILL v3.29 is live on merge (the main checkout is on this branch), eval passed both modes ($1.96). Tag `ro-follow-ups/wave-2`.
+- Wave 3 and close:
 
 ## On Completion
 
