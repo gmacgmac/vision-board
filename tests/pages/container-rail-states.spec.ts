@@ -140,7 +140,7 @@ for (const theme of THEMES) {
     await setTheme(page, theme);
     await page.goto('/gallery.html');
     const section = page.locator('section[data-feature="toolRail"]');
-    await expect(section.locator('vb-region[data-rail]')).toHaveCount(11);
+    await expect(section.locator('vb-region[data-rail]')).toHaveCount(14);
     await expect(section.locator('vb-region[data-region="rail-menu"] .vb-region-menu')).toBeVisible();
     // The layout tiles: hovered, pressed, focus ring and current, and paused when the board is locked.
     const tiles = section.locator('vb-region[data-region="rail-tiles"] .vb-mode-pop');

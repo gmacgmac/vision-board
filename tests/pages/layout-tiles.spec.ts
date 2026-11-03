@@ -103,7 +103,7 @@ test('a past version keeps the tiles inert: no tool is visible, and a click on o
 for (const theme of THEMES) {
   test(`the rail rests at half strength in ${theme} too, as the token says`, async ({ page, request }) => {
     await setTheme(page, theme);
-    await board(page, request);
+    await board(page, request, '?flags=-railOnHover'); // the dimmed look; on, only the container in use shows it
     await zoomTo(page, 1);
     const token = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--vb-rail-rest').trim());
     expect(Number(token)).toBe(0.5);

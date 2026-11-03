@@ -152,7 +152,7 @@ function build(): void {
   if (flagOn('cardHistory', flags)) main.append(historySection(fx));
   main.append(appIconSection());
   // Last, so the sections above keep their place (and their screenshots) with the flag on or off.
-  if (flagOn('toolRail', flags)) main.append(railSection(fx));
+  if (flagOn('toolRail', flags)) main.append(railSection(fx, flagOn('railOnHover', flags)));
   if (flagOn('freshCards', flags)) main.append(freshSection(fx)); // after the rail, so the sections above keep their place
   if (flagOn('groupNoteOnce', flags)) main.append(groupNotesSection(fx)); // last, so the sections above keep their place
   if (flagOn('openFolder', flags) && flagOn('currentFolder', flags)) main.append(currentFolderSection()); // last, so the sections above keep their place

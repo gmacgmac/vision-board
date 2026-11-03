@@ -32,15 +32,18 @@ interface Sample {
   tiles?: { pressed: string; focus: string };
   /** The board cannot change (locked): the tiles are paused. */
   paused?: true;
+  /** The railOnHover look: the frame carries data-rail-hover, and data-use when it is the one in use. */
+  hover?: 'hidden' | 'use';
 }
 
 /** Draw one frame of `region` (from `view` and `state`) under the sample id. */
 function frame(s: Sample, region: Region, view: View, state: BoardState, owed?: ReadonlySet<string>, fixed = false): VbRegionElement {
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render({ ...region, id: `rail-${s.id}` }, { ...ownIds(), ...(fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true }) });
+  f.render({ ...region, id: `rail-${s.id}` }, { ...ownIds(), ...(fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true, ...(s.hover && { railHover: true }) }) });
   f.update({ ...regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed), ...(s.paused && { paused: true }) });
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.dataset.sample = s.height;
+  if (s.hover === 'use') f.setAttribute('data-use', '');
   if (s.lit) f.querySelector('.vb-region-tools')!.setAttribute('data-look', 'hover');
   if (s.open) f.showPanel(s.open.what, { ...(s.open.what === 'modes' && { mode: s.open.mode }), focus: false });
   if (s.tiles) {
@@ -56,7 +59,7 @@ const frames = (...fs: HTMLElement[]) => {
   return box;
 };
 
-export function railSection(fx: Fixture): HTMLElement {
+export function railSection(fx: Fixture, hover = false): HTMLElement {
   const grid = fx.view.regions.find((r) => r.id === `${FRAME_PREFIX}grid`)!;
   const draw = (s: Sample) => frame(s, grid, fx.view, fx.state);
   const notes = fx.containerNotes;
@@ -78,6 +81,11 @@ export function railSection(fx: Fixture): HTMLElement {
     group('At rest and lit', 'At rest the icons are dimmed to half strength (--vb-rail-rest 0.5 in both themes, a trial: dark is under APCA Lc 30 at rest); hovered, focused or with a '
       + 'popover open they are at full strength. A touch screen never dims them.',
     frames(draw({ id: 'rest', height: 'tall' }), draw({ id: 'lit', height: 'tall', lit: true }))),
+    ...(hover ? [group('Only on the container in use', 'With the railOnHover flag the icons and the divider show only on the container being hovered or holding focus: hidden '
+      + 'on the others (still reachable by the keyboard, and focus shows them), at half strength on the one in use, full on its rail. '
+      + 'Comment\'s badge still shows, and a touch screen keeps every rail shown.',
+    frames(draw({ id: 'hidden', height: 'tall', hover: 'hidden' }), draw({ id: 'inuse', height: 'tall', hover: 'use' }),
+      draw({ id: 'inuse-lit', height: 'tall', hover: 'use', lit: true })))] : []),
     group('A short frame', 'With no room for the whole rail it keeps the checked layout, Comment and the cog. Hovered or focused it '
       + 'expands upward over the cards, so Comment and the cog stay under the pointer, and collapses on leave, blur or Esc.',
     frames(draw({ id: 'collapsed', height: 'short' }), draw({ id: 'expanded', height: 'short', lit: true }))),

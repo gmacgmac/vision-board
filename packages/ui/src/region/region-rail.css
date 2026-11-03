@@ -81,6 +81,22 @@ vb-region[data-rail] :is(.vb-mode-icon, .vb-mode-div) { transition: opacity var(
     :is(.vb-mode-icon, .vb-mode-div) { opacity: var(--vb-rail-rest); }
 }
 
+/* Only on the container in use (railOnHover flag, data-rail-hover; point 416): a frame that is neither
+   hovered nor holding focus (:hover and :focus-within see its rail and tools; data-use is the board's
+   mark for its cards, region-use.ts) hides its icons and divider. Opacity only: they keep their place,
+   so nothing moves and the keyboard still reaches them (focus makes the frame in use). Comment's badge
+   is not an icon here and stays. A touch screen has no hover to find the container in use, so it keeps
+   them shown. The gallery draws the in-use look with data-use on the frame. */
+vb-region[data-rail-hover] .vb-mode-row { transition: border-color var(--vb-motion-fast), background-color var(--vb-motion-fast), box-shadow var(--vb-motion-fast); }
+@media (hover: hover) {
+  /* The row's own box goes with its icons (an empty pill would read as a fault), and so do the checked
+     layout's and the switch's fills, which are not icons. Comment keeps its place, so its badge shows. */
+  vb-region[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within)
+    .vb-region-tools:not([data-look]) :is(.vb-mode-icon, .vb-mode-div, .vb-mseg:not(.vb-region-comment)) { opacity: 0; }
+  vb-region[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within)
+    .vb-region-tools:not([data-look]) > .vb-mode-row { border-color: transparent; background-color: transparent; box-shadow: none; }
+}
+
 /* Short frames (Design 4), by the rail's room on screen, mirroring the top line's row. The full rail
    is 247px (221px without Match card widths: 2px border, 4px padding, nine 26px stops, the divider's
    7px), so it needs that plus its top and foot: 275px (249px). Below that it collapses to the checked

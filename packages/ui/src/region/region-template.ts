@@ -132,9 +132,10 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, prefix?:
  * container in the settings menu (personRemove flag, N24); a fixed frame never has it. `rail`: the tools
  * group (row, popover, note preview, menu) sits in a rail on the frame's left edge, after the header,
  * instead of on the top line (toolRail flag, container tool rail Design 1); the top line then holds
- * the label alone. A fixed frame's rail holds only the cog. `idPrefix`: put before every id the frame
+ * the label alone. A fixed frame's rail holds only the cog. `railHover`: with `rail`, the frame carries
+ * data-rail-hover and its rail icons show only while it is in use (railOnHover flag; region-rail.css). `idPrefix`: put before every id the frame
  * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
+export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = regionWords.everythingHereIsAnswered;
