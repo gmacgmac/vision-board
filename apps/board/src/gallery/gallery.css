@@ -126,6 +126,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* The archive and lock sections' "⋯" alone (archive-section.ts, lock-section.ts): at the strip's right end, as in the toolbar, so its menu hangs inside. */
 .g-archive-menu { justify-content: flex-end; }
 .g-archive-menu[data-menu-open] { padding-bottom: calc(var(--vb-space-6) * 7); }
+/* The read-only section (editing-section.ts): a row of "⋯" in its menu's box, in the page flow. */
+.g-editing-row { position: static; width: 280px; }
 /* The lock section's title line (lock-section.ts): the name, its version and "Locked", spaced as in the toolbar. */
 .g-lock-title { gap: var(--vb-space-2); }
 /* The app icon samples (navigation FE_05): side by side, aligned on their bottoms. */

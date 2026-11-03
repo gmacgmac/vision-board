@@ -5,7 +5,8 @@
      Reply (ToolbarMenu); a narrow toolbar (`[data-narrow]`, Toolbar.svelte) shows Agents, Send and
      Chat as icons, their words kept for screen readers and the title tooltip. Off: Hide answered,
      Theme and Reply as buttons, which a narrow toolbar shows as icons, as before. With `onarchive` (the
-     archiveBoard flag) the menu has Archive board…, and with `onlock` (lockBoard flag) Lock board or Unlock board. The gallery
+     archiveBoard flag) the menu has Archive board…, and with `onlock` (lockBoard flag) Lock board or Unlock board. Send is
+     paused, its title the reason, on a locked board and while the ledger is read-only (D-085). The gallery
      passes `placement` 'gallery' (no board ids) and `menuOpen`. With `tier` (adaptiveHeader flag,
      header-tier.ts) the group follows the header's form: at full − 47% + then Fit; at half the zoom as a
      small menu (ZoomMenu); at a third no zoom and no Agents, which are rows of "⋯" (`fields`). -->
@@ -25,7 +26,7 @@
   import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../input/index.ts';
   import type { CommandId } from '../input/index.ts';
   import type { AccessHolder } from '#actions';
-  import { LOCKED_PERSON } from '#actions';
+  import { LOCKED_PERSON, READ_ONLY_PERSON } from '#actions';
 
   const { state: shown, parts, flag, id: idIn, ids } = useChrome();
 
@@ -100,7 +101,7 @@
   {#if holders}
     {#if here('agents')}<BoardAgents {holders} {onrevoke} icon={menu} />{/if}
     <SendButton {onsend} icon={menu} id={idOf('send')} state={board ? undefined : send ?? 'idle'} waiting={shown.sendWaiting} {queue} unsent={shown.unsent || shown.chatAttached}
-      paused={board && shown.locked ? LOCKED_PERSON : undefined} />
+      paused={!board ? undefined : shown.locked ? LOCKED_PERSON : shown.readOnly ? READ_ONLY_PERSON : undefined} />
   {/if}
   {#if parts.chat}<PagePart draw={parts.chat} />{/if}
   {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}

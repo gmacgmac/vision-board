@@ -401,7 +401,8 @@ record is `api.md` 58-61.
    every control shows at every zoom. The toolbar's zoom group shows the level as a percentage beside
    Fit (`ZoomLevel.svelte`, rounded down so "55%" means the controls show; `Viewport` decides "far"
    from the same number), its buttons' tooltips say it ("Zoom in · + · 55% now"), and a polite status
-   announces it once the zoom settles.
+   announces it once the zoom settles; the level a board opens at (its first draw's fit or kept place, a switch) is not
+   news and is not announced (`tests/pages/zoom-level.spec.ts`, "the level a board opens at is not news").
 5. **Popovers share their sizes** (popovers-larger-thread ruling 4,
    `cortex-tasks/board/2026-10-14_board-ui_popovers-larger-thread.md`). Every popover reads the
    `--vb-pop-*` tokens (`packages/tokens/src/tokens.css`): `--vb-pop-text` (every text in a
@@ -850,6 +851,12 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    "⋯" under the folder's at a third (`header-tier.ts` `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the page's folder and
    ledger"). `FULL_MIN` and `HALF_MIN` hold with it: `tests/pages/ledgers.spec.ts` ("long folder, ledger and board names")
    fits every form from 1470px to 400px with a 40-character ledger, a long folder and board name, a flagged card and Locked.
+   With the `readOnlyStart` flag the ledger's state is two more controls of the table (§ 6, Read-only and Edit): `editing`,
+   the state chip after the path, in the bar at every tier like Locked (decision 16; at a third its icon, the word for
+   screen readers), and `edit`, Edit or Stop editing, a button at full and a row of "⋯" from half (`header-tier.ts`
+   `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the ledger's state"). `FULL_MIN` and `HALF_MIN` hold with them:
+   `tests/pages/read-only.spec.ts` ("long folder, ledger and board names, Locked and flagged, read-only") fits every form
+   from 1470px to 400px, the folder giving up its room for the state at full and the button giving way on a crowded bar.
 6. **The folder picker** (`openFolder` flag, on by default; task
    `cortex-tasks/board/2026-10-09_board-app_open-folder.md`, api.md 109-113). The "⋯" menu ends with
    Open folder… (its tooltip names the open folder, as the page title does). It opens
@@ -906,6 +913,33 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    section is `gallery/ledger-section.ts`; the tests are `tests/pages/ledgers.spec.ts` (the path, half, a third, switching,
    another tab following, create and kept out of git, refused names and a refusal, the flag off, fit, axe, APCA, the gallery).
    Off, the header is as above.
+
+   **Read-only and Edit** (`readOnlyStart` flag, off by default, needs `openFolder`; D-085 2 and 5; task
+   `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/READONLY_UI_01_edit-control.md`). Whether the open ledger
+   can be changed here is the standalone page's to show, as its folder and ledger are (no seam change): two page parts,
+   `board/host.ts` `BoardPageParts` `editChip` and `editButton`, filled by `shell/page-parts.ts` once `shell/editing.ts`
+   `editingOn`, and drawn only while `get_project` says `readOnly` or `editing: { here }` (`editing.ts` `editState`; a server
+   opened with `--edit` says neither, and nothing shows). `shell/EditChip.svelte` follows the path, before Locked: an eye and
+   "Read-only", or a pencil and "Editing" (ringed in the accent's line), Locked's look (`styles/editing.css`); its tooltip and
+   accessible name say the whole state (`editing.ts` `stateTip`: "Read-only: press Edit to change this ledger", or "being
+   edited on <computer> since <time>" when another computer holds the lock). The word gives way at a third, on a narrow half
+   and on a crowded bar with Locked's (`styles/header.css`), the icon never. The chip is a button opening a small menu
+   (the zoom menu's pattern, `board/chrome` `toolbarPopup`): the state in words, then Edit or Stop editing; a polite status
+   says a change of state. `shell/EditButton.svelte` is Edit or Stop editing as a button at full (its pencil alone under
+   1500px, hidden under a 1360px content box or on a crowded bar, where the chip's menu holds it) and as a row of "⋯" from
+   half (`HeaderFields.svelte`). Pressed, each shows loading (a spinner, "Opening for editing…", `aria-busy`, focus kept)
+   until `editing.ts` `toggleEditing` has the server's answer (`page-io.ts` `editLedger`, `stopEditing`): Editing, or
+   read-only again with a toast naming the computer that holds the ledger. The page reads the folder again when the
+   board's reads change their `readOnly` and when the chip's menu opens. Every control that would write says why while
+   read-only (`#actions` `READ_ONLY_PERSON`): the card's controls and the flag (`#ui` `NodeState.paused`, `NodeState.readOnly`,
+   `vb-node.ts` `FLAG`), the container's (`RegionState.paused`), Send (`ToolbarEnd.svelte`), New board… and Rename board…
+   (`BoardPicker.svelte`), Lock board… and Archive board… (`ToolbarMenu.svelte`), Accept all (`ProposalsBar.svelte`), Restore
+   (`ArchivedList.svelte`); the chat panel hears it (`ChatPanel.show`'s `readOnly`, `App.svelte`). There is no disabled
+   state for a folder that cannot be written: `get_project` gives no such reason. Words: `shell/words/editing.ts`. Reading
+   text Lc 60 or more and the icons Lc 30 or more, light and dark. The gallery's section is `gallery/editing-section.ts`;
+   the tests are `tests/pages/read-only.spec.ts` (opens read-only with every write control paused and saying why; Edit then
+   a write; Stop editing; another computer named; 1400, 900, 620 and 600 px and the keys; fit; axe; APCA; the flag off;
+   the gallery) and `packages/ui/tests/node-paused.test.ts`. Off, the header is as above.
 
 7. **The open cards list** (`openList` flag, on by default; task set
    `cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/`, FE_01). The toolbar's
@@ -1111,7 +1145,8 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    (`controller.ts`), the flag too, which a lock lets through. It is not a lock: no "Locked", no `data-locked`. The page
    learns it from its reads (`live.ts` `readOnly`), not from the standalone shell; nothing is written, not even a seen
    mark (a card seen is kept in the page). `BoardState.readOnly` carries it for the elements; the header's control
-   and the elements' paused look are READONLY_UI_01's. Test: `tests/pages/read-only-writes.spec.ts`.
+   and the elements' paused look are § 6, Read-only and Edit (`NodeState.readOnly` pauses the flag too). Tests:
+   `tests/pages/read-only-writes.spec.ts`, `tests/pages/read-only.spec.ts`.
 7. Tests: `tests/pages/lock-board.spec.ts` (the menu row by mouse and keyboard, "Locked", every
    paused control aria-disabled, a press on a button, a key, a note, a layout and the selection bar
    saying why and writing nothing but seen lines, the flag by click and Shift+F, a lock from another

@@ -4,7 +4,7 @@
      browser's; a choice closes the menu first (`choose`). They sit beside the role="menu", not in it,
      because a select is not a menu item; the menu's keys walk them all the same (ToolbarMenu.svelte). The
      zoom row keeps the menu open for − and +, so the level can be seen to change. The page's folder and ledger rows
-     (`folderField`, `ledgerField`) come first, folder above ledger. -->
+     (`folderField`, `ledgerField`) come first, folder above ledger, then its Edit or Stop editing (`editButton`, readOnlyStart flag). -->
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
   import * as toolbarWords from '../words/toolbar.ts';
@@ -60,6 +60,9 @@
 {/if}
 {#if inMenu(tier, 'ledger') && parts.ledgerField}
   <PagePart draw={parts.ledgerField} args={{ id: idOf('ledger-chip'), choose }} />
+{/if}
+{#if inMenu(tier, 'edit') && parts.editButton}
+  <PagePart draw={parts.editButton} args={{ id: idOf('edit'), choose }} />
 {/if}
 {#if inMenu(tier, 'version') && facts.version !== null}
   <VersionPicker {facts} {onversion} id={idOf('version')} face={versionRow} kind="vb-menu-item" onpicked={choose} />

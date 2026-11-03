@@ -8,9 +8,10 @@
      the lockBoard flag, Lock board and the toolbar's Locked (a padlock, shut) and Unlock board (a padlock, open); with
      the adaptiveHeader flag, a dropdown's mark (a chevron) and the "⋯" menu's Version (a clock), Containers (two frames),
      Open cards (a ring), New cards (a four-point star) and Zoom (a magnifier); with the ledgerFolders flag, the page's ledger
-     chip and New ledger… (a bound book, two lines on its cover). -->
+     chip and New ledger… (a bound book, two lines on its cover); with the readOnlyStart flag, the page's Read-only chip (an
+     eye) and its Editing chip, Edit and Stop editing (a pencil). -->
 <script lang="ts">
-  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' | 'align' | 'archive' | 'lock' | 'unlock' | 'chevron' | 'version' | 'containers' | 'open' | 'new' | 'zoom' | 'ledger' } = $props();
+  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' | 'align' | 'archive' | 'lock' | 'unlock' | 'chevron' | 'version' | 'containers' | 'open' | 'new' | 'zoom' | 'ledger' | 'eye' | 'pencil' } = $props();
 </script>
 <svg class="vb-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -57,6 +58,10 @@
     <circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5L21 21" />
   {:else if name === 'ledger'}
     <path d="M5 5a2 2 0 0 1 2-2h12v15H7a2 2 0 0 0-2 2z M5 20a2 2 0 0 0 2 1h12v-3 M9 7.5h6 M9 11h6" />
+  {:else if name === 'eye'}
+    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
+  {:else if name === 'pencil'}
+    <path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-4-4L4 16z M14 6l4 4" />
   {:else if name === 'cloud'}
     <path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a4.25 4.25 0 0 1-.5 8.5z" />
   {:else}

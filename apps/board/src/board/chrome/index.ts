@@ -28,6 +28,7 @@ export function mountChrome(root: HTMLElement, host: BoardHost, deps: { status: 
 export { default as BoardChrome } from './BoardChrome.svelte';
 export { chromeContext, chromeState, createChrome, type ChromeState, type SendState } from './chrome.svelte.ts';
 export { FULL_MIN, HALF_MIN, type HeaderTier } from './header-tier.ts';
+export { toolbarPopup } from './toolbar-popup.svelte.ts';
 export { default as AccessRequests } from './AccessRequests.svelte';
 export { default as AppIcon } from './AppIcon.svelte';
 export { default as ArchivedList } from './ArchivedList.svelte';

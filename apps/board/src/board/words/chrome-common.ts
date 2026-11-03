@@ -8,6 +8,9 @@ export const cancel = 'Cancel';
 export const creating = 'Creating…';
 export const create = 'Create';
 
+// ---- Toolbar.svelte (the "⋯" tooltip's Ledger row), shell/LedgerPart.svelte (the ledger list's name)
+export const ledger = 'Ledger';
+
 // ---- FolderPicker.svelte
 export const copy = 'Copy';
 /** A count's word: "3 new", on the toolbar's chip and the chat's replies. */

@@ -70,6 +70,14 @@ test('full: the path reads folder / ledger / board / version, and the list names
   await expect(chip(page)).toHaveCSS('background-color', sunken);
 });
 
+test('the "⋯" tooltip names New ledger at full, and the Ledger row at a third, where that row stands for it (LEDGER_UI_01-R1)', async ({ page }) => {
+  await open(page);
+  await expect(menuButton(page)).toHaveAttribute('title', /, Open folder, New ledger$/);
+  await open(page, 490);
+  await expect(menuButton(page)).toHaveAttribute('title', /^More: Folder, Ledger, Version, /);
+  await expect(menuButton(page)).not.toHaveAttribute('title', /New ledger/);
+});
+
 test('half: the folder is its icon, the ledger keeps its icon and its name, no "/"', async ({ page }) => {
   await open(page, 900);
   await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', 'half');

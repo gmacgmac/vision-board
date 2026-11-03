@@ -8,3 +8,4 @@ import './chat-sidebar.css';
 import './folder-dialog.css';
 import './current-folder.css';
 import './ledgers.css';
+import './editing.css';

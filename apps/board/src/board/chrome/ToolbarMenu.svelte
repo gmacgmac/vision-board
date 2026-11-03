@@ -3,7 +3,7 @@
      archiveBoard flag (`onarchive` given) Archive board…, which asks, then archives the open board (N39
      ruling 5; off, aria-disabled, while no board is open or a past version shows), with the lockBoard flag (`onlock` given)
      Lock board, or on a locked board Unlock board (N40 ruling 4: no confirm, nothing is lost either way; off like Archive
-     board…), the page's Open folder… (`folderRow`) and New ledger… (`ledgerRow`, ledgerFolders flag). A click or Enter on "⋯" opens it and focuses the
+     board…; both off, saying why, while the ledger is read-only, D-085), the page's Open folder… (`folderRow`) and New ledger… (`ledgerRow`, ledgerFolders flag). A click or Enter on "⋯" opens it and focuses the
      first row; the keys and the press outside are the shared menu's (`#ui` `openMenu`): Up, Down, Home,
      End, Esc (focus back on "⋯"), Tab; a press outside or a choice closes it. H in the menu chooses Hide
      answered, as H does on the board (keys.ts). Its look is the shared menu's (#ui base/menu.css). The
@@ -20,6 +20,7 @@
   import ButtonIcon from './ButtonIcon.svelte';
   import PagePart from './PagePart.svelte';
   import { toolbarPopup } from './toolbar-popup.svelte.ts';
+  import { READ_ONLY_PERSON } from '#actions';
 
   const { state: view, parts, id: idIn } = useChrome();
 
@@ -49,9 +50,11 @@
   const idOf = (name: string) => (board ? idIn(name) : undefined);
   /** Archive board… waits for a board to be open, and for now to show (the gallery's is on). */
   const archiveOff = $derived(board && (view.version === null || !!view.past));
+  /** The ledger is read-only (D-085): neither row can write, and says why (the gallery draws it with its sample's state). */
+  const readOnly = $derived(!archiveOff && view.readOnly);
   const isLocked = $derived(locked ?? view.locked);
   const lockTip = $derived(archiveOff ? (view.past ? toolbarWords.goBackToNowTo(isLocked) : toolbarWords.noBoardIsOpen)
-    : isLocked ? toolbarWords.letYouAndTheAgents : toolbarWords.makeThisBoardReadOnly);
+    : readOnly ? READ_ONLY_PERSON : isLocked ? toolbarWords.letYouAndTheAgents : toolbarWords.makeThisBoardReadOnly);
   let root: HTMLElement;
   let button: HTMLButtonElement;
   let surface: HTMLElement;
@@ -84,7 +87,7 @@
 
 <div class="vb-menu" bind:this={root}>
   <button type="button" class="vb-btn vb-menu-btn" id={idOf('toolbar-menu')} bind:this={button}
-    title={toolbarWords.moreTitle({ theme: !!parts.theme, centre: !!parts.alignRow, lock: !!onlock, locked: isLocked, archive: !!onarchive, folder: !!parts.folderRow, also })} aria-label={toolbarWords.more} aria-haspopup="menu" aria-expanded={shown}
+    title={toolbarWords.moreTitle({ theme: !!parts.theme, centre: !!parts.alignRow, lock: !!onlock, locked: isLocked, archive: !!onarchive, folder: !!parts.folderRow, ledger: !!parts.ledgerRow && !ledgerAbove, also })} aria-label={toolbarWords.more} aria-haspopup="menu" aria-expanded={shown}
     aria-controls={idIn(`vb-menu-${uid}`)} onclick={() => (popup.open ? close() : void popup.show())}><ButtonIcon name="more" /></button>
   <div class={fields ? 'vb-menu-surface vb-surface-pop' : 'vb-menu-surface'} data-fields={fields ? '' : undefined} hidden={!shown} bind:this={surface} onfocusin={(e) => { if (fields) (e.target as HTMLElement).scrollIntoView({ block: 'nearest' }); }}>
   {#if fields}<div class="vb-menu-fields" role="group" aria-label={toolbarWords.moreControls}>{@render fields(choose)}</div>{/if}
@@ -104,15 +107,15 @@
     {#if fields && (onlock || onarchive)}<div class="vb-menu-rule" role="separator"></div>{/if}
     {#if onlock}
       <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={idOf('lock-board')}
-        aria-disabled={archiveOff} title={lockTip} onclick={() => { if (!archiveOff) choose(onlock); }}>
+        aria-disabled={archiveOff || readOnly} title={lockTip} onclick={() => { if (!archiveOff && !readOnly) choose(onlock); }}>
         <ButtonIcon name={isLocked ? 'unlock' : 'lock'} /><span class="vb-menu-label">{isLocked ? toolbarWords.unlockBoard : toolbarWords.lockBoard}</span>
       </button>
     {/if}
     {#if onarchive}
       <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={idOf('archive-board')}
-        aria-haspopup="dialog" aria-disabled={archiveOff}
-        title={archiveOff ? (view.past ? toolbarWords.goBackToNowToArchive : toolbarWords.noBoardIsOpen) : toolbarWords.hideThisBoardFromEvery}
-        onclick={() => { if (!archiveOff) choose(onarchive); }}>
+        aria-haspopup="dialog" aria-disabled={archiveOff || readOnly}
+        title={archiveOff ? (view.past ? toolbarWords.goBackToNowToArchive : toolbarWords.noBoardIsOpen) : readOnly ? READ_ONLY_PERSON : toolbarWords.hideThisBoardFromEvery}
+        onclick={() => { if (!archiveOff && !readOnly) choose(onarchive); }}>
         <ButtonIcon name="archive" /><span class="vb-menu-label">{toolbarWords.archiveBoard2}</span>
       </button>
     {/if}

@@ -15,6 +15,7 @@
   import { useChrome } from './chrome.svelte.ts';
   import ArchivedList from './ArchivedList.svelte';
   import { backdropClick, syncModal, whenShut } from '#ui';
+  import { READ_ONLY_PERSON } from '#actions';
 
   let { onrestore }: { onrestore: (board: string) => Promise<string | null> } = $props();
 
@@ -49,5 +50,5 @@
 <dialog id={UID} class="vb-dialog" aria-labelledby="{UID}-title" aria-describedby="{UID}-body"
   bind:this={dlg} onclick={backdrop} oncancel={(e) => { if (busy !== null) e.preventDefault(); else shown.archivedDialog = false; }}
   onclose={whenShut(() => { shown.archivedDialog = false; })}>
-  <ArchivedList boards={shown.archived} uid={UID} {busy} {problem} onrestore={(b) => void restore(b)} onclose={close} />
+  <ArchivedList boards={shown.archived} uid={UID} {busy} {problem} paused={shown.readOnly ? READ_ONLY_PERSON : undefined} onrestore={(b) => void restore(b)} onclose={close} />
 </dialog>

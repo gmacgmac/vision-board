@@ -36,8 +36,8 @@ function title(): HTMLElement {
 }
 
 /** The marks board's flag container, from `state`: its frame (the layout icons, the widths switch
- * absent here, the grip and Comment), then its cards. */
-function board(fx: Fixture, state: BoardState): HTMLElement[] {
+ * absent here, the grip and Comment), then its cards (`label` names their list). The read-only section draws it too. */
+export function pausedBoard(fx: Fixture, state: BoardState, label = 'A locked board\'s cards'): HTMLElement[] {
   const { view } = fx.marks;
   const region = view.regions.find((r) => r.id === 'flagged')!;
   const frame = document.createElement('vb-region') as VbRegionElement;
@@ -52,7 +52,7 @@ function board(fx: Fixture, state: BoardState): HTMLElement[] {
   const frames = el('div', 'g-frames vb-ground');
   frames.append(frame);
   const canvas = el('div', 'g-sizes vb-ground');
-  canvas.append(cardList('A locked board\'s cards', ...cards));
+  canvas.append(cardList(label, ...cards));
   return [frames, canvas];
 }
 
@@ -70,7 +70,7 @@ export function lockSection(fx: Fixture): HTMLElement {
   heading.id = 'feature-lockBoard';
   const meta = el('p', 'g-meta');
   meta.append(el('code', undefined, 'lock · unlock · LockedChip · paused'), ' · feature flag lockBoard, on by default · off with ?flags=-lockBoard');
-  const [frame, cards] = board(fx, { ...fx.marks.state, locked: true });
+  const [frame, cards] = pausedBoard(fx, { ...fx.marks.state, locked: true });
   box.append(heading,
     el('p', 'g-desc', `The person makes a board read-only for everyone, agents included, until they unlock it. Every control that would change it is paused in place, saying "${LOCKED_PERSON}"; the flag, the person's private mark, still works.`),
     meta,

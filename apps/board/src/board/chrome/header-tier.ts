@@ -12,19 +12,22 @@ export const HALF_MIN = 620;
 
 export const headerTier = (width: number): HeaderTier => (width >= FULL_MIN ? 'full' : width >= HALF_MIN ? 'half' : 'third');
 
-/** Everything the header holds that moves or goes. The board picker, Send, Chat, "⋯" and Locked stay. */
-export type HeaderControl = 'app-icon' | 'folder' | 'ledger' | 'board' | 'version' | 'locked' | 'containers' | 'open' | 'new'
+/** Everything the header holds that moves or goes. The board picker, Send, Chat, "⋯", Locked and the ledger's state
+ *  (`editing`: Read-only or Editing, readOnlyStart flag, decision 16) stay. */
+export type HeaderControl = 'app-icon' | 'folder' | 'ledger' | 'board' | 'version' | 'locked' | 'editing' | 'edit' | 'containers' | 'open' | 'new'
   | 'boards-updated' | 'replied' | 'flagged' | 'zoom' | 'agents' | 'send' | 'chat' | 'more';
 
-export const HEADER_CONTROLS: readonly HeaderControl[] = ['app-icon', 'folder', 'ledger', 'board', 'version', 'locked', 'containers', 'open', 'new',
+export const HEADER_CONTROLS: readonly HeaderControl[] = ['app-icon', 'folder', 'ledger', 'board', 'version', 'editing', 'edit', 'locked', 'containers', 'open', 'new',
   'boards-updated', 'replied', 'flagged', 'zoom', 'agents', 'send', 'chat', 'more'];
 
 /** What moves into "⋯" at each tier: a row there does what the control does in the bar. The page's folder and
- *  ledger (ledgerFolders flag) sit in the path at full and half, and are rows of "⋯" at a third, the ledger's under the folder's. */
+ *  ledger (ledgerFolders flag) sit in the path at full and half, and are rows of "⋯" at a third, the ledger's under the folder's.
+ *  Edit or Stop editing (readOnlyStart flag) is a button at full and a row of "⋯" under them from half; the state chip's
+ *  own menu holds it at every width. */
 const IN_MENU: Record<HeaderTier, readonly HeaderControl[]> = {
   full: [],
-  half: ['version', 'containers'],
-  third: ['folder', 'ledger', 'version', 'containers', 'open', 'new', 'flagged', 'zoom', 'agents', 'boards-updated'],
+  half: ['edit', 'version', 'containers'],
+  third: ['folder', 'ledger', 'edit', 'version', 'containers', 'open', 'new', 'flagged', 'zoom', 'agents', 'boards-updated'],
 };
 
 /** What no longer shows at a tier: decoration, or a count that says nothing a person can act on there. */

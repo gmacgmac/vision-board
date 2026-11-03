@@ -62,6 +62,8 @@ export const shell = $state({
   ledgerDialog: false,
   /** The ledger being opened, until the page reloads onto it (ledgers.ts `openLedger`); null otherwise. */
   ledgerOpening: null as string | null,
+  /** Edit or Stop editing on its way to the server (readOnlyStart flag, editing.ts); null otherwise. */
+  editBusy: null as 'edit' | 'stop' | null,
 });
 
 let toastTimer = 0;

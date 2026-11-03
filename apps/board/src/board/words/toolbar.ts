@@ -58,8 +58,8 @@ export const zoom = (percent: number): string => `Zoom ${percent}%`;
 
 // ---- ToolbarMenu.svelte
 /** The More button's tooltip: what its menu holds, now. */
-export const moreTitle = (o: { theme: boolean; centre: boolean; lock: boolean; locked: boolean; archive: boolean; folder: boolean; also?: readonly string[] }): string =>
-  `More: ${moreAlso(o.also ?? [])}${o.theme ? 'Theme, ' : ''}Hide answered${o.centre ? ', Centre cards' : ''}, Reply${o.lock ? `, ${o.locked ? 'Unlock' : 'Lock'} board` : ''}${o.archive ? ', Archive board' : ''}${o.folder ? ', Open folder' : ''}`;
+export const moreTitle = (o: { theme: boolean; centre: boolean; lock: boolean; locked: boolean; archive: boolean; folder: boolean; ledger?: boolean; also?: readonly string[] }): string =>
+  `More: ${moreAlso(o.also ?? [])}${o.theme ? 'Theme, ' : ''}Hide answered${o.centre ? ', Centre cards' : ''}, Reply${o.lock ? `, ${o.locked ? 'Unlock' : 'Lock'} board` : ''}${o.archive ? ', Archive board' : ''}${o.folder ? ', Open folder' : ''}${o.ledger ? ', New ledger' : ''}`;
 
 // ---- The adaptive header (adaptiveHeader flag: Toolbar.svelte, HeaderFields.svelte, ZoomMenu.svelte)
 export const whereYouAre = 'Where you are';

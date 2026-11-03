@@ -22,8 +22,9 @@ export interface ChatPanelDeps extends NewsHost {
 export type ChatViewLoader = () => Promise<{ mountChatView(panel: HTMLElement): ChatView }>;
 
 export interface ChatPanel {
-  /** The open board ('' a folder with no board; null before the page knows), and whether a past version of it shows. */
-  show(board: string | null, past: boolean): void;
+  /** The open board ('' a folder with no board; null before the page knows), whether a past version of it shows, and
+   *  whether the ledger is read-only (D-085: with no session in use, no message can go, since a start would join). */
+  show(board: string | null, past: boolean, readOnly?: boolean): void;
   /** Load the drawing if it has not come yet (a no-op once it has): true once it is drawn, false when it did not come. */
   load(): Promise<boolean>;
   focus(): void;

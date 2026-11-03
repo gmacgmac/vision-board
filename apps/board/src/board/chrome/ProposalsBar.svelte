@@ -15,13 +15,13 @@
   import * as chromeProposalsWords from '../words/chrome-proposals.ts';
   import { tick } from 'svelte';
   import type { ProposalRow } from '#actions';
-  import { acceptAllPlan } from '#actions';
+  import { acceptAllPlan, READ_ONLY_PERSON } from '#actions';
   import { barWords, proposes } from '../cards/index.ts';
   import { reviewRows } from '../find/index.ts';
   import MenuSelect from './MenuSelect.svelte';
   import type { BoardStore } from '../host.ts';
 
-  let { rows, news = [], onreview, onacceptall, placement = 'board', collapsed = false, look, ids = '', store }: {
+  let { rows, news = [], onreview, onacceptall, placement = 'board', collapsed = false, look, ids = '', store, readOnly = false }: {
     /** The mount's prefix for its ids (mount-ids.ts). */
     ids?: string;
     /** Where the hidden choice is kept (BoardHost.store); a gallery sample has none, and keeps nothing. */
@@ -38,6 +38,8 @@
     collapsed?: boolean;
     /** Review's list drawn in a state without the pointer or keys: the gallery's samples only (MenuSelect). */
     look?: 'hover' | 'focus' | 'pressed';
+    /** The ledger is read-only (D-085): Accept all is off, saying why; Review still opens the list. */
+    readOnly?: boolean;
   } = $props();
 
   const HIDDEN_KEY = 'proposals-hidden';
@@ -94,7 +96,8 @@
       <button type="button" class="vb-btn vb-btn-small" bind:this={review} onclick={() => onreview()}>{chromeProposalsWords.review}</button>
     {/if}
     {#if ready}
-      <button type="button" class="vb-btn vb-btn-small vb-btn-primary" onclick={onacceptall}>{chromeProposalsWords.acceptAll(ready)}</button>
+      <button type="button" class="vb-btn vb-btn-small vb-btn-primary" aria-disabled={readOnly || undefined} title={readOnly ? READ_ONLY_PERSON : undefined}
+        onclick={() => { if (!readOnly) onacceptall(); }}>{chromeProposalsWords.acceptAll(ready)}</button>
     {/if}
   {/if}
 </section>
