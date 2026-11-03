@@ -114,6 +114,20 @@ Branch `feat/fix-01-run2` from `ledgers/wave-8`, port 7200, no commit. VERIFY_01
   current; `npm test` 2361/2361 + timing 14/14; test:plugin 83/83; host-styles, gallery, ledgers, read-only 63 passed.
   Flipped: unit 2361/2361; page groups above.
 
+### Run 3
+Branch `feat/fix-01-run3`, port 7200, no commit. The coordinator's full page suite with both defaults on: 1 failure.
+- `tests/pages/board.spec.ts` "on its own page the board's ids start vb1-…" failed because its `shell` list of the page's own
+  ids didn't name the New ledger dialog's ids (`ledger-dialog`, `-title`, `-body`, `-name`, `-check`, `-git`,
+  `-git-note`, `-cancel`, `-create`). Reproduced with both defaults flipped. Fix: the list names `ledger-dialog.*`, plus
+  `new-ledger` (LedgerRow, shown once the server names a ledger) and `vb-editing-.+` (EditChip's menu, shown while
+  the server says read-only or editing). Those are the set's only unprefixed ids in `shell/`; every other ledger and
+  editing part takes the mount's prefix (`idOf`).
+- The similar list, `tests/pages/board-chrome.spec.ts` "a host gets the whole board… nothing that is the page's":
+  it now also checks that the ledger chip, the state chip, Edit, New ledger and the ledger dialog are absent under a
+  host, and that "⋯"'s title doesn't name Ledger. No other list of shell ids in `tests/pages/`.
+- Defaults flipped: board.spec + board-chrome 38/38 (the failure first). `flags.ts` reverted (sha1 f9cd6c7…, no diff),
+  rebuilt, then defaults off: 38/38; verify ok; tsc 0 errors.
+
 ## On Completion
 
 Notes; your row; one LOG line (`[board-app] FIX_01: …` → this file, one line ending in a newline); the return block with

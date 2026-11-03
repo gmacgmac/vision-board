@@ -32,8 +32,9 @@ test('on its own page the board\'s ids start vb1-, none twice, every reference p
       .flatMap((e) => ['for', 'aria-controls', 'aria-labelledby', 'aria-describedby'].flatMap((a) => (e.getAttribute(a) ?? '').split(' ').filter(Boolean)));
     return { ids, twice: ids.filter((id, i) => ids.indexOf(id) !== i), dangling: refs.filter((r) => !document.getElementById(r)), skip: document.querySelector('.vb-skip')?.getAttribute('href') };
   });
-  // The page's own ids (the shell's: its chat, theme and align buttons, toast, dialogs) are not the board's.
-  const shell = /^(chat-toggle|theme|align|chat|toast|open-folder|confirm-.+|folder-dialog.*)$/;
+  // The page's own ids (the shell's: its chat, theme and align buttons, toast, dialogs) are not the board's. With ledger
+  // folders and read-only opening (whatever their defaults): the New ledger dialog and row, and the state chip's menu.
+  const shell = /^(chat-toggle|theme|align|chat|toast|open-folder|confirm-.+|folder-dialog.*|ledger-dialog.*|new-ledger|vb-editing-.+)$/;
   expect(found.ids.filter((id) => !id.startsWith('vb1-') && !shell.test(id)), 'an id the board owns without its prefix').toEqual([]);
   expect(found.ids.filter((id) => id.startsWith('vb1-')).length).toBeGreaterThan(20);
   expect(found.twice).toEqual([]);
