@@ -240,11 +240,14 @@ host; nclite's pane will be another.
 - **What it keeps goes through its host** (M13): `host.store` (`board/host.ts` `BoardStore`, strings under
   keys the board names: `view.<board>`, `proposals-hidden`). The keys say only what is on the board, so a
   host gives each folder or bot its own store, and two boards named "plans" never clash. Left out, the
-  board keeps them for as long as the mount (`memoryStore`). The standalone page keeps them per folder and ledger
-  (`shell/kept.ts` `pageStore`: `vb.view.<board>` in sessionStorage, the rest in localStorage; under a ledger other than
-  `main` each key ends `:` and the ledger's folder, `ledgerScope`, while `main` keeps the keys it always had; it reads the
-  folder before the board mounts, `App.svelte`). Proven by `apps/board/tests/kept.test.ts` "pageStore: under another
-  ledger…" and `tests/pages/ledger-memory.spec.ts` (two ledgers' boards `plan`: zoom and the proposals notice). Nothing
+  board keeps them for as long as the mount (`memoryStore`). The standalone page keeps them per folder and ledger, `main`
+  too (`shell/kept.ts` `pageStore`: `vb.view.<board>` in sessionStorage, the rest in localStorage, each key ending `:`
+  and `ledgerScope`: the folder's path for its `main` or old layout, the ledger's folder for another; it reads the folder
+  before the board mounts, `App.svelte`). A key from before, with no scope, is read once by `main` of the folder open and
+  kept under that folder's key from then on (PLAN decision 11). Proven by `apps/board/tests/kept.test.ts` "pageStore:
+  each folder's main and each ledger…" and "pageStore: a value from before is read once…", and
+  `tests/pages/ledger-memory.spec.ts` (boards `plan` of two ledgers and of two folders' `main`, and the keys from
+  before: zoom and the proposals notice). Nothing
   under `board/` touches the page's storage or address (`apps/board/tests/board-no-page.test.ts`).
   Proven by `board-guest.spec.ts` "the saved view goes through the host".
 - **Its pictures come from its host's route**: `host.imageRoute`, the address a picture's path goes after,
