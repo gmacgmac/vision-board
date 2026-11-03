@@ -53,12 +53,12 @@ function frame(id: string, fx: Fixture): VbRegionElement {
   return node;
 }
 
-function strip(fx: Fixture): HTMLElement {
+export function strip(fx: Fixture, readOnly = false): HTMLElement {
   const host = el('div', 'g-access');
   const rows = requestRows(asBoard(fx));
   mount(AccessRequests, {
     target: host,
-    props: { requests: rows, refusing: rows[1]?.seq ?? null, placement: 'gallery', byBot: flagOn('accessByBot', pageFlags()), onanswer: () => Promise.resolve(false) },
+    props: { requests: rows, refusing: readOnly ? null : rows[1]?.seq ?? null, readOnly, scope: readOnly ? 'read-only' : '', placement: 'gallery', byBot: flagOn('accessByBot', pageFlags()), onanswer: () => Promise.resolve(false) },
   });
   return host;
 }
@@ -80,9 +80,9 @@ function byBot(): HTMLElement {
   return host;
 }
 
-function agents(fx: Fixture): HTMLElement {
+export function agents(fx: Fixture, readOnly = false): HTMLElement {
   const host = el('div', 'g-agents');
-  mount(BoardAgents, { target: host, props: { holders: fx.boardAgents, open: true, onrevoke: () => Promise.resolve() } });
+  mount(BoardAgents, { target: host, props: { holders: fx.boardAgents, open: true, readOnly, onrevoke: () => Promise.resolve() } });
   return host;
 }
 

@@ -22,7 +22,7 @@
 //   menu keys (the shared menu, `#ui` `openMenu`); Esc or a press outside closes it.
 import type { ActionId, LedgerEvent, ViewNode } from '#format';
 import type { LedgerState } from '#actions';
-import { ACTIONS } from '#actions';
+import { ACTIONS, READ_ONLY_PERSON } from '#actions';
 import type { BoardLayout } from '#layout';
 import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } from '#ui';
 import type { OpenMenu } from '#ui';
@@ -221,6 +221,8 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     }
     if (what !== 'app-allow' && what !== 'app-revoke') return;
     const action: ActionId = what;
+    // A read-only ledger pauses Allow and Stop app (FE_01): a press says why and sends nothing.
+    if (button.hasAttribute('data-paused')) return d.toast(READ_ONLY_PERSON);
     // An allow names the version list_apps gave; with none known yet there is nothing to allow.
     if (action === 'app-allow' && !info?.hash) return;
     // The footer's control the act is for: Allow, or "Allowed ▾" for its menu's Stop app.

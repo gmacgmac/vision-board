@@ -43,14 +43,21 @@ chunks. Only your files (TASK-STATUS File Ownership); other needs under `REQUEST
 
 _Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (Run 1)
 
 ### Changes Made
--
+- `AccessRequests.svelte`: `readOnly` prop (BoardChrome passes `shown.readOnly`); Allow all / Allow / Refuse (and the note's Refuse) are aria-disabled, `data-paused`, title `READ_ONLY_PERSON`; a press does nothing.
+- `BoardAgents.svelte`: Remove access likewise; `readOnly` prop, else the board's own state through `useChrome()`, so `ToolbarEnd` / `HeaderFields` (FE_02's) needed no change.
+- Cards (`packages/ui`): `paused.ts` `explainPaused` gives every paused card control (answers, size, note pin, flag, Allow app, Stop app) the reason as its title and restores its own tip on Edit; `vb-node.ts` pauses Allow / Stop app (`APP`); `app-cards.ts` `press` toasts the reason and sends nothing (no confirm first).
+- Looks: `button.css` `.vb-btn[data-paused]` quiet outline; `paused.css` quiet Allow in an app card's footer (the accent at half strength left its word unreadable).
+- Gallery: new last section `read-only-controls-section.ts` (strip, Agents, app card Allow and Stop app); `access-section.ts` / `app-frame-section.ts` export the samples. Spec `tests/pages/read-only-controls.spec.ts` (7 tests; red first on `aria-disabled`); unit test `node-paused.test.ts`.
+- `read-only.spec.ts`: its "section is last" check skips the new last section.
 ### Caught Beyond the Brief
--
+- `ProposalsBar` Accept all (aria-disabled, title) has no `data-paused` and so no quiet look: REQUEST.
+- At 600 px "Allow all" wraps onto two lines in the strip (`access.css`, not mine; also when editable).
+- A locked board's card controls still say only "Check · a"; the reason is read-only's only (FE_01 scope).
 ### Deviations from Plan
--
+- None. Appended the gallery section last (after Editing) so no screenshot above it moved; no screenshot files were taken.
 
 ## On Completion
 

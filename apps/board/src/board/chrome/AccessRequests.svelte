@@ -9,17 +9,19 @@
      Both are the person's decision (rule 8), sent through the board's act path. A region
      landmark with a heading; a polite live region, always present so it is heard, announces the
      requests in `news`: those that arrived in the page's latest batch (board/cards/attention.ts, the
-     `grant.requested` condition). The strip itself shows only while a request is open. The gallery
+     `grant.requested` condition). The strip itself shows only while a request is open. While the ledger is read-only (`readOnly`) Allow all, Allow and Refuse
+     are aria-disabled with the reason as their title (FE_01), and a press does nothing. The gallery
      passes `refusing` to draw a row with its note open. -->
 <script lang="ts">
   import * as accessWords from '../words/access.ts';
   import * as chromeAccessWords from '../words/chrome-access.ts';
   import * as chromeCommonWords from '../words/chrome-common.ts';
+  import { READ_ONLY_PERSON } from '#actions';
   import { tick } from 'svelte';
   import type { AccessRequestRow } from '../access/index.ts';
   import { askWords, groupAskWords, groupByBot } from '../access/index.ts';
 
-  let { requests, onanswer, refusing = null, placement = 'board', scope = '', news = [], onallowall, byBot = true, root: where, ids = '' }: {
+  let { requests, onanswer, refusing = null, placement = 'board', scope = '', news = [], onallowall, byBot = true, root: where, ids = '', readOnly = false }: {
     /** Where it says its height, and where it looks for the next row: the board's root. */
     root?: HTMLElement;
     /** The mount's prefix for its ids (mount-ids.ts). */
@@ -39,7 +41,12 @@
     news?: readonly number[];
     /** Group the rows by bot (the accessByBot flag). */
     byBot?: boolean;
+    /** The ledger is read-only (D-085): Allow all, Allow and Refuse are paused, their title the reason (FE_01). */
+    readOnly?: boolean;
   } = $props();
+
+  const paused = $derived(readOnly || undefined);
+  const why = $derived(readOnly ? READ_ONLY_PERSON : undefined);
 
   // svelte-ignore state_referenced_locally
   let open: number | null = $state(refusing);
@@ -72,7 +79,7 @@
   }
 
   async function answer(r: AccessRequestRow, a: 'grant' | 'deny', text?: string) {
-    if (busy.length) return;
+    if (busy.length || readOnly) return;
     busy = [r.seq];
     const ok = await onanswer(r.seq, a, text);
     busy = [];
@@ -84,7 +91,7 @@
 
   /** Allow every request of one bot, one `grant` each, stopping at the first that is not recorded. */
   async function allowAll(asks: readonly AccessRequestRow[]) {
-    if (busy.length) return;
+    if (busy.length || readOnly) return;
     busy = asks.map((r) => r.seq);
     let ok = true;
     if (onallowall) ok = await onallowall(asks.map((r) => r.seq));
@@ -94,6 +101,7 @@
   }
 
   async function startRefuse(r: AccessRequestRow) {
+    if (readOnly) return;
     open = r.seq;
     note = '';
     await tick();
@@ -128,14 +136,14 @@
         <label class="vb-visually-hidden" for={idOf(r.seq, 'note')}>{chromeAccessWords.noteForOptional(name)}</label>
         <input class="vb-access-note" id={idOf(r.seq, 'note')} type="text" maxlength="4000" autocomplete="off"
           placeholder={chromeAccessWords.optionalWhyNot} value={note} oninput={(e) => { note = e.currentTarget.value; }} onkeydown={(e) => noteKey(e, r)} />
-        <button type="submit" class="vb-btn vb-btn-small" aria-label={grouped ? chromeAccessWords.refuseTo(name, where) : chromeAccessWords.refuse(name)}>{chromeAccessWords.refuse2}</button>
+        <button type="submit" class="vb-btn vb-btn-small" aria-disabled={paused} data-paused={paused} title={why} aria-label={grouped ? chromeAccessWords.refuseTo(name, where) : chromeAccessWords.refuse(name)}>{chromeAccessWords.refuse2}</button>
         <button type="button" class="vb-btn vb-btn-small" onclick={() => cancelRefuse(r)}>{chromeCommonWords.cancel}</button>
       </form>
     {:else}
       <div class="vb-access-actions">
-        <button type="button" class="vb-btn vb-btn-small vb-btn-primary vb-access-allow"
+        <button type="button" class="vb-btn vb-btn-small vb-btn-primary vb-access-allow" aria-disabled={paused} data-paused={paused} title={why}
           aria-label={chromeAccessWords.allowTo(name, where)} onclick={() => answer(r, 'grant')}>{chromeAccessWords.allow}</button>
-        <button type="button" class="vb-btn vb-btn-small" id={idOf(r.seq, 'refuse')}
+        <button type="button" class="vb-btn vb-btn-small" id={idOf(r.seq, 'refuse')} aria-disabled={paused} data-paused={paused} title={why}
           aria-label={grouped ? chromeAccessWords.refuseTo(name, where) : chromeAccessWords.refuse(name)} onclick={() => startRefuse(r)}>{chromeAccessWords.refuse2}</button>
       </div>
     {/if}
@@ -152,7 +160,7 @@
           <div class="vb-access-bot">
             <h3 class="vb-access-bot-name" id={idOf(g.asks[0]!.seq, 'bot')}><b>{g.name}</b> {groupAskWords(g)}</h3>
             {#if g.asks.length > 1}
-              <button type="button" class="vb-btn vb-btn-small vb-btn-primary vb-access-allow-all"
+              <button type="button" class="vb-btn vb-btn-small vb-btn-primary vb-access-allow-all" aria-disabled={paused} data-paused={paused} title={why}
                 aria-label={chromeAccessWords.allowAllOf(g.name, g.asks.length)} onclick={() => allowAll(g.asks)}>{chromeAccessWords.allowAll}</button>
             {/if}
           </div>
