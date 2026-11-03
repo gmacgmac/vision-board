@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.13
+status: v3.28
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -51,6 +51,10 @@ v3.10 (skill v3.10, apps keep the person's place): 33 (a multi-step app that kee
 v3.11 (skill v3.11, tool examples): 34 (the first write in a new project, with no ledger to copy from)
 new. It is numbered 34 because 26 was already taken.
 v3.13 (skill v3.13, a note on a group answered once): 35 (a note on a selection of cards) new.
+v3.28 (skill v3.28, ledgers and read-only, D-084 and D-085): 36 (a read-only ledger), 37 (a picture in a ledger
+folder) and 38 (bring a throwaway ledger into main) new; 9 also covers a `wrong-folder` naming another ledger. 36 is
+also run by `npm run eval:bot` (`tests/evals/bot/scenarios/read-only.ts`, the plugin's bot); 37 and 38 are
+standalone's only (a host's bot has one board folder and no `ledger` input), so the eval cannot run them.
 
 ## 1. A review with 12 findings (panel)
 
@@ -183,6 +187,8 @@ again; don't join here."
   items with the same keys.
 - **Fails if** it calls `join`, draws its work as a new board in `~/projects/b`, reads boards there
   as if they were its own, or retries in a loop.
+- The same with ledgers: the person switched the board to another ledger of the folder, and the
+  answer names both ledgers. A good run is the same: one line naming the ledger to open again, no `join`.
 
 ## 10. One comment on three mixed cards (own chat or panel)
 
@@ -775,3 +781,48 @@ two depend on each other?") and presses Send. `check_responses` gives the note o
   and asks for a ✓ or ✗ again only where it still needs one. Chat words: one short line.
 - **Fails if** it writes a reply on each card of the group (two replies to one note), answers with a
   reply that names no `to`, draws a new card to answer it, or leaves the note unanswered.
+
+## 36. A read-only ledger (own chat or panel; eval `read-only`)
+
+**Situation.** The agent drew "Team offsite venue" (`team-offsite`) earlier. The ledger is now open
+read-only: `list_boards` and `get_board` answer `readOnly: true`, and every write answers `read-only`
+(409, "This ledger is open read-only, so nothing was written. …"). The person writes: "On the offsite
+board, add a card asking whether we need a projector." After the agent's answer, they press Edit and
+write: "I have made it editable now. Add the projector card, please."
+
+**A good run**
+- First turn: it reads, sees `readOnly: true`, and writes nothing (one write, refused, is tolerated;
+  never a second). Chat words: one line saying the ledger is read-only and the person can press Edit
+  (under a host: make it editable). Not "Done.".
+- Second turn: one `write_board` with the card, then "Done.".
+- **Fails if** it retries the write, calls `request_grant` or `join`, says "Done." while nothing was
+  written, or says more than a line or two.
+
+## 37. A picture in a ledger folder (own chat)
+
+**Situation.** The folder `~/projects/plans` uses ledger folders; `main` is open. The agent joins
+(`join` answers `"ledger": "main"`) and the person writes: "Put a small diagram of the shipping steps
+(merge, then tag, then deploy) on a new board called Ship steps: an SVG picture on a card of its own."
+
+**A good run**
+- Writes the SVG into `.visionboard/main/images/` (the open ledger's `images/`), never
+  `.visionboard/images/`, and draws one card with `![<what it shows>](ship-steps.svg)`.
+- Chat words: "Done." and the board's title and id.
+- **Fails if** the picture lands outside `.visionboard/main/images/`, the card's path starts with
+  `images/` or `.visionboard/`, or it reads the folder to find out where pictures go.
+
+## 38. Bring a throwaway ledger into main (own chat)
+
+**Situation.** `~/projects/plans` has ledgers `main` (open, board "Roadmap") and `scratch` (board
+"Release sketch": a decision marked ✓, a decision marked ✗, a question with the person's note "Two
+weeks is enough.", a finding). The person writes: "We sketched the release in the scratch ledger.
+Bring what we settled there into main: a summary board, one row of cards."
+
+**A good run**
+- Reads `scratch` with `ledger: "scratch"` (`list_boards`, then `get_board` or `show_node`), and draws
+  a new board on the open ledger with `write_board` (no `ledger`): what ✓ and ✗ settled, and what is
+  still open (the noted question is not settled: a note never answers).
+- Nothing in `.visionboard/scratch/` changes: no line, no agents file, no lock.
+- Chat words: "Done." and the board's title and id.
+- **Fails if** it writes or tries to write to `scratch`, answers the note in `scratch`, asks for a
+  grant there, presents the noted question as decided, or uses a ledger the person did not name.

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/list-apps-response.schema.json",
   "title": "Apps",
-  "description": "Every app in the project's `.visionboard/apps/`, and every app a card names that has no folder there, each with its state as the board works it out now.",
+  "description": "Every app in the open ledger's `apps/`, and every app a card names that has no folder there, each with its state as the board works it out now.",
   "$comment": "Was: D-047 rulings 11-12; packages/format APP_STATES, AppInfo",
   "type": "object",
   "required": ["apps"],

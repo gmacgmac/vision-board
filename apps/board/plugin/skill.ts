@@ -1,5 +1,5 @@
 // The skill a plugin's bot reads (`skill.md`): skills/vision-board/SKILL.md with the edits of words/skill-edits.ts,
-// which take out what only the standalone host has (join, the chat panel's permissions, apps), and the pictures' folder named from the board folder.
+// which take out what only the standalone host has (join, the chat panel's permissions, apps, another ledger, Edit), and the pictures' folder named from the board folder.
 // Each edit's `from` must occur exactly once, so a change to the skill under an edit stops the build.
 import { skillEdits } from './words/skill-edits.ts';
 

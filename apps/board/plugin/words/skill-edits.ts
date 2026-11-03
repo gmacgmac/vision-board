@@ -39,6 +39,9 @@ export const skillEdits: readonly SkillEdit[] = [
   // Starting a board and access: no panel, no join, no waiting inside a call.
   { from: 'In the chat panel, "the board" is always the panel\'s own (`Board: <id>`).\n  Elsewhere, when', to: 'When' },
   { from: 'do not `join` or write until', to: 'do not write until' },
+  // Read-only: the host may draw no Edit; reading another ledger is the standalone host's (`ledger` is not offered here).
+  { from: 'that they can press Edit to change it,', to: 'that it is read-only until they make it editable,' },
+  { from: '## Another ledger', until: '## Layout: fit the task', to: '' },
   { from: 'in your own chat, `check_responses` with `wait` until a `grant` or\n  `deny` for your request arrives. In the panel, say', to: 'say' },
   { from: 'In your own chat, pass `wait` (up to 60 seconds) to hold until they press Send. On', to: 'On' },
   // Pictures: the folder is named from the board folder, which the host tells the bot, never by the standalone path.
