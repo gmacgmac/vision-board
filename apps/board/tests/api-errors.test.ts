@@ -172,7 +172,7 @@ test('a wrong Host, or a write from another Origin, is forbidden (403); no Origi
 });
 
 test('anything unexpected is server-error (500) with a fixed detail; the stack goes to stderr only', async () => {
-  const broken = { state() { throw new Error('secret internals at /home/x'); } } as unknown as Ledger;
+  const broken = { state() { throw new Error('secret internals at /home/x'); }, gate() {} } as unknown as Ledger;
   const board = await startTestBoard({ ledger: broken, dist: '/nonexistent' });
   const { port } = board;
   const logged: unknown[] = [];

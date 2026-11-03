@@ -167,6 +167,7 @@ export function openChats(o: ChatOptions): Chats {
     if (!make) throw problem('conflict', serverChatWords.isNotAvailableOnThis(agentName(record.agent)));
     const why = blocked[record.agent];
     if (why) throw problem('conflict', serverChatWords.couldNotBeStarted(agentName(record.agent), why));
+    refuseReadOnly(record.agent); // a fresh secret writes the ledger's agents file
     const token = newToken();
     try {
       const extra = { sessionId: record.session, ...(record.model && { model: record.model }) };
@@ -200,13 +201,21 @@ export function openChats(o: ChatOptions): Chats {
     return 'refused' in said || !said.text ? undefined : said;
   }
 
+  /** A start (a new agent, or a fresh secret after a restart) would write the ledger's agents file: refused while the
+   * ledger is read-only (D-085 3), before any CLI starts. */
+  function refuseReadOnly(agent: ChatSession['agent']): void {
+    if (ledger.readOnly()) throw problem('read-only', serverChatWords.noChatWhileReadOnly(agentName(agent)));
+  }
+
   /** Hand `live`'s agent `held` on `board`: built when it goes, the Send recorded then if asked. */
   function deliver(live: LiveSession, board: string, held: Held): ChatEvent | undefined {
     const id = live.record.session;
     if (live.busy) waiting.set(id, held);
     return live.post(() => {
       waiting.delete(id);
-      const round = unsaid(live, board, held.before);
+      // Read-only, as locked: the words go alone, with no round and no Send (D-085 3).
+      const closed = ledger.readOnly();
+      const round = closed ? undefined : unsaid(live, board, held.before);
       const s = ledger.state();
       const { msg, said } = checked(cwd, held.msg);
       const built = promptFor(s, resolve, board, msg, round);
@@ -216,7 +225,7 @@ export function openChats(o: ChatOptions): Chats {
       // On a locked board the words and chips go alone: no round (unsaid), and no Send to record. The round was
       // read just now, through `s.seq`, and the Send is recorded in the same step, so it says so (`head`); a record
       // refused hands over nothing.
-      if (!isLocked(s, board)) {
+      if (!isLocked(s, board) && !closed) {
         held.record?.(sendHead ? s.seq : undefined);
         told.set(id, s.seq);
       }
@@ -259,6 +268,7 @@ export function openChats(o: ChatOptions): Chats {
       }
       const why = blocked[agent];
       if (why) throw problem('invalid', serverChatWords.couldNotBeStarted2(agentName(agent)), { errors: [{ pointer: '/agent', detail: why }] });
+      refuseReadOnly(agent);
       const identity = newIdentity(ledger, agents());
       const token = newToken();
       let started;

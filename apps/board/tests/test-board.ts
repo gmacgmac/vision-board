@@ -2,7 +2,8 @@
 // API harness, the page suite's servers, the fixture server other modules spawn). A project folder
 // (a new temp one unless given, removed on close), a fixture ledger copied in when it has none, the
 // built page or a given one, any port (0: a free one). As server.ts starts it, less the folder lock
-// (tests take none, project.ts) and the folder choice. Plus the person's cookie and a joined agent,
+// (tests take none, project.ts) and the folder choice, and in edit mode (`edit`, as `--edit`) unless the test says
+// `edit: false`: with read-only opening on (`readOnlyStart`, D-085) every other test still writes as before. Plus the person's cookie and a joined agent,
 // the two callers a test acts as. Reached as `#board/testing` (support.ts).
 import fs from 'node:fs';
 import type http from 'node:http';
@@ -40,7 +41,7 @@ export interface TestBoard {
   close(): Promise<void>;
 }
 
-export async function startTestBoard({ project, prefix = 'vb-board-', seed, dist = DIST, port = 0, ledger: given, ...options }: TestBoardOptions = {}): Promise<TestBoard> {
+export async function startTestBoard({ project, prefix = 'vb-board-', seed, dist = DIST, port = 0, ledger: given, edit = true, ...options }: TestBoardOptions = {}): Promise<TestBoard> {
   const dir = project ?? fs.realpathSync(makeTempDir(prefix));
   const file = ledgerPath(dir);
   if (seed && !fs.existsSync(file)) {
@@ -48,7 +49,7 @@ export async function startTestBoard({ project, prefix = 'vb-board-', seed, dist
     fs.copyFileSync(seed, file);
   }
   const ledger = given ?? openLedger(file, () => {});
-  const server = createBoardServer({ ...options, ledger, dist });
+  const server = createBoardServer({ ...options, ledger, dist, edit });
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', () => { server.off('error', reject); resolve(); });

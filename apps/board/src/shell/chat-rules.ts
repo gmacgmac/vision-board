@@ -1,6 +1,6 @@
 // The chat panel's rules (split out of chat-panel.ts, N39): which agents and models it offers, what
 // the header shows, why no message can go (`blockedReason`: loading, a past version, an archived
-// board, a refused start), what Send waits on, the board a folder session first drew, how a streamed
+// board, a read-only ledger with no session to take it, a refused start), what Send waits on, the board a folder session first drew, how a streamed
 // event is applied, and a message's body. Pure, so they are unit-tested under plain Node.
 import type { ChatEvent, ChatOption, ChatState, Chip } from '#chat';
 import { applyEvent, EMPTY_CHAT } from '#chat';
@@ -24,6 +24,8 @@ export const shownPick = (s: ChatSessionInfo | null, refused: string | undefined
   s && refused === undefined ? { agent: s.agent, model: shownModel(s.agent, s.model) } : pick);
 export const LOADING = chatWords.loading;
 export const PAST = chatWords.aPastVersionOfThe;
+/** Why no session can start while the ledger is read-only. */
+export const READ_ONLY = chatWords.readOnlyPressEditTo;
 
 /** What the session runs, or will when it starts. */
 export interface Pick { agent: Agent; model: string }
@@ -32,9 +34,11 @@ export interface Pick { agent: Agent; model: string }
 export const ARCHIVED = chatWords.thisBoardIsArchivedSo;
 
 /** Why no message can go, in the order it matters: the page not knowing yet where it is (null; ''
- *  is a folder with no board), a past version, an archived board, a refused start. */
-export const blockedReason = (board: string | null, past: boolean, refused?: string, archived = false): string | undefined =>
-  board === null ? LOADING : past ? PAST : archived ? ARCHIVED : refused;
+ *  is a folder with no board), a past version, an archived board, a read-only ledger (`readOnly`: why, when no
+ *  session is in use to take the message, since a new one would have to join the ledger, D-085 3), a refused start.
+ *  A session already in use still takes messages while read-only: the words go alone, with no Send. */
+export const blockedReason = (board: string | null, past: boolean, refused?: string, archived = false, readOnly = false): string | undefined =>
+  board === null ? LOADING : past ? PAST : archived ? ARCHIVED : readOnly ? READ_ONLY : refused;
 
 /** The key of the person's last message ('' before any): Send waits while it stays the one the agent
  *  was answering, and the answers handed over are the next. */
@@ -69,6 +73,8 @@ export const panelState = () => ({
   /** Send was pressed while the agent answered this message (`lastAsk`): waiting until the next. */
   wait: null as string | null,
   pick: { agent: 'claude', model: '' } as Pick, refused: undefined as string | undefined, sending: false,
+  /** The ledger is open read-only, as the host last said (`show`). */
+  readOnly: false,
   /** A session starting (New session, a pick, a first message): a message waits for it. */
   starting: null as Promise<ChatSessionInfo | null> | null,
 });

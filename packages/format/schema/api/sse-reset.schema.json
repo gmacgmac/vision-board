@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/sse-reset.schema.json",
+  "title": "Ledger replaced event",
+  "description": "A `reset` event whose `data` is JSON `{ seq }`: the ledger file was replaced (a git pull, a sync, a copy dropped in), not only appended to, and the server read it again from the start. A client reads the whole ledger again.",
+  "$comment": "readOnlyStart flag (READONLY_01, D-085 6)",
+  "type": "object",
+  "required": [
+    "event",
+    "data"
+  ],
+  "properties": {
+    "event": {
+      "const": "reset",
+      "description": "The event name; always `reset`."
+    },
+    "data": {
+      "type": "string",
+      "contentMediaType": "application/json",
+      "contentSchema": {
+        "type": "object",
+        "required": [
+          "seq"
+        ],
+        "properties": {
+          "seq": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+          }
+        },
+        "unevaluatedProperties": false
+      },
+      "description": "JSON text `{ \"seq\": <ledger position> }`: the position of the ledger as read again, which may be lower than before."
+    },
+    "retry": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many milliseconds a client waits before it reconnects."
+    }
+  },
+  "unevaluatedProperties": false
+}

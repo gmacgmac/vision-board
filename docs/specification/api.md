@@ -227,6 +227,7 @@ packages/format/schema/openapi.json               every operation, input, output
 | `server-error` | 500 | Anything unexpected; details go to the server log, not the answer |
 | `wrong-folder` | 409 | The board has another folder open: an agent call's `VB-Project` names another folder, or its secret is an agent's of a folder opened before (114, 115) |
 | `locked` | 423 | The person locked the board: every write on it is refused, whole, until they unlock it (139) |
+| `read-only` | 409 | The ledger is open read-only: every write is refused before anything is written, until the person presses Edit (173) |
 | `needs-approval` | 403 | An app's tool was called before the person allowed this version of the app's code (151, 153) |
 | `app-not-found` | 404 | No app with this id in the project's `.visionboard/apps/` (153) |
 | `app-invalid` | 422 | The app's manifest or files have problems; `list_apps` lists them (152, 153) |
@@ -271,7 +272,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `forget_permission` | `POST /api/permissions/forget` | person | `{ id }`: forget one kept yes; the agent asks again; the ones left (100, 107) |
 | `attach_chat_file` | `POST /api/chat/files` | person | `{ name, type, data, of? }`: save one file the person attaches to a message, or with `of` a picture the page made of one; 201 with `{ file }` (164, 168) |
 | `read_attachment` | `POST /api/chat/files/read` | agent | `{ path, sheet?, range? }`: read an attached Word or Excel file, or expand a zip; 200 with `{ kind, untrusted, ... }` (167) |
-| `get_project` | `GET /api/project` | person | The open folder: `{ path, name, found, boards? }` (109) |
+| `get_project` | `GET /api/project` | person | The open folder: `{ path, name, found, boards? }`; with read-only opening `readOnly?`, `editing?` (109, 173) |
+| `edit_ledger` | `POST /api/project/edit` | person | Edit: take the open ledger's lock now, or `conflict` naming who holds it; the open folder (173) |
+| `stop_editing` | `DELETE /api/project/edit` | person | Stop editing: let the lock go; the ledger is read-only; the open folder (173) |
 | `list_folders` | `GET /api/folders` | person | One folder under home (`path`, default home): found or not, its folders marked `hasBoard`, and `recent` (109, 110) |
 | `open_project` | `POST /api/project` | person | `{ path, create? }`: open another folder under home in place of this one; the folder now open (111) |
 | `list_apps` | `GET /api/apps` | agent | `{ apps }`: every app in the folder and every app a card names, each with its state, tools, hash and whether the person allowed it; an agent's secret or the person's cookie (152) |
@@ -945,8 +948,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     once at start: `VB_PROJECT` when set, else the nearest folder at or above its working folder
     with a Vision Board in either layout, `.visionboard/ledger.jsonl` or a ledger folder's
     `.visionboard/<ledger>/ledger.jsonl` (`ledgersIn`; a home folder that only keeps `recent.json` is no
-    project), else none. `ledgersIn` and the server's `ledgers.ts` (`isOldLayout`, `listLedgers`) are one
-    rule, held equal by `apps/board/tests/ledger-layout-rule.test.ts`; the client cannot import the server. `packages/client` sends it as `VB-Project` on every call (`project` option). The
+    project), else none. `ledgersIn` is the one rule: the server's `ledgers.ts` (`isOldLayout`,
+    `listLedgers`, `ledgerFoldersIn`) asks it too (LEDGERS_02-R1). `packages/client` sends it as `VB-Project` on every call (`project` option). The
     instructions (`INSTRUCTIONS`, `INSTRUCTIONS_JOINED`) and the skill say: on `wrong-folder`, stop,
     tell the person, and do not join.
 117. **Answers name the open folder.** `join` and `list_boards` answer `project`, the open folder's
@@ -1762,3 +1765,64 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     neither mark is not the caller's to answer: on a card it may not answer, or an earlier note on a card whose latest
     note carries the mark. A person's read and the page's fold stay unmarked (`apps/board/tests/bot-tool-rules.test.ts`
     "reads say what answered a note", "reads, flag off").
+
+## Read-only and Edit (READONLY_01, D-085)
+
+173. **A ledger opens read-only** (`readOnlyStart` flag, server and page; off by default until the set closes). With it
+    on, opening a ledger takes no lock and writes nothing into its folder: at start (`apps/board/server.ts`
+    `startReadOnly`: no lock, no move of an old layout, no `VB_SEED`, no exit when another server holds the ledger; the
+    terminal says who), on a switch (`server/project.ts` `openOne`, `openLedgerOf`: the lock held before is let go,
+    the next ledger is only read), and for `create` (the new ledger is made under its lock, which is let go at once).
+    `npm run board -- --edit` or `VB_EDIT=1` opens every ledger for editing as before (`BoardServerOptions.edit`);
+    the tests' servers do too (`startTestBoard`'s `edit`, default true), unless a test is about read-only. Held by
+    `apps/board/tests/api-read-only-open.test.ts`.
+    - **Edit** (`edit_ledger`, `POST /api/project/edit`, the person's) takes the open ledger's lock now (`lock.ts`
+      `takeLock` as it stands): a live lock of another server refuses with `conflict` and `holderMessage`, naming the
+      computer, and the ledger stays read-only. A folder still in the old layout (ledger folders on) is moved into
+      `main/` first, so it opens again there and its streams end, as on a switch. **Stop editing** (`stop_editing`,
+      `DELETE /api/project/edit`) lets the lock go. Both answer the open folder, as `get_project` does; an agent is
+      `forbidden`. With the flag off, Stop editing still works (the ledger is then read-only until Edit); nothing in
+      the page offers it.
+    - **The state** has one home per open folder, `server/editing.ts` (`createEditing`): `readOnly()` is what the
+      ledger (`ledger.ts` `gate`), the engine (`EngineOptions.readOnly`) and the agents store (`openAgents`) ask.
+      With the flag on, a lock this server no longer holds (another computer took a stale one over) reads as
+      read-only (`Lock.held`), so a writer stops before its next line. The heartbeat beats only a lock held.
+    - **Reads say it** (`common.schema.json` `readOnly`, only when true, like `locked`): `get_board`, `list_boards`
+      and `read_ledger` carry `readOnly: true` (`engine/operations.ts` `readOnlyMark`). With the flag on, `get_project`
+      (and `open_project`, `edit_ledger`, `stop_editing`) answer `readOnly` and `editing`: `{ here: true }` while
+      this server may write, else `{ host, since }` from another server's live lock (`lock.ts` `lockHolder`), else
+      nothing. With it off, those answers are as before.
+    - **Writes are refused before anything is written** (problem `read-only`, 409, `problem.schema.json`): the engine
+      refuses every operation that is not a GET before its body is read (`engine.ts` `run`), `join` too, since it would
+      write `agents.json`; the ledger refuses any line handed to it, from any route (`ledger.ts` `append`, before
+      `stamp`), and the agents store any hash (`agents.ts` `add`). An agent reads `READ_ONLY` ("…press Edit…"), the
+      person `READ_ONLY_PERSON` ("Read-only: press Edit to change it"; `#actions` `read-only.ts`). The person's
+      `put_panel_state` is refused the same way. Not D-043's lock: a read-only ledger takes no flag either, and a
+      locked board answers `locked` as before in edit mode. Held by `apps/board/tests/api-read-only.test.ts`, the
+      contract walk of `api-lock.test.ts` for read-only: every agent write 409 with nothing written (the ledger
+      file's bytes, `agents.json` and the ledger folder's listing), every read as before plus `readOnly`, every person
+      write either refused or named with why it still goes, Edit refused by another computer's live lock, a lock
+      taken over stopping the next line, D-043 unchanged in edit mode.
+    - **The chat** (`chat-sessions.ts`). A start, or a session resumed after a restart (a fresh secret), would write
+      the ledger's `agents.json`: refused with `read-only` (`noChatWhileReadOnly`) before any CLI starts. A session
+      already running still takes messages: as on a locked board, the words go alone, with no answers and no Send
+      recorded (`deliver`). The repo-wide chat files (sessions, attachments, permissions) are the person's
+      conversation, not the ledger, and are still written. Held by `api-read-only.test.ts` ("a chat running when the
+      person stops editing…").
+    - **A replaced file** (`ledger.ts` `refresh`): another inode, a shorter file, or other first bytes (a digest of
+      the first 4 KB) mean the file was replaced (a git pull, a sync, a copy dropped in), not grown; the ledger reads
+      it again from the start, taking whole lines only (a last line still being written waits), and tells its reset
+      listeners (`onReset`). The streams then send `reset { seq }` (`streams.ts`), and `editing { readOnly }` after
+      Edit or Stop editing (`sse-reset.schema.json`, `sse-editing.schema.json`). Held by
+      `apps/board/tests/ledger-replace.test.ts` (grown; replaced longer, shorter, in place, half-written; made after
+      it was opened) and `api-read-only.test.ts` ("a replaced ledger file…").
+    - **The page** learns read-only from its reads (`live.ts` `readOnly`, from `read_ledger`), so any host's board
+      does with no seam change; an `editing` event makes it read again, and `reset` (the host's change with head 0,
+      `page-host.ts`) reads the whole ledger again. The past version's read-only path is widened to "past version or
+      read-only ledger" (`controller.ts`: the sender's refusal, proposals, parking, the chat side); `lock-flow.ts`
+      `paused` gives the read-only reason, so the stage's acting handlers, the note bubble and the selection bar's
+      acting commands stop as on a locked board, the flag too. No board seen and no card seen mark is written; a card
+      seen is kept in the page (`attention.ts`, `update-flow.ts` `quiet`). `BoardState.readOnly` is set from the reads
+      for the elements. The chat panel blocks a message only when no session is in use (`chat-rules.ts`
+      `blockedReason`), since a new one would have to join. Held by `apps/board/tests/live-read-only.test.ts` and
+      `tests/pages/read-only-writes.spec.ts`. The header's Edit control is READONLY_UI_01's.

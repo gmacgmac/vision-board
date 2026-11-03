@@ -29,6 +29,8 @@ export const opus55 = 'Opus 5.5';
 export const sonnet55 = 'Sonnet 5.5';
 export const loading = 'Loading…';
 export const aPastVersionOfThe = 'A past version of the board is showing. Go back to now to send a message.';
+/** The ledger is open read-only and no session is in use: a new one would join the ledger (D-085 3). */
+export const readOnlyPressEditTo = 'This ledger is read-only. Press Edit to start a chat here.';
 export const thisBoardIsArchivedSo = 'This board is archived, so its agent can\'t see it. Restore it from the board picker to chat about it.';
 
 // ---- ChatButton.svelte (workAlongside flag)

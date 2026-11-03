@@ -30,6 +30,9 @@ export interface Lock {
   beat(): void;
   /** Remove the lock, if it is still ours. Safe to call twice. */
   release(): void;
+  /** True while the lock file still names this holder: read from the file, so a lock another computer took over
+   *  (a stale one, after a sleep) reads false, and a writer stops before its next line (D-085 2). */
+  held(): boolean;
 }
 
 export type Taken =
@@ -64,6 +67,13 @@ export const holderMessage = (x: LockInfo): string =>
   serverFoldersWords.anotherBoardServerHoldsThis(x.host, x.pid, x.port) +
   serverFoldersWords.runningSinceStopThatServer(x.started);
 
+/** Who holds ledger folder `dir`'s lock now, when its holder is live (`get_project`'s `editing`); undefined when
+ *  no one does. Reads only. */
+export function lockHolder(dir: string, env: LockEnv = realEnv()): LockInfo | undefined {
+  const x = readLock(ledgerFiles(dir).lock);
+  return x && live(x, env) ? x : undefined;
+}
+
 /** Take the lock in ledger folder `dir` (`ledgerFolder`), or say who holds it. */
 export function takeLock(dir: string, port: number, env: LockEnv = realEnv()): Taken {
   const file = ledgerFiles(dir).lock;
@@ -81,6 +91,7 @@ export function takeLock(dir: string, port: number, env: LockEnv = realEnv()): T
   const lock: Lock = {
     beat() { if (ours()) writeLock(file, { ...mine, beat: new Date(env.now()).toISOString() }); },
     release() { if (ours()) fs.rmSync(file, { force: true }); },
+    held: ours,
   };
   return { ok: true, lock, ...(old && { replaced: old }) };
 }

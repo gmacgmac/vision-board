@@ -44,15 +44,21 @@ export interface ProjectEvents {
   change(seq: number): void;
   /** The built page's id; sent only by a server in watch mode, on connect and on every rebuild. */
   build(id: string): void;
+  /** The ledger file was replaced (a git pull, a sync), not only appended to: read it again from the start (D-085 6). */
+  reset(seq: number): void;
+  /** The person pressed Edit or Stop editing: the ledger is now read-only, or not (D-085 2). */
+  editing(readOnly: boolean): void;
   /** The stream (re)connected. */
   open(): void;
 }
 
 /** Follow the whole project, boards or none; a stop function. */
 export function watchProject(on: ProjectEvents): () => void {
-  return client.watch('watch_project', {}, ['change', 'build'], (d, event) => {
-    const data = d as { seq?: unknown; build?: unknown };
+  return client.watch('watch_project', {}, ['change', 'build', 'reset', 'editing'], (d, event) => {
+    const data = d as { seq?: unknown; build?: unknown; readOnly?: unknown };
     if (event === 'change') on.change(Number(data.seq));
+    else if (event === 'reset') on.reset(Number(data.seq));
+    else if (event === 'editing') on.editing(data.readOnly === true);
     else if (typeof data.build === 'string') on.build(data.build);
   }, () => on.open());
 }
@@ -162,6 +168,12 @@ export type LedgerEntry = NonNullable<FolderInfo['ledgers']>[number];
 
 /** What else `open_project` takes with ledger folders: the ledger, and for a new one whether git keeps it out. */
 export type LedgerChoice = Pick<OperationInput<'open_project'>['body'], 'ledger' | 'keepOutOfGit'>;
+
+/** Edit (D-085 2): the open ledger's lock taken now; refused, naming the server that holds it, while another does. */
+export const editLedger = () => person(() => client.call('edit_ledger'));
+
+/** Stop editing: the lock let go, the ledger read-only. */
+export const stopEditing = () => person(() => client.call('stop_editing'));
 
 /** Open `path` in place of the open folder; `create` makes its Vision Board (with `ledger`, that ledger). */
 export const openProject = (path: string, create = false, ledger: LedgerChoice = {}) =>

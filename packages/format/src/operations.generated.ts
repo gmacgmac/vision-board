@@ -150,6 +150,14 @@ export const OPERATIONS = {
     operationId: 'open_project', method: 'POST', path: '/api/project',
     pathParams: [], xAgent: false, auth: 'person',
   },
+  edit_ledger: {
+    operationId: 'edit_ledger', method: 'POST', path: '/api/project/edit',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
+  stop_editing: {
+    operationId: 'stop_editing', method: 'DELETE', path: '/api/project/edit',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
   list_folders: {
     operationId: 'list_folders', method: 'GET', path: '/api/folders',
     pathParams: [], xAgent: false, auth: 'person',
@@ -193,6 +201,7 @@ export const PROBLEMS = {
   'server-error': { status: 500, title: 'Server error' },
   'wrong-folder': { status: 409, title: 'Wrong folder' },
   locked: { status: 423, title: 'Locked' },
+  'read-only': { status: 409, title: 'Read-only' },
   'needs-approval': { status: 403, title: 'Needs approval' },
   'app-not-found': { status: 404, title: 'App not found' },
   'app-invalid': { status: 422, title: 'App invalid' },

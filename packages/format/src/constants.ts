@@ -19,6 +19,8 @@ export const ENV = {
   kiroAgent: 'VB_KIRO_AGENT',
   /** Feature flags to turn on or off (flags.ts). */
   flags: 'VB_FLAGS',
+  /** `1`: open every ledger for editing, as `--edit` does (read-only opening, `readOnlyStart`, D-085). */
+  edit: 'VB_EDIT',
 } as const;
 
 export type EnvName = (typeof ENV)[keyof typeof ENV];

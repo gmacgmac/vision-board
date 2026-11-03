@@ -1105,6 +1105,13 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    so its button and Shift+F work on a locked board (`passesLock`).
 6. **The chat**: messages still go; the composer's chip carries no answers on a locked board
    (`#actions` `answersChip`), as the server sends none (api.md 140).
+6a. **A read-only ledger** (D-085, `readOnlyStart`; api.md 173) pauses the same way, with its own reason, "Read-only:
+   press Edit to change it" (`#actions` `READ_ONLY_PERSON`): `lock-flow.ts` `paused` gives it, so the stage's acting
+   handlers, the note bubble and the selection bar's acting commands stop, and the sender refuses every line first
+   (`controller.ts`), the flag too, which a lock lets through. It is not a lock: no "Locked", no `data-locked`. The page
+   learns it from its reads (`live.ts` `readOnly`), not from the standalone shell; nothing is written, not even a seen
+   mark (a card seen is kept in the page). `BoardState.readOnly` carries it for the elements; the header's control
+   and the elements' paused look are READONLY_UI_01's. Test: `tests/pages/read-only-writes.spec.ts`.
 7. Tests: `tests/pages/lock-board.spec.ts` (the menu row by mouse and keyboard, "Locked", every
    paused control aria-disabled, a press on a button, a key, a note, a layout and the selection bar
    saying why and writing nothing but seen lines, the flag by click and Shift+F, a lock from another

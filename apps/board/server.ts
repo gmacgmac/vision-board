@@ -15,7 +15,9 @@
 // One server per ledger: the ledger folder's lock (server/lock.ts) refuses a second one, here or on
 // another computer sharing the folder. Every mode releases it on exit. With ledger folders (`ledgerFolders`,
 // D-084) it opens the folder's last ledger (recent.json), else `main`, moving an old-layout folder into
-// `main/` first (server/ledger-move.ts); the lock is that ledger folder's.
+// `main/` first (server/ledger-move.ts); the lock is that ledger folder's. With read-only opening (`readOnlyStart`,
+// D-085) the ledger opens read-only: no lock, no move, no seed, and no exit when another server holds it (the terminal
+// says who); `--edit` or VB_EDIT=1 opens it for editing as above. Edit on the board takes the lock (server/project.ts).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -24,8 +26,8 @@ import { DEFAULT_PORT, ENV, flagOn, ledgerFiles, ledgerFolder, parseFlags } from
 import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
 import { ledgerPath, openLedger } from './server/ledger.ts';
-import { chooseLedger } from './server/ledgers.ts';
-import { holderMessage, takeLock } from './server/lock.ts';
+import { chooseLedger, isOldLayout } from './server/ledgers.ts';
+import { holderMessage, lockHolder, takeLock } from './server/lock.ts';
 import type { Lock } from './server/lock.ts';
 import { ProblemError } from './server/problem.ts';
 import { takeLedger } from './server/project.ts';
@@ -64,7 +66,7 @@ if (flags.refused.length) {
 }
 
 /** The old layout's one ledger and its lock: `.visionboard/ledger.jsonl`. */
-function startOne(): { file: string; lock: Lock } {
+function startOne(): { file: string; lock: Lock | undefined } {
   const taken = takeLock(ledgerFolder(PROJECT), PORT);
   if (!taken.ok) {
     console.error(holderMessage(taken.holder));
@@ -79,7 +81,7 @@ function startOne(): { file: string; lock: Lock } {
 }
 
 /** Ledger folders: the folder's last ledger, else `main` (its file made on the first line, or by VB_SEED); an old layout moved first. */
-function startLedger(): { file: string; lock: Lock } {
+function startLedger(): { file: string; lock: Lock | undefined } {
   const name = chooseLedger(PROJECT, undefined, lastLedger(HOME, PROJECT));
   try {
     return { file: ledgerFiles(ledgerFolder(PROJECT, name)).ledger, lock: takeLedger(PROJECT, name, undefined, PORT, PROJECT) };
@@ -89,13 +91,26 @@ function startLedger(): { file: string; lock: Lock } {
   }
 }
 
-const { file: FILE, lock } = flagOn('ledgerFolders', flags.overrides) ? startLedger() : startOne();
-process.on('exit', () => lock.release());
+/** Read-only opening: the ledger file as it lies (an old layout not moved), and no lock. */
+function startReadOnly(ledgers: boolean): { file: string; lock: undefined } {
+  const name = chooseLedger(PROJECT, undefined, lastLedger(HOME, PROJECT));
+  const file = !ledgers || isOldLayout(PROJECT) ? ledgerPath(PROJECT) : ledgerFiles(ledgerFolder(PROJECT, name)).ledger;
+  const holder = lockHolder(path.dirname(file));
+  console.log(serverFoldersWords.openedReadOnly(holder ? serverFoldersWords.editingElsewhere(holder.host, holder.started) : ''));
+  return { file, lock: undefined };
+}
 
-const seeded = seed(FILE, process.env[ENV.seed]);
+const ledgers = flagOn('ledgerFolders', flags.overrides);
+const EDIT = process.argv.includes('--edit') || process.env[ENV.edit] === '1';
+const readOnly = flagOn('readOnlyStart', flags.overrides) && !EDIT;
+const { file: FILE, lock } = readOnly ? startReadOnly(ledgers) : ledgers ? startLedger() : startOne();
+process.on('exit', () => lock?.release());
+
+if (readOnly && process.env[ENV.seed] && !fs.existsSync(FILE)) console.log(serverFoldersWords.seedNotCopied(process.env[ENV.seed]!));
+const seeded = !readOnly && seed(FILE, process.env[ENV.seed]);
 const build = process.env[ENV.watch] === '1' ? watchBuild(DIST) : undefined;
 const chat = { kiroAgent: process.env[ENV.kiroAgent] !== '0' };
-const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat, flags: flags.overrides });
+const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat, flags: flags.overrides, edit: EDIT });
 
 // Closing the server stops the chats and lets go of the open folder's lock (server/project.ts).
 const stop = () => {

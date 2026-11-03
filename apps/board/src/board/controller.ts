@@ -13,7 +13,7 @@
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
 import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
-import { answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, retiredCounts, sendHead } from '#actions';
+import { answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, READ_ONLY_PERSON, retiredCounts, sendHead } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, flagOf, markdownOf } from './host.ts';
@@ -76,13 +76,16 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const hiddenSet = (): Set<string> => (status.now.hide && S.data ? answeredIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
 
   const live = createLive({ readLedger: io.readLedger, events: (l) => host.events(l) }, onLines);
-  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state, fresh: on('freshCards'), status, markBoardSeen: io.markBoardSeen, chat: on('sendCountsWhatWent') ? host.chat.status : undefined });
+  /** Nothing may change the board: a past version shows, or the ledger is open read-only (D-085 3, its reads say so). */
+  const readOnly = () => !!versions.state || live.readOnly;
+  // Read-only, the board seen and card seen marks stay in the page (`quiet`): nothing is written.
+  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state, quiet: () => live.readOnly, fresh: on('freshCards'), status, markBoardSeen: io.markBoardSeen, chat: on('sendCountsWhatWent') ? host.chat.status : undefined });
   /** The version dropdown and a past version, read-only (navigation FE_01), behind the versionView flag. */
   const versions = createVersions({
     world, on: versionView, live: () => live.state, board: () => S.id, fail, status, readLedger: io.readLedger,
     redraw: () => { redraw(true); if (!versions.state) attention.batch([], true); },
   });
-  const lock = createLockFlow({ world, state: () => live.state, board: () => S.id, say: (why) => fail(new ApiError(why)), status }); // a locked board (N40)
+  const lock = createLockFlow({ world, state: () => live.state, board: () => S.id, say: (why) => fail(new ApiError(why)), status, readOnly: () => live.readOnly }); // a locked board (N40), a read-only ledger (D-085)
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
@@ -107,6 +110,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     // A past version stays as it is; only the dropdown's "now" moves (versions.ts).
     if (!S.frame && !versions.state) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
     boards.listed(); versions.listed(); lock.apply(); apps.lines(lines, full, live.state); history.refresh();
+    if (status.now.readOnly !== live.readOnly) status.set({ readOnly: live.readOnly });
   }
 
   /** Work the open board out from the held state and draw what changed, now; while a batch of acts
@@ -121,6 +125,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     S.fresh = S.drew = false;
     const d = boardData(s, S.id);
     if (!flagging) d.state.flags.clear(); // the person's flags show only with the flag on
+    if (live.readOnly && !versions.state) d.state.readOnly = true; // the reads' word, for the elements (D-085)
     S.retired = retiring ? retiredCounts(s, S.id, versionView) : new Map();
     S.drawn = d.view;
     // Each card in the container the person put it in, Later last (3_FE_03 rulings 2 and 5).
@@ -149,19 +154,19 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** Every act goes through here: the server validates it, its problems show in the error toast,
    * and the stored line comes back and is applied in place (sender.ts). */
   const sender = createSender({ io, board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail,
-    refusal: (board, line) => (versions.state ? READ_ONLY : lock.refuse(board, line)) });
+    refusal: (board, line) => (versions.state ? READ_ONLY : live.readOnly ? READ_ONLY_PERSON : lock.refuse(board, line)) });
   const { attempt, record } = sender;
   const apps = createAppCards({ on: apping, fit: on('appFit'), stage, vp, board: () => S.id, selection, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: ask, toast, fail, redraw: () => redraw(), io }); // app-cards.ts
   const removal = removing ? createRemoveFlow({ stage, state: () => live.state, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id,
     retire: async (fields) => (await notes.leaveIf({ card: (id) => !!fields.cards?.includes(Number(id)) || (!!fields.region && nodeOf(id)?.region === fields.region), region: (r) => r === fields.region })) ? sender.retire(fields) : '',
     confirm: ask, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24); a note being written on what goes asks too (point 309)
   const proposals = createProposalFlow({
-    on: proposing, list: on('reviewList'), stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
+    on: proposing, list: on('reviewList'), stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state, // read-only: shown, Accept and Reject refused by the sender
     vp, box: (id) => drawing.layout?.nodes.get(id), title: (n) => view().nodes.find((x) => x.n === n)?.title, go: (n) => go.to(n), // Review goes as Go to card does (`go`, below)
     ver: (n) => S.data?.versions[String(n)], card: (id) => drawing.cards.get(id), record, run: (steps) => sender.run(steps), toast, status, confirm: (a) => host.confirm(a),
   });
   const updates = createUpdateFlow({ on: updating, stage, selection, state: () => live.state, board: () => S.id, unseen: () => attention.unseen(), newCards, fresh: () => attention.fresh(),
-    readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw(), source: (n) => chatSource(host.chat, S.id, n) });
+    readOnly: () => !!versions.state, quiet: () => live.readOnly, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw(), source: (n) => chatSource(host.chat, S.id, n) });
   /** "Awaiting", the handover and the agent's replies under notes (parking.ts), from the state the board is drawn from. */
   const parking = createParking({ handover: on('handover'), replies: on('cardReplies'), state: () => versions.state ?? live.state, board: () => S.id,
     awaiting: () => attention.awaiting(), readOnly: () => !!versions.state, apart: on('groupNoteOnce') });
@@ -206,7 +211,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const noteHide = createNoteHide({ stage, vp, state: () => S.data?.state ?? null, card: (id) => drawing.cards.get(id), layout: () => drawing.layout, record });
   const history = createHistoryFlow({ stage, state: () => versions.state ?? live.state, board: () => S.id, highlight: (id, part) => noteHide.highlight(id, part) }); // the ⓘ's box (history-flow.ts, card-polish FE_03)
   /** The board's side of its host's chat (chat-side.ts): the selection and the answers as chips, its status, the stepper's link. */
-  const unchat = bindChat({ chat: host.chat, stage, selection, status, data: () => S.data, ledger: () => live.state, id: () => S.id, readOnly: () => !!versions.state });
+  const unchat = bindChat({ chat: host.chat, stage, selection, status, data: () => S.data, ledger: () => live.state, id: () => S.id, readOnly });
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({ node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => status.now.hide, hidden: hiddenSet,

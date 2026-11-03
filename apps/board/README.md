@@ -15,7 +15,8 @@ board edits), `access/` (agent access) and `apps/` (app cards), with `controller
 file, `index.ts`, and code outside it imports only that (`npm run verify`, `checkFeatureFolders`); a unit test of a
 folder's inside may import the inside. Vite builds `src/` into `dist/`
 (gitignored). Localhost only, with Host and Origin checks, JSON only. `bin/reply.ts <board>
-[--json]` prints the numbered reply for a board from the project ledger. `bin/validate.ts
+[--ledger <name>] [--json]` prints the numbered reply for a board from the project ledger: the old layout's, else
+`--ledger`'s, else the ledger the board had open there last, else `main`. `bin/validate.ts
 <ledger.jsonl>` (`npm run validate -- <file>`) checks ledger files line by line against the JSON
 Schemas and the hand validator, then in order, and prints every problem with its line number.
 `server/schema.ts` is the only module that imports `ajv` (D-026): it loads the schemas in

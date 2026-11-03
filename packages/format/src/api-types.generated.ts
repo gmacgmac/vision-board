@@ -207,6 +207,14 @@ export interface OperationTypes {
     };
     output: Project;
   };
+  edit_ledger: {
+    input: Record<never, never>;
+    output: Project;
+  };
+  stop_editing: {
+    input: Record<never, never>;
+    output: Project;
+  };
   list_folders: {
     input: {
       path?: string;
@@ -264,6 +272,7 @@ type ListBoardsResponse = {
   head: number;
   project: string;
   ledger?: string;
+  readOnly?: true;
 };
 type CommonTitle = string;
 type GetBoardResponse = {
@@ -298,6 +307,7 @@ type GetBoardResponse = {
   boardHolders?: GetBoardResponseHolder[];
   holders?: Record<string, GetBoardResponseHolder[]>;
   locked?: true;
+  readOnly?: true;
 };
 type View = {
   format: 1;
@@ -591,6 +601,7 @@ type ReadLedgerResponse = {
   events: LedgerEvent[];
   head: number;
   more?: true;
+  readOnly?: true;
 };
 type LedgerEvent = BoardStored | RegionStored | NodeStored | LinkStored | UnlinkStored | ActStored | SeenStored | ReplyStored | ProposeStored | ParkStored | JoinStored | GrantRequestStored | RetireStored;
 type RegionStored = {
@@ -1108,11 +1119,19 @@ type Project = {
   boards?: number;
   ledger?: string;
   ledgers?: ProjectLedgerEntry[];
+  readOnly?: true;
+  editing?: ProjectEditing;
 };
 type ProjectLedgerEntry = {
   name: string;
   boards: number;
   keptOutOfGit: boolean;
+};
+type ProjectEditing = {
+  here: true;
+} | {
+  host: string;
+  since: string;
 };
 type OpenProjectRequest = {
   path: string;
