@@ -1,7 +1,9 @@
 <!-- The standalone page, one host of the board (board/mount.ts, host.ts; page-host.ts): the board's root fills it
      and holds the board's controls (board/chrome/), and the page keeps its own: the skip link, the chat sidebar
      (chatPanel flag), toast, the confirm dialog, the folder picker (openFolder flag), the New ledger dialog
-     (ledgerFolders flag) and the parts it draws in the board's header (page-parts.ts). -->
+     (while the server names a ledger, M51) and the parts it draws in the board's header (page-parts.ts). With the
+     openFolder flag the folder is read before the board mounts, so the board's store keys on its ledger from the
+     first read (kept.ts `pageStore`, M52). -->
 <script lang="ts">
   import * as chromeBoardWords from '../board/words/chrome-board.ts';
   import { onMount, tick, untrack } from 'svelte';
@@ -15,7 +17,7 @@
   import ChatSidebar from './ChatSidebar.svelte';
   import FolderDialog from './FolderDialog.svelte';
   import LedgerDialog from './LedgerDialog.svelte';
-  import { ledgersOn } from './folder.ts';
+  import { loadFolder } from './folder.ts';
   import { guardLedgers } from './ledgers.ts';
   import Toast from './Toast.svelte';
   import * as chatWords from './words/chat.ts';
@@ -35,7 +37,6 @@
   shell.chatPanel = flagOn('chatPanel', pageFlags());
   const host = createPageHost(bridge.host, pageParts());
   const openFolder = flagOn('openFolder', pageFlags());
-  const ledgers = ledgersOn();
   /** A tab close, a reload and another folder ask while a note holds unsaved words (M11). */
   const leavePrompt = flagOn('leavePrompt', pageFlags());
   /** Working alongside the agent (workAlongside flag, point 328): the chat button's mark and count, Send queued, a reply announced. */
@@ -78,6 +79,14 @@
   }
 
   onMount(() => {
+    let gone = false;
+    let undo: (() => void) | undefined;
+    void (openFolder ? loadFolder() : Promise.resolve()).then(() => { if (!gone) undo = start(); });
+    return () => { gone = true; undo?.(); };
+  });
+
+  /** Mount the board in its root and the page around it; gives back what undoes it. */
+  function start(): () => void {
     const v = mount(root!, host);
     // What the page shows of the board is its status, mirrored into the page's state.
     const mirror = (patch: Partial<typeof v.status.now>) => { Object.assign(shell, patch); };
@@ -99,7 +108,7 @@
     view = v;
     if (leavePrompt) guardLedgers(v);
     return () => { level.disconnect(); unguardDrops?.(); unguard?.(); guardLedgers(null); unrefresh(); unbridge(); unmirror(); v.unmount(); };
-  });
+  }
 </script>
 
 <a class="vb-skip" href="#stage" bind:this={skip}>{chromeBoardWords.skipToTheBoard}</a>
@@ -110,4 +119,4 @@
 
 <ConfirmDialog />
 {#if openFolder}<FolderDialog guard={leavePrompt ? view : null} />{/if}
-{#if ledgers}<LedgerDialog />{/if}
+{#if openFolder && shell.folder?.ledger}<LedgerDialog />{/if}

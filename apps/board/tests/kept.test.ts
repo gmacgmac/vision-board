@@ -1,9 +1,11 @@
 // A per-viewer convenience kept in the browser (shell/kept.ts): read and kept through
 // localStorage, and nothing breaks when storage is absent or refuses. `pageStore` is the board's store
-// on the standalone page: a view for this tab only, the rest as above, under the keys it always had.
+// on the standalone page: a view for this tab only, the rest as above, under the keys it always had for `main`, and
+// under keys of its own for another ledger (M52, `ledgerScope`).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { keep, kept, pageStore } from '../src/shell/kept.ts';
+import { ledgerFolder } from '#format';
+import { keep, kept, ledgerScope, pageStore } from '../src/shell/kept.ts';
 
 const g = globalThis as { localStorage?: unknown };
 
@@ -63,15 +65,54 @@ test('pageStore: a board\'s view goes in sessionStorage, the rest in localStorag
   Object.defineProperty(globalThis, 'sessionStorage', { value: area(session), configurable: true, writable: true });
   try {
     withStorage(area(local), () => {
-      pageStore.set('view.plans', '{}');
-      pageStore.set('proposals-hidden', '1');
+      const store = pageStore(() => '');
+      store.set('view.plans', '{}');
+      store.set('proposals-hidden', '1');
       assert.deepEqual([...session], [['vb.view.plans', '{}']]);
       assert.deepEqual([...local], [['vb.proposals-hidden', '1']]);
-      assert.equal(pageStore.get('view.plans'), '{}');
+      assert.equal(store.get('view.plans'), '{}');
     });
     withStorage(undefined, () => {
-      assert.equal(pageStore.get('proposals-hidden'), null);
-      assert.doesNotThrow(() => pageStore.set('proposals-hidden', '1'));
+      const store = pageStore(() => '');
+      assert.equal(store.get('proposals-hidden'), null);
+      assert.doesNotThrow(() => store.set('proposals-hidden', '1'));
+    });
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'sessionStorage', had);
+    else delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+  }
+});
+
+// M52 (PLAN decision 4; VERIFY_01 F15): the page's memory per folder and ledger. `main`, the old layout and an unread
+// folder keep the keys they always had; another ledger's are its own, so `ui/plan` never reads `main/plan`'s.
+test('ledgerScope: \'\' for main, the old layout and no folder; another ledger\'s folder for any other', () => {
+  for (const f of [null, undefined, { path: '/work/atlas' }, { path: '/work/atlas', ledger: 'main' }]) assert.equal(ledgerScope(f), '');
+  assert.equal(ledgerScope({ path: '/work/atlas', ledger: 'ui' }), ledgerFolder('/work/atlas', 'ui'));
+  assert.notEqual(ledgerScope({ path: '/work/atlas', ledger: 'ui' }), ledgerScope({ path: '/work/other', ledger: 'ui' }));
+});
+
+test('pageStore: under another ledger each key ends with its scope, read when asked; main\'s keys are as before', () => {
+  const local = new Map<string, string>();
+  const session = new Map<string, string>();
+  const area = (m: Map<string, string>) => ({ getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => m.set(k, v) });
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+  Object.defineProperty(globalThis, 'sessionStorage', { value: area(session), configurable: true, writable: true });
+  try {
+    withStorage(area(local), () => {
+      let open: { path: string; ledger?: string } | null = null; // not read yet
+      const store = pageStore(() => ledgerScope(open));
+      open = { path: '/work/atlas', ledger: 'main' };
+      store.set('view.plan', 'main view');
+      store.set('proposals-hidden', '1');
+      open = { path: '/work/atlas', ledger: 'ui' };
+      const ui = ledgerFolder('/work/atlas', 'ui');
+      assert.equal(store.get('view.plan'), null, 'ui/plan does not read main/plan\'s view');
+      assert.equal(store.get('proposals-hidden'), null);
+      store.set('view.plan', 'ui view');
+      assert.deepEqual(Object.fromEntries(session), { 'vb.view.plan': 'main view', [`vb.view.plan:${ui}`]: 'ui view' });
+      assert.deepEqual(Object.fromEntries(local), { 'vb.proposals-hidden': '1' });
+      open = { path: '/work/atlas', ledger: 'main' };
+      assert.equal(store.get('view.plan'), 'main view');
     });
   } finally {
     if (had) Object.defineProperty(globalThis, 'sessionStorage', had);

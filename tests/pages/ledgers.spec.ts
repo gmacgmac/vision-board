@@ -1,10 +1,11 @@
-// The ledger chip (ledgerFolders flag, D-084 7; LEDGER_UI_01), on the page with the flag on: the path reads
+// The ledger chip (ledgerFolders flag, D-084 7; LEDGER_UI_01), once the server names a ledger: the path reads
 // folder / ledger / board / version at full, the ledger keeps its icon and name at half and is a row of "⋯" at a
 // third; choosing a ledger opens it and its board; another tab follows a ledger switch (LEDGERS_01-R1); New ledger…
 // makes one, kept out of git when asked; a name the rule refuses, one the folder has and a refusal stay in the
-// dialog; every form fits with long names; axe and APCA in light and dark; the flag off shows no ledger; the gallery's
-// section. Runs on the folder server with two ledgers (folder-server.ts `ledgers`: `start` has `main` and `ui`, one
-// board each), fresh for this file; the tests run in order, each leaving `main` open.
+// dialog; every form fits with long names; axe and APCA in light and dark; the page's own flag off still shows the
+// ledger the server names, and a server that names none shows none (M51); the gallery's section. Runs on the folder
+// server with two ledgers (folder-server.ts `ledgers`: `start` has `main` and `ui`, one board each), fresh for this
+// file; the tests run in order, each leaving `main` open.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { APIRequestContext, Page } from '@playwright/test';
@@ -224,15 +225,38 @@ test.describe('a refusal', () => {
   });
 });
 
-test('the flag off: no ledger in the path or in "⋯", the path as it was', async ({ page }) => {
+test('the page\'s flag off: the server names a ledger, so the chip, its "⋯" row and New ledger… show all the same (M51)', async ({ page }) => {
   await open(page, 1470, '-ledgerFolders');
-  await expect(page.locator(bid('folder-chip'))).toBeVisible();
-  await expect(chip(page)).toHaveCount(0);
-  await expect(page.locator('.vb-path-sep')).toHaveCount(2);
+  await expect(chip(page).locator('.vb-ledger-name')).toHaveText('main');
+  await expect(page.locator('.vb-path-sep')).toHaveCount(3);
+  await expect(menuButton(page)).toHaveAttribute('title', /, Open folder, New ledger$/);
   await menuButton(page).click();
-  await expect(menu(page).getByRole('menuitem', { name: /New ledger/ })).toHaveCount(0);
+  await expect(menu(page).getByRole('menuitem', { name: /New ledger/ })).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.locator('#ledger-dialog')).toHaveCount(0);
+  await open(page, 490, '-ledgerFolders');
+  await expect(menuButton(page)).toHaveAttribute('title', /^More: Folder, Ledger, Version, /);
+  await menuButton(page).click();
+  await expect(page.getByRole('group', { name: 'Moved from the bar' }).locator('.vb-ledger-row')).toContainText(/Ledger\s*main/);
+  await page.keyboard.press('Escape');
+});
+
+test('a server that names no ledger: none in the path or in "⋯", the path as it was, whatever the page\'s flag', async ({ page }) => {
+  const one = await startFolderServer(); // the server's ledgerFolders off: one ledger, never named
+  try {
+    await page.setViewportSize({ width: 1470, height: 900 });
+    await page.goto(`${one.base}/?vbwork&flags=ledgerFolders`);
+    await drawn(page);
+    await expect(page.locator(bid('folder-chip'))).toBeVisible();
+    await expect(chip(page)).toHaveCount(0);
+    await expect(page.locator('.vb-path-sep')).toHaveCount(2);
+    await expect(menuButton(page)).toHaveAttribute('title', /, Open folder$/);
+    await menuButton(page).click();
+    await expect(menu(page).getByRole('menuitem', { name: /New ledger/ })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#ledger-dialog')).toHaveCount(0);
+    await page.setViewportSize({ width: 490, height: 900 });
+    await expect(menuButton(page)).toHaveAttribute('title', /^More: Folder, Version, /);
+  } finally { await one.close(); }
 });
 
 // ---- Long names, every form (FULL_MIN and HALF_MIN re-measured with a ledger, LEDGER_UI_01 step 4) ----

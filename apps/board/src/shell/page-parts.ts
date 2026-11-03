@@ -1,6 +1,10 @@
 // What only the standalone page has in the board's header (host.ts `BoardPageParts`): its Theme and Centre
-// cards, its folder, its ledger (ledgerFolders flag), the ledger's read-only state and Edit (readOnlyStart flag) and its Chat button. Each is the page's own Svelte, mounted in the element the header gives,
-// reading the page's state. The flags decide which exist; the gallery passes its samples' folder and placement.
+// cards, its folder, its ledger, the ledger's read-only state and Edit and its Chat button. Each is the page's own
+// Svelte, mounted in the element the header gives, reading the page's state. The page's flags decide which exist,
+// except what the server says: the ledger's three parts are there while the server names a ledger, whatever the
+// page's own ledgerFolders flag (M51, PLAN decision 3): getters reading the folder the page read (shell.svelte.ts),
+// so the header, its "⋯" rows and tooltip follow it. The gallery passes its samples' folder and placement; there the
+// page's flags decide which samples show, the ledger's too.
 import { type Component, mount, unmount } from 'svelte';
 import { flagOn } from '#format';
 import type { BoardPageParts, PagePart } from '../board/host.ts';
@@ -12,12 +16,13 @@ import ChatButton from './ChatButton.svelte';
 import EditButton from './EditButton.svelte';
 import EditChip from './EditChip.svelte';
 import { editingOn } from './editing.ts';
-import { currentFolderOn, ledgersOn, openFolderOn } from './folder.ts';
+import { currentFolderOn, openFolderOn } from './folder.ts';
 import FolderPart from './FolderPart.svelte';
 import FolderRow from './FolderRow.svelte';
 import LedgerPart from './LedgerPart.svelte';
 import LedgerRow from './LedgerRow.svelte';
 import type { FolderInfo } from './page-io.ts';
+import { shell } from './shell.svelte.ts';
 import ThemeControl from './ThemeControl.svelte';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each part's own props, given as they are
@@ -45,19 +50,25 @@ export interface PagePartsOptions {
 
 export function pageParts({ placement = 'board', chat = false, chip, ledger, editing, ...sample }: PagePartsOptions = {}): BoardPageParts {
   const flags = pageFlags();
+  const folderOn = openFolderOn();
+  /** The page's own ledger parts follow its server alone; a gallery sample's, as every sample there, the page's flag too. */
+  const ledgersOn = folderOn && (placement === 'board' || flagOn('ledgerFolders', flags));
+  /** The server names a ledger (the gallery's sample, else the page's folder): read where the header draws. */
+  const named = () => ledgersOn && !!(ledger === undefined ? shell.folder : ledger)?.ledger;
+  const ledgerChip = draw(LedgerPart, { folder: ledger });
+  const ledgerField = draw(LedgerPart, { folder: ledger, row: chromeCommonWords.ledger });
+  const ledgerRow = draw(LedgerRow, { placement, folder: ledger });
   return {
     theme: draw(ThemeControl, { placement, ...(placement === 'gallery' && { theme: 'system' }) }),
     ...(flagOn('alignSetting', flags) && { alignRow: draw(AlignRow, { placement }) }),
-    ...(openFolderOn() && { folderRow: draw(FolderRow, { placement, ...sample }) }),
+    ...(folderOn && { folderRow: draw(FolderRow, { placement, ...sample }) }),
     ...(currentFolderOn() && {
       folderChip: draw(FolderPart, { folder: chip }),
       folderField: draw(FolderPart, { folder: chip, row: toolbarWords.folder }),
     }),
-    ...(ledgersOn() && {
-      ledgerChip: draw(LedgerPart, { folder: ledger }),
-      ledgerField: draw(LedgerPart, { folder: ledger, row: chromeCommonWords.ledger }),
-      ledgerRow: draw(LedgerRow, { placement, folder: ledger }),
-    }),
+    get ledgerChip() { return named() ? ledgerChip : undefined; },
+    get ledgerField() { return named() ? ledgerField : undefined; },
+    get ledgerRow() { return named() ? ledgerRow : undefined; },
     // A gallery sample shows only the state it is given: none draws nothing, and nothing reads the page's folder.
     ...(editingOn() && {
       editChip: draw(EditChip, { folder: placement === 'gallery' ? editing ?? null : editing }),
