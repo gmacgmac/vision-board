@@ -43,13 +43,14 @@
     "reply": "node apps/board/bin/reply.ts",
     "vb": "node packages/cli/bin/vb.ts",
     "mcp": "node packages/mcp/bin/vb-mcp.ts",
-    "test": "node --test --test-timeout=120000 \"packages/*/tests/**/*.test.ts\" \"apps/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\" \"skills/**/*.test.mjs\" \"tests/plugin/*.test.ts\" && npm run test:timing",
+    "test": "node --test --test-timeout=120000 \"packages/*/tests/**/*.test.ts\" \"apps/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\" \"skills/**/*.test.mjs\" \"tests/plugin/*.test.ts\" \"tests/evals/**/*.test.ts\" && npm run test:timing",
     "test:timing": "node --test --test-concurrency=1 \"packages/*/tests/**/*.timing.ts\" \"apps/*/tests/**/*.timing.ts\"",
     "verify": "node scripts/verify.mjs",
     "map": "node scripts/verify.mjs --write-map",
     "gen": "node scripts/gen-api.mjs",
     "test:pages": "playwright test --config tests/pages/playwright.config.ts",
-    "test:plugin": "playwright test --config tests/plugin/playwright.config.ts"
+    "test:plugin": "playwright test --config tests/plugin/playwright.config.ts",
+    "eval:bot": "node tests/evals/bot/run.ts"
   },
   "dependencies": {
     "ajv": "8.20.0",
