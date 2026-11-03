@@ -31,5 +31,6 @@ the browser and in Node 22.
 - **Used by**: `apps/board` (`src/board/io.ts`, the board's calls through its host's transport;
   `src/shell/page-io.ts`, the standalone page's own), `packages/cli` and `packages/mcp`.
 - **Public API** (`src/index.ts`): `createClient`, `httpTransport`, `ApiProblem`, `buildRequest`,
-  `pathFor`, `urlFor`, `parseResponse`, `problemFrom`, `projectOf`, and their types (`Transport`,
+  `pathFor`, `urlFor`, `parseResponse`, `problemFrom`, `projectOf`, `ledgersIn` (the one "is this a
+  board" rule in either layout, api.md 116), and their types (`Transport`,
   `CallInput`, `InputOf`, `OutputOf`, `Client`, `ClientOptions`, `CallOptions`, `BuiltRequest`).

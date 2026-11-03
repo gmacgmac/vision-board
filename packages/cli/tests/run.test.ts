@@ -44,6 +44,14 @@ test('--text prints key: value lines through the generic formatter', async () =>
   assert.equal(r.out, 'boards[0].board: roadmap\nboards[0].seq: 51\nhead: 51\n');
 });
 
+test('the open ledger prints beside the open folder, as the server names them (D-084 3, api.md 117)', async () => {
+  const where = { project: '~/projects/multi', ledger: 'ui' };
+  const listed = await exec(['list-boards', '--text'], { answers: [json({ ...where, boards: [], head: 0 })] });
+  assert.equal(listed.out, 'project: ~/projects/multi\nledger: ui\nboards: []\nhead: 0\n');
+  const joined = await exec(['join', '--label', 'A'], { answers: [json({ agent: 'a-k3m9x2pq', secret: 's', ...where }, 201)] });
+  assert.deepEqual(JSON.parse(joined.out), { agent: 'a-k3m9x2pq', secret: 's', ...where });
+});
+
 test('a problem prints its detail and each error\'s pointer and detail to stderr, exit 1, nothing on stdout', async () => {
   const r = await exec(['get-board', '--board', 'nope'], {
     answers: [problem('bad-request', 400, 'Two things are wrong.', [{ pointer: '/items/0/node/title', detail: 'Give it a title.' }, { pointer: '', detail: 'Whole body.' }])],

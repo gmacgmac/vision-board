@@ -57,6 +57,7 @@ export const somethingWentWrongOnThe = 'Something went wrong on the server. Try 
 
 // ---- caller-folder.ts
 export const theBoardHasSwitchedTo = (displayName: string, displayName2: string): string => `The board has switched to ${displayName}. Your work is in ${displayName2}. Ask the person to open it again; don't join here.`;
+export const theBoardHasLedgerOpen = (displayName: string, open: string, yours: string): string => `The board has ledger "${open}" of ${displayName} open. Your work is in ledger "${yours}". Stop and tell the person: they can switch the board back to "${yours}". Don't join here.`;
 
 // ---- engine.ts
 export const theBoardHasNo = (kind: string): string => `The board has no ${kind}.`;
