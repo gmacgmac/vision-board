@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-17
-updated: 2026-10-27
+updated: 2026-11-03 (the folders' place from the paths module); 2026-10-27
 scope: The app card contract — an app's folder, manifest, panel protocol, saved panel state, tools module, limits, approval and states
 ---
 
@@ -30,7 +30,9 @@ for nothing.
 
 ## The folder
 
-An app is one folder in the open project: `.visionboard/apps/<id>/`. The id is the folder's name,
+An app is one folder in the open project: `.visionboard/apps/<id>/` (`ledgerFiles` `apps` in
+`packages/format/src/data-folder.ts`, the one home of the data folder's layout; `appsDir` in
+`apps/board/server/apps/manifest.ts`). The id is the folder's name,
 with the pattern of every other id: lower-case letters, digits and hyphens, not starting with a
 hyphen (`APP_ID`). The folder holds:
 
@@ -243,7 +245,7 @@ and gets it back when it starts:
   from one read of the server, waited for at most `LOAD_WAIT_MS`, after which it starts without
   (`apps/board/src/board/apps/panel-states.ts`).
 - **Where it is kept.** Per card, not per app: two cards showing one app keep two states. The board
-  keeps it in the project, `.visionboard/app-state/<card identity>.json`, beside the ledger, through
+  keeps it in the project, `.visionboard/app-state/<card identity>.json` (`ledgerFiles` `appState`), beside the ledger, through
   its two person-only operations (api.md 157). A card that now names another app starts that app
   with no state; removing the card keeps the file. No agent reads it, and an app's tools don't get
   it: a panel passes what a tool needs in its call.

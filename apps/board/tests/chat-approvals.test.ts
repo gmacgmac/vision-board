@@ -4,6 +4,7 @@
 // access rules come first, and a kept yes is narrow (D-066, the tests at the end). Every event fits
 // the chat schema's kinds and the gate's outcome fits `outcome`. On a real board folder; the facts'
 // paths in /tmp are outside it, so they are asked.
+// verify: data-folder-literal paths as the agent's file tools send them to the gate (the access rules' layout, D-037)
 import { after, test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Facts } from '#agent';

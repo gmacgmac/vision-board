@@ -1,5 +1,5 @@
 // The recent folders (open-folder task, api.md 110, 112; D-038 proposed): the only module that reads
-// or writes `<home>/.visionboard/recent.json`, `{ folders }`, newest first, at most 10. It is a
+// or writes the person's `recent.json` (`homeFiles(home).recent`, data-folder.ts), `{ folders }`, newest first, at most 10. It is a
 // per-person setting, so it lives in the home folder, not in a repo. It is checked on read and a bad
 // file is ignored (no recent folders), never fatal; a write replaces it atomically, readable by this
 // user only. Also the folder the server starts in: VB_PROJECT wins, then the newest recent folder if
@@ -7,15 +7,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { writeFileAtomic } from './atomic-file.ts';
+import { homeFiles } from '#format';
 import { isUnder } from './folders.ts';
-import { DATA_DIR } from './ledger.ts';
 
-export const RECENT_FILE = 'recent.json';
 export const RECENT_MAX = 10;
 /** An absolute path with no control character. */
 const FOLDER = /^\/[^\u0000-\u001f\u007f]*$/;
 
-export const recentPath = (home: string): string => path.join(home, DATA_DIR, RECENT_FILE);
+export const recentPath = (home: string): string => homeFiles(home).recent;
 
 /** The recent folders, newest first; none when the file is missing or not a valid recent file. */
 export function readRecent(home: string): string[] {

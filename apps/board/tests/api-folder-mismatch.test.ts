@@ -15,6 +15,7 @@ import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { fakeChat } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
+import { ledgerFiles, ledgerFolder } from '#format';
 
 const home = fs.realpathSync(makeTempDir('vb-home-'));
 const config = makeTempDir('vb-mismatch-cli-');
@@ -91,7 +92,7 @@ test('working in the open folder with a secret from a folder joined earlier: tol
 test('a header naming another folder is refused on reads, join and writes; nothing is read or written', async () => {
   const fromA = h.agent(undefined, a);
   const before = fs.readFileSync(ledgerPath(b), 'utf8');
-  const agentsFile = path.join(b, '.visionboard', 'agents.json');
+  const agentsFile = ledgerFiles(ledgerFolder(b)).agents;
   const agentsBefore = fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, 'utf8') : '';
   for (const [id, input] of [
     ['list_boards', {}],

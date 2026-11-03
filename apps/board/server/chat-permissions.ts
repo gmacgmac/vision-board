@@ -1,5 +1,5 @@
 // "Allow for this folder" (D-066 6, api.md 100, 107): the yeses the person gave the side-panel agent for
-// the board's folder, kept across sessions and restarts in `<folder>/.visionboard/permissions.json`. The
+// the board's folder, kept across sessions and restarts in its `permissions.json` (`projectFiles(folder).permissions`). The
 // only module that reads or writes it; the access rules refuse it to the agent (`ACCESS_RULES`), so only
 // the server writes it (atomically). Each entry is a cover (`coverOf`, packages/agent): writes in one
 // folder, reads of one file, searches of one folder (relative to the board's folder), or a command by
@@ -10,13 +10,13 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Cover } from '#agent';
+import { PERMISSIONS_FILE } from '#format';
 import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 import { problem } from './problem.ts';
 import { SCHEMA_BASE, schemaProblems } from './schema.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
-export const PERMISSIONS_FILE = 'permissions.json';
 const PERMISSION_ID = `${SCHEMA_BASE}schema/api/permission.schema.json`;
 
 /** One kept yes, as list_permissions shows it (`permission.schema.json`). */
@@ -53,7 +53,7 @@ function read(file: string, warn: (m: string) => void): FolderPermission[] {
   return [];
 }
 
-/** The store for the board's folder `root` (its real path) and its data folder `dir` (`.visionboard`). */
+/** The store for the board's folder `root` (its real path) and its repo-wide folder `dir` (`projectFiles(root).root`). */
 export function openPermissions(dir: string, root: string, warn: (m: string) => void = (m) => console.error(m)): Permissions {
   const file = path.join(dir, PERMISSIONS_FILE);
   let kept: FolderPermission[] | undefined;

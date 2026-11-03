@@ -9,7 +9,7 @@ import { namedApps } from '#actions';
 import type { Ledger } from '../ledger.ts';
 import { problem } from '../problem.ts';
 import { readEnv } from './env.ts';
-import { appIds } from './manifest.ts';
+import { APPS_FOLDER, appIds } from './manifest.ts';
 import type { AppStatus } from './state.ts';
 import { appState } from './state.ts';
 import type { AppLimits } from './supervisor.ts';
@@ -63,7 +63,7 @@ export function createAppHost({ dir, ledger, flags, limits }: AppHostOptions): A
     async call(id, tool, args, signal) {
       if (!on) throw problem('not-found', APPS_OFF);
       const { info, folder } = status(id);
-      if (info.state === 'missing') throw problem('app-not-found', `There is no app "${id}" in this folder's .visionboard/apps/.`);
+      if (info.state === 'missing') throw problem('app-not-found', appsHostWords.thereIsNoApp(id, APPS_FOLDER));
       if (info.state === 'invalid') throw appInvalid(id, info.problems);
       if (info.state === 'needs-approval') {
         throw problem('needs-approval', info.changed

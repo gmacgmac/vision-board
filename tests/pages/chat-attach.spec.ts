@@ -4,6 +4,7 @@
 // the agent's prompt names paths and never the person's name for a file; the sent message shows its chips;
 // a folder switch clears them; flag off is today's. The server is chat-server.ts with the agent package's
 // fake `claude`, never the real one, on its own empty project.
+// verify: data-folder-literal the attachment paths an agent is told (`.visionboard/attachments/…`, repo-wide in every layout)
 import type { Locator, Page } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';

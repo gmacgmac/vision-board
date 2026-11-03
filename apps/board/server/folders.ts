@@ -45,7 +45,7 @@ export function displayName(home: string, dir: string): string {
   return rel ? `~/${rel.split(path.sep).join('/')}` : '~';
 }
 
-/** The folder has a Vision Board: its `.visionboard/ledger.jsonl` is a file. */
+/** The folder has a Vision Board: its ledger file (`ledgerPath`) is a file. */
 export function hasBoard(dir: string): boolean {
   try { return fs.statSync(ledgerPath(dir), { throwIfNoEntry: false })?.isFile() ?? false; } catch { return false; }
 }

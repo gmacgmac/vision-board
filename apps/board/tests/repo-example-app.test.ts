@@ -1,6 +1,7 @@
 // This repo's own board holds a copy of the example app (app-cards FE_02, PLAN.md ruling 16), so the
 // maintainer can use the calculator there. The skill folder is its one source: the copy must equal
 // it byte for byte, file for file, so the two can't drift.
+// verify: data-folder-literal this repo's own folder on disk, checked from outside (read only)
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';

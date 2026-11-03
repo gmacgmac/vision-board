@@ -6,10 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import {
-  ACTION_IDS, ACT_SIZES, AGENT_ID_PATTERN, EVENT_TYPES, ID_PATTERN, KINDS, LIMITS, MODES, NODE_SIZES,
-  ITEM_REMOVED, LIST_RENAMED, TIMESTAMP_PATTERN, WIDTHS, eventProblems, readLedger,
-} from '#format';
+import { ACTION_IDS, ACT_SIZES, AGENT_ID_PATTERN, EVENT_TYPES, ID_PATTERN, ITEM_REMOVED, KINDS, LIMITS, LIST_RENAMED, MODES, NODE_SIZES, TIMESTAMP_PATTERN, WIDTHS, eventProblems, ledgerFiles, readLedger } from '#format';
 import { FIXTURES_DIR, SCHEMA_DIR } from '#format/files';
 import { schemaFiles } from '../server/format-files.ts';
 import {
@@ -191,7 +188,7 @@ test('validate CLI: exits non-zero on a ledger with one bad line, naming the lin
   try {
     const lines = linesOf(path.relative(ROOT, path.join(FIXTURES_DIR, 'login-review.ledger.jsonl')));
     lines[2] = JSON.stringify({ ...JSON.parse(lines[2]!), bogus: true });
-    const file = path.join(dir, 'ledger.jsonl');
+    const file = ledgerFiles(dir).ledger;
     fs.writeFileSync(file, `${lines.join('\n')}\n`);
     const run = cli(file);
     assert.equal(run.status, 1, run.stdout);

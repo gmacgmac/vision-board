@@ -21,6 +21,7 @@ import type { Event } from './chat-support.ts';
 import { fakeChat, gone, readChat } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
 import * as serverChatWords from '../server/words/server-chat.ts';
+import { projectFiles } from '#format';
 
 const config = makeTempDir('vb-chat-send-');
 const fake = fakeChat(config);
@@ -45,7 +46,7 @@ test('with a session, Send hands it the answers in card order, ✓ and ✗ as ma
   ({ session } = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } }));
   // The seed's container is another agent's: the session's agent hears only what it may answer
   // (api.md 41), so it asks for the container and the person allows it.
-  const index = JSON.parse(fs.readFileSync(path.join(h.project, '.visionboard', 'chat-sessions.json'), 'utf8'));
+  const index = JSON.parse(fs.readFileSync(projectFiles(h.project).chatSessions, 'utf8'));
   const agent = index.sessions[0].agentId as string;
   const request = h.ledger.append({ type: 'grant-request', board: 'pricing', region: 'options', reason: 'Answer the options.' }, { by: 'agent', agent }).seq;
   await act({ action: 'grant', request });

@@ -11,7 +11,7 @@ import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { APP_SIZE } from '#format';
+import { APP_SIZE, ledgerFiles, ledgerFolder } from '#format';
 import type { Harness, Joined } from './api-harness.ts';
 import { AGENT, startBoard } from './api-harness.ts';
 import { FILE_NAME_WORDS, addApp, allow, apps, gone, raw, refused, run, touch } from './app-support.ts';
@@ -31,7 +31,7 @@ before(async () => {
   A = await h.join('Apps chat');
   fs.writeFileSync(path.join(h.project, '.env'), '# keys for the apps\nexport GOOD_KEY="from .env"\nOTHER_KEY=not for apps\n');
   for (const id of IDS) dirs[id] = addApp(h.project, id);
-  fs.mkdirSync(path.join(h.project, '.visionboard', 'apps', 'Not_An_Id'));
+  fs.mkdirSync(path.join(ledgerFiles(ledgerFolder(h.project)).apps, 'Not_An_Id'));
   // An app card whose app has no folder: `missing`.
   h.ledger.append({ type: 'node', board: 'pricing', node: { region: 'options', kind: 'app', title: 'Ghost', app: { id: 'ghost' } } }, AGENT);
 });
@@ -68,7 +68,7 @@ test('list_apps: an agent working in another folder is refused, like every agent
 
 test('finding 25: list_apps gives the size of an app.json with other problems while its size is good, so a card with no size keeps it', async () => {
   const write = (id: string, json: unknown): string => {
-    const dir = path.join(h.project, '.visionboard', 'apps', id);
+    const dir = path.join(ledgerFiles(ledgerFolder(h.project)).apps, id);
     fs.mkdirSync(dir);
     fs.writeFileSync(path.join(dir, 'app.json'), typeof json === 'string' ? json : JSON.stringify({ id, title: 'T', version: '1', ...json as object }));
     fs.writeFileSync(path.join(dir, 'panel.html'), '<p>hi</p>');
@@ -224,7 +224,7 @@ test('finding 29: a tools module that doesn\'t load or doesn\'t fit says why wit
     'unfit-twice': [`export default { tools: [{ name: "a", ${go} }, { name: "a", ${go} }] };`, 'has two tools named "a".'],
     'unfit-syntax': ['export default {', 'could not load: Unexpected end of input'],
   };
-  const dirOf = (id: string) => path.join(h.project, '.visionboard', 'apps', id);
+  const dirOf = (id: string) => path.join(ledgerFiles(ledgerFolder(h.project)).apps, id);
   for (const [id, [code]] of Object.entries(made)) {
     fs.mkdirSync(dirOf(id));
     fs.writeFileSync(path.join(dirOf(id), 'app.json'), JSON.stringify({ id, title: 'T', version: '1' }));

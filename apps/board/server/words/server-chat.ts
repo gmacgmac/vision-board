@@ -41,7 +41,7 @@ export const theMessageNamesNotesOrCards = 'The message names notes or cards, bu
 // ---- chat-files.ts
 export const thisFileIsOverThe = 'This file is over the 10 MB limit, so it was not saved.';
 export const theFileIsNotValid = 'The file\'s data is not valid base64, so it was not saved.';
-export const theFileCouldNotBe = 'The file could not be saved: .visionboard/attachments/ or the day\'s folder inside it is not a plain folder. Check it, then attach the file again.';
+export const theFileCouldNotBe = (attachments: string): string => `The file could not be saved: ${attachments} or the day's folder inside it is not a plain folder. Check it, then attach the file again.`;
 export const thisIsNotAFile = 'this is not a file attached through the board, or it has since been deleted';
 export const theMessageNamesFilesThat = 'The message was not sent: a file on it can\'t be sent.';
 export const fileGoneForThePerson = (names: string[]): string => `Deleted before this message went, so not sent: ${names.join(', ')}.`;
@@ -56,7 +56,7 @@ export const readingPagesIsOff = 'Making pictures of attached files is off on th
 export const theFrameIsNotBuilt = 'The page that reads PDFs is not here. Run npm run build.';
 export const pagesOfAnAttachedFile = 'Pages of an attached file';
 
-export const theNewFolderCouldNot = 'The new folder could not be made: .visionboard/attachments/ or a folder inside it is not a plain folder, or the disk refused. Nothing was saved.';
+export const theNewFolderCouldNot = (attachments: string): string => `The new folder could not be made: ${attachments} or a folder inside it is not a plain folder, or the disk refused. Nothing was saved.`;
 
 // ---- chat-read.ts
 export const readingAttachedFilesIsOff = 'Reading attached files is off on this server.';

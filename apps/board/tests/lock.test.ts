@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { LockEnv, LockInfo } from '../server/lock.ts';
-import { BEAT_MS, LOCK_FILE, STALE_MS, holderMessage, takeLock } from '../server/lock.ts';
+import { BEAT_MS, STALE_MS, holderMessage, takeLock } from '../server/lock.ts';
 import { makeTempDir } from '#format/testing';
+import { ledgerFiles } from '#format';
 
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true, force: true }); });
@@ -24,8 +25,8 @@ const env = (host = 'mac-a', pid = 100, running: number[] = [100]) => {
   };
   return e;
 };
-const read = (d: string): LockInfo => JSON.parse(fs.readFileSync(path.join(d, LOCK_FILE), 'utf8'));
-const put = (d: string, info: LockInfo) => fs.writeFileSync(path.join(d, LOCK_FILE), JSON.stringify(info));
+const read = (d: string): LockInfo => JSON.parse(fs.readFileSync(ledgerFiles(d).lock, 'utf8'));
+const put = (d: string, info: LockInfo) => fs.writeFileSync(ledgerFiles(d).lock, JSON.stringify(info));
 const held = (over: Partial<LockInfo> = {}): LockInfo =>
   ({ host: 'mac-b', pid: 7, port: 4466, started: new Date(T0 - 60_000).toISOString(), beat: new Date(T0 - 1_000).toISOString(), ...over });
 
@@ -34,7 +35,7 @@ test('takes a free ledger: writes who, where and when, and ignores the file in g
   const r = takeLock(d, 4466, env());
   assert.equal(r.ok, true);
   assert.deepEqual(read(d), { host: 'mac-a', pid: 100, port: 4466, started: '2026-10-07T10:00:00.000Z', beat: '2026-10-07T10:00:00.000Z' });
-  assert.match(fs.readFileSync(path.join(d, '.gitignore'), 'utf8'), /^lock$/m);
+  assert.match(fs.readFileSync(ledgerFiles(d).gitignore, 'utf8'), /^lock$/m);
   assert.deepEqual(fs.readdirSync(d).filter((f) => f.endsWith('.tmp')), []);
 });
 
@@ -77,7 +78,7 @@ test('replaces a stale lock: beat 2 minutes old, even on this host with a runnin
 
 test('replaces a lock file that cannot be read', () => {
   const d = dir();
-  fs.writeFileSync(path.join(d, LOCK_FILE), '{not json');
+  fs.writeFileSync(ledgerFiles(d).lock, '{not json');
   const r = takeLock(d, 4466, env());
   assert.equal(r.ok, true);
   assert.equal(r.ok && r.replaced, undefined);
@@ -102,7 +103,7 @@ test('release removes our lock', () => {
   const r = takeLock(d, 4466, env());
   assert.ok(r.ok);
   r.lock.release();
-  assert.equal(fs.existsSync(path.join(d, LOCK_FILE)), false);
+  assert.equal(fs.existsSync(ledgerFiles(d).lock), false);
 });
 
 test('beat refreshes the heartbeat and keeps the start; it leaves a lock that is not ours', () => {

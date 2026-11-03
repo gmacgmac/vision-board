@@ -1,5 +1,5 @@
 // The open folder (open-folder task, api.md 109, 111; D-038 proposed): which project folder the
-// server has open, with its engine (the board's ledger and agents, in `<folder>/.visionboard`), lock,
+// server has open, with its engine (the board's ledger and agents, in its ledger folder: data-folder.ts), lock,
 // chats and app host, and the only thing that switches it.
 // A switch takes the new folder's lock first and changes nothing when it can't (`conflict`), or when
 // the new ledger can't be made or read (its lock is let go). Then, in order: the old folder's chats
@@ -8,6 +8,7 @@
 // it is under home). The lock is beaten while held and let go when the server closes or exits.
 import fs from 'node:fs';
 import path from 'node:path';
+import { ledgerFiles, ledgerFolder, projectOfLedger } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost, AppHostOptions } from './apps.ts';
 import { createAppHost } from './apps.ts';
@@ -18,7 +19,7 @@ import type { SendHook } from './engine/operations.ts';
 import { createEngine } from './engine/index.ts';
 import { displayName, hasBoard, isUnder, realPath } from './folders.ts';
 import type { Ledger } from './ledger.ts';
-import { DATA_DIR, ledgerPath, openLedger } from './ledger.ts';
+import { ledgerPath, openLedger } from './ledger.ts';
 import type { Lock } from './lock.ts';
 import { BEAT_MS, holderMessage, takeLock } from './lock.ts';
 import { problem } from './problem.ts';
@@ -29,7 +30,7 @@ import * as serverFoldersWords from './words/server-folders.ts';
 export interface OpenFolder {
   /** The folder: its real path. */
   readonly dir: string;
-  /** The board's engine on the folder's data folder (`.visionboard`). */
+  /** The board's engine on the folder's ledger folder (`ledgerFolder`). */
   readonly engine: Engine;
   readonly ledger: Ledger;
   agents(): Agents;
@@ -77,7 +78,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   let apps: AppHost | undefined;
   let engine: Engine | undefined;
   const abort = new AbortController();
-  const getDir = () => (dir ??= realPath(path.dirname(data())));
+  const getDir = () => (dir ??= realPath(projectOfLedger(data())));
   const getEngine = () => (engine ??= createEngine({ dir: data(), ledger, name: () => displayName(o.home, getDir()), onSend, flags: o.apps?.flags }));
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({
@@ -129,9 +130,9 @@ export function openProject(o: ProjectOptions): Project {
         return cur;
       }
       if (!create && !hasBoard(dir)) {
-        throw problem('not-found', `No Vision Board here: ${displayName(home, dir)} has no .visionboard/ledger.jsonl. Send create: true to make one, or choose another folder.`);
+        throw problem('not-found', serverFoldersWords.noVisionBoardHere(displayName(home, dir), ledgerFiles(ledgerFolder('')).ledger));
       }
-      const taken = takeLock(path.join(dir, DATA_DIR), o.port());
+      const taken = takeLock(ledgerFolder(dir), o.port());
       if (!taken.ok) throw problem('conflict', holderMessage(taken.holder));
       const ledger = ledgerOf(dir, create, taken.lock);
       const old = cur;

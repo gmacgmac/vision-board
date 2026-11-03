@@ -29,4 +29,5 @@ export const makeOr = 'make or ';
 export const thereIsNoFolderChoose = (displayName: string): string => `There is no folder ${displayName}. Choose one from list_folders.`;
 
 // ---- project.ts
+export const noVisionBoardHere = (displayName: string, ledgerFile: string): string => `No Vision Board here: ${displayName} has no ${ledgerFile}. Send create: true to make one, or choose another folder.`;
 export const theBoardServerCouldNot = (create: string, displayName: string): string => `The board server could not ${create}read the ledger in ${displayName}. Check the folder's permissions, then try again.`;

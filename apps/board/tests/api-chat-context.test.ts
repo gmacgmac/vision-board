@@ -19,7 +19,7 @@ import type { Event } from './chat-support.ts';
 import { fakeChat, gone, readChat } from './chat-support.ts';
 import { createEngine } from '../server/engine/index.ts';
 import { openChats } from '../server/chat-sessions.ts';
-import { DEFAULT_SERVER } from '#format';
+import { DEFAULT_SERVER, projectFiles } from '#format';
 import { makeTempDir } from '#format/testing';
 
 const config = makeTempDir('vb-chat-context-');
@@ -39,7 +39,7 @@ const headLine = (seq: number) => `These are the person's answers up to head ${s
 test('a session names the agent id it writes as, the one in the index', async () => {
   const started = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } });
   session = started.session;
-  const index = JSON.parse(fs.readFileSync(path.join(h.project, '.visionboard', 'chat-sessions.json'), 'utf8'));
+  const index = JSON.parse(fs.readFileSync(projectFiles(h.project).chatSessions, 'utf8'));
   assert.match(started.agentId, /^a-[a-z0-9]{8}$/);
   assert.equal(started.agentId, index.sessions[0].agentId);
   assert.equal((await h.ok('list_chats', { board: 'pricing' })).sessions[0].agentId, started.agentId);

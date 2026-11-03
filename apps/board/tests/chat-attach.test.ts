@@ -1,6 +1,7 @@
 // Attaching on the page's side (D-068, COMPOSE_01), the parts that run under Node: each file checked
 // before it goes up and its chip's state from the answer (`createChatBridge`), the limits held equal to
 // the server's, a name as a label the contract takes, a pasted picture's name, base64 the server reads.
+// verify: data-folder-literal the attachment paths a page and an agent see (`.visionboard/attachments/…`, repo-wide in every layout)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ComposerFile } from '#chat';

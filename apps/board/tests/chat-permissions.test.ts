@@ -8,9 +8,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { accessFixture } from '#agent/testing';
 import { makeTempDir } from '#format/testing';
-import { PERMISSIONS_FILE, openPermissions } from '../server/chat-permissions.ts';
+import { openPermissions } from '../server/chat-permissions.ts';
 import { ProblemError } from '../server/problem.ts';
 import { SCHEMA_BASE, schemaProblems } from '../server/schema.ts';
+import { GITIGNORE_FILE, PERMISSIONS_FILE } from '#format';
 
 const fx = accessFixture();
 after(() => fx.remove());
@@ -38,7 +39,7 @@ test('kept relative to the folder, listed oldest first, covers only what it name
   assert.ok(!kept.covers({ kind: 'command', head: 'npm run build' }));
   const file = path.join(dir, PERMISSIONS_FILE);
   assert.equal(fs.statSync(file).mode & 0o777, 0o600);
-  assert.ok(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8').split('\n').includes(PERMISSIONS_FILE));
+  assert.ok(fs.readFileSync(path.join(dir, GITIGNORE_FILE), 'utf8').split('\n').includes(PERMISSIONS_FILE));
   assert.deepEqual(openPermissions(dir, fx.folder).list(), list, 'read back after a restart');
 });
 

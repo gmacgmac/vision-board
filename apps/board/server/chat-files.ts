@@ -1,5 +1,5 @@
 // The files the person attaches to a chat message (D-068, api.md 164): each is saved at
-// `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`, and the agent opens it by that path. A name is
+// `<attachments>/<YYYY-MM-DD>/<n>-<name>` (`projectFiles`, data-folder.ts: `.visionboard/attachments/`), and the agent opens it by that path. A name is
 // hostile until `attachmentName` has made it plain, and `<n>` means no two files clash and no name
 // is special (`.env`, `CON`). Every step from the data folder down must be a plain folder, never a
 // link, so a file's real path is the path written. A path a page sends back is believed only when
@@ -9,16 +9,16 @@
 // project's git: the board's own `.gitignore` names the folder (D-069 ruling 3).
 import fs from 'node:fs';
 import path from 'node:path';
-import { PICTURE_BYTES } from '#format';
+import { ATTACHMENTS_DIR, PICTURE_BYTES, projectFiles } from '#format';
 import { ignoreInGit } from './agents.ts';
 import { writeFileAtomic } from './atomic-file.ts';
 import { KIB } from './body.ts';
-import { DATA_DIR } from './ledger.ts';
 import type { PointerError } from './problem.ts';
 import { ProblemError, problem } from './problem.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
-const ATTACHMENTS_DIR = 'attachments';
+/** Where attached files sit, relative to the board's folder: the path a page and an agent name them by. */
+const ATTACHED = projectFiles('').attachments;
 const NAME_MAX = 80;
 const EXTENSION = /\.[A-Za-z0-9_-]{1,16}$/;
 const STANDIN = 'file';
@@ -74,10 +74,10 @@ function plain(p: string, want: 'file' | 'folder'): fs.Stats | undefined {
 
 /** The day's folder, made if need be, a step at a time so nothing is made through a link. */
 function dayFolder(folder: string, day: string): string {
-  const root = path.join(folder, DATA_DIR, ATTACHMENTS_DIR);
+  const root = projectFiles(folder).attachments;
   for (const dir of [root, path.join(root, day)]) {
     try { fs.mkdirSync(dir, { recursive: true }); } catch { /* something else is there: the check below says so */ }
-    if (!plain(dir, 'folder')) throw problem('conflict', serverChatWords.theFileCouldNotBe);
+    if (!plain(dir, 'folder')) throw problem('conflict', serverChatWords.theFileCouldNotBe(`${ATTACHED}/`));
   }
   return path.join(root, day);
 }
@@ -106,23 +106,24 @@ export function saveAttachment(folder: string, input: { name: string; type: stri
   if (bytes.length > ATTACHMENT_BYTES) throw fileTooLarge();
   const day = now.toISOString().slice(0, 10);
   const dir = dayFolder(folder, day);
-  ignoreInGit(path.join(folder, DATA_DIR), `${ATTACHMENTS_DIR}/`);
+  ignoreInGit(projectFiles(folder).root, `${ATTACHMENTS_DIR}/`);
   const name = attachmentName(input.name);
   const number = nextNumber(dir);
   const saved = `${number}-${name}`;
   writeFileAtomic(path.join(dir, saved), bytes, 0o600);
   take(dir, number);
-  return { name, path: [DATA_DIR, ATTACHMENTS_DIR, day, saved].join('/'), size: bytes.length };
+  return { name, path: [ATTACHED, day, saved].join('/'), size: bytes.length };
 }
 
 /** The file at `rel`, a path a page or an agent sent, when it is one the board could have written and is still there: the exact shape, and no link at any step. */
 export function attachedFile(folder: string, rel: string): AttachedFile | undefined {
-  const [data, attachments, day, saved, ...inside] = rel.split('/');
+  if (!rel.startsWith(`${ATTACHED}/`)) return undefined;
+  const [day, saved, ...inside] = rel.slice(ATTACHED.length + 1).split('/');
   const name = SAVED.exec(saved ?? '')?.[2];
-  if (data !== DATA_DIR || attachments !== ATTACHMENTS_DIR || !DAY.test(day ?? '') || !name) return undefined;
+  if (!DAY.test(day ?? '') || !name) return undefined;
   if (inside.length > INSIDE_DEPTH || !inside.every((step) => INSIDE.test(step))) return undefined;
   const steps = [day!, saved!, ...inside];
-  let at = path.join(folder, DATA_DIR, ATTACHMENTS_DIR);
+  let at = projectFiles(folder).attachments;
   if (!plain(at, 'folder')) return undefined;
   for (const step of steps.slice(0, -1)) {
     at = path.join(at, step);
@@ -200,7 +201,7 @@ export function saveCopy(folder: string, input: { data: string; of: { path: stri
   const dir = copiesFolder(rel, page === undefined ? FITTED_SUFFIX : PAGES_SUFFIX);
   const at = path.join(folder, dir);
   try { fs.mkdirSync(at, { mode: 0o700 }); } catch { /* there already, for the page before: the check below says what it is */ }
-  if (!plain(at, 'folder')) throw problem('conflict', serverChatWords.theNewFolderCouldNot);
+  if (!plain(at, 'folder')) throw problem('conflict', serverChatWords.theNewFolderCouldNot(`${ATTACHED}/`));
   const name = page === undefined ? `fitted.${png ? 'png' : 'jpg'}` : `page-${String(page).padStart(3, '0')}-of-${String(pages).padStart(3, '0')}${blank ? '-blank' : ''}.png`;
   try { fs.writeFileSync(path.join(at, name), bytes, { flag: 'wx', mode: 0o600 }); } catch { throw problem('conflict', serverChatWords.thisCopyIsAlreadySaved); }
   return { name, path: `${dir}/${name}`, size: bytes.length };
@@ -263,7 +264,7 @@ function newFolder(parent: string, name: string): string {
       if ((err as NodeJS.ErrnoException).code !== 'EEXIST') break;
     }
   }
-  throw problem('conflict', serverChatWords.theNewFolderCouldNot);
+  throw problem('conflict', serverChatWords.theNewFolderCouldNot(`${ATTACHED}/`));
 }
 
 /**
@@ -271,8 +272,8 @@ function newFolder(parent: string, name: string): string {
  * ever written over anything, each name is the board's own, whatever is asked, and a failure leaves no folder.
  */
 export function saveBeside(folder: string, rel: string, suffix: string, files: { path: string; bytes: Uint8Array }[]): { folder: string; files: SavedFile[] } {
-  if (!attachedFile(folder, rel)) throw problem('conflict', serverChatWords.theNewFolderCouldNot);
-  ignoreInGit(path.join(folder, DATA_DIR), `${ATTACHMENTS_DIR}/`);
+  if (!attachedFile(folder, rel)) throw problem('conflict', serverChatWords.theNewFolderCouldNot(`${ATTACHED}/`));
+  ignoreInGit(projectFiles(folder).root, `${ATTACHMENTS_DIR}/`);
   const parentRel = path.posix.dirname(rel);
   const parent = path.join(folder, parentRel);
   const stem = path.posix.basename(rel).replace(/\.[^.]*$/, '');
@@ -288,7 +289,7 @@ export function saveBeside(folder: string, rel: string, suffix: string, files: {
     return { folder: `${parentRel}/${name}`, files: saved };
   } catch (err) {
     fs.rmSync(path.join(parent, name), { recursive: true, force: true });
-    throw err instanceof ProblemError ? err : problem('conflict', serverChatWords.theNewFolderCouldNot);
+    throw err instanceof ProblemError ? err : problem('conflict', serverChatWords.theNewFolderCouldNot(`${ATTACHED}/`));
   }
 }
 

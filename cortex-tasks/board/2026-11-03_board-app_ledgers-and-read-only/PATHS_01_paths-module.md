@@ -89,26 +89,81 @@ What exists (research, 2026-11-03; check each before relying on it):
 
 ## Validation
 
-- [ ] `npm run verify` (with the new rule), `npm run check`, `npm test` green; `npm run test:plugin` green
-- [ ] Page specs that start servers on folders: `tests/pages/*folder*.spec.ts`, `*app*.spec.ts`, `*image*.spec.ts`,
+- [x] `npm run verify` (with the new rule; only `modules.md` awaits the orchestrator's `npm run map`), `npm run check`, `npm test` green; `npm run test:plugin` green
+- [x] Page specs that start servers on folders: `tests/pages/*folder*.spec.ts`, `*app*.spec.ts`, `*image*.spec.ts`,
       `chat-panel.spec.ts` green; no screenshot changed
-- [ ] `grep -rn "'.visionboard'" apps packages --include=*.ts` finds only the module and the access rules
-- [ ] On a scratch project under the OS temp folder, the board starts, writes, serves a picture and an app exactly as before
+- [x] `grep -rn "'.visionboard'" apps packages --include=*.ts` finds only the module and the access rules (plus the agent's tests, D-037, and the marked tests of the layout from outside)
+- [x] On a scratch project under the OS temp folder, the board starts, writes, serves a picture and an app exactly as before
 
 ## Implementation Notes
 
 _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (2026-11-03, Opus 5.5, worktree `feat/paths-01`)
 
 ### Changes Made
--
+- **The module**: `packages/format/src/data-folder.ts`, exported from `index.ts`, no import at all. Names
+  `DATA_DIR`, `LEDGER_FILE`, `AGENTS_FILE`, `LOCK_FILE`, `IMAGES_DIR`, `APPS_DIR`, `APP_STATE_DIR`, `GITIGNORE_FILE`,
+  `CHAT_SESSIONS_FILE`, `PERMISSIONS_FILE`, `ATTACHMENTS_DIR`, `RECENT_FILE`, and `DATA_FOLDER_NAMES` (all of them,
+  for verify and for LEDGERS_01's ledger-name rule). Functions `ledgerFolder`, `ledgerFiles`, `projectFiles`
+  (`''` gives project-relative paths: what an agent is told), `projectOfLedger`, `homeFiles`. The depth lives in
+  one private `LEDGER_STEPS`: LEDGERS_01 changes `ledgerFolder` / `LEDGER_STEPS` and nothing else moves.
+  `IMAGES_DIR` left `images.ts`; `APPS_DIR`, `APP_STATE_DIR` left `apps.ts` (no re-export: every caller used `#format`).
+- **Tests first**: `packages/format/tests/data-folder.test.ts` (7): each function, `projectOfLedger` inverts
+  `ledgerFolder` (POSIX, `\`, `/`, relative), names unique and every path ends in one, the file imports nothing.
+- **Server**: `ledger.ts` (`DATA_DIR`/`LEDGER_FILE` gone; `ledgerPath` is a thin call), `engine.ts`, `agents.ts`
+  (`openAgents`, `ignoreInGit`), `lock.ts`, `chat-index.ts`, `chat-permissions.ts`, `chat-sessions.ts` `openChats`
+  (`projectOfLedger` + `projectFiles`, no "two levels up"), `chat-files.ts` (`ATTACHED = projectFiles('').attachments`;
+  `attachedFile` checks the prefix, same shapes accepted and refused), `chat-read.ts` `TOP_STEPS` derived,
+  `images.ts` `serveImage`, `apps/manifest.ts` `appsDir` + `APPS_FOLDER`, `apps/panel-state.ts`, `apps/host.ts`,
+  `recent.ts` (`recentPath` thin), `caller-folder.ts` `secretElsewhere`, `folders.ts`, `project.ts` `hold` `getDir`
+  and `open`, `server.ts`; `bin/reply.ts` unchanged (it already goes through `ledgerPath`).
+  `packages/client/src/project.ts` `projectOf` (and `ProjectFs.path` no longer needs `join`).
+- **Words take the path** (so LEDGERS_01 passes the real one): `server-chat.ts` `theFileCouldNotBe(attachments)`,
+  `theNewFolderCouldNot(attachments)`; `apps-host.ts` `thereIsNoApp(id, appsFolder)` and
+  `apps-manifest.ts` `linksOutsideTheAppsFolder(appsFolder)` (both were literals in code); `server-folders.ts`
+  `noVisionBoardHere(displayName, ledgerFile)` (was a literal in `project.ts`). Same sentences as before.
+- **Repo rule**: `scripts/verify-data-folder.mjs` `checkDataFolder`, run by `verify.mjs`, proven by
+  `verify-data-folder.test.mjs` (6). It takes the names from the module itself (`#format`), strips comments, and
+  fails a whitespace-free string literal under `apps/` or `packages/` (source and tests) that holds `.visionboard`
+  or a dotted data-folder file name as a whole path step. Allowed: the module, `words/`, `*.schema.json`,
+  `openapi.json`, `*.generated.*`, `packages/agent/src/access-rules.ts` (D-037), and a file marked
+  `verify: data-folder-literal <reason>` (a test of the layout seen from outside). Pending (a warning, not a failure):
+  `apps/board/src/gallery/attach-section.ts` (request R1).
+- **Test helpers**: `images-support.ts` `imagesDir`, `app-support.ts` `addApp`, `tests/pages/serve-boards.ts`
+  `templates`, `app-server.ts` `startAppServer`; `api-harness.ts`, `test-board.ts`, `folder-server.ts` already went
+  through `ledgerPath`; `chat-server.ts`, `gallery-images.ts` build no path. 34 test files moved onto the module or
+  marked (marked: `chat-files`, `chat-read`, `chat-read-notes`, `api-chat-files`, `chat-attach`, `chat-schema`,
+  `pdf-pages` (attachment paths an agent sees), `api-chat-access`, `chat-approvals` (paths the agent's tools send the
+  gate), `repo-example-app`, `packages/mcp/tests/project.test.ts`, and the page specs `chat-attach`,
+  `chat-attach-pages`).
+- **Docs**: `api.md` 161, `apps.md` § The folder and § Saving the panel's state, `images.md` § The folder now cite
+  the paths module. Docs naming a moved constant: `packages/format/README.md` (`APPS_DIR` under apps.ts,
+  `IMAGES_DIR` under images.ts; not this task's file: request R2). `modules.md`: only the `packages/format` API
+  row changes (`* from data-folder.ts`); the orchestrator's `npm run map`.
+- **SETUP-R1 done**: `apps/board/tests/engine.test.ts` "watch: a write through another engine…" holds the loop
+  with an interval while it awaits the watcher (the ledger's follow timer is `unref`'d, `ledger.ts` `follow`); the
+  engine is unchanged. The file: 13 pass, 0 cancelled (was 10 pass, 3 cancelled).
+
 ### Issues & Resolutions
--
+- The orchestrator-owned `docs/specification/modules.md` is out of date until `npm run map`: `npm run verify`'s
+  only failure in this worktree.
+- No `timeout` on this machine: runs were limited with `perl -e 'alarm N; exec …'`.
+
 ### Caught Beyond the Brief
-- None
+- `chat-sessions.ts` used `dirname(ledger.file)` as the chat's repo-wide folder: right today, wrong with ledger
+  folders (it would have put chat sessions and permissions inside the ledger). Now `projectFiles(projectOfLedger(…)).root`.
+- Sentences outside words files still name the layout (`packages/format/src/flags.ts` descriptions,
+  `app-shape.ts`, `packages/actions/src/references.ts`); the rule leaves sentences to the words rule. With ledger
+  folders `.visionboard/apps/` becomes `.visionboard/<ledger>/apps/`, so LEDGERS_01 should revisit them.
+- `apps/board/server/words/plugin-tools.ts` matches the OpenAPI text `.visionboard/apps/`: it changes when that does.
+
 ### Deviations from Plan
-- None
+- Small, by the principles: the rule lives in its own `scripts/verify-data-folder.mjs` (+ test), as
+  `verify-style.mjs` does, so `verify.mjs` stays under 300 lines. `ProjectFiles` also has `gitignore` (the repo-wide
+  folder's own git rules; tests and `ignoreInGit` callers need it). `packages/agent/tests/` is allowed by the rule as
+  well as `access-rules.ts`: the agent package imports nothing from this repo (D-037), so its tests can only name
+  the layout as the agent sends it; those files are ACCESS_01's this wave.
 
 ## On Completion
 

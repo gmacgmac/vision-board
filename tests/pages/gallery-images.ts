@@ -1,6 +1,6 @@
 // The gallery's pictures (app-cards FE_03, D-048): a wide flow diagram and a tall phone screen, and two
 // svg pictures (D-064, SVG_01: a plan sized by width and height, three pulsing dots sized by viewBox), saved
-// into a project's `.visionboard/images/gallery/` as an agent would save them. servers.ts writes them
+// into a project's images folder (`gallery/`, `ledgerFiles`) as an agent would save them. servers.ts writes them
 // into each worker's main project before its server starts, so the gallery's image section shows real
 // files through the real route; its paths are those apps/board/src/gallery/image-view-section.ts
 // names. Drawn here from plain shapes (`pngOf`).

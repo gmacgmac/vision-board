@@ -5,7 +5,7 @@ import path from 'node:path';
 import type { Caller } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import { ProblemError } from '../server/problem.ts';
-import { LEDGER_FORMAT } from '#format';
+import { LEDGER_FORMAT, ledgerFiles, ledgerFolder } from '#format';
 import { makeTempDir } from '#format/testing';
 
 // New lines are ledger v3, where `agent` is an agent id from `join` (api.md 11).
@@ -48,17 +48,18 @@ const problemsOf = (fn: () => unknown): string[] => {
 
 const lineCount = (file: string) => fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).length;
 
-test('ledgerPath: <project>/.visionboard/ledger.jsonl; an absent file opens empty', () => {
-  const file = tempFile();
-  assert.equal(path.basename(path.dirname(file)), '.visionboard');
-  assert.equal(path.basename(file), 'ledger.jsonl');
+test('ledgerPath: the project\'s ledger file, by the paths module; an absent file opens empty', () => {
+  const dir = makeTempDir('vb-ledger-');
+  dirs.push(dir);
+  const file = ledgerPath(dir);
+  assert.equal(file, ledgerFiles(ledgerFolder(dir)).ledger);
   const ledger = openLedger(file, quiet);
   assert.deepEqual(ledger.problems, []);
   assert.equal(ledger.state().seq, 0);
   assert.equal(fs.existsSync(file), false);
 });
 
-test('append: stamps every event and creates .visionboard/ on first write', () => {
+test('append: stamps every event and creates the ledger folder on first write', () => {
   const { file, ledger } = seeded(1);
   const lines = fs.readFileSync(file, 'utf8').split('\n');
   assert.equal(lines.pop(), '');

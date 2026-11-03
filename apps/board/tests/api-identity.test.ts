@@ -10,13 +10,14 @@ import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Answer } from './openapi-ajv.ts';
 import { checkAnswer } from './openapi-ajv.ts';
+import { ledgerFiles } from '#format';
 
 let h: Harness;
 before(async () => { h = await startBoard(); });
 after(() => h.close());
 
 const dataDir = () => path.dirname(h.ledger.file);
-const agentsFile = () => path.join(dataDir(), 'agents.json');
+const agentsFile = () => ledgerFiles(dataDir()).agents;
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const ONLY_PERSON = 'Only the person can do this, on the board; send a propose or reply item instead.';
 
@@ -53,7 +54,7 @@ test('join: 201 with { agent, secret } once; only the hash is stored, git-ignore
   const text = fs.readFileSync(agentsFile(), 'utf8');
   assert.equal(text.includes(joined.secret), false, 'the secret itself is never stored');
   assert.ok(JSON.parse(text).agents.some((x: any) => x.agent === joined.agent && x.sha256 === sha(joined.secret)));
-  assert.match(fs.readFileSync(path.join(dataDir(), '.gitignore'), 'utf8'), /^agents\.json$/m);
+  assert.match(fs.readFileSync(ledgerFiles(dataDir()).gitignore, 'utf8'), /^agents\.json$/m);
   const line = h.ledger.events().at(-1)!;
   assert.deepEqual(line.type === 'join' && [line.by, line.agent, line.label, 'key' in line], ['agent', joined.agent, 'Pricing chat', false]);
   const two = await h.join('Review chat');

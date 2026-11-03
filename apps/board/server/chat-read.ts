@@ -9,6 +9,7 @@ import { Worker } from 'node:worker_threads';
 import type { DocxDocument, DocxFound, ExpandedZip, SheetAnswer, WorkbookSummary } from '#documents';
 import { LIMITS, canBeSeen } from '#documents';
 import type { OperationInput, OperationOutput } from '#format';
+import { projectFiles } from '#format';
 import type { SavedFile } from './chat-files.ts';
 import { attachedBytes, attachedFile, PICTURE_BYTES, saveBeside } from './chat-files.ts';
 import type { ReadJob } from './chat-read-worker.ts';
@@ -29,8 +30,8 @@ const OVER_NAMED = 10;
 const NOTE_NAMES = 10;
 const WHOLE_TEXT_FILE = 'document.md';
 const PDF = /\.pdf$/i;
-/** How deep a saved file's path starts: `.visionboard/attachments/<day>/<n>-<name>`. Past that it came from an archive. */
-const TOP_STEPS = 4;
+/** How deep a saved file's path starts: the attachments folder (`projectFiles`), then `<day>/<n>-<name>`. Past that it came from an archive. */
+const TOP_STEPS = projectFiles('').attachments.split('/').length + 2;
 const PICTURE = /\.(?:png|jpe?g|gif|webp|bmp|tiff?|avif|heic|emf|wmf|svg)$/i;
 
 type ReadInput = OperationInput<'read_attachment'>['body'];

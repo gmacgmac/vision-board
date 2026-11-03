@@ -9,6 +9,7 @@ import path from 'node:path';
 import { PERSON, startBoard } from './api-harness.ts';
 import { addApp, allow, alive, gone, refused, run } from './app-support.ts';
 import { makeTempDir } from '#format/testing';
+import { ledgerFiles, ledgerFolder } from '#format';
 
 const pidOf = async (h: Awaited<ReturnType<typeof startBoard>>, app = 'loop') =>
   (await run<{ pid: number }>(h, app, 'quick')).structuredContent!.pid;
@@ -43,8 +44,8 @@ test('a process with no calls stops after the idle time, and starts again on the
 test('opening another folder stops the old folder\'s app processes', async () => {
   const home = fs.realpathSync(makeTempDir('vb-home-'));
   const other = path.join(home, 'other');
-  fs.mkdirSync(path.join(other, '.visionboard'), { recursive: true });
-  fs.writeFileSync(path.join(other, '.visionboard', 'ledger.jsonl'), '');
+  fs.mkdirSync(ledgerFolder(other), { recursive: true });
+  fs.writeFileSync(ledgerFiles(ledgerFolder(other)).ledger, '');
   const h = await startBoard({ home });
   try {
     addApp(h.project, 'loop');

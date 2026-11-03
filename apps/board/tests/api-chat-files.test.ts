@@ -1,5 +1,6 @@
 // Attaching a file to a chat message, over HTTP with the fake CLI (D-068, api.md 164): the operation, the
 // refusals `send_chat` gives a path it did not save, the prompt's one block, `message_in.files`, and the flag.
+// verify: data-folder-literal the attachment paths a page and an agent see (`.visionboard/attachments/…`, repo-wide in every layout)
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -14,6 +15,7 @@ import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, readChat } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
+import { projectFiles } from '#format';
 
 const config = makeTempDir('vb-chat-files-api-');
 const fake = fakeChat(config);
@@ -171,7 +173,7 @@ test('flag off: the operation is 404, files are refused, and a message without t
   const off = await startBoard({ chat: { adapters: fake.adapters }, flags: { chatAttachments: false } });
   try {
     await off.fails('attach_chat_file', { body: { name: 'a', type: '', data: '' } }, 404, 'not-found');
-    assert.equal(fs.existsSync(path.join(off.project, '.visionboard', 'attachments')), false);
+    assert.equal(fs.existsSync(projectFiles(off.project).attachments), false);
     const { session } = await off.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } });
     const err = await off.fails('send_chat', { session, body: { text: 'Look', files: named('.visionboard/attachments/2026-10-30/1-a.txt') } }, 422, 'invalid');
     assert.deepEqual(pointers(err), ['/files']);

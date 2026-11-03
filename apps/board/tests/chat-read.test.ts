@@ -1,5 +1,6 @@
 // `read_attachment`'s gate and its saving (D-071), with no server: a path `attachedFile` refuses, a folder the board
 // made, nothing over anything, and a reader that hangs is stopped while the rest keeps running.
+// verify: data-folder-literal the attachment paths a page and an agent see (`.visionboard/attachments/…`, repo-wide in every layout)
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,6 +11,7 @@ import { READS_AT_ONCE, inWorker, readAttachment } from '../server/chat-read.ts'
 import { ProblemError } from '../server/problem.ts';
 import { attachedFilesAreUntrusted as UNTRUSTED } from '../server/words/server-chat.ts';
 import { makeTempDir } from '#format/testing';
+import { projectFiles } from '#format';
 
 const base = fs.realpathSync(makeTempDir('vb-chat-read-'));
 after(() => fs.rmSync(base, { recursive: true, force: true }));
@@ -17,7 +19,7 @@ after(() => fs.rmSync(base, { recursive: true, force: true }));
 let count = 0;
 function board() {
   const folder = path.join(base, `f${++count}`);
-  fs.mkdirSync(path.join(folder, '.visionboard'), { recursive: true });
+  fs.mkdirSync(projectFiles(folder).root, { recursive: true });
   return folder;
 }
 const NOW = new Date('2026-10-30T09:00:00Z');

@@ -15,6 +15,7 @@ export * from './flags.ts';
 export * from './records.ts';
 export * from './apps.ts';
 export * from './images.ts';
+export * from './data-folder.ts';
 export * from './geometry.ts';
 export * from './clip.ts';
 export * from './constants.ts';

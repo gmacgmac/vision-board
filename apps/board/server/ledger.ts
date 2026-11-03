@@ -1,5 +1,5 @@
 // The one I/O layer for the project ledger (rule 7, D-017): the only module that reads or appends
-// `<project>/.visionboard/ledger.jsonl`. Every line is checked on read and every event before it is
+// the ledger file (`ledgerFiles(dir).ledger`, data-folder.ts). Every line is checked on read and every event before it is
 // written. The server stamps `v`, `seq`, `at`, `by` and `agent`, and assigns card identities and
 // versions, so a request body can never claim them. `append` takes a line as the file holds it
 // (a card by its identity, `n`; board numbers are turned into identities first, edge.ts). Each
@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { ActEvent, LedgerEvent, LedgerIndex } from '#format';
 import {
-  LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, readLedger, readLine,
+  LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, ledgerFiles, ledgerFolder, readLedger, readLine,
 } from '#format';
 import type { LedgerState } from '#actions';
 import { applyEvent, cardName, foldLedger, validateAct, writeProblem } from '#actions';
@@ -23,9 +23,6 @@ import { pointerError, problem } from './problem.ts';
 import { ledgerLineProblems } from './schema.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
 import { isRecord } from '#format';
-
-export const DATA_DIR = '.visionboard';
-export const LEDGER_FILE = 'ledger.jsonl';
 
 /** Who is writing. Set by the server from the route, never from the request body (D-019). */
 export type Caller = { by: 'person' } | { by: 'agent'; agent: string };
@@ -57,8 +54,8 @@ export const FOLLOW_MS = 200;
 /** Fields only the server writes; dropped from every request body. */
 const STAMPED = ['v', 'seq', 'at', 'by', 'agent', 'person'] as const;
 
-export const ledgerPath = (projectDir: string): string =>
-  path.join(path.resolve(projectDir), DATA_DIR, LEDGER_FILE);
+/** The ledger file of project folder `projectDir` (resolved), by the paths module. */
+export const ledgerPath = (projectDir: string): string => ledgerFiles(ledgerFolder(path.resolve(projectDir))).ledger;
 
 type Rec = Record<string, unknown>;
 

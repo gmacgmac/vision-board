@@ -4,6 +4,7 @@
 // and asks nobody; an allowed read goes unasked), the server decides again (the gate's route, called
 // directly), a kept yes is narrow, and "for this folder" is kept across sessions and a restart, listed
 // and forgotten. With both flags off, the gate is strict and a question lapses.
+// verify: data-folder-literal paths as the agent's file tools send them to the gate (the access rules' layout, D-037)
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';

@@ -11,7 +11,7 @@ import path from 'node:path';
 import type { AnswersText, ChipRefusal } from '#actions';
 import { answersChip, roundOf, selectionChip } from '#actions';
 import { boardWriteSummary } from '#agent';
-import { IMAGES_DIR } from '#format';
+import { ledgerFiles } from '#format';
 import { FIXTURES_DIR, TOOLS_FILE } from '#format/files';
 import { descriptionEdits, inputEdits, ruleEdits } from '../server/words/plugin-tools.ts';
 import { createMcpServer, INSTRUCTIONS_JOINED, MODERN } from '#mcp';
@@ -23,11 +23,11 @@ const PERSON: Caller = { by: 'person' };
 const dirs: string[] = [];
 after(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true }); });
 
-/** A data folder holding the roadmap fixture as its ledger. */
+/** A ledger folder holding the roadmap fixture as its ledger. */
 function dataDir(): string {
   const dir = makeTempDir('vb-engine-');
   dirs.push(dir);
-  fs.copyFileSync(path.join(FIXTURES_DIR, 'roadmap.ledger.jsonl'), path.join(dir, 'ledger.jsonl'));
+  fs.copyFileSync(path.join(FIXTURES_DIR, 'roadmap.ledger.jsonl'), ledgerFiles(dir).ledger);
   return dir;
 }
 
@@ -226,7 +226,9 @@ test('watch: a write through another engine on the same folder is told, with its
   });
   const made = await call(b, 'PUT', 'boards/ideas', { body: { title: 'Ideas' }, caller: PERSON });
   assert.equal(made.status, 201);
-  await told;
+  // The ledger's follow timer is unref'd (ledger.ts `follow`): hold the loop open until the watcher is told.
+  const hold = setInterval(() => {}, 1000);
+  try { await told; } finally { clearInterval(hold); }
   assert.deepEqual(seen.at(-1), { board: 'ideas', head: b.ledger.state().seq });
   assert.equal(a.ledger.state().seq, b.ledger.state().seq, 'the watcher\'s fold took the line in');
   const next = await call(a, 'PUT', 'boards/more', { body: { title: 'More' }, caller: PERSON });
@@ -246,10 +248,11 @@ test('a held check_responses ends when its host\'s signal does, and answers as a
 test('image: the route a host points `imageRoute` at answers as the standalone route does: a picture and its ETag, 304, HEAD, an svg under its own policy, and only what is in the images folder', async () => {
   const dir = dataDir();
   const engine = open(dir);
-  fs.mkdirSync(path.join(dir, IMAGES_DIR, 'shots'), { recursive: true });
+  const images = ledgerFiles(dir).images;
+  fs.mkdirSync(path.join(images, 'shots'), { recursive: true });
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEBgIApD5fRAAAAABJRU5ErkJggg==', 'base64');
-  fs.writeFileSync(path.join(dir, IMAGES_DIR, 'shots', 'a.png'), png);
-  fs.writeFileSync(path.join(dir, IMAGES_DIR, 'p.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>');
+  fs.writeFileSync(path.join(images, 'shots', 'a.png'), png);
+  fs.writeFileSync(path.join(images, 'p.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>');
   fs.writeFileSync(path.join(dir, 'secret.png'), png);
 
   const got = engine.image({ method: 'GET', path: 'shots/a.png' });

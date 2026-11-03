@@ -1,7 +1,7 @@
 // Vision Board local server. Run: npm run board (builds the page, then starts this; Node 22.18+).
 // Startup only: the routes, problems and handlers live in server/ (app.ts, dispatch.ts, from the
 // route table generated from openapi.json, api.md 53). Binds to 127.0.0.1 only. Boards come from
-// the project ledger (`<folder>/.visionboard/ledger.jsonl`, D-017). The folder: VB_PROJECT when set,
+// the project ledger (its ledger folder's `ledger.jsonl`, packages/format/src/data-folder.ts, D-017). The folder: VB_PROJECT when set,
 // else the folder last opened from the board (`~/.visionboard/recent.json`) if it is still there,
 // else this repo (server/recent.ts `startFolder`, api.md 112); the board can open another one
 // (`open_project`, server/project.ts, which then holds the lock).
@@ -12,16 +12,16 @@
 // server otherwise keeps current at start, N34 ruling 1; the page tests' servers set it), VB_FLAGS
 // (the server's own flags, written as `?flags=` is: `-appCards` turns app cards off, so the panel
 // route and call_app_tool answer not-found; an unknown name stops the start).
-// One server per ledger: `.visionboard/lock` (server/lock.ts) refuses a second one, here or on
+// One server per ledger: the ledger folder's lock (server/lock.ts) refuses a second one, here or on
 // another computer sharing the folder. Every mode releases it on exit.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_PORT, ENV, parseFlags } from '#format';
+import { DEFAULT_PORT, ENV, ledgerFolder, parseFlags } from '#format';
 import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
-import { DATA_DIR, ledgerPath, openLedger } from './server/ledger.ts';
+import { ledgerPath, openLedger } from './server/ledger.ts';
 import { holderMessage, takeLock } from './server/lock.ts';
 import * as serverFoldersWords from './server/words/server-folders.ts';
 import { startFolder } from './server/recent.ts';
@@ -52,7 +52,7 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 }
 
 const FILE = ledgerPath(PROJECT);
-const taken = takeLock(path.join(PROJECT, DATA_DIR), PORT);
+const taken = takeLock(ledgerFolder(PROJECT), PORT);
 if (!taken.ok) {
   console.error(holderMessage(taken.holder));
   if (taken.holder.host === os.hostname()) console.error(serverFoldersWords.itIsAlreadyRunning(taken.holder.port, taken.holder.pid));

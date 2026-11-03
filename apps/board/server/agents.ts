@@ -1,15 +1,14 @@
 // Agent secrets (D-027, api.md 21-22): the only module that reads or writes
-// `<project>/.visionboard/agents.json`. It holds one SHA-256 per agent, never a secret, and the
+// a ledger folder's `agents.json` (`ledgerFiles(dir).agents`, data-folder.ts). It holds one SHA-256 per agent, never a secret, and the
 // file is git-ignored from the moment the first agent joins. A hash counts only once the ledger
 // has that agent's `join` event, so a hash written before a failed append is ignored. Lookups
 // compare every stored hash with `timingSafeEqual`.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { AGENTS_FILE, GITIGNORE_FILE, ledgerFiles } from '#format';
 import { writeFileAtomic } from './atomic-file.ts';
 
-export const AGENTS_FILE = 'agents.json';
-const GITIGNORE = '.gitignore';
 const AGENT_ID = /^a-[a-z0-9]{8}$/;
 const SHA256 = /^[0-9a-f]{64}$/;
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -55,17 +54,17 @@ function writeHashes(file: string, hashes: AgentHash[]): void {
   writeFileAtomic(file, `${JSON.stringify({ agents: hashes }, null, 2)}\n`, 0o600);
 }
 
-/** `.visionboard/.gitignore` names `name`, so the file is never committed. */
+/** The data folder `dir`'s own `.gitignore` names `name`, so the file is never committed. */
 export function ignoreInGit(dir: string, name: string): void {
-  const file = path.join(dir, GITIGNORE);
+  const file = path.join(dir, GITIGNORE_FILE);
   const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   if (text.split(/\r?\n/).some((line) => line.trim() === name)) return;
   fs.writeFileSync(file, `${text}${text && !text.endsWith('\n') ? '\n' : ''}${name}\n`);
 }
 
-/** The agents store in the project's data folder (`.visionboard`). Read once, on first use. */
+/** The agents store in ledger folder `dir` (`ledgerFolder`). Read once, on first use. */
 export function openAgents(dir: string): Agents {
-  const file = path.join(dir, AGENTS_FILE);
+  const file = ledgerFiles(dir).agents;
   let hashes: AgentHash[] | undefined;
   const all = () => (hashes ??= readHashes(file));
   return {
