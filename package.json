@@ -36,6 +36,7 @@
     "serve": "node apps/board/server.ts",
     "dev": "npm run build && VB_PROJECT=temp/demo VB_SEED=packages/format/fixtures/roadmap.ledger.jsonl node apps/board/server.ts",
     "board:watch": "node scripts/board-watch.mjs",
+    "worktree": "node scripts/worktree.mjs",
     "watch": "vite build --config apps/board/vite.config.ts --watch",
     "build:plugin": "node apps/board/bin/build-plugin.ts",
     "check": "svelte-check --tsconfig apps/board/tsconfig.json && tsc -p tsconfig.json",
