@@ -240,8 +240,11 @@ host; nclite's pane will be another.
 - **What it keeps goes through its host** (M13): `host.store` (`board/host.ts` `BoardStore`, strings under
   keys the board names: `view.<board>`, `proposals-hidden`). The keys say only what is on the board, so a
   host gives each folder or bot its own store, and two boards named "plans" never clash. Left out, the
-  board keeps them for as long as the mount (`memoryStore`). The standalone page keeps what it always kept
-  (`shell/kept.ts` `pageStore`: `vb.view.<board>` in sessionStorage, the rest in localStorage). Nothing
+  board keeps them for as long as the mount (`memoryStore`). The standalone page keeps them per folder and ledger
+  (`shell/kept.ts` `pageStore`: `vb.view.<board>` in sessionStorage, the rest in localStorage; under a ledger other than
+  `main` each key ends `:` and the ledger's folder, `ledgerScope`, while `main` keeps the keys it always had; it reads the
+  folder before the board mounts, `App.svelte`). Proven by `apps/board/tests/kept.test.ts` "pageStore: under another
+  ledger…" and `tests/pages/ledger-memory.spec.ts` (two ledgers' boards `plan`: zoom and the proposals notice). Nothing
   under `board/` touches the page's storage or address (`apps/board/tests/board-no-page.test.ts`).
   Proven by `board-guest.spec.ts` "the saved view goes through the host".
 - **Its pictures come from its host's route**: `host.imageRoute`, the address a picture's path goes after,
@@ -846,7 +849,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    (`styles/header.css`). Tests: `apps/board/tests/header-tier.test.ts`; `tests/pages/header-tiers.spec.ts` (nothing cut
    off down to 400px, quiet and crowded; every action reachable at a third; the bar's own width; no other form first on
    load; axe and APCA, light and dark; the gallery's section, `gallery/header-section.ts`). Off, the toolbar is as § 4 and § 5 say.
-   With the `ledgerFolders` flag the page's ledger is one more control of the table, `ledger` (§ 6, the ledger chip): in the
+   While the page's server names a ledger the page's ledger is one more control of the table, `ledger` (§ 6, the ledger chip): in the
    path after the folder at full ("folder / ledger ▾ / board ▾ / version ▾") and at half (its icon and its name), and a row of
    "⋯" under the folder's at a third (`header-tier.ts` `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the page's folder and
    ledger"). `FULL_MIN` and `HALF_MIN` hold with it: `tests/pages/ledgers.spec.ts` ("long folder, ledger and board names")
@@ -891,11 +894,13 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    tests are `apps/board/tests/folder-path.test.ts` and `tests/pages/current-folder.spec.ts`. Off, the name is
    only in the page title and the Open folder… tooltip, and the dialog is as it was.
 
-   **The ledger chip and New ledger** (`ledgerFolders` flag, off by default, needs `openFolder`; D-084 7; task
-   `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/LEDGER_UI_01_ledger-chip.md`). The open folder's ledger is
+   **The ledger chip and New ledger** (the server's `ledgerFolders` flag; needs `openFolder`; D-084 7; tasks
+   `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/LEDGER_UI_01_ledger-chip.md` and, for M51 and M52,
+   `cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/FE_02_ledger-chip-and-memory.md`). The open folder's ledger is
    the standalone page's, as the folder is (no seam change): three page parts, `board/host.ts` `BoardPageParts` `ledgerChip`,
-   `ledgerField` and `ledgerRow`, filled by `shell/page-parts.ts` `pageParts` once `shell/folder.ts` `ledgersOn`, and drawn
-   only while `get_project` names a ledger. `shell/LedgerPart.svelte` is the chip and the row, the board picker's pattern: a
+   `ledgerField` and `ledgerRow`, which `shell/page-parts.ts` `pageParts` gives (getters) only while `get_project` names a
+   ledger, whatever the page's own flag (a gallery sample: the page's flag too); the header reads them where it draws, so
+   the path's "/", the "⋯" rows and the "⋯" tooltip follow (`Toolbar.svelte` `given`). `shell/LedgerPart.svelte` is the chip and the row, the board picker's pattern: a
    native select unseen over a face (`.vb-menu-face`) listing the folder's ledgers as "name · N boards" ("· kept out of
    git" for a throwaway one), the open one selected, then New ledger…. Choosing a ledger calls `open_project` with the folder
    and the ledger (`shell/ledgers.ts` `openLedger`) and reloads onto it (`folder.ts` `reloadOnto`); the board last looked at
@@ -911,8 +916,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    while there is one; "Keep out of git", off, sends `keepOutOfGit`; a refusal stays in the dialog in the server's words.
    Words: `shell/words/ledgers.ts`. Reading text Lc 60 or more and the icon Lc 30 or more, light and dark. The gallery's
    section is `gallery/ledger-section.ts`; the tests are `tests/pages/ledgers.spec.ts` (the path, half, a third, switching,
-   another tab following, create and kept out of git, refused names and a refusal, the flag off, fit, axe, APCA, the gallery).
-   Off, the header is as above.
+   another tab following, create and kept out of git, refused names and a refusal, the page's flag off with a server that
+   names a ledger, a server that names none, fit, axe, APCA, the gallery). A server that names no ledger: the header is as above.
 
    **Read-only and Edit** (`readOnlyStart` flag, off by default, needs `openFolder`; D-085 2 and 5; task
    `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/READONLY_UI_01_edit-control.md`). Whether the open ledger

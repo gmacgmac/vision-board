@@ -1,5 +1,5 @@
-<!-- The page's New ledger… (ledgerFolders flag; LEDGER_UI_01), a row of the "⋯" menu's own after Open folder…, once the
-     server names a ledger: it closes the menu and opens the New ledger dialog (LedgerDialog.svelte). At a third of the
+<!-- The page's New ledger… (LEDGER_UI_01), a row of the "⋯" menu's own after Open folder…, once the server names a
+     ledger, whatever the page's own ledgerFolders flag (M51): it closes the menu and opens the New ledger dialog (LedgerDialog.svelte). At a third of the
      width the Ledger row above stands for it (its list ends in New ledger…), so the menu leaves it out there
      (ToolbarMenu.svelte `ledgerAbove`). The gallery passes `folder` and `placement` 'gallery'. -->
 <script lang="ts">
