@@ -152,8 +152,11 @@ for (const theme of THEMES) {
     // About 250 samples, each shot twice.
     test.setTimeout(180_000);
     await setTheme(page, theme);
-    // Without the chat panel's samples: the chat is the standalone page's (nclite brings its own).
-    await page.goto('/gallery.html?flags=-openList,-chatPanel');
+    // Without the chat panel's samples: the chat is the standalone page's (nclite brings its own). Without the ledger
+    // section's either: the ledger chip, its list and the New ledger dialog are the standalone page's parts, and a host
+    // never chooses a ledger (it passes one folder per bot: D-084 4, plugin.md). Named, so it holds whatever the
+    // flag's default is (FIX_01 Run 2, F16).
+    await page.goto('/gallery.html?flags=-openList,-chatPanel,-ledgerFolders');
     await expect(page.locator('vb-node').first()).toBeVisible();
     // Each sample's outermost board element (a vb- element or class with none above it): the page's
     // own notes around them are the gallery's, which a host replaces.

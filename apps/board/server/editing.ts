@@ -30,7 +30,8 @@ export interface Editing {
    *  unsubscribe. */
   onChange(fn: (readOnly: boolean) => void): () => void;
   /** Look again at ledger folder `dir`'s lock (the beat): tell `onChange` when this server lost it, or another computer
-   *  started or stopped editing, since the last look (FIX_01 F6). The first look only notes what it sees. */
+   *  started or stopped editing, since the last look or since a page was told who is editing (`info`; FIX_01 F6, and
+   *  Run 2 N2: a change before the first beat is told on it). The first look with neither only notes what it sees. */
   look(dir: string): void;
 }
 
@@ -67,6 +68,7 @@ export function createEditing(lock: Lock | undefined, writable: boolean, guard: 
       tell();
     },
     info(dir) {
+      seen = state(dir); // what the page is told now: a later look tells it of any change from this
       if (!readOnly()) return { here: true };
       const x = lockHolder(dir, env);
       return x && { host: x.host, since: x.started };

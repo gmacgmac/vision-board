@@ -50,6 +50,9 @@ export interface Ledger {
   onReset(fn: () => void): () => void;
   /** True while the host's read-only check says nothing may be appended (`gate`). */
   readOnly(): boolean;
+  /** Throw what `append` would refuse before any line is read (`read-only` while the gate says so, `conflict` while
+   * the file has gone), so a write beside the ledger (the agents file, on `join`) goes only when its line can. */
+  checkWritable(caller: Caller): void;
   /** Set the read-only check: while it answers true, `append` throws `read-only` and writes nothing. */
   gate(readOnly: () => boolean): void;
   /** Read in the whole lines another writer appended since this ledger last read the file. */
@@ -246,6 +249,13 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
     for (const line of whole.toString('utf8').split('\n')) if (line.trim()) takeLine(line);
   };
   let timer: ReturnType<typeof setInterval> | undefined;
+  /** Read-only: refused before anything is read, stamped or written (D-085 3), in the caller's words; then the file
+   * looked at again, and refused while it has gone (FIX_01 F1). */
+  const checkWritable = (caller: Caller) => {
+    if (readOnly()) throw problem('read-only', caller.by === 'agent' ? READ_ONLY : READ_ONLY_PERSON);
+    refresh();
+    if (gone) throw problem('conflict', serverFoldersWords.ledgerFileGone);
+  };
 
   return {
     file,
@@ -274,11 +284,9 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
         if (--followers === 0) clearInterval(timer);
       };
     },
+    checkWritable,
     append(input, caller, opts = {}) {
-      // Read-only: refused before anything is read, stamped or written (D-085 3), in the caller's words.
-      if (readOnly()) throw problem('read-only', caller.by === 'agent' ? READ_ONLY : READ_ONLY_PERSON);
-      refresh();
-      if (gone) throw problem('conflict', serverFoldersWords.ledgerFileGone);
+      checkWritable(caller);
       const e = stamp(input, caller, h.ix.seq + 1, h.ix);
       const errors = check(input, e, h.ix, h.s, opts.board);
       if (errors.length) {
