@@ -440,3 +440,4 @@
 [[2026-11-02 23:45]] [project-docs] D-079 appended: inside a host's page the board's styles hold their own (374E, maintainer yes)
 [[2026-11-02 23:59]] [project-docs] D-080, D-081, D-082 appended: plugin bot's tools, the build and theming, the board's size and teardown (374F-H, maintainer yes)
 [[2026-11-03 00:10]] [project-docs] plugin.md open points all settled (391A-D keep; 3, 7, 11 by D-075, D-082, D-080); tracker M48 narrowed to the skill's live run and nclite → Notes: `docs/specification/plugin.md` (§ Open points), `cortex-tasks/tracker.md` (M48)
+[[2026-11-03 01:30]] [board-agent] Plugin skill live run on Sonnet: draw, answers, picture, refusals passed; the bot holds its turn with check_responses wait when asked to wait; six skill lines confused it (evidence temp/plugin-live/) → Task: [[cortex-tasks/board/2026-11-03_board-agent_plugin-skill-live-run.md]]
