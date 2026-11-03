@@ -24,11 +24,11 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
-| 1 | FE_01 | 1 | standard | Interaction designer — a control that can't act looks it, and says why, before anyone presses it. | [Write controls while read-only](./FE_01_read-only-controls.md) | Pending | |
-| 2 | FE_02 | 1 | strong | Front-end engineer who owns page state — what the server says decides what the page shows, and one person's settings never leak into another place. | [Ledger chip and page memory per ledger](./FE_02_ledger-chip-and-memory.md) | Pending | |
-| 3 | T_02 | 1 | standard | Test engineer — a check fails only for a real difference, never for how a pixel was rounded. | [Whole-pixel host-styles shots](./T_02_whole-pixel-shots.md) | Pending | |
-| 4 | BOT_01 | 1 | strong | Evaluation engineer for agents — an instruction counts as working when a scored run shows it, not when one hand check did. | [Standalone bot eval](./BOT_01_standalone-eval.md) | Pending | |
-| 5 | T_01 | 2 | standard | Accessibility engineer — reading text reads, in every theme, on every surface it sits on. | [Subtle ink to the reading tier](./T_01_subtle-ink-contrast.md) | Pending | |
+| 1 | FE_01 | 1 | standard | Interaction designer — a control that can't act looks it, and says why, before anyone presses it. | [Write controls while read-only](./FE_01_read-only-controls.md) | Completed | Allow all/Allow/Refuse, Remove access, Allow app and Stop app, card tips paused with the reason; own spec, gallery section |
+| 2 | FE_02 | 1 | strong | Front-end engineer who owns page state — what the server says decides what the page shows, and one person's settings never leak into another place. | [Ledger chip and page memory per ledger](./FE_02_ledger-chip-and-memory.md) | Completed | Ledger parts are getters over the server's folder (M51); `pageStore` keyed by `ledgerScope`, `main` keeps `vb.<key>`; the board mounts after the folder read (M52). 2 requests |
+| 3 | T_02 | 1 | standard | Test engineer — a check fails only for a real difference, never for how a pixel was rounded. | [Whole-pixel host-styles shots](./T_02_whole-pixel-shots.md) | Completed | Whole-pixel clip in sameUnderHost; 3 green runs, deliberate rule fails |
+| 4 | BOT_01 | 1 | strong | Evaluation engineer for agents — an instruction counts as working when a scored run shows it, not when one hand check did. | [Standalone bot eval](./BOT_01_standalone-eval.md) | Completed | `eval:bot -- --standalone`: 3 scenarios, standalone 52/54 over 9 runs (`other-ledger/done-only` 1/3: SKILL.md finding), plugin 48/48; $1.4685 |
+| 5 | T_01 | 2 | standard | Accessibility engineer — reading text reads, in every theme, on every surface it sits on. | [Subtle ink to the reading tier](./T_01_subtle-ink-contrast.md) | Run 1 done, BLOCKED for the maintainer's yes | Run 1: `--vb-ink-subtle` dark `#b8b8c0` (darkest same-hue at Lc 60 on every text surface; 60.1 on deep, 60.9 on the Note chip, 63.0 on card); light unchanged. Awaiting the yes for Run 2. |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -63,6 +63,12 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
+| FE_01-R1 | FE_01 | `docs/specification/components.md`: AccessRequests `readOnly` (Allow all / Allow / Refuse paused, title `READ_ONLY_PERSON`); BoardAgents `readOnly` (Remove access paused); `#ui` `explainPaused` and the app card's Allow / Stop app paused; `button.css` `.vb-btn[data-paused]` quiet look; the gallery section "Write controls on a read-only ledger" | T_01 Run 2 | Open |
+| FE_01-R2 | FE_01 | `apps/board/src/board/chrome/ProposalsBar.svelte`: Accept all gets `data-paused={readOnly \|\| undefined}` for the quiet look | T_01 Run 2 (added to its ownership) | Open |
+| FE_01-R3 | FE_01 | `apps/board/src/styles/access.css`: "Allow all" wraps at 600 px; `white-space: nowrap` on `.vb-access-allow-all` | T_01 Run 2 (added to its ownership) | Open |
+| FE_02-R1 | FE_02 | `apps/board/src/gallery/ledger-section.ts` meta line → "on by default · off with ?flags=-ledgerFolders"; re-take `tests/pages/__screenshots__/ledgers.spec.ts/ledgers-{light,dark}-darwin.png` | T_01 Run 2 (screenshots are its) | Open |
+| FE_02-R2 | FE_02 | `packages/format/src/flags.ts` `ledgerFolders` comment: the page reads it only for gallery samples | orchestrator | Done (wave 1 gate) |
+| BOT_01-R1 | BOT_01 | `skills/vision-board/SKILL.md`: after a summary from another ledger the standalone bot recaps the cards in the chat (other-ledger/done-only 1 of 3); on a ledger mismatch it offers the other ledger in 3-4 sentences (one line, no offer, is the rule); then `eval:bot -- --standalone` | maintainer (point 417) | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -70,7 +76,7 @@ tracker: cortex-tasks/tracker.md#N44, #N45, #M51, #M52, #M53, #M54
 
 ### Wave gates (orchestrator)
 - Setup: `feat/ro-follow-ups` cut from `main` (after `ledgers/done` and the 403-406 commit). T_01 Run 1 (measure only, writes nothing but its notes) runs beside wave 1, so the maintainer's yes on the token value comes early; its Run 2 (the write) stays wave 2.
-- Wave 1:
+- Wave 1: FE_01, FE_02, T_02, BOT_01 and T_01 Run 1 merged (no conflict). Orchestrator: `ledgerFolders` comment (FE_02-R2). `map` (no change), `verify` ok, `check` 0 errors, `gen --check` current, `build`, `npm test` 2365/0, `test:plugin` 83/83. Accepted: FE_01 touched `BoardChrome.svelte` (one prop) and one selector in `read-only.spec.ts`, unowned this wave; FE_02 read decision 4 literally (`main` keeps the old keys, so `main` boards of two folders still share as before; other ledgers keyed by folder and ledger). T_01 Run 1 proposes `#b8b8c0` (maintainer point 415). BOT_01 spend $1.47; two SKILL.md habits to the maintainer (417). Tag `ro-follow-ups/wave-1`.
 - Wave 2 and close:
 
 ## On Completion

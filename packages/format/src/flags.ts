@@ -302,7 +302,8 @@ export const FLAGS = {
   },
   ledgerFolders: {
     // On by default (ledgers-and-read-only close, PLAN decision 22: VERIFY_01 Run 2 and FIX_01 Run 2 left no blocking
-    // finding, 2026-11-03, D-084); -ledgerFolders turns it off. Read by the standalone server (VB_FLAGS) and its page.
+    // finding, 2026-11-03, D-084); -ledgerFolders turns it off. Read by the standalone server (VB_FLAGS); the page
+    // shows the ledger the server names whatever its own flag (only the gallery's samples read the page flag).
     default: true,
     description: 'A project holds several ledgers, one folder each inside `.visionboard/` (`main/` first); every data-folder path follows the open ledger, repo-wide chat files stay at `.visionboard/`. The header lists, switches and creates ledgers; a folder in the old layout moves into `main/` on first open, by rename, while holding the lock; an agent\'s reads may name another ledger of the folder and read it, read-only (D-084). Off, one ledger at `.visionboard/`.',
   },
