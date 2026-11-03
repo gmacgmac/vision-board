@@ -301,15 +301,16 @@ export const FLAGS = {
     description: 'The tools keep the rules a bot must keep and give it the facts it needs: under a host, `check_responses` has no `wait` (one sent is refused at once, saying the Send brings the answers) and the engine\'s `tools.instructions` are the plugin\'s; `get_board`, `show_node` and `show_container` mark each note the caller owes (`owed`), `list_boards` and `get_board` a board it holds (`held`); a key conflict says what the key holds and names a free key. Off, as before.',
   },
   ledgerFolders: {
-    // Off until VERIFY_01 leaves no blocking finding (ledgers-and-read-only PLAN decision 22, D-084). Read by the
-    // standalone server (VB_FLAGS) and its page.
-    default: false,
+    // On by default (ledgers-and-read-only close, PLAN decision 22: VERIFY_01 Run 2 and FIX_01 Run 2 left no blocking
+    // finding, 2026-11-03, D-084); -ledgerFolders turns it off. Read by the standalone server (VB_FLAGS) and its page.
+    default: true,
     description: 'A project holds several ledgers, one folder each inside `.visionboard/` (`main/` first); every data-folder path follows the open ledger, repo-wide chat files stay at `.visionboard/`. The header lists, switches and creates ledgers; a folder in the old layout moves into `main/` on first open, by rename, while holding the lock; an agent\'s reads may name another ledger of the folder and read it, read-only (D-084). Off, one ledger at `.visionboard/`.',
   },
   readOnlyStart: {
-    // Off until VERIFY_01 leaves no blocking finding (ledgers-and-read-only PLAN decision 22, D-085). Read by the
-    // standalone server (VB_FLAGS) and its page.
-    default: false,
+    // On by default (ledgers-and-read-only close, PLAN decision 22, 2026-11-03, D-085); -readOnlyStart turns it off.
+    // Read by the standalone server (VB_FLAGS); the page shows the state the server answers whatever its own flag
+    // (only the gallery's section reads the page flag).
+    default: true,
     description: 'Every ledger opens read-only and takes no lock; Edit takes the ledger\'s lock if no one else holds it, Stop editing gives it back. Read-only writes nothing into the ledger\'s folder; reads carry `readOnly: true` and writes answer `read-only` (D-085). `--edit` or `VB_EDIT=1` opens for editing. Off, the board opens for writing as before.',
   },
 } as const satisfies Record<string, FlagDef>;

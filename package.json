@@ -34,7 +34,7 @@
     "build": "vite build --config apps/board/vite.config.ts",
     "board": "npm run build && node apps/board/server.ts",
     "serve": "node apps/board/server.ts",
-    "dev": "npm run build && VB_PROJECT=temp/demo VB_SEED=packages/format/fixtures/roadmap.ledger.jsonl node apps/board/server.ts",
+    "dev": "npm run build && VB_EDIT=1 VB_PROJECT=temp/demo VB_SEED=packages/format/fixtures/roadmap.ledger.jsonl node apps/board/server.ts",
     "board:watch": "node scripts/board-watch.mjs",
     "worktree": "node scripts/worktree.mjs",
     "ledgers:undo": "node apps/board/bin/ledgers-undo.ts",
