@@ -29,7 +29,7 @@
 
   const { state: shown, parts, flag, id: idIn, ids } = useChrome();
 
-  let { oncommand, onhide, onsend, onrevoke, onarchive, onlock, holders, menu, zoom, placement = 'board', menuOpen = false, tier, fields, also, folderAbove = false, zoomOpen = false, look, send }: {
+  let { oncommand, onhide, onsend, onrevoke, onarchive, onlock, holders, menu, zoom, placement = 'board', menuOpen = false, tier, fields, also, folderAbove = false, ledgerAbove = false, zoomOpen = false, look, send }: {
     oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
@@ -52,6 +52,8 @@
     fields?: Snippet<[(run: () => void) => void]> | undefined;
     also?: readonly string[] | undefined;
     folderAbove?: boolean;
+    /** The fields hold the Ledger row: New ledger… gives way to it. */
+    ledgerAbove?: boolean;
     /** Draw the zoom menu open, or its button in a state: the gallery's samples only. */
     zoomOpen?: boolean;
     look?: 'hover' | 'focus' | 'pressed' | undefined;
@@ -101,5 +103,5 @@
       paused={board && shown.locked ? LOCKED_PERSON : undefined} />
   {/if}
   {#if parts.chat}<PagePart draw={parts.chat} />{/if}
-  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {placement} open={menuOpen} {fields} {also} {folderAbove} />{/if}
+  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
 </div>

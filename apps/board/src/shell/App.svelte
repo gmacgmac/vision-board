@@ -1,7 +1,7 @@
 <!-- The standalone page, one host of the board (board/mount.ts, host.ts; page-host.ts): the board's root fills it
      and holds the board's controls (board/chrome/), and the page keeps its own: the skip link, the chat sidebar
-     (chatPanel flag), toast, the confirm dialog, the folder picker (openFolder flag) and the parts it draws in the
-     board's header (page-parts.ts). -->
+     (chatPanel flag), toast, the confirm dialog, the folder picker (openFolder flag), the New ledger dialog
+     (ledgerFolders flag) and the parts it draws in the board's header (page-parts.ts). -->
 <script lang="ts">
   import * as chromeBoardWords from '../board/words/chrome-board.ts';
   import { onMount, tick, untrack } from 'svelte';
@@ -14,6 +14,9 @@
   import ConfirmDialog from './ConfirmDialog.svelte';
   import ChatSidebar from './ChatSidebar.svelte';
   import FolderDialog from './FolderDialog.svelte';
+  import LedgerDialog from './LedgerDialog.svelte';
+  import { ledgersOn } from './folder.ts';
+  import { guardLedgers } from './ledgers.ts';
   import Toast from './Toast.svelte';
   import * as chatWords from './words/chat.ts';
   import { createChatBridge } from './chat-bridge.ts';
@@ -32,6 +35,7 @@
   shell.chatPanel = flagOn('chatPanel', pageFlags());
   const host = createPageHost(bridge.host, pageParts());
   const openFolder = flagOn('openFolder', pageFlags());
+  const ledgers = ledgersOn();
   /** A tab close, a reload and another folder ask while a note holds unsaved words (M11). */
   const leavePrompt = flagOn('leavePrompt', pageFlags());
   /** Working alongside the agent (workAlongside flag, point 328): the chat button's mark and count, Send queued, a reply announced. */
@@ -93,7 +97,8 @@
     const unguardDrops = shell.chatPanel && flagOn('chatAttachments', pageFlags()) ? guardFileDrops(document) : undefined;
     if (new URLSearchParams(location.search).has('vbwork')) exposeWork({ rebuild: () => v.board.rebuild(), idle: () => v.board.idle() });
     view = v;
-    return () => { level.disconnect(); unguardDrops?.(); unguard?.(); unrefresh(); unbridge(); unmirror(); v.unmount(); };
+    if (leavePrompt) guardLedgers(v);
+    return () => { level.disconnect(); unguardDrops?.(); unguard?.(); guardLedgers(null); unrefresh(); unbridge(); unmirror(); v.unmount(); };
   });
 </script>
 
@@ -105,3 +110,4 @@
 
 <ConfirmDialog />
 {#if openFolder}<FolderDialog guard={leavePrompt ? view : null} />{/if}
+{#if ledgers}<LedgerDialog />{/if}

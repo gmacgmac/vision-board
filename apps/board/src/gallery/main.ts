@@ -45,6 +45,7 @@ import { toolbarSection } from './toolbar-section.ts';
 import { folderSection } from './folder-section.ts';
 import { currentFolderSection } from './current-folder-section.ts';
 import { headerSection } from './header-section.ts';
+import { ledgerSection } from './ledger-section.ts';
 import { flagSection } from './flag-section.ts';
 import { archiveSection } from './archive-section.ts';
 import { lockSection } from './lock-section.ts';
@@ -162,6 +163,7 @@ function build(): void {
   if (flagOn('chatPanel', flags) && flagOn('agentAccessRules', flags)) main.append(folderAccessSection()); // last of all, so no section moves
   if (flagOn('chatPanel', flags) && flagOn('chatAttachments', flags)) main.append(attachSection(flags)); // after everything, so no section moves
   if (flagOn('adaptiveHeader', flags) && flagOn('toolbarMenu', flags) && flagOn('versionView', flags)) main.append(headerSection(fx)); // after everything, so no section moves
+  if (flagOn('ledgerFolders', flags) && flagOn('openFolder', flags) && flagOn('adaptiveHeader', flags) && flagOn('toolbarMenu', flags) && flagOn('versionView', flags)) main.append(ledgerSection(fx)); // after everything, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

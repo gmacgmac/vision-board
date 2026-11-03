@@ -157,6 +157,12 @@ export const getProject = () => person(() => client.call('get_project'));
 export const listFolders = (path?: string) =>
   person(() => client.call('list_folders', path === undefined ? {} : { path }));
 
-/** Open `path` in place of the open folder; `create` makes its Vision Board. */
-export const openProject = (path: string, create = false) =>
-  person(() => client.call('open_project', { body: { path, ...(create && { create }) } }));
+/** One ledger of the open folder, as `get_project` lists it (ledgerFolders flag, D-084). */
+export type LedgerEntry = NonNullable<FolderInfo['ledgers']>[number];
+
+/** What else `open_project` takes with ledger folders: the ledger, and for a new one whether git keeps it out. */
+export type LedgerChoice = Pick<OperationInput<'open_project'>['body'], 'ledger' | 'keepOutOfGit'>;
+
+/** Open `path` in place of the open folder; `create` makes its Vision Board (with `ledger`, that ledger). */
+export const openProject = (path: string, create = false, ledger: LedgerChoice = {}) =>
+  person(() => client.call('open_project', { body: { path, ...(create && { create }), ...ledger } }));

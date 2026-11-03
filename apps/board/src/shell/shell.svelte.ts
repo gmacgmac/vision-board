@@ -1,6 +1,6 @@
 // The standalone page's state: the board's status (board/status.ts), mirrored here after every change
 // so the chat and the page's parts redraw (App.svelte, page-parts.ts), and the page's own: its toast, confirm
-// dialog, chat panel, open folder, theme and the viewer's alignment. The board never reads or writes this file.
+// dialog, chat panel, open folder and its ledger, theme and the viewer's alignment. The board never reads or writes this file.
 import type { Align } from '#layout';
 import type { ConfirmList } from '../board/host.ts';
 import { initialStatus } from '../board/status.ts';
@@ -58,6 +58,10 @@ export const shell = $state({
   folder: null as FolderInfo | null,
   /** The folder picker is open (FolderDialog.svelte). */
   folderDialog: false,
+  /** The New ledger dialog is open (ledgerFolders flag, LedgerDialog.svelte). */
+  ledgerDialog: false,
+  /** The ledger being opened, until the page reloads onto it (ledgers.ts `openLedger`); null otherwise. */
+  ledgerOpening: null as string | null,
 });
 
 let toastTimer = 0;

@@ -119,6 +119,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-header[data-open='zoom'] { min-height: 200px; }
 .g-header[data-open='half'] { min-height: 420px; }
 .g-header[data-open='third'] { min-height: 620px; }
+/* The ledger section (ledger-section.ts): the chip's list as a list box, and the New ledger form in the dialog's box. */
+.g-header[data-open='full'] { min-height: 330px; }
+.g-ledger-list { min-width: 22rem; padding: var(--vb-space-1); font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-strong); background: var(--vb-surface-card); border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); }
+.g-ledger-dialog { position: static; display: block; max-width: 100%; }
 /* The archive and lock sections' "⋯" alone (archive-section.ts, lock-section.ts): at the strip's right end, as in the toolbar, so its menu hangs inside. */
 .g-archive-menu { justify-content: flex-end; }
 .g-archive-menu[data-menu-open] { padding-bottom: calc(var(--vb-space-6) * 7); }

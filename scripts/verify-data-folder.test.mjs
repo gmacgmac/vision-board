@@ -2,7 +2,7 @@
 // the paths module names `.visionboard` or a data-folder file as a path (PATHS_01, PLAN decision 2).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MODULE, checkDataFolder, dataFolderPaths } from './verify-data-folder.mjs';
+import { MODULE, PENDING, checkDataFolder, dataFolderPaths } from './verify-data-folder.mjs';
 
 const levels = (r) => r.map((x) => x.level);
 const DOT = '.vision' + 'board'; // built, so this file names no path itself
@@ -41,8 +41,9 @@ test('a test of the layout seen from outside passes with its marker and a reason
   assert.deepEqual(levels(checkDataFolder('apps/board/tests/a.test.ts', `// verify: data-folder-literal\n${code}`)), ['fail']);
 });
 
-test('a pending file warns instead of failing, until its owner moves it', () => {
-  assert.deepEqual(levels(checkDataFolder('apps/board/src/gallery/attach-section.ts', `const DAY = '${DOT}/attachments/2026-10-30';`)), ['warn']);
+test('no file is pending any more: the gallery\'s attachment sample takes its path from the module, so a literal there fails', () => {
+  assert.deepEqual(PENDING, []);
+  assert.deepEqual(levels(checkDataFolder('apps/board/src/gallery/attach-section.ts', `const DAY = '${DOT}/attachments/2026-10-30';`)), ['fail']);
 });
 
 test('dataFolderPaths: each path literal once, a template\'s ${} parts left out', () => {
