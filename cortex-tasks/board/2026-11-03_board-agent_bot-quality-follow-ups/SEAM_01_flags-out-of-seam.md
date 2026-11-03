@@ -28,3 +28,13 @@ No commits, no LOG, no PII. Your worktree only. Anything outside File Ownership 
 
 ## Implementation Notes
 
+**Done 2026-11-03.** Flag names entered `plugin.d.ts` only through `PluginEngineOptions.flags` (`Pick<EngineOptions, ... 'flags'>` opened to `flags?: FlagOverrides`, which reached `FlagName` and `FlagOverrides`). Changes:
+
+- `apps/board/plugin/engine.ts` `PluginEngineOptions`: `Pick<EngineOptions, 'dir' | 'name' | 'warn'> & { flags?: Record<string, boolean> | undefined }`. The app's `FlagName` / `FlagOverrides` stay the checked union (no change in `packages/format`); `createBoardEngine({ flags })` takes the wider record unchanged (`npm run check` clean).
+- Unknown names are ignored as before: `flagOn(name, overrides)` reads `overrides[name]` for the board's own names only, so an extra key is never read (`packages/format/src/flags.ts` `flagOn`). Not a new behaviour; no code to add.
+- Test first (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone"): no `FLAGS` name, `FlagName` or `FlagOverrides` in the types (comments stripped, the hash ignores them). It failed before the change, passes now.
+- Checked by hand: a temporary extra flag in `flags.ts` left the hash `fde5eb97...` unchanged (reverted).
+- `docs/specification/plugin.md` § The engine: one sentence that flag names are strings at the seam, proved by that test.
+- The hash moves once: old `327f600b...` to `fde5eb9724e5d0efbe322aeb731430e8d0b888bbe7623b3f0477fc4116d4f683`. An addition (host's `flags` still accepts what it did; `svgImages: true` compiles), so `SEAM` stays 1. `seam.ts` left as it was in the tree; I set the hash in it temporarily to run the build-dependent tests, then reverted.
+- Until the orchestrator sets `SEAM_TYPES`, "the seam number cannot stay behind the types" (and the plugin build) fails by design.
+- Results (with the hash set temporarily): `npm run check` ok, `npm run verify` ok, unit tests under `apps/board/tests` and `tests/plugin/*.test.ts`: 824 pass, `npm run test:plugin`: 79 pass.
