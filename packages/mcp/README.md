@@ -18,10 +18,13 @@ normally starts it for you. It needs Node 22.18 or newer, and a running board (`
   instructions tell the agent its identity is given (no `join`, no secret to save, no `secret`
   argument). The board's chat panel sets it for each agent it starts (api.md 106).
 - `VB_PROJECT` (optional): the folder this agent works in (api.md 116). Left out, it is the
-  nearest folder at or above the server's working folder with `.visionboard/ledger.jsonl` (a client
-  starts it in your project), else none. Every call sends it as `VB-Project`, and the board refuses
-  the call with `wrong-folder` when it has another folder open, so an agent never reads or draws on
-  the wrong project. With none, calls are not checked. The chat panel sets it to the open folder.
+  nearest folder at or above the server's working folder with a Vision Board in either layout:
+  `.visionboard/ledger.jsonl`, or ledger folders, `.visionboard/<ledger>/ledger.jsonl` (`#client`
+  `ledgersIn`; a client starts it in your project, or in one of its ledger folders), else none. Every
+  call sends it as `VB-Project`, and the board refuses the call with `wrong-folder` when it has another
+  folder open, so an agent never reads or draws on the wrong project. With none, calls are not checked.
+  The chat panel sets it to the open folder (the project). The ledger is not a setting: the board has
+  one open, and an agent's secret belongs to the ledger it joined (api.md 115a).
 
 ## Adding it to a client
 
@@ -58,9 +61,11 @@ the secret as the `secret` argument of `write_board`, `request_grant`, `list_ope
 `check_responses`. An unknown secret answers `not-authenticated`: join again, ask for the grants
 again, and the person approves again. A secret from a folder the board had open before answers
 `wrong-folder` instead: the agent stops and tells the person, and does not join (api.md 115).
-When the agent's own folder (`VB_PROJECT`) is the one now open, that secret answers
+So does a secret from another ledger of the open folder, naming both ledgers (api.md 115a).
+When the agent's own folder (`VB_PROJECT`) is the one now open, a secret from another folder answers
 `not-authenticated` with "call join again" (api.md 124).
-`join` and `list_boards` answer `project`, the folder the board has open.
+`join` and `list_boards` answer `project`, the folder the board has open, and `ledger`, its open
+ledger, with ledger folders.
 
 `VB_AGENT_SECRET` in the `env` above makes one identity for every chat that shares that MCP
 configuration, so two chats would write as one agent and share its grants. Set it only for a

@@ -916,7 +916,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     - **Off**: no `ledger` or `ledgers` in any answer, `ledger` and `keepOutOfGit` in a request are
       ignored, and a folder opens in place. Test: "ledgerFolders off…".
 
-## An agent from another folder (folder-mismatch task, U12)
+## An agent from another folder or ledger (folder-mismatch task, U12; LEDGERS_02, D-084)
 
 114. **The caller's folder** (`apps/board/server/caller-folder.ts`). Every agent operation
     (`x-agent: true`) takes an optional `VB-Project` header: the folder the agent works in, an
@@ -926,21 +926,36 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `wrong-folder` (409), and nothing is read or written. No header, nothing is checked (an agent
     started outside any project). Person routes and the page never send it and are never checked.
     `openapi.json` `info.version` becomes 1.12.0.
-115. **A secret from a folder left behind.** A Bearer secret the open folder's agents do not know is
-    looked for in the recent folders' `agents.json` (hashes only, read, never written) before the
-    generic answer. Found: `wrong-folder`, never "join again". Both refusals say the same: "The
+115. **A secret from a folder left behind.** A Bearer secret the open ledger's agents do not know is
+    looked for in the recent folders' `agents.json`, every ledger of each in either layout (hashes
+    only, read, never written; `caller-folder.ts` `secretElsewhere`) before the generic answer.
+    Found: `wrong-folder`, never "join again". Both refusals say the same: "The
     board has switched to `~/projects/b`. Your work is in `~/projects/a`. Ask the person to open it
-    again; don't join here."
+    again; don't join here." Proven by `apps/board/tests/api-folder-mismatch.test.ts` (old layout) and
+    `api-folder-mismatch-ledgers.test.ts` (a recent folder's other ledger).
+115a. **A secret from another ledger of the open folder** (ledger folders, D-084 3). Agents are per
+    ledger, so an agent that joined ledger `ui` and calls while the board has `main` of the same folder
+    open is found in `ui`'s `agents.json` and refused with `wrong-folder` (409), whatever its
+    `VB-Project` header, before anything is read or written (`caller-folder.ts` `wrongLedger`, words
+    `words/http.ts` `theBoardHasLedgerOpen`): "The board has ledger "main" of `~/projects/b` open. Your
+    work is in ledger "ui". Stop and tell the person: they can switch the board back to "ui". Don't join
+    here." It reuses the problem the instructions already stop on. A secret no ledger of the open or a
+    recent folder knows is still `not-authenticated`. Proven by `api-folder-mismatch-ledgers.test.ts`.
 116. **The board's MCP server and the `vb` CLI name their folder** (`packages/client/src/project.ts` `projectOf`), worked out
     once at start: `VB_PROJECT` when set, else the nearest folder at or above its working folder
-    with `.visionboard/ledger.jsonl` (a home folder that only keeps `recent.json` is no project),
-    else none. `packages/client` sends it as `VB-Project` on every call (`project` option). The
+    with a Vision Board in either layout, `.visionboard/ledger.jsonl` or a ledger folder's
+    `.visionboard/<ledger>/ledger.jsonl` (`ledgersIn`; a home folder that only keeps `recent.json` is no
+    project), else none. `ledgersIn` and the server's `ledgers.ts` (`isOldLayout`, `listLedgers`) are one
+    rule, held equal by `apps/board/tests/ledger-layout-rule.test.ts`; the client cannot import the server. `packages/client` sends it as `VB-Project` on every call (`project` option). The
     instructions (`INSTRUCTIONS`, `INSTRUCTIONS_JOINED`) and the skill say: on `wrong-folder`, stop,
     tell the person, and do not join.
 117. **Answers name the open folder.** `join` and `list_boards` answer `project`, the open folder's
-    display name (`~/projects/example`), so an agent can check where it is. The chat panel's CLI runs
-    in the open folder and its MCP server gets `VB_PROJECT` set to it (`chat-access.ts` `boardMcpServer`),
-    so it always matches; a switch stops its chats (111).
+    display name (`~/projects/example`), and with ledger folders `ledger`, the open ledger, so an agent
+    can check where it is; `vb` prints them as it prints any answer (`packages/cli/tests/run.test.ts`).
+    The chat panel's CLI runs in the open folder (the project, never a ledger folder) and its MCP server
+    gets `VB_PROJECT` set to it (`chat-access.ts` `boardMcpServer`), so it always matches; a switch of
+    folder or ledger stops its chats (111). No ledger is sent: its secret is the open ledger's, so after a
+    ledger switch its next call meets 115a rather than the other ledger (`api-folder-mismatch-ledgers.test.ts`).
 
 ## Ledger v11: the kind decides (every-node BE_01, D-040 proposed)
 
@@ -1038,7 +1053,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `wrong-folder`: "This board now has your folder open (`~/projects/b`). Your secret is from
     `~/projects/a` — call join again." Its folder is open now, so joining here is right; the MCP
     instructions already say to join again on `not-authenticated`. Without a header the answer is
-    `wrong-folder` as before (115), and a header naming another folder is refused first (114).
+    `wrong-folder` as before (115), and a header naming another folder is refused first (114). A
+    secret from another ledger of the open folder is never told to join again, header or not (115a).
 
 ## Ledger v12: board numbers, retire, the flag, column and row (field-report batch 2 BE_01, D-041 proposed)
 
