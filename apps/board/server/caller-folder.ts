@@ -6,11 +6,9 @@
 // left behind by a switch is told where its work is instead of "join again"; one whose header names
 // the open folder is told to join again here (field report batch 1, ruling 2).
 import type { IncomingMessage } from 'node:http';
-import path from 'node:path';
-import { PROJECT_HEADER } from '#format';
+import { PROJECT_HEADER, ledgerFolder } from '#format';
 import { openAgents } from './agents.ts';
 import { displayName, isUnder, realPath } from './folders.ts';
-import { DATA_DIR } from './ledger.ts';
 import { REALM } from './callers.ts';
 import type { ProblemError } from './problem.ts';
 import { problem } from './problem.ts';
@@ -57,7 +55,7 @@ export function secretElsewhere(env: FolderEnv, secret: string, here = false): P
   for (const folder of readRecent(env.home)) {
     if (realPath(folder) === env.dir) continue;
     try {
-      if (openAgents(path.join(folder, DATA_DIR)).find(secret, () => true)) return (here ? joinAgain : wrongFolder)(env, folder);
+      if (openAgents(ledgerFolder(folder)).find(secret, () => true)) return (here ? joinAgain : wrongFolder)(env, folder);
     } catch { /* gone or not a valid agents file: not this one */ }
   }
   return undefined;

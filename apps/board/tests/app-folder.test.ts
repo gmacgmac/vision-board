@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { APP_LIMITS } from '#format';
+import { APP_LIMITS, ledgerFiles, ledgerFolder } from '#format';
 import { SCHEMA_DIR } from '#format/files';
 import { appHash, appState, parseEnv, readApp, readEnv } from '../server/apps.ts';
 import { foreignSchemas } from '../server/schema.ts';
@@ -18,7 +18,7 @@ const project = fs.realpathSync(makeTempDir('vb-apps-'));
 const outside = fs.realpathSync(makeTempDir('vb-outside-'));
 after(() => { for (const d of [project, outside]) fs.rmSync(d, { recursive: true, force: true }); });
 
-const APPS = path.join(project, '.visionboard', 'apps');
+const APPS = ledgerFiles(ledgerFolder(project)).apps;
 /** Write app `id` with this manifest (merged over a valid one) and these files. */
 function app(id: string, manifest: Record<string, unknown> = {}, files: Record<string, string> = { 'panel.html': '<p>hi</p>' }): string {
   const dir = path.join(APPS, id);

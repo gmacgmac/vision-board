@@ -14,6 +14,7 @@ import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, readChat } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
+import { projectFiles } from '#format';
 
 const config = makeTempDir('vb-chat-folder-');
 const fake = fakeChat(config);
@@ -21,7 +22,7 @@ let h: Harness;
 before(async () => { h = await startBoard({ chat: { adapters: fake.adapters } }); });
 after(async () => { await h.close(); fs.rmSync(config, { recursive: true, force: true }); });
 
-const stored = () => JSON.parse(fs.readFileSync(path.join(h.project, '.visionboard', 'chat-sessions.json'), 'utf8')).sessions as StoredSession[];
+const stored = () => JSON.parse(fs.readFileSync(projectFiles(h.project).chatSessions, 'utf8')).sessions as StoredSession[];
 const turns = (n: number) => (events: Event[]) => events.filter((e) => e.kind === 'system' && e.turn !== undefined).length >= n;
 const newBoard = (board: string, title: string) => ({ board, body: { items: [{ type: 'board', title, key: `${board}-board` }] } });
 let session = '';

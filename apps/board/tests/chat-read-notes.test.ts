@@ -1,4 +1,5 @@
 // What `read_attachment` tells the agent of what it can't see (VERIFY_01 F2, F4-F6, F9), over the readers' results: the markers, the notes, and the caps on an answer.
+// verify: data-folder-literal the attachment paths a page and an agent see (`.visionboard/attachments/…`, repo-wide in every layout)
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -8,6 +9,7 @@ import { attachedFile, saveAttachment } from '../server/chat-files.ts';
 import { readAttachment } from '../server/chat-read.ts';
 import { ProblemError } from '../server/problem.ts';
 import { makeTempDir } from '#format/testing';
+import { projectFiles } from '#format';
 
 const base = fs.realpathSync(makeTempDir('vb-chat-read-notes-'));
 after(() => fs.rmSync(base, { recursive: true, force: true }));
@@ -15,7 +17,7 @@ after(() => fs.rmSync(base, { recursive: true, force: true }));
 let count = 0;
 function board() {
   const folder = path.join(base, `f${++count}`);
-  fs.mkdirSync(path.join(folder, '.visionboard'), { recursive: true });
+  fs.mkdirSync(projectFiles(folder).root, { recursive: true });
   return folder;
 }
 const NOW = new Date('2026-10-30T09:00:00Z');

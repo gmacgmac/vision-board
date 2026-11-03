@@ -1,5 +1,5 @@
 // An app card's saved panel state (D-050; apps.md § Saving the panel's state; api.md 157):
-// the server's one reader and writer of `.visionboard/app-state/`. The page saves a card's value
+// the server's one reader and writer of the ledger folder's app state (`ledgerFiles(dir).appState`). The page saves a card's value
 // (`put_panel_state`) and reads it back when the panel starts (`get_panel_state`), naming the card by
 // its number on the board; here that becomes the card's identity (edge.ts `cardOn`), the only name
 // its file takes, so no text from a request reaches a path. A value is checked against the schema
@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { appOf } from '#actions';
 import type { AppStateFile, AppStateValue } from '#format';
-import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, appStateBytes, appStateProblem } from '#format';
+import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, appStateBytes, appStateProblem, ledgerFiles } from '#format';
 import { ignoreInGit } from '../agents.ts';
 import { writeFileAtomic } from '../atomic-file.ts';
 import type { Ctx, Handler } from '../dispatch.ts';
@@ -48,12 +48,12 @@ function appCard({ ledger, params, apps }: Ctx): AppCard {
   return { id, app };
 }
 
-/** Card `id`'s file. The folder must be a real folder inside the project's data folder (a link out
+/** Card `id`'s file. The folder must be a real folder inside the ledger's folder (a link out
  * is refused); `make` creates it. Undefined when it isn't there, or leads out. */
 function stateFile(ledgerFile: string, id: number, make: boolean): string | undefined {
   if (!Number.isSafeInteger(id) || id < 1) throw new Error(`panel state: card identity ${id} is not a positive integer`);
   const data = path.dirname(ledgerFile);
-  const dir = path.join(data, APP_STATE_DIR);
+  const dir = ledgerFiles(data).appState;
   if (make) {
     fs.mkdirSync(dir, { recursive: true });
     ignoreInGit(data, `${APP_STATE_DIR}/`);

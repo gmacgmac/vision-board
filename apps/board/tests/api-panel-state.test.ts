@@ -1,6 +1,6 @@
 // An app card's saved panel state over the API (D-050, api.md 157, apps.md § Saving the
 // panel's state): the page saves and reads a card's value by its board number; the server keeps it by
-// the card's identity in `.visionboard/app-state/`, written whole, checked both ways. The person's
+// the card's identity in the ledger folder's app state (`ledgerFiles`), written whole, checked both ways. The person's
 // alone: an agent is refused, and no agent read shows it or moves for it. Every guard: not JSON, over
 // the limit, not fitting, an unknown board or card, a card that isn't an app card, a removed card (its
 // file kept), a card now naming another app, a bad file, a link out, a foreign Origin or Host, and app
@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import type { NodeEvent } from '#format';
-import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, boardNumber } from '#format';
+import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, boardNumber, ledgerFiles, ledgerFolder } from '#format';
 import type { Harness } from './api-harness.ts';
 import { AGENT, startBoard } from './api-harness.ts';
 import { raw } from './app-support.ts';
@@ -30,7 +30,7 @@ function drawApp(app: string, id?: number): { n: number; id: number } {
   return { id: e.id, n: boardNumber(h.ledger.state().index, e.id)! };
 }
 
-const dir = () => path.join(h.project, '.visionboard', APP_STATE_DIR);
+const dir = () => ledgerFiles(ledgerFolder(h.project)).appState;
 const fileOf = (id: number) => path.join(dir(), `${id}.json`);
 const read = (n: number) => h.ok('get_panel_state', { board: 'pricing', n });
 const save = (n: number, state: unknown) => h.ok('put_panel_state', { board: 'pricing', n, body: { state } });
@@ -194,7 +194,7 @@ test('the panel state operations (D-050, api.md 157): the person only, never an 
 
 test('a saved value stays out of the project\'s git: the board\'s own ignore list names the folder before the first is written', async () => {
   const { n } = cards.calc!;
-  const ignore = path.join(h.project, '.visionboard', '.gitignore');
+  const ignore = ledgerFiles(ledgerFolder(h.project)).gitignore;
   fs.rmSync(ignore, { force: true });
   await save(n, { secret: 'private value' });
   await save(n, { secret: 'private value 2' });

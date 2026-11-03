@@ -11,6 +11,7 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { PORTS } from './ports.ts';
 import { sendButton, side, status, text } from './chat-page.ts';
+import { ledgerFiles, ledgerFolder } from '#format';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -55,7 +56,7 @@ for (const theme of ['dark', 'light'] as Theme[]) {
     await expect(page.locator('vb-node')).toHaveCount(1);
     await srv.act(board, { action: 'ack', n: asked!.n, ver: 1 });
     await expect(sendButton(page)).toHaveAttribute('data-state', 'idle');
-    const sends = () => fs.readFileSync(path.join(project, '.visionboard', 'ledger.jsonl'), 'utf8').split('\n').filter((l) => /"action": ?"send"/.test(l)).length;
+    const sends = () => fs.readFileSync(ledgerFiles(ledgerFolder(project)).ledger, 'utf8').split('\n').filter((l) => /"action": ?"send"/.test(l)).length;
     const before = sends();
     await sendButton(page).click();
     const toast = page.locator('#toast');

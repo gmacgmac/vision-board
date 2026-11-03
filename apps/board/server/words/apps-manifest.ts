@@ -3,6 +3,7 @@
 
 // ---- manifest.ts
 export const linksOutsideTheAppS = 'links outside the app\'s folder. Make it a real file.';
+export const linksOutsideTheAppsFolder = (appsFolder: string): string => `links outside ${appsFolder}. Make it a real folder.`;
 export const overTheLimitMakeIt = (sizeWords: string): string => `over the ${sizeWords} limit. Make it smaller.`;
 export const notInTheAppS = 'not in the app\'s folder. Write it there';
 export const nearLine = (line: string): string => ` near line ${line}`;

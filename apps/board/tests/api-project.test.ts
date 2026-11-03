@@ -11,12 +11,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { boardList } from '#actions';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
-import { LOCK_FILE } from '../server/lock.ts';
-import { RECENT_FILE } from '../server/recent.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { alive, fakeChat, gone } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
+import { homeFiles, ledgerFiles, ledgerFolder } from '#format';
 
 const home = fs.realpathSync(makeTempDir('vb-home-'));
 const outside = fs.realpathSync(makeTempDir('vb-outside-'));
@@ -26,8 +25,8 @@ const projects = path.join(home, 'projects');
 const example = path.join(projects, 'example');
 const fresh = path.join(projects, 'new-app');
 const unreadable = path.join(projects, 'unreadable');
-const recentFile = path.join(home, '.visionboard', RECENT_FILE);
-const lockOf = (dir: string) => path.join(dir, '.visionboard', LOCK_FILE);
+const recentFile = homeFiles(home).recent;
+const lockOf = (dir: string) => ledgerFiles(ledgerFolder(dir)).lock;
 let h: Harness;
 let agent: Joined;
 
@@ -85,10 +84,10 @@ test('list_folders and open_project refuse a folder outside home, through a link
     assert.match(listed.detail, /home folder/, p);
     await h.fails('open_project', { body: { path: p, create: true } }, 403, 'forbidden');
   }
-  assert.equal(fs.existsSync(path.join(outside, '.visionboard')), false, 'nothing was made outside home');
+  assert.equal(fs.existsSync(ledgerFolder(outside)), false, 'nothing was made outside home');
   const homeItself = await h.fails('open_project', { body: { path: home, create: true } }, 403, 'forbidden');
   assert.match(homeItself.detail, /not the home folder itself/);
-  assert.equal(fs.existsSync(path.join(home, '.visionboard', 'ledger.jsonl')), false, 'no ledger in the home folder itself');
+  assert.equal(fs.existsSync(ledgerPath(home)), false, 'no ledger in the home folder itself');
   await h.fails('list_folders', { path: path.join(home, 'no-such-folder') }, 404, 'not-found');
   await h.fails('list_folders', { path: path.join(home, 'notes.txt') }, 404, 'not-found');
   await h.fails('list_folders', { path: 'projects' }, 400, 'bad-request');
@@ -115,7 +114,7 @@ test('a folder with no Vision Board is not-found without create, and nothing is 
   pid = (await fake.run(1)).pid;
   const p = await h.fails('open_project', { body: { path: fresh } }, 404, 'not-found');
   assert.match(p.detail, /create/);
-  assert.equal(fs.existsSync(path.join(fresh, '.visionboard')), false);
+  assert.equal(fs.existsSync(ledgerFolder(fresh)), false);
   await h.fails('open_project', { body: { path: path.join(home, 'no-such-folder'), create: true } }, 404, 'not-found');
   assert.equal((await h.ok('get_project')).path, fs.realpathSync(h.project));
   assert.ok(alive(pid), 'the chat still runs');
@@ -177,7 +176,7 @@ test('create: a folder with no Vision Board gets .visionboard and an empty ledge
   const made = await h.ok('open_project', { body: { path: fresh, create: true } });
   assert.deepEqual(made, { path: fresh, name: '~/projects/new-app', found: true, boards: 0 });
   assert.equal(fs.readFileSync(ledgerPath(fresh), 'utf8'), '');
-  assert.match(fs.readFileSync(path.join(fresh, '.visionboard', '.gitignore'), 'utf8'), /^lock$/m);
+  assert.match(fs.readFileSync(ledgerFiles(ledgerFolder(fresh)).gitignore, 'utf8'), /^lock$/m);
   assert.equal(fs.existsSync(lockOf(example)), false, 'the old folder\'s lock was let go');
   assert.ok(fs.existsSync(lockOf(fresh)));
   assert.deepEqual((await h.ok('list_boards')).boards, []);

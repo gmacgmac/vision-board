@@ -15,6 +15,7 @@ import type { Caller, Engine } from '../server/engine/index.ts';
 import { createEngine } from '../server/engine/index.ts';
 import { inputRefusals } from '../server/words/plugin-tools.ts';
 import { checkAnswer } from './openapi-ajv.ts';
+import { ledgerFiles } from '#format';
 
 const PERSON: Caller = { by: 'person' };
 const OFF: FlagOverrides = { botToolRules: false };
@@ -24,7 +25,7 @@ after(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true 
 function open(flags: FlagOverrides = {}): Engine {
   const dir = makeTempDir('vb-bot-rules-');
   dirs.push(dir);
-  fs.copyFileSync(path.join(FIXTURES_DIR, 'roadmap.ledger.jsonl'), path.join(dir, 'ledger.jsonl'));
+  fs.copyFileSync(path.join(FIXTURES_DIR, 'roadmap.ledger.jsonl'), ledgerFiles(dir).ledger);
   return createEngine({ dir, name: () => '~/example', warn: () => {}, flags });
 }
 

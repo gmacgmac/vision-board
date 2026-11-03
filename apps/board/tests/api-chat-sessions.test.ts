@@ -22,6 +22,7 @@ import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, gone, readChat, turnEnded } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
+import { ledgerFolder, projectFiles } from '#format';
 
 const config = makeTempDir('vb-chat-cli-');
 const fake = fakeChat(config);
@@ -29,8 +30,8 @@ let h: Harness;
 before(async () => { h = await startBoard({ chat: { adapters: fake.adapters } }); });
 after(async () => { await h.close(); fs.rmSync(config, { recursive: true, force: true }); });
 
-const dataDir = () => path.join(h.project, '.visionboard');
-const indexFile = () => path.join(dataDir(), 'chat-sessions.json');
+const dataDir = () => projectFiles(h.project).root;
+const indexFile = () => projectFiles(h.project).chatSessions;
 const stored = () => JSON.parse(fs.readFileSync(indexFile(), 'utf8')).sessions as StoredSession[];
 const valid = (events: Event[]) => { for (const e of events) assert.deepEqual(schemaProblems(CHAT_EVENT_ID, e), [], JSON.stringify(e)); };
 let first: { session: string; board: string };
@@ -49,7 +50,7 @@ test('start: a session for the board; the server joins as its agent and records 
   assert.ok(board.boardHolders.some((x: { agent: string }) => x.agent === agentId), 'the session\'s agent holds the board');
   assert.deepEqual(stored(), [{ ...first, agentId }]);
   assert.equal(fs.statSync(indexFile()).mode & 0o777, 0o600);
-  assert.match(fs.readFileSync(path.join(dataDir(), '.gitignore'), 'utf8'), /^chat-sessions\.json$/m);
+  assert.match(fs.readFileSync(projectFiles(h.project).gitignore, 'utf8'), /^chat-sessions\.json$/m);
   assert.deepEqual(await h.ok('list_chats', { board: 'pricing' }), { sessions: [first] });
 });
 
@@ -86,7 +87,7 @@ test('the secret reaches only the board MCP server\'s environment, and it is the
   for (const [where, text] of [['the CLI\'s arguments', run.args.join(' ')], ['the events', JSON.stringify(events)], ['the index', fs.readFileSync(indexFile(), 'utf8')], ['the ledger', fs.readFileSync(h.ledger.file, 'utf8')]]) {
     assert.ok(!text!.includes(secret), `the secret is in ${where}`);
   }
-  assert.equal(openAgents(dataDir()).find(secret, () => true), stored()[0]!.agentId);
+  assert.equal(openAgents(ledgerFolder(h.project)).find(secret, () => true), stored()[0]!.agentId);
   await h.ok('list_open', { board: 'pricing' }, { as: h.agent(secret) });
 });
 
@@ -159,7 +160,7 @@ test('after a restart the session is listed and resumed, as the same agent with 
     const run = await fake.run(runs + 1);
     assert.deepEqual(run.args.slice(4, 6), ['--resume', current.session]);
     const secret = run.mcpConfig.mcpServers['vision-board']!.env.VB_AGENT_SECRET!;
-    assert.equal(openAgents(dataDir()).find(secret, () => true), current.agentId);
+    assert.equal(openAgents(ledgerFolder(h.project)).find(secret, () => true), current.agentId);
   } finally {
     await board.close();
   }

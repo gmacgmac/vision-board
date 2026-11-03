@@ -16,9 +16,6 @@ export const APP_HASH_PATTERN = /^[0-9a-f]{64}$/;
 /** A tool's name: the names every MCP client accepts (api.md 50). */
 export const APP_TOOL_NAME = /^[a-z][a-z0-9_]{0,39}$/;
 
-/** Where apps live in a project, under `.visionboard/`. */
-export const APPS_DIR = 'apps';
-
 /** The board server's panel route, outside /api: an app's panel is served at this path plus its id
  * (apps.md § The panel). The server's route and the page's frame both read it. */
 export const APP_PANEL_PATH = '/app-panels/';
@@ -201,10 +198,8 @@ export interface AppInfo {
   problems?: AppProblem[];
 }
 
-/** Where the board keeps each app card's saved panel state, under `.visionboard/`: one file per card,
- * `<card identity>.json` (D-041), the shape schema/app/panel-state.schema.json gives. */
-export const APP_STATE_DIR = 'app-state';
-
+// An app card's saved panel state: one file per card, `<card identity>.json` (D-041), in the ledger
+// folder's `APP_STATE_DIR` (data-folder.ts), the shape schema/app/panel-state.schema.json gives.
 /** The version of that file's shape (panel-state.schema.json `v`). */
 export const APP_STATE_FORMAT = 1;
 

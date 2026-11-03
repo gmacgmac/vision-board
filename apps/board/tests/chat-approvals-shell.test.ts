@@ -11,10 +11,11 @@ import type { ApprovalDraft } from '../server/chat-approvals.ts';
 import { createApprovals } from '../server/chat-approvals.ts';
 import { openPermissions } from '../server/chat-permissions.ts';
 import { makeTempDir } from '#format/testing';
+import { projectFiles } from '#format';
 
 const fx = accessFixture();
 after(() => fx.remove());
-const DAY = path.join(fx.folder, '.visionboard/attachments/2026-10-30');
+const DAY = path.join(projectFiles(fx.folder).attachments, '2026-10-30');
 
 function setup() {
   const events: ApprovalDraft[] = [];

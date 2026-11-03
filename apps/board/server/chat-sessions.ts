@@ -16,6 +16,7 @@ import path from 'node:path';
 import type { AnswersText } from '#actions';
 import { creatorOf, sendHead as headFor } from '#actions';
 import type { LedgerEvent } from '#format';
+import { projectFiles, projectOfLedger } from '#format';
 import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
@@ -132,8 +133,8 @@ function joined(was: Held | undefined, next: Held): Held {
 
 export function openChats(o: ChatOptions): Chats {
   const { ledger, resolve, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false, readAttachment = false, sendHead = false } = o;
-  const dir = path.dirname(ledger.file);
-  const cwd = path.dirname(dir);
+  const cwd = projectOfLedger(path.dirname(ledger.file));
+  const dir = projectFiles(cwd).root;
   let kept: Permissions | undefined;
   const permissions = () => (kept ??= openPermissions(dir, (() => { try { return fs.realpathSync(cwd); } catch { return cwd; } })()));
   let index: ChatIndex | undefined;

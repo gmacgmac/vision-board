@@ -1,5 +1,5 @@
 // The chat sessions index (chat-panel BE_03 ruling 2, api.md 101): the only module that reads or
-// writes `<project>/.visionboard/chat-sessions.json`. One entry per session ever started, oldest
+// writes the project's `chat-sessions.json` (`projectFiles(project).chatSessions`, data-folder.ts). One entry per session ever started, oldest
 // first: the session as list_chats shows it, with `agentId`, the board identity the server joined
 // for it (never a secret; the page reads which answers that agent is told, api.md 131). A session started in the folder has no board until its agent creates
 // one (panel-send ruling 2); then `attach` gives it that board, once. Every entry is checked on
@@ -7,12 +7,12 @@
 // Git-ignored from the first write.
 import fs from 'node:fs';
 import path from 'node:path';
+import { CHAT_SESSIONS_FILE } from '#format';
 import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 import { SCHEMA_BASE, schemaProblems } from './schema.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
-export const CHAT_SESSIONS_FILE = 'chat-sessions.json';
 const SESSION_ID = `${SCHEMA_BASE}schema/api/chat-session.schema.json`;
 
 /** One session as the chat routes show it (`chat-session.schema.json`). */
@@ -64,7 +64,7 @@ function writeEntries(file: string, entries: StoredSession[]): void {
   writeFileAtomic(file, `${JSON.stringify({ sessions: entries }, null, 2)}\n`, 0o600);
 }
 
-/** The index in the project's data folder (`.visionboard`). Read once, on first use. */
+/** The index in the project's repo-wide folder `dir` (`projectFiles(project).root`). Read once, on first use. */
 export function openChatIndex(dir: string): ChatIndex {
   const file = path.join(dir, CHAT_SESSIONS_FILE);
   let entries: StoredSession[] | undefined;

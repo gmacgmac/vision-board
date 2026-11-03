@@ -1,12 +1,9 @@
 // Images in cards (D-048, docs/specification/images.md): which files the board shows in a card and
-// the one check of a path to one. An image is a file under the project's `.visionboard/images/`
+// the one check of a path to one. An image is a file in the ledger folder's images folder (data-folder.ts)
 // that a card's Markdown names as `![alt](path)`; the board serves it at `/board-images/<path>`.
 // This is the one place the limits and the path check live: the server's route and the Markdown
 // renderer both call `imagePathProblem`, so the two can't disagree. Pure string logic: it reads no
 // file and touches no DOM, so it runs in the page and in the server alike.
-
-/** Where images live in a project, under `.visionboard/`. */
-export const IMAGES_DIR = 'images';
 
 /** The board's route for an image: this, then the path inside the images folder. Outside /api. */
 export const IMAGE_ROUTE = '/board-images/';

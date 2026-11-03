@@ -1,16 +1,15 @@
-// One board server per ledger (D-017, tracker U8): `<project>/.visionboard/lock` says which
+// One board server per ledger (D-017, tracker U8): the ledger folder's lock (`ledgerFiles(dir).lock`) says which
 // computer, process and port hold the ledger. The folder may be shared between computers (Dropbox),
 // and a second writer would fork the ledger, so a second server refuses to start while the lock is
 // live. Live: the heartbeat is under 2 minutes old and, on this computer, the process still runs.
 // Written atomically (atomic-file.ts) and git-ignored.
 import fs from 'node:fs';
 import os from 'node:os';
-import path from 'node:path';
+import { LOCK_FILE, ledgerFiles } from '#format';
 import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
 
-export const LOCK_FILE = 'lock';
 /** How often the holder rewrites `beat`. */
 export const BEAT_MS = 30_000;
 /** A heartbeat this old (or older) means the holder is gone. */
@@ -65,9 +64,9 @@ export const holderMessage = (x: LockInfo): string =>
   serverFoldersWords.anotherBoardServerHoldsThis(x.host, x.pid, x.port) +
   serverFoldersWords.runningSinceStopThatServer(x.started);
 
-/** Take the lock in `dir` (the project's `.visionboard` folder), or say who holds it. */
+/** Take the lock in ledger folder `dir` (`ledgerFolder`), or say who holds it. */
 export function takeLock(dir: string, port: number, env: LockEnv = realEnv()): Taken {
-  const file = path.join(dir, LOCK_FILE);
+  const file = ledgerFiles(dir).lock;
   const old = readLock(file);
   if (old && live(old, env)) return { ok: false, holder: old };
   const started = new Date(env.now()).toISOString();

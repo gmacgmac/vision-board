@@ -3,13 +3,15 @@
 // (file length), rule 15 (the board page's weight, from the last `npm run build`), rule 20 and
 // cortex-rules 11 (exact versions, dependency register), the generated module map
 // (docs/specification/modules.md), the board's feature-folder front doors, a function's length
-// (verify-functions.mjs), and the style and layer rules in verify-style.mjs (colour
-// literals only in the tokens, I/O only in its layers, scoped board stylesheets; UI_01).
+// (verify-functions.mjs), the style and layer rules in verify-style.mjs (colour
+// literals only in the tokens, I/O only in its layers, scoped board stylesheets; UI_01), and only the
+// paths module naming the data folder (verify-data-folder.mjs; PATHS_01).
 // Each check is a pure function over strings, so scripts/verify.test.mjs proves every rule fails
 // when broken. `--write-map` regenerates the module map instead of checking it.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkDataFolder } from './verify-data-folder.mjs';
 import { checkFunctionLength } from './verify-functions.mjs';
 import { checkStyleAndLayers } from './verify-style.mjs';
 import { checkWeight, PAGE, pageAssets, pageWeight, weightOf } from './verify-weight.mjs';
@@ -249,7 +251,7 @@ export function verify(root, { writeMap = false } = {}) {
   const files = ROOTS.filter((r) => existsSync(path.join(root, r))).flatMap((r) => walk(root, r, []));
   const names = namesOf(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')));
   const results = files.flatMap(({ rel, text }) => [...checkLength(rel, text), ...(FIXTURE_HOST.test(rel) ? [] : checkReferences(rel, text, names)),
-    ...checkStyleAndLayers(rel, text), ...checkBoardHost(rel, text), ...checkFeatureFolders(rel, text), ...checkFunctionLength(rel, text)]);
+    ...checkStyleAndLayers(rel, text), ...checkBoardHost(rel, text), ...checkFeatureFolders(rel, text), ...checkFunctionLength(rel, text), ...checkDataFolder(rel, text)]);
   const registerPath = path.join(root, REGISTER);
   const register = existsSync(registerPath) ? readFileSync(registerPath, 'utf8') : null;
   const manifests = ['package.json', ...['apps', 'packages'].flatMap((r) =>

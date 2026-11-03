@@ -3,6 +3,7 @@
 // (`.visionboard/ledger.jsonl`), else none. It sends that folder as `VB-Project` on every call, and
 // sends nothing when there is none. The instructions tell an agent refused with `wrong-folder` to
 // stop and tell the person.
+// verify: data-folder-literal the folder on disk as an agent's working folder finds it, built from outside
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

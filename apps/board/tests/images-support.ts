@@ -1,12 +1,13 @@
 // Test support for the image route (app-cards BE_03, D-048): four tiny real images (each decodes),
 // a real PNG of any size (`pngOf`: the zoomed view's tall and wide images, app-cards FE_03), writing a
-// file into a temp project's `.visionboard/images/`, and a raw request that returns the body as bytes
+// file into a temp project's images folder (`ledgerFiles`), and a raw request that returns the body as bytes
 // and sends the path exactly as written (fetch would resolve `..` and `%2e%2e`). Only a temp project is
 // ever written.
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { ledgerFiles, ledgerFolder } from '#format';
 
 const b64 = (s: string) => Buffer.from(s, 'base64');
 
@@ -45,7 +46,7 @@ export function pngOf(w: number, h: number, paint: (x: number, y: number) => Rgb
 export const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><script>alert(1)</script></svg>');
 
 /** The project's images folder. */
-export const imagesDir = (project: string): string => path.join(project, '.visionboard', 'images');
+export const imagesDir = (project: string): string => ledgerFiles(ledgerFolder(project)).images;
 
 /** Write `data` as `rel` in the project's images folder (folders made); returns the file's path. */
 export function put(project: string, rel: string, data: Buffer | string): string {
