@@ -4,7 +4,8 @@
 // `read-only` (409) and its reads carry `readOnly: true`, and the page pauses with the person's words. Pure.
 import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
-/** What an agent is told when it writes on a read-only ledger: nothing was written; the person can press Edit. */
+/** What an agent is told when it writes on a read-only ledger: nothing was written, and it is read-only until the person
+ * makes it editable (host-neutral: a host may have no Edit of its own). */
 export const READ_ONLY = actionsRefusalsWords.thisLedgerIsOpenRead;
 /** What the person is told when a change waits for Edit. */
 export const READ_ONLY_PERSON = actionsRefusalsWords.readOnlyPressEditTo;

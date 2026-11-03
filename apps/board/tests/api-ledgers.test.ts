@@ -229,7 +229,7 @@ test('the folder open now, still in the old layout, moves when a ledger of it is
 });
 
 test('ledgerFolders off: no ledger in the answers, `ledger` is ignored, the old layout opens in place', async () => {
-  const off = await startBoard({ home });
+  const off = await startBoard({ home, flags: { ledgerFolders: false } });
   try {
     const plain = path.join(projects, 'plain');
     withLedger(plain, undefined, ['one']);
@@ -239,5 +239,18 @@ test('ledgerFolders off: no ledger in the answers, `ledger` is ignored, the old 
     const boards = await off.ok('list_boards');
     assert.equal('ledger' in boards, false);
     assert.equal('ledger' in (await off.ok('join', { body: { label: 'off' } })), false);
+  } finally { await off.close(); }
+});
+
+test('ledgerFolders off: a folder already in ledger folders is refused, naming the flag, and nothing is written beside main/ (FIX_01 F5)', async () => {
+  const off = await startBoard({ home, flags: { ledgerFolders: false } });
+  try {
+    for (const create of [false, true]) {
+      const p = await off.fails('open_project', { body: { path: multi, create } }, 409, 'conflict');
+      assert.match(p.detail, /ledgerFolders/);
+    }
+    assert.equal(fs.existsSync(fileOf(multi)), false, 'no second ledger in the old place');
+    assert.equal(fs.existsSync(lockOf(multi)), false);
+    assert.notEqual((await off.ok('get_project')).path, multi, 'the open folder is unchanged');
   } finally { await off.close(); }
 });

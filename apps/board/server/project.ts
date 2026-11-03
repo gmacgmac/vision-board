@@ -9,16 +9,17 @@
 // With ledger folders (`ledgerFolders`, D-084) the open folder is a project and one of its ledgers: opening
 // names the ledger (default the one open there last, else `main`), switching ledgers is opening the same
 // folder with another, the lock is the ledger folder's, and a folder in the old layout is first moved into
-// `main/` (ledger-move.ts). A new ledger is made only with `create` (ledgers.ts `makeLedger`).
+// `main/` (ledger-move.ts `takeLedger`). A new ledger is made only with `create` (ledgers.ts `makeLedger`).
 // With read-only opening (`readOnlyStart`, D-085; off with `edit`, the server's `--edit`) opening or switching takes no
 // lock and writes nothing (an old layout is not moved); `create` takes the new ledger's lock only while making it.
 // `edit` takes the open ledger's lock then (refused, naming the holder, while another server holds it live), moving an
 // old layout first; `stopEditing` lets it go. editing.ts holds the state the ledger, engine and agents ask.
-// A read may name another ledger of the open folder (`ledger`, D-084 8): `otherLedgers` opens it read-only on its first
-// read (no lock, gated, nothing written), the engine reads it again on every read, and it is let go with the folder.
+// A read may name another ledger of the open folder (`ledger`, D-084 8): ledgers.ts `otherLedgers` opens it read-only on
+// its first read (no lock, gated, nothing written), the engine reads it again on every read, and it is let go with the
+// folder. An open ledger another server moved between layouts (into `main/`, or back) is followed there, read-only.
 import fs from 'node:fs';
 import path from 'node:path';
-import { MAIN_LEDGER, flagOn, ledgerFiles, ledgerFolder, ledgerNameProblem, ledgerOfFolder, projectOfLedger } from '#format';
+import { MAIN_LEDGER, flagOn, ledgerFiles, ledgerFolder, ledgerOfFolder, projectOfLedger } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost, AppHostOptions } from './apps.ts';
 import { createAppHost } from './apps.ts';
@@ -30,16 +31,15 @@ import { createEngine } from './engine/index.ts';
 import { displayName, hasBoard, isUnder, realPath } from './folders.ts';
 import type { Ledger } from './ledger.ts';
 import { ledgerPath, openLedger } from './ledger.ts';
-import { moveIntoMain } from './ledger-move.ts';
-import { chooseLedger, isOldLayout, listLedgers, makeLedger } from './ledgers.ts';
+import { holdLock, takeLedger } from './ledger-move.ts';
+import { checkLedgerName, chooseLedger, isOldLayout, listLedgers, movedLedger, otherLedgers, refuseLedgerFolders } from './ledgers.ts';
 import type { Editing } from './editing.ts';
 import { createEditing } from './editing.ts';
 import type { Lock, LockEnv } from './lock.ts';
-import { BEAT_MS, holderMessage, takeLock } from './lock.ts';
+import { BEAT_MS, lockHolder, takeLock } from './lock.ts';
 import { problem } from './problem.ts';
 import { addRecent, lastLedger } from './recent.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
-import * as writesWords from './words/writes.ts';
 
 /** One open folder. */
 export interface OpenFolder {
@@ -102,27 +102,6 @@ export interface OpenOptions {
 
 interface Held extends OpenFolder { close(): void }
 
-/** The folder's other ledgers, for the reads that name one (D-084 8): each opened read-only on its first read and kept
- * until `close`; undefined for the open ledger; `not-found`, naming the folder's ledgers, for a name it doesn't have. */
-function otherLedgers(project: () => string, open: () => string | undefined, home: string) {
-  const kept = new Map<string, Ledger>();
-  return {
-    get(name: string): Ledger | undefined {
-      const dir = project();
-      if (name === open() || (open() === undefined && name === MAIN_LEDGER && isOldLayout(dir))) return undefined;
-      const names = listLedgers(dir);
-      if (!names.includes(name)) {
-        kept.delete(name);
-        throw problem('not-found', serverFoldersWords.noLedgerToRead(displayName(home, dir), name, names));
-      }
-      let ledger = kept.get(name);
-      if (!ledger) kept.set(name, ledger = openLedger(ledgerFiles(ledgerFolder(dir, name)).ledger, undefined, { readOnly: () => true }));
-      return ledger;
-    },
-    close: () => kept.clear(),
-  };
-}
-
 /** The folder's parts, each made on first use (the data folder, the real path and the engine too,
  * the engine on the ledger already opened under its lock). A Send through the engine hands the folder's chat session
  * the person's answers, and is recorded once it has them (api.md 121, chat-sessions.ts `send`). */
@@ -138,7 +117,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   const abort = new AbortController();
   const getDir = () => (dir ??= realPath(projectOfLedger(data())));
   const getLedgerName = () => ledgerOfFolder(data());
-  const others = flagOn('ledgerFolders', o.apps?.flags ?? {}) ? otherLedgers(getDir, getLedgerName, o.home) : undefined;
+  const others = flagOn('ledgerFolders', o.apps?.flags ?? {}) ? otherLedgers(getDir, getLedgerName, () => displayName(o.home, getDir())) : undefined;
   const getEngine = () => (engine ??= createEngine({
     dir: data(), ledger, name: () => displayName(o.home, getDir()), ledgerName: getLedgerName(), onSend, flags: o.apps?.flags, readOnly: editing.readOnly, otherLedger: others?.get,
   }));
@@ -164,28 +143,6 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   };
 }
 
-/** The lock of ledger folder `dir`, or a refusal naming who holds it. */
-function lockOf(dir: string, port: number, env?: LockEnv): Lock {
-  const taken = takeLock(dir, port, env);
-  if (!taken.ok) throw problem('conflict', holderMessage(taken.holder));
-  return taken.lock;
-}
-
-/** Ledger `name` of project `dir`, made when `make` and locked: an old layout moved into `main/` first
- * (its lock taken by the move), the new ledger made next, and its own lock taken last. */
-export function takeLedger(dir: string, name: string, make: { keepOutOfGit: boolean } | undefined, port: number, shown: string, env?: LockEnv): Lock {
-  const moved = isOldLayout(dir) ? moveIntoMain(dir, { port, name: shown }) : undefined;
-  if (make) makeLedger(dir, name, make.keepOutOfGit);
-  if (moved && name === MAIN_LEDGER) return moved;
-  try { return lockOf(ledgerFolder(dir, name), port, env); } finally { moved?.release(); }
-}
-
-/** A ledger name the request may name: the schema has checked its characters; a data-folder name is refused here. */
-function checkName(name: string | undefined): void {
-  const why = name === undefined ? undefined : ledgerNameProblem(name);
-  if (why) throw problem('invalid', writesWords.theRequestDoesNotFit, { errors: [{ pointer: '/ledger', detail: why }] });
-}
-
 export function openProject(o: ProjectOptions): Project {
   const { home } = o;
   const ledgers = flagOn('ledgerFolders', o.apps?.flags ?? {});
@@ -194,7 +151,10 @@ export function openProject(o: ProjectOptions): Project {
   let cur = hold(o.ledger, o.lock, o);
   const exit = () => cur.close();
   process.on('exit', exit);
-  const beat = setInterval(() => cur.editing.lock?.beat(), BEAT_MS);
+  const beat = setInterval(() => {
+    cur.editing.lock?.beat();
+    cur.editing.look(path.dirname(cur.ledger.file)); // the lock changed hands elsewhere: the streams are told (F6)
+  }, BEAT_MS);
   beat.unref();
 
   /** The ledger file, its lock already taken, opened; made when `create`. */
@@ -247,16 +207,17 @@ export function openProject(o: ProjectOptions): Project {
       if (create && !cur.editing.readOnly() && !fs.existsSync(cur.ledger.file)) fs.writeFileSync(cur.ledger.file, '', { flag: 'a' });
       return cur;
     }
+    refuseLedgerFolders(dir, displayName(home, dir));
     const found = hasBoard(dir);
     if (!create && !found) throw noBoard(dir);
     if (readOnlyStart && found) return switchTo([readOnlyLedger(dir, ledgerPath(dir)), undefined]);
-    const lock = lockOf(ledgerFolder(dir), o.port());
+    const lock = holdLock(ledgerFolder(dir), { port: o.port() });
     return switchTo(opened(ledgerOf(dir, ledgerPath(dir), create, lock), lock));
   }
 
   /** Ledger folders: ledger `asked` of `dir` (default the one open there last, else `main`). */
   function openLedgerOf(dir: string, { create = false, ledger: asked, keepOutOfGit = false }: OpenOptions): OpenFolder {
-    checkName(asked);
+    checkLedgerName(asked);
     const old = isOldLayout(dir);
     const name = chooseLedger(dir, asked, lastLedger(home, dir));
     // An old layout opened read-only is its one ledger, not moved: `main` names it.
@@ -289,19 +250,35 @@ export function openProject(o: ProjectOptions): Project {
     return taken.ok ? taken.lock : undefined;
   }
 
-  /** Edit (D-085 2): the open ledger's lock taken now; a folder still in the old layout is moved into `main/` first,
-   * so it opens again there (its streams end, as on a switch). */
+  /** The open ledger, read-only, moved between layouts by another server since it was opened (into `main/` by its Edit,
+   * or back by `ledgers:undo`): opened again where it is now, read-only, its streams ended as on a switch (FIX_01 F1).
+   * Under `--edit` this server holds its lock, so nothing moves it; its ledger refuses a line to a file that has gone. */
+  function followMove(): OpenFolder {
+    const file = ledgers && readOnlyStart ? movedLedger(cur.dir, cur.ledgerName, cur.ledger.file) : undefined;
+    return file === undefined ? cur : switchTo([readOnlyLedger(cur.dir, file), undefined]);
+  }
+
+  /** Edit (D-085 2): the open ledger's lock taken now, where the ledger is now; a folder still in the old layout is
+   * moved into `main/` first, so it opens again there (its streams end, as on a switch). */
   function edit(): OpenFolder {
-    if (!cur.editing.readOnly()) return cur;
-    if (ledgers && isOldLayout(cur.dir)) return lockLedger(cur.dir, MAIN_LEDGER, undefined, o.lockEnv);
-    cur.editing.take(lockOf(path.dirname(cur.ledger.file), o.port(), o.lockEnv));
+    if (!followMove().editing.readOnly()) return cur;
+    const old = ledgers && isOldLayout(cur.dir);
+    const holder = lockHolder(old ? ledgerFolder(cur.dir) : path.dirname(cur.ledger.file), o.lockEnv);
+    if (holder) throw problem('conflict', serverFoldersWords.editRefused(holder.host, holder.pid, holder.port, holder.started));
+    try {
+      if (old) return lockLedger(cur.dir, MAIN_LEDGER, undefined, o.lockEnv);
+      cur.editing.take(holdLock(path.dirname(cur.ledger.file), { port: o.port(), env: o.lockEnv }));
+    } catch (err) { // a folder this computer can't write (a read-only share): said in words, still read-only (F8)
+      if (!['EACCES', 'EPERM', 'EROFS'].includes((err as NodeJS.ErrnoException).code ?? '')) throw err;
+      throw problem('conflict', serverFoldersWords.cannotBeWritten(displayName(home, cur.dir)));
+    }
     return cur;
   }
 
   return {
     home,
-    current: () => cur,
-    open: (dir, options = {}) => (ledgers ? openLedgerOf(dir, options) : openOne(dir, options.create === true)),
+    current: followMove,
+    open: (dir, options = {}) => (followMove(), ledgers ? openLedgerOf(dir, options) : openOne(dir, options.create === true)),
     edit,
     stopEditing() {
       cur.editing.drop();

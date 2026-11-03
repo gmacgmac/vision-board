@@ -1679,6 +1679,7 @@ Media type `application/json`.
 | `model` | string | no | The model the agent uses, as the agent's own command line names it (such as `opus`); left out for the agent's default. |
 | `created` | string | yes | When the session started. |
 | `agentId` | string | yes | The agent id the session's agent writes on the board as (its `join` line), never a secret: the page works out from it which of the person's answers that agent is told. |
+| `ledger` | string | no | With ledger folders, the ledger the session works on: only that ledger's boards list it, resume it or answer through it. Left out, the old layout's one ledger, which is `main` once moved. |
 
 Example:
 
@@ -1788,6 +1789,7 @@ Media type `application/json`.
 | `model` | string | no | The model the agent uses, as the agent's own command line names it (such as `opus`); left out for the agent's default. |
 | `created` | string | yes | When the session started. |
 | `agentId` | string | yes | The agent id the session's agent writes on the board as (its `join` line), never a secret: the page works out from it which of the person's answers that agent is told. |
+| `ledger` | string | no | With ledger folders, the ledger the session works on: only that ledger's boards list it, resume it or answer through it. Left out, the old layout's one ledger, which is `main` once moved. |
 
 Example:
 

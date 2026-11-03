@@ -140,3 +140,22 @@ test('the refusal names the computer, port and start', () => {
   assert.match(text, /4466/);
   assert.match(text, /2026-10-07T09:59:00/);
 });
+
+test('a holder waking after a sleep of 2 minutes or more does not beat its own copy again: the lock is lost, and left as it is (FIX_01 F7)', () => {
+  const d = dir();
+  const e = env();
+  const r = takeLock(d, 4466, e);
+  assert.ok(r.ok);
+  e.time += BEAT_MS;
+  r.lock.beat();
+  assert.equal(r.lock.held(), true, 'a beat on time keeps it');
+  e.time += STALE_MS; // asleep: over Dropbox, another computer may already hold it, unsynced here
+  const before = fs.readFileSync(ledgerFiles(d).lock, 'utf8');
+  r.lock.beat();
+  assert.equal(fs.readFileSync(ledgerFiles(d).lock, 'utf8'), before, 'not rewritten from its own copy');
+  assert.equal(r.lock.held(), false, 'lost: the ledger is read-only until Edit again');
+  r.lock.release();
+  assert.equal(fs.readFileSync(ledgerFiles(d).lock, 'utf8'), before, 'not removed either: it may be about to sync as another\'s');
+  const again = takeLock(d, 4466, e);
+  assert.equal(again.ok, true, 'Edit again takes it, as a stale lock');
+});

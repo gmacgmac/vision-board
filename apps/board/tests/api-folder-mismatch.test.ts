@@ -11,6 +11,7 @@ import path from 'node:path';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { OLD_LAYOUT } from './test-board.ts';
 import { fakeChat } from './chat-support.ts';
 import { callMcp } from './mcp-call.ts';
 import { makeTempDir } from '#format/testing';
@@ -40,7 +41,7 @@ before(async () => {
   withBoard(b, 'plans-b');
   fs.mkdirSync(inB, { recursive: true });
   fs.symlinkSync(b, link);
-  h = await startBoard({ home, chat: { adapters: fake.adapters } });
+  h = await startBoard({ home, flags: OLD_LAYOUT, chat: { adapters: fake.adapters } });
   await h.ok('open_project', { body: { path: a } });
 });
 after(async () => {

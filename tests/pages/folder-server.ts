@@ -63,8 +63,9 @@ export async function startFolderServer({ ledgers = false, readOnly = false }: {
   const board = await startTestBoard({
     project: start, home, port: ledgers ? PORTS.ledgers : PORTS.folder, chat: { adapters: fake.adapters },
     ...(ledgers && { ledger }),
-    ...((ledgers || readOnly) && { flags: { ...(ledgers && { ledgerFolders: true }), ...(readOnly && { readOnlyStart: true }) } }),
-    ...(readOnly && { edit: false }),
+    // Both flags named, so the server is the one asked for whatever their defaults are.
+    flags: { ledgerFolders: ledgers, readOnlyStart: readOnly },
+    edit: !readOnly,
   });
   const { base } = board;
   const cookie = await personCookie(base);

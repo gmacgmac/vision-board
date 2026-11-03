@@ -42,8 +42,13 @@ function readFile(home: string): Recent {
 /** The recent folders, newest first; none when the file is missing or not a valid recent file. */
 export const readRecent = (home: string): string[] => readFile(home).folders;
 
-/** The ledger last open in recent folder `dir`, if one is kept. */
-export const lastLedger = (home: string, dir: string): string | undefined => readFile(home).ledgers[dir];
+/** The ledger last open in recent folder `dir`, if one is kept: by `dir` as given, else by its real path, which the
+ * board keeps (`VB_PROJECT` through a link, or `/var` for `/private/var`; FIX_01 F14). */
+export function lastLedger(home: string, dir: string): string | undefined {
+  const { ledgers } = readFile(home);
+  if (ledgers[dir] !== undefined) return ledgers[dir];
+  try { return ledgers[fs.realpathSync(dir)]; } catch { return undefined; }
+}
 
 /** Put `dir` first in the recent list (once), keeping at most RECENT_MAX; with `ledger`, keep it as the
  * folder's last ledger. */

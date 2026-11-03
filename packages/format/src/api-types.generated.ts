@@ -892,6 +892,7 @@ type ChatSession = {
   model?: string;
   created: string;
   agentId: string;
+  ledger?: string;
 };
 type ChatStartRequest = {
   agent: "claude" | "kiro";

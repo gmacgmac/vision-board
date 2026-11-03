@@ -225,7 +225,7 @@ test.describe('a refusal', () => {
 });
 
 test('the flag off: no ledger in the path or in "⋯", the path as it was', async ({ page }) => {
-  await open(page, 1470, '');
+  await open(page, 1470, '-ledgerFolders');
   await expect(page.locator(bid('folder-chip'))).toBeVisible();
   await expect(chip(page)).toHaveCount(0);
   await expect(page.locator('.vb-path-sep')).toHaveCount(2);
@@ -329,10 +329,10 @@ for (const theme of THEMES) {
 const section = (page: Page) => page.locator('section[data-feature="ledgerFolders"]');
 
 test('gallery: the section is there only with the flag, last, with the three forms and ids of its own', async ({ page }) => {
-  await page.goto('/gallery.html');
+  await page.goto('/gallery.html?flags=-ledgerFolders');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
-  await page.goto('/gallery.html?flags=ledgerFolders');
+  await page.goto('/gallery.html?flags=ledgerFolders,-readOnlyStart');
   await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'ledgerFolders');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).locator('.vb-ledger-chip').first()).toContainText('customer-research-interviews');

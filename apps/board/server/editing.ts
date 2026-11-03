@@ -4,7 +4,8 @@
 // live) and Stop editing lets it go. Without read-only opening every ledger opens for writing, as before, under the lock
 // the opener took (tests take none). While guarded, a lock this server no longer holds (another computer took it over
 // after a sleep) reads as read-only, so a writer stops before its next line. The ledger, the engine and the agents store
-// ask `readOnly` (ledger.ts `gate`); the change streams hear `onChange`.
+// ask `readOnly` (ledger.ts `gate`); the change streams hear `onChange`: after Edit and Stop editing, and when the lock's
+// beat finds it changed hands elsewhere (`look`: this server's lock taken over, another computer starting or stopping).
 import type { Lock, LockEnv } from './lock.ts';
 import { lockHolder } from './lock.ts';
 
@@ -25,8 +26,12 @@ export interface Editing {
   drop(): void;
   /** Who is writing ledger folder `dir`: here, another live server, or nobody. */
   info(dir: string): EditingInfo | undefined;
-  /** Called with the new read-only state after Edit or Stop editing. Returns an unsubscribe. */
+  /** Called with the read-only state after Edit or Stop editing, and after a `look` that found a change. Returns an
+   *  unsubscribe. */
   onChange(fn: (readOnly: boolean) => void): () => void;
+  /** Look again at ledger folder `dir`'s lock (the beat): tell `onChange` when this server lost it, or another computer
+   *  started or stopped editing, since the last look (FIX_01 F6). The first look only notes what it sees. */
+  look(dir: string): void;
 }
 
 /** `lock`: the one the opener took. `writable`: open for writing at first. `guard`: read-only opening is on, so a lock
@@ -38,6 +43,12 @@ export function createEditing(lock: Lock | undefined, writable: boolean, guard: 
   const listeners = new Set<(readOnly: boolean) => void>();
   const readOnly = () => !editing || (guard && held !== undefined && !held.held());
   const tell = () => { for (const fn of [...listeners]) fn(readOnly()); };
+  /** What the last `look` saw: whether read-only, and who held the lock since when. */
+  let seen: string | undefined;
+  const state = (dir: string) => {
+    const x = readOnly() ? lockHolder(dir, env) : undefined;
+    return JSON.stringify([readOnly(), x?.host, x?.started]);
+  };
   return {
     startsReadOnly,
     get lock() { return held; },
@@ -63,6 +74,11 @@ export function createEditing(lock: Lock | undefined, writable: boolean, guard: 
     onChange(fn) {
       listeners.add(fn);
       return () => { listeners.delete(fn); };
+    },
+    look(dir) {
+      const now = state(dir);
+      if (seen !== undefined && now !== seen) tell();
+      seen = now;
     },
   };
 }

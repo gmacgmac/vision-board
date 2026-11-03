@@ -83,6 +83,20 @@ test('an agent joined on ui, calling while main is open: wrong-folder naming the
   await h.ok('list_open', { board: 'ui-own' }, { as: h.agent(joined.secret, multi) });
 });
 
+test('its reads too (FIX_01 F12): a secret of ui\'s, reading while main is open, is wrong-folder, never main\'s boards; no secret, or one no ledger knows, reads as before', async () => {
+  await open(multi, 'ui');
+  const joined = await h.ok('join', { body: { label: 'UI reader' } }, { as: h.agent(undefined, multi) });
+  await open(multi, 'main');
+  for (const [id, input] of [['list_boards', {}], ['get_board', { board: 'plans' }], ['show_node', { board: 'plans', n: 1 }]] as const) {
+    for (const project of [multi, undefined]) {
+      const refused = await h.fails(id, input, 409, 'wrong-folder', h.agent(joined.secret, project));
+      assert.equal(refused.detail, wrongLedger('main', 'ui'), `${id} ${project}`);
+    }
+  }
+  assert.deepEqual((await h.ok('list_boards', {}, { as: h.agent(undefined) })).boards.map((b: { board: string }) => b.board), ['plans']);
+  assert.equal((await h.ok('list_boards', {}, { as: h.agent('s-unknown-to-every-ledger-0000000') })).ledger, 'main');
+});
+
 test('an agent unknown to every ledger of the folder still gets not-authenticated', async () => {
   await open(multi, 'main');
   for (const project of [multi, undefined]) {

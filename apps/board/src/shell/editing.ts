@@ -6,8 +6,6 @@
 // stays read-only (said with the holder `get_project` names, else in the server's words). Stop editing gives the lock back. The chip (EditChip.svelte), the button and the "⋯" row
 // (EditButton.svelte) all come here. With the server opened for editing (`--edit`) the folder says neither, and
 // nothing shows.
-import { flagOn } from '#format';
-import { pageFlags } from '../flags.ts';
 import { openFolderOn } from './folder.ts';
 import { problemWords } from './ledgers.ts';
 import type { FolderInfo } from './page-io.ts';
@@ -15,8 +13,10 @@ import { editLedger, getProject, stopEditing } from './page-io.ts';
 import { shell, toast } from './shell.svelte.ts';
 import * as editingWords from './words/editing.ts';
 
-/** The state chip and its actions (readOnlyStart flag; needs openFolder, which reads the folder). */
-export const editingOn = (): boolean => openFolderOn() && flagOn('readOnlyStart', pageFlags());
+/** The state chip and its actions (needs openFolder, which reads the folder). Not the page's own `readOnlyStart`: the
+ *  server says whether the ledger is read-only, and a ledger the person can't write always shows it, with Edit
+ *  (decision 16; FIX_01 F11). With nothing said, the chip and Edit draw nothing. */
+export const editingOn = (): boolean => openFolderOn();
 
 /** What the header shows: nothing (the flag off on the server, or opened for editing), read-only, or editing here. */
 export type EditState = 'none' | 'read-only' | 'editing';

@@ -33,7 +33,7 @@ const snapshot = (dir: string) => fs.readdirSync(dir, { recursive: true }).map(S
 const lockIn = (dir: string, ledger?: string) => fs.existsSync(ledgerFiles(ledgerFolder(dir, ledger)).lock);
 
 async function readOnlyBoard(flags: Record<string, boolean> = {}): Promise<Harness> {
-  return startBoard({ home, edit: false, flags: { readOnlyStart: true, ...flags } });
+  return startBoard({ home, edit: false, flags: { ledgerFolders: false, readOnlyStart: true, ...flags } });
 }
 
 test('at start: read-only, no lock; a write is refused; Edit takes the lock', async () => {
@@ -108,7 +108,7 @@ test('ledger folders: a switch to another ledger opens it read-only and lets the
 });
 
 test('edit mode (`--edit`): with readOnlyStart on, a switch takes the lock as before and writes go', async () => {
-  const h = await startBoard({ home, flags: { readOnlyStart: true } });
+  const h = await startBoard({ home, flags: { ledgerFolders: false, readOnlyStart: true } });
   const other = project('edited');
   try {
     const opened = await h.ok('open_project', { body: { path: other } });
@@ -120,7 +120,7 @@ test('edit mode (`--edit`): with readOnlyStart on, a switch takes the lock as be
 
 test('Edit over another computer\'s lock gone stale (no beat for 2 minutes, by the lock\'s clock) takes it, as at start', async () => {
   const later = { now: () => Date.now() + 3 * 60_000, host: os.hostname(), pid: process.pid, alive: () => true };
-  const h = await startBoard({ home, edit: false, flags: { readOnlyStart: true }, lockEnv: later });
+  const h = await startBoard({ home, edit: false, flags: { ledgerFolders: false, readOnlyStart: true }, lockEnv: later });
   try {
     const now = new Date().toISOString();
     fs.writeFileSync(ledgerFiles(ledgerFolder(h.project)).lock, `${JSON.stringify({ host: 'another-computer', pid: 1, port: 4466, started: now, beat: now })}\n`);
@@ -128,4 +128,25 @@ test('Edit over another computer\'s lock gone stale (no beat for 2 minutes, by t
     assert.deepEqual((await h.ok('edit_ledger')).editing, { here: true });
     assert.equal(JSON.parse(fs.readFileSync(ledgerFiles(ledgerFolder(h.project)).lock, 'utf8')).host, os.hostname());
   } finally { await h.close(); }
+});
+
+test('Edit on a folder this computer can\'t write: a refusal in words, still read-only, nothing written (FIX_01 F8)', async () => {
+  for (const ledgers of [false, true]) {
+    const h = await readOnlyBoard({ ledgerFolders: ledgers });
+    const dir = project(`unwritable-${ledgers}`, ledgers ? 'main' : undefined);
+    const before = snapshot(dir);
+    try {
+      await h.ok('open_project', { body: { path: dir } });
+      fs.chmodSync(ledgerFolder(dir, ledgers ? 'main' : undefined), 0o555);
+      fs.chmodSync(ledgerFolder(dir), 0o555);
+      const p = await h.fails('edit_ledger', {}, 409, 'conflict');
+      assert.match(p.detail, /can't be written/);
+      assert.equal((await h.ok('get_project')).readOnly, true);
+      assert.deepEqual(snapshot(dir), before, 'nothing written');
+    } finally {
+      fs.chmodSync(ledgerFolder(dir), 0o755);
+      fs.chmodSync(ledgerFolder(dir, ledgers ? 'main' : undefined), 0o755);
+      await h.close();
+    }
+  }
 });

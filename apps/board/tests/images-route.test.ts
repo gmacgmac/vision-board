@@ -13,6 +13,7 @@ import { OPENAPI_FILE } from '#format/files';
 import type { ImageName } from '#format';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { OLD_LAYOUT } from './test-board.ts';
 import type { Got } from './images-support.ts';
 import { IMAGES, SVG, get, imagesDir, problemOf, put } from './images-support.ts';
 import { makeTempDir } from '#format/testing';
@@ -25,7 +26,7 @@ const url = (rel: string) => `${IMAGE_ROUTE}${rel}`;
 let h: Harness;
 let project: string;
 before(async () => {
-  h = await startBoard();
+  h = await startBoard({ flags: OLD_LAYOUT });
   project = fs.realpathSync(h.project);
   // Valid pictures just outside the images folder: in the project and in its ledger folder.
   fs.writeFileSync(path.join(project, 'secret.png'), decoy);
@@ -155,7 +156,7 @@ test('a missing file, a folder and a missing images folder are 404', async () =>
   await refused(url('folder.png'), 404, 'not-found', W.missing);
   await refused(IMAGE_ROUTE, 404, 'not-found', W.empty);
   await refused(IMAGE_ROUTE.slice(0, -1), 404, 'not-found');
-  const bare = await startBoard();
+  const bare = await startBoard({ flags: OLD_LAYOUT });
   try {
     const got = await get(bare.base, url('a.png'));
     assert.equal(got.status, 404);
@@ -204,7 +205,7 @@ test('a link out of the images folder is refused, a link that stays inside works
 
 test('the images folder may itself be a link, but nothing in it may link out of it', async () => {
   const real = fs.realpathSync(makeTempDir('vb-images-'));
-  const linked = await startBoard();
+  const linked = await startBoard({ flags: OLD_LAYOUT });
   try {
     fs.mkdirSync(ledgerFolder(linked.project), { recursive: true });
     fs.symlinkSync(real, imagesDir(linked.project));
@@ -242,7 +243,7 @@ test('only GET and HEAD: any other method is 405 and says so', async () => {
 test('the route serves the folder that is open now, not the one the server started on', async () => {
   const home = fs.realpathSync(makeTempDir('vb-home-'));
   const other = path.join(home, 'projects', 'other');
-  const b = await startBoard({ home });
+  const b = await startBoard({ home, flags: OLD_LAYOUT });
   try {
     put(b.project, 'which.png', IMAGES.png);
     put(other, 'which.png', Buffer.concat([IMAGES.png, Buffer.from('FROM-THE-OTHER-FOLDER')]));

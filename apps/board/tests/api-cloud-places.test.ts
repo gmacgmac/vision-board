@@ -14,6 +14,7 @@ import { projectOf } from '#client';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { OLD_LAYOUT } from './test-board.ts';
 import { makeTempDir } from '#format/testing';
 import { homeFiles, ledgerFiles, ledgerFolder } from '#format';
 
@@ -53,7 +54,7 @@ before(async () => {
   for (const d of ['.Cloud-Hidden', 'node_modules']) fs.mkdirSync(path.join(cloud, d));
   fs.writeFileSync(path.join(cloud, 'Cloud-File.txt'), 'not a folder\n');
   fs.symlinkSync(place, homeLink);
-  h = await startBoard({ home });
+  h = await startBoard({ home, flags: OLD_LAYOUT });
 });
 after(async () => {
   await h.close();

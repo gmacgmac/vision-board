@@ -5,6 +5,7 @@
 // Claude gate's are: refused (said why), allowed without asking, or asked of the person; anything else
 // is refused, because the panel has no way to show it. Only a one-time option is ever chosen, so Kiro
 // keeps no trust of its own from us: "for this session" is the board server's to remember.
+import type { OpenLedger } from './access-rules.ts';
 import type { Facts } from './approvals.ts';
 import { factsFor } from './approvals.ts';
 import { policy } from './policy.ts';
@@ -55,10 +56,10 @@ function pathsOf(toolCall: Rec, input: Rec): string[] {
 }
 
 /** The rules' verdict on `facts`, and on every other path the call names (`also`, judged as `facts`' kind). */
-function judged(facts: Facts, also: string[], cwd: string, strict: boolean): Verdict {
+function judged(facts: Facts, also: string[], cwd: string, strict: boolean, ledger?: OpenLedger): Verdict {
   let asks = false;
   for (const f of [facts, ...also.map((path): Facts => (facts.kind === 'write' ? { ...facts, path } : { kind: 'read', path }))]) {
-    const d = policy(f, cwd, { strict });
+    const d = policy(f, cwd, { strict, ledger });
     if ('refuse' in d) return d;
     if ('ask' in d) asks = true;
   }
@@ -68,10 +69,11 @@ function judged(facts: Facts, also: string[], cwd: string, strict: boolean): Ver
 /**
  * What to do for `toolCall` (an ACP tool call with its `kind`, `locations`, `content` and
  * `rawInput`). `own` says whether the tool is one of the board's own (the `vision-board` server's).
- * `cwd` is the board's folder, which the access rules are relative to; `strict`, the `agentAccessRules`
+ * `cwd` is the board's folder, which the access rules are relative to; `ledger`, the open ledger, whose pictures and
+ * apps a write is asked of the board (it knows whether the ledger may be written now); `strict`, the `agentAccessRules`
  * flag off (nothing goes ahead unasked).
  */
-export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (path: string) => boolean, strict = false): Verdict {
+export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (path: string) => boolean, strict = false, ledger?: OpenLedger): Verdict {
   if (own) return { allow: true };
   const kind = str(toolCall.kind);
   if (kind === 'think') return { allow: true };
@@ -80,11 +82,11 @@ export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (pa
     const named = pathsOf(toolCall, input);
     if (named.length === 0 && kind === 'read') return { refuse: 'The read did not say which file, so it was refused.' };
     const asked = factsFor({ tool_name: kind === 'read' ? 'Read' : 'Grep', tool_input: { file_path: named[0], path: named[0] ?? '' }, cwd }, exists);
-    return 'refuse' in asked ? asked : judged(asked, named.slice(1), cwd, strict);
+    return 'refuse' in asked ? asked : judged(asked, named.slice(1), cwd, strict, ledger);
   }
   if (kind === 'execute') {
     const asked = factsFor({ tool_name: 'Bash', tool_input: { command: str(input.command) }, cwd }, exists);
-    return 'refuse' in asked ? asked : judged(asked, [], cwd, strict);
+    return 'refuse' in asked ? asked : judged(asked, [], cwd, strict, ledger);
   }
   if (kind === 'edit' || kind === 'delete' || kind === 'move') {
     const [change] = diffs(toolCall.content);
@@ -100,7 +102,7 @@ export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (pa
       : { tool_name: 'Write', tool_input: { file_path: file, content: after } };
     const asked = factsFor({ ...hook, cwd }, exists);
     const others = pathsOf(toolCall, input).filter((p) => p !== file).map((p) => (p.startsWith('/') ? p : `${cwd}/${p}`));
-    return 'refuse' in asked ? asked : judged(asked, others, cwd, strict);
+    return 'refuse' in asked ? asked : judged(asked, others, cwd, strict, ledger);
   }
   return { refuse: `The board cannot show a ${kind || 'tool'} request to the person, so it was refused.` };
 }

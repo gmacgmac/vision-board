@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-11-03 (the agent's access in both layouts of the data folder: D-084, ACCESS_01)
+updated: 2026-11-03 (the agent's access in both layouts of the data folder: D-084, ACCESS_01; the open ledger only, while writable: FIX_01)
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -236,6 +236,13 @@ before anything remembered:
   named like a ledger's, under today's pictures (`cat .visionboard/images/*`), is refused too. Held by
   `packages/agent/tests/policy-ledgers.test.ts`, `policy.test.ts` (every row), `claude-args.test.ts` and
   `kiro-turn.test.ts` (the second lines).
+- **The open ledger only, while it may be written** (D-085 3, FIX_01 F2): given the chat's ledger
+  (`access-rules.ts` `OpenLedger`: its folder, `StartOptions.ledgerFolder`), the pictures and apps rows (`openLedger`)
+  hold in that ledger's folder only, so another ledger's `images/` and `apps/` are the board's files; while it is
+  read-only a write there is refused (`ledgerReadOnly`). The board's approvals ask the ledger at each question
+  (`ApprovalOptions.ledger`); the CLI's hook (`AGENT_GATE_LEDGER`) and Kiro's request can't tell, so such a write is
+  asked of the board. Held by `policy-ledgers.test.ts` ("the open ledger only…"), `gate.test.ts` ("the open
+  ledger…") and `apps/board/tests/chat-approvals.test.ts`.
 - **What the person attached** (D-068, D-069 rulings 1, 2): `.visionboard/attachments/**` is read freely and its
   file tools are refused. A command the rules can't judge asks about an attached file, as about any other file
   in the folder: the row's own `unknownCommand` (`access-rules.ts`), which no other row has, so the ledger, `.git/`

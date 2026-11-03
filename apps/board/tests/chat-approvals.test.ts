@@ -195,6 +195,23 @@ test('the rules first: a refused path is denied unasked, whatever is kept; an al
   assert.equal(a.events.length, seen, 'nobody was asked');
 });
 
+test('the open ledger, asked at each question (FIX_01 F2): its pictures go while it may be written; read-only, or another ledger\'s, are denied unasked', async () => {
+  let writable = true;
+  const a = setup(undefined, undefined, { ledger: () => ({ folder: '.visionboard/main', writable }) });
+  const go = { approved: true, status: 'approved', asked: false };
+  const no = { approved: false, status: 'denied', asked: false };
+  assert.deepEqual(await a.approvals.ask(write('.visionboard/main/images/a.svg')), go);
+  assert.deepEqual(await a.approvals.ask(write('.visionboard/ui/images/a.svg')), no, 'another ledger\'s');
+  assert.deepEqual(await a.approvals.ask(write('.visionboard/images/a.svg')), no, 'today\'s layout, with main open');
+  writable = false; // Stop editing, or the lock lost: the next question already knows
+  for (const f of [write('.visionboard/main/images/a.svg'), write('.visionboard/main/apps/calc/x.js'), command('cp a.svg .visionboard/main/images/a.svg')]) {
+    assert.deepEqual(await a.approvals.ask(f), no, JSON.stringify(f));
+  }
+  assert.equal(a.events.length, 0, 'nobody was asked');
+  writable = true;
+  assert.deepEqual(await a.approvals.ask(write('.visionboard/main/images/a.svg')), go, 'Edit again');
+});
+
 test('a kept yes is narrow: a write covers its file\'s folder; a command its first words; an interpreter never', async () => {
   const a = setup();
   await answered(a, write('src/a.ts'), { approved: true, scope: 'session' });

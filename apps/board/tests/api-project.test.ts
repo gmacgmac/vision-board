@@ -13,6 +13,7 @@ import { boardList } from '#actions';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { OLD_LAYOUT } from './test-board.ts';
 import { alive, fakeChat, gone } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
 import { homeFiles, ledgerFiles, ledgerFolder } from '#format';
@@ -45,7 +46,7 @@ before(async () => {
   fs.writeFileSync(path.join(home, 'notes.txt'), 'not a folder\n');
   fs.symlinkSync(outside, path.join(home, 'out'));
   fs.symlinkSync(example, path.join(home, 'shortcut'));
-  h = await startBoard({ home, chat: { adapters: fake.adapters } });
+  h = await startBoard({ home, flags: OLD_LAYOUT, chat: { adapters: fake.adapters } });
   agent = await h.join('Folder test agent');
 });
 after(async () => {

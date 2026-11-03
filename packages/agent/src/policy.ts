@@ -7,7 +7,7 @@
 // Pure but for the disk, which it sees only through an injected reader (`NODE_READER` by default).
 import { lstatSync, readdirSync, readlinkSync, realpathSync } from 'node:fs';
 import path from 'node:path';
-import type { CommandOp, AccessVerdict } from './access-rules.ts';
+import type { CommandOp, AccessVerdict, OpenLedger } from './access-rules.ts';
 import { OUTSIDE_RULE, accessFor, refusedTail, stricter, verdictOf } from './access-rules.ts';
 import type { AskScope, Facts } from './approvals.ts';
 import { knownChanges } from './command-changes.ts';
@@ -50,6 +50,9 @@ export interface PolicyOptions {
   /** For a command: the shell's working folder (Claude's hook `cwd`), which its relative words are
    * resolved from; the rules stay relative to the board's folder. Left out, the board's folder. */
   cwd?: string;
+  /** The ledger the chat works on (`OpenLedger`): only its pictures and apps are written, only while it may be.
+   * Left out, every ledger's are, as the rows say. */
+  ledger?: OpenLedger | undefined;
 }
 
 const gone = (e: unknown) => ['ENOENT', 'ENOTDIR'].includes((e as { code?: string }).code ?? '');
@@ -103,10 +106,10 @@ interface Judged {
   at: ResolvedPath;
 }
 
-function judge(root: string, input: string, op: CommandOp, reader: PathReader, base = root): Judged {
+function judge(root: string, input: string, op: CommandOp, reader: PathReader, base = root, open?: OpenLedger): Judged {
   const at = place(root, input, reader, base);
   if (at.rel === null) return { verdict: verdictOf(OUTSIDE_RULE, op), why: OUTSIDE_RULE.why, inside: false, once: false, at };
-  const { verdict, rule } = accessFor(at.rel, op);
+  const { verdict, rule } = accessFor(at.rel, op, open);
   const once = verdict !== 'refuse' && ((!!at.stat?.isFile() && at.stat.nlink > 1) || (op === 'unknown' && rule.unknownCommand !== undefined));
   return { verdict: once ? stricter(verdict, 'ask') : verdict, why: rule.why, inside: true, once, at };
 }
@@ -176,7 +179,7 @@ function searchOf(root: string, j: Judged, reader: PathReader): ReturnType<typeo
 }
 
 /** `fed`: what this command prints goes to a command known to change what it is given (`rm "$(ls x)"`), so its words count as changed. */
-function commandPolicy(command: string, root: string, reader: PathReader, strict: boolean, base: string, depth = 0, fed = false): Decision {
+function commandPolicy(command: string, root: string, reader: PathReader, strict: boolean, base: string, depth = 0, fed = false, open?: OpenLedger): Decision {
   if (runsProgram(command) !== null) return { refuse: words.gitIsThePersons };
   const readOnly = fed ? null : readOnlyCommand(command);
   const changes = readOnly ? null : knownChanges(command);
@@ -186,14 +189,14 @@ function commandPolicy(command: string, root: string, reader: PathReader, strict
   let scriptOnce = false;
   for (const script of shellScripts(command)) {
     if (depth >= SCRIPT_DEPTH) throw new Unfollowable();
-    const d = commandPolicy(script, root, reader, strict, base, depth + 1, feeds);
+    const d = commandPolicy(script, root, reader, strict, base, depth + 1, feeds, open);
     if ('refuse' in d) return d;
     if ('ask' in d && !d.scopes.includes('session')) scriptOnce = true;
   }
   const { segments } = shellWords(command);
   for (const word of segments.flat()) {
     for (const c of candidates(word.text)) {
-      const rule = refusedTail(c, opOf(c), word.glob);
+      const rule = refusedTail(c, opOf(c), word.glob, open);
       if (rule) return { refuse: words.commandNames(c, rule.why) };
     }
   }
@@ -201,7 +204,7 @@ function commandPolicy(command: string, root: string, reader: PathReader, strict
   let verdict: AccessVerdict = readOnly ? 'allow' : 'ask';
   for (const word of segments.flatMap((s) => s.slice(1))) {
     for (const c of candidates(word.text)) {
-      const j = judge(root, c, opOf(c), reader, base);
+      const j = judge(root, c, opOf(c), reader, base, open);
       if (j.verdict === 'refuse') return { refuse: words.commandNames(c, j.why) };
       verdict = stricter(verdict, j.verdict);
       judged.push(j);
@@ -227,10 +230,10 @@ export function policy(facts: PolicyFacts, folder: string, options: PolicyOption
     if (facts.kind === 'command') {
       let base = root;
       if (options.cwd !== undefined) { try { base = reader.realpath(options.cwd); } catch { return { refuse: words.cannotFollow }; } }
-      return commandPolicy(facts.command, root, reader, strict, base);
+      return commandPolicy(facts.command, root, reader, strict, base, 0, false, options.ledger);
     }
     if (facts.path === '') return { refuse: words.noPath };
-    const j = judge(root, facts.path, facts.kind === 'read' ? 'read' : 'write', reader);
+    const j = judge(root, facts.path, facts.kind === 'read' ? 'read' : 'write', reader, root, options.ledger);
     if (j.verdict === 'refuse') return { refuse: j.why };
     const found = facts.kind === 'read' && facts.recursive ? searchOf(root, j, reader) : undefined;
     if (found !== undefined) {

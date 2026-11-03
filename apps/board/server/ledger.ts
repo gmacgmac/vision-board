@@ -12,7 +12,8 @@
 // and the next `seq` stay current and every listener hears of them too. A file replaced rather than grown (a git
 // pull, a sync, a copy dropped in: another inode, shorter, or its first bytes changed) is read again from the start
 // and every reset listener is told (D-085 6). While the host's read-only check says so, nothing is appended at all
-// (`read-only`, D-085 3): the one gate every line passes, whoever writes it.
+// (`read-only`, D-085 3): the one gate every line passes, whoever writes it. A file that had lines and has gone (moved
+// into `main/` by another server) reads as empty, and nothing is appended until it is back (`conflict`).
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -219,8 +220,14 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
       try { fn(); } catch (err) { warn(`ledger: reset listener failed: ${String(err)}`); }
     }
   };
+  /** The file held lines (or was there) when last read and is gone now: moved into `main/` by another server
+   * (decision 7) or deleted. Read as empty, but nothing is appended until it is back, so no second ledger starts in
+   * the old place (FIX_01 F1). */
+  let gone = false;
   const refresh = () => {
     const stat = fs.statSync(file, { throwIfNoEntry: false });
+    if (!stat && (h.size > 0 || h.ino !== 0)) gone = true;
+    else if (stat) gone = false;
     if (replaced(file, h, stat)) return reopen();
     if (!h.ino && stat) h.ino = stat.ino; // the file was made since it was opened
     const now = stat?.size ?? 0;
@@ -271,6 +278,7 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
       // Read-only: refused before anything is read, stamped or written (D-085 3), in the caller's words.
       if (readOnly()) throw problem('read-only', caller.by === 'agent' ? READ_ONLY : READ_ONLY_PERSON);
       refresh();
+      if (gone) throw problem('conflict', serverFoldersWords.ledgerFileGone);
       const e = stamp(input, caller, h.ix.seq + 1, h.ix);
       const errors = check(input, e, h.ix, h.s, opts.board);
       if (errors.length) {

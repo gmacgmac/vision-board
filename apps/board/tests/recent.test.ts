@@ -6,7 +6,7 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { RECENT_MAX, addRecent, readRecent, recentPath, startFolder } from '../server/recent.ts';
+import { RECENT_MAX, addRecent, lastLedger, readRecent, recentPath, startFolder } from '../server/recent.ts';
 import { makeTempDir } from '#format/testing';
 import { homeFiles } from '#format';
 
@@ -64,4 +64,14 @@ test('start: VB_PROJECT wins, then the newest recent folder under home, then the
   assert.equal(startFolder({ home, fallback: b }), b, 'a recent folder outside home is never opened');
   write('not json');
   assert.equal(startFolder({ home, fallback }), fallback);
+});
+
+test('the last ledger is found by the folder\'s real path too: a link to it, or /var for /private/var (FIX_01 F14)', () => {
+  const real = folder('linked');
+  const link = path.join(home, 'linked-here');
+  fs.symlinkSync(real, link);
+  addRecent(home, real, 'ui');
+  assert.equal(lastLedger(home, link), 'ui');
+  assert.equal(lastLedger(home, real), 'ui');
+  assert.equal(lastLedger(home, path.join(home, 'projects', 'gone')), undefined);
 });

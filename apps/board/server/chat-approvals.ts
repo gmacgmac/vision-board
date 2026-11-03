@@ -12,7 +12,7 @@
 // approvalHold flag, PLAN ruling 335) a question waits until the person answers, Stops or sends a new
 // message; the request then carries no `expiresAt`.
 import { randomBytes } from 'node:crypto';
-import type { ApprovalAnswer, ApprovalOutcome, ApprovalStatus, AskScope, Cover, Facts, PathReader } from '#agent';
+import type { ApprovalAnswer, ApprovalOutcome, ApprovalStatus, AskScope, Cover, Facts, OpenLedger, PathReader } from '#agent';
 import { coverOf, policy } from '#agent';
 import type { Permissions } from './chat-permissions.ts';
 import { problem } from './problem.ts';
@@ -50,6 +50,9 @@ export interface ApprovalOptions {
   kept?: Permissions | undefined;
   /** The disk as the rules see it (tests). */
   reader?: PathReader | undefined;
+  /** The open ledger now, and whether it may be written: only its pictures and apps are written, only while it may be
+   * (the rules' `OpenLedger`; FIX_01 F2). Asked at each question, so Stop editing or a lost lock holds at once. */
+  ledger?: (() => OpenLedger) | undefined;
 }
 
 interface Pending { cover: Cover | null; scopes: AskScope[]; timer: NodeJS.Timeout | undefined; resolve: (o: ApprovalOutcome) => void }
@@ -58,7 +61,7 @@ const keyOf = (c: Cover) => (c.kind === 'command' ? `command\0${c.head}` : `${c.
 
 /** `emit` stamps and sends a draft, and returns the event. */
 export function createApprovals<E>(emit: (draft: ApprovalDraft) => E, options: ApprovalOptions): Approvals<E> {
-  const { folder, ttlMs = APPROVAL_TTL_MS, onWait, strict = false, kept, reader } = options;
+  const { folder, ttlMs = APPROVAL_TTL_MS, onWait, strict = false, kept, reader, ledger } = options;
   const pending = new Map<string, Pending>();
   const settled = new Map<string, ApprovalStatus>();
   /** The covers of yeses for the session. */
@@ -83,7 +86,7 @@ export function createApprovals<E>(emit: (draft: ApprovalDraft) => E, options: A
   return {
     ask(facts, signal) {
       // A command's words are judged from the shell's folder, which the gate's facts carry when it is not the board's.
-      const at = { ...(reader && { reader }), ...(facts.kind === 'command' && facts.cwd !== undefined && { cwd: facts.cwd }) };
+      const at = { ...(reader && { reader }), ...(facts.kind === 'command' && facts.cwd !== undefined && { cwd: facts.cwd }), ledger: ledger?.() };
       let rules = policy(facts, folder, { strict, ...at });
       // What the gate asked about, the server never lets through unasked (VERIFY_01 F4).
       if (facts.kind === 'command' && 'allow' in rules) rules = policy(facts, folder, { strict: true, ...at });
