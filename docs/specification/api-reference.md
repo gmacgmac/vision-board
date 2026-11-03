@@ -51,12 +51,13 @@ API version 1.41.0. Every operation on the project ledger, defined once. The MCP
 
 `GET /api/boards` · who: anyone (no credentials) · MCP tool `list_boards`, `vb` command `vb list-boards`
 
-List the project's boards. Call it first: the other tools take a board id. No input, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).
+List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
+| `ledger` | query | string | no | Another ledger of this folder to read, read-only. |
 | `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
@@ -70,8 +71,8 @@ Media type `application/json`.
 | `boards` | list of object | yes | Every board in the project. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `project` | string | yes | The folder the board server has open, as the person reads it (`~/projects/example`); every board listed is in its ledger. |
-| `ledger` | string | no | The ledger the board server has open in that folder; every board listed is in it. Given only with ledger folders. |
-| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. |
+| `ledger` | string | no | The ledger every board listed is in: the one the board server has open in that folder, or the other one the read named (`ledger`, read-only). Given only with ledger folders. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 
@@ -95,6 +96,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
@@ -110,6 +112,7 @@ Read one board as it is now. Pass `board`. Returns `head`, the View (regions, no
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
 | `board` | path | string | yes | The board id, from list_boards. |
+| `ledger` | query | string | no | Another ledger of this folder to read, read-only. |
 | `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
@@ -129,7 +132,8 @@ Media type `application/json`.
 | `boardHolders` | list of object | no | The agents that may write on this board now, creator first; left out when there are none. |
 | `holders` | object | no | Region id to the agents that hold it now, creator first; a region with none, and a board with none, are left out. |
 | `locked` | `true` | no | Present, and true, while the person has the board locked: it is read-only for everyone, and every write on it is refused with `locked` until the person unlocks it. |
-| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. |
+| `ledger` | string | no | The other ledger of the folder this was read from, when the read named one (`ledger`); it comes with `readOnly: true`. Left out for the open ledger. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 
@@ -190,7 +194,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
@@ -313,6 +317,7 @@ Read one card with its history. Pass `board` and `n`, the card's number on that 
 | `board` | path | string | yes | The board id, from list_boards. |
 | `n` | path | integer | yes | The card's number on this board (1, 2, 3... in the order drawn). |
 | `linked` | query | boolean | no | True also returns the nodes linked to this one. |
+| `ledger` | query | string | no | Another ledger of this folder to read, read-only. |
 | `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
@@ -339,6 +344,8 @@ Media type `application/json`.
 | `retired` | integer | no | The ledger line that took the card off the board, for a retired card; left out while it is on the board. Its history stays readable and its number is never given again. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `linked` | list of object | no | The nodes linked to this one, each in full. Present only when `linked` is true. |
+| `ledger` | string | no | The other ledger of the folder this was read from, when the read named one (`ledger`); it comes with `readOnly: true`. Left out for the open ledger. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 
@@ -430,7 +437,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
@@ -540,7 +547,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
@@ -631,7 +638,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
@@ -689,7 +696,7 @@ Example:
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 401 | `not-authenticated` | The Bearer secret is missing or unknown. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
@@ -759,7 +766,7 @@ Example:
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 401 | `not-authenticated` | The Bearer secret is missing or unknown. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
@@ -789,7 +796,7 @@ Media type `application/json`.
 | `events` | list of object | yes | The ledger lines after `after`, oldest first. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `more` | `true` | no | Present, and true, only when there is more to read or the answer repeats an earlier one |
-| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 
@@ -874,7 +881,7 @@ Example (Two lines):
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
@@ -1035,7 +1042,7 @@ Example (A request for the whole board):
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 401 | `not-authenticated` | The Bearer secret is missing or unknown. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `read-only` | The board server has another folder open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that they can press Edit. Nothing was written either way. |
 | 413 | `too-large` | The body or the batch is over the limit. |
@@ -1178,7 +1185,7 @@ Example:
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 401 | `not-authenticated` | The Bearer secret is missing or unknown. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `read-only` | The board server has another folder open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that they can press Edit. Nothing was written either way. |
 | 413 | `too-large` | The body or the batch is over the limit. |
@@ -1290,7 +1297,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `conflict` | A `send` whose chat session could not be loaded: the chat could not be reached. Nothing was recorded, so the person's answers are still unsent and Send can be pressed again. Or the ledger is open read-only (`read-only`): nothing was recorded until the person presses Edit. |
 | 413 | `too-large` | The body or the batch is over the limit. |
@@ -1375,7 +1382,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
 | 413 | `too-large` | The body or the batch is over the limit. |
@@ -1458,7 +1465,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
 | 413 | `too-large` | The body or the batch is over the limit. |
@@ -1519,7 +1526,7 @@ Example (The person pressed Edit):
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
@@ -2320,7 +2327,7 @@ Example:
 |---|---|---|
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `conflict` | The attachments folder is a link, not a folder, so nothing was saved. |
 | 413 | `too-large` | The body or the batch is over the limit. |
@@ -2413,7 +2420,7 @@ Example:
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 401 | `not-authenticated` | The Bearer secret is missing or unknown. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
-| 404 | `not-found` | No such board, node or region. |
+| 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
 | 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 413 | `too-large` | The body or the batch is over the limit. |

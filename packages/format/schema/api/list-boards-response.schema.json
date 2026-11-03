@@ -57,8 +57,8 @@
     },
     "ledger": {
       "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName",
-      "description": "The ledger the board server has open in that folder; every board listed is in it. Given only with ledger folders.",
-      "$comment": "ledgerFolders flag (LEDGERS_01, D-084 rule 3; D-083 rule 4)"
+      "description": "The ledger every board listed is in: the one the board server has open in that folder, or the other one the read named (`ledger`, read-only). Given only with ledger folders.",
+      "$comment": "ledgerFolders flag (LEDGERS_01, D-084 rule 3; D-083 rule 4; CONSOLIDATE_01, D-084 rule 8)"
     },
     "readOnly": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly"

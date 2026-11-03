@@ -5,18 +5,31 @@
     {
       "name": "list_boards",
       "title": "List the boards",
-      "description": "List the project's boards. Call it first: the other tools take a board id. No input, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
+      "description": "List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
       "input": {
         "type": "object",
-        "properties": {},
+        "properties": {
+          "ledger": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+            "description": "Another ledger of this folder to read, read-only."
+          }
+        },
         "additionalProperties": false
       },
       "writes": false,
       "secret": false,
       "route": {
         "path": [],
-        "query": [],
+        "query": [
+          "ledger"
+        ],
         "body": []
+      },
+      "inputHosts": {
+        "ledger": [
+          "standalone"
+        ]
       },
       "hosts": [
         "standalone",
@@ -34,6 +47,11 @@
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
             "description": "The board id, from list_boards."
+          },
+          "ledger": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+            "description": "Another ledger of this folder to read, read-only."
           }
         },
         "required": [
@@ -47,8 +65,15 @@
         "path": [
           "board"
         ],
-        "query": [],
+        "query": [
+          "ledger"
+        ],
         "body": []
+      },
+      "inputHosts": {
+        "ledger": [
+          "standalone"
+        ]
       },
       "hosts": [
         "standalone",
@@ -76,6 +101,11 @@
             "type": "boolean",
             "default": false,
             "description": "True also returns the nodes linked to this one."
+          },
+          "ledger": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+            "description": "Another ledger of this folder to read, read-only."
           }
         },
         "required": [
@@ -92,9 +122,15 @@
           "n"
         ],
         "query": [
-          "linked"
+          "linked",
+          "ledger"
         ],
         "body": []
+      },
+      "inputHosts": {
+        "ledger": [
+          "standalone"
+        ]
       },
       "hosts": [
         "standalone",

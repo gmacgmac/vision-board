@@ -31,8 +31,10 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "list-boards", operationId: "list_boards", takesBody: false,
     summary: "List the boards",
-    description: "List the project's boards. Call it first: the other tools take a board id. No input, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
-    inputs: [],
+    description: "List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
+    inputs: [
+      {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
+    ],
   },
   {
     name: "get-board", operationId: "get_board", takesBody: false,
@@ -40,6 +42,7 @@ export const COMMANDS: readonly CommandInfo[] = [
     description: "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`). For one node's history, use `show_node`.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
+      {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
     ],
   },
   {
@@ -50,6 +53,7 @@ export const COMMANDS: readonly CommandInfo[] = [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
       {"name":"n","in":"path","type":"integer","required":true,"description":"The card's number on this board (1, 2, 3... in the order drawn)."},
       {"name":"linked","in":"query","type":"boolean","required":false,"description":"True also returns the nodes linked to this one."},
+      {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
     ],
   },
   {

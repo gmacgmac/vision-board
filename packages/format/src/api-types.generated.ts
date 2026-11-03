@@ -7,12 +7,15 @@
 /** Each operation's input (path and query parameters by name, `body` for a JSON body) and its success answer. */
 export interface OperationTypes {
   list_boards: {
-    input: Record<never, never>;
+    input: {
+      ledger?: string;
+    };
     output: ListBoardsResponse;
   };
   get_board: {
     input: {
       board: string;
+      ledger?: string;
     };
     output: GetBoardResponse;
   };
@@ -28,6 +31,7 @@ export interface OperationTypes {
       board: string;
       n: number;
       linked?: boolean;
+      ledger?: string;
     };
     output: ShowNodeResponse;
   };
@@ -307,6 +311,7 @@ type GetBoardResponse = {
   boardHolders?: GetBoardResponseHolder[];
   holders?: Record<string, GetBoardResponseHolder[]>;
   locked?: true;
+  ledger?: string;
   readOnly?: true;
 };
 type View = {
@@ -421,6 +426,8 @@ type CommonKey = string;
 type ShowNodeResponse = {
   head: number;
   linked?: CommonNodeDetail[];
+  ledger?: string;
+  readOnly?: true;
 } & CommonNodeDetailCore;
 type CommonNodeDetail = CommonNodeDetailCore;
 type CommonNodeDetailCore = {

@@ -53,9 +53,10 @@ test('x-hosts says what a plugin bot gets: never the agent\'s own identity, the 
   assert.throws(() => toolTableWithHosts(withOp({ 'x-agent': false, 'x-hosts': ['plugin'] }), loadSchemas()), /only for an x-agent/);
 });
 
-test('x-hosts on an input says who gives it: check_responses\'s `wait` is standalone\'s alone, so a host\'s bot cannot hold its turn; a say on an unknown host stops the build', () => {
+test('x-hosts on an input says who gives it: check_responses\'s `wait` is standalone\'s alone, so a host\'s bot cannot hold its turn, and so is the reads\' `ledger` (a host keeps one ledger); a say on an unknown host stops the build', () => {
   const limited = Object.fromEntries(table.tools.filter((t) => t.inputHosts).map((t) => [t.name, t.inputHosts]));
-  assert.deepEqual(limited, { check_responses: { wait: ['standalone'] } });
+  const ledger = { ledger: ['standalone'] };
+  assert.deepEqual(limited, { check_responses: { wait: ['standalone'] }, list_boards: ledger, get_board: ledger, show_node: ledger });
   for (const row of table.tools.filter((t) => t.inputHosts)) {
     for (const name of Object.keys(row.inputHosts)) assert.ok(name in row.input.properties, `${row.name}: ${name} is an input`);
   }

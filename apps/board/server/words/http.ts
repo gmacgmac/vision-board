@@ -28,6 +28,7 @@ export const thisPathAnswersOnly = (allow: string): string => `This path answers
 
 // ---- engine.ts
 export const theChipNamesNothingOn = 'The chip names nothing on the board.';
+export const oneLedgerHere = 'The query parameter `ledger` reads another ledger of the folder, and this board keeps one ledger: read without it.';
 
 // ---- operations.ts
 export const theInThePath = (PATH_WORDS: string): string => `The ${PATH_WORDS} in the path`;
