@@ -72,7 +72,7 @@ const edited = (text: string, edits: readonly { from: string; to: string }[], wh
  * out, and with the rules on, what a host's bot may not do. */
 function forPlugin(row: ToolRow, rules: boolean): string {
   const edits = [...descriptionEdits, ...(rules ? ruleEdits : [])].filter((e) => e.tool === row.name);
-  return edited(row.description, edits, `${row.name}'s description`);
+  return edited(row.description, edits, row.name);
 }
 
 /** The inputs of `row` a plugin bot is not given (none with the rules off). */
@@ -100,7 +100,7 @@ function inputForPlugin(row: ToolRow, input: Record<string, unknown>): Record<st
 
 /** The refusal of an input a host does not give, sent anyway: `invalid`, with the words for that input. */
 function refusedInput(tool: string, name: string): ToolResult {
-  const words = inputRefusals[`${tool}.${name}`];
+  const words = inputRefusals.find((r) => r.tool === tool && r.input === name);
   if (!words) throw new Error(`words/plugin-tools.ts inputRefusals has no words for ${tool}.${name}`);
   return problemResult(problem('invalid', words.detail, { errors: [{ pointer: `/${name}`, detail: words.pointer }] }).body);
 }

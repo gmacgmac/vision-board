@@ -80,7 +80,7 @@ test('every input a host\'s bot is not given has the words that refuse it, and n
   const rows = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: { name: string; hosts: string[]; inputHosts?: Record<string, string[]> }[] }).tools;
   const limited = rows.filter((r) => r.hosts.includes('plugin'))
     .flatMap((r) => Object.entries(r.inputHosts ?? {}).filter(([, hosts]) => !hosts.includes('plugin')).map(([name]) => `${r.name}.${name}`));
-  assert.deepEqual(Object.keys(inputRefusals).sort(), limited.sort());
+  assert.deepEqual(inputRefusals.map((r) => `${r.tool}.${r.input}`).sort(), limited.sort());
 });
 
 test('no holding the turn, flag off: `wait` is listed and holds until the host\'s signal ends it, as before', async () => {

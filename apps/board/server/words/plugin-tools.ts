@@ -30,14 +30,16 @@ export const ruleEdits: readonly DescriptionEdit[] = [
   { tool: 'check_responses', from: '; a wait that times out returns `{ responses: [], head }`.', to: '.' },
 ];
 
-/** Why an input a host does not give is refused (`detail`) and its pointer's words, by `<tool>.<input>`: a test holds
+/** Why an input a host does not give is refused (`detail`) and its pointer's words, one per tool and input: a test holds
  * one for every input the tool table limits to other hosts. */
-export const inputRefusals: Readonly<Record<string, { detail: string; pointer: string }>> = {
-  'check_responses.wait': {
+export const inputRefusals: readonly { tool: string; input: string; detail: string; pointer: string }[] = [
+  {
+    tool: 'check_responses',
+    input: 'wait',
     detail: '`check_responses` takes no `wait` here: your host brings the person\'s answers in their next message, when they press Send. Don\'t wait for them: end your turn.',
     pointer: 'not given under a host',
   },
-};
+];
 
 /** The MCP server's instructions for a host's bot (`createMcpServer({ tools })`, from `tools.instructions`): the
  * standalone joined text (`#mcp` `INSTRUCTIONS_JOINED`) less what a host's bot does not have (`join`, a secret, `wait`, a
