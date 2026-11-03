@@ -924,8 +924,11 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
       layout read-only, when another server's Edit moves it into `main/` (or `ledgers:undo` moves it back), opens it
       again where it is, read-only, on its next request or Edit, its streams ended as on a switch. Its Edit then takes
       `main/`'s lock or is refused. A ledger whose file held lines and has gone appends nothing until it is back
-      (`ledger.ts` `append`, `conflict`), so no second ledger starts in the old place. Tests:
-      `api-ledger-moved.test.ts`, `ledger-replace.test.ts` ("a file that held lines and is gone…").
+      (`ledger.ts` `checkWritable`, `conflict`), so no second ledger starts in the old place; a `join` asks it before
+      storing the agent's hash, so none is left behind. An agent's secret is checked against the file as it is now
+      (`callers.ts` looks again first), so its first call after the file is back goes. Tests:
+      `api-ledger-moved.test.ts`, `api-ledger-gone.test.ts`, `ledger-replace.test.ts` ("a file that held lines and is
+      gone…").
     - **Off**: no `ledger` or `ledgers` in any answer, `ledger` and `keepOutOfGit` in a request are
       ignored, and a folder opens in place. A folder already in ledger folders is refused with `conflict` naming the
       flag, at start (`server.ts`) and on a switch, before anything is written (`ledgers.ts` `refuseLedgerFolders`):
@@ -1831,8 +1834,9 @@ headers and answers) is [images.md](./images.md); this section is what the API s
       read-only (`Lock.held`), so a writer stops before its next line. The heartbeat beats only a lock held, and a
       holder whose own last beat is 2 minutes old (`STALE_MS`, after a sleep) never beats or removes it again: its copy
       may not show another computer's takeover yet (`lock.test.ts` "a holder waking…"). Each beat also looks again
-      (`Editing.look`): this server's lock lost, or another computer starting or stopping, sends `editing`
-      (`editing.test.ts`).
+      (`Editing.look`): this server's lock lost, or another computer starting or stopping, sends `editing`; what it
+      compares with is also what a page was last told (`Editing.info`, `get_project`), so a change before the first beat
+      is told on it (`editing.test.ts`).
     - **Reads say it** (`common.schema.json` `readOnly`, only when true, like `locked`): `get_board`, `list_boards`
       and `read_ledger` carry `readOnly: true` (`engine/operations.ts` `readOnlyMark`). With the flag on, `get_project`
       (and `open_project`, `edit_ledger`, `stop_editing`) answer `readOnly` and `editing`: `{ here: true }` while

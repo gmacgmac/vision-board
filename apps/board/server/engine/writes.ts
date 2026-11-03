@@ -96,13 +96,15 @@ const retireCards: Op = async (ctx) => {
 };
 
 /** A new agent: id and secret, shown once. The hash is stored before the `join` line is
- * appended, so a secret the board hands out is always one it knows (api.md 21). */
+ * appended, so a secret the board hands out is always one it knows (api.md 21); and only once the line can be
+ * appended, so a refused join leaves no hash behind (FIX_01 Run 2, N1). */
 const join: Op = async (ctx) => {
   const { ledger, agents } = ctx;
   const { label } = await body('join', ctx, JOIN_LIMIT);
   const store = agents();
   const agent = store.mint(ledger.state().index.agents);
   const secret = newToken();
+  ledger.checkWritable({ by: 'agent', agent });
   store.add(agent, secret);
   ledger.append({ type: 'join', label }, { by: 'agent', agent });
   return reply(201, { agent, secret, ...whereAnswer(ctx) });

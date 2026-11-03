@@ -50,3 +50,14 @@ test('the beat tells when the lock changed hands elsewhere, once per change', ()
   watching.look(dir);
   assert.deepEqual(seen, [true, true], 'a watcher hears another computer start and stop');
 });
+
+test('what a page was told is noted: a change before the first beat is told on it (N2)', () => {
+  const other = take(there); // another computer edits when this server opens the ledger
+  const watching = createEditing(undefined, false, true, true, here);
+  assert.equal((watching.info(dir) as { host: string }).host, 'there', 'the page is told who edits');
+  const seen: boolean[] = [];
+  watching.onChange((readOnly) => seen.push(readOnly));
+  other.release(); // it stops a second later, before this server's first beat
+  watching.look(dir);
+  assert.deepEqual(seen, [true], 'told on the first beat');
+});
