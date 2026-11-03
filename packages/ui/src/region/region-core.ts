@@ -177,7 +177,7 @@ export interface RegionState {
    *  the container holds new or updated cards the person has not engaged with. Left out while it
    *  does not; the page adds it (`regionFresh`). */
   fresh?: RegionFresh;
-  /** The board is locked (`BoardState.locked`, N40 ruling 4): the layout icons, the widths switch,
+  /** The board is locked (`BoardState.locked`, N40 ruling 4), or its ledger read-only (`BoardState.readOnly`, D-085): the layout icons, the widths switch,
    *  the grip, Comment, the note's Edit and Remove, Reset places, Put container back and Remove
    *  access are paused (paused.ts); the cog still opens its menu. Left out while it is not. */
   paused?: true;
@@ -243,6 +243,6 @@ export function regionState(
     commentLabel: commentLabel(title, note?.badge ?? 'none'),
     showEmpty: !nodes.some((n) => placed.has(n.id)),
     ...(holders !== undefined && holders.length > 0 && { holders: regionHolders(holders) }),
-    ...(s.locked && { paused: true as const }),
+    ...((s.locked || s.readOnly) && { paused: true as const }),
   };
 }

@@ -32,7 +32,8 @@
 [data-tier='half'] .vb-folder-chip-name { display: none; }
 
 /* The counts: "14 open" and "3 new" keep their words at full and half; the chips that come and go are bare
-   up to 1500px; a crowded half gives up those words and Locked's word too, and a third draws one compact count. */
+   up to 1500px; a crowded half gives up those words and Locked's word too, and a third draws one compact count. The
+   ledger's state (Read-only or Editing, readOnlyStart flag; styles/editing.css) gives up its word with Locked's. */
 @container vb-bar (max-width: 1500px) {
   .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face) .vb-chip-word, .vb-toolbar-end :is(.vb-chat-mark-word, .vb-chat-news-word) {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
@@ -40,16 +41,16 @@
   .vb-counts .vb-chip[data-tone='agent'] .vb-btn-icon { display: block; width: 14px; height: 14px; }
 }
 @container vb-bar (max-width: 1400px) {
-  .vb-toolbar[data-tier='full']:has(.vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) .vb-chip-locked .vb-chip-word {
+  .vb-toolbar[data-tier='full']:has(.vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) :is(.vb-chip-locked, .vb-chip-editing) .vb-chip-word {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
 }
 @container vb-bar (max-width: 900px) {
-  .vb-toolbar[data-tier='half']:has(.vb-chip-locked, .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) :is(.vb-counts :is([data-tone='open'], .vb-menu-face), .vb-chip-locked) .vb-chip-word {
+  .vb-toolbar[data-tier='half']:has(.vb-chip-locked, .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) :is(.vb-counts :is([data-tone='open'], .vb-menu-face), .vb-chip-locked, .vb-chip-editing) .vb-chip-word {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
 }
-[data-tier='third'] .vb-chip-locked .vb-chip-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+[data-tier='third'] :is(.vb-chip-locked, .vb-chip-editing) .vb-chip-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .vb-count { gap: var(--vb-space-1); }
 .vb-count-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--vb-accent); }
 

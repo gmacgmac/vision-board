@@ -12,6 +12,7 @@
   import { mayLeave, openLedger, problemWords } from './ledgers.ts';
   import type { FolderInfo } from './page-io.ts';
   import { shell, toast } from './shell.svelte.ts';
+  import * as chromeCommonWords from '../board/words/chrome-common.ts';
   import * as ledgerWords from './words/ledgers.ts';
 
   let { id, look, choose, row, folder = undefined, opening = undefined }: {
@@ -56,7 +57,7 @@
     {:else}
       <span class="vb-ledger-name">{going ? ledgerWords.opening(going) : name}</span><ButtonIcon name="chevron" />
     {/if}
-    <select {id} class="vb-menu-over" aria-label={ledgerWords.ledger} value={name} disabled={!!going} onchange={(e) => pick(e.currentTarget)}>
+    <select {id} class="vb-menu-over" aria-label={chromeCommonWords.ledger} value={name} disabled={!!going} onchange={(e) => pick(e.currentTarget)}>
       {#each ledgers as l (l.name)}
         <option value={l.name}>{ledgerWords.ledgerOption(l.name, l.boards, l.keptOutOfGit)}</option>
       {/each}

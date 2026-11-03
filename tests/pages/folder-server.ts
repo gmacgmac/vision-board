@@ -7,7 +7,8 @@
 // chat ran in. It serves the page the global setup built, on the worker's folder port (ports.ts);
 // everything is removed on close. With `ledgers` (the `ledgerFolders` flag on, D-084), `start` is in the
 // ledger folders' layout with two ledgers, `main` (open at first) and `ui`, each with one board; the
-// other folders stay in the old layout, so opening one moves it into `main/`.
+// other folders stay in the old layout, so opening one moves it into `main/`. With `readOnly` as well (the
+// `readOnlyStart` flag on, D-085) the server opens every ledger read-only, as without `--edit`: Edit takes its lock.
 import fs from 'node:fs';
 import path from 'node:path';
 import { makeTempDir } from '#format/testing';
@@ -49,7 +50,7 @@ function seed(dir: string, board: string, title: string, ledgerName?: string): v
   ledger.append({ type: 'node', board, node: { region: 'ideas', kind: 'question', title } }, AGENT);
 }
 
-export async function startFolderServer({ ledgers = false }: { ledgers?: boolean } = {}): Promise<FolderServer> {
+export async function startFolderServer({ ledgers = false, readOnly = false }: { ledgers?: boolean; readOnly?: boolean } = {}): Promise<FolderServer> {
   const home = fs.realpathSync(makeTempDir('vb-folder-pages-'));
   const [start, other, empty] = ['start', 'other', 'empty-app'].map((n) => path.join(home, 'projects', n)) as [string, string, string];
   seed(start, 'start-board', 'Start card', ledgers ? 'main' : undefined);
@@ -61,7 +62,9 @@ export async function startFolderServer({ ledgers = false }: { ledgers?: boolean
   const ledger = ledgers ? openLedger(ledgerFiles(ledgerFolder(start, 'main')).ledger, () => {}) : undefined;
   const board = await startTestBoard({
     project: start, home, port: ledgers ? PORTS.ledgers : PORTS.folder, chat: { adapters: fake.adapters },
-    ...(ledgers && { ledger, flags: { ledgerFolders: true } }),
+    ...(ledgers && { ledger }),
+    ...((ledgers || readOnly) && { flags: { ...(ledgers && { ledgerFolders: true }), ...(readOnly && { readOnlyStart: true }) } }),
+    ...(readOnly && { edit: false }),
   });
   const { base } = board;
   const cookie = await personCookie(base);

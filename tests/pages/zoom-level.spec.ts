@@ -102,6 +102,17 @@ test('screen readers hear the level once it settles, politely, and not on every 
   await expect(level(page)).toHaveAttribute('aria-hidden', 'true');
 });
 
+test('the level a board opens at is not news: the status stays empty until the person zooms (GATE3-R1)', async ({ page }) => {
+  await openBoard(page);
+  await expectInSync(page);
+  // Past the settling time, the opening fit (100% to the board's level) said nothing.
+  await page.waitForTimeout(1200);
+  await expect(status(page)).toHaveText('');
+  await page.keyboard.press('+');
+  const now = await expectInSync(page);
+  await expect(status(page)).toHaveText(`Zoom ${now}%`);
+});
+
 test('card controls hide below the level and show above it, and focus never lands on a hidden one', async ({ page }) => {
   await openBoard(page);
   const controls = '.vb-act:visible, .vb-size-trig:visible, .vb-mode-row:visible';

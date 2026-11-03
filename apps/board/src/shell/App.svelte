@@ -47,11 +47,11 @@
   } : {};
   let chat: ChatPanel | null = $state(null);
   // The chat talks about the open board, or in the folder ('') once boot found no board in it; an
-  // archive or restore draws its composer again (N39 ruling 3).
+  // archive or restore draws its composer again (N39 ruling 3), and so does the ledger turning read-only or not (D-085).
   $effect(() => {
-    const [c, id, past] = [chat, shell.boardId || (shell.noBoards ? '' : null), !!shell.past];
+    const [c, id, past, readOnly] = [chat, shell.boardId || (shell.noBoards ? '' : null), !!shell.past, shell.readOnly];
     void shell.archived;
-    untrack(() => c?.show(id, past));
+    untrack(() => c?.show(id, past, readOnly));
   });
   // The sidebar opened: replies not seen show (chat-panel.ts `opened`).
   $effect(() => {

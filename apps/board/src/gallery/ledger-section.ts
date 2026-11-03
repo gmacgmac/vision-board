@@ -10,6 +10,7 @@ import { chromeState, type ChromeState, FULL_MIN, HALF_MIN, type HeaderTier } fr
 import LedgerForm from '../shell/LedgerForm.svelte';
 import LedgerPart from '../shell/LedgerPart.svelte';
 import type { FolderInfo } from '../shell/page-io.ts';
+import * as chromeCommonWords from '../board/words/chrome-common.ts';
 import * as ledgerWords from '../shell/words/ledgers.ts';
 import { chromeSample } from './chrome-sample.ts';
 import { el, group } from './dom.ts';
@@ -66,7 +67,7 @@ function chip(folder: Ledgers, o: { look?: 'hover' | 'focus' | 'pressed'; openin
 function list(): HTMLElement {
   const box = el('select', 'g-ledger-list');
   box.size = LEDGERS.length + 2;
-  box.setAttribute('aria-label', ledgerWords.ledger);
+  box.setAttribute('aria-label', chromeCommonWords.ledger);
   for (const l of LEDGERS) box.append(new Option(ledgerWords.ledgerOption(l.name, l.boards, l.keptOutOfGit), l.name, false, l.name === OPEN.ledger));
   box.append(el('hr'), new Option(ledgerWords.newLedger, ':new'));
   return box;

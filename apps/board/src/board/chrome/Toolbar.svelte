@@ -22,7 +22,9 @@
      shows "Locked" after its name and version (LockedChip, N40 ruling 4); with the lockBoard flag the
      "⋯" menu has Lock board or Unlock board.
      The page's folder chip (`BoardPageParts.folderChip`), when it gives one, sits first, after the app icon, and its
-     ledger chip (`ledgerChip`, ledgerFolders flag) after it; a host has neither, and the bar reflows.
+     ledger chip (`ledgerChip`, ledgerFolders flag) after it; a host has neither, and the bar reflows. After the path (or the
+     title and version) the page's ledger state (`editChip`, readOnlyStart flag: Read-only or Editing, at every width) and,
+     at full, its Edit or Stop editing button (`editButton`; a row of "⋯" from half, HeaderFields), then Locked.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
      carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
      counts show their numbers only (title and screen readers keep the words), all in board.css; "with
@@ -122,9 +124,11 @@
   const here = (c: HeaderControl) => !adaptive || inBar(tier, c);
   const holders = $derived(givenHolders !== undefined ? givenHolders : facts.agentAccess && facts.version !== null && !facts.past ? facts.boardHolders : null);
   /** What "⋯" also holds at this form, for its tooltip. */
-  const ALSO: readonly (readonly [HeaderControl, string])[] = [['folder', toolbarWords.folder], ['version', toolbarWords.version], ['containers', toolbarWords.containers],
-    ['open', toolbarWords.openCards], ['new', toolbarWords.newCards], ['zoom', commonWords.zoom], ['agents', chromeBoardsWords.agents]];
-  const also = $derived(adaptive ? ALSO.filter(([c]) => inMenu(tier, c) && (c !== 'folder' || parts.folderRow)).map(([, name]) => name) : []);
+  const ALSO: readonly (readonly [HeaderControl, string])[] = [['folder', toolbarWords.folder], ['ledger', chromeCommonWords.ledger], ['version', toolbarWords.version],
+    ['containers', toolbarWords.containers], ['open', toolbarWords.openCards], ['new', toolbarWords.newCards], ['zoom', commonWords.zoom], ['agents', chromeBoardsWords.agents]];
+  /** A page part's row is there only when the page gives it. */
+  const given: Partial<Record<HeaderControl, boolean>> = { folder: !!parts.folderRow, ledger: !!parts.ledgerField };
+  const also = $derived(adaptive ? ALSO.filter(([c]) => inMenu(tier, c) && given[c] !== false).map(([, name]) => name) : []);
 </script>
 
 {#snippet chevron()}<ButtonIcon name="chevron" />{/snippet}
@@ -165,6 +169,8 @@
       <VersionPicker {facts} {onversion} id={idOf('version')} />
     {/if}
   {/if}
+  {#if parts.editChip}<PagePart draw={parts.editChip} args={{ id: idOf('editing'), look }} />{/if}
+  {#if here('edit') && parts.editButton}<PagePart draw={parts.editButton} args={{ id: idOf('edit'), look }} />{/if}
   <LockedChip id={idOf('locked')} locked={facts.locked} />
   {#if adaptive && tier === 'full'}<span class="vb-bar-rule" aria-hidden="true"></span>{/if}
   {#if here('containers') && facts.containers.length}

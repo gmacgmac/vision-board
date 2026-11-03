@@ -73,7 +73,8 @@ export type PagePart = (target: HTMLElement, args: PagePartArgs) => () => void;
 /** What only the standalone page has in the board's header: its theme and alignment in "⋯", its folder
  *  (a chip in the path, a row of "⋯" once the bar is narrow, Open folder… last in "⋯"), its ledger the same way
  *  (ledgerFolders flag, D-084 7: a chip after the folder in the path, a row of "⋯" under the folder's, New ledger… in
- *  "⋯" after Open folder…) and its Chat button. */
+ *  "⋯" after Open folder…), its ledger's read-only state with Edit and Stop editing (readOnlyStart flag, D-085) and its
+ *  Chat button. */
 export interface BoardPageParts {
   /** A row of "⋯" given `choose`, else a button (toolbarMenu flag off). */
   theme?: PagePart;
@@ -87,6 +88,11 @@ export interface BoardPageParts {
   ledgerField?: PagePart;
   /** New ledger…, a row of "⋯"'s own, given `choose`. */
   ledgerRow?: PagePart;
+  /** The open ledger's state, Read-only or Editing (readOnlyStart flag, D-085 5): after the path at every width
+   *  (header-tier.ts `editing`), a chip whose menu holds Edit or Stop editing. */
+  editChip?: PagePart;
+  /** Edit or Stop editing as a button at full (header-tier.ts `edit`); given `choose`, a row of "⋯" at half and a third. */
+  editButton?: PagePart;
   chat?: PagePart;
 }
 
