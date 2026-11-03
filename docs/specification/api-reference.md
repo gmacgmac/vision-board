@@ -68,6 +68,7 @@ Media type `application/json`.
 | `boards` | list of object | yes | Every board in the project. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `project` | string | yes | The folder the board server has open, as the person reads it (`~/projects/example`); every board listed is in its ledger. |
+| `ledger` | string | no | The ledger the board server has open in that folder; every board listed is in it. Given only with ledger folders. |
 
 Example:
 
@@ -903,6 +904,7 @@ Media type `application/json`.
 | `agent` | string | yes | Your agent id. |
 | `secret` | string | yes | 32 random bytes, base64url, shown once |
 | `project` | string | yes | The folder the board server has open, as the person reads it (`~/projects/example`): check it is the folder you work in. |
+| `ledger` | string | no | The ledger the board server has open in that folder: you join this ledger, and your id and secret are good on it only. Given only with ledger folders. |
 
 Example:
 
@@ -2381,7 +2383,7 @@ Example:
 
 `GET /api/project` · who: the person (the board page cookie) · not offered to agents (`x-agent: false`)
 
-Show the folder the board server has open: its absolute path, its name as the person reads it (starting with `~` under the home folder), whether it has a Vision Board and how many boards that holds. Every other operation reads and writes this folder's ledger. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.
+Show the folder the board server has open: its absolute path, its name as the person reads it (starting with `~` under the home folder), whether it has a Vision Board and how many boards that holds. Every other operation reads and writes this folder's ledger. With ledger folders it also names the ledger open now (`ledger`) and lists the folder's ledgers in `.visionboard/` (`ledgers`: each one's name, board count and whether it is kept out of git). Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.
 
 ### Inputs
 
@@ -2397,8 +2399,10 @@ Media type `application/json`.
 |---|---|---|---|
 | `path` | string | yes | A folder's absolute path on the computer running the board server, as the server gave it |
 | `name` | string | yes | The folder as the person reads it: under the home folder it starts with `~` (`~/projects/example`); elsewhere it is the absolute path |
-| `found` | boolean | yes | True when the folder has a Vision Board: a `.visionboard/ledger.jsonl` file. |
-| `boards` | integer | no | How many boards its ledger holds; given only when `found` is true. |
+| `found` | boolean | yes | True when the folder has a Vision Board: a ledger in `.visionboard/`. |
+| `boards` | integer | no | How many boards its open ledger holds; given only when `found` is true. |
+| `ledger` | string | no | The ledger open now; every other operation reads and writes it. Given only with ledger folders. |
+| `ledgers` | list of object | no | The folder's ledgers, by name. Given only with ledger folders. |
 
 Example:
 
@@ -2424,14 +2428,16 @@ Example:
 
 `POST /api/project` · who: the person (the board page cookie) · not offered to agents (`x-agent: false`)
 
-Open another folder under the home folder in place of the one open now, on the same server and port. The server takes the folder's lock first and changes nothing if it can't; then it stops every running chat, ends every live stream (so every open page reloads onto the new folder), lets go of the old folder's lock, and keeps the folder in the recent list. A folder with no Vision Board is refused with `not-found` unless `create` is true, which makes `.visionboard/` and an empty ledger there. Agents join again after a switch: each folder keeps its own agents, so an old secret gets `not-authenticated`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the folder now open.
+Open another folder under the home folder in place of the one open now, on the same server and port. The server takes the folder's lock first and changes nothing if it can't; then it stops every running chat, ends every live stream (so every open page reloads onto the new folder), lets go of the old folder's lock, and keeps the folder in the recent list. A folder with no Vision Board is refused with `not-found` unless `create` is true, which makes `.visionboard/` and an empty ledger there. With ledger folders, `ledger` names the ledger to open (left out: the one this folder had open last, else `main`), so switching ledgers is opening the same folder with another `ledger`; the lock is the ledger's own, so another server may hold another ledger of the folder. With `create`, a ledger that is not there is made, and `keepOutOfGit` keeps it out of git; a name that is not a ledger name is refused with `invalid`. A folder still in the old layout (`.visionboard/ledger.jsonl`) is first moved into `.visionboard/main/`, by renaming its files, only while no other server holds it. Agents join again after a switch: each folder, and each ledger, keeps its own agents, so an old secret gets `not-authenticated`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the folder now open.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
 | `path` | body | string | yes | A folder's absolute path on the computer running the board server, as the server gave it |
-| `create` | body | boolean | no | True makes `.visionboard/` and an empty ledger when the folder has none; false (the default) refuses such a folder with `not-found`. |
+| `create` | body | boolean | no | True makes `.visionboard/` and an empty ledger when the folder (with ledger folders: the ledger named) has none; false (the default) refuses such a folder or ledger with `not-found`. |
+| `ledger` | body | string | no | With ledger folders, the ledger to open; left out, the one this folder had open last, else `main`. Ignored without ledger folders. |
+| `keepOutOfGit` | body | boolean | no | With `create` and ledger folders, true writes a `.gitignore` of `*` into the new ledger's folder, so git never sees it (a throwaway ledger). Ignored when the ledger is already there. |
 
 Example request (Open a folder that has a Vision Board):
 
@@ -2460,8 +2466,10 @@ Media type `application/json`.
 |---|---|---|---|
 | `path` | string | yes | A folder's absolute path on the computer running the board server, as the server gave it |
 | `name` | string | yes | The folder as the person reads it: under the home folder it starts with `~` (`~/projects/example`); elsewhere it is the absolute path |
-| `found` | boolean | yes | True when the folder has a Vision Board: a `.visionboard/ledger.jsonl` file. |
-| `boards` | integer | no | How many boards its ledger holds; given only when `found` is true. |
+| `found` | boolean | yes | True when the folder has a Vision Board: a ledger in `.visionboard/`. |
+| `boards` | integer | no | How many boards its open ledger holds; given only when `found` is true. |
+| `ledger` | string | no | The ledger open now; every other operation reads and writes it. Given only with ledger folders. |
+| `ledgers` | list of object | no | The folder's ledgers, by name. Given only with ledger folders. |
 
 Example:
 

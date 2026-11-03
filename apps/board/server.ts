@@ -13,18 +13,24 @@
 // (the server's own flags, written as `?flags=` is: `-appCards` turns app cards off, so the panel
 // route and call_app_tool answer not-found; an unknown name stops the start).
 // One server per ledger: the ledger folder's lock (server/lock.ts) refuses a second one, here or on
-// another computer sharing the folder. Every mode releases it on exit.
+// another computer sharing the folder. Every mode releases it on exit. With ledger folders (`ledgerFolders`,
+// D-084) it opens the folder's last ledger (recent.json), else `main`, moving an old-layout folder into
+// `main/` first (server/ledger-move.ts); the lock is that ledger folder's.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_PORT, ENV, ledgerFolder, parseFlags } from '#format';
+import { DEFAULT_PORT, ENV, flagOn, ledgerFiles, ledgerFolder, parseFlags } from '#format';
 import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
 import { ledgerPath, openLedger } from './server/ledger.ts';
+import { chooseLedger } from './server/ledgers.ts';
 import { holderMessage, takeLock } from './server/lock.ts';
+import type { Lock } from './server/lock.ts';
+import { ProblemError } from './server/problem.ts';
+import { takeLedger } from './server/project.ts';
 import * as serverFoldersWords from './server/words/server-folders.ts';
-import { startFolder } from './server/recent.ts';
+import { lastLedger, startFolder } from './server/recent.ts';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
@@ -51,28 +57,44 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
   process.exit(1);
 }
 
-const FILE = ledgerPath(PROJECT);
-const taken = takeLock(ledgerFolder(PROJECT), PORT);
-if (!taken.ok) {
-  console.error(holderMessage(taken.holder));
-  if (taken.holder.host === os.hostname()) console.error(serverFoldersWords.itIsAlreadyRunning(taken.holder.port, taken.holder.pid));
-  process.exit(1);
-}
-const { lock } = taken;
-if (taken.replaced) {
-  const { host, pid, beat } = taken.replaced;
-  console.log(`Replaced a stale lock (computer "${host}", process ${pid}, last beat ${beat}).`);
-}
-process.on('exit', () => lock.release());
-
-const seeded = seed(FILE, process.env[ENV.seed]);
-const build = process.env[ENV.watch] === '1' ? watchBuild(DIST) : undefined;
-const chat = { kiroAgent: process.env[ENV.kiroAgent] !== '0' };
 const flags = parseFlags(process.env[ENV.flags]);
 if (flags.refused.length) {
   console.error(`${ENV.flags} names no such flag: ${flags.refused.join(', ')}. The flags are in packages/format/src/flags.ts.`);
   process.exit(1);
 }
+
+/** The old layout's one ledger and its lock: `.visionboard/ledger.jsonl`. */
+function startOne(): { file: string; lock: Lock } {
+  const taken = takeLock(ledgerFolder(PROJECT), PORT);
+  if (!taken.ok) {
+    console.error(holderMessage(taken.holder));
+    if (taken.holder.host === os.hostname()) console.error(serverFoldersWords.itIsAlreadyRunning(taken.holder.port, taken.holder.pid));
+    process.exit(1);
+  }
+  if (taken.replaced) {
+    const { host, pid, beat } = taken.replaced;
+    console.log(`Replaced a stale lock (computer "${host}", process ${pid}, last beat ${beat}).`);
+  }
+  return { file: ledgerPath(PROJECT), lock: taken.lock };
+}
+
+/** Ledger folders: the folder's last ledger, else `main` (its file made on the first line, or by VB_SEED); an old layout moved first. */
+function startLedger(): { file: string; lock: Lock } {
+  const name = chooseLedger(PROJECT, undefined, lastLedger(HOME, PROJECT));
+  try {
+    return { file: ledgerFiles(ledgerFolder(PROJECT, name)).ledger, lock: takeLedger(PROJECT, name, undefined, PORT, PROJECT) };
+  } catch (err) {
+    console.error(err instanceof ProblemError ? err.message : String(err));
+    process.exit(1);
+  }
+}
+
+const { file: FILE, lock } = flagOn('ledgerFolders', flags.overrides) ? startLedger() : startOne();
+process.on('exit', () => lock.release());
+
+const seeded = seed(FILE, process.env[ENV.seed]);
+const build = process.env[ENV.watch] === '1' ? watchBuild(DIST) : undefined;
+const chat = { kiroAgent: process.env[ENV.kiroAgent] !== '0' };
 const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat, flags: flags.overrides });
 
 // Closing the server stops the chats and lets go of the open folder's lock (server/project.ts).

@@ -16,7 +16,7 @@ type Rec = Record<string, unknown>;
 export function appRefProblems(v: unknown, f: string, p: string[]): void {
   if (!isRecord(v)) return void p.push(formatCommonWords.mustBeAnObject(f));
   for (const k of Object.keys(v)) if (!['id', 'w', 'h'].includes(k)) p.push(formatLedgerWords.unknownField(f, k));
-  if (typeof v.id !== 'string' || !ID_PATTERN.test(v.id)) p.push(`${f}.id: the app's id, its folder's name in .visionboard/apps/`);
+  if (typeof v.id !== 'string' || !ID_PATTERN.test(v.id)) p.push(formatCommonWords.appIdIsItsFolder(f));
   for (const d of ['w', 'h'] as const) {
     const x = v[d];
     const { min, max } = APP_SIZE[d];

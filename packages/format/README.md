@@ -34,15 +34,24 @@ never a file. The format-1 view files and transcript are archived in
   `readLedger` and `validateLedger` (a whole file); the drawn fold
   (`foldDrawn`, `applyDrawn`, `nodesOf` (on the board now), `everyNodeOf` (retired too), `latest`) and `boardView` (one board as a `View`); the route table `OPERATIONS` and `OperationId` (each operation's
   method, path, path parameters, `xAgent` and `auth`), generated from `schema/openapi.json` by `npm run gen`.
+- **The data folder** (`src/data-folder.ts`, D-084 2, [api.md](../../docs/specification/api.md) 113a): the one home
+  of every name in a project's `.visionboard/` and of every path built from them. The names (`DATA_DIR`,
+  `LEDGER_FILE`, `AGENTS_FILE`, `LOCK_FILE`, `IMAGES_DIR`, `APPS_DIR`, `APP_STATE_DIR`, `GITIGNORE_FILE`,
+  `CHAT_SESSIONS_FILE`, `PERMISSIONS_FILE`, `ATTACHMENTS_DIR`, `RECENT_FILE`), `DATA_FOLDER_NAMES` (all of them) and
+  `PER_LEDGER_NAMES`; `ledgerFolder(project, ledger?)` (`.visionboard/<ledger>`, or the old layout's `.visionboard`),
+  `ledgerFiles`, `projectFiles` (the repo-wide files), `projectOfLedger` and `ledgerOfFolder` (either layout),
+  `homeFiles`; `MAIN_LEDGER`, `LEDGER_NAME_MAX` and `ledgerNameProblem` (the ledger name rule). Pure string logic:
+  its one import is its words file. `npm run verify` holds that nothing else names a data-folder file
+  (`scripts/verify-data-folder.mjs`); `tests/data-folder.test.ts`.
 - **App cards** (`src/apps.ts`, D-047, [apps.md](../../docs/specification/apps.md)): `APP_ID`,
-  `APP_HASH_PATTERN`, `APP_TOOL_NAME`, `APPS_DIR`, `APP_FILES`, `APP_SIZE`, `APP_LIMITS`,
+  `APP_HASH_PATTERN`, `APP_TOOL_NAME`, `APP_FILES`, `APP_SIZE`, `APP_LIMITS`,
   `APP_STATES`, the panel protocol (`APP_PROTOCOL_VERSION`, `PANEL_METHODS`, `HOST_NOTIFICATIONS`,
   `PANEL_ERRORS`, `APP_STYLE_VARIABLES`), the types `AppRef`, `AppManifest`, `AppToolInfo`,
   `AppToolResult`, `AppInfo`, and `appSize`; `APP_ACTIONS` (ledger.ts); the manifest's one source is
   `schema/app/manifest.schema.json`. The hand twin of the app card's schema pieces is
   `src/app-shape.ts`.
 - **Images in cards** (`src/images.ts`, D-048, svg D-064, [images.md](../../docs/specification/images.md)):
-  `IMAGES_DIR`, `IMAGE_ROUTE`, `IMAGE_LIMITS` (png, jpeg, webp, gif and svg with their extensions,
+  `IMAGE_ROUTE`, `IMAGE_LIMITS` (png, jpeg, webp, gif and svg with their extensions,
   content types and first bytes; the size, svg size and svg head, depth and name limits),
   `IMAGE_HEAD_BYTES`, `IMAGE_WORDS` and `imageNotReal` (the plain words for why an image is not
   shown), `imagePathProblem` (the one path check, used by the board's route and the Markdown

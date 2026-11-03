@@ -54,6 +54,11 @@
     "project": {
       "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName",
       "description": "The folder the board server has open, as the person reads it (`~/projects/example`); every board listed is in its ledger."
+    },
+    "ledger": {
+      "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName",
+      "description": "The ledger the board server has open in that folder; every board listed is in it. Given only with ledger folders.",
+      "$comment": "ledgerFolders flag (LEDGERS_01, D-084 rule 3; D-083 rule 4)"
     }
   },
   "unevaluatedProperties": false

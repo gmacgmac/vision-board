@@ -263,6 +263,7 @@ type ListBoardsResponse = {
   }[];
   head: number;
   project: string;
+  ledger?: string;
 };
 type CommonTitle = string;
 type GetBoardResponse = {
@@ -724,6 +725,7 @@ type JoinResponse = {
   agent: string;
   secret: string;
   project: string;
+  ledger?: string;
 };
 type GrantRequestBody = {
   key?: CommonKey;
@@ -1104,10 +1106,19 @@ type Project = {
   name: string;
   found: boolean;
   boards?: number;
+  ledger?: string;
+  ledgers?: ProjectLedgerEntry[];
+};
+type ProjectLedgerEntry = {
+  name: string;
+  boards: number;
+  keptOutOfGit: boolean;
 };
 type OpenProjectRequest = {
   path: string;
   create?: boolean;
+  ledger?: string;
+  keepOutOfGit?: boolean;
 };
 type FolderList = {
   path: string;

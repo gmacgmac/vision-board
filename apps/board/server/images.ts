@@ -94,10 +94,11 @@ function openImage(raw: string, images: string, flags: FlagOverrides): OpenImage
   }
 }
 
-/** Answer a request for image `raw` in folder `project` (its real path), under the server's `flags`. */
-export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string, flags: FlagOverrides = {}): void {
+/** Answer a request for image `raw` in folder `project` (its real path), under the server's `flags`: from
+ * the folder of its ledger `ledger` (none: the old layout's). */
+export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string, flags: FlagOverrides = {}, ledger?: string): void {
   onlyRead(req.method);
-  const { fd, size, etag, contentType, headers } = openImage(raw, ledgerFiles(ledgerFolder(project)).images, flags);
+  const { fd, size, etag, contentType, headers } = openImage(raw, ledgerFiles(ledgerFolder(project, ledger)).images, flags);
   let streaming = false;
   try {
     if (matches(req.headers['if-none-match'], etag)) {

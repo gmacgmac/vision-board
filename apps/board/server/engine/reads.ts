@@ -19,7 +19,7 @@ import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './calle
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
-import { reply } from './operations.ts';
+import { reply, whereAnswer } from './operations.ts';
 import * as writesWords from '../words/writes.ts';
 
 /** At most `limit` of `list`, and `more: true` when it was cut (api.md 31). */
@@ -28,11 +28,12 @@ function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true }
   return { list: list.slice(0, max), ...(list.length > max && { more: true as const }) };
 }
 
-const listBoards: Op = ({ ledger, name, caller, flags }) => {
+const listBoards: Op = (ctx) => {
+  const { ledger, caller, flags } = ctx;
   const s = ledger.state();
   const rules = flagOn('botToolRules', flags);
   const boards = boardList(s).map((b) => (rules && holds(s, b.board, caller) ? { ...b, held: true as const } : b));
-  return reply(200, { project: name(), boards, head: s.seq });
+  return reply(200, { ...whereAnswer(ctx), boards, head: s.seq });
 };
 
 const getBoard: Op = ({ params, ledger, caller, flags }) => {

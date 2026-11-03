@@ -2,13 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/open-project-request.schema.json",
   "title": "Open a folder",
-  "description": "`{ path, create? }`: the folder to open, under the home folder, and whether to create its Vision Board when it has none.",
+  "description": "`{ path, create?, ledger?, keepOutOfGit? }`: the folder to open, under the home folder, whether to create its Vision Board (or, with ledger folders, the ledger) when it has none, and which ledger.",
   "$comment": "Was: api.md 109 (open-folder task, U12)",
   "type": "object",
   "required": ["path"],
   "properties": {
     "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
-    "create": {"type": "boolean", "default": false, "description": "True makes `.visionboard/` and an empty ledger when the folder has none; false (the default) refuses such a folder with `not-found`."}
+    "create": {"type": "boolean", "default": false, "description": "True makes `.visionboard/` and an empty ledger when the folder (with ledger folders: the ledger named) has none; false (the default) refuses such a folder or ledger with `not-found`."},
+    "ledger": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName", "description": "With ledger folders, the ledger to open; left out, the one this folder had open last, else `main`. Ignored without ledger folders.", "$comment": "ledgerFolders flag (LEDGERS_01, D-084)"},
+    "keepOutOfGit": {"type": "boolean", "default": false, "description": "With `create` and ledger folders, true writes a `.gitignore` of `*` into the new ledger's folder, so git never sees it (a throwaway ledger). Ignored when the ledger is already there.", "$comment": "ledgerFolders flag (LEDGERS_01, D-084; PLAN decision 8)"}
   },
   "unevaluatedProperties": false
 }
