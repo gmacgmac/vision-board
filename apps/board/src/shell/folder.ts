@@ -7,7 +7,6 @@
 import { flagOn } from '#format';
 import { pageFlags } from '../flags.ts';
 import { shell } from './shell.svelte.ts';
-import { ledgerScope } from './kept.ts';
 import type { FolderInfo } from './page-io.ts';
 import { getProject } from './page-io.ts';
 import { folderName } from './folder-path.ts';
@@ -31,11 +30,12 @@ export async function loadFolder(): Promise<FolderInfo | null> {
   } catch { return null; }
 }
 
-/** Where the board last looked at is kept: per folder when the folder is known, and per ledger when it names
- * one (kept.ts `ledgerScope`); `main` keeps the folder's own key, so the board last looked at before the move into
- * `main/` still opens. */
-export const lastBoardKey = (f: FolderInfo | null): string =>
-  (f ? `${LAST_BOARD_KEY}:${ledgerScope(f) || f.path}` : LAST_BOARD_KEY);
+/** The board last looked at: its key in the page's store (kept.ts `pageStore`), so it is kept as the board's own memory
+ *  is (PLAN decision 11): per folder and ledger, `vb.lastBoard:<ledgerScope>`, where `main` and the old layout have the
+ *  folder's own key, so the board last looked at before the move into `main/` still opens; one kept before folders
+ *  (`vb.lastBoard`) is read once, by `main` of the folder open, and kept under its key, so another folder never opens on
+ *  it. With no folder read, `vb.lastBoard` as before. */
+export const lastBoardKey = LAST_BOARD_KEY.slice('vb.'.length);
 
 /** Reload onto the folder now open: without the board hash, so that folder's own last board opens. */
 export function reloadOnto(): void {

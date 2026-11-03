@@ -140,6 +140,41 @@ _Re-run? Add a `### Run N` block; never overwrite an earlier run._
 - `npm run check` 0 errors; `--write-map` leaves `modules.md` as it is; `verify` as above (35 warnings, unchanged).
 - No visual change in this run (storage keys only), so there was no look to take.
 
+### Run 3
+
+**Status**: Completed (2026-11-03, Opus 5.5, worktree `feat/fe-02-run3`, `VB_TEST_PORT=6200`). Request FE_02-R3, under
+PLAN decision 11: the global `vb.lastBoard` read once into the folder's key; `lastBoardKey`'s `|| f.path` dropped.
+
+#### Changes Made
+- `shell/folder.ts` `lastBoardKey` is now the last board's key in the page's store (`'lastBoard'`, from `LAST_BOARD_KEY`),
+  not a function: the key rule is `kept.ts` `pageStore`'s alone, so `|| f.path` went with it. Same keys as before:
+  `vb.lastBoard:<path>` for `main` and the old layout, `vb.lastBoard:<ledgerFolder>` for another ledger, `vb.lastBoard`
+  with no folder read.
+- `shell/page-host.ts`: one `pageStore(() => shell.folder)` serves the board (`store`) and the last board. `wanted()`
+  reads `store.get(lastBoardKey)`, so the global from before is read once by `main` of the folder open and moved into
+  its key. `opened()` writes only the folder's key, which also retires the global; it is no longer written beside it.
+- `tests/pages/last-board.spec.ts`: the keys asserted are the folder's (`vb.lastBoard:<folder>`, the global gone). New
+  tests: "one kept before folders is read once…" and "another folder never opens on this folder's last board, even with
+  a board of the same id" (folder server: `plan` in `start` and `other`; `start#plan`, then open `other`: its first
+  board, after a reload too; back to `start`: `plan`).
+
+#### Deviations from Plan
+- `lastBoardKey` is kept as the symbol's name (cited by `kept.ts`, `ledgers.ts` and `components.md`, none of them mine
+  this wave) but is now a constant, not a function; what those citations say stays true.
+
+#### Caught Beyond the Brief
+- The base of this wave (wave 2 gate, my change stashed) fails two gallery screenshots in light, 1px taller:
+  `ledgers.spec.ts` "gallery: … (light)" (4566 vs 4567 px) and `current-folder.spec.ts` "gallery: … (light)". Not from
+  this run (no gallery code touched); T_01 Run 2 re-takes screenshots.
+- `verify`: the board page is 200.5 KB gzip against 200 KB (T_03's page weight); this run only removes code.
+
+#### Verification (normal tier)
+- Failing first: 4 last-board tests (the global still written; B opened on A's `plan`).
+- After: last-board 5/5 (and 15/15 with `--repeat-each=3`); ledgers + ledger-memory green except the base's
+  ledgers gallery shot; picker-archive, open-folder, current-folder, live-boards, new-board, ledger-folders 57/58 (the
+  base's current-folder gallery shot). `npm run check` 0 errors; unit (kept, start-board, board-no-page, scripts)
+  108/108; `--write-map` unchanged; `verify` only the page budget. No visual change.
+
 ## On Completion
 
 Notes; your TASK-STATUS row; one LOG line, `[board-ui] FE_02: … → Task: [[cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/FE_02_ledger-chip-and-memory.md]]`, ending in a newline; the return block.

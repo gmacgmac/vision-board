@@ -3,7 +3,7 @@
 // (`watch_project`), its header's own controls the page's parts (page-parts.ts), its settings are the page's flags (`?flags=` and `vb.flags`, flags.ts) and the
 // viewer's alignment (align.ts), its notices the toast and its confirmations the shared dialog
 // (shell.svelte.ts), its store this browser's storage, per folder and ledger (kept.ts `pageStore`). Its page part names the open board in the address, keeps the board last looked
-// at (per folder with the openFolder flag, folder.ts), reloads to start again and holds the person's
+// at in that same store (per folder and ledger with the openFolder flag, folder.ts `lastBoardKey`), reloads to start again and holds the person's
 // cookie. Its chat is the chat panel's, through its bridge (chat-panel.ts, chat-bridge.ts `host`): the
 // board's selection and answers, Send and the agent's status all go through `BoardChat`. With the
 // leavePrompt flag it guards its own tab: a close or reload while a note holds unsaved words gets the
@@ -11,11 +11,10 @@
 import { flagOn, isFlag } from '#format';
 import type { BoardChat, BoardHost, BoardEvent, BoardPageParts } from '../board/host.ts';
 import type { Status } from '../board/status.ts';
-import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
 import { readEditing } from './editing.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
-import { keep, kept, pageStore } from './kept.ts';
+import { pageStore } from './kept.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
 import { askConfirm, shell, toast } from './shell.svelte.ts';
 import * as pageHelpWords from './words/page-help.ts';
@@ -44,8 +43,8 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
   const flags = pageFlags();
   const openFolder = openFolderOn();
   const listeners = new Set<() => void>();
-  /** Where the board last looked at is kept: per folder once the folder is known. */
-  let lastKey = LAST_BOARD_KEY;
+  /** The board's memory and the board last looked at, per folder and ledger once the folder is read. */
+  const store = pageStore(() => shell.folder);
 
   /** The project's live stream as change events. In watch mode (dev only) the stream also names the
    *  built page: the first id is kept, and a different one reloads the page, whose view is already
@@ -87,18 +86,16 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     settingsChanged() { for (const l of listeners) l(); },
     notify: (text, tone) => toast(text, tone),
     confirm: ({ heading, body, confirm, list }) => askConfirm(heading, body, confirm, list),
-    store: pageStore(() => shell.folder),
+    store,
     page: {
       async wanted() {
-        const folder = openFolder ? shell.folder ?? await loadFolder() : null; // read before the mount (App.svelte)
-        lastKey = lastBoardKey(folder);
-        const lasts = [kept(lastKey), kept(LAST_BOARD_KEY)].filter((x): x is string => x !== null);
-        return [decodeURIComponent(location.hash.slice(1)), ...lasts];
+        if (openFolder && !shell.folder) await loadFolder(); // read before the mount (App.svelte)
+        const last = store.get(lastBoardKey);
+        return [decodeURIComponent(location.hash.slice(1)), ...(last === null ? [] : [last])];
       },
       opened(id) {
         history.replaceState(null, '', `#${encodeURIComponent(id)}`);
-        keep(lastKey, id);
-        if (lastKey !== LAST_BOARD_KEY) keep(LAST_BOARD_KEY, id);
+        store.set(lastBoardKey, id);
       },
       restart: reloadOnto,
       parts,
