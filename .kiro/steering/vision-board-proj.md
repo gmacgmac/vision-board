@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.5 | **Updated**: 2026-11-02 (maintainer approved)
+> **Version**: 0.6 | **Updated**: 2026-11-03 (maintainer approved, point 399)
 
 # Vision Board — project rules
 
@@ -48,6 +48,8 @@ follow them where our documents are silent. If two of our documents disagree, ra
   at the end (`npm run test:pages`: 5 workers, `VB_TEST_WORKERS` to change; each worker's servers on
   `VB_TEST_PORT` + 10 per worker, fresh for every spec file). Never use port 4466: it is the
   maintainer's board. Tasks running at once take `VB_TEST_PORT`s 100 apart.
+- **Bot instructions**: Changing a bot's instructions (`skills/vision-board/SKILL.md`, the plugin's edits):
+  `npm run eval:bot` passes before it merges.
 - **Sentences**: a new sentence a person or an agent reads goes in its area's words file
   (`docs/specification/words.md`), never in the code that shows or sends it.
 - **Worktrees**: work in one; the maintainer's board runs from the main checkout.

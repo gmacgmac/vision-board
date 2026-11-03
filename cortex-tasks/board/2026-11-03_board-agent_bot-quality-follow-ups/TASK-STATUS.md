@@ -1,7 +1,8 @@
 ---
 task_name: Bot Quality Follow-ups
 created: 2026-11-03
-status: in-progress
+status: completed
+completed: 2026-11-03
 categories: [board-agent]
 tracker: cortex-tasks/tracker.md#M48
 ---
@@ -37,3 +38,12 @@ tracker: cortex-tasks/tracker.md#M48
 ## Implementation Notes
 
 (each task's notes are in its own file)
+
+### Orchestrator (close, 2026-11-03)
+
+- Merged the three branches; `SEAM_TYPES` set to `fde5eb97…` (the one move SEAM_01 made, flags widened to `string` for
+  what a host gives: an addition, `SEAM` stays 1, point 397).
+- Gates on the merged branch: map, verify, check, gen-api, unit and timing, plugin 79/79 all pass; pages 847/858 with
+  one failure (`app-cards.spec.ts` end to end, light: the calculator's History list not shown in 5 s) and its 10
+  followers not run. Unrelated to this set; the spec alone, repeated 4 times: 36/36. A flake under load.
+- Point 399's rule added to the project rules (v0.6) with the maintainer's yes.
