@@ -38,14 +38,15 @@ chunks. Only your files (TASK-STATUS File Ownership); other needs under `REQUEST
 
 _Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed
 
 ### Changes Made
--
+- `tests/pages/host-styles.spec.ts`: new `wholePixels(t)` (box shrunk to whole pixels: near edges ceil, far edges floor); `sameUnderHost`'s `shot` scrolls the target into view and takes `page.screenshot({ clip })`, so every shot of a target (own, before, under, after) takes the same clip. Run: host-styles 8/8 three times (4.7, 4.9, 5.0 min), defaults both on. Deliberate rule (`.vb-board * { color: red !important }` in HOST, removed) failed the 550px light test (first pass 231). `verify` ok, `check` 0 errors.
 ### Caught Beyond the Brief
--
+- Step 1 (reproducing the F16 partial row) was not done separately: the dialog sample is excluded (-ledgerFolders) and the flake was intermittent; the fix removes the partial rows by construction.
+- Gallery group takes ~2.2-2.5 min per theme, near the 5 min group limit when two themes run on 3 workers.
 ### Deviations from Plan
--
+- none
 
 ## On Completion
 
