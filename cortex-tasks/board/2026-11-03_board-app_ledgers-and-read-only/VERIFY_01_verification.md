@@ -82,6 +82,19 @@ _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite 
   an unwritable folder is a 500; the Edit menu under the access bar; enabled write controls; page flags separate from
   the server's; reads after a switch; part-way move advice; last ledger by unresolved path; `pageStore`).
 
+### Run 2
+**Status**: Completed (2026-11-03, re-check after FIX_01; worktree `verify-01-run2` at fface1c, ports 7150-7199).
+- Re-ran Run 1's reproductions: F1 (watcher A, mover C, A's Edit, a fresh D, `ledgers:undo` under watchers, a vanished
+  file), F2 (the gate's open-ledger verdicts after Stop editing and a lost lock, another ledger's write rows: FIX_01's
+  tests and the code path; no real CLI), F3 (same-id boards in two ledgers), F4 (both defaults flipped in `flags.ts`,
+  unit 2242/2242, the 10 related page specs 108/108, three more groups; restored, sha1 `f9cd6c7…`, no diff).
+- Spot-checked F5-F9, F11 (read-only half), F12-F14: fixed. Judged FIX_01's three left items (F10, F11 chip half,
+  F2 app process): not blocking.
+- **Blocking left: F16** — `tests/pages/host-styles.spec.ts` "the gallery's samples … draw the same under a host's
+  element rules" (light and dark) fails with both defaults on, at the New ledger dialog sample. New, not blocking:
+  N1 (orphan agent hash on a refused join), N2 (`look`'s first beat only notes), N3 (401 on the first write after a
+  vanished file returns). Details: [VERIFY_01_findings.md § Run 2](./VERIFY_01_findings.md).
+
 ## On Completion
 
 Notes; your row; one LOG line (`[board-app] VERIFY_01: …` → this file, one line ending in a newline); the return block.
