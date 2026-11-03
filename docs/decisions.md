@@ -1134,3 +1134,17 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: a pane is not the window; a host gets no way round the seam that it could come to depend on; a host's page must outlive the board's mistakes.
 - **Rejected**: a `ResizeObserver` writing the root's height (JavaScript for what CSS does); rethrowing from `unmount` (stops the host's teardown).
 - **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md (CONTRACT_01, FIX_01)
+
+## D-083 The tools keep a bot's rules; the reads give it the facts
+- **Date**: 2026-11-03 · **Status**: Accepted (maintainer, points 396, 401, 402) · **From**: board-agent bot-quality TOOLS_01, TOOLS_02
+- **In short**: a rule a bot must keep is held by its tool, which refuses the wrong call, and what a bot needs to know comes back in what its tools return, not only in its instructions.
+- **Decision**:
+  1. A rule a bot must not break is held by its tool: an input it may not use is missing from its schema and refused when sent; the instructions carry only judgement. Who gives an input is said once, `x-hosts` on the parameter in `openapi.json`, as for a tool (D-080), and generated into the tool table (`inputHosts`).
+  2. Under a host, `check_responses` has no `wait`; one sent is refused at once (`invalid`: the Send brings the answers, end the turn). The host starts the bot's turn from the Send; nothing polls. Standalone keeps `wait`.
+  3. The MCP instructions are per host: tools may carry their own (`ToolHost.instructions`); the engine's are the plugin's, made from standalone's by edits in the plugin's words.
+  4. A read tells an agent caller what is true for it: `owed` on each note it owes, `answered` on a note that is answered (what answered it and where: a reply's line, a version, a ✓ or ✗; never its words, which are on the board), `held` on a board it holds. One rule decides owing and answered (`noteAnswer`). A person's read is unmarked.
+  5. A key repeated with the same content stays a quiet replay; with other content, a conflict whose words say what the key holds and name a free key. A key names one ledger line for good (D-017).
+  6. All behind `botToolRules`, on; off is the revert.
+- **Why**: in the bot eval, rules written only in the instructions were broken (a bot held its turn, answered a note twice, asked for a board it had); held by the tools and the reads, the eval went from 35 of 40 checks to 80 of 80.
+- **Rejected**: more instruction text for each slip; a host-chosen `wait` (the Send starts the turn); repeating a reply's words in `answered` (context the board already holds).
+- **Task**: cortex-tasks/board/2026-11-03_board-agent_bot-quality/TASK-STATUS.md (TOOLS_01, TOOLS_02)
