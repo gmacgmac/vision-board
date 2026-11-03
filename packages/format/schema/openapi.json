@@ -20,7 +20,7 @@
         "x-agent": true,
         "x-hosts": ["standalone", "plugin"],
         "summary": "List the boards",
-        "description": "List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
+        "description": "List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes). `readOnly: true`: the whole ledger is open read-only (no writes).",
         "security": [],
         "responses": {
           "200": {
@@ -79,7 +79,7 @@
         "x-agent": true,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Read a board as it is now",
-        "description": "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`). For one node's history, use `show_node`.",
+        "description": "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). For one node's history, use `show_node`.",
         "security": [],
         "parameters": [
           {
@@ -910,7 +910,7 @@
         "x-agent": true,
         "x-hosts": ["standalone"],
         "summary": "Join as an agent",
-        "description": "Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.",
+        "description": "Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret`, `project`, the folder the board has open, and with ledger folders `ledger`, the ledger in it you join: check both are the ones you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder or ledger open, so stop, tell the person, and do not join. The one write that needs no credentials.",
         "security": [],
         "requestBody": {
           "required": true,
@@ -979,7 +979,7 @@
         "x-agent": true,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Ask for write access to a board or a container",
-        "description": "Ask the person for write access to a board, or to one container on it. Before you write on a board you did not create, call it with just `board`; for another agent's container, with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` the person can decide on; then wait in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423). Returns `request`, the request's `seq` (the person's answer names it); an open request for the same thing comes back with `replayed: true`, and `{ held: true }` when you already hold it.",
+        "description": "Ask the person for write access to a board, or to one container on it. Before you write on a board you did not create, call it with just `board`; for another agent's container, with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` the person can decide on; then wait in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423), nor a ledger open read-only (`read-only`, 409). Returns `request`, the request's `seq` (the person's answer names it); an open request for the same thing comes back with `replayed: true`, and `{ held: true }` when you already hold it.",
         "security": [
           {
             "agentSecret": []
@@ -2923,7 +2923,7 @@
         "x-agent": true,
         "x-hosts": ["standalone"],
         "summary": "List the apps in this folder",
-        "description": "List the apps in this folder, to draw one on a card or see what to fix. Apps live in `.visionboard/apps/<id>/` (the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.",
+        "description": "List the apps in this folder, to draw one on a card or see what to fix. Apps live in the open ledger's `apps/<id>/` (`.visionboard/apps/`, or `.visionboard/<ledger>/apps/` with ledger folders; the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.",
         "security": [
           {
             "agentSecret": []
@@ -3116,7 +3116,7 @@
         "operationId": "get_panel_state",
         "x-agent": false,
         "summary": "Read an app card's saved panel state",
-        "description": "Read the value an app card's panel last saved, so the panel can start where it was. Only the board page calls this, with the person's cookie, when the card's panel starts. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in `.visionboard/app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. It answers `{ state }`, or `{}` when nothing is saved or the card now names another app than the one that saved. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`.",
+        "description": "Read the value an app card's panel last saved, so the panel can start where it was. Only the board page calls this, with the person's cookie, when the card's panel starts. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in the open ledger's `app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. It answers `{ state }`, or `{}` when nothing is saved or the card now names another app than the one that saved. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`.",
         "security": [
           {
             "personCookie": []
@@ -3190,7 +3190,7 @@
         "operationId": "put_panel_state",
         "x-agent": false,
         "summary": "Save an app card's panel state",
-        "description": "Save the value an app card's panel asks to keep (`vision-board/save-state`), in place of the one before, written whole or not at all. Only the board page calls this, with the person's cookie. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in `.visionboard/app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. The body is `{ state }`: any JSON value of at most `APP_LIMITS.stateBytes` bytes as compact UTF-8 JSON; more is `too-large`. A body that is not JSON is `unsupported-media-type` or `bad-request`, and one that doesn't fit is `invalid`. A locked or archived board still takes it: it is the person's own. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`. It answers `{ bytes }`, the saved value's size.",
+        "description": "Save the value an app card's panel asks to keep (`vision-board/save-state`), in place of the one before, written whole or not at all. Only the board page calls this, with the person's cookie. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in the open ledger's `app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. The body is `{ state }`: any JSON value of at most `APP_LIMITS.stateBytes` bytes as compact UTF-8 JSON; more is `too-large`. A body that is not JSON is `unsupported-media-type` or `bad-request`, and one that doesn't fit is `invalid`. A locked or archived board still takes it: it is the person's own. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`. It answers `{ bytes }`, the saved value's size.",
         "security": [
           {
             "personCookie": []
@@ -3682,7 +3682,7 @@
       "appPath": {
         "name": "app",
         "in": "path",
-        "description": "The app's id: its folder's name in the project's `.visionboard/apps/`.",
+        "description": "The app's id: its folder's name in the open ledger's `apps/`.",
         "required": true,
         "schema": {
           "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id"
@@ -3973,7 +3973,7 @@
         }
       },
       "wrongFolder": {
-        "description": "The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here.",
+        "description": "The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here.",
         "content": {
           "application/problem+json": {
             "schema": {
@@ -4133,7 +4133,7 @@
         }
       },
       "agentConflict": {
-        "description": "The board server has another folder open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that they can press Edit. Nothing was written either way.",
+        "description": "The board server has another folder, or another ledger of it, open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that it is read-only until they make it editable. Nothing was written either way.",
         "content": {
           "application/problem+json": {
             "schema": {
@@ -4143,7 +4143,7 @@
               "type": "https://vision-board.invalid/problems/read-only",
               "title": "Read-only",
               "status": 409,
-              "detail": "This ledger is open read-only, so nothing was written. Read it as usual; to write, tell the person in one line that they can press Edit, and wait for them."
+              "detail": "This ledger is open read-only, so nothing was written. Read it as usual; to write, tell the person in one line that it is read-only until they make it editable, and wait for them."
             }
           }
         }

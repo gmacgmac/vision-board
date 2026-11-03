@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/app/panel-state.schema.json",
   "title": "App panel state",
-  "description": "An app card's saved panel state: the file the board keeps for one card, `.visionboard/app-state/<card identity>.json`, holding the version of this shape, the app the card named when its panel saved, and the value. `$defs/value` is what a panel may save; `$defs/save` the params of the panel's `vision-board/save-state` request and the body of `put_panel_state`; `$defs/saved` the panel's answer; `$defs/read` the answer of `get_panel_state`; `$defs/written` the answer of `put_panel_state`. No agent reads any of it.",
+  "description": "An app card's saved panel state: the file the board keeps for one card, `app-state/<card identity>.json` in the open ledger's folder, holding the version of this shape, the app the card named when its panel saved, and the value. `$defs/value` is what a panel may save; `$defs/save` the params of the panel's `vision-board/save-state` request and the body of `put_panel_state`; `$defs/saved` the panel's answer; `$defs/read` the answer of `get_panel_state`; `$defs/written` the answer of `put_panel_state`. No agent reads any of it.",
   "$comment": "D-050; docs/specification/apps.md § Saving the panel's state",
   "type": "object",
   "required": ["v", "app", "state"],

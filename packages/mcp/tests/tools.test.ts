@@ -43,9 +43,12 @@ test('no tool description and no instructions tell an agent about archived board
   for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) assert.doesNotMatch(text, /archiv/i);
 });
 
-test('the instructions and the board reads tell an agent what `locked` means: stop and tell the person (N40 ruling 3)', () => {
-  for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) assert.match(text, /`locked`[^.]*read-only[^.]*answers `locked`, so tell the person in one line and stop\./);
-  for (const name of ['list_boards', 'get_board']) assert.match(tools.find((t) => t.name === name)!.description, /`locked: true`/, name);
+test('the instructions and the board reads tell an agent what `locked` and `readOnly` mean: stop and tell the person (N40 ruling 3, D-085)', () => {
+  for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) {
+    assert.match(text, /`locked`[^.]*unlocks it[^.]*answers `locked`, so tell the person in one line and stop\./);
+    assert.match(text, /`readOnly`[^.]*whole ledger[^.]*answers `read-only` and writes nothing\./);
+  }
+  for (const name of ['list_boards', 'get_board']) assert.match(tools.find((t) => t.name === name)!.description, /`locked: true`[\s\S]*`readOnly: true`/, name);
   assert.match(tools.find((t) => t.name === 'request_grant')!.description, /locked board takes no request \(`locked`, 423\)/);
 });
 
@@ -135,10 +138,10 @@ test('no tool description carries an example: examples live in the skill, the sc
 
 /** The size budget: the whole `tools/list` and each tool, as compact JSON. Set from the trimmed
  * list plus about 10% (task 2026-10-25_board-agent_tool-list-trim); raise it only on purpose. Raised for the
- * three reads' `ledger` input (CONSOLIDATE_01, D-084 8). */
+ * three reads' `ledger` input (CONSOLIDATE_01, D-084 8), and for `readOnly: true` on list_boards and get_board (SKILL_01, D-085). */
 const LIST_CAP = 30_800;
 const TOOL_CAPS: Record<string, number> = {
-  list_boards: 700, get_board: 1100, show_node: 1150, show_container: 850, show_layout: 1050, list_open: 1150,
+  list_boards: 760, get_board: 1150, show_node: 1150, show_container: 850, show_layout: 1050, list_open: 1150,
   check_responses: 2600, join: 1600, request_grant: 1900, write_board: 17_350, list_apps: 1350, read_attachment: 2450,
 };
 

@@ -51,7 +51,7 @@ API version 1.41.0. Every operation on the project ledger, defined once. The MCP
 
 `GET /api/boards` · who: anyone (no credentials) · MCP tool `list_boards`, `vb` command `vb list-boards`
 
-List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).
+List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes). `readOnly: true`: the whole ledger is open read-only (no writes).
 
 ### Inputs
 
@@ -98,14 +98,14 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `get_board`
 
 `GET /api/boards/{board}` · who: anyone (no credentials) · MCP tool `get_board`, `vb` command `vb get-board`
 
-Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`). For one node's history, use `show_node`.
+Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). For one node's history, use `show_node`.
 
 ### Inputs
 
@@ -196,7 +196,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `put_board`
@@ -439,7 +439,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `show_container`
@@ -549,7 +549,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `show_layout`
@@ -640,7 +640,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `list_open`
@@ -698,7 +698,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `check_responses`
@@ -768,7 +768,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `read_ledger`
@@ -889,7 +889,7 @@ Example (Two lines):
 
 `POST /api/agents` · who: anyone (no credentials) · MCP tool `join`, `vb` command `vb join`
 
-Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.
+Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret`, `project`, the folder the board has open, and with ledger folders `ledger`, the ledger in it you join: check both are the ones you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder or ledger open, so stop, tell the person, and do not join. The one write that needs no credentials.
 
 ### Inputs
 
@@ -936,7 +936,7 @@ Example:
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The board server has another folder open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that they can press Edit. Nothing was written either way. |
+| 409 | `read-only` | The board server has another folder, or another ledger of it, open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that it is read-only until they make it editable. Nothing was written either way. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -946,7 +946,7 @@ Example:
 
 `POST /api/grants` · who: an agent (Bearer secret from `join`) · MCP tool `request_grant`, `vb` command `vb request-grant`
 
-Ask the person for write access to a board, or to one container on it. Before you write on a board you did not create, call it with just `board`; for another agent's container, with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` the person can decide on; then wait in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423). Returns `request`, the request's `seq` (the person's answer names it); an open request for the same thing comes back with `replayed: true`, and `{ held: true }` when you already hold it.
+Ask the person for write access to a board, or to one container on it. Before you write on a board you did not create, call it with just `board`; for another agent's container, with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` the person can decide on; then wait in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423), nor a ledger open read-only (`read-only`, 409). Returns `request`, the request's `seq` (the person's answer names it); an open request for the same thing comes back with `replayed: true`, and `{ held: true }` when you already hold it.
 
 ### Inputs
 
@@ -1044,7 +1044,7 @@ Example (A request for the whole board):
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The board server has another folder open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that they can press Edit. Nothing was written either way. |
+| 409 | `read-only` | The board server has another folder, or another ledger of it, open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that it is read-only until they make it editable. Nothing was written either way. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -1187,7 +1187,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The board server has another folder open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that they can press Edit. Nothing was written either way. |
+| 409 | `read-only` | The board server has another folder, or another ledger of it, open (`wrong-folder`): the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before; stop and tell the person, do not join here. Or the ledger is open read-only (`read-only`): read it as usual, and to write tell the person in one line that it is read-only until they make it editable. Nothing was written either way. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -2422,7 +2422,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -2722,7 +2722,7 @@ Example:
 
 `GET /api/apps` · who: an agent (Bearer secret from `join`) or the person (the board page cookie) · MCP tool `list_apps`, `vb` command `vb list-apps`
 
-List the apps in this folder, to draw one on a card or see what to fix. Apps live in `.visionboard/apps/<id>/` (the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.
+List the apps in this folder, to draw one on a card or see what to fix. Apps live in the open ledger's `apps/<id>/` (`.visionboard/apps/`, or `.visionboard/<ledger>/apps/` with ledger folders; the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.
 
 ### Inputs
 
@@ -2787,7 +2787,7 @@ Example:
 | 401 | `not-authenticated` | The Bearer secret is missing or unknown. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `wrong-folder` | The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here. |
+| 409 | `wrong-folder` | The board server has another folder, or another ledger of it, open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder or ledger opened before. Nothing was read or written. Stop and tell the person; do not join here. |
 | 500 | `server-error` | Something unexpected; the detail is in the server log, not here. |
 
 ## `call_app_tool`
@@ -2800,7 +2800,7 @@ Run one tool of an app for its panel on the board, and answer the tool's result.
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
-| `app` | path | string | yes | The app's id: its folder's name in the project's `.visionboard/apps/`. |
+| `app` | path | string | yes | The app's id: its folder's name in the open ledger's `apps/`. |
 | `tool` | body | string | yes | The tool's name, as the app's tools module gives it. |
 | `arguments` | body | object | no | The tool's input, checked against its `inputSchema` before it runs. Left out, `{}`. |
 
@@ -2878,7 +2878,7 @@ Example (The tool threw):
 
 `GET /api/boards/{board}/nodes/{n}/panel-state` · who: the person (the board page cookie) · not offered to agents (`x-agent: false`)
 
-Read the value an app card's panel last saved, so the panel can start where it was. Only the board page calls this, with the person's cookie, when the card's panel starts. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in `.visionboard/app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. It answers `{ state }`, or `{}` when nothing is saved or the card now names another app than the one that saved. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`.
+Read the value an app card's panel last saved, so the panel can start where it was. Only the board page calls this, with the person's cookie, when the card's panel starts. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in the open ledger's `app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. It answers `{ state }`, or `{}` when nothing is saved or the card now names another app than the one that saved. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`.
 
 ### Inputs
 
@@ -2928,7 +2928,7 @@ Example (Nothing saved):
 
 `PUT /api/boards/{board}/nodes/{n}/panel-state` · who: the person (the board page cookie) · not offered to agents (`x-agent: false`)
 
-Save the value an app card's panel asks to keep (`vision-board/save-state`), in place of the one before, written whole or not at all. Only the board page calls this, with the person's cookie. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in `.visionboard/app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. The body is `{ state }`: any JSON value of at most `APP_LIMITS.stateBytes` bytes as compact UTF-8 JSON; more is `too-large`. A body that is not JSON is `unsupported-media-type` or `bad-request`, and one that doesn't fit is `invalid`. A locked or archived board still takes it: it is the person's own. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`. It answers `{ bytes }`, the saved value's size.
+Save the value an app card's panel asks to keep (`vision-board/save-state`), in place of the one before, written whole or not at all. Only the board page calls this, with the person's cookie. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in the open ledger's `app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. The body is `{ state }`: any JSON value of at most `APP_LIMITS.stateBytes` bytes as compact UTF-8 JSON; more is `too-large`. A body that is not JSON is `unsupported-media-type` or `bad-request`, and one that doesn't fit is `invalid`. A locked or archived board still takes it: it is the person's own. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`. It answers `{ bytes }`, the saved value's size.
 
 ### Inputs
 
