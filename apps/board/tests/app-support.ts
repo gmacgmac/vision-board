@@ -1,6 +1,6 @@
 // Test support for the app host (app-cards BE_02): copy a test app (tests/fixtures/apps/) into a
 // temp project, allow it as the person, call a tool as the board page does, read a raw path, and
-// wait for a process to be gone. Only a temp project's `.visionboard/apps/` is ever written.
+// wait for a process to be gone. Only a temp project's apps folder (`ledgerFiles`) is ever written.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -10,6 +10,7 @@ import type { AppInfo } from '#format';
 import { ApiProblem } from '#client';
 import type { Harness } from './api-harness.ts';
 import { PERSON } from './api-harness.ts';
+import { ledgerFiles, ledgerFolder } from '#format';
 
 export const FIXTURES = fileURLToPath(new URL('./fixtures/apps/', import.meta.url));
 
@@ -21,7 +22,7 @@ export const FILE_NAME_WORDS = {
 
 /** Copy test app `id` into the project's apps folder; returns its folder there. */
 export function addApp(project: string, id: string): string {
-  const to = path.join(project, '.visionboard', 'apps', id);
+  const to = path.join(ledgerFiles(ledgerFolder(project)).apps, id);
   fs.cpSync(path.join(FIXTURES, id), to, { recursive: true });
   return to;
 }

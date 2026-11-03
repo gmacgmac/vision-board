@@ -33,6 +33,8 @@ export interface AttentionDeps {
   fail(err: unknown): void;
   /** A past version of the open board shows: no board seen. */
   readOnly(): boolean;
+  /** The ledger is open read-only (D-085 3): no board seen is written; the marks stay as the ledger has them. */
+  quiet?(): boolean;
   /** The freshCards flag: the "N new" list and the fresh containers. */
   fresh?: boolean;
   status: Status;
@@ -87,7 +89,7 @@ export function createAttention(d: AttentionDeps): Attention {
   function see(board: string, leaving = false) {
     const s = d.state();
     const head = s?.heads.get(board);
-    if (!s || d.readOnly() || head === undefined || !boardNews(s, board) || (sent.get(board) ?? 0) >= head) return;
+    if (!s || d.readOnly() || d.quiet?.() || head === undefined || !boardNews(s, board) || (sent.get(board) ?? 0) >= head) return;
     sent.set(board, head);
     sentAt = Date.now();
     d.markBoardSeen(board, head, leaving).catch((err: unknown) => {
@@ -99,7 +101,7 @@ export function createAttention(d: AttentionDeps): Attention {
   /** While a board stays open: a board seen when one is due, at most once a minute. */
   function keep() {
     const s = d.state();
-    if (timer || !s || d.readOnly() || !d.board() || !boardNews(s, d.board())) return;
+    if (timer || !s || d.readOnly() || d.quiet?.() || !d.board() || !boardNews(s, d.board())) return;
     timer = window.setTimeout(() => { timer = 0; see(d.board()); }, Math.max(0, sentAt + SEEN_EVERY_MS - Date.now()));
   }
 

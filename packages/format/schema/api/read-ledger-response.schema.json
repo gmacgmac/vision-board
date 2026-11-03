@@ -22,6 +22,9 @@
     },
     "more": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
+    },
+    "readOnly": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly"
     }
   },
   "unevaluatedProperties": false

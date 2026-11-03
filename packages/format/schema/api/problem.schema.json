@@ -24,14 +24,14 @@
   "$defs": {
     "code": {
       "type": "string",
-      "pattern": "^https://vision-board\\.invalid/problems/(bad-request|not-authenticated|forbidden|needs-grant|not-found|method-not-allowed|conflict|too-large|unsupported-media-type|depends-on-failed|invalid|server-error|wrong-folder|locked|needs-approval|app-not-found|app-invalid|app-failed|app-busy|app-timeout)$",
+      "pattern": "^https://vision-board\\.invalid/problems/(bad-request|not-authenticated|forbidden|needs-grant|not-found|method-not-allowed|conflict|too-large|unsupported-media-type|depends-on-failed|invalid|server-error|wrong-folder|locked|read-only|needs-approval|app-not-found|app-invalid|app-failed|app-busy|app-timeout)$",
       "description": "`https://vision-board.invalid/problems/<code>`; the codes are listed in the API reference.",
       "$comment": "Was: api.md 40"
     },
     "codes": {
       "type": "object",
       "description": "Every problem code, with the HTTP status it is sent with (`const`) and its `title` (the same for every problem with that code). The source of the codes: the server and the client are generated from it (scripts/gen-api.mjs), and `code`'s pattern must list exactly these.",
-      "$comment": "423 Locked (RFC 4918 11.3): the board itself is locked, so a client can tell it from every 409 by status alone. The app codes are D-047 rulings 6-8 (api.md 153).",
+      "$comment": "423 Locked (RFC 4918 11.3): the board itself is locked, so a client can tell it from every 409 by status alone. The app codes are D-047 rulings 6-8 (api.md 153). `read-only` (409) is a ledger opened read-only (D-085): nothing in its folder is written until the person presses Edit; not `locked`, which is one board.",
       "properties": {
         "bad-request": {
           "const": 400,
@@ -88,6 +88,10 @@
         "locked": {
           "const": 423,
           "title": "Locked"
+        },
+        "read-only": {
+          "const": 409,
+          "title": "Read-only"
         },
         "needs-approval": {
           "const": 403,

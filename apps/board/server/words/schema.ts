@@ -6,6 +6,7 @@ export const doesNotFitAnyOf = 'does not fit any of the shapes the tool takes';
 export const theLineIsNotJSON = 'the line is not JSON';
 export const theEvent = 'the event';
 export const isNotAValidId = 'is not a valid id: lowercase letters, digits and hyphens, up to 64, not starting with a hyphen';
+export const isNotALedgerName = 'is not a ledger name: lowercase letters, digits and hyphens, up to 40, not starting with a hyphen';
 export const isNotAnAgentId = 'is not an agent id: "a-" and 8 lowercase letters or digits, as join gives it';
 export const mustNotBeBlank = 'must not be blank';
 export const isNotAUTCTimestamp = 'is not a UTC timestamp like 2026-10-05T09:00:00Z';

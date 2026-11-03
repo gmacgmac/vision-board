@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-17
-updated: 2026-10-27
+updated: 2026-11-03 (the folders' place from the paths module); 2026-10-27
 scope: The app card contract — an app's folder, manifest, panel protocol, saved panel state, tools module, limits, approval and states
 ---
 
@@ -30,7 +30,11 @@ for nothing.
 
 ## The folder
 
-An app is one folder in the open project: `.visionboard/apps/<id>/`. The id is the folder's name,
+An app is one folder in the open ledger's folder: `.visionboard/apps/<id>/` in the open project, or with ledger
+folders (D-084, api.md 113a) `.visionboard/<ledger>/apps/<id>/`, so each ledger has its own apps (`ledgerFiles` `apps`
+of `ledgerFolder` in `packages/format/src/data-folder.ts`, the one home of the data folder's layout; `appsDir(project,
+ledger)` in `apps/board/server/apps/manifest.ts`, which the app host calls with the open ledger, `apps/host.ts`
+`createAppHost` `ledgerName`). The move into `main/` carries the apps with the ledger (`apps/board/tests/ledger-move.test.ts`). The id is the folder's name,
 with the pattern of every other id: lower-case letters, digits and hyphens, not starting with a
 hyphen (`APP_ID`). The folder holds:
 
@@ -39,7 +43,7 @@ hyphen (`APP_ID`). The folder holds:
 - the tools module, an ES module file (`tools.mjs` unless the manifest names another). An app with
   no tools file has a panel only.
 
-The board reads only `.visionboard/apps/*`. It checks an id against the pattern before it builds any
+The board reads only the open ledger's `apps/*`. It checks an id against the pattern before it builds any
 path, takes the manifest's file names only as plain names inside the folder (no `/`, no `..`, not
 hidden), and refuses any resolved path that leaves the folder, a link out included. A folder whose
 name is not an id is not an app: `list_apps` leaves it out. No file may be over `fileBytes`
@@ -243,7 +247,7 @@ and gets it back when it starts:
   from one read of the server, waited for at most `LOAD_WAIT_MS`, after which it starts without
   (`apps/board/src/board/apps/panel-states.ts`).
 - **Where it is kept.** Per card, not per app: two cards showing one app keep two states. The board
-  keeps it in the project, `.visionboard/app-state/<card identity>.json`, beside the ledger, through
+  keeps it in the project, `.visionboard/app-state/<card identity>.json` (`ledgerFiles` `appState`), beside the ledger, through
   its two person-only operations (api.md 157). A card that now names another app starts that app
   with no state; removing the card keeps the file. No agent reads it, and an app's tools don't get
   it: a panel passes what a tool needs in its call.

@@ -7,6 +7,10 @@ import { expect, bid } from './helpers.ts';
 
 /** The roadmap fixture's cards. */
 export const ROADMAP_CARDS = 17;
+/** The page's flags for the header and "⋯" menu as they were before ledgers and read-only (D-084, D-085; their own
+ *  specs: ledgers.spec.ts, read-only.spec.ts): a test that counts that header's parts or rows names them, so it passes
+ *  whatever the flags' defaults are. */
+export const OLD_HEADER = '-ledgerFolders,-readOnlyStart';
 
 export const card = (page: Page, n: number | string) => page.locator(`vb-node[data-id="${n}"]`);
 export const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);

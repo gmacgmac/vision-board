@@ -1,0 +1,32 @@
+/* The open ledger (ledgerFolders flag, LEDGER_UI_01): its chip in the header's path (shell/LedgerPart.svelte; the path's
+   part look, header.css `.vb-path-part`, with the select unseen over it, board.css `.vb-menu-face`) and the New ledger
+   dialog's own fields (shell/LedgerForm.svelte; the shared dialog's look, #ui base/dialog.css). Tokens only. */
+
+/* The chip: the ledger's icon and its name in the reading ink, then the chevron. A ledger's name is short (an id), so
+   at full it keeps its room while the folder and the board's name give theirs (a part that shrank even a fraction of
+   a pixel would show "…"): up to 16ch, so the board's name, the page's heading, keeps the most room; 12ch on a full bar under about 1385px (its content box, 1360px), a longer name
+   cut with "…", the whole name in its tooltip. At half the board's name takes only what is left (header.css), so
+   the chip has 16ch and gives way first when the bar is crowded, never under its icon and a "…" (44px). At a third
+   it is a row of "⋯" (header-tier.ts). */
+.vb-ledger-chip { flex: none; min-width: 44px; max-width: 16ch; color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
+@container vb-bar (max-width: 1360px) { .vb-path .vb-ledger-chip { max-width: 12ch; } }
+[data-tier='half'] .vb-path .vb-ledger-chip { flex-shrink: 1; max-width: 16ch; }
+.vb-ledger-chip .vb-btn-icon:first-child { flex: none; color: var(--vb-ink-subtle); }
+.vb-ledger-chip .vb-btn-icon:last-of-type { flex: none; }
+.vb-ledger-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vb-ledger-chip[aria-busy='true'] { cursor: progress; }
+/* Outside the adaptive header (adaptiveHeader off) it sits after the folder's chip, as a chip. */
+.vb-toolbar:not([data-tier]) > .vb-part .vb-ledger-chip { height: var(--vb-control-h); }
+
+/* The dialog: the name's rule under it, which turns into its problem; "Keep out of git" and what it means. Both lines
+   are reading text in the plain ink (Lc 60 in dark too; the quiet ink is only Lc 49 on the dialog's surface there). */
+.vb-ledger-check { margin: var(--vb-space-1) 0 0; font-size: var(--vb-text-xs); color: var(--vb-ink); }
+.vb-ledger-check[data-problem] {
+  padding: var(--vb-space-1) var(--vb-space-2); color: var(--vb-ink-strong);
+  border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft); border-radius: var(--vb-radius-sm);
+}
+.vb-ledger-git { display: flex; align-items: center; gap: var(--vb-space-2); margin: var(--vb-space-4) 0 0; font-weight: 600; color: var(--vb-ink-strong); cursor: pointer; }
+.vb-ledger-git input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--vb-accent); cursor: pointer; }
+.vb-ledger-git input:disabled, .vb-ledger-git:has(input:disabled) { cursor: default; }
+.vb-ledger-git-note { margin-left: calc(18px + var(--vb-space-2)); color: var(--vb-ink); }
+.vb-dialog .vb-input[aria-invalid='true'] { border-color: var(--vb-state-drop); }

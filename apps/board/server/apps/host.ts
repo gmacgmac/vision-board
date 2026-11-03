@@ -9,7 +9,7 @@ import { namedApps } from '#actions';
 import type { Ledger } from '../ledger.ts';
 import { problem } from '../problem.ts';
 import { readEnv } from './env.ts';
-import { appIds } from './manifest.ts';
+import { appIds, appsFolder } from './manifest.ts';
 import type { AppStatus } from './state.ts';
 import { appState } from './state.ts';
 import type { AppLimits } from './supervisor.ts';
@@ -23,6 +23,8 @@ export const APPS_OFF = appsHostWords.appCardsAreOffOn;
 export interface AppHostOptions {
   /** The open folder (its real path) and its ledger, for what the person allowed. */
   dir: () => string;
+  /** The ledger's name, with ledger folders: its apps are in its folder (D-084 1); none, the old layout's. */
+  ledgerName?: string | undefined;
   ledger: Ledger;
   flags?: FlagOverrides | undefined;
   /** Shorter limits than APP_LIMITS, for tests. */
@@ -41,14 +43,14 @@ export interface AppHost {
   close(): void;
 }
 
-export function createAppHost({ dir, ledger, flags, limits }: AppHostOptions): AppHost {
+export function createAppHost({ dir, ledgerName, ledger, flags, limits }: AppHostOptions): AppHost {
   const on = flagOn('appCards', flags);
   const runs = createSupervisor(limits);
   // A stop takes the allow back now: the app's process goes with it.
   const unsubscribe = ledger.onAppend((e) => { if (e.type === 'act' && e.action === 'app-revoke' && e.app) runs.seen(e.app, undefined); });
 
   function status(id: string): AppStatus {
-    const s = appState(dir(), id, ledger.state().appAllowed.get(id), runs.known);
+    const s = appState(dir(), id, ledger.state().appAllowed.get(id), runs.known, ledgerName);
     runs.seen(id, s.info.allowed && s.folder?.tools ? s.info.hash : undefined);
     return s;
   }
@@ -57,13 +59,13 @@ export function createAppHost({ dir, ledger, flags, limits }: AppHostOptions): A
     on,
     status,
     list() {
-      const ids = new Set([...appIds(dir()), ...namedApps(ledger.state()).keys()]);
+      const ids = new Set([...appIds(dir(), ledgerName), ...namedApps(ledger.state()).keys()]);
       return [...ids].sort().map((id) => status(id).info);
     },
     async call(id, tool, args, signal) {
       if (!on) throw problem('not-found', APPS_OFF);
       const { info, folder } = status(id);
-      if (info.state === 'missing') throw problem('app-not-found', `There is no app "${id}" in this folder's .visionboard/apps/.`);
+      if (info.state === 'missing') throw problem('app-not-found', appsHostWords.thereIsNoApp(id, appsFolder(ledgerName)));
       if (info.state === 'invalid') throw appInvalid(id, info.problems);
       if (info.state === 'needs-approval') {
         throw problem('needs-approval', info.changed

@@ -1,5 +1,6 @@
 <!-- The board picker: a native select of the folder's boards, then New board…, Rename board… (boardEdit
-     flag) and "Archived (N)…" (archiveBoard flag). The picker marks a board the person has not opened
+     flag) and "Archived (N)…" (archiveBoard flag); New board… and Rename board… are off, saying why, while a past version
+     shows or the ledger is read-only (D-085). The picker marks a board the person has not opened
      " · new" and one an agent wrote on since they last looked " · changed", never the open one. With
      `face` (adaptiveHeader flag) the select lies unseen over the board's name, cut with "…" (board.css
      `.vb-menu-face`), so the title shows once: the path's picker is the title. Toolbar.svelte draws this. -->
@@ -12,7 +13,7 @@
   import * as commonWords from '../words/common.ts';
   import * as toolbarWords from '../words/toolbar.ts';
   import { useChrome, type ChromeState } from './chrome.svelte.ts';
-  import { BOARD_ACTION_IDS, BOARD_ACTIONS, type BoardActionId } from '#actions';
+  import { BOARD_ACTION_IDS, BOARD_ACTIONS, READ_ONLY_PERSON, type BoardActionId } from '#actions';
 
   let { facts, onboard, id, face, look }: {
     /** What it shows: the board's status, or a gallery sample's. */
@@ -58,7 +59,7 @@
       <hr />
       {#each BOARD_ACTION_IDS as a (a)}
         {#if a === 'new-board' || facts.version !== null}
-          <option value={entry(a)} disabled={!!facts.past}>{BOARD_ACTIONS[a].label}…</option>
+          <option value={entry(a)} disabled={!!facts.past || facts.readOnly} title={facts.readOnly ? READ_ONLY_PERSON : undefined}>{BOARD_ACTIONS[a].label}…</option>
         {/if}
       {/each}
     {/if}

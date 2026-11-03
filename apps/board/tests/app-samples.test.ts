@@ -15,6 +15,7 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { allow, apps, refused } from './app-support.ts';
 import { doc, read, ROOT } from './openapi-ajv.ts';
+import { ledgerFiles, ledgerFolder } from '#format';
 
 const GALLERY = JSON.parse(read('apps/board/src/gallery/gallery.apps.json')) as Record<'files' | 'tools', AppInfo>;
 const LISTED = doc.paths['/api/apps'].get.responses['200'].content['application/json'].example.apps as AppInfo[];
@@ -26,7 +27,7 @@ before(async () => { h = await startBoard(); });
 after(async () => { await h.close(); });
 
 /** App `id`'s folder in the project. */
-const folder = (id: string): string => path.join(h.project, '.visionboard', 'apps', id);
+const folder = (id: string): string => path.join(ledgerFiles(ledgerFolder(h.project)).apps, id);
 /** The example calculator as the skill ships it. */
 const CALCULATOR = path.join(ROOT, 'skills/vision-board/examples/apps/calculator');
 

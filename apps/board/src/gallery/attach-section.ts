@@ -8,13 +8,13 @@
 import type { ChatComposerElement, ChatEvent, ChatFeedElement, ChatHost, ComposerContext, ComposerFile } from '#chat';
 import { applyEvents, composerView, EMPTY_CHAT } from '#chat';
 import type { FlagOverrides } from '#format';
-import { flagOn } from '#format';
+import { flagOn, projectFiles } from '#format';
 import { renderMarkdown } from '#ui';
 import { attachingFiles, fileIsTooBig, fittingPicture, onlySomePages, pagesMayBeIncomplete, pagesTookTooLong, pdfHasAPassword, pdfIsDamaged, pictureNotFitted, readingPages, sendWaitsForCopy, tooManyFiles } from '../shell/words/chat.ts';
 import { el, group } from './dom.ts';
 
 const SESSION = '5d2c8e41-7a36-4f0b-9c1d-3e6a8b2f4d70';
-const DAY = '.visionboard/attachments/2026-10-30';
+const DAY = `${projectFiles('').attachments}/2026-10-30`;
 const TOO_BIG = fileIsTooBig(13_002_342);
 
 interface Sample {

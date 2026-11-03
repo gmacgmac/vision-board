@@ -2,18 +2,44 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/project.schema.json",
   "title": "The open folder",
-  "description": "`{ path, name, found, boards? }`: the folder the board server has open, whose `.visionboard/ledger.jsonl` every other operation reads and writes.",
+  "description": "`{ path, name, found, boards?, ledger?, ledgers?, readOnly?, editing? }`: the folder the board server has open, whose open ledger every other operation reads and writes. With ledger folders it also names that ledger and lists the folder's ledgers; with read-only opening, whether the ledger is read-only and who is writing it.",
   "$comment": "Was: api.md 109 (open-folder task, U12)",
   "type": "object",
   "required": ["path", "name", "found"],
   "properties": {
     "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
     "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName"},
-    "found": {"type": "boolean", "description": "True when the folder has a Vision Board: a `.visionboard/ledger.jsonl` file."},
-    "boards": {"type": "integer", "minimum": 0, "description": "How many boards its ledger holds; given only when `found` is true."}
+    "found": {"type": "boolean", "description": "True when the folder has a Vision Board: a ledger in `.visionboard/`."},
+    "boards": {"type": "integer", "minimum": 0, "description": "How many boards its open ledger holds; given only when `found` is true."},
+    "ledger": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName", "description": "The ledger open now; every other operation reads and writes it. Given only with ledger folders.", "$comment": "ledgerFolders flag (LEDGERS_01, D-084)"},
+    "ledgers": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerEntry"},
+      "description": "The folder's ledgers, by name. Given only with ledger folders.",
+      "$comment": "ledgerFolders flag (LEDGERS_01, D-084)"
+    },
+    "readOnly": {"$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly", "description": "Present, and true, while the open ledger is read-only: nothing is written into its folder until Edit (`edit_ledger`)."},
+    "editing": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/editing"}
   },
   "unevaluatedProperties": false,
   "$defs": {
+    "editing": {
+      "description": "Who is writing the open ledger: `{ here: true }` when this board server holds its lock, or the computer that does (`host`) and since when (`since`) when another server holds it live. Left out when no one does.",
+      "$comment": "readOnlyStart flag (READONLY_01, D-085 2)",
+      "oneOf": [
+        {"type": "object", "required": ["here"], "properties": {"here": {"const": true, "description": "This board server holds the lock: the ledger is open for writing here."}}, "unevaluatedProperties": false},
+        {
+          "type": "object",
+          "required": ["host", "since"],
+          "properties": {
+            "host": {"type": "string", "minLength": 1, "maxLength": 255, "description": "The computer whose board server holds the lock, as it names itself."},
+            "since": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/timestamp", "description": "When that server took the lock."}
+          },
+          "unevaluatedProperties": false
+        }
+      ]
+    },
     "folderPath": {
       "type": "string",
       "minLength": 1,
@@ -41,7 +67,24 @@
       "properties": {
         "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName", "description": "The folder's own name in a folder's list and in the cloud storage list (`places`); its display name (`~/...`) in the recent list."},
         "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
-        "hasBoard": {"type": "boolean", "description": "True when it has a `.visionboard/ledger.jsonl` file."}
+        "hasBoard": {"type": "boolean", "description": "True when it has a ledger in `.visionboard/`."}
+      },
+      "unevaluatedProperties": false
+    },
+    "ledgerName": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+      "description": "A ledger's name: its folder in `.visionboard/`; lowercase letters, digits and `-`, like a board id, at most 40 characters, and never the name of a file or folder the board keeps there (`images`, `apps`, `app-state`, `attachments`, `lock`). The first ledger is `main`.",
+      "$comment": "ledgerFolders flag (LEDGERS_01, D-084 1); data-folder.ts ledgerNameProblem holds the same rule"
+    },
+    "ledgerEntry": {
+      "type": "object",
+      "description": "One ledger of the folder.",
+      "required": ["name", "boards", "keptOutOfGit"],
+      "properties": {
+        "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName"},
+        "boards": {"type": "integer", "minimum": 0, "description": "How many boards it holds (0 when its ledger can't be read)."},
+        "keptOutOfGit": {"type": "boolean", "description": "True when its folder's `.gitignore` keeps the whole ledger out of git (a throwaway ledger)."}
       },
       "unevaluatedProperties": false
     }

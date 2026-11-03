@@ -7,7 +7,10 @@
 // in one batch; an event with no head (a stream that opened again) reads whatever is new. An act the
 // page sent itself is applied from its answer when it is the next line. A full fetch happens again
 // only when the ledger went back (another project, a reset) or a line has a format the page cannot
-// apply. Reloading the page (a rebuilt page, another folder) is the standalone host's (page-host.ts).
+// apply. Reloading the page (a rebuilt page, another folder) is the standalone host's (page-host.ts). Every read
+// also says whether the ledger is open read-only (`readOnly`, D-085 4), so any host's board learns it from its reads;
+// a change of it alone is handed on as an empty batch, so the board draws its controls again. A change event with
+// head 0 says the ledger file was replaced (a git pull, a sync, D-085 6): the whole ledger is read again.
 import type { LedgerEvent, LedgerLine } from '#format';
 import type { LedgerState } from '#actions';
 import { applyEvent, foldLedger } from '#actions';
@@ -21,6 +24,8 @@ import { work } from './work.ts';
 export interface Live {
   /** The held state; null until the first `load`. */
   readonly state: LedgerState | null;
+  /** The ledger is open read-only, as the last read said (D-085 4). */
+  readonly readOnly: boolean;
   /** Read and fold the whole ledger (a full fetch). */
   load(): Promise<void>;
   /** Read the lines after the held head and apply them. Calls made while a read is in flight
@@ -48,11 +53,21 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
   let state: LedgerState | null = null;
   let reading: Promise<void> | null = null;
   let again = false;
+  let readOnly = false;
+  /** The next read is from the start: the file was replaced. */
+  let fromZero = false;
+  /** What a read said of read-only; true when that changed. */
+  const heard = (page: { readOnly?: true }): boolean => {
+    const was = readOnly;
+    readOnly = page.readOnly === true;
+    return was !== readOnly;
+  };
 
   async function all(): Promise<LedgerEvent[]> {
     const out: LedgerEvent[] = [];
     for (;;) {
       const page = await d.readLedger(out.at(-1)?.seq ?? 0);
+      heard(page);
       out.push(...page.events);
       if (!page.more) return out;
     }
@@ -75,16 +90,23 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
   }
 
   async function readOnce() {
-    if (!state) return load();
+    if (!state || fromZero) {
+      fromZero = false;
+      return load();
+    }
     const lines: LedgerEvent[] = [];
+    let flipped = false;
     for (;;) {
       const page = await d.readLedger(lines.at(-1)?.seq ?? state.seq);
+      flipped = heard(page) || flipped;
       // The ledger went back past what the page holds: it is not the ledger the page folded.
       if (page.head < state.seq) return load();
       lines.push(...page.events);
       if (!page.more) break;
     }
-    if (!apply(lines)) await load();
+    const fresh = lines.some((e) => e.seq > state!.seq);
+    if (!apply(lines)) return load();
+    if (flipped && !fresh) onLines([], false);
   }
 
   function sync(): Promise<void> {
@@ -107,6 +129,7 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
 
   return {
     get state() { return state; },
+    get readOnly() { return readOnly; },
     load,
     sync,
     async own(line, board) {
@@ -115,7 +138,10 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
     },
     watch(failed, worked) {
       // A head past the one held, or no head (catch up on anything appended while not following).
-      return hearUntilStopped<[BoardEvent]>((heard) => d.events(heard), ({ ref }) => { if (!state || ref.head === undefined || ref.head > state.seq) sync().then(worked, failed); });
+      return hearUntilStopped<[BoardEvent]>((events) => d.events(events), ({ ref }) => {
+        if (ref.head === 0 && state) { fromZero = true; sync().then(worked, failed); } // the file was replaced: from the start
+        else if (!state || ref.head === undefined || ref.head > state.seq) sync().then(worked, failed);
+      });
     },
     settled: async () => { while (reading) await reading; },
   };

@@ -1,6 +1,7 @@
 // The chat event schema (api.md 98-101, D-036, D-037): the chat package's own contract,
 // packages/chat/schema/chat-event.schema.json. Every kind has a valid event and a broken one; a
 // tool_activity never carries a tool's raw input; approval facts and answers follow nclite's shapes.
+// verify: data-folder-literal the attachment paths a page and an agent see (`.visionboard/attachments/…`, repo-wide in every layout)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CHAT_SCHEMA_DIR } from '#chat/files';

@@ -58,6 +58,7 @@ function agentOf(req: IncomingMessage, env: CallerEnv): Caller {
   const auth = req.headers.authorization;
   const m = auth === undefined ? null : BEARER.exec(auth);
   if (!m) throw problem('not-authenticated', NO_SECRET, { headers: REALM });
+  env.ledger.refresh(); // the file as it is now: its join lines, after another writer or a file come back (N3)
   const index = env.ledger.state().index;
   const agent = env.agents().find(m[1]!, (id) => index.agents.has(id));
   if (!agent) throw env.elsewhere?.(m[1]!) ?? problem('not-authenticated', UNKNOWN_SECRET, { headers: REALM });
@@ -92,5 +93,19 @@ export function callerOf(req: IncomingMessage, id: OperationId, env: CallerEnv):
   if (agentOp && req.method !== 'GET' && cookie !== undefined) throw problem('forbidden', ONLY_AGENT);
   if (security === 'agent') return agentOf(req, env);
   if (security === 'optional-agent' && req.headers.authorization !== undefined) return agentOf(req, env);
+  if (agentOp) refuseElsewhere(req, env);
   return undefined;
+}
+
+/** A read that sends a secret this ledger does not know but another's agents do (another ledger of the folder, a
+ * recent folder) is refused as a write would be, so an agent left behind by a switch never takes the open ledger's
+ * boards for its own (FIX_01 F12). A read with no secret, or one no ledger knows, goes as before. */
+function refuseElsewhere(req: IncomingMessage, env: CallerEnv): void {
+  const secret = bearerOf(req);
+  if (secret === undefined || !env.elsewhere) return;
+  env.ledger.refresh();
+  const index = env.ledger.state().index;
+  if (env.agents().find(secret, (id) => index.agents.has(id))) return;
+  const away = env.elsewhere(secret);
+  if (away) throw away;
 }

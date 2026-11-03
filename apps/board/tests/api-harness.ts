@@ -90,7 +90,7 @@ export interface Joined { agent: string; secret: string; client: Client }
 
 const PERSON_OPS: ReadonlySet<OperationId> = new Set([
   'act', 'mark_seen', 'put_board', 'retire_cards', 'read_ledger', 'start_chat', 'list_chats', 'start_folder_chat', 'list_folder_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat', 'list_permissions', 'forget_permission', 'attach_chat_file',
-  'get_project', 'list_folders', 'open_project', 'call_app_tool', 'get_panel_state', 'put_panel_state',
+  'get_project', 'list_folders', 'open_project', 'edit_ledger', 'stop_editing', 'call_app_tool', 'get_panel_state', 'put_panel_state',
 ]);
 
 const mediaOf = (h: Headers) => (h.get('content-type') ?? '').split(';')[0]!.trim();
@@ -107,8 +107,10 @@ async function parsed(res: Response, media: string): Promise<unknown> {
  * person's home folder for the folder routes (a temp folder; never the real one in a test).
  * `flags`: the server's flags (as `VB_FLAGS`); `appLimits`: shorter app limits, so a test of a
  * time limit doesn't wait the real one. */
-export async function startBoard({ watch = false, chat, home, flags, appLimits }: {
+export async function startBoard({ watch = false, chat, home, flags, appLimits, edit, lockEnv }: {
   watch?: boolean; chat?: BoardServerOptions['chat']; home?: string; flags?: BoardServerOptions['flags']; appLimits?: BoardServerOptions['appLimits'];
+  /** Edit mode (default, as `startTestBoard`); `false` with `readOnlyStart` opens read-only (D-085). */
+  edit?: boolean; lockEnv?: BoardServerOptions['lockEnv'];
 } = {}): Promise<Harness> {
   const dir = makeTempDir('vb-api-');
   const file = ledgerPath(dir);
@@ -122,7 +124,7 @@ export async function startBoard({ watch = false, chat, home, flags, appLimits }
   const build = watch ? watchBuild(dist) : undefined;
   // A temp home folder unless the test brings its own: no test reads the real one (api.md 112).
   const ownHome = home ? undefined : makeTempDir('vb-home-');
-  const board = await startTestBoard({ project: dir, ledger, dist, build, chat, flags, appLimits, home: home ?? fs.realpathSync(ownHome!) });
+  const board = await startTestBoard({ project: dir, ledger, dist, build, chat, flags, appLimits, home: home ?? fs.realpathSync(ownHome!), ...(edit !== undefined && { edit }), lockEnv });
   const { base } = board;
   // The page is served with the person cookie (api.md 20); the test page keeps it like a browser.
   const cookie = await personCookie(base);

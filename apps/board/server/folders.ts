@@ -3,15 +3,16 @@
 // folder (itself a real path) or under it, so neither `..` nor a link leads out; no part of it under
 // home may be hidden (a name starting with a dot) or `node_modules`; and it must be a folder.
 // Listings hold folder names only: never a file's name or contents, never a hidden folder,
-// `node_modules` or a link. Whether a folder has a Vision Board is whether its ledger file exists.
+// `node_modules` or a link. Whether a folder has a Vision Board is whether a ledger file exists, in either
+// layout (ledgers.ts `hasLedger`: `.visionboard/ledger.jsonl`, or `.visionboard/<ledger>/ledger.jsonl`).
 // The cloud storage places (folder-links-cloud task) are the real folders in `~/Library/CloudStorage`,
 // where macOS keeps Dropbox and the like (home only holds links to them, and links are not listed);
 // each passes the same checks, so a place is just another folder under home, by its real path.
 import fs from 'node:fs';
 import path from 'node:path';
-import { boardList } from '#actions';
 import type { OperationOutput } from '#format';
-import { ledgerPath, openLedger } from './ledger.ts';
+import { ledgerFiles } from '#format';
+import { boardsIn, hasLedger, ledgerFoldersIn } from './ledgers.ts';
 import { problem } from './problem.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
 
@@ -45,17 +46,13 @@ export function displayName(home: string, dir: string): string {
   return rel ? `~/${rel.split(path.sep).join('/')}` : '~';
 }
 
-/** The folder has a Vision Board: its `.visionboard/ledger.jsonl` is a file. */
-export function hasBoard(dir: string): boolean {
-  try { return fs.statSync(ledgerPath(dir), { throwIfNoEntry: false })?.isFile() ?? false; } catch { return false; }
-}
+/** The folder has a Vision Board: a ledger file, in either layout (`hasLedger`). */
+export const hasBoard = (dir: string): boolean => hasLedger(dir);
 
-/** How many boards the folder's ledger holds; undefined when it can't be read. */
+/** How many boards the folder's ledgers hold together, in either layout; undefined when none can be read. */
 export function countBoards(dir: string): number | undefined {
-  try {
-    fs.accessSync(ledgerPath(dir), fs.constants.R_OK);
-    return boardList(openLedger(ledgerPath(dir), () => {}).state()).length;
-  } catch { return undefined; }
+  const counts = ledgerFoldersIn(dir).map((f) => boardsIn(ledgerFiles(f).ledger)).filter((n) => n !== undefined);
+  return counts.length ? counts.reduce((a, b) => a + b, 0) : undefined;
 }
 
 /** The real path of `dir`, or its absolute path when it is not there (yet). */

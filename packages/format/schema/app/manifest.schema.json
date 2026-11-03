@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/app/manifest.schema.json",
   "title": "App manifest",
-  "description": "`app.json` in an app's folder, `.visionboard/apps/<id>/`: what the board needs to show the app's panel and run its tools. The agent writes it; the board only reads it. `$defs/tool` is one tool as the tools module exports it, less `run`.",
+  "description": "`app.json` in an app's folder, `apps/<id>/` in the open ledger's folder: what the board needs to show the app's panel and run its tools. The agent writes it; the board only reads it. `$defs/tool` is one tool as the tools module exports it, less `run`.",
   "$comment": "Was: D-047 ruling 2; docs/specification/apps.md § The manifest",
   "type": "object",
   "required": ["id", "title", "version"],

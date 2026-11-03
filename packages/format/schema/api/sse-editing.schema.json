@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/sse-editing.schema.json",
+  "title": "Editing event",
+  "description": "An `editing` event whose `data` is JSON `{ readOnly }`: the person pressed Edit or Stop editing, so the open ledger became writable or read-only. A client reads the ledger again to learn it (`readOnly` on the reads).",
+  "$comment": "readOnlyStart flag (READONLY_01, D-085 2)",
+  "type": "object",
+  "required": [
+    "event",
+    "data"
+  ],
+  "properties": {
+    "event": {
+      "const": "editing",
+      "description": "The event name; always `editing`."
+    },
+    "data": {
+      "type": "string",
+      "contentMediaType": "application/json",
+      "contentSchema": {
+        "type": "object",
+        "required": [
+          "readOnly"
+        ],
+        "properties": {
+          "readOnly": {
+            "type": "boolean",
+            "description": "True when the ledger is now read-only."
+          }
+        },
+        "unevaluatedProperties": false
+      },
+      "description": "JSON text `{ \"readOnly\": <bool> }`."
+    },
+    "retry": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many milliseconds a client waits before it reconnects."
+    }
+  },
+  "unevaluatedProperties": false
+}

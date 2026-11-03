@@ -11,7 +11,8 @@
 // table finds new (`item.new`); a selection marks seen every card a condition holds for whose row's
 // `clearedBy` names select (`seenOnSelect`), so a NEW card is marked seen when selected. A card
 // found, not clicked (Go to card, the finder lists), is selected by `find`: it marks nothing (ruling
-// 322, findKeepsMarks flag); the person's click on it, or an act, still does.
+// 322, findKeepsMarks flag); the person's click on it, or an act, still does. While the ledger is open read-only
+// (`quiet`, D-085 3) nothing is sent: a version seen is kept in the page's memory, so its tab still goes away.
 import type { ViewNode } from '#format';
 import type { LedgerState, SeenMark } from '#actions';
 import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '#actions';
@@ -38,6 +39,8 @@ export interface UpdateDeps {
   fresh(): ReadonlySet<number>;
   /** A past version shows: no tabs, nothing sent. */
   readOnly(): boolean;
+  /** The ledger is open read-only: the tabs show, and what the person sees is kept in memory, never sent. */
+  quiet?(): boolean;
   card(id: string): HTMLElement | undefined;
   /** Send card seen lines in order (the sender). */
   seen(marks: readonly SeenMark[]): Promise<boolean>;
@@ -67,6 +70,11 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
   const open = new Map<number, Stepper>();
   /** Card seen lines on their way, so a second click sends none. */
   const sending = new Set<string>();
+  /** Read-only (`quiet`): per board, card number -> the highest version seen, in memory only. */
+  const kept = new Map<string, Map<number, number>>();
+  const keptOn = () => kept.get(d.board()) ?? new Map<number, number>();
+  /** Whether card `n`'s latest version `ver` was seen in memory. */
+  const keptSeen = (n: number, ver: number) => (keptOn().get(n) ?? 0) >= ver;
   const live = () => (d.on && !d.readOnly() ? d.state() : null);
   const none: ReadonlySet<number> = new Set();
   /** The state the card seen lines are worked out from: not while a past version shows. */
@@ -79,6 +87,12 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     const s = current();
     const due = marks.filter((m) => s && seenDue(s, d.board(), m.n, m.ver) && !sending.has(`${m.n}:${m.ver}`));
     if (!due.length) return;
+    if (d.quiet?.()) {
+      const on = keptOn();
+      for (const m of due) on.set(m.n, Math.max(on.get(m.n) ?? 0, m.ver));
+      kept.set(d.board(), on);
+      return d.redraw();
+    }
     for (const m of due) sending.add(`${m.n}:${m.ver}`);
     void d.seen(due).finally(() => { for (const m of due) sending.delete(`${m.n}:${m.ver}`); });
   }
@@ -157,11 +171,11 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
         clearTimeout(o.timer);
         open.delete(n);
       }
-      if (s) for (const n of unseen()) counts.set(n, unseenCount(s, d.board(), n));
+      if (s) for (const n of unseen()) counts.set(n, keptOn().has(n) ? unseenSteps(s, d.board(), n, versionTime).filter((x) => !keptSeen(n, x.ver)).length : unseenCount(s, d.board(), n));
     },
     card(n) {
       if (n.n === undefined) return NONE;
-      if (!d.readOnly() && fresh().has(n.n)) return { new: true };
+      if (!d.readOnly() && fresh().has(n.n) && !keptOn().has(n.n)) return { new: true };
       const o = open.get(n.n);
       const count = counts.get(n.n) ?? 0;
       const source = o && d.source?.(n.n);

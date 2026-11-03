@@ -1,16 +1,15 @@
-// One board server per ledger (D-017, tracker U8): `<project>/.visionboard/lock` says which
+// One board server per ledger (D-017, tracker U8): the ledger folder's lock (`ledgerFiles(dir).lock`) says which
 // computer, process and port hold the ledger. The folder may be shared between computers (Dropbox),
 // and a second writer would fork the ledger, so a second server refuses to start while the lock is
 // live. Live: the heartbeat is under 2 minutes old and, on this computer, the process still runs.
 // Written atomically (atomic-file.ts) and git-ignored.
 import fs from 'node:fs';
 import os from 'node:os';
-import path from 'node:path';
+import { LOCK_FILE, ledgerFiles } from '#format';
 import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
 
-export const LOCK_FILE = 'lock';
 /** How often the holder rewrites `beat`. */
 export const BEAT_MS = 30_000;
 /** A heartbeat this old (or older) means the holder is gone. */
@@ -31,6 +30,11 @@ export interface Lock {
   beat(): void;
   /** Remove the lock, if it is still ours. Safe to call twice. */
   release(): void;
+  /** True while the lock file still names this holder: read from the file, so a lock another computer took over
+   *  (a stale one, after a sleep) reads false, and a writer stops before its next line (D-085 2). False for good once
+   *  this holder's own last beat is `STALE_MS` old: after a sleep its copy of the file may not show another computer's
+   *  takeover yet, so it is never beaten again or removed (FIX_01 F7); Edit takes the lock again. */
+  held(): boolean;
 }
 
 export type Taken =
@@ -65,9 +69,16 @@ export const holderMessage = (x: LockInfo): string =>
   serverFoldersWords.anotherBoardServerHoldsThis(x.host, x.pid, x.port) +
   serverFoldersWords.runningSinceStopThatServer(x.started);
 
-/** Take the lock in `dir` (the project's `.visionboard` folder), or say who holds it. */
+/** Who holds ledger folder `dir`'s lock now, when its holder is live (`get_project`'s `editing`); undefined when
+ *  no one does. Reads only. */
+export function lockHolder(dir: string, env: LockEnv = realEnv()): LockInfo | undefined {
+  const x = readLock(ledgerFiles(dir).lock);
+  return x && live(x, env) ? x : undefined;
+}
+
+/** Take the lock in ledger folder `dir` (`ledgerFolder`), or say who holds it. */
 export function takeLock(dir: string, port: number, env: LockEnv = realEnv()): Taken {
-  const file = path.join(dir, LOCK_FILE);
+  const file = ledgerFiles(dir).lock;
   const old = readLock(file);
   if (old && live(old, env)) return { ok: false, holder: old };
   const started = new Date(env.now()).toISOString();
@@ -79,9 +90,18 @@ export function takeLock(dir: string, port: number, env: LockEnv = realEnv()): T
     const x = readLock(file);
     return x?.host === mine.host && x.pid === mine.pid && x.started === mine.started;
   };
+  /** When this holder last wrote its beat; once that is `STALE_MS` old, the lock is lost. */
+  let last = env.now();
+  let lost = false;
+  const fresh = (): boolean => (lost ||= env.now() - last >= STALE_MS) === false;
   const lock: Lock = {
-    beat() { if (ours()) writeLock(file, { ...mine, beat: new Date(env.now()).toISOString() }); },
-    release() { if (ours()) fs.rmSync(file, { force: true }); },
+    beat() {
+      if (!fresh() || !ours()) return;
+      last = env.now();
+      writeLock(file, { ...mine, beat: new Date(last).toISOString() });
+    },
+    release() { if (fresh() && ours()) fs.rmSync(file, { force: true }); },
+    held: () => fresh() && ours(),
   };
   return { ok: true, lock, ...(old && { replaced: old }) };
 }

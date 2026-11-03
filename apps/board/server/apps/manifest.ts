@@ -1,5 +1,5 @@
 // An app's folder, read and checked (D-047 rulings 2 and 9, apps.md § The folder, § The manifest).
-// Only `<project>/.visionboard/apps/<id>/` is ever read, and only when `id` fits the id pattern. The
+// Only `<ledger folder>/apps/<id>/` (`appsDir`, data-folder.ts) is ever read, and only when `id` fits the id pattern. The
 // manifest is checked against its schema (server/schema.ts, compiled once); its file names are plain
 // names, so they stay in the folder; every file's real path must too (a link out is refused), and
 // none may be over `APP_LIMITS.fileBytes`. What is wrong is a problem for the agent to fix, in plain
@@ -9,8 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AppManifest, AppProblem, AppSize } from '#format';
-import { APP_FILES, APP_ID, APP_LIMITS, APPS_DIR, appSize } from '#format';
-import { DATA_DIR } from '../ledger.ts';
+import { APP_FILES, APP_ID, APP_LIMITS, appSize, ledgerFiles, ledgerFolder } from '#format';
 import { sizeWords } from '../problem.ts';
 import type { SchemaProblem } from '../schema.ts';
 import { SCHEMA_BASE, schemaProblems } from '../schema.ts';
@@ -38,8 +37,10 @@ export interface AppFolder {
   problems: AppProblem[];
 }
 
-/** The project's apps folder. */
-export const appsDir = (project: string): string => path.join(project, DATA_DIR, APPS_DIR);
+/** The project's apps folder, in the folder of its ledger `ledger` (none: the old layout's). */
+export const appsDir = (project: string, ledger?: string): string => ledgerFiles(ledgerFolder(project, ledger)).apps;
+/** The apps folder as the agent names it, relative to the project (none: the old layout's). */
+export const appsFolder = (ledger?: string): string => `${ledgerFiles(ledgerFolder('', ledger)).apps}/`;
 
 const inside = (root: string, file: string) => file.startsWith(root + path.sep);
 const real = (p: string): string | undefined => { try { return fs.realpathSync(p); } catch { return undefined; } };
@@ -54,9 +55,9 @@ export function fieldWords({ pointer, detail }: SchemaProblem): string {
 }
 
 /** The ids of the app folders in the project: every folder whose name is an id, sorted. */
-export function appIds(project: string): string[] {
+export function appIds(project: string, ledger?: string): string[] {
   let entries: fs.Dirent[];
-  try { entries = fs.readdirSync(appsDir(project), { withFileTypes: true }); } catch { return []; }
+  try { entries = fs.readdirSync(appsDir(project, ledger), { withFileTypes: true }); } catch { return []; }
   return entries.filter((e) => (e.isDirectory() || e.isSymbolicLink()) && APP_ID.test(e.name)).map((e) => e.name).sort();
 }
 
@@ -106,15 +107,15 @@ function manifestOf(folder: AppFolder, bytes: Buffer): AppManifest | undefined {
 
 /** App `id`'s folder in the project, read and checked now; undefined when there is no such folder
  * (or `id` is not an id: then no path is built at all). */
-export function readApp(project: string, id: string): AppFolder | undefined {
+export function readApp(project: string, id: string, ledger?: string): AppFolder | undefined {
   if (!APP_ID.test(id)) return undefined;
-  const root = real(appsDir(project));
+  const root = real(appsDir(project, ledger));
   const dir = root && real(path.join(root, id));
   if (!root || !dir || !fs.statSync(dir).isDirectory()) return undefined;
   const problems: AppProblem[] = [];
   const folder: AppFolder = { id, dir, problems };
   if (!inside(root, dir)) {
-    problems.push({ file: `${id}/`, detail: 'links outside .visionboard/apps/. Make it a real folder.' });
+    problems.push({ file: `${id}/`, detail: appsManifestWords.linksOutsideTheAppsFolder(appsFolder(ledger)) });
     return folder;
   }
   const manifestFile = locate(dir, APP_FILES.manifest, problems);

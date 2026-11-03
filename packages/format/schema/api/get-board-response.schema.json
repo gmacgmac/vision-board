@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/get-board-response.schema.json",
   "title": "Board state",
-  "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`; with agents, also the open grant requests, the board's holders and each region's holders; `locked` while the person has it locked; `held` when you hold it. `state` and `versions` are keyed by node id (the string form of the number).",
+  "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`; with agents, also the open grant requests, the board's holders and each region's holders; `locked` while the person has it locked; `readOnly` while the ledger is open read-only; `held` when you hold it. `state` and `versions` are keyed by node id (the string form of the number).",
   "type": "object",
   "required": [
     "head",
@@ -220,6 +220,14 @@
       "const": true,
       "description": "Present, and true, while the person has the board locked: it is read-only for everyone, and every write on it is refused with `locked` until the person unlocks it.",
       "$comment": "Was: api.md 139"
+    },
+    "ledger": {
+      "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName",
+      "description": "The other ledger of the folder this was read from, when the read named one (`ledger`); it comes with `readOnly: true`. Left out for the open ledger.",
+      "$comment": "ledgerFolders flag (CONSOLIDATE_01, D-084 8)"
+    },
+    "readOnly": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly"
     }
   },
   "unevaluatedProperties": false,

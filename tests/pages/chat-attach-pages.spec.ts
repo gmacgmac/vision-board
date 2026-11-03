@@ -2,6 +2,7 @@
 // built in the test (chat-attach-pages-fixtures.ts), the real frame and pdf.js, a fake agent. What came out is read
 // from the page's own uploads, and what the agent is told from its prompt. A script run inside the frame while
 // it works stands for a PDF that broke pdf.js: it reaches nothing, and what it hands back is dropped.
+// verify: data-folder-literal the attachment paths an agent is told (`.visionboard/attachments/…`, repo-wide in every layout)
 import type { Frame, Page, Request } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';

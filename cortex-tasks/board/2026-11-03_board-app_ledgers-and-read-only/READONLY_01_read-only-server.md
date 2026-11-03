@@ -101,26 +101,103 @@ PLAN decisions 11-17. LEDGERS_01's notes first (the lock is per ledger). Researc
 
 ## Validation
 
-- [ ] `npm test` green with `readOnlyStart` on and off; `api-read-only.test.ts` walks every operation; `api-lock*.test.ts` unedited and green
-- [ ] `npm run gen -- --check`, `verify`, `check` green; `npm run test:plugin` green (the engine's default unchanged)
-- [ ] Page specs of write paths (`lock-board.spec.ts`, `new-board.spec.ts`, `chat-panel.spec.ts`, `notes*.spec.ts`) green
-- [ ] A scratch project: two servers on one folder (one `--edit`, one read-only); the reader follows every line and a
+- [x] `npm test` green with `readOnlyStart` on and off; `api-read-only.test.ts` walks every operation; `api-lock*.test.ts` unedited and green
+- [x] `npm run gen -- --check`, `verify`, `check` green; `npm run test:plugin` green (the engine's default unchanged) (verify: all but `modules.md`, which wants the orchestrator's `npm run map`)
+- [x] Page specs of write paths (`lock-board.spec.ts`, `new-board.spec.ts`, `chat-panel.spec.ts`, `notes*.spec.ts`) green
+- [x] A scratch project: two servers on one folder (one `--edit`, one read-only); the reader follows every line and a
       replaced file; the reader's Edit is refused naming the writer; after the writer stops editing, the reader's Edit works
 
 ## Implementation Notes
 
 _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (2026-11-03, Opus 5.5, worktree `feat/readonly-01`)
 
 ### Changes Made
--
+- **Tests in edit mode first** (step 1): `BoardServerOptions.edit` (and `lockEnv`, for a test's other computer);
+  `startTestBoard` passes `edit` (default true), so `startBoard` and `serve-boards.ts` inherit it; `startBoard` takes
+  `edit`/`lockEnv`. With `readOnlyStart` defaulted on (a temporary local flip of `flags.ts`, reverted, no diff left) the
+  whole unit suite passed (2329/0) and the write-path page specs (94) passed.
+- **Contract** (step 2): problem `read-only` (409, `problem.schema.json`); `common.schema.json` `readOnly`, on
+  `get_board`, `list_boards`, `read_ledger`, and `project.schema.json` `readOnly` + `editing` (`{ here }` or
+  `{ host, since }`); `edit_ledger` (POST) / `stop_editing` (DELETE) `/api/project/edit`, the person's; SSE `reset { seq }`
+  and `editing { readOnly }` (`sse-reset`, `sse-editing` schemas) on both streams; `readOnly` response on the person's
+  ledger writes, `agentConflict` (wrong-folder or read-only) as the agent writes' 409. `npm run gen`: no tool text,
+  command or MCP file changed (agent op descriptions untouched: SKILL_01's). `ENV.edit` (`VB_EDIT`).
+- **Words**: `#actions` `read-only.ts` `READ_ONLY` (agent) / `READ_ONLY_PERSON` (person) in `actions-refusals.ts`;
+  server `server-folders.ts` (`openedReadOnly`, `editingElsewhere`, `seedNotCopied`), `server-chat.ts`
+  (`noChatWhileReadOnly`); page `shell/words/chat.ts` (`readOnlyPressEditTo`).
+- **The gate** (step 3): `server/editing.ts` (new, `createEditing`: the open folder's lock and read-only state, `info`,
+  `onChange`); `ledger.ts` `gate`/`readOnly` (append refuses first, before `refresh`/`stamp`), `agents.ts` `openAgents(dir,
+  readOnly)` (`add` refuses), `engine.ts` `EngineOptions.readOnly` (every non-GET refused before its body is read; reads
+  get `readOnly`, `operations.ts` `readOnlyMark`), `apps/panel-state.ts` (`put_panel_state`), `chat-sessions.ts` (start
+  and resume refused before any CLI; a running session's message goes with no round and no Send).
+- **Start, switch, Edit, Stop editing** (step 5): `server.ts` `startReadOnly` (no lock, no move, no seed, no exit; says
+  who edits), `--edit`/`VB_EDIT=1`; `project.ts` read-only `openOne`/`openLedgerOf` (no lock; create makes under a lock let
+  go), `lockLedger`, `edit()` (old layout moved into `main/` first), `stopEditing`; heartbeat over the held lock only;
+  `lock.ts` `lockHolder`, `Lock.held` (a lock taken over stops the next line, with the flag on).
+- **Replacement** (step 6): `ledger.ts` `refresh` reopens on another inode, a shorter file or other first 4 KB
+  (digest), whole lines only; `onReset`; `streams.ts` sends `reset`; `live.ts` reads from zero on head 0
+  (`page-host.ts` maps `reset`), serialised through `sync`.
+- **The page** (step 7): `live.ts` `readOnly` from every read (an empty batch when only it changed); `controller.ts`
+  widened the sender's refusal (`READ_ONLY_PERSON`) and the chat side; `lock-flow.ts` `paused` gives the read-only
+  reason (stage handlers, notes, selection commands; `apply` still lock-only); `attention.ts`/`update-flow.ts` `quiet`
+  (no board seen or card seen written; a card seen kept in memory, its tab goes); `status.readOnly`;
+  `BoardState.readOnly` set from the reads; `io/errors.ts` `ApiError.code`; `chat-rules.ts` `blockedReason(…, readOnly)`
+  and `chat-panel.ts` `show(board, past, readOnly)` + a read-only start refusal said in a toast; `page-io.ts`
+  `editLedger`, `stopEditing`, `ProjectEvents.reset/editing`.
+- **Requests**: LEDGERS_01-R3 (`references.ts` app meaning; it reaches no agent text, only `references.test.ts`);
+  LEDGERS_02-R1 (`ledgers.ts` asks `#client` `ledgersIn`; `ledger-layout-rule.test.ts` removed), R2 (`ledgers.ts`
+  `ledgerFoldersIn`, used by `folders.ts` `countBoards` and `caller-folder.ts`), R4 (`apps/board/README.md`).
+- **Tests**: `api-read-only.test.ts` (13: the walk, person writes classified, the ledger gate, Edit refused by another
+  computer, Edit/Stop, D-043 in edit mode, a lock taken over, a running chat, `reset` on the stream),
+  `api-read-only-open.test.ts` (7: start, switch, create, old layout not moved until Edit, ledger switch, `--edit`, a
+  stale lock taken by Edit via `LockEnv`), `ledger-replace.test.ts` (7), `live-read-only.test.ts` (3),
+  `tests/pages/read-only-writes.spec.ts` (2); `openapi.test.ts`, `route-table.test.ts`, `api-errors.test.ts` updated.
+- **Docs**: `api.md` 173 (new), Errors and Operations rows, 116 (one rule); `components.md` § Lock a board 6a;
+  `api-reference.md` generated. `chat.md` states nothing a locked board pauses, so it is unchanged.
+
 ### Issues & Resolutions
--
+- A folder's close told the streams `editing` after they ended (write after end): `streams.ts` sends nothing after end.
+- With the flag on, edit-mode answers gained `editing: { here: true }` and 6 tests compared `get_project` whole: the
+  answers now say `readOnly`/`editing` only when ledgers open read-only (no `--edit`) or the ledger is read-only, so
+  edit mode reads as before.
+- `format: date-time` is unknown to the repo's ajv: `since` uses the ledger's `timestamp`.
+- No `timeout` on this machine: runs limited with `perl -e 'alarm N; exec …'`.
+
 ### Caught Beyond the Brief
-- None
+- A lock lost to another computer (a stale takeover after a sleep) left the old server writing: with the flag on it
+  now reads as read-only before its next line (`Lock.held`), tested.
+- A chat session started while editing keeps running after Stop editing (in memory): its board writes are refused, but
+  its own file tools (images/, apps/ under `agentAccessRules`) are packages/agent's gate, not stopped by read-only; an
+  app's own process (`call_app_tool`) may write files too. For VERIFY_01.
+- `npm run dev` seeds with `VB_SEED`; with `readOnlyStart` on it opens read-only and seeds nothing (said in the
+  terminal): `package.json` `dev` wants `--edit` when the flag turns on.
+- A plugin host gets no `reset` (`Engine.watch` is unchanged, so the seam is too); a host can pass a replaced file on as
+  a change with head 0, which the board reads from the start (`live.ts`).
+
 ### Deviations from Plan
-- None
+- Small, by the principles. `BoardState.readOnly` is set by the controller from the reads, not by `boardState` (the
+  fold has no read-only: it is not in the ledger). The elements still pause on `locked` only (`packages/ui`, outside
+  this wave): presses reach the sender, which refuses with the reason.
+- Widened where a path writes: the sender, the chat side, `lock-flow` `paused` (stage, notes, selection commands).
+  Proposals and parking keep showing (Accept/Reject refused by the sender); attention and updates go `quiet` (shown,
+  nothing written) rather than hidden, so a viewer still sees what changed.
+- `stop_editing` works with the flag off too (nothing offers it); `edit_ledger` then retakes. The ledger's head
+  digest is 4 KB. `shell/words/chat.ts` (shell/**, no owner this wave) gained the chat rule's one sentence.
+
+### Verification
+- Tier: wide (contract, the ledger gate, server start/switch, page write paths). `npm run gen -- --check` current;
+  `check` 0 errors; `verify`: one failure, `modules.md` out of date (`npm run map`, the orchestrator's: new
+  `server/editing.ts`, `#actions` read-only exports), warnings as before plus `chat-panel.ts` 305 lines.
+- Unit suite (npm test's globs, 3 at a time): flag off 2330/0/0; `readOnlyStart` defaulted on 2329/0/0; `test:timing`
+  14/14; `test:plugin` 79/79. Page specs (VB_TEST_PORT=6600, 3 workers): lock-board, new-board, chat-panel, notes,
+  note-*, read-only-writes, ledger-folders, ledgers, live-boards, card-updates, versions, chat-send, open-folder:
+  71 + 68 passed flag off; 94 passed with the flag on.
+- Scratch project (session temp folder, temp HOME, ports 6610/6611, `VB_FLAGS=readOnlyStart`): a writer (`--edit`,
+  seeded) and a reader on one folder; the reader said who edits, followed the writer's lines (36→38), read a replaced
+  shorter file (20), its Edit was refused naming the writer's computer, process and port; after the writer's Stop
+  editing the reader's Edit worked and wrote, the writer answered 409 and followed (21). Removed after.
 
 ## On Completion
 

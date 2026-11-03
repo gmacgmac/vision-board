@@ -81,6 +81,8 @@ export interface Stage {
   facts: Record<string, number | string>;
   /** The board the bot last wrote on this run (its own name for it), if it wrote one. */
   botBoard(): string | undefined;
+  /** Open the ledger read-only (true) or for writing (false), as a host's own control does (`readOnly`, plugin.md). */
+  readOnly(on: boolean): void;
 }
 
 /** One message from the host: the person's words, and/or what the person did on the board, then their Send. */

@@ -82,6 +82,8 @@ const fieldOf = (pointer: string) => {
 
 const PATTERNS: Record<string, string> = {
   '^[a-z0-9][a-z0-9-]{0,63}$': schemaWords.isNotAValidId,
+  // A ledger's name (project.schema.json `ledgerName`, data-folder.ts `ledgerNameProblem`).
+  '^[a-z0-9][a-z0-9-]{0,39}$': schemaWords.isNotALedgerName,
   '^a-[a-z0-9]{8}$': schemaWords.isNotAnAgentId,
   '\\S': schemaWords.mustNotBeBlank,
   '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$': schemaWords.isNotAUTCTimestamp,

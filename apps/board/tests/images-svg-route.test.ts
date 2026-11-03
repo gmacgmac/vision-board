@@ -10,7 +10,7 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import type { FlagOverrides } from '#format';
-import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS, imageNotReal } from '#format';
+import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS, imageNotReal, ledgerFolder } from '#format';
 import { makeTempDir } from '#format/testing';
 import { SVG_CSP, serveImage } from '../server/images.ts';
 import { ProblemError, serverError } from '../server/problem.ts';
@@ -131,7 +131,7 @@ test('an svg over its own cap is refused (413) in its own words, and one at the 
 /** The route alone, as app.ts calls it, under `flags`: the server's own flags. */
 async function routeUnder(flags: FlagOverrides): Promise<{ base: string; project: string; close(): Promise<void> }> {
   const project = fs.realpathSync(makeTempDir('vb-svg-flag-'));
-  fs.mkdirSync(path.join(project, '.visionboard'), { recursive: true });
+  fs.mkdirSync(ledgerFolder(project), { recursive: true });
   const server = http.createServer((req, res) => {
     try { serveImage(req, res, new URL(req.url!, 'http://x').pathname.slice(IMAGE_ROUTE.length), project, flags); } catch (err) {
       sendProblem(res, err instanceof ProblemError ? err : serverError(err));

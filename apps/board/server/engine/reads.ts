@@ -19,7 +19,7 @@ import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './calle
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
-import { reply } from './operations.ts';
+import { readOnlyMark, reply, whereAnswer } from './operations.ts';
 import * as writesWords from '../words/writes.ts';
 
 /** At most `limit` of `list`, and `more: true` when it was cut (api.md 31). */
@@ -28,18 +28,19 @@ function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true }
   return { list: list.slice(0, max), ...(list.length > max && { more: true as const }) };
 }
 
-const listBoards: Op = ({ ledger, name, caller, flags }) => {
+const listBoards: Op = (ctx) => {
+  const { ledger, caller, flags } = ctx;
   const s = ledger.state();
   const rules = flagOn('botToolRules', flags);
   const boards = boardList(s).map((b) => (rules && holds(s, b.board, caller) ? { ...b, held: true as const } : b));
-  return reply(200, { project: name(), boards, head: s.seq });
+  return reply(200, { ...whereAnswer(ctx), boards, head: s.seq, ...readOnlyMark(ctx) });
 };
 
-const getBoard: Op = ({ params, ledger, caller, flags }) => {
+const getBoard: Op = ({ params, ledger, caller, flags, readOnly }) => {
   const s = ledger.state();
   const id = requireBoard(s, params.board);
   // The page draws the same `boardData`; `locked` is the server's (api.md 139): read-only for everyone until the person unlocks it.
-  return reply(200, { ...markBoard(boardJson(boardData(s, id)), marksFor(s, id, caller, flags)), ...(isLocked(s, id) && { locked: true }) });
+  return reply(200, { ...markBoard(boardJson(boardData(s, id)), marksFor(s, id, caller, flags)), ...(isLocked(s, id) && { locked: true }), ...readOnlyMark({ readOnly }) });
 };
 
 const showNode: Op = ({ params, ledger, caller, flags }) => {
@@ -150,13 +151,13 @@ const checkResponses: Op = async (ctx) => {
 /** Ledger lines after `after`, oldest first, optionally one board's, as the file holds them (cards
  * by identity, flags included): the page's only (api.md 130). The standalone host sends `events`
  * as JSON Lines when the caller asks for `application/jsonl` (api.md 44). */
-const readLedger: Op = ({ params, ledger }) => {
+const readLedger: Op = ({ params, ledger, readOnly }) => {
   const s = ledger.state();
   const board = params.board === undefined ? undefined : personBoard(s, params.board);
   const after = Number(params.after);
   const lines = ledger.events().filter((e) => e.seq > after && (board === undefined || eventBoard(s, e) === board)).map(toLine);
   const { list, more } = page(lines, params.limit);
-  return reply(200, { events: list, head: s.seq, ...(more && { more }) });
+  return reply(200, { events: list, head: s.seq, ...(more && { more }), ...readOnlyMark({ readOnly }) });
 };
 
 export const READS = {

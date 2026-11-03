@@ -27,10 +27,14 @@ export interface OpCtx {
   agents(): Agents;
   /** The board's folder as the person reads it (`list_boards`, `join`). */
   name(): string;
+  /** The ledger's name, when the host keeps several (`EngineOptions.ledgerName`): answered beside `project`. */
+  ledgerName: string | undefined;
   /** A Send the person made (`act`), handed to the host to record (`SendHook`). */
   onSend: SendHook;
   /** The engine's flags (`botToolRules`: the reads' `owed` and `held`, a key conflict's words). */
   flags: FlagOverrides;
+  /** The ledger is open read-only now (`EngineOptions.readOnly`): the reads say so. */
+  readOnly: boolean;
 }
 
 /** The person's Send on `board`, given to the host with `record`, which appends its `send` line (with `head`: what its
@@ -118,3 +122,10 @@ export function checkCaller(id: OperationId, caller: Caller | undefined): void {
   if (auth === 'agent' && caller?.by !== 'agent') throw problem('not-authenticated', NO_AGENT);
   if (auth === 'agent-or-person' && caller === undefined) throw problem('not-authenticated', NO_AGENT);
 }
+
+/** `readOnly: true` for a read's answer while the ledger is open read-only (D-085 4); nothing otherwise. */
+export const readOnlyMark = ({ readOnly }: Pick<OpCtx, 'readOnly'>): { readOnly?: true } => (readOnly ? { readOnly: true } : {});
+
+/** `project`, and `ledger` when the host names one: where the caller is (`list_boards`, `join`; D-084 3). */
+export const whereAnswer = ({ name, ledgerName }: Pick<OpCtx, 'name' | 'ledgerName'>): { project: string; ledger?: string } =>
+  ({ project: name(), ...(ledgerName !== undefined && { ledger: ledgerName }) });

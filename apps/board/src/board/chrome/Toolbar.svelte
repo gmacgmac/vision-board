@@ -21,8 +21,10 @@
      list (ArchivedDialog), and the "⋯" menu has Archive board… (ruling 5, ToolbarMenu). A locked board
      shows "Locked" after its name and version (LockedChip, N40 ruling 4); with the lockBoard flag the
      "⋯" menu has Lock board or Unlock board.
-     The page's folder chip (`BoardPageParts.folderChip`), when it gives one, sits first, after the app icon;
-     a host has none, and the bar reflows.
+     The page's folder chip (`BoardPageParts.folderChip`), when it gives one, sits first, after the app icon, and its
+     ledger chip (`ledgerChip`, ledgerFolders flag) after it; a host has neither, and the bar reflows. After the path (or the
+     title and version) the page's ledger state (`editChip`, readOnlyStart flag: Read-only or Editing, at every width) and,
+     at full, its Edit or Stop editing button (`editButton`; a row of "⋯" from half, HeaderFields), then Locked.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
      carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
      counts show their numbers only (title and screen readers keep the words), all in board.css; "with
@@ -31,7 +33,7 @@
      With the adaptiveHeader flag (needs versionView and toolbarMenu; off, all of the above holds as it was) the
      bar takes one of three forms by its own width, read by a ResizeObserver, not the window's (header-tier.ts,
      the one table of what sits where; styles/header.css): one copy of each control, in the bar or as a row
-     of "⋯" (HeaderFields). The path "folder / board / version" (nav) replaces the title: the picker's face is
+     of "⋯" (HeaderFields). The path "folder / ledger / board / version" (nav) replaces the title: the picker's face is
      the board's name, and the visually hidden h1 stays the page's heading. The gallery passes `placement`
      'gallery' (ids of its own), `form` (the form to draw), `facts` (what to show) and the looks. -->
 <script lang="ts">
@@ -122,9 +124,11 @@
   const here = (c: HeaderControl) => !adaptive || inBar(tier, c);
   const holders = $derived(givenHolders !== undefined ? givenHolders : facts.agentAccess && facts.version !== null && !facts.past ? facts.boardHolders : null);
   /** What "⋯" also holds at this form, for its tooltip. */
-  const ALSO: readonly (readonly [HeaderControl, string])[] = [['folder', toolbarWords.folder], ['version', toolbarWords.version], ['containers', toolbarWords.containers],
-    ['open', toolbarWords.openCards], ['new', toolbarWords.newCards], ['zoom', commonWords.zoom], ['agents', chromeBoardsWords.agents]];
-  const also = $derived(adaptive ? ALSO.filter(([c]) => inMenu(tier, c) && (c !== 'folder' || parts.folderRow)).map(([, name]) => name) : []);
+  const ALSO: readonly (readonly [HeaderControl, string])[] = [['folder', toolbarWords.folder], ['ledger', chromeCommonWords.ledger], ['version', toolbarWords.version],
+    ['containers', toolbarWords.containers], ['open', toolbarWords.openCards], ['new', toolbarWords.newCards], ['zoom', commonWords.zoom], ['agents', chromeBoardsWords.agents]];
+  /** A page part's row is there only when the page gives it. */
+  const given: Partial<Record<HeaderControl, boolean>> = { folder: !!parts.folderRow, ledger: !!parts.ledgerField };
+  const also = $derived(adaptive ? ALSO.filter(([c]) => inMenu(tier, c) && given[c] !== false).map(([, name]) => name) : []);
 </script>
 
 {#snippet chevron()}<ButtonIcon name="chevron" />{/snippet}
@@ -138,11 +142,16 @@
 <header class="vb-toolbar" bind:this={bar} data-tier={adaptive ? tier : undefined} data-narrow={(adaptive ? tier !== 'full' : narrow.current) || undefined} data-menu={toolbarMenu || undefined}>
   {#if here('app-icon')}<AppIcon />{/if}
   {#if !adaptive && parts.folderChip}<PagePart draw={parts.folderChip} args={{ id: idOf('folder-chip') }} />{/if}
+  {#if !adaptive && parts.ledgerChip}<PagePart draw={parts.ledgerChip} args={{ id: idOf('ledger-chip') }} />{/if}
   {#if board && facts.versionView}<h1 id={idOf('title')} class="vb-visually-hidden">{facts.title}</h1>{/if}
   {#if adaptive}
     <nav class="vb-path" aria-label={toolbarWords.whereYouAre}>
       {#if here('folder') && parts.folderChip}
         <PagePart draw={parts.folderChip} args={{ id: idOf('folder-chip'), look }} />
+        {#if tier === 'full'}<span class="vb-path-sep" aria-hidden="true">/</span>{/if}
+      {/if}
+      {#if here('ledger') && parts.ledgerChip}
+        <PagePart draw={parts.ledgerChip} args={{ id: idOf('ledger-chip'), look }} />
         {#if tier === 'full'}<span class="vb-path-sep" aria-hidden="true">/</span>{/if}
       {/if}
       <BoardPicker {facts} {onboard} id={idOf('board')} face={boardFace} {look} />
@@ -160,6 +169,8 @@
       <VersionPicker {facts} {onversion} id={idOf('version')} />
     {/if}
   {/if}
+  {#if parts.editChip}<PagePart draw={parts.editChip} args={{ id: idOf('editing'), look }} />{/if}
+  {#if here('edit') && parts.editButton}<PagePart draw={parts.editButton} args={{ id: idOf('edit'), look }} />{/if}
   <LockedChip id={idOf('locked')} locked={facts.locked} />
   {#if adaptive && tier === 'full'}<span class="vb-bar-rule" aria-hidden="true"></span>{/if}
   {#if here('containers') && facts.containers.length}
@@ -196,5 +207,6 @@
   </div>
   <ToolbarEnd {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} menu={toolbarMenu}
     {holders} {placement} {zoom} {menuOpen} {zoomOpen} {look} {send} tier={adaptive ? tier : undefined} {also} folderAbove={adaptive && inMenu(tier, 'folder') && !!parts.folderField}
+    ledgerAbove={adaptive && inMenu(tier, 'ledger') && !!parts.ledgerField}
     fields={adaptive && tier !== 'full' ? fields : undefined} />
 </header>

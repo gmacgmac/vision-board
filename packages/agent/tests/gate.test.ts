@@ -8,7 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { ApprovalOutcome, Facts } from '../src/index.ts';
-import { GATE_BIN, GATE_FOLDER_ENV, GATE_STRICT_ENV, GATE_TOKEN_ENV, GATE_URL_ENV, GATE_WAIT_MS, PREVIEW_MAX, RELEASED_REFUSAL, RULES_REFUSAL, UNREACHABLE, askOverHttp, decide, factsFor, gateEnv, gateSettings, runGate } from '../src/index.ts';
+import { GATE_BIN, GATE_FOLDER_ENV, GATE_LEDGER_ENV, GATE_STRICT_ENV, GATE_TOKEN_ENV, GATE_URL_ENV, GATE_WAIT_MS, PREVIEW_MAX, RELEASED_REFUSAL, RULES_REFUSAL, UNREACHABLE, askOverHttp, decide, factsFor, gateEnv, gateSettings, runGate } from '../src/index.ts';
 import { GATE_WAIT_ENV, gateWaitFrom } from '../src/gate.ts';
 import * as words from '../src/words/agent-access.ts';
 import { accessFixture } from './access-fixture.ts';
@@ -97,6 +97,19 @@ test('the access rules decide first: a refusal says why and asks nobody; an allo
   assert.deepEqual(await run('Bash', { command: 'npm test' }), ['allow', 'The person allowed it.']);
   assert.deepEqual(await run('Read', { file_path: 'src/x.ts' }, true), ['allow', 'The person allowed it.'], 'strict: asked');
   assert.deepEqual(asked, [{ kind: 'read', path: `${fx.outside}/notes.txt` }, { kind: 'command', command: 'npm test', risks: [], paths: [] }, { kind: 'read', path: `${fx.folder}/src/x.ts` }]);
+});
+
+test('the open ledger (FIX_01 F2): the hook can\'t tell whether it may be written, so a write in its pictures is asked of the board; another ledger\'s is refused', async () => {
+  const asked: Facts[] = [];
+  const yes = async (facts: Facts) => { asked.push(facts); return { approved: true, status: 'approved' } as ApprovalOutcome; };
+  const access = { folder: fx.folder, ledger: { folder: '.visionboard/main' } };
+  const run = async (input: Record<string, unknown>) => decided(await decide(JSON.stringify({ ...hook('Write', input), cwd: fx.folder }), yes, none, access));
+  assert.deepEqual(await run({ file_path: '.visionboard/main/images/a.png', content: 'x' }), ['allow', 'The person allowed it.']);
+  assert.equal(asked.length, 1, 'asked of the board');
+  assert.deepEqual(await run({ file_path: '.visionboard/ui/images/a.png', content: 'x' }), ['deny', words.boardFiles]);
+  assert.equal(asked.length, 1);
+  const gate = { url: 'http://127.0.0.1:1/api/run/approvals', token: 't' };
+  assert.equal(gateEnv({ cwd: '/p', gate, ledgerFolder: '.visionboard/main' })[GATE_LEDGER_ENV], '.visionboard/main');
 });
 
 test('gateEnv: where to ask, the token, the board\'s folder, and the flags only when on', () => {

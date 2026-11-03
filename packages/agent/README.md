@@ -88,7 +88,9 @@ uses it: `docs/specification/chat.md`.
   `Glob`, `Grep` (`GATED_TOOLS`, `READ_TOOLS`). `factsFor` makes the facts (`WriteFacts`: op, path, a short
   preview; `CommandFacts`: the command; `ReadFacts`: Read's file, Glob's pattern's folder, Grep's path with
   `recursive`). `policy` decides first, relative to `AGENT_GATE_FOLDER` (the board's folder; never the
-  hook's own `cwd`) and strict with `AGENT_GATE_STRICT=1`: a refusal is denied with the rule's reason, an
+  hook's own `cwd`), strict with `AGENT_GATE_STRICT=1`, and with `AGENT_GATE_LEDGER` (the open ledger's folder,
+  `StartOptions.ledgerFolder`) a write in that ledger's pictures or apps is asked of the board, which knows whether it
+  may be written now, and another ledger's is refused (`OpenLedger`): a refusal is denied with the rule's reason, an
   allowed call goes ahead unasked. Only what it asks about is posted to `AGENT_GATE_URL` with
   `Authorization: Bearer $AGENT_GATE_TOKEN`, waiting up to `AGENT_GATE_WAIT_MS` (the adapter sets all of
   them on the CLI: `gateEnv`); the decision says why. Anything but a yes is a denial: an unreachable host,
@@ -107,12 +109,13 @@ uses it: `docs/specification/chat.md`.
   spells it (`realpath.native`), a file not made yet by its nearest existing folder. Then `ACCESS_RULES`,
   one table relative to the folder, decides: the most specific row wins (a row naming a file beats one
   naming a folder's contents, then more named parts, then the order written), matched as written and
-  ignoring case, the stricter kept. Outside the folder is asked `once` or `session` only; inside, `folder`
+  ignoring case, the stricter kept. Each per-ledger row has a twin for the ledger folders' layout,
+  `.visionboard/*/<file>` beside `.visionboard/<file>` (D-084; `tests/policy-ledgers.test.ts`). Outside the folder is asked `once` or `session` only; inside, `folder`
   is offered too; a hard-linked file is asked `once`; `strict` (the `agentAccessRules` flag off) allows
   nothing unasked. A search is allowed only when nothing under the folder is refused. A command is
   read-only (`readOnlyCommand`) when every `|`-joined part is on the allow-list with plain words
   (`shellWords`); it is then a read of every word it names, else it is asked; any command whose words
-  name a refused path (by any trailing part, a glob, `$'...'`, a flag's joined value, `rev:path`) is
+  name a refused path (by any trailing part, a glob, a name a glob spells out against the row's pattern there, `$'...'`, a flag's joined value, `rev:path`) is
   refused. `commandHead` gives a command's first words, none for a compound command; `rememberedHead`
   is what a remembered yes may cover: those words (a script runner's
   script too, `npm run build`), never a script by its path nor a row of `NEVER_REMEMBERED` (one table

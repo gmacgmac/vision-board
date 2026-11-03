@@ -5,11 +5,12 @@
 // light and dark; the gallery's section. -adaptiveHeader is the bar as it was (toolbar.spec.ts). It runs on
 // the worker's empty project (EMPTY_BASE), fresh for this file: two boards, one crowded.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { axeFindings, expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
-import { folderDialog, menu, menuButton } from './board-page.ts';
+import { OLD_HEADER, folderDialog, menu, menuButton } from './board-page.ts';
 import { lc, pixel, resolved } from './apca.ts';
+import { expectBarPasses, expectWhole } from './header-fit.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 const LONG = 'Quarterly hiring plan for the platform and data teams across every region, with budgets and open questions';
@@ -35,7 +36,7 @@ async function setUp(page: Page, request: APIRequestContext) {
 
 let ready = false;
 /** The long-named board, open and drawn, at `width`. */
-async function open(page: Page, request: APIRequestContext, width: number, board = BOARD, flags = '') {
+async function open(page: Page, request: APIRequestContext, width: number, board = BOARD, flags = OLD_HEADER) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto(`${EMPTY_BASE}/?vbwork${flags && `&flags=${flags}`}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: unknown }).__vbWork !== undefined);
@@ -70,32 +71,6 @@ async function crowd(page: Page, request: APIRequestContext) {
   await expect(page.locator('.vb-toolbar [data-tone="new"]').first()).toHaveCount(1, { timeout: 10_000 });
 }
 const uncrowd = (page: Page) => act(page, { action: 'unlock' });
-
-/** The bar's visible parts, flattened through the path and the groups, with their boxes. */
-const parts = (page: Page) => page.evaluate((counts) => {
-  const bar = document.querySelector('.vb-toolbar') as HTMLElement;
-  const shown = [...bar.querySelectorAll<HTMLElement>(`.vb-brand, .vb-path > *, :scope > *, ${counts} > *, .vb-toolbar-end > *`)]
-    .filter((e) => !e.matches(`.vb-visually-hidden, .vb-path, .vb-toolbar-end, ${counts}, [hidden]`) && e.getClientRects().length > 0 && getComputedStyle(e).position !== 'absolute')
-    .map((e) => { const r = e.getBoundingClientRect(); return { name: e.id || (e.getAttribute('class') ?? e.tagName), left: r.left, right: r.right, width: r.width, top: r.top, bottom: r.bottom }; });
-  return { scroll: bar.scrollWidth - bar.clientWidth, page: document.documentElement.scrollWidth - innerWidth, width: bar.getBoundingClientRect().width, height: bar.getBoundingClientRect().height, shown };
-}, bid('counts'));
-
-async function expectWhole(page: Page, what: string) {
-  const fit = await parts(page);
-  expect(fit.scroll, `${what}: the bar scrolls`).toBeLessThanOrEqual(0);
-  expect(fit.page, `${what}: the page scrolls sideways`).toBeLessThanOrEqual(0);
-  for (const e of fit.shown) {
-    expect(e.left, `${what}: ${e.name} starts inside`).toBeGreaterThanOrEqual(0);
-    expect(e.right, `${what}: ${e.name} ends inside`).toBeLessThanOrEqual(fit.width);
-    expect(e.top, `${what}: ${e.name} inside the bar's height`).toBeGreaterThanOrEqual(0);
-    expect(e.bottom, `${what}: ${e.name} inside the bar's height`).toBeLessThanOrEqual(fit.height);
-  }
-  const sorted = [...fit.shown].sort((a, b) => a.left - b.left);
-  for (let i = 1; i < sorted.length; i++) expect(sorted[i]!.left, `${what}: ${sorted[i]!.name} after ${sorted[i - 1]!.name}`).toBeGreaterThanOrEqual(sorted[i - 1]!.right - 0.5);
-  // No id twice: the page and the tests reach a control by its id.
-  const ids = await page.evaluate(() => [...document.querySelectorAll('[id]')].map((e) => e.id));
-  expect(ids.filter((id, i) => ids.indexOf(id) !== i), `${what}: an id twice`).toEqual([]);
-}
 
 for (const [width, form] of FORMS) {
   test(`${width}px is the ${form} form and a long name leaves every control whole, quiet or crowded`, async ({ page, request }) => {
@@ -340,16 +315,6 @@ test('a short window: "⋯" scrolls inside itself and keeps every row reachable'
   await expect(last).toBeInViewport();
 });
 
-/** Axe, whole page; a card's small parts at this zoom (under 24px on the canvas, which zooms) are the cards' own tests'. */
-async function expectBarPasses(page: Page) {
-  const found = await axeFindings(page);
-  const bar = await page.evaluate(([all, stage]) => (all as typeof found).flatMap((f) => {
-    const outside = f.id === 'target-size' ? f.targets.filter((t) => !document.querySelector(t)?.closest(stage as string)) : f.targets;
-    return outside.length ? [`${f.id}: ${outside.join(', ')}`] : [];
-  }), [found, bid('stage')] as const);
-  expect(bar).toEqual([]);
-}
-
 for (const theme of THEMES) {
   test(`axe at every form with its menus open (${theme})`, async ({ page, request }) => {
     await setTheme(page, theme);
@@ -402,7 +367,7 @@ test('gallery: the section is last, draws the three forms with ids of its own, a
   await page.goto('/gallery.html?flags=-adaptiveHeader');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
-  await page.goto('/gallery.html');
+  await page.goto(`/gallery.html?flags=${OLD_HEADER}`);
   await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).getByRole('menu', { name: 'Zoom' })).toBeVisible();

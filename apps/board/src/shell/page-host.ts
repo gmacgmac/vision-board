@@ -13,6 +13,7 @@ import type { BoardChat, BoardHost, BoardEvent, BoardPageParts } from '../board/
 import type { Status } from '../board/status.ts';
 import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
+import { readEditing } from './editing.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
 import { keep, kept, pageStore } from './kept.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
@@ -56,6 +57,11 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     const catchUp = () => listener({ plugin: PLUGIN, ref: {} });
     return watchProject({
       change: (seq) => listener({ plugin: PLUGIN, ref: { head: seq } }),
+      // The ledger file was replaced: a head of 0 reads it again from the start (live.ts). Edit or Stop editing, or the
+      // lock changed hands elsewhere: the board reads again and learns `readOnly` from the read, and the folder is read
+      // again for who is editing (the chip's words, FIX_01 F6).
+      reset: () => listener({ plugin: PLUGIN, ref: { head: 0 } }),
+      editing: () => { catchUp(); if (openFolder) void readEditing(); },
       build: (id) => {
         if (build === null) build = id;
         else if (id !== build) location.reload();

@@ -140,11 +140,16 @@ test('a 401 sends WWW-Authenticate and a 405 sends Allow', () => {
   }
 });
 
-test('every agent operation takes the VB-Project header and may answer 409 wrong-folder; no other does (api.md 114)', () => {
-  for (const { id, op } of ops) {
+test('every agent operation takes the VB-Project header and may answer 409 wrong-folder; no other does (api.md 114); an agent write may also answer read-only', () => {
+  const agentConflicts = ['#/components/responses/wrongFolder', '#/components/responses/agentConflict'];
+  // A POST that only reads (an attached file, outside the ledger) is no write.
+  const reads = new Set(['read_attachment']);
+  for (const { id, method, op } of ops) {
     const header = (op.parameters ?? []).some((p: Rec) => p.$ref === '#/components/parameters/projectHeader');
     assert.equal(header, op['x-agent'], `${id} header`);
-    assert.equal(op.responses['409']?.$ref === '#/components/responses/wrongFolder', op['x-agent'], `${id} 409`);
+    assert.equal(agentConflicts.includes(op.responses['409']?.$ref), op['x-agent'], `${id} 409`);
+    // A write (D-085 4): wrong-folder or read-only, in one response that names both; a read: wrong-folder alone.
+    if (op['x-agent']) assert.equal(op.responses['409'].$ref, agentConflicts[method === 'GET' || reads.has(id) ? 0 : 1], `${id} 409 response`);
   }
   assert.deepEqual([doc.components.parameters.projectHeader.in, doc.components.parameters.projectHeader.name], ['header', 'VB-Project']);
 });
@@ -252,7 +257,7 @@ test('every operation in api.md is in openapi.json, with its method and path, an
 test('the problem codes are the codes of api.md 40', () => {
   const section = apiMd.split(/^## Errors$/m)[1]!.split(/^## /m)[0]!;
   const codes = [...section.matchAll(/^\| `([a-z-]+)` \| (\d{3}) \|/gm)].map((m) => m[1]!);
-  assert.equal(codes.length, 20);
+  assert.equal(codes.length, 21);
   const problem = schemaFiles().find((f) => f.schema.$id === `${API}problem.schema.json`)!.schema as Rec;
   const inPattern = /\(([^)]+)\)\$$/.exec(problem.$defs.code.pattern)![1]!.split('|');
   assert.deepEqual([...inPattern].sort(), [...codes].sort());

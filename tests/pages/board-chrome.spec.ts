@@ -22,11 +22,12 @@ test('a host gets the whole board inside its root, and nothing that is the page\
   await expect(root.locator('#vb1-board')).toBeAttached();
   await expect(root.locator('#vb1-send')).toBeVisible();
   // What is the page's is not there, and the bar has no hole for it.
-  await expect(page.locator('#vb1-chat-toggle, .vb-folder-chip, .vb-part, .vb-path-sep:first-child')).toHaveCount(0);
+  // Its ledger and the ledger's state too (D-084 4, D-085: the standalone page's parts), whatever their flags' defaults.
+  await expect(page.locator('#vb1-chat-toggle, .vb-folder-chip, .vb-part, .vb-path-sep:first-child, .vb-ledger-chip, .vb-chip-editing, .vb-edit-btn, #ledger-dialog')).toHaveCount(0);
   await root.locator('#vb1-toolbar-menu').click();
   await expect(root.locator('#vb1-hide')).toBeVisible();
-  await expect(page.locator('#vb1-theme, #vb1-align, #vb1-open-folder')).toHaveCount(0);
-  await expect(root.locator('#vb1-toolbar-menu')).not.toHaveAttribute('title', /Theme|Open folder/);
+  await expect(page.locator('#vb1-theme, #vb1-align, #vb1-open-folder, #new-ledger, #vb1-ledger-chip, #vb1-edit')).toHaveCount(0);
+  await expect(root.locator('#vb1-toolbar-menu')).not.toHaveAttribute('title', /Theme|Open folder|Ledger/);
   await page.keyboard.press('Escape');
 
   // `/` opens the search inside the root, from the board, and is the host's in its own field (M27).

@@ -12,11 +12,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { projectOf } from '#client';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
-import { LOCK_FILE } from '../server/lock.ts';
-import { RECENT_FILE } from '../server/recent.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { OLD_LAYOUT } from './test-board.ts';
 import { makeTempDir } from '#format/testing';
+import { homeFiles, ledgerFiles, ledgerFolder } from '#format';
 
 const home = fs.realpathSync(makeTempDir('vb-cloud-home-'));
 const outside = fs.realpathSync(makeTempDir('vb-cloud-outside-'));
@@ -30,7 +30,7 @@ const other = path.join(home, 'projects', 'a');
 const homeLink = path.join(home, 'Cloud-Example');
 const repoByLink = path.join(homeLink, 'repo');
 const unreadable = path.join(cloud, 'Cloud-Locked');
-const recentFile = path.join(home, '.visionboard', RECENT_FILE);
+const recentFile = homeFiles(home).recent;
 const entry = (dir: string, hasBoard = false) => ({ name: path.basename(dir), path: dir, hasBoard });
 let h: Harness;
 
@@ -54,7 +54,7 @@ before(async () => {
   for (const d of ['.Cloud-Hidden', 'node_modules']) fs.mkdirSync(path.join(cloud, d));
   fs.writeFileSync(path.join(cloud, 'Cloud-File.txt'), 'not a folder\n');
   fs.symlinkSync(place, homeLink);
-  h = await startBoard({ home });
+  h = await startBoard({ home, flags: OLD_LAYOUT });
 });
 after(async () => {
   await h.close();
@@ -109,8 +109,8 @@ test('home itself stays refused, also by a link in the cloud folder', async () =
     assert.match(refused.detail, /not the home folder itself/, p);
   }
   await h.fails('open_project', { body: { path: path.join(cloud, 'Cloud-Out'), create: true } }, 403, 'forbidden');
-  assert.equal(fs.existsSync(path.join(home, '.visionboard', 'ledger.jsonl')), false);
-  assert.equal(fs.existsSync(path.join(outside, '.visionboard')), false);
+  assert.equal(fs.existsSync(ledgerPath(home)), false);
+  assert.equal(fs.existsSync(ledgerFolder(outside)), false);
 });
 
 test('a folder opened by its link and by its real path is one folder: one recent entry, one lock', async () => {
@@ -121,9 +121,9 @@ test('a folder opened by its link and by its real path is one folder: one recent
   await h.ok('open_project', { body: { path: repoByLink } });
   assert.deepEqual(JSON.parse(fs.readFileSync(recentFile, 'utf8')), { folders: [repo, other] });
   assert.deepEqual((await h.ok('list_folders')).recent.map((f: { name: string }) => f.name), ['~/Library/CloudStorage/Cloud-Example/repo', '~/projects/a']);
-  const lock = JSON.parse(fs.readFileSync(path.join(repo, '.visionboard', LOCK_FILE), 'utf8')) as { pid: number };
+  const lock = JSON.parse(fs.readFileSync(ledgerFiles(ledgerFolder(repo)).lock, 'utf8')) as { pid: number };
   assert.equal(lock.pid, process.pid);
-  assert.equal(fs.existsSync(path.join(other, '.visionboard', LOCK_FILE)), false);
+  assert.equal(fs.existsSync(ledgerFiles(ledgerFolder(other)).lock), false);
   assert.deepEqual(await h.ok('get_project'), opened);
 });
 

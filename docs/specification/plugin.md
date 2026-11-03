@@ -3,9 +3,9 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-03 (the tools keep the bot's rules: § Tools, `tools.instructions`)
+updated: 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
-keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version]
+keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
 
 # The board as a plugin
@@ -181,12 +181,22 @@ With no chat at all, where nothing carries a chip, and the bot reads the board i
 ## The engine
 
 ```ts
-createEngine({ dir, name?, warn?, flags? }): PluginEngine   // apps/board/plugin/engine.ts `createEngine`
+createEngine({ dir, name?, warn?, flags?, readOnly? }): PluginEngine   // apps/board/plugin/engine.ts `createEngine`
 ```
 
 `dir` is the board's data folder, one per bot or project, and the only place it reads or writes: the ledger, the agents'
 hashes and `images/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
 `warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself: `svgImages`. Flag names are plain strings in `plugin.d.ts` (`{ [name: string]: boolean }`), so a new flag is never a change to the seam, and a name the engine does not know is ignored (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone").
+
+**Read-only** (D-085 7). `readOnly()` is asked on every call, so you flip it in place: no new engine, no reload. While it
+answers true, every write, your person's through `route` and your bot's through `tools.call`, answers the problem
+`read-only` (409; a tool's `isError` with words saying nothing was written) and writes nothing in `dir`; every read says
+`readOnly: true` (`list_boards`, `get_board`, `ledger`). The view learns it from its reads: after you flip it, say a `ref`
+with no `head` through `events` (§ What the host gives), and the view reads again. Then a press that would write says why
+through `notify`, `error`, and writes nothing, on the same path as standalone's page (`tests/pages/read-only-writes.spec.ts`:
+an answer, a key, a note, a flag; seen marks stay in the view's memory). Naming your bot (`POST agents`, § The bot) is
+a write too: do it while open. Left out, the engine is never read-only and no answer carries `readOnly`. Proven by
+`read-only.spec.ts` "readOnly: an engine made read-only", "readOnly: asked on every call", "readOnly: the host flips it".
 
 | Member | Promise | Proven by |
 |---|---|---|
@@ -194,7 +204,7 @@ hashes and `images/`. `name()` is the folder as the person reads it (`list_board
 | `image({ method, path, ifNoneMatch? })` | Answers `imageRoute`: `path` is the text after the prefix, as the request wrote it. `GET` or `HEAD` of a picture in `dir`'s `images/` and only there, held to the same checks as standalone's route (`images.md`). A card names a picture relative to that folder: `![Flow](flow.png)` is `<dir>/images/flow.png`, and `images/flow.png` is missing. `body` is its bytes or null. Send `headers` as given: they carry the type, the no-sniff and the svg's policy | `engine-hooks.spec.ts` "image:" |
 | `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`, and `head`, the ledger line it read through (what the Send's `record` is given, § The chat). Never throws | `engine-hooks.spec.ts` "resolve:" |
 | `tools.list()`, `tools.call(name, input, ctx)`, `tools.instructions` | § Tools | `tools.spec.ts`, `apps/board/tests/bot-tool-rules.test.ts` "the right instructions per host" |
-| `watch(onChange)` | `{ board?, head }` for every ledger change, this engine's or another writer's on `dir`. Returns the stop. Turn each into an `events` call | `engine-hooks.spec.ts` "watch:" |
+| `watch(onChange)` | `{ board?, head }` for every ledger change, this engine's or another writer's on `dir`. A ledger file replaced rather than grown (a sync, a git pull, a copy dropped in) is read again from the start and said as `{ head: 0 }`, which the view reads from the start. Returns the stop. Turn each into an `events` call | `engine-hooks.spec.ts` "watch:", `read-only.spec.ts` "watch: a ledger file replaced" |
 
 Nothing else is there (`engine-hooks.spec.ts` "createEngine and the engine hold no more").
 
@@ -312,6 +322,12 @@ now required, or takes less than before; a member the host is given that now hol
 something else, or happens at another moment. *Not breaking*: a member the host may leave out, a member the host is given
 and may ignore, a new tool or chip kind, a new flag that is off until a host turns it on, new words.
 
+*An option shaped like standalone's.* A member the host gives that the standalone engine also takes (`readOnly`) is
+declared in `PluginEngineOptions` itself, with its promise in a host's words, rather than picked from `EngineOptions`,
+whose comments name standalone's own controls: the compiler holds the two shapes equal at `createEngine`'s call, and
+"the types are the code's own" fails if a standalone name reaches the file. A host written before it still compiles
+(`apps/board/tests/plugin-types.test.ts` "an option a host may leave out is additive").
+
 *When the number moves.* `SEAM` is raised by one in the same change as the breaking change, never lowered, never reused. The
 types cannot tell a breaking change from an addition, and no tool can see a changed meaning, so the person making the change
 decides, and review checks. What the build does is make the decision unavoidable: `SEAM_TYPES` in `seam.ts` is the hash of the
@@ -396,6 +412,17 @@ Reviewed by the maintainer (D-074 rule 7): all settled, 2026-11-02. Each is stil
 9. **Types in the folder.** **Settled** (point 377): `plugin.d.ts`, generated at build (§ The types and the seam version).
 10. **A seam version.** **Settled** (point 377): `seam` in the manifest, with the rule for moving it (§ The types and the seam version).
 11. **The zoomed view stays a real modal**, inert page and all (PROOF_01). Non-modal means rebuilding its focus handling. **Settled** (D-080).
+
+Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
+
+12. **The person's reason names Edit.** A refused press says standalone's words, "Read-only: press Edit to change it"
+    (`#actions` `READ_ONLY_PERSON`), and a bot's refusal tells it the person can press Edit (`READ_ONLY`). A host has no
+    Edit unless it draws one. Either a host-neutral sentence for both, or `readOnly` answering the reason the host gives.
+13. **A bot's own file writes.** `readOnly` stops every write through the engine. A bot that writes pictures straight into
+    `images/` (open point 1) is stopped only by the host's own file rules while the board is read-only.
+14. **A lock of the host's own.** Standalone takes the ledger's lock on Edit, so two computers never write one ledger; the
+    engine takes none. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
+    the lock in the seam.
 
 ## What nclite needs
 

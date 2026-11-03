@@ -77,7 +77,9 @@ layer: its words import nothing, not even `node:`.
 | File | Area | Holds |
 |---|---|---|
 | `apps/board/src/shell/words/chat.ts` | `chat` | The chat panel's sentences that the page owns. |
+| `apps/board/src/shell/words/editing.ts` | `editing` | The ledger's read-only state in the header, Edit and Stop editing, and an Edit refused (readOnlyStart flag). |
 | `apps/board/src/shell/words/folders.ts` | `folders` | The folder picker, the folder chip and the page title that names the folder. |
+| `apps/board/src/shell/words/ledgers.ts` | `ledgers` | The ledger chip, its list, New ledger… and the New ledger dialog (ledgerFolders flag). |
 | `apps/board/src/shell/words/page-help.ts` | `page-help` | Help only a person on the standalone page can act on: this repo's commands. A host's person is never told them. |
 
 ### The ledger format (`packages/format`, the bottom layer: its words import nothing)

@@ -2,17 +2,18 @@
 // images.md): the project's images, and only those, served as what they are (png, jpeg, webp, gif,
 // checked by name and by bytes; svg, by its opening, in images-svg-route.test.ts) with an ETag, a 304 for a matching If-None-Match, and the
 // headers that stop a browser guessing. Every refusal is a problem; nothing outside
-// `.visionboard/images/` is ever read, so each trick below is also tried against valid pictures
+// images folder (`ledgerFiles`) is ever read, so each trick below is also tried against valid pictures
 // that sit just outside it (the decoys), whose bytes must never come back.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS, OPERATIONS, imageNotReal } from '#format';
+import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS, OPERATIONS, imageNotReal, ledgerFolder } from '#format';
 import { OPENAPI_FILE } from '#format/files';
 import type { ImageName } from '#format';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { OLD_LAYOUT } from './test-board.ts';
 import type { Got } from './images-support.ts';
 import { IMAGES, SVG, get, imagesDir, problemOf, put } from './images-support.ts';
 import { makeTempDir } from '#format/testing';
@@ -25,11 +26,11 @@ const url = (rel: string) => `${IMAGE_ROUTE}${rel}`;
 let h: Harness;
 let project: string;
 before(async () => {
-  h = await startBoard();
+  h = await startBoard({ flags: OLD_LAYOUT });
   project = fs.realpathSync(h.project);
-  // Valid pictures just outside the images folder: in the project and in its `.visionboard/`.
+  // Valid pictures just outside the images folder: in the project and in its ledger folder.
   fs.writeFileSync(path.join(project, 'secret.png'), decoy);
-  fs.writeFileSync(path.join(project, '.visionboard', 'secret.png'), decoy);
+  fs.writeFileSync(path.join(ledgerFolder(project), 'secret.png'), decoy);
 });
 after(() => h.close());
 
@@ -155,7 +156,7 @@ test('a missing file, a folder and a missing images folder are 404', async () =>
   await refused(url('folder.png'), 404, 'not-found', W.missing);
   await refused(IMAGE_ROUTE, 404, 'not-found', W.empty);
   await refused(IMAGE_ROUTE.slice(0, -1), 404, 'not-found');
-  const bare = await startBoard();
+  const bare = await startBoard({ flags: OLD_LAYOUT });
   try {
     const got = await get(bare.base, url('a.png'));
     assert.equal(got.status, 404);
@@ -191,9 +192,9 @@ test('a link out of the images folder is refused, a link that stays inside works
   put(h.project, 'real/inner.png', IMAGES.png);
   const link = (target: string, name: string) => fs.symlinkSync(target, path.join(dir, name));
   link(path.join(project, 'secret.png'), 'out-file.png'); // an absolute link to a picture outside
-  link('../secret.png', 'out-relative.png'); // a relative one: .visionboard/secret.png
+  link('../secret.png', 'out-relative.png'); // a relative one: the ledger folder's secret.png
   link(project, 'out-dir'); // a folder link out, then a file inside it
-  link(path.join(project, '.visionboard'), 'out-data');
+  link(ledgerFolder(project), 'out-data');
   link('real/inner.png', 'in-file.png');
   link('real', 'in-dir');
   link('nowhere.png', 'dangling.png');
@@ -204,9 +205,9 @@ test('a link out of the images folder is refused, a link that stays inside works
 
 test('the images folder may itself be a link, but nothing in it may link out of it', async () => {
   const real = fs.realpathSync(makeTempDir('vb-images-'));
-  const linked = await startBoard();
+  const linked = await startBoard({ flags: OLD_LAYOUT });
   try {
-    fs.mkdirSync(path.join(linked.project, '.visionboard'), { recursive: true });
+    fs.mkdirSync(ledgerFolder(linked.project), { recursive: true });
     fs.symlinkSync(real, imagesDir(linked.project));
     fs.writeFileSync(path.join(real, 'here.png'), IMAGES.png);
     fs.writeFileSync(path.join(linked.project, 'secret.png'), decoy);
@@ -242,7 +243,7 @@ test('only GET and HEAD: any other method is 405 and says so', async () => {
 test('the route serves the folder that is open now, not the one the server started on', async () => {
   const home = fs.realpathSync(makeTempDir('vb-home-'));
   const other = path.join(home, 'projects', 'other');
-  const b = await startBoard({ home });
+  const b = await startBoard({ home, flags: OLD_LAYOUT });
   try {
     put(b.project, 'which.png', IMAGES.png);
     put(other, 'which.png', Buffer.concat([IMAGES.png, Buffer.from('FROM-THE-OTHER-FOLDER')]));

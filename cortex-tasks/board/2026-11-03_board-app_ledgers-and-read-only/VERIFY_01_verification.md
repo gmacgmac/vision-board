@@ -60,12 +60,40 @@ temp folder, never the repo's own `.visionboard/`, never port 4466 (your block: 
 
 _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (Run 1, 2026-11-03)
 
 ### What was checked
--
+- Steps 1-8 all done, on scratch projects under the OS temp folder (removed), servers on 7110-7170, never 4466; no code
+  changed. Two computers = two servers on one folder with their own `HOME` and port (same host: `LockEnv` can't be set
+  from outside a test); a stale lock simulated by ageing its `beat`; an interrupted move by a folder that can't be
+  renamed (instead of a kill between renames).
+- Steps not done as written: a real chat CLI after Stop editing (F2, from the code: no sign-in under a temp `HOME`);
+  keyboard and axe by hand (the read-only and ledgers page specs cover them and pass).
+- CONSOLIDATE_01-R4: both defaults flipped in this worktree's `flags.ts` only, run, restored byte for byte, rebuilt;
+  `git status` clean.
+- Requests weighed: LEDGERS_01-R6 → F3 (blocking), READONLY_01-R6 → F2 (blocking), READONLY_UI_01-R2 → F6,
+  LEDGER_UI_01-R3 → F15 (tracker), CONSOLIDATE_01-R4 → F4 (21 unit as reported; 13 page, not 4).
 ### Findings summary
--
+- [VERIFY_01_findings.md](./VERIFY_01_findings.md): 15 findings, 4 blocking. F1 a watcher of an old-layout folder,
+  after another server moved it, shows nothing and its Edit forks a second ledger at the old place; F2 a chat keeps
+  writing `images/`/`apps/` after Stop editing, and into every ledger's folder; F3 chat sessions cross ledgers on
+  same-id boards and re-key an agent into the other ledger; F4 the flag-on test list. Not blocking: F5-F15 (a
+  flags-off server forks a moved folder; no `editing` event on a lost lock; a waking writer re-beats its lock; Edit on
+  an unwritable folder is a 500; the Edit menu under the access bar; enabled write controls; page flags separate from
+  the server's; reads after a switch; part-way move advice; last ledger by unresolved path; `pageStore`).
+
+### Run 2
+**Status**: Completed (2026-11-03, re-check after FIX_01; worktree `verify-01-run2` at fface1c, ports 7150-7199).
+- Re-ran Run 1's reproductions: F1 (watcher A, mover C, A's Edit, a fresh D, `ledgers:undo` under watchers, a vanished
+  file), F2 (the gate's open-ledger verdicts after Stop editing and a lost lock, another ledger's write rows: FIX_01's
+  tests and the code path; no real CLI), F3 (same-id boards in two ledgers), F4 (both defaults flipped in `flags.ts`,
+  unit 2242/2242, the 10 related page specs 108/108, three more groups; restored, sha1 `f9cd6c7…`, no diff).
+- Spot-checked F5-F9, F11 (read-only half), F12-F14: fixed. Judged FIX_01's three left items (F10, F11 chip half,
+  F2 app process): not blocking.
+- **Blocking left: F16** — `tests/pages/host-styles.spec.ts` "the gallery's samples … draw the same under a host's
+  element rules" (light and dark) fails with both defaults on, at the New ledger dialog sample. New, not blocking:
+  N1 (orphan agent hash on a refused join), N2 (`look`'s first beat only notes), N3 (401 on the first write after a
+  vanished file returns). Details: [VERIFY_01_findings.md § Run 2](./VERIFY_01_findings.md).
 
 ## On Completion
 

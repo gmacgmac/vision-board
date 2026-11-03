@@ -1,6 +1,7 @@
 // The page's side of the sandboxed frame (D-071): every answer from it is checked again, and only the answer waited for
 // is taken; a frame that stalls is removed at a deadline, and the chip says how far it got. A fake frame stands in for the
 // real one, which chat-attach-pages.spec.ts drives. Also the server's frame route and its policy.
+// verify: data-folder-literal the attachment paths a page and an agent see (`.visionboard/attachments/…`, repo-wide in every layout)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { deflateSync } from 'node:zlib';

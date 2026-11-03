@@ -19,6 +19,7 @@ import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { gone, readChat, turnEnded } from './chat-support.ts';
 import { makeTempDir } from '#format/testing';
+import { projectFiles } from '#format';
 
 const work = makeTempDir('vb-chat-kiro-');
 const note = path.join(work, 'notes.jsonl');
@@ -84,7 +85,7 @@ test('start: Kiro joins the board as its agent; a message becomes a turn; a file
   assert.equal(made.params.mcpServers[0].env.find((e: { name: string }) => e.name === 'VB_SERVER').value, h.base);
   assert.ok(!made.args.join(' ').includes(secret), 'not on the command line');
   for (const [where, text] of [['the events', JSON.stringify(events)], ['the ledger', fs.readFileSync(h.ledger.file, 'utf8')],
-    ['the index', fs.readFileSync(path.join(h.project, '.visionboard', 'chat-sessions.json'), 'utf8')]] as const) {
+    ['the index', fs.readFileSync(projectFiles(h.project).chatSessions, 'utf8')]] as const) {
     assert.ok(!text.includes(secret), `the secret is in ${where}`);
   }
   const options = sent.filter((n) => n.answered).map((n) => n.result.outcome.optionId).sort();

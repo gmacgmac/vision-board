@@ -31,15 +31,18 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "list-boards", operationId: "list_boards", takesBody: false,
     summary: "List the boards",
-    description: "List the project's boards. Call it first: the other tools take a board id. No input, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
-    inputs: [],
+    description: "List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes). `readOnly: true`: the whole ledger is open read-only (no writes).",
+    inputs: [
+      {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
+    ],
   },
   {
     name: "get-board", operationId: "get_board", takesBody: false,
     summary: "Read a board as it is now",
-    description: "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`). For one node's history, use `show_node`.",
+    description: "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). For one node's history, use `show_node`.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
+      {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
     ],
   },
   {
@@ -50,6 +53,7 @@ export const COMMANDS: readonly CommandInfo[] = [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
       {"name":"n","in":"path","type":"integer","required":true,"description":"The card's number on this board (1, 2, 3... in the order drawn)."},
       {"name":"linked","in":"query","type":"boolean","required":false,"description":"True also returns the nodes linked to this one."},
+      {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
     ],
   },
   {
@@ -92,7 +96,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "join", operationId: "join", takesBody: true,
     summary: "Join as an agent",
-    description: "Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.",
+    description: "Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret`, `project`, the folder the board has open, and with ledger folders `ledger`, the ledger in it you join: check both are the ones you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder or ledger open, so stop, tell the person, and do not join. The one write that needs no credentials.",
     inputs: [
       {"name":"label","in":"body","type":"string","required":true,"description":"Your working folder's name (not a path). The person sees it when you ask for access."},
     ],
@@ -100,7 +104,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "request-grant", operationId: "request_grant", takesBody: true,
     summary: "Ask for write access to a board or a container",
-    description: "Ask the person for write access to a board, or to one container on it. Before you write on a board you did not create, call it with just `board`; for another agent's container, with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` the person can decide on; then wait in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423). Returns `request`, the request's `seq` (the person's answer names it); an open request for the same thing comes back with `replayed: true`, and `{ held: true }` when you already hold it.",
+    description: "Ask the person for write access to a board, or to one container on it. Before you write on a board you did not create, call it with just `board`; for another agent's container, with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` the person can decide on; then wait in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423), nor a ledger open read-only (`read-only`, 409). Returns `request`, the request's `seq` (the person's answer names it); an open request for the same thing comes back with `replayed: true`, and `{ held: true }` when you already hold it.",
     inputs: [
       {"name":"board","in":"body","type":"string","required":true,"description":"The board you need to write to, or that holds the container."},
       {"name":"region","in":"body","type":"string","required":false,"description":"The container (region) you need. Leave it out to ask for the whole board."},
@@ -130,7 +134,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "list-apps", operationId: "list_apps", takesBody: false,
     summary: "List the apps in this folder",
-    description: "List the apps in this folder, to draw one on a card or see what to fix. Apps live in `.visionboard/apps/<id>/` (the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.",
+    description: "List the apps in this folder, to draw one on a card or see what to fix. Apps live in the open ledger's `apps/<id>/` (`.visionboard/apps/`, or `.visionboard/<ledger>/apps/` with ledger folders; the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.",
     inputs: [],
   },
 ];

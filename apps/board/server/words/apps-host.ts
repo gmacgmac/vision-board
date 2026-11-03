@@ -7,6 +7,7 @@ export const theCodeOfTheApp = (id: string): string => `The code of the app "${i
 export const thePersonHasNotAllowed = (id: string): string => `The person has not allowed the app "${id}" yet. Press Allow on its card first.`;
 export const theAppHasAPanel = (id: string): string => `The app "${id}" has a panel only: it has no tools to call.`;
 export const thisAppHasNoTools = 'this app has no tools';
+export const thereIsNoApp = (id: string, appsFolder: string): string => `There is no app "${id}" in this folder's ${appsFolder}.`;
 
 // ---- panel-state.ts
 export const thereIsNoCardOn = (n: number, board: string): string => `There is no card ${n} on board "${board}".`;

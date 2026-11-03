@@ -1,18 +1,20 @@
 // The chat sessions index (chat-panel BE_03 ruling 2, api.md 101): the only module that reads or
-// writes `<project>/.visionboard/chat-sessions.json`. One entry per session ever started, oldest
+// writes the project's `chat-sessions.json` (`projectFiles(project).chatSessions`, data-folder.ts). One entry per session ever started, oldest
 // first: the session as list_chats shows it, with `agentId`, the board identity the server joined
 // for it (never a secret; the page reads which answers that agent is told, api.md 131). A session started in the folder has no board until its agent creates
 // one (panel-send ruling 2); then `attach` gives it that board, once. Every entry is checked on
-// read and before a write (rule 7); a damaged file is refused, never silently rewritten.
+// read and before a write (rule 7); a damaged file is refused, never silently rewritten. The file is repo-wide and holds
+// every ledger's sessions (D-084 1); an index is opened for one ledger and shows only its sessions, an entry naming
+// no ledger being the old layout's one, `main` once moved (FIX_01 F3).
 // Git-ignored from the first write.
 import fs from 'node:fs';
 import path from 'node:path';
+import { CHAT_SESSIONS_FILE, MAIN_LEDGER } from '#format';
 import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 import { SCHEMA_BASE, schemaProblems } from './schema.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
-export const CHAT_SESSIONS_FILE = 'chat-sessions.json';
 const SESSION_ID = `${SCHEMA_BASE}schema/api/chat-session.schema.json`;
 
 /** One session as the chat routes show it (`chat-session.schema.json`). */
@@ -25,13 +27,15 @@ export interface ChatSession {
   created: string;
   /** The agent id it writes on the board as. */
   agentId: string;
+  /** With ledger folders, its ledger; none, the old layout's (`main` once moved). */
+  ledger?: string;
 }
 
 /** What the index keeps: the session as the routes show it. */
 export type StoredSession = ChatSession;
 
 export interface ChatIndex {
-  /** Every session, oldest first. */
+  /** Every session of the index's ledger, oldest first. */
   all(): readonly StoredSession[];
   /** Record a new session (file first). */
   add(entry: StoredSession): void;
@@ -64,11 +68,14 @@ function writeEntries(file: string, entries: StoredSession[]): void {
   writeFileAtomic(file, `${JSON.stringify({ sessions: entries }, null, 2)}\n`, 0o600);
 }
 
-/** The index in the project's data folder (`.visionboard`). Read once, on first use. */
-export function openChatIndex(dir: string): ChatIndex {
+/** The index of ledger `ledger` (none: the old layout's) in the project's repo-wide folder `dir`
+ * (`projectFiles(project).root`). Read once, on first use. */
+export function openChatIndex(dir: string, ledger?: string): ChatIndex {
   const file = path.join(dir, CHAT_SESSIONS_FILE);
   let entries: StoredSession[] | undefined;
-  const all = () => (entries ??= readEntries(file));
+  const every = () => (entries ??= readEntries(file));
+  const ours = (e: StoredSession) => (e.ledger ?? MAIN_LEDGER) === (ledger ?? MAIN_LEDGER);
+  const all = () => every().filter(ours);
   const save = (next: StoredSession[]) => {
     const problems = next.flatMap(entryProblems);
     if (problems.length) throw new Error(`not a valid chat session: ${problems.join('; ')}`);
@@ -79,14 +86,14 @@ export function openChatIndex(dir: string): ChatIndex {
   return {
     all,
     add(entry) {
-      const next = [...all(), entry];
+      const next = [...every(), entry];
       save(next);
       entries = next;
     },
     attach(session, board) {
       const entry = all().find((e) => e.session === session);
       if (!entry || entry.board !== undefined) return;
-      save(all().map((e) => (e === entry ? { ...e, board } : e)));
+      save(every().map((e) => (e === entry ? { ...e, board } : e)));
       entry.board = board;
     },
   };

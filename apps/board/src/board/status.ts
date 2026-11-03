@@ -69,6 +69,8 @@ export interface BoardStatus {
   unsent: boolean;
   /** The open board is locked (N40, lock-flow.ts): read-only until the person unlocks it. */
   locked: boolean;
+  /** The ledger is open read-only (D-085, the reads' `readOnly`): nothing changes until the person presses Edit. */
+  readOnly: boolean;
   /** The Go to card box (goToCard flag, go-to-card.ts), open while set. */
   go: GoBox | null;
   /** How many times the board was drawn. */
@@ -91,7 +93,7 @@ export const initialStatus = (): BoardStatus => ({
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, flagged: 0,
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
-  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, go: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
+  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, go: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
 });
 
 export interface Status {

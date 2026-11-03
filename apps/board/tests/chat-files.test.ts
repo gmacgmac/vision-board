@@ -1,5 +1,6 @@
 // The attached files' store (D-068, api.md 164): a name is hostile until sanitised, a saved file stays
 // inside `.visionboard/attachments/`, and `attachedFile` is the one check of a path a page sends back.
+// verify: data-folder-literal the attachment paths a page and an agent see (`.visionboard/attachments/…`, repo-wide in every layout)
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -10,6 +11,7 @@ import { ATTACHMENT_BODY_BYTES, ATTACHMENT_BYTES, attachedFile, attachedFiles, a
 import { ProblemError } from '../server/problem.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import { makeTempDir } from '#format/testing';
+import { ledgerFiles, ledgerFolder, projectFiles } from '#format';
 
 const base = fs.realpathSync(makeTempDir('vb-chat-files-'));
 after(() => fs.rmSync(base, { recursive: true, force: true }));
@@ -19,9 +21,9 @@ let count = 0;
 function folders() {
   const folder = path.join(base, `f${++count}`);
   const outside = path.join(base, `out${count}`);
-  fs.mkdirSync(path.join(folder, '.visionboard'), { recursive: true });
+  fs.mkdirSync(projectFiles(folder).root, { recursive: true });
   fs.mkdirSync(outside);
-  return { folder, outside, attachments: path.join(folder, '.visionboard', 'attachments') };
+  return { folder, outside, attachments: projectFiles(folder).attachments };
 }
 const NOW = new Date('2026-10-30T09:00:00Z');
 const DAY = '2026-10-30';
@@ -137,7 +139,7 @@ test('attachedFile takes only a file the board saved: the shape, then no link at
   const file = saveAttachment(folder, input('a.txt'), NOW);
   assert.deepEqual(attachedFile(folder, file.path), file);
   const day = path.join(attachments, DAY);
-  fs.writeFileSync(path.join(folder, '.visionboard', 'ledger.jsonl'), '');
+  fs.writeFileSync(ledgerFiles(ledgerFolder(folder)).ledger, '');
   fs.writeFileSync(path.join(outside, 'secret.txt'), 'x');
   fs.symlinkSync(path.join(outside, 'secret.txt'), path.join(day, '2-link.txt'));
   fs.mkdirSync(path.join(day, '3-folder'));
@@ -190,7 +192,7 @@ test('F3: stillThere splits a waiting message\'s files by whether each is still 
 
 test('F5, D-069 ruling 3: the board keeps attachments out of the project\'s git, through its own .gitignore, keeping what is there', () => {
   const { folder } = folders();
-  const ignore = path.join(folder, '.visionboard', '.gitignore');
+  const ignore = projectFiles(folder).gitignore;
   fs.writeFileSync(ignore, 'agents.json');
   const file = saveAttachment(folder, input('private notes.txt'), NOW);
   saveAttachment(folder, input('again.txt'), NOW);

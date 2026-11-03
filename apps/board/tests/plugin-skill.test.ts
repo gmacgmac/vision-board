@@ -45,7 +45,7 @@ test('the plugin skill has an Images section: the board folder\'s images/, the e
   assert.deepEqual([IMAGE_LIMITS.maxBytes, IMAGE_LIMITS.svgMaxBytes, IMAGE_LIMITS.depth, Object.keys(IMAGE_LIMITS.types)], [8 * 1024 * 1024, 1024 * 1024, 8, ['png', 'jpeg', 'webp', 'gif', 'svg']], 'the numbers the section names are the engine\'s');
   assert.ok(!/nclite|\.visionboard|\bapp\b|upload|put_image/i.test(section), 'it names no host, no standalone path, no app, no upload tool');
   assert.ok(!/^### Images in cards$/m.test(source.replace(/^### Images in cards$/m, '')) , 'the standalone skill has its own, once');
-  assert.ok(source.includes('Keep it in the project\'s `.visionboard/images/`'), 'the standalone words are untouched');
+  assert.ok(source.includes('Keep it in the open ledger\'s `images/`: `.visionboard/<ledger>/images/`'), 'the standalone words are untouched');
   assert.ok(plugin.includes('It also shows pictures inside a card.') && !plugin.includes('small apps you build'));
 });
 
@@ -54,6 +54,13 @@ test('every tool a plugin bot has is in the skill, and its sentences about the p
   for (const kept of ['"Waiting for your reply" is yours.', "**Don't fetch it again**", 'Never hold your turn open: no `check_responses` with `wait`.']) {
     assert.ok(source.includes(kept) && plugin.includes(kept), kept);
   }
+});
+
+test('ledgers and read-only (D-084, D-085): standalone reads another ledger and presses Edit; a host\'s bot is offered neither', () => {
+  assert.match(source, /^## Another ledger$/m);
+  assert.ok(source.includes('take `ledger: "<name>"`') && source.includes('they can press Edit to change it'));
+  assert.ok(!/^## Another ledger$/m.test(plugin) && !plugin.includes('ledger: "'), 'no other ledger under a host: its `ledger` input is not offered');
+  assert.ok(!/\bEdit\b/.test(plugin) && plugin.includes('read-only until they make it editable'), 'a host may draw no Edit');
 });
 
 test('each skill edit finds its place exactly once, and a change under one stops the build', () => {

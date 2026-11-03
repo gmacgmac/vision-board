@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AppInfo } from '#format';
-import { parseFlags } from '#format';
+import { ledgerFiles, ledgerFolder, parseFlags } from '#format';
 import { makeTempDir } from '#format/testing';
 import { addApp, joinAgent, personAct, personCookie, startTestBoard } from '#board/testing';
 import { PORTS } from './ports.ts';
@@ -47,7 +47,7 @@ export interface AppServerOptions {
 
 export async function startAppServer({ flags, fixtures = [] }: AppServerOptions = {}): Promise<AppServer> {
   const project = fs.realpathSync(makeTempDir('vb-app-pages-'));
-  const apps = path.join(project, '.visionboard', 'apps');
+  const apps = ledgerFiles(ledgerFolder(project)).apps;
   fs.cpSync(EXAMPLE, path.join(apps, 'calculator'), { recursive: true });
   for (const id of fixtures) addApp(project, id);
   const board = await startTestBoard({ project, flags: parseFlags(flags).overrides, port: flags ? PORTS.appsOff : PORTS.app });

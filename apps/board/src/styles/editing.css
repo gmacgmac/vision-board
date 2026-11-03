@@ -1,0 +1,45 @@
+/* The open ledger's state in the header (readOnlyStart flag, D-085; READONLY_UI_01): the chip after the path
+   (shell/EditChip.svelte), Read-only or Editing, and Edit or Stop editing beside it at full (shell/EditButton.svelte).
+   The chip is Locked's look (styles/lock.css): its icon and word in the strong ink on the chip's ground, ringed, so it
+   reads as a state; a chip that is a button (#ui chip.css `.vb-chip-btn`), whose menu hangs from its left edge.
+   Editing rings it in the accent's line and draws the pencil in the accent (decoration, Lc 30). Its word gives way
+   when the bar is crowded and at a third (header.css, with Locked's), its icon never. Tokens only. */
+.vb-editing { flex: none; }
+.vb-chip-editing { height: var(--vb-control-h); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong); }
+.vb-chip-editing .vb-btn-icon { display: block; flex: none; width: 14px; height: 14px; }
+.vb-chip-editing .vb-btn-icon:last-child { width: 12px; height: 12px; color: var(--vb-ink); }
+.vb-chip-editing[data-state='editing'] { box-shadow: inset 0 0 0 1px var(--vb-accent-line); }
+.vb-chip-editing[data-state='editing'] .vb-btn-icon:first-child { color: var(--vb-accent); }
+.vb-chip-editing[aria-busy='true'] { cursor: progress; }
+.vb-chip-editing[aria-expanded='true'] { background: var(--vb-surface-deep); }
+/* Open, the header stacks over the access-request bar under it, as for "⋯" (board.css; FIX_01 F9). */
+.vb-toolbar:has(.vb-chip-editing[aria-expanded='true']) { z-index: var(--vb-z-chrome-open); }
+.vb-editing > .vb-menu-list { left: 0; right: auto; width: max-content; max-width: min(360px, calc(100cqw - 2 * var(--vb-space-2))); }
+/* The state in words, above the menu's row: reading text, wrapped. */
+.vb-editing-line { margin: 0; padding: var(--vb-space-1) var(--vb-space-3) var(--vb-space-2); font-size: var(--vb-text-sm); color: var(--vb-ink); white-space: normal; }
+
+/* A narrow half (under a 720px content box) has no room for the word beside the path and the end group: the icon alone. */
+@container vb-bar (max-width: 720px) {
+  [data-tier='half'] .vb-chip-editing .vb-chip-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+/* Edit or Stop editing at full: the end group's button look (board.css `.vb-btn-iconic`), where there is room for it
+   (from a 1360px content box, a bar of about 1385px; under that the chip's menu holds it), its pencil alone under 1500px
+   (its word for screen readers and its tooltip). Busy, it keeps its place and focus (aria-disabled) and shows the spinner. */
+.vb-edit-btn { flex: none; display: inline-flex; align-items: center; gap: var(--vb-space-1); }
+.vb-edit-btn .vb-btn-icon { display: block; width: 14px; height: 14px; }
+.vb-edit-btn[aria-busy='true'] { cursor: progress; }
+.vb-edit-btn[aria-disabled='true']:active { transform: none; }
+@container vb-bar (max-width: 1500px) {
+  .vb-edit-btn .vb-btn-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@container vb-bar (max-width: 1359px) { [data-tier='full'] .vb-edit-btn { display: none; } }
+/* A crowded full bar (Locked, or a count that comes and goes, as header.css judges it) gives up the button first, under
+   1500px, and the folder gives up its room for the state too (header.css keeps it whole from 1400px otherwise), so the
+   state keeps its word longest: it is what the person reads at a glance. */
+@container vb-bar (max-width: 1500px) {
+  .vb-toolbar[data-tier='full']:has(.vb-chip-locked, .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) .vb-edit-btn { display: none; }
+}
+@container vb-bar (min-width: 1400px) { .vb-toolbar:has(.vb-chip-editing) .vb-path .vb-folder-chip { flex-shrink: 1; } }
+/* Outside the adaptive header (adaptiveHeader off) both sit after the title, as chips and buttons do there. */
+.vb-toolbar:not([data-tier]) .vb-chip-editing { height: var(--vb-control-h); }

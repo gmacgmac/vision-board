@@ -27,7 +27,7 @@ import { guard } from './guard.ts';
 import { HANDLERS } from './handlers.ts';
 import { serveImage } from './images.ts';
 import type { Ledger } from './ledger.ts';
-import type { Lock } from './lock.ts';
+import type { Lock, LockEnv } from './lock.ts';
 import { ProblemError, problem, serverError } from './problem.ts';
 import { openProject } from './project.ts';
 import { sendProblem } from './respond.ts';
@@ -62,11 +62,16 @@ export interface BoardServerOptions {
   flags?: FlagOverrides | undefined;
   /** Shorter app limits than APP_LIMITS, for tests. */
   appLimits?: Partial<AppLimits> | undefined;
+  /** Open every ledger for writing, as before read-only opening (`readOnlyStart`, D-085): server.ts's `--edit` and
+   *  `VB_EDIT=1`; the tests' servers (`startTestBoard`) unless a test is about read-only. */
+  edit?: boolean | undefined;
+  /** What a lock reads from the world, for tests (another computer's live lock refusing Edit). */
+  lockEnv?: LockEnv | undefined;
 }
 
 /** An http.Server for the board. The Host check uses the port it is actually listening on, so a
  * test can listen on port 0. The agents store sits beside the ledger and is opened on first use. */
-export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat, flags, appLimits }: BoardServerOptions): http.Server {
+export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat, flags, appLimits, edit, lockEnv }: BoardServerOptions): http.Server {
   const port = () => (server.address() as AddressInfo).port;
   const realHome = fs.realpathSync(home);
   const kiro = chat?.kiroAgent ? keepKiroAgent(realHome) : undefined;
@@ -76,7 +81,7 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
     sendHead: flagOn('sendCountsWhatWent', flags ?? {}) };
   const project = openProject({
     ledger, lock, home: realHome, port, base: () => `http://127.0.0.1:${port()}`, chat: { ...access, ...chat, ...(kiro && { blocked: { kiro } }) },
-    apps: { flags, limits: appLimits },
+    apps: { flags, limits: appLimits }, edit, lockEnv,
   });
   const env: ServerEnv = { person: newToken(), project, build };
   const server = http.createServer(async (req, res) => {
@@ -85,7 +90,10 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
       guard(req, port());
       const url = new URL(req.url ?? '/', `http://127.0.0.1:${port()}`);
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return await dispatch(req, res, url, env, HANDLERS);
-      if (url.pathname.startsWith(IMAGE_ROUTE)) return serveImage(req, res, url.pathname.slice(IMAGE_ROUTE.length), project.current().dir, flags);
+      if (url.pathname.startsWith(IMAGE_ROUTE)) {
+        const open = project.current();
+        return serveImage(req, res, url.pathname.slice(IMAGE_ROUTE.length), open.dir, flags, open.ledgerName);
+      }
       if (req.method !== 'GET') throw problem('method-not-allowed', httpWords.thePageAnswersGETOnly, { headers: { Allow: 'GET' } });
       const panel = PANEL_PATH.exec(url.pathname);
       if (panel) return servePanel(res, panel[1]!, project.current().apps());

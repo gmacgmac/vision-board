@@ -195,9 +195,11 @@ export interface NodeState {
   /** The person flagged the card (`BoardState.flags`, field report batch 2 ruling 3): the flag
    *  button shows pressed and the name says ", flagged". */
   flagged?: true;
-  /** The board is locked (`BoardState.locked`, N40 ruling 4): the review buttons, the size control,
-   *  the note pin and a proposal's answers are paused (paused.ts); the flag is not. */
+  /** The board is locked (`BoardState.locked`, N40 ruling 4), or its ledger read-only (`BoardState.readOnly`, D-085):
+   *  the review buttons, the size control, the note pin and a proposal's answers are paused (paused.ts); the flag is not. */
   paused?: true;
+  /** The ledger is read-only (`BoardState.readOnly`, D-085 3): the flag is paused too, since read-only writes no flag. */
+  readOnly?: true;
   app?: AppCardView; // an app card's state view (node-app.ts `appView`); it takes no size control
 }
 
@@ -225,7 +227,8 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
     statusWord: awaiting ? AWAITING.word : asksAnswer(n) ? STATUS_LABEL[status] : '',
     ...(awaiting && { awaiting: true as const }),
     ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
-    ...(flagged && { flagged: true as const }), ...(s.locked && { paused: true as const }), ...(app && { app }),
+    ...(flagged && { flagged: true as const }), ...((s.locked || s.readOnly) && { paused: true as const }),
+    ...(s.readOnly && { readOnly: true as const }), ...(app && { app }),
     pressed,
     ...(tier && n.kind !== 'app' ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
   };

@@ -12,6 +12,7 @@ import type { BuildWatch } from './build-watch.ts';
 import { checkFolder, secretElsewhere } from './caller-folder.ts';
 import { callerOf } from './callers.ts';
 import type { Chats } from './chat-sessions.ts';
+import type { Editing } from './editing.ts';
 import type { Caller, Engine } from './engine/index.ts';
 import { matchRoute, readParams } from './engine/index.ts';
 import type { Ledger } from './ledger.ts';
@@ -35,6 +36,8 @@ export interface Ctx {
   params: Record<string, unknown>;
   engine: Engine;
   ledger: Ledger;
+  /** Whether the open ledger may be written now (editing.ts): the streams' `editing` event. */
+  editing: Editing;
   agents: () => Agents;
   chats: () => Chats;
   apps: () => AppHost;
@@ -66,13 +69,13 @@ export async function dispatch(
   }
   const params = readParams(match.id, match.raw, url.searchParams);
   const open = env.project.current();
-  const folder = { home: env.project.home, dir: open.dir };
+  const folder = { home: env.project.home, dir: open.dir, ledger: open.ledgerName };
   const here = SPECS[match.id].agent && checkFolder(req, folder);
   const caller = callerOf(req, match.id, {
     person: env.person, ledger: open.ledger, agents: open.agents, elsewhere: (secret) => secretElsewhere(folder, secret, here),
   });
   await handlers[match.id]({
-    req, res, url, params, engine: open.engine, ledger: open.ledger, agents: open.agents, chats: open.chats, apps: open.apps,
+    req, res, url, params, engine: open.engine, ledger: open.ledger, editing: open.editing, agents: open.agents, chats: open.chats, apps: open.apps,
     closed: open.closed, project: env.project, caller, build: env.build,
   });
 }

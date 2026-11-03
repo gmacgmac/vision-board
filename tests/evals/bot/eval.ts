@@ -74,7 +74,7 @@ async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: num
   try {
     const facts: Record<string, number | string> = { boardDir: dir };
     const botBoard = () => host.calls.filter((c) => c.name === 'write_board' && typeof c.input.board === 'string').at(-1)?.input.board as string | undefined;
-    const stage: Stage = { dir, tool: host.tool, person: host.person, facts, botBoard };
+    const stage: Stage = { dir, tool: host.tool, person: host.person, facts, botBoard, readOnly: host.setReadOnly };
     if (s.setup) await deadline(s.setup(stage), CALL_MS, `${s.id} setup`);
     const mcp = path.join(runDir, 'mcp.json');
     const env = { VB_EVAL_DOOR: host.door, VB_EVAL_TOKEN: host.token, VB_EVAL_INSTRUCTIONS: o.instructions };

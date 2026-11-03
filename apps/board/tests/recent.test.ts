@@ -1,13 +1,14 @@
 // The recent folders and the folder the server starts in (open-folder task, api.md 110, 112): the
-// list lives in `<home>/.visionboard/recent.json`, newest first, at most 10, readable by this user
+// list lives in the person's `recent.json` (`homeFiles`), newest first, at most 10, readable by this user
 // only; a bad file is ignored, never fatal. At start VB_PROJECT wins, then the newest recent folder
 // if it is still a folder under home, then this repo. The home folder is a temp folder here.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { RECENT_MAX, addRecent, readRecent, recentPath, startFolder } from '../server/recent.ts';
+import { RECENT_MAX, addRecent, lastLedger, readRecent, recentPath, startFolder } from '../server/recent.ts';
 import { makeTempDir } from '#format/testing';
+import { homeFiles } from '#format';
 
 const home = fs.realpathSync(makeTempDir('vb-recent-'));
 const outside = fs.realpathSync(makeTempDir('vb-recent-out-'));
@@ -24,7 +25,7 @@ const write = (text: string) => {
 
 test('no file: no recent folders, and reading makes nothing', () => {
   assert.deepEqual(readRecent(home), []);
-  assert.equal(fs.existsSync(path.join(home, '.visionboard')), false);
+  assert.equal(fs.existsSync(path.dirname(homeFiles(home).recent)), false);
 });
 
 test('add: newest first, each once, at most 10, written for this user only', () => {
@@ -63,4 +64,14 @@ test('start: VB_PROJECT wins, then the newest recent folder under home, then the
   assert.equal(startFolder({ home, fallback: b }), b, 'a recent folder outside home is never opened');
   write('not json');
   assert.equal(startFolder({ home, fallback }), fallback);
+});
+
+test('the last ledger is found by the folder\'s real path too: a link to it, or /var for /private/var (FIX_01 F14)', () => {
+  const real = folder('linked');
+  const link = path.join(home, 'linked-here');
+  fs.symlinkSync(real, link);
+  addRecent(home, real, 'ui');
+  assert.equal(lastLedger(home, link), 'ui');
+  assert.equal(lastLedger(home, real), 'ui');
+  assert.equal(lastLedger(home, path.join(home, 'projects', 'gone')), undefined);
 });

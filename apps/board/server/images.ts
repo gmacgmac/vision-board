@@ -16,10 +16,9 @@ import path from 'node:path';
 import { pipeline } from 'node:stream';
 import type { FlagOverrides } from '#format';
 import {
-  IMAGES_DIR, IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, flagOn, imageCap, imageHeadProblem, imagePathProblem, imageTypeByName,
+  IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, flagOn, imageCap, imageHeadProblem, imagePathProblem, imageTypeByName, ledgerFiles, ledgerFolder,
 } from '#format';
 import { isUnder } from './folders.ts';
-import { DATA_DIR } from './ledger.ts';
 import { problem } from './problem.ts';
 import * as httpWords from './words/http.ts';
 
@@ -95,10 +94,11 @@ function openImage(raw: string, images: string, flags: FlagOverrides): OpenImage
   }
 }
 
-/** Answer a request for image `raw` in folder `project` (its real path), under the server's `flags`. */
-export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string, flags: FlagOverrides = {}): void {
+/** Answer a request for image `raw` in folder `project` (its real path), under the server's `flags`: from
+ * the folder of its ledger `ledger` (none: the old layout's). */
+export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string, flags: FlagOverrides = {}, ledger?: string): void {
   onlyRead(req.method);
-  const { fd, size, etag, contentType, headers } = openImage(raw, path.join(project, DATA_DIR, IMAGES_DIR), flags);
+  const { fd, size, etag, contentType, headers } = openImage(raw, ledgerFiles(ledgerFolder(project, ledger)).images, flags);
   let streaming = false;
   try {
     if (matches(req.headers['if-none-match'], etag)) {

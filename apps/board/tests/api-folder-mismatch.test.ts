@@ -6,15 +6,16 @@
 // folder here: no test reads or writes the real one.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createInterface } from 'node:readline';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { OLD_LAYOUT } from './test-board.ts';
 import { fakeChat } from './chat-support.ts';
+import { callMcp } from './mcp-call.ts';
 import { makeTempDir } from '#format/testing';
+import { ledgerFiles, ledgerFolder } from '#format';
 
 const home = fs.realpathSync(makeTempDir('vb-home-'));
 const config = makeTempDir('vb-mismatch-cli-');
@@ -40,7 +41,7 @@ before(async () => {
   withBoard(b, 'plans-b');
   fs.mkdirSync(inB, { recursive: true });
   fs.symlinkSync(b, link);
-  h = await startBoard({ home, chat: { adapters: fake.adapters } });
+  h = await startBoard({ home, flags: OLD_LAYOUT, chat: { adapters: fake.adapters } });
   await h.ok('open_project', { body: { path: a } });
 });
 after(async () => {
@@ -91,7 +92,7 @@ test('working in the open folder with a secret from a folder joined earlier: tol
 test('a header naming another folder is refused on reads, join and writes; nothing is read or written', async () => {
   const fromA = h.agent(undefined, a);
   const before = fs.readFileSync(ledgerPath(b), 'utf8');
-  const agentsFile = path.join(b, '.visionboard', 'agents.json');
+  const agentsFile = ledgerFiles(ledgerFolder(b)).agents;
   const agentsBefore = fs.existsSync(agentsFile) ? fs.readFileSync(agentsFile, 'utf8') : '';
   for (const [id, input] of [
     ['list_boards', {}],
@@ -140,21 +141,6 @@ test('person routes and the page are unaffected by the header', async () => {
   const page = await fetch(`${h.base}/api/boards`, { headers: { Cookie: h.cookie } });
   assert.equal(page.status, 200);
 });
-
-/** One `tools/call` to the board's MCP server exactly as a CLI would start it: command, args and env
- * from its MCP config, in the folder the CLI ran in. */
-async function callMcp(server: { command: string; args: string[]; env: Record<string, string> }, cwd: string, name: string, args: Record<string, unknown>): Promise<any> {
-  const env: NodeJS.ProcessEnv = { ...process.env, ...server.env };
-  const child = spawn(server.command, server.args, { cwd, env, stdio: ['pipe', 'pipe', 'ignore'] });
-  const meta = { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientCapabilities': {} };
-  const answer = new Promise<any>((resolve) => createInterface({ input: child.stdout! }).once('line', (l) => resolve(JSON.parse(l))));
-  child.stdin!.write(`${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args, _meta: meta } })}\n`);
-  const r = await answer;
-  const exited = new Promise((resolve) => child.once('exit', resolve));
-  child.stdin!.end();
-  await exited;
-  return r.result;
-}
 
 test('the chat panel\'s agent still draws after a switch: its board MCP names the open folder', async () => {
   const { session } = await h.ok('start_chat', { board: 'plans-b', body: { agent: 'claude' } });

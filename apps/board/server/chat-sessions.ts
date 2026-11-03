@@ -16,6 +16,7 @@ import path from 'node:path';
 import type { AnswersText } from '#actions';
 import { creatorOf, sendHead as headFor } from '#actions';
 import type { LedgerEvent } from '#format';
+import { ledgerFolder, ledgerOfFolder, projectFiles, projectOfLedger } from '#format';
 import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
@@ -132,12 +133,19 @@ function joined(was: Held | undefined, next: Held): Held {
 
 export function openChats(o: ChatOptions): Chats {
   const { ledger, resolve, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false, readAttachment = false, sendHead = false } = o;
-  const dir = path.dirname(ledger.file);
-  const cwd = path.dirname(dir);
+  const cwd = projectOfLedger(path.dirname(ledger.file));
+  const dir = projectFiles(cwd).root;
+  /** The open ledger's folder, relative to the project (`.visionboard/main`): only its pictures and apps are written by a
+   * chat, and only while it may be written (FIX_01 F2). */
+  const openFolder = path.relative(cwd, path.dirname(ledger.file)).split(path.sep).join('/');
+  const openLedger = () => ({ folder: openFolder, writable: !ledger.readOnly() });
   let kept: Permissions | undefined;
   const permissions = () => (kept ??= openPermissions(dir, (() => { try { return fs.realpathSync(cwd); } catch { return cwd; } })()));
   let index: ChatIndex | undefined;
-  const store = () => (index ??= openChatIndex(dir));
+  /** The open ledger's name, when it sits in a ledger folder of the project: its sessions are its own (FIX_01 F3). */
+  const named = ledgerOfFolder(path.dirname(ledger.file));
+  const ledgerName = named !== undefined && ledgerFolder(cwd, named) === path.dirname(ledger.file) ? named : undefined;
+  const store = () => (index ??= openChatIndex(dir, ledgerName));
   const entries = () => store().all();
   const sessions = new Map<string, LiveSession>();
   const loading = new Map<string, Promise<LiveSession>>();
@@ -150,12 +158,12 @@ export function openChats(o: ChatOptions): Chats {
 
   /** What the adapter needs for one session: the board's MCP server with its secret, and the gate. */
   const options = (secret: string, token: string, extra: Partial<StartOptions>): StartOptions => ({
-    cwd, ...extra, instructionsFile: INSTRUCTIONS_FILE, allowedTools: CHAT_TOOLS, approvalHold, strictAccess,
+    cwd, ledgerFolder: openFolder, ...extra, instructionsFile: INSTRUCTIONS_FILE, allowedTools: CHAT_TOOLS, approvalHold, strictAccess,
     mcpServers: { [MCP_NAME]: boardMcpServer(base(), secret, cwd) }, gate: { url: `${base()}/api/run/approvals`, token },
   });
 
   const keep = (record: StoredSession, adapterSession: Parameters<typeof createLiveSession>[1], token: string, resumed = false) => {
-    const access = { folder: cwd, strict: strictAccess, ...(!strictAccess && { kept: permissions() }) };
+    const access = { folder: cwd, strict: strictAccess, ledger: openLedger, ...(!strictAccess && { kept: permissions() }) };
     const live = createLiveSession(record, adapterSession, token, { access, ttlMs: approvalTtlMs, hold: approvalHold, resumed });
     sessions.set(record.session, live);
     return live;
@@ -166,6 +174,7 @@ export function openChats(o: ChatOptions): Chats {
     if (!make) throw problem('conflict', serverChatWords.isNotAvailableOnThis(agentName(record.agent)));
     const why = blocked[record.agent];
     if (why) throw problem('conflict', serverChatWords.couldNotBeStarted(agentName(record.agent), why));
+    refuseReadOnly(record.agent); // a fresh secret writes the ledger's agents file
     const token = newToken();
     try {
       const extra = { sessionId: record.session, ...(record.model && { model: record.model }) };
@@ -199,13 +208,21 @@ export function openChats(o: ChatOptions): Chats {
     return 'refused' in said || !said.text ? undefined : said;
   }
 
+  /** A start (a new agent, or a fresh secret after a restart) would write the ledger's agents file: refused while the
+   * ledger is read-only (D-085 3), before any CLI starts. */
+  function refuseReadOnly(agent: ChatSession['agent']): void {
+    if (ledger.readOnly()) throw problem('read-only', serverChatWords.noChatWhileReadOnly(agentName(agent)));
+  }
+
   /** Hand `live`'s agent `held` on `board`: built when it goes, the Send recorded then if asked. */
   function deliver(live: LiveSession, board: string, held: Held): ChatEvent | undefined {
     const id = live.record.session;
     if (live.busy) waiting.set(id, held);
     return live.post(() => {
       waiting.delete(id);
-      const round = unsaid(live, board, held.before);
+      // Read-only, as locked: the words go alone, with no round and no Send (D-085 3).
+      const closed = ledger.readOnly();
+      const round = closed ? undefined : unsaid(live, board, held.before);
       const s = ledger.state();
       const { msg, said } = checked(cwd, held.msg);
       const built = promptFor(s, resolve, board, msg, round);
@@ -215,7 +232,7 @@ export function openChats(o: ChatOptions): Chats {
       // On a locked board the words and chips go alone: no round (unsaid), and no Send to record. The round was
       // read just now, through `s.seq`, and the Send is recorded in the same step, so it says so (`head`); a record
       // refused hands over nothing.
-      if (!isLocked(s, board)) {
+      if (!isLocked(s, board) && !closed) {
         held.record?.(sendHead ? s.seq : undefined);
         told.set(id, s.seq);
       }
@@ -258,6 +275,7 @@ export function openChats(o: ChatOptions): Chats {
       }
       const why = blocked[agent];
       if (why) throw problem('invalid', serverChatWords.couldNotBeStarted2(agentName(agent)), { errors: [{ pointer: '/agent', detail: why }] });
+      refuseReadOnly(agent);
       const identity = newIdentity(ledger, agents());
       const token = newToken();
       let started;
@@ -273,6 +291,7 @@ export function openChats(o: ChatOptions): Chats {
       }
       const record: StoredSession = {
         session: started.id, ...(board !== undefined && { board }), agent, ...(model && { model }), created: new Date().toISOString(), agentId: identity.agentId,
+        ...(ledgerName !== undefined && { ledger: ledgerName }),
       };
       try {
         joinAndGrant(ledger, agents(), identity, chatLabel(agent, cwd), board);

@@ -707,3 +707,21 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   say what you would run and why) and the closed-files line.
 - 2026-10-29, agent: **not run with live agents.** Watch a real turn for the agent reaching for `git status`
   or `git diff` first (refused), and whether it then says what it wanted instead of working around it.
+
+## Skill v3.28 (ledgers and read-only)
+
+- 2026-11-03, agent (ledgers-and-read-only SKILL_01, D-084, D-085): `npm run eval:bot` runs only a host's bot (the
+  plugin's skill, built from this one). Before any word changed, its new `read-only` scenario passed on the tools'
+  words alone, but the bot read `list_boards` and `get_board` (both `readOnly: true`) and still wrote once, refused.
+  With `readOnly: true` explained in those two descriptions and the MCP instructions, it wrote nothing in 2 of 2 runs.
+- 2026-11-03, agent: the bot's `read-only` refusal now says "until they make it editable", not "press Edit"
+  (PLUGIN_RO_01-R1: a host may draw no Edit). The host's bot then said "Make it editable" (2 of 2); a standalone bot,
+  told "press Edit" by this skill, said "Press Edit to make it editable" (1 manual run, read-only server, `join` refused).
+- 2026-11-03, agent: standalone only, manual runs (`claude -p`, this skill as the system prompt, `vb-mcp` on a test
+  server in a temp home, ledgers `main` and `scratch`): bringing scratch in read `list_boards` and `get_board` with
+  `ledger: "scratch"`, drew a summary board on main and left scratch untouched (1 run). A picture: the first wording
+  ("`.visionboard/<ledger>/images/` when `join` and `list_boards` name a `ledger`, else `.visionboard/images/`")
+  put the file right but narrated a doubt and reached for `ls`; worded as "`<ledger>` being the `ledger` that `join`
+  and `list_boards` name", it went straight to `.visionboard/main/images/` (1 run). Single runs, not rates.
+- 2026-11-03, agent: the `locked` instruction no longer calls a locked board "read-only", so the two states keep
+  their own words (D-085 4).

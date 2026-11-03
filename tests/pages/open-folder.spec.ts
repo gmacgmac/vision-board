@@ -14,7 +14,8 @@ import type { FolderServer } from './folder-server.ts';
 import { startFolderServer } from './folder-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { folderDialog as dialog, menuButton } from './board-page.ts';
+import { OLD_HEADER, folderDialog as dialog, menuButton } from './board-page.ts';
+import { homeFiles, ledgerFiles, ledgerFolder } from '#format';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -25,7 +26,7 @@ test.beforeEach(async () => { await srv.open(srv.start); });
 
 /** Open the board and wait for its first draw. */
 async function open(page: Page, flags = '') {
-  await page.goto(`${srv.base}/?vbwork${flags && `&flags=${flags}`}`);
+  await page.goto(`${srv.base}/?vbwork&flags=${[OLD_HEADER, flags].filter(Boolean).join(',')}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
 }
 const row = (page: Page) => page.locator('#open-folder');
@@ -111,7 +112,7 @@ test('by keyboard: Enter on the row, Enter into folders, Create focused on one w
   await expect(dialog(page)).toBeHidden();
   await expect(menuButton(page)).toBeFocused();
   await expect(page).toHaveTitle('start · Vision Board');
-  expect(fs.existsSync(`${srv.empty}/.visionboard`)).toBe(false);
+  expect(fs.existsSync(ledgerFolder(srv.empty))).toBe(false);
 });
 
 test('Create makes a Vision Board in a folder with none and lands on its empty board', async ({ page }) => {
@@ -123,7 +124,7 @@ test('Create makes a Vision Board in a folder with none and lands on its empty b
   await expect(page).toHaveTitle('empty-app · Vision Board');
   await expect(page.locator('.vb-message')).toContainText('No boards yet');
   await expect(card(page)).toHaveCount(0);
-  expect(fs.readFileSync(`${srv.empty}/.visionboard/ledger.jsonl`, 'utf8')).toBe('');
+  expect(fs.readFileSync(ledgerFiles(ledgerFolder(srv.empty)).ledger, 'utf8')).toBe('');
 });
 
 test('another open page follows the switch: it reloads onto the new folder\'s boards', async ({ page, context }) => {
@@ -179,7 +180,7 @@ const crumbs = (page: Page) => dialog(page).getByRole('navigation', { name: 'Fol
  * `start` and remove the place. */
 async function withCloud(body: (repo: string) => Promise<void>) {
   const repo = srv.addCloud();
-  fs.rmSync(path.join(srv.home, '.visionboard', 'recent.json'), { force: true });
+  fs.rmSync(homeFiles(srv.home).recent, { force: true });
   try { await body(repo); } finally {
     await srv.open(srv.start);
     srv.removeCloud();

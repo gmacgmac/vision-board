@@ -14,9 +14,9 @@ import type { Call, Person } from './types.ts';
 const PERSON: HostCaller = { by: 'person' };
 const BOT_LABEL = 'The host\'s bot';
 
-async function engineFor(dir: string, dry: boolean, flags?: Record<string, boolean>): Promise<PluginEngine> {
+async function engineFor(dir: string, dry: boolean, readOnly: () => boolean, flags?: Record<string, boolean>): Promise<PluginEngine> {
   const { createEngine } = dry ? await import('#board/engine') : await loadEngine();
-  const options = { dir, name: () => 'The host\'s folder', warn: () => {}, ...(flags && { flags }) };
+  const options = { dir, name: () => 'The host\'s folder', warn: () => {}, readOnly, ...(flags && { flags }) };
   return createEngine(options) as unknown as PluginEngine;
 }
 
@@ -39,7 +39,8 @@ const json = (res: ServerResponse, status: number, value: unknown) => {
 };
 
 export async function startEvalHost(o: { dir: string; port: number; dry: boolean; flags?: Record<string, boolean> }) {
-  const engine = await engineFor(o.dir, o.dry, o.flags);
+  let readOnly = false;
+  const engine = await engineFor(o.dir, o.dry, () => readOnly, o.flags);
   const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: BOT_LABEL } }))!.body as { agent: string };
   const bot: HostCaller = { by: 'agent', agent: joined.agent };
   const token = randomBytes(18).toString('base64url');
@@ -118,6 +119,7 @@ export async function startEvalHost(o: { dir: string; port: number; dry: boolean
       return JSON.parse(result.content?.[0]?.text ?? 'null');
     },
     setTurn(n: number) { turn = n; },
+    setReadOnly(on: boolean) { readOnly = on; },
     image: (path: string) => engine.image({ method: 'GET', path }).status,
     async close() {
       server.closeAllConnections();

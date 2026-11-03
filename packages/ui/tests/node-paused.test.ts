@@ -38,3 +38,19 @@ test('the elements pause every control that changes the board, and never the fla
     assert.ok(frameList.includes(sel), sel);
   assert.doesNotMatch(frameList, /vb-cog|data-note-act="show"/, 'the cog and Show in container stay');
 });
+
+// A ledger open read-only (D-085 3; READONLY_UI_01): the same controls pause as on a locked board, and the flag too,
+// since read-only writes no flag; only `BoardState.readOnly` says so (the page sets it from its reads).
+const readOnly = (): BoardState => ({ ...board(false), readOnly: true as const });
+
+test('a read-only ledger pauses a card and its container as a lock does, and the card\'s flag besides', () => {
+  const st = nodeState(node({}), readOnly());
+  assert.equal(st.paused, true);
+  assert.equal(st.readOnly, true);
+  assert.ok(!('readOnly' in nodeState(node({}), board(true))), 'a lock leaves the flag');
+  assert.ok(!('readOnly' in nodeState(node({}), board(false))));
+  assert.equal(regionState(region, view, readOnly(), new Set(['3'])).paused, true);
+  const source = fs.readFileSync(new URL('../src/node/vb-node.ts', import.meta.url), 'utf8');
+  assert.match(source, /const FLAG = 'button\[data-flag\]'/);
+  assert.match(source, /pauseControls\(this, FLAG, st\.readOnly === true\)/);
+});

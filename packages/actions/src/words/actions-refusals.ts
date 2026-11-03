@@ -62,6 +62,10 @@ export const lockedUnlockToChangeIt = 'Locked: unlock to change it';
 export const boardIsAlreadyLocked = (id: string): string => `board: "${id}" is already locked`;
 export const boardIsnTLocked = (id: string): string => `board: "${id}" isn't locked`;
 
+// ---- read-only.ts
+export const thisLedgerIsOpenRead = 'This ledger is open read-only, so nothing was written. Read it as usual; to write, tell the person in one line that it is read-only until they make it editable, and wait for them.';
+export const readOnlyPressEditTo = 'Read-only: press Edit to change it';
+
 // ---- moves.ts
 export const later = 'Later';
 

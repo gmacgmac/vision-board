@@ -7,7 +7,7 @@ export interface DescriptionEdit { tool: string; from: string; to: string }
 
 /** The same for a tool's input, whose words the format's schemas hold: `from` must occur in it. */
 export const inputEdits: readonly DescriptionEdit[] = [
-  { tool: 'write_board', from: "The app's folder name in `.visionboard/apps/`", to: "The app's id" },
+  { tool: 'write_board', from: "The app's folder name in the open ledger's `apps/`", to: "The app's id" },
 ];
 
 export const descriptionEdits: readonly DescriptionEdit[] = [
@@ -39,6 +39,24 @@ export const inputRefusals: readonly { tool: string; input: string; detail: stri
     detail: '`check_responses` takes no `wait` here: your host brings the person\'s answers in their next message, when they press Send. Don\'t wait for them: end your turn.',
     pointer: 'not given under a host',
   },
+  {
+    tool: 'list_boards',
+    input: 'ledger',
+    detail: '`list_boards` takes no `ledger` here: your host keeps one ledger, the one you work on. Read without it.',
+    pointer: 'not given under a host',
+  },
+  {
+    tool: 'get_board',
+    input: 'ledger',
+    detail: '`get_board` takes no `ledger` here: your host keeps one ledger, the one you work on. Read without it.',
+    pointer: 'not given under a host',
+  },
+  {
+    tool: 'show_node',
+    input: 'ledger',
+    detail: '`show_node` takes no `ledger` here: your host keeps one ledger, the one you work on. Read without it.',
+    pointer: 'not given under a host',
+  },
 ];
 
 /** The MCP server's instructions for a host's bot (`createMcpServer({ tools })`, from `tools.instructions`): the
@@ -56,5 +74,5 @@ export const instructionEdits: readonly { from: string; to: string }[] = [
     to: 'Your host brings the person\'s answers in their next message, when they press Send, so never hold your turn to wait for them; `check_responses` with the `head` you last saw reads what they did',
   },
   { from: 'Answer every note with a `reply` or an `append`,', to: 'Answer every note a read marks `owed` with a `reply` or an `append` (one marked `answered` is answered already: never answer it again),' },
-  { from: '`join` and `list_boards` name the folder the board has open (`project`). If a call answers `wrong-folder`, the board has another folder open: stop, tell the person what it says, and do not call `join`. ', to: '' },
+  { from: '`join` and `list_boards` name the folder the board has open (`project`) and, with ledger folders, the ledger open in it (`ledger`): check they are the ones you mean. If a call answers `wrong-folder`, the board has another folder or ledger open: stop, tell the person what it says, and do not call `join`. ', to: '' },
 ];

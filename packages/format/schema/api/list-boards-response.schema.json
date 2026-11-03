@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/list-boards-response.schema.json",
   "title": "Board list",
-  "description": "`seq` is that board's own last ledger line; `head` is the ledger's; `locked` marks a board the person has locked.",
+  "description": "`seq` is that board's own last ledger line; `head` is the ledger's; `locked` marks a board the person has locked. `readOnly` marks a ledger opened read-only.",
   "$comment": "Was: api.md Operations, 139",
   "type": "object",
   "required": [
@@ -54,6 +54,14 @@
     "project": {
       "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName",
       "description": "The folder the board server has open, as the person reads it (`~/projects/example`); every board listed is in its ledger."
+    },
+    "ledger": {
+      "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName",
+      "description": "The ledger every board listed is in: the one the board server has open in that folder, or the other one the read named (`ledger`, read-only). Given only with ledger folders.",
+      "$comment": "ledgerFolders flag (LEDGERS_01, D-084 rule 3; D-083 rule 4; CONSOLIDATE_01, D-084 rule 8)"
+    },
+    "readOnly": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly"
     }
   },
   "unevaluatedProperties": false

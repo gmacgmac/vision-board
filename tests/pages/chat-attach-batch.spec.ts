@@ -9,6 +9,7 @@ import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
 import { expect, expectNoAxeViolations, test } from './helpers.ts';
 import { card, side, text, toggle } from './chat-page.ts';
+import { projectFiles } from '#format';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -42,7 +43,7 @@ async function pick(page: Page, files: ReturnType<typeof upload>[]) {
 /** The newest file saved of that name, on disk, in the folder the board says it has open. */
 async function savedFile(name: string): Promise<string> {
   const { project } = await (await fetch(`${srv.base}/api/boards`)).json() as { project: string };
-  const root = path.join(project.replace(/^~/, os.homedir()), '.visionboard', 'attachments');
+  const root = projectFiles(project.replace(/^~/, os.homedir())).attachments;
   for (const day of fs.readdirSync(root).sort().reverse()) {
     const found = fs.readdirSync(path.join(root, day)).find((f) => f.endsWith(`-${name}`));
     if (found) return path.join(root, day, found);

@@ -47,7 +47,7 @@
       "$comment": "Was: api.md 150, D-047 ruling 3",
       "required": ["id"],
       "properties": {
-        "id": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id", "description": "The app's folder name in `.visionboard/apps/`." },
+        "id": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id", "description": "The app's folder name in the open ledger's `apps/`." },
         "w": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/appWidth", "description": "The panel's width in px; the card adds its padding." },
         "h": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/appHeight", "description": "The panel's height in px." }
       },

@@ -7,12 +7,15 @@
 /** Each operation's input (path and query parameters by name, `body` for a JSON body) and its success answer. */
 export interface OperationTypes {
   list_boards: {
-    input: Record<never, never>;
+    input: {
+      ledger?: string;
+    };
     output: ListBoardsResponse;
   };
   get_board: {
     input: {
       board: string;
+      ledger?: string;
     };
     output: GetBoardResponse;
   };
@@ -28,6 +31,7 @@ export interface OperationTypes {
       board: string;
       n: number;
       linked?: boolean;
+      ledger?: string;
     };
     output: ShowNodeResponse;
   };
@@ -207,6 +211,14 @@ export interface OperationTypes {
     };
     output: Project;
   };
+  edit_ledger: {
+    input: Record<never, never>;
+    output: Project;
+  };
+  stop_editing: {
+    input: Record<never, never>;
+    output: Project;
+  };
   list_folders: {
     input: {
       path?: string;
@@ -263,6 +275,8 @@ type ListBoardsResponse = {
   }[];
   head: number;
   project: string;
+  ledger?: string;
+  readOnly?: true;
 };
 type CommonTitle = string;
 type GetBoardResponse = {
@@ -297,6 +311,8 @@ type GetBoardResponse = {
   boardHolders?: GetBoardResponseHolder[];
   holders?: Record<string, GetBoardResponseHolder[]>;
   locked?: true;
+  ledger?: string;
+  readOnly?: true;
 };
 type View = {
   format: 1;
@@ -410,6 +426,8 @@ type CommonKey = string;
 type ShowNodeResponse = {
   head: number;
   linked?: CommonNodeDetail[];
+  ledger?: string;
+  readOnly?: true;
 } & CommonNodeDetailCore;
 type CommonNodeDetail = CommonNodeDetailCore;
 type CommonNodeDetailCore = {
@@ -590,6 +608,7 @@ type ReadLedgerResponse = {
   events: LedgerEvent[];
   head: number;
   more?: true;
+  readOnly?: true;
 };
 type LedgerEvent = BoardStored | RegionStored | NodeStored | LinkStored | UnlinkStored | ActStored | SeenStored | ReplyStored | ProposeStored | ParkStored | JoinStored | GrantRequestStored | RetireStored;
 type RegionStored = {
@@ -724,6 +743,7 @@ type JoinResponse = {
   agent: string;
   secret: string;
   project: string;
+  ledger?: string;
 };
 type GrantRequestBody = {
   key?: CommonKey;
@@ -872,6 +892,7 @@ type ChatSession = {
   model?: string;
   created: string;
   agentId: string;
+  ledger?: string;
 };
 type ChatStartRequest = {
   agent: "claude" | "kiro";
@@ -1104,10 +1125,27 @@ type Project = {
   name: string;
   found: boolean;
   boards?: number;
+  ledger?: string;
+  ledgers?: ProjectLedgerEntry[];
+  readOnly?: true;
+  editing?: ProjectEditing;
+};
+type ProjectLedgerEntry = {
+  name: string;
+  boards: number;
+  keptOutOfGit: boolean;
+};
+type ProjectEditing = {
+  here: true;
+} | {
+  host: string;
+  since: string;
 };
 type OpenProjectRequest = {
   path: string;
   create?: boolean;
+  ledger?: string;
+  keepOutOfGit?: boolean;
 };
 type FolderList = {
   path: string;
