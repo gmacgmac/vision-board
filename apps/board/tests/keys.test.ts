@@ -98,3 +98,14 @@ test('typing is typing: a key in a contenteditable fires no shortcut', () => {
   const editing: Fake = { ...target(mine), closest: (sel) => (sel === '.vb-board' ? mine : sel.includes('[contenteditable]') ? editing : null) };
   assert.deepEqual(press('h', editing, mine), []);
 });
+
+// KEY_01: a command key hears which card the focus is on, so C can write on it (selection-flow.ts `comment`).
+test('a command key is told the card the focus is on, else null', () => {
+  const seen: string[] = [];
+  const mine = root();
+  const unbind = bindKeys({ command: (_c: string, _k: string, focused: string | null) => { seen.push(String(focused)); return true; } } as unknown as KeyHandlers, mine as unknown as HTMLElement);
+  const on = (id?: string): Fake => ({ ...target(mine), closest: (sel) => (sel === '.vb-board' ? mine : sel === 'vb-node' && id ? { ...target(mine), dataset: { id } } : null) });
+  for (const at of [on('2'), on()]) listener!({ target: at, key: 'c', defaultPrevented: false, metaKey: false, ctrlKey: false, altKey: false, shiftKey: false, preventDefault() {} } as unknown as KeyboardEvent);
+  unbind();
+  assert.deepEqual(seen, ['2', 'null']);
+});

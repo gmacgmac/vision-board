@@ -57,7 +57,7 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
     carried: moves.carried, dragStart: moves.dragStart, dragOver: moves.dragOver,
     drop: (boxes, at) => void moves.drop(boxes, at),
     step: (from, dir) => { const next = focus.neighbour(from, dir); if (next) drawing.cards.get(next)?.focus({ preventScroll: true }); },
-    command: (id, key) => flow.command(id, key), toggleHide: f.toggleHide, lassoMove: flow.lassoMove, lassoEnd: flow.lassoEnd, lassoCancel: flow.lassoCancel,
+    command: (id, key, focused) => flow.command(id, key, focused), toggleHide: f.toggleHide, lassoMove: flow.lassoMove, lassoEnd: flow.lassoEnd, lassoCancel: flow.lassoCancel,
     pick: (id, add) => { selection.select([id], add ? 'toggle' : 'only'); updates.saw([id]); },
     toggle: (id) => selection.select([id], 'toggle'),
     clear: (target) => {

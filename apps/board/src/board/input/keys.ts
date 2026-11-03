@@ -28,8 +28,9 @@ export interface KeyHandlers {
   toggle(id: string): void;
   step(from: string | null, dir: 1 | -1): void;
   /** A view command (3_FE_02 ruling 5: F, +, -, Z, N, C; 3_FE_03: Shift+M); false when it does not
-   *  apply now, so the key falls through (C on one card is that card's comment). */
-  command(id: CommandId, key: string): boolean;
+   *  apply now, so the key falls through (C on one card is that card's comment). `focused`: the card
+   *  the keyboard focus is on, if any (KEY_01: C acts there). */
+  command(id: CommandId, key: string, focused: string | null): boolean;
   toggleHide(): void;
   /** Esc: true when it had something to close or clear. */
   escape(): boolean;
@@ -71,9 +72,9 @@ function onCommand(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | n
   // A Shift combination a command claims (Shift+M, 3_FE_03 ruling 8) is that command's alone: it
   // never falls through to the plain key's action.
   const shifted = e.shiftKey ? commandForKey(`shift+${key}`) : undefined;
-  if (shifted) { e.preventDefault(); h.command(shifted, `shift+${key}`); return true; }
+  if (shifted) { e.preventDefault(); h.command(shifted, `shift+${key}`, id); return true; }
   const cmd = commandForKey(key);
-  if (cmd && h.command(cmd, key)) { e.preventDefault(); return true; }
+  if (cmd && h.command(cmd, key, id)) { e.preventDefault(); return true; }
   if (id && BY_KEY.has(key)) { e.preventDefault(); h.act(id, BY_KEY.get(key)!); return true; }
   // R with no selection (a selection's R is Reset places, commands.ts): the focused card's reset.
   if (id && key === 'r') { e.preventDefault(); h.unpin(id); return true; }

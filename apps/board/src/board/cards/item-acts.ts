@@ -5,7 +5,8 @@
 // ignored, so a double click never undoes itself. Comment on a card with a note not yet sent opens
 // it to edit (2e_FE_01 ruling 1). Later and Reopen also move the card into the Later container and
 // back out (3_FE_03 ruling 6, moves.ts). With "Hide answered" on, focus goes on to the next card
-// when the card it was on is hidden by its answer.
+// when the card it was on is hidden by its answer. The write is slower than the keyboard: focus goes back
+// to the card only if it is still there or lost to the redraw, never from where the person moved it on.
 import type { ActionId, ViewNode } from '#format';
 import type { BoardState } from '#actions';
 import { ACTIONS, DECIDED, statusOf } from '#actions';
@@ -26,6 +27,9 @@ export interface ItemActDeps {
   hidden(): Set<string>;
   neighbour(id: string, dir: 1 | -1): string | null;
   focusCard(id: string): void;
+  /** The focusLeads flag: the keyboard focus is now somewhere other than card `id` and not lost, so a
+   *  finished press must not take it back (KEY_01). Absent with the flag off: focus always returns. */
+  focusLeft?(id: string): boolean;
   toast(text: string): void;
   /** The clock, in ms (tests pass their own). */
   now?(): number;
@@ -53,7 +57,7 @@ export function createItemActs(d: ItemActDeps): (id: string, requested: ActionId
     const next = d.hiding() && def.status && DECIDED.has(def.status) ? d.neighbour(id, 1) : null;
     const done = action === 'later' || action === 'reopen' ? d.moves.status(id, action) : d.record({ action, ...d.target(id) });
     if (!(await done)) return;
-    d.focusCard(next && d.hidden().has(id) ? next : id);
+    if (!d.focusLeft?.(id)) d.focusCard(next && d.hidden().has(id) ? next : id);
     d.toast(`${n.n} ${action === 'reopen' ? 'cleared' : def.reply ?? def.label.toLowerCase()}`);
   };
 }

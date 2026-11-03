@@ -378,6 +378,12 @@ record is `api.md` 58-61.
 2. **The page** has one bubble, owned by `apps/board/src/board/notes/notes.ts`: C, M, the footer
    buttons, the pin and a click on a note open it; it follows its card through
    `Viewport.onApply` and every relayout; every write goes through the controller's `attempt`.
+   **Which card C writes on** is the one the keyboard focus is on (`focusLeads` flag, point 394):
+   with two or more cards selected C is the group note only while the focus is on one of them or on
+   no card (`commentOnSelection`, `selection/comment-key.ts`, tested in `comment-key.test.ts` and
+   `tests/pages/note-key-target.spec.ts`); N and the selection bar's Comment are the selection's
+   wherever the focus is. A ✓ or ✗ whose write finishes after the focus has moved on does not take
+   it back (`createItemActs` `focusLeft`). Off, C follows the selection and a press always refocuses.
 3. **On the card** (`<vb-node>`): `nodeState().notes` gives the pin (the latest note's number,
    `.vb-note-pin`, hanging off the top-right corner) and the "Your note" block (`notesMarkup`,
    `data-sent` notes grey). The block reads like a chat, oldest first, top to bottom (review polish

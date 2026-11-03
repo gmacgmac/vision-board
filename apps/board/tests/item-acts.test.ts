@@ -10,24 +10,26 @@ import { createItemActs, REPEAT_MS } from '../src/board/cards/item-acts.ts';
 const card: ViewNode = { id: '12', n: 12, region: 'r', kind: 'decision', title: 'Keep the free tier' };
 
 /** One decision whose status follows what was recorded; the clock moves by hand. */
-function harness() {
+function harness(focusLeft?: (id: string) => boolean) {
   let status: ItemStatus = 'open';
   let clock = 1000;
   const log: string[] = [];
+  const focused: string[] = [];
   const state = (): BoardState => ({
     items: new Map([['12', { status, notes: [] }]]), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(),
     moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(),
   });
   const set: Partial<Record<ActionId, ItemStatus>> = { ack: 'acknowledged', drop: 'dropped', later: 'later', reopen: 'open' };
   const act = createItemActs({
+    ...(focusLeft && { focusLeft }),
     node: (id) => (id === '12' ? card : undefined), state,
     notes: { press: (id) => void log.push(`note ${id}`) },
     moves: { status: async (_id, a) => { status = set[a]!; log.push(a); return true; } },
     record: async (f) => { status = set[f.action]!; log.push(f.action); return true; },
     target: () => ({ n: 12, ver: 1 }), hiding: () => false, hidden: () => new Set(), neighbour: () => null,
-    focusCard: () => {}, toast: (t) => void log.push(`toast ${t}`), now: () => clock,
+    focusCard: (id) => void focused.push(id), toast: (t) => void log.push(`toast ${t}`), now: () => clock,
   });
-  return { act, log, status: () => status, wait: (ms: number) => { clock += ms; } };
+  return { act, log, focused, status: () => status, wait: (ms: number) => { clock += ms; } };
 }
 
 test('a lit ✓ pressed again clears it, and the toast says "12 cleared"', async () => {
@@ -63,4 +65,22 @@ test('Comment opens the note; More context is not a button any card has', async 
   await h.act('12', 'comment');
   await h.act('12', 'context');
   assert.deepEqual(h.log, ['note 12']);
+});
+
+// KEY_01 (focusLeads flag): the write answers later than the keyboard moves; a press gives focus back to
+// its card only when focus is still there or lost, never when the person has moved on.
+test('after the write, focus returns to the card unless the person has moved it elsewhere', async () => {
+  const stay = harness(() => false);
+  await stay.act('12', 'ack');
+  assert.deepEqual(stay.focused, ['12']);
+  const moved = harness(() => true);
+  await moved.act('12', 'ack');
+  assert.deepEqual(moved.focused, [], 'focus left where the person put it');
+  assert.deepEqual(moved.log, ['ack', 'toast 12 ✓'], 'the toast still says it');
+});
+
+test('without the flag (no focusLeft), focus always returns to the card, as before', async () => {
+  const h = harness();
+  await h.act('12', 'drop');
+  assert.deepEqual(h.focused, ['12']);
 });

@@ -192,7 +192,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
       docs: () => (S.data ? boardSearchDocs((versions.state ?? live.state)!, S.id, view()).filter((doc) => drawing.layout?.nodes.has(doc.id)) : []) } }) });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
-    stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)
+    stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), focusLeads: on('focusLeads'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
     ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }) });
   vp.onApply = () => { status.set({ zoom: zoomPercent(vp.k) }); notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
@@ -210,7 +210,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({ node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => status.now.hide, hidden: hiddenSet,
-    neighbour: (id, dir) => focus.neighbour(id, dir), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t) });
+    neighbour: (id, dir) => focus.neighbour(id, dir), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t),
+    ...(on('focusLeads') && { focusLeft: (id: string) => { const at = document.activeElement; return !!at && at !== document.body && !drawing.cards.get(id)?.contains(at); } }) });
 
   /** Pins, Reset places, the layout mode and the size tier (places.ts). */
   const places = createPlaces({ vp, view, state: () => S.data!.state, layout: () => drawing.layout, target, record, redraw: () => redraw(),

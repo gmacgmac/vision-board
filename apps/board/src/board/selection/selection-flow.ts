@@ -17,6 +17,7 @@ import type { CommandId } from '../input/index.ts';
 import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS, selectionButtons } from '../input/index.ts';
 import type { NoteFlow } from '../notes/index.ts';
 import type { Selection } from './selection.ts';
+import { commentOnSelection } from './comment-key.ts';
 import { createPill } from './selection-pill.ts';
 import type { Viewport } from '../canvas/index.ts';
 import { APP_FIT, SELECTION_FIT } from '../canvas/index.ts';
@@ -50,6 +51,8 @@ export interface SelectionFlowDeps {
   paused?(): string | null;
   /** The selectionPill flag: the compact bar, a pill over a selection until it is opened. */
   pill: boolean;
+  /** The focusLeads flag: C writes on the focused card unless the focus is in a selection of two or more. */
+  focusLeads?: boolean;
   /** A digit typed on the board: the Go to card box opens holding it (go-to-card.ts); absent with
    *  the goToCard flag off, when digits do nothing. */
   goTo?(key: string): boolean;
@@ -61,7 +64,7 @@ export interface SelectionFlow {
   lassoEnd(from: Point, to: Point, add: boolean): void;
   lassoCancel(): void;
   /** Run a command; false when it does not apply now (so a key can mean something else). */
-  command(id: CommandId, key?: string): boolean;
+  command(id: CommandId, key?: string, focused?: string | null): boolean;
   /** Zoom to these cards, whatever is selected (Zoom to selection's fit); false when none is drawn. */
   zoomTo(ids: readonly string[]): boolean;
   /** Show, hide or move the bar for the selection, the area and the view as they are now. */
@@ -152,15 +155,15 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   }
 
   /** Comment: one note on exactly the selected cards, any kinds (every-node ruling 4), two or more,
-   *  or the one card's own note. C means this only with two or more selected; alone it is the
-   *  focused card's comment. A card with no number (the everyNode flag off) takes no note. */
-  function comment(key?: string): boolean {
+   *  or the one card's own note. C means this only with two or more selected and the focus in
+   *  them (comment-key.ts); otherwise it is the focused card's comment. A card with no number
+   *  (the everyNode flag off) takes no note. */
+  function comment(key?: string, focused?: string | null): boolean {
     const items = d.selection.selected().filter((id) => d.item(id) !== undefined)
       .sort((a, b) => d.item(a)! - d.item(b)!);
-    if (key === 'c' && items.length < 2) return false;
+    if (!commentOnSelection(items, key, focused, !!d.focusLeads)) return false;
     if (items.length >= 2) d.notes.group(items);
-    else if (items.length === 1) d.commentOn(items[0]!);
-    else return false;
+    else d.commentOn(items[0]!);
     return true;
   }
 
@@ -172,14 +175,14 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     return b !== undefined;
   }
 
-  function command(id: CommandId, key?: string): boolean {
+  function command(id: CommandId, key?: string, focused?: string | null): boolean {
     const layout = d.layout();
     if (COMMANDS[id].acts && (d.readOnly() || d.paused?.())) return false;
     switch (id) {
       case 'zoom-in': d.vp.zoomCentre(1.2); return true;
       case 'zoom-out': d.vp.zoomCentre(1 / 1.2); return true;
       case 'fit': if (layout) d.vp.fit(layout.bounds); return true;
-      case 'comment': return comment(key);
+      case 'comment': return comment(key, focused);
       case 'move': {
         const sel = d.selection.selected();
         const world = worldBoxOf(layout, sel);

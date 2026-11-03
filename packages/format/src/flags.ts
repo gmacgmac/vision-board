@@ -53,6 +53,11 @@ export const FLAGS = {
     default: true,
     description: 'A Containers dropdown in the toolbar lists every container on the board with its card count, Later always last (greyed when empty); choosing one zooms to it and focuses its title; it works in a past version too (N18).',
   },
+  focusLeads: {
+    // On by default (KEY_01, point 394); ?flags=-focusLeads turns it off.
+    default: true,
+    description: 'The keyboard focus decides where a key acts. C writes a note on the focused card; with two or more cards selected it is the group note only while the focus is on one of them (or on no card); N and the bar\'s Comment stay the selection\'s. A ✓, ✗ or other card button that finishes after the person has moved the focus elsewhere does not take it back. Off, C follows the selection and a finished press always refocuses its card.',
+  },
   keyBubble: {
     // On by default (maintainer, 2026-10-07, navigation FE_04); ?flags=-keyBubble turns it off.
     default: true,
