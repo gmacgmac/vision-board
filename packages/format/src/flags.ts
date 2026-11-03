@@ -304,7 +304,7 @@ export const FLAGS = {
     // Off until VERIFY_01 leaves no blocking finding (ledgers-and-read-only PLAN decision 22, D-084). Read by the
     // standalone server (VB_FLAGS) and its page.
     default: false,
-    description: 'A project holds several ledgers, one folder each inside `.visionboard/` (`main/` first); every data-folder path follows the open ledger, repo-wide chat files stay at `.visionboard/`. The header lists, switches and creates ledgers; a folder in the old layout moves into `main/` on first open, by rename, while holding the lock (D-084). Off, one ledger at `.visionboard/`.',
+    description: 'A project holds several ledgers, one folder each inside `.visionboard/` (`main/` first); every data-folder path follows the open ledger, repo-wide chat files stay at `.visionboard/`. The header lists, switches and creates ledgers; a folder in the old layout moves into `main/` on first open, by rename, while holding the lock; an agent\'s reads may name another ledger of the folder and read it, read-only (D-084). Off, one ledger at `.visionboard/`.',
   },
   readOnlyStart: {
     // Off until VERIFY_01 leaves no blocking finding (ledgers-and-read-only PLAN decision 22, D-085). Read by the
