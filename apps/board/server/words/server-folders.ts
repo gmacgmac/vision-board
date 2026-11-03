@@ -31,3 +31,22 @@ export const thereIsNoFolderChoose = (displayName: string): string => `There is 
 // ---- project.ts
 export const noVisionBoardHere = (displayName: string, ledgerFile: string): string => `No Vision Board here: ${displayName} has no ${ledgerFile}. Send create: true to make one, or choose another folder.`;
 export const theBoardServerCouldNot = (create: string, displayName: string): string => `The board server could not ${create}read the ledger in ${displayName}. Check the folder's permissions, then try again.`;
+
+// ---- project.ts (ledger folders, D-084)
+export const noSuchLedger = (displayName: string, ledger: string): string => `${displayName} has no ledger "${ledger}". Send create: true to make it, or choose one from ledgers.`;
+
+// ---- ledger-move.ts (the old layout into main/, D-084 6)
+export const nothingToMove = (displayName: string, oldLedger: string): string => `${displayName} has no ${oldLedger}, so there is nothing to move into a ledger folder.`;
+export const movedBefore = (displayName: string, oldLedger: string, mainLedger: string): string =>
+  `${displayName} has both ${oldLedger} and ${mainLedger}: its ledger was moved before, and something wrote the old place since (a server running older code?). Nothing was moved. Keep the one you want (git has both), then open the folder again.`;
+export const inBothPlaces = (displayName: string, names: string, rootDir: string, mainDir: string): string =>
+  `${displayName} has ${names} both in ${rootDir}/ and in ${mainDir}/. Nothing was moved. Keep one of each, then open the folder again.`;
+export const movePartWay = (displayName: string, reason: string, moved: string, there: string, left: string, here: string): string =>
+  `Moving the ledger of ${displayName} stopped part-way (${reason}). In ${there}/: ${moved}. Still in ${here}/: ${left}. Nothing was lost: open the folder again to finish, or run npm run ledgers:undo -- <folder> to put them back.`;
+export const nothingYet = 'nothing yet';
+export const otherLedgers = (displayName: string, others: string): string =>
+  `${displayName} has other ledgers beside main (${others}), so it can't go back to one ledger. Move them out of .visionboard/ first.`;
+export const noMainToUndo = (displayName: string, mainLedger: string): string => `${displayName} has no ${mainLedger} to move back.`;
+export const oldLayoutAlready = (displayName: string, oldLedger: string, mainLedger: string): string =>
+  `${displayName} has both ${oldLedger} and ${mainLedger}. Nothing was moved back. Keep the one you want (git has both), then try again.`;
+export const mainNotEmpty = (mainDir: string, names: string): string => `${mainDir}/ still holds ${names}, which are not the board's, so it was left in place.`;

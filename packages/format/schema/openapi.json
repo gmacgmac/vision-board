@@ -2562,7 +2562,7 @@
         "operationId": "get_project",
         "x-agent": false,
         "summary": "Show the open folder",
-        "description": "Show the folder the board server has open: its absolute path, its name as the person reads it (starting with `~` under the home folder), whether it has a Vision Board and how many boards that holds. Every other operation reads and writes this folder's ledger. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "description": "Show the folder the board server has open: its absolute path, its name as the person reads it (starting with `~` under the home folder), whether it has a Vision Board and how many boards that holds. Every other operation reads and writes this folder's ledger. With ledger folders it also names the ledger open now (`ledger`) and lists the folder's ledgers in `.visionboard/` (`ledgers`: each one's name, board count and whether it is kept out of git). Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
         "security": [
           {
             "personCookie": []
@@ -2603,7 +2603,7 @@
         "operationId": "open_project",
         "x-agent": false,
         "summary": "Open another folder",
-        "description": "Open another folder under the home folder in place of the one open now, on the same server and port. The server takes the folder's lock first and changes nothing if it can't; then it stops every running chat, ends every live stream (so every open page reloads onto the new folder), lets go of the old folder's lock, and keeps the folder in the recent list. A folder with no Vision Board is refused with `not-found` unless `create` is true, which makes `.visionboard/` and an empty ledger there. Agents join again after a switch: each folder keeps its own agents, so an old secret gets `not-authenticated`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the folder now open.",
+        "description": "Open another folder under the home folder in place of the one open now, on the same server and port. The server takes the folder's lock first and changes nothing if it can't; then it stops every running chat, ends every live stream (so every open page reloads onto the new folder), lets go of the old folder's lock, and keeps the folder in the recent list. A folder with no Vision Board is refused with `not-found` unless `create` is true, which makes `.visionboard/` and an empty ledger there. With ledger folders, `ledger` names the ledger to open (left out: the one this folder had open last, else `main`), so switching ledgers is opening the same folder with another `ledger`; the lock is the ledger's own, so another server may hold another ledger of the folder. With `create`, a ledger that is not there is made, and `keepOutOfGit` keeps it out of git; a name that is not a ledger name is refused with `invalid`. A folder still in the old layout (`.visionboard/ledger.jsonl`) is first moved into `.visionboard/main/`, by renaming its files, only while no other server holds it. Agents join again after a switch: each folder, and each ledger, keeps its own agents, so an old secret gets `not-authenticated`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the folder now open.",
         "security": [
           {
             "personCookie": []

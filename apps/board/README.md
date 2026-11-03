@@ -56,6 +56,14 @@ here or on another computer sharing the folder, prints which computer holds the 
 A lock is stale, and replaced with a one-line notice, when its `beat` is over 2 minutes old or it
 is on this computer and its process is gone. `SIGINT`, `SIGTERM` and normal exit release it, in
 every mode. If a server is refused and nothing is running, wait 2 minutes or delete the file.
+With ledger folders (`ledgerFolders` flag, D-084, api.md 113a) a ledger lives in its own folder,
+`<VB_PROJECT>/.visionboard/<ledger>/` (ledger, agents, lock, images, apps, app state; paths from
+`packages/format/src/data-folder.ts`), and the lock is that folder's, so two servers can hold two ledgers of
+one folder. At start `server.ts` opens the folder's last ledger (`recent.json` `ledgers`), else `main`;
+`server/ledgers.ts` lists and makes ledgers; `server/ledger-move.ts` moves an old-layout folder into `main/`
+by rename (`moveIntoMain`) and back (`undoMove`, run by `npm run ledgers:undo -- <folder>`,
+`bin/ledgers-undo.ts`). Tests: `tests/api-ledgers.test.ts`, `tests/ledger-move.test.ts`,
+`tests/access-layout.test.ts`.
 
 Routes come from the route table generated from `packages/format/schema/openapi.json`
 (`docs/specification/api.md`). `server.ts` only starts the server; `server/app.ts` runs the guard
@@ -90,14 +98,15 @@ answers, the board), `server/chat-round.ts` writes the answers part, the board's
 
 The open folder (api.md 109-112): `server/project.ts` holds the folder the server has open (its
 ledger, lock, agents, chats and app host) and is the only code that switches it (`open_project`): the new
-folder's lock first, then the chats and app processes stop, the live streams end, the old lock goes. `server/folders.ts`
+folder's lock first, then the chats and app processes stop, the live streams end, the old lock goes; with ledger
+folders it opens a named ledger the same way, so switching ledgers is opening the same folder. `server/folders.ts`
 is the only module that looks at other folders, all under the home folder (realpath, no hidden
 folder or `node_modules`); `server/recent.ts` is the only module that touches
 `~/.visionboard/recent.json` and picks the start folder. `server/open-folder.ts` answers the three
 routes. `createBoardServer({ home })` takes the home folder, so tests use a temp one.
 
 App cards (D-047, `docs/specification/apps.md`): `server/apps.ts` is the front door other server
-files import; the app host is in `server/apps/`. It reads only `.visionboard/apps/<id>/`
+files import; the app host is in `server/apps/`. It reads only the open ledger's `apps/<id>/`
 (`manifest.ts`), works out each app's state fresh in one function (`state.ts` `appState`), serves
 the panel at `GET /app-panels/<id>` with its own CSP (`panel.ts`), answers `list_apps` and
 `call_app_tool` (`routes.ts`), and runs each app's tools in its own permission-limited process
@@ -109,11 +118,13 @@ wires each app card's frame (loaded once on screen, then kept and frozen when of
 through `io.ts` `callAppTool`; Esc back to the card; theme changes), and Allow and Stop app through
 the one sender; `src/board/apps/app-state.ts` holds the one copy of `list_apps`' answer;
 `src/board/words/app-cards.ts` says what the person reads around them (components.md § App card; `tests/words-app-cards.test.ts`). This
-repo's own board holds a copy of the example in `.visionboard/apps/calculator/`
-(`tests/repo-example-app.test.ts` keeps it equal to the skill's).
+repo's own board holds a copy of the example in `.visionboard/apps/calculator/` (in `.visionboard/main/apps/`
+once its folder has moved into ledger folders; `tests/repo-example-app.test.ts` finds it in either and keeps it
+equal to the skill's).
 
 Images in cards (D-048, `docs/specification/images.md`): `server/images.ts` `serveImage` answers
-`GET /board-images/<path>` (and `HEAD`) from `.visionboard/images/` only, after `imagePathProblem`
+`GET /board-images/<path>` (and `HEAD`) from the open ledger's `images/` only (`.visionboard/images/`, or
+`.visionboard/<ledger>/images/` with ledger folders), after `imagePathProblem`
 (packages/format, the one path check the Markdown renderer makes too), with an ETag and 304. An svg
 (the svgImages flag, D-064) is checked by its opening (`svgProblem`) and served with its own policy,
 `SVG_CSP`: no script, nothing loaded, sandboxed, so opened at its own address it runs nothing. On the

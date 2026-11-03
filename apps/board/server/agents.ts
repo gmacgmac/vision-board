@@ -54,11 +54,12 @@ function writeHashes(file: string, hashes: AgentHash[]): void {
   writeFileAtomic(file, `${JSON.stringify({ agents: hashes }, null, 2)}\n`, 0o600);
 }
 
-/** The data folder `dir`'s own `.gitignore` names `name`, so the file is never committed. */
+/** The data folder `dir`'s own `.gitignore` names `name`, so the file is never committed. A `*` line
+ * already keeps every name out (a ledger kept out of git, ledgers.ts), so nothing is added after it. */
 export function ignoreInGit(dir: string, name: string): void {
   const file = path.join(dir, GITIGNORE_FILE);
   const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  if (text.split(/\r?\n/).some((line) => line.trim() === name)) return;
+  if (text.split(/\r?\n/).some((line) => line.trim() === name || line.trim() === '*')) return;
   fs.writeFileSync(file, `${text}${text && !text.endsWith('\n') ? '\n' : ''}${name}\n`);
 }
 

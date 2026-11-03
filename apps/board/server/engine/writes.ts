@@ -15,7 +15,7 @@ import { SPECS, bodyProblems } from '../spec.ts';
 import { writeItems } from '../write-board.ts';
 import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } from '../visibility.ts';
 import type { Op, OpCtx } from './operations.ts';
-import { reply } from './operations.ts';
+import { reply, whereAnswer } from './operations.ts';
 import { compileSchema } from '../schema.ts';
 import * as writesWords from '../words/writes.ts';
 
@@ -98,14 +98,14 @@ const retireCards: Op = async (ctx) => {
 /** A new agent: id and secret, shown once. The hash is stored before the `join` line is
  * appended, so a secret the board hands out is always one it knows (api.md 21). */
 const join: Op = async (ctx) => {
-  const { ledger, agents, name } = ctx;
+  const { ledger, agents } = ctx;
   const { label } = await body('join', ctx, JOIN_LIMIT);
   const store = agents();
   const agent = store.mint(ledger.state().index.agents);
   const secret = newToken();
   store.add(agent, secret);
   ledger.append({ type: 'join', label }, { by: 'agent', agent });
-  return reply(201, { agent, secret, project: name() });
+  return reply(201, { agent, secret, ...whereAnswer(ctx) });
 };
 
 /** Ask the person for one container, or with no `region` for the board (api.md 25-26, 81): a

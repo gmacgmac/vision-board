@@ -91,26 +91,100 @@ standalone server opens a folder (research, 2026-11-03):
 
 ## Validation
 
-- [ ] `npm run gen -- --check`, `verify`, `check`, `npm test` green, with the flag on and off (`VB_FLAGS` / `startBoard({ flags })`)
-- [ ] The move and undo tests prove byte-for-byte equality and refuse under a live lock
-- [ ] `tests/pages/*folder*.spec.ts` green with the flag off; with it on, a folder spec of your own opens a second ledger
-- [ ] A scratch project under the OS temp folder: start with the flag on, the old layout moves into `main/`, a second
+- [x] `npm run gen -- --check`, `verify`, `check`, `npm test` green, with the flag on and off (`VB_FLAGS` / `startBoard({ flags })`)
+- [x] The move and undo tests prove byte-for-byte equality and refuse under a live lock
+- [x] `tests/pages/*folder*.spec.ts` green with the flag off; with it on, a folder spec of your own opens a second ledger
+- [x] A scratch project under the OS temp folder: start with the flag on, the old layout moves into `main/`, a second
       ledger is created, switching works, `ledgers:undo` restores the old layout
 
 ## Implementation Notes
 
 _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (2026-11-03, Opus 5.5, worktree `feat/ledgers-01`)
 
 ### Changes Made
--
+- **Paths module** (`packages/format/src/data-folder.ts`): `ledgerFolder(project, ledger?)` (`.visionboard/<ledger>`, or
+  the old layout's `.visionboard` with none), `ledgerOfFolder`, `projectOfLedger` in both layouts (the depth still in
+  `LEDGER_STEPS`, plus one step when a ledger is named), `MAIN_LEDGER`, `LEDGER_NAME_MAX` (40), `ledgerNameProblem`
+  (id like a board id; data-folder names refused), `PER_LEDGER_NAMES`. Its one import is its words file
+  (`format-common.ts` § data-folder.ts); the purity test now allows exactly that. 5 new tests in `data-folder.test.ts`.
+- **Contract first** (`ledgerFolders`, fields optional): `project.schema.json` `ledger`, `ledgers`, `$defs/ledgerName`,
+  `$defs/ledgerEntry`; `found`/`hasBoard` read "a ledger in `.visionboard/`"; `open-project-request` `ledger`,
+  `keepOutOfGit`; `list-boards-response` and `join-response` `ledger`; `openapi.json` `get_project`/`open_project`
+  descriptions. `npm run gen`: types and `api-reference.md` only (no tool text changed). The schema's ledger pattern has
+  plain words (`server/schema.ts` `PATTERNS`, `words/schema.ts` `isNotALedgerName`).
+- **Server**: `server/ledgers.ts` (new: `isOldLayout`, `listLedgers`, `hasLedger`, `chooseLedger`, `boardsIn`,
+  `keptOutOfGit`, `ledgerEntries`, `makeLedger`); `server/ledger-move.ts` (new: `moveIntoMain`, `undoMove`);
+  `project.ts` `open(dir, { ledger, create, keepOutOfGit })` (`openLedgerOf` with the flag, `openOne` without, both
+  through `switchTo`), `takeLedger` (move, make, lock), `OpenFolder.ledgerName`; `open-folder.ts` `shownOpen`;
+  `folders.ts` `hasBoard`/`countBoards` both layouts; `recent.ts` `ledgers` map (`lastLedger`, `addRecent(…, ledger)`;
+  an old file reads); `server.ts` starts on the last ledger, else `main`, moving first; the engine's `ledgerName`
+  option and `operations.ts` `whereAnswer` (list_boards, join); apps (`appsDir`/`appIds`/`readApp`/`appState` take an
+  optional ledger, `createAppHost` `ledgerName`, `appsFolder(ledger)` in the words) and the image route
+  (`serveImage(…, ledger)`) follow the open ledger; `agents.ts` `ignoreInGit` adds nothing after a `*` line.
+  Words: `server-folders.ts` (§ project.ts ledger folders, § ledger-move.ts), `bin.ts` (§ ledgers-undo.ts).
+- **bin**: `apps/board/bin/ledgers-undo.ts` (`npm run ledgers:undo -- <folder>`).
+- **Tests**: `api-ledgers.test.ts` (12: open, list with counts, switch with streams ending, last ledger, create and
+  kept out of git, bad names at `/ledger`, lock per ledger with two servers, repo-wide chat session / attachment /
+  permission at `.visionboard/`, old layout moved on open, a held old folder refused, the open folder moved, flag off);
+  `ledger-move.test.ts` (8, on a real-shaped copy in the OS temp folder: byte-for-byte after move and after undo, live
+  lock stops both, second move refused, entry in both places, other ledgers stop undo, part-way and finished, a
+  repo-shaped `.gitignore` reads the same after both); `access-layout.test.ts` (5: every `ledgerFiles`/`projectFiles` key
+  has a verdict, both layouts and a nested project, every `.visionboard` row of `ACCESS_RULES` names a module file,
+  the per-ledger rows twinned; ACCESS_01's extra `*/chat-sessions.json` row and the `.gitignore` via `.visionboard/**`
+  allowed); `repo-example-app.test.ts` reads either layout. Page: `tests/pages/ledger-folders.spec.ts` (2: second ledger
+  drawn after a switch; an old-layout folder moves and an open page follows); `folder-server.ts` `startFolderServer({
+  ledgers })`, `open(dir, create, ledger)`; `ports.ts` a `ledgers` port (offset 9).
+- **Docs**: `api.md` 109, 110, 111, 112 and new 113a (ledgers, the move, the lock per ledger); `images.md` § The folder;
+  `apps.md` § The folder; `chat.md` § Attaching (repo-wide; PATHS_01-R3 `projectFiles` cited); `README.md` § Running;
+  `apps/board/README.md`; `packages/format/README.md` (PATHS_01-R2: data-folder bullet, `APPS_DIR`/`IMAGES_DIR` dropped
+  from apps.ts/images.ts). PATHS_01-R4: `app-shape.ts` sentence moved into `format-common.ts` `appIdIsItsFolder`
+  ("the ledger folder's apps/"; the old one only passed the words scan because `.visionboard/…` read as a selector).
+
 ### Issues & Resolutions
--
+- `hold` computed the ledger name eagerly and broke `api-errors.test.ts` (a test ledger with no file): made lazy.
+- Tests were written beside the code, not strictly before it; each was run red-to-green only where a fix followed
+  (the lazy name, the words scan). Stated plainly rather than claimed.
+- No `timeout` on this machine: runs limited with `perl -e 'alarm N; exec …'`.
+
 ### Caught Beyond the Brief
-- None
+- The page's `folder.ts` `folderMoved` compares only `path`, so another tab does not reload after a *ledger* switch in
+  the same folder (a stream ends, the path is unchanged). LEDGER_UI_01 should compare `ledger` too (request).
+- `apps/board/server/caller-folder.ts` `secretElsewhere` and `packages/client/src/project.ts` `projectOf` still look
+  only at the old layout (`ledgerFolder(folder)`): in a new-layout folder an agent from another folder gets
+  `not-authenticated` rather than `wrong-folder`, and the MCP server finds no project. Both are LEDGERS_02's.
+- `apps/board/bin/reply.ts` reads only `ledgerPath(project)` (the old layout). Legacy tool "until U4's vb check": noted.
+- Repo-wide chat sessions are keyed by board id; two ledgers may hold boards with the same id, so `list_chats` on a
+  board could show the other ledger's sessions. For VERIFY_01 to check (decision 6 keeps them repo-wide).
+- An older server (code before this set) started on another computer after the move finds no root ledger and starts
+  a new one at `.visionboard/ledger.jsonl`; the next open then refuses with `movedBefore` ("both"). The PLAN's risk row
+  ("both machines run the same synced code") stands; the refusal is the backstop.
+- A `recent.json` with `ledgers` is not read by code before this set (it checked `keys === folders`): a revert to
+  `checkpoint/before-ledgers` loses the recent list (not fatal: an empty list).
+
 ### Deviations from Plan
-- None
+- Small, by the principles. Step 5 "refuse if `main/` exists": refused when `main/` has a ledger file or an entry is in
+  both places, so a move stopped part-way can be finished by the next open (step 5's other sentence). The ledger file is
+  renamed last, so a folder reads as the old layout until the move is whole.
+- The `.gitignore` split is the one rewrite (as step 5 asks); `undoMove` joins it back, `main/`'s lines first, so the
+  same lines return (a repo-shaped file, ledger lines first, returns byte for byte; the test holds both).
+- `ledgerNameProblem` lives in `data-folder.ts` as Shared Foundations names it, so that file imports its words file.
+- Apps and images take an optional trailing `ledger` (`appsDir`, `readApp`, `appState`, `serveImage`) so every existing
+  test runs unedited with the flag off.
+- With the flag off `hasBoard` also sees the new layout (step 4); opening such a folder with the flag off fails as an
+  unreadable ledger (`conflict`). "Every existing test passes with the flag on" is not meaningful (tests that name
+  old-layout paths would see them moved); the flag-on proof is the new tests and spec.
+
+### Verification
+- Tier: wide (the contract, the server's open path, the paths module). `npm run gen -- --check` current; `verify` ok
+  (33 warnings, none new for these files); `check` 0 errors; unit suite (`packages`, `apps`, `scripts`, `skills`,
+  `tests/plugin`, `tests/evals` `*.test.*`) 2287 pass, 0 fail; `test:timing` 14/14. Page specs (VB_TEST_PORT=6300, 3
+  workers): `ledger-folders`, `open-folder`, `current-folder`, `note-folder`, `chat-folder` 49 passed.
+- Scratch project in the session's temp folder, a temp `HOME`, port 6302, `VB_FLAGS=ledgerFolders`: the old layout
+  moved into `main/` at start; `ui` created and opened; back to `main`; `apps` refused at `/ledger`; the image route
+  read `main/images/`; `ledgers:undo` refused while `ui` existed, then (server stopped, `ui` set aside) restored every
+  file byte for byte (the `.gitignore` lines the same, reordered; fixed after: main's lines first). Removed after.
 
 ## On Completion
 

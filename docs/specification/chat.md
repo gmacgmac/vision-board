@@ -245,7 +245,8 @@ before anything remembered:
   the rules of where it lands. A yes for any of these holds for that call (`Judged.once`): a kept yes for
   `unzip` would cover `unzip -o x.zip -d` onto the file later. Held by `packages/agent/tests/policy-attachments.test.ts`,
   through `policy`, the real `bin/gate.ts` and Kiro's `verdictFor`.
-- **For this folder**: kept in `.visionboard/permissions.json` (`chat-permissions.ts`), written by the
+- **For this folder**: kept in `.visionboard/permissions.json` (`projectFiles` `permissions`; `chat-permissions.ts`,
+  repo-wide in either layout), written by the
   server only and refused to the agent; listed by `list_permissions`, forgotten by `forget_permission`
   (api.md 107).
 - **In the chat** (`agentAccessRules` on; `packages/chat`). The approval card offers the answers its request lists
@@ -287,8 +288,12 @@ The page and the server each have the `chatAttachments` flag, and off means both
 server, `?flags=-chatAttachments` for the page. With only the server's off the paperclip stays, and a chip says it is off.
 
 - **Where files go**: each is saved when it is attached (`attach_chat_file`,
-  `apps/board/server/chat-files.ts` `saveAttachment`) at `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`, in
-  the person's project. Day folders, because a new chat's first message has no session yet. The board keeps them out
+  `apps/board/server/chat-files.ts` `saveAttachment`) at `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`
+  (`projectFiles` `attachments`, `packages/format/src/data-folder.ts`), in the person's project. Attachments are
+  repo-wide: with ledger folders (D-084, api.md 113a) they stay at `.visionboard/attachments/`, beside the chat's
+  sessions and permissions, never in a ledger's folder (`apps/board/tests/api-ledgers.test.ts` "the repo-wide files
+  stay at .visionboard/…"), so a path already stored keeps working. Day folders, because a new chat's first message
+  has no session yet. The board keeps them out
   of the project's git: `saveAttachment` adds `attachments/` to `.visionboard/.gitignore` through `ignoreInGit`
   (D-069 ruling 3; `chat-files.test.ts` asks git itself).
 - **By path, never by content**: Send carries the paths; the prompt names them, one a line, under "The

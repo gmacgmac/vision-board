@@ -22,8 +22,11 @@ in `apps/board/server/images.ts` (`serveImage`, `SVG_CSP`).
 
 ## The folder
 
-Images live in `.visionboard/images/` in the open project (`ledgerFiles` `images` in
-`packages/format/src/data-folder.ts`, the one home of the data folder's layout), in subfolders if the agent likes
+Images live in the open ledger's folder: `.visionboard/images/` in the open project, or with ledger folders (D-084,
+api.md 113a) `.visionboard/<ledger>/images/`, so each ledger has its own pictures (`ledgerFiles` `images` of
+`ledgerFolder` in `packages/format/src/data-folder.ts`, the one home of the data folder's layout; the standalone route
+asks for the open ledger's, `apps/board/server/images.ts` `serveImage`; `apps/board/tests/api-ledgers.test.ts` "an
+old-layout folder moves into main/ when opened…"), in subfolders if the agent likes
 (`diagrams/flow/v2.png`). The agent owns the folder and its files; the board only reads them. A
 path in `![alt](path)` is relative to that folder. Overwrite a file to update its picture (§ Updates).
 

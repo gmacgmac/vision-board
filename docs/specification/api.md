@@ -816,7 +816,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Opening a folder from the board (open-folder task, U12, D-038 proposed)
 
 109. **The open folder.** The server has one folder open at a time, and every other operation
-    reads and writes its ledger, `<folder>/.visionboard/ledger.jsonl` (D-017). `get_project` shows
+    reads and writes its ledger, `<folder>/.visionboard/ledger.jsonl` (D-017; with ledger folders, the
+    open ledger's, `<folder>/.visionboard/<ledger>/ledger.jsonl`, 113a). `get_project` shows
     it: `path` (absolute), `name` (`~/...` under the home folder, else the absolute path), `found`
     (it has a ledger) and `boards` (how many, when found). `openapi.json` `info.version` becomes
     1.11.0. All three routes are the person's: `x-agent: false` and the `vb_person` cookie, refused
@@ -836,7 +837,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     that is a link, hidden, or leads out of home is left out). Only on the home listing and only
     when that folder exists, so other systems get none. A place is just a folder under home: its
     path, display name (`~/Library/CloudStorage/...`), recent entry, lock and open folder are its
-    real path, and an agent working through home's link matches it (114). **Recent** is `~/.visionboard/recent.json` (`server/recent.ts`): `{ folders }`, newest
+    real path, and an agent working through home's link matches it (114). **Recent** is `~/.visionboard/recent.json` (`server/recent.ts`): `{ folders }` (and, with ledger folders, `ledgers`, 113a), newest
     first, at most 10, written atomically and readable by this user only. It is checked on read; a
     bad file is ignored (an empty list), never fatal. Listed, each entry must still be a folder under
     home. It is a per-person setting, so it lives in home, not in a repo.
@@ -853,9 +854,11 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     agent's old secret is not known in the new folder; it gets `wrong-folder` naming both folders
     (115), or `not-authenticated` (22) when the old folder is not in recent. The person's
     cookie stays valid: it belongs to the server, not the folder. The chat panel's agent works in
-    the open folder (`chat-sessions.ts` `cwd`).
+    the open folder (`chat-sessions.ts` `cwd`). With ledger folders a switch also names the
+    ledger (113a).
 112. **At start** (`apps/board/server.ts`, `startFolder`): `VB_PROJECT` wins; else the newest
-    recent folder, if it is still a folder under home; else this repo. Start-up never writes
+    recent folder, if it is still a folder under home; else this repo. With ledger folders, that
+    folder's last ledger, else `main` (113a). Start-up never writes
     `recent.json`: only `open_project` does. Tests pass their own home folder
     (`createBoardServer({ home })`), so no test reads or writes the real one.
 113. **The page** (`openFolder` flag, on by default). The "⋯" menu's last row, "Open folder…",
@@ -863,6 +866,55 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     the open folder. The page keeps its last board per folder (`vb.lastBoard:<path>`, falling back to
     `vb.lastBoard`). When the live stream opens again it asks `get_project`, and a different folder
     reloads the page (without its board hash). Off, the page never calls these routes.
+113a. **Ledgers** (`ledgerFolders` flag; D-084; LEDGERS_01). A project
+    holds one folder per ledger in `.visionboard/` (`.visionboard/<ledger>/`, `main` first), each a
+    whole data folder for the engine: its ledger, agents, lock, images, apps and app state. The
+    repo-wide files (chat sessions, attachments, permissions) stay at `.visionboard/`. Every path
+    comes from `packages/format/src/data-folder.ts` (`ledgerFolder(project, ledger)`, `ledgerFiles`,
+    `projectFiles`, `projectOfLedger`, either layout). A ledger's name passes `ledgerNameProblem`:
+    an id like a board id, at most `LEDGER_NAME_MAX` characters, never a data-folder name
+    (`DATA_FOLDER_NAMES`). Held by `packages/format/tests/data-folder.test.ts` ("ledgerNameProblem:
+    an id like a board id, at most 40 characters, never a data-folder name", "projectOfLedger
+    inverts ledgerFolder in the new layout too").
+    - **Reads.** `get_project` and `open_project` answer `ledger` (the open one) and `ledgers`, each
+      `{ name, boards, keptOutOfGit }` (`server/ledgers.ts` `ledgerEntries`); `list_boards` and
+      `join` answer `ledger` beside `project` (`engine/operations.ts` `whereAnswer`), so an agent
+      knows which ledger it joined. `found` and `hasBoard` see a ledger in either layout
+      (`ledgers.ts` `hasLedger`): a home folder holding only `recent.json` has none. Tests:
+      `apps/board/tests/api-ledgers.test.ts` ("open a new-layout folder…", "list_boards and join
+      answer the ledger beside the project").
+    - **Opening and switching** (`open_project { path, ledger?, create?, keepOutOfGit? }`,
+      `server/project.ts` `openLedgerOf`). Without `ledger`, the one open there last
+      (`recent.json` `ledgers`, by folder: `recent.ts` `lastLedger`; a file without it still reads),
+      else `main` (`ledgers.ts` `chooseLedger`). Switching ledgers is opening the same folder with
+      another `ledger`, in the order of 111: the new ledger's lock first, then the old one's chats,
+      streams and lock end. A ledger that is not there is `not-found` without `create`; with it, its
+      folder, an empty ledger and its own `.gitignore` are made (`ledgers.ts` `makeLedger`:
+      `agents.json`, `lock`, `app-state/`; with `keepOutOfGit`, the one line `*`, after which
+      `agents.ts` `ignoreInGit` adds nothing). A name the schema refuses, or a data-folder name, is
+      `invalid` at `/ledger` in plain words; nothing is made. Tests: "switch to another ledger of
+      the folder…", "the last ledger…", "create a ledger…", "a bad ledger name is invalid at
+      /ledger…".
+    - **The lock is the ledger folder's** (`ledgerFiles(ledgerFolder(project, ledger)).lock`): two
+      servers may hold two ledgers of one folder, never one ledger. Test: "the lock is the ledger
+      folder's…".
+    - **The move** (`server/ledger-move.ts` `moveIntoMain`). A folder still in the old layout is
+      moved into `main/` when it is opened, or at start (`server.ts`), with the flag on: the old
+      folder's lock first (a live lock anywhere refuses with `holderMessage`); refused when `main/`
+      already has a ledger, or an entry is in both places; then each per-ledger entry that exists is
+      renamed into `main/` (agents, images, apps, app state, the ledger file last), the
+      `.gitignore` split (per-ledger lines go with the ledger); `main/`'s lock taken, the old one let
+      go. Nothing is copied, rewritten or deleted. A failure part-way leaves each entry whole in one
+      place, says which, and the next open finishes the move. The reverse, `npm run ledgers:undo --
+      <folder>` (`apps/board/bin/ledgers-undo.ts`, `undoMove`), runs only while `main` is the only
+      ledger and no server holds either folder; then turn the flag off. Tests:
+      `apps/board/tests/ledger-move.test.ts` (every byte the same after the move and after the undo;
+      a live lock stops both; a second move refused; a move stopped part-way), `api-ledgers.test.ts`
+      ("an old-layout folder moves into main/ when opened…").
+    - **The agent's file rules** stay their own table (`packages/agent` `ACCESS_RULES`, D-037), held
+      equal to the paths module by `apps/board/tests/access-layout.test.ts`.
+    - **Off**: no `ledger` or `ledgers` in any answer, `ledger` and `keepOutOfGit` in a request are
+      ignored, and a folder opens in place. Test: "ledgerFolders off…".
 
 ## An agent from another folder (folder-mismatch task, U12)
 

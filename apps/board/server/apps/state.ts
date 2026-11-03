@@ -19,8 +19,8 @@ export type RunFacts = (id: string, hash: string) => AppRun | undefined;
 /** An app's state, and its folder when it has one. */
 export interface AppStatus { info: AppInfo; folder?: AppFolder }
 
-export function appState(project: string, id: string, allowed: string | undefined, run?: RunFacts): AppStatus {
-  const folder = readApp(project, id);
+export function appState(project: string, id: string, allowed: string | undefined, run?: RunFacts, ledger?: string): AppStatus {
+  const folder = readApp(project, id, ledger);
   if (!folder) return { info: { id, state: 'missing', tools: [], allowed: false } };
   const { manifest, manifestBytes, problems } = folder;
   const hash = manifestBytes && appHash(manifestBytes, folder.tools?.bytes);

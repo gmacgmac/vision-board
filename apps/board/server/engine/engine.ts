@@ -50,6 +50,9 @@ export interface EngineOptions {
   ledger?: Ledger | undefined;
   /** The board's folder as the person reads it (`list_boards`, `join` answer `project`); default `dir`. */
   name?: (() => string) | undefined;
+  /** The ledger's name, when the host keeps several in one folder (the standalone server's ledger folders,
+   *  D-084): `list_boards` and `join` answer it as `ledger`. Default none, and no `ledger` in the answers. */
+  ledgerName?: string | undefined;
   /** Given the person's Send to record (`SendHook`): the standalone server records it once its chat session has the
    *  answers. Default: recorded at once. */
   onSend?: SendHook | undefined;
@@ -111,7 +114,7 @@ const toReply = (err: unknown): EngineReply => {
   return { status: p.status, body: p.body, headers: { ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8' } };
 };
 
-export function createEngine({ dir, ledger: given, name = () => dir, onSend = (_, record) => record(), warn, flags = {} }: EngineOptions): Engine {
+export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {} }: EngineOptions): Engine {
   const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn);
   let agents: Agents | undefined;
   const getAgents = () => (agents ??= openAgents(dir));
@@ -124,7 +127,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = (_
       ledger.refresh();
       const read = input.body;
       return await OPS[id]!({
-        params: withDefaults(id, input.params), caller, signal: input.signal, ledger, agents: getAgents, name, onSend, flags,
+        params: withDefaults(id, input.params), caller, signal: input.signal, ledger, agents: getAgents, name, ledgerName, onSend, flags,
         body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
     } catch (err) { return toReply(err); }

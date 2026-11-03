@@ -1,9 +1,13 @@
 // The data folder's layout (PLAN decision 2, D-084 2): the one home of every name in a project's
 // `.visionboard` and of every path built from them. Nothing else names a data-folder file or builds a
 // data-folder path; `npm run verify` holds that (scripts/verify-data-folder.mjs). Pure string logic
-// joined with `/`, and no `node:` import (D-059, D-060): the page loads `#format` too.
-// Today a project has one ledger, and its folder is the project's `.visionboard`, so the ledger's
-// files and the project's repo-wide files sit side by side. Only this file knows that.
+// joined with `/`, and no `node:` import (D-059, D-060): the page loads `#format` too; its one import is
+// its words file.
+// Two layouts (D-084 1): with ledger folders a project holds one folder per ledger,
+// `.visionboard/<ledger>/`, beside its repo-wide files at `.visionboard/`; in the old layout (no ledger
+// named, the `ledgerFolders` flag off) the one ledger's folder is `.visionboard/` itself, so its files and
+// the repo-wide ones sit side by side. Only this file knows either.
+import * as formatCommonWords from './words/format-common.ts';
 
 /** The project's data folder, at its root (and the person's own, at home). */
 export const DATA_DIR = '.visionboard';
@@ -36,8 +40,28 @@ export const DATA_FOLDER_NAMES = [
   CHAT_SESSIONS_FILE, PERMISSIONS_FILE, ATTACHMENTS_DIR, RECENT_FILE,
 ] as const;
 
-/** The steps from a project folder down to its ledger's folder. The only place the depth is said:
- * `ledgerFolder` goes down them and `projectOfLedger` comes back up. */
+/** The names that belong to one ledger's folder (what the move into `main/` carries, D-084 6). */
+export const PER_LEDGER_NAMES = [LEDGER_FILE, AGENTS_FILE, LOCK_FILE, IMAGES_DIR, APPS_DIR, APP_STATE_DIR, GITIGNORE_FILE] as const;
+
+/** The first ledger of a project, and where an old-layout folder's ledger moves (D-084 1, 6). */
+export const MAIN_LEDGER = 'main';
+/** The longest ledger name (PLAN decision 1). */
+export const LEDGER_NAME_MAX = 40;
+/** A ledger name: an id like a board id (lowercase, digits, `-`), at most LEDGER_NAME_MAX long. */
+const LEDGER_NAME = new RegExp(`^[a-z0-9][a-z0-9-]{0,${LEDGER_NAME_MAX - 1}}$`);
+
+/** Why `name` cannot name a ledger, in plain words; undefined when it can. A data-folder name is
+ * refused, so a ledger's folder is never mistaken for a folder inside one (PLAN decision 1). */
+export function ledgerNameProblem(name: string): string | undefined {
+  if (name.length > LEDGER_NAME_MAX) return formatCommonWords.ledgerNameTooLong(LEDGER_NAME_MAX);
+  if (!LEDGER_NAME.test(name)) return formatCommonWords.ledgerNameChars;
+  if ((DATA_FOLDER_NAMES as readonly string[]).includes(name)) return formatCommonWords.ledgerNameTaken(name);
+  return undefined;
+}
+
+/** The steps from a project folder down to the folder that holds its ledgers (and, in the old layout,
+ * is the ledger's folder). The only place the depth is said: `ledgerFolder` goes down them (and one
+ * more, the ledger's name, when one is given) and `projectOfLedger` comes back up. */
 const LEDGER_STEPS: readonly string[] = [DATA_DIR];
 
 /** `parts` joined with `/`, empty parts left out, so `''` as the first gives a project-relative path. */
@@ -70,9 +94,17 @@ export interface HomeFiles {
   readonly recent: string;
 }
 
-/** The folder of the project's ledger: the engine's `dir` (today `<project>/.visionboard`). The only
- * way from a project folder to a ledger folder. */
-export const ledgerFolder = (projectDir: string): string => join(projectDir, ...LEDGER_STEPS);
+/** The folder of ledger `ledger` of the project: the engine's `dir`, `<project>/.visionboard/<ledger>`;
+ * with no ledger named, the old layout's `<project>/.visionboard`. The only way from a project folder to
+ * a ledger folder. `ledger` is a name `ledgerNameProblem` passes; the caller checks it. */
+export const ledgerFolder = (projectDir: string, ledger?: string): string => join(projectDir, ...LEDGER_STEPS, ledger ?? '');
+
+/** The name of the ledger whose folder is `ledgerDir`; undefined for the old layout's folder. */
+export function ledgerOfFolder(ledgerDir: string): string | undefined {
+  const steps = ledgerDir.split(/[\\/]+/).filter(Boolean);
+  const last = steps[steps.length - 1];
+  return last === undefined || last === LEDGER_STEPS[LEDGER_STEPS.length - 1] ? undefined : last;
+}
 
 /** Every file and folder in ledger folder `ledgerDir` (`ledgerFolder`). The only home of their names. */
 export function ledgerFiles(ledgerDir: string): LedgerFiles {
@@ -100,11 +132,12 @@ export function projectFiles(projectDir: string): ProjectFiles {
   };
 }
 
-/** The project folder that ledger folder `ledgerDir` belongs to: `ledgerFolder` undone. The only way
- * back up from a ledger (never "two levels up" from its file). `/` or `\` between steps. */
+/** The project folder that ledger folder `ledgerDir` belongs to, in either layout: `ledgerFolder`
+ * undone. The only way back up from a ledger (never "two levels up" from its file). `/` or `\` between steps. */
 export function projectOfLedger(ledgerDir: string): string {
   let at = ledgerDir.replace(/[\\/]+$/, '');
-  for (let i = 0; i < LEDGER_STEPS.length; i++) {
+  const steps = LEDGER_STEPS.length + (ledgerOfFolder(at) === undefined ? 0 : 1);
+  for (let i = 0; i < steps; i++) {
     const cut = Math.max(at.lastIndexOf('/'), at.lastIndexOf('\\'));
     at = cut > 0 ? at.slice(0, cut) : cut === 0 ? '/' : '.';
   }
