@@ -303,3 +303,100 @@ as the tracker row it is routed to (key the store by folder and ledger).
   (READONLY_01-R7).
 - **Seen, already routed**: the Edit refusal reads "Stop that server first" (READONLY_UI_01-R1). After New ledger…
   while editing, the new ledger opens read-only and needs Edit again (D-085 1; worth a line in the closing note).
+
+## Run 2
+
+> 2026-11-03 · branch `feat/verify-01-run2` at fface1c (`ledgers/wave-8`, after FIX_01) · ports 7150-7199 · the same
+> rules; every temp folder removed; `flags.ts` flipped for the F4 runs and restored (sha1 `f9cd6c7…`, no diff).
+
+**Blocking left: yes, one: F16** (a test that fails with both defaults on, the F4 rule). F1, F2, F3 and F4's 34 listed
+tests are fixed.
+
+| # | Run 1 | Run 2 | Blocking now |
+|---|---|---|---|
+| F1 | stale watcher forks a moved ledger | **fixed**: re-run as in Run 1 | no |
+| F2 | chat writes after Stop editing | **fixed** for the board's chats (writes refused, chats run on); the app process left | no |
+| F3 | chat sessions cross ledgers | **fixed** | no |
+| F4 | 21 unit + 13 page tests fail with flags on | **fixed** (all 34 pass); one more found: F16 | — |
+| F16 | — | `host-styles.spec.ts` gallery samples fail with flags on (the New ledger dialog sample) | **yes** (for the close) |
+| F5, F6, F7, F8, F12, F13, F14 | | fixed (spot-checked; F6 with a gap: N2) | no |
+| F9, F11 (read-only half) | | fixed (their page tests pass with flags on) | no |
+| F10, F11 (chip half), F2 (app process) | | left by FIX_01; judged not blocking | no |
+| F15 | | tracker row | no |
+
+### F1 re-run: fixed
+Same sequence: watcher A (read-only on the old layout), mover C (Edit → `main/`). A then reads `ledger: "main"`, 11
+boards, `editing` naming C, with an agent's read first as well as with `get_project` first (`project.ts` `followMove`);
+A's Edit → 409 "Computer … has been editing this ledger since …, so it stays read-only here. Press Edit again once it
+stops editing." (READONLY_UI_01-R1's words too); A's join → `read-only`; nothing appears beside `main/`. A fresh D opens
+`main` with 11 boards. `ledgers:undo` under two watchers → the folder identical to the original; the watchers follow
+back to the old layout, and follow the next move again. A writer whose ledger file vanished: a join → 409 "The ledger
+file this board read has gone … nothing was written", no file made (but N1).
+
+### F2 re-run: fixed for the chats, judged against decision 13
+`chat-sessions.ts` hands the gate `{ folder, writable: !ledger.readOnly() }` at each question; `ledger.readOnly` is the
+editing gate, so it covers Stop editing and a lost lock (`held()` false) alike. `accessFor` with `OpenLedger`: the open
+ledger's pictures/apps written only while `writable`; another ledger's refused; Claude's hook (writability unknown)
+asks the board, which decides. Tests `policy-ledgers`, `gate`, `chat-approvals` "the open ledger…" pass (37/37 with
+F1/F3's). Not run with a real CLI (as Run 1). **Judgement**: decision 13 says read-only writes nothing into the ledger's
+folder; the chat's own talk goes to the repo-wide chat files, which may be written. Refusing the chat's file writes
+meets that; stopping the chat is not required. Fine.
+**Left (the app process)**: an allowed app's process keeps running while read-only, as `call_app_tool` already did
+from a read-only start; the board writes nothing for it (panel state refused). The process is the person's own allowed
+code. Not blocking; the maintainer's question stands (FIX_01's `[needs-human-input]`).
+
+### F3 re-run: fixed
+`main` and `ui` both with board `plan`; `main`'s session on `plan`: `ui`'s `GET /api/boards/plan/chats` → `[]`,
+`main`'s → its session. Entries with no `ledger` stay `main`'s (test "an entry naming no ledger…").
+
+### F4 re-run: fixed; F16 new
+Both defaults flipped in this worktree's `flags.ts`, rebuilt:
+- unit (`apps/board/tests`, `packages/*/tests`, `tests/plugin/*.test.ts`): **2242 / 2242 pass**, 0 fail.
+- the 10 related page specs of Run 1 (header-tiers, ledgers, ledger-folders, read-only, read-only-writes,
+  current-folder, open-folder, chat-folder, note-folder): **108 / 108 pass** (the 13 of Run 1 among them).
+- more groups: gallery, app-gallery, chat-attach-gallery: 23/23; toolbar, host-styles, chat-*, lock, archive: 66
+  passed, **2 failed** (F16). The full page suite was not run (the orchestrator's); other specs may still fail.
+
+### F16 `host-styles.spec.ts` gallery samples fail with both flags on (blocking for the close)
+**Steps**: both defaults on (or the gallery with `ledgerFolders`); `npx playwright test … host-styles -g "gallery's
+samples"`. **Happened**, light and dark, twice out of two: "target 306 (div vb-dialog vb-ledger-dialog
+g-ledger-dialog) changed under the host's element rules (first pass: 35)" (dark: 8), over `RASTER` 2. With the flags
+off the ledger section is not drawn, so the test passes today. **Suspected**: the New ledger dialog's sample in
+`apps/board/src/gallery/ledger-section.ts` / `shell/LedgerDialog.svelte`, `LedgerForm.svelte` and
+`styles/ledgers.css`: an element (input, label, checkbox or button) styled by a host's element rule, which other
+dialogs' samples resist. **Fix hint**: the dialog's controls take the base classes the other dialogs use; or, if a
+standalone-only dialog is not meant to sit under a host, the check names why it leaves it out. The fix starts with the
+failing test (it already fails with the flags on).
+
+### Non-blocking fixes spot-checked
+- F5: a flags-off server on a moved folder refuses to start, naming the flag and `ledgers:undo`; nothing written.
+- F6: another server starting to edit reached a watcher's stream as `editing` within a beat, and `get_project` names
+  it. But N2.
+- F7: `lock.test.ts` "a holder waking after a sleep of 2 minutes or more…" passes (not reproducible on one disk).
+- F8: Edit on a `chmod -R a-w` folder → 409 "~/proj can't be written on this computer (a read-only share, or its
+  permissions), so it stays read-only. Nothing was written."
+- F9, F11 (read-only half): `read-only.spec.ts` "the chip's menu opens over the access-request bar…" and "the flag off
+  on the page: the server says read-only, so the chip and Edit show…" pass (with flags on too).
+- F12: `main`'s agent reading while `ui` is open → `wrong-folder` naming both ledgers.
+- F13: the part-way message now says "once the cause is fixed, open the folder again (or press Edit) to finish… Once it
+  has finished, npm run ledgers:undo… puts it all back"; `ledgers:undo` part-way still refuses, as the words now say.
+- F14: `VB_PROJECT` under `/var/…` (real path `/private/var/…`): restart reopens `ui`, the last ledger.
+
+### Left by FIX_01, judged (PLAN decision 22)
+- F10 (write controls enabled in read-only): not blocking. Nothing is written (each is refused with the read-only
+  words); a tracker row.
+- F11 (the ledger chip when only the server has `ledgerFolders`): not blocking. At the close both defaults turn on
+  together, and the read-only chip and Edit now follow the server; a tracker row.
+- F2 (an app's process): not blocking (above); the maintainer's question.
+
+### New, not blocking
+- **N1**: a join refused because the ledger file vanished still adds the new agent's hash to `agents.json` (one
+  orphan entry with no join line; its secret was never returned, so no one can use it). Suspected: the join path adds
+  to the agents store before `ledger.append` refuses (`agents.ts` `add`, the join handler). Order them, or roll back.
+- **N2**: `editing.ts` `look` only notes what it sees on its first beat after a start or a switch, so a change in that
+  first beat window (up to 30 s) is never told: a watcher started while C edited kept "being edited on…" after C
+  stopped 1 s later (no `editing` event in 44 s). Seed `seen` when the editing state is made, or tell on a first look
+  that differs from what the page was given.
+- **N3**: right after a vanished ledger file comes back, an agent's first write answers 401 "not authenticated" until
+  a read refreshes the ledger; the next write goes. Suspected: the secret check reads the held state without
+  `refresh`.
