@@ -89,6 +89,16 @@ _Re-run? Add a `### Run N` block; never overwrite an earlier run._
 ### Deviations from Plan
 - None. (Step 2's `import()` route not needed: the weight left the page altogether.)
 
+### Run 2
+
+**Status**: Completed (2026-11-03)
+
+- Failing first: with a stray `packages/.DS_Store` in the worktree, `flags.test.ts` "the descriptions stay out of the board
+  page…" failed with ENOTDIR (`scandir 'packages/.DS_Store/src'`): `readdirSync('packages')` read every entry as a package.
+- Fix (`packages/format/tests/flags.test.ts`): the scan takes only directories of `packages/` that have a `src/`
+  (`withFileTypes`, `isDirectory()`, `existsSync`). With the stray file: 17/0. A planted `FLAG_DESCRIPTIONS` in
+  `packages/client/src/` still fails it; plant and stray file removed, 17/0 again; `tsc` clean.
+
 ## On Completion
 
 Notes; your TASK-STATUS row; one LOG line, `[project-tooling] T_03: … → Task: [[cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/T_03_page-weight-headroom.md]]`,
