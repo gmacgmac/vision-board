@@ -48,16 +48,67 @@ task's types decision.
 
 _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (2026-11-03, Opus 5.5, worktree `feat/plugin-ro-01`)
 
 ### Changes Made
--
+- **Tests first** (red before the option, green after): `tests/plugin/read-only.spec.ts` (4): an engine made read-only
+  answers both write tools (`write_board`, `request_grant`, the manifest's `writes: true`) `isError` with the read-only
+  words, and the person's writes and `POST agents` 409 `.../read-only`, with every file of the folder byte-for-byte the
+  same; `list_boards`, `get_board`, `ledger` carry `readOnly: true`; the option flipped in place; a host without it sees
+  no `readOnly`; the mounted view (fake host flips it and says a ref with no head) refuses ✓ through `notify` `error` with
+  the reason and writes nothing, then writes when flipped back; `watch` says a replaced ledger file as `{ head: 0 }` and
+  the view goes back from 4 cards to the file's 3. Fake host: `HostOptions.readOnly`, `setReadOnly` (`server.ts`); the
+  harness's `hostOptions` fixture.
+- **The option** (`apps/board/plugin/engine.ts`): `PluginEngineOptions.readOnly?: (() => boolean) | undefined`, passed to
+  `EngineOptions.readOnly` (READONLY_01's shape is a function, so a host flips it in place, no new engine). Declared in
+  the seam's own literal (as `flags` is), not picked: the picked member brought `EngineOptions.readOnly`'s comment, which
+  names `Ledger.gate` and Edit, into `plugin.d.ts`, and "the types are the code's own" refused it (a standalone name). The
+  compiler holds the shape equal at the `createBoardEngine` call.
+- **READONLY_01-R4, decided**: the plugin's `watch` also says a replaced ledger file as `{ head: 0 }` (`Engine.ledger.onReset`,
+  read inside the entry, not passed on), so a host that turns each change into an `events` call gets the view reading
+  from the start (`live.ts`) with nothing new to do. Before, a replaced file was reopened by the engine but never said,
+  and the next heads (lower than the view's) were ignored: the view stayed stale. `Engine.watch` itself is unchanged
+  (standalone sends its own `reset`; a head 0 there would double it).
+- **Types and seam**: `plugin.d.ts` gains `readOnly?` and `createEngine`'s destructured `readOnly`; `SEAM_TYPES` set to
+  `1bb9dfb1…d5813`. **`SEAM` stays 1.** By plugin.md's rule: an optional member the host gives and may leave out is not
+  breaking, and no member a host is given changed. The `watch` head 0 is no type change; it is a change a host already
+  passes on, a value the view already reads (head 0 from the start), and a host that drops it is no worse off than before
+  (stale, as it was). Proven additive: `plugin-types.test.ts` "an option a host may leave out is additive" (the host
+  fixture without `readOnly` compiles against the new types); the fixture uses `readOnly` so the member-cut test holds
+  it. `ProblemCode` does not reach `plugin.d.ts` (the problem code `read-only` is in no seam type): no types decision there.
+  Built `manifest.json` `seam`: 1.
+- **spec-truth** (`tests/plugin/spec-truth.test.ts`): the options the seam declares itself (`flags`, `readOnly`) must be
+  in plugin.md; the "passes on none of it" guard now reads `createEngine`'s call and return exactly (the entry reads the
+  ledger's reset, so a plain "no `ledger`" scan no longer fits).
+- **Docs** (`docs/specification/plugin.md`): § The engine signature and a **Read-only** paragraph (flip in place, say a ref
+  with no head, `POST agents` is a write, left out = never); the `watch` row (replaced file, head 0); § The types and the
+  seam version: an option shaped like standalone's is declared in host words; Open points 12-14 (open).
+
 ### Issues & Resolutions
--
+- `api-ledgers.test.ts` "the folder open now…" failed in the unit suite before `npm run build` (no cookie on `GET /`
+  without the built page); green after the build. Environment, not this change.
+- `request_grant` needs `reason`, and `list_boards` takes no `board`: a write tool's input must fit before read-only is
+  checked (the schema check comes first), so the test gives each a fitting input.
+
 ### Caught Beyond the Brief
-- None
+- The person's and the bot's read-only words name Edit (`#actions` `READ_ONLY_PERSON`, `READ_ONLY`), a control a plugin host
+  has only if it draws one: plugin.md Open point 12; a request below.
+- A plugin bot writes pictures straight into `images/` (Open point 1): `readOnly` cannot stop that; the host's file rules
+  must (Open point 13).
+- The engine takes no lock: a host letting two writers open one `dir` keeps them apart itself (Open point 14).
+- The elements still don't look disabled under read-only in the plugin view either (presses are refused with the reason):
+  READONLY_01-R3, READONLY_UI_01's `packages/ui` change, reaches the plugin view too.
+
 ### Deviations from Plan
-- None
+- Small, by the principles: `readOnly` declared in `PluginEngineOptions`'s literal instead of added to the `Pick` (why above).
+- R4 decided as a build, not only a doc line: the plugin entry says the reset; the seam's types do not move for it.
+
+### Verification
+- Tier: normal (the plugin seam and its contract suite; no standalone code). `npm run verify` ok (warnings as before);
+  `npm run check` 0 errors (svelte-check and tsc); plugin unit tests (`plugin-*.test.ts`, `tests/plugin/*.test.ts`,
+  `engine`, `bot-tool-rules`, `ledger-replace`, `api-read-only`) 75/75; unit suite (npm test's globs, 3 at a time)
+  2330/1, the one `api-ledgers` failure gone after `npm run build` (12/12); `npm run test:plugin` (port 6800, 3 workers)
+  83/83 (79 + 4 new). No new UI: no screenshots.
 
 ## On Completion
 

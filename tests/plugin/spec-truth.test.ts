@@ -50,6 +50,11 @@ test('every member of the engine seam is in the spec, and every option a host gi
   for (const pattern of [/PluginEngineOptions = Pick<EngineOptions, ([^>]+)>/, /PluginEngine = Pick<Engine, ([^>]+)>/]) {
     for (const m of pattern.exec(engine)![1]!.split('|').map((x) => x.trim().replaceAll("'", ''))) assert.ok(SPEC.includes(m), `plugin.md names ${m}`);
   }
+  // The options the seam declares itself, beside the ones it picks (`flags`, `readOnly`).
+  const own = /PluginEngineOptions = [^{]*\{([\s\S]*?)\n\};/.exec(engine)![1]!;
+  const declared = [...own.matchAll(/^\s+(\w+)\??:/gm)].map((m) => m[1]!);
+  assert.deepEqual(declared, ['flags', 'readOnly']);
+  for (const m of declared) assert.ok(SPEC.includes(`\`${m}\``), `plugin.md names ${m}`);
 });
 
 test('the seam names no host: nclite only in the last section, and that section is last', () => {
@@ -62,7 +67,11 @@ test('the seam names no host: nclite only in the last section, and that section 
 test('the spec states what is standalone-only, and the folder\'s entries do not pass it on', () => {
   const standalone = SPEC.slice(SPEC.indexOf('## Standalone\'s own'), SPEC.indexOf('## Open points'));
   for (const m of ['MountedBoard.board', 'BoardControls', 'BoardHost.page', 'BoardPage', 'BoardPageParts', 'EngineOptions.ledger', 'EngineOptions.onSend', 'Engine.ledger', 'Engine.agents']) assert.ok(standalone.includes(m), m);
-  assert.doesNotMatch(read('apps/board/plugin/engine.ts').replace(/^\/\/.*$/gm, ''), /onSend|ledger|agents/);
+  // What createEngine passes in and gives back: the entry reads the ledger's reset for `watch` (§ The engine), and passes on none of it.
+  const engine = read('apps/board/plugin/engine.ts');
+  const passed = [/createBoardEngine\(\{([^}]*)\}\)/, /\n {2}return \{([^}]*)\};\n\}/].map((r) => r.exec(engine)![1]!);
+  assert.deepEqual(passed.map((p) => p.split(',').map((x) => x.trim())), [['dir', 'name', 'warn', 'flags', 'readOnly'], ['route', 'image', 'resolve', 'tools', 'watch']]);
+  for (const p of passed) assert.doesNotMatch(p, /onSend|ledger|agents/);
   assert.doesNotMatch(read('apps/board/plugin/view.ts').replace(/^\/\/.*$/gm, ''), /\.board\b|board,/);
 });
 
