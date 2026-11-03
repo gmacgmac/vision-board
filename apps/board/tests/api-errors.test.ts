@@ -37,7 +37,7 @@ test('the handler table has exactly one handler per operation of the route table
 test('checkAnswer can fail: an undeclared status, a missing header, a body that does not fit', () => {
   const ok: Answer = { status: 200, headers: new Headers(), media: 'application/json', body: { project: '~/projects/example', boards: [], head: 0 } };
   checkAnswer('list_boards', ok);
-  assert.throws(() => checkAnswer('list_boards', { ...ok, status: 404 }), /does not declare/);
+  assert.throws(() => checkAnswer('list_boards', { ...ok, status: 401 }), /does not declare/);
   assert.throws(() => checkAnswer('list_boards', { ...ok, body: { project: '~/projects/example', boards: [], head: 0, extra: 1 } }), /list_boards 200/);
   assert.throws(() => checkAnswer('list_boards', { ...ok, media: 'text/plain' }), /not declared/);
   const p405 = { type: 'https://vision-board.invalid/problems/method-not-allowed', title: 'Method not allowed', status: 405, detail: 'No.' };

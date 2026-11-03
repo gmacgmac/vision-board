@@ -20,7 +20,7 @@
         "x-agent": true,
         "x-hosts": ["standalone", "plugin"],
         "summary": "List the boards",
-        "description": "List the project's boards. Call it first: the other tools take a board id. No input, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
+        "description": "List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).",
         "security": [],
         "responses": {
           "200": {
@@ -50,6 +50,9 @@
           "403": {
             "$ref": "#/components/responses/forbidden"
           },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
@@ -61,6 +64,9 @@
           }
         },
         "parameters": [
+          {
+            "$ref": "#/components/parameters/otherLedger"
+          },
           {
             "$ref": "#/components/parameters/projectHeader"
           }
@@ -78,6 +84,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/otherLedger"
           },
           {
             "$ref": "#/components/parameters/projectHeader"
@@ -279,6 +288,9 @@
           },
           {
             "$ref": "#/components/parameters/linked"
+          },
+          {
+            "$ref": "#/components/parameters/otherLedger"
           },
           {
             "$ref": "#/components/parameters/projectHeader"
@@ -3601,6 +3613,17 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/wait"
         }
       },
+      "otherLedger": {
+        "name": "ledger",
+        "in": "query",
+        "description": "Another ledger of this folder to read, read-only.",
+        "x-hosts": ["standalone"],
+        "x-comment": "ledgerFolders flag (CONSOLIDATE_01, D-084 8): refused with the flag off",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName"
+        }
+      },
       "linked": {
         "name": "linked",
         "in": "query",
@@ -3726,7 +3749,7 @@
         }
       },
       "notFound": {
-        "description": "No such board, node or region.",
+        "description": "No such board, node, region or ledger.",
         "content": {
           "application/problem+json": {
             "schema": {

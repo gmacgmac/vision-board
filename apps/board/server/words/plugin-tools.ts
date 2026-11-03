@@ -39,6 +39,24 @@ export const inputRefusals: readonly { tool: string; input: string; detail: stri
     detail: '`check_responses` takes no `wait` here: your host brings the person\'s answers in their next message, when they press Send. Don\'t wait for them: end your turn.',
     pointer: 'not given under a host',
   },
+  {
+    tool: 'list_boards',
+    input: 'ledger',
+    detail: '`list_boards` takes no `ledger` here: your host keeps one ledger, the one you work on. Read without it.',
+    pointer: 'not given under a host',
+  },
+  {
+    tool: 'get_board',
+    input: 'ledger',
+    detail: '`get_board` takes no `ledger` here: your host keeps one ledger, the one you work on. Read without it.',
+    pointer: 'not given under a host',
+  },
+  {
+    tool: 'show_node',
+    input: 'ledger',
+    detail: '`show_node` takes no `ledger` here: your host keeps one ledger, the one you work on. Read without it.',
+    pointer: 'not given under a host',
+  },
 ];
 
 /** The MCP server's instructions for a host's bot (`createMcpServer({ tools })`, from `tools.instructions`): the

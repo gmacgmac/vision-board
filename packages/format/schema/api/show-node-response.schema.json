@@ -17,6 +17,14 @@
         "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeDetail"
       },
       "description": "The nodes linked to this one, each in full. Present only when `linked` is true."
+    },
+    "ledger": {
+      "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName",
+      "description": "The other ledger of the folder this was read from, when the read named one (`ledger`); it comes with `readOnly: true`. Left out for the open ledger.",
+      "$comment": "ledgerFolders flag (CONSOLIDATE_01, D-084 8)"
+    },
+    "readOnly": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly"
     }
   },
   "allOf": [

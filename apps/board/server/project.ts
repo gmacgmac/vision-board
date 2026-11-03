@@ -14,6 +14,8 @@
 // lock and writes nothing (an old layout is not moved); `create` takes the new ledger's lock only while making it.
 // `edit` takes the open ledger's lock then (refused, naming the holder, while another server holds it live), moving an
 // old layout first; `stopEditing` lets it go. editing.ts holds the state the ledger, engine and agents ask.
+// A read may name another ledger of the open folder (`ledger`, D-084 8): `otherLedgers` opens it read-only on its first
+// read (no lock, gated, nothing written), the engine reads it again on every read, and it is let go with the folder.
 import fs from 'node:fs';
 import path from 'node:path';
 import { MAIN_LEDGER, flagOn, ledgerFiles, ledgerFolder, ledgerNameProblem, ledgerOfFolder, projectOfLedger } from '#format';
@@ -100,6 +102,27 @@ export interface OpenOptions {
 
 interface Held extends OpenFolder { close(): void }
 
+/** The folder's other ledgers, for the reads that name one (D-084 8): each opened read-only on its first read and kept
+ * until `close`; undefined for the open ledger; `not-found`, naming the folder's ledgers, for a name it doesn't have. */
+function otherLedgers(project: () => string, open: () => string | undefined, home: string) {
+  const kept = new Map<string, Ledger>();
+  return {
+    get(name: string): Ledger | undefined {
+      const dir = project();
+      if (name === open() || (open() === undefined && name === MAIN_LEDGER && isOldLayout(dir))) return undefined;
+      const names = listLedgers(dir);
+      if (!names.includes(name)) {
+        kept.delete(name);
+        throw problem('not-found', serverFoldersWords.noLedgerToRead(displayName(home, dir), name, names));
+      }
+      let ledger = kept.get(name);
+      if (!ledger) kept.set(name, ledger = openLedger(ledgerFiles(ledgerFolder(dir, name)).ledger, undefined, { readOnly: () => true }));
+      return ledger;
+    },
+    close: () => kept.clear(),
+  };
+}
+
 /** The folder's parts, each made on first use (the data folder, the real path and the engine too,
  * the engine on the ledger already opened under its lock). A Send through the engine hands the folder's chat session
  * the person's answers, and is recorded once it has them (api.md 121, chat-sessions.ts `send`). */
@@ -115,7 +138,10 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   const abort = new AbortController();
   const getDir = () => (dir ??= realPath(projectOfLedger(data())));
   const getLedgerName = () => ledgerOfFolder(data());
-  const getEngine = () => (engine ??= createEngine({ dir: data(), ledger, name: () => displayName(o.home, getDir()), ledgerName: getLedgerName(), onSend, flags: o.apps?.flags, readOnly: editing.readOnly }));
+  const others = flagOn('ledgerFolders', o.apps?.flags ?? {}) ? otherLedgers(getDir, getLedgerName, o.home) : undefined;
+  const getEngine = () => (engine ??= createEngine({
+    dir: data(), ledger, name: () => displayName(o.home, getDir()), ledgerName: getLedgerName(), onSend, flags: o.apps?.flags, readOnly: editing.readOnly, otherLedger: others?.get,
+  }));
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({
     ledger, resolve: getEngine().resolve, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
@@ -131,6 +157,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
     close() {
       chats?.close();
       apps?.close();
+      others?.close();
       abort.abort();
       editing.drop();
     },

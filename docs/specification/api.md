@@ -242,9 +242,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 | operationId | Method and path | Who | Does |
 |---|---|---|---|
-| `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq, locked? }], head }`; `seq` is that board's own last line; `locked` on a locked board (139) |
-| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty); `locked` on a locked board (139) |
-| `show_node` | `GET /api/boards/{board}/nodes/{n}` | anyone | Every version of node `n`, its notes, replies, proposals, park bundle, links, container and size; `linked=true` adds linked nodes |
+| `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq, locked? }], head }`; `seq` is that board's own last line; `locked` on a locked board (139); `ledger` reads another ledger of the folder (113b) |
+| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty); `locked` on a locked board (139); `ledger` reads another ledger (113b) |
+| `show_node` | `GET /api/boards/{board}/nodes/{n}` | anyone | Every version of node `n`, its notes, replies, proposals, park bundle, links, container and size; `linked=true` adds linked nodes; `ledger` reads another ledger (113b) |
 | `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note |
 | `show_layout` | `GET /api/boards/{board}/regions/{region}/layout` | anyone | How the board arranges one container, structure only: mode and widths in effect, each card's lane, column and row, how many links cross, how many cells are empty (133) |
 | `list_open` | `GET /api/boards/{board}/open` | anyone | Items not yet decided, with `pending` (36) and `unseen` (a newer version than the person last saw) |
@@ -918,6 +918,30 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
       equal to the paths module by `apps/board/tests/access-layout.test.ts`.
     - **Off**: no `ledger` or `ledgers` in any answer, `ledger` and `keepOutOfGit` in a request are
       ignored, and a folder opens in place. Test: "ledgerFolders off…".
+113b. **Reading another ledger** (`ledgerFolders` flag; D-084 8; CONSOLIDATE_01). `list_boards`, `get_board` and
+    `show_node` take an optional `ledger` (`openapi.json` parameter `otherLedger`, `x-hosts: standalone`): another
+    ledger of the open folder, read instead of the open one, so an agent can draw a summary of a throwaway ledger's
+    work on the open ledger. These three are enough to summarise a board: the boards, a board whole (its cards, notes
+    and answers) and one card's versions and replies; the reads about the caller's own conversation (`list_open`,
+    `check_responses`) and the arrangement (`show_layout`) do not take it, nor does any write.
+    - **Read-only, opened by the host** (`server/project.ts` `otherLedgers`): on its first read the ledger is opened
+      with `openLedger(…, { readOnly })` (no lock, no agents file, nothing appended), kept while the folder is open,
+      read again on every read (the engine's `refresh`, so another writer's lines and a replaced file are followed),
+      and let go with the folder (a switch, a ledger switch). Only a ledger `ledgers.ts` `listLedgers` lists is
+      opened.
+    - **An unmarked read** (`engine/engine.ts` `namedLedger`, `EngineOptions.otherLedger`): the operation runs on the
+      other ledger with no caller, so nothing about the caller is marked (`owed`, `held`; D-083 rule 4): agents are per
+      ledger, and the caller has no identity there. The answer says `ledger` (its name) and `readOnly: true`
+      (`common.schema.json` `readOnly`); `project` stays the folder. Naming the open ledger reads it as usual.
+    - **Names**: one the schema refuses is `bad-request`; one the folder doesn't have (a data-folder name included) is
+      `not-found`, naming the folder's ledgers (`words/server-folders.ts` `noLedgerToRead`).
+    - **Off, or a host with one ledger** (the plugin: no `otherLedger`): `ledger` is `bad-request` (`words/http.ts`
+      `oneLedgerHere`). With `botToolRules` on, a host's bot is not given the input, and one sent is refused with
+      `words/plugin-tools.ts` `inputRefusals`.
+    - Held by `apps/board/tests/api-read-ledger.test.ts`: the three reads named, read-only and unmarked with every file
+      of the other ledger's folder the same byte for byte; another writer's line followed; the names; no write takes
+      it; an MCP agent joined on `main` reads `scratch` and draws a summary on `main`; with the open ledger read-only
+      too; after a ledger switch; flag off; a host's engine.
 
 ## An agent from another folder or ledger (folder-mismatch task, U12; LEDGERS_02, D-084)
 

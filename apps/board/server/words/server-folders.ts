@@ -35,6 +35,10 @@ export const theBoardServerCouldNot = (create: string, displayName: string): str
 // ---- project.ts (ledger folders, D-084)
 export const noSuchLedger = (displayName: string, ledger: string): string => `${displayName} has no ledger "${ledger}". Send create: true to make it, or choose one from ledgers.`;
 
+// ---- project.ts (reading another ledger, D-084 8)
+export const noLedgerToRead = (displayName: string, ledger: string, ledgers: readonly string[]): string =>
+  `${displayName} has no ledger "${ledger}" to read. ${ledgers.length ? `Its ledgers: ${ledgers.join(', ')}.` : 'It has no other ledger.'}`;
+
 // ---- ledger-move.ts (the old layout into main/, D-084 6)
 export const nothingToMove = (displayName: string, oldLedger: string): string => `${displayName} has no ${oldLedger}, so there is nothing to move into a ledger folder.`;
 export const movedBefore = (displayName: string, oldLedger: string, mainLedger: string): string =>
