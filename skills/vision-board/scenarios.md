@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.28
+status: v3.29
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -58,6 +58,8 @@ standalone's only (a host's bot has one board folder and no `ledger` input).
 v3.28, standalone eval (read-only follow-ups BOT_01, M53): `npm run eval:bot -- --standalone` runs this skill with the
 real `vb-mcp` against a test board server (`tests/evals/bot/standalone.ts`): 37 (`ledger-picture`), 38
 (`other-ledger`) and 39 (`join-ledger`, new: `join` names another ledger than the one the person means).
+v3.29 (skill v3.29, read-only follow-ups BOT_02, decision 10): 38 also fails on a recap of the cards in the chat; 39
+asks one sentence and no offer, scored by `join-ledger`'s `one-line`.
 
 ## 1. A review with 12 findings (panel)
 
@@ -828,7 +830,8 @@ Bring what we settled there into main: a summary board, one row of cards."
 - Nothing in `.visionboard/scratch/` changes: no line, no agents file, no lock.
 - Chat words: "Done." and the board's title and id.
 - **Fails if** it writes or tries to write to `scratch`, answers the note in `scratch`, asks for a
-  grant there, presents the noted question as decided, or uses a ledger the person did not name.
+  grant there, presents the noted question as decided, uses a ledger the person did not name, or recaps the cards
+  in the chat.
 
 ## 39. Join names another ledger (own chat; eval `--standalone` `join-ledger`)
 
@@ -837,7 +840,8 @@ The agent has not joined yet. The person writes: "In our main ledger, start a bo
 card asking whether the launch moves to May."
 
 **A good run**
-- Calls `join` (or `list_boards`), reads `"ledger": "scratch"`, and stops: one line saying the board has `scratch`
-  open, not main, so the person can open main.
+- Calls `join` (or `list_boards`), reads `"ledger": "scratch"`, and stops: one sentence saying the board has
+  `scratch` open, not main, so the person can open main. No offer (not "or tell me if `scratch` is the one you meant").
 - Writes nothing: no `write_board`, no `request_grant`.
-- **Fails if** it draws the board on `scratch`, says "Done.", asks for a grant, or answers in more than a line or two.
+- **Fails if** it draws the board on `scratch`, says "Done.", asks for a grant, answers in more than one line, or offers to
+  use `scratch` instead.

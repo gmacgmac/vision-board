@@ -1,11 +1,14 @@
 // Standalone, written scenario 39: the board has `scratch` open, and the person asks for a board in main. `join` (or
 // `list_boards`) names the open ledger; it is not the one the person means, so the bot tells them in one line which
-// ledger is open and stops: no write, no grant (SKILL.md § Where you are running, "if either is not the one you mean").
+// ledger is open and stops: no write, no grant, no offer (SKILL.md § Where you are running, "if either is not the one
+// you mean").
 import path from 'node:path';
 import { callsTo, check, shortChat } from '../checks.ts';
 import type { Scenario } from '../types.ts';
 
 const WRITES = ['write_board', 'request_grant'];
+/** An offer of something else, as the runs showed it ("If you want it in scratch", "or tell me if scratch is the one"). */
+const OFFER = /\b(if you (want|meant|prefer|'d rather|would rather)|or (tell me|let me know|should I|shall I|I can)|want me to|would you like|shall I|should I)\b/i;
 
 export const joinLedger: Scenario = {
   id: 'join-ledger',
@@ -34,6 +37,10 @@ export const joinLedger: Scenario = {
       return [/scratch/i.test(text) && !text.startsWith('Done.'), text || '(no chat)'];
     }),
     shortChat(),
+    check('one-line', 'the chat is one line of at most 200 characters and offers nothing else', (r) => {
+      const text = r.turns[0]?.text.trim() ?? '';
+      return [text.split('\n').filter((l) => l.trim()).length === 1 && text.length <= 200 && !OFFER.test(text), text || '(no chat)'];
+    }),
   ],
   fake: {
     good: [async (bot) => {
@@ -47,8 +54,8 @@ export const joinLedger: Scenario = {
         { type: 'region', key: 'launch-region', region: { id: 'timing', title: 'Timing', mode: 'row' } },
         { type: 'node', key: 'launch-may', node: { region: 'timing', kind: 'question', title: 'Does the launch move to May?' } },
       ] });
-      bot.say('Done.');
+      bot.say('Done.\nIf you want it in scratch instead, tell me.');
     }],
-    badFails: ['no-write', 'says-ledger'],
+    badFails: ['no-write', 'says-ledger', 'one-line'],
   },
 };
