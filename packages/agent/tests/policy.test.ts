@@ -51,6 +51,14 @@ const ROWS: [string, Decision, Decision][] = [
   ['.visionboard/attachments/2026-10-30/new.txt', ALLOW, refuse(words.theirAttachments)],
   ['.visionboard/attachments', ALLOW, refuse(words.theirAttachments)],
   ['.visionboard/attachments/.env', refuse(words.secretsFiles), refuse(words.secretsFiles)],
+  ['.visionboard/main/agents.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
+  ['sub/.visionboard/ui/agents.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
+  ['.visionboard/main/chat-sessions.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
+  ['sub/.visionboard/main/ledger.jsonl', ALLOW, refuse(words.theLedger)],
+  ['.visionboard/main/lock', ALLOW, refuse(words.boardFiles)],
+  ['.visionboard/main/app-state/s.json', refuse(words.appState), refuse(words.appState)],
+  ['.visionboard/main/images/a.png', ALLOW, ALLOW],
+  ['.visionboard/main/apps/calc/app.json', ALLOW, ALLOW],
   ['.git/HEAD', refuse(words.gitFolder), refuse(words.gitFolder)],
   ['.git/hooks/x', refuse(words.gitFolder), refuse(words.gitFolder)],
   ['.git', refuse(words.gitFolder), refuse(words.gitFolder)],
@@ -59,7 +67,7 @@ const ROWS: [string, Decision, Decision][] = [
 ];
 
 test('every row of the table, for a read and a write', () => {
-  assert.equal(ACCESS_RULES.length, 17, 'a new row needs its line in ROWS');
+  assert.equal(ACCESS_RULES.length, 24, 'a new row needs its line in ROWS');
   for (const [p, r, w] of ROWS) {
     assert.deepEqual(decide(read(p)), r, `read ${p}`);
     assert.deepEqual(decide(write(p)), w, `write ${p}`);

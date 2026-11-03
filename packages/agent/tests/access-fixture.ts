@@ -23,11 +23,12 @@ const FILES = [
   '.visionboard/images/a.png', '.visionboard/apps/calc/app.json', '.visionboard/attachments/2026-10-30/1-a.pdf', '.git/HEAD', '.git/hooks/x',
 ];
 
-export function accessFixture(): AccessFixture {
+/** `extra`: more files to make in the board's folder (the ledger folders' layout, `policy-ledgers.test.ts`). */
+export function accessFixture(extra: readonly string[] = []): AccessFixture {
   const base = realpathSync(mkdtempSync(path.join(tmpdir(), 'agent-access-')));
   const folder = path.join(base, 'Board');
   const outside = path.join(base, 'outside');
-  for (const f of [...FILES.map((f) => path.join(folder, f)), path.join(outside, 'notes.txt'), path.join(outside, '.env')]) {
+  for (const f of [...[...FILES, ...extra].map((f) => path.join(folder, f)), path.join(outside, 'notes.txt'), path.join(outside, '.env')]) {
     mkdirSync(path.dirname(f), { recursive: true });
     writeFileSync(f, 'x\n');
   }

@@ -74,23 +74,31 @@ test('Claude Code\'s own deny rules, from the access rules, at the board\'s fold
     'Read(//home/some one/\\[p\\]/**/.envrc)',
     'Read(//home/some one/\\[p\\]/**/.npmrc)',
     'Read(//home/some one/\\[p\\]/**/.visionboard/agents.json)',
+    'Read(//home/some one/\\[p\\]/**/.visionboard/*/agents.json)',
     'Read(//home/some one/\\[p\\]/**/.visionboard/chat-sessions.json)',
+    'Read(//home/some one/\\[p\\]/**/.visionboard/*/chat-sessions.json)',
     'Read(//home/some one/\\[p\\]/**/.visionboard/app-state/**)',
+    'Read(//home/some one/\\[p\\]/**/.visionboard/*/app-state/**)',
     'Read(//home/some one/\\[p\\]/**/.git/**)',
     'Edit(//home/some one/\\[p\\]/**/.env)',
     'Edit(//home/some one/\\[p\\]/**/.envrc)',
     'Edit(//home/some one/\\[p\\]/**/.npmrc)',
     'Edit(//home/some one/\\[p\\]/**/.visionboard/agents.json)',
+    'Edit(//home/some one/\\[p\\]/**/.visionboard/*/agents.json)',
     'Edit(//home/some one/\\[p\\]/**/.visionboard/chat-sessions.json)',
+    'Edit(//home/some one/\\[p\\]/**/.visionboard/*/chat-sessions.json)',
     'Edit(//home/some one/\\[p\\]/**/.visionboard/ledger.jsonl)',
+    'Edit(//home/some one/\\[p\\]/**/.visionboard/*/ledger.jsonl)',
     'Edit(//home/some one/\\[p\\]/.visionboard/lock)',
+    'Edit(//home/some one/\\[p\\]/.visionboard/*/lock)',
     'Edit(//home/some one/\\[p\\]/**/.visionboard/app-state/**)',
+    'Edit(//home/some one/\\[p\\]/**/.visionboard/*/app-state/**)',
     'Edit(//home/some one/\\[p\\]/.visionboard/permissions.json)',
     'Edit(//home/some one/\\[p\\]/.visionboard/attachments/**)',
     'Edit(//home/some one/\\[p\\]/**/.git/**)',
     'Bash(git)',
     'Bash(git *)',
-  ], '.env.* (it has .env.example) and .visionboard/** (it has images/ and apps/) are left to the gate; git is refused (346)');
+  ], '.env.* (it has .env.example) and .visionboard/** (it has images/ and apps/, in both layouts) are left to the gate; git is refused (346); a ledger\'s folder as today\'s (D-084)');
   const linked = mkdtempSync(path.join(tmpdir(), 'agent-deny-'));
   try {
     const real = realpathSync(linked);

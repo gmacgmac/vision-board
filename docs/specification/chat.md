@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-11-02 (a Send the chat can't take says why: api.md 170)
+updated: 2026-11-03 (the agent's access in both layouts of the data folder: D-084, ACCESS_01)
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -224,6 +224,18 @@ before anything remembered:
 - **Secrets and the board's files** (point 345): `.env`, `.env.*` (but `.env.example`), `.envrc`, `.npmrc`
   and the bots' secrets in any folder; what apps save (`.visionboard/app-state/**`) is unread and unwritten
   in any board folder, and the ledger unwritten in any board folder.
+- **Both layouts of the data folder** (D-084 decisions 1, 6): each per-ledger row has a twin a folder down, so
+  `.visionboard/<file>` (today's) and `.visionboard/<ledger>/<file>` are decided alike, in a nested project too:
+  `agents.json` and `app-state/**` closed, `ledger.jsonl` read but never written, `lock` and `.gitignore` the
+  board's, `images/**` and `apps/**` written freely (`.git` and secrets inside them still closed). The repo-wide
+  files sit at `.visionboard/` only: `chat-sessions.json` (closed in a ledger's folder too, should it land there),
+  `permissions.json` and `attachments/**`, whose looser answers a ledger's folder does not get. A ledger's
+  pictures and apps rows come after the attachments row, so on a tie `.visionboard/attachments/images/` stays the
+  person's. A command's pattern is refused for what it could name: a name it spells out meets the row's pattern
+  (`cat .visionboard/main/*`, `sub/.visionboard/main/agen*`; `refusedTail`). So a pattern that could reach a file
+  named like a ledger's, under today's pictures (`cat .visionboard/images/*`), is refused too. Held by
+  `packages/agent/tests/policy-ledgers.test.ts`, `policy.test.ts` (every row), `claude-args.test.ts` and
+  `kiro-turn.test.ts` (the second lines).
 - **What the person attached** (D-068, D-069 rulings 1, 2): `.visionboard/attachments/**` is read freely and its
   file tools are refused. A command the rules can't judge asks about an attached file, as about any other file
   in the folder: the row's own `unknownCommand` (`access-rules.ts`), which no other row has, so the ledger, `.git/`
@@ -250,7 +262,7 @@ before anything remembered:
   nothing kept for the folder is used; the refusals hold either way (`strictAccess` on the adapter,
   `AGENT_GATE_STRICT` for the gate).
 - **Searches and paths outside**: a search of a folder that holds a refused file (any board folder holds
-  `.visionboard/agents.json`) is refused, and so is a search of a folder that holds the board's folder (the
+  an `agents.json`, at `.visionboard/` or in a ledger's folder) is refused, and so is a search of a folder that holds the board's folder (the
   parent, `/`): the board's folder is walked for it. A command naming a path outside the folder is asked
   `once`, never kept. A command the gate asked about is never let through unasked by the server, and the gate tells it
   the shell's folder when that is not the board's (`commandFacts.cwd`), so the server judges the same words from
@@ -265,7 +277,7 @@ before anything remembered:
   covers one folder.
 
 Tests: `packages/agent/tests/gate.test.ts`, `kiro-turn.test.ts`, `claude-args.test.ts`, `remember.test.ts`,
-`policy.test.ts`, `policy-scripts.test.ts`; `apps/board/tests/chat-approvals.test.ts`, `chat-approvals-shell.test.ts`, `chat-permissions.test.ts`, and end to end with
+`policy.test.ts`, `policy-scripts.test.ts`, `policy-ledgers.test.ts`; `apps/board/tests/chat-approvals.test.ts`, `chat-approvals-shell.test.ts`, `chat-permissions.test.ts`, and end to end with
 the fake CLI and the real gate, `api-chat-access.test.ts`.
 
 ## Attaching

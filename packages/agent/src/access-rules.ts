@@ -28,6 +28,13 @@ export interface AccessRule {
  * writing wins; then more named parts win, then the order written. So `**` + `/.env` holds inside
  * `.visionboard/images/`, `images/**` beats `.visionboard/**`, and `**` + `/.git/**` holds inside
  * `.visionboard/apps/` (points 345, 346, D-067 proposed).
+ *
+ * The board's data folder has two layouts (D-084): today's, `.visionboard/<file>`, and the ledger folders',
+ * `.visionboard/<ledger>/<file>`. Each per-ledger fact has a row for each, side by side (`*` is the ledger;
+ * no ledger is named like a data folder, decision 1). The repo-wide files (chat sessions, permissions,
+ * attachments) sit at `.visionboard/` only; chat sessions are closed in a ledger's folder too, should they
+ * ever land there. A ledger's pictures and apps come after the attachments: on a tie the order written
+ * decides, so `.visionboard/attachments/images/` stays the person's.
  */
 export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '**', read: 'allow', write: 'ask', why: words.filesInTheFolder },
@@ -37,15 +44,22 @@ export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '**/.envrc', read: 'refuse', write: 'refuse', why: words.secretsFiles },
   { path: '**/.npmrc', read: 'refuse', write: 'refuse', why: words.secretsFiles },
   { path: '**/.visionboard/agents.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
+  { path: '**/.visionboard/*/agents.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
   { path: '**/.visionboard/chat-sessions.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
+  { path: '**/.visionboard/*/chat-sessions.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
   { path: '**/.visionboard/ledger.jsonl', read: 'allow', write: 'refuse', why: words.theLedger },
+  { path: '**/.visionboard/*/ledger.jsonl', read: 'allow', write: 'refuse', why: words.theLedger },
   { path: '.visionboard/lock', read: 'allow', write: 'refuse', why: words.boardFiles },
+  { path: '.visionboard/*/lock', read: 'allow', write: 'refuse', why: words.boardFiles },
   { path: '**/.visionboard/app-state/**', read: 'refuse', write: 'refuse', why: words.appState },
+  { path: '**/.visionboard/*/app-state/**', read: 'refuse', write: 'refuse', why: words.appState },
   { path: '.visionboard/permissions.json', read: 'allow', write: 'refuse', why: words.permissionsFile },
   { path: '.visionboard/**', read: 'allow', write: 'refuse', why: words.boardFiles },
   { path: '.visionboard/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
   { path: '.visionboard/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
   { path: '.visionboard/attachments/**', read: 'allow', write: 'refuse', unknownCommand: 'ask', why: words.theirAttachments },
+  { path: '.visionboard/*/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
+  { path: '.visionboard/*/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
   { path: '**/.git/**', read: 'refuse', write: 'refuse', why: words.gitFolder },
 ];
 
@@ -117,8 +131,12 @@ function nameGlob(name: string): RegExp {
   try { return new RegExp(`^${/^[*?[]/.test(name) ? '(?!\\.)' : ''}${re}$`, 'i'); } catch { return /^/; }
 }
 
-/** For each refused row, a path it refuses (`**` read as a name), to test a glob word against. */
-const SAMPLES = ACCESS_RULES.map((rule) => ({ rule, sample: rule.path.replace(/^\*\*\//, '').replace(/\*\*/g, 'x').replace(/\*/g, 'x') }));
+/** For each row, a path it covers (`**` and `*` read as a name), to test a glob word against, and each of its
+ * names as a pattern, so a name the word spells out meets the row's pattern there (`main` meets the ledger's `*`). */
+const SAMPLES = ACCESS_RULES.map((rule) => {
+  const names = rule.path.replace(/^\*\*\//, '').split('/');
+  return { rule, sample: names.map((n) => n.replace(/\*+/g, 'x')), patterns: names.map((n) => globRegExp(n, 'i')) };
+});
 
 /**
  * A row that refuses `op` for some trailing part of `word`, as a command names it: `$HOME/p/.env`,
@@ -130,8 +148,8 @@ export function refusedTail(word: string, op: CommandOp, glob = false): AccessRu
   for (let k = 1; k <= parts.length; k++) {
     const tail = parts.slice(-k);
     if (glob && tail.some((p) => /[*?[]/.test(p))) {
-      const hit = SAMPLES.find(({ rule, sample }) => verdictOf(rule, op) === 'refuse' && sample.split('/').length === k
-        && sample.split('/').every((s, i) => nameGlob(tail[i]!).test(s)));
+      const hit = SAMPLES.find(({ rule, sample, patterns }) => verdictOf(rule, op) === 'refuse' && sample.length === k
+        && tail.every((t, i) => nameGlob(t).test(sample[i]!) || patterns[i]!.test(t)));
       if (hit) return hit.rule;
       continue;
     }

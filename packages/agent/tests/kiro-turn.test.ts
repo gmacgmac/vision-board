@@ -156,16 +156,22 @@ test('Kiro\'s agent file (F1): reads and commands ask, so they reach verdictFor;
   assert.ok(has({ capability: 'fs_read', match: ['**/.visionboard/agents.json'], effect: 'deny' }));
   assert.ok(has({ capability: 'fs_read', match: ['**/.visionboard/chat-sessions.json'], effect: 'deny' }));
   assert.ok(has({ capability: 'fs_write', match: ['**/.git/**'], effect: 'deny' }));
-  assert.ok(has({ capability: 'fs_write', match: ['./.visionboard/**'], exclude: ['./.visionboard/images/**', './.visionboard/apps/**'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_write', match: ['./.visionboard/**'], exclude: ['./.visionboard/images/**', './.visionboard/apps/**', './.visionboard/*/images/**', './.visionboard/*/apps/**'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_read', match: ['**/.visionboard/*/agents.json'], effect: 'deny' }), 'a ledger\'s folder as today\'s (D-084)');
+  assert.ok(has({ capability: 'fs_read', match: ['**/.visionboard/*/app-state/**'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_write', match: ['**/.visionboard/*/ledger.jsonl'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_write', match: ['./.visionboard/*/lock'], effect: 'deny' }));
   assert.ok(!rules.some((r) => r.effect === 'deny' && r.capability === 'fs_read' && r.match?.includes('**/.visionboard/ledger.jsonl')), 'a read the rules allow is not denied');
   assert.ok(has({ capability: 'fs_write', match: ['./.visionboard/attachments/**'], effect: 'deny' }), 'an attached file is never changed');
   assert.ok(!rules.some((r) => r.effect === 'deny' && r.capability === 'fs_read' && r.match?.includes('./.visionboard/attachments/**')), 'and is read');
   // CLI 2.x (engine v2): read, grep and glob are trusted in the working folder, so their deniedPaths are the line there.
   for (const tool of ['read', 'grep', 'glob']) {
     assert.deepEqual(made.toolsSettings[tool].deniedPaths, ['**/.env', '**/.env.*', '**/.envrc', '**/.npmrc', '**/.visionboard/agents.json',
-      '**/.visionboard/chat-sessions.json', '**/.visionboard/app-state/**', '**/.git/**'], tool);
+      '**/.visionboard/*/agents.json', '**/.visionboard/chat-sessions.json', '**/.visionboard/*/chat-sessions.json', '**/.visionboard/app-state/**',
+      '**/.visionboard/*/app-state/**', '**/.git/**'], tool);
   }
   assert.ok(made.toolsSettings.write.deniedPaths.includes('**/.visionboard/ledger.jsonl'));
+  assert.ok(made.toolsSettings.write.deniedPaths.includes('**/.visionboard/*/ledger.jsonl'));
   assert.ok(made.toolsSettings.write.deniedPaths.includes('./.visionboard/attachments/**'), 'an attached file is never changed');
   assert.ok(!made.toolsSettings.write.deniedPaths.includes('./.visionboard/**'), 'no exception in 2.x: left to verdictFor');
   assert.deepEqual(made.toolsSettings.shell, { autoAllowReadonly: false, deniedCommands: ['git(\\s.*)?'] });
