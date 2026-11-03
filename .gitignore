@@ -40,3 +40,6 @@ temp/
 
 # --- Personal Kiro settings (machine-local) ---
 .kiro/settings/
+
+# --- The bot eval's reports and run folders (tests/evals/bot, `npm run eval:bot`) ---
+tests/evals/bot/out/
