@@ -14,7 +14,7 @@ import type { FolderServer } from './folder-server.ts';
 import { startFolderServer } from './folder-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { folderDialog as dialog, menuButton } from './board-page.ts';
+import { OLD_HEADER, folderDialog as dialog, menuButton } from './board-page.ts';
 import { homeFiles, ledgerFiles, ledgerFolder } from '#format';
 
 test.describe.configure({ mode: 'serial' });
@@ -26,7 +26,7 @@ test.beforeEach(async () => { await srv.open(srv.start); });
 
 /** Open the board and wait for its first draw. */
 async function open(page: Page, flags = '') {
-  await page.goto(`${srv.base}/?vbwork${flags && `&flags=${flags}`}`);
+  await page.goto(`${srv.base}/?vbwork&flags=${[OLD_HEADER, flags].filter(Boolean).join(',')}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
 }
 const row = (page: Page) => page.locator('#open-folder');

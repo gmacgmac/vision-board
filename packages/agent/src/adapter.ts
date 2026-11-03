@@ -22,6 +22,10 @@ export interface GateConfig {
 export interface StartOptions {
   /** The agent's working folder. */
   cwd: string;
+  /** The open ledger's folder, relative to `cwd` and `/`-joined (`.visionboard/main`, or `.visionboard` in today's
+   * layout): only its pictures and apps are written, and the CLI's hook asks the board whether it may be written now
+   * (`OpenLedger`, FIX_01 F2). Left out, every ledger's pictures and apps are written freely, as the rows say. */
+  ledgerFolder?: string | undefined;
   /** Resume this session; left out, a new one starts with no memory. */
   sessionId?: string;
   /** As the CLI names it (`opus`); left out for the CLI's default. */

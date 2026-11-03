@@ -20,7 +20,15 @@ export interface AccessRule {
   unknownCommand?: AccessVerdict;
   /** What the agent is told when the rule refuses it (and what the row means). */
   why: string;
+  /** A row of a ledger's pictures or apps: given the open ledger (`OpenLedger`), it holds in that ledger's folder only,
+   * and lets a write through only while the ledger may be written (D-085 3; FIX_01 F2). */
+  openLedger?: true;
 }
+
+/** The ledger a chat works on: its folder, relative to the board's and `/`-joined (`.visionboard/main`, or
+ * `.visionboard` in today's layout), and whether it may be written now; left out, not known here (the CLI's hook, a
+ * process of its own), so a write there is asked of the board, which knows. */
+export interface OpenLedger { folder: string; writable?: boolean | undefined }
 
 /**
  * The table. The most specific matching row wins: a row that names a file (its last part is not `**`)
@@ -34,7 +42,9 @@ export interface AccessRule {
  * no ledger is named like a data folder, decision 1). The repo-wide files (chat sessions, permissions,
  * attachments) sit at `.visionboard/` only; chat sessions are closed in a ledger's folder too, should they
  * ever land there. A ledger's pictures and apps come after the attachments: on a tie the order written
- * decides, so `.visionboard/attachments/images/` stays the person's.
+ * decides, so `.visionboard/attachments/images/` stays the person's. Given the open ledger, its pictures and apps
+ * rows (`openLedger`) hold only in its folder, so another ledger's are the board's files, and while it is read-only a
+ * write there is refused.
  */
 export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '**', read: 'allow', write: 'ask', why: words.filesInTheFolder },
@@ -55,11 +65,11 @@ export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '**/.visionboard/*/app-state/**', read: 'refuse', write: 'refuse', why: words.appState },
   { path: '.visionboard/permissions.json', read: 'allow', write: 'refuse', why: words.permissionsFile },
   { path: '.visionboard/**', read: 'allow', write: 'refuse', why: words.boardFiles },
-  { path: '.visionboard/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
-  { path: '.visionboard/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
+  { path: '.visionboard/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps, openLedger: true },
+  { path: '.visionboard/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps, openLedger: true },
   { path: '.visionboard/attachments/**', read: 'allow', write: 'refuse', unknownCommand: 'ask', why: words.theirAttachments },
-  { path: '.visionboard/*/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
-  { path: '.visionboard/*/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
+  { path: '.visionboard/*/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps, openLedger: true },
+  { path: '.visionboard/*/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps, openLedger: true },
   { path: '**/.git/**', read: 'refuse', write: 'refuse', why: words.gitFolder },
 ];
 
@@ -91,10 +101,17 @@ const rank = (r: AccessRule): [number, number, number] => {
 const COMPILED = ACCESS_RULES.map((rule, order) => ({ rule, order, rank: rank(rule), exact: globRegExp(rule.path), folded: globRegExp(rule.path, 'i') }));
 const SEVERITY: Record<AccessVerdict, number> = { allow: 0, ask: 1, refuse: 2 };
 
-function pick(rel: string, folded: boolean): AccessRule {
+/** `rel` is in the open ledger's folder, where row `rule` (an `openLedger` row: its folder, then `images/**`) holds. */
+function inOpen(rule: AccessRule, rel: string, open: OpenLedger, folded: boolean): boolean {
+  const here = rel.split('/').slice(0, rule.path.split('/').length - 2).join('/');
+  return folded ? here.toLowerCase() === open.folder.toLowerCase() : here === open.folder;
+}
+
+function pick(rel: string, folded: boolean, open?: OpenLedger): AccessRule {
   let best: (typeof COMPILED)[number] | undefined;
   for (const c of COMPILED) {
     if (!(folded ? c.folded : c.exact).test(rel)) continue;
+    if (open && c.rule.openLedger && !inOpen(c.rule, rel, open, folded)) continue;
     const diff = best ? c.rank.findIndex((v, i) => v !== best!.rank[i]) : -1;
     if (!best || (diff >= 0 && c.rank[diff]! > best.rank[diff]!)) best = c;
   }
@@ -104,13 +121,16 @@ function pick(rel: string, folded: boolean): AccessRule {
 /**
  * The rule for `rel` (relative to the folder, `/`-joined, '' for the folder itself) and what `op`
  * gets. Matched as written and again ignoring case, and the stricter answer kept: on a disk that
- * ignores case `.ENV` is `.env`, and on one that doesn't, refusing it costs nothing.
+ * ignores case `.ENV` is `.env`, and on one that doesn't, refusing it costs nothing. `open`: the chat's
+ * ledger, which narrows the pictures and apps rows to it, and to while it may be written.
  */
-export function accessFor(rel: string, op: CommandOp): { verdict: AccessVerdict; rule: AccessRule } {
-  const exact = pick(rel, false);
-  const folded = pick(rel, true);
+export function accessFor(rel: string, op: CommandOp, open?: OpenLedger): { verdict: AccessVerdict; rule: AccessRule } {
+  const exact = pick(rel, false, open);
+  const folded = pick(rel, true, open);
   const rule = SEVERITY[verdictOf(folded, op)] > SEVERITY[verdictOf(exact, op)] ? folded : exact;
-  return { verdict: verdictOf(rule, op), rule };
+  const verdict = verdictOf(rule, op);
+  if (!open || !rule.openLedger || op === 'read' || open.writable === true || verdict === 'refuse') return { verdict, rule };
+  return open.writable === false ? { verdict: 'refuse', rule: { ...rule, why: words.ledgerReadOnly } } : { verdict: stricter(verdict, 'ask'), rule };
 }
 
 /** The rows that let through part of what `row` refuses for `op`: a row naming a path under it (`**` read as
@@ -143,7 +163,7 @@ const SAMPLES = ACCESS_RULES.map((rule) => {
  * `../.env`, `HEAD:.env` (split by the caller) or `.e*` all end in a refused name. A command's words
  * can't be resolved for sure (a `cd`, a variable), so any trailing part counts, wherever it points.
  */
-export function refusedTail(word: string, op: CommandOp, glob = false): AccessRule | null {
+export function refusedTail(word: string, op: CommandOp, glob = false, open?: OpenLedger): AccessRule | null {
   const parts = word.split('/').filter((p) => p !== '' && p !== '.' && p !== '..');
   for (let k = 1; k <= parts.length; k++) {
     const tail = parts.slice(-k);
@@ -153,7 +173,7 @@ export function refusedTail(word: string, op: CommandOp, glob = false): AccessRu
       if (hit) return hit.rule;
       continue;
     }
-    const { verdict, rule } = accessFor(tail.join('/'), op);
+    const { verdict, rule } = accessFor(tail.join('/'), op, open);
     if (verdict === 'refuse') return rule;
   }
   return null;

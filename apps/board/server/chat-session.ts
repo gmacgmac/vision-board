@@ -64,7 +64,7 @@ export const hasToken = (live: LiveSession, given: string): boolean => sameText(
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 /** How a live session's approvals are decided: the board's folder, the flag, the folder's kept yeses. */
-export type SessionAccess = Pick<ApprovalOptions, 'folder' | 'strict' | 'kept' | 'reader'>;
+export type SessionAccess = Pick<ApprovalOptions, 'folder' | 'strict' | 'kept' | 'reader' | 'ledger'>;
 
 export function createLiveSession(
   record: StoredSession, agent: AgentSession, token: string,

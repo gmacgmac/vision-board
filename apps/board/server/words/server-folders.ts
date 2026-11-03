@@ -12,6 +12,8 @@ export const onlyAnAgentWritesA = (String: string): string => `only an agent wri
 export const theEventMustBeAn = 'the event must be an object';
 export const nUnknownNodeLeaveN = (String: string): string => `n: unknown node ${String}; leave n out to create a node`;
 export const theEventDoesNotFit = 'The event does not fit the ledger. Fix the fields listed in errors and send it again.';
+/** The ledger file held lines when it was read and is gone now (moved into main/ by another server, or deleted). */
+export const ledgerFileGone = 'The ledger file this board read has gone (another server moved it into a ledger folder, or it was deleted), so nothing was written. Open the folder again to read the ledger where it is now.';
 
 // ---- lock.ts
 export const anotherBoardServerHoldsThis = (host: string, pid: number, port: number): string => `Another board server holds this ledger: computer "${host}", process ${pid}, port ${port}, `;
@@ -46,16 +48,25 @@ export const movedBefore = (displayName: string, oldLedger: string, mainLedger: 
 export const inBothPlaces = (displayName: string, names: string, rootDir: string, mainDir: string): string =>
   `${displayName} has ${names} both in ${rootDir}/ and in ${mainDir}/. Nothing was moved. Keep one of each, then open the folder again.`;
 export const movePartWay = (displayName: string, reason: string, moved: string, there: string, left: string, here: string): string =>
-  `Moving the ledger of ${displayName} stopped part-way (${reason}). In ${there}/: ${moved}. Still in ${here}/: ${left}. Nothing was lost: open the folder again to finish, or run npm run ledgers:undo -- <folder> to put them back.`;
+  `Moving the ledger of ${displayName} stopped part-way (${reason}). In ${there}/: ${moved}. Still in ${here}/: ${left}. Nothing was lost: once the cause is fixed, open the folder again (or press Edit) to finish the move. Once it has finished, npm run ledgers:undo -- <folder> puts it all back if you want the one ledger again.`;
 export const nothingYet = 'nothing yet';
 export const otherLedgers = (displayName: string, others: string): string =>
   `${displayName} has other ledgers beside main (${others}), so it can't go back to one ledger. Move them out of .visionboard/ first.`;
 export const noMainToUndo = (displayName: string, mainLedger: string): string => `${displayName} has no ${mainLedger} to move back.`;
 export const oldLayoutAlready = (displayName: string, oldLedger: string, mainLedger: string): string =>
   `${displayName} has both ${oldLedger} and ${mainLedger}. Nothing was moved back. Keep the one you want (git has both), then try again.`;
+/** A folder in ledger folders, opened by a server with the `ledgerFolders` flag off (an older checkout, or `-ledgerFolders`). */
+export const inLedgerFolders = (displayName: string): string =>
+  `${displayName} keeps its ledgers in folders (.visionboard/main/ and others), and this board server runs with ledger folders off, so it would start a second ledger beside them. Nothing was opened. Start it with VB_FLAGS=ledgerFolders, or run npm run ledgers:undo -- <folder> to go back to one ledger.`;
 export const mainNotEmpty = (mainDir: string, names: string): string => `${mainDir}/ still holds ${names}, which are not the board's, so it was left in place.`;
 
 // ---- server.ts and editing.ts (read-only opening, D-085)
+/** Edit refused: another computer's board server is editing the ledger (the person's words, not a second server's). */
+export const editRefused = (host: string, pid: number, port: number, since: string): string =>
+  `Computer "${host}" (process ${pid}, port ${port}) has been editing this ledger since ${since}, so it stays read-only here. Press Edit again once it stops editing.`;
+/** Edit on a folder this computer can't write (a read-only share, its permissions). */
+export const cannotBeWritten = (displayName: string): string =>
+  `${displayName} can't be written on this computer (a read-only share, or its permissions), so it stays read-only. Nothing was written.`;
 /** The terminal's line at start when the ledger opens read-only. */
 export const openedReadOnly = (holder: string): string =>
   `Opened read-only: nothing is written until you press Edit on the board (or start with --edit, or VB_EDIT=1).${holder}`;

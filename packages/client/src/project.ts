@@ -16,8 +16,8 @@ export interface ProjectFs {
 
 /** The ledgers a project folder holds (D-084 1): `old` when its ledger file sits in `.visionboard/` itself
  * (the old layout), `ledgers` the folders in `.visionboard/` whose name is a ledger name and that hold a
- * ledger file, sorted. The server's `ledgers.ts` (`isOldLayout`, `listLedgers`) answers the same, held
- * equal by `apps/board/tests/ledger-layout-rule.test.ts`. A home folder keeping only `recent.json` has none. */
+ * ledger file, sorted. The one home of the rule: the server's `ledgers.ts` (`isOldLayout`, `listLedgers`) asks this
+ * same function (LEDGERS_02-R1). A home folder keeping only `recent.json` has none. */
 export function ledgersIn(dir: string, { fs }: Pick<ProjectFs, 'fs'>): { old: boolean; ledgers: string[] } {
   const isFile = (file: string): boolean => {
     try { return fs.statSync(file, { throwIfNoEntry: false })?.isFile() ?? false; } catch { return false; }

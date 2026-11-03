@@ -18,6 +18,7 @@
 // `main/` first (server/ledger-move.ts); the lock is that ledger folder's. With read-only opening (`readOnlyStart`,
 // D-085) the ledger opens read-only: no lock, no move, no seed, and no exit when another server holds it (the terminal
 // says who); `--edit` or VB_EDIT=1 opens it for editing as above. Edit on the board takes the lock (server/project.ts).
+// With ledger folders off, a folder already in ledger folders stops the start (server/ledgers.ts `refuseLedgerFolders`).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,11 +27,11 @@ import { DEFAULT_PORT, ENV, flagOn, ledgerFiles, ledgerFolder, parseFlags } from
 import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
 import { ledgerPath, openLedger } from './server/ledger.ts';
-import { chooseLedger, isOldLayout } from './server/ledgers.ts';
+import { chooseLedger, isOldLayout, refuseLedgerFolders } from './server/ledgers.ts';
 import { holderMessage, lockHolder, takeLock } from './server/lock.ts';
 import type { Lock } from './server/lock.ts';
 import { ProblemError } from './server/problem.ts';
-import { takeLedger } from './server/project.ts';
+import { takeLedger } from './server/ledger-move.ts';
 import * as serverFoldersWords from './server/words/server-folders.ts';
 import { lastLedger, startFolder } from './server/recent.ts';
 
@@ -65,8 +66,17 @@ if (flags.refused.length) {
   process.exit(1);
 }
 
+/** Ledger folders off: a folder already in ledger folders stops the start (it would fork the ledger, FIX_01 F5). */
+function refuseMoved(): void {
+  try { refuseLedgerFolders(PROJECT, PROJECT); } catch (err) {
+    console.error(err instanceof ProblemError ? err.message : String(err));
+    process.exit(1);
+  }
+}
+
 /** The old layout's one ledger and its lock: `.visionboard/ledger.jsonl`. */
 function startOne(): { file: string; lock: Lock | undefined } {
+  refuseMoved();
   const taken = takeLock(ledgerFolder(PROJECT), PORT);
   if (!taken.ok) {
     console.error(holderMessage(taken.holder));
@@ -93,6 +103,7 @@ function startLedger(): { file: string; lock: Lock | undefined } {
 
 /** Read-only opening: the ledger file as it lies (an old layout not moved), and no lock. */
 function startReadOnly(ledgers: boolean): { file: string; lock: undefined } {
+  if (!ledgers) refuseMoved();
   const name = chooseLedger(PROJECT, undefined, lastLedger(HOME, PROJECT));
   const file = !ledgers || isOldLayout(PROJECT) ? ledgerPath(PROJECT) : ledgerFiles(ledgerFolder(PROJECT, name)).ledger;
   const holder = lockHolder(path.dirname(file));

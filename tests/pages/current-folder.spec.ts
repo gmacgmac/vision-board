@@ -12,7 +12,7 @@ import { startFolderServer } from './folder-server.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { folderDialog as dialog, menu, menuButton } from './board-page.ts';
+import { OLD_HEADER, folderDialog as dialog, menu, menuButton } from './board-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -28,7 +28,7 @@ test.afterAll(async () => { await srv.close(); });
 test.beforeEach(async () => { await srv.open(srv.start); });
 
 async function open(page: Page, flags = '') {
-  await page.goto(`${srv.base}/?vbwork${flags && `&flags=${flags}`}`);
+  await page.goto(`${srv.base}/?vbwork&flags=${[OLD_HEADER, flags].filter(Boolean).join(',')}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
 }
 /** The long-named folder, which has no board yet: make one as the person does, then open it. */

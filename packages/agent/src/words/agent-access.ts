@@ -12,6 +12,7 @@ export const theLedger = 'The ledger is written only through the board\'s tools.
 export const permissionsFile = 'Permissions are changed only by the person, in the chat.';
 export const boardFiles = 'The board\'s own files are written only by the board. Use the board\'s tools instead.';
 export const boardPicturesAndApps = 'Pictures and apps for the board are written freely.';
+export const ledgerReadOnly = 'The board\'s ledger is open read-only: its pictures and apps are not changed until the person makes it editable.';
 export const theirAttachments = 'The files the person attached are the agent\'s to read and never to change. To work on one, copy it out.';
 export const gitFolder = 'Git is the person\'s: the agent does not read or change .git. Ask the person for what you need from it.';
 export const appState = 'What apps save on the board is the person\'s and the app\'s: not open to the agent.';

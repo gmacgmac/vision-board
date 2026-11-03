@@ -8,7 +8,7 @@ import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
-import { folderDialog, menu, menuButton } from './board-page.ts';
+import { OLD_HEADER, folderDialog, menu, menuButton } from './board-page.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { expectBarPasses, expectWhole } from './header-fit.ts';
 
@@ -36,7 +36,7 @@ async function setUp(page: Page, request: APIRequestContext) {
 
 let ready = false;
 /** The long-named board, open and drawn, at `width`. */
-async function open(page: Page, request: APIRequestContext, width: number, board = BOARD, flags = '') {
+async function open(page: Page, request: APIRequestContext, width: number, board = BOARD, flags = OLD_HEADER) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto(`${EMPTY_BASE}/?vbwork${flags && `&flags=${flags}`}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: unknown }).__vbWork !== undefined);
@@ -367,7 +367,7 @@ test('gallery: the section is last, draws the three forms with ids of its own, a
   await page.goto('/gallery.html?flags=-adaptiveHeader');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
-  await page.goto('/gallery.html');
+  await page.goto(`/gallery.html?flags=${OLD_HEADER}`);
   await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).getByRole('menu', { name: 'Zoom' })).toBeVisible();

@@ -4,15 +4,20 @@
 // itself. That rule has one home, `#client` `ledgersIn`, which the agent's tools find their project with too
 // (LEDGERS_02-R1). A new ledger's folder gets its own `.gitignore` (`ignoreInGit`): the agents' hashes, the lock
 // and app state, or `*` when the person keeps it out of git (PLAN decision 8). Folders only: never a
-// file's contents but a ledger's, read to count its boards.
+// file's contents but a ledger's, read to count its boards. Also where an open ledger went when another server moved it
+// between layouts (`movedLedger`), and the folder's other ledgers an agent's reads may name (`otherLedgers`, D-084 8).
 import fs from 'node:fs';
 import { boardList } from '#actions';
 import { ledgersIn } from '#client';
 import {
-  AGENTS_FILE, APP_STATE_DIR, LOCK_FILE, MAIN_LEDGER, ledgerFiles, ledgerFolder,
+  AGENTS_FILE, APP_STATE_DIR, LOCK_FILE, MAIN_LEDGER, ledgerFiles, ledgerFolder, ledgerNameProblem,
 } from '#format';
 import { ignoreInGit } from './agents.ts';
+import type { Ledger } from './ledger.ts';
 import { openLedger } from './ledger.ts';
+import { problem } from './problem.ts';
+import * as serverFoldersWords from './words/server-folders.ts';
+import * as writesWords from './words/writes.ts';
 
 /** The line of a ledger folder's `.gitignore` that keeps the whole folder out of git. */
 export const KEEP_OUT = '*';
@@ -37,6 +42,13 @@ export const listLedgers = (project: string): string[] => layout(project).ledger
 export function ledgerFoldersIn(project: string): string[] {
   const { old, ledgers } = layout(project);
   return [...(old ? [ledgerFolder(project)] : []), ...ledgers.map((name) => ledgerFolder(project, name))];
+}
+
+/** With ledger folders off (`ledgerFolders`), a project whose ledgers are only in ledger folders is refused, before
+ *  anything is written: the old layout's ledger would start empty beside `main/` and fork it (FIX_01 F5).
+ *  `shown`: the folder as the person reads it. */
+export function refuseLedgerFolders(project: string, shown: string): void {
+  if (!isOldLayout(project) && listLedgers(project).length > 0) throw problem('conflict', serverFoldersWords.inLedgerFolders(shown));
 }
 
 /** The project has a Vision Board in either layout. A home folder's `.visionboard/`, holding only
@@ -73,6 +85,13 @@ export function ledgerEntries(project: string, open?: { name: string; boards: nu
   });
 }
 
+/** A ledger name a request may name (`open_project`'s `ledger`): the schema has checked its characters; a data-folder
+ * name is refused here, at its pointer. */
+export function checkLedgerName(name: string | undefined): void {
+  const why = name === undefined ? undefined : ledgerNameProblem(name);
+  if (why) throw problem('invalid', writesWords.theRequestDoesNotFit, { errors: [{ pointer: '/ledger', detail: why }] });
+}
+
 /** Make ledger `name` of the project, when it is not there: its folder, its `.gitignore` and an empty
  * ledger file. Nothing already there is changed. The name is checked by the caller. */
 export function makeLedger(project: string, name: string, keepOutOfGit: boolean): void {
@@ -83,4 +102,37 @@ export function makeLedger(project: string, name: string, keepOutOfGit: boolean)
   if (keepOutOfGit) ignoreInGit(dir, KEEP_OUT);
   else for (const n of [AGENTS_FILE, LOCK_FILE, `${APP_STATE_DIR}/`]) ignoreInGit(dir, n);
   fs.writeFileSync(files.ledger, '', { flag: 'a' });
+}
+
+/** Where open ledger `name` (undefined: the old layout's) of the project is now, when its file `file` has gone since it
+ *  was opened because another server moved it between layouts: into `main/` (decision 7), or back by `ledgers:undo`.
+ *  Undefined while the file is there, or when it went nowhere this can tell (FIX_01 F1). */
+export function movedLedger(project: string, name: string | undefined, file: string): string | undefined {
+  if (isFile(file)) return undefined;
+  const { old, ledgers } = layout(project);
+  if (name === undefined && ledgers.includes(MAIN_LEDGER)) return ledgerFiles(ledgerFolder(project, MAIN_LEDGER)).ledger;
+  if (name === MAIN_LEDGER && old) return ledgerFiles(ledgerFolder(project)).ledger;
+  return undefined;
+}
+
+/** The folder's other ledgers, for the reads that name one (D-084 8): each opened read-only on its first read and kept
+ * until `close`; undefined for the open ledger; `not-found`, naming the folder's ledgers, for a name it doesn't have.
+ * `shown`: the folder as the person reads it. */
+export function otherLedgers(project: () => string, open: () => string | undefined, shown: () => string) {
+  const kept = new Map<string, Ledger>();
+  return {
+    get(name: string): Ledger | undefined {
+      const dir = project();
+      if (name === open() || (open() === undefined && name === MAIN_LEDGER && isOldLayout(dir))) return undefined;
+      const names = listLedgers(dir);
+      if (!names.includes(name)) {
+        kept.delete(name);
+        throw problem('not-found', serverFoldersWords.noLedgerToRead(shown(), name, names));
+      }
+      let ledger = kept.get(name);
+      if (!ledger) kept.set(name, ledger = openLedger(ledgerFiles(ledgerFolder(dir, name)).ledger, undefined, { readOnly: () => true }));
+      return ledger;
+    },
+    close: () => kept.clear(),
+  };
 }

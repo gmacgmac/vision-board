@@ -29,19 +29,64 @@ a fix that would change one stops and is reported (`DEVIATION`).
 
 ## Validation
 
-- [ ] Every blocking finding has its test and fix; every other finding fixed or reasoned
-- [ ] The checks in step 4 green
+- [x] Every blocking finding has its test and fix; every other finding fixed or reasoned
+- [x] The checks in step 4 green (but `verify`: `modules.md` needs `npm run map`, orchestrator's)
 
 ## Implementation Notes
 
 _To be completed by the agent. Re-run? Add a `### Run N` block; never overwrite an earlier run._
 
-**Status**: Pending
+**Status**: Completed (Run 1, branch `feat/fix-01`, port 7200; no commit)
 
 ### Fixed
--
+- F1: tests `apps/board/tests/api-ledger-moved.test.ts` (both), `ledger-replace.test.ts` "a file that held lines and is gone…";
+  fix `server/ledgers.ts` `movedLedger`, `server/project.ts` `followMove` (in `current`, `open`, `edit`), `server/ledger.ts`
+  `append` (`gone`: refuses `conflict`, words `ledgerFileGone`). Follows `ledgers:undo` back too.
+- F2: tests `packages/agent/tests/policy-ledgers.test.ts` "the open ledger only…", `gate.test.ts` "the open ledger…",
+  `apps/board/tests/chat-approvals.test.ts` "the open ledger, asked…"; fix `packages/agent` `access-rules.ts` `OpenLedger`,
+  rows `openLedger: true` (the four pictures/apps rows; twin rows and `access-layout.test.ts` unchanged and green), `accessFor`,
+  `refusedTail`, `policy.ts` `PolicyOptions.ledger`, `gate.ts` `GATE_LEDGER_ENV`, `kiro-permission.ts` `verdictFor`,
+  `adapter.ts` `StartOptions.ledgerFolder`; server `chat-approvals.ts` `ApprovalOptions.ledger` (asked at each question),
+  `chat-sessions.ts` `openLedger`. Words `agent-access.ts` `ledgerReadOnly`. Chats are not stopped on Stop editing: the gate
+  refuses their writes at once instead (a running chat may keep talking, decision 13).
+- F3: schema first (`chat-session.schema.json` `ledger`), `npm run gen`; tests `api-chat-ledgers.test.ts` (both); fix
+  `chat-index.ts` `openChatIndex(dir, ledger)` (entries without `ledger` are `main`'s), `chat-sessions.ts` stamps `ledger`.
+- F4: 21 unit + 13 page tests now name their flags: `test-board.ts` `OLD_LAYOUT` (api-project, api-cloud-places,
+  api-folder-mismatch, images-route), `ledgerFolders: false` in api-read-only(-open), api-ledgers "ledgerFolders off";
+  `board-page.ts` `OLD_HEADER` (header-tiers, current-folder, open-folder), explicit `-ledgerFolders`/`-readOnlyStart` in the
+  ledgers and read-only gallery checks; `folder-server.ts` names both server flags. Proven with both defaults flipped in
+  `flags.ts` (unit 2357/2358 then 2358 after the F3 fix; page groups 95 + 53 passed), then `flags.ts` restored (sha1
+  f9cd6c7…, no diff).
+- F5: test api-ledgers "ledgerFolders off: a folder already in ledger folders is refused…"; fix `ledgers.ts`
+  `refuseLedgerFolders` in `project.ts` `openOne` and `server.ts` `refuseMoved` (words `inLedgerFolders`).
+- F6: test `editing.test.ts`; fix `editing.ts` `look` (from the beat in `project.ts`), page `page-host.ts` reads the folder
+  on `editing`.
+- F7: test `lock.test.ts` "a holder waking after a sleep…"; fix `lock.ts` `takeLock` (`fresh`: never beats or removes after
+  `STALE_MS` without a beat; `held` false).
+- F8: test api-read-only-open "Edit on a folder this computer can't write…"; fix `project.ts` `edit` (words `cannotBeWritten`).
+- F9: test read-only.spec "the chip's menu opens over the access-request bar…"; fix `styles/editing.css`.
+- F11 (the read-only half): test read-only.spec "the flag off on the page: the server says read-only…" (was the opposite);
+  fix `shell/editing.ts` `editingOn` asks only `openFolder`.
+- F12: test api-folder-mismatch-ledgers "its reads too…"; fix `callers.ts` `refuseElsewhere`.
+- F13: test ledger-move "a move stopped part-way…" (the advice works); fix words `movePartWay`.
+- F14: test recent "the last ledger is found by the folder's real path too…"; fix `recent.ts` `lastLedger`.
+- READONLY_UI_01-R1: tests api-read-only "Edit while another computer edits…", api-ledger-moved; fix `project.ts` `edit`
+  (`lockHolder` first, words `editRefused`). READONLY_01-R7: `packages/client/src/project.ts` `ledgersIn` comment.
+  CONSOLIDATE_01-R3: `otherLedgers` and `checkLedgerName` into `ledgers.ts`, `takeLedger`/`holdLock` into `ledger-move.ts`
+  (one lock helper, was two); `project.ts` 293 lines. SKILL_01-R1 (`api.md`), SKILL_01-R3 (`read-only.ts` comment).
+- Docs: `api.md` (105, 115a, the move, Off, Edit, the state, the chat's files), `chat.md`, `components.md`, agent README.
 ### Left, with reasons
--
+- F10 (write controls enabled in read-only): a UI change across the access strip (`AccessRequests.svelte`), the Agents
+  panel's remove and `#ui`'s app card Allow, with their disabled states, gallery entries, axe and APCA in both themes: its own
+  task. Nothing is written meanwhile (each is refused by the server with the read-only words). Request: tracker row.
+- F11 (the ledger-chip half): the page parts are built at boot, before the folder is read, and the ledger chip brings a
+  separator and a "⋯" tooltip word with it; showing it from the server's answer is a header-structure change. With both
+  defaults on together at the close the page and server agree. Request: tracker row.
+- F2 (an app's process): an allowed app's process runs the person's allowed code and runs in read-only from the start
+  (READONLY_01: `call_app_tool` still goes); its state writes are refused. Stopping it on Stop editing would not stop it
+  restarting on the next panel call; whether apps run at all while read-only is the maintainer's call.
+  `[needs-human-input]` Should an app's process run on a read-only ledger (D-085 3 says nothing is written)?
+- F15: the orchestrator's tracker row (brief).
 
 ## On Completion
 

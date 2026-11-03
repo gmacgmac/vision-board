@@ -9,6 +9,7 @@ import https from 'node:https';
 import type { StartOptions } from './adapter.ts';
 import type { ApprovalOutcome, Facts } from './approvals.ts';
 import { factsFor, refusalFor } from './approvals.ts';
+import type { OpenLedger } from './access-rules.ts';
 import type { PathReader } from './policy.ts';
 import { policy } from './policy.ts';
 
@@ -21,6 +22,9 @@ export const GATE_WAIT_ENV = 'AGENT_GATE_WAIT_MS';
 export const GATE_FOLDER_ENV = 'AGENT_GATE_FOLDER';
 /** `1` when the `agentAccessRules` flag is off: nothing goes ahead unasked. */
 export const GATE_STRICT_ENV = 'AGENT_GATE_STRICT';
+/** The open ledger's folder, relative to the board's (`StartOptions.ledgerFolder`): a write in its pictures or apps
+ * is asked of the board, which knows whether the ledger may be written now. */
+export const GATE_LEDGER_ENV = 'AGENT_GATE_LEDGER';
 /** The CLI's own limit on the hook, in seconds; past it the CLI would go on without an answer. */
 export const HOOK_TIMEOUT_S = 600;
 /** With `approvalHold`: a question waits for the person, so the hook may wait a day (PLAN ruling 335). */
@@ -37,11 +41,12 @@ export function gateWaitFrom(env: NodeJS.ProcessEnv): number {
 }
 
 /** The gate's environment for a session: where to ask, with which token, for which folder, and how long to wait. */
-export function gateEnv(start: Pick<StartOptions, 'cwd' | 'gate' | 'approvalHold' | 'strictAccess'>): Record<string, string> {
+export function gateEnv(start: Pick<StartOptions, 'cwd' | 'gate' | 'approvalHold' | 'strictAccess' | 'ledgerFolder'>): Record<string, string> {
   return {
     [GATE_URL_ENV]: start.gate.url, [GATE_TOKEN_ENV]: start.gate.token, [GATE_FOLDER_ENV]: start.cwd,
     ...(start.approvalHold && { [GATE_WAIT_ENV]: String(gateWaitMs(true)) }),
     ...(start.strictAccess && { [GATE_STRICT_ENV]: '1' }),
+    ...(start.ledgerFolder !== undefined && { [GATE_LEDGER_ENV]: start.ledgerFolder }),
   };
 }
 
@@ -105,6 +110,8 @@ export interface GateAccess {
   folder: string;
   strict?: boolean;
   reader?: PathReader;
+  /** The open ledger, whose being writable the gate can't know: a write in its pictures or apps is asked. */
+  ledger?: OpenLedger | undefined;
 }
 
 /** The decision for one hook input: the access rules first, then the person. Never throws: anything
@@ -116,7 +123,7 @@ export async function decide(stdin: string, ask: Ask, exists: (path: string) => 
   if ('refuse' in facts) return decision(false, facts.refuse);
   // A command's words are where the shell is (the hook's `cwd`), judged against the board's folder.
   const cwd = facts.kind === 'command' && typeof (input as { cwd?: unknown }).cwd === 'string' ? (input as { cwd: string }).cwd : undefined;
-  const rules = policy(facts, access.folder, { strict: access.strict ?? false, ...(access.reader && { reader: access.reader }), ...(cwd && { cwd }) });
+  const rules = policy(facts, access.folder, { strict: access.strict ?? false, ...(access.reader && { reader: access.reader }), ...(cwd && { cwd }), ledger: access.ledger });
   if ('refuse' in rules) return decision(false, rules.refuse);
   if ('allow' in rules) return decision(true, 'The board\'s access rules allow it.');
   let outcome: ApprovalOutcome;
@@ -132,5 +139,6 @@ export async function runGate(stdin: string, env: NodeJS.ProcessEnv, exists: (pa
   const token = env[GATE_TOKEN_ENV];
   const folder = env[GATE_FOLDER_ENV];
   if (!url || !token || !folder) return decision(false, UNREACHABLE);
-  return decide(stdin, askOverHttp(url, token, gateWaitFrom(env)), exists, { folder, strict: env[GATE_STRICT_ENV] === '1' });
+  const ledger = env[GATE_LEDGER_ENV];
+  return decide(stdin, askOverHttp(url, token, gateWaitFrom(env)), exists, { folder, strict: env[GATE_STRICT_ENV] === '1', ...(ledger !== undefined && { ledger: { folder: ledger } }) });
 }

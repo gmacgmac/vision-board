@@ -12,6 +12,8 @@
 .vb-chip-editing[data-state='editing'] .vb-btn-icon:first-child { color: var(--vb-accent); }
 .vb-chip-editing[aria-busy='true'] { cursor: progress; }
 .vb-chip-editing[aria-expanded='true'] { background: var(--vb-surface-deep); }
+/* Open, the header stacks over the access-request bar under it, as for "⋯" (board.css; FIX_01 F9). */
+.vb-toolbar:has(.vb-chip-editing[aria-expanded='true']) { z-index: var(--vb-z-chrome-open); }
 .vb-editing > .vb-menu-list { left: 0; right: auto; width: max-content; max-width: min(360px, calc(100cqw - 2 * var(--vb-space-2))); }
 /* The state in words, above the menu's row: reading text, wrapped. */
 .vb-editing-line { margin: 0; padding: var(--vb-space-1) var(--vb-space-3) var(--vb-space-2); font-size: var(--vb-text-sm); color: var(--vb-ink); white-space: normal; }

@@ -126,3 +126,23 @@ test('D-084: a command naming a ledger\'s keys or app state is refused, spelled 
   assert.deepEqual(decide(command('cat .visionboard/main/ledger.jsonl')), { allow: true }, 'the ledger is read');
   assert.deepEqual(decide(command('ls .visionboard/main/images')), { allow: true });
 });
+
+test('the open ledger only, while it may be written (FIX_01 F2): its pictures and apps go; another ledger\'s, or a read-only one, never; unknown asks the board', () => {
+  const at = (folder: string, writable?: boolean) => ({ ledger: { folder, ...(writable !== undefined && { writable }) } });
+  const on = (f: Facts, folder: string, writable?: boolean) => policy(f, fx.folder, at(folder, writable));
+  assert.deepEqual(on(write('.visionboard/main/images/new.png'), '.visionboard/main', true), { allow: true });
+  assert.deepEqual(on(write('.visionboard/main/apps/calc/new.js'), '.visionboard/main', true), { allow: true });
+  assert.deepEqual(on(write('.visionboard/images/new.png'), '.visionboard', true), { allow: true }, 'today\'s layout open');
+  for (const p of ['.visionboard/ui/images/new.png', '.visionboard/ui/apps/calc/new.js', '.visionboard/images/new.png']) {
+    assert.deepEqual(on(write(p), '.visionboard/main', true), { refuse: words.boardFiles }, `${p}: not the open ledger's`);
+  }
+  assert.deepEqual(on(write('.visionboard/main/images/new.png'), '.visionboard', true), { refuse: words.boardFiles }, 'a ledger folder with today\'s layout open');
+  for (const p of ['.visionboard/main/images/new.png', '.visionboard/main/apps/calc/new.js']) {
+    assert.deepEqual(on(write(p), '.visionboard/main', false), { refuse: words.ledgerReadOnly }, `${p}: read-only`);
+    assert.ok('ask' in on(write(p), '.visionboard/main'), `${p}: the hook can't tell, so the board is asked`);
+  }
+  assert.ok(refused(on(command('cp x.png .visionboard/ui/images/x.png'), '.visionboard/main', true)), 'a command into another ledger');
+  assert.ok(refused(on(command('rm .visionboard/main/images/new.png'), '.visionboard/main', false)), 'a command while read-only');
+  assert.deepEqual(on(read('.visionboard/ui/images/new.png'), '.visionboard/main', false), { allow: true }, 'reads are as before');
+  assert.deepEqual(on(write('.visionboard/main/images/.env'), '.visionboard/main', true), { refuse: words.secretsFiles });
+});

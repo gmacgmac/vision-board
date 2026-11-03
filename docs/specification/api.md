@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -759,7 +759,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     thing that starts a CLI. Its index, `.visionboard/chat-sessions.json` (`chat-index.ts`, checked
     on read and write, git-ignored, readable by this user only), keeps every session started, oldest
     first: the session as `list_chats` shows it plus `agentId`, the board agent the server joined for
-    it (never a secret). A session not loaded since the server started is loaded on first use of any
+    it (never a secret). With ledger folders each entry names its `ledger` (left out, the old layout's one ledger,
+    `main` once moved): the index is opened for the open ledger (`openChatIndex`), so a board lists, resumes and
+    answers through only its own ledger's sessions, and another ledger's session is `not-found` by its id
+    (`api-chat-ledgers.test.ts`). A session not loaded since the server started is loaded on first use of any
     of its routes, and its CLI resumes its own transcript. Events are kept in memory only and
     numbered from 1 at each server start, so an `after` past the latest event starts the stream over.
     A session loaded again after a restart starts with one `system` line (no `turn`): "Earlier
@@ -908,7 +911,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
       renamed into `main/` (agents, images, apps, app state, the ledger file last), the
       `.gitignore` split (per-ledger lines go with the ledger); `main/`'s lock taken, the old one let
       go. Nothing is copied, rewritten or deleted. A failure part-way leaves each entry whole in one
-      place, says which, and the next open finishes the move. The reverse, `npm run ledgers:undo --
+      place, says which, and the next open (or Edit) finishes the move; its words offer the undo only once it has
+      finished. The reverse, `npm run ledgers:undo --
       <folder>` (`apps/board/bin/ledgers-undo.ts`, `undoMove`), runs only while `main` is the only
       ledger and no server holds either folder; then turn the flag off. Tests:
       `apps/board/tests/ledger-move.test.ts` (every byte the same after the move and after the undo;
@@ -916,8 +920,17 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
       ("an old-layout folder moves into main/ when opened…").
     - **The agent's file rules** stay their own table (`packages/agent` `ACCESS_RULES`, D-037), held
       equal to the paths module by `apps/board/tests/access-layout.test.ts`.
+    - **A watcher follows a move** (`project.ts` `followMove`, `ledgers.ts` `movedLedger`): a server that opened the old
+      layout read-only, when another server's Edit moves it into `main/` (or `ledgers:undo` moves it back), opens it
+      again where it is, read-only, on its next request or Edit, its streams ended as on a switch. Its Edit then takes
+      `main/`'s lock or is refused. A ledger whose file held lines and has gone appends nothing until it is back
+      (`ledger.ts` `append`, `conflict`), so no second ledger starts in the old place. Tests:
+      `api-ledger-moved.test.ts`, `ledger-replace.test.ts` ("a file that held lines and is gone…").
     - **Off**: no `ledger` or `ledgers` in any answer, `ledger` and `keepOutOfGit` in a request are
-      ignored, and a folder opens in place. Test: "ledgerFolders off…".
+      ignored, and a folder opens in place. A folder already in ledger folders is refused with `conflict` naming the
+      flag, at start (`server.ts`) and on a switch, before anything is written (`ledgers.ts` `refuseLedgerFolders`):
+      it would start an empty ledger beside `main/`. A checkout from before ledger folders has no such check, so it
+      must not open a moved folder. Tests: "ledgerFolders off…".
 113b. **Reading another ledger** (`ledgerFolders` flag; D-084 8; CONSOLIDATE_01). `list_boards`, `get_board` and
     `show_node` take an optional `ledger` (`openapi.json` parameter `otherLedger`, `x-hosts: standalone`): another
     ledger of the open folder, read instead of the open one, so an agent can draw a summary of a throwaway ledger's
@@ -967,7 +980,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `words/http.ts` `theBoardHasLedgerOpen`): "The board has ledger "main" of `~/projects/b` open. Your
     work is in ledger "ui". Stop and tell the person: they can switch the board back to "ui". Don't join
     here." It reuses the problem the instructions already stop on. A secret no ledger of the open or a
-    recent folder knows is still `not-authenticated`. Proven by `api-folder-mismatch-ledgers.test.ts`.
+    recent folder knows is still `not-authenticated`. Reads too: a read that sends such a secret is refused the
+    same way (`callers.ts` `refuseElsewhere`), so an agent never takes the open ledger's boards for its own; a read
+    with no secret, or one no ledger knows, answers as before. Proven by `api-folder-mismatch-ledgers.test.ts`
+    ("its reads too…").
 116. **The board's MCP server and the `vb` CLI name their folder** (`packages/client/src/project.ts` `projectOf`), worked out
     once at start: `VB_PROJECT` when set, else the nearest folder at or above its working folder
     with a Vision Board in either layout, `.visionboard/ledger.jsonl` or a ledger folder's
@@ -1801,8 +1817,10 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     the tests' servers do too (`startTestBoard`'s `edit`, default true), unless a test is about read-only. Held by
     `apps/board/tests/api-read-only-open.test.ts`.
     - **Edit** (`edit_ledger`, `POST /api/project/edit`, the person's) takes the open ledger's lock now (`lock.ts`
-      `takeLock` as it stands): a live lock of another server refuses with `conflict` and `holderMessage`, naming the
-      computer, and the ledger stays read-only. A folder still in the old layout (ledger folders on) is moved into
+      `takeLock` as it stands): a live lock of another server refuses with `conflict` in the person's words
+      (`words/server-folders.ts` `editRefused`: the computer, process, port and since when; "Press Edit again once it
+      stops editing"), and the ledger stays read-only. A folder this computer can't write is refused with `conflict`
+      in words (`cannotBeWritten`), never a server error. A folder still in the old layout (ledger folders on) is moved into
       `main/` first, so it opens again there and its streams end, as on a switch. **Stop editing** (`stop_editing`,
       `DELETE /api/project/edit`) lets the lock go. Both answer the open folder, as `get_project` does; an agent is
       `forbidden`. With the flag off, Stop editing still works (the ledger is then read-only until Edit); nothing in
@@ -1810,7 +1828,11 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     - **The state** has one home per open folder, `server/editing.ts` (`createEditing`): `readOnly()` is what the
       ledger (`ledger.ts` `gate`), the engine (`EngineOptions.readOnly`) and the agents store (`openAgents`) ask.
       With the flag on, a lock this server no longer holds (another computer took a stale one over) reads as
-      read-only (`Lock.held`), so a writer stops before its next line. The heartbeat beats only a lock held.
+      read-only (`Lock.held`), so a writer stops before its next line. The heartbeat beats only a lock held, and a
+      holder whose own last beat is 2 minutes old (`STALE_MS`, after a sleep) never beats or removes it again: its copy
+      may not show another computer's takeover yet (`lock.test.ts` "a holder waking…"). Each beat also looks again
+      (`Editing.look`): this server's lock lost, or another computer starting or stopping, sends `editing`
+      (`editing.test.ts`).
     - **Reads say it** (`common.schema.json` `readOnly`, only when true, like `locked`): `get_board`, `list_boards`
       and `read_ledger` carry `readOnly: true` (`engine/operations.ts` `readOnlyMark`). With the flag on, `get_project`
       (and `open_project`, `edit_ledger`, `stop_editing`) answer `readOnly` and `editing`: `{ here: true }` while
@@ -1819,7 +1841,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     - **Writes are refused before anything is written** (problem `read-only`, 409, `problem.schema.json`): the engine
       refuses every operation that is not a GET before its body is read (`engine.ts` `run`), `join` too, since it would
       write `agents.json`; the ledger refuses any line handed to it, from any route (`ledger.ts` `append`, before
-      `stamp`), and the agents store any hash (`agents.ts` `add`). An agent reads `READ_ONLY` ("…press Edit…"), the
+      `stamp`), and the agents store any hash (`agents.ts` `add`). An agent reads `READ_ONLY` ("…until they make it editable…"), the
       person `READ_ONLY_PERSON` ("Read-only: press Edit to change it"; `#actions` `read-only.ts`). The person's
       `put_panel_state` is refused the same way. Not D-043's lock: a read-only ledger takes no flag either, and a
       locked board answers `locked` as before in edit mode. Held by `apps/board/tests/api-read-only.test.ts`, the
@@ -1827,6 +1849,10 @@ headers and answers) is [images.md](./images.md); this section is what the API s
       file's bytes, `agents.json` and the ledger folder's listing), every read as before plus `readOnly`, every person
       write either refused or named with why it still goes, Edit refused by another computer's live lock, a lock
       taken over stopping the next line, D-043 unchanged in edit mode.
+    - **The chat's own files** (`chat-sessions.ts` `openLedger`, `packages/agent` `OpenLedger`): a chat writes only the
+      open ledger's `images/` and `apps/`, and only while it may be written, asked at each question (the server's
+      approvals), so Stop editing or a lost lock holds at once; the CLI's hook can't tell, so it asks the board
+      (`chat-approvals.test.ts` "the open ledger, asked…").
     - **The chat** (`chat-sessions.ts`). A start, or a session resumed after a restart (a fresh secret), would write
       the ledger's `agents.json`: refused with `read-only` (`noChatWhileReadOnly`) before any CLI starts. A session
       already running still takes messages: as on a locked board, the words go alone, with no answers and no Send

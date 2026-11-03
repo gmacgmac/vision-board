@@ -92,5 +92,18 @@ export function callerOf(req: IncomingMessage, id: OperationId, env: CallerEnv):
   if (agentOp && req.method !== 'GET' && cookie !== undefined) throw problem('forbidden', ONLY_AGENT);
   if (security === 'agent') return agentOf(req, env);
   if (security === 'optional-agent' && req.headers.authorization !== undefined) return agentOf(req, env);
+  if (agentOp) refuseElsewhere(req, env);
   return undefined;
+}
+
+/** A read that sends a secret this ledger does not know but another's agents do (another ledger of the folder, a
+ * recent folder) is refused as a write would be, so an agent left behind by a switch never takes the open ledger's
+ * boards for its own (FIX_01 F12). A read with no secret, or one no ledger knows, goes as before. */
+function refuseElsewhere(req: IncomingMessage, env: CallerEnv): void {
+  const secret = bearerOf(req);
+  if (secret === undefined || !env.elsewhere) return;
+  const index = env.ledger.state().index;
+  if (env.agents().find(secret, (id) => index.agents.has(id))) return;
+  const away = env.elsewhere(secret);
+  if (away) throw away;
 }

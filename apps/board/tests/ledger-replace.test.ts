@@ -102,3 +102,17 @@ test('the gate: while read-only, append refuses before anything is written', () 
   l.gate(() => true);
   assert.equal(l.readOnly(), true);
 });
+
+test('a file that held lines and is gone (moved into main/, decision 7): read as empty, but append refuses and writes nothing (FIX_01 F1)', () => {
+  const { file, text } = written(2);
+  const l = openLedger(file, () => {});
+  const moved = path.join(path.dirname(file), 'moved.jsonl');
+  fs.renameSync(file, moved);
+  l.refresh(); // a watcher's poll finds it gone first
+  assert.deepEqual(boards(l), []);
+  assert.throws(() => l.append({ type: 'board', board: 'fork', title: 'Fork' }, AGENT), (err: any) => err.status === 409 && err.code === 'conflict');
+  assert.equal(fs.existsSync(file), false, 'no second ledger started in the old place');
+  fs.renameSync(moved, file); // put back (ledgers:undo): it reads and writes again
+  l.append({ type: 'board', board: 'back', title: 'Back' }, AGENT);
+  assert.equal(fs.readFileSync(file, 'utf8').startsWith(text), true);
+});

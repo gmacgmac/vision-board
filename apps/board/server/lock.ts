@@ -31,7 +31,9 @@ export interface Lock {
   /** Remove the lock, if it is still ours. Safe to call twice. */
   release(): void;
   /** True while the lock file still names this holder: read from the file, so a lock another computer took over
-   *  (a stale one, after a sleep) reads false, and a writer stops before its next line (D-085 2). */
+   *  (a stale one, after a sleep) reads false, and a writer stops before its next line (D-085 2). False for good once
+   *  this holder's own last beat is `STALE_MS` old: after a sleep its copy of the file may not show another computer's
+   *  takeover yet, so it is never beaten again or removed (FIX_01 F7); Edit takes the lock again. */
   held(): boolean;
 }
 
@@ -88,10 +90,18 @@ export function takeLock(dir: string, port: number, env: LockEnv = realEnv()): T
     const x = readLock(file);
     return x?.host === mine.host && x.pid === mine.pid && x.started === mine.started;
   };
+  /** When this holder last wrote its beat; once that is `STALE_MS` old, the lock is lost. */
+  let last = env.now();
+  let lost = false;
+  const fresh = (): boolean => (lost ||= env.now() - last >= STALE_MS) === false;
   const lock: Lock = {
-    beat() { if (ours()) writeLock(file, { ...mine, beat: new Date(env.now()).toISOString() }); },
-    release() { if (ours()) fs.rmSync(file, { force: true }); },
-    held: ours,
+    beat() {
+      if (!fresh() || !ours()) return;
+      last = env.now();
+      writeLock(file, { ...mine, beat: new Date(last).toISOString() });
+    },
+    release() { if (fresh() && ours()) fs.rmSync(file, { force: true }); },
+    held: () => fresh() && ours(),
   };
   return { ok: true, lock, ...(old && { replaced: old }) };
 }

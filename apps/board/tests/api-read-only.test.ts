@@ -26,7 +26,7 @@ let h: Harness;
 let A: Joined;
 let B: Joined;
 before(async () => {
-  h = await startBoard({ flags: { readOnlyStart: true }, chat: { adapters: fake.adapters } });
+  h = await startBoard({ flags: { ledgerFolders: false, readOnlyStart: true }, chat: { adapters: fake.adapters } });
   A = await h.join('Plans chat');
   B = await h.join('Other chat');
   const items = [
@@ -157,7 +157,8 @@ test('Edit while another computer edits: `conflict` naming that computer; still 
   anotherComputer();
   try {
     const refused = await h.fails('edit_ledger', {}, 409, 'conflict');
-    assert.match(refused.detail, /Another board server holds this ledger: computer "another-computer"/);
+    assert.match(refused.detail, /^Computer "another-computer" \(process 1, port 4466\) has been editing this ledger since .*, so it stays read-only here\. Press Edit again once it stops editing\.$/);
+    assert.doesNotMatch(refused.detail, /Stop that server/, 'the person\'s words, not a second server\'s (READONLY_UI_01-R1)');
     const project = await h.ok('get_project');
     assert.equal(project.readOnly, true);
     assert.equal(project.editing.host, 'another-computer');

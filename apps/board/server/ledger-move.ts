@@ -12,7 +12,7 @@ import {
 } from '#format';
 import { ignoreInGit } from './agents.ts';
 import { writeFileAtomic } from './atomic-file.ts';
-import { isOldLayout, listLedgers } from './ledgers.ts';
+import { isOldLayout, listLedgers, makeLedger } from './ledgers.ts';
 import type { Lock, LockEnv } from './lock.ts';
 import { holderMessage, takeLock } from './lock.ts';
 import { problem } from './problem.ts';
@@ -34,7 +34,7 @@ const exists = (p: string): boolean => fs.lstatSync(p, { throwIfNoEntry: false }
 const rel = (project: string, p: string): string => path.relative(project, p).split(path.sep).join('/');
 
 /** Take the lock of ledger folder `dir`, or refuse naming who holds it. */
-function hold(dir: string, o: MoveOptions): Lock {
+export function holdLock(dir: string, o: MoveOptions): Lock {
   const taken = takeLock(dir, o.port, o.env);
   if (!taken.ok) throw problem('conflict', holderMessage(taken.holder));
   return taken.lock;
@@ -94,7 +94,7 @@ export function moveIntoMain(project: string, o: MoveOptions): Lock {
   const main = ledgerFolder(project, MAIN_LEDGER);
   const oldFile = rel(project, ledgerFiles(root).ledger);
   if (!isOldLayout(project)) throw problem('conflict', serverFoldersWords.nothingToMove(name, oldFile));
-  const rootLock = hold(root, o);
+  const rootLock = holdLock(root, o);
   try {
     if (exists(ledgerFiles(main).ledger)) {
       throw problem('conflict', serverFoldersWords.movedBefore(name, oldFile, rel(project, ledgerFiles(main).ledger)));
@@ -103,7 +103,7 @@ export function moveIntoMain(project: string, o: MoveOptions): Lock {
     fs.mkdirSync(main, { recursive: true });
     splitIgnore(root, main);
     renameAll(project, root, main, name);
-    return hold(main, o);
+    return holdLock(main, o);
   } finally {
     rootLock.release();
   }
@@ -122,10 +122,10 @@ export function undoMove(project: string, o: MoveOptions): string | undefined {
   const others = ledgers.filter((l) => l !== MAIN_LEDGER);
   if (others.length) throw problem('conflict', serverFoldersWords.otherLedgers(name, others.join(', ')));
   if (isOldLayout(project)) throw problem('conflict', serverFoldersWords.oldLayoutAlready(name, rel(project, ledgerFiles(root).ledger), mainFile));
-  const mainLock = hold(main, o);
+  const mainLock = holdLock(main, o);
   let rootLock: Lock | undefined;
   try {
-    rootLock = hold(root, o);
+    rootLock = holdLock(root, o);
     refuseBoth(project, main, root, name);
     renameAll(project, main, root, name);
     joinIgnore(root, main);
@@ -136,4 +136,14 @@ export function undoMove(project: string, o: MoveOptions): string | undefined {
   const leftover = fs.readdirSync(main);
   if (leftover.length === 0) { fs.rmdirSync(main); return undefined; }
   return serverFoldersWords.mainNotEmpty(rel(project, main), leftover.join(', '));
+}
+
+/** Ledger `name` of project `dir`, made when `make` and locked: an old layout moved into `main/` first
+ * (its lock taken by the move), the new ledger made next, and its own lock taken last. `shown`: the folder as the person
+ * reads it. */
+export function takeLedger(dir: string, name: string, make: { keepOutOfGit: boolean } | undefined, port: number, shown: string, env?: LockEnv): Lock {
+  const moved = isOldLayout(dir) ? moveIntoMain(dir, { port, name: shown }) : undefined;
+  if (make) makeLedger(dir, name, make.keepOutOfGit);
+  if (moved && name === MAIN_LEDGER) return moved;
+  try { return holdLock(ledgerFolder(dir, name), { port, env }); } finally { moved?.release(); }
 }

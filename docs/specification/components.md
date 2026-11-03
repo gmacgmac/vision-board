@@ -918,19 +918,21 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/READONLY_UI_01_edit-control.md`). Whether the open ledger
    can be changed here is the standalone page's to show, as its folder and ledger are (no seam change): two page parts,
    `board/host.ts` `BoardPageParts` `editChip` and `editButton`, filled by `shell/page-parts.ts` once `shell/editing.ts`
-   `editingOn`, and drawn only while `get_project` says `readOnly` or `editing: { here }` (`editing.ts` `editState`; a server
+   `editingOn` (`openFolder` alone: the page's own flag is not asked, so a server that opens read-only always shows it,
+   decision 16), and drawn only while `get_project` says `readOnly` or `editing: { here }` (`editing.ts` `editState`; a server
    opened with `--edit` says neither, and nothing shows). `shell/EditChip.svelte` follows the path, before Locked: an eye and
    "Read-only", or a pencil and "Editing" (ringed in the accent's line), Locked's look (`styles/editing.css`); its tooltip and
    accessible name say the whole state (`editing.ts` `stateTip`: "Read-only: press Edit to change this ledger", or "being
    edited on <computer> since <time>" when another computer holds the lock). The word gives way at a third, on a narrow half
    and on a crowded bar with Locked's (`styles/header.css`), the icon never. The chip is a button opening a small menu
    (the zoom menu's pattern, `board/chrome` `toolbarPopup`): the state in words, then Edit or Stop editing; a polite status
-   says a change of state. `shell/EditButton.svelte` is Edit or Stop editing as a button at full (its pencil alone under
+   says a change of state. Open, the header stacks over the access-request bar, as for "⋯" (`styles/editing.css`). `shell/EditButton.svelte` is Edit or Stop editing as a button at full (its pencil alone under
    1500px, hidden under a 1360px content box or on a crowded bar, where the chip's menu holds it) and as a row of "⋯" from
    half (`HeaderFields.svelte`). Pressed, each shows loading (a spinner, "Opening for editing…", `aria-busy`, focus kept)
    until `editing.ts` `toggleEditing` has the server's answer (`page-io.ts` `editLedger`, `stopEditing`): Editing, or
    read-only again with a toast naming the computer that holds the ledger. The page reads the folder again when the
-   board's reads change their `readOnly` and when the chip's menu opens. Every control that would write says why while
+   board's reads change their `readOnly`, on the stream's `editing` event (another computer started or stopped, or this
+   server lost its lock: `page-host.ts`) and when the chip's menu opens. Every control that would write says why while
    read-only (`#actions` `READ_ONLY_PERSON`): the card's controls and the flag (`#ui` `NodeState.paused`, `NodeState.readOnly`,
    `vb-node.ts` `FLAG`), the container's (`RegionState.paused`), Send (`ToolbarEnd.svelte`), New board… and Rename board…
    (`BoardPicker.svelte`), Lock board… and Archive board… (`ToolbarMenu.svelte`), Accept all (`ProposalsBar.svelte`), Restore
@@ -938,8 +940,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    state for a folder that cannot be written: `get_project` gives no such reason. Words: `shell/words/editing.ts`. Reading
    text Lc 60 or more and the icons Lc 30 or more, light and dark. The gallery's section is `gallery/editing-section.ts`;
    the tests are `tests/pages/read-only.spec.ts` (opens read-only with every write control paused and saying why; Edit then
-   a write; Stop editing; another computer named; 1400, 900, 620 and 600 px and the keys; fit; axe; APCA; the flag off;
-   the gallery) and `packages/ui/tests/node-paused.test.ts`. Off, the header is as above.
+   a write; Stop editing; another computer named; 1400, 900, 620 and 600 px and the keys; fit; axe; APCA; the menu over
+   the access bar; the page's flag off; the gallery) and `packages/ui/tests/node-paused.test.ts`. Off, the header is as above.
 
 7. **The open cards list** (`openList` flag, on by default; task set
    `cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/`, FE_01). The toolbar's

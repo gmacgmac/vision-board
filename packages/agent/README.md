@@ -88,7 +88,9 @@ uses it: `docs/specification/chat.md`.
   `Glob`, `Grep` (`GATED_TOOLS`, `READ_TOOLS`). `factsFor` makes the facts (`WriteFacts`: op, path, a short
   preview; `CommandFacts`: the command; `ReadFacts`: Read's file, Glob's pattern's folder, Grep's path with
   `recursive`). `policy` decides first, relative to `AGENT_GATE_FOLDER` (the board's folder; never the
-  hook's own `cwd`) and strict with `AGENT_GATE_STRICT=1`: a refusal is denied with the rule's reason, an
+  hook's own `cwd`), strict with `AGENT_GATE_STRICT=1`, and with `AGENT_GATE_LEDGER` (the open ledger's folder,
+  `StartOptions.ledgerFolder`) a write in that ledger's pictures or apps is asked of the board, which knows whether it
+  may be written now, and another ledger's is refused (`OpenLedger`): a refusal is denied with the rule's reason, an
   allowed call goes ahead unasked. Only what it asks about is posted to `AGENT_GATE_URL` with
   `Authorization: Bearer $AGENT_GATE_TOKEN`, waiting up to `AGENT_GATE_WAIT_MS` (the adapter sets all of
   them on the CLI: `gateEnv`); the decision says why. Anything but a yes is a denial: an unreachable host,

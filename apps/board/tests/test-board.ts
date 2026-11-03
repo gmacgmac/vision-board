@@ -19,6 +19,10 @@ import { ledgerPath, openLedger } from '../server/ledger.ts';
 /** The page `npm run build` writes: what the standalone server serves. */
 export const DIST = fileURLToPath(new URL('../dist', import.meta.url));
 
+/** The flags of the one-ledger board that opens for writing (the old layout, before D-084 and D-085): a test about
+ * that board names them, so it passes whatever the flags' defaults are. */
+export const OLD_LAYOUT = { ledgerFolders: false, readOnlyStart: false } as const;
+
 export interface TestBoardOptions extends Omit<BoardServerOptions, 'ledger' | 'dist'> {
   /** A ledger already open (a test's own, or a broken one); default the project's. */
   ledger?: Ledger;

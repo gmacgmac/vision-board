@@ -17,6 +17,7 @@ import { expectBarPasses, expectWhole } from './header-fit.ts';
 import { bid, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { MAIN_BASE } from './ports.ts';
+import { openLedger } from '../../apps/board/server/ledger.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -262,10 +263,29 @@ for (const theme of THEMES) {
   });
 }
 
-test('the flag off on the page: no chip and no Edit, and on a server without it, writes as today', async ({ page }) => {
-  // The page's flag off, on this read-only server: nothing of the state shows.
-  await open(page, 1400, 'ledgerFolders');
-  await expect(page.locator('.vb-chip-editing, .vb-edit-btn')).toHaveCount(0);
+// Late in the file: the access request it leaves on `main` shows a bar the earlier tests' looks don't have.
+test('the chip\'s menu opens over the access-request bar: Edit can be seen and pressed (FIX_01 F9)', async ({ page }) => {
+  // An agent asking for access, its lines appended to the ledger file as another computer's server would.
+  const other = openLedger(ledgerFiles(ledgerFolder(srv.start, 'main')).ledger, () => {});
+  const agent = { by: 'agent', agent: 'a-asker000' } as const;
+  other.append({ type: 'join', label: 'Asking chat' }, agent);
+  other.append({ type: 'grant-request', board: 'start-board', reason: 'I need to add ideas.' }, agent);
+  await open(page);
+  await expect(page.locator('.vb-access')).toBeVisible();
+  await chip(page).click();
+  const item = page.locator('.vb-editing .vb-menu-item');
+  await expect(item).toBeVisible();
+  const box = (await item.boundingBox())!;
+  const onTop = await page.evaluate(([x, y]) => !!document.elementFromPoint(x!, y!)?.closest('.vb-editing'), [box.x + box.width / 2, box.y + box.height / 2]);
+  expect(onTop, 'the menu, not the access bar, is under the pointer').toBe(true);
+  await page.keyboard.press('Escape');
+});
+
+test('the flag off on the page: the server says read-only, so the chip and Edit show; on a server without it, writes as today', async ({ page }) => {
+  // The page's flag off, on this read-only server: the state shows all the same, with Edit (decision 16; FIX_01 F11).
+  await open(page, 1400, 'ledgerFolders,-readOnlyStart');
+  await expect(page.locator('.vb-chip-editing')).toBeVisible();
+  await expect(page.locator('.vb-edit-btn')).toBeVisible();
   // The worker's own board (edit mode, the server's flag off), the page's flag on: nothing shows, and a press writes.
   await open(page, 1400, FLAGS, MAIN_BASE);
   await expect(page.locator('.vb-chip-editing, .vb-edit-btn')).toHaveCount(0);
@@ -285,10 +305,10 @@ test('the flag off on the page: no chip and no Edit, and on a server without it,
 const section = (page: Page) => page.locator('section[data-feature="readOnlyStart"]');
 
 test('gallery: the section is there only with the flag, last, with the three forms and ids of its own', async ({ page }) => {
-  await page.goto('/gallery.html');
+  await page.goto('/gallery.html?flags=-readOnlyStart');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
-  await page.goto('/gallery.html?flags=readOnlyStart');
+  await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders');
   await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'readOnlyStart');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"] .vb-chip-editing`).first()).toBeVisible();
   await expect(section(page).locator(`${bid('editing')}, ${bid('edit')}`)).toHaveCount(0);
@@ -298,7 +318,7 @@ test('gallery: the section is there only with the flag, last, with the three for
 for (const theme of THEMES) {
   test(`gallery: the section passes axe and matches its screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=readOnlyStart');
+    await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders');
     await expect(section(page)).toBeVisible();
     await expectNoAxeViolations(page);
     await expect(section(page)).toHaveScreenshot(`read-only-${theme}.png`);
