@@ -372,7 +372,6 @@ type CommonCardNumbers = number[];
 type CommonNoteAnswer = {
   kind: "reply";
   seq: number;
-  text: CommonLongText;
 } | {
   kind: "version";
   ver: number;

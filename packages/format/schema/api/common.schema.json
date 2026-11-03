@@ -150,11 +150,10 @@
       "oneOf": [
         {
           "type": "object",
-          "required": ["kind", "seq", "text"],
+          "required": ["kind", "seq"],
           "properties": {
             "kind": { "const": "reply", "description": "A reply naming the note in `to`." },
-            "seq": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/seq", "description": "The reply's line." },
-            "text": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/longText", "description": "What the reply said." }
+            "seq": { "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/seq", "description": "The reply's line: read the card (`show_node`) for its words." }
           },
           "additionalProperties": false
         },

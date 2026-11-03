@@ -148,7 +148,7 @@ test('reads tell the truth: a note the caller owes is `owed`, from the same rule
 /** A note's marks as a read gives them: `[seq, owed, answered]`. */
 const marks = (notes: any[]) => notes.map((x) => [x.seq, x.owed === true, x.answered]);
 
-test('reads say what answered a note (TOOLS_02): a reply with its words, a newer version, or the person\'s ✓ after it; an earlier note, and one not yet answered on another bot\'s card, are neither', async () => {
+test('reads say what answered a note (TOOLS_02): a reply\'s line, a newer version, or the person\'s ✓ after it; an earlier note, and one not yet answered on another bot\'s card, are neither', async () => {
   const { engine, bot, other, act } = await withPlans();
   const first = await act({ action: 'comment', n: 1, ver: 1, text: 'Friday is too soon.' });
   await act({ action: 'send', board: 'plans' });
@@ -163,9 +163,9 @@ test('reads say what answered a note (TOOLS_02): a reply with its words, a newer
     { type: 'reply', n: 1, to: onNow, text: 'Split.', key: 'plans-reply-now' },
   ] }, bot);
   const [reply, , nowReply] = wrote.results.map((r: any) => r.seq);
-  const byReply = { kind: 'reply', seq: reply, text: 'Monday, then.' };
+  const byReply = { kind: 'reply', seq: reply };
   const byVersion = { kind: 'version', ver: 2 };
-  const nowAnswer = { kind: 'reply', seq: nowReply, text: 'Split.' };
+  const nowAnswer = { kind: 'reply', seq: nowReply };
   const board = await tool(engine, 'get_board', { board: 'plans' }, bot);
   assert.deepEqual(marks(board.state.items['1'].notes), [[first, false, undefined], [latest, false, byReply]], 'the latest answered by the reply; the earlier one stood behind it');
   assert.deepEqual(marks(board.state.items['2'].notes), [[onTwo, false, byVersion]]);

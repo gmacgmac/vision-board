@@ -30,3 +30,10 @@ No commits, no LOG, no PII. Your worktree only. Anything outside File Ownership 
 
 ## Implementation Notes
 
+- `NoteAnswer` reply kind is `{ kind: 'reply', seq }` (`packages/actions/src/note-answer.ts`); `caller-marks.ts` needed no change (it passes the value through).
+- Contract: `$defs/noteAnswer` reply branch has no `text`; `info.version` 1.40.0 to 1.41.0 (`openapi.json`, `openapi.test.ts`); `npm run gen` run, `--check` current. `api.md` point 172 updated (no new point).
+- `SKILL.md` v3.27: one line under "Answer a note once": `answered` says what and where, never the words; unsure, read the card with `show_node`. The plugin's skill edits in `apps/board/plugin/words/` did not touch that text; `build-plugin.ts` ran without error (eval build, `test:plugin`).
+- Test (`bot-tool-rules.test.ts`, TOOLS_02 test): expectations now `{ kind: 'reply', seq }`. The test was edited first, so it failed against the old output by `deepEqual`; not run red before the code change.
+- Verification: `npm run verify` ok (warnings only, none new); `npm run check` 0 errors; unit tests 2200 pass; `test:plugin` 79 pass; `eval:bot --only answered-note,two-turns --repeat 2 --max-usd 1.5 --port 7050`: 4 runs, 22/22 checks, $0.3302 (report `tests/evals/bot/out/2026-11-03T08-56-49-015Z/report.md`). Dry run before it: 11/11.
+- Not run: `test:pages` (nothing the page draws changed; the person's read is unmarked).
+

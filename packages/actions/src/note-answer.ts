@@ -7,10 +7,10 @@ import type { Ask } from './notes.ts';
 import { askVer, cardsOf, closedAfter } from './notes.ts';
 import { replyTo } from './note-lock.ts';
 
-/** What answered a note: a `reply` naming it (its line and words), a newer version of the card (by `ver`: a version
+/** What answered a note: a `reply` naming it (its line, never its words: they are on the board), a newer version of the card (by `ver`: a version
  * has no `seq` of its own in the fold), or the person's ✓ or ✗ after it (its line). */
 export type NoteAnswer =
-  | { kind: 'reply'; seq: number; text: string }
+  | { kind: 'reply'; seq: number }
   | { kind: 'version'; ver: number }
   | { kind: 'check' | 'cross'; seq: number };
 
@@ -20,7 +20,7 @@ export type NoteAnswer =
  * container (no `id`) is answered by a reply alone. */
 export function noteAnswer(s: LedgerState, a: Ask, id?: number): NoteAnswer | undefined {
   const r = replyTo(s, a.seq, cardsOf(a));
-  if (r) return { kind: 'reply', seq: r.seq, text: r.text };
+  if (r) return { kind: 'reply', seq: r.seq };
   if (id === undefined) return undefined;
   const newer = s.nodes.get(id)?.versions.find((v) => v.ver > askVer(a, id));
   if (newer) return { kind: 'version', ver: newer.ver };
