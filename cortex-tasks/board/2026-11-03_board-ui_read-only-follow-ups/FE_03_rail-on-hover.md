@@ -64,3 +64,6 @@ _Re-run? Add a `### Run N` block; never overwrite an earlier run._
 ## On Completion
 
 Notes; your TASK-STATUS row; one LOG line, `[board-ui] FE_03: … → Task: [[cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/FE_03_rail-on-hover.md]]`, ending in a newline; the return block.
+
+### Run 2
+Cause (a), not (b): `data-rail-hover` is identical on fresh and in-place draws; `data-use` lingered. `bindRegionUse` kept the focused frame in a variable set on `focusin`; the spec's "click later" moves a focused card to Later, and the mark stayed on the frame it was in (and a `blur()` was only seen on the next animation frame). Fix: `region-use.ts` reads `document.activeElement` live at apply time, applies focus changes at once (focusout in a microtask), and returns `{ apply, stop }`; `draw.ts` calls `use.apply()` after each placement. `same-picture` (seeds 11, 77, 2026 and the rest), `container-rail*` and `container-rail-hover` pass (28). No spec change. `PERF_BASE` comes from `PORTS.perf` in `ports.ts`, inside the `VB_TEST_PORT` block.
