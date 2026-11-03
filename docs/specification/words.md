@@ -179,7 +179,7 @@ Files whose text only a developer reads: they stay in code and are not scanned.
 
 | File | Why it stays in code |
 |---|---|
-| `packages/format/src/flags.ts` | What each feature flag switches: read in the source and in the gallery's flag list, by the maintainer. |
+| `packages/format/src/flags.ts` | What each feature flag switches (`FLAG_DESCRIPTIONS`): read in the source, by the maintainer. |
 | `packages/actions/src/conditions.ts` | When each condition is true and when it ends (`trueWhen`, `endsWhen`): documentation of the registry, not shown to the person or sent to an agent. |
 | `packages/actions/src/references.ts` | What each reference edge means (`REFERENCES`): documentation of the registry, not shown or sent. |
 

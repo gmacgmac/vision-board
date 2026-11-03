@@ -96,7 +96,7 @@
       <button type="button" class="vb-btn vb-btn-small" bind:this={review} onclick={() => onreview()}>{chromeProposalsWords.review}</button>
     {/if}
     {#if ready}
-      <button type="button" class="vb-btn vb-btn-small vb-btn-primary" aria-disabled={readOnly || undefined} title={readOnly ? READ_ONLY_PERSON : undefined}
+      <button type="button" class="vb-btn vb-btn-small vb-btn-primary" aria-disabled={readOnly || undefined} data-paused={readOnly || undefined} title={readOnly ? READ_ONLY_PERSON : undefined}
         onclick={() => { if (!readOnly) onacceptall(); }}>{chromeProposalsWords.acceptAll(ready)}</button>
     {/if}
   {/if}

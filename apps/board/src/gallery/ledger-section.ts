@@ -93,7 +93,7 @@ export function ledgerSection(fx: Fixture): HTMLElement {
   const heading = el('h2', 'g-title', 'Ledgers');
   heading.id = 'feature-ledgerFolders';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'LedgerPart · LedgerRow · LedgerForm · header-tier'), ' · feature flag ledgerFolders, off by default · on with ?flags=ledgerFolders');
+  meta.append(el('code', undefined, 'LedgerPart · LedgerRow · LedgerForm · header-tier'), ' · feature flag ledgerFolders, on by default · off with ?flags=-ledgerFolders');
   box.append(heading,
     el('p', 'g-desc', 'A folder holds several ledgers, each with its own boards. The header\'s path reads folder / ledger / board / version: the ledger\'s list switches to another ledger, which the page reloads onto, and ends with New ledger….'),
     meta,

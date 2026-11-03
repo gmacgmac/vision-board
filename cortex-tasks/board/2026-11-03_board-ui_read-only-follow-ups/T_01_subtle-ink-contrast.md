@@ -91,6 +91,21 @@ paused/stale ink at opacity 0.35 and the hidden size options (opacity 0).
 ### Deviations from Plan
 -
 
+### Run 2 (the write; maintainer's yes, point 415: "415 - ok")
+
+**Status**: Completed.
+
+### Changes Made
+- `packages/tokens/src/tokens.css`: `--vb-ink-subtle: light-dark(#6b6b74, #b8b8c0);` with a comment naming the reading tier and point 415. `packages/tokens/README.md`: an "Ink tiers" line. `dialog.css` untouched: its three subtle lines (`.vb-dialog-item`, `.vb-field-note`, `.vb-dialog-hint`) are reading text.
+- FE_01-R2 `ProposalsBar.svelte` Accept all `data-paused={readOnly || undefined}`; FE_01-R3 `access.css` `.vb-access-allow-all { white-space: nowrap; }`; FE_02-R1 `gallery/ledger-section.ts` meta "on by default · off with ?flags=-ledgerFolders".
+- `docs/specification/components.md`: FE_01-R1 (write controls on a read-only ledger, after the header-controls item), FE_03-R1 (`railOnHover`, `data-rail-hover`, `data-use`, after the tool rail section), the stale "dark 48.8" lines (two) now 63.0, the ledger chip paragraph (last board through `pageStore`, `vb.lastBoard` read once), and § Feature flags (`FLAGS` is `{ default }`, sentences in `FLAG_DESCRIPTIONS`; written to match T_03, true after its merge). `docs/specification/words.md` and `scripts/words-homes.mjs` `DEVELOPER_TEXT` (flags.ts row): equal, "FLAG_DESCRIPTIONS", no gallery flag list; `node --test scripts/words.test.mjs` 7/7.
+- Screenshots re-taken (`tests/pages/__screenshots__/`, light and dark each, 34 files). Dark: the lighter subtle ink (mean lightness of the changed pixels up 6 to 13 on gallery pages; app-fit, alongside, chat-attach, folder-access, current-folder, gallery-base/freshCards/groupNoteOnce, header, review-list, search, fresh-section, ledgers, read-only). Light: the same pages differ with no lightness change; they fail identically (same pixel counts) on the wave-2 base without my edits, so they are the set's earlier changes (FE_03's rail icons hidden unless in use, FE_01/FE_02/FE_03 sections shifting the gallery by a fraction of a pixel), not the token; I looked at fresh-section-light (rail size icon fainter) and app-fit-light (same words, shifted text) before re-taking. Rail: `container-rail-states.spec.ts/rail-{light,dark}` and `gallery.spec.ts/gallery-toolRail-{light,dark}` (2682 -> 3164 px tall, FE_03's new group). Height by one pixel: `ledgers-{light,dark}` (4566 -> 4567; FE_02's meta line and FE_01's section; the 4567 vs 4566 FE_02 reported), `read-only-*` (3844 -> 3845), `header-*` (2858 -> 2857), `review-list-*` (697 -> 696): the same cause.
+### Caught Beyond the Brief
+- I ran the whole page suite once by mistake (a bare spec name filter matches the folder name `vision-board`, so 915 tests ran), then a second time partly and stopped it. Both outside the one-group allowance; I kept to the results (875 passed, 24 failed at that run: the screenshot specs above and `same-picture.spec.ts`). Use `tests/pages/<name>.spec.ts` paths from now on.
+- `same-picture.spec.ts` seeds 11, 77, 2026 fail on the base and with my edits (after "click later", a region's markup differs: `data-rail-hover`/`data-use` from FE_03). Not mine, not changed: REPORT.
+### Deviations from Plan
+- None.
+
 ## On Completion
 
 Notes; your TASK-STATUS row; one LOG line, `[board-tokens] T_01: … → Task: [[cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/T_01_subtle-ink-contrast.md]]`, ending in a newline; the return block.

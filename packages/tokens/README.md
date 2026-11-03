@@ -8,3 +8,4 @@ maintainer's yes.
 - **Depends on**: nothing.
 - **Used by**: `apps/board` (the page's stylesheet list, `src/styles/page.ts`, imports `#tokens/styles.css`), and `packages/ui` through it.
 - **Public API**: the `--vb-*` custom properties in `src/tokens.css`, reached as `#tokens/styles.css` (D-060); no `<link>` in the HTML pages.
+- **Ink tiers**: `--vb-ink-subtle` is muted text, so it is the reading tier (Lc 60) on every surface it is text on, in both themes; dark is `#b8b8c0` (maintainer point 415), Lc 63.0 on a card and 60.1 on the deepest surface, still about 8 Lc under `--vb-ink`.
