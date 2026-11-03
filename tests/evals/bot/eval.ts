@@ -1,5 +1,6 @@
 // The eval's loop: each scenario (times `repeat`) as one run with its own host, board folder and bot process, its
-// checks scored from the record, and the caps enforced before every run: the run counter and the spend (a run is
+// checks scored from the record (the plugin's host by default; with `standalone`, the real SKILL.md and `vb-mcp` against a
+// board server, standalone.ts, over the standalone scenarios), and the caps enforced before every run: the run counter and the spend (a run is
 // started only if the spend so far plus a whole run's cap stays within `maxUsd`). One retry for a run that crashed,
 // never for one that failed a check.
 import { createHash } from 'node:crypto';
@@ -11,8 +12,9 @@ import { deadline, startEvalHost } from './host.ts';
 import { CALL_MS, CEILING_RUNS, CEILING_USD, CRASH_RETRIES, RUN_TURNS, RUN_USD } from './limits.ts';
 import { runCost, runTurns } from './model.ts';
 import { picturesIn } from './scenarios/picture.ts';
-import { SCENARIOS } from './scenarios/index.ts';
-import type { RunRecord, Scenario, Stage } from './types.ts';
+import { SCENARIOS, STANDALONE } from './scenarios/index.ts';
+import { startStandaloneHost } from './standalone.ts';
+import type { BotHost, RunRecord, Scenario, Stage } from './types.ts';
 
 export const ROOT = path.resolve(import.meta.dirname, '../../..');
 export const SKILL = path.join(ROOT, 'dist/plugin/board/skill.md');
@@ -22,6 +24,8 @@ const SERVER = 'vision-board';
 
 export interface EvalOptions {
   dry: boolean;
+  /** The standalone bot (standalone.ts) and its scenarios, in place of the plugin's. */
+  standalone?: boolean;
   fake?: 'good' | 'bad';
   only?: string[];
   repeat: number;
@@ -44,14 +48,13 @@ export interface RunResult {
 
 export const sha = (text: string) => createHash('sha256').update(text).digest('hex').slice(0, 12);
 
-/** The CLI's arguments for one run, as a host's bot: the plugin's skill, only the host's tools and `Write`. */
-export function botArgs(o: { model: string; dir: string; mcp: string }): string[] {
+/** The CLI's arguments for one run: the host's skill and line, only the board's tools and the host's built-in ones. */
+export function botArgs(o: { model: string; bot: BotHost['bot']; mcp: string }): string[] {
   return [
     '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
-    '--model', o.model, '--system-prompt-file', SKILL,
-    '--append-system-prompt', `The host: your Vision Board's board folder is ${o.dir}`,
-    '--mcp-config', o.mcp, '--strict-mcp-config', '--tools', 'Write', '--allowedTools', `mcp__${SERVER}`,
-    '--permission-mode', 'acceptEdits', '--permission-prompts', 'none', '--add-dir', o.dir,
+    '--model', o.model, '--system-prompt-file', o.bot.skill, '--append-system-prompt', o.bot.prompt,
+    '--mcp-config', o.mcp, '--strict-mcp-config', '--tools', o.bot.tools, '--allowedTools', `mcp__${SERVER}`,
+    '--permission-mode', 'acceptEdits', '--permission-prompts', 'none', '--add-dir', o.bot.addDir,
     '--max-budget-usd', String(RUN_USD), '--max-turns', String(RUN_TURNS),
     '--no-session-persistence', '--disable-slash-commands', '--setting-sources', '', '--no-chrome',
   ];
@@ -64,22 +67,33 @@ export function checkCaps(o: Pick<EvalOptions, 'maxRuns' | 'maxUsd' | 'repeat'>)
   if (!(Number.isInteger(o.repeat) && o.repeat >= 1)) throw new Error('--repeat must be a whole number from 1');
 }
 
+/** The plugin's host (host.ts) as the bot sees it: the built skill, the pass-through to the door, `Write` only. */
+async function pluginHost(o: EvalOptions, base: string): Promise<BotHost> {
+  const dir = path.join(base, 'board');
+  mkdirSync(dir);
+  const host = await startEvalHost({ dir, port: o.port, dry: o.dry, ...(o.flags && { flags: o.flags }) });
+  return {
+    ...host, cwd: base, setReadOnly: host.setReadOnly, image: async (p) => host.image(p), record: () => {},
+    openLedger: async () => { throw new Error('a host has one board folder: no other ledger to open'); },
+    mcp: { command: process.execPath, args: [MCP_BOT], env: { VB_EVAL_DOOR: host.door, VB_EVAL_TOKEN: host.token, VB_EVAL_INSTRUCTIONS: o.instructions } },
+    bot: { skill: SKILL, prompt: `The host: your Vision Board's board folder is ${dir}`, tools: 'Write', addDir: dir },
+  };
+}
+
 /** One run of `scenario`: a fresh host and board folder, setup, the bot through every turn, then the record. */
 async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: number): Promise<{ record: RunRecord; problem: string | null }> {
   mkdirSync(runDir, { recursive: true });
   const base = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'vb-eval-')));
-  const dir = path.join(base, 'board');
-  mkdirSync(dir);
-  const host = await startEvalHost({ dir, port: o.port, dry: o.dry, ...(o.flags && { flags: o.flags }) });
+  const host = o.standalone ? await startStandaloneHost({ base, port: o.port, ...(o.flags && { flags: o.flags }) }) : await pluginHost(o, base);
+  const { dir } = host;
   try {
     const facts: Record<string, number | string> = { boardDir: dir };
     const botBoard = () => host.calls.filter((c) => c.name === 'write_board' && typeof c.input.board === 'string').at(-1)?.input.board as string | undefined;
-    const stage: Stage = { dir, tool: host.tool, person: host.person, facts, botBoard, readOnly: host.setReadOnly };
+    const stage: Stage = { dir, tool: host.tool, person: host.person, facts, botBoard, readOnly: host.setReadOnly, ledger: host.openLedger };
     if (s.setup) await deadline(s.setup(stage), CALL_MS, `${s.id} setup`);
     const mcp = path.join(runDir, 'mcp.json');
-    const env = { VB_EVAL_DOOR: host.door, VB_EVAL_TOKEN: host.token, VB_EVAL_INSTRUCTIONS: o.instructions };
-    writeFileSync(mcp, `${JSON.stringify({ mcpServers: { [SERVER]: { command: process.execPath, args: [MCP_BOT], env } } }, null, 2)}\n`);
-    const args = botArgs({ model: o.model, dir, mcp });
+    writeFileSync(mcp, `${JSON.stringify({ mcpServers: { [SERVER]: host.mcp } }, null, 2)}\n`);
+    const args = botArgs({ model: o.model, bot: host.bot, mcp });
     writeFileSync(path.join(runDir, 'args.json'), `${JSON.stringify(args, null, 2)}\n`);
     const turns = s.turns.map((t) => async () => {
       if (t.act) await deadline(t.act(stage), CALL_MS, `${s.id} person`);
@@ -87,19 +101,20 @@ async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: num
       return [t.say, sent].filter(Boolean).join('\n\n');
     });
     const run = await runTurns({
-      command: o.dry ? process.execPath : 'claude', args: o.dry ? [FAKE_BOT, ...args] : args, cwd: base, out: runDir,
+      command: o.dry ? process.execPath : 'claude', args: o.dry ? [FAKE_BOT, ...args] : args, cwd: host.cwd, out: runDir,
       env: { ...process.env, CLAUDE_CODE_DISABLE_CLAUDE_MDS: '1', VB_EVAL_SCENARIO: s.id, VB_EVAL_FAKE: o.fake ?? 'good' },
       ...(o.killMs && { killMs: o.killMs }),
     }, turns, (i) => host.setTurn(i));
+    host.record(run.turns);
     const copy = path.join(runDir, 'board-folder');
-    cpSync(dir, copy, { recursive: true });
+    cpSync(o.standalone ? path.dirname(dir) : dir, copy, { recursive: true });
     const record: RunRecord = {
-      scenario: s.id, attempt, dir: copy, turns: run.turns, calls: host.calls, ledger: await host.ledger(), facts,
-      exit: run.exit, model: run.model, instructions: host.seen.instructions, imageStatus: {},
+      scenario: s.id, attempt, dir: o.standalone ? path.join(copy, path.basename(dir)) : copy, turns: run.turns, calls: host.calls,
+      ledger: await host.ledger(), facts, exit: run.exit, model: run.model, instructions: host.seen.instructions, imageStatus: {},
       costUsd: o.dry ? 0 : runCost(run.turns.map((t) => t.end), RUN_USD), problem: run.problem,
     };
     const texts = itemsOf(record).map(({ item }) => String(item.node?.body ?? item.text ?? ''));
-    for (const [, p] of picturesIn(texts)) record.imageStatus[p] = host.image(p);
+    for (const [, p] of picturesIn(texts)) record.imageStatus[p] = await host.image(p);
     writeFileSync(path.join(runDir, 'calls.jsonl'), host.calls.map((c) => JSON.stringify(c)).join('\n') + '\n');
     writeFileSync(path.join(runDir, 'record.json'), `${JSON.stringify(record, null, 2)}\n`);
     return { record, problem: run.problem };
@@ -118,7 +133,8 @@ export function score(s: Scenario, r: RunRecord): Scored[] {
 
 export async function runEval(o: EvalOptions): Promise<{ results: RunResult[]; runs: number; spent: number; stopped: string | null }> {
   checkCaps(o);
-  const chosen = o.only?.length ? SCENARIOS.filter((s) => o.only!.includes(s.id)) : SCENARIOS;
+  const all = o.standalone ? STANDALONE : SCENARIOS;
+  const chosen = o.only?.length ? all.filter((s) => o.only!.includes(s.id)) : all;
   if (o.only?.length && chosen.length !== o.only.length) throw new Error(`unknown scenario in --only ${o.only.join(',')}`);
   const results: RunResult[] = [];
   let runs = 0;
@@ -145,4 +161,4 @@ export async function runEval(o: EvalOptions): Promise<{ results: RunResult[]; r
 }
 
 /** The skill the bot read, for the report: its hash and size. */
-export const skillFacts = () => { try { const t = readFileSync(SKILL, 'utf8'); return { sha: sha(t), lines: t.split('\n').length }; } catch { return null; } };
+export const skillFacts = (file = SKILL) => { try { const t = readFileSync(file, 'utf8'); return { sha: sha(t), lines: t.split('\n').length }; } catch { return null; } };

@@ -15,7 +15,7 @@ const arg = (name: string) => { const i = argv.indexOf(name); return i >= 0 ? ar
 const SERVER = 'vision-board';
 const scenario = scenarioById(process.env.VB_EVAL_SCENARIO ?? '');
 const script = (process.env.VB_EVAL_FAKE === 'bad' ? scenario.fake.bad : undefined) ?? scenario.fake.good;
-const dir = /board folder is (\S+)/.exec(arg('--append-system-prompt'))?.[1] ?? '';
+const dir = /folder is (\S+)/.exec(arg('--append-system-prompt'))?.[1] ?? '';
 const emit = (row: object) => process.stdout.write(`${JSON.stringify(row)}\n`);
 
 // The MCP pass-through, as the CLI starts it.
