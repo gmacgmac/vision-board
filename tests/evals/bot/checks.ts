@@ -114,3 +114,13 @@ export const cardAdded = (): Check => check('card-added', 'a new card was drawn'
   const added = callsTo(r, 'write_board').flatMap(resultsOf).filter((x) => x.ok && typeof x.n === 'number' && x.ver === 1);
   return [added.length > 0, added.map((x) => `card ${x.n} "${x.title}"`).join(', ') || 'none'];
 });
+
+const LOOKS = ['Read', 'Glob', 'Grep', 'LS', 'Bash'];
+/** No look around the folder (standalone, where the bot has read tools): what it needs comes from the board's tools. */
+export const noFolderRead = (): Check => ({
+  id: 'no-folder-read', says: 'no Read, Glob, Grep, LS or Bash use: where things go comes from the board\'s tools',
+  run(r) {
+    const used = r.turns.flatMap((t) => t.uses).filter((u) => LOOKS.includes(u.name));
+    return used.length ? no(used.map((u) => `${u.name} ${brief(u.input)}`).join('; ')) : ok('no look around the folder');
+  },
+});

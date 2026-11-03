@@ -725,3 +725,14 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   and `list_boards` name", it went straight to `.visionboard/main/images/` (1 run). Single runs, not rates.
 - 2026-11-03, agent: the `locked` instruction no longer calls a locked board "read-only", so the two states keep
   their own words (D-085 4).
+- 2026-11-03, agent (read-only follow-ups BOT_01, M53): `npm run eval:bot -- --standalone` now runs this skill as the
+  system prompt with the real `vb-mcp` against a test board server (ledger folders and read-only opening on, opened for
+  editing; calls read from the bot's stream), scored by the same checks. Scenarios 37 (`ledger-picture`), 38
+  (`other-ledger`) and 39 (`join-ledger`, new). Model `sonnet`, 9 runs over two invocations, skill v3.28 unchanged:
+  every check passed in 3 of 3 runs but one: 38's `done-only` passed 1 of 3. The bot read `scratch` with `ledger`,
+  left it byte-for-byte untouched and drew the summary on main every time, but then summed up the cards in the chat
+  (which were settled, which still open) in 2 runs. Likely from § Where you are running's own-chat line ("name the
+  board's title and id in the line saying what changed") meeting a summary that has things to explain; not changed
+  here (SKILL.md is not this task's file). 39: `scratch` named and nothing written, 3 of 3, but every run offered
+  `scratch` instead ("or tell me if `scratch` is the one you meant") in three or four sentences near the 300-character
+  cap, where The conversation asks one line and no offer for what the bot can't do; the eval does not score offers.
