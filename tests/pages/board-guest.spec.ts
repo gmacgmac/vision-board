@@ -177,7 +177,8 @@ test('pictures load from the host\'s route: the version and the picture ask ther
   await expect.poll(() => pic('a').getAttribute('src')).toMatch(/^\/pics\/one\/flow\.png\?v=one$/);
   await expect.poll(() => pic('b').getAttribute('src')).toMatch(/^\/pics\/two\/flow\.png\?v=one$/);
   expect(asked).toContain('HEAD /pics/one/flow.png');
-  expect(asked).toContain('GET /pics/two/flow.png');
+  // The src is set before the browser sends the GET: wait for the request, not just the attribute.
+  await expect.poll(() => asked).toContain('GET /pics/two/flow.png');
   expect(asked.filter((a) => !a.includes(' /pics/')), 'no fixed path').toEqual([]);
 });
 
