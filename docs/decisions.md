@@ -1148,3 +1148,36 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: in the bot eval, rules written only in the instructions were broken (a bot held its turn, answered a note twice, asked for a board it had); held by the tools and the reads, the eval went from 35 of 40 checks to 80 of 80.
 - **Rejected**: more instruction text for each slip; a host-chosen `wait` (the Send starts the turn); repeating a reply's words in `answered` (context the board already holds).
 - **Task**: cortex-tasks/board/2026-11-03_board-agent_bot-quality/TASK-STATUS.md (TOOLS_01, TOOLS_02)
+
+## D-084 A project holds several ledgers, one folder each
+- **Date**: 2026-11-03 · **Status**: Accepted (maintainer, points 23-30, 37-44) · **From**: board-app ledgers-and-read-only PLAN
+- **In short**: `.visionboard/` holds one folder per ledger; each is a whole data folder for the engine, chosen by the standalone host.
+- **Decision**:
+  1. `.visionboard/<ledger>/` holds a ledger, its agents, lock, images, apps and app state. Repo-wide files (the standalone chat's sessions, attachments, permissions) stay at `.visionboard/`. The first ledger is `main`.
+  2. One paths module gives every data-folder path from the project and the ledger; the agent's file rules stay their own table (D-037), held equal to it by a test.
+  3. Keys, card identities, board numbers and agents are per ledger (amends D-017's "per project" to "per ledger").
+  4. Choosing a ledger is the standalone host's, as choosing the folder is; the plugin seam does not change.
+  5. One server has one ledger open at a time; switching is the folder switch's path; the lock is per ledger.
+  6. A folder in the old layout moves into `main/` on first open, by rename only, while holding the lock; `npm run ledgers:undo` reverses it.
+  7. The header shows folder / ledger / board / version; the ledger is three page parts of the standalone host, placed by `header-tier.ts`.
+  8. An agent's read tools may read another ledger of the same project, read-only, to bring its work into the open one.
+  9. Behind `ledgerFolders`.
+- **Why**: one ledger per project grows without end and mixes unrelated work; throwaway planning needs a ledger of its own.
+- **Rejected**: a ledger folder beside `.visionboard/` (clutters the project root); per-board files inside one ledger (agents, grants and numbers are ledger-wide, a far larger contract change); ledgers inside the plugin's board picker (a seam change for a host's choice).
+- **Task**: cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/TASK-STATUS.md
+
+## D-085 A ledger opens read-only; Edit takes its lock
+- **Date**: 2026-11-03 · **Status**: Accepted (maintainer, points 25, 31-36, 39, 42, 45) · **From**: board-app ledgers-and-read-only PLAN
+- **In short**: opening a ledger never writes; Edit takes the ledger's lock if no one holds it; agents can read a read-only ledger and are told it is read-only.
+- **Decision**:
+  1. A ledger opens read-only and takes no lock; `--edit` or `VB_EDIT=1` opens it for editing, for development and tests.
+  2. Edit takes the lock at the moment it is pressed (`takeLock`); a live lock elsewhere refuses and names the computer. Stop editing releases it.
+  3. Read-only writes nothing at all: no line, flag, Send, lock or file.
+  4. Reads carry `readOnly: true`; writes answer the problem `read-only`. Tools stay listed. D-043's `locked` is unchanged.
+  5. The read-only state shows in all three header forms.
+  6. A followed ledger reopens when its file is replaced, not only when it grows.
+  7. The engine takes an optional read-only option, so a host can have it; `SEAM` stays 1 if the types check allows.
+  8. Behind `readOnlyStart`.
+- **Why**: a board shared through Dropbox, a git pull or a sent file must be watchable by anyone without a second writer forking the ledger; writing is a deliberate step.
+- **Rejected**: hiding the tools while read-only (MCP clients cache the list for an hour, `packages/mcp/src/info.ts` `CACHE`); reusing `locked` (it means one board closed by the person, and bots are told to stop); a read-only server mode chosen only at start (the person could not go from watching to editing).
+- **Task**: cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/TASK-STATUS.md

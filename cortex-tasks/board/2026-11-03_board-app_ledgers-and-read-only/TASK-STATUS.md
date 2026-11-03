@@ -2,7 +2,7 @@
 task_name: Ledgers and Read-only
 created: 2026-11-03
 completed:
-status: planned
+status: in-progress
 categories: [board-app, board-security, board-agent, board-ui]
 skills: [cortex-architecture, cortex-docs]
 tracker:
@@ -31,7 +31,7 @@ tracker:
 
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
-| 0 | SETUP | 0 | — | — (orchestrator) | Branch `feat/ledgers`; D-084 and D-085 appended from PLAN; flags `ledgerFolders`, `readOnlyStart` added off; script `ledgers:undo` added to `package.json` | Pending | |
+| 0 | SETUP | 0 | — | — (orchestrator) | Branch `feat/ledgers`; D-084 and D-085 appended from PLAN; flags `ledgerFolders`, `readOnlyStart` added off; script `ledgers:undo` added to `package.json` | Completed | Plan committed on `main` (895f4b3); tag `ledgers/wave-0`. SETUP-R1 routed to PATHS_01 |
 | 1 | PATHS_01 | 1 | strong | Software engineer who refactors live systems — a move changes no behaviour, and the tests and screenshots are the proof; a second home for a fact is a bug waiting. | [One paths module](./PATHS_01_paths-module.md) | Pending | |
 | 2 | ACCESS_01 | 1 | strong | Application security engineer — an agent never reads a secret because of where a file happens to sit; a rule is proven by a test that tries to break it, in every layout. | [Agent file rules for ledger folders](./ACCESS_01_agent-file-rules.md) | Pending | |
 | 3 | LEDGERS_01 | 2 | strong | Backend engineer who owns storage migrations — data is moved once, by rename, recoverably, and never while another writer might hold it; the contract changes before the code. | [Ledgers on the server](./LEDGERS_01_ledgers-server.md) | Pending | |
@@ -102,13 +102,14 @@ notes) and `cortex/LOG.md` (append one line) are shared by design.
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
+| SETUP-R1 | SETUP | `apps/board/tests/engine.test.ts` "watch: a write through another engine…" fails on `main` before this set (and cancels the two tests after it): the ledger's follow timer is `unref`'d (`ledger.ts` `follow`), so awaiting another engine's poll lets the event loop drain. Fix the test (hold the loop while it waits), not the engine | PATHS_01 (owns `apps/board/tests/**`) | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
 ## Implementation Notes
 
 ### Wave gates (orchestrator)
-- Setup:
+- Setup: plan committed alone on `main` (895f4b3); `feat/ledgers` cut; D-084, D-085 appended; flags `ledgerFolders`, `readOnlyStart` off; `ledgers:undo` script. `map`, `verify`, `check` green; `npm test` 2237 pass, 0 fail, 3 cancelled — all in `engine.test.ts`, the same on the plan commit without these changes (SETUP-R1); `test:timing` green.
 - Wave 1:
 - Wave 2:
 - Wave 3:
