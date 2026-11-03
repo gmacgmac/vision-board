@@ -11,6 +11,7 @@ import { makeTempDir } from '#format/testing';
 import { pluginTypes, seamProblem, typesHash } from '../bin/plugin-types.ts';
 import { SEAM, SEAM_TYPES, TYPES_FILE } from '../plugin/seam.ts';
 import { manifestOf } from '../plugin/manifest.ts';
+import { FLAGS } from '#format';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const dts = pluginTypes();
@@ -155,4 +156,12 @@ test('the seam number cannot stay behind the types: a change to them fails until
   assert.notEqual(widened, dts, 'the sample change was made');
   assert.match(seamProblem(widened) ?? '', /raises SEAM to 2/);
   assert.match(seamProblem(dts.replace('hasLine?(ref', 'hasLine(ref')) ?? '', /SEAM_TYPES/);
+});
+
+test('a new flag leaves the types alone: flag names are strings at the seam, so adding one is not a seam change (D-078)', () => {
+  const code = dts.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ''); // a comment may name a flag; the hash ignores comments
+  const named = Object.keys(FLAGS).filter((name) => new RegExp(`\\b${name}\\b`).test(code));
+  assert.deepEqual(named, [], 'no flag name is in plugin.d.ts');
+  assert.doesNotMatch(code, /\bFlagName\b|\bFlagOverrides\b/);
+  assert.match(dts, /flags\?: Record<string, boolean>/);
 });

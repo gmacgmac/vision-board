@@ -186,7 +186,7 @@ createEngine({ dir, name?, warn?, flags? }): PluginEngine   // apps/board/plugin
 
 `dir` is the board's data folder, one per bot or project, and the only place it reads or writes: the ledger, the agents'
 hashes and `images/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
-`warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself: `svgImages`.
+`warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself: `svgImages`. Flag names are plain strings in `plugin.d.ts` (`{ [name: string]: boolean }`), so a new flag is never a change to the seam, and a name the engine does not know is ignored (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone").
 
 | Member | Promise | Proven by |
 |---|---|---|
