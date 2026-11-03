@@ -103,6 +103,43 @@ _Re-run? Add a `### Run N` block; never overwrite an earlier run._
 - Look: a two-ledger folder server on port 6219, page `?flags=-ledgerFolders`: 1400 light and dark (folder / main /
   board / v4), 900 light and dark (folder icon, "main", the board), 600 light and dark ("⋯": Folder, Ledger main, …).
 
+### Run 2
+
+**Status**: Completed (2026-11-03, Opus 5.5, worktree `feat/fe-02-run2`, `VB_TEST_PORT=6200`). PLAN decision 11
+(point 418): `main` is per folder too; a key from before is read once by `main` of the open folder, then kept under its key.
+
+#### Changes Made
+- `shell/kept.ts` `ledgerScope`: the folder's path for its `main` and its old layout (the same data before and after the
+  move into `main/`), `ledgerFolder(path, ledger)` for another ledger, '' while no folder is read. `pageStore(folder)`:
+  every key `vb.<key>:<scope>`; for `main` (or the old layout) a missing value falls back to the key from before
+  (`vb.<key>`), which is then kept under the new key and removed (read once); a write there removes it too. With no
+  folder read, the keys from before. `page-host.ts` passes `() => shell.folder`.
+- Tests: `apps/board/tests/kept.test.ts` (`ledgerScope`; each folder's `main` and each ledger keep their own; a value
+  from before read once, then moved; a write retires it); `tests/pages/ledger-memory.spec.ts` (`other` moved into `main/`
+  with its own `plan`; keys now carry the folder; "main/plan of two folders…"; "a value kept before…").
+- Docs: `components.md` (the host's store paragraph).
+
+#### The last-board key (LEDGER_UI_01)
+- Its keys already follow the rule: `folder.ts` `lastBoardKey` is `vb.lastBoard:<ledgerScope>` (its `|| f.path` now
+  never applies; `folder.ts` is not this run's file, and it gives the same keys).
+- Not its fallback: `page-host.ts` still writes the key from before (`vb.lastBoard`) on every open and reads it as the
+  last fallback each load, so folder B can open folder A's last board when B has a board of that id. Making it "read
+  once" (stop writing it once a folder is read; move it into the folder's key on first read) breaks
+  `tests/pages/last-board.spec.ts`, which asserts `vb.lastBoard` in two tests and is not this run's file. Request.
+
+#### Caught Beyond the Brief
+- `npm run verify` fails at the base of this wave: the board page is 200.0 KB gzip over the 200 KB budget
+  (`feat/ro-follow-ups` HEAD, my change stashed); this run adds 0.1 KB (200.1). Not this run's to fix.
+
+#### Verification (normal tier)
+- Failing first: the unit tests (4 of 8 failed: keys without the folder) and both new page tests (keys without the
+  folder; the old value stayed under its old key).
+- After: unit 8/8 in `kept.test.ts`; related unit 131/131. Pages (nice 15, 3 workers, port 6200, 5 min each):
+  ledger-memory, ledgers, last-board 26/26; live-boards, card-image-states, proposals-notice, proposals, open-folder,
+  current-folder 76/76; board-guest, board-host, zoom-level, read-only, header-tiers 64/64.
+- `npm run check` 0 errors; `--write-map` leaves `modules.md` as it is; `verify` as above (35 warnings, unchanged).
+- No visual change in this run (storage keys only), so there was no look to take.
+
 ## On Completion
 
 Notes; your TASK-STATUS row; one LOG line, `[board-ui] FE_02: … → Task: [[cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/FE_02_ledger-chip-and-memory.md]]`, ending in a newline; the return block.

@@ -15,7 +15,7 @@ import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
 import { readEditing } from './editing.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
-import { keep, kept, ledgerScope, pageStore } from './kept.ts';
+import { keep, kept, pageStore } from './kept.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
 import { askConfirm, shell, toast } from './shell.svelte.ts';
 import * as pageHelpWords from './words/page-help.ts';
@@ -87,7 +87,7 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     settingsChanged() { for (const l of listeners) l(); },
     notify: (text, tone) => toast(text, tone),
     confirm: ({ heading, body, confirm, list }) => askConfirm(heading, body, confirm, list),
-    store: pageStore(() => ledgerScope(shell.folder)),
+    store: pageStore(() => shell.folder),
     page: {
       async wanted() {
         const folder = openFolder ? shell.folder ?? await loadFolder() : null; // read before the mount (App.svelte)
