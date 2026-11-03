@@ -191,12 +191,12 @@ export const FLAGS = {
   cardImages: {
     // On by default (app-cards orchestrator decision 5, D-048 rulings 19-23); ?flags=-cardImages turns it off.
     default: true,
-    description: 'Markdown draws `![alt](path)` as the image in the project\'s `.visionboard/images/` (D-048), which opens over the board at 70% of the screen. Off, it stays its text.',
+    description: 'Markdown draws `![alt](path)` as the image in the open ledger\'s `images/` (`.visionboard/images/`, or `.visionboard/<ledger>/images/` with ledgerFolders; D-048), which opens over the board at 70% of the screen. Off, it stays its text.',
   },
   svgImages: {
     // On by default with the maintainer's yes to D-064 (host-fixes-and-svg SVG_01); ?flags=-svgImages turns it off.
     default: true,
-    description: 'With cardImages, an svg in the project\'s `.visionboard/images/` is a picture like a png (D-064): drawn only through <img>, so its CSS and SMIL animation play and its script never runs, and served under its own policy (no script, sandboxed) at its own address; at most 1 MB, and it must say its size (a viewBox, or a width and height). Off, an svg is refused as before ("only png, jpeg, webp or gif") by the page\'s Markdown (`renderMarkdown`\'s `svg`, from the host\'s settings) and by the server\'s route (its own flags).',
+    description: 'With cardImages, an svg in the open ledger\'s `images/` is a picture like a png (D-064): drawn only through <img>, so its CSS and SMIL animation play and its script never runs, and served under its own policy (no script, sandboxed) at its own address; at most 1 MB, and it must say its size (a viewBox, or a width and height). Off, an svg is refused as before ("only png, jpeg, webp or gif") by the page\'s Markdown (`renderMarkdown`\'s `svg`, from the host\'s settings) and by the server\'s route (its own flags).',
   },
   leavePrompt: {
     // On by default (maintainer, point 310; host-fixes-and-svg M11_01: words lost is the worse failure); ?flags=-leavePrompt turns it off.
@@ -256,7 +256,7 @@ export const FLAGS = {
   agentAccessRules: {
     // On by default (maintainer, 2026-10-28, points 329, 331, 334; agent-access-and-working). The refusals are a fix and hold with it off.
     default: true,
-    description: 'The side-panel agent may, without asking: read files inside the board\'s folder that the access rules allow (packages/agent/src/access-rules.ts), run shell commands that only read such files, and write in `.visionboard/images/` and `.visionboard/apps/`; a question inside the folder also offers "Allow for this folder", remembered. Off, every read outside the agent\'s own tools asks, as do those writes. Refused paths (`.env`, the bots\' secrets, the ledger, `.git/`) are refused either way.',
+    description: 'The side-panel agent may, without asking: read files inside the board\'s folder that the access rules allow (packages/agent/src/access-rules.ts), run shell commands that only read such files, and write in the open ledger\'s `images/` and `apps/` (`.visionboard/…`, or `.visionboard/<ledger>/…` with ledgerFolders); a question inside the folder also offers "Allow for this folder", remembered. Off, every read outside the agent\'s own tools asks, as do those writes. Refused paths (`.env`, the bots\' secrets, the ledger, `.git/`) are refused either way.',
   },
   approvalHold: {
     // On by default (maintainer, 2026-10-28, point 335; agent-access-and-working HOLD_01). Read on the server (VB_FLAGS).
