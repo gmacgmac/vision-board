@@ -30,7 +30,7 @@ export const skillEdits: readonly SkillEdit[] = [
   { from: ", and always in the board's own chat panel. It also shows pictures, and small apps you build, inside a card.", to: '. It also shows pictures inside a card.' },
   { from: 'status: ', until: '\n---\n', to: 'status: the Vision Board skill, for a bot that a host names' },
   // Where you are running: the standalone chat's own join, panel and permissions go; the message's blocks stay.
-  { from: '**From your own chat** (the', until: '- **One message carries everything**', to: 'You run in a host\'s chat, with the `vision-board` tools.\n\n' },
+  { from: '**From your own chat** (the', until: '- **Quiet while you work.**', to: 'You run in a host\'s chat, with the `vision-board` tools.\n\n' },
   { from: '**One message carries everything**', to: '**A message carries**' },
   { from: '  2. `The person attached these files:`', until: '`The person selected these cards:`', to: '  2. ' },
   { from: '  4. (Rare, an older page)', until: 'The Send message:', to: '  3. ' },
