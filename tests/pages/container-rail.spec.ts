@@ -79,8 +79,10 @@ test('bounds: at every zoom down to FAR_K the rail never reaches a card, a lane 
   }
 });
 
+// The dimmed-at-rest look is the railOnHover flag off (?flags=-railOnHover); on, the rest strength is the
+// container in use's and the others hide (container-rail-hover.spec.ts).
 test('dim at rest, lit on hover, on focus and while a popover is open; Comment\'s badge is never dimmed', async ({ page, request }) => {
-  const d = await board(page, request);
+  const d = await board(page, request, '?flags=-railOnHover');
   await zoomTo(page, 1);
   const f = frame(page);
   const rest = Number(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--vb-rail-rest')));
@@ -117,7 +119,7 @@ test('dim at rest, lit on hover, on focus and while a popover is open; Comment\'
 for (const theme of THEMES) {
   test(`APCA: every icon at rest on the canvas and on the rail (Lc 30 in light; dark's trial numbers reported); lit, the quiet icon is as before (${theme})`, async ({ page, request }) => {
     await setTheme(page, theme);
-    await board(page, request);
+    await board(page, request, '?flags=-railOnHover');
     await zoomTo(page, 1);
     const f = frame(page);
     const rest = await iconOpacity(f);
