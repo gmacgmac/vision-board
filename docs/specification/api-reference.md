@@ -72,7 +72,7 @@ Media type `application/json`.
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `project` | string | yes | The folder the board server has open, as the person reads it (`~/projects/example`); every board listed is in its ledger. |
 | `ledger` | string | no | The ledger every board listed is in: the one the board server has open in that folder, or the other one the read named (`ledger`, read-only). Given only with ledger folders. |
-| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 
@@ -133,7 +133,7 @@ Media type `application/json`.
 | `holders` | object | no | Region id to the agents that hold it now, creator first; a region with none, and a board with none, are left out. |
 | `locked` | `true` | no | Present, and true, while the person has the board locked: it is read-only for everyone, and every write on it is refused with `locked` until the person unlocks it. |
 | `ledger` | string | no | The other ledger of the folder this was read from, when the read named one (`ledger`); it comes with `readOnly: true`. Left out for the open ledger. |
-| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 
@@ -345,7 +345,7 @@ Media type `application/json`.
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `linked` | list of object | no | The nodes linked to this one, each in full. Present only when `linked` is true. |
 | `ledger` | string | no | The other ledger of the folder this was read from, when the read named one (`ledger`); it comes with `readOnly: true`. Left out for the open ledger. |
-| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 
@@ -796,7 +796,7 @@ Media type `application/json`.
 | `events` | list of object | yes | The ledger lines after `after`, oldest first. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `more` | `true` | no | Present, and true, only when there is more to read or the answer repeats an earlier one |
-| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person presses Edit. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
+| `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
 
 Example:
 

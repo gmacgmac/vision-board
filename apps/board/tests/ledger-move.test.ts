@@ -156,7 +156,7 @@ test('a move stopped part-way says what is where, loses nothing, and the next on
   try {
     refused(() => moveIntoMain(project, { port: PORT }), /stopped part-way .* In \.visionboard\/main\/: agents\.json, images\. Still in \.visionboard\/: apps, app-state, ledger\.jsonl/);
     // What it advises works in that state: opening again finishes; undo only once finished (FIX_01 F13).
-    refused(() => moveIntoMain(project, { port: PORT }), /open the folder again \(or press Edit\) to finish the move\. Once it has finished, npm run ledgers:undo/);
+    refused(() => moveIntoMain(project, { port: PORT }), /open the folder again \(or switch to Editing\) to finish the move\. Once it has finished, npm run ledgers:undo/);
     refused(() => undoMove(project, { port: PORT }), /has no \.visionboard\/main\/ledger\.jsonl to move back/);
   } finally { fs.chmodSync(apps, 0o700); }
   assert.ok(fs.existsSync(ledgerFiles(root()).ledger), 'the ledger file goes last: still the old layout');

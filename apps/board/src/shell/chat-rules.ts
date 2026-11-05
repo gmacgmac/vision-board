@@ -25,7 +25,7 @@ export const shownPick = (s: ChatSessionInfo | null, refused: string | undefined
 export const LOADING = chatWords.loading;
 export const PAST = chatWords.aPastVersionOfThe;
 /** Why no session can start while the ledger is read-only. */
-export const READ_ONLY = chatWords.readOnlyPressEditTo;
+export const READ_ONLY = chatWords.readOnlySwitchToEditing;
 
 /** What the session runs, or will when it starts. */
 export interface Pick { agent: Agent; model: string }

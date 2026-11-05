@@ -8,6 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { APIRequestContext, Page } from '@playwright/test';
+import { READ_ONLY_PERSON as REASON } from '#actions';
 import { ledgerFiles, ledgerFolder } from '#format';
 import { lc, pixel, resolved } from './apca.ts';
 import { card, idle, menuButton, toast } from './board-page.ts';
@@ -22,7 +23,6 @@ import { openLedger } from '../../apps/board/server/ledger.ts';
 test.describe.configure({ mode: 'serial' });
 
 const THEMES: Theme[] = ['light', 'dark'];
-const REASON = 'Read-only: press Edit to change it';
 /** The menu as it was: the toggle (readOnlyToggle, read-only-toggle.spec.ts) off. */
 const FLAGS = 'readOnlyStart,ledgerFolders,-readOnlyToggle';
 let srv: FolderServer;
@@ -56,8 +56,8 @@ test('opens read-only: the chip says so, and every control that would write is p
   await expect(chip(page)).toBeVisible();
   await expect(chip(page)).toHaveAttribute('data-state', 'read-only');
   await expect(chip(page)).toContainText('Read-only');
-  await expect(chip(page)).toHaveAccessibleName('Read-only: press Edit to change this ledger');
-  await expect(chip(page)).toHaveAttribute('title', 'Read-only: press Edit to change this ledger');
+  await expect(chip(page)).toHaveAccessibleName('Read-only: switch to Editing to change this ledger');
+  await expect(chip(page)).toHaveAttribute('title', 'Read-only: switch to Editing to change this ledger');
   await expect(button(page)).toBeVisible();
   await expect(button(page)).toHaveAccessibleName('Edit');
   // The path, then the state, then Edit.
