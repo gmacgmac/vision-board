@@ -11,10 +11,12 @@
 // ruling 6; text fields keep their cursor, board.css). A drag on a container's label (its grip, title
 // or count, not its other buttons) moves the container (3_FE_04 ruling 5; open list and container
 // title FE_02, container-drag.ts); held still, a press on the title is the background's click. While a pan, a move or a lasso runs, nothing on
-// the page gets text-selected (U5). Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live
+// the page gets text-selected (U5). Scroll pans (wheelChaining: once what is under the pointer can scroll
+// no further, wheel-latch.ts), Ctrl/Cmd + scroll zooms. Keyboard equivalents live
 // in keys.ts (project rule 5).
 import type { Box, Point } from '#layout';
 import type { Viewport } from '../canvas/index.ts';
+import { createWheelLatch, scrollerIn } from './wheel-latch.ts';
 
 export interface PointerHandlers {
   box(id: string): Box | undefined;
@@ -82,7 +84,7 @@ type Gesture =
 
 /** Listens on the stage and the window; returns the function that stops listening on the window
  * (the stage's own listeners go with it). */
-export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers): () => void {
+export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers, wheelChaining = false): () => void {
   let g: Gesture | null = null;
   /** The mousedown after this pointerdown must not do its default (focus, text selection). */
   let stopMouse = false;
@@ -254,11 +256,14 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   };
   window.addEventListener('click', onClick, true);
 
+  const latch = wheelChaining ? createWheelLatch(scrollerIn(stage)) : null;
   stage.addEventListener('wheel', (e) => {
-    // Scrolling inside the note bubble or a hover tip scrolls its text, not the board.
-    if ((e.target as HTMLElement).closest('vb-note-bubble, .vb-tip')) return;
+    const zoom = e.ctrlKey || e.metaKey;
+    // wheelChaining: what is under the pointer scrolls while it can, one target a gesture (wheel-latch.ts);
+    // Ctrl/Cmd zooms everywhere. Off: inside the note bubble or a hover tip the wheel is always its own.
+    if (latch ? !zoom && latch.target(e) : (e.target as HTMLElement).closest('vb-note-bubble, .vb-tip')) return;
     e.preventDefault();
-    if (e.ctrlKey || e.metaKey) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
+    if (zoom) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
     else vp.panBy(-e.deltaX, -e.deltaY);
   }, { passive: false });
   return () => {

@@ -274,6 +274,10 @@ export const FLAGS = {
     // On by default (maintainer, 2026-11-05, point 431; insert-markdown-signals FE_02); ?flags=-readOnlyToggle turns it off.
     default: true,
   },
+  wheelChaining: {
+    // On by default (maintainer, 2026-11-05, the "scroll then pan" point after 436); ?flags=-wheelChaining turns it off.
+    default: true,
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
@@ -378,4 +382,5 @@ export const FLAG_DESCRIPTIONS = {
   markdownMore: 'Markdown draws `#` large, `##` medium and `###` to `######` as the small label; GFM tables of up to 4 columns that wrap and never scroll (a card with one is the widest tier); and `---`, `***` or `___` as a horizontal line. Off, every heading is the small label and tables and breaks stay text (D-023).',
   updateSignals: 'Updated is a bright amber (`--vb-state-updated`): the card\'s "N updates" tab and the "updated" count in a container\'s pill; new stays teal. The agent\'s reply has an amber left edge, bright while its card is unseen, muted after. Off, the tab is the accent pink and replies are grey.',
   readOnlyToggle: 'Read-only and Editing are one toggle button in the header that shows the current state and flips on a press (taking the lock can still be refused). Off, the read-only chip opens a menu.',
+  wheelChaining: 'The wheel scrolls what is under the pointer (a note or reply bubble, a long tip, a text box, a code block) while it can still scroll that way, and pans the board otherwise, a container\'s title included; one gesture keeps the target its first wheel event found until a quiet gap of about 150 ms, so a flick that reaches a bubble\'s end stops there and the next gesture pans. Ctrl or Cmd with the wheel zooms everywhere. Off, the wheel inside a note bubble or any hover tip is always its own and never pans; everywhere else it pans.',
 } as const satisfies Record<FlagName, string>;

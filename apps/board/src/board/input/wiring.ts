@@ -75,8 +75,10 @@ const selectingIn = (el: Element) => {
 };
 
 /** Bind everything; returns the function that unbinds what outlives the stage (document, window).
- * `pageWide`: the board has its own page (`host.page`), so its keys work anywhere on it (keys.ts). */
-export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, onResize: () => void, pageWide = false): () => void {
+ * `pageWide`: the board has its own page (`host.page`), so its keys work anywhere on it (keys.ts).
+ * `wheelChaining`: the wheel scrolls what is under the pointer, then pans (the flag, pointer.ts). */
+export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, onResize: () => void,
+  { pageWide = false, wheelChaining = false }: { pageWide?: boolean; wheelChaining?: boolean } = {}): () => void {
   stage.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
@@ -137,7 +139,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     frameStart: h.frameStart,
     frameMove: h.frameMove,
     frameEnd: h.frameEnd,
-  });
+  }, wheelChaining);
 
   const unbindKeys = bindKeys({
     ...h,
