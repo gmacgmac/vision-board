@@ -77,10 +77,11 @@ export function notesMarkup(v: NotesView, now = new Date(), md?: MarkdownOptions
 }
 
 /** An agent's reply under the note it answers (FE_03 ruling 3): the note's shape, clamp and time,
- * read-only, and a tab stop so focus shows its full text in the same tip (`bindNoteTip`). */
+ * read-only, and a tab stop so focus shows its full text in the same tip (`bindNoteTip`). `data-unseen`
+ * while its card is unseen (updateSignals flag: the bright amber edge, node-parking.css). */
 function replyMarkup(r: ReplyEntry, now: Date, md?: MarkdownOptions): string {
   const text = renderMarkdown(r.text, md);
-  return `<div class="vb-node-reply" data-reply="${r.seq}" data-at="${esc(r.at)}" tabindex="0"><span class="vb-node-note-who">${esc(r.who)}</span>`
+  return `<div class="vb-node-reply" data-reply="${r.seq}" data-at="${esc(r.at)}"${r.unseen ? ' data-unseen' : ''} tabindex="0"><span class="vb-node-note-who">${esc(r.who)}</span>`
     + `${timeMarkup(r.at, now)}<div class="vb-node-note-text">${text}</div><div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>`;
 }
 

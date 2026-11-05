@@ -4,7 +4,7 @@ import type { ActionId, NodeSize, ParkBundle, ViewNode } from '#format';
 import { NODE_TYPES } from '#format';
 import type { BoardState, ItemStatus, ProposalRow } from '#actions';
 import type { CardReply, NotesView } from './node-notes.ts';
-import { notesView } from './node-notes.ts';
+import { litReplies, notesView } from './node-notes.ts';
 import type { CardUpdates, UpdatesView } from './node-updates.ts';
 import { type AppCardInput, type AppCardView, appView } from './node-app.ts';
 import { updatesView, updateWords } from './node-updates.ts';
@@ -209,13 +209,13 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const status = statusOf(s, n.id);
   const pressed: Partial<Record<ActionId, boolean>> = {};
   for (const a of offers(n)) pressed[a] = isPressed(a, status);
-  const notes = notesView(n, s.items.get(n.id)?.notes ?? [], c.replies, s.notesHidden?.get(n.id), c.groupNotesApart);
   const awaiting = isItem(n) && c.awaiting === true;
   const handover = handoverView(n, c.handover, awaiting);
   const picked = s.sizes.has(n.id);
   const proposal = proposalsView(n, c.proposals);
   const updates = updatesView(n, c.updates);
   const fresh = isItem(n) && c.new === true;
+  const notes = notesView(n, s.items.get(n.id)?.notes ?? [], litReplies(c.replies, c.new === true || (!!updates && !updates.done)), s.notesHidden?.get(n.id), c.groupNotesApart);
   const flagged = isItem(n) && s.flags.has(n.id);
   const app = n.kind === 'app' && c.app ? appView(n, c.app) : undefined;
   return {

@@ -35,3 +35,11 @@ vb-node .vb-node-reply .vb-node-note-who { color: var(--vb-ink); }
 vb-node:has(.vb-node-reply[data-tip-open]) { z-index: var(--vb-z-open); }
 vb-node .vb-node-reply[data-tip-open] .vb-note-tip { display: block; }
 vb-node .vb-node-reply :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
+
+/* The agent's reply in amber (updateSignals flag, D-088): its left edge is --vb-state-updated while its
+   card is unseen (`data-unseen`, D-054), then a muted amber, halfway to the strong line, so a reply always
+   reads apart from the person's notes (pink while editable, grey once sent). APCA of the edge on the
+   reply's sunken fill: bright Lc 61.9 light, 73.1 dark; muted 42.3 and 33.4 (edges, 30). The note
+   bubble's replies take the same two (note-bubble.css). */
+[data-update-signals] vb-node .vb-node-reply { border-left-color: color-mix(in srgb, var(--vb-state-updated) 50%, var(--vb-line-strong)); }
+[data-update-signals] vb-node .vb-node-reply[data-unseen] { border-left-color: var(--vb-state-updated); }

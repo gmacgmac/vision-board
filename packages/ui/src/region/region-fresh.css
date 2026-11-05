@@ -26,3 +26,7 @@ vb-region .vb-region-fresh {
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold);
 }
 vb-region .vb-region-fresh[hidden] { display: none; }
+/* Updated in amber (updateSignals flag, D-088): the pill's "updated" count takes --vb-state-updated, "new"
+   stays teal, so each meaning has one colour; the border stays teal, also when only updated cards are
+   inside (point 432). APCA on the pill's -soft fill: Lc 61.6 light, 71.2 dark (labels, 45). */
+[data-update-signals] vb-region .vb-region-fresh-updated { color: var(--vb-state-updated); }
