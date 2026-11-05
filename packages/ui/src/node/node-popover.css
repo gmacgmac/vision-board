@@ -15,9 +15,10 @@ vb-node .vb-node-btab {
 vb-node .vb-node-btab[hidden] { display: none; }
 /* Two tabs or more (a proposal and "N updates", FE_02) reach under the footer's buttons. The buttons
    rise to the footer's top and the row drops 2px, so each tab's 24px target circle clears them (WCAG
-   2.5.8) while the card keeps its size and the row stays clear of the card below. */
-vb-node:has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
-vb-node .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) { bottom: -13px; }
+   2.5.8) while the card keeps its size and the row stays clear of the card below. The one tab that stands for
+   updates and a proposal (data-updated, oneChangeTab) counts as two: it is as wide as two on an S card. */
+vb-node:has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), .vb-node-btab[data-updated]:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
+vb-node .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), > .vb-node-btab[data-updated]:not([hidden])) { bottom: -13px; }
 /* With updateSignals (tab place, point 442 follow-up) the tabs centre about a third of the way along the
    bottom edge, clear of the kind icon and state word at the left. The slot spans 14px to two thirds less
    14px (its gap taken back by the spacers), so it is centred on the third; two spacers centre the tabs in it.

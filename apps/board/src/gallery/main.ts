@@ -38,6 +38,7 @@ import { parkingSection } from './parking-section.ts';
 import { proposalsSection, reviewListSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
 import { updateSignalsSection } from './update-signals-section.ts';
+import { oneTabSection } from './one-tab-section.ts';
 import { bigTitlesSection } from './big-titles-section.ts';
 import { chatSection } from './chat-section.ts';
 import { alongsideSection } from './alongside-section.ts';
@@ -174,6 +175,7 @@ function build(): void {
   if (flagOn('readOnlyStart', flags) && flagOn('agentAccess', flags) && flagOn('appCards', flags)) main.append(readOnlyControlsSection(fx)); // last of all, so no section moves
   if (flagOn('updateSignals', flags)) main.append(updateSignalsSection(fx)); // last of all, so no section moves
   if (flagOn('bigTitles', flags) && flagOn('markdownMore', flags)) main.append(bigTitlesSection(fx)); // last of all, so no section moves
+  if (flagOn('oneChangeTab', flags) && flagOn('proposals', flags) && flagOn('cardUpdates', flags)) main.append(oneTabSection(fx)); // last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

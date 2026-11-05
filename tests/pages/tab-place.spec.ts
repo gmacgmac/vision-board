@@ -32,7 +32,8 @@ async function board(page: Page, request: APIRequestContext, tabs: Tabs, query =
     ...SIZES.map((s) => ({ type: 'node', node: node(s) })),
   ]);
   const ns = r.slice(-SIZES.length).map((x) => x.n!);
-  await open(page, { board: d.board, n: ns }, query);
+  // Two tabs are the oneChangeTab flag off: on, a proposal and updates share one tab (one-change-tab.spec.ts).
+  await open(page, { board: d.board, n: ns }, tabs === 'both' ? `${query || '?flags='}${query ? ',' : ''}-oneChangeTab` : query);
   for (const [i, n] of ns.entries()) await act(page, d, { action: 'size', n, size: SIZES[i] });
   // The proposal first, on version 1; the change after it makes it "Out of date", still a tab.
   if (tabs !== 'update') await write(request, d, ns.map((n) => ({ type: 'propose', n, ver: 1, action: 'check', reason: 'The client said yes.', source: 'Email pasted in chat' })));

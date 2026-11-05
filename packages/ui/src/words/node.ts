@@ -75,3 +75,11 @@ export const proposalsBox = (k: number, n: number | undefined): string => `${k =
 /** What the proposals add to the card's name: ", 2 proposals, 1 out of date". */
 export const proposalsInName = (k: number, stale: number): string =>
   `, ${k} proposal${k > 1 ? 's' : ''}${stale ? `, ${stale === k ? '' : `${stale} `}out of date` : ''}`;
+
+// ---- One tab for updates and proposals (oneChangeTab flag, point 444). `updates` is the updates tab's own words ("1 update").
+/** The tab: "1 update · proposal", "2 updates · 2 proposals", "1 update · out of date" when every proposal is. */
+export const updatesAndProposalsTab = (updates: string, k: number, stale: boolean): string =>
+  `${updates} · ${stale ? 'out of date' : k === 1 ? 'proposal' : `${k} proposals`}`;
+/** The tab's and the box's accessible name: "1 update and a proposal on item 3", "2 updates and 2 proposals on item 3, out of date". */
+export const updatesAndProposalsOnItem = (updates: string, k: number, n: number | undefined, stale: boolean): string =>
+  `${updates} and ${k === 1 ? 'a proposal' : `${k} proposals`} on item ${n}${stale ? ', out of date' : ''}`;

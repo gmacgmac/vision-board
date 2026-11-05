@@ -10,7 +10,7 @@
    Opened, the card grows by one section for the step shown, right under its text, and its footer
    becomes the stepper (data-stepping). Tokens only. */
 
-vb-node .vb-node-btab[data-tab='updates'] {
+vb-node .vb-node-btab:is([data-tab='updates'], [data-tab='proposal'][data-updated]) {
   align-self: center; height: 18px; margin-block: 1px; padding: 0 var(--vb-space-1); border-color: var(--vb-line-strong); background: var(--vb-surface-card);
   color: var(--vb-ink-subtle); font-weight: var(--vb-weight-medium); letter-spacing: 0; text-transform: none;
 }
@@ -23,6 +23,12 @@ vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']),
    amber (FIX_01; words on the -soft Lc 52.3 light, 70.7 dark). With freshCards off the tab stays grey. */
 [data-fresh-cards][data-update-signals] vb-node .vb-node-btab[data-tab='updates'] { border-color: var(--vb-state-updated); color: var(--vb-state-updated); }
 [data-fresh-cards][data-update-signals] vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { background: var(--vb-state-updated-soft); }
+/* One tab for updates and a proposal (oneChangeTab, point 444): the proposal tab that stands for both takes the
+   updates tab's look (above) in the updated amber, whatever freshCards says, hovered or open on its soft fill, as
+   the amber tab's. Its steps sit in the proposal box, under the proposals, the stepper in the box too (vb-node.ts
+   placeSteps): the section keeps its look and the stepper its row, the box's buttons' size. */
+vb-node .vb-node-btab[data-tab='proposal'][data-updated] { border-color: var(--vb-state-updated); color: var(--vb-state-updated); }
+vb-node .vb-node-btab[data-tab='proposal'][data-updated]:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-updated); background: var(--vb-state-updated-soft); }
 
 /* The step: version, when and who; the change chips; what the text gained. Opaque, so its text
    reads the same over a see-through card (wireLayers). */
@@ -62,3 +68,5 @@ vb-node .vb-node-steps:has(> .vb-step-done) { padding: 0; border-color: transpar
 vb-node[data-stepping] .vb-node-foot > :not(.vb-node-stepnav) { display: none; }
 vb-node .vb-node-stepnav:not([hidden]) { flex: 1; display: flex; align-items: center; gap: var(--vb-space-2); padding-right: var(--vb-space-1); }
 vb-node .vb-node-stepcount { flex: 1; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-bold); color: var(--vb-state-context); }
+/* In the proposal box (oneChangeTab) the stepper's buttons end at the box's edge, under Accept. */
+vb-node .vb-card-pop .vb-node-stepnav:not([hidden]) { padding-right: 0; }

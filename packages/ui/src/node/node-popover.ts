@@ -18,6 +18,10 @@ export const POPOVER_OPEN = 'vb-popover-open';
 export const POPOVER_SHOW = 'vb-popover-show';
 export interface PopoverShowDetail { name: string; box: HTMLElement }
 
+/** Fired on the card, bubbling, as its popover hides, however it closed; `detail` is its name (the
+ *  proposal box folds the update steps it holds, oneChangeTab). */
+export const POPOVER_HIDE = 'vb-popover-hide';
+
 /** Dispatched on a card by the page, `detail` a popover's name, to close that box now (a history row
  *  that took the person to a note on the card). */
 export const POPOVER_CLOSE = 'vb-popover-close';
@@ -35,6 +39,7 @@ export function bindCardPopover(card: HTMLElement, name: string, tabSel = `.vb-n
     onToggle(on) {
       const b = box();
       if (on && b) card.dispatchEvent(new CustomEvent<PopoverShowDetail>(POPOVER_SHOW, { bubbles: true, detail: { name, box: b } }));
+      if (!on) card.dispatchEvent(new CustomEvent<string>(POPOVER_HIDE, { bubbles: true, detail: name }));
       tab()?.setAttribute('aria-expanded', String(on));
       box()?.toggleAttribute('data-open', on);
       if (!on && box()?.contains(document.activeElement)) tab()?.focus({ preventScroll: true });

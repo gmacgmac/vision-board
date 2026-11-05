@@ -1119,6 +1119,25 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    the buttons level on M and L with two tabs, raised on S; a wide tab on S ending before the buttons; the flag off;
    axe light and dark).
 
+   **One tab for updates and a proposal** (`oneChangeTab` flag; point 444, task
+   `cortex-tasks/board/2026-11-05_board-ui_one-change-tab.md`). A card with both unseen updates and a proposal shows one
+   bottom tab, the proposal's (`data-tab="proposal"`, `data-updated`), saying both: "1 update · proposal", "2 updates · 2
+   proposals", "1 update · out of date" when every proposal is, named "1 update and a proposal on item 3"
+   (`packages/ui/src/node/node-core.ts` `changeTab`, words `packages/ui/src/words/node.ts` `updatesAndProposalsTab`,
+   `updatesAndProposalsOnItem`). It takes the "N updates" tab's look in `--vb-state-updated` (D-088), hovered or open on
+   its soft fill (`node-steps.css`), and counts as two tabs for the buttons' rise (`node-popover.css`). Its box holds the
+   proposals first, then the card's own step section and stepper, moved in, never copied (`vb-node.ts` `placeSteps`,
+   `NodeState.oneTab`); the footer stays as it is and the card keeps its size. Opening the box for good (a click or
+   Enter; `POPOVER_OPEN`) opens the stepper at the first unseen step with focus left on Reject, and the box hiding,
+   however it hides (`POPOVER_HIDE`, `node-popover.ts`), folds it (`apps/board/src/board/cards/update-flow.ts`); past
+   the last step focus goes to the proposal's first answer and the box stays open. Accept and Reject are the proposal
+   box's own; an act clears the updates too (D-054). A proposal alone and updates alone keep their own tabs. Off, two
+   tabs. Tests: `packages/ui/tests/node-change-tab.test.ts`, `tests/pages/one-change-tab.spec.ts` (the tab and names;
+   the box's order; Next to "You're up to date"; Accept from the box and from the preview; out of date; either alone;
+   the flag off; keyboard, focus and Esc; the place on S and M; APCA Lc 45 at rest and hovered and axe, light and dark;
+   the gallery's section, `gallery/one-tab-section.ts`, the last). `tests/pages/tab-place.spec.ts` draws its two tabs
+   with the flag off.
+
 ## Every card in the conversation (every-node FE_01)
 
 Task set `cortex-tasks/board/2026-10-10_board-actions_every-node/` (rulings 1-4, 6; api.md 118-120),

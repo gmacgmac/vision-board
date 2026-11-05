@@ -282,6 +282,10 @@ export const FLAGS = {
     // On by default (maintainer, 2026-11-05, point 437); ?flags=-bigTitles turns it off.
     default: true,
   },
+  oneChangeTab: {
+    // On by default (maintainer, 2026-11-05, point 444); ?flags=-oneChangeTab turns it off.
+    default: true,
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
@@ -388,4 +392,5 @@ export const FLAG_DESCRIPTIONS = {
   readOnlyToggle: 'Read-only and Editing are one toggle button in the header that shows the current state and flips on a press (taking the lock can still be refused). Off, the read-only chip opens a menu.',
   wheelChaining: 'The wheel scrolls what is under the pointer (a note or reply bubble, a long tip, a text box, a code block) while it can still scroll that way, and pans the board otherwise, a container\'s title included; one gesture keeps the target its first wheel event found until a quiet gap of about 150 ms, so a flick that reaches a bubble\'s end stops there and the next gesture pans. Ctrl or Cmd with the wheel zooms everywhere. Off, the wheel inside a note bubble or any hover tip is always its own and never pans; everywhere else it pans.',
   bigTitles: 'A card whose body has structure (a `#` or `##` heading, or a table, as drawn with markdownMore) shows its title large, at the `#` size, as the card\'s one heading; in its body `#` then draws at the `##` size, `##` too, and `###` stays the small label. Other cards are unchanged. Off, the title is medium on every card and `#` large.',
+  oneChangeTab: 'A card with both unseen updates and a proposal shows one bottom tab in the updated amber, "1 update · proposal" ("2 updates · 2 proposals"; "· out of date" when every proposal is), named "1 update and a proposal on item 3". Its box lists the proposals first, Accept and Reject as from the proposal tab, and the update steps beneath, Back and Next in the box; opening it shows the first step and closing it folds the steps. A proposal alone and updates alone keep their own tabs. Off, the card shows the two tabs.',
 } as const satisfies Record<FlagName, string>;

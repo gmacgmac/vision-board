@@ -6,7 +6,7 @@ export * from './node/node-updates.ts';
 export * from './node/node-template.ts';
 export * from './node/node-icons.ts';
 export * from './node/node-time.ts';
-export { POPOVER_CLOSE, POPOVER_OPEN, POPOVER_SHOW } from './node/node-popover.ts';
+export { POPOVER_CLOSE, POPOVER_HIDE, POPOVER_OPEN, POPOVER_SHOW } from './node/node-popover.ts';
 export type { PopoverShowDetail } from './node/node-popover.ts';
 export * from './node/node-history.ts';
 export type { VbNodeElement } from './node/vb-node.ts';
