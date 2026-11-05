@@ -23,8 +23,8 @@ Close what wave 1 left and VERIFY_01 found blocking, so the set meets PLAN Decis
    ≥ 20, by hue toward orange and/or chroma, as bright as Lc 45 words on the card allows), keep dark `#ffc21a`;
    the seen-reply mix and `-soft` follow; figures in the token comment; `update-signals.spec.ts` checks light too.
    Report the value: the maintainer may change it (point 429).
-6. **`tests/pages/read-only-controls.spec.ts`** gallery "…last…" selector skips `[data-feature="updateSignals"]`
-   (VERIFY_01 finding 2), as the three other specs now do.
+6. **Docs**: `docs/specification/components.md`: what you change, and its quotes of "Read-only: press Edit to change it"
+   / "Press Edit again" take the new words (FIX_02 owns the words; read them from `#actions` `READ_ONLY_PERSON`).
 7. **Gallery**: `update-signals-section.ts` box taller than its cards so the shot shows the badges and the tab;
    `editing-section.ts` meta says `readOnlyStart` is on by default.
 

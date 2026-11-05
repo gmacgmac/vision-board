@@ -30,6 +30,7 @@ skills: [cortex-architecture, cortex-docs]
 | 6 | VERIFY_01 | 2 | strong | A product manager using the board daily on a dark screen, with no builder context — scans a busy board for what changed. | [Review the set](./VERIFY_01_review.md) | Completed | 3 blocking: light amber ≈ action amber (token, maintainer); `read-only-controls.spec.ts` "last" selector; card NEW tab pink. Docs and 46 screenshots done |
 
 | 7 | FIX_01 | 3 | strong | Visual designer for monitoring screens — what changed is the brightest thing on the board until you've looked, then it steps back. | [Wave 2 findings and signal follow-ups](./FIX_01_findings.md) | Pending | |
+| 8 | FIX_02 | 3 | strong | Content designer — the words name what the person sees on the screen, the same in every place they appear. | ["Switch to Editing" everywhere](./FIX_02_edit-wording.md) | Pending | |
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
 ## Ports
@@ -40,6 +41,7 @@ skills: [cortex-architecture, cortex-docs]
 | MD_01 | 7200 | VERIFY_01 | 7600 |
 | FE_01 | 7300 | orchestrator | 7900 |
 | FE_02 | 7400 | FIX_01 | 7700 |
+| FIX_02 | 7800 | | |
 
 ## Shared Foundations
 
@@ -61,7 +63,8 @@ skills: [cortex-architecture, cortex-docs]
 | 1 | FE_01 | `packages/tokens/src/tokens.css` (the one token), `packages/tokens/README.md`, `packages/ui/src/node/**`, `packages/ui/src/region/region-fresh.*`, `packages/ui/src/note-bubble/**`, `packages/ui/src/words/{node-notes,node-updates,note-bubble}.ts` and the region-fresh words, `apps/board/src/board/{cards,canvas}/**`, gallery `{fresh,updates,note-bubble,group-notes,node}-section.ts`, `tests/pages/{fresh-cards,card-updates,notes,note-polish,group-note}.spec.ts` and a new spec of its own |
 | 1 | FE_02 | `apps/board/src/shell/{EditChip.svelte,editing.ts}`, `apps/board/src/shell/words/editing.ts`, `apps/board/src/board/chrome/**`, `apps/board/src/board/host.ts`, gallery `{editing,read-only-controls,header,toolbar}-section.ts`, `tests/pages/{read-only,read-only-writes,read-only-controls,header-tiers}.spec.ts` and a new spec of its own |
 | 1 | FE_01 (granted by orchestrator) | one line each: `apps/board/src/board/controller.ts` (the `data-update-signals` toggle beside `data-fresh-cards`), `apps/board/src/gallery/main.ts` (the matching gallery line, and the new last section with its import), new `apps/board/src/gallery/update-signals-section.ts`, `packages/ui/src/region/vb-region.ts` (`applyFresh`: `fillFreshPill` and its import) |
-| 3 | FIX_01 | `packages/ui/src/markdown/markdown.css` (table widths), `tests/pages/markdown-more.spec.ts`, `tests/pages/__screenshots__/{markdown-more,gallery}.spec.ts/*` it changes, `packages/tokens/src/tokens.css` (`--vb-state-updated` light value and its mixes only), `packages/tokens/README.md`, `packages/ui/src/node/node-popover.css`, `tests/pages/{read-only-controls,update-signals}.spec.ts`, `apps/board/src/gallery/{update-signals,editing,fresh,updates}-section.ts`, `packages/ui/src/region/region-note.css`, `packages/ui/src/node/node-steps.css`, the toolbar's "N new" chip files in `apps/board/src/board/chrome/**`, and whatever VERIFY_01's blocking findings name (the orchestrator lists them in the brief); the specs and screenshots those touch |
+| 3 | FIX_01 | `packages/ui/src/markdown/markdown.css` (table widths), `tests/pages/markdown-more.spec.ts`, `tests/pages/__screenshots__/{markdown-more,gallery}.spec.ts/*` it changes, `packages/tokens/src/tokens.css` (`--vb-state-updated` light value and its mixes only), `packages/tokens/README.md`, `packages/ui/src/node/node-popover.css`, `tests/pages/update-signals.spec.ts`, `docs/specification/components.md`, `apps/board/src/gallery/{update-signals,editing,fresh,updates}-section.ts`, `packages/ui/src/region/region-note.css`, `packages/ui/src/node/node-steps.css`, the toolbar's "N new" chip files in `apps/board/src/board/chrome/**`, and whatever VERIFY_01's blocking findings name (the orchestrator lists them in the brief); the specs and screenshots those touch |
+| 3 | FIX_02 | `apps/board/tests/{api-read-only,ledger-move}.test.ts`, `tests/pages/{read-only,read-only-writes,read-only-controls,read-only-toggle}.spec.ts` and their screenshots, `apps/board/server/words/server-chat.ts`, `apps/board/src/shell/words/{chat,editing}.ts`, `apps/board/src/gallery/read-only-controls-section.ts`, `packages/format/schema/api/common.schema.json` and every output of `npm run gen`, `docs/specification/{api,plugin}.md`, `packages/actions/src/{read-only.ts,words/actions-refusals.ts}` and the readers of the renamed key; a `gallery.spec.ts` screenshot its words change goes under REQUESTS (FIX_01 owns those) |
 | 1 | each | the screenshots of the specs it owns, under `tests/pages/__screenshots__/` |
 | 2 | BOT_01 | `packages/actions/src/words/actions-refusals.ts` and `apps/board/server/words/server-folders.ts` (FE_02-R2 wording only), `skills/vision-board/**`, `apps/board/plugin/words/skill-edits.ts`, `apps/board/tests/plugin-skill.test.ts`, `tests/evals/bot/**`, `packages/format/schema/openapi.json` (descriptions) and every output of `npm run gen` |
 | 2 | VERIFY_01 | `tests/pages/{header-tiers,ledgers,read-only}.spec.ts` (FE_01-R1 selectors only), `docs/specification/**` except `modules.md` and `api-reference.md` (doc requests), any screenshot under `tests/pages/__screenshots__/` the merged wave changed and no wave-1 task re-took; findings only for code |
@@ -85,12 +88,16 @@ skills: [cortex-architecture, cortex-docs]
 | MD_01-R5 | MD_01 | Re-take `gallery.spec.ts` `markdown-*`, `gallery-node-*`, `size.spec.ts` `node-size-*` after merge | VERIFY_01 | Done |
 | ACT_01-R2 | ACT_01 | `write_board`'s tool description names `insert`; `LIST_CAP` (`packages/mcp/tests/tools.test.ts`) now 32,000, about 150 characters left | BOT_01 | Done (BOT_01) |
 | VERIFY_01-R1 | VERIFY_01 | Light `--vb-state-updated` `#a66800` reads as the action amber (ΔE76 9.0, darker); `update-signals.spec.ts` checks light too | FIX_01 item 5 (value reported; maintainer may change it, point 429) | Open |
-| VERIFY_01-R2 | VERIFY_01 | `tests/pages/read-only-controls.spec.ts` gallery "last" selector skips `updateSignals` | FIX_01 item 6 | Open |
+| VERIFY_01-R2 | VERIFY_01 | `tests/pages/read-only-controls.spec.ts` gallery "last" selector skips `updateSignals` | FIX_02 item 2 | Open |
 | VERIFY_01-R3 | VERIFY_01 | `packages/ui/src/node/node-popover.css` card NEW tab pink, pill "new" teal | FIX_01 item 4 | Open |
 | VERIFY_01-R4 | VERIFY_01 | FIX_01's file carried ACT_01's Run 1 notes | orchestrator | Done |
 | VERIFY_01-R5 | VERIFY_01 | `update-signals-section.ts` box shorter than its cards; `editing-section.ts` meta says `readOnlyStart` off | FIX_01 item 7 | Open |
 | VERIFY_01-R6 | VERIFY_01 | Findings 7 (selecting one card clears the container's pill while its cards keep their tabs, D-054) and 11 (two links entering one card: one label not drawn) | tracker (outside this set) | Open |
 | VERIFY_01-R7 | VERIFY_01 | Finding 4: a `#` heading (18px, 680) is bigger than the card's title (15px, 550) | maintainer (at close) | Open |
+| BOT_01-R1 | BOT_01 | Tests quoting the reworded sentences: `api-read-only.test.ts`, `ledger-move.test.ts`; `tests/pages/{read-only,read-only-writes,read-only-controls}.spec.ts` `REASON`; re-take `read-only-toggle` screenshots | FIX_02 item 1 | Open |
+| BOT_01-R2 | BOT_01 | "press Edit" left in `server-chat.ts`, `shell/words/{chat,editing}.ts`, `read-only-controls-section.ts`, `common.schema.json` `readOnly`, `docs/specification/{api,plugin,components}.md` | FIX_02 item 3 (components.md: FIX_01 item 6) | Open |
+| BOT_01-R3 | BOT_01 | Rename `readOnlyPressEditTo` with its words file | FIX_02 item 4 | Open |
+| BOT_01-R4 | BOT_01 | `eval:bot` not green every run: chat narration, mostly `summary-card` `done-only`, about 1 in 3, present on v3.29 too; spend $7.21, over the $6 budget | maintainer (at close) | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
