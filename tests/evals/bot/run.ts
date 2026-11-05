@@ -4,7 +4,7 @@
 //   --standalone           the standalone bot: skills/vision-board/SKILL.md and the real vb-mcp against a test board
 //                          server (standalone.ts), over the standalone scenarios; `--port` is that server's
 //   --only a,b             these scenarios only        --repeat N      each scenario N times: a pass rate
-//   --max-runs N           stop after N runs (default 12, at most 30)
+//   --max-runs N           stop after N runs (default 16, at most 30)
 //   --max-usd X            start no run that could pass $X in all (default 3, at most 10)
 //   --model M              default sonnet              --port P        the door's port (default 6010)
 //   --flags a,-b           engine flags on or off      --instructions server|none   what the bot's MCP server says
