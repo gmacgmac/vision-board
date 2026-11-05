@@ -100,6 +100,55 @@ Layout is flag-free today; A or B would change flag-off boards too unless the la
   wide (as wide as the L card; measured) while keeping `data-size="s"`, so they raised their buttons with room to
   spare. Gone with the flag on; flag off unchanged.
 
+### Run 2
+
+Two maintainer decisions: the tabs start just after the state word, left-aligned (main `d175720`, by eye), and point
+445/446, option B behind `updateSignals`: first 28px, then (mid-run) 30px. Everything below is at 30px unless it says 28.
+
+- **Merge**: `feat/tab-lower` fast-forwarded to main (no merge commit), the run-1 work re-applied; `node-popover.css`
+  resolved to main's horizontal rule (`left: calc(… + 3em + var(--vb-space-2))`, `font-size: var(--vb-text-sm)`) plus
+  run 1's vertical one (`bottom: -18px`; the raise rules scoped to the flag off). Main's leftover M/L overrides go
+  with the raise.
+- **Row gap** (`packages/layout`): `ROW_GAP` 30 beside `GAP` 24 (`types.ts`), `ModeInput.rowGap`, `RegionOptions.rowGap`,
+  `LayoutOptions.rowGap` (absent: `GAP`). Used for a card and the one under it in `grid` (rows; columns keep `GAP`),
+  `column`, `flow` (each column's stack and `place`) and `lanes` (a lane's stacks, `orderStacks`). `row` and `radial`
+  unchanged; the collision pass round pins (`collide.ts` `makeRoom`) keeps `GAP` (not in the decision). The page
+  passes it from the flag (`controller.ts`: `rowGap: on('updateSignals') ? ROW_GAP : undefined`, through `draw.ts` to
+  the layout cache, whose key includes it); the gallery's mini boards the same (`gallery/mini-board.ts`). Flag off:
+  24px everywhere, as before.
+- **Measured clearance** (scratch board, combined tab, a column of five cards): cards 30px apart (24 before); the
+  hung tab ends 4px above the next card's top tabs (combined and "N updates" tabs, 18px tall). A proposal or handover
+  tab (20px tall) ends 3px above: row 115–135 against the next card's tabs from 138 (118 + 30 + 1 − 11). At 28px it
+  was 2px and 1px. Main's look before this run: 3px (combined, raised row at −13px) and 5px.
+- **Gallery room**: a `.g-cards` list that shows a tab gets `row-gap` `--vb-space-6` (28px while the board was at 28) and `padding-bottom` `--vb-space-5` under
+  the flag (`gallery.css`, zero-specificity conditions so a list's own room still wins); the two lists that set their
+  own padding inline (`update-signals-section.ts`, `one-tab-section.ts` `list`) take `--vb-space-5` at the bottom.
+  Measured: tabs end 7–8px inside each list. Lists whose card is positioned under a notice or pill (the samples that
+  float a card) still let the tab out by 11px; their screenshots are of the whole group, see the suite below.
+- **Tests**: `tab-place.spec.ts` drops the third: the first tab 4–24px after the state word ("Open"), at the same
+  place on S, M and L, never past the right edge less 14px, the rest as run 1; a new stacked-column test (`ROW_GAP`
+  apart, tab ≥ 3px clear of the next card's top tabs (≥ 1 at 28); flag off 24px). `layout-controls.spec.ts` reads the
+  column's gaps as `ROW_GAP` (it held 24). `one-change-tab.spec.ts` the same start check on S and
+  M. `packages/layout/tests/stack-gap.test.ts`: `rowGap` in column, grid rows, flow and a lane's stack, side by side
+  `GAP`; `apps/board/tests/layout-cache.test.ts`: the gap lays out every container and equals `layoutBoard`. The
+  layout tests were written with the code, not before it (they call a parameter that did not exist).
+- **Docs**: `components.md` Tab place (the start, the row gap and its tests), `pattern.json`, `modules.md`
+  (`npm run map`: `ROW_GAP` exported).
+- **PNGs** (worktree `temp/tab-lower/`): `before-*` is main's look (left-aligned, not lowered, 24px), `after-*` this
+  run at 30px; `{before,after}-{update,combined,two,stack}-{light,dark}.png`. Run 1's set moved to `temp/tab-lower/run1/`.
+- **Runs at 28px**: the full page suite (3 workers, 12.3 min): 953 passed, 27 failed, 16 did not run (the budgets and
+  the serial app-cards tests after its first failure). 20 were screenshots of the gap and the tabs; 2 were
+  `layout-controls` (the column's gaps asserted 24, and the next test that read its state); 5 were app/panel tests
+  (`app-cards` ×3, `read-only-controls`, `layout-tiles`: the calculator panel's request aborted, a cursor read "grab"),
+  all passing when run alone afterwards at 30px, so taken as load flakes. The unit suite (`npm test`, 2410 + 14 passed).
+- **After the switch to 30px** (no full suite, by the maintainer): rebuilt; the affected specs run alone (tab-place,
+  one-change-tab, layout-controls, layout-tiles, app-cards, read-only-controls, card-images: 74 passed, 6 failed, all
+  screenshots); the screenshot specs (card-updates, fresh-cards, gallery, parking-replies, proposals-review,
+  proposals, update-signals, card-images, layout-controls): 20 screenshot failures, each diff checked (the gap under
+  cards, the tabs' new start and hang, the gallery lists' room, a 1px fit change on card-images), re-taken: 115
+  passed. `packages/layout` and `apps/board` unit tests 1018 passed; `npm run check` 0 errors; `npm run verify` ok.
+  The performance budgets were not run at 30px.
+
 ## On Completion
 
 Notes in the main checkout's copy; one LOG line, `[board-ui] Tab lower: … → Task: [[cortex-tasks/board/2026-11-05_board-ui_tab-lower.md]]`, ending in a newline.

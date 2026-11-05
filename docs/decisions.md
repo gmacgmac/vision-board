@@ -1260,3 +1260,14 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   4. Behind `oneChangeTab`.
 - **Why**: the agent changing a card and proposing its mark in one round put two tabs on the card that both said "something new here".
 - **Task**: cortex-tasks/board/2026-11-05_board-ui_one-change-tab.md
+
+## D-093 The bottom tabs start after the state word and hang lower; 30 px below a card
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, points 445-446 and the badge placed by eye) · **From**: cortex-tasks/board/2026-11-05_board-ui_tab-lower.md
+- **Decision** (amends D-091's place):
+  1. The card's bottom tabs start just after the footer's state word ("Open"), left-aligned, and grow rightwards to fit.
+  2. They hang lower (the row at `bottom: -18px`), so their targets never meet the footer buttons' and the buttons never rise, on any size, with any number of tabs.
+  3. The gap between a card and the card below it is 30 px (`ROW_GAP`: grid rows, column, flow and lane stacks); side by side stays 24 px (`GAP`). The hung tab clears the next card's top tabs by 3-4 px.
+  4. Behind `updateSignals`: off, 24 px everywhere and the old tab place.
+- **Why**: on a small card the tab fell back against "Open" and lifted the buttons; centred at a third it sat too far right.
+- **Rejected**: 24 px (the hung tab overlapped the next card's tabs by 2-3 px); 28 px (1-2 px clear, cramped); 32 px everywhere (every board looser).
+- **Task**: cortex-tasks/board/2026-11-05_board-ui_tab-lower.md
