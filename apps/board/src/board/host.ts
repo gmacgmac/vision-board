@@ -90,9 +90,11 @@ export interface BoardPageParts {
   /** New ledger…, a row of "⋯"'s own, given `choose`. */
   ledgerRow?: PagePart;
   /** The open ledger's state, Read-only or Editing (readOnlyStart flag, D-085 5): after the path at every width
-   *  (header-tier.ts `editing`), a chip whose menu holds Edit or Stop editing. */
+   *  (header-tier.ts `editing`), a chip whose menu holds Edit or Stop editing; with the readOnlyToggle flag one toggle
+   *  that flips the state on a press, and the header draws no `editButton`. */
   editChip?: PagePart;
-  /** Edit or Stop editing as a button at full (header-tier.ts `edit`); given `choose`, a row of "⋯" at half and a third. */
+  /** Edit or Stop editing as a button at full (header-tier.ts `edit`); given `choose`, a row of "⋯" at half and a third.
+   *  Not drawn with the readOnlyToggle flag (`editChip` is the one control). */
   editButton?: PagePart;
   chat?: PagePart;
 }

@@ -4,7 +4,7 @@
 // with the reason; Edit (the button at full, a row of "⋯" from half, the chip's menu always) takes the ledger and a
 // write works; Stop editing gives it back; another computer holding the ledger makes Edit say who, and the ledger
 // stays read-only; long names fit every form; axe and APCA in light and dark; the flag off shows nothing and writes
-// as today; the gallery's section. Fresh for this file; the tests run in order, each leaving `main` open, read-only.
+// as today; the gallery's section. All with the toggle off (readOnlyToggle; read-only-toggle.spec.ts has it on). Fresh for this file; the tests run in order, each leaving `main` open, read-only.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { APIRequestContext, Page } from '@playwright/test';
@@ -23,7 +23,8 @@ test.describe.configure({ mode: 'serial' });
 
 const THEMES: Theme[] = ['light', 'dark'];
 const REASON = 'Read-only: press Edit to change it';
-const FLAGS = 'readOnlyStart,ledgerFolders';
+/** The menu as it was: the toggle (readOnlyToggle, read-only-toggle.spec.ts) off. */
+const FLAGS = 'readOnlyStart,ledgerFolders,-readOnlyToggle';
 let srv: FolderServer;
 test.beforeAll(async () => { srv = await startFolderServer({ ledgers: true, readOnly: true }); });
 test.afterAll(async () => { await srv.close(); });
@@ -283,7 +284,7 @@ test('the chip\'s menu opens over the access-request bar: Edit can be seen and p
 
 test('the flag off on the page: the server says read-only, so the chip and Edit show; on a server without it, writes as today', async ({ page }) => {
   // The page's flag off, on this read-only server: the state shows all the same, with Edit (decision 16; FIX_01 F11).
-  await open(page, 1400, 'ledgerFolders,-readOnlyStart');
+  await open(page, 1400, 'ledgerFolders,-readOnlyStart,-readOnlyToggle');
   await expect(page.locator('.vb-chip-editing')).toBeVisible();
   await expect(page.locator('.vb-edit-btn')).toBeVisible();
   // The worker's own board (edit mode, the server's flag off), the page's flag on: nothing shows, and a press writes.
@@ -308,7 +309,7 @@ test('gallery: the section is there only with the flag, last, with the three for
   await page.goto('/gallery.html?flags=-readOnlyStart');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
-  await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders');
+  await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders,-readOnlyToggle');
   await expect(page.locator('main > section:not([data-feature="readOnlyControls"])').last()).toHaveAttribute('data-feature', 'readOnlyStart');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"] .vb-chip-editing`).first()).toBeVisible();
   await expect(section(page).locator(`${bid('editing')}, ${bid('edit')}`)).toHaveCount(0);
@@ -318,7 +319,7 @@ test('gallery: the section is there only with the flag, last, with the three for
 for (const theme of THEMES) {
   test(`gallery: the section passes axe and matches its screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders');
+    await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders,-readOnlyToggle');
     await expect(section(page)).toBeVisible();
     await expectNoAxeViolations(page);
     await expect(section(page)).toHaveScreenshot(`read-only-${theme}.png`);

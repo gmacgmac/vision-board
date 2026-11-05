@@ -10,6 +10,10 @@
 .vb-chip-editing .vb-btn-icon:last-child { width: 12px; height: 12px; color: var(--vb-ink); }
 .vb-chip-editing[data-state='editing'] { box-shadow: inset 0 0 0 1px var(--vb-accent-line); }
 .vb-chip-editing[data-state='editing'] .vb-btn-icon:first-child { color: var(--vb-accent); }
+/* One toggle (readOnlyToggle flag): on (aria-pressed, Editing) takes the base toggle pattern's fill (`#ui` button.css
+   `.vb-btn[aria-pressed='true']`, the accent's soft ground), hovered too, as there, so on and off differ at a glance in dark
+   as well. Not the pattern's accent border or ink: the ring stays the accent's line and the word the strong ink (Lc 60). */
+.vb-chip-editing[aria-pressed='true'], .vb-chip-editing[aria-pressed='true']:hover { background: var(--vb-accent-soft); }
 .vb-chip-editing[aria-busy='true'] { cursor: progress; }
 .vb-chip-editing[aria-expanded='true'] { background: var(--vb-surface-deep); }
 /* Open, the header stacks over the access-request bar under it, as for "⋯" (board.css; FIX_01 F9). */

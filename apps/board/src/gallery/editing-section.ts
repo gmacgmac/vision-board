@@ -4,11 +4,14 @@
 // computer with its menu open; Edit and Stop editing as a button and as a row of "⋯", loading too; the refusal's toast;
 // and what read-only pauses: the cards (the flag too), the container, Send, the "⋯" menu's Lock and Archive rows. Shown
 // only with the flag on (it is off by default), so the gallery is as it was without it. Names and times are examples.
+// With the readOnlyToggle flag (PLAN decision 11) the chip is one toggle with no menu and no Edit button: its samples
+// (`toggleGroups`) take the place of the chip's, the button's and the row's.
 import { mount } from 'svelte';
 import { READ_ONLY_PERSON } from '#actions';
 import { chromeState, type ChromeState, FULL_MIN, HALF_MIN, type HeaderTier, SendButton, Toolbar, ToolbarMenu } from '../board/chrome/index.ts';
 import EditButton from '../shell/EditButton.svelte';
 import EditChip from '../shell/EditChip.svelte';
+import { toggleOn } from '../shell/editing.ts';
 import type { FolderInfo } from '../shell/page-io.ts';
 import Toast from '../shell/Toast.svelte';
 import * as editingWords from '../shell/words/editing.ts';
@@ -83,12 +86,46 @@ function send(): HTMLElement {
   return host;
 }
 
-/** The refusal, as the page's toast says it. */
-function refused(): HTMLElement {
+/** The refusal, as the page's toast says it (the toggle's words, or Edit's). */
+function refused(words = editingWords.editRefused): HTMLElement {
   const host = el('div', 'g-toolbar');
-  mount(Toast, { target: host, props: { placement: 'gallery', toast: { text: editingWords.editRefused('studio-example', '09:12'), tone: 'error', seq: 1 } } });
+  mount(Toast, { target: host, props: { placement: 'gallery', toast: { text: words('studio-example', '09:12'), tone: 'error', seq: 1 } } });
   return host;
 }
+
+/** The chip, its button and the row of "⋯" (readOnlyToggle off). */
+const menuGroups = (fx: Fixture): HTMLElement[] => [
+  group('Full, read-only', `${FULL_MIN}px and up: the state after the path, then Edit (its pencil alone under 1500px; from 1400px of bar, else in the chip's menu), then Locked when the board is locked.`, bar(fx, 'full', READ_ONLY)),
+  group('Full, editing', 'This board server holds the ledger: Editing, with Stop editing beside it.', bar(fx, 'full', EDITING)),
+  group('Half', `From ${HALF_MIN}px: the state keeps its word while there is room; Edit is a row of "⋯".`, bar(fx, 'half', READ_ONLY)),
+  group('A third', `Under ${HALF_MIN}px: the state's icon stays in the bar, never in "⋯" (its word for screen readers); Edit is a row of "⋯".`, bar(fx, 'third', READ_ONLY, true)),
+  group('The chip', 'At rest, hovered, focused and pressed. Its tooltip and name say the whole state; a press opens its menu.',
+    chip(READ_ONLY), chip(READ_ONLY, { look: 'hover' }), chip(READ_ONLY, { look: 'focus' }), chip(READ_ONLY, { look: 'pressed' })),
+  group('Opening for editing', 'While the server takes the ledger: a spinner, the words, aria-busy; nothing more can be pressed.', chip(READ_ONLY, { busy: 'edit' })),
+  group('Editing', 'The pencil in the accent, the ring in the accent\'s line.', chip(EDITING), chip(EDITING, { busy: 'stop' })),
+  group('Held by another computer', 'Its menu says who edits and since when, then Edit, which checks again when pressed.', chip(HELD(), { open: true })),
+  group('Edit and Stop editing', 'The button at full: at rest, hovered, focused, pressed, loading; then Stop editing.',
+    button(READ_ONLY), button(READ_ONLY, { look: 'hover' }), button(READ_ONLY, { look: 'focus' }), button(READ_ONLY, { look: 'pressed' }),
+    button(READ_ONLY, { busy: 'edit' }), button(EDITING)),
+  group('The row of "⋯"', 'At half and a third: Edit, loading, and Stop editing.', button(READ_ONLY, { row: true }), button(READ_ONLY, { row: true, busy: 'edit' }), button(EDITING, { row: true })),
+  group('Edit refused', 'Another computer holds the ledger: the toast says who and since when, and the ledger stays read-only.', refused()),
+];
+
+/** The one toggle (readOnlyToggle): the state in the bar at every form, and the toggle alone in each of its states. */
+const toggleGroups = (fx: Fixture): HTMLElement[] => [
+  group('Full, read-only', `${FULL_MIN}px and up: the state after the path is one toggle: a press edits. Then Locked when the board is locked.`, bar(fx, 'full', READ_ONLY)),
+  group('Full, editing', 'This board server holds the ledger: the toggle on, Editing; a press makes it read-only again.', bar(fx, 'full', EDITING)),
+  group('Half', `From ${HALF_MIN}px: the toggle keeps its word while there is room.`, bar(fx, 'half', READ_ONLY)),
+  group('A third', `Under ${HALF_MIN}px: its icon alone in the bar, never in "⋯" (its name and state for screen readers); "⋯" has no Edit row.`, bar(fx, 'third', READ_ONLY, true)),
+  group('Read-only', 'At rest, hovered, focused and pressed: not pressed (aria-pressed false). Its name is Edit whatever the state; its tooltip says the state and what a press does.',
+    chip(READ_ONLY), chip(READ_ONLY, { look: 'hover' }), chip(READ_ONLY, { look: 'focus' }), chip(READ_ONLY, { look: 'pressed' })),
+  group('Editing', 'On (aria-pressed true): the toggle pattern\'s soft accent fill, the pencil in the accent, the ring in the accent\'s line; at rest, hovered and focused.',
+    chip(EDITING), chip(EDITING, { look: 'hover' }), chip(EDITING, { look: 'focus' })),
+  group('Busy', 'While the server takes or gives back the ledger: a spinner, the words, aria-busy; it keeps its place and focus, and a press does nothing.',
+    chip(READ_ONLY, { busy: 'edit' }), chip(EDITING, { busy: 'stop' })),
+  group('Held by another computer', `Read-only all the same; its tooltip says "${editingWords.toggleHeldTip('studio-example', '09:12')}".`, chip(HELD())),
+  group('A press refused', 'Another computer holds the ledger: it stays Read-only, and the toast says who and since when.', refused(editingWords.toggleRefused)),
+];
 
 export function editingSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
@@ -97,25 +134,14 @@ export function editingSection(fx: Fixture): HTMLElement {
   const heading = el('h2', 'g-title', 'Read-only and Edit');
   heading.id = 'feature-readOnlyStart';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'EditChip · EditButton · header-tier · paused'), ' · feature flag readOnlyStart, off by default · on with ?flags=readOnlyStart');
+  const toggle = toggleOn();
+  meta.append(el('code', undefined, toggle ? 'EditChip · header-tier · paused' : 'EditChip · EditButton · header-tier · paused'),
+    toggle ? ' · feature flags readOnlyStart and readOnlyToggle' : ' · feature flag readOnlyStart, off by default · on with ?flags=readOnlyStart');
   const [frame, cards] = pausedBoard(fx, { ...fx.marks.state, readOnly: true }, 'A read-only ledger\'s cards');
   box.append(heading,
     el('p', 'g-desc', `A ledger opens read-only: nothing is written until the person presses Edit, which opens it for changes here unless another computer is editing it. The header always says which, at every width; every control that would write is paused, saying "${READ_ONLY_PERSON}".`),
     meta,
-    group('Full, read-only', `${FULL_MIN}px and up: the state after the path, then Edit (its pencil alone under 1500px; from 1400px of bar, else in the chip's menu), then Locked when the board is locked.`, bar(fx, 'full', READ_ONLY)),
-    group('Full, editing', 'This board server holds the ledger: Editing, with Stop editing beside it.', bar(fx, 'full', EDITING)),
-    group('Half', `From ${HALF_MIN}px: the state keeps its word while there is room; Edit is a row of "⋯".`, bar(fx, 'half', READ_ONLY)),
-    group('A third', `Under ${HALF_MIN}px: the state's icon stays in the bar, never in "⋯" (its word for screen readers); Edit is a row of "⋯".`, bar(fx, 'third', READ_ONLY, true)),
-    group('The chip', 'At rest, hovered, focused and pressed. Its tooltip and name say the whole state; a press opens its menu.',
-      chip(READ_ONLY), chip(READ_ONLY, { look: 'hover' }), chip(READ_ONLY, { look: 'focus' }), chip(READ_ONLY, { look: 'pressed' })),
-    group('Opening for editing', 'While the server takes the ledger: a spinner, the words, aria-busy; nothing more can be pressed.', chip(READ_ONLY, { busy: 'edit' })),
-    group('Editing', 'The pencil in the accent, the ring in the accent\'s line.', chip(EDITING), chip(EDITING, { busy: 'stop' })),
-    group('Held by another computer', 'Its menu says who edits and since when, then Edit, which checks again when pressed.', chip(HELD(), { open: true })),
-    group('Edit and Stop editing', 'The button at full: at rest, hovered, focused, pressed, loading; then Stop editing.',
-      button(READ_ONLY), button(READ_ONLY, { look: 'hover' }), button(READ_ONLY, { look: 'focus' }), button(READ_ONLY, { look: 'pressed' }),
-      button(READ_ONLY, { busy: 'edit' }), button(EDITING)),
-    group('The row of "⋯"', 'At half and a third: Edit, loading, and Stop editing.', button(READ_ONLY, { row: true }), button(READ_ONLY, { row: true, busy: 'edit' }), button(EDITING, { row: true })),
-    group('Edit refused', 'Another computer holds the ledger: the toast says who and since when, and the ledger stays read-only.', refused()),
+    ...(toggle ? toggleGroups(fx) : menuGroups(fx)),
     group('"⋯" on a read-only ledger', 'Lock board and Archive board are off, their tooltip the reason.', menu()),
     group('A read-only ledger\'s container', 'Paused as on a locked board: in place, quiet, aria-disabled; a press says why.', frame!),
     group('A read-only ledger\'s cards', 'The review buttons, the size control, the note pin and the flag too (read-only writes no flag) are paused.', cards!),
