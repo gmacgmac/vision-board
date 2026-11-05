@@ -13,6 +13,8 @@ import { written } from './write-result.ts';
 import { fail } from './write-problem.ts';
 import type { Batch } from './write-refs.ts';
 import { storedFor } from './write-refs.ts';
+import type { Between } from './write-insert.ts';
+import { insertedBy } from './write-insert.ts';
 import * as writesWords from './words/writes.ts';
 
 type Rec = Record<string, unknown>;
@@ -45,16 +47,19 @@ const sameNode = (item: Rec, stored: Rec): boolean =>
   item.type !== 'node' || (item.n === undefined ? stored.ver === 1 : item.n === stored.n);
 
 /** A key sent before: the same content returns the first result and writes nothing; other
- * content is a `conflict` (api.md 29). Undefined when the key is new. */
-export function replay(b: Batch, i: number, key: string, e: Rec): WriteResult | undefined {
+ * content is a `conflict` (api.md 29). Undefined when the key is new. An item with `insert` (`at`) is the same only
+ * when its node line was followed by that insert's lines (write-insert.ts `insertedBy`). */
+export function replay(b: Batch, i: number, key: string, e: Rec, at?: Between): WriteResult | undefined {
   const stored = storedFor(b, key);
   if (!stored) return undefined;
   const line = toLine(stored);
-  if (contentHash(line) !== contentHash(e) || !sameNode(e, line)) {
+  const was = at && insertedBy(b, stored);
+  const otherInsert = at !== undefined && (was?.after !== at.after || was.before !== at.before);
+  if (contentHash(line) !== contentHash(e) || !sameNode(e, line) || otherInsert) {
     const detail = b.keyHelp ? conflictWords(b, key, stored) : writesWords.theKeyWasUsedBefore(key);
     fail('conflict', detail, { errors: [{ pointer: `/items/${i}/key`, detail: writesWords.keyReusedForDifferentContent2 }] });
   }
-  return written(b.ledger.state(), i, key, stored, true);
+  return written(b.ledger.state(), i, key, stored, true, was);
 }
 
 

@@ -67,3 +67,22 @@ export const youCanTRetireThis = (why: string): string => `You can't retire this
 
 // ---- write-refs.ts
 export const boardHasNoCardName = (board: string, String: string): string => `Board "${board}" has no card ${String}. Name a card by its number on this board (get_board lists them), or by the key of the node item that made it.`;
+
+// ---- write-insert.ts (a node item's `insert`, point 424)
+export const insertSameCard = (n: number): string => `\`insert\` names card ${n} as both \`after\` and \`before\`. Name the two cards a link joins: \`after\` where the link starts, \`before\` where it ends.`;
+export const insertTheCardItself = (n: number): string => `Card ${n} can't go between itself and another card. In \`insert\`, name the two linked cards it goes between, not the card this item writes.`;
+export const insertRetired = (n: number): string => `Card ${n} was retired, so nothing can go next to it. Name two cards on the board now (get_board lists them).`;
+export const insertNoLink = (after: number, before: number): string => `Card ${after} has no link to card ${before}, so there is no link to put a card into. Name two cards a link joins, \`after\` where it starts; show_node with \`linked\` lists a card's links.`;
+export const insertReversed = (after: number, before: number): string => `Card ${after} has no link to card ${before}, but card ${before} links to card ${after}: send \`after: ${before}\` and \`before: ${after}\`.`;
+export const insertApart = (after: number, region: string, before: number, region2: string): string => `Card ${after} is in container "${region}" and card ${before} in "${region2}": \`insert\` goes between two cards of one container. Write the links with \`unlink\` and \`link\` items instead.`;
+export const insertNotFlow = (region: string, mode: string): string => `Container "${region}" lays out as \`${mode}\`, which doesn't place cards by their links, so there is no place between two cards. \`insert\` works in a \`flow\` or \`lanes\` container; here, draw the card without it.`;
+export const insertRegion = (region: string, container: string): string => `The card's \`region\` is "${region}", but the cards it goes between are in "${container}". Send \`region: "${container}"\` to put it there.`;
+export const insertMoved = (n: number, region: string, container: string): string => `The person moved card ${n} to "${region}", and their move wins over yours, so it can't go into "${container}". Draw a new card there instead.`;
+export const notTheSameCard = 'the same card twice';
+export const theCardThisItemWrites = 'the card this item writes';
+export const noLinkFromTo = (after: number, before: number): string => `no link from card ${after} to card ${before}`;
+export const cardWasRetired = (n: number): string => `card ${n} was retired`;
+export const cardsInTwoContainers = (region: string, region2: string): string => `the cards are in "${region}" and "${region2}"`;
+export const containerLaysOutAs = (region: string, mode: string): string => `"${region}" lays out as \`${mode}\``;
+export const notTheContainer = (container: string): string => `not "${container}"`;
+export const thePersonMovedIt = (region: string): string => `the person moved it to "${region}"`;

@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1880,3 +1880,33 @@ headers and answers) is [images.md](./images.md); this section is what the API s
       for the elements. The chat panel blocks a message only when no session is in use (`chat-rules.ts`
       `blockedReason`), since a new one would have to join. Held by `apps/board/tests/live-read-only.test.ts` and
       `tests/pages/read-only-writes.spec.ts`. The header's Edit control is READONLY_UI_01's.
+
+## Insert a card into a flow (insert-markdown-signals ACT_01, point 424)
+
+174. **A node item may carry `insert: { after, before }`** (`insertBetween` flag, on; `node.schema.json` `$defs/sent`,
+    never the stored line). `after` and `before` name two cards as `n` does (a number, or `{ key }`, 35). The item puts
+    its card, new or an existing one (`n`, with `base` as 30), between them in one write: the node line, then an
+    `unlink` of `after`→`before` and two `link` lines, `after`→card and card→`before`, both with the old link's label
+    (`write-insert.ts` `insertLines`). The three lines carry no key of their own; the item's key is on the node line.
+    The card's other links stay. Ledger format unchanged: the ledger holds only lines it already knew.
+    - **All or nothing.** Everything the three lines need is checked before the node line is appended
+      (`checkInsert`, after the item's `base`, board and proposal checks, before its grant, `write-board.ts`
+      `writeOne`); the grant is the node's plus the old link's (its `after` card's container, 82). Refused with
+      `invalid` and a pointer into `insert` (or `node/region`, or `n`), in the words of `words/writes.ts`
+      § write-insert.ts, when: `after` and `before` are one card; either is the card this item writes; either is
+      retired or on another board; there is no link `after`→`before` (when the link runs the other way, the words
+      say to swap them); the two sit in different containers; that container does not lay out by its links (the
+      person's mode wins, as `show_layout` reads it: `flow` and `lanes` do, `grid`, `column`, `row`, `radial` and Later
+      do not); the item's `region` names another container; or the person moved the existing card elsewhere (their
+      move wins, 66). A schema refusal of a node item with `insert` carries the node example that shows it
+      (`examples.ts` `itemExample`).
+    - **Result.** As a node item's (34), plus `inserted: { after, before }` by board number (`write-result.schema.json`
+      `written`; `write-result.ts` `written`).
+    - **Retry** (29). The same item under its key replays with `inserted`; the key with another `insert` is a
+      `conflict`. What an insert wrote is read back from the three lines after its node line (`insertedBy`).
+    - **Flag off.** `insert` is refused as an unknown field, exactly as before (`write-board.ts` `itemProblems`).
+      The engine passes the flag to `writeItems` as its `insert` argument (`engine/writes.ts` `writeBoard`).
+    - Held by `apps/board/tests/api-insert.test.ts`: a new card between linked flow cards (the four lines, the label
+      on both links, no `insert` on the stored line), `show_layout` placing it between its neighbours, an existing card
+      by `n` and `base`, cards by key in a `lanes` container, the retry and the conflict, each refusal writing nothing,
+      a grant, a failed key, the example, and the flag off (through `writeItems` and through the server).

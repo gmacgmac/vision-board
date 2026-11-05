@@ -3,8 +3,10 @@
 // (board numbers and `{ key }`s, write-refs.ts), then its own retry key (before grants; write-replay.ts), then
 // `base`, then the board, a proposal's card kind, the grant and a retire's owed cards, then the
 // ledger module's own checks as it appends. One failure never stops the rest, except items naming a
-// failed item's key, directly or through another failed item. Results name cards by board number.
-import { LIMITS, codePoints, isRecord, latest } from '#format';
+// failed item's key, directly or through another failed item. Results name cards by board number. A node item's
+// `insert` is checked whole before its node line is appended, then written as three more lines (write-insert.ts).
+import type { LedgerEvent } from '#format';
+import { LIMITS, codePoints, flagOn, isRecord, latest } from '#format';
 import type { LedgerState, RetireTarget, WriteItem } from '#actions';
 import { ACTION_OUT, actionIn, canWrite, numberOf, proposeProblem, retireProblem } from '#actions';
 import { WRITE_ITEM_ID, itemExample, itemTypes } from './examples.ts';
@@ -14,12 +16,15 @@ import { ProblemError } from './problem.ts';
 import { LEDGER_SCHEMA_BASE, schemaProblems } from './schema.ts';
 import type { ItemProblem } from './write-problem.ts';
 import { ItemFailed, fail, under } from './write-problem.ts';
+import type { Between } from './write-insert.ts';
+import { checkInsert, insertLines, insertOf, labelOf } from './write-insert.ts';
 import { replay } from './write-replay.ts';
 import type { WriteResult } from './write-result.ts';
 import { written } from './write-result.ts';
 import type { Batch } from './write-refs.ts';
 import { refsOf, resolve, retireLine, storedFor } from './write-refs.ts';
 import * as writesWords from './words/writes.ts';
+import * as schemaWords from './words/schema.ts';
 
 export type { ItemProblem } from './write-problem.ts';
 export type { WriteResult } from './write-result.ts';
@@ -37,10 +42,10 @@ function keyOf(raw: unknown): string | undefined {
   return typeof key === 'string' && schemaProblems(KEY_ID, key).length === 0 ? key : undefined;
 }
 
-/** The ledger line an item becomes: `base` dropped, the path's board on the lines that carry one
- * (api.md 34), and a retire's cards filled in (api.md 126). */
+/** The ledger line an item becomes: `base` and a node's `insert` dropped, the path's board on the lines that carry
+ * one (api.md 34), and a retire's cards filled in (api.md 126). */
 function eventOf(b: Batch, item: Rec): Rec {
-  const { base: _base, ...rest } = item;
+  const { base: _base, insert: _insert, ...rest } = item;
   const e = ON_BOARD.has(String(item.type)) ? { ...rest, board: b.board } : rest;
   return e.type === 'retire' ? retireLine(b.ledger.state(), e) : e;
 }
@@ -128,10 +133,9 @@ function checkOwed(b: Batch, s: LedgerState, i: number, item: Rec, e: Rec): void
 /** Append through the ledger module; its problems point into this item. A `/board` pointer
  * names the path's board, which the item does not carry, so it points at the item; a retire's
  * `/cards` pointer is about the card or container the item named. */
-function append(b: Batch, i: number, key: string | undefined, item: Rec, e: Rec): WriteResult {
+function append(b: Batch, i: number, item: Rec, e: Rec): LedgerEvent {
   try {
-    const stored = b.ledger.append(e, { by: 'agent', agent: b.agent }, { board: b.board });
-    return written(b.ledger.state(), i, key, stored);
+    return b.ledger.append(e, { by: 'agent', agent: b.agent }, { board: b.board });
   } catch (err) {
     if (!(err instanceof ProblemError)) throw err;
     const { status: _status, errors, ...rest } = err.body;
@@ -155,37 +159,60 @@ function checkProposeWord(i: number, raw: unknown): void {
 /** The item as the ledger names it: a proposal's `check` or `cross` stored as `ack` or `drop`. */
 const storedNames = (item: Rec): Rec => (item.type === 'propose' ? { ...item, action: actionIn(String(item.action)) } : item);
 
-/** A refused item (api.md 40): one naming a known `type` comes back with that form's example; one
- * with a missing or unknown `type` lists the ten types. */
-function refuse(i: number, raw: unknown, errors: readonly PointerError[]): never {
-  const example = itemExample(isRecord(raw) ? raw.type : undefined);
+/** The item's schema problems. With `insertBetween` off, a node item's `insert` is an unknown field, as it was
+ * before the schema had one: the rest of the item is checked as it stands. */
+function itemProblems(b: Batch, raw: unknown): PointerError[] {
+  if (b.insert || !isRecord(raw) || raw.type !== 'node' || !Object.hasOwn(raw, 'insert')) return schemaProblems(WRITE_ITEM_ID, raw);
+  const { insert: _insert, ...rest } = raw;
+  return [...schemaProblems(WRITE_ITEM_ID, rest), { pointer: '/insert', detail: schemaWords.unknownField('insert') }];
+}
+
+/** A refused item (api.md 40): one naming a known `type` comes back with that form's example (a node item with
+ * `insert`, the one showing it); one with a missing or unknown `type` lists the ten types. */
+function refuse(b: Batch, i: number, raw: unknown, errors: readonly PointerError[]): never {
+  const insert = b.insert && isRecord(raw) && Object.hasOwn(raw, 'insert');
+  const example = itemExample(isRecord(raw) ? raw.type : undefined, insert ? 'insert' : undefined);
   if (example === undefined) {
     fail('invalid', writesWords.eachItemNeedsAType(itemTypes().map((t) => `\`${t}\``).join(', ')), { errors: under(i, errors) });
   }
   fail('invalid', writesWords.thisItemDoesNotFit, { errors: under(i, errors), example });
 }
 
+/** A node item with `insert`: its node line, then the unlink and two links (write-insert.ts), all checked already. */
+function appendInsert(b: Batch, i: number, key: string | undefined, item: Rec, e: Rec, at: Between): WriteResult {
+  const label = labelOf(b.ledger.state(), at);
+  const stored = append(b, i, item, e);
+  if (stored.type !== 'node') throw new Error('a node item was stored as another line');
+  for (const line of insertLines(at, stored.id, label)) append(b, i, item, line);
+  return written(b.ledger.state(), i, key, stored, false, at);
+}
+
 function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): WriteResult {
   checkProposeWord(i, raw);
-  const errors = schemaProblems(WRITE_ITEM_ID, raw);
-  if (errors.length) refuse(i, raw, errors);
+  const errors = itemProblems(b, raw);
+  if (errors.length) refuse(b, i, raw, errors);
   const item = storedNames(raw as Rec);
-  const e = item.type === 'append' ? appended(b, i, resolve(b, i, item), key) : eventOf(b, resolve(b, i, item));
-  const replayed = key === undefined ? undefined : replay(b, i, key, e);
+  const r = resolve(b, i, item);
+  const at = item.type === 'node' ? insertOf(r) : undefined;
+  const e = item.type === 'append' ? appended(b, i, r, key) : eventOf(b, r);
+  const replayed = key === undefined ? undefined : replay(b, i, key, e, at);
   if (replayed) return replayed;
   const s = b.ledger.state();
   checkBase(s, i, item, e);
   checkBoard(b, s, i, e);
   checkProposal(s, i, e);
+  if (at) checkInsert(b, i, e, at);
   checkGrant(b, s, i, e);
+  if (at) checkGrant(b, s, i, { type: 'unlink', from: at.after, to: at.before }); // the old link and after→card are in `after`'s container
   checkOwed(b, s, i, item, e);
-  return append(b, i, key, item, e);
+  return at ? appendInsert(b, i, key, item, e, at) : written(b.ledger.state(), i, key, append(b, i, item, e));
 }
 
 /** Write `items` for `agent` on `board`, in order, one result each (api.md 34). `keyHelp`: a key conflict says what the
- * key holds (write-replay.ts). */
-export function writeItems(ledger: Ledger, agent: string, board: string, items: readonly unknown[], keyHelp = false): WriteResult[] {
-  const b: Batch = { ledger, agent, board, failed: new Set(), keyHelp };
+ * key holds (write-replay.ts); `insert`: a node item may carry `insert` (the `insertBetween` flag, default on). */
+export function writeItems(ledger: Ledger, agent: string, board: string, items: readonly unknown[], keyHelp = false,
+  insert = flagOn('insertBetween', {})): WriteResult[] {
+  const b: Batch = { ledger, agent, board, failed: new Set(), keyHelp, insert };
   return items.map((raw, i) => {
     const key = keyOf(raw);
     try {
