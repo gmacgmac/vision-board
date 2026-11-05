@@ -175,7 +175,7 @@ test('the flag off: the chip opens its menu and Edit is a button beside it, as b
   await open(page, 1400, 'readOnlyStart,ledgerFolders,-readOnlyToggle');
   await expect(toggle(page)).toHaveAttribute('aria-haspopup', 'menu');
   await expect(toggle(page)).not.toHaveAttribute('aria-pressed');
-  await expect(toggle(page)).toHaveAccessibleName('Read-only: press Edit to change this ledger');
+  await expect(toggle(page)).toHaveAccessibleName('Read-only: switch to Editing to change this ledger');
   await expect(page.locator(bid('edit'))).toHaveAccessibleName('Edit');
   await toggle(page).click();
   await expect(page.getByRole('menu', { name: 'This ledger' })).toBeVisible();

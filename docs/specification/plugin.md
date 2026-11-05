@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -415,9 +415,10 @@ Reviewed by the maintainer (D-074 rule 7): all settled, 2026-11-02. Each is stil
 
 Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
 
-12. **The person's reason names Edit.** A refused press says standalone's words, "Read-only: press Edit to change it"
-    (`#actions` `READ_ONLY_PERSON`), and a bot's refusal tells it the person can press Edit (`READ_ONLY`). A host has no
-    Edit unless it draws one. Either a host-neutral sentence for both, or `readOnly` answering the reason the host gives.
+12. **The person's reason names Editing.** A refused press says standalone's words, "Read-only: switch to Editing to
+    change it" (`#actions` `READ_ONLY_PERSON`); a bot's refusal is already host-neutral, "until they make it editable"
+    (`READ_ONLY`). A host has no Editing unless it draws one. Either a host-neutral sentence for the person too, or
+    `readOnly` answering the reason the host gives.
 13. **A bot's own file writes.** `readOnly` stops every write through the engine. A bot that writes pictures straight into
     `images/` (open point 1) is stopped only by the host's own file rules while the board is read-only.
 14. **A lock of the host's own.** Standalone takes the ledger's lock on Edit, so two computers never write one ledger; the

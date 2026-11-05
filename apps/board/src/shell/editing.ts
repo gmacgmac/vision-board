@@ -44,7 +44,7 @@ export function holder(f: Pick<FolderInfo, 'editing'> | null | undefined, now = 
 export function stateTip(f: Pick<FolderInfo, 'readOnly' | 'editing'> | null | undefined): string {
   if (editState(f) === 'editing') return editingWords.editingHere;
   const who = holder(f);
-  return who ? editingWords.readOnlyEditedOn(who.host, who.since) : editingWords.readOnlyPressEdit;
+  return who ? editingWords.readOnlyEditedOn(who.host, who.since) : editingWords.readOnlySwitchToEditing;
 }
 
 /** The toggle's tooltip, its description (its name is Edit, whatever the state): the state and what a press does. */

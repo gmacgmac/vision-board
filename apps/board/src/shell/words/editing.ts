@@ -5,7 +5,7 @@
 export const readOnly = 'Read-only';
 export const editing = 'Editing';
 /** The read-only chip's tooltip and name, while no other computer is editing. */
-export const readOnlyPressEdit = 'Read-only: press Edit to change this ledger';
+export const readOnlySwitchToEditing = 'Read-only: switch to Editing to change this ledger';
 /** The same, while another computer holds the ledger. */
 export const readOnlyEditedOn = (host: string, since: string): string => `Read-only: being edited on ${host} since ${since}`;
 /** The editing chip's tooltip and name. */
@@ -23,14 +23,14 @@ export const editTip = 'Open this ledger for changes here: it checks no other co
 export const stopEditingTip = 'Make this ledger read-only again, so another computer can edit it';
 /** Edit refused: another computer holds the ledger. */
 export const editRefused = (host: string, since: string): string =>
-  `Still read-only: ${host} has been editing this ledger since ${since}. Press Edit again once it stops editing.`;
+  `Still read-only: ${host} has been editing this ledger since ${since}. Try again once it stops editing.`;
 /** While Edit or Stop editing is on its way. */
 export const opening = 'Opening for editing…';
 export const stopping = 'Stopping…';
 
 // ---- EditChip.svelte as one toggle (readOnlyToggle flag, PLAN decision 11): it shows the state in words (`readOnly`,
 // `editing`, or `opening` and `stopping` while busy); its name is `edit` whatever the state (aria-pressed says which),
-// so "press Edit" stays true for the screen reader and voice control; the tooltip below is its description.
+// so voice control can always say it; the tooltip below is its description.
 /** Read-only, while no other computer is editing. */
 export const toggleReadOnlyTip = 'Read-only: press to edit this ledger here';
 /** Read-only, while another computer holds the ledger. */

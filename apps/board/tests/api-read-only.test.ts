@@ -130,7 +130,7 @@ test('read-only, every person write of the ledger\'s folder answers 409 `read-on
   const before = disk();
   for (const [id, input] of Object.entries(PERSON_WRITES) as [OperationId, Rec][]) {
     const refused = await h.fails(id, input, 409, 'read-only');
-    assert.equal(id.includes('chat') ? /read-only.*Press Edit/.test(refused.detail) : refused.detail === READ_ONLY_PERSON, true, `${id}: ${refused.detail}`);
+    assert.equal(id.includes('chat') ? /read-only.*Switch to Editing/.test(refused.detail) : refused.detail === READ_ONLY_PERSON, true, `${id}: ${refused.detail}`);
   }
   for (const action of ['flag', 'send', 'ack', 'lock']) {
     const body = { type: 'act', action, ...(action === 'send' || action === 'lock' ? { board: PLANS } : { n: 1, ver: 1 }) };
@@ -157,7 +157,7 @@ test('Edit while another computer edits: `conflict` naming that computer; still 
   anotherComputer();
   try {
     const refused = await h.fails('edit_ledger', {}, 409, 'conflict');
-    assert.match(refused.detail, /^Computer "another-computer" \(process 1, port 4466\) has been editing this ledger since .*, so it stays read-only here\. Press Edit again once it stops editing\.$/);
+    assert.match(refused.detail, /^Computer "another-computer" \(process 1, port 4466\) has been editing this ledger since .*, so it stays read-only here\. Try again once it stops editing\.$/);
     assert.doesNotMatch(refused.detail, /Stop that server/, 'the person\'s words, not a second server\'s (READONLY_UI_01-R1)');
     const project = await h.ok('get_project');
     assert.equal(project.readOnly, true);

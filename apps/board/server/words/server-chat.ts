@@ -153,4 +153,4 @@ export const theKiroAgentFileCould = (kiroAgentFile: string, err: string): strin
 // ---- chat-sessions.ts (read-only opening, D-085)
 /** A chat that would write the ledger's agents file (a new agent, or a fresh secret for one after a restart). */
 export const noChatWhileReadOnly = (agent: string): string =>
-  `This ledger is open read-only, so ${agent} can't be started here: its agent would have to join the ledger. Press Edit first.`;
+  `This ledger is open read-only, so ${agent} can't be started here: its agent would have to join the ledger. Switch to Editing first.`;
