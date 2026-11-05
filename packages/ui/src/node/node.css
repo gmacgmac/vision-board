@@ -114,6 +114,10 @@ vb-node .vb-node-title {
   margin: 0; font-size: var(--vb-text-lg); font-weight: var(--vb-weight-medium); line-height: 1.3;
   letter-spacing: -0.01em; color: var(--vb-ink-strong);
 }
+/* Big title (bigTitles flag, point 437): a card whose body has structure (a `#` or `##` heading or a
+   table, as the renderer drew it) shows its title at the body's `#` size, as the card's one heading;
+   markdown.css steps that `#` down to `##`. Other cards keep the medium title. */
+[data-big-titles] vb-node .vb-node-content:has(> .vb-node-body :is(.vb-md-h1, .vb-md-h2, .vb-md-table)) > .vb-node-title { font-size: var(--vb-text-xl); }
 /* The body is Markdown (markdown.css styles its blocks); its blocks sit on the content's rhythm. */
 vb-node .vb-node-body {
   display: grid; gap: var(--vb-space-2); min-width: 0; font-size: var(--vb-text-md); line-height: 1.5; color: var(--vb-ink);

@@ -122,6 +122,15 @@ stay text, exactly as before). Proven by `packages/ui/tests/markdown-more.test.t
   (`vb-md-label`), all `role="heading"` at the caller's `headingLevel` (`render.ts` `heading`). The
   two larger sizes sit one and two type-scale steps above `--vb-md-text`, so they grow in a popover
   (`markdown.css`; `tests/pages/markdown-more.spec.ts`).
+- **Big titles** (the `bigTitles` flag, on by default; point 437). The card's title is its one heading.
+  A card whose body has structure, a `#` or `##` heading or a table as the renderer drew it, shows its
+  title at the `#` size (`--vb-text-xl`; `node.css`, `.vb-node-content:has(…) > .vb-node-title`), and in
+  that body `#` draws at the `##` size (`markdown.css`, `--vb-md-step`), `##` too, and `###` stays the
+  label. The structure is read from the renderer's output with `:has()`, so nothing parses the body
+  twice and a redraw updates it. A card whose only heading is `###`, a plain card, and a `#` in a note
+  or popover are unchanged. The board's world and the gallery's main carry `data-big-titles` (the
+  controller's flag-attribute list). Off, every title is medium and `#` large
+  (`tests/pages/big-titles.spec.ts`).
 - A GFM table: the paragraph's last line is the header, then a delimiter row with as many cells
   (colons give each column's alignment), then rows until a blank line or another block; inline
   Markdown in cells, `\|` for a pipe (`table.ts` `splitRow`, `delimiterRow`, `tableHtml`; GFM's

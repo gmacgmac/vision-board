@@ -67,6 +67,8 @@ test.describe('on the gallery', () => {
   });
 
   test('# is large, ## medium, ### the label; all headings at the caller\'s level, and they grow with the popover text', async ({ page }) => {
+    // The renderer's own sizes, as a note or popover draws them: under a card's big title `#` steps down (big-titles.spec.ts).
+    await page.goto('/gallery.html?flags=-bigTitles');
     const card = sample(page, 'Heading sizes');
     const [h1, h2, h3] = [card.locator('.vb-md-h1'), card.locator('.vb-md-h2'), card.locator('.vb-md-label')];
     for (const h of [h1, h2, h3]) {

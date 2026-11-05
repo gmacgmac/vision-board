@@ -15,9 +15,16 @@
 /* Heading sizes (markdownMore, PLAN decision 7): `#` and `##` sit one and two steps of the type scale
    above the text around them (xl and lg over md on a card, so 18px and 15px), so they grow with
    --vb-md-text in a popover; `###` and smaller stay the label above. Body ink, no hue. */
-.vb-md-h1, .vb-md-h2 { display: block; font-weight: var(--vb-weight-bold); line-height: 1.3; color: var(--vb-ink-strong); }
-.vb-md-h1 { font-size: calc(var(--vb-md-text, var(--vb-text-md)) + var(--vb-text-xl) - var(--vb-text-md)); }
-.vb-md-h2 { font-size: calc(var(--vb-md-text, var(--vb-text-md)) + var(--vb-text-lg) - var(--vb-text-md)); }
+.vb-md-h1, .vb-md-h2 {
+  display: block; font-weight: var(--vb-weight-bold); line-height: 1.3; color: var(--vb-ink-strong);
+  font-size: calc(var(--vb-md-text, var(--vb-text-md)) + var(--vb-md-step) - var(--vb-text-md));
+}
+.vb-md-h1 { --vb-md-step: var(--vb-text-xl); }
+.vb-md-h2 { --vb-md-step: var(--vb-text-lg); }
+/* Under a big title (bigTitles flag, point 437; node.css): a card whose body has structure shows its
+   title at the `#` size, so its body's `#` steps down to the `##` size and the title stays the one
+   heading. A `#` anywhere else (a note, a popover) keeps its size. */
+[data-big-titles] vb-node .vb-node-body:has(:is(.vb-md-h1, .vb-md-h2, .vb-md-table)) .vb-md-h1 { --vb-md-step: var(--vb-text-lg); }
 /* Space above, not below, so a heading sits with the text it opens. */
 :is(.vb-md-h1, .vb-md-h2):not(:first-child) { margin-top: var(--vb-space-1); }
 
