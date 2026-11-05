@@ -1,6 +1,6 @@
 // Big titles (bigTitles flag, point 437): a card whose body has structure (a `#` or `##` heading, or a
-// table) shows its title at today's `#` size, larger than any of its body headings, and its body's `#`
-// steps down to the `##` size; a plain card's title, and a card whose only heading is `###`, are
+// table) shows its title at today's `#` size and bold weight (point 442), larger than any of its body
+// headings, and its body's `#` steps down to the `##` size; a plain card's title, and a card whose only heading is `###`, are
 // unchanged; ?flags=-bigTitles draws today's sizes. In light and dark: the title passes Lc 60, axe passes,
 // and the gallery's samples match their screenshot.
 import type { Locator, Page } from '@playwright/test';
@@ -11,6 +11,7 @@ import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 const fontSize = (l: Locator) => l.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+const weight = (l: Locator) => l.evaluate((e) => Number(getComputedStyle(e).fontWeight));
 
 /** Today's `#` size: a `vb-md-h1` outside any card, as markdown.css draws it. */
 const todaysH1 = (page: Page) => page.evaluate(() => {
@@ -55,6 +56,10 @@ test('on the board: a structured card\'s title is today\'s # size and larger tha
   // A card whose only heading is the label, and a plain card, keep the medium title.
   expect(label!.title).toBeLessThan(h1);
   expect(plain!.title).toBe(label!.title);
+  // Bold, the `#` weight (point 442): the headline over its bold `##`; the label and plain cards keep the medium title.
+  const bold = await weight(cardOf(page, 1).locator('.vb-md-h2'));
+  for (const i of [1, 2]) expect(await weight(cardOf(page, i).locator('.vb-node-title')), `card ${i}: bold`).toBe(bold);
+  for (const i of [3, 4]) expect(await weight(cardOf(page, i).locator('.vb-node-title')), `card ${i}: medium`).toBeLessThan(bold);
   // The big title still fits: it wraps inside its card, never wider.
   for (const i of [1, 2]) expect(await cardOf(page, i).locator('.vb-node-title').evaluate((t) => t.scrollWidth <= t.clientWidth)).toBe(true);
 });
@@ -67,6 +72,9 @@ test('flag off: every title keeps today\'s size and # stays larger than ##', asy
   expect(await fontSize(cardOf(page, 1).locator('.vb-md-h1'))).toBe(await todaysH1(page));
   expect(await fontSize(cardOf(page, 1).locator('.vb-md-h1'))).toBeGreaterThan(await fontSize(cardOf(page, 1).locator('.vb-md-h2')));
   expect(titles[0]).toBeLessThan(await todaysH1(page));
+  const weights = await Promise.all([1, 2, 3, 4].map(async (i) => weight(cardOf(page, i).locator('.vb-node-title'))));
+  expect(new Set(weights).size, 'every title keeps the medium weight').toBe(1);
+  expect(weights[0]).toBeLessThan(await weight(cardOf(page, 1).locator('.vb-md-h2')));
 });
 
 test.describe('on the gallery', () => {
