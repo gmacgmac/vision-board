@@ -258,6 +258,22 @@ export const FLAGS = {
     // On by default (maintainer, 2026-11-03, point 416; read-only follow-ups FE_03); ?flags=-railOnHover turns it off.
     default: true,
   },
+  insertBetween: {
+    // On by default (maintainer, 2026-11-05, point 424; insert-markdown-signals ACT_01); ?flags=-insertBetween turns it off.
+    default: true,
+  },
+  markdownMore: {
+    // On by default (maintainer, 2026-11-05, points 426-428; insert-markdown-signals MD_01); ?flags=-markdownMore turns it off.
+    default: true,
+  },
+  updateSignals: {
+    // On by default (maintainer, 2026-11-05, points 429-432; insert-markdown-signals FE_01); ?flags=-updateSignals turns it off.
+    default: true,
+  },
+  readOnlyToggle: {
+    // On by default (maintainer, 2026-11-05, point 431; insert-markdown-signals FE_02); ?flags=-readOnlyToggle turns it off.
+    default: true,
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
@@ -358,4 +374,8 @@ export const FLAG_DESCRIPTIONS = {
   ledgerFolders: 'A project holds several ledgers, one folder each inside `.visionboard/` (`main/` first); every data-folder path follows the open ledger, repo-wide chat files stay at `.visionboard/`. The header lists, switches and creates ledgers; a folder in the old layout moves into `main/` on first open, by rename, while holding the lock; an agent\'s reads may name another ledger of the folder and read it, read-only (D-084). Off, one ledger at `.visionboard/`.',
   readOnlyStart: 'Every ledger opens read-only and takes no lock; Edit takes the ledger\'s lock if no one else holds it, Stop editing gives it back. Read-only writes nothing into the ledger\'s folder; reads carry `readOnly: true` and writes answer `read-only` (D-085). `--edit` or `VB_EDIT=1` opens for editing. Off, the board opens for writing as before.',
   railOnHover: 'A container\'s rail icons and divider show only on the container being hovered or holding focus (at the rail\'s rest strength, full on the rail itself); on every other container they are hidden, though still focusable. Comment\'s badge still shows, and a touch screen keeps them shown. Off, every container shows its rail icons dimmed at rest.',
+  insertBetween: 'A `node` item may carry `insert: { after, before }`: the card goes between two linked cards of one `flow` or `lanes` container, in one write (the card, the old link removed, two links made with its label), all or nothing; refused with a reason otherwise. Off, `insert` is refused as an unknown field.',
+  markdownMore: 'Markdown draws `#` large, `##` medium and `###` to `######` as the small label; GFM tables of up to 4 columns that wrap and never scroll (a card with one is the widest tier); and `---`, `***` or `___` as a horizontal line. Off, every heading is the small label and tables and breaks stay text (D-023).',
+  updateSignals: 'Updated is a bright amber (`--vb-state-updated`): the card\'s "N updates" tab and the "updated" count in a container\'s pill; new stays teal. The agent\'s reply has an amber left edge, bright while its card is unseen, muted after. Off, the tab is the accent pink and replies are grey.',
+  readOnlyToggle: 'Read-only and Editing are one toggle button in the header that shows the current state and flips on a press (taking the lock can still be refused). Off, the read-only chip opens a menu.',
 } as const satisfies Record<FlagName, string>;
