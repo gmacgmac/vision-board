@@ -239,3 +239,19 @@ test('nodeState: a note answered before a Send is grey, marked Answered, and its
     pin: { seq: one.seq, index: 1, sent: true, label: 'Note 1 on item 1, answered. Show it' },
   });
 });
+
+// updateSignals (D-088): a reply the person has not looked at keeps `unseen` only while its card is
+// unseen itself (NEW, or an "N updates" tab not yet stepped through), on the card and in its markup.
+test('nodeState: a reply is unseen only while its card is', () => {
+  const a = note('Why?', 'comment', true);
+  const replies: CardReply[] = [{ seq: 90, to: a.seq, text: 'Because.', at: '2026-10-04T00:00:00Z', unseen: true }];
+  const s = withItem('open', [a]);
+  const unseenOf = (c: Parameters<typeof nodeState>[4]) => {
+    const e = nodeState(node({ n: 2 }), s, undefined, false, c).notes!.entries[0]!;
+    return isNoteEntry(e) ? e.replies![0]!.unseen : undefined;
+  };
+  assert.equal(unseenOf({ replies, updates: { count: 1 } }), true);
+  assert.equal(unseenOf({ replies, new: true }), true);
+  assert.equal(unseenOf({ replies }), undefined, 'the card seen: muted');
+  assert.equal(unseenOf({ replies, updates: { count: 1, steps: [], at: 0 } }), undefined, 'stepped past the last: up to date');
+});

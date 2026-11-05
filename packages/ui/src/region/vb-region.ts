@@ -13,6 +13,7 @@ import { bindModeRow } from './region-row.ts';
 import type { NoteParts } from './region-note.ts';
 import { bindNoteParts } from './region-note.ts';
 import { bindTitleTip } from './region-title.ts';
+import { fillFreshPill } from './region-fresh.ts';
 import { holdersTemplate, regionIds, regionIdsOf, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
 import { pauseControls } from '../paused/paused.ts';
@@ -180,7 +181,7 @@ export function defineVbRegion(): void {
       const pill = this.piece('.vb-region-fresh');
       pill.hidden = !f;
       pill.title = f?.label ?? '';
-      this.piece('.vb-region-fresh-n').textContent = f?.text ?? '';
+      fillFreshPill(this.piece('.vb-region-fresh-n'), f);
       this.piece('.vb-region-fresh-words').textContent = f?.label ?? '';
     }
 

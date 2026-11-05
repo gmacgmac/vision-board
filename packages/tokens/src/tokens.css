@@ -148,6 +148,14 @@
      Lc 54.8 and 63.5 (labels, 45). */
   --vb-state-fresh: light-dark(#0d9488, #2dd4bf);
   --vb-state-fresh-soft: color-mix(in srgb, var(--vb-state-fresh) 12%, var(--vb-surface-card));
+  /* Updated (updateSignals flag, D-088, points 429-432): a card's "N updates" tab, the "updated" count in a
+     container's pill and the agent's reply edge while its card is unseen. A bright amber: dark full
+     saturation, clearly lighter than the action amber (--vb-kind-action, Lc 63.6 on the card) and the
+     changed family's (--vb-state-context, 62.9); light the same hue, deeper. APCA-W3 0.0.98G-4g
+     (tests/pages/update-signals.spec.ts): on the card Lc 71.3 light, 74.2 dark; sunken 61.9, 73.1;
+     deep 55.5, 71.3; the canvas 65.4, 75.0; on its -soft 61.0, 70.7 (labels 45, edges 30). */
+  --vb-state-updated: light-dark(#a66800, #ffc21a);
+  --vb-state-updated-soft: color-mix(in srgb, var(--vb-state-updated) 12%, var(--vb-surface-card));
 
   /* Node kinds (Architect families, D-024) */
   --vb-kind-question: light-dark(#3471d0, #72a6f2);

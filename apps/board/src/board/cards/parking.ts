@@ -85,10 +85,13 @@ export function createParking(d: ParkingDeps): Parking {
   };
 
   /** The replies to card `id`'s notes (a note on a group is answered on any of its cards), then its own that
-   *  name no note, in the order they were written. A reply naming a note elsewhere shows there. */
+   *  name no note, in the order they were written. A reply naming a note elsewhere shows there. `unseen`: one
+   *  written after the person last looked at this card (`looked`, D-054), never while a past version shows;
+   *  the card keeps it only while it is itself unseen (packages/ui `litReplies`). */
   function repliesOn(s: LedgerState, id: number): CardReply[] {
     const out = (s.items.get(id)?.notes ?? []).flatMap((x) => answers.get(x.seq) ?? []);
     for (const r of own.get(id) ?? []) if (r.to === undefined || !s.asks.has(r.to)) out.push(r);
-    return out.sort(bySeq);
+    const since = d.readOnly() ? Infinity : s.looked.get(id) ?? 0;
+    return out.sort(bySeq).map((r) => (r.seq > since ? { ...r, unseen: true as const } : r));
   }
 }

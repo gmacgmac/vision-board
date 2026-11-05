@@ -31,7 +31,7 @@ const hint = (text: string): string =>
 /** One reply as the card shows it: "Agent reply · label" over its words as Markdown (D-023). In the
  *  conversation each entry also carries its `seq` and takes focus from the page (`at`). */
 const replyItem = (r: ReplyEntry, md: MarkdownOptions | undefined, at = '', cls = ''): string =>
-  `<li class="vb-nb-reply${cls}"${at}><span class="vb-nb-who">${esc(r.who)}</span><div class="vb-nb-reply-text">${renderMarkdown(r.text, md)}</div></li>`;
+  `<li class="vb-nb-reply${cls}"${at}${r.unseen ? ' data-unseen' : ''}><span class="vb-nb-who">${esc(r.who)}</span><div class="vb-nb-reply-text">${renderMarkdown(r.text, md)}</div></li>`;
 
 /** Where the page can scroll to and focus an entry of the conversation: by its ledger `seq`. */
 const seqAt = (seq: number): string => ` data-seq="${seq}" tabindex="-1"`;

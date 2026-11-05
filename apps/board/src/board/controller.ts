@@ -61,7 +61,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const versionView = on('versionView');
   status.set({ agentAccess: access, versionView });
   world.toggleAttribute('data-wire-layers', layers);
-  for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview'], ['data-app-title', 'appTitle'], ['data-fresh-cards', 'freshCards']] as const) world.toggleAttribute(attr, on(flag)); // hover tips (FE_03, FE_04), an app card's title (card-polish FE_01), the pink updates tab (freshCards); rule 12
+  for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview'], ['data-app-title', 'appTitle'], ['data-fresh-cards', 'freshCards'], ['data-update-signals', 'updateSignals']] as const) world.toggleAttribute(attr, on(flag)); // hover tips (FE_03, FE_04), an app card's title (card-polish FE_01), the updates tab (freshCards), updated in amber (updateSignals); rule 12
   const toast = (text: string, tone?: 'info' | 'error') => host.notify(text, tone);
   /** The modules' confirm, as the host asks it. */
   const ask = (heading: string, body: string, confirm: string, list?: ConfirmList) => host.confirm({ heading, body, confirm, ...(list && { list }) });
