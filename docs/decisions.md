@@ -1231,3 +1231,14 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: hovering a container title or a reply's popover stopped the board panning, which the maintainer found annoying in daily use.
 - **Rejected**: panning only with the pan key over overlays (the earlier rule); handing over mid-flick (the board would lurch).
 - **Task**: cortex-tasks/board/2026-11-05_board-app_wheel-chaining.md
+
+## D-090 A structured card's title is its big headline
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, point 437) · **From**: cortex-tasks/board/2026-11-05_board-ui_big-titles.md
+- **In short**: on a card whose body has a `#` or `##` heading or a table, the title draws large and the body steps down from it.
+- **Decision**:
+  1. A card is structured when its body, as drawn, has a `#` or `##` heading or a table; `###` labels, lists, quotes, code and lines alone do not count.
+  2. A structured card's title draws at the `#` size (18 px on a card); in its body `#` and `##` draw at the medium size, `###` and smaller stay the small label. Every other card is unchanged. Notes and popovers keep D-086's sizes.
+  3. CSS only, from what the renderer drew (`:has`), so the body is never parsed twice. Behind `bigTitles`.
+- **Why**: a body `#` was bigger than the card's title, so a summary card read as if its title were a sub-heading; a test of 8 runs (Sonnet and Opus, SKILL v3.30) showed bots treat the title as the card's heading and start bodies at `##`.
+- **Rejected**: a leading body `#` becoming the title with the real title muted (two names for one card; no bot wrote it); capping `#` at the title's size (loses the presentable headline).
+- **Task**: cortex-tasks/board/2026-11-05_board-ui_big-titles.md
