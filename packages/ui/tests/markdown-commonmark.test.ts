@@ -1,6 +1,6 @@
 // CommonMark's own examples for every construct the renderer supports (D-023). Each example in
 // the covered sections is rendered and compared with the spec's HTML, after mapping our output
-// back to plain CommonMark tags (classes, the label, the quote and the image shapes) and applying our
+// back to plain CommonMark tags (classes, the label and heading sizes, the rule, the quote and the image shapes) and applying our
 // link and image rules to the spec's side, so the comparison is fair. Examples we deliberately differ on are in
 // EXCLUDED, each with a reason; any other failure fails the test, and so does an excluded example
 // that passes, so the table is the exact list of differences.
@@ -19,14 +19,13 @@ const INDENTED = 'indented code is not in the subset: its lines are paragraph te
 const RAW_HTML = 'raw HTML is always escaped (D-023)';
 const HTML_BLOCK = 'HTML blocks are not in the subset: escaped paragraph text';
 const REFS = 'reference links and definitions are not in the subset: plain text';
-const HR = 'thematic breaks are not in the subset: paragraph text';
 const SETEXT = 'setext headings are not in the subset: paragraph text';
 const DEEP = 'lists nested deeper than one level are plain text';
 
 /** Every example we deliberately differ on: number, then why (one line). */
 const EXCLUDED: Record<number, string> = {
   13: TABS,
-  18: INDENTED, 69: INDENTED, 134: INDENTED, 225: INDENTED, 231: INDENTED, 236: INDENTED, 252: INDENTED,
+  18: INDENTED, 48: INDENTED, 69: INDENTED, 134: INDENTED, 225: INDENTED, 231: INDENTED, 236: INDENTED, 252: INDENTED,
   253: INDENTED, 254: INDENTED, 257: INDENTED, 264: INDENTED, 270: INDENTED, 271: INDENTED, 272: INDENTED,
   273: INDENTED, 274: INDENTED, 278: INDENTED, 286: INDENTED, 287: INDENTED, 288: INDENTED, 289: INDENTED,
   290: INDENTED, 313: INDENTED,
@@ -43,8 +42,7 @@ const EXCLUDED: Record<number, string> = {
   566: REFS, 567: REFS, 568: REFS, 569: REFS, 570: REFS, 571: REFS,
   573: REFS, 576: REFS, 577: REFS, 582: REFS, 583: REFS, 584: REFS, 585: REFS, 586: REFS, 587: REFS,
   588: REFS, 589: REFS, 591: REFS, 592: REFS, 593: REFS,
-  77: HR, 234: HR, 246: HR,
-  141: SETEXT, 300: SETEXT,
+  59: SETEXT, 141: SETEXT, 300: SETEXT,
   294: DEEP, 299: DEEP, 307: DEEP,
 };
 
@@ -54,13 +52,14 @@ const SPEC = JSON.parse(readFileSync(new URL('./fixtures/commonmark-0.31.2.json'
 const SECTIONS = [
   'Paragraphs', 'Emphasis and strong emphasis', 'Code spans', 'Links', 'Autolinks', 'List items',
   'Lists', 'Block quotes', 'Fenced code blocks', 'Backslash escapes', 'Hard line breaks',
-  'ATX headings', 'Raw HTML', 'Images',
+  'ATX headings', 'Raw HTML', 'Images', 'Thematic breaks',
 ];
 
 /** Our shapes back to plain CommonMark tags. */
 const ours = (html: string): string => html
   .replace(/<p class="vb-md-p">/g, '<p>')
-  .replace(/<span class="vb-md-label" role="heading" aria-level="\d">([\s\S]*?)<\/span>/g, '<h>$1</h>')
+  .replace(/<span class="vb-md-(?:label|h1|h2)" role="heading" aria-level="\d">([\s\S]*?)<\/span>/g, '<h>$1</h>')
+  .replace(/<hr class="vb-md-rule">/g, '<hr />')
   .replace(/<(ul|ol) class="vb-md-list"/g, '<$1')
   .replace(/<blockquote class="vb-md-quote">/g, '<blockquote>')
   .replace(/<pre class="vb-md-code" tabindex="0">/g, '<pre>')
@@ -88,7 +87,7 @@ const theirs = (html: string): string => html
   .replace(/<a href="([^"]*)"(?: title="[^"]*")?>([\s\S]*?)<\/a>/g, (m, href: string, text: string) =>
     (ALLOWED.test(href.replace(/&amp;/g, '&')) ? m : text));
 
-const BLOCK_TAG = /\n*(<\/?(?:p|ul|ol|li|blockquote|h|pre)\b[^>]*>)\n*/g;
+const BLOCK_TAG = /\n*(<\/?(?:p|ul|ol|li|blockquote|h|pre|hr)\b[^>]*>)\n*/g;
 
 /** Both sides: one spelling per escaped character, no newlines around block tags, one hard break. */
 const common = (html: string): string => html
