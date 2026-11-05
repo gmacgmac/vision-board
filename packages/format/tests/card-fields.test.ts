@@ -58,7 +58,8 @@ test('every field an event schema marks as naming a card is in its row', () => {
 
 test('the table as it stands; an unknown type has no card fields', () => {
   assert.deepEqual(CARD_FIELDS, {
-    board: [], region: [{ field: 'center', in: 'region' }], node: [{ field: 'n' }],
+    board: [], region: [{ field: 'center', in: 'region' }],
+    node: [{ field: 'n' }, { field: 'after', in: 'insert' }, { field: 'before', in: 'insert' }],
     link: [{ field: 'from' }, { field: 'to' }], unlink: [{ field: 'from' }, { field: 'to' }],
     act: [{ field: 'n' }, { field: 'nodes', list: true }], seen: [{ field: 'n' }], reply: [{ field: 'n' }],
     propose: [{ field: 'n' }], park: [{ field: 'n' }], join: [], 'grant-request': [],

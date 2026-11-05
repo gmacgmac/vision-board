@@ -154,7 +154,7 @@ export function createDrawing(d: DrawDeps): Drawing {
       cache.clear();
       sizes.clear();
     }
-    const tier = d.sizing ? (n: ViewNode): NodeSize => tierOf(n, data.state) : undefined;
+    const tier = d.sizing ? (n: ViewNode): NodeSize => tierOf(n, data.state, d.markdown?.more) : undefined;
     const sync = cards.sync(data.view, data.state, data.versions, d.selected, tier, d.facts);
     if (fresh || sync.created) noAnim();
     regions.sync(data.view);

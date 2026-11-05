@@ -7,8 +7,9 @@ import type { BoardState } from '#actions';
 import { sizeTier } from '#layout';
 import type { ActFields } from '../io.ts';
 
-/** The tier a card is drawn at: the person's pick, else the agent's suggestion or the auto tier. */
-export const tierOf = (n: ViewNode, s: BoardState): NodeSize => sizeTier(n, s.sizes.get(n.id));
+/** The tier a card is drawn at: the person's pick, else the agent's suggestion or the auto tier.
+ *  `tables`: a table makes the card L only while Markdown draws tables (markdownMore, MD_01-R3). */
+export const tierOf = (n: ViewNode, s: BoardState, tables?: boolean): NodeSize => sizeTier(n, s.sizes.get(n.id), tables);
 
 export const isSizePick = (v: string | undefined): v is ActSize => (ACT_SIZES as readonly string[]).includes(v ?? '');
 

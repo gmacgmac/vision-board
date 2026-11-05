@@ -1181,3 +1181,41 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: a board shared through Dropbox, a git pull or a sent file must be watchable by anyone without a second writer forking the ledger; writing is a deliberate step.
 - **Rejected**: hiding the tools while read-only (MCP clients cache the list for an hour, `packages/mcp/src/info.ts` `CACHE`); reusing `locked` (it means one board closed by the person, and bots are told to stop); a read-only server mode chosen only at start (the person could not go from watching to editing).
 - **Task**: cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/TASK-STATUS.md
+
+## D-086 Markdown gains heading sizes, tables of up to 4 columns, and breaks
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, points 426-428) · **From**: board-ui insert-markdown-signals PLAN
+- **In short**: extends D-023's fixed list so consolidated cards can carry structure; still our own renderer, still no HTML.
+- **Decision**:
+  1. `#` draws large, `##` medium, `###` to `######` as the small label (D-023's look); the caller's `aria-level` is kept.
+  2. GFM tables of up to 4 columns, as real tables; columns follow their content, cells wrap, a word breaks only when it alone is wider than its column; a table never scrolls sideways; a card with one is the widest tier (`l`). Five or more columns stay text.
+  3. `---`, `***`, `___` draw one quiet horizontal line; setext headings stay unsupported, so `---` under a line is a break.
+  4. Behind `markdownMore`.
+- **Why**: bigger cards (a summary of several) read as one undivided block; agents asked for structure; the person scans, so nothing may scroll.
+- **Rejected**: horizontal scroll for wide tables (scanning a board breaks on it); task-list checkboxes (`- [ ]`: they look like answers and blur ✓ and ✗, D-045); equal-width columns (broke short words, wasted room).
+- **Task**: cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/TASK-STATUS.md
+
+## D-087 A card can be inserted into a flow in one item
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, point 424) · **From**: board-ui insert-markdown-signals PLAN
+- **In short**: `insert: { after, before }` on a `node` item puts the card between two linked cards of a `flow` or `lanes` container.
+- **Decision**:
+  1. One write: the card, the old link `after`→`before` removed, links `after`→card and card→`before` made with the old link's label; all or nothing; retry-safe by the item's key.
+  2. Refused with a reason unless `after`→`before` is a link and both sit in one container that lays out by links; works for a new card or an existing one.
+  3. An API convenience only: the ledger gets the existing node, unlink and link lines; ledger version unchanged.
+  4. A new card's number comes in the write's answer; an agent names it in a reply in its next call (no placeholder).
+  5. Behind `insertBetween`.
+- **Why**: putting a card into a flow took three items, and forgetting the unlink left a fork.
+- **Rejected**: a `{card:key}` placeholder in text (a format change and a new failure mode, to save one call); insert for `row`/`column`/`grid` (they order by card number).
+- **Task**: cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/TASK-STATUS.md
+
+## D-088 Updated is amber, and the agent's reply carries it; new is teal
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, points 429-432; the colour may change, 429) · **From**: board-ui insert-markdown-signals PLAN
+- **In short**: one colour per meaning, so a person scanning a busy board sees what changed.
+- **Decision**:
+  1. New is teal (`--vb-state-fresh`): the container's border and pill count, the card's NEW tab, the toolbar's "N new" chip and dot.
+  2. Updated is a new token `--vb-state-updated` (light `#d66e00`, dark `#ffc21a`), set apart from the action amber by brightness in dark and by hue in light: the card's "N updates" tab (hover keeps it), the pill's "updated" count.
+  3. The agent's reply has a left edge in that amber: bright while its card is unseen (D-054), muted after; the person's notes stay as they are.
+  4. A container holding only updated cards keeps its teal border.
+  5. Behind `updateSignals`. Read-only and Editing are one toggle (`readOnlyToggle`); sentences say "switch to Editing".
+- **Why**: the pink "updates" marker was hard to see in dark, and the agent's replies looked like the person's notes.
+- **Rejected**: amber for new as well (two meanings, one colour); the action amber itself (an action card's badge and its update tab would read the same).
+- **Task**: cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/TASK-STATUS.md

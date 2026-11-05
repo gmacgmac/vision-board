@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { autoTier, measureBody, sizeTier } from '../src/index.ts';
+import { TABLE_COLUMNS } from '../src/size.ts';
 
 const chars = (n: number) => 'x'.repeat(n);
 const list = (items: number) => Array.from({ length: items }, (_, i) => `- item ${i + 1}`).join('\n');
@@ -42,13 +43,34 @@ test('auto: more than 6 list items is M; 6 is not', () => {
 });
 
 test('auto: list markers inside a code block are not list items', () => {
-  assert.deepEqual(measureBody(`${list(5)}\n\n\`\`\`\n- a\n- b\n\`\`\``), { chars: 61, code: true, items: 5 });
-  assert.deepEqual(measureBody(`${list(5)}\n- a\n- b`), { chars: 52, code: false, items: 7 });
+  assert.deepEqual(measureBody(`${list(5)}\n\n\`\`\`\n- a\n- b\n\`\`\``), { chars: 61, code: true, items: 5, table: false });
+  assert.deepEqual(measureBody(`${list(5)}\n- a\n- b`), { chars: 52, code: false, items: 7, table: false });
   assert.equal(autoTier(list(5)), 's');
 });
 
 test('auto: a rule or emphasis line is not a list item', () => {
   assert.equal(autoTier('---\n*not a list*\n**bold**\n-x\n1.5 percent\n- a\n- b'), 's');
+});
+
+test('auto: a table of up to 4 columns makes a short body L (markdownMore); 5 columns, or the flag off, do not', () => {
+  const table = (n: number) => `${'| h '.repeat(n)}|\n${'|:-:'.repeat(n)}|\n${'| x '.repeat(n)}|`;
+  assert.equal(TABLE_COLUMNS, 4);
+  assert.equal(autoTier(table(1)), 'l');
+  assert.equal(autoTier(`Two options:\n${table(4)}`), 'l');
+  assert.equal(autoTier('a | b\n- | -'), 's', 'a delimiter row starting "- " is a list item, not a table');
+  assert.equal(autoTier('a | b\n--|--'), 'l', 'outer pipes are optional');
+  assert.equal(autoTier(`> ${table(2).replace(/\n/g, '\n> ')}`), 'l', 'in a quote');
+  assert.equal(autoTier(table(5)), 's');
+  assert.equal(autoTier(table(2), false), 's');
+  assert.equal(sizeTier({ body: table(2) }, undefined, false), 's');
+  assert.equal(sizeTier({ body: table(2) }), 'l');
+  // Not a table: a delimiter row with no pipe, a column count that differs, a blank line between, in a code block, under a heading.
+  for (const src of ['a\n---', '| a | b |\n|---|', '| a |\n\n|---|', '```\n| a |\n|---|\n```', '# a | b\n|-|-|']) {
+    assert.equal(measureBody(src).table, false, src);
+  }
+  // The agent's suggestion and the person's pick still win over it.
+  assert.equal(sizeTier({ body: table(2), size: 's' }), 's');
+  assert.equal(sizeTier({ body: table(2) }, 'm'), 'm');
 });
 
 test('auto: the over-480 rule wins over the M rules', () => {

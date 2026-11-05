@@ -1,7 +1,7 @@
 // Markdown, the front function (D-023): the one renderer every Markdown surface calls (card
 // bodies and notes now; replies, the chat and parking bundles later). Source to safe HTML with
 // the pattern's CSS hooks (markdown.css); no inline styles, no DOM, so it runs under node --test.
-// blocks.ts splits the lines into blocks; inline.ts renders each block's text, escaped; image.ts
+// blocks.ts splits the lines into blocks; inline.ts renders each block's text, escaped; table.ts a table; image.ts
 // writes `![alt](path)` (D-048), unless images are off. No switch of its own: whoever renders passes the
 // flags it was given (`MarkdownOptions`), so two boards on one page can differ; left out, each flag's default.
 import { flagOn } from '#format';
@@ -10,6 +10,7 @@ import type { Block } from './blocks.ts';
 import type { ImageWriter } from './image.ts';
 import { imageMarkup } from './image.ts';
 import { esc, renderInline } from './inline.ts';
+import { tableHtml } from './table.ts';
 
 export interface MarkdownOptions {
   /** aria-level of a `#` label (1 to 6). Default 4: the card title is an h3. */
@@ -20,12 +21,15 @@ export interface MarkdownOptions {
   svg?: boolean;
   /** Where the pictures are served: a path goes after it. Default `IMAGE_ROUTE`. */
   imageRoute?: string | undefined;
+  /** `#` large and `##` medium, tables of up to 4 columns and thematic breaks; false, every heading is the
+   * small label and tables and breaks stay text. The markdownMore flag; default, its default. */
+  more?: boolean;
 }
 
 /** Longer input is cut here with an ellipsis (2c_FE_01, Safety). */
 export const MARKDOWN_MAX = 20_000;
 
-interface Ctx { level: number; lists: number; tight: boolean; image: ImageWriter | undefined }
+interface Ctx { level: number; lists: number; tight: boolean; image: ImageWriter | undefined; more: boolean }
 
 const inlineOf = (b: Block, ctx: Ctx): string => renderInline(b.lines.join('\n').trim(), ctx.image);
 
@@ -49,10 +53,18 @@ function flatList(b: Block, ctx: Ctx): string {
   }).join('');
 }
 
+/** `#` large, `##` medium, `###` to `######` the small label (markdownMore); without it, every one the label. */
+function heading(b: Block, ctx: Ctx): string {
+  const cls = !ctx.more || b.level! >= 3 ? 'vb-md-label' : `vb-md-h${b.level}`;
+  return `<span class="${cls}" role="heading" aria-level="${ctx.level}">${inlineOf(b, ctx)}</span>`;
+}
+
 function blockHtml(b: Block, ctx: Ctx): string {
   switch (b.t) {
     case 'para': return ctx.tight ? inlineOf(b, ctx) : `<p class="vb-md-p">${inlineOf(b, ctx)}</p>`;
-    case 'head': return `<span class="vb-md-label" role="heading" aria-level="${ctx.level}">${inlineOf(b, ctx)}</span>`;
+    case 'head': return heading(b, ctx);
+    case 'hr': return '<hr class="vb-md-rule">';
+    case 'table': return tableHtml(b.lines, b.aligns!, (s) => renderInline(s, ctx.image));
     case 'quote': return `<blockquote class="vb-md-quote">${kids(b, { ...ctx, tight: false })}</blockquote>`;
     case 'code': return `<pre class="vb-md-code" tabindex="0"><code>${esc(b.lines.join(''))}</code></pre>`;
     case 'list': return ctx.lists >= 2 ? flatList(b, ctx) : list(b, ctx);
@@ -70,5 +82,6 @@ export function renderMarkdown(src: string, opts: MarkdownOptions = {}): string 
   const h = opts.headingLevel;
   const level = h !== undefined && Number.isInteger(h) && h >= 1 && h <= 6 ? h : 4;
   const image = (opts.images ?? flagOn('cardImages')) ? imageMarkup(opts.svg, opts.imageRoute) : undefined;
-  return kids(parseBlocks(text), { level, lists: 0, tight: false, image });
+  const more = opts.more ?? flagOn('markdownMore');
+  return kids(parseBlocks(text, more), { level, lists: 0, tight: false, image, more });
 }

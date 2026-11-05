@@ -31,7 +31,7 @@
     "codes": {
       "type": "object",
       "description": "Every problem code, with the HTTP status it is sent with (`const`) and its `title` (the same for every problem with that code). The source of the codes: the server and the client are generated from it (scripts/gen-api.mjs), and `code`'s pattern must list exactly these.",
-      "$comment": "423 Locked (RFC 4918 11.3): the board itself is locked, so a client can tell it from every 409 by status alone. The app codes are D-047 rulings 6-8 (api.md 153). `read-only` (409) is a ledger opened read-only (D-085): nothing in its folder is written until the person presses Edit; not `locked`, which is one board.",
+      "$comment": "423 Locked (RFC 4918 11.3): the board itself is locked, so a client can tell it from every 409 by status alone. The app codes are D-047 rulings 6-8 (api.md 153). `read-only` (409) is a ledger opened read-only (D-085): nothing in its folder is written until the person makes it editable; not `locked`, which is one board.",
       "properties": {
         "bad-request": {
           "const": 400,

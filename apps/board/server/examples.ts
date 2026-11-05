@@ -22,8 +22,12 @@ function forms(): Map<string, Rec> {
 /** The ten item types, in the schema's order. */
 export const itemTypes = (): string[] => [...forms().keys()];
 
-/** A write item form's worked example, or undefined for a `type` that names no form. */
-export const itemExample = (type: unknown): unknown => (typeof type === 'string' ? forms().get(type)?.examples?.[0] : undefined);
+/** A write item form's worked example, or undefined for a `type` that names no form: the first that carries field
+ * `has` (a node item's `insert`), else the form's first. */
+export function itemExample(type: unknown, has?: string): unknown {
+  const examples = typeof type === 'string' ? (forms().get(type)?.examples as Rec[] | undefined) : undefined;
+  return (has === undefined ? undefined : examples?.find((x) => Object.hasOwn(x, has))) ?? examples?.[0];
+}
 
 /** The `example` a refusal of this operation's body carries: its request example, when it has one. */
 export const bodyExample = (id: OperationId): { example?: unknown } => {

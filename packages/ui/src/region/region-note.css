@@ -104,6 +104,11 @@ vb-region .vb-nblock-reply {
   border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
   background: var(--vb-surface-raised);
 }
+/* With updateSignals (D-088) a reply carries the updated amber on its edge, as a card's (node-parking.css):
+   muted (50% toward the strong line; Lc on the raised surface 47.2 light, 34.5 dark, edges 30), bright
+   while `data-unseen` marks it. So it never reads as one of the person's notes. */
+[data-update-signals] vb-region .vb-nblock-reply { border-left-color: color-mix(in srgb, var(--vb-state-updated) 50%, var(--vb-line-strong)); }
+[data-update-signals] vb-region .vb-nblock-reply[data-unseen] { border-left-color: var(--vb-state-updated); }
 vb-region .vb-nblock-reply .vb-nblock-who { color: var(--vb-ink); }
 vb-region .vb-nblock-reply-text {
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;

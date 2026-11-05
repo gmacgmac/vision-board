@@ -16,7 +16,8 @@ export const IMGS = new RegExp(IMG_SHAPE, 'g');
  * fixed shape. */
 export function assertSafe(html: string): void {
   const tags = [...html.matchAll(/<\/?([a-z0-9]+)/g)].map((m) => m[1]);
-  const allowed = new Set(['p', 'span', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'a', 'strong', 'em', 'del', 'br', 'img']);
+  const allowed = new Set(['p', 'span', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'a', 'strong', 'em', 'del', 'br', 'img',
+    'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td']);
   for (const t of tags) assert.ok(allowed.has(t!), `unexpected tag <${t}> in ${html}`);
   assert.equal((html.match(/<a /g) ?? []).length, (html.match(LINKS) ?? []).length, `link shape in ${html}`);
   assert.equal((html.match(/<img/g) ?? []).length, (html.match(IMGS) ?? []).length, `image shape in ${html}`);
@@ -50,4 +51,16 @@ export const ADVERSARIAL: Record<string, string> = {
   'many list items': '- a\n'.repeat(5_000),
   'trailing hashes': `# ${'# '.repeat(9_998)}`,
   'spaces then hashes': `# a${' '.repeat(10_000)}${'#'.repeat(9_990)}x`,
+  // Tables and breaks (markdownMore): rows and cells stay linear, whatever the pipes and dashes.
+  'pipes': '|'.repeat(20_000),
+  'escaped pipes': '\\|'.repeat(10_000),
+  'one wide row under a delimiter row': `${'|a'.repeat(5_000)}|\n${'|-'.repeat(4_000)}|`,
+  'many table rows': `| a | b | c | d |\n|---|---|---|---|\n${'| 1 | 2 | 3 | 4 |\n'.repeat(1_100)}`,
+  'many rows of many cells': `| a | b |\n|---|---|\n${`${'|x'.repeat(50)}\n`.repeat(190)}`,
+  'header and delimiter pairs': '| a |\n|---|\n'.repeat(1_800),
+  'delimiter rows only': '|---|---|\n'.repeat(2_000),
+  'a long paragraph, then a delimiter row': `${'a | b\n'.repeat(3_300)}-|-`,
+  'breaks': '---\n'.repeat(5_000),
+  'spaced break characters': `${'- '.repeat(9_999)}-`,
+  'nearly breaks': '**-\n'.repeat(5_000),
 };

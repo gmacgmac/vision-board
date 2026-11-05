@@ -1,8 +1,9 @@
 // The write controls a read-only ledger leaves (FE_01, tracker N44, VERIFY_01 F10): the requests strip's Allow all /
 // Allow / Refuse, the Agents panel's remove, an app card's Allow and Stop app, and the card toolbar's tooltips are
-// paused, each saying why ("Read-only: press Edit to change it") before anyone presses it; a press writes nothing.
+// paused, each saying why (`#actions` READ_ONLY_PERSON) before anyone presses it; a press writes nothing.
 // Edit gives them back. On the app server (app-server.ts), drawn while it is editable, then given up with Stop editing.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
+import { READ_ONLY_PERSON as REASON } from '#actions';
 import { lc, pixel } from './apca.ts';
 import { joinAgent } from './agent-board.ts';
 import type { AppServer } from './app-server.ts';
@@ -14,7 +15,6 @@ import type { Theme } from './helpers.ts';
 test.describe.configure({ mode: 'serial' });
 
 const THEMES: Theme[] = ['light', 'dark'];
-const REASON = 'Read-only: press Edit to change it';
 let s: AppServer;
 let board = '';
 let cards: number[] = [];
@@ -151,7 +151,7 @@ for (const theme of THEMES) {
     await page.goto('/gallery.html');
     const section = page.locator('section[data-feature="readOnlyControls"]');
     await expect(section).toBeVisible();
-    await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'readOnlyControls');
+    await expect(page.locator('main > section:not([data-feature="updateSignals"])').last()).toHaveAttribute('data-feature', 'readOnlyControls');
     for (const sel of ['.vb-access-allow-all', '.vb-access-allow', '.vb-agents-row .vb-btn', '[data-app-act="app-allow"]', '[data-app-act="app-revoke"]'])
       for (const el of await section.locator(sel).all()) await expectPaused(el);
     await expectNoAxeViolations(page);

@@ -39,6 +39,7 @@ export { default as GoToCard } from './GoToCard.svelte';
 export { default as KeyHelp } from './KeyHelp.svelte';
 export { default as LockedChip } from './LockedChip.svelte';
 export { default as OpenChip } from './OpenChip.svelte';
+export { newTone, updatedTone } from './chip-tone.ts';
 export { default as ProposalsBar } from './ProposalsBar.svelte';
 export { default as SendButton } from './SendButton.svelte';
 export { default as Toolbar } from './Toolbar.svelte';

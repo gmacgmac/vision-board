@@ -45,7 +45,7 @@ export interface BoardState {
   /** The board is locked (api.md 138): read-only for everyone, so the page pauses every control that
    * changes it (the flag excepted). Left out while it is not; `get_board` says it at its top. */
   locked?: true;
-  /** The ledger is open read-only (D-085): nothing on it changes until the person presses Edit, the flag included.
+  /** The ledger is open read-only (D-085): nothing on it changes until the person switches to Editing, the flag included.
    *  Not in the ledger, so never folded: the page sets it from its reads' `readOnly`, as any host's board does. */
   readOnly?: true;
 }

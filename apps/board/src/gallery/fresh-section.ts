@@ -1,16 +1,19 @@
 // Gallery entry for new and updated cards at board scale (freshCards flag, new-and-updated task),
 // shown by default (gallery.html?flags=-freshCards hides it): the updates board's container drawn by
-// the board's own drawing, its cards' NEW and pink "N updates" tabs, its teal border and its
+// the board's own drawing, its cards' NEW and amber "N updates" tabs (pink with updateSignals off), its teal border and its
 // "1 new · 3 updated" pill, at 100% and zoomed out (the pill keeps its size); its frame alone on a
 // narrow line, where the pill leaves whole, and once engaged (plain border, no pill); and the
-// toolbar's "N new" chip (board/chrome/OpenChip.svelte) at rest, hovered, focused, pressed and narrow. Every
+// toolbar's "N new" chip (board/chrome/OpenChip.svelte; teal with updateSignals, pink without) at rest, hovered,
+// focused, pressed and narrow. Every
 // number is worked out from the fixture ledger as the board does (packages/actions `pageConditions`).
 import { mount } from 'svelte';
+import { flagOn } from '#format';
 import type { ViewNode } from '#format';
 import type { CardConditions, VbRegionElement } from '#ui';
 import { regionFresh, regionState } from '#ui';
 import { pageConditions } from '#actions';
-import { OpenChip } from '../board/chrome/index.ts';
+import { OpenChip, newTone } from '../board/chrome/index.ts';
+import { pageFlags } from '../flags.ts';
 import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { UPDATES_BOARD } from './fixture.ts';
@@ -40,7 +43,7 @@ function chip(fx: Fixture, id: string, look?: Look, narrow = false): HTMLElement
   const host = el('div', 'g-toolbar vb-counts');
   host.toggleAttribute('data-narrow', narrow);
   mount(OpenChip, { target: host, props: {
-    id, count: cards.length, cards, onpick: () => undefined, word: 'new', tone: 'new', label: 'Go to a new or updated card',
+    id, count: cards.length, cards, onpick: () => undefined, word: 'new', tone: newTone(flagOn('updateSignals', pageFlags())), label: 'Go to a new or updated card',
     title: 'New and updated cards: choose one to go to it', ...(look && { look }),
   } });
   return host;
@@ -70,7 +73,7 @@ export function freshSection(fx: Fixture): HTMLElement {
   box.append(heading,
     el('p', 'g-desc', 'On a large board the person finds what the agent added or changed: the cards\' tabs, the containers holding them, and a list in the toolbar.'),
     meta,
-    group('A fresh container', 'A NEW card and three updated ones, their "N updates" tabs outlined in pink. The container\'s border is teal and its title line says '
+    group('A fresh container', `A NEW card and three updated ones, their "N updates" tabs outlined in ${flagOn('updateSignals', pageFlags()) ? 'amber' : 'pink'}. The container's border is teal and its title line says `
       + '"1 new · 3 updated" until the person selects or acts on one of its cards. Zoomed out the pill keeps its size on screen.', board('-fresh'), board('-fresh-far', 0.4)),
     group('The pill on the title line', 'It follows the label\'s shrink order: the holders give way first, then the pill, whole, then the title. '
       + 'Once a card in the container is engaged, the border is plain and the pill gone; the cards keep their own tabs.', frames),

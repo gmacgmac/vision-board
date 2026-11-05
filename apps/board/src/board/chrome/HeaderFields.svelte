@@ -4,7 +4,8 @@
      browser's; a choice closes the menu first (`choose`). They sit beside the role="menu", not in it,
      because a select is not a menu item; the menu's keys walk them all the same (ToolbarMenu.svelte). The
      zoom row keeps the menu open for − and +, so the level can be seen to change. The page's folder and ledger rows
-     (`folderField`, `ledgerField`) come first, folder above ledger, then its Edit or Stop editing (`editButton`, readOnlyStart flag). -->
+     (`folderField`, `ledgerField`) come first, folder above ledger, then its Edit or Stop editing (`editButton`, readOnlyStart flag;
+     none with the readOnlyToggle flag: the state in the bar is the one toggle). -->
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
   import * as toolbarWords from '../words/toolbar.ts';
@@ -15,6 +16,7 @@
   import PagePart from './PagePart.svelte';
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
+  import { newTone } from './chip-tone.ts';
   import VersionPicker from './VersionPicker.svelte';
   import { optionText } from './BoardPicker.svelte';
   import { inMenu, type HeaderTier } from './header-tier.ts';
@@ -24,7 +26,9 @@
   import type { AccessHolder } from '#actions';
   import { useChrome, type ChromeState } from './chrome.svelte.ts';
 
-  const { parts } = useChrome();
+  const { parts, flag } = useChrome();
+  /** The ledger's state is one toggle in the bar (readOnlyToggle): no Edit row here. */
+  const editToggle = flag('readOnlyToggle');
 
   let { tier, facts, choose, idOf, percent, holders, onversion, ongo, onopen, onflagged, oncommand, onrevoke }: {
     tier: HeaderTier;
@@ -61,7 +65,7 @@
 {#if inMenu(tier, 'ledger') && parts.ledgerField}
   <PagePart draw={parts.ledgerField} args={{ id: idOf('ledger-chip'), choose }} />
 {/if}
-{#if inMenu(tier, 'edit') && parts.editButton}
+{#if inMenu(tier, 'edit') && parts.editButton && !editToggle}
   <PagePart draw={parts.editButton} args={{ id: idOf('edit'), choose }} />
 {/if}
 {#if inMenu(tier, 'version') && facts.version !== null}
@@ -76,7 +80,7 @@
     <OpenChip id={idOf('open-cards')} count={facts.counts.open} cards={facts.openCards} row={openRow} onpick={(n) => choose(() => onopen(n))} />
   {/if}
   {#if inMenu(tier, 'new') && facts.freshCards.length && !facts.past}
-    <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} row={newRow} onpick={(n) => choose(() => onopen(n))} word={chromeCommonWords.newWord} tone="new"
+    <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} row={newRow} onpick={(n) => choose(() => onopen(n))} word={chromeCommonWords.newWord} tone={newTone(flag('updateSignals'))}
       label={toolbarWords.goToNewCard} title={toolbarWords.newAndUpdatedCardsChoose} />
   {/if}
 {/if}

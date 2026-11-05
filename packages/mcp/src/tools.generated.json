@@ -178,7 +178,7 @@
     {
       "name": "check_responses",
       "title": "Wait for the person's answers",
-      "description": "Read what the person did on a board after a ledger position, including answers to your grant requests. Pass `board` and `after` (the `head` you last saw; 0 for all); optional `limit`, and `wait` (0-60 seconds) to hold until the person presses Send or answers a request. Returns `responses`, `head` and `more`; a wait that times out returns `{ responses: [], head }`. A note comes as the `comment` act that made it (`context` on an old More context note) with its latest text and kind, again whenever the person edits it; a note removed before you saw it never appears, and `note-remove` appears only for one you may have read. Each batch, up to its Send, is sorted by card number: a note on several cards at its lowest card, a note on a container at its lowest card, several acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's marks on a card that asks, meaning what your card asks; a note never answers a card. Each card's ✓, ✗, Later and clear (`reopen`) fold to its latest, shown only when it differs from how it stood at `after` (✓ then cleared shows nothing). No state is kept for you: pass back the `head` you got. `more: true`: `limit` cut the list in ledger order, so read again at once with `after` set to the highest `seq` in `responses`. With your secret, only the containers you hold. Over MCP the secret is the `secret` argument; leave it out only when this server has `VB_AGENT_SECRET`.",
+      "description": "Read what the person did on a board after a ledger position, including answers to your grant requests; `list_open` says where each card stands. Pass `board` and `after` (the `head` you last saw; 0 for all); optional `limit`, and `wait` (0-60 seconds) to hold until the person presses Send or answers a request. Returns `responses`, `head` and `more`; a wait that times out returns `{ responses: [], head }`. A note comes as the `comment` act that made it (`context` on an old More context note) with its latest text and kind, again whenever the person edits it; a note removed before you saw it never appears, and `note-remove` appears only for one you may have read. Each batch, up to its Send, is sorted by card number: a note on several cards at its lowest card, a note on a container at its lowest card, several acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's marks on a card that asks, meaning what your card asks; a note never answers a card. Each card's ✓, ✗, Later and clear (`reopen`) fold to its latest, shown only when it differs from how it stood at `after` (✓ then cleared shows nothing). No state is kept for you: pass back the `head` you got. `more: true`: `limit` cut the list in ledger order, so read again at once with `after` set to the highest `seq` in `responses`. With your secret, only the containers you hold. Over MCP the secret is the `secret` argument; leave it out only when this server has `VB_AGENT_SECRET`.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -300,7 +300,7 @@
     {
       "name": "write_board",
       "title": "Write to a board",
-      "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. Returns one result per item, `head`, and `pending` (cards waiting for your answer). Over MCP the secret is the `secret` argument; leave it out only when this server has `VB_AGENT_SECRET`.",
+      "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. A `node` item's `insert: { after, before }` puts it between two linked cards of a `flow` or `lanes`. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. Returns one result per item, `head`, and `pending` (cards waiting for your answer). Over MCP the secret is the `secret` argument; leave it out only when this server has `VB_AGENT_SECRET`.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -606,6 +606,67 @@
                       "pattern": "\\S",
                       "maxLength": 64,
                       "description": "Retry key, per agent across the project."
+                    },
+                    "insert": {
+                      "type": "object",
+                      "description": "Put this card (new or existing) between two linked cards of one `flow` or `lanes` container, in one write: `after`→`before` becomes `after`→card→`before`, keeping the label. Its `region` must be that container.",
+                      "required": [
+                        "after",
+                        "before"
+                      ],
+                      "properties": {
+                        "after": {
+                          "description": "Where the link starts.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Its number on this board."
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "key"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "type": "string",
+                                  "pattern": "\\S",
+                                  "maxLength": 64,
+                                  "description": "The key of the item that drew it."
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "before": {
+                          "description": "Where the link ends.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Its number on this board."
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "key"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "type": "string",
+                                  "pattern": "\\S",
+                                  "maxLength": 64,
+                                  "description": "The key of the item that drew it."
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "description": "Kind `app` needs `app` and takes no `size`; no other kind names an app.",
@@ -618,6 +679,19 @@
                         "kind": "question",
                         "title": "Flat fee or per seat?",
                         "body": "Which model fits a team of ten?"
+                      }
+                    },
+                    {
+                      "type": "node",
+                      "key": "trial-step",
+                      "node": {
+                        "region": "steps",
+                        "kind": "topic",
+                        "title": "Run a two-week trial"
+                      },
+                      "insert": {
+                        "after": 3,
+                        "before": 4
                       }
                     }
                   ],

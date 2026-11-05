@@ -138,8 +138,9 @@ test('no tool description carries an example: examples live in the skill, the sc
 
 /** The size budget: the whole `tools/list` and each tool, as compact JSON. Set from the trimmed
  * list plus about 10% (task 2026-10-25_board-agent_tool-list-trim); raise it only on purpose. Raised for the
- * three reads' `ledger` input (CONSOLIDATE_01, D-084 8), and for `readOnly: true` on list_boards and get_board (SKILL_01, D-085). */
-const LIST_CAP = 30_800;
+ * three reads' `ledger` input (CONSOLIDATE_01, D-084 8), for `readOnly: true` on list_boards and get_board (SKILL_01, D-085), and
+ * for a node item's `insert`, two card references (insert-markdown-signals ACT_01, point 424). */
+const LIST_CAP = 32_000;
 const TOOL_CAPS: Record<string, number> = {
   list_boards: 760, get_board: 1150, show_node: 1150, show_container: 850, show_layout: 1050, list_open: 1150,
   check_responses: 2600, join: 1600, request_grant: 1900, write_board: 17_350, list_apps: 1350, read_attachment: 2450,

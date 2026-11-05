@@ -16,7 +16,7 @@ const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[da
 const updates = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="updates"]');
 const freshList = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
 const openList = (page: Page) => page.getByLabel('Go to an open card', { exact: true });
-const freshChip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="new"]:has(${bid('fresh-cards')})`);
+const freshChip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="fresh"]:has(${bid('fresh-cards')})`);
 
 /** The card seen lines the person has sent on the board (a board seen line names no card). */
 const cardSeen = async (page: Page, d: Drawn) => (await boardLines(page, d.board)).filter((e) => e.type === 'seen' && e.n !== undefined).length;

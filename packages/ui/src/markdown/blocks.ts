@@ -1,10 +1,15 @@
-// Markdown, block layer (D-023): lines into paragraphs, lists, `#` labels, `>` quotes and fenced
+// Markdown, block layer (D-023): lines into paragraphs, lists, `#` headings, `>` quotes and fenced
 // code, following CommonMark's two-phase block algorithm (match the open containers, start new
-// blocks, add the rest of the line). Everything else (tables, setext headings, thematic breaks,
-// HTML blocks, reference definitions, indented code) is not recognised, so it stays paragraph
-// text. No DOM: render.ts turns the tree into HTML and inline.ts renders each block's text.
+// blocks, add the rest of the line). With `more` (the markdownMore flag) also thematic breaks and
+// GFM tables (table.ts); setext headings are never recognised, so `---` under a paragraph line is a
+// break. Everything else (HTML blocks, reference definitions, indented code; without `more`, tables
+// and breaks) is not recognised, so it stays paragraph text. No DOM: render.ts turns the tree into
+// HTML and inline.ts renders each block's text.
+import { atx, thematicBreak } from './line-starts.ts';
+import type { Align } from './table.ts';
+import { delimiterRow, headerFits } from './table.ts';
 
-export type BlockType = 'doc' | 'quote' | 'list' | 'item' | 'para' | 'code' | 'head';
+export type BlockType = 'doc' | 'quote' | 'list' | 'item' | 'para' | 'code' | 'head' | 'hr' | 'table';
 
 export interface Block {
   t: BlockType;
@@ -16,7 +21,7 @@ export interface Block {
   end: number;
   /** Nesting depth of containers, capped so a hostile input cannot nest without end. */
   depth: number;
-  /** Paragraph and heading lines; code lines with their line endings. */
+  /** Paragraph and heading lines; code lines with their line endings; table rows, the header first. */
   lines: string[];
   /** list: numbered, the bullet or delimiter character, the first number, tight. */
   ordered?: boolean;
@@ -31,10 +36,12 @@ export interface Block {
   fenceIndent?: number;
   /** head: 1 to 6. */
   level?: number;
+  /** table: each column's alignment, from the delimiter row. */
+  aligns?: Align[];
 }
 
 interface Parser {
-  doc: Block; tip: Block; oldtip: Block; lastMatched: Block; allClosed: boolean;
+  doc: Block; tip: Block; oldtip: Block; lastMatched: Block; allClosed: boolean; more: boolean;
   line: string; lineNo: number; offset: number;
   /** Next non-space index, its indent from `offset`, and whether the rest of the line is blank. */
   nn: number; indent: number; blank: boolean;
@@ -117,7 +124,7 @@ function matches(p: Parser, b: Block): 0 | 1 | 2 {
       p.offset += b.width!;
       return 0;
     case 'list': return 0;
-    case 'para': return p.blank ? 1 : 0;
+    case 'para': case 'table': return p.blank ? 1 : 0;
     case 'code': return fenceLine(p, b);
     default: return 1;
   }
@@ -135,18 +142,20 @@ function fenceLine(p: Parser, b: Block): 0 | 2 {
   return 0;
 }
 
-/** `#` to `######` and the text, without a closing run of `#`s. */
-function atx(s: string, i: number): { level: number; text: string } | null {
-  let n = 0;
-  while (s[i + n] === '#') n += 1;
-  if (n > 6 || (i + n < s.length && s[i + n] !== ' ')) return null;
-  const a = i + n;
-  let b = s.length;
-  while (b > a && s[b - 1] === ' ') b -= 1;
-  let c = b;
-  while (c > a && s[c - 1] === '#') c -= 1;
-  if (c < b && (c === a || s[c - 1] === ' ')) b = c;
-  return { level: n, text: s.slice(a, b).trim() };
+/** GFM: a delimiter row under an open paragraph whose last line has as many cells opens a table; the
+ * paragraph's earlier lines stay a paragraph. */
+function tableStart(p: Parser, para: Block): boolean {
+  const aligns = delimiterRow(p.line.slice(p.nn));
+  const header = para.lines.at(-1)!;
+  if (!aligns || !headerFits(header, aligns)) return false;
+  closeUnmatched(p);
+  para.lines.pop();
+  if (para.lines.length) finalize(p, para, p.lineNo - 2);
+  else para.parent!.kids.pop();
+  if (p.tip === para) p.tip = para.parent!;
+  Object.assign(add(p, 'table'), { aligns, lines: [header], start: p.lineNo - 1 });
+  p.offset = p.line.length;
+  return true;
 }
 
 /** A list marker at the next non-space: bullet `-*+` or `1.`/`1)` (up to nine digits). */
@@ -204,6 +213,12 @@ function startBlock(p: Parser, container: Block): 0 | 1 | 2 {
     p.offset = s.length;
     return 2;
   }
+  if (p.more && thematicBreak(s, p.nn)) {
+    closeUnmatched(p);
+    add(p, 'hr');
+    p.offset = s.length;
+    return 2;
+  }
   if (c === '`' || c === '~') {
     let n = 0;
     while (s[p.nn + n] === c) n += 1;
@@ -214,7 +229,8 @@ function startBlock(p: Parser, container: Block): 0 | 1 | 2 {
       return 2;
     }
   }
-  return room && listItem(p, container) ? 1 : 0;
+  if (room && listItem(p, container)) return 1;
+  return p.more && container.t === 'para' && tableStart(p, container) ? 2 : 0;
 }
 
 /** One source line through CommonMark's three steps. */
@@ -250,13 +266,14 @@ function addRest(p: Parser, container: Block): void {
   closeUnmatched(p);
   if (container.t === 'code') { if (container.start !== p.lineNo) container.lines.push(`${rest}\n`); return; }
   if (container.t === 'para') { container.lines.push(rest); return; }
-  if (container.t !== 'head' && !p.blank) add(p, 'para').lines.push(rest);
+  if (container.t === 'table') { if (rest) container.lines.push(rest); return; }
+  if (container.t !== 'head' && container.t !== 'hr' && !p.blank) add(p, 'para').lines.push(rest);
 }
 
-/** Markdown source to a block tree (the document). */
-export function parseBlocks(src: string): Block {
+/** Markdown source to a block tree (the document). `more`: thematic breaks and tables too (markdownMore). */
+export function parseBlocks(src: string, more = false): Block {
   const doc = block('doc', null, 0);
-  const p: Parser = { doc, tip: doc, oldtip: doc, lastMatched: doc, allClosed: true, line: '', lineNo: 0, offset: 0, nn: 0, indent: 0, blank: true };
+  const p: Parser = { doc, tip: doc, oldtip: doc, lastMatched: doc, allClosed: true, more, line: '', lineNo: 0, offset: 0, nn: 0, indent: 0, blank: true };
   const lines = src.replace(/\0/g, '\uFFFD').split(/\r\n|\r|\n/);
   if (lines.at(-1) === '') lines.pop();
   for (const line of lines) incorporate(p, line);

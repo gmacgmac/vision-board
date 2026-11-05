@@ -8,8 +8,10 @@ import * as uiCommonWords from '../words/ui-common.ts';
 import * as nodeNotesWords from '../words/node-notes.ts';
 
 /** One of the agent's replies under a note, read-only (FE_03 ruling 3). `who` is "Agent reply · label";
- *  `at` its line's time (ISO), which the card shows on hover (card-polish FE_02). */
-export interface ReplyEntry { seq: number; who: string; text: string; at: string }
+ *  `at` its line's time (ISO), which the card shows on hover (card-polish FE_02). `unseen`: written after
+ *  the person last looked at its card, while the card is still unseen (D-054): its edge is the bright
+ *  amber, muted once seen (updateSignals flag, node-parking.css). */
+export interface ReplyEntry { seq: number; who: string; text: string; at: string; unseen?: true }
 
 /** One of the person's notes in the card's "Your note" block (2e_FE_01 ruling 7), with the agent's
  * replies to it, oldest first. `index` is its pin number: its place among the card's notes, in the
@@ -44,13 +46,20 @@ export interface NotesView {
 }
 
 /** An agent's reply as the page passes it in (cardReplies flag): its `seq`, `to` (the `seq` of the
- * note it answers, if it names one), the agent's label, its words and `at`, the line's time (ISO). */
-export interface CardReply { seq: number; to?: number; agent?: string; text: string; at: string }
+ * note it answers, if it names one), the agent's label, its words and `at`, the line's time (ISO);
+ * `unseen`, written after the person last looked at the card it is passed in for (`LedgerState.looked`). */
+export interface CardReply { seq: number; to?: number; agent?: string; text: string; at: string; unseen?: true }
 
 /** An old More context reads as a note everywhere (D-045). */
 const KIND_WORD: Record<ItemNote['kind'], string> = { comment: uiCommonWords.yourNote, context: uiCommonWords.yourNote };
 
-export const replyEntry = (r: CardReply): ReplyEntry => ({ seq: r.seq, who: nodeNotesWords.agentReply(r.agent ? ` · ${r.agent}` : ''), text: r.text, at: r.at });
+export const replyEntry = (r: CardReply): ReplyEntry =>
+  ({ seq: r.seq, who: nodeNotesWords.agentReply(r.agent ? ` · ${r.agent}` : ''), text: r.text, at: r.at, ...(r.unseen && { unseen: true as const }) });
+
+/** `replies` as a card passes them on: `unseen` only while the card itself is unseen (NEW or an
+ * "N updates" tab, D-054), so a reply never reads as new on a card the person has seen. */
+export const litReplies = (replies: readonly CardReply[] | undefined, cardUnseen: boolean): readonly CardReply[] | undefined =>
+  cardUnseen || !replies?.some((r) => r.unseen) ? replies : replies.map(({ unseen: _, ...r }) => r);
 
 /** A list of notes and the agent's replies as one conversation, oldest first, top to bottom
  * (review-polish ruling 8 and decision 8): each note then its replies by `seq`, a reply naming none

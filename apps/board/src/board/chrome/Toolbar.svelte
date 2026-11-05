@@ -24,7 +24,8 @@
      The page's folder chip (`BoardPageParts.folderChip`), when it gives one, sits first, after the app icon, and its
      ledger chip (`ledgerChip`, while the page's server names a ledger) after it; a host has neither, and the bar reflows. After the path (or the
      title and version) the page's ledger state (`editChip`, readOnlyStart flag: Read-only or Editing, at every width) and,
-     at full, its Edit or Stop editing button (`editButton`; a row of "⋯" from half, HeaderFields), then Locked.
+     at full, its Edit or Stop editing button (`editButton`; a row of "⋯" from half, HeaderFields), then Locked. With the
+     readOnlyToggle flag the state is one toggle that flips on a press (PLAN decision 11), so the button is not drawn.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
      carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
      counts show their numbers only (title and screen readers keep the words), all in board.css; "with
@@ -51,6 +52,7 @@
   import LockedChip from './LockedChip.svelte';
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
+  import { newTone, updatedTone } from './chip-tone.ts';
   import ToolbarEnd from './ToolbarEnd.svelte';
   import VersionPicker from './VersionPicker.svelte';
   import { headerTier, inBar, inMenu, type HeaderControl, type HeaderTier } from './header-tier.ts';
@@ -108,6 +110,8 @@
   const archiving = flag('archiveBoard');
   const locking = flag('lockBoard');
   const openList = flag('openList');
+  /** The ledger's state is one toggle (readOnlyToggle): no Edit button beside it. */
+  const editToggle = flag('readOnlyToggle');
   /** A narrow toolbar shows the end group's icons and bare counts (board.css `[data-narrow]`). */
   const narrow = new MediaQuery('max-width: 1500px');
   /** The bar's form by its own width (adaptiveHeader flag); the window's width is only its first guess, so a page loads in its form. */
@@ -170,7 +174,7 @@
     {/if}
   {/if}
   {#if parts.editChip}<PagePart draw={parts.editChip} args={{ id: idOf('editing'), look }} />{/if}
-  {#if here('edit') && parts.editButton}<PagePart draw={parts.editButton} args={{ id: idOf('edit'), look }} />{/if}
+  {#if here('edit') && parts.editButton && !editToggle}<PagePart draw={parts.editButton} args={{ id: idOf('edit'), look }} />{/if}
   <LockedChip id={idOf('locked')} locked={facts.locked} />
   {#if adaptive && tier === 'full'}<span class="vb-bar-rule" aria-hidden="true"></span>{/if}
   {#if here('containers') && facts.containers.length}
@@ -184,16 +188,16 @@
         {@const fresh = facts.past ? 0 : facts.freshCards.length}
         <span class="vb-chip vb-count" title={toolbarWords.compactCount(facts.counts.open, fresh)}>
           <b>{facts.counts.open}</b> <span class="vb-visually-hidden">{toolbarWords.openWord}</span>
-          {#if fresh}<span class="vb-count-dot" aria-hidden="true"></span> <span class="vb-visually-hidden">{toolbarWords.freshCount(fresh)}</span>{/if}
+          {#if fresh}<span class="vb-count-dot" data-tone={newTone(flag('updateSignals'))} aria-hidden="true"></span> <span class="vb-visually-hidden">{toolbarWords.freshCount(fresh)}</span>{/if}
         </span>
       {/if}
       {#if updated}<span class="vb-visually-hidden">{toolbarWords.boardUpdated(updated)}</span>{/if}
     {:else}
-      {#if updated}<span id={idOf('boards-updated')} class="vb-chip" data-tone="new" title={toolbarWords.boardUpdated(updated)}><b>{updated}</b> <span class="vb-chip-word">{toolbarWords.boardUpdatedWord(updated)}</span></span>{/if}
+      {#if updated}<span id={idOf('boards-updated')} class="vb-chip" data-tone={updatedTone(flag('updateSignals'))} title={toolbarWords.boardUpdated(updated)}><b>{updated}</b> <span class="vb-chip-word">{toolbarWords.boardUpdatedWord(updated)}</span></span>{/if}
       {#if facts.version !== null}
         <OpenChip id={idOf('open-cards')} count={facts.counts.open} cards={openList ? facts.openCards : []} onpick={onopen} />
         {#if facts.freshCards.length && !facts.past}
-          <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} onpick={onopen} word={chromeCommonWords.newWord} tone="new"
+          <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} onpick={onopen} word={chromeCommonWords.newWord} tone={newTone(flag('updateSignals'))}
             label={toolbarWords.goToNewCard} title={toolbarWords.newAndUpdatedCardsChoose} />
         {/if}
         {#if facts.counts.withAgent}<span class="vb-chip" data-tone="agent" title={toolbarWords.repliedItems}><ButtonIcon name="agents" /><b>{facts.counts.withAgent}</b> <span class="vb-chip-word">{toolbarWords.replied}</span></span>{/if}

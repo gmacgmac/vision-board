@@ -6,7 +6,9 @@
      (board/find/go-to-card.ts `to`). With no cards (or `cards` empty: the flag off) it is the plain chip.
      The count stays on a narrow toolbar, the word for screen readers (board.css). The toolbar and
      the gallery both draw this. With `row` (adaptiveHeader flag, the narrowest bar) it is a row of the "⋯"
-     menu with `row` as its face, a plain line while it has no cards to list. -->
+     menu with `row` as its face, a plain line while it has no cards to list. The "N new" chip's tone is
+     `newTone` (chip-tone.ts): teal with the updateSignals flag (D-088, one colour per meaning), pink without. -->
+
 <script lang="ts">
   import * as chromeGoToCardWords from '../words/chrome-go-to-card.ts';
   import MenuSelect from './MenuSelect.svelte';

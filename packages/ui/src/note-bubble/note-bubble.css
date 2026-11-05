@@ -91,6 +91,13 @@ vb-note-bubble .vb-nb-reply {
   border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
   background: var(--vb-surface-sunken); color: var(--vb-ink);
 }
+/* The agent's reply in amber (updateSignals flag, D-088), as on the card (node-parking.css): bright while
+   its card is unseen, muted after. The bubble sits in the stage beside the world, so the flag is read
+   from the world before it (the board) or from an ancestor (the gallery). */
+[data-update-signals] vb-note-bubble .vb-nb-reply,
+[data-update-signals] ~ vb-note-bubble .vb-nb-reply { border-left-color: color-mix(in srgb, var(--vb-state-updated) 50%, var(--vb-line-strong)); }
+[data-update-signals] vb-note-bubble .vb-nb-reply[data-unseen],
+[data-update-signals] ~ vb-note-bubble .vb-nb-reply[data-unseen] { border-left-color: var(--vb-state-updated); }
 /* The conversation (review polish ruling 6): every note and reply on the card or container, oldest
    first, in one list. A note sits on the card's own surface with its who line (and Edit while it can
    still be edited); its replies follow it, set in as above; a reply naming no note is not set in. */

@@ -137,3 +137,14 @@ test('nodeTemplate: ✓ and ✗ read Check and Cross on every kind that asks; no
   assert.deepEqual([tips('question'), tips('action'), tips('decision')], [asks, asks, asks]);
   assert.deepEqual(tips('finding'), { comment: 'Comment · c', later: 'Save for later · l' });
 });
+
+test('notesMarkup: an unseen reply carries data-unseen (updateSignals: the bright amber edge); a seen one none', () => {
+  const html = notesMarkup({
+    count: '1 note', toggle: 'Hide notes on item 1',
+    entries: [{ seq: 4, index: 1, who: 'Your note 1 · Sent', text: 'First', sent: true, at: AT, replies: [
+      { seq: 5, who: 'Agent reply', text: 'Seen', at: AT }, { seq: 6, who: 'Agent reply', text: 'New', at: AT, unseen: true },
+    ] }],
+  }, NOW);
+  assert.match(html, /<div class="vb-node-reply" data-reply="5" data-at="[^"]+" tabindex="0">/);
+  assert.match(html, /<div class="vb-node-reply" data-reply="6" data-at="[^"]+" data-unseen tabindex="0">/);
+});

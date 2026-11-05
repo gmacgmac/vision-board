@@ -1,5 +1,5 @@
 // New and updated cards at board scale (new-and-updated task, freshCards flag, on by default; api.md
-// 158): the "N updates" tab outlined in pink at rest; a container holding a new or updated card the
+// 158): the "N updates" tab outlined at rest (amber with the updateSignals flag, D-088, pink without); a container holding a new or updated card the
 // person has not engaged with has a teal border and a "1 new · 1 updated" pill, until they select or
 // act on one of its cards (a click on the frame ends nothing); the toolbar's "N new" chip lists those
 // cards and goes to each; count = list = tabs. APCA measured light and dark; axe; the flag off is
@@ -23,7 +23,7 @@ const pill = (page: Page, id: string) => frame(page, id).locator('.vb-region-fre
 const said = (page: Page, id: string) => pill(page, id).locator('.vb-region-fresh-n');
 const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
 const list = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
-const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="new"]:has(${bid('fresh-cards')})`);
+const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="fresh"]:has(${bid('fresh-cards')})`);
 /** The rows' words: each option's `label` (MenuSelect). */
 const texts = (page: Page) => list(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
 
@@ -83,20 +83,23 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/?setup');
 });
 
-test('the updates tab: pink outline and words at rest, the amber edge and the ink on hover; NEW unchanged', async ({ page, request }) => {
+test('the updates tab: the updated amber outline and words at rest, and on hover with its soft fill; NEW teal', async ({ page, request }) => {
   const { d, added } = await fresh(page, request);
   const t = tab(page, d.n[2]!);
   await expect(t).toHaveText('1 update');
-  expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-accent'));
-  expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-accent-text'));
+  expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-updated'));
+  expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-state-updated'));
   expect(await colour(page, t, 'backgroundColor')).toEqual(await token(page, '--vb-surface-card'));
+  // Hovered it never steps down to the duller changed amber (FIX_01): the amber stays, on its soft fill.
   await t.hover();
-  expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-context'));
-  expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-ink'));
+  expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-updated'));
+  expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-state-updated'));
+  expect(await colour(page, t, 'backgroundColor')).toEqual(await token(page, '--vb-state-updated-soft'));
+  // NEW is teal, as the pill's "new" (one colour per meaning; pink with updateSignals off: update-signals.spec.ts).
   const nw = isNew(page, added);
   await expect(nw).toHaveText('NEW');
-  expect(await colour(page, nw, 'backgroundColor')).toEqual(await token(page, '--vb-accent-soft'));
-  expect(await colour(page, nw, 'color')).toEqual(await token(page, '--vb-accent'));
+  expect(await colour(page, nw, 'backgroundColor')).toEqual(await token(page, '--vb-state-fresh-soft'));
+  expect(await colour(page, nw, 'color')).toEqual(await token(page, '--vb-state-fresh'));
 });
 
 test('a fresh container: teal border and "1 new" / "1 updated" pills; count = list = tabs', async ({ page, request }) => {
@@ -107,6 +110,11 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   await expect(said(page, 'p')).toHaveText('1 new');
   await expect(pill(page, 'p')).toHaveAttribute('title', '1 new card in this container');
   await expect(said(page, 'q')).toHaveText('1 updated');
+  // One colour per meaning (updateSignals): "new" teal, "updated" amber; a container holding only an
+  // updated card keeps its teal border (point 432).
+  expect(await colour(page, said(page, 'p').locator('.vb-region-fresh-new'), 'color')).toEqual(await token(page, '--vb-state-fresh'));
+  expect(await colour(page, said(page, 'q').locator('.vb-region-fresh-updated'), 'color')).toEqual(await token(page, '--vb-state-updated'));
+  expect(await colour(page, frame(page, 'q'), 'borderTopColor')).toEqual(await token(page, '--vb-state-fresh'));
   await expect(chip(page)).toContainText('2 new');
   await expect.poll(() => texts(page)).toEqual(['2 new', `${d.n[2]} · Card 3 · updated`, `${added} · Card 4`]);
   // One definition: the tabs the board shows are the list's rows.
@@ -114,6 +122,7 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   // Another update in "p": its pill counts both.
   await write(request, d, [{ type: 'node', n: d.n[0], node: { region: 'p', kind: 'question', title: 'Card 1', body: 'Changed too.' } }]);
   await expect(said(page, 'p')).toHaveText('1 new · 1 updated');
+  await expect(said(page, 'p').locator('span')).toHaveText(['1 new', '1 updated']);
   await expect(chip(page)).toContainText('3 new');
 });
 

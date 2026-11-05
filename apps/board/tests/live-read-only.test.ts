@@ -71,5 +71,5 @@ test('the chat panel: read-only blocks a message only when no session is in use 
   assert.equal(blockedReason('b', false, undefined, false, true), READ_ONLY);
   assert.equal(blockedReason('b', true, undefined, false, true), blockedReason('b', true), 'a past version first');
   assert.equal(blockedReason('b', false, undefined, false, false), undefined);
-  assert.match(READ_ONLY, /read-only\. Press Edit/);
+  assert.match(READ_ONLY, /read-only\. Switch to Editing/);
 });

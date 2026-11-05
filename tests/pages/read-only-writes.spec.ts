@@ -1,15 +1,15 @@
 // A ledger open read-only on the page (D-085 3; READONLY_01 step 7): the board learns it from its reads, and every
-// path that would write stops cleanly, saying "Read-only: press Edit to change it": an answer button, a key, a note,
+// path that would write stops cleanly, saying why (`#actions` READ_ONLY_PERSON): an answer button, a key, a note,
 // a layout, the flag (which a lock lets through, but read-only does not); selecting a changed card and looking at the
 // board write no seen line (seen stays in the page). Edit from another tab, as the header will press it, writes again.
 // The header's own control is READONLY_UI_01's. On the worker's empty project (EMPTY_BASE), fresh for this file.
 import type { APIRequestContext, Page } from '@playwright/test';
+import { READ_ONLY_PERSON as REASON } from '#actions';
 import { expect, test, bid } from './helpers.ts';
 import { EMPTY_BASE } from './ports.ts';
 import { card, idle, toast } from './board-page.ts';
 
 const PLANS = 'plans';
-const REASON = 'Read-only: press Edit to change it';
 
 async function open(page: Page): Promise<void> {
   await page.goto(`${EMPTY_BASE}/?vbwork#${PLANS}`);

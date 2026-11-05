@@ -92,6 +92,17 @@
           "description": "For a `retire` item: every card it took off the board, by number (none for an empty container)",
           "$comment": "Was: api.md 126"
         },
+        "inserted": {
+          "type": "object",
+          "required": ["after", "before"],
+          "properties": {
+            "after": {"$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumber", "description": "The card that now links to this one."},
+            "before": {"$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumber", "description": "The card this one now links to."}
+          },
+          "additionalProperties": false,
+          "description": "For a `node` item with `insert`: the two cards it now sits between, by number; their old link is gone",
+          "$comment": "Was: api.md 174"
+        },
         "replayed": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more",
           "description": "The key was sent before with the same content; nothing was written now",

@@ -5,36 +5,44 @@
   "selector": "[class^='vb-md-']",
   "description": "The one Markdown renderer (D-023): a fixed subset to safe HTML, with no DOM. Card bodies and the saved note use it now; replies, the chat and parking bundles call the same function later. Anything outside the subset shows as plain text, and raw HTML is always escaped.",
   "files": {
-    "blocks": "blocks.ts (parseBlocks: lines into paragraphs, lists, # labels, > quotes and fenced code)",
+    "blocks": "blocks.ts (parseBlocks: lines into paragraphs, lists, # headings, > quotes, fenced code; with more, thematic breaks and where a table starts and ends)",
     "inline": "inline.ts (renderInline: bold, italic, strikethrough, inline code, links, autolinks, escapes, hard breaks; esc)",
-    "render": "render.ts (renderMarkdown, the front function, whose options are headingLevel, images (the cardImages flag), svg (the svgImages flag) and imageRoute, each given by whoever renders; MARKDOWN_MAX)",
+    "render": "render.ts (renderMarkdown, the front function, whose options are headingLevel, images (the cardImages flag), svg (the svgImages flag), imageRoute and more (the markdownMore flag), each given by whoever renders; MARKDOWN_MAX)",
     "image": "image.ts (imageMarkup: what ![alt](path) becomes, after imagePathProblem, packages/format; imageNote and IMAGE_NOTE: the box saying why)",
-    "styles": "markdown.css (the vb-md-* classes; tokens only; imported by the page beside node.css). Paragraphs, lists and quotes read --vb-md-text, which a popover sets to --vb-pop-text (popovers-larger-thread); else --vb-text-md"
+    "styles": "markdown.css (the vb-md-* classes; tokens only; imported by the page beside node.css). Paragraphs, lists, quotes, tables and the large and medium headings read --vb-md-text, which a popover sets to --vb-pop-text (popovers-larger-thread); else --vb-text-md",
+    "table": "table.ts (GFM tables: splitRow, delimiterRow, headerFits, tableHtml; MAX_COLUMNS, 4)"
   },
-  "states": ["paragraph", "label", "bulleted list", "numbered list", "nested list", "quote", "code block", "inline marks", "link", "refused link", "plain text"],
+  "states": ["paragraph", "large heading", "medium heading", "label", "bulleted list", "numbered list", "nested list", "quote", "code block", "table", "table at S", "break", "inline marks", "link", "refused link", "plain text"],
   "subset": {
     "paragraphs": "blank-line separated; soft breaks; a hard break after two spaces or a backslash",
     "inline": "**bold** __bold__ *italic* _italic_ ~~strike~~ `code`, [text](url \"title\"), <https://…> and <a@b.c>",
     "lists": "- * + bullets and 1. 1) numbers, one level of nesting; deeper lists are plain text led by their marker",
-    "labels": "# to ###### all draw as one small label, role=heading at headingLevel (default 4: the card title is an h3)",
+    "headings": "# large, ## medium, ### to ###### the small label, all role=heading at headingLevel (default 4: the card title is an h3); markdownMore off: every level the label",
     "quotes": "> lines, drawn as the callout (01b .reply without its who line)",
     "code": "``` or ~~~ fences; the info string is dropped; capped height, scrolls, focusable",
     "images": "![alt](path), path relative to the project's .visionboard/images/ (subfolders too): the image when imagePathProblem passes and the alt text is there; a refused path is the box; no alt text is the path as plain text; with images off (the cardImages flag), the source text; an svg is an <img> like any other, never inline markup, so its script never runs (D-064; svgImages flag off: refused)",
-    "plain text": "tables, HTML blocks, setext headings, thematic breaks, reference links, indented code, entities"
+    "tables": "GFM: the paragraph's last line is the header row, then a delimiter row (dashes, colons for alignment) with as many cells, then rows until a blank line or another block; at most 4 columns (5 or more stay text); inline Markdown in cells, \\| for a pipe; a card with one is L (sizeTier); markdownMore off: text",
+    "breaks": "---, *** or ___ (three or more, spaces between) on a line of its own; setext headings are not supported, so --- under a paragraph line is a break; markdownMore off: text",
+    "plain text": "HTML blocks, setext headings, reference links, indented code, entities"
   },
   "classes": {
     "vb-md-p": "p: a paragraph (01b .p)",
-    "vb-md-label": "span role=heading aria-level: a # label (01b .lbl)",
+    "vb-md-h1": "span role=heading aria-level: a # heading, two type-scale steps above the text (xl over md)",
+    "vb-md-h2": "span role=heading aria-level: a ## heading, one step above (lg over md)",
+    "vb-md-label": "span role=heading aria-level: a ### to ###### label (01b .lbl); every level with markdownMore off",
     "vb-md-list": "ul or ol (with start when not 1): a list (01b .ul, bold in the strong ink)",
     "vb-md-quote": "blockquote: the callout, tinted from --kind",
     "vb-md-code": "pre tabindex=0 > code: a fenced code block",
+    "vb-md-table": "table > thead > tr > th scope=col, then tbody > tr > td: the table's width, laid out as a grid of minmax(0, auto) columns that follow their content; cells wrap and a word breaks only when it alone is wider than its column; never scrolls",
+    "vb-md-left": "th or td: a column aligned by :-- (and vb-md-center :-:, vb-md-right --:)",
+    "vb-md-rule": "hr: a thematic break, one line in --vb-line-strong",
     "vb-md-icode": "code: inline code",
     "vb-md-link": "a href rel=noopener noreferrer target=_blank: http, https and mailto only",
     "vb-md-img": "img src=<imageRoute, default /board-images/><path> alt loading=lazy decoding=async: the one image shape; never wider than what holds it, at most 1.5 card widths tall, a sunken 16 by 10 box until its size is known (the page then adds width and height)",
     "vb-md-noimg": "span: \"Image not found: <path>\" or \"Image not shown: <path> (<reason>)\", the reason in IMAGE_WORDS' words; the path in a code element"
   },
-  "safety": "Every text run escapes & < > \" ' before markup is added. Links keep only http:, https: and mailto: (anything else is its text). An image only ever names the board's image route, and only for a path imagePathProblem passes (no scheme, no .., no leading / or ., no backslash, no %): nothing from the internet. Input over MARKDOWN_MAX (20,000) characters is cut with an ellipsis. Linear time: tested at 20,000 adversarial characters under 50 ms.",
+  "safety": "Every text run escapes & < > \" ' before markup is added. Links keep only http:, https: and mailto: (anything else is its text). An image only ever names the board's image route, and only for a path imagePathProblem passes (no scheme, no .., no leading / or ., no backslash, no %): nothing from the internet. Input over MARKDOWN_MAX (20,000) characters is cut with an ellipsis. Table rows are split once each, and a row is never wider than its header (at most 4 cells). Linear time: tested at 20,000 adversarial characters under 50 ms.",
   "whenToUse": "Any text a person or the agent writes that is shown on the board: card bodies, notes, later replies and the chat.",
   "whenNotToUse": "Titles, labels, tags and other one-line fields: those stay plain text through esc().",
-  "accessibility": "Labels are headings below the card title (aria-level). Lists, quotes and links are real elements. A code block is focusable so a keyboard user can scroll it. Links open in a new tab."
+  "accessibility": "Headings are below the card title (aria-level), whatever their size. Lists, quotes, links and tables are real elements; a table's header cells are th scope=col. A code block is focusable so a keyboard user can scroll it. Links open in a new tab."
 }

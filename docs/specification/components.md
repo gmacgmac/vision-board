@@ -104,15 +104,41 @@ the default.
 ## Markdown (D-023)
 
 Card bodies and notes are Markdown, and every surface that shows written text renders it through
-the one function `renderMarkdown(src, { headingLevel, images })` from the `packages/ui` front door. It is a
-pattern without an element: `packages/ui/src/markdown/` holds `blocks.ts` (lines into blocks),
-`inline.ts` (marks, links, escapes), `image.ts` (what `![alt](path)` becomes, § Images in cards),
-`render.ts` (the front function), `markdown.css` (the
-`vb-md-*` classes, in `#ui/styles.css` beside `node.css`) and `pattern.json` (the subset, the
+the one function `renderMarkdown(src, { headingLevel, images, more })` from the `packages/ui` front
+door. It is a pattern without an element: `packages/ui/src/markdown/` holds `blocks.ts` (lines into
+blocks), `line-starts.ts` (the ATX heading and break scanners), `table.ts` (GFM tables), `inline.ts`
+(marks, links, escapes), `image.ts` (what `![alt](path)` becomes, § Images in cards), `render.ts`
+(the front function), `markdown.css` (the `vb-md-*` classes, in `#ui/styles.css` beside `node.css`) and `pattern.json` (the subset, the
 classes and the safety rules). A template sets its output with `innerHTML`, which is safe because
 the renderer escapes every text run; one-line fields (titles, tags) stay plain text through `esc`.
 Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.test.ts`), whose
 `EXCLUDED` table is the full list of deliberate differences.
+
+**Heading sizes, tables and breaks** (the `markdownMore` flag, on by default; `renderMarkdown`'s
+`more` option, given by whoever renders; off, every heading is the label and tables and breaks
+stay text, exactly as before). Proven by `packages/ui/tests/markdown-more.test.ts` unless named:
+
+- `#` draws large (`vb-md-h1`), `##` medium (`vb-md-h2`), `###` to `######` the small label
+  (`vb-md-label`), all `role="heading"` at the caller's `headingLevel` (`render.ts` `heading`). The
+  two larger sizes sit one and two type-scale steps above `--vb-md-text`, so they grow in a popover
+  (`markdown.css`; `tests/pages/markdown-more.spec.ts`).
+- A GFM table: the paragraph's last line is the header, then a delimiter row with as many cells
+  (colons give each column's alignment), then rows until a blank line or another block; inline
+  Markdown in cells, `\|` for a pipe (`table.ts` `splitRow`, `delimiterRow`, `tableHtml`; GFM's
+  examples 198-205). At most 4 columns (`MAX_COLUMNS`); 5 or more stay text. The table is its
+  holder's width, laid out as a grid with one `minmax(0, auto)` track per column (`markdown.css`
+  `.vb-md-table`; the rows `display: contents`, the roles still table, row, columnheader and cell), so a
+  column of short words or numbers takes just its width and the columns of sentences share the rest;
+  cells wrap and a word breaks only when it alone is wider than its column (`overflow-wrap:
+  break-word`). It never overflows or scrolls, at L or at S, and short words stay whole
+  (`tests/pages/markdown-more.spec.ts`, "follow their content").
+- A card whose body has a table is L by the auto rule (`packages/layout` `measureBody`, `autoTier`;
+  `packages/layout/tests/size.test.ts`); the agent's suggestion and the person's pick still win. The
+  two packages may not import each other, so the page suite holds their table rules equal
+  (`tests/pages/markdown-more.spec.ts`, "agree on what is a table").
+- `---`, `***` or `___` on a line of its own is a thematic break, one line (`vb-md-rule`;
+  `line-starts.ts` `thematicBreak`; CommonMark's Thematic breaks section). Setext headings stay
+  unsupported, so `---` under a paragraph line is a break.
 
 ## Type checking
 
@@ -354,8 +380,9 @@ override it by hand. Mockup `prototypes/board-v3-design/mockups/07-node-sizing.h
 1. **Tiers** are tokens: `--vb-card-w-s` 280px, `--vb-card-w-m` 360px, `--vb-card-w-l` 464px.
    Body text then runs about 37, 49 and 70 characters a line. Cards still grow taller to fit.
 2. **Auto tier**, a pure function in `packages/layout` (`sizeTier`), counting the body Markdown
-   only (title and tags do not count): `l` if the body is over 480 characters; `m` if it is over
-   140, or has a code block, or more than 6 list items; `s` otherwise.
+   only (title and tags do not count): `l` if the body is over 480 characters or has a table (the
+   markdownMore flag, § Markdown); `m` if it is over 140, or has a code block, or more than 6 list
+   items; `s` otherwise.
 3. **Precedence**: the person's `size` act, then the agent's `node.size` suggestion, then the auto
    tier. Emphasis raises the result one tier, up to `l`. The person's `auto` removes their pick.
 4. **Where it is applied**: the page sets `data-size` on `<vb-node>` before it measures cards,
@@ -940,7 +967,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    another tab following, create and kept out of git, refused names and a refusal, the page's flag off with a server that
    names a ledger, a server that names none, fit, axe, APCA, the gallery). A server that names no ledger: the header is as above.
 
-   **Read-only and Edit** (`readOnlyStart` flag, off by default, needs `openFolder`; D-085 2 and 5; task
+   **Read-only and Edit** (`readOnlyStart` flag, on by default, needs `openFolder`; D-085 2 and 5; task
    `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/READONLY_UI_01_edit-control.md`). Whether the open ledger
    can be changed here is the standalone page's to show, as its folder and ledger are (no seam change): two page parts,
    `board/host.ts` `BoardPageParts` `editChip` and `editButton`, filled by `shell/page-parts.ts` once `shell/editing.ts`
@@ -948,7 +975,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    decision 16), and drawn only while `get_project` says `readOnly` or `editing: { here }` (`editing.ts` `editState`; a server
    opened with `--edit` says neither, and nothing shows). `shell/EditChip.svelte` follows the path, before Locked: an eye and
    "Read-only", or a pencil and "Editing" (ringed in the accent's line), Locked's look (`styles/editing.css`); its tooltip and
-   accessible name say the whole state (`editing.ts` `stateTip`: "Read-only: press Edit to change this ledger", or "being
+   accessible name say the whole state (`editing.ts` `stateTip`: "Read-only: switch to Editing to change this ledger", or "being
    edited on <computer> since <time>" when another computer holds the lock). The word gives way at a third, on a narrow half
    and on a crowded bar with Locked's (`styles/header.css`), the icon never. The chip is a button opening a small menu
    (the zoom menu's pattern, `board/chrome` `toolbarPopup`): the state in words, then Edit or Stop editing; a polite status
@@ -968,6 +995,25 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    the tests are `tests/pages/read-only.spec.ts` (opens read-only with every write control paused and saying why; Edit then
    a write; Stop editing; another computer named; 1400, 900, 620 and 600 px and the keys; fit; axe; APCA; the menu over
    the access bar; the page's flag off; the gallery) and `packages/ui/tests/node-paused.test.ts`. Off, the header is as above.
+
+   **Read-only as one toggle** (`readOnlyToggle` flag, on by default; PLAN decision 11, point 431; task
+   `cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/FE_02_read-only-toggle.md`). Wherever the chip above is
+   drawn, `shell/EditChip.svelte` is one toggle button with no menu (`editing.ts` `toggleOn`): its icon and word are the
+   state (an eye and "Read-only", a pencil and "Editing"; "Opening for editing…" or "Stopping…" while busy), `aria-pressed`
+   is true while Editing, and its accessible name is Edit whatever the state, so voice control can always say it (the
+   visible word is the state). Its tooltip is its description (`editing.ts` `toggleTip`: the
+   state and what a press does, or the computer that holds the ledger). A press is `toggleEditing` with the toggle's own
+   refusal words (`shell/words/editing.ts` `toggleRefused`): Editing, read-only again, or still read-only with a toast
+   naming the computer that holds the ledger. Busy, it keeps its place and focus (`aria-busy`, `aria-disabled`) with the
+   spinner, and a press does nothing. Editing takes the base toggle pattern's on fill, the accent's soft ground, its ring
+   still the accent's line (`styles/editing.css` `.vb-chip-editing[aria-pressed='true']`). `shell/EditButton.svelte` is not
+   drawn: no Edit or Stop editing button at full and no row in "⋯" (`Toolbar.svelte`, `HeaderFields.svelte` `editToggle`).
+   Words: `shell/words/editing.ts` (`toggleReadOnlyTip`, `toggleHeldTip`, `toggleEditingTip`, `toggleRefused`). The word
+   Lc 60 or more and the icon Lc 30 or more, light and dark. The gallery's section is `gallery/editing-section.ts`
+   (`toggleGroups`; `menuGroups` with the flag off); the tests are `tests/pages/read-only-toggle.spec.ts` (one toggle named
+   Edit, not pressed, no menu; a press takes the lock and one more gives it back; Space and Enter; another computer
+   holding the ledger; 1400, 900 and 600 px; axe; APCA; the flag off; the gallery). Off, the chip opens its menu and
+   EditButton is beside it, as above (`tests/pages/read-only.spec.ts`, which pins `-readOnlyToggle`).
 
 7. **The open cards list** (`openList` flag, on by default; task set
    `cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/`, FE_01). The toolbar's
@@ -1005,6 +1051,39 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    49.8, its outline 72.0 and 47.7. The gallery's "New and updated cards" section draws them
    (`gallery/fresh-section.ts`). Off, the tab is grey until hovered and no container, pill or chip
    shows.
+
+   **Updated in amber** (`updateSignals` flag, on by default; PLAN decision 10, points 429-432; task
+   `cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/FE_01_update-signals.md`). One colour per meaning:
+   updated is `--vb-state-updated` (its APCA figures in `packages/tokens/src/tokens.css`), new stays `--vb-state-fresh`.
+   At rest the "N updates" tab's outline and words take the amber in place of the pink above (`node-steps.css`, the world's
+   `data-fresh-cards` and `data-update-signals`); hovered or open it keeps the amber and gains its soft fill
+   (`--vb-state-updated-soft`), never the duller changed amber. The pill writes each count in its own
+   span (`region-fresh.ts` `fillFreshPill`, called by `vb-region.ts` `applyFresh`), so "updated" takes the amber
+   (`region-fresh.css` `.vb-region-fresh-updated`) and "new" stays teal; the border stays teal, also when only updated
+   cards are inside. New is teal wherever it shows: the card's NEW tab (`node-popover.css`, the world's
+   `data-update-signals`) and the toolbar's "N new" chip (`OpenChip.svelte` `newTone`: tone `fresh`, `chip.css`;
+   `Toolbar.svelte`, `HeaderFields.svelte`), which counts new and updated cards together under the one word "new", and
+   the narrowest bar's "new" dot (`Toolbar.svelte` `.vb-count-dot` `data-tone={newTone(…)}`, `header.css`). The other
+   boards' "N boards updated" chip is amber (`chip-tone.ts` `updatedTone`: chip tone `updated`, `chip.css`). The
+   agent's reply carries the amber on its left edge, apart from the person's notes: bright while
+   its card is unseen, then a muted amber (`color-mix` halfway to `--vb-line-strong`), on the card (`node-parking.css`)
+   in the note bubble (`note-bubble.css`), and under a container's note on its frame (`region-note.css`
+   `.vb-nblock-reply`, muted: the frame's replies carry no `data-unseen`). A reply is unseen when written after the person last looked at its card
+   (`apps/board/src/board/cards/parking.ts` `repliesOn`, from `LedgerState.looked`; never while a past version shows),
+   and keeps it only while the card itself is NEW or has an "N updates" tab not stepped through (`node-notes.ts`
+   `litReplies`, in `node-core.ts` `nodeState`); the templates mark it `data-unseen` (`node-template.ts` `replyMarkup`,
+   `note-bubble-template.ts` `replyItem`). Opening the bubble from a reply is not engagement: the reply stays bright until
+   the card is selected (D-054). The tests are `tests/pages/update-signals.spec.ts` (the card's edge bright then muted
+   on select, the note keeping its own edge; the bubble the same; APCA as words Lc 45 and edges Lc 30 on the card,
+   sunken and deep, light and dark; in dark brighter than `--vb-kind-action` and `--vb-state-context`; in both themes
+   ΔE76 20 or more from those two and from `--vb-state-flag` and `--vb-kind-risk`; the tab hovered still amber; the NEW
+   tab and the "N new" chip teal; a container's reply muted; the flag off; the gallery) and
+   `tests/pages/fresh-cards.spec.ts` (the amber tab, the two-colour pill, the teal border with only
+   updated cards), with `packages/ui/tests/{node-core,node-template,region-fresh}.test.ts` and
+   `apps/board/tests/parking.test.ts`. The gallery's sample is the last section, `gallery/update-signals-section.ts`.
+   Not covered here: the "N new" dot on the narrowest bar (`styles/header.css` `.vb-count-dot`, still pink) and the
+   toolbar's "N updated" chip for other boards (tone `new`, pink). Off, the tab, the NEW tab and the chip are the pink
+   above and replies are grey.
 
 ## Every card in the conversation (every-node FE_01)
 
@@ -1168,7 +1247,7 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
 6. **The chat**: messages still go; the composer's chip carries no answers on a locked board
    (`#actions` `answersChip`), as the server sends none (api.md 140).
 6a. **A read-only ledger** (D-085, `readOnlyStart`; api.md 173) pauses the same way, with its own reason, "Read-only:
-   press Edit to change it" (`#actions` `READ_ONLY_PERSON`): `lock-flow.ts` `paused` gives it, so the stage's acting
+   switch to Editing to change it" (`#actions` `READ_ONLY_PERSON`): `lock-flow.ts` `paused` gives it, so the stage's acting
    handlers, the note bubble and the selection bar's acting commands stop, and the sender refuses every line first
    (`controller.ts`), the flag too, which a lock lets through. It is not a lock: no "Locked", no `data-locked`. The page
    learns it from its reads (`live.ts` `readOnly`), not from the standalone shell; nothing is written, not even a seen

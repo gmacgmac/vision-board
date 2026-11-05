@@ -68,7 +68,7 @@ async function crowd(page: Page, request: APIRequestContext) {
   await expect(page.locator('vb-node').first()).toBeVisible();
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/); // settled: the zoom that hides the cards' controls is in
   await page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
-  await expect(page.locator('.vb-toolbar [data-tone="new"]').first()).toHaveCount(1, { timeout: 10_000 });
+  await expect(page.locator('.vb-toolbar [data-tone="fresh"]').first()).toHaveCount(1, { timeout: 10_000 });
 }
 const uncrowd = (page: Page) => act(page, { action: 'unlock' });
 
@@ -350,7 +350,8 @@ for (const theme of THEMES) {
     await page.setViewportSize({ width: 490, height: 900 });
     await writeAs(request, BOARD, [node(`Dot card ${Date.now()}`)]);
     await expect(page.locator(`${bid('counts')} .vb-count-dot`)).toBeVisible();
-    found.push(['count dot', lc(await paint('var(--vb-accent)'), await paint('var(--vb-surface-sunken)')), 30]);
+    const dot = await page.locator(`${bid('counts')} .vb-count-dot`).evaluate((e) => getComputedStyle(e).backgroundColor).then((c) => pixel(page, c));
+    found.push(['count dot', lc(dot, await paint('var(--vb-surface-sunken)')), 30]);
     await menuButton(page).click();
     const raised = await paint('var(--vb-surface-raised)');
     found.push(['row value', lc(await colour('.vb-menu-value'), raised), 60], ['row word', lc(await colour('.vb-menu-fields .vb-menu-label'), raised), 60], ['zoom level', lc(await colour('.vb-menu-zoom-level'), raised), 60]);
@@ -368,7 +369,7 @@ test('gallery: the section is last, draws the three forms with ids of its own, a
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto(`/gallery.html?flags=${OLD_HEADER}`);
-  await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
+  await expect(page.locator('main > section:not([data-feature="updateSignals"])').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).getByRole('menu', { name: 'Zoom' })).toBeVisible();
   await expect(section(page).locator(`${bid('board')}, ${bid('version')}, ${bid('containers')}, ${bid('send')}, [id="chat-toggle"], ${bid('toolbar-menu')}, ${bid('counts')}, ${bid('title')}, ${bid('folder-chip')}, ${bid('open-cards')}, ${bid('locked')}`)).toHaveCount(0);

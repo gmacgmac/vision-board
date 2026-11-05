@@ -4,8 +4,10 @@
 // <vb-node> elements updated with `nodeState` and the fixture ledger's unseen versions, read through
 // the conditions table as the board reads them; each stepper state is the one the page passes in.
 import type { ViewNode } from '#format';
+import { flagOn } from '#format';
 import type { CardUpdates, VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
+import { pageFlags } from '../flags.ts';
 import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
@@ -27,7 +29,7 @@ function newCard(n: ViewNode, fx: Fixture): VbNodeElement {
   return node;
 }
 
-/** `fresh`: the freshCards flag, whose pink tab the first group's words describe (words the length of the
+/** `fresh`: the freshCards flag, whose pink tab (amber with updateSignals, read from the page's flags) the first group's words describe (words the length of the
  * old ones, so the sections below keep their place and their screenshots). */
 export function updatesSection(fx: Fixture, newCards: boolean, fresh = false): HTMLElement {
   const box = el('section', 'g-section');
@@ -41,7 +43,7 @@ export function updatesSection(fx: Fixture, newCards: boolean, fresh = false): H
   box.append(heading,
     el('p', 'g-desc', 'A card the agent changed since the person last looked, past version 1, says how many times. Selecting the card, or any act on it, counts as looking; Send does not.'),
     meta,
-    group('The tab', `"3 updates" on the bottom edge, ${fresh ? 'small, its outline and words pink' : 'small and quiet in the muted ink'}, after any other tab there (here an out-of-date proposal); hovered or open it takes the CHANGED amber.`
+    group('The tab', `"3 updates" on the bottom edge, ${fresh ? `small, its outline and words ${flagOn('updateSignals', pageFlags()) ? 'amber' : 'pink'}` : 'small and quiet in the muted ink'}, after any other tab there (here an out-of-date proposal); hovered or open it takes the CHANGED amber.`
       + ' With two tabs the card\'s buttons rise a little to leave them room. The card never changes size for it.',
       cardList('A changed card', card(rest, fx))),
     group('The stepper', 'The tab opens the card in place, one step per unseen version: when and who, the change chips (+ added, ~ changed, - removed) and what the text gained. The footer becomes "Update 3 of 3 · Back · Next"; each step shown marks its version seen; Esc folds it.',

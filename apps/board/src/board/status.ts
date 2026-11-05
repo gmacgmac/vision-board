@@ -69,7 +69,7 @@ export interface BoardStatus {
   unsent: boolean;
   /** The open board is locked (N40, lock-flow.ts): read-only until the person unlocks it. */
   locked: boolean;
-  /** The ledger is open read-only (D-085, the reads' `readOnly`): nothing changes until the person presses Edit. */
+  /** The ledger is open read-only (D-085, the reads' `readOnly`): nothing changes until they switch to Editing. */
   readOnly: boolean;
   /** The Go to card box (goToCard flag, go-to-card.ts), open while set. */
   go: GoBox | null;

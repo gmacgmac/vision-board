@@ -8,7 +8,7 @@
 // is not among them and stays usable), the note bubble doesn't open, and sender.ts asks `refuse`
 // before every line it sends, so a path this file doesn't know is refused there too (the one funnel,
 // with the same `passesLock` the server asks). Selection, zoom, pan and the finder stay. A ledger open read-only
-// (D-085, `readOnly`) pauses the same controls with its own reason ("Read-only: press Edit to change it"); it is not
+// (D-085, `readOnly`) pauses the same controls with its own reason (`READ_ONLY_PERSON`); it is not
 // a lock (no "Locked", no `data-locked`), and its refusals are the sender's (controller.ts), the flag's too.
 import type { LedgerState } from '#actions';
 import { boardLocked, LOCKED_PERSON, passesLock, READ_ONLY_PERSON } from '#actions';

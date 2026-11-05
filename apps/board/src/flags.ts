@@ -9,9 +9,9 @@ import { kept } from './shell/kept.ts';
 export const FLAGS_KEY = 'vb.flags';
 
 /** The page's flags as Markdown's options, for what the page draws itself: its chat, its gallery. */
-export function pageMarkdown(): { images: boolean; svg: boolean } {
+export function pageMarkdown(): { images: boolean; svg: boolean; more: boolean } {
   const flags = pageFlags();
-  return { images: flagOn('cardImages', flags), svg: flagOn('svgImages', flags) };
+  return { images: flagOn('cardImages', flags), svg: flagOn('svgImages', flags), more: flagOn('markdownMore', flags) };
 }
 
 export function pageFlags(): FlagOverrides {

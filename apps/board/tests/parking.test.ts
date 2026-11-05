@@ -22,8 +22,8 @@ const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendatio
 
 /** Cards 1 to 4. 1: later, no park. 2: later, then parked. 3: a note (seq 11), answered, and a reply
  *  naming nothing. 3 and 4 share a group note (seq 12), answered on card 4. A note on the container
- *  (seq 13), answered on card 1. */
-function ledger() {
+ *  (seq 13), answered on card 1. `seen`: the person then looks at that card. */
+function ledger(seen?: number) {
   maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
@@ -36,6 +36,7 @@ function ledger() {
     person({ type: 'act', action: 'comment', board: 'b', region: 'r', text: 'Order?' }),
     agent({ type: 'reply', n: 3, text: 'Because.', to: 11 }), agent({ type: 'reply', n: 3, text: 'Also, FYI' }),
     agent({ type: 'reply', n: 4, text: 'Yes, both.', to: 12 }), agent({ type: 'reply', n: 1, text: 'Fine as is.', to: 13 }),
+    ...(seen === undefined ? [] : [person({ type: 'seen', n: seen, ver: 1 })]),
   ];
   const { events, problems } = readLedger(lines);
   assert.deepEqual(problems, []);
@@ -73,10 +74,17 @@ test('a past version has no awaiting (today\'s fact); the written handover still
 test('a reply sits on the card its note is on; one naming no note stays on its own card', () => {
   const p = make(ledger());
   assert.deepEqual(p.card(card(3)).replies, [
-    { seq: 14, text: 'Because.', at: AT(14), to: 11, agent: 'Pricing chat' }, { seq: 15, text: 'Also, FYI', at: AT(15), agent: 'Pricing chat' },
-    { seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat' },
+    { seq: 14, text: 'Because.', at: AT(14), to: 11, agent: 'Pricing chat', unseen: true }, { seq: 15, text: 'Also, FYI', at: AT(15), agent: 'Pricing chat', unseen: true },
+    { seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat', unseen: true },
   ]);
-  assert.deepEqual(p.card(card(4)).replies, [{ seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat' }], 'a group note is answered on every card it is on');
+  assert.deepEqual(p.card(card(4)).replies, [{ seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat', unseen: true }], 'a group note is answered on every card it is on');
+});
+
+test('a reply is unseen on a card until the person looks at that card (updateSignals, D-054); never on a past version', () => {
+  const p = make(ledger(3));
+  assert.deepEqual(p.card(card(3)).replies!.map((r) => [r.seq, r.unseen === true]), [[14, false], [15, false], [16, false]], 'card 3 looked at after its replies');
+  assert.deepEqual(p.card(card(4)).replies!.map((r) => r.unseen), [true], 'the same reply on card 4 is still unseen there');
+  assert.equal(make(ledger(), { readOnly: true }).card(card(3)).replies!.some((r) => r.unseen), false);
 });
 
 test('a reply to a container note is on no card; the frame reads it', () => {

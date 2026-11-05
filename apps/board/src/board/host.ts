@@ -90,9 +90,11 @@ export interface BoardPageParts {
   /** New ledger…, a row of "⋯"'s own, given `choose`. */
   ledgerRow?: PagePart;
   /** The open ledger's state, Read-only or Editing (readOnlyStart flag, D-085 5): after the path at every width
-   *  (header-tier.ts `editing`), a chip whose menu holds Edit or Stop editing. */
+   *  (header-tier.ts `editing`), a chip whose menu holds Edit or Stop editing; with the readOnlyToggle flag one toggle
+   *  that flips the state on a press, and the header draws no `editButton`. */
   editChip?: PagePart;
-  /** Edit or Stop editing as a button at full (header-tier.ts `edit`); given `choose`, a row of "⋯" at half and a third. */
+  /** Edit or Stop editing as a button at full (header-tier.ts `edit`); given `choose`, a row of "⋯" at half and a third.
+   *  Not drawn with the readOnlyToggle flag (`editChip` is the one control). */
   editButton?: PagePart;
   chat?: PagePart;
 }
@@ -190,7 +192,7 @@ export const flagOf = (host: Pick<BoardHost, 'settings'>, f: FlagName): boolean 
 
 /** How the board's Markdown renders under this host, for every surface that draws it. */
 export const markdownOf = (host: Pick<BoardHost, 'settings' | 'imageRoute'>): MarkdownOptions =>
-  ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute });
+  ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute, more: flagOf(host, 'markdownMore') });
 
 /** A store for one mount, for a host that gives none. */
 export function memoryStore(): BoardStore {

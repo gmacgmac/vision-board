@@ -23,7 +23,7 @@ export const PASS_THROUGH_LIFE_MS = 200_000;
 export const BUILD_MS = 120_000;
 
 /** Per invocation of the eval: defaults, and ceilings no flag may pass. */
-export const MAX_RUNS = 12;
+export const MAX_RUNS = 16;
 export const MAX_USD = 3;
 export const CEILING_RUNS = 30;
 export const CEILING_USD = 10;
