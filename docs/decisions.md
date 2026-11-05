@@ -1242,3 +1242,11 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: a body `#` was bigger than the card's title, so a summary card read as if its title were a sub-heading; a test of 8 runs (Sonnet and Opus, SKILL v3.30) showed bots treat the title as the card's heading and start bodies at `##`.
 - **Rejected**: a leading body `#` becoming the title with the real title muted (two names for one card; no bot wrote it); capping `#` at the title's size (loses the presentable headline).
 - **Task**: cortex-tasks/board/2026-11-05_board-ui_big-titles.md
+
+## D-091 The big title is bold; the bottom tabs sit at a third of the card
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, point 442 and the bottom-tab screenshot) · **From**: cortex-tasks/board/2026-11-05_board-ui_title-weight-and-tab-place.md
+- **Decision**:
+  1. A structured card's big title (D-090) is bold, so it reads as the headline over a bold `##`.
+  2. The card's bottom-edge tabs are centred about a third of the way along the bottom edge, clear of the kind icon and "Open"; never left of 14 px nor over the footer buttons. Where a third does not fit (two tabs on a small card) they start at 14 px as before. Behind `updateSignals`.
+- **Why**: the "N updates" tab sat against the card's icon and "Open" and read as part of them.
+- **Task**: cortex-tasks/board/2026-11-05_board-ui_title-weight-and-tab-place.md
