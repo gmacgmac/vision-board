@@ -126,8 +126,12 @@ stay text, exactly as before). Proven by `packages/ui/tests/markdown-more.test.t
   (colons give each column's alignment), then rows until a blank line or another block; inline
   Markdown in cells, `\|` for a pipe (`table.ts` `splitRow`, `delimiterRow`, `tableHtml`; GFM's
   examples 198-205). At most 4 columns (`MAX_COLUMNS`); 5 or more stay text. The table is its
-  holder's width with equal columns (`table-layout: fixed`) and cells that wrap, so it never
-  scrolls, at L or at S (`tests/pages/markdown-more.spec.ts`).
+  holder's width, laid out as a grid with one `minmax(0, auto)` track per column (`markdown.css`
+  `.vb-md-table`; the rows `display: contents`, the roles still table, row, columnheader and cell), so a
+  column of short words or numbers takes just its width and the columns of sentences share the rest;
+  cells wrap and a word breaks only when it alone is wider than its column (`overflow-wrap:
+  break-word`). It never overflows or scrolls, at L or at S, and short words stay whole
+  (`tests/pages/markdown-more.spec.ts`, "follow their content").
 - A card whose body has a table is L by the auto rule (`packages/layout` `measureBody`, `autoTier`;
   `packages/layout/tests/size.test.ts`); the agent's suggestion and the person's pick still win. The
   two packages may not import each other, so the page suite holds their table rules equal
@@ -971,7 +975,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    decision 16), and drawn only while `get_project` says `readOnly` or `editing: { here }` (`editing.ts` `editState`; a server
    opened with `--edit` says neither, and nothing shows). `shell/EditChip.svelte` follows the path, before Locked: an eye and
    "Read-only", or a pencil and "Editing" (ringed in the accent's line), Locked's look (`styles/editing.css`); its tooltip and
-   accessible name say the whole state (`editing.ts` `stateTip`: "Read-only: press Edit to change this ledger", or "being
+   accessible name say the whole state (`editing.ts` `stateTip`: "Read-only: switch to Editing to change this ledger", or "being
    edited on <computer> since <time>" when another computer holds the lock). The word gives way at a third, on a narrow half
    and on a crowded bar with Locked's (`styles/header.css`), the icon never. The chip is a button opening a small menu
    (the zoom menu's pattern, `board/chrome` `toolbarPopup`): the state in words, then Edit or Stop editing; a polite status
@@ -996,8 +1000,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    `cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/FE_02_read-only-toggle.md`). Wherever the chip above is
    drawn, `shell/EditChip.svelte` is one toggle button with no menu (`editing.ts` `toggleOn`): its icon and word are the
    state (an eye and "Read-only", a pencil and "Editing"; "Opening for editing…" or "Stopping…" while busy), `aria-pressed`
-   is true while Editing, and its accessible name is Edit whatever the state, so "press Edit" stays true for a screen
-   reader and voice control (the visible word is the state). Its tooltip is its description (`editing.ts` `toggleTip`: the
+   is true while Editing, and its accessible name is Edit whatever the state, so voice control can always say it (the
+   visible word is the state). Its tooltip is its description (`editing.ts` `toggleTip`: the
    state and what a press does, or the computer that holds the ledger). A press is `toggleEditing` with the toggle's own
    refusal words (`shell/words/editing.ts` `toggleRefused`): Editing, read-only again, or still read-only with a toast
    naming the computer that holds the ledger. Busy, it keeps its place and focus (`aria-busy`, `aria-disabled`) with the
@@ -1052,24 +1056,32 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    `cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/FE_01_update-signals.md`). One colour per meaning:
    updated is `--vb-state-updated` (its APCA figures in `packages/tokens/src/tokens.css`), new stays `--vb-state-fresh`.
    At rest the "N updates" tab's outline and words take the amber in place of the pink above (`node-steps.css`, the world's
-   `data-fresh-cards` and `data-update-signals`); hovered or open it is as before. The pill writes each count in its own
+   `data-fresh-cards` and `data-update-signals`); hovered or open it keeps the amber and gains its soft fill
+   (`--vb-state-updated-soft`), never the duller changed amber. The pill writes each count in its own
    span (`region-fresh.ts` `fillFreshPill`, called by `vb-region.ts` `applyFresh`), so "updated" takes the amber
    (`region-fresh.css` `.vb-region-fresh-updated`) and "new" stays teal; the border stays teal, also when only updated
-   cards are inside. The agent's reply carries the amber on its left edge, apart from the person's notes: bright while
+   cards are inside. New is teal wherever it shows: the card's NEW tab (`node-popover.css`, the world's
+   `data-update-signals`) and the toolbar's "N new" chip (`OpenChip.svelte` `newTone`: tone `fresh`, `chip.css`;
+   `Toolbar.svelte`, `HeaderFields.svelte`), which counts new and updated cards together under the one word "new". The
+   agent's reply carries the amber on its left edge, apart from the person's notes: bright while
    its card is unseen, then a muted amber (`color-mix` halfway to `--vb-line-strong`), on the card (`node-parking.css`)
-   and in the note bubble (`note-bubble.css`). A reply is unseen when written after the person last looked at its card
+   in the note bubble (`note-bubble.css`), and under a container's note on its frame (`region-note.css`
+   `.vb-nblock-reply`, muted: the frame's replies carry no `data-unseen`). A reply is unseen when written after the person last looked at its card
    (`apps/board/src/board/cards/parking.ts` `repliesOn`, from `LedgerState.looked`; never while a past version shows),
    and keeps it only while the card itself is NEW or has an "N updates" tab not stepped through (`node-notes.ts`
    `litReplies`, in `node-core.ts` `nodeState`); the templates mark it `data-unseen` (`node-template.ts` `replyMarkup`,
    `note-bubble-template.ts` `replyItem`). Opening the bubble from a reply is not engagement: the reply stays bright until
    the card is selected (D-054). The tests are `tests/pages/update-signals.spec.ts` (the card's edge bright then muted
    on select, the note keeping its own edge; the bubble the same; APCA as words Lc 45 and edges Lc 30 on the card,
-   sunken and deep, light and dark, and in dark brighter than `--vb-kind-action` and `--vb-state-context`; the flag
-   off; the gallery) and `tests/pages/fresh-cards.spec.ts` (the amber tab, the two-colour pill, the teal border with only
+   sunken and deep, light and dark; in dark brighter than `--vb-kind-action` and `--vb-state-context`; in both themes
+   ΔE76 20 or more from those two and from `--vb-state-flag` and `--vb-kind-risk`; the tab hovered still amber; the NEW
+   tab and the "N new" chip teal; a container's reply muted; the flag off; the gallery) and
+   `tests/pages/fresh-cards.spec.ts` (the amber tab, the two-colour pill, the teal border with only
    updated cards), with `packages/ui/tests/{node-core,node-template,region-fresh}.test.ts` and
    `apps/board/tests/parking.test.ts`. The gallery's sample is the last section, `gallery/update-signals-section.ts`.
-   Not covered here: a container's own note replies on the frame (`region-note.css`) and the toolbar's "N new" chip. Off,
-   the tab is the pink above and replies are grey.
+   Not covered here: the "N new" dot on the narrowest bar (`styles/header.css` `.vb-count-dot`, still pink) and the
+   toolbar's "N updated" chip for other boards (tone `new`, pink). Off, the tab, the NEW tab and the chip are the pink
+   above and replies are grey.
 
 ## Every card in the conversation (every-node FE_01)
 
@@ -1233,7 +1245,7 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
 6. **The chat**: messages still go; the composer's chip carries no answers on a locked board
    (`#actions` `answersChip`), as the server sends none (api.md 140).
 6a. **A read-only ledger** (D-085, `readOnlyStart`; api.md 173) pauses the same way, with its own reason, "Read-only:
-   press Edit to change it" (`#actions` `READ_ONLY_PERSON`): `lock-flow.ts` `paused` gives it, so the stage's acting
+   switch to Editing to change it" (`#actions` `READ_ONLY_PERSON`): `lock-flow.ts` `paused` gives it, so the stage's acting
    handlers, the note bubble and the selection bar's acting commands stop, and the sender refuses every line first
    (`controller.ts`), the flag too, which a lock lets through. It is not a lock: no "Locked", no `data-locked`. The page
    learns it from its reads (`live.ts` `readOnly`), not from the standalone shell; nothing is written, not even a seen

@@ -24,18 +24,26 @@
 /* A thematic break (decision 9): one quiet line. */
 .vb-md-rule { width: 100%; margin: var(--vb-space-1) 0; border: 0; border-top: 1px solid var(--vb-line-strong); }
 
-/* A table (decision 8): the width of what holds it, never wider, so it never scrolls. The fixed layout
-   shares the width out equally, whatever the cells hold; cells wrap and a word longer than its column
-   breaks anywhere. (The automatic layout with breaking anywhere gave a long sentence's column nearly
-   all the width and broke short words like "Price" next to it.) Tight cells, so a word of about
-   seven letters still fits a column of four at S. Header in the strong ink on the sunken ground. */
+/* A table (decision 8): the width of what holds it, never wider, so it never scrolls; its columns follow
+   their content (FIX_01). Laid out as a grid, one track per column (thead, tbody and rows `display:
+   contents`, so every cell is a grid item; the table's roles stay table, row, columnheader and cell),
+   each track `minmax(0, auto)`: a column of short words or numbers takes just its width, the columns of
+   sentences share the rest, and a track can shrink to nothing, so nothing overflows. Cells wrap at spaces
+   and break a word only when it alone is wider than its column (`break-word`). Neither table layout
+   does all three: `fixed` gives equal columns, so "Internationalisation" breaks beside a column of
+   numbers; `auto` with `break-word` never lets a column under its longest word, so long paths or
+   identifiers overflow at S; `auto` with `anywhere` hands a sentence's column nearly all the width and
+   breaks short words ("Pri ce"). Header in the strong ink on the sunken ground. */
 .vb-md-table {
-  width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed;
+  display: grid; grid-template-columns: repeat(var(--vb-md-cols, 1), minmax(0, auto)); width: 100%; max-width: 100%;
   font-size: var(--vb-md-text, var(--vb-text-md)); line-height: 1.4; color: var(--vb-ink);
 }
+.vb-md-table:has(th:nth-child(2)) { --vb-md-cols: 2; }
+.vb-md-table:has(th:nth-child(3)) { --vb-md-cols: 3; }
+.vb-md-table:has(th:nth-child(4)) { --vb-md-cols: 4; }
+.vb-md-table :is(thead, tbody, tr) { display: contents; }
 .vb-md-table :is(th, td) {
-  padding: var(--vb-space-1); border-bottom: 1px solid var(--vb-line); text-align: start;
-  vertical-align: top; overflow-wrap: anywhere;
+  min-width: 0; padding: var(--vb-space-1); border-bottom: 1px solid var(--vb-line); text-align: start; overflow-wrap: break-word;
 }
 .vb-md-table th { background: var(--vb-surface-sunken); border-bottom-color: var(--vb-line-strong); color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
 .vb-md-table tr:last-child > td { border-bottom: 0; }

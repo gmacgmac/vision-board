@@ -16,6 +16,7 @@
   import PagePart from './PagePart.svelte';
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
+  import { newTone } from './chip-tone.ts';
   import VersionPicker from './VersionPicker.svelte';
   import { optionText } from './BoardPicker.svelte';
   import { inMenu, type HeaderTier } from './header-tier.ts';
@@ -79,7 +80,7 @@
     <OpenChip id={idOf('open-cards')} count={facts.counts.open} cards={facts.openCards} row={openRow} onpick={(n) => choose(() => onopen(n))} />
   {/if}
   {#if inMenu(tier, 'new') && facts.freshCards.length && !facts.past}
-    <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} row={newRow} onpick={(n) => choose(() => onopen(n))} word={chromeCommonWords.newWord} tone="new"
+    <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} row={newRow} onpick={(n) => choose(() => onopen(n))} word={chromeCommonWords.newWord} tone={newTone(flag('updateSignals'))}
       label={toolbarWords.goToNewCard} title={toolbarWords.newAndUpdatedCardsChoose} />
   {/if}
 {/if}

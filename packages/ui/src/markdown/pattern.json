@@ -33,7 +33,7 @@
     "vb-md-list": "ul or ol (with start when not 1): a list (01b .ul, bold in the strong ink)",
     "vb-md-quote": "blockquote: the callout, tinted from --kind",
     "vb-md-code": "pre tabindex=0 > code: a fenced code block",
-    "vb-md-table": "table > thead > tr > th scope=col, then tbody > tr > td: the table's width, fixed layout (equal columns), cells wrap and long words break; never scrolls",
+    "vb-md-table": "table > thead > tr > th scope=col, then tbody > tr > td: the table's width, laid out as a grid of minmax(0, auto) columns that follow their content; cells wrap and a word breaks only when it alone is wider than its column; never scrolls",
     "vb-md-left": "th or td: a column aligned by :-- (and vb-md-center :-:, vb-md-right --:)",
     "vb-md-rule": "hr: a thematic break, one line in --vb-line-strong",
     "vb-md-icode": "code: inline code",

@@ -2,13 +2,17 @@
 // FE_01, PLAN decision 10, D-088): the card's "N updates" tab and the "updated" count in a container's pill
 // take --vb-state-updated, "new" stays teal; the agent's reply carries that amber on its left edge, bright
 // while its card is unseen (D-054), muted once the person has looked, on the card and in the note bubble;
-// the person's own note edge is unchanged. APCA light and dark; axe; the flag off is the old look; the
-// gallery's sample. Each test draws its own board through the API (agent-board.ts).
+// the person's own note edge is unchanged. FIX_01: the tab hovered or open keeps the amber; new is teal on
+// the card's NEW tab and the toolbar's "N new" chip too; a container's note replies take the muted amber; the
+// amber reads apart (ΔE76 20) from the action and changed ambers, the flag and risk in both themes. APCA
+// light and dark; axe; the flag off is the old look; the gallery's sample. Each test draws its own board
+// through the API (agent-board.ts).
 import type { Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { bid, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import type { Rgb } from './apca.ts';
 import type { Drawn } from './agent-board.ts';
-import { act, card, draw, open, reply } from './agent-board.ts';
+import { act, card, draw, open, reply, write } from './agent-board.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { bubble, replies, tab } from './board-page.ts';
 
@@ -20,6 +24,20 @@ const token = async (page: Page, css: string) => pixel(page, await resolved(page
 /** The muted amber of a seen reply's edge, as node-parking.css mixes it. */
 const MUTED = 'color-mix(in srgb, var(--vb-state-updated) 50%, var(--vb-line-strong))';
 const note = (page: Page, n: number) => card(page, n).locator('.vb-node-note');
+/** The toolbar's "N new" chip, whatever its tone. */
+const newChip = (page: Page) => page.locator(`${bid('counts')} .vb-chip:has(${bid('fresh-cards')})`);
+
+/** CIE76 ΔE between two sRGB pixels (D65). */
+function deltaE(a: Rgb, b: Rgb): number {
+  const lab = (c: Rgb) => {
+    const [r, g, bl] = c.map((v) => { const x = v / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }) as Rgb;
+    const xyz = [(0.4124 * r + 0.3576 * g + 0.1805 * bl) / 0.95047, 0.2126 * r + 0.7152 * g + 0.0722 * bl, (0.0193 * r + 0.1192 * g + 0.9505 * bl) / 1.08883];
+    const [fx, fy, fz] = xyz.map((t) => (t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116)) as Rgb;
+    return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+  };
+  const [p, q] = [lab(a), lab(b)];
+  return Math.hypot(p[0]! - q[0]!, p[1]! - q[1]!, p[2]! - q[2]!);
+}
 
 /** A board with one card; the person's note on it, then the agent's reply to it, arriving live. */
 async function answered(page: Page, request: Parameters<typeof draw>[0], query = ''): Promise<{ d: Drawn; n: number }> {
@@ -90,16 +108,59 @@ for (const theme of THEMES) {
     if (theme === 'dark') {
       for (const other of ['--vb-kind-action', '--vb-state-context']) expect(words.card - lc(await on(other), cardBg), `brighter than ${other}`).toBeGreaterThanOrEqual(8);
     }
+    // In both themes it reads apart from the other ambers and oranges (in light by hue and chroma: FIX_01).
+    for (const other of ['--vb-kind-action', '--vb-state-context', '--vb-state-flag', '--vb-kind-risk']) {
+      const d = deltaE(amber, await on(other));
+      console.log(`ΔE76 ${theme}: updated vs ${other} ${d.toFixed(1)}`);
+      expect(d, `apart from ${other}`).toBeGreaterThanOrEqual(20);
+    }
+    // Hovered, the tab keeps the amber words on its soft fill; the "N new" chip's teal words on its own.
+    const hovered = lc(amber, await on('--vb-state-updated-soft'));
+    const chipWords = lc(await on('--vb-state-fresh'), soft);
+    for (const [where, v] of Object.entries({ hovered, chipWords })) expect(v, where).toBeGreaterThanOrEqual(45);
     expect(await colour(page, replies(page, n).first(), 'borderLeftColor')).toEqual(amber);
     await expectNoAxeViolations(page);
   });
 }
 
-test('flag off: replies are grey, as before', async ({ page, request }) => {
-  const { n } = await answered(page, request, '?flags=-updateSignals');
+/** A second card the agent adds while the page is open: NEW. */
+async function added(page: Page, request: Parameters<typeof draw>[0], d: Drawn): Promise<number> {
+  const [r] = await write(request, d, [{ type: 'node', node: { region: 'p', kind: 'question', title: 'Card 2' } }]);
+  const n = r!.n!;
+  await expect(card(page, n).locator('.vb-node-btab[data-tab="new"]')).toBeVisible();
+  return n;
+}
+
+test('one colour per meaning: the tab hovered keeps the amber; the NEW tab and the "N new" chip are teal', async ({ page, request }) => {
+  const { d, n } = await answered(page, request);
+  const fresh = await token(page, '--vb-state-fresh');
+  const amber = await token(page, '--vb-state-updated');
+  await tab(page, n).hover();
+  expect(await colour(page, tab(page, n), 'borderTopColor')).toEqual(amber);
+  expect(await colour(page, tab(page, n), 'color')).toEqual(amber);
+  expect(await colour(page, tab(page, n), 'backgroundColor')).toEqual(await token(page, '--vb-state-updated-soft'));
+  await page.mouse.move(0, 0);
+  const m = await added(page, request, d);
+  const newTab = card(page, m).locator('.vb-node-btab[data-tab="new"]');
+  expect(await colour(page, newTab, 'color')).toEqual(fresh);
+  expect(await colour(page, newTab, 'backgroundColor')).toEqual(await token(page, '--vb-state-fresh-soft'));
+  await expect(newChip(page)).toContainText('2 new');
+  await expect(newChip(page)).toHaveAttribute('data-tone', 'fresh');
+  expect(await colour(page, newChip(page).locator('.vb-chip-word'), 'color')).toEqual(fresh);
+});
+
+test('flag off: replies are grey, the tab hovered the changed amber, NEW and "N new" pink, as before', async ({ page, request }) => {
+  const { d, n } = await answered(page, request, '?flags=-updateSignals');
   await expect(tab(page, n)).toHaveText('1 update');
   expect(await colour(page, tab(page, n), 'borderTopColor')).toEqual(await token(page, '--vb-accent'));
   expect(await colour(page, replies(page, n).first(), 'borderLeftColor')).toEqual(await token(page, '--vb-line-strong'));
+  await tab(page, n).hover();
+  expect(await colour(page, tab(page, n), 'borderTopColor')).toEqual(await token(page, '--vb-state-context'));
+  await page.mouse.move(0, 0);
+  const m = await added(page, request, d);
+  expect(await colour(page, card(page, m).locator('.vb-node-btab[data-tab="new"]'), 'color')).toEqual(await token(page, '--vb-accent'));
+  await expect(newChip(page)).toHaveAttribute('data-tone', 'new');
+  expect(await colour(page, newChip(page).locator('.vb-chip-word'), 'color')).toEqual(await token(page, '--vb-accent'));
 });
 
 // ---- The gallery ----
@@ -118,6 +179,10 @@ for (const theme of THEMES) {
     expect(await colour(page, fresh.locator('.vb-region-fresh-updated').first(), 'color')).toEqual(await token(page, '--vb-state-updated'));
     expect(await colour(page, fresh.locator('.vb-region-fresh-new').first(), 'color')).toEqual(await token(page, '--vb-state-fresh'));
     expect(await colour(page, fresh.locator('.vb-node-btab[data-tab="updates"]').first(), 'color')).toEqual(await token(page, '--vb-state-updated'));
+    // New is teal: the NEW tab and the "N new" chip; a container's note reply on its frame, the muted amber.
+    expect(await colour(page, fresh.locator('.vb-node-btab[data-tab="new"]').first(), 'color')).toEqual(await token(page, '--vb-state-fresh'));
+    expect(await colour(page, fresh.locator('.vb-chip[data-tone="fresh"] .vb-chip-word').first(), 'color')).toEqual(await token(page, '--vb-state-fresh'));
+    expect(await colour(page, page.locator('vb-region .vb-nblock-reply').first(), 'borderLeftColor')).toEqual(await token(page, MUTED));
     await expectNoAxeViolations(page);
     await sample.scrollIntoViewIfNeeded();
     await expect(sample).toHaveScreenshot(`update-signals-replies-${theme}.png`);
@@ -131,4 +196,7 @@ test('gallery, flag off: no section of its own, the reply edges are grey and the
   expect(await colour(page, reply, 'borderLeftColor')).toEqual(await token(page, '--vb-line-strong'));
   const fresh = page.locator('section[data-feature="freshCards"]');
   expect(await colour(page, fresh.locator('.vb-region-fresh-updated').first(), 'color')).toEqual(await token(page, '--vb-state-fresh'));
+  expect(await colour(page, fresh.locator('.vb-node-btab[data-tab="new"]').first(), 'color')).toEqual(await token(page, '--vb-accent'));
+  expect(await colour(page, fresh.locator('.vb-chip[data-tone="new"] .vb-chip-word').first(), 'color')).toEqual(await token(page, '--vb-accent'));
+  expect(await colour(page, page.locator('vb-region .vb-nblock-reply').first(), 'borderLeftColor')).toEqual(await token(page, '--vb-line-strong'));
 });

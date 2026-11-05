@@ -1,7 +1,7 @@
 // Heading sizes, tables and breaks (markdownMore flag, PLAN decisions 7-9, insert-markdown-signals MD_01),
 // on the gallery's Markdown section: the three heading sizes differ and grow with --vb-md-text (a
 // popover's text), a 4-column table with long words never overflows at the card's widest (L, where a
-// table puts it) and narrowest (S, the person's pick) tier, a break draws a line, and heading and cell
+// table puts it) and narrowest (S, the person's pick) tier, its columns follow their content (FIX_01), a break draws a line, and heading and cell
 // text pass APCA's reading tier (Lc 60) in light and dark. Also: the page's two table rules (the
 // renderer's and the card size's, packages/ui and packages/layout, which may not import each other)
 // agree on the same inputs.
@@ -22,6 +22,33 @@ const px = (l: Locator, prop: 'fontSize' | 'borderTopWidth' | 'height') => l.eva
 /** Nothing in the card is wider than the box that holds it: the body, the table, each cell. */
 const overflows = (card: Locator) => card.evaluate((n) => [...n.querySelectorAll('.vb-node-body, table, th, td')]
   .filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => `${e.tagName} ${e.textContent?.slice(0, 20)}`));
+
+/** Words split across lines in the card's table cells that would have fitted their cell whole (FIX_01: a word
+ * breaks only when it alone is wider than its column); and each column's width, in order. */
+const tableWords = (card: Locator) => card.evaluate((n) => {
+  const table = n.querySelector('table')!;
+  const needless: string[] = [];
+  for (const cell of table.querySelectorAll<HTMLElement>('th, td')) {
+    const cs = getComputedStyle(cell);
+    const room = cell.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+    for (let t = walker.nextNode() as Text | null; t; t = walker.nextNode() as Text | null) {
+      for (const m of t.data.matchAll(/\S+/g)) {
+        const r = document.createRange();
+        r.setStart(t, m.index!);
+        r.setEnd(t, m.index! + m[0].length);
+        if (new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size < 2) continue;
+        const probe = document.createElement('span');
+        probe.style.whiteSpace = 'nowrap';
+        probe.textContent = m[0];
+        t.parentElement!.append(probe);
+        if (probe.getBoundingClientRect().width <= room) needless.push(m[0]);
+        probe.remove();
+      }
+    }
+  }
+  return { needless, columns: [...table.querySelectorAll<HTMLElement>('th')].map((c) => c.offsetWidth) };
+});
 
 test('the renderer and the card size agree on what is a table', () => {
   const inputs = [
@@ -76,6 +103,16 @@ test.describe('on the gallery', () => {
     await expect(wide.locator('td strong')).toHaveText('Starter');
     // Five columns are not a table.
     await expect(sample(page, 'Five columns stay text').locator('table')).toHaveCount(0);
+  });
+
+  test('columns follow their content: a word breaks only when it alone is wider than its column, at L and S', async ({ page }) => {
+    const wide = sample(page, 'A table');
+    const narrow = sample(page, 'A table at S, with long words');
+    for (const card of [wide, narrow]) expect((await tableWords(card)).needless).toEqual([]);
+    // At L, "Price" (short numbers) is the narrowest column and "Notes" (phrases) the widest; nothing breaks.
+    const { columns } = await tableWords(wide);
+    expect(Math.min(...columns)).toBe(columns[2]);
+    expect(Math.max(...columns)).toBe(columns[3]);
   });
 
   test('a thematic break draws one line, also straight under a paragraph line', async ({ page }) => {

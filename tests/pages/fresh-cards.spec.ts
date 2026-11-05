@@ -23,7 +23,7 @@ const pill = (page: Page, id: string) => frame(page, id).locator('.vb-region-fre
 const said = (page: Page, id: string) => pill(page, id).locator('.vb-region-fresh-n');
 const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
 const list = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
-const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="new"]:has(${bid('fresh-cards')})`);
+const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="fresh"]:has(${bid('fresh-cards')})`);
 /** The rows' words: each option's `label` (MenuSelect). */
 const texts = (page: Page) => list(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
 
@@ -83,20 +83,23 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/?setup');
 });
 
-test('the updates tab: the updated amber outline and words at rest, the changed amber edge and the ink on hover; NEW unchanged', async ({ page, request }) => {
+test('the updates tab: the updated amber outline and words at rest, and on hover with its soft fill; NEW teal', async ({ page, request }) => {
   const { d, added } = await fresh(page, request);
   const t = tab(page, d.n[2]!);
   await expect(t).toHaveText('1 update');
   expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-updated'));
   expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-state-updated'));
   expect(await colour(page, t, 'backgroundColor')).toEqual(await token(page, '--vb-surface-card'));
+  // Hovered it never steps down to the duller changed amber (FIX_01): the amber stays, on its soft fill.
   await t.hover();
-  expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-context'));
-  expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-ink'));
+  expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-updated'));
+  expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-state-updated'));
+  expect(await colour(page, t, 'backgroundColor')).toEqual(await token(page, '--vb-state-updated-soft'));
+  // NEW is teal, as the pill's "new" (one colour per meaning; pink with updateSignals off: update-signals.spec.ts).
   const nw = isNew(page, added);
   await expect(nw).toHaveText('NEW');
-  expect(await colour(page, nw, 'backgroundColor')).toEqual(await token(page, '--vb-accent-soft'));
-  expect(await colour(page, nw, 'color')).toEqual(await token(page, '--vb-accent'));
+  expect(await colour(page, nw, 'backgroundColor')).toEqual(await token(page, '--vb-state-fresh-soft'));
+  expect(await colour(page, nw, 'color')).toEqual(await token(page, '--vb-state-fresh'));
 });
 
 test('a fresh container: teal border and "1 new" / "1 updated" pills; count = list = tabs', async ({ page, request }) => {

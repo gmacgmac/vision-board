@@ -151,10 +151,15 @@
   /* Updated (updateSignals flag, D-088, points 429-432): a card's "N updates" tab, the "updated" count in a
      container's pill and the agent's reply edge while its card is unseen. A bright amber: dark full
      saturation, clearly lighter than the action amber (--vb-kind-action, Lc 63.6 on the card) and the
-     changed family's (--vb-state-context, 62.9); light the same hue, deeper. APCA-W3 0.0.98G-4g
-     (tests/pages/update-signals.spec.ts): on the card Lc 71.3 light, 74.2 dark; sunken 61.9, 73.1;
-     deep 55.5, 71.3; the canvas 65.4, 75.0; on its -soft 61.0, 70.7 (labels 45, edges 30). */
-  --vb-state-updated: light-dark(#a66800, #ffc21a);
+     changed family's (--vb-state-context, 62.9). Light can't be lighter than the action amber and keep
+     Lc 45 on deep, so it is apart by hue and chroma: a tangerine amber (FIX_01, was #a66800, ΔE76 9.0
+     from the action amber), as light as Lc 45 on deep allows, between the action amber and the flag's
+     and risk's oranges. ΔE76 light / dark from the action amber 22.1 / 23.1, the changed amber 20.3 /
+     21.7, the flag 21.4 / 33.6, risk 21.8 / 51.9. APCA-W3 0.0.98G-4g (tests/pages/update-signals.spec.ts):
+     on the card Lc 61.4 light, 74.2 dark; sunken 52.0, 73.1; deep 45.6, 71.3; the canvas 55.5, 75.0;
+     on its -soft 52.3, 70.7; on the pill's teal -soft 51.7, 71.2; a seen reply's muted edge (50% toward
+     --vb-line-strong) on sunken 37.8, 33.4 (labels 45, edges 30). */
+  --vb-state-updated: light-dark(#d66e00, #ffc21a);
   --vb-state-updated-soft: color-mix(in srgb, var(--vb-state-updated) 12%, var(--vb-surface-card));
 
   /* Node kinds (Architect families, D-024) */

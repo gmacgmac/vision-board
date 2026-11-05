@@ -12,7 +12,9 @@ function replyEdges(fx: Fixture): HTMLElement {
   const [k, c] = [...fx.cleared][0]!;
   const n = fx.view.nodes.find((x) => x.n === k)!;
   const seen = card(n, fx, fx.state, { replies: (c.replies ?? []).map(({ unseen: _, ...r }) => r) });
-  return cardList('The agent\'s reply, unseen and seen', card(n, fx, fx.state, c), seen);
+  const list = cardList('The agent\'s reply, unseen and seen', card(n, fx, fx.state, c), seen);
+  list.style.padding = 'var(--vb-space-4) var(--vb-space-1)'; // the cards' top badges and bottom tabs sit on their edges: inside the box, so its screenshot shows them
+  return list;
 }
 
 export function updateSignalsSection(fx: Fixture): HTMLElement {

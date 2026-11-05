@@ -3,7 +3,7 @@
 // holding Edit); the chip alone at rest, hovered, focused, pressed, opening for editing, editing, and held by another
 // computer with its menu open; Edit and Stop editing as a button and as a row of "⋯", loading too; the refusal's toast;
 // and what read-only pauses: the cards (the flag too), the container, Send, the "⋯" menu's Lock and Archive rows. Shown
-// only with the flag on (it is off by default), so the gallery is as it was without it. Names and times are examples.
+// only with the flag on (on by default; ?flags=-readOnlyStart hides it), so the gallery is as it was without it. Names and times are examples.
 // With the readOnlyToggle flag (PLAN decision 11) the chip is one toggle with no menu and no Edit button: its samples
 // (`toggleGroups`) take the place of the chip's, the button's and the row's.
 import { mount } from 'svelte';
@@ -136,10 +136,11 @@ export function editingSection(fx: Fixture): HTMLElement {
   const meta = el('p', 'g-meta');
   const toggle = toggleOn();
   meta.append(el('code', undefined, toggle ? 'EditChip · header-tier · paused' : 'EditChip · EditButton · header-tier · paused'),
-    toggle ? ' · feature flags readOnlyStart and readOnlyToggle' : ' · feature flag readOnlyStart, off by default · on with ?flags=readOnlyStart');
+    toggle ? ' · feature flags readOnlyStart and readOnlyToggle, on by default · off with ?flags=-readOnlyToggle'
+      : ' · feature flag readOnlyStart (D-085), on by default · off with ?flags=-readOnlyStart');
   const [frame, cards] = pausedBoard(fx, { ...fx.marks.state, readOnly: true }, 'A read-only ledger\'s cards');
   box.append(heading,
-    el('p', 'g-desc', `A ledger opens read-only: nothing is written until the person presses Edit, which opens it for changes here unless another computer is editing it. The header always says which, at every width; every control that would write is paused, saying "${READ_ONLY_PERSON}".`),
+    el('p', 'g-desc', `A ledger opens read-only: nothing is written until the person switches to Editing, which opens it for changes here unless another computer is editing it. The header always says which, at every width; every control that would write is paused, saying "${READ_ONLY_PERSON}".`),
     meta,
     ...(toggle ? toggleGroups(fx) : menuGroups(fx)),
     group('"⋯" on a read-only ledger', 'Lock board and Archive board are off, their tooltip the reason.', menu()),
