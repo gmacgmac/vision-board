@@ -13,7 +13,7 @@
   "parts": {
     "vb-btn": "a text button (vb-btn-primary: the one primary action; vb-btn-small); aria-pressed draws it on, aria-busy busy, disabled muted",
     "vb-select": "a select beside the buttons, in their look",
-    "vb-chip": "a pill of words or a count; data-tone agent | answered | later | new; vb-chip-btn when it is a button",
+    "vb-chip": "a pill of words or a count; data-tone agent | answered | later | new | fresh; vb-chip-btn when it is a button",
     "vb-menu-list": "the role=menu list on the popover surface, hung under its opener's right edge; a page that places it moves it",
     "vb-menu-item": "a row: its icon, vb-menu-label (cut with an ellipsis), vb-menu-check (a menuitemcheckbox's tick), its kbd",
     "vb-dialog": "the panel surface of a <dialog> (or a sample div): h2, vb-dialog-item, vb-field + vb-input or a textarea, vb-dialog-problem, vb-dialog-hint, vb-dialog-actions",

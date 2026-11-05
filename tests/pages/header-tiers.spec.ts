@@ -68,7 +68,7 @@ async function crowd(page: Page, request: APIRequestContext) {
   await expect(page.locator('vb-node').first()).toBeVisible();
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/); // settled: the zoom that hides the cards' controls is in
   await page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
-  await expect(page.locator('.vb-toolbar [data-tone="new"]').first()).toHaveCount(1, { timeout: 10_000 });
+  await expect(page.locator('.vb-toolbar [data-tone="fresh"]').first()).toHaveCount(1, { timeout: 10_000 });
 }
 const uncrowd = (page: Page) => act(page, { action: 'unlock' });
 

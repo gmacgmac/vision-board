@@ -31,6 +31,12 @@ vb-node .vb-node-btab[data-stale]:is(:hover, [aria-expanded='true']) { border-co
    A label, not a button: nothing to open, so no pointer, no hover and no hit area. */
 vb-node .vb-node-btab[data-tab='new'] { cursor: default; pointer-events: none; background: var(--vb-accent-soft); color: var(--vb-accent); }
 vb-node .vb-node-btab[data-tab='new']::after { content: none; }
+/* With updateSignals (D-088, one colour per meaning) new is teal, as the container's pill and the toolbar's
+   chip: the words --vb-state-fresh on its -soft (Lc 54.8 light, 63.5 dark; labels 45), the edge as the
+   stale tab's, the colour 45% toward the line. */
+[data-update-signals] vb-node .vb-node-btab[data-tab='new'] {
+  border-color: color-mix(in srgb, var(--vb-state-fresh) 45%, var(--vb-line)); background: var(--vb-state-fresh-soft); color: var(--vb-state-fresh);
+}
 
 /* The box: beside the card at its top, with a bridge over the gap so the pointer can cross onto it.
    Its sizes are the shared popover tokens (--vb-pop-*), so it scales with the note bubble

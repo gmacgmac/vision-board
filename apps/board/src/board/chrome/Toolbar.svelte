@@ -52,6 +52,7 @@
   import LockedChip from './LockedChip.svelte';
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
+  import { newTone } from './chip-tone.ts';
   import ToolbarEnd from './ToolbarEnd.svelte';
   import VersionPicker from './VersionPicker.svelte';
   import { headerTier, inBar, inMenu, type HeaderControl, type HeaderTier } from './header-tier.ts';
@@ -196,7 +197,7 @@
       {#if facts.version !== null}
         <OpenChip id={idOf('open-cards')} count={facts.counts.open} cards={openList ? facts.openCards : []} onpick={onopen} />
         {#if facts.freshCards.length && !facts.past}
-          <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} onpick={onopen} word={chromeCommonWords.newWord} tone="new"
+          <OpenChip id={idOf('fresh-cards')} count={facts.freshCards.length} cards={facts.freshCards} onpick={onopen} word={chromeCommonWords.newWord} tone={newTone(flag('updateSignals'))}
             label={toolbarWords.goToNewCard} title={toolbarWords.newAndUpdatedCardsChoose} />
         {/if}
         {#if facts.counts.withAgent}<span class="vb-chip" data-tone="agent" title={toolbarWords.repliedItems}><ButtonIcon name="agents" /><b>{facts.counts.withAgent}</b> <span class="vb-chip-word">{toolbarWords.replied}</span></span>{/if}
