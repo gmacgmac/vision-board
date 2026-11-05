@@ -101,8 +101,12 @@ skills: [cortex-architecture, cortex-docs]
 | FIX_02-R1 | FIX_02 | `apps/board/tests/live-read-only.test.ts` regex follows "Switch to Editing" | FIX_02 (granted, wave 3) | Done |
 | FIX_02-R2 | FIX_02 | Rename `readOnlyPressEdit` (`shell/words/editing.ts`) and its reader `stateTip` (`shell/editing.ts`) | FIX_02 (granted, wave 3) | Done |
 | FIX_02-R3 | FIX_02 | Comments in `board-state.ts`, `status.ts`, `lock-flow.ts`, `problem.schema.json` `$comment` say "presses Edit" | FIX_02 (granted, wave 3) | Done |
-| FIX_02-R4 | FIX_02 | `apps/board/src/gallery/editing-section.ts` description says "presses Edit"; `read-only` and `read-only-toggle` screenshots then re-taken | FIX_01 (text), orchestrator after merge (screenshots) | Open |
-| FIX_02-R5 | FIX_02 | `components.md` quote of `stateTip`: "Read-only: switch to Editing to change this ledger" | FIX_01 item 6 | Open |
+| FIX_02-R4 | FIX_02 | `apps/board/src/gallery/editing-section.ts` description says "presses Edit"; `read-only` and `read-only-toggle` screenshots then re-taken | FIX_01 (text, done), FIX_01 Run 2 (screenshots, on the merged branch) | Open |
+| FIX_02-R5 | FIX_02 | `components.md` quote of `stateTip`: "Read-only: switch to Editing to change this ledger" | FIX_01 item 6 | Done |
+| FIX_01-R1 | FIX_01 | Re-take `read-only`, `read-only-toggle`, `read-only-controls`, `read-only-writes` screenshots on the merged branch | FIX_01 Run 2 | Open |
+| FIX_01-R2 | FIX_01 | `apps/board/src/styles/header.css` `.vb-count-dot`: the narrowest bar's "new" dot still pink; teal under `updateSignals`. Also the toolbar's "N updated" chip for other boards still pink: amber (Decision 10) | FIX_01 Run 2 | Open |
+| FIX_01-R3 | FIX_01 | `region-template.ts` `nblockRepliesMarkup`: a container's reply is never marked unseen (no "seen" rule for containers yet), so it shows only the muted edge | tracker (needs a rule for when a container is seen) | Open |
+| FIX_01-R4 | FIX_01 | `docs/specification/modules.md`: `chip-tone.ts` | closed: modules.md names modules, not chrome files; `verify` passes | Closed |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
