@@ -65,6 +65,8 @@ export interface DrawDeps {
   markdown?: MarkdownOptions;
   /** The viewer's alignment (ruling 4; `start` without the alignSetting flag). */
   align?(): Align;
+  /** The gap between a card and the card under it (`ROW_GAP` with updateSignals); absent: the layout's GAP. */
+  rowGap?: number;
   data(): BoardData;
   hidden(): Set<string>;
   focus(): string | null;
@@ -179,7 +181,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   function lay(data: BoardData, fresh: boolean) {
     const { pins, modes, regionPins, widths } = data.state;
     const inputs = {
-      pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start',
+      pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start', rowGap: d.rowGap,
       // The widths in force per container: the person's, the agent's, the shown mode's (as the server's show_layout).
       widths: new Map(data.view.regions.map((r) => [r.id, widthsOf(modes.get(r.id) ?? r.mode, r.widths, widths.get(r.id))])),
     } as const;

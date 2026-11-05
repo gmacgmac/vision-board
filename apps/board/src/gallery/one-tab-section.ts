@@ -3,10 +3,12 @@
 // in: the one amber tab at rest, out of date, and its box open with the proposal first and the step beneath (the
 // box forced open, `data-open`, as the proposals section does). Last of all, so no section moves.
 import type { ViewNode } from '#format';
+import { flagOn } from '#format';
 import type { CardProposal, CardUpdates, VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
 import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
+import { pageFlags } from '../flags.ts';
 
 /** A proposal made on the card's latest version, as the page's proposal rows read it. */
 const FRESH: CardProposal = { seq: 9001, action: 'ack', reason: 'The client agreed on the call.', when: 'Nov 5, 16:10', stale: false, agent: 'Pricing chat', source: 'Email pasted in chat' };
@@ -28,7 +30,7 @@ function card(n: ViewNode, fx: Fixture, proposals: readonly CardProposal[], open
 /** Cards in a list padded so their bottom tabs, and an open box, show in the section's screenshot. */
 function list(label: string, ...cards: VbNodeElement[]): HTMLElement {
   const l = cardList(label, ...cards);
-  l.style.padding = 'var(--vb-space-4) var(--vb-space-1)';
+  l.style.padding = 'var(--vb-space-4) var(--vb-space-1) var(--vb-space-5)'; // room for the hung tab and its target
   return l;
 }
 
@@ -51,7 +53,7 @@ export function oneTabSection(fx: Fixture): HTMLElement {
   box.append(heading,
     el('p', 'g-desc', 'A card the agent changed and proposed on shows one tab, not two: something here needs you. Opening it shows all of it in order of what to do.'),
     meta,
-    group('The tab', '"1 update · proposal" in the updated amber, named "1 update and a proposal on item N"; "· out of date" when every proposal is, as the proposal tab says. On a small card the buttons rise a little, as for two tabs.',
+    group('The tab', `"1 update · proposal" in the updated amber, named "1 update and a proposal on item N"; "· out of date" when every proposal is, as the proposal tab says. ${flagOn('updateSignals', pageFlags()) ? 'It hangs below the footer at a third of the card, so the buttons stay where they are.' : 'On a small card the buttons rise a little, as for two tabs.'}`,
       list('Cards with an update and a proposal', card(stepping, fx, [FRESH]), card(rest, fx, stale))),
     group('Opened', 'The proposal first, Reject and Accept as from the proposal tab; the update\'s step beneath it, Back and Next in the box. Opening it shows the first step (and marks it seen); closing it folds the steps. A proposal alone and updates alone keep their own tabs.',
       open(list('The box open on an update and a proposal', card(stepping, fx, [FRESH], true)))));

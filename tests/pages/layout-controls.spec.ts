@@ -5,6 +5,7 @@
 // only read here (the alignment is the viewer's own, in this browser); the widths acts go to the
 // performance server's mixed board, which same-picture.spec.ts changes at random anyway.
 import type { Page } from '@playwright/test';
+import { ROW_GAP } from '#layout';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { PERF_BASE } from './ports.ts';
@@ -145,12 +146,13 @@ test('widths: each frame\'s switch shows the widths in force; a press or the key
   await frame(page, 'prove').locator('button[data-mode="column"]').click();
   await expect(widthsSwitch(page, 'prove')).toHaveAttribute('aria-checked', 'true');
   await expect.poll(async () => [(await boxOf(page, 4)).w, (await boxOf(page, 5)).w, (await boxOf(page, 6)).w]).toEqual([464, 464, 464]);
-  // A widened card is measured at its drawn width: the gaps down the column stay the layout's own.
+  // A widened card is measured at its drawn width: the gaps down the column stay the layout's own (ROW_GAP
+  // with updateSignals, on by default: the hung bottom tabs, tab-lower task).
   const gaps = async () => {
     const [a, b, c] = [await boxOf(page, 4), await boxOf(page, 5), await boxOf(page, 6)];
     return [Math.round(b.y - (a.y + a.h)), Math.round(c.y - (b.y + b.h))];
   };
-  expect(await gaps()).toEqual([24, 24]);
+  expect(await gaps()).toEqual([ROW_GAP, ROW_GAP]);
   // A press: own widths, so 5 and 6 go back to their own width.
   await reveal(page, 'prove');
   await widthsSwitch(page, 'prove').click();
@@ -158,7 +160,7 @@ test('widths: each frame\'s switch shows the widths in force; a press or the key
   expect((await widthsOn(page)).prove).toBe('own');
   await expect.poll(async () => (await boxOf(page, 5)).w).toBeLessThan(464);
   expect((await boxOf(page, 4)).w).toBe(464);
-  expect(await gaps()).toEqual([24, 24]);
+  expect(await gaps()).toEqual([ROW_GAP, ROW_GAP]);
   // The keyboard: Right from the last layout moves on to the switch, Space presses it.
   await frame(page, 'prove').locator('button[data-mode="row"]').focus();
   await page.keyboard.press('ArrowRight');

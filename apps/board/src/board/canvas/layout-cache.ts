@@ -1,8 +1,8 @@
 // Layout per container, kept between draws (N12_FE_01 ruling 3, performance.md approach 2). Each
 // container's result from `layoutRegion` is kept with a key of everything it read: the region, its
 // mode, its visible nodes (id, kind, lane, measured size, pin) in view order, the links inside
-// it, its head inset (the shown note block's height, 3_FE_04 step 4G ruling 3), its card widths
-// and the viewer's alignment (field-report batch 3 rulings 4 and 5). A draw lays
+// it, its head inset (the shown note block's height, 3_FE_04 step 4G ruling 3), its card widths,
+// the viewer's alignment (field-report batch 3 rulings 4 and 5) and the gap under a card (rowGap). A draw lays
 // out again only the containers whose key changed, then packs every container and routes the
 // links (cheap). The layout functions stay pure; only this cache lives in the page.
 // Same input, same picture: a test drives random changes and holds the result equal to
@@ -26,6 +26,8 @@ export interface LayoutInputs {
   widths?: Map<string, Widths>;
   /** The viewer's alignment (ruling 4); absent: `start`. Every container reads it. */
   align?: Align;
+  /** The gap between a card and the card under it (LayoutOptions.rowGap); absent: GAP. Every container reads it. */
+  rowGap?: number;
 }
 
 export interface LayoutRun {
@@ -48,7 +50,7 @@ const nodeKey = (n: ViewNode, s: Size | undefined, pin: Point | undefined) =>
 export function createLayoutCache(): LayoutCache {
   let kept = new Map<string, { key: string; piece: RegionPiece }>();
   return {
-    run(view, sizes, { pins, modes, hidden, regionPins, headInsets, widths, align }) {
+    run(view, sizes, { pins, modes, hidden, regionPins, headInsets, widths, align, rowGap }) {
       const nodes = new Map<string, ViewNode[]>();
       const regionOf = new Map<string, string>();
       for (const n of view.nodes) {
@@ -73,13 +75,13 @@ export function createLayoutCache(): LayoutCache {
         const inset = Math.max(0, headInsets?.get(region.id) ?? 0);
         const chosen = widths?.get(region.id);
         const key = JSON.stringify([
-          region, mode ?? null, inset, chosen ?? null, align ?? 'start',
+          region, mode ?? null, inset, chosen ?? null, align ?? 'start', rowGap ?? null,
           own.map((n) => nodeKey(n, sizes.get(n.id), pins.get(n.id))), inner.map((l) => [l.from, l.to]),
         ]);
         const old = kept.get(region.id);
         let piece = old?.key === key ? old.piece : undefined;
         if (!piece) {
-          piece = layoutRegion(region, own, inner, sizes, { mode, pins, headInset: inset, widths: chosen, align });
+          piece = layoutRegion(region, own, inner, sizes, { mode, pins, headInset: inset, widths: chosen, align, rowGap });
           laidOut.push(region.id);
         }
         next.set(region.id, { key, piece });

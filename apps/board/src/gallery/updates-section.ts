@@ -44,7 +44,8 @@ export function updatesSection(fx: Fixture, newCards: boolean, fresh = false): H
     el('p', 'g-desc', 'A card the agent changed since the person last looked, past version 1, says how many times. Selecting the card, or any act on it, counts as looking; Send does not.'),
     meta,
     group('The tab', `"3 updates" on the bottom edge, ${fresh ? `small, its outline and words ${flagOn('updateSignals', pageFlags()) ? 'amber' : 'pink'}` : 'small and quiet in the muted ink'}, after any other tab there (here an out-of-date proposal); hovered or open it takes the CHANGED amber.`
-      + ' With two tabs the card\'s buttons rise a little to leave them room. The card never changes size for it.',
+      + (flagOn('updateSignals', pageFlags()) ? ' The tabs hang below the footer, so the card\'s buttons stay where they are.' : ' With two tabs the card\'s buttons rise a little to leave them room.')
+      + ' The card never changes size for it.',
       cardList('A changed card', card(rest, fx))),
     group('The stepper', 'The tab opens the card in place, one step per unseen version: when and who, the change chips (+ added, ~ changed, - removed) and what the text gained. The footer becomes "Update 3 of 3 · Back · Next"; each step shown marks its version seen; Esc folds it.',
       cardList('A changed card at its last step', card(stepping, fx, (k) => k - 1))),

@@ -27,6 +27,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* Patterns are placed by the board page (position: absolute, transform). Here they flow. */
 .g-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-3); }
 .g-cards vb-node, .g-frames vb-region { position: relative; }
+/* With updateSignals a card's bottom tabs hang about 17px below it (node-popover.css, tab lower): a list that
+   shows any keeps room for them and their 24px targets under each row, as the board keeps ROW_GAP under a card. Low
+   specificity, so a list's own gap and room (.g-tips, .g-sizes) still win. */
+.g-cards:where([data-update-signals] *):where(:has(.vb-node-btab:not([hidden]))) { row-gap: var(--vb-space-6); padding-bottom: var(--vb-space-5); }
 /* A card with its note preview open: room to its right for the box (the popover width and its reach) and below it for the box, which is taller than a short card. */
 .g-tips { gap: var(--vb-space-5) calc(var(--vb-pop-w) + var(--vb-space-6) * 2); padding-bottom: calc(var(--vb-space-6) * 3); }
 /* The frames sit on the board's dot-grid canvas (.vb-ground). The top line straddles each frame's

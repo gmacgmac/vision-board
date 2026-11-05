@@ -3,7 +3,7 @@ import { GAP } from '../types.ts';
 
 /** Cards in rows. Column widths from the widest card, row heights from the tallest. Under `match`
  *  a card takes its column's width (ruling 5); `center` centres a card in its cell both ways. */
-export const grid: ModeFn = ({ region, nodes, sizes, align, widths }) => {
+export const grid: ModeFn = ({ region, nodes, sizes, align, widths, rowGap = GAP }) => {
   const cols = Math.max(1, region.columns ?? Math.ceil(Math.sqrt(nodes.length)));
   const colW: number[] = [];
   const rowH: number[] = [];
@@ -12,8 +12,8 @@ export const grid: ModeFn = ({ region, nodes, sizes, align, widths }) => {
     colW[i % cols] = Math.max(colW[i % cols] ?? 0, s.w);
     rowH[Math.floor(i / cols)] = Math.max(rowH[Math.floor(i / cols)] ?? 0, s.h);
   });
-  const xs = prefix(colW);
-  const ys = prefix(rowH);
+  const xs = prefix(colW, GAP);
+  const ys = prefix(rowH, rowGap);
   const pos = new Map<string, Box>();
   const cells = new Map<string, Cell>();
   const mid = align === 'center' ? 0.5 : 0;
@@ -31,9 +31,9 @@ export const grid: ModeFn = ({ region, nodes, sizes, align, widths }) => {
 const inCardOrder = <T extends { n?: number | undefined }>(nodes: readonly T[]): T[] =>
   [...nodes].sort((a, b) => (a.n !== undefined && b.n !== undefined ? a.n - b.n : 0));
 
-/** One column, top to bottom in card order, GAP apart so the next card's tabs clear the one above
- * (api.md 129: `column`, the old `list`). Left-aligned, or centred; `match`: one width for all. */
-export const column: ModeFn = ({ nodes, sizes, align, widths }) => {
+/** One column, top to bottom in card order, `rowGap` (GAP) apart so the next card's tabs clear the one
+ * above (api.md 129: `column`, the old `list`). Left-aligned, or centred; `match`: one width for all. */
+export const column: ModeFn = ({ nodes, sizes, align, widths, rowGap = GAP }) => {
   const pos = new Map<string, Box>();
   const cells = new Map<string, Cell>();
   const widest = Math.max(0, ...nodes.map((n) => sizes.get(n.id)!.w));
@@ -44,7 +44,7 @@ export const column: ModeFn = ({ nodes, sizes, align, widths }) => {
     const w = widths === 'match' ? widest : s.w;
     pos.set(n.id, { x: (widest - w) * mid, y, w, h: s.h });
     cells.set(n.id, { column: 1, row: i + 1 });
-    y += s.h + GAP;
+    y += s.h + rowGap;
   });
   return { pos, cells };
 };
@@ -66,12 +66,12 @@ export const row: ModeFn = ({ nodes, sizes, align }) => {
   return { pos, cells };
 };
 
-function prefix(sizes: number[]): number[] {
+function prefix(sizes: number[], gap: number): number[] {
   const out: number[] = [];
   let at = 0;
   for (const s of sizes) {
     out.push(at);
-    at += s + GAP;
+    at += s + gap;
   }
   return out;
 }
