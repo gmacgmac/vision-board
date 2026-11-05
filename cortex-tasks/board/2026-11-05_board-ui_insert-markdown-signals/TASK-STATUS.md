@@ -22,13 +22,14 @@ skills: [cortex-architecture, cortex-docs]
 
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
-| 1 | ACT_01 | 1 | strong | API designer for agents — one item does one thing a person would name, all or nothing, and a refusal says exactly what to fix. | [Insert a card into a flow](./ACT_01_insert-into-flow.md) | Pending | |
-| 2 | MD_01 | 1 | strong | Typesetter for small screens — a heading tells you where you are, a table reads at a glance, and nothing scrolls sideways. | [Heading sizes, tables, breaks](./MD_01_markdown-more.md) | Pending | |
-| 3 | FE_01 | 1 | strong | Visual designer for monitoring screens — what changed is the brightest thing on the board until you've looked, then it steps back. | [Updated in amber; the agent's reply edge](./FE_01_update-signals.md) | Pending | |
-| 4 | FE_02 | 1 | strong | Interaction designer — a two-state setting is one control that shows its state and flips on a press. | [Read-only as one toggle](./FE_02_read-only-toggle.md) | Pending | |
+| 1 | ACT_01 | 1 | strong | API designer for agents — one item does one thing a person would name, all or nothing, and a refusal says exactly what to fix. | [Insert a card into a flow](./ACT_01_insert-into-flow.md) | Completed | `insert` on the node item, `inserted` in the result; R1 done: the engine passes the flag |
+| 2 | MD_01 | 1 | strong | Typesetter for small screens — a heading tells you where you are, a table reads at a glance, and nothing scrolls sideways. | [Heading sizes, tables, breaks](./MD_01_markdown-more.md) | Completed | Fixed table layout (auto + anywhere broke short words); gallery fixture card 61 is now a table; 3 screenshot sets + flag wiring under REQUESTS |
+| 3 | FE_01 | 1 | strong | Visual designer for monitoring screens — what changed is the brightest thing on the board until you've looked, then it steps back. | [Updated in amber; the agent's reply edge](./FE_01_update-signals.md) | Completed | `--vb-state-updated` light-dark(#a66800, #ffc21a); requests FE_01-R1..R3 |
+| 4 | FE_02 | 1 | strong | Interaction designer — a two-state setting is one control that shows its state and flips on a press. | [Read-only as one toggle](./FE_02_read-only-toggle.md) | Completed | Toggle behind `readOnlyToggle`; new spec `read-only-toggle.spec.ts`; old spec pinned to flag off; requests: editing.css fill, words, components.md |
 | 5 | BOT_01 | 2 | strong | Prompt engineer who treats instructions as code — every line earns its place by a scenario. | [Bot instructions and check_responses](./BOT_01_skill-and-reads.md) | Pending | |
 | 6 | VERIFY_01 | 2 | strong | A product manager using the board daily on a dark screen, with no builder context — scans a busy board for what changed. | [Review the set](./VERIFY_01_review.md) | Pending | |
 
+| 7 | FIX_01 | 3 | strong | Visual designer for monitoring screens — what changed is the brightest thing on the board until you've looked, then it steps back. | [Wave 2 findings and signal follow-ups](./FIX_01_findings.md) | Pending | |
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
 ## Ports
@@ -38,7 +39,7 @@ skills: [cortex-architecture, cortex-docs]
 | ACT_01 | 7100 | BOT_01 | 7500 (eval's door: 6010) |
 | MD_01 | 7200 | VERIFY_01 | 7600 |
 | FE_01 | 7300 | orchestrator | 7900 |
-| FE_02 | 7400 | | |
+| FE_02 | 7400 | FIX_01 | 7700 |
 
 ## Shared Foundations
 
@@ -59,14 +60,30 @@ skills: [cortex-architecture, cortex-docs]
 | 1 | MD_01 | `packages/ui/src/markdown/**`, `packages/ui/src/words/markdown.ts`, `packages/ui/tests/markdown*`, `packages/layout/src/size.ts` and its tests, `apps/board/src/gallery/markdown-section.ts`, a new `tests/pages/markdown-more.spec.ts`, `docs/specification/components.md` |
 | 1 | FE_01 | `packages/tokens/src/tokens.css` (the one token), `packages/tokens/README.md`, `packages/ui/src/node/**`, `packages/ui/src/region/region-fresh.*`, `packages/ui/src/note-bubble/**`, `packages/ui/src/words/{node-notes,node-updates,note-bubble}.ts` and the region-fresh words, `apps/board/src/board/{cards,canvas}/**`, gallery `{fresh,updates,note-bubble,group-notes,node}-section.ts`, `tests/pages/{fresh-cards,card-updates,notes,note-polish,group-note}.spec.ts` and a new spec of its own |
 | 1 | FE_02 | `apps/board/src/shell/{EditChip.svelte,editing.ts}`, `apps/board/src/shell/words/editing.ts`, `apps/board/src/board/chrome/**`, `apps/board/src/board/host.ts`, gallery `{editing,read-only-controls,header,toolbar}-section.ts`, `tests/pages/{read-only,read-only-writes,read-only-controls,header-tiers}.spec.ts` and a new spec of its own |
+| 1 | FE_01 (granted by orchestrator) | one line each: `apps/board/src/board/controller.ts` (the `data-update-signals` toggle beside `data-fresh-cards`), `apps/board/src/gallery/main.ts` (the matching gallery line, and the new last section with its import), new `apps/board/src/gallery/update-signals-section.ts`, `packages/ui/src/region/vb-region.ts` (`applyFresh`: `fillFreshPill` and its import) |
+| 3 | FIX_01 | `packages/ui/src/region/region-note.css`, `packages/ui/src/node/node-steps.css`, the toolbar's "N new" chip files in `apps/board/src/board/chrome/**`, and whatever VERIFY_01's blocking findings name (the orchestrator lists them in the brief); the specs and screenshots those touch |
 | 1 | each | the screenshots of the specs it owns, under `tests/pages/__screenshots__/` |
-| 2 | BOT_01 | `skills/vision-board/**`, `apps/board/plugin/words/skill-edits.ts`, `apps/board/tests/plugin-skill.test.ts`, `tests/evals/bot/**`, `packages/format/schema/openapi.json` (descriptions) and every output of `npm run gen` |
-| 2 | VERIFY_01 | `docs/specification/**` except `modules.md` and `api-reference.md` (doc requests), any screenshot under `tests/pages/__screenshots__/` the merged wave changed and no wave-1 task re-took; findings only for code |
+| 2 | BOT_01 | `packages/actions/src/words/actions-refusals.ts` and `apps/board/server/words/server-folders.ts` (FE_02-R2 wording only), `skills/vision-board/**`, `apps/board/plugin/words/skill-edits.ts`, `apps/board/tests/plugin-skill.test.ts`, `tests/evals/bot/**`, `packages/format/schema/openapi.json` (descriptions) and every output of `npm run gen` |
+| 2 | VERIFY_01 | `tests/pages/{header-tiers,ledgers,read-only}.spec.ts` (FE_01-R1 selectors only), `docs/specification/**` except `modules.md` and `api-reference.md` (doc requests), any screenshot under `tests/pages/__screenshots__/` the merged wave changed and no wave-1 task re-took; findings only for code |
 
 ## Requests
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
+| ACT_01-R1 | ACT_01 | `apps/board/server/engine/writes.ts` `writeBoard`: pass `flagOn('insertBetween', ctx.flags)` to `writeItems` so flag off refuses `insert` | ACT_01 (granted, wave 1) | Done |
+| FE_02-R1 | FE_02 | `apps/board/src/styles/editing.css`: the toggle's on state takes the shared pressed look, so on and off differ clearly in dark; APCA again | FE_02 (granted, wave 1) | Done |
+| FE_02-R2 | FE_02 | "press Edit" no longer matches what a sighted person sees with the toggle on: `packages/actions/src/words/actions-refusals.ts` `readOnlyPressEditTo`, `apps/board/server/words/server-folders.ts`, `skills/vision-board/SKILL.md`: reword so it reads true with the toggle (and off) | BOT_01 (files added to its ownership) | Open |
+| FE_02-R3 | FE_02 | `docs/specification/components.md` EditChip / EditButton: the toggle under `readOnlyToggle` | VERIFY_01 | Open |
+| FE_02-R4 | FE_02 | Accessible name "Edit" (constant, `aria-pressed`) vs the visible "Read-only" / "Editing": WCAG 2.5.3 half met | maintainer (at close) | Open |
+| MD_01-R1 | MD_01 | `apps/board/src/flags.ts` `pageMarkdown`: `more: flagOn('markdownMore', flags)` | MD_01 (granted, wave 1) | Done |
+| MD_01-R2 | MD_01 | `apps/board/src/board/host.ts` `markdownOf`: `more: flagOf(host, 'markdownMore')` | MD_01 (granted, wave 1; FE_02 done) | Done |
+| FE_01-R1 | FE_01 | `tests/pages/{header-tiers,ledgers,read-only}.spec.ts` "the section is last": exclude `[data-feature="updateSignals"]` (the new last gallery section) | VERIFY_01 (files added to its ownership) | Open |
+| FE_01-R2 | FE_01 | Re-take `gallery.spec.ts` "screenshot of each section" and `parking-replies.spec.ts` gallery screenshots (the replies' amber edges) | VERIFY_01 | Open |
+| FE_01-R3 | FE_01 | `packages/ui/src/region/region-note.css` `.vb-nblock-reply`: the muted amber edge under `[data-update-signals]`, as card replies (container replies stay grey on the frame) | FIX_01 (wave 3) | Open |
+| MD_01-R3 | MD_01 | `apps/board/src/board/cards/size.ts` `tierOf`: the flag as `sizeTier`'s `tables` argument | orchestrator after merge (FE_01's branch has no `tables` argument) | Done (`tierOf` takes `tables`, `draw.ts` passes `d.markdown?.more`) |
+| MD_01-R4 | MD_01 | `packages/format/fixtures/gallery.ledger.jsonl` card 61: a 5-column table as the "outside the subset" example | MD_01 (granted, wave 1) | Done |
+| MD_01-R5 | MD_01 | Re-take `gallery.spec.ts` `markdown-*`, `gallery-node-*`, `size.spec.ts` `node-size-*` after merge | VERIFY_01 | Open |
+| ACT_01-R2 | ACT_01 | `write_board`'s tool description names `insert`; `LIST_CAP` (`packages/mcp/tests/tools.test.ts`) now 32,000, about 150 characters left | BOT_01 | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
