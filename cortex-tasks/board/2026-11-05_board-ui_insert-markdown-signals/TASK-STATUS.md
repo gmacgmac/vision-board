@@ -92,7 +92,7 @@ skills: [cortex-architecture, cortex-docs]
 | VERIFY_01-R3 | VERIFY_01 | `packages/ui/src/node/node-popover.css` card NEW tab pink, pill "new" teal | FIX_01 item 4 | Open |
 | VERIFY_01-R4 | VERIFY_01 | FIX_01's file carried ACT_01's Run 1 notes | orchestrator | Done |
 | VERIFY_01-R5 | VERIFY_01 | `update-signals-section.ts` box shorter than its cards; `editing-section.ts` meta says `readOnlyStart` off | FIX_01 item 7 | Open |
-| VERIFY_01-R6 | VERIFY_01 | Findings 7 (selecting one card clears the container's pill while its cards keep their tabs, D-054) and 11 (two links entering one card: one label not drawn) | tracker (outside this set) | Open |
+| VERIFY_01-R6 | VERIFY_01 | Findings 7 (selecting one card clears the container's pill while its cards keep their tabs, D-054) and 11 (two links entering one card: one label not drawn) | tracker N48, N49 | Done |
 | VERIFY_01-R7 | VERIFY_01 | Finding 4: a `#` heading (18px, 680) is bigger than the card's title (15px, 550) | maintainer (at close) | Open |
 | BOT_01-R1 | BOT_01 | Tests quoting the reworded sentences: `api-read-only.test.ts`, `ledger-move.test.ts`; `tests/pages/{read-only,read-only-writes,read-only-controls}.spec.ts` `REASON`; re-take `read-only-toggle` screenshots | FIX_02 item 1 | Open |
 | BOT_01-R2 | BOT_01 | "press Edit" left in `server-chat.ts`, `shell/words/{chat,editing}.ts`, `read-only-controls-section.ts`, `common.schema.json` `readOnly`, `docs/specification/{api,plugin,components}.md` | FIX_02 item 3 (components.md: FIX_01 item 6) | Open |
@@ -105,7 +105,7 @@ skills: [cortex-architecture, cortex-docs]
 | FIX_02-R5 | FIX_02 | `components.md` quote of `stateTip`: "Read-only: switch to Editing to change this ledger" | FIX_01 item 6 | Done |
 | FIX_01-R1 | FIX_01 | Re-take `read-only`, `read-only-toggle`, `read-only-controls`, `read-only-writes` screenshots on the merged branch | FIX_01 Run 2 | Open |
 | FIX_01-R2 | FIX_01 | `apps/board/src/styles/header.css` `.vb-count-dot`: the narrowest bar's "new" dot still pink; teal under `updateSignals`. Also the toolbar's "N updated" chip for other boards still pink: amber (Decision 10) | FIX_01 Run 2 | Open |
-| FIX_01-R3 | FIX_01 | `region-template.ts` `nblockRepliesMarkup`: a container's reply is never marked unseen (no "seen" rule for containers yet), so it shows only the muted edge | tracker (needs a rule for when a container is seen) | Open |
+| FIX_01-R3 | FIX_01 | `region-template.ts` `nblockRepliesMarkup`: a container's reply is never marked unseen (no "seen" rule for containers yet), so it shows only the muted edge | tracker N47 | Done |
 | FIX_01-R4 | FIX_01 | `docs/specification/modules.md`: `chip-tone.ts` | closed: modules.md names modules, not chrome files; `verify` passes | Closed |
 
 **Status Values**: `Open` | `Done` | `Closed`
