@@ -30,6 +30,8 @@ export interface RegionOptions {
   /** The card widths in effect; absent: `widthsOf(mode, region.widths)`. */
   widths?: Widths | undefined;
   align?: Align | undefined;
+  /** The gap between a card and the card under it (LayoutOptions.rowGap); absent: GAP. */
+  rowGap?: number | undefined;
 }
 
 /** One region: `nodes` are its visible nodes in view order, `links` the links between them. Pins
@@ -42,7 +44,7 @@ export function layoutRegion(
   const mode = opts.mode ?? region.mode;
   const widths = opts.widths ?? widthsOf(mode, region.widths);
   const out: ModeOutput = nodes.length
-    ? MODE_FNS[mode]({ region: { ...region, mode }, nodes, links, sizes, align: opts.align ?? 'start', widths })
+    ? MODE_FNS[mode]({ region: { ...region, mode }, nodes, links, sizes, align: opts.align ?? 'start', widths, rowGap: opts.rowGap })
     : { pos: new Map() };
   const pinned = applyPins(out.pos, opts.pins);
   const laneBoxes: Box[] = (out.lanes ?? []).map((l) => ({ x: 0, y: l.y, w: LANE_GUTTER, h: l.h }));
@@ -100,7 +102,7 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     const links = view.links.filter((l) => ids.has(l.from) && ids.has(l.to));
     return layoutRegion(region, nodes, links, sizes, {
       mode: opts.modes?.get(region.id), pins: opts.pins, headInset: opts.headInsets?.get(region.id),
-      widths: opts.widths?.get(region.id), align: opts.align,
+      widths: opts.widths?.get(region.id), align: opts.align, rowGap: opts.rowGap,
     });
   });
   return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth, pins: opts.regionPins });

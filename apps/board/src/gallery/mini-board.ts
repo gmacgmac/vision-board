@@ -6,6 +6,9 @@
 import type { View, ViewNode } from '#format';
 import type { BoardState, FreshCount } from '#actions';
 import type { Align } from '#layout';
+import { ROW_GAP } from '#layout';
+import { flagOn } from '#format';
+import { pageFlags } from '../flags.ts';
 import type { CardConditions } from '#ui';
 import { createDrawing, type Drawing } from '../board/canvas/index.ts';
 import { FAR_K, Viewport } from '../board/canvas/index.ts';
@@ -74,6 +77,8 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
     // unmounts a sample, so the prefix is never released.
     els: { stage, world, regions, cards, wires, wiresTop, marks }, vp, sizing: true, access: false, layers: true, ids: ownIds().idPrefix,
     labels: o.labels === true, widthsControl: o.widths === true, align: () => o.align ?? 'start',
+    // The gap under a card as the board takes it: wider while the bottom tabs hang (updateSignals).
+    rowGap: flagOn('updateSignals', pageFlags()) ? ROW_GAP : undefined,
     data: () => ({ head: 0, view, state: board.state, versions: {}, access: { requests: [], holders: {} } }),
     hidden: () => new Set(), focus: () => null, selected: () => false, insets: () => new Map(), owed: () => new Set(),
     facts: o.facts ?? (() => ({})), replies: () => [],

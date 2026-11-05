@@ -18,6 +18,8 @@ export interface ModeInput {
   sizes: Map<string, Size>;
   align?: Align | undefined;
   widths?: Widths | undefined;
+  /** The gap between a card and the card under it (column, grid rows, flow, a lane's stacks); absent: GAP. */
+  rowGap?: number | undefined;
 }
 
 export interface Lane { name: string; y: number; h: number }
@@ -54,6 +56,8 @@ export interface LayoutOptions {
   widths?: Map<string, Widths>;
   /** The viewer's alignment (ruling 4); default `start` (top, or left for vertical layouts). */
   align?: Align;
+  /** The gap between a card and the card under it; absent: GAP. The board passes ROW_GAP with updateSignals. */
+  rowGap?: number;
   /** Nodes not drawn (e.g. decided items when hidden). */
   hidden?: Set<string>;
   /** Width after which regions wrap to a new row. */
@@ -124,6 +128,11 @@ export interface BoardLayout {
 }
 
 export const GAP = 24;
+/** The gap under a card when its bottom tabs hang below its footer (updateSignals, tab-lower task, points
+ *  445/446, 30px by the maintainer): the hung tab (about 17px below the card) clears the next card's top
+ *  tabs (11px above it) by 3 to 4px.
+ *  Cards side by side stay GAP apart. */
+export const ROW_GAP = 30;
 export const COL_GAP = 72;
 export const REGION_PAD = 28;
 /** The top line of a region's frame: how far below the frame's top edge the content starts. The

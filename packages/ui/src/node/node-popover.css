@@ -13,28 +13,26 @@ vb-node .vb-node-btab {
   transition: border-color var(--vb-motion-fast), background var(--vb-motion-fast);
 }
 vb-node .vb-node-btab[hidden] { display: none; }
-/* Two tabs or more (a proposal and "N updates", FE_02) reach under the footer's buttons. The buttons
-   rise to the footer's top and the row drops 2px, so each tab's 24px target circle clears them (WCAG
-   2.5.8) while the card keeps its size and the row stays clear of the card below. The one tab that stands for
-   updates and a proposal (data-updated, oneChangeTab) counts as two: it is as wide as two on an S card. */
-vb-node:has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), .vb-node-btab[data-updated]:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
-vb-node .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), > .vb-node-btab[data-updated]:not([hidden])) { bottom: -13px; }
-/* With updateSignals the tabs sit clear of the kind icon and state word at the left (D-091, placed by eye
-   below). The row lets the pointer through to the footer; the tabs take it back. */
-/* Maintainer (2026-11-05, by eye, untested): the tabs start just after the footer's state word, left-aligned,
-   and grow rightwards to fit. The offset is the footer's own: border, left padding, kind icon, two gaps, the
-   divider, room for the state word ("Open"; 3em of the footer's text size) and a space. */
+/* Without updateSignals: two tabs or more (a proposal and "N updates", FE_02) reach under the footer's
+   buttons. The buttons rise to the footer's top and the row drops 2px, so each tab's 24px target circle
+   clears them (WCAG 2.5.8) while the card keeps its size and the row stays clear of the card below. The one
+   tab that stands for updates and a proposal (data-updated, oneChangeTab) counts as two: it is as wide as
+   two on an S card. */
+vb-node:not([data-update-signals] *):has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), .vb-node-btab[data-updated]:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
+vb-node:not([data-update-signals] *) .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), > .vb-node-btab[data-updated]:not([hidden])) { bottom: -13px; }
+/* With updateSignals (D-091, tab lower) the tabs hang below the footer: the row's top is 2px inside the
+   card's edge (3px over its border, still on it), so a tab's 24px target starts below the footer buttons,
+   which end 5.5px above the edge, and the buttons never rise, on any size, with any number of tabs. The
+   layout leaves 30px under a card for them (packages/layout `ROW_GAP`). Across, the tabs start just after
+   the footer's state word, left-aligned, and grow rightwards (maintainer, by eye): the offset is the
+   footer's own, border, left padding, kind icon, two gaps, the divider, room for the state word ("Open";
+   3em of the footer's text size) and a space. The row lets the pointer through to the footer; the tabs
+   take it back. */
 [data-update-signals] vb-node .vb-node-btabs {
-  font-size: var(--vb-text-sm); pointer-events: none;
+  bottom: -18px; font-size: var(--vb-text-sm); pointer-events: none;
   left: calc(1px + var(--vb-space-2) + 14px + 2 * var(--vb-space-1) + 1px + 3em + var(--vb-space-2));
 }
 [data-update-signals] vb-node .vb-node-btab:not([data-tab='new']) { pointer-events: auto; }
-/* On M and L two tabs end before the buttons, so the buttons stay level with the state word and the row on
-   the edge; three tabs, or two on S, still reach under them and raise them. */
-[data-update-signals] vb-node:is([data-size='m'], [data-size='l']):not(:has(.vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])))
-  :is(.vb-node-actions, .vb-history) { align-self: auto; margin-top: 0; }
-[data-update-signals] vb-node:is([data-size='m'], [data-size='l']):not(:has(.vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])))
-  .vb-node-btabs { bottom: -11px; }
 /* A 24px hit area, without growing the tab. */
 vb-node .vb-node-btab::after { content: ''; position: absolute; inset: -3px -2px; }
 vb-node .vb-node-btab:hover, vb-node .vb-node-btab[aria-expanded='true'] { border-color: var(--vb-accent); }

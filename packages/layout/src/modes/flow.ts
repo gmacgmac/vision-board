@@ -5,7 +5,7 @@ import { normalise } from '../geometry.ts';
 
 /** Left to right with branches: layered, then three barycentre sweeps to cut crossings. Cards line
  *  up by their tops (align `start`, ruling 4) or their centres (`center`). */
-export const flow: ModeFn = ({ nodes, links, sizes: own, align, widths }) => {
+export const flow: ModeFn = ({ nodes, links, sizes: own, align, widths, rowGap = GAP }) => {
   const g = graphOf(nodes, links);
   const layers = layersOf(nodes, g);
   const sizes = matched(layers, own, widths);
@@ -18,13 +18,13 @@ export const flow: ModeFn = ({ nodes, links, sizes: own, align, widths }) => {
   const ay = new Map<string, number>();
   for (const col of cols) {
     let y = 0;
-    for (const id of col) { ay.set(id, y + h(id) * f); y += h(id) + GAP; }
+    for (const id of col) { ay.set(id, y + h(id) * f); y += h(id) + rowGap; }
   }
   const sweep = (towards: 'preds' | 'succs', order: string[][]) => {
     for (const col of order) {
       const want = (id: string) =>
         mean((g[towards].get(id) ?? []).map((o) => ay.get(o)!)) ?? ay.get(id)!;
-      for (const [id, top] of place(col, want, h, GAP, f)) ay.set(id, top + h(id) * f);
+      for (const [id, top] of place(col, want, h, rowGap, f)) ay.set(id, top + h(id) * f);
     }
   };
   sweep('preds', cols);

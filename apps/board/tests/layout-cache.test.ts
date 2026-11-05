@@ -8,7 +8,7 @@ import type { Mode, View, ViewNode } from '#format';
 import { boardView, foldDrawn, readLedger } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import type { Point, Size } from '#layout';
-import { layoutBoard, layoutRegion } from '#layout';
+import { layoutBoard, layoutRegion, ROW_GAP } from '#layout';
 import { createLayoutCache } from '../src/board/canvas/layout-cache.ts';
 import type { LayoutInputs } from '../src/board/canvas/layout-cache.ts';
 import type { Random } from './random.ts';
@@ -159,4 +159,17 @@ test('card widths lay out exactly their container; the alignment lays out every 
   const all = cache.run(view, sizes, centred);
   assert.deepEqual(all.laidOut, view.regions.map((r) => r.id));
   assert.deepEqual(all.layout, layoutBoard(view, sizes, centred));
+});
+
+test('the gap under a card (rowGap, updateSignals) lays out every container and equals layoutBoard', () => {
+  const view = load('roadmap');
+  const sizes = new Map(view.nodes.map((n, i) => [n.id, { w: 240 + (i % 3) * 40, h: 96 + (i % 4) * 18 }]));
+  const inputs: LayoutInputs = { pins: new Map(), modes: new Map(), hidden: new Set<string>() };
+  const cache = createLayoutCache();
+  cache.run(view, sizes, inputs);
+  const wider = { ...inputs, rowGap: ROW_GAP };
+  const all = cache.run(view, sizes, wider);
+  assert.deepEqual(all.laidOut, view.regions.map((r) => r.id));
+  assert.deepEqual(all.layout, layoutBoard(view, sizes, wider));
+  assert.deepEqual(cache.run(view, sizes, wider).laidOut, []);
 });

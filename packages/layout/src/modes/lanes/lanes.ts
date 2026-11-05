@@ -22,7 +22,7 @@ export function laneNames(region: Region, nodes: ViewNode[]): string[] {
 const laneOf = (region: Region, n: ViewNode, names: string[]): string =>
   region.lanes?.length ? (names.includes(n.lane ?? '') ? n.lane! : names[0]!) : n.kind;
 
-export const lanes: ModeFn = ({ region, nodes, links, sizes: own, align, widths }) => {
+export const lanes: ModeFn = ({ region, nodes, links, sizes: own, align, widths, rowGap = GAP }) => {
   const names = laneNames(region, nodes);
   const lane = new Map(nodes.map((n) => [n.id, names.indexOf(laneOf(region, n, names))]));
   const { cols, dag } = laneColumns(nodes, links, lane, names.length);
@@ -32,7 +32,7 @@ export const lanes: ModeFn = ({ region, nodes, links, sizes: own, align, widths 
   const stacks: string[][][] = names.map(() => []);
   for (const n of nodes) (stacks[lane.get(n.id)!]![cols.get(n.id)!] ??= []).push(n.id);
   const stackH = (stack: string[] | undefined) =>
-    stack?.length ? stack.reduce((s, id) => s + h(id), 0) + (stack.length - 1) * GAP : 0;
+    stack?.length ? stack.reduce((s, id) => s + h(id), 0) + (stack.length - 1) * rowGap : 0;
   // reduce skips the columns a lane leaves empty (holes in its array).
   const inner = stacks.map((cs) => cs.reduce((m, s) => Math.max(m, stackH(s)), 0));
   const out: Lane[] = [];
@@ -42,7 +42,7 @@ export const lanes: ModeFn = ({ region, nodes, links, sizes: own, align, widths 
     out.push({ name, y, h: hl });
     y += hl;
   });
-  orderStacks(stacks, out.map((l) => l.y + LANE_PAD), h, dag);
+  orderStacks(stacks, out.map((l) => l.y + LANE_PAD), h, dag, rowGap);
 
   const xs = columnX(cols, sizes, LANE_GUTTER);
   const cells = new Map<string, Cell>();
@@ -54,7 +54,7 @@ export const lanes: ModeFn = ({ region, nodes, links, sizes: own, align, widths 
       stack.forEach((id, r) => {
         pos.set(id, { x: xs[c]!, y: at, ...sizes.get(id)! });
         cells.set(id, { column: c + 1, row: r + 1, lane: names[l]! });
-        at += h(id) + GAP;
+        at += h(id) + rowGap;
       });
     }));
     return pos;

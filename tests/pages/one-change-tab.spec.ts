@@ -155,7 +155,7 @@ test('keyboard only: focus previews, Enter opens on Reject, Tab reaches Next, Es
   await expect.poll(() => shown(page, n)).toEqual(['proposal: Proposal']);
 });
 
-test('the one tab sits as D-091 places a tab: on S clear of the icon, the word and the buttons; on M centred at a third', async ({ page, request }) => {
+test('the one tab sits as D-091 places a tab, hung below the footer: just after the state word on S (the default) and M, the buttons level', async ({ page, request }) => {
   const { d, n } = await board(page, request, 'fresh');
   await expect(tab(page, n)).toBeVisible();
   const place = () => card(page, n).evaluate((el) => {
@@ -166,14 +166,23 @@ test('the one tab sits as D-091 places a tab: on S clear of the icon, the word a
     // As tab-place.spec.ts: the tab never over the kind icon or the state word, its 24px target never over a button.
     const hit = (a: DOMRect, b: DOMRect, x: number, y: number) => a.left - x * k < b.right && b.left < a.right + x * k && a.top - y * k < b.bottom && b.top < a.bottom + y * k;
     const crowds = r('.vb-node-kico, .vb-node-status').some((b) => hit(t!, b, 0, 0)) || r('.vb-node-foot .vb-act, .vb-history').some((b) => hit(t!, b, 2, 3));
-    return { mid: (t!.left + t!.right) / 2 - c.left, third: c.width / 3, crowds };
+    const mid = (s: string) => { const b = el.querySelector(s)!.getBoundingClientRect(); return (b.top + b.bottom) / 2; };
+    const word = el.querySelector('.vb-node-status')!.getBoundingClientRect();
+    return { after: (t!.left - word.right) / k, end: (c.right - t!.right) / k, crowds, level: Math.abs(mid('.vb-node-actions') - mid('.vb-node-state')) / k };
   });
-  expect((await place()).crowds, 'S').toBe(false);
-  await act(page, d, { action: 'size', n, size: 'm' });
-  await expect(card(page, n)).toHaveAttribute('data-size', 'm');
-  const f = await place();
-  expect(Math.abs(f.mid - f.third), `M: centre ${f.mid.toFixed(1)}, a third ${f.third.toFixed(1)}`).toBeLessThanOrEqual(2);
-  expect(f.crowds, 'M').toBe(false);
+  for (const size of ['s', 'm'] as const) {
+    if (size === 'm') {
+      await act(page, d, { action: 'size', n, size });
+      await expect(card(page, n)).toHaveAttribute('data-size', size);
+    }
+    const f = await place();
+    // As tab-place.spec.ts: a little after the state word, and short of the card's right edge less 14px.
+    expect(f.after, `${size}: ${f.after.toFixed(1)}px after the state word`).toBeGreaterThanOrEqual(4);
+    expect(f.after, `${size}: ${f.after.toFixed(1)}px after the state word`).toBeLessThanOrEqual(24);
+    expect(f.end, `${size}: room to the right edge`).toBeGreaterThanOrEqual(14);
+    expect(f.crowds, size).toBe(false);
+    expect(f.level, `${size}: the buttons level with the state word`).toBeLessThanOrEqual(1);
+  }
 });
 
 for (const theme of THEMES) {

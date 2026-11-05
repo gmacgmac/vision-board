@@ -7,12 +7,12 @@ import { mean } from '../../layers.ts';
 import { GAP } from '../../types.ts';
 
 /** `stacks[lane][column]`: the card ids, top to bottom; sorted in place. `top[lane]`: where the
- *  lane's first card starts; `h`: a card's height. */
-export function orderStacks(stacks: string[][][], top: number[], h: (id: string) => number, dag: Graph): void {
+ *  lane's first card starts; `h`: a card's height; `gap`: between a card and the one under it. */
+export function orderStacks(stacks: string[][][], top: number[], h: (id: string) => number, dag: Graph, gap = GAP): void {
   const cy = new Map<string, number>();
   const settle = (lane: number, stack: string[]) => {
     let y = top[lane]!;
-    for (const id of stack) { cy.set(id, y + h(id) / 2); y += h(id) + GAP; }
+    for (const id of stack) { cy.set(id, y + h(id) / 2); y += h(id) + gap; }
   };
   stacks.forEach((cols, lane) => cols.forEach((stack) => settle(lane, stack)));
   const columns = Math.max(0, ...stacks.map((cols) => cols.length));

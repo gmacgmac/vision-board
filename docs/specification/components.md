@@ -1105,19 +1105,24 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    toolbar's "N updated" chip for other boards (tone `new`, pink). Off, the tab, the NEW tab and the chip are the pink
    above and replies are grey.
 
-   **Tab place** (`updateSignals` flag; task `cortex-tasks/board/2026-11-05_board-ui_title-weight-and-tab-place.md`).
-   The bottom-edge tabs (`.vb-node-btabs`: a proposal, the handover, "N updates", NEW) centre about a third of the way
-   along the card's bottom edge, away from the kind icon and the state word at its left (`node-popover.css`, the world's
-   `data-update-signals`). The slot runs from 14px to two thirds less 14px, so its middle is the third, and two spacers
-   centre the tabs in it; the right spacer never narrows past the footer's buttons (a reserve of six
-   `--vb-control-target`s and `--vb-space-3`, for ✓ ✗ note Later, the flag and the ⓘ), so where the third does not fit
-   (a wide tab on an S card) the tabs end before the buttons, and where even that does not fit (two tabs on S) they start
-   at 14px and the buttons rise as before. On M and L two tabs end before the buttons, so the buttons stay level with
-   the state word. The slot lets the pointer through to the footer; the tabs take it back. Off, the tabs sit at 14px.
-   Tests: `tests/pages/tab-place.spec.ts` (one tab and two on S, M and L: the centre within 1px of a third where it
-   fits, never left of 14px, no tab over the kind icon or the state word, no tab's 24px target over a footer button;
-   the buttons level on M and L with two tabs, raised on S; a wide tab on S ending before the buttons; the flag off;
-   axe light and dark).
+   **Tab place** (`updateSignals` flag, D-091; tasks `cortex-tasks/board/2026-11-05_board-ui_title-weight-and-tab-place.md`,
+   `cortex-tasks/board/2026-11-05_board-ui_tab-lower.md`). The bottom-edge tabs (`.vb-node-btabs`: a proposal, the
+   handover, "N updates", NEW) hang below the footer and start just after the footer's state word, left-aligned, growing
+   right (`node-popover.css`, the world's `data-update-signals`; the offset is the footer's own: border, padding, kind
+   icon, gaps, divider, 3em for the state word and a space). The row's top sits just inside the card's edge, so the tabs
+   stay on the border while each tab's 24px target begins below the footer's buttons: the buttons never rise, on any
+   size, with any number of tabs. The row lets the pointer through to the footer; the tabs take it back. So the hung
+   tabs clear the next card's top tabs, the board lays out a card and the card under it `ROW_GAP` (30px) apart instead
+   of `GAP` (24px) in column, grid rows, flow and a lane's stacks; side by side stays `GAP` (`packages/layout/src/types.ts`
+   `ROW_GAP`, `LayoutOptions.rowGap`, passed by `controller.ts` and the gallery's `mini-board.ts` with the flag; the
+   layout cache keys on it). Off, the tabs sit at 14px on the edge, two tabs (or the combined tab) raise the buttons,
+   and cards are `GAP` apart every way. Tests: `tests/pages/tab-place.spec.ts` (one tab, the combined tab, two tabs and
+   a proposal alone on S, M and L: the first tab 4 to 24px after the state word, at the same place on every size, never
+   past the right edge less 14px; no tab over the kind icon or the state word; no tab's 24px target over a footer button;
+   the buttons level with the state word; every tab on the card's edge; a stacked column 30px apart with the hung tab
+   clear of the next card's top tabs, 24px with the flag off; axe light and dark), `packages/layout/tests/stack-gap.test.ts`
+   (`rowGap` in each mode that stacks; side by side `GAP`), `apps/board/tests/layout-cache.test.ts` (the gap lays out
+   every container and equals `layoutBoard`).
 
    **One tab for updates and a proposal** (`oneChangeTab` flag; point 444, task
    `cortex-tasks/board/2026-11-05_board-ui_one-change-tab.md`). A card with both unseen updates and a proposal shows one
@@ -1125,7 +1130,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    proposals", "1 update · out of date" when every proposal is, named "1 update and a proposal on item 3"
    (`packages/ui/src/node/node-core.ts` `changeTab`, words `packages/ui/src/words/node.ts` `updatesAndProposalsTab`,
    `updatesAndProposalsOnItem`). It takes the "N updates" tab's look in `--vb-state-updated` (D-088), hovered or open on
-   its soft fill (`node-steps.css`), and counts as two tabs for the buttons' rise (`node-popover.css`). Its box holds the
+   its soft fill (`node-steps.css`); with `updateSignals` off it counts as two tabs for the buttons' rise (`node-popover.css`). Its box holds the
    proposals first, then the card's own step section and stepper, moved in, never copied (`vb-node.ts` `placeSteps`,
    `NodeState.oneTab`); the footer stays as it is and the card keeps its size. Opening the box for good (a click or
    Enter; `POPOVER_OPEN`) opens the stepper at the first unseen step with focus left on Reject, and the box hiding,
