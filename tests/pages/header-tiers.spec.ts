@@ -368,7 +368,7 @@ test('gallery: the section is last, draws the three forms with ids of its own, a
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto(`/gallery.html?flags=${OLD_HEADER}`);
-  await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
+  await expect(page.locator('main > section:not([data-feature="updateSignals"])').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).getByRole('menu', { name: 'Zoom' })).toBeVisible();
   await expect(section(page).locator(`${bid('board')}, ${bid('version')}, ${bid('containers')}, ${bid('send')}, [id="chat-toggle"], ${bid('toolbar-menu')}, ${bid('counts')}, ${bid('title')}, ${bid('folder-chip')}, ${bid('open-cards')}, ${bid('locked')}`)).toHaveCount(0);

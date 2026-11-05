@@ -963,7 +963,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    another tab following, create and kept out of git, refused names and a refusal, the page's flag off with a server that
    names a ledger, a server that names none, fit, axe, APCA, the gallery). A server that names no ledger: the header is as above.
 
-   **Read-only and Edit** (`readOnlyStart` flag, off by default, needs `openFolder`; D-085 2 and 5; task
+   **Read-only and Edit** (`readOnlyStart` flag, on by default, needs `openFolder`; D-085 2 and 5; task
    `cortex-tasks/board/2026-11-03_board-app_ledgers-and-read-only/READONLY_UI_01_edit-control.md`). Whether the open ledger
    can be changed here is the standalone page's to show, as its folder and ledger are (no seam change): two page parts,
    `board/host.ts` `BoardPageParts` `editChip` and `editButton`, filled by `shell/page-parts.ts` once `shell/editing.ts`
@@ -991,6 +991,25 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    the tests are `tests/pages/read-only.spec.ts` (opens read-only with every write control paused and saying why; Edit then
    a write; Stop editing; another computer named; 1400, 900, 620 and 600 px and the keys; fit; axe; APCA; the menu over
    the access bar; the page's flag off; the gallery) and `packages/ui/tests/node-paused.test.ts`. Off, the header is as above.
+
+   **Read-only as one toggle** (`readOnlyToggle` flag, on by default; PLAN decision 11, point 431; task
+   `cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/FE_02_read-only-toggle.md`). Wherever the chip above is
+   drawn, `shell/EditChip.svelte` is one toggle button with no menu (`editing.ts` `toggleOn`): its icon and word are the
+   state (an eye and "Read-only", a pencil and "Editing"; "Opening for editing…" or "Stopping…" while busy), `aria-pressed`
+   is true while Editing, and its accessible name is Edit whatever the state, so "press Edit" stays true for a screen
+   reader and voice control (the visible word is the state). Its tooltip is its description (`editing.ts` `toggleTip`: the
+   state and what a press does, or the computer that holds the ledger). A press is `toggleEditing` with the toggle's own
+   refusal words (`shell/words/editing.ts` `toggleRefused`): Editing, read-only again, or still read-only with a toast
+   naming the computer that holds the ledger. Busy, it keeps its place and focus (`aria-busy`, `aria-disabled`) with the
+   spinner, and a press does nothing. Editing takes the base toggle pattern's on fill, the accent's soft ground, its ring
+   still the accent's line (`styles/editing.css` `.vb-chip-editing[aria-pressed='true']`). `shell/EditButton.svelte` is not
+   drawn: no Edit or Stop editing button at full and no row in "⋯" (`Toolbar.svelte`, `HeaderFields.svelte` `editToggle`).
+   Words: `shell/words/editing.ts` (`toggleReadOnlyTip`, `toggleHeldTip`, `toggleEditingTip`, `toggleRefused`). The word
+   Lc 60 or more and the icon Lc 30 or more, light and dark. The gallery's section is `gallery/editing-section.ts`
+   (`toggleGroups`; `menuGroups` with the flag off); the tests are `tests/pages/read-only-toggle.spec.ts` (one toggle named
+   Edit, not pressed, no menu; a press takes the lock and one more gives it back; Space and Enter; another computer
+   holding the ledger; 1400, 900 and 600 px; axe; APCA; the flag off; the gallery). Off, the chip opens its menu and
+   EditButton is beside it, as above (`tests/pages/read-only.spec.ts`, which pins `-readOnlyToggle`).
 
 7. **The open cards list** (`openList` flag, on by default; task set
    `cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/`, FE_01). The toolbar's
@@ -1028,6 +1047,29 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    49.8, its outline 72.0 and 47.7. The gallery's "New and updated cards" section draws them
    (`gallery/fresh-section.ts`). Off, the tab is grey until hovered and no container, pill or chip
    shows.
+
+   **Updated in amber** (`updateSignals` flag, on by default; PLAN decision 10, points 429-432; task
+   `cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/FE_01_update-signals.md`). One colour per meaning:
+   updated is `--vb-state-updated` (its APCA figures in `packages/tokens/src/tokens.css`), new stays `--vb-state-fresh`.
+   At rest the "N updates" tab's outline and words take the amber in place of the pink above (`node-steps.css`, the world's
+   `data-fresh-cards` and `data-update-signals`); hovered or open it is as before. The pill writes each count in its own
+   span (`region-fresh.ts` `fillFreshPill`, called by `vb-region.ts` `applyFresh`), so "updated" takes the amber
+   (`region-fresh.css` `.vb-region-fresh-updated`) and "new" stays teal; the border stays teal, also when only updated
+   cards are inside. The agent's reply carries the amber on its left edge, apart from the person's notes: bright while
+   its card is unseen, then a muted amber (`color-mix` halfway to `--vb-line-strong`), on the card (`node-parking.css`)
+   and in the note bubble (`note-bubble.css`). A reply is unseen when written after the person last looked at its card
+   (`apps/board/src/board/cards/parking.ts` `repliesOn`, from `LedgerState.looked`; never while a past version shows),
+   and keeps it only while the card itself is NEW or has an "N updates" tab not stepped through (`node-notes.ts`
+   `litReplies`, in `node-core.ts` `nodeState`); the templates mark it `data-unseen` (`node-template.ts` `replyMarkup`,
+   `note-bubble-template.ts` `replyItem`). Opening the bubble from a reply is not engagement: the reply stays bright until
+   the card is selected (D-054). The tests are `tests/pages/update-signals.spec.ts` (the card's edge bright then muted
+   on select, the note keeping its own edge; the bubble the same; APCA as words Lc 45 and edges Lc 30 on the card,
+   sunken and deep, light and dark, and in dark brighter than `--vb-kind-action` and `--vb-state-context`; the flag
+   off; the gallery) and `tests/pages/fresh-cards.spec.ts` (the amber tab, the two-colour pill, the teal border with only
+   updated cards), with `packages/ui/tests/{node-core,node-template,region-fresh}.test.ts` and
+   `apps/board/tests/parking.test.ts`. The gallery's sample is the last section, `gallery/update-signals-section.ts`.
+   Not covered here: a container's own note replies on the frame (`region-note.css`) and the toolbar's "N new" chip. Off,
+   the tab is the pink above and replies are grey.
 
 ## Every card in the conversation (every-node FE_01)
 
