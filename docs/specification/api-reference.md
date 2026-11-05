@@ -297,7 +297,7 @@ Example:
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
+| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person switches it to Editing to write; until then every write answers this. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -705,7 +705,7 @@ Example:
 
 `GET /api/boards/{board}/responses` · who: anyone; with an agent's Bearer secret from `join`, only what that agent holds · MCP tool `check_responses`, `vb` command `vb check-responses`
 
-Read what the person did on a board after a ledger position, including answers to your grant requests. Pass `board` and `after` (the `head` you last saw; 0 for all); optional `limit`, and `wait` (0-60 seconds) to hold until the person presses Send or answers a request. Returns `responses`, `head` and `more`; a wait that times out returns `{ responses: [], head }`. A note comes as the `comment` act that made it (`context` on an old More context note) with its latest text and kind, again whenever the person edits it; a note removed before you saw it never appears, and `note-remove` appears only for one you may have read. Each batch, up to its Send, is sorted by card number: a note on several cards at its lowest card, a note on a container at its lowest card, several acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's marks on a card that asks, meaning what your card asks; a note never answers a card. Each card's ✓, ✗, Later and clear (`reopen`) fold to its latest, shown only when it differs from how it stood at `after` (✓ then cleared shows nothing). No state is kept for you: pass back the `head` you got. `more: true`: `limit` cut the list in ledger order, so read again at once with `after` set to the highest `seq` in `responses`. With your secret, only the containers you hold.
+Read what the person did on a board after a ledger position, including answers to your grant requests; `list_open` says where each card stands. Pass `board` and `after` (the `head` you last saw; 0 for all); optional `limit`, and `wait` (0-60 seconds) to hold until the person presses Send or answers a request. Returns `responses`, `head` and `more`; a wait that times out returns `{ responses: [], head }`. A note comes as the `comment` act that made it (`context` on an old More context note) with its latest text and kind, again whenever the person edits it; a note removed before you saw it never appears, and `note-remove` appears only for one you may have read. Each batch, up to its Send, is sorted by card number: a note on several cards at its lowest card, a note on a container at its lowest card, several acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's marks on a card that asks, meaning what your card asks; a note never answers a card. Each card's ✓, ✗, Later and clear (`reopen`) fold to its latest, shown only when it differs from how it stood at `after` (✓ then cleared shows nothing). No state is kept for you: pass back the `head` you got. `more: true`: `limit` cut the list in ledger order, so read again at once with `after` set to the highest `seq` in `responses`. With your secret, only the containers you hold.
 
 ### Inputs
 
@@ -1055,7 +1055,7 @@ Example (A request for the whole board):
 
 `POST /api/boards/{board}/write` · who: an agent (Bearer secret from `join`) · MCP tool `write_board`, `vb` command `vb write-board`
 
-Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. Returns one result per item, `head`, and `pending` (cards waiting for your answer).
+Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. A `node` item's `insert: { after, before }` puts it between two linked cards of a `flow` or `lanes`. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. Returns one result per item, `head`, and `pending` (cards waiting for your answer).
 
 ### Inputs
 
@@ -1299,7 +1299,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `conflict` | A `send` whose chat session could not be loaded: the chat could not be reached. Nothing was recorded, so the person's answers are still unsent and Send can be pressed again. Or the ledger is open read-only (`read-only`): nothing was recorded until the person presses Edit. |
+| 409 | `conflict` | A `send` whose chat session could not be loaded: the chat could not be reached. Nothing was recorded, so the person's answers are still unsent and Send can be pressed again. Or the ledger is open read-only (`read-only`): nothing was recorded until the person switches it to Editing. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -1384,7 +1384,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
+| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person switches it to Editing to write; until then every write answers this. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -1467,7 +1467,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, node, region or ledger. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
+| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person switches it to Editing to write; until then every write answers this. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -1702,7 +1702,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board, chat session or approval. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
+| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person switches it to Editing to write; until then every write answers this. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -1810,7 +1810,7 @@ Example:
 | 400 | `bad-request` | The request cannot be read: not JSON, a bad id in the path, or a bad query. |
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
+| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person switches it to Editing to write; until then every write answers this. |
 | 413 | `too-large` | The body or the batch is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |
@@ -2977,7 +2977,7 @@ Example:
 | 403 | `forbidden` | The Host or Origin is not allowed, or the wrong kind of caller used this route. |
 | 404 | `not-found` | No such board or card, a card that is removed or is not an app card, or app cards are off. |
 | 405 | `method-not-allowed` | The path exists but not for this method. |
-| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person presses Edit to write; until then every write answers this. |
+| 409 | `read-only` | The ledger is open read-only: nothing was written into its folder. The person switches it to Editing to write; until then every write answers this. |
 | 413 | `too-large` | The state is over the limit. |
 | 415 | `unsupported-media-type` | The body is not application/json. |
 | 422 | `invalid` | The body fails the schema or a context rule. |

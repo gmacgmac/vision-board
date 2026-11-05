@@ -756,3 +756,23 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   wording, whose 38 lines are the same, 1 on the final), 39 2 of 2, 37 2 of 2 (37's `no-folder-read` failed once on
   the first wording, a `Glob` of `.visionboard/**` before writing the picture; 37's lines were not changed). Plugin
   (skill unchanged): 47 of 48, `refusals/short-chat` once over two lines; re-run, 5 of 5. Model `sonnet`.
+
+## Skill v3.30 (where cards stand, insert, new Markdown)
+
+- 2026-11-05, agent (insert-markdown-signals BOT_01): an agent's handover after a real session read every card with
+  `get_board` to find the 5 it owed, guessed a new card's number in a reply in the same call, and took three items to
+  put a card into a flow. Scenarios 40-43 written first, with eval scenarios `where-cards-stand`, `new-card-number`,
+  `insert-step`, `summary-card` (plugin). Baseline on v3.29, 21 of 26: `insert-step` already passed (the schema's
+  `insert` description carries it); `where-cards-stand` already read `list_open` but recapped in the chat;
+  `new-card-number` wrote "I'll give its number in the write result" in the reply; `summary-card` used bullets,
+  no heading or table, and narrated "The person asked directly, so I'll write the summary…" before writing.
+- 2026-11-05, agent: wording that failed and was changed. "To name a new card in a reply, draw it first, then reply
+  in a later call" was echoed into the chat as a plan 4 of 5 ("Draw the card first, then reply with its number"); as
+  a fact ("its `n` comes in the answer to the call that draws it, so a reply that names it goes in the next call")
+  plus the quiet rule naming plans, 4 of 4. "That is their call made, so no proposal" on Distil was echoed 3 of 3
+  ("…so no proposal is needed"); reverted. "Weigh the rules silently" made narration worse (1 of 3); reverted.
+- 2026-11-05, agent: residual. `summary-card` still narrates "The person asked directly, so I'll…" about 1 run in 3
+  (the same sentence as the v3.29 baseline: the bot weighs "Consolidation is the person's call" aloud); the standalone
+  bot narrates once in about 6 ("Write the SVG first."; v3.29 did too). Standalone `ledger-picture` put the svg in
+  `.visionboard/images/` 2 of 5 after the quiet rule grew (v3.29: 0 of 4, with the path once said aloud); naming
+  `"ledger": "main"` → `.visionboard/main/images/` in the Images line, 4 of 4 then 2 of 2. Model `sonnet`.

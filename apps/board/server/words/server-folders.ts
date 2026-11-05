@@ -48,7 +48,7 @@ export const movedBefore = (displayName: string, oldLedger: string, mainLedger: 
 export const inBothPlaces = (displayName: string, names: string, rootDir: string, mainDir: string): string =>
   `${displayName} has ${names} both in ${rootDir}/ and in ${mainDir}/. Nothing was moved. Keep one of each, then open the folder again.`;
 export const movePartWay = (displayName: string, reason: string, moved: string, there: string, left: string, here: string): string =>
-  `Moving the ledger of ${displayName} stopped part-way (${reason}). In ${there}/: ${moved}. Still in ${here}/: ${left}. Nothing was lost: once the cause is fixed, open the folder again (or press Edit) to finish the move. Once it has finished, npm run ledgers:undo -- <folder> puts it all back if you want the one ledger again.`;
+  `Moving the ledger of ${displayName} stopped part-way (${reason}). In ${there}/: ${moved}. Still in ${here}/: ${left}. Nothing was lost: once the cause is fixed, open the folder again (or switch to Editing) to finish the move. Once it has finished, npm run ledgers:undo -- <folder> puts it all back if you want the one ledger again.`;
 export const nothingYet = 'nothing yet';
 export const otherLedgers = (displayName: string, others: string): string =>
   `${displayName} has other ledgers beside main (${others}), so it can't go back to one ledger. Move them out of .visionboard/ first.`;
@@ -63,13 +63,13 @@ export const mainNotEmpty = (mainDir: string, names: string): string => `${mainD
 // ---- server.ts and editing.ts (read-only opening, D-085)
 /** Edit refused: another computer's board server is editing the ledger (the person's words, not a second server's). */
 export const editRefused = (host: string, pid: number, port: number, since: string): string =>
-  `Computer "${host}" (process ${pid}, port ${port}) has been editing this ledger since ${since}, so it stays read-only here. Press Edit again once it stops editing.`;
+  `Computer "${host}" (process ${pid}, port ${port}) has been editing this ledger since ${since}, so it stays read-only here. Try again once it stops editing.`;
 /** Edit on a folder this computer can't write (a read-only share, its permissions). */
 export const cannotBeWritten = (displayName: string): string =>
   `${displayName} can't be written on this computer (a read-only share, or its permissions), so it stays read-only. Nothing was written.`;
 /** The terminal's line at start when the ledger opens read-only. */
 export const openedReadOnly = (holder: string): string =>
-  `Opened read-only: nothing is written until you press Edit on the board (or start with --edit, or VB_EDIT=1).${holder}`;
+  `Opened read-only: nothing is written until you switch the board to Editing (or start with --edit, or VB_EDIT=1).${holder}`;
 /** Beside it, when another server holds the ledger live: who. */
 export const editingElsewhere = (host: string, since: string): string => ` Computer "${host}" has been editing it since ${since}.`;
 /** A seed ledger is not copied into a ledger opened read-only. */

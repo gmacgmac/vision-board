@@ -64,7 +64,7 @@ export const boardIsnTLocked = (id: string): string => `board: "${id}" isn't loc
 
 // ---- read-only.ts
 export const thisLedgerIsOpenRead = 'This ledger is open read-only, so nothing was written. Read it as usual; to write, tell the person in one line that it is read-only until they make it editable, and wait for them.';
-export const readOnlyPressEditTo = 'Read-only: press Edit to change it';
+export const readOnlyPressEditTo = 'Read-only: switch to Editing to change it';
 
 // ---- moves.ts
 export const later = 'Later';

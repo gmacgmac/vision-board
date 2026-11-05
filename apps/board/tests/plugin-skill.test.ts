@@ -56,11 +56,20 @@ test('every tool a plugin bot has is in the skill, and its sentences about the p
   }
 });
 
-test('ledgers and read-only (D-084, D-085): standalone reads another ledger and presses Edit; a host\'s bot is offered neither', () => {
+test('ledgers and read-only (D-084, D-085): standalone reads another ledger and switches to Editing; a host\'s bot is offered neither', () => {
   assert.match(source, /^## Another ledger$/m);
-  assert.ok(source.includes('take `ledger: "<name>"`') && source.includes('they can press Edit to change it'));
+  assert.ok(source.includes('take `ledger: "<name>"`') && source.includes('they can\n  switch it to Editing'), 'true with the toggle (Read-only / Editing) and the menu (Edit)');
+  assert.ok(!/press Edit/.test(source.split('\n---\n')[1]!), 'no "press Edit" past the history: the toggle shows Read-only / Editing (FE_02-R2)');
   assert.ok(!/^## Another ledger$/m.test(plugin) && !plugin.includes('ledger: "'), 'no other ledger under a host: its `ledger` input is not offered');
-  assert.ok(!/\bEdit\b/.test(plugin) && plugin.includes('read-only until they make it editable'), 'a host may draw no Edit');
+  assert.ok(!/\bEdit(ing)?\b/.test(plugin) && plugin.includes('read-only until they make it editable'), 'a host may draw no Edit');
+});
+
+test('v3.30 (insert-markdown-signals BOT_01): both skills point to list_open, draw before naming, insert, and the Markdown; standalone saves its secret', () => {
+  for (const kept of [
+    'never read every card with `get_board` to find what you owe.\n  Answer on the board, and the chat is still "Done."', 'its `n` comes in the answer to the call\n  that draws it, so a reply that names it',
+    '`insert: { after, before }` beside `node`', '`#` and `##` headings (large, medium), a table of 4 columns at most', '**A summary card** reads at a glance',
+  ]) assert.ok(source.includes(kept) && plugin.includes(kept), kept);
+  assert.ok(source.includes('in the session\'s scratchpad or notes file') && !plugin.includes('scratchpad'), 'the secret is the standalone bot\'s');
 });
 
 test('each skill edit finds its place exactly once, and a change under one stops the build', () => {

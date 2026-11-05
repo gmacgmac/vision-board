@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.29
+status: v3.30
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -60,6 +60,10 @@ real `vb-mcp` against a test board server (`tests/evals/bot/standalone.ts`): 37 
 (`other-ledger`) and 39 (`join-ledger`, new: `join` names another ledger than the one the person means).
 v3.29 (skill v3.29, read-only follow-ups BOT_02, decision 10): 38 also fails on a recap of the cards in the chat; 39
 asks one sentence and no offer, scored by `join-ledger`'s `one-line`.
+v3.30 (skill v3.30, insert-markdown-signals BOT_01, decisions 1, 4-9): 40 (where cards stand, from `list_open`), 41 (a new
+card named in a reply), 42 (a step put into a flow) and 43 (a summary card with headings and a table) new, each run by
+`npm run eval:bot` (`where-cards-stand`, `new-card-number`, `insert-step`, `summary-card`). 36: the person switches the
+ledger to Editing (the toggle, or the menu's Edit).
 
 ## 1. A review with 12 findings (panel)
 
@@ -792,13 +796,13 @@ two depend on each other?") and presses Send. `check_responses` gives the note o
 **Situation.** The agent drew "Team offsite venue" (`team-offsite`) earlier. The ledger is now open
 read-only: `list_boards` and `get_board` answer `readOnly: true`, and every write answers `read-only`
 (409, "This ledger is open read-only, so nothing was written. …"). The person writes: "On the offsite
-board, add a card asking whether we need a projector." After the agent's answer, they press Edit and
-write: "I have made it editable now. Add the projector card, please."
+board, add a card asking whether we need a projector." After the agent's answer, they switch it to
+Editing and write: "I have made it editable now. Add the projector card, please."
 
 **A good run**
 - First turn: it reads, sees `readOnly: true`, and writes nothing (one write, refused, is tolerated;
-  never a second). Chat words: one line saying the ledger is read-only and the person can press Edit
-  (under a host: make it editable). Not "Done.".
+  never a second). Chat words: one line saying the ledger is read-only and the person can switch it to
+  Editing (under a host: make it editable). Not "Done.".
 - Second turn: one `write_board` with the card, then "Done.".
 - **Fails if** it retries the write, calls `request_grant` or `join`, says "Done." while nothing was
   written, or says more than a line or two.
@@ -845,3 +849,53 @@ card asking whether the launch moves to May."
 - Writes nothing: no `write_board`, no `request_grant`.
 - **Fails if** it draws the board on `scratch`, says "Done.", asks for a grant, answers in more than one line, or offers to
   use `scratch` instead.
+
+## 40. Where the cards stand, with nothing in the message (panel; eval `where-cards-stand`)
+
+**Situation.** The agent drew "Team offsite venue" (`team-offsite`, three venue decisions) in an earlier chat, or before
+a compaction: nothing of it is in context. The person marked ✗ on card 1 and wrote a note on card 2 ("Is the cabin free
+on a weekday?"), pressed Send, and now writes, with no Send in the message: "Pick up where we left off on the offsite
+board: answer whatever you owe me there."
+
+**A good run**
+- Finds what it owes with `list_open` (number, kind, title, status and `pending` per card); `show_node` on card 2 for the
+  note's `seq` is fine. It never reads every card with `get_board` to find out.
+- Answers the note on card 2 once, asking for the mark again if it still needs one; leaves card 1 (✗ settled it) and
+  card 3 (open, with the person) alone. Chat words: "Done.".
+- **Fails if** it calls `get_board` to find what is owed, answers the note twice or not at all, or answers card 1 or 3.
+
+## 41. A new card named in a reply (panel; eval `new-card-number`)
+
+**Situation.** The offsite board as in 40, cards 1 to 3. The person writes a note on card 2: "Could we add a co-working
+space downtown as a fourth option? Tell me which card it is." and presses Send.
+
+**A good run**
+- Draws the new card first; its `write_board` answer gives the card's `n`. Then, in a later call, replies to the note
+  naming the card by that `n` ("Added as card 4. ✓ if the cabin still stays in the running.").
+- Chat words: "Done.".
+- **Fails if** any text in a write names a card number the board had not given yet (a reply in the same call as the
+  card it names, even when the guess happens to be right), the reply names no card, or the note gets two answers.
+
+## 42. A step put into a flow (panel; eval `insert-step`)
+
+**Situation.** Board "Release steps" (`release-steps`) has one `flow` container: "Merge the branch" (1) then "Tag the
+release" (2) then "Deploy" (3), each link labelled "then". The person writes: "On the release steps board, add a step to
+run the smoke tests between tagging and deploying."
+
+**A good run**
+- One `node` item with `insert: { after: 2, before: 3 }` beside `node` (its `region` the flow's): the answer's `inserted`
+  shows it went in, and both new links keep "then". No `unlink` or `link` items. Reading the board first to find the
+  numbers is fine. Chat words: "Done.".
+- **Fails if** it writes the change as separate `unlink` and `link` items, or the card lands outside the flow.
+
+## 43. A summary card with headings and a table (panel; eval `summary-card`)
+
+**Situation.** The offsite board as in 40. The person marked ✗ on card 1, ✓ on card 2 and ✗ on card 3, pressed Send, and
+writes: "Sum up the venue cards in one card."
+
+**A good run**
+- One summary card in the venues container: `#` or `##` headings for its parts, and a table of at most 4 columns for
+  what was compared (venue, the mark, why); then a `retire { n }` for cards 1, 2 and 3, in the same call.
+- Chat words: "Done.".
+- **Fails if** the summary has no `#` or `##` heading, no table, or a table of 5 or more columns (it stays text), or
+  cards 1 to 3 stay on the board.
