@@ -124,13 +124,14 @@ stay text, exactly as before). Proven by `packages/ui/tests/markdown-more.test.t
   (`markdown.css`; `tests/pages/markdown-more.spec.ts`).
 - **Big titles** (the `bigTitles` flag, on by default; point 437). The card's title is its one heading.
   A card whose body has structure, a `#` or `##` heading or a table as the renderer drew it, shows its
-  title at the `#` size (`--vb-text-xl`; `node.css`, `.vb-node-content:has(…) > .vb-node-title`), and in
+  title at the `#` size and weight (`--vb-text-xl`, `--vb-weight-bold`, point 442: the headline over a bold
+  `##`; `node.css`, `.vb-node-content:has(…) > .vb-node-title`), and in
   that body `#` draws at the `##` size (`markdown.css`, `--vb-md-step`), `##` too, and `###` stays the
   label. The structure is read from the renderer's output with `:has()`, so nothing parses the body
   twice and a redraw updates it. A card whose only heading is `###`, a plain card, and a `#` in a note
   or popover are unchanged. The board's world and the gallery's main carry `data-big-titles` (the
-  controller's flag-attribute list). Off, every title is medium and `#` large
-  (`tests/pages/big-titles.spec.ts`).
+  controller's flag-attribute list). Off, every title is medium (size and weight) and `#` large
+  (`tests/pages/big-titles.spec.ts`: sizes and weights, on and off).
 - A GFM table: the paragraph's last line is the header, then a delimiter row with as many cells
   (colons give each column's alignment), then rows until a blank line or another block; inline
   Markdown in cells, `\|` for a pipe (`table.ts` `splitRow`, `delimiterRow`, `tableHtml`; GFM's
@@ -1103,6 +1104,20 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    Not covered here: the "N new" dot on the narrowest bar (`styles/header.css` `.vb-count-dot`, still pink) and the
    toolbar's "N updated" chip for other boards (tone `new`, pink). Off, the tab, the NEW tab and the chip are the pink
    above and replies are grey.
+
+   **Tab place** (`updateSignals` flag; task `cortex-tasks/board/2026-11-05_board-ui_title-weight-and-tab-place.md`).
+   The bottom-edge tabs (`.vb-node-btabs`: a proposal, the handover, "N updates", NEW) centre about a third of the way
+   along the card's bottom edge, away from the kind icon and the state word at its left (`node-popover.css`, the world's
+   `data-update-signals`). The slot runs from 14px to two thirds less 14px, so its middle is the third, and two spacers
+   centre the tabs in it; the right spacer never narrows past the footer's buttons (a reserve of six
+   `--vb-control-target`s and `--vb-space-3`, for ✓ ✗ note Later, the flag and the ⓘ), so where the third does not fit
+   (a wide tab on an S card) the tabs end before the buttons, and where even that does not fit (two tabs on S) they start
+   at 14px and the buttons rise as before. On M and L two tabs end before the buttons, so the buttons stay level with
+   the state word. The slot lets the pointer through to the footer; the tabs take it back. Off, the tabs sit at 14px.
+   Tests: `tests/pages/tab-place.spec.ts` (one tab and two on S, M and L: the centre within 1px of a third where it
+   fits, never left of 14px, no tab over the kind icon or the state word, no tab's 24px target over a footer button;
+   the buttons level on M and L with two tabs, raised on S; a wide tab on S ending before the buttons; the flag off;
+   axe light and dark).
 
 ## Every card in the conversation (every-node FE_01)
 

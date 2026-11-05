@@ -18,6 +18,28 @@ vb-node .vb-node-btab[hidden] { display: none; }
    2.5.8) while the card keeps its size and the row stays clear of the card below. */
 vb-node:has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
 vb-node .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) { bottom: -13px; }
+/* With updateSignals (tab place, point 442 follow-up) the tabs centre about a third of the way along the
+   bottom edge, clear of the kind icon and state word at the left. The slot spans 14px to two thirds less
+   14px (its gap taken back by the spacers), so it is centred on the third; two spacers centre the tabs in it.
+   The right spacer never narrows past the footer's buttons (six of them at most: ✓ ✗ note Later, the flag,
+   the ⓘ, with a gap), so where the third does not fit (an S card, a wide tab) the tabs slide left until they
+   end before the buttons, and where even that does not fit (two tabs on S) they start at today's 14px and
+   the buttons rise, as above. The slot lets the pointer through to the footer; the tabs take it back. */
+[data-update-signals] vb-node .vb-node-btabs {
+  --vb-btabs-reserve: calc(6 * var(--vb-control-target) + var(--vb-space-3));
+  left: calc(14px - var(--vb-space-2)); width: calc(200% / 3 - 2 * (14px - var(--vb-space-2))); pointer-events: none;
+}
+[data-update-signals] vb-node .vb-node-btabs::before,
+[data-update-signals] vb-node .vb-node-btabs::after { content: ''; flex: 1 1 0; min-width: 0; }
+/* The slot is B wide and the card 1.5 (B + 28px - 2 gaps), so the buttons' edge is this far in from the slot's. */
+[data-update-signals] vb-node .vb-node-btabs::after { min-width: calc(var(--vb-btabs-reserve) - 50% - 28px + var(--vb-space-2)); }
+[data-update-signals] vb-node .vb-node-btab:not([data-tab='new']) { pointer-events: auto; }
+/* On M and L two tabs end before the buttons, so the buttons stay level with the state word and the row on
+   the edge; three tabs, or two on S, still reach under them and raise them. */
+[data-update-signals] vb-node:is([data-size='m'], [data-size='l']):not(:has(.vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])))
+  :is(.vb-node-actions, .vb-history) { align-self: auto; margin-top: 0; }
+[data-update-signals] vb-node:is([data-size='m'], [data-size='l']):not(:has(.vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])))
+  .vb-node-btabs { bottom: -11px; }
 /* A 24px hit area, without growing the tab. */
 vb-node .vb-node-btab::after { content: ''; position: absolute; inset: -3px -2px; }
 vb-node .vb-node-btab:hover, vb-node .vb-node-btab[aria-expanded='true'] { border-color: var(--vb-accent); }
