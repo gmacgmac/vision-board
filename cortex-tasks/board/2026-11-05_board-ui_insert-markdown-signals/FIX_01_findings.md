@@ -154,6 +154,56 @@ REQUEST): `read-only`, `read-only-toggle`, `read-only-controls`, `read-only-writ
 **Deviations**: none from the PLAN. Item 8 is met by a grid, not `table-layout: auto` (the brief's suggestion), because
 no table layout meets all three of its conditions (table above).
 
+### Run 2 (2026-11-05, Opus 5.5, worktree `.claude/worktrees/fix-01b`, branch `feat/fix-01b` on the merged wave 3, port 7700; look server 7790)
+
+**Changes Made**
+1. FIX_01-R2, the narrowest bar's "new" dot: `Toolbar.svelte` gives `.vb-count-dot` `data-tone={newTone(flag('updateSignals'))}`
+   (Run 1's `chip-tone.ts`); `apps/board/src/styles/header.css` `.vb-count-dot[data-tone='fresh']` takes `--vb-state-fresh`.
+   Flag off: tone `new`, the accent's pink, as before. Lc on the count chip's sunken fill: 55.1 light, 65.5 dark (bar 30).
+2. FIX_01-R2, the toolbar's "N boards updated" chip (`Toolbar.svelte` `boards-updated`): tone from the new
+   `chip-tone.ts` `updatedTone` (`updated` with the flag, `new` without; re-exported by `chrome/index.ts`); the chip pattern
+   gains the tone, `packages/ui/src/base/chip.css` `.vb-chip[data-tone='updated']` (`--vb-state-updated` on its `-soft`,
+   the "N updates" tab's amber), listed in `base/pattern.json`. Words Lc 52.3 light, 70.7 dark (bar 45). The "⋯" menu's
+   "boards updated" row has no tone and keeps none.
+3. Tests: `update-signals.spec.ts` new "the bar (light|dark)" (a second board drawn: chip tone `updated`, amber words on
+   its soft fill; at 490 px the dot tone `fresh`, teal; APCA; axe) and the flag-off test extended (chip and dot pink);
+   seen failing before the change (stash), green after. `header-tiers.spec.ts` APCA test now reads the dot's own colour,
+   not `--vb-accent`. Gallery: the header section already draws the real Toolbar (third: the dot; crowded: the chip),
+   so no section change.
+4. FIX_01-R1: on the merged branch `read-only-controls` and `read-only-writes` already pass (FIX_02's fixes): nothing to
+   re-take. `read-only` and `read-only-toggle` gallery shots (light and dark) re-taken after each diff was looked at:
+   only the editing section's words ("switches to Editing", "(D-085), on by default · off with ?flags=-readOnlyStart",
+   "…readOnlyToggle, on by default · off with ?flags=-readOnlyToggle") and sub-pixel anti-aliasing (max channel
+   difference 1-7, at no offset; two disabled menu icons at max 79, same place, same shape). Nothing else.
+5. Step 1's own shots: `header-tiers` `header-{light,dark}`: only the three third-form dots (6 px, pink to teal) and the
+   two crowded "1" chips (pink to amber fill); re-taken. No other spec's shot changed (`gallery.spec.ts` passes: the
+   header section is below every other).
+
+**Caught Beyond the Brief**
+- At ≤1400 px the "N boards updated" chip shows its number only (as before); the amber is then only its soft fill
+  behind an ink number. In light the fill reads peach beside the teal "N new"; in dark it is a dim brown, quieter than
+  the pink was. The tooltip and screen readers keep the words. The maintainer's eye decides whether the number takes the
+  amber too (point 429).
+- `docs/specification/components.md` § 8 does not yet name the dot and the boards-updated chip (not my file this run: REQUEST).
+- Files beyond the brief's list, each the home of what it changed: `packages/ui/src/base/chip.css` and its `pattern.json`
+  (the chip tones live there, as in Run 1), `tests/pages/{update-signals,header-tiers}.spec.ts`.
+
+**Verification** (tier: wide)
+- `npm run build`; `npm run check` 0 errors; `node scripts/verify.mjs` ok (35 warnings, none on a touched file);
+  `npm test` 2400/2400 (+14/14).
+- Spec group (port 7700, 3 workers, `nice -n 15`): update-signals, header-tiers, live-boards, toolbar, answer-model,
+  gallery, read-only, read-only-toggle, read-only-controls, read-only-writes: 116 pass, 4 shots failed before re-take
+  (above), all pass after.
+- Full page suite (`VB_TEST_WORKERS=3`, `nice -n 15`, 12.7 min): **950 passed, 0 failed**, no flaky.
+- The look (look server on 7790, scratch HOME and project; `temp/fix-01b/look.mjs`): a board with an updated action card
+  (bright reply edge, "1 update" tab), a NEW risk card, the Plan container's "1 new · 1 updated" pill, a seen reply
+  (muted edge), another board drawn ("N boards updated" chip), at 1400, 900 and 600 px, light and dark; the 490 px bar
+  with the teal dot; the gallery's 4-column tables at L and S. PNGs in `.claude/worktrees/fix-01b/temp/fix-01b/`:
+  `board-{dark,light}-{1400,900,600}.png`, `toolbar-{dark,light}-1400.png`, `narrow-dot-{dark,light}-490.png`,
+  `table-{L,S}-{dark,light}.png`.
+
+**Deviations**: none.
+
 ## On Completion
 
 Notes here (Changes Made, Verification, Caught Beyond the Brief, Deviations); your TASK-STATUS row; one LOG line,
