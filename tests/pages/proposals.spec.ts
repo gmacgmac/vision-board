@@ -16,6 +16,9 @@ import { open, tabTo, write } from './agent-board.ts';
 import { bar, box, draw, propose, review, tab } from './proposals-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
+/** A change makes a proposal out of date and is an update too; the tests of the proposal tab alone keep two tabs
+ *  (oneChangeTab off). The one tab for both is one-change-tab.spec.ts's. */
+const ONE_TAB_OFF = '?flags=-oneChangeTab';
 // The proposal's time and the gallery's screenshot read the same in every test machine's clock.
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
 
@@ -120,7 +123,7 @@ test('out of date: the tab and the box say so, Accept is aria-disabled and does 
   const d = await draw(request);
   const [n] = d.n as [number];
   await propose(request, d, n, 'cross', 'the client declined');
-  await open(page, d);
+  await open(page, d, ONE_TAB_OFF);
   await expect(tab(page, n)).toHaveText('Proposal');
   // The agent adds to the card: a new version, so the proposal made on version 1 is out of date.
   await write(request, d, [{ type: 'append', n, text: 'The credit amount is in.' }]);
@@ -152,7 +155,7 @@ test('Accept all lists what it applies and what it skips, then applies it in ord
   await write(request, d, [{ type: 'append', n: b, text: 'The credit amount is in.' }]);
   await propose(request, d, c, 'check', 'the sheet confirms it');
   await propose(request, d, c, 'cross', 'the new prices remove it');
-  await open(page, d);
+  await open(page, d, ONE_TAB_OFF);
   await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('4 proposals');
   await expect(bar(page)).toContainText('· 1 out of date');
   // Two proposals on one card: the box lists both, newest first.
@@ -240,7 +243,7 @@ for (const theme of THEMES) {
     await propose(request, d, b, 'check', 'the draft is done');
     await write(request, d, [{ type: 'append', n: b, text: 'The credit amount is in.' }]);
     await setTheme(page, theme);
-    await open(page, d);
+    await open(page, d, ONE_TAB_OFF);
     await expect(tab(page, b)).toHaveText('Out of date');
     await tab(page, a).click();
     await expect(box(page, a)).toBeVisible();

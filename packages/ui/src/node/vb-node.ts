@@ -156,11 +156,13 @@ export function defineVbNode(): void {
       const tab = this.querySelector<HTMLButtonElement>('[data-tab="updates"]');
       if (!tab) return;
       const v = st.updates;
-      tab.hidden = !v?.tab;
+      this.placeSteps(st.oneTab === true);
+      tab.hidden = !v?.tab || st.oneTab === true;
       tab.textContent = v?.tab ?? '';
-      tab.setAttribute('aria-expanded', String(v?.open ?? false));
+      tab.setAttribute('aria-expanded', String((v?.open ?? false) && !st.oneTab));
       if (v) tab.setAttribute('aria-label', v.label);
-      this.toggleAttribute('data-stepping', v?.step !== undefined);
+      // In the proposal box the stepper is the box's, so the footer stays as it is.
+      this.toggleAttribute('data-stepping', v?.step !== undefined && !st.oneTab);
       const section = this.piece('steps')!;
       section.hidden = !v?.open;
       if (v?.step) section.setAttribute('aria-label', v.step.label);
@@ -177,6 +179,18 @@ export function defineVbNode(): void {
       else back.removeAttribute('aria-disabled');
     }
 
+    /** The step section and the stepper: in the proposal box, under the proposals, while one tab stands for both
+     *  (`NodeState.oneTab`, point 444), else at home, under the card's text and in its footer. Moved, never copied. */
+    private placeSteps(inBox: boolean): void {
+      const section = this.piece('steps')!, nav = this.piece('stepnav')!;
+      const box = this.querySelector<HTMLElement>('[data-pop="proposal"]')!;
+      if (inBox && section.parentElement !== box) box.append(section, nav);
+      else if (!inBox && section.parentElement === box) {
+        this.piece('content')!.insertBefore(section, this.piece('notes'));
+        this.piece('foot')!.append(nav);
+      }
+    }
+
     /** The PROPOSAL tab and its box (FE_01): rebuilt only when the proposals changed, closed when none is left. */
     private updateProposal(st: NodeState): void {
       const tab = this.querySelector<HTMLButtonElement>('[data-tab="proposal"]');
@@ -185,14 +199,16 @@ export function defineVbNode(): void {
       tab.hidden = v === undefined;
       tab.textContent = v?.tab ?? '';
       tab.toggleAttribute('data-stale', v?.stale ?? false);
+      tab.toggleAttribute('data-updated', v?.updated ?? false);
       if (v) tab.setAttribute('aria-label', v.label);
+      const box = this.querySelector<HTMLElement>('[data-pop="proposal"]')!;
+      if (v) box.setAttribute('aria-label', v.box);
       const src = v ? JSON.stringify(v.entries) : '';
       if (this.proposalSrc === src) return;
       this.proposalSrc = src;
-      const box = this.querySelector<HTMLElement>('[data-pop="proposal"]')!;
-      // Markup from proposalsMarkup, which escapes every text run.
-      box.innerHTML = v ? proposalsMarkup(v, this.dataset.idPrefix) : '';
-      if (v) box.setAttribute('aria-label', v.box);
+      // Markup from proposalsMarkup, which escapes every text run. Only the proposals: steps moved in stay (placeSteps).
+      for (const p of box.querySelectorAll(':scope > .vb-prop')) p.remove();
+      if (v) box.insertAdjacentHTML('afterbegin', proposalsMarkup(v, this.dataset.idPrefix));
       else this.proposalPop?.close();
     }
 

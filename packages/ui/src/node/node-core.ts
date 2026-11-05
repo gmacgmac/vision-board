@@ -97,6 +97,8 @@ export interface CardConditions {
   /** The groupNoteOnce flag: the card leaves out notes on a group of cards and the replies to them,
    *  which the group's own pin shows once (`notesView`'s `apart`). */
   groupNotesApart?: boolean;
+  /** The oneChangeTab flag (point 444): unseen updates and a proposal share one tab and one box. */
+  oneTab?: boolean;
   /** An app card's app from list_apps (`{}` until it answers; none with the appCards flag off), and whether a past version shows (node-app.ts). */
   app?: AppCardInput;
 }
@@ -107,8 +109,9 @@ export interface ProposalEntry {
   seq: number; head: string; what: string; from: string; stale: boolean; why?: string; accept: string; reject: string;
 }
 
-/** The PROPOSAL tab (OUT OF DATE when every proposal is) and its box, newest first. */
-export interface ProposalsView { tab: string; stale: boolean; label: string; box: string; entries: ProposalEntry[] }
+/** The PROPOSAL tab (OUT OF DATE when every proposal is) and its box, newest first. `updated`: the
+ *  tab also stands for the card's unseen updates (`oneChangeTab`), in the updated amber. */
+export interface ProposalsView { tab: string; stale: boolean; label: string; box: string; entries: ProposalEntry[]; updated?: true }
 
 /** The tab and box for an item's open proposals; undefined with none. */
 export function proposalsView(n: ViewNode, list: readonly CardProposal[] = []): ProposalsView | undefined {
@@ -131,6 +134,16 @@ export function proposalsView(n: ViewNode, list: readonly CardProposal[] = []): 
     label: nodeWords.proposalsOnItem(k, n.n, stale),
     box: nodeWords.proposalsBox(k, n.n),
   };
+}
+
+/** One tab for updates and proposals (oneChangeTab flag, point 444): with both, the proposal tab says both,
+ *  "1 update · proposal", and its box holds the update steps beneath the proposals (`NodeState.oneTab`);
+ *  past the last step ("You're up to date") the tab is the proposal's own again. Else the proposal as it is. */
+export function changeTab(n: ViewNode, p: ProposalsView, u: UpdatesView): ProposalsView {
+  if (!u.tab) return p;
+  const k = p.entries.length;
+  const label = nodeWords.updatesAndProposalsOnItem(u.tab, k, n.n, p.stale);
+  return { ...p, tab: nodeWords.updatesAndProposalsTab(u.tab, k, p.stale), label, box: label, updated: true };
 }
 
 /** What the proposals add to the card's name: ", 2 proposals, 1 out of date". */
@@ -186,6 +199,9 @@ export interface NodeState {
   proposal?: ProposalsView;
   /** The "N updates" tab and the stepper (FE_02); absent with nothing unseen. */
   updates?: UpdatesView;
+  /** The updates share the proposal's tab and box (`changeTab`, oneChangeTab flag): no "N updates" tab, and
+   *  the step section and stepper sit in the proposal box, under the proposals. */
+  oneTab?: true;
   /** The NEW tab (stage5-follow-ups FE_01): a card the agent added after the person first opened the board. */
   fresh?: true;
   /** The handover is still owed (FE_03): `statusWord` then reads "Awaiting", with `AWAITING.tip` over it. */
@@ -212,8 +228,10 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const awaiting = isItem(n) && c.awaiting === true;
   const handover = handoverView(n, c.handover, awaiting);
   const picked = s.sizes.has(n.id);
-  const proposal = proposalsView(n, c.proposals);
   const updates = updatesView(n, c.updates);
+  const own = proposalsView(n, c.proposals);
+  const oneTab = c.oneTab === true && !!own && !!updates;
+  const proposal = oneTab ? changeTab(n, own, updates) : own;
   const fresh = isItem(n) && c.new === true;
   const notes = notesView(n, s.items.get(n.id)?.notes ?? [], litReplies(c.replies, c.new === true || (!!updates && !updates.done)), s.notesHidden?.get(n.id), c.groupNotesApart);
   const flagged = isItem(n) && s.flags.has(n.id);
@@ -226,7 +244,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
       `${awaiting ? nodeWords.awaitingContext2 : ''}${handover ? nodeWords.handoverReady : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${app?.words ?? ''}${fresh ? nodeWords.freshInName : ''}${flagged ? nodeWords.flaggedInName : ''}`),
     statusWord: awaiting ? AWAITING.word : asksAnswer(n) ? STATUS_LABEL[status] : '',
     ...(awaiting && { awaiting: true as const }),
-    ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
+    ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(oneTab && { oneTab: true as const }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
     ...(flagged && { flagged: true as const }), ...((s.locked || s.readOnly) && { paused: true as const }),
     ...(s.readOnly && { readOnly: true as const }), ...(app && { app }),
     pressed,

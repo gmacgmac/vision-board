@@ -59,6 +59,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl, removing, going, apping] = [on('nodeSize'), on('agentAccess'),
     on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
   const versionView = on('versionView');
+  const oneTab = on('oneChangeTab'); // one tab for updates and a proposal (point 444)
   status.set({ agentAccess: access, versionView });
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview'], ['data-app-title', 'appTitle'], ['data-fresh-cards', 'freshCards'], ['data-update-signals', 'updateSignals'], ['data-big-titles', 'bigTitles']] as const) world.toggleAttribute(attr, on(flag)); // hover tips (FE_03, FE_04), an app card's title (card-polish FE_01), the updates tab (freshCards), updated in amber (updateSignals), a structured card's big title (bigTitles); rule 12
@@ -91,7 +92,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const drawing = createDrawing({
     els, vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), fresh: () => attention.freshIn(),
-    facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n) }), appCards: apping, placed: () => apps.place(),
+    facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n), ...(oneTab && { oneTab }) }), appCards: apping, placed: () => apps.place(),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
   selection.onChange((c) => { drawing.restate(c.changed); status.set({ selection: c.text }); flow.dismissArea(); flow.place(); });

@@ -13,11 +13,14 @@
 // found, not clicked (Go to card, the finder lists), is selected by `find`: it marks nothing (ruling
 // 322, findKeepsMarks flag); the person's click on it, or an act, still does. While the ledger is open read-only
 // (`quiet`, D-085 3) nothing is sent: a version seen is kept in the page's memory, so its tab still goes away.
+// One tab (oneChangeTab flag, point 444): where the card's steps sit in its proposal box, under the proposals,
+// opening that box for good (a click or Enter, never a hover) opens the stepper with focus left on the
+// proposal, and the box closing, however it closes, folds it.
 import type { ViewNode } from '#format';
 import type { LedgerState, SeenMark } from '#actions';
 import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '#actions';
 import type { CardConditions, CardStep } from '#ui';
-import { versionTime } from '#ui';
+import { POPOVER_HIDE, POPOVER_OPEN, versionTime } from '#ui';
 import type { SelectBy, Selection } from '../selection/index.ts';
 
 /** How long "You're up to date" stays before the section folds away (node-steps.css fades it first). */
@@ -99,17 +102,20 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
 
   const pieceOf = (n: number, sel: string) => d.card(String(n))?.querySelector<HTMLElement>(sel);
 
-  /** Draw the stepper at its step, focus where the person goes on, and mark the step seen. */
-  function show(n: number, o: Stepper) {
+  /** Draw the stepper at its step, focus where the person goes on (unless `focus` is false: the proposal
+   *  box that opened it keeps it), and mark the step seen. */
+  function show(n: number, o: Stepper, focus = true) {
     d.redraw();
     const step = o.steps[o.at];
     if (step) {
       const next = pieceOf(n, '[data-step="next"]');
-      if (next && !next.closest('[hidden]')) next.focus({ preventScroll: true });
+      if (focus && next && !next.closest('[hidden]')) next.focus({ preventScroll: true });
       return send([{ n, ver: step.ver }]);
     }
-    // Past the last: "You're up to date"; the stepper's buttons are gone, so focus goes to the card.
-    d.card(String(n))?.focus({ preventScroll: true });
+    // Past the last: "You're up to date"; the stepper's buttons are gone, so focus goes to the card, or in
+    // the proposal box to its first answer, so the box stays open on what is left to do.
+    const answer = pieceOf(n, '.vb-card-pop[data-open] button[data-answer]:not([aria-disabled="true"])');
+    (answer ?? d.card(String(n)))?.focus({ preventScroll: true });
     o.timer = window.setTimeout(() => fold(n), UP_TO_DATE_MS);
   }
 
@@ -121,20 +127,21 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     const card = d.card(String(n));
     const inside = card?.contains(document.activeElement);
     d.redraw();
-    if (!inside) return;
+    // Focus on a tab, or in an open box, stays (the proposal tab or box that held the steps, oneChangeTab).
+    if (!inside || document.activeElement?.closest('.vb-node-btab:not([hidden]), .vb-card-pop[data-open]')) return;
     const tab = pieceOf(n, '[data-tab="updates"]');
     (tab && !tab.hidden ? tab : card)?.focus({ preventScroll: true });
   }
 
   /** The tab: open the stepper on the first unseen version, or fold it. */
-  function toggle(n: number) {
+  function toggle(n: number, focus = true) {
     if (open.has(n)) return fold(n);
     const s = live();
     const steps = s ? unseenSteps(s, d.board(), n, versionTime) : [];
     if (!steps.length) return;
     const o: Stepper = { board: d.board(), steps, at: 0 };
     open.set(n, o);
-    show(n, o);
+    show(n, o, focus);
   }
 
   function go(n: number, by: 1 | -1) {
@@ -158,8 +165,25 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     e.preventDefault();
     fold(n);
   };
+  /** A card whose steps sit in its proposal box (oneChangeTab): `e` is that box's own event. */
+  const boxed = (e: Event, name: string) => {
+    const card = (e.target as Element).closest<HTMLElement>('vb-node');
+    return name === 'proposal' && card?.querySelector('.vb-card-pop[data-pop="proposal"] > .vb-node-steps') ? Number(card.dataset.id) : undefined;
+  };
+  const onOpen = (e: Event) => {
+    const box = (e as CustomEvent<HTMLElement>).detail;
+    const n = boxed(e, box.dataset.pop ?? '');
+    if (n !== undefined && !open.has(n)) toggle(n, false);
+  };
+  // After the draw that closed it (a proposal answered closes its box from inside the card's update).
+  const onHide = (e: Event) => {
+    const n = boxed(e, (e as CustomEvent<string>).detail);
+    if (n !== undefined) queueMicrotask(() => fold(n));
+  };
   d.stage.addEventListener('click', onClick);
   d.stage.addEventListener('keydown', onKey);
+  d.stage.addEventListener(POPOVER_OPEN, onOpen);
+  d.stage.addEventListener(POPOVER_HIDE, onHide);
   const unlisten = d.selection.onChange((c) => flow.saw(c.changed, c.by));
 
   const flow: UpdateFlow = {
@@ -188,6 +212,8 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     destroy() {
       d.stage.removeEventListener('click', onClick);
       d.stage.removeEventListener('keydown', onKey);
+      d.stage.removeEventListener(POPOVER_OPEN, onOpen);
+      d.stage.removeEventListener(POPOVER_HIDE, onHide);
       unlisten();
       for (const o of open.values()) clearTimeout(o.timer);
     },
