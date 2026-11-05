@@ -33,6 +33,29 @@ Worktree `.claude/worktrees/skill-443` (branch `feat/skill-443`, from main), `VB
 
 ## Implementation Notes
 
+**Status**: completed 2026-11-05 (worktree `feat/skill-443`, uncommitted). Model `sonnet` for every eval run.
+
+- **Skill v3.31**: the Body line says "A longer card's parts take `##` headings (the title above them shows large)";
+  `###` stays in the small-labels list. The summary-card line already said `##` per part: unchanged. Status entry
+  short: "a card's parts take `##`, under its large title". NOTES.md § Skill v3.31; scenarios.md 43 and a v3.31 line.
+- **Plugin**: no skill edit touches the Body line, so `skill-edits.ts` is unchanged; `plugin-skill.test.ts` has a v3.31
+  test (both skills carry the line, neither the old "(large, medium)") and the v3.30 test's kept string moved.
+- **Eval**: `summary-card` gained `title-not-repeated` (the first body heading, any level, compared as words with the
+  title); the bad fake opens with `### Venue: the cabin` and lists it in `badFails` (the dry test, `bot-eval.test.ts`).
+- **Results** (spend $4.42 of $5 in all): baseline v3.30 `summary-card` ×3: the new check 3/3. Plugin suite on the
+  first wording 73/75 (narration in `where-cards-stand`, `new-card-number`), repeat of those and `summary-card` ×2:
+  42/42; final wording `summary-card` ×2: 13/14 (the known narration). Standalone final: 18/19 (`ledger-picture`
+  narration). `title-not-repeated` 5/5 on v3.31.
+- Tests: `plugin-skill.test.ts` 9/9, `bot-eval.test.ts` (dry, both modes) 6/6, `tsc --noEmit` clean, `npm run verify` ok.
+
+### Caught Beyond the Brief
+
+- The first wording ("The title is the card's headline: …") with a long status entry made standalone `join-ledger`
+  fail `one-line` 5 of 12 (two lines, or "Which one do you want me to use?"), against 7 of 7 on v3.30 and 4 of 4 with
+  the new Body line under the old status; the short status entry: 3 of 3. The status line is not inert text.
+- Standalone `ledger-picture` narrated 3 of 5 on v3.31 wordings vs NOTES' ~1 in 6 on v3.30; not baselined (budget).
+  Worth a check before the next skill change.
+
 ## On Completion
 
 Notes in the main checkout's copy; one LOG line, `[board-agent] Skill heading sizes: … → Task: [[cortex-tasks/board/2026-11-05_board-agent_skill-heading-sizes.md]]`, ending in a newline.
