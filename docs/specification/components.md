@@ -453,8 +453,8 @@ record is `api.md` 58-61.
    the close, and coming back cancels it; opening, Esc, a press outside, focus leaving and `close()`
    stay immediate. `bindHoverTip` and the container note preview (`region-note.ts`) both use it. The
    note and reply tip (`.vb-note-tip`) keeps its box unclipped so its bridge over the gap takes the
-   pointer, and scrolls the `.vb-tip-body` inside it (the wheel exemption in `board/input/pointer.ts` is
-   `.vb-tip`, which matches it). The card popover's box is itself the scroller (a tab stop, filled by
+   pointer, and scrolls the `.vb-tip-body` inside it, which the wheel scrolls while it can (§ Selecting and
+   moving, 3: the wheel). The card popover's box is itself the scroller (a tab stop, filled by
    three producers), so it relies on the grace alone. Tests: `close-grace.test.ts`,
    `tests/pages/hover-tip.spec.ts`.
 6. **The conversation** (review polish rulings 6 and 7, decisions 8 and 9,
@@ -565,6 +565,16 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    every key press and release and as the pointer comes over the board, and drops it when the window
    loses focus; `board.css` draws it over every part's own cursor but a text field's. The key is named
    once, `pointer.ts` `panKey`.
+   **The wheel** pans, and Ctrl/Cmd + wheel zooms, everywhere; an app card's panel keeps its own wheel
+   unless Cmd or Ctrl is held (`app-pan-key.spec.ts`). With the `wheelChaining` flag (on by default) the
+   wheel first scrolls what is under the pointer: the element there, or an ancestor below the stage,
+   whose overflow scrolls and which is not yet at that edge (a bubble's thread, a long tip's body, a
+   text box, a code block; `input/wheel-latch.ts` `canScroll`, `scrollerOn`); otherwise the board pans,
+   a container's title and its tip included. One gesture keeps the target its first wheel event found
+   until a quiet gap of `WHEEL_GAP` (`createWheelLatch`), as browsers latch a scroll, so a flick that
+   reaches a bubble's end stops there and the next gesture pans. Off, the wheel inside the note bubble
+   or any hover tip (`.vb-tip`) is always its own and never pans. Tests: `wheel-latch.test.ts`,
+   `tests/pages/wheel-chaining.spec.ts`.
    The stage is `user-select: none` and a card's content `user-select: text`.
 4. **Keys** (`keys.ts`): Space on a focused card toggles it; Esc closes the note bubble first,
    else clears the selection.

@@ -239,7 +239,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const handlers = stageHandlers({ act, flags: flagging ? flags : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,
     versions, selection, drawing, focus, view, showVersion, toggleHide, status,
     ...(on('containerZoom') && { container: { zoom: (id: string) => zoomToContainer(finding, id), mark: (id: string) => focusContainer(finding, id) } }) });
-  const unbind = bindStage(stage, vp, versions.guard(lock.guard(handlers)), () => { if (drawing.layout) vp.resized(); }, !!host.page);
+  const unbind = bindStage(stage, vp, versions.guard(lock.guard(handlers)), () => { if (drawing.layout) vp.resized(); },
+    { pageWide: !!host.page, wheelChaining: on('wheelChaining') });
 
   // ---- boards --------------------------------------------------------------------------------
   /** Boot, and switching boards (boards.ts). */

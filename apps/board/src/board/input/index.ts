@@ -5,3 +5,5 @@ export { keyGroups } from './key-help.ts';
 export { DRAG_THRESHOLD } from './pointer.ts';
 export { bindStage } from './wiring.ts';
 export type { StageHandlers } from './wiring.ts';
+export { WHEEL_GAP, canScroll, createWheelLatch, scrollerOn } from './wheel-latch.ts';
+export type { Overflow, ScrollBox } from './wheel-latch.ts';
