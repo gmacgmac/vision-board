@@ -1,7 +1,8 @@
 ---
 task_name: Insert, Markdown and Update Signals
 created: 2026-11-05
-status: in-progress
+completed: 2026-11-05
+status: completed
 categories: [board-actions, board-ui, board-tokens, board-app, board-agent]
 skills: [cortex-architecture, cortex-docs]
 ---
@@ -82,21 +83,21 @@ skills: [cortex-architecture, cortex-docs]
 | MD_01-R2 | MD_01 | `apps/board/src/board/host.ts` `markdownOf`: `more: flagOf(host, 'markdownMore')` | MD_01 (granted, wave 1; FE_02 done) | Done |
 | FE_01-R1 | FE_01 | `tests/pages/{header-tiers,ledgers,read-only}.spec.ts` "the section is last": exclude `[data-feature="updateSignals"]` (the new last gallery section) | VERIFY_01 (files added to its ownership) | Done |
 | FE_01-R2 | FE_01 | Re-take `gallery.spec.ts` "screenshot of each section" and `parking-replies.spec.ts` gallery screenshots (the replies' amber edges) | VERIFY_01 | Done |
-| FE_01-R3 | FE_01 | `packages/ui/src/region/region-note.css` `.vb-nblock-reply`: the muted amber edge under `[data-update-signals]`, as card replies (container replies stay grey on the frame) | FIX_01 (wave 3) | Open |
+| FE_01-R3 | FE_01 | `packages/ui/src/region/region-note.css` `.vb-nblock-reply`: the muted amber edge under `[data-update-signals]`, as card replies (container replies stay grey on the frame) | FIX_01 (wave 3) | Done |
 | MD_01-R3 | MD_01 | `apps/board/src/board/cards/size.ts` `tierOf`: the flag as `sizeTier`'s `tables` argument | orchestrator after merge (FE_01's branch has no `tables` argument) | Done (`tierOf` takes `tables`, `draw.ts` passes `d.markdown?.more`) |
 | MD_01-R4 | MD_01 | `packages/format/fixtures/gallery.ledger.jsonl` card 61: a 5-column table as the "outside the subset" example | MD_01 (granted, wave 1) | Done |
 | MD_01-R5 | MD_01 | Re-take `gallery.spec.ts` `markdown-*`, `gallery-node-*`, `size.spec.ts` `node-size-*` after merge | VERIFY_01 | Done |
 | ACT_01-R2 | ACT_01 | `write_board`'s tool description names `insert`; `LIST_CAP` (`packages/mcp/tests/tools.test.ts`) now 32,000, about 150 characters left | BOT_01 | Done (BOT_01) |
-| VERIFY_01-R1 | VERIFY_01 | Light `--vb-state-updated` `#a66800` reads as the action amber (ΔE76 9.0, darker); `update-signals.spec.ts` checks light too | FIX_01 item 5 (value reported; maintainer may change it, point 429) | Open |
-| VERIFY_01-R2 | VERIFY_01 | `tests/pages/read-only-controls.spec.ts` gallery "last" selector skips `updateSignals` | FIX_02 item 2 | Open |
-| VERIFY_01-R3 | VERIFY_01 | `packages/ui/src/node/node-popover.css` card NEW tab pink, pill "new" teal | FIX_01 item 4 | Open |
+| VERIFY_01-R1 | VERIFY_01 | Light `--vb-state-updated` `#a66800` reads as the action amber (ΔE76 9.0, darker); `update-signals.spec.ts` checks light too | FIX_01 item 5 (value reported; maintainer may change it, point 429) | Done |
+| VERIFY_01-R2 | VERIFY_01 | `tests/pages/read-only-controls.spec.ts` gallery "last" selector skips `updateSignals` | FIX_02 item 2 | Done |
+| VERIFY_01-R3 | VERIFY_01 | `packages/ui/src/node/node-popover.css` card NEW tab pink, pill "new" teal | FIX_01 item 4 | Done |
 | VERIFY_01-R4 | VERIFY_01 | FIX_01's file carried ACT_01's Run 1 notes | orchestrator | Done |
-| VERIFY_01-R5 | VERIFY_01 | `update-signals-section.ts` box shorter than its cards; `editing-section.ts` meta says `readOnlyStart` off | FIX_01 item 7 | Open |
+| VERIFY_01-R5 | VERIFY_01 | `update-signals-section.ts` box shorter than its cards; `editing-section.ts` meta says `readOnlyStart` off | FIX_01 item 7 | Done |
 | VERIFY_01-R6 | VERIFY_01 | Findings 7 (selecting one card clears the container's pill while its cards keep their tabs, D-054) and 11 (two links entering one card: one label not drawn) | tracker N48, N49 | Done |
 | VERIFY_01-R7 | VERIFY_01 | Finding 4: a `#` heading (18px, 680) is bigger than the card's title (15px, 550) | maintainer (at close) | Open |
-| BOT_01-R1 | BOT_01 | Tests quoting the reworded sentences: `api-read-only.test.ts`, `ledger-move.test.ts`; `tests/pages/{read-only,read-only-writes,read-only-controls}.spec.ts` `REASON`; re-take `read-only-toggle` screenshots | FIX_02 item 1 | Open |
-| BOT_01-R2 | BOT_01 | "press Edit" left in `server-chat.ts`, `shell/words/{chat,editing}.ts`, `read-only-controls-section.ts`, `common.schema.json` `readOnly`, `docs/specification/{api,plugin,components}.md` | FIX_02 item 3 (components.md: FIX_01 item 6) | Open |
-| BOT_01-R3 | BOT_01 | Rename `readOnlyPressEditTo` with its words file | FIX_02 item 4 | Open |
+| BOT_01-R1 | BOT_01 | Tests quoting the reworded sentences: `api-read-only.test.ts`, `ledger-move.test.ts`; `tests/pages/{read-only,read-only-writes,read-only-controls}.spec.ts` `REASON`; re-take `read-only-toggle` screenshots | FIX_02 item 1 | Done |
+| BOT_01-R2 | BOT_01 | "press Edit" left in `server-chat.ts`, `shell/words/{chat,editing}.ts`, `read-only-controls-section.ts`, `common.schema.json` `readOnly`, `docs/specification/{api,plugin,components}.md` | FIX_02 item 3 (components.md: FIX_01 item 6) | Done |
+| BOT_01-R3 | BOT_01 | Rename `readOnlyPressEditTo` with its words file | FIX_02 item 4 | Done |
 | BOT_01-R4 | BOT_01 | `eval:bot` not green every run: chat narration, mostly `summary-card` `done-only`, about 1 in 3, present on v3.29 too; spend $7.21, over the $6 budget | maintainer (at close) | Open |
 | FIX_02-R1 | FIX_02 | `apps/board/tests/live-read-only.test.ts` regex follows "Switch to Editing" | FIX_02 (granted, wave 3) | Done |
 | FIX_02-R2 | FIX_02 | Rename `readOnlyPressEdit` (`shell/words/editing.ts`) and its reader `stateTip` (`shell/editing.ts`) | FIX_02 (granted, wave 3) | Done |
@@ -107,6 +108,7 @@ skills: [cortex-architecture, cortex-docs]
 | FIX_01-R2 | FIX_01 | `apps/board/src/styles/header.css` `.vb-count-dot`: the narrowest bar's "new" dot still pink; teal under `updateSignals`. Also the toolbar's "N updated" chip for other boards still pink: amber (Decision 10) | FIX_01 Run 2 | Done (Run 2) |
 | FIX_01-R3 | FIX_01 | `region-template.ts` `nblockRepliesMarkup`: a container's reply is never marked unseen (no "seen" rule for containers yet), so it shows only the muted edge | tracker N47 | Done |
 | FIX_01-R4 | FIX_01 | `docs/specification/modules.md`: `chip-tone.ts` | closed: modules.md names modules, not chrome files; `verify` passes | Closed |
+| FIX_01-R5 | FIX_01 Run 2 | `docs/specification/components.md` § 8 names the teal narrow-bar dot and the amber "N boards updated" chip | orchestrator | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 

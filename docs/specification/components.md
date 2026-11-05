@@ -1062,7 +1062,9 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    (`region-fresh.css` `.vb-region-fresh-updated`) and "new" stays teal; the border stays teal, also when only updated
    cards are inside. New is teal wherever it shows: the card's NEW tab (`node-popover.css`, the world's
    `data-update-signals`) and the toolbar's "N new" chip (`OpenChip.svelte` `newTone`: tone `fresh`, `chip.css`;
-   `Toolbar.svelte`, `HeaderFields.svelte`), which counts new and updated cards together under the one word "new". The
+   `Toolbar.svelte`, `HeaderFields.svelte`), which counts new and updated cards together under the one word "new", and
+   the narrowest bar's "new" dot (`Toolbar.svelte` `.vb-count-dot` `data-tone={newTone(…)}`, `header.css`). The other
+   boards' "N boards updated" chip is amber (`chip-tone.ts` `updatedTone`: chip tone `updated`, `chip.css`). The
    agent's reply carries the amber on its left edge, apart from the person's notes: bright while
    its card is unseen, then a muted amber (`color-mix` halfway to `--vb-line-strong`), on the card (`node-parking.css`)
    in the note bubble (`note-bubble.css`), and under a container's note on its frame (`region-note.css`
