@@ -52,7 +52,7 @@
   import LockedChip from './LockedChip.svelte';
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
-  import { newTone } from './chip-tone.ts';
+  import { newTone, updatedTone } from './chip-tone.ts';
   import ToolbarEnd from './ToolbarEnd.svelte';
   import VersionPicker from './VersionPicker.svelte';
   import { headerTier, inBar, inMenu, type HeaderControl, type HeaderTier } from './header-tier.ts';
@@ -188,12 +188,12 @@
         {@const fresh = facts.past ? 0 : facts.freshCards.length}
         <span class="vb-chip vb-count" title={toolbarWords.compactCount(facts.counts.open, fresh)}>
           <b>{facts.counts.open}</b> <span class="vb-visually-hidden">{toolbarWords.openWord}</span>
-          {#if fresh}<span class="vb-count-dot" aria-hidden="true"></span> <span class="vb-visually-hidden">{toolbarWords.freshCount(fresh)}</span>{/if}
+          {#if fresh}<span class="vb-count-dot" data-tone={newTone(flag('updateSignals'))} aria-hidden="true"></span> <span class="vb-visually-hidden">{toolbarWords.freshCount(fresh)}</span>{/if}
         </span>
       {/if}
       {#if updated}<span class="vb-visually-hidden">{toolbarWords.boardUpdated(updated)}</span>{/if}
     {:else}
-      {#if updated}<span id={idOf('boards-updated')} class="vb-chip" data-tone="new" title={toolbarWords.boardUpdated(updated)}><b>{updated}</b> <span class="vb-chip-word">{toolbarWords.boardUpdatedWord(updated)}</span></span>{/if}
+      {#if updated}<span id={idOf('boards-updated')} class="vb-chip" data-tone={updatedTone(flag('updateSignals'))} title={toolbarWords.boardUpdated(updated)}><b>{updated}</b> <span class="vb-chip-word">{toolbarWords.boardUpdatedWord(updated)}</span></span>{/if}
       {#if facts.version !== null}
         <OpenChip id={idOf('open-cards')} count={facts.counts.open} cards={openList ? facts.openCards : []} onpick={onopen} />
         {#if facts.freshCards.length && !facts.past}

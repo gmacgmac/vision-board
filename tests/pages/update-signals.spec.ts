@@ -4,7 +4,8 @@
 // while its card is unseen (D-054), muted once the person has looked, on the card and in the note bubble;
 // the person's own note edge is unchanged. FIX_01: the tab hovered or open keeps the amber; new is teal on
 // the card's NEW tab and the toolbar's "N new" chip too; a container's note replies take the muted amber; the
-// amber reads apart (ΔE76 20) from the action and changed ambers, the flag and risk in both themes. APCA
+// amber reads apart (ΔE76 20) from the action and changed ambers, the flag and risk in both themes; the
+// narrowest bar's "new" dot is teal and the "N boards updated" chip amber (Run 2). APCA
 // light and dark; axe; the flag off is the old look; the gallery's sample. Each test draws its own board
 // through the API (agent-board.ts).
 import type { Locator, Page } from '@playwright/test';
@@ -161,7 +162,39 @@ test('flag off: replies are grey, the tab hovered the changed amber, NEW and "N 
   expect(await colour(page, card(page, m).locator('.vb-node-btab[data-tab="new"]'), 'color')).toEqual(await token(page, '--vb-accent'));
   await expect(newChip(page)).toHaveAttribute('data-tone', 'new');
   expect(await colour(page, newChip(page).locator('.vb-chip-word'), 'color')).toEqual(await token(page, '--vb-accent'));
+  // "N boards updated" and the narrowest bar's dot: pink, as before.
+  await draw(request, 1, 'other');
+  await expect(page.locator(bid('boards-updated'))).toHaveAttribute('data-tone', 'new');
+  expect(await colour(page, page.locator(`${bid('boards-updated')} .vb-chip-word`), 'color')).toEqual(await token(page, '--vb-accent'));
+  await page.setViewportSize({ width: 490, height: 900 });
+  await expect(page.locator(`${bid('counts')} .vb-count-dot`)).toHaveAttribute('data-tone', 'new');
+  expect(await colour(page, page.locator(`${bid('counts')} .vb-count-dot`), 'backgroundColor')).toEqual(await token(page, '--vb-accent'));
 });
+
+// ---- The bar (FIX_01 Run 2): the narrowest bar's "new" dot teal, the "N boards updated" chip amber ----
+
+for (const theme of THEMES) {
+  test(`the bar (${theme}): "N boards updated" amber, its words Lc 45; the narrowest bar's "new" dot teal, Lc 30; axe`, async ({ page, request }) => {
+    await setTheme(page, theme);
+    const { d } = await answered(page, request);
+    await draw(request, 1, 'other');
+    const updated = page.locator(bid('boards-updated'));
+    await expect(updated).toHaveAttribute('data-tone', 'updated');
+    const [amber, amberSoft] = [await token(page, '--vb-state-updated'), await token(page, '--vb-state-updated-soft')];
+    expect(await colour(page, updated.locator('.vb-chip-word'), 'color')).toEqual(amber);
+    expect(await colour(page, updated, 'backgroundColor')).toEqual(amberSoft);
+    await added(page, request, d);
+    await page.setViewportSize({ width: 490, height: 900 });
+    const dot = page.locator(`${bid('counts')} .vb-count-dot`);
+    await expect(dot).toHaveAttribute('data-tone', 'fresh');
+    const teal = await colour(page, dot, 'backgroundColor');
+    expect(teal).toEqual(await token(page, '--vb-state-fresh'));
+    const found = { 'updated words': [lc(amber, amberSoft), 45], dot: [lc(teal, await colour(page, page.locator(`${bid('counts')} .vb-count`), 'backgroundColor')), 30] } as const;
+    console.log(`APCA ${theme}: ${Object.entries(found).map(([w, [v]]) => `${w} ${v.toFixed(1)}`).join(', ')}`);
+    for (const [what, [v, bar]] of Object.entries(found)) expect(Math.abs(v), what).toBeGreaterThanOrEqual(bar);
+    await expectNoAxeViolations(page);
+  });
+}
 
 // ---- The gallery ----
 

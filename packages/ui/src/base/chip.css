@@ -1,5 +1,5 @@
 /* The chip (UI_01): a small pill of words, a count or a state, toned by what it says (data-tone:
-   agent, answered, later, new, fresh); a chip that is a button (`.vb-chip-btn`) darkens on hover and
+   agent, answered, later, new, fresh, updated); a chip that is a button (`.vb-chip-btn`) darkens on hover and
    presses down. data-look draws a state without the pointer: the gallery's samples only. Tokens only. */
 .vb-chip {
   display: inline-flex; align-items: center; gap: var(--vb-space-1); height: var(--vb-control-target); padding: 0 var(--vb-space-2);
@@ -13,6 +13,8 @@
 .vb-chip[data-tone='new'] { background: var(--vb-accent-soft); color: var(--vb-accent); }
 /* New cards with updateSignals (D-088, one colour per meaning): the teal of the container's pill (Lc 54.8 light, 63.5 dark). */
 .vb-chip[data-tone='fresh'] { background: var(--vb-state-fresh-soft); color: var(--vb-state-fresh); }
+/* Updated with updateSignals (D-088): the amber of the card's "N updates" tab; the toolbar's "N boards updated". */
+.vb-chip[data-tone='updated'] { background: var(--vb-state-updated-soft); color: var(--vb-state-updated); }
 .vb-chip-btn { border: 0; font: inherit; font-size: var(--vb-text-sm); cursor: pointer; }
 .vb-chip-btn:hover, .vb-chip-btn[data-look='hover'] { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
 .vb-chip-btn:active, .vb-chip-btn[data-look='pressed'] { transform: translateY(1px); }

@@ -350,7 +350,8 @@ for (const theme of THEMES) {
     await page.setViewportSize({ width: 490, height: 900 });
     await writeAs(request, BOARD, [node(`Dot card ${Date.now()}`)]);
     await expect(page.locator(`${bid('counts')} .vb-count-dot`)).toBeVisible();
-    found.push(['count dot', lc(await paint('var(--vb-accent)'), await paint('var(--vb-surface-sunken)')), 30]);
+    const dot = await page.locator(`${bid('counts')} .vb-count-dot`).evaluate((e) => getComputedStyle(e).backgroundColor).then((c) => pixel(page, c));
+    found.push(['count dot', lc(dot, await paint('var(--vb-surface-sunken)')), 30]);
     await menuButton(page).click();
     const raised = await paint('var(--vb-surface-raised)');
     found.push(['row value', lc(await colour('.vb-menu-value'), raised), 60], ['row word', lc(await colour('.vb-menu-fields .vb-menu-label'), raised), 60], ['zoom level', lc(await colour('.vb-menu-zoom-level'), raised), 60]);
