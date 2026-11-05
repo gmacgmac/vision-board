@@ -49,6 +49,49 @@ every run, `nice -n 15`, `VB_TEST_WORKERS=3`, full spec paths. `npm run build` o
 
 ## Implementation Notes
 
+**Done (2026-11-05, worktree `feat/big-titles`, not committed).**
+
+- **Flag**: `bigTitles` (on) in `packages/format/src/flags.ts` `FLAGS` + `FLAG_DESCRIPTIONS`.
+- **The mark**: no `data-structured` attribute and no parse. The CSS reads the renderer's own output with
+  `:has()` (precedent: `node.css` already uses `:has` on `vb-node`): `node.css`
+  `[data-big-titles] vb-node .vb-node-content:has(> .vb-node-body :is(.vb-md-h1, .vb-md-h2, .vb-md-table)) > .vb-node-title`
+  takes `--vb-text-xl` (today's `#` on a card). `markdown.css` now sizes `#`/`##` through a local
+  `--vb-md-step` (xl / lg), and the step-down rule sets `#` to the `##` step inside such a body. It follows a
+  redraw for free and works on both render paths. `measureBody` was not touched (it sees tables, not headings).
+- **Flag wiring**: `apps/board/src/board/controller.ts` flag-attribute list gains `['data-big-titles', 'bigTitles']`;
+  the gallery's `main.ts` toggles the same attribute.
+- **Fit**: title wraps inside its card (tested: no horizontal overflow); card height is measured from the DOM,
+  so the tier and layout absorb the extra ~4 px; the tier rule is unchanged.
+- **Gallery (deviation from step 3, reported)**: the samples first went into the Markdown section; the full page
+  suite then failed 70 gallery screenshots (every section below moved by ~1 px). Following the gallery's own rule
+  ("last of all, so no section moves", `main.ts`), they are a section of their own, `big-titles-section.ts`,
+  appended last (structured card: title + `##` + table + `###`; plain card beside it). `markdown-section.ts`
+  exports `moreCard`/`MoreSample` for it.
+- **Tests**: new `tests/pages/big-titles.spec.ts` (board: structured `#`+`##`+table, table-only, `###`-only and
+  plain cards; title = today's `#`, larger than every body heading, `#` = `##`; flag off = today; gallery samples;
+  Lc ≥ 60 and axe in light and dark; new screenshots `big-titles-{light,dark}`). `markdown-more.spec.ts`: the
+  renderer-size test now opens the gallery with `-bigTitles` (its "Heading sizes" sample is itself structured);
+  its two group screenshots re-baselined (structured samples' titles larger, `#` medium).
+  Written with the implementation rather than strictly before it (the maintainer was waiting on screenshots).
+- **Docs**: `docs/specification/components.md` § Markdown, a "Big titles" passage; `packages/ui/src/markdown/pattern.json` `headings`.
+- **Screenshots** (scratch server on 8205, HOME and project under the worktree's `temp/big-titles/`, board drawn
+  by `temp/big-titles/draw.mjs`, shot by `temp/big-titles/shoot.mjs`): `temp/big-titles/board-{on,off}-{light,dark}.png`
+  (whole board, 1400 px, 2x) and `summary-{on,off}-{light,dark}.png` (close crop, card zoomed with Z).
+
+- **Last-section tests**: `header-tiers`, `ledgers`, `read-only`, `read-only-controls` specs assert their gallery
+  section is last except `updateSignals`; each now also excepts `bigTitles` (the same edit updateSignals made).
+  New baselines: `gallery-bigTitles-{light,dark}`; re-baselined: `gallery.spec.ts` `markdown-{light,dark}`.
+- **Gates (worktree)**: `npm test` 2400 + 14 pass; `npm run check` 0 errors; `npm run verify` ok; full
+  `npm run test:pages` 955 passed (VB_TEST_PORT 8200, 3 workers, 13.0 min).
+
+**Caught Beyond the Brief**
+
+- The big title keeps the title's medium weight; the body's `##` is bold. At 18 vs 15 px the title leads, but at
+  the board's zoomed-out scale the bold `##` right under it competes. A bold title (today's `#` weight) would make
+  the one headline unmistakable: a maintainer call, not taken.
+- SKILL.md's Body line still says "`#` and `##` headings (large, medium)"; under bigTitles both draw medium in a
+  card body. Listed under REQUESTS (not this task's file).
+
 ## On Completion
 
 Notes in the main checkout's copy; one LOG line, `[board-ui] Big titles: … → Task: [[cortex-tasks/board/2026-11-05_board-ui_big-titles.md]]`, ending in a newline.
