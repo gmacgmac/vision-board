@@ -53,6 +53,8 @@
 [data-tier='third'] :is(.vb-chip-locked, .vb-chip-editing) .vb-chip-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .vb-count { gap: var(--vb-space-1); }
 .vb-count-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--vb-accent); }
+/* New is teal with updateSignals (D-088, chip-tone.ts `newTone`), as the "N new" chip it stands for. */
+.vb-count-dot[data-tone='fresh'] { background: var(--vb-state-fresh); }
 
 /* The zoom as a small menu, half width: the level at a fixed width, so the button does not shift as its digits change. */
 .vb-btn.vb-zoom-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--vb-space-1); padding: 0 var(--vb-space-2); font-variant-numeric: tabular-nums; }
