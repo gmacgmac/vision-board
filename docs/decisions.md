@@ -1250,3 +1250,13 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   2. The card's bottom-edge tabs are centred about a third of the way along the bottom edge, clear of the kind icon and "Open"; never left of 14 px nor over the footer buttons. Where a third does not fit (two tabs on a small card) they start at 14 px as before. Behind `updateSignals`.
 - **Why**: the "N updates" tab sat against the card's icon and "Open" and read as part of them.
 - **Task**: cortex-tasks/board/2026-11-05_board-ui_title-weight-and-tab-place.md
+
+## D-092 One tab for an update and a proposal
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, point 444) · **From**: cortex-tasks/board/2026-11-05_board-ui_one-change-tab.md
+- **Decision**:
+  1. A card with both unseen updates and a proposal shows one amber tab, "1 update · proposal" ("2 updates · 2 proposals"; "· out of date" when every proposal is). Its box shows the proposals first (Accept, Reject, as from the proposal tab) and the update steps under them.
+  2. A proposal alone, updates alone and the handover tab are unchanged. Accepting is an act on the card, so it also clears the updates (D-054).
+  3. Hover shows only the proposals; the steps open on a click or Enter, since showing a step marks it seen.
+  4. Behind `oneChangeTab`.
+- **Why**: the agent changing a card and proposing its mark in one round put two tabs on the card that both said "something new here".
+- **Task**: cortex-tasks/board/2026-11-05_board-ui_one-change-tab.md

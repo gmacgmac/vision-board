@@ -45,6 +45,46 @@ lines in chunks. Time limit on every run, `nice -n 15`, `VB_TEST_WORKERS=3`, ful
 
 ## Implementation Notes
 
+Done 2026-11-05 in `.claude/worktrees/one-tab` (branch `feat/one-tab`), uncommitted.
+
+- **Core**: `packages/ui/src/node/node-core.ts` `changeTab` + `CardConditions.oneTab` (the flag, passed by the page
+  like `groupNotesApart`) + `NodeState.oneTab`. With both, the proposal view's tab/label/box say both and carry
+  `updated`; the updates view is kept (the box's stepper reads it). Past the last step the tab is "Proposal" again.
+  Words: `packages/ui/src/words/node.ts` `updatesAndProposalsTab`, `updatesAndProposalsOnItem`.
+- **Element** (`vb-node.ts`): the proposal tab gets `data-updated`; `placeSteps` *moves* the card's own step section
+  and stepper into the proposal box (after the proposals) and back, so nothing is copied; `data-stepping` is not set
+  while they are in the box (the footer stays); the proposal box now rebuilds only its `.vb-prop` children.
+- **Popover** (`node-popover.ts`): new `POPOVER_HIDE` event (exported from `#ui`), fired on every hide. Needed because
+  the dismissable layer swallows Esc in capture, so update-flow's own Esc never sees it.
+- **Page** (`update-flow.ts`): `POPOVER_OPEN` on a proposal box holding the steps opens the stepper without moving
+  focus (Reject keeps it); `POPOVER_HIDE` folds it (in a microtask: an answered proposal closes its box from inside the
+  card's update). Past the last step focus goes to the box's first answer; `fold` leaves focus on a tab or in an open
+  box. `controller.ts` passes `oneTab` in `facts`.
+- **CSS**: `node-steps.css` the combined tab shares the updates tab's look, always in `--vb-state-updated` (not gated
+  on freshCards), soft fill hovered/open; `node-popover.css` the combined tab counts as two tabs for the buttons' rise
+  (see Caught Beyond the Brief 1).
+- **Flag** `oneChangeTab` (on) + description. **Gallery**: new last section `gallery/one-tab-section.ts`.
+- **Docs**: `docs/specification/components.md` (after Tab place), `pattern.json` (state, btabs, event),
+  `modules.md` regenerated (`npm run map`).
+- **Tests**: `packages/ui/tests/node-change-tab.test.ts` (4); `tests/pages/one-change-tab.spec.ts` (15). Adjusted:
+  `tab-place.spec.ts` and three `proposals.spec.ts` tests open with `-oneChangeTab` (they test two tabs / the proposal
+  tab alone after a change); four "section is last" gallery asserts skip `oneChangeTab`; gallery node-section
+  baselines regenerated (only the pattern's states line changed).
+- **PNGs** (`temp/one-tab/`): before-{m-card,s-card,popover,stepper}-{light,dark}.png, after-{m-card,s-card,popover}-{light,dark}.png.
+
+### Caught Beyond the Brief
+
+1. On an S card "1 update · proposal" is wider than the room before ✓, so its 24px target sat over ✓. Applied D-091's
+   own rule for two tabs on S (buttons rise, row drops 2px) to the one tab. M and L stay level, centred at a third.
+2. Accepting from the box always clears the updates too (an act clears `item.unseen`, D-054), so "N updates alone"
+   after Accept never happens; the test asserts the tab goes.
+3. The hover/focus preview shows the proposals only; the steps appear on a click or Enter, because showing a step marks
+   it seen and hovering must send nothing. Maintainer may want the preview to say "1 update" beneath.
+4. The open box has two pink primaries (Accept and Next). Works, but the eye has two targets; a quieter Next in the
+   box is a possible follow-up.
+5. Tracker N50 reproduced: a proposal at v2 written live right after the v2 change sometimes never shows its tab. My
+   page tests open the board after the agent's round to stay clear of it.
+
 ## On Completion
 
 Notes in the main checkout's copy; one LOG line, `[board-ui] One change tab: … → Task: [[cortex-tasks/board/2026-11-05_board-ui_one-change-tab.md]]`, ending in a newline.
