@@ -49,6 +49,48 @@ Run `npm run build` once in the worktree before tests that need the page.
 
 ## Implementation Notes
 
+Done in worktree `wheel-01` (branch `feat/wheel-01`), uncommitted.
+
+- **Helper** `apps/board/src/board/input/wheel-latch.ts`: `canScroll` (overflow auto/scroll/overlay on that axis and
+  more than 1px from that edge), `scrollerOn` (first box on the event's composed path below the stage that can
+  scroll; the stage and beyond never), `createWheelLatch` (target fixed at a gesture's first event until a quiet gap
+  of `WHEEL_GAP` = 150 ms since the last event; found again if the target left the page), `scrollerIn(stage)` (the DOM
+  finder). Exported through `input/index.ts`. A latched target gets the browser's own scroll (no `preventDefault`).
+- **pointer.ts** `bindPointer(…, wheelChaining)`: flag on, Ctrl/Cmd zooms always, else the latch decides scroll or
+  pan; flag off, the old `closest('vb-note-bubble, .vb-tip')` line, unchanged. `wiring.ts` `bindStage`'s 5th param
+  is now an options object `{ pageWide, wheelChaining }` (one caller, `controller.ts`, which reads `on('wheelChaining')`).
+- **Flag** `wheelChaining` (on) in `packages/format/src/flags.ts` with its `FLAG_DESCRIPTIONS` line.
+- **Docs**: `docs/specification/components.md` § Selecting and moving, 3 (new "The wheel" paragraph) and the hover-tip
+  paragraph's old "wheel exemption" sentence now points there.
+- **Tests**: `apps/board/tests/wheel-latch.test.ts` (4); `tests/pages/wheel-chaining.spec.ts` (7 × light and dark).
+  The spec was run first against a build with the flag defaulting off: 12 of 14 failed, the 2 flag-off cases passed.
+  The latch is checked in the page with synthetic wheel events (deterministic timing): the handler prevents the
+  default exactly when it pans or zooms.
+- **Findings**: the title itself already panned before; what swallowed the wheel was the open full-title tip
+  (`.vb-title-tip`, a `.vb-tip`) under the label. Ctrl + wheel over the bubble or a tip did nothing before (the early
+  return also skipped zoom); it zooms now.
+
+### Caught Beyond the Brief
+
+- The rule reaches every scroller on the stage, not only the ones listed: a Markdown code block (`.vb-md-code`), a
+  card's popover (`.vb-card-pop`), an app card's state box (`.vb-app-state`, `.vb-app-problems`) now scroll under the
+  wheel while they can, then pan. Before, the wheel over them always panned. Seen in the browser on a code block. As
+  decision 1 says; flagging it in case any of them should stay pan-only.
+- The selection pill still closes on any wheel without Ctrl/Cmd (`selection-pill.ts`), including one that only scrolls
+  a bubble; unchanged from today. components.md calls it "a wheel pan". Left as is.
+- Seen in the browser (light): the open full-title tip draws under the first card's number and kind tabs and title
+  (the frame's raise does not lift it over the card layer). Pre-existing, not touched.
+- No gallery entry: the behaviour has no look of its own.
+
+**Verification** (VB_TEST_PORT 8100, 3 workers, nice): `wheel-chaining.spec.ts` 14/14; related wheel specs
+(`app-pan-key`, `selection-pill`, `pill-gap`, `hover-tip`, `notes`, `note-polish`, `container-title`,
+`container-polish`, `card-images`, `chat-follow`) 79/79; further wheel users (`board`, `app-alive`, `app-follow`,
+`app-states`, `board-guest`, `zoom-level`, `layout-controls`, `focus-ring`, `open-list`, `live-boards`,
+`chat-alongside`) 117/117; `npm run check` 0 errors; `npm test` 2404 + 14 pass; `npm run verify` ok (warnings only:
+`pointer.ts` 307 lines and `controller.ts` 313 were already over 300). Browser look on a scratch board (own server,
+port 8150, scratch HOME and project), dark and light: code block and conversation bubble scroll to their end, the
+gesture stops there, the next pans; wheel over the open title tip pans. Full page suite not run (task said related specs).
+
 ## On Completion
 
 Notes here (in the main checkout's copy); one LOG line, `[board-app] Wheel chaining: … → Task: [[cortex-tasks/board/2026-11-05_board-app_wheel-chaining.md]]`, ending in a newline.

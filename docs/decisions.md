@@ -1219,3 +1219,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: the pink "updates" marker was hard to see in dark, and the agent's replies looked like the person's notes.
 - **Rejected**: amber for new as well (two meanings, one colour); the action amber itself (an action card's badge and its update tab would read the same).
 - **Task**: cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/TASK-STATUS.md
+
+## D-089 The wheel scrolls what is under the pointer, then pans
+- **Date**: 2026-11-05 · **Status**: Accepted (maintainer, after point 436) · **From**: cortex-tasks/board/2026-11-05_board-app_wheel-chaining.md
+- **In short**: over anything that can still scroll the wheel's way, the wheel scrolls it; otherwise the board pans.
+- **Decision**:
+  1. One rule for the stage's wheel: the nearest element under the pointer that can still scroll in the wheel's direction scrolls; none, the board pans. It replaces the exception that never panned over note bubbles and hover tips (a container's title tip blocked panning).
+  2. One gesture, one target: the target the first wheel event of a gesture finds keeps it until a 150 ms quiet gap, so a flick that reaches a bubble's end stops there and the next one pans.
+  3. Ctrl or Cmd with the wheel zooms everywhere (it did nothing over a bubble or tip before). App cards keep the pan key: their sandboxed frame keeps its own wheel.
+  4. Behind `wheelChaining`.
+- **Why**: hovering a container title or a reply's popover stopped the board panning, which the maintainer found annoying in daily use.
+- **Rejected**: panning only with the pan key over overlays (the earlier rule); handing over mid-flick (the board would lurch).
+- **Task**: cortex-tasks/board/2026-11-05_board-app_wheel-chaining.md
