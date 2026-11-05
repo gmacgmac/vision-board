@@ -4,8 +4,11 @@
 // their `readOnly` (another tab pressed, another computer let go). Edit takes the ledger's lock now
 // (page-io.ts `editLedger`), or is refused naming the computer that holds it: the refusal is a toast and the ledger
 // stays read-only (said with the holder `get_project` names, else in the server's words). Stop editing gives the lock back. The chip (EditChip.svelte), the button and the "⋯" row
-// (EditButton.svelte) all come here. With the server opened for editing (`--edit`) the folder says neither, and
-// nothing shows.
+// (EditButton.svelte) all come here; with the readOnlyToggle flag (PLAN decision 11) the chip is one toggle that does
+// both, and the button and the row are not drawn (Toolbar.svelte, HeaderFields.svelte). With the server opened for
+// editing (`--edit`) the folder says neither, and nothing shows.
+import { flagOn } from '#format';
+import { pageFlags } from '../flags.ts';
 import { openFolderOn } from './folder.ts';
 import { problemWords } from './ledgers.ts';
 import type { FolderInfo } from './page-io.ts';
@@ -17,6 +20,9 @@ import * as editingWords from './words/editing.ts';
  *  server says whether the ledger is read-only, and a ledger the person can't write always shows it, with Edit
  *  (decision 16; FIX_01 F11). With nothing said, the chip and Edit draw nothing. */
 export const editingOn = (): boolean => openFolderOn();
+
+/** The chip is one toggle, Read-only or Editing, that flips on a press, instead of a chip with a menu (readOnlyToggle). */
+export const toggleOn = (): boolean => flagOn('readOnlyToggle', pageFlags());
 
 /** What the header shows: nothing (the flag off on the server, or opened for editing), read-only, or editing here. */
 export type EditState = 'none' | 'read-only' | 'editing';
@@ -41,13 +47,21 @@ export function stateTip(f: Pick<FolderInfo, 'readOnly' | 'editing'> | null | un
   return who ? editingWords.readOnlyEditedOn(who.host, who.since) : editingWords.readOnlyPressEdit;
 }
 
+/** The toggle's tooltip, its description (its name is Edit, whatever the state): the state and what a press does. */
+export function toggleTip(f: Pick<FolderInfo, 'readOnly' | 'editing'> | null | undefined): string {
+  if (editState(f) === 'editing') return editingWords.toggleEditingTip;
+  const who = holder(f);
+  return who ? editingWords.toggleHeldTip(who.host, who.since) : editingWords.toggleReadOnlyTip;
+}
+
 /** Read the folder again (its `readOnly` and `editing`); a failed read leaves what the page has. */
 export async function readEditing(): Promise<void> {
   try { shell.folder = await getProject(); } catch { /* the board's own reads still say read-only */ }
 }
 
-/** Edit, or Stop editing, as the state asks; the press shows busy until the server answers. A refusal is a toast. */
-export async function toggleEditing(): Promise<void> {
+/** Edit, or Stop editing, as the state asks; the press shows busy until the server answers. A refusal is a toast,
+ *  in `refused`'s words when it names who holds the ledger (the toggle's own, else Edit's). */
+export async function toggleEditing(refused: (host: string, since: string) => string = editingWords.editRefused): Promise<void> {
   if (shell.editBusy) return;
   const stop = editState(shell.folder) === 'editing';
   shell.editBusy = stop ? 'stop' : 'edit';
@@ -56,7 +70,7 @@ export async function toggleEditing(): Promise<void> {
   } catch (err) {
     await readEditing(); // who holds it now, for the toast and the chip's tooltip
     const who = stop ? null : holder(shell.folder);
-    toast(who ? editingWords.editRefused(who.host, who.since) : problemWords(err), 'error');
+    toast(who ? refused(who.host, who.since) : problemWords(err), 'error');
   } finally {
     shell.editBusy = null;
   }

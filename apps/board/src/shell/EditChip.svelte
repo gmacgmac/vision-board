@@ -8,11 +8,17 @@
      read-only and says who holds the ledger in a toast. Beside it, always there, a polite status says a change of
      state. The page's state reads the folder again when the board's reads change their `readOnly` and when the
      menu opens. With nothing to say (the server opened for editing, the flag off there) it draws nothing. The
-     gallery passes `folder`, `busy`, `open` and `look`. -->
+     gallery passes `folder`, `busy`, `open` and `look`.
+     With the readOnlyToggle flag (PLAN decision 11) it is one toggle instead, with no menu: the same chip, its icon and
+     word the state, Read-only or Editing, and a press flips it (`toggleEditing`); the base button's toggle pattern
+     (`#ui` button.css, aria-pressed: pressed is Editing), its name Edit whatever the state, so the state is aria-pressed
+     and never a second name, its tooltip the state and what a press does (editing.ts `toggleTip`), its description.
+     Busy, it keeps its place and focus (aria-disabled) with the spinner and the words; refused, it stays Read-only and
+     the toast says who holds the ledger. The header then draws no Edit button or "⋯" row (Toolbar, HeaderFields). -->
 <script lang="ts">
   import { untrack } from 'svelte';
   import { ButtonIcon, toolbarPopup } from '../board/chrome/index.ts';
-  import { editState, readEditing, stateTip, toggleEditing } from './editing.ts';
+  import { editState, readEditing, stateTip, toggleEditing, toggleOn, toggleTip } from './editing.ts';
   import type { FolderInfo } from './page-io.ts';
   import { shell } from './shell.svelte.ts';
   import * as editingWords from './words/editing.ts';
@@ -32,7 +38,9 @@
   const here = $derived(own ? shell.folder : folder);
   const mode = $derived(editState(here));
   const going = $derived(busy === undefined ? shell.editBusy : busy);
-  const tip = $derived(stateTip(here));
+  /** One toggle, no menu (readOnlyToggle flag). */
+  const toggle = toggleOn();
+  const tip = $derived(toggle ? toggleTip(here) : stateTip(here));
   const uid = $props.id();
   let root = $state<HTMLElement>();
   let button = $state<HTMLButtonElement>();
@@ -66,13 +74,25 @@
   }
 </script>
 
-{#if mode !== 'none'}
+{#snippet face()}
+  {#if going}<span class="vb-spinner" aria-hidden="true"></span>{:else}<ButtonIcon name={mode === 'editing' ? 'pencil' : 'eye'} />{/if}
+  <span class="vb-chip-word">{word}</span>
+{/snippet}
+
+{#if mode !== 'none' && toggle}
+  <div class="vb-editing">
+    <button type="button" class="vb-chip vb-chip-btn vb-chip-editing" {id} data-state={mode} data-look={look} title={tip} aria-label={editingWords.edit}
+      aria-pressed={mode === 'editing'} aria-busy={going ? true : undefined} aria-disabled={going ? true : undefined}
+      onclick={() => { if (!going) void toggleEditing(editingWords.toggleRefused); }}>
+      {@render face()}
+    </button>
+  </div>
+{:else if mode !== 'none'}
   <div class="vb-menu vb-editing" bind:this={root}>
     <button type="button" class="vb-chip vb-chip-btn vb-chip-editing" {id} data-state={mode} data-look={look} bind:this={button}
       title={tip} aria-label={tip} aria-haspopup="menu" aria-expanded={shown} aria-controls="vb-editing-{uid}" aria-busy={going ? true : undefined}
       onclick={() => (popup.open ? popup.close() : void show())}>
-      {#if going}<span class="vb-spinner" aria-hidden="true"></span>{:else}<ButtonIcon name={mode === 'editing' ? 'pencil' : 'eye'} />{/if}
-      <span class="vb-chip-word">{word}</span><ButtonIcon name="chevron" />
+      {@render face()}<ButtonIcon name="chevron" />
     </button>
     <div class="vb-menu-list" id="vb-editing-{uid}" role="menu" aria-label={editingWords.ledgerState} tabindex="-1" hidden={!shown} bind:this={list}>
       <p class="vb-menu-current vb-editing-line" role="none">{tip}</p>

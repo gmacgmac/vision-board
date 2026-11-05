@@ -24,7 +24,8 @@
      The page's folder chip (`BoardPageParts.folderChip`), when it gives one, sits first, after the app icon, and its
      ledger chip (`ledgerChip`, while the page's server names a ledger) after it; a host has neither, and the bar reflows. After the path (or the
      title and version) the page's ledger state (`editChip`, readOnlyStart flag: Read-only or Editing, at every width) and,
-     at full, its Edit or Stop editing button (`editButton`; a row of "⋯" from half, HeaderFields), then Locked.
+     at full, its Edit or Stop editing button (`editButton`; a row of "⋯" from half, HeaderFields), then Locked. With the
+     readOnlyToggle flag the state is one toggle that flips on a press (PLAN decision 11), so the button is not drawn.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
      carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
      counts show their numbers only (title and screen readers keep the words), all in board.css; "with
@@ -108,6 +109,8 @@
   const archiving = flag('archiveBoard');
   const locking = flag('lockBoard');
   const openList = flag('openList');
+  /** The ledger's state is one toggle (readOnlyToggle): no Edit button beside it. */
+  const editToggle = flag('readOnlyToggle');
   /** A narrow toolbar shows the end group's icons and bare counts (board.css `[data-narrow]`). */
   const narrow = new MediaQuery('max-width: 1500px');
   /** The bar's form by its own width (adaptiveHeader flag); the window's width is only its first guess, so a page loads in its form. */
@@ -170,7 +173,7 @@
     {/if}
   {/if}
   {#if parts.editChip}<PagePart draw={parts.editChip} args={{ id: idOf('editing'), look }} />{/if}
-  {#if here('edit') && parts.editButton}<PagePart draw={parts.editButton} args={{ id: idOf('edit'), look }} />{/if}
+  {#if here('edit') && parts.editButton && !editToggle}<PagePart draw={parts.editButton} args={{ id: idOf('edit'), look }} />{/if}
   <LockedChip id={idOf('locked')} locked={facts.locked} />
   {#if adaptive && tier === 'full'}<span class="vb-bar-rule" aria-hidden="true"></span>{/if}
   {#if here('containers') && facts.containers.length}
