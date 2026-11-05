@@ -104,15 +104,37 @@ the default.
 ## Markdown (D-023)
 
 Card bodies and notes are Markdown, and every surface that shows written text renders it through
-the one function `renderMarkdown(src, { headingLevel, images })` from the `packages/ui` front door. It is a
-pattern without an element: `packages/ui/src/markdown/` holds `blocks.ts` (lines into blocks),
-`inline.ts` (marks, links, escapes), `image.ts` (what `![alt](path)` becomes, § Images in cards),
-`render.ts` (the front function), `markdown.css` (the
-`vb-md-*` classes, in `#ui/styles.css` beside `node.css`) and `pattern.json` (the subset, the
+the one function `renderMarkdown(src, { headingLevel, images, more })` from the `packages/ui` front
+door. It is a pattern without an element: `packages/ui/src/markdown/` holds `blocks.ts` (lines into
+blocks), `line-starts.ts` (the ATX heading and break scanners), `table.ts` (GFM tables), `inline.ts`
+(marks, links, escapes), `image.ts` (what `![alt](path)` becomes, § Images in cards), `render.ts`
+(the front function), `markdown.css` (the `vb-md-*` classes, in `#ui/styles.css` beside `node.css`) and `pattern.json` (the subset, the
 classes and the safety rules). A template sets its output with `innerHTML`, which is safe because
 the renderer escapes every text run; one-line fields (titles, tags) stay plain text through `esc`.
 Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.test.ts`), whose
 `EXCLUDED` table is the full list of deliberate differences.
+
+**Heading sizes, tables and breaks** (the `markdownMore` flag, on by default; `renderMarkdown`'s
+`more` option, given by whoever renders; off, every heading is the label and tables and breaks
+stay text, exactly as before). Proven by `packages/ui/tests/markdown-more.test.ts` unless named:
+
+- `#` draws large (`vb-md-h1`), `##` medium (`vb-md-h2`), `###` to `######` the small label
+  (`vb-md-label`), all `role="heading"` at the caller's `headingLevel` (`render.ts` `heading`). The
+  two larger sizes sit one and two type-scale steps above `--vb-md-text`, so they grow in a popover
+  (`markdown.css`; `tests/pages/markdown-more.spec.ts`).
+- A GFM table: the paragraph's last line is the header, then a delimiter row with as many cells
+  (colons give each column's alignment), then rows until a blank line or another block; inline
+  Markdown in cells, `\|` for a pipe (`table.ts` `splitRow`, `delimiterRow`, `tableHtml`; GFM's
+  examples 198-205). At most 4 columns (`MAX_COLUMNS`); 5 or more stay text. The table is its
+  holder's width with equal columns (`table-layout: fixed`) and cells that wrap, so it never
+  scrolls, at L or at S (`tests/pages/markdown-more.spec.ts`).
+- A card whose body has a table is L by the auto rule (`packages/layout` `measureBody`, `autoTier`;
+  `packages/layout/tests/size.test.ts`); the agent's suggestion and the person's pick still win. The
+  two packages may not import each other, so the page suite holds their table rules equal
+  (`tests/pages/markdown-more.spec.ts`, "agree on what is a table").
+- `---`, `***` or `___` on a line of its own is a thematic break, one line (`vb-md-rule`;
+  `line-starts.ts` `thematicBreak`; CommonMark's Thematic breaks section). Setext headings stay
+  unsupported, so `---` under a paragraph line is a break.
 
 ## Type checking
 
@@ -354,8 +376,9 @@ override it by hand. Mockup `prototypes/board-v3-design/mockups/07-node-sizing.h
 1. **Tiers** are tokens: `--vb-card-w-s` 280px, `--vb-card-w-m` 360px, `--vb-card-w-l` 464px.
    Body text then runs about 37, 49 and 70 characters a line. Cards still grow taller to fit.
 2. **Auto tier**, a pure function in `packages/layout` (`sizeTier`), counting the body Markdown
-   only (title and tags do not count): `l` if the body is over 480 characters; `m` if it is over
-   140, or has a code block, or more than 6 list items; `s` otherwise.
+   only (title and tags do not count): `l` if the body is over 480 characters or has a table (the
+   markdownMore flag, § Markdown); `m` if it is over 140, or has a code block, or more than 6 list
+   items; `s` otherwise.
 3. **Precedence**: the person's `size` act, then the agent's `node.size` suggestion, then the auto
    tier. Emphasis raises the result one tier, up to `l`. The person's `auto` removes their pick.
 4. **Where it is applied**: the page sets `data-size` on `<vb-node>` before it measures cards,

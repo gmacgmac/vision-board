@@ -192,7 +192,7 @@ export const flagOf = (host: Pick<BoardHost, 'settings'>, f: FlagName): boolean 
 
 /** How the board's Markdown renders under this host, for every surface that draws it. */
 export const markdownOf = (host: Pick<BoardHost, 'settings' | 'imageRoute'>): MarkdownOptions =>
-  ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute });
+  ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute, more: flagOf(host, 'markdownMore') });
 
 /** A store for one mount, for a host that gives none. */
 export function memoryStore(): BoardStore {

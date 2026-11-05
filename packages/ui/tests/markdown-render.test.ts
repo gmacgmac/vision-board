@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderMarkdown } from '../src/index.ts';
 
-const md = (src: string, opts?: { headingLevel?: number }) => renderMarkdown(src, opts);
+const md = (src: string, opts?: { headingLevel?: number; more?: boolean }) => renderMarkdown(src, opts);
 
 test('paragraphs, with soft and hard line breaks', () => {
   assert.equal(md(''), '');
@@ -23,10 +23,11 @@ test('inline marks carry their classes', () => {
   assert.equal(md('\\*not\\*'), '<p class="vb-md-p">*not*</p>');
 });
 
-test('any ATX heading is a small label, at the level the caller gives (default 4)', () => {
+// Heading sizes (markdownMore on, the default) are markdown-more.test.ts's; with it off, every level is the label.
+test('a ### heading is a small label, at the level the caller gives (default 4); with markdownMore off, every level', () => {
   assert.equal(md('### Options'), '<span class="vb-md-label" role="heading" aria-level="4">Options</span>');
-  assert.equal(md('# A'), md('###### A'));
-  assert.equal(md('## A', { headingLevel: 5 }), '<span class="vb-md-label" role="heading" aria-level="5">A</span>');
+  assert.equal(md('# A', { more: false }), md('###### A'));
+  assert.equal(md('## A', { headingLevel: 5, more: false }), '<span class="vb-md-label" role="heading" aria-level="5">A</span>');
   for (const bad of [0, 9, 2.5, Number.NaN]) assert.match(md('# A', { headingLevel: bad }), /aria-level="4"/, String(bad));
 });
 
@@ -54,9 +55,8 @@ test('quotes are callouts and code blocks are scrollable, focusable pre > code',
 
 test('everything outside the subset renders as escaped plain text', () => {
   const plain = (src: string) => assert.doesNotMatch(md(src), /<(?!\/?p\b)[a-z]/, src);
-  plain('| a | b |\n|---|---|\n| 1 | 2 |');
+  // Tables and thematic breaks are in the subset with markdownMore (markdown-more.test.ts); off, they are text.
   plain('Title\n=====');
-  plain('***');
   plain('    indented code');
   plain('[ref]\n\n[ref]: https://e.com');
   plain('<div>\nhtml block\n</div>');
@@ -67,5 +67,5 @@ test('everything outside the subset renders as escaped plain text', () => {
 });
 
 test('the output never carries an inline style', () => {
-  assert.doesNotMatch(md('# a\n\n- **b**\n\n> c\n\n```\nd\n```\n\n[e](https://e.com) `f`'), /style=|<style/);
+  assert.doesNotMatch(md('# a\n\n- **b**\n\n> c\n\n```\nd\n```\n\n[e](https://e.com) `f`\n\n---\n\n| g | h |\n|:-:|--:|\n| i | j |'), /style=|<style/);
 });

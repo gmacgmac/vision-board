@@ -12,6 +12,38 @@
   letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-ink-subtle);
 }
 
+/* Heading sizes (markdownMore, PLAN decision 7): `#` and `##` sit one and two steps of the type scale
+   above the text around them (xl and lg over md on a card, so 18px and 15px), so they grow with
+   --vb-md-text in a popover; `###` and smaller stay the label above. Body ink, no hue. */
+.vb-md-h1, .vb-md-h2 { display: block; font-weight: var(--vb-weight-bold); line-height: 1.3; color: var(--vb-ink-strong); }
+.vb-md-h1 { font-size: calc(var(--vb-md-text, var(--vb-text-md)) + var(--vb-text-xl) - var(--vb-text-md)); }
+.vb-md-h2 { font-size: calc(var(--vb-md-text, var(--vb-text-md)) + var(--vb-text-lg) - var(--vb-text-md)); }
+/* Space above, not below, so a heading sits with the text it opens. */
+:is(.vb-md-h1, .vb-md-h2):not(:first-child) { margin-top: var(--vb-space-1); }
+
+/* A thematic break (decision 9): one quiet line. */
+.vb-md-rule { width: 100%; margin: var(--vb-space-1) 0; border: 0; border-top: 1px solid var(--vb-line-strong); }
+
+/* A table (decision 8): the width of what holds it, never wider, so it never scrolls. The fixed layout
+   shares the width out equally, whatever the cells hold; cells wrap and a word longer than its column
+   breaks anywhere. (The automatic layout with breaking anywhere gave a long sentence's column nearly
+   all the width and broke short words like "Price" next to it.) Tight cells, so a word of about
+   seven letters still fits a column of four at S. Header in the strong ink on the sunken ground. */
+.vb-md-table {
+  width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed;
+  font-size: var(--vb-md-text, var(--vb-text-md)); line-height: 1.4; color: var(--vb-ink);
+}
+.vb-md-table :is(th, td) {
+  padding: var(--vb-space-1); border-bottom: 1px solid var(--vb-line); text-align: start;
+  vertical-align: top; overflow-wrap: anywhere;
+}
+.vb-md-table th { background: var(--vb-surface-sunken); border-bottom-color: var(--vb-line-strong); color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
+.vb-md-table tr:last-child > td { border-bottom: 0; }
+.vb-md-table .vb-md-left { text-align: left; }
+.vb-md-table .vb-md-center { text-align: center; }
+.vb-md-table .vb-md-right { text-align: right; }
+.vb-md-quote .vb-md-table th { background: var(--vb-surface-deep); }
+
 .vb-md-list {
   display: grid; gap: var(--vb-space-1); margin: 0; padding-left: calc(var(--vb-space-4) + var(--vb-space-1));
   font-size: var(--vb-md-text, var(--vb-text-md)); line-height: 1.45; color: var(--vb-ink);
