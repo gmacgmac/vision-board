@@ -796,6 +796,10 @@ type NodeSent = {
   n?: CommonNodeRef;
   base?: number;
   key?: CommonKey;
+  insert?: {
+    after: CommonNodeRef;
+    before: CommonNodeRef;
+  };
 } & NodeCore & NodeNoItem & NodeAppRule;
 type CommonNodeRef = number | {
   key: CommonKey;
@@ -847,6 +851,10 @@ type WriteResultWritten = {
   ver?: number;
   title?: CommonTitle;
   retired?: number[];
+  inserted?: {
+    after: number;
+    before: number;
+  };
   replayed?: true;
 };
 type WriteResultFailed = {

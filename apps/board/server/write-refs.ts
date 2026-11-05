@@ -15,9 +15,10 @@ import { isRecord } from '#format';
 
 type Rec = Record<string, unknown>;
 
-/** One batch: the ledger, the writing agent, the path's board, and the keys of items that failed. */
-/** One `write_board` call's state; `keyHelp`: a key conflict's words say what the key holds (`botToolRules`). */
-export interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string>; keyHelp?: boolean }
+/** One `write_board` call's state: the ledger, the writing agent, the path's board, and the keys of items that failed;
+ * `keyHelp`: a key conflict's words say what the key holds (`botToolRules`); `insert`: a node item may carry `insert`
+ * (`insertBetween`, write-insert.ts). */
+export interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string>; keyHelp?: boolean; insert?: boolean }
 
 /** The top-level fields of an item of `type` that hold one card's board number or `{ key }` (api.md
  * 35), from the one card-reference table (`CARD_FIELDS`): a link's two ends, else `n`. A reply's
@@ -61,7 +62,7 @@ function numbered(b: Batch, s: LedgerState, n: unknown, pointer: string): number
 }
 
 /** The item with every card it names by identity, as the card-reference table lists them (`n`,
- * `from`, `to`, a region's `center`); a top-level one may be a `{ key }`. */
+ * `from`, `to`, a region's `center`, a node's `insert`); any that its schema lets be a `{ key }` may be one. */
 export function resolve(b: Batch, i: number, item: Rec): Rec {
   const s = b.ledger.state();
   const out: Rec = { ...item };
@@ -70,7 +71,7 @@ export function resolve(b: Batch, i: number, item: Rec): Rec {
     const ref = isRecord(holder) ? holder[f.field] : undefined;
     if (f.list || ref === undefined) continue; // an item names its cards one by one
     const pointer = `/items/${i}/${f.in === undefined ? '' : `${f.in}/`}${f.field}`;
-    const id = f.in === undefined && isRecord(ref) ? keyed(b, ref, pointer) : numbered(b, s, ref, pointer);
+    const id = isRecord(ref) ? keyed(b, ref, pointer) : numbered(b, s, ref, pointer);
     if (f.in === undefined) out[f.field] = id;
     else out[f.in] = { ...(out[f.in] as Rec), [f.field]: id };
   }

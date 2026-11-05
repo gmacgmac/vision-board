@@ -235,7 +235,7 @@ export interface CardField { readonly field: string; readonly in?: string; reado
 export const CARD_FIELDS: Readonly<Record<string, readonly CardField[]>> = {
   board: [],
   region: [{ field: 'center', in: 'region' }],
-  node: [{ field: 'n' }],
+  node: [{ field: 'n' }, { field: 'after', in: 'insert' }, { field: 'before', in: 'insert' }],
   link: [{ field: 'from' }, { field: 'to' }],
   unlink: [{ field: 'from' }, { field: 'to' }],
   act: [{ field: 'n' }, { field: 'nodes', list: true }],

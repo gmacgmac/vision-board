@@ -13,14 +13,28 @@
       }
     },
     "sent": {
-      "examples": [{"type": "node", "key": "fee-question", "node": {"region": "options", "kind": "question", "title": "Flat fee or per seat?", "body": "Which model fits a team of ten?"}}],
+      "examples": [
+        {"type": "node", "key": "fee-question", "node": {"region": "options", "kind": "question", "title": "Flat fee or per seat?", "body": "Which model fits a team of ten?"}},
+        {"type": "node", "key": "trial-step", "node": {"region": "steps", "kind": "topic", "title": "Run a two-week trial"}, "insert": {"after": 3, "before": 4}}
+      ],
       "type": "object",
       "required": ["type"],
       "properties": {
         "type": {"const": "node"},
         "n": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/nodeRef"},
         "base": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/version", "description": "The `ver` you read; if the card has moved on, the item fails with `conflict`."},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/key"}
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/key"},
+        "insert": {
+          "type": "object",
+          "description": "Put this card (new or existing) between two linked cards of one `flow` or `lanes` container, in one write: `after`→`before` becomes `after`→card→`before`, keeping the label. Its `region` must be that container.",
+          "$comment": "Sent only: the ledger gets the node, unlink and link lines (PLAN Decision 5, point 424).",
+          "required": ["after", "before"],
+          "properties": {
+            "after": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/nodeRef", "description": "Where the link starts."},
+            "before": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/nodeRef", "description": "Where the link ends."}
+          },
+          "additionalProperties": false
+        }
       },
       "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/19/events/node.schema.json#/$defs/core"}, {"$ref": "https://vision-board.invalid/schema/ledger/19/events/node.schema.json#/$defs/noItem"}, {"$ref": "https://vision-board.invalid/schema/ledger/19/events/node.schema.json#/$defs/appRule"}],
       "unevaluatedProperties": false

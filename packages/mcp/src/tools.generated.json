@@ -606,6 +606,67 @@
                       "pattern": "\\S",
                       "maxLength": 64,
                       "description": "Retry key, per agent across the project."
+                    },
+                    "insert": {
+                      "type": "object",
+                      "description": "Put this card (new or existing) between two linked cards of one `flow` or `lanes` container, in one write: `after`→`before` becomes `after`→card→`before`, keeping the label. Its `region` must be that container.",
+                      "required": [
+                        "after",
+                        "before"
+                      ],
+                      "properties": {
+                        "after": {
+                          "description": "Where the link starts.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Its number on this board."
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "key"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "type": "string",
+                                  "pattern": "\\S",
+                                  "maxLength": 64,
+                                  "description": "The key of the item that drew it."
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "before": {
+                          "description": "Where the link ends.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Its number on this board."
+                            },
+                            {
+                              "type": "object",
+                              "required": [
+                                "key"
+                              ],
+                              "properties": {
+                                "key": {
+                                  "type": "string",
+                                  "pattern": "\\S",
+                                  "maxLength": 64,
+                                  "description": "The key of the item that drew it."
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "description": "Kind `app` needs `app` and takes no `size`; no other kind names an app.",
@@ -618,6 +679,19 @@
                         "kind": "question",
                         "title": "Flat fee or per seat?",
                         "body": "Which model fits a team of ten?"
+                      }
+                    },
+                    {
+                      "type": "node",
+                      "key": "trial-step",
+                      "node": {
+                        "region": "steps",
+                        "kind": "topic",
+                        "title": "Run a two-week trial"
+                      },
+                      "insert": {
+                        "after": 3,
+                        "before": 4
                       }
                     }
                   ],

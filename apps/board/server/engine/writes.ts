@@ -161,7 +161,7 @@ const writeBoard: Op = async (ctx) => {
   const list = items as unknown[];
   const board = String(params.board);
   writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));
-  const results = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags));
+  const results = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags));
   const s = ledger.state();
   const pending = s.boards.has(board) ? openItems(s, board, agent).filter((x) => x.pending !== undefined) : [];
   const containers = s.boards.has(board) ? openContainers(s, board, agent) : [];
