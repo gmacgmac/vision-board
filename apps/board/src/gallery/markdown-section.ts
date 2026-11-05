@@ -15,7 +15,8 @@ import { REGION_MARKDOWN } from './fixture.ts';
 import { card } from './node-section.ts';
 
 /** The markdownMore samples: title, kind, body, and a tier the person picked (else the board's own). */
-const MORE: { title: string; kind: ViewNode['kind']; body: string; size?: NodeSize }[] = [
+export interface MoreSample { title: string; kind: ViewNode['kind']; body: string; size?: NodeSize }
+const MORE: MoreSample[] = [
   { title: 'Heading sizes', kind: 'finding',
     body: '# Release plan\n\nThe large heading opens the card.\n\n## Before launch\n\nThe medium heading opens a part.\n\n### Checks\n\n- Page tests\n- Contrast' },
   { title: 'A table', kind: 'decision',
@@ -28,9 +29,9 @@ const MORE: { title: string; kind: ViewNode['kind']; body: string; size?: NodeSi
   { title: 'Five columns stay text', kind: 'question', body: '| a | b | c | d | e |\n|---|---|---|---|---|\n| 1 | 2 | 3 | 4 | 5 |' },
 ];
 
-/** A <vb-node> for a markdownMore sample, at its tier, with the page's flags. */
-function moreCard(s: (typeof MORE)[number], i: number, fx: Fixture): VbNodeElement {
-  const n: ViewNode = { id: `md-more-${i + 1}`, region: REGION_MARKDOWN, kind: s.kind, title: s.title, body: s.body };
+/** A <vb-node> for a Markdown sample (markdownMore here, bigTitles in big-titles-section.ts), at its tier, with the page's flags. */
+export function moreCard(s: MoreSample, i: number, fx: Fixture, prefix = 'md-more'): VbNodeElement {
+  const n: ViewNode = { id: `${prefix}-${i + 1}`, region: REGION_MARKDOWN, kind: s.kind, title: s.title, body: s.body };
   const node = document.createElement('vb-node') as VbNodeElement;
   node.render(n, { ...ownIds(), markdown: pageMarkdown() });
   node.update(nodeState(n, fx.state, s.size ?? tierOf(n, fx.state)));

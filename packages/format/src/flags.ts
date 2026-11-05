@@ -274,6 +274,10 @@ export const FLAGS = {
     // On by default (maintainer, 2026-11-05, point 431; insert-markdown-signals FE_02); ?flags=-readOnlyToggle turns it off.
     default: true,
   },
+  bigTitles: {
+    // On by default (maintainer, 2026-11-05, point 437); ?flags=-bigTitles turns it off.
+    default: true,
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
@@ -378,4 +382,5 @@ export const FLAG_DESCRIPTIONS = {
   markdownMore: 'Markdown draws `#` large, `##` medium and `###` to `######` as the small label; GFM tables of up to 4 columns that wrap and never scroll (a card with one is the widest tier); and `---`, `***` or `___` as a horizontal line. Off, every heading is the small label and tables and breaks stay text (D-023).',
   updateSignals: 'Updated is a bright amber (`--vb-state-updated`): the card\'s "N updates" tab and the "updated" count in a container\'s pill; new stays teal. The agent\'s reply has an amber left edge, bright while its card is unseen, muted after. Off, the tab is the accent pink and replies are grey.',
   readOnlyToggle: 'Read-only and Editing are one toggle button in the header that shows the current state and flips on a press (taking the lock can still be refused). Off, the read-only chip opens a menu.',
+  bigTitles: 'A card whose body has structure (a `#` or `##` heading, or a table, as drawn with markdownMore) shows its title large, at the `#` size, as the card\'s one heading; in its body `#` then draws at the `##` size, `##` too, and `###` stays the small label. Other cards are unchanged. Off, the title is medium on every card and `#` large.',
 } as const satisfies Record<FlagName, string>;

@@ -357,7 +357,7 @@ test('gallery: the section is there only with the flag, last, with the three for
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto('/gallery.html?flags=ledgerFolders,-readOnlyStart');
-  await expect(page.locator('main > section:not([data-feature="updateSignals"])').last()).toHaveAttribute('data-feature', 'ledgerFolders');
+  await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"])').last()).toHaveAttribute('data-feature', 'ledgerFolders');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).locator('.vb-ledger-chip').first()).toContainText('customer-research-interviews');
   await expect(section(page).locator(`${bid('ledger-chip')}, #new-ledger, #ledger-dialog`)).toHaveCount(0);

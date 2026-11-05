@@ -38,6 +38,7 @@ import { parkingSection } from './parking-section.ts';
 import { proposalsSection, reviewListSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
 import { updateSignalsSection } from './update-signals-section.ts';
+import { bigTitlesSection } from './big-titles-section.ts';
 import { chatSection } from './chat-section.ts';
 import { alongsideSection } from './alongside-section.ts';
 import { folderAccessSection } from './folder-access-section.ts';
@@ -130,6 +131,7 @@ function build(): void {
   main.toggleAttribute('data-app-title', flagOn('appTitle', flags)); // an app card's title over its panel (card-polish FE_01), as the board's world
   main.toggleAttribute('data-fresh-cards', flagOn('freshCards', flags)); // the pink "N updates" tab (freshCards), as the board's world
   main.toggleAttribute('data-update-signals', flagOn('updateSignals', flags)); // updated in amber, the agent's reply edge (updateSignals), as the board's world
+  main.toggleAttribute('data-big-titles', flagOn('bigTitles', flags)); // a structured card's big title (bigTitles, point 437), as the board's world
   if (flagOn('nodeSize', flags)) main.append(sizeSection(fx));
   if (flagOn('agentAccess', flags)) main.append(accessSection(fx));
   if (flagOn('wireLayers', flags)) main.append(wireSection(fx));
@@ -171,6 +173,7 @@ function build(): void {
   if (flagOn('readOnlyStart', flags) && flagOn('openFolder', flags) && flagOn('adaptiveHeader', flags) && flagOn('toolbarMenu', flags) && flagOn('versionView', flags)) main.append(editingSection(fx)); // after everything, so no section moves
   if (flagOn('readOnlyStart', flags) && flagOn('agentAccess', flags) && flagOn('appCards', flags)) main.append(readOnlyControlsSection(fx)); // last of all, so no section moves
   if (flagOn('updateSignals', flags)) main.append(updateSignalsSection(fx)); // last of all, so no section moves
+  if (flagOn('bigTitles', flags) && flagOn('markdownMore', flags)) main.append(bigTitlesSection(fx)); // last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

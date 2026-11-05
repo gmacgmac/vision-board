@@ -17,7 +17,7 @@
     "paragraphs": "blank-line separated; soft breaks; a hard break after two spaces or a backslash",
     "inline": "**bold** __bold__ *italic* _italic_ ~~strike~~ `code`, [text](url \"title\"), <https://…> and <a@b.c>",
     "lists": "- * + bullets and 1. 1) numbers, one level of nesting; deeper lists are plain text led by their marker",
-    "headings": "# large, ## medium, ### to ###### the small label, all role=heading at headingLevel (default 4: the card title is an h3); markdownMore off: every level the label",
+    "headings": "# large, ## medium, ### to ###### the small label, all role=heading at headingLevel (default 4: the card title is an h3); in a card body with a # or ## heading or a table, # is medium under the card's big title (the bigTitles flag, node.css); markdownMore off: every level the label",
     "quotes": "> lines, drawn as the callout (01b .reply without its who line)",
     "code": "``` or ~~~ fences; the info string is dropped; capped height, scrolls, focusable",
     "images": "![alt](path), path relative to the project's .visionboard/images/ (subfolders too): the image when imagePathProblem passes and the alt text is there; a refused path is the box; no alt text is the path as plain text; with images off (the cardImages flag), the source text; an svg is an <img> like any other, never inline markup, so its script never runs (D-064; svgImages flag off: refused)",
