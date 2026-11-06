@@ -1283,3 +1283,13 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: under a host the board kept its own accent and greys beside a bot of another colour, and followed the system when the person had forced the host's mode the other way.
 - **Rejected**: colours stay the board's (D-081 3: the board looks foreign in its host); the mode from an inherited `color-scheme` (a page that says nothing would make the board light); a board setting for its own look or the host's (the host decides by setting the properties or not, point 450).
 - **Task**: cortex-tasks/board/2026-11-06_board-tokens_host-styling/TASK-STATUS.md
+
+## D-095 A host's button fill apart from its accent
+- **Date**: 2026-11-06 · **Status**: Accepted (maintainer, point 457) · **From**: nclite's accent-fill handoff
+- **Decision** (adds to D-094):
+  1. Two more optional properties: `--host-accent-fill` (a primary button's fill; without it, `--host-accent`) and `--host-accent-fill-hover` (without it, `--host-accent-strong`).
+  2. `--host-accent` keeps the selection, the rings and the soft grounds; `--host-accent-strong` keeps the accent text.
+  3. `--host-on-accent` pairs with the fill and its hover, at Lc 60.
+  4. A host that gives neither sees no change. The seam stays 1.
+- **Why**: hosts fill a button deeper than they ring a selection. With one colour for both jobs, nclite's dark mode missed a contrast tier whichever colour it gave (Lc 51–58 with the bright accent as the fill; 17–36 with the deep colour as the ring).
+- **Task**: cortex-tasks/board/2026-11-06_board-tokens_host-styling/TASK-STATUS.md
