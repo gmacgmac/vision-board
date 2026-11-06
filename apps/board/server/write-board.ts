@@ -13,7 +13,7 @@ import { WRITE_ITEM_ID, itemExample, itemTypes } from './examples.ts';
 import type { Ledger } from './ledger.ts';
 import type { PointerError } from './problem.ts';
 import { ProblemError } from './problem.ts';
-import { LEDGER_SCHEMA_BASE, schemaProblems } from './schema.ts';
+import { LEDGER_SCHEMA_BASE, schemaDefault, schemaProblems } from './schema.ts';
 import type { ItemProblem } from './write-problem.ts';
 import { ItemFailed, fail, under } from './write-problem.ts';
 import type { Between } from './write-insert.ts';
@@ -30,6 +30,8 @@ export type { ItemProblem } from './write-problem.ts';
 export type { WriteResult } from './write-result.ts';
 export { WRITE_ITEM_ID };
 
+const REGION_ID = `${LEDGER_SCHEMA_BASE}events/region.schema.json#/$defs/region`;
+
 const KEY_ID = `${LEDGER_SCHEMA_BASE}common.schema.json#/$defs/key`;
 
 type Rec = Record<string, unknown>;
@@ -42,11 +44,21 @@ function keyOf(raw: unknown): string | undefined {
   return typeof key === 'string' && schemaProblems(KEY_ID, key).length === 0 ? key : undefined;
 }
 
+/** A sent container with no `mode` as it is stored (a line always names one): the layout the container has, else the
+ * schema's default (`mode.default`, `row`). An agent's update never resets a layout it did not name. */
+function withMode(s: LedgerState, board: string, e: Rec): Rec {
+  const r = e.region as Rec;
+  if (r.mode !== undefined) return e;
+  const had = s.boards.get(board)?.regions.find((x) => x.id === r.id)?.mode;
+  return { ...e, region: { ...r, mode: had ?? schemaDefault(REGION_ID, 'mode') } };
+}
+
 /** The ledger line an item becomes: `base` and a node's `insert` dropped, the path's board on the lines that carry
- * one (api.md 34), and a retire's cards filled in (api.md 126). */
+ * one (api.md 34), a container's mode filled in, and a retire's cards filled in (api.md 126). */
 function eventOf(b: Batch, item: Rec): Rec {
   const { base: _base, insert: _insert, ...rest } = item;
   const e = ON_BOARD.has(String(item.type)) ? { ...rest, board: b.board } : rest;
+  if (e.type === 'region') return withMode(b.ledger.state(), b.board, e);
   return e.type === 'retire' ? retireLine(b.ledger.state(), e) : e;
 }
 

@@ -36,6 +36,11 @@ test('a short frame: the rail collapses, expands over the cards on hover or focu
   expect(await drawn(f)).toEqual(all);
   await page.keyboard.press('ArrowDown');
   await expect(f.getByRole('radio', { name: 'Flow' })).toBeFocused();
+  // The icon's tooltip is open (layoutTooltip flag): the first Esc dismisses it and nothing else; the next collapses the rail.
+  await expect(f.getByRole('radio', { name: 'Flow' }).locator('.vb-mode-tip')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(f.getByRole('radio', { name: 'Flow' }).locator('.vb-mode-tip')).toBeHidden();
+  expect(await drawn(f)).toEqual(all);
   await page.keyboard.press('Escape');
   await expect(f.getByRole('radio', { name: 'Flow' })).toBeFocused();
   expect(await drawn(f)).toEqual(['Grid', 'Flow', 'Comment', 'Settings']);
@@ -51,8 +56,8 @@ test('a short frame: the rail collapses, expands over the cards on hover or focu
   expect(await drawn(f)).toEqual(all);
 });
 
-test('popovers open to the right of the rail, top-aligned with what opened them, inside the window', async ({ page, request }) => {
-  const d = await board(page, request);
+test('popovers open to the right of the rail, top-aligned with what opened them, inside the window (the layout popover with layoutTooltip off)', async ({ page, request }) => {
+  const d = await board(page, request, '?flags=-layoutTooltip');
   await act(page, d, { action: 'comment', board: d.board, region: 'p', text: 'Is the order right?' });
   await zoomTo(page, 0.8);
   await centreOn(page);

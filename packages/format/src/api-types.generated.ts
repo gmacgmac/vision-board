@@ -513,7 +513,7 @@ type ShowContainerResponse = {
 type RegionRegion = {
   id: string;
   title: CommonRegionTitle;
-  mode: CommonLineMode;
+  mode?: CommonLineMode;
   lanes?: CommonLanes;
   center?: number;
   columns?: number;

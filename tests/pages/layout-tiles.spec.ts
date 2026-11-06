@@ -1,7 +1,7 @@
 // A tile of a container's layout popover applies its layout (board-ui rail polish, point 1): a click,
 // or Enter on a focused tile, sets it through the page's one click wiring, the action the rail's icon
 // sends, and the popover closes. A past version and a locked board keep the tiles inert. Then the two
-// small looks of the same task: the rail rests at 50% in both themes, and a container's title is one
+// small looks of the same task (the tiles are the layoutTooltip flag's off look: these boards run with it off): the rail rests at 50% in both themes, and a container's title is one
 // two text steps larger (--vb-text-lg). On a board of its own, drawn through the API (rail-board.ts).
 import type { Page } from '@playwright/test';
 import { act, write } from './agent-board.ts';
@@ -18,7 +18,7 @@ const modeActs = async (page: Page, id: string) =>
   (await boardLines(page, id)).filter((l) => l.type === 'act' && l.action === 'mode');
 
 test('a tile click sets the layout like the rail icon: one act, the popover closes', async ({ page, request }) => {
-  const d = await board(page, request);
+  const d = await board(page, request, '?flags=-layoutTooltip');
   await zoomTo(page, 1);
   await expect(frame(page)).toHaveAttribute('data-mode', 'grid');
   const before = (await modeActs(page, d.board)).length;
@@ -42,7 +42,7 @@ test('a tile click sets the layout like the rail icon: one act, the popover clos
 });
 
 test('Enter on a focused tile applies it, and the icon the keyboard was on keeps the focus', async ({ page, request }) => {
-  const d = await board(page, request);
+  const d = await board(page, request, '?flags=-layoutTooltip');
   await zoomTo(page, 1);
   await radio(page, 'Grid').focus();
   await expect(popover(page)).toBeVisible();
@@ -56,7 +56,7 @@ test('Enter on a focused tile applies it, and the icon the keyboard was on keeps
 });
 
 test('a tile is a button with its states: pointer, hover, pressed, focus, current', async ({ page, request }) => {
-  await board(page, request);
+  await board(page, request, '?flags=-layoutTooltip');
   await zoomTo(page, 1);
   await radio(page, 'Grid').hover();
   const lanes = tile(page, 'lanes');
@@ -81,7 +81,7 @@ test('a tile is a button with its states: pointer, hover, pressed, focus, curren
 });
 
 test('a past version keeps the tiles inert: no tool is visible, and a click on one sends nothing', async ({ page, request }) => {
-  const d = await board(page, request);
+  const d = await board(page, request, '?flags=-layoutTooltip');
   await zoomTo(page, 1);
   // The person's answer ends the agent's run, so the next card is a version of its own.
   await act(page, d, { action: 'ack', n: Number(await page.locator('vb-node').first().getAttribute('data-id')), ver: 1 });

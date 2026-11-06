@@ -202,7 +202,8 @@ test('two mounts in one page work apart', async ({ page, host }) => {
   await expect(page.locator('.host-root vb-node')).toHaveCount(3);
 });
 
-test('theme: the three --host-* properties reach the board, and light or dark follows the system, or data-theme', async ({ page, host }) => {
+// With no --host-color-scheme (host-styling.spec.ts holds it and the colours).
+test('theme: the three --host-* type properties reach the board, and light or dark follows the system, or data-theme', async ({ page, host }) => {
   await drawPlans(host);
   await openHost(page, host);
   await drawn(page);
@@ -222,7 +223,8 @@ test('theme: the three --host-* properties reach the board, and light or dark fo
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect.poll(ground).not.toBe(light);
   const dark = await ground();
-  // `data-theme` on the page's root forces one; on the board's root, or a `color-scheme` of the host's, does not.
+  // `data-theme` on the page's root forces one; on the board's root, or a `color-scheme` of the host's, does not. The
+  // ground is the board's own canvas, light-dark() kept native: it resolves against the color-scheme at the board's root.
   await page.evaluate(() => { document.documentElement.dataset.theme = 'light'; });
   await expect.poll(ground).toBe(light);
   await page.evaluate(() => { delete document.documentElement.dataset.theme; document.querySelector<HTMLElement>('.host-root')!.dataset.theme = 'light'; document.documentElement.style.colorScheme = 'light'; });

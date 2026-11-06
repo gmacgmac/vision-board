@@ -1271,3 +1271,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: on a small card the tab fell back against "Open" and lifted the buttons; centred at a third it sat too far right.
 - **Rejected**: 24 px (the hung tab overlapped the next card's tabs by 2-3 px); 28 px (1-2 px clear, cramped); 32 px everywhere (every board looser).
 - **Task**: cortex-tasks/board/2026-11-05_board-ui_tab-lower.md
+
+## D-094 A host may set the board's colours and mode
+- **Date**: 2026-11-06 · **Status**: Accepted (maintainer, point 453) · **From**: cortex-tasks/board/2026-11-06_board-tokens_host-styling/TASK-STATUS.md (T_01)
+- **In short**: under a host, the board can wear the host's colours and light or dark; a host that sets nothing, and standalone, keep the board's own look.
+- **Decision** (amends D-081 rule 3; refines D-009):
+  1. A host may set the board's colours and mode through optional properties (`--host-accent`, `--host-accent-strong`, `--host-on-accent`, `--host-canvas`, `--host-surface`, `--host-surface-sunken`, `--host-ink`, `--host-ink-muted`, `--host-line`, `--host-line-strong`, `--host-focus`, `--host-color-scheme`), on the mount root or any ancestor, live. Each falls back to the board's own token. The card kinds, state colours, scrim, dot grid, wires, lane band and shadows stay the board's.
+  2. Contrast of the host's pairs is the host's promise: D-009's tiers, measured with APCA-W3 0.0.98G-4g in each mode it gives, for the pairs `docs/specification/plugin.md` § Theme and host styling lists. The board's own colours stay measured on its own grounds; on a host's grounds they are looked at, not promised.
+  3. Light or dark: `--host-color-scheme`, else `data-theme` on `<html>`, else the system; never an inherited `color-scheme`.
+  4. The seam stays 1. Behind `hostStyling`, on.
+- **Why**: under a host the board kept its own accent and greys beside a bot of another colour, and followed the system when the person had forced the host's mode the other way.
+- **Rejected**: colours stay the board's (D-081 3: the board looks foreign in its host); the mode from an inherited `color-scheme` (a page that says nothing would make the board light); a board setting for its own look or the host's (the host decides by setting the properties or not, point 450).
+- **Task**: cortex-tasks/board/2026-11-06_board-tokens_host-styling/TASK-STATUS.md

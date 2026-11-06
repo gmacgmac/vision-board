@@ -1,5 +1,6 @@
 /* Vision Board design tokens: the only source of style (project rule 3).
-   Each colour is one light-dark() value driven by color-scheme; data-theme forces a theme.
+   Each colour is one light-dark() value driven by color-scheme; data-theme forces a theme. Under a
+   host, a colour may front a --vb-host-* (the palette's head, below).
    Contrast: three APCA tiers (D-009: Lc 60 reading text, Lc 45 short coloured labels, Lc 30
    decoration; APCA-W3 0.0.98G-4g). Pairs were measured by hand for Stage 2b; the automatic
    gate is tracker N1. */
@@ -80,46 +81,58 @@
   --vb-motion-fast: 120ms;
   --vb-motion: 360ms;
   --vb-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 
-  /* Palette: Uplynk Architect's (D-024), measured against the APCA tiers (D-009, APCA-W3
-     0.0.98G-4g). Three values are nudged from Architect's to pass; Architect's originals are
-     recorded in prototypes/board-v3-design/README.md § Palette. */
-
+/* Palette: Uplynk Architect's (D-024), measured against the APCA tiers (D-009, APCA-W3
+   0.0.98G-4g). Three values are nudged from Architect's to pass; Architect's originals are
+   recorded in prototypes/board-v3-design/README.md § Palette.
+   On the board's root as well as `:root` (docs/specification/plugin.md § Theme and host styling, Scope): a colour
+   resolves where it is declared, so the board's root reads what a host sets on it or on any ancestor, and two
+   boards in one page may differ. Under a host, `--vb-host-*` (apps/board/plugin/theme.css: a host's `--host-*`, only
+   while hostStyling is on) replaces the value it fronts; nothing sets one elsewhere, so the literal after it is the
+   board's own, written once. */
+:root, .vb-board {
   /* Surfaces */
-  --vb-surface-canvas: light-dark(#f5f5f6, #111112);
-  --vb-surface-region: light-dark(#ffffff, #1a1a1c);
-  --vb-surface-card: light-dark(#ffffff, #1a1a1c);
-  --vb-surface-raised: light-dark(#ffffff, #1a1a1c);
-  --vb-surface-sunken: light-dark(#efeff1, #222225);
-  --vb-surface-deep: light-dark(#e4e4e7, #2c2c30);
+  --vb-surface-canvas: var(--vb-host-canvas, light-dark(#f5f5f6, #111112));
+  --vb-surface-region: var(--vb-host-surface, light-dark(#ffffff, #1a1a1c));
+  --vb-surface-card: var(--vb-host-surface, light-dark(#ffffff, #1a1a1c));
+  --vb-surface-raised: var(--vb-host-surface, light-dark(#ffffff, #1a1a1c));
+  --vb-surface-sunken: var(--vb-host-surface-sunken, light-dark(#efeff1, #222225));
+  --vb-surface-deep: var(--vb-host-surface-sunken, light-dark(#e4e4e7, #2c2c30));
   --vb-scrim: light-dark(#18181c66, #000000a6);
   --vb-dot: light-dark(rgb(24 24 27 / 0.09), rgb(255 255 255 / 0.07));
 
   /* Ink (no hue in body text, rule 3) */
-  --vb-ink-strong: light-dark(#18181b, #ededef);
-  --vb-ink: light-dark(#3f3f46, #c7c7cc);
-  --vb-ink-subtle: light-dark(#6b6b74, #b8b8c0); /* muted text is the reading tier: dark Lc 60+ on every surface it is text on (60.1 on deep); maintainer point 415 */
-  --vb-ink-on-fill: light-dark(#ffffff, #1a0712);
+  --vb-ink-strong: var(--vb-host-ink, light-dark(#18181b, #ededef));
+  --vb-ink: var(--vb-host-ink, light-dark(#3f3f46, #c7c7cc));
+  --vb-ink-subtle: var(--vb-host-ink-muted, light-dark(#6b6b74, #b8b8c0)); /* muted text is the reading tier: dark Lc 60+ on every surface it is text on (60.1 on deep); maintainer point 415 */
+  --vb-ink-on-fill: var(--vb-host-on-accent, light-dark(#ffffff, #1a0712));
 
   /* Lines (faint by design; not a contrast tier) */
-  --vb-line: light-dark(#e1e1e5, #2a2a2e);
-  --vb-line-strong: light-dark(#cbcbd1, #3a3a40);
+  --vb-line: var(--vb-host-line, light-dark(#e1e1e5, #2a2a2e));
+  --vb-line-strong: var(--vb-host-line-strong, light-dark(#cbcbd1, #3a3a40));
   /* The next step up this scale, by the same size as line to line-strong (review polish FE_01,
      chosen by eye): the container frame and every hover box's border. */
-  --vb-line-contrast: light-dark(#b5b5bd, #4a4a52);
+  --vb-line-contrast: var(--vb-host-line-strong, light-dark(#b5b5bd, #4a4a52));
   --vb-wire: light-dark(#8a8a95, #7c7c89);
   --vb-wire-hot: var(--vb-accent);
 
   /* Accent and focus */
   --vb-brand: #fb1fa7;
   --vb-brand-mark: light-dark(#0d9488, #2dd4bf); /* The app icon's teal (N21): APCA Lc 64.5 on the light toolbar, 66.6 on the dark one. */
-  --vb-accent: light-dark(#d4138a, #ff5cbe);
-  --vb-accent-text: light-dark(#c81784, #ff66c2); /* dark nudged from #ff5cbe */
-  --vb-accent-fill: light-dark(#d4138a, #ff85cf); /* dark nudged from #ff5cbe */
-  --vb-accent-fill-hover: light-dark(#bc0f7a, #ff9bd8);
-  --vb-accent-soft: light-dark(#fde7f4, #2e1726);
-  --vb-accent-line: light-dark(#f7b6dc, #5e2449);
-  --vb-focus: var(--vb-accent);
+  /* The board's own accent, which the decision kind and the commented state keep under a host: a card's colour
+     says what it is, so it never takes a host's (D-094, point 455). */
+  --vb-board-accent: light-dark(#d4138a, #ff5cbe);
+  --vb-board-accent-text: light-dark(#c81784, #ff66c2); /* dark nudged from #ff5cbe */
+  --vb-board-accent-soft: light-dark(#fde7f4, #2e1726);
+  --vb-accent: var(--vb-host-accent, var(--vb-board-accent));
+  --vb-accent-text: var(--vb-host-accent-strong, var(--vb-board-accent-text));
+  --vb-accent-fill: var(--vb-host-accent-fill, light-dark(#d4138a, #ff85cf)); /* dark nudged from #ff5cbe */
+  --vb-accent-fill-hover: var(--vb-host-accent-fill-hover, light-dark(#bc0f7a, #ff9bd8));
+  /* Under a host's accent, mixed from it into the surface (theme.css), so one accent dresses the family. */
+  --vb-accent-soft: var(--vb-host-accent-soft, var(--vb-board-accent-soft));
+  --vb-accent-line: var(--vb-host-accent-line, light-dark(#f7b6dc, #5e2449));
+  --vb-focus: var(--vb-host-focus, var(--vb-accent));
   --vb-agent: light-dark(#5f7a0e, #c3dc5c);
 
   /* Item states (project rule 3: node states are tokens) */
@@ -133,13 +146,13 @@
   --vb-state-ack: light-dark(#278f52, #4cc47f);
   --vb-state-drop: light-dark(#cc3b3b, #f07474);
   --vb-state-drop-fill: light-dark(#cc3b3b, #f59a9a);
-  --vb-state-comment: var(--vb-accent-text);
+  --vb-state-comment: var(--vb-board-accent-text);
   --vb-state-context: light-dark(#b97c0c, #e6af45);
   --vb-state-later: light-dark(#7257c6, #a48ef2);
   --vb-state-flag: light-dark(#c2410c, #fb923c); /* the person's private flag (D-041 set, N36) */
   --vb-state-ack-soft: color-mix(in srgb, var(--vb-state-ack) 12%, var(--vb-surface-card));
   --vb-state-drop-soft: color-mix(in srgb, var(--vb-state-drop) 12%, var(--vb-surface-card));
-  --vb-state-comment-soft: var(--vb-accent-soft);
+  --vb-state-comment-soft: var(--vb-board-accent-soft);
   --vb-state-context-soft: color-mix(in srgb, var(--vb-state-context) 12%, var(--vb-surface-card));
   --vb-state-later-soft: color-mix(in srgb, var(--vb-state-later) 12%, var(--vb-surface-card));
   /* A container holding new or updated cards the person has not engaged with (new-and-updated point 88):
@@ -165,7 +178,7 @@
   /* Node kinds (Architect families, D-024) */
   --vb-kind-question: light-dark(#3471d0, #72a6f2);
   --vb-kind-finding: light-dark(#1f8f7e, #4fc3b0);
-  --vb-kind-decision: var(--vb-accent);
+  --vb-kind-decision: var(--vb-board-accent);
   --vb-kind-risk: light-dark(#e0552a, #f38860);
   --vb-kind-action: light-dark(#b57c09, #e8b04a); /* light nudged from #c98a0b */
   --vb-kind-topic: var(--vb-state-later);
@@ -193,10 +206,12 @@
    at APCA Lc 30 or more (the decoration tier, D-009): Lc 36.5 on the canvas, 39.8 on the rail's fill.
    Dark 0.5 does not: Lc 16.9 on the canvas and 17.7 on the fill for the unchecked icons and the cog
    (the checked layout 33.8 and 36.5); it was 0.76 (Lc 32.6 and 32.7) because lit the quiet icon is only
-   Lc 48.8 in dark. Reported, awaiting the maintainer: keep, or dim dark less. */
+   Lc 48.8 in dark. Reported, awaiting the maintainer: keep, or dim dark less.
+   One value while both modes are the same (D-052), so it holds in whatever mode the board is in (a host's
+   --host-color-scheme included). A number can't be light-dark(), and a rule on prefers-color-scheme or
+   :root[data-theme] would miss a board whose own mode differs from the page's: if dark dims less again,
+   that needs a mode the board's root can be selected by. */
 :root { --vb-rail-rest: 0.5; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --vb-rail-rest: 0.5; } }
-:root[data-theme='dark'] { --vb-rail-rest: 0.5; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --vb-motion: 0ms; --vb-motion-fast: 0ms; }

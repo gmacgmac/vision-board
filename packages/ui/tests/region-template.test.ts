@@ -1,7 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MODES } from '#format';
-import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, nblockRepliesMarkup, regionIds, regionTemplate } from '../src/index.ts';
+import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, nblockRepliesMarkup, regionIds, regionTemplate as template } from '../src/index.ts';
+import type { RegionFrameOptions } from '../src/index.ts';
+
+// The popover's markup (layoutTooltip off) is what these tests read; the tooltip's own are at the end.
+const regionTemplate = (r: Parameters<typeof template>[0], o: RegionFrameOptions = {}) => template(r, { layoutTooltip: false, ...o });
 
 const region = { id: 'review', title: 'Review', mode: 'flow' as const };
 
@@ -190,4 +194,28 @@ test('a fixed frame with the rail: only the cog in its rail; no rail option, no 
   assert.match(later, /<\/header><div class="vb-region-rail"><div class="vb-region-tools"><div class="vb-mode-row"><button type="button" class="vb-mseg vb-cog"/);
   assert.equal((later.match(/class="vb-mseg/g) ?? []).length, 1);
   assert.doesNotMatch(regionTemplate(region), /vb-region-rail/);
+});
+
+// Layout tooltip (host-styling FE_02, layoutTooltip flag): each layout icon names itself and says what it does as its
+// accessible description; the big popover is not drawn.
+test('layoutTooltip: every layout icon carries a tip, name over hint, and the hint is its accessible description', () => {
+  const html = template(region, { layoutTooltip: true });
+  const icons = [...html.matchAll(/<button type="button" class="vb-mseg" role="radio" aria-checked="false" tabindex="-1" aria-label="(\w+)" aria-describedby="([^"]+)" data-mode="(\w+)" data-region="review"><svg[^>]*>.*?<\/svg><span class="vb-tip vb-mode-tip"><span class="vb-mode-tip-name">(\w+)<\/span><span class="vb-mode-tip-hint" id="([^"]+)">([^<]+)<\/span><\/span><\/button>/g)];
+  assert.deepEqual(icons.map((i) => i[3]), [...MODES]);
+  for (const [, label, describedby, mode, name, id, hint] of icons) {
+    const m = mode as (typeof MODES)[number];
+    assert.equal(label, MODE_LABEL[m]);
+    assert.equal(name, MODE_LABEL[m]);
+    assert.equal(hint, MODE_HINT[m]);
+    assert.equal(describedby, id, 'the hint is the description');
+    assert.equal(id, `region-review-tip-${m}`);
+  }
+  assert.doesNotMatch(html, /vb-mode-pop|vb-mtile|vb-mode-line/, 'no popover, no tiles');
+});
+
+test('layoutTooltip: a fixed frame has no layout icons, so no tip; the ids follow the mount prefix; off draws the popover', () => {
+  assert.doesNotMatch(template({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true, layoutTooltip: true }), /vb-mode-tip|vb-mode-pop/);
+  assert.match(template(region, { layoutTooltip: true, idPrefix: 'vb2-' }), /id="vb2-region-review-tip-row"/);
+  assert.match(template(region, { layoutTooltip: false }), /class="vb-mode-pop"/);
+  assert.match(template(region), /vb-mode-tip/, 'on by default');
 });

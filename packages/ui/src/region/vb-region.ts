@@ -13,6 +13,8 @@ import { bindModeRow } from './region-row.ts';
 import type { NoteParts } from './region-note.ts';
 import { bindNoteParts } from './region-note.ts';
 import { bindTitleTip } from './region-title.ts';
+import type { LayoutTips } from './region-layout-tip.ts';
+import { bindLayoutTips } from './region-layout-tip.ts';
 import { fillFreshPill } from './region-fresh.ts';
 import { holdersTemplate, regionIds, regionIdsOf, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
@@ -33,7 +35,7 @@ export interface VbRegionElement extends HTMLElement {
   render(r: Region, opts?: RegionFrameOptions): void;
   /** Apply the current state (from `regionState`) without rebuilding the markup. */
   update(st: RegionState): void;
-  /** Open the layout popover (`mode` highlighted) or the settings menu; the gallery's samples. */
+  /** Open the layout popover (`mode` highlighted; with layoutTooltip, that layout's tip) or the settings menu; the gallery's samples. */
   showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void;
   /** Mark the container's note bubble open or closed: `data-note-open` on the frame (3_FE_04
    *  ruling 3), and opening closes the note preview. The page calls it as it opens or closes the
@@ -62,11 +64,14 @@ export function defineVbRegion(): void {
     private markdown: RegionFrameOptions['markdown'];
     private readonly note: NoteParts = bindNoteParts(this, () => this.markdown);
     private readonly titleTip = bindTitleTip(this);
+    /** The layout icons' tips (layoutTooltip flag); null when the frame is drawn with the popover. */
+    private layoutTips: LayoutTips | null = null;
 
     render(r: Region, opts: RegionFrameOptions = {}): void {
       this.markdown = opts.markdown;
       this.row.close();
       this.titleTip.close();
+      this.layoutTips?.close();
       this.dataset.region = r.id;
       if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
       else delete this.dataset.idPrefix;
@@ -77,6 +82,9 @@ export function defineVbRegion(): void {
       this.setAttribute('aria-labelledby', regionIds(r.id, opts.idPrefix).heading);
       this.style.setProperty('--region', regionColour(r));
       this.innerHTML = regionTemplate(r, opts);
+      const tip = this.querySelector('.vb-mode-tip') !== null;
+      this.toggleAttribute('data-layout-tooltip', tip);
+      this.layoutTips = tip ? bindLayoutTips(this) : null;
       this.note.bind();
       this.setNoteOpen(this.hasAttribute('data-note-open'));
       this.holdersKey = '';
@@ -112,7 +120,8 @@ export function defineVbRegion(): void {
     }
 
     showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void {
-      this.row.open(what, opts);
+      if (what === 'modes' && this.layoutTips) this.layoutTips.show(opts?.mode ?? (this.dataset.mode as Mode));
+      else this.row.open(what, opts);
     }
 
     setNoteOpen(open: boolean): void {

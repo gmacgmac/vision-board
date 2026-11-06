@@ -37,8 +37,8 @@ export const embedFormatFiles = (): Plugin => {
 };
 
 /** The tokens set `color-scheme` on `:root` and on `[data-theme]`, which is the standalone page's to say: under a host it
- *  would turn the host's own fields and scrollbars dark (the board's own is on its root, plugin/color-scheme.css). The
- *  lowered `--lightningcss-*` they leave beside it are what the colours run on, and stay. Three rules, or the build stops. */
+ *  would turn the host's own fields and scrollbars dark (the board's own is on its root, plugin/color-scheme.css). Each
+ *  of those three rules loses its `color-scheme` (a rule left with nothing goes), or the build stops. */
 export const hostKeepsColorScheme = (): Plugin => ({
   name: 'host-keeps-color-scheme',
   enforce: 'post',
@@ -46,10 +46,20 @@ export const hostKeepsColorScheme = (): Plugin => ({
     const sheet = Object.values(bundle).find((f) => f.type === 'asset' && f.fileName.endsWith('.css'));
     if (sheet?.type !== 'asset') throw new Error('the view bundle has no stylesheet');
     let taken = 0;
-    sheet.source = String(sheet.source).replace(/((?::root|\[data-theme=(?:light|dark)\])\{(?:--lightningcss-[a-z]+:[^;}]*;)+)color-scheme:[^;}]+;?/g, (_all, before: string) => { taken += 1; return before; });
+    sheet.source = String(sheet.source).replace(/(?<=^|[}\s])(:root|\[data-theme=(?:light|dark)\])\{([^}]*)\}/g, (all, sel: string, body: string) => {
+      const rest = body.replace(/(^|;)color-scheme:[^;}]+;?/, '$1').replace(/;$/, '');
+      if (rest === body) return all;
+      taken += 1;
+      return rest ? `${sel}{${rest}}` : '';
+    });
     if (taken !== 3) throw new Error(`the tokens' color-scheme: expected 3 rules, took ${taken}`);
   },
 });
+
+/** The browsers the view's sheet is written for: each has `light-dark()`, so the minifier keeps it native and every colour
+ *  resolves against the `color-scheme` at the board's root (a host's `--host-color-scheme`; plugin.md § Theme and host
+ *  styling, Mode), not against the media query a lowered `--lightningcss-*` pair would follow. */
+export const CSS_TARGET = ['chrome123', 'safari17.5', 'firefox120'];
 
 const common = (outDir: string, watch: boolean) => ({
   configFile: false as const, root: ROOT, logLevel: 'warn' as const,
@@ -62,7 +72,7 @@ export const viewBuild = (outDir: string, watch = false): InlineConfig => {
   return {
     ...base, plugins: [svelte({ configFile: here('svelte.config.js') }), hostKeepsColorScheme()],
     build: {
-      ...base.build, target: 'es2022', cssCodeSplit: false,
+      ...base.build, target: 'es2022', cssTarget: CSS_TARGET, cssCodeSplit: false,
       lib: { entry: here('plugin/view.ts'), formats: ['es'], fileName: () => 'board.js', cssFileName: 'board' },
       rollupOptions: { output: { codeSplitting: false } },
     },

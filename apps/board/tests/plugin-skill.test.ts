@@ -98,3 +98,9 @@ test('the plugin bot\'s tool descriptions are the tool table\'s (the MCP server 
   }
   assert.ok(Object.keys(OPERATIONS).length > listed.length);
 });
+
+test('v3.31 (host-styling FE_03): both skills say a container with no `mode` is a `row`, used unless the bot has a reason for another', () => {
+  const kept = 'unless you have a reason for another layout: leave `mode` out and a new container is a `row`';
+  assert.ok(source.includes(kept) && plugin.includes(kept), kept);
+  assert.ok(!source.includes('`column`s side by side') && !plugin.includes('`column`s side by side'), 'a column is no default for a few cards');
+});

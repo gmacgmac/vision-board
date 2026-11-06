@@ -243,7 +243,7 @@ test('each layout mode draws every region', async ({ page }) => {
 });
 
 test('the mode row by keyboard: one Tab stop, arrows move, Enter applies, Esc closes the popover', async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, { query: '?flags=-layoutTooltip' }); // layoutTooltip off: the popover
   await zoomToButtons(page);
   await panTo(page, row(page, 'review'));
   // The keyboard alone: the pointer leaves the row, which panTo set it on.
@@ -294,7 +294,7 @@ test('the mode row by keyboard: one Tab stop, arrows move, Enter applies, Esc cl
 });
 
 test('hovering a layout icon shows the tiles, and leaving the row closes them', async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, { query: '?flags=-layoutTooltip' }); // layoutTooltip off: the popover
   await zoomToButtons(page);
   await panTo(page, row(page, 'review'));
   const review = page.locator('vb-region[data-region="review"]');
@@ -362,7 +362,7 @@ test('the cog opens the settings menu; Reset places puts a moved card back, then
 for (const theme of THEMES) {
   test(`axe passes with the popover and the settings menu open, at full size (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page);
+    await openBoard(page, { query: '?flags=-layoutTooltip' }); // layoutTooltip off: the popover
     await zoomToFull(page, { check: true });
     await panTo(page, row(page, 'review'));
     const review = page.locator('vb-region[data-region="review"]');

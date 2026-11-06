@@ -45,3 +45,20 @@ vb-region .vb-mode-foot {
   vb-region .vb-mtile small { display: none; }
   vb-region .vb-mode-line { display: block; }
 }
+
+/* The layout icons' tooltips (layoutTooltip flag; region-layout-tip.ts): the layout's name over what it
+   does, in the shared tip box (tip/tip.css), inside the icon so the pointer crossing onto it is still on the
+   icon. Beside the icon, never over it: below it on the top line, to the right of it in the rail (over the
+   cards, as the popovers there). Shown while the icon carries data-tip-open; the frame is then drawn above
+   every card, as for an open popover, and only its tools take the pointer. The hint is the icon's accessible
+   description whether or not this shows. */
+vb-region .vb-mseg[role='radio'] { position: relative; }
+vb-region .vb-mode-tip { top: calc(100% + var(--vb-space-1)); right: 0; text-align: left; cursor: default; }
+vb-region[data-rail] .vb-mode-tip {
+  top: 50%; right: auto; left: calc(100% + var(--rail-ring) + var(--vb-space-1)); transform: translateY(-50%);
+}
+vb-region[data-rail] .vb-mode-tip::before { left: auto; right: 100%; top: 0; bottom: 0; width: calc(var(--rail-ring) + var(--vb-space-1)); height: auto; }
+vb-region .vb-mseg[data-tip-open] .vb-mode-tip { display: grid; gap: 2px; }
+vb-region .vb-mode-tip-name { color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
+vb-region .vb-mode-tip-hint { color: var(--vb-ink); font-size: var(--vb-text-xs); font-weight: var(--vb-weight-regular); }
+vb-region:has(.vb-mseg[data-tip-open]) { z-index: var(--vb-z-open); pointer-events: none; }

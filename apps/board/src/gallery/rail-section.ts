@@ -30,6 +30,8 @@ interface Sample {
   open?: { what: 'modes'; mode: 'flow' } | { what: 'menu' };
   /** The popover's tiles drawn pressed and with the focus ring (data-look), by layout. */
   tiles?: { pressed: string; focus: string };
+  /** Drawn with layoutTooltip off: the popover and its tiles. */
+  popover?: true;
   /** The board cannot change (locked): the tiles are paused. */
   paused?: true;
   /** The railOnHover look: the frame carries data-rail-hover, and data-use when it is the one in use. */
@@ -39,7 +41,7 @@ interface Sample {
 /** Draw one frame of `region` (from `view` and `state`) under the sample id. */
 function frame(s: Sample, region: Region, view: View, state: BoardState, owed?: ReadonlySet<string>, fixed = false): VbRegionElement {
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render({ ...region, id: `rail-${s.id}` }, { ...ownIds(), ...(fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true, ...(s.hover && { railHover: true }) }) });
+  f.render({ ...region, id: `rail-${s.id}` }, { ...ownIds(), ...(s.popover && { layoutTooltip: false }), ...(fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true, ...(s.hover && { railHover: true }) }) });
   f.update({ ...regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed), ...(s.paused && { paused: true }) });
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.dataset.sample = s.height;
@@ -92,13 +94,13 @@ export function railSection(fx: Fixture, hover = false): HTMLElement {
     group('The narrowest', 'Only the cog, and Comment while its badge shows (an unsent or a waiting note); the badge is never dimmed.',
       frames(draw({ id: 'narrowest', height: 'shortest' }),
         frame({ id: 'badged', height: 'shortest' }, badged, notes.view, notes.state, notes.owed))),
-    group('Popovers', 'The layout popover and the settings menu open to the right of the rail, over the cards, top-aligned with '
+    group('Popovers', 'The layout tooltip and the settings menu open to the right of the rail, over the cards, top-aligned with '
       + 'what opened them: the layouts, the cog.',
     frames(draw({ id: 'modes', height: 'tall', open: { what: 'modes', mode: 'flow' } }), draw({ id: 'menu', height: 'tall', open: { what: 'menu' } }))),
     group('Layout tiles', 'A tile is a button: a click, or Enter on it, sets that layout as the rail\'s icon does, and the popover closes. '
       + 'Flow is hovered, Radial pressed, Row has the focus ring and Grid is the layout in force; locked, the tiles are paused.',
-    frames(draw({ id: 'tiles', height: 'tall', open: { what: 'modes', mode: 'flow' }, tiles: { pressed: 'radial', focus: 'row' } }),
-      draw({ id: 'tiles-locked', height: 'tall', open: { what: 'modes', mode: 'flow' }, paused: true }))),
+    frames(draw({ id: 'tiles', height: 'tall', popover: true, open: { what: 'modes', mode: 'flow' }, tiles: { pressed: 'radial', focus: 'row' } }),
+      draw({ id: 'tiles-locked', height: 'tall', popover: true, open: { what: 'modes', mode: 'flow' }, paused: true }))),
     group('Later', 'The board sets Later\'s layout, so its rail holds only the cog.',
       frames(frame({ id: 'later', height: 'short' }, laterRegion, later, fx.state, undefined, true))));
   return box;

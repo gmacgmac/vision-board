@@ -421,8 +421,8 @@ suggestion: "Rows by area are good."
   areas (venue, travel, agenda, budget): a row per area, or columns side by side?", and nothing
   else: no numbered list of the points in the chat.
 - Second turn: one `write_board` call: a `board` item named for the subject ("Team offsite",
-  never the whole sentence), then a container per area in `row` mode (or `column`s if each area
-  has 3 or fewer cards), one point per card: what it can explain as `topic`, `note`, `finding` or
+  never the whole sentence), then a container per area in `row` mode (the default: leave `mode`
+  out), one point per card: what it can explain as `topic`, `note`, `finding` or
   `risk`; what only the person can answer as `question` or `decision` cards (dates, budget
   ceiling, who comes). Every item keyed (`team-offsite-...`).
 - No links (chatting, not a flow), no `size`, no `widths`, no coordinates, no numbers in titles or

@@ -468,8 +468,7 @@
                       "type": "object",
                       "required": [
                         "id",
-                        "title",
-                        "mode"
+                        "title"
                       ],
                       "properties": {
                         "id": {
@@ -494,6 +493,7 @@
                             "list"
                           ],
                           "description": "`list` is now `column` (top to bottom in card order); `row` runs left to right, `flow` follows the links.",
+                          "default": "row",
                           "not": {
                             "const": "list"
                           }

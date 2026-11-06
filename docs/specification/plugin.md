@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -160,9 +160,10 @@ With no chat at all, where nothing carries a chip, and the bot reads the board i
   two elements (`body span`, `main div`), which ties the board's guard and wins when your sheet comes later, a rule on `*` (`box-sizing`
   among them), one on an element not named there or on an svg's inner shapes, a less usual property on `span` or `div` (the sheet lists what it
   takes back; `all` costs a big board too much), or a `width` or `height` on an `svg` or `img` that carries its own. The board's rules stay under its own `vb-` names, but the sheet does
-  set `--vb-*` and `--lightningcss-*` on `:root` and on `[data-theme]`, registers `--vb-root-w`, and selects `vb-node` and `vb-region`. A
-  `color-scheme` of yours stays yours: the board's is on its root. Proven by `guest.spec.ts` "a host's loud element rules",
-  "a picture stands too", "a host's color-scheme", `tests/pages/host-styles.spec.ts`.
+  set `--vb-*` on `:root` and again on the board's root (§ Theme and host styling, Scope), registers `--vb-root-w`, and selects
+  `vb-node` and `vb-region`. It reads `--host-*` and never sets one. A `color-scheme` of yours stays yours: the board's is on its
+  root. Proven by `guest.spec.ts` "a host's loud element rules", "a picture stands too", "a host's color-scheme",
+  `host-styling.spec.ts` "the sheet:", `tests/pages/host-styles.spec.ts`.
 - **Size.** What opens stays inside the root, by the root's size and not the window's, but for a modal (above). The Reply panel and the
   requests strip too; the strip stacks when the root is narrow. Proven by `short-pane.spec.ts`.
 - **Your CSP.** It must allow `img-src` for `imageRoute` and for `data:` (a picture's blank, `packages/ui/src/markdown/markdown.css`
@@ -281,9 +282,13 @@ takes one, and no tool reads one. Your chat attaches, uploads and tells the bot 
 `read_attachment` and the PDF frame stay with the standalone chat, and `packages/documents` stays reusable. Standalone's own
 way is its chat's (`apps/board/server/chat-files.ts`; `docs/specification/chat.md`). Proven by `tools.spec.ts` "tools.list" (the absence).
 
-## Theme
+## Theme and host styling
 
-Set any of three properties on the page's root, or none (`apps/board/plugin/theme.css`):
+A host may dress the board in its own type, colours and light or dark, or set none of it and get the board's own look. Each
+property is optional: a CSS custom property you set and the board only reads, never declares. Set it on `root` or any ancestor
+(**Scope**, below).
+
+**Type** (`apps/board/plugin/theme.css`):
 
 | Property | What it is | Without it |
 |---|---|---|
@@ -291,9 +296,70 @@ Set any of three properties on the page's root, or none (`apps/board/plugin/them
 | `--host-font-mono` | The face of code and numbers, a list | The board's own |
 | `--host-text-scale` | The text size around the cards, a number | `1.25` |
 
-Colours are not on the list: they are measured for contrast (D-009). **Light or dark follows the system; `data-theme="light"` or
-`"dark"` on the page's root (`<html>`) forces one.** A `color-scheme` of yours doesn't move them, nor does `data-theme` on
-`root`, so two boards in a page share one theme. Proven by `guest.spec.ts` "theme", `apps/board/tests/plugin-theme.test.ts`.
+**Colours** (read in `apps/board/plugin/theme.css`; the board's own values in `packages/tokens/src/tokens.css`). Give each as one finished colour for the mode the board is in: resolve your own
+light and dark first, and change the value when your mode changes. Each feeds the board's tokens in its row; one you leave out
+keeps the board's own value, light / dark.
+
+| Property | What it means | Feeds | Without it (light / dark) |
+|---|---|---|---|
+| `--host-accent` | Your accent: the selection, the active state, a highlighted link; a button's fill when you give no `--host-accent-fill` | `--vb-accent` | `#d4138a` / `#ff5cbe` |
+| `--host-accent-strong` | The accent where it carries text; a fill's hover when you give no `--host-accent-fill-hover` | `--vb-accent-text` | `#c81784` / `#ff66c2` |
+| `--host-accent-fill` | A primary button's fill, when yours differs from your accent | `--vb-accent-fill` | Your `--host-accent`, else `#d4138a` / `#ff85cf` |
+| `--host-accent-fill-hover` | That fill under the pointer | `--vb-accent-fill-hover` | Your `--host-accent-strong`, else `#bc0f7a` / `#ff9bd8` |
+| `--host-on-accent` | Text and icons on the fill and its hover | `--vb-ink-on-fill` | `#ffffff` / `#1a0712` |
+| `--host-canvas` | The ground behind the containers | `--vb-surface-canvas` | `#f5f5f6` / `#111112` |
+| `--host-surface` | Containers, cards, menus and popovers | `--vb-surface-region`, `--vb-surface-card`, `--vb-surface-raised` | `#ffffff` / `#1a1a1c` |
+| `--host-surface-sunken` | Wells, fields, the deepest grounds | `--vb-surface-sunken`, `--vb-surface-deep` | `#efeff1` / `#222225`; deep `#e4e4e7` / `#2c2c30` |
+| `--host-ink` | Body text and strong text | `--vb-ink-strong`, `--vb-ink` | `#18181b` / `#ededef`; ink `#3f3f46` / `#c7c7cc` |
+| `--host-ink-muted` | Secondary text | `--vb-ink-subtle` | `#6b6b74` / `#b8b8c0` |
+| `--host-line` | Hairlines and borders | `--vb-line` | `#e1e1e5` / `#2a2a2e` |
+| `--host-line-strong` | Borders that must be seen, a container's frame | `--vb-line-strong`, `--vb-line-contrast` | `#cbcbd1` / `#3a3a40`; contrast `#b5b5bd` / `#4a4a52` |
+| `--host-focus` | The focus ring | `--vb-focus` | The accent, yours when you give one |
+| `--host-color-scheme` | Light or dark: `light`, `dark`, or `light dark` (the system's) | The `color-scheme` of the board's root | **Mode**, below |
+
+**Derived.** `--vb-accent-soft` (a selected or commented ground) and `--vb-accent-line` (its edge) mix `--host-accent` into
+`--host-surface` (or the board's surface) when you give an accent, so one accent dresses the whole family; without one they
+are the board's own. The fill is apart from the accent because many hosts fill a button with a deeper colour than they ring a
+selection in: give `--host-accent-fill` and its hover, and the accent keeps the selection, the ring and the soft grounds;
+give neither, and the fill is your accent as before. A token the board defines from one in the table follows it: the focus ring and a highlighted wire are
+the accent, and a state's soft ground mixes into the card surface. **The board's own**, whatever you set: every card kind, a
+decision's pink too, and the state colours (answered, dropped, commented, later, new, updated, the flag), since a card's
+colour says what it is (D-094, point 455); the scrim, the dot grid, the wires, the lane band and the shadows. Proven by `host-styling.spec.ts` "no host property", "each host property reaches", "derived accents",
+"fill:", `apps/board/tests/plugin-theme.test.ts` "the spec's host table".
+
+**Mode.** The board's root takes `--host-color-scheme` as its `color-scheme`, and every colour, the board's own and the
+defaults above, resolves against it (`light-dark()`, kept native in `view/board.css`). Without it, `data-theme="light"` or
+`"dark"` on `<html>` forces one, else the system's. An inherited `color-scheme` doesn't move the board, nor does `data-theme`
+on `root`: the board can't tell a `color-scheme` you chose from a page that said nothing, whose `normal` would make every
+colour light, so it reads your choice from the property, beside your colours.
+Proven by `host-styling.spec.ts` "mode: --host-color-scheme", `guest.spec.ts` "theme", "a host's color-scheme".
+
+**Scope.** Every property here, the type's too, works set on `root` or any ancestor of it; nothing needs `<html>`. The sheet
+declares the board's tokens on its root as well as `:root`, so they read what you set there, and two boards in one page may
+wear different colours and modes. Proven by `host-styling.spec.ts` "scope: on the mount root", "scope: two mounts".
+
+**Live.** Change a property, or your mode, while the board is mounted, and it follows at once, with no remount and no call.
+Proven by `host-styling.spec.ts` "live:".
+
+**Contrast** (D-009). The board's own pairs meet APCA tiers, measured with APCA-W3 0.0.98G-4g, light and dark. Your colours
+are your promise: in each mode you give, measured the same way, your pairs meet these. A property you leave out counts as the
+board's value, so your ink on the board's surface is your pair too.
+
+| Pair | At least |
+|---|---|
+| `--host-ink` on `--host-surface`, `--host-canvas` and `--host-surface-sunken` | Lc 60 |
+| `--host-ink-muted` on the same three | Lc 60 |
+| `--host-on-accent` on the fill and its hover: `--host-accent-fill` and `--host-accent-fill-hover`, or `--host-accent` and `--host-accent-strong` where you give no fill | Lc 60 |
+| `--host-accent-strong` as text on `--host-surface` and `--host-canvas` | Lc 45 |
+| `--host-focus` on `--host-surface` and `--host-canvas` | Lc 30 |
+
+Lines (`--host-line`, `--host-line-strong`) are not a tier: the board's own are faint by design, as `tokens.css` § Lines
+says. The board's own colours that stay (the kinds, the states) are measured on its own grounds, not on yours (§ Not covered).
+Proven by `host-styling.spec.ts` "contrast: the board's own", which holds the board's defaults to the same table.
+
+**Off.** Behind the `hostStyling` flag, on. Off (`settings.get('hostStyling')` false, read at mount), the colour properties
+and `--host-color-scheme` reach nothing and light or dark is as before; the type's three still apply. Proven by
+`host-styling.spec.ts` "flag off:".
 
 ## The types and the seam version
 
@@ -320,7 +386,8 @@ Proven by `apps/board/tests/plugin-types.test.ts` "the types are the code's own"
 taken out or renamed, or a part of the folder or its entry (`mount`, `createEngine`) moved; a member the host gives that is
 now required, or takes less than before; a member the host is given that now holds less; a promise on this page that now means
 something else, or happens at another moment. *Not breaking*: a member the host may leave out, a member the host is given
-and may ignore, a new tool or chip kind, a new flag that is off until a host turns it on, new words.
+and may ignore, a new tool or chip kind, a new flag that is off until a host turns it on, new words, a new `--host-*`
+property a host may leave out (§ Theme and host styling: a host that sets none sees the board as before, and no type moves).
 
 *An option shaped like standalone's.* A member the host gives that the standalone engine also takes (`readOnly`) is
 declared in `PluginEngineOptions` itself, with its promise in a host's words, rather than picked from `EngineOptions`,
@@ -381,6 +448,8 @@ No test holds these:
 - A host's routes on another origin than its page, a page in a frame, a phone's width.
 - App cards under a host: `appCards` stays off here.
 - `isolation: isolate` on `root` against a host's own layers.
+- The board's own colours (the card kinds, the states, the wires) on a host's grounds: looked at on the fake host's palettes,
+  not measured by a test. A colour read into script (an app card's frame) following a host's change: `appCards` stays off here.
 
 ## Open points
 
@@ -406,9 +475,11 @@ Reviewed by the maintainer (D-074 rule 7): all settled, 2026-11-02. Each is stil
    this repo, does not: `App.svelte` needs its test door.
 7. **The root is a size container** (`apps/board/src/styles/board.css`). **Settled** (D-082): `100cqh` caps a menu by the pane. It asks a host for a definite
    size, which its absolute children needed already.
-8. **The sheet still touches `:root`.** **Settled** (point 391D), until a host needs two boards with different themes: the tokens, whose lowered form makes `data-theme` work only there. `color-scheme` left it for the
-   board's root (`apps/board/vite.plugin.config.ts` `hostKeepsColorScheme`), so a host's fields stay its own. Scoping the tokens to
-   `.vb-board` too would let two boards differ, but it moves every token and risks the screenshots. Keep until a host minds.
+8. **The sheet still touches `:root`.** **Settled** (point 391D; reopened and settled by host styling, 2026-11-06): the tokens
+   are declared on `:root` and again on the board's root, one literal each, so a host's properties on the mount root reach them and
+   two boards may differ (§ Theme and host styling). `light-dark()` stays native in the plugin's sheet, so the board's mode is the
+   `color-scheme` at its root, and `color-scheme` itself stays off `:root` (`apps/board/vite.plugin.config.ts`
+   `hostKeepsColorScheme`), so a host's fields stay its own. The standalone page keeps its own build.
 9. **Types in the folder.** **Settled** (point 377): `plugin.d.ts`, generated at build (§ The types and the seam version).
 10. **A seam version.** **Settled** (point 377): `seam` in the manifest, with the rule for moving it (§ The types and the seam version).
 11. **The zoomed view stays a real modal**, inert page and all (PROOF_01). Non-modal means rebuilding its focus handling. **Settled** (D-080).
@@ -450,8 +521,8 @@ rows 1 and 2. With a throwaway manifest and engine shim it loads, and `mount` st
 | 13 | "Framework-free view"; "every selector starts with its root class" | The board is Svelte inside, and its sheet selects `vb-node` and sets `:root` tokens | "Framework-free to the host: it only calls `mount`"; "every selector under the plugin's own prefix" |
 | 14 | The pane's header is the host's; nothing about a plugin's own | The board draws its own header in `root`, under the pane's | Say so; Add to chat stays the pane's, by `pageChip`. A short pane works |
 | 15 | One bot, no joins | The board's ledger names agents, and `request_grant` is for a person's board | Register the bot once at turn-on (`POST agents`), keep its id with the bot's plugin data; the grants strip is inside the board |
-| 16 | `prefers-color-scheme` and the app's theme | Colours follow the system or `data-theme` on `<html>` | Set `data-theme` on `<html>` if the app has a theme switch |
-| 17 | No `--host-*` | Fonts and text size | Set the three on the root, or leave them |
+| 16 | `prefers-color-scheme` and the app's theme | Colours follow `--host-color-scheme`, else `data-theme` on `<html>`, else the system | Set `--host-color-scheme` on the pane's root from `data-mode` (its `data-theme` holds palette names, which the board ignores) |
+| 17 | No `--host-*` | Fonts, text size, colours and mode (§ Theme and host styling) | Set the bot's colours and the mode on the pane's root, or leave them for the board's own look |
 
 **How the tools should reach its bot (recommended, its choice).** One generic plugin pass-through in the existing container MCP
 server: `tools/list` from the engine for the plugins on for this bot; `tools/call` becomes `POST /api/run/plugins/{id}/tools/{name}`

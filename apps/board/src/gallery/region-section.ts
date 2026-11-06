@@ -2,7 +2,7 @@
 // empty message, and a region with nothing to count. Each frame is a real <vb-region>, updated
 // with `regionState`, exactly as the board does. The frame draws no cards (D-013), so a sample
 // says which nodes the layout drew by passing `placed`. Four samples are drawn open, through the
-// element's own `showPanel`: the layout popover (wide, and compact on a narrow frame) and the
+// element's own `showPanel`: the layout popover (wide, and compact on a narrow frame; drawn with layoutTooltip off) and the
 // settings menu with Reset places enabled and disabled.
 import type { Mode } from '#format';
 import type { VbRegionElement } from '#ui';
@@ -13,6 +13,7 @@ import { FRAME_PREFIX } from './fixture.ts';
 import { containerSamples } from './container-section.ts';
 import { laterSamples } from './later-section.ts';
 import { titleSamples } from './title-section.ts';
+import { layoutTipSection } from './layout-tip-section.ts';
 
 /** The one frame whose layout drew none of its nodes, so it shows the empty message. */
 const DREW_NOTHING = `${FRAME_PREFIX}empty`;
@@ -29,7 +30,7 @@ function frame(id: string, fx: Fixture): VbRegionElement {
   const region = fx.view.regions.find((r) => r.id === id)!;
   const placed = new Set(id === DREW_NOTHING ? [] : fx.view.nodes.map((n) => n.id));
   const node = document.createElement('vb-region') as VbRegionElement;
-  node.render(region, ownIds());
+  node.render(region, { ...ownIds(), layoutTooltip: false }); // these samples show the popover, the layoutTooltip flag's off look (layout-tip-section.ts shows the tooltip)
   node.update(regionState(region, fx.view, fx.state, placed));
   return node;
 }
@@ -46,6 +47,7 @@ export function regionSamples(body: HTMLElement, fx: Fixture): void {
     'The checked icon is the layout in force. Items are counted as answered when checked (✓) or crossed (✗). '
     + 'Grid mode shows the popover with Flow under the pointer; the narrow "Empty message showing" frame shows its compact form. '
     + 'The cog\'s menu is open on "Reset places showing" (a card was moved) and on "Nothing to decide, so no count" (nothing to reset).', frames));
+  layoutTipSection(body, fx);
   titleSamples(body, fx);
   laterSamples(body, fx);
   containerSamples(body, fx);

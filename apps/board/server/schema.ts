@@ -43,6 +43,10 @@ export function compileSchema(id: string): ValidateFunction {
   return validate;
 }
 
+/** The `default` the schema at `id` (a `$defs` path included) gives its property `name`: a default has one home, the schema. */
+export const schemaDefault = (id: string, name: string): unknown =>
+  (compileSchema(id).schema as { properties?: Record<string, { default?: unknown }> }).properties?.[name]?.default;
+
 /** Every problem with `value` against schema `id`. Empty means valid. */
 export function schemaProblems(id: string, value: unknown): SchemaProblem[] {
   const validate = compileSchema(id);

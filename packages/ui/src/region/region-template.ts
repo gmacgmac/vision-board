@@ -6,7 +6,7 @@
 // State is applied in place by the element (`VbRegion.update`), so this runs once per view version;
 // the holders slot is filled by `holdersTemplate` whenever the holders change.
 import type { Mode, Region } from '#format';
-import { MODES } from '#format';
+import { MODES, flagOn } from '#format';
 import { esc } from '../node/node-template.ts';
 import type { MarkdownOptions } from '../markdown/render.ts';
 import { renderMarkdown } from '../markdown/render.ts';
@@ -25,6 +25,9 @@ export const regionIds = (id: string, prefix = '') => ({
   back: `${prefix}region-${id}-back-hint`, preview: `${prefix}region-${id}-note-preview`, previewText: `${prefix}region-${id}-note-preview-text`,
   noteText: `${prefix}region-${id}-note-text`,
 });
+
+/** The id of a layout's hint in its tooltip, the icon's accessible description. */
+export const layoutTipId = (id: string, m: Mode, prefix = ''): string => `${prefix}region-${id}-tip-${m}`;
 
 /** The ids of the frame `host` (a `vb-region`): its container and the prefix it was drawn with. */
 export const regionIdsOf = (host: HTMLElement) => regionIds(host.dataset.region ?? '', host.dataset.idPrefix);
@@ -82,10 +85,13 @@ export const nblockRepliesMarkup = (replies: readonly ReplyEntry[], md?: Markdow
   + `<div class="vb-nblock-reply-text">${renderMarkdown(r.text, md)}</div></div>`).join('');
 
 /** One layout icon: a radio in the row's radiogroup, out of the tab order until `update` makes the
- * checked one the row's single Tab stop. `data-mode` / `data-region` are the page's click wiring. */
-const modeButton = (m: Mode, id: string): string =>
+ * checked one the row's single Tab stop. `data-mode` / `data-region` are the page's click wiring.
+ * With the layoutTooltip flag it carries its tip: the name over what it does, the hint being the
+ * button's accessible description (`aria-describedby`, always, shown or not). */
+const modeButton = (m: Mode, id: string, tipId?: string): string =>
   `<button type="button" class="vb-mseg" role="radio" aria-checked="false" tabindex="-1" aria-label="${MODE_LABEL[m]}"`
-  + ` data-mode="${m}" data-region="${esc(id)}">${svgIcon(MODE_ICON[m], 24, 'vb-mode-icon')}</button>`;
+  + `${tipId ? ` aria-describedby="${tipId}"` : ''} data-mode="${m}" data-region="${esc(id)}">${svgIcon(MODE_ICON[m], 24, 'vb-mode-icon')}`
+  + `${tipId ? `<span class="vb-tip vb-mode-tip"><span class="vb-mode-tip-name">${MODE_LABEL[m]}</span><span class="vb-mode-tip-hint" id="${tipId}">${MODE_HINT[m]}</span></span>` : ''}</button>`;
 
 /** Match card widths (widthsControl flag, field report batch 3 ruling 5): a switch in the row, after
  * the layouts' divider, on while every card in a column takes its widest card's width. `update`
@@ -134,8 +140,9 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, prefix?:
  * instead of on the top line (toolRail flag, container tool rail Design 1); the top line then holds
  * the label alone. A fixed frame's rail holds only the cog. `railHover`: with `rail`, the frame carries
  * data-rail-hover and its rail icons show only while it is in use (railOnHover flag; region-rail.css). `idPrefix`: put before every id the frame
- * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
+ * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. `layoutTooltip`: each
+ * layout icon carries a tooltip and the layout popover is not drawn (layoutTooltip flag, the flag's value when not given). */
+export interface RegionFrameOptions { layoutTooltip?: boolean; fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = regionWords.everythingHereIsAnswered;
@@ -168,12 +175,13 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
   const ids = regionIds(r.id, opts.idPrefix);
   const title = esc(r.title);
   const notes = !opts.fixed;
-  const modes = opts.fixed ? '' : MODES.map((m) => modeButton(m, r.id)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
+  const tip = opts.layoutTooltip ?? flagOn('layoutTooltip');
+  const modes = opts.fixed ? '' : MODES.map((m) => modeButton(m, r.id, tip ? layoutTipId(r.id, m, opts.idPrefix) : undefined)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
   const row = `<div class="vb-mode-row"${opts.fixed ? '' : ` role="radiogroup" aria-label="Layout for ${title}"`}>`
     + modes + (opts.widths && !opts.fixed ? widthsSwitch(r.id) : '') + (notes ? commentButton(r.id, title) : '')
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="${regionWords.settingsFor(title)}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
-  const tools = `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r, opts.idPrefix)}${notes ? notePreview(r.id, title, opts.idPrefix) : ''}`
+  const tools = `<div class="vb-region-tools">${row}${opts.fixed || tip ? '' : modePopover(r, opts.idPrefix)}${notes ? notePreview(r.id, title, opts.idPrefix) : ''}`
     + `${settingsMenu(r, opts.remove === true && !opts.fixed, opts.idPrefix)}</div>`;
   return `<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">${handle(title, ids.heading)}`
     + `${FRESH}${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`

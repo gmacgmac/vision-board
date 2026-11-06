@@ -35,7 +35,7 @@ export interface RegionSet {
 /** `widths`: every ordinary frame has the Match card widths switch (widthsControl flag); `remove`:
  * Remove container in its settings (personRemove flag, N24); `rail`: every frame, Later too, has its
  * tools in a rail on its left edge (toolRail flag); `idPrefix`: the mount's, before every id a frame sets. */
-export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions } = {}): RegionSet {
+export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; layoutTooltip?: boolean; idPrefix?: string; markdown?: MarkdownOptions } = {}): RegionSet {
   const els = new Map<string, VbRegionElement>();
   const drawn = new Map<string, string>();
   const shown = new Map<string, { box: string; state: string }>();
@@ -61,8 +61,9 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         if (drawn.get(r.id) !== key) {
           const rail = opts.rail === true;
           const railHover = opts.railHover === true;
+          const layoutTooltip = opts.layoutTooltip;
           const { idPrefix, markdown } = opts;
-          el.render(r, r.id === LATER_REGION ? { ...LATER_FRAME, rail, railHover, idPrefix, markdown } : { widths: opts.widths === true, remove: opts.remove === true, rail, railHover, idPrefix, markdown });
+          el.render(r, r.id === LATER_REGION ? { ...LATER_FRAME, rail, railHover, layoutTooltip, idPrefix, markdown } : { widths: opts.widths === true, remove: opts.remove === true, rail, railHover, layoutTooltip, idPrefix, markdown });
           drawn.set(r.id, key);
           shown.delete(r.id);
         }
