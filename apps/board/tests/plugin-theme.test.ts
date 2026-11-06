@@ -43,8 +43,9 @@ test('only the board\'s own custom properties are set: the map reaches nothing o
 /** The spec's rows: type (three cells) and colour (four), by property. */
 const rows = [...spec.matchAll(/^\| `(--host-[a-z-]+)` \|([^\n]*)\|$/gm)].map((m) => ({ prop: m[1]!, cells: m[2]!.split('|').map((c) => c.trim()) }));
 const colourRows = rows.filter((r) => r.cells.length === 3);
-/** theme.css: each `--vb-host-*` and the host property it passes on (the plain ones, not the mixes). */
-const passes = new Map([...theme.matchAll(/(--vb-host-[a-z-]+): var\((--host-[a-z-]+)\);/g)].map((m) => [m[1]!, m[2]!]));
+/** theme.css: each `--vb-host-*` and the host property it passes on (the plain ones, not the mixes); a fill's own
+ *  property first, then the accent it stands in for. */
+const passes = new Map([...theme.matchAll(/(--vb-host-[a-z-]+): var\((--host-[a-z-]+)(?:, var\(--host-[a-z-]+\))?\);/g)].map((m) => [m[1]!, m[2]!]));
 /** tokens.css: the board's own accents, which the decision kind and commented state keep (point 455), by name. */
 const boardOwn = new Map([...uncomment(tokens).matchAll(/(--vb-board-[a-z-]+): ([^;]+);/g)].map((m) => [`var(${m[1]})`, m[2]!.trim()]));
 /** tokens.css: each token that fronts a `--vb-host-*`, and its own value after it (a board accent read through). */
@@ -53,7 +54,10 @@ const fronts = [...uncomment(tokens).matchAll(/(--vb-[a-z-]+): var\((--vb-host-[
 const pairs = (cell: string) => [...cell.matchAll(/`(#[0-9a-f]{6})` \/ `(#[0-9a-f]{6})`/g)].map((m) => `light-dark(${m[1]}, ${m[2]})`);
 
 test('the spec\'s host table names each property the sheet reads, the tokens it feeds and their defaults', () => {
-  assert.equal(colourRows.length, 12);
+  assert.equal(colourRows.length, 14);
+  // A fill the host leaves out is its accent (and the hover its strong form), as before the fill had a property.
+  assert.match(theme, /--vb-host-accent-fill: var\(--host-accent-fill, var\(--host-accent\)\);/);
+  assert.match(theme, /--vb-host-accent-fill-hover: var\(--host-accent-fill-hover, var\(--host-accent-strong\)\);/);
   const named = new Set(rows.map((r) => r.prop));
   for (const css of [tokens, theme, scheme]) for (const m of uncomment(css).matchAll(/var\((--host-[a-z-]+)/g)) assert.ok(named.has(m[1]!), `${m[1]} has a row`);
   for (const { prop, cells: [, feedsCell, defaultsCell] } of colourRows) {

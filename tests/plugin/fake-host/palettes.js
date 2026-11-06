@@ -14,12 +14,13 @@ const GROUNDS = {
   },
 };
 
-/** Each accent with its strong form and the ink on it; `focus` only where a host gives its own. */
+/** Each accent with its strong form and the ink on it; `focus` only where a host gives its own. Violet's dark fills its
+ *  buttons deeper than its bright accent, as nclite does, so its `on-accent` pairs with the fill. */
 const ACCENTS = {
   orange: { grounds: 'warm', light: { accent: '#c2410c', 'accent-strong': '#9a3412', 'on-accent': '#ffffff' }, dark: { accent: '#fdba74', 'accent-strong': '#fed7aa', 'on-accent': '#1c0a02' } },
   green: { grounds: 'cool', light: { accent: '#15803d', 'accent-strong': '#166534', 'on-accent': '#ffffff' }, dark: { accent: '#4ade80', 'accent-strong': '#86efac', 'on-accent': '#052e16' } },
   blue: { grounds: 'cool', light: { accent: '#1d4ed8', 'accent-strong': '#1e40af', 'on-accent': '#ffffff', focus: '#0369a1' }, dark: { accent: '#8bbcfb', 'accent-strong': '#93c5fd', 'on-accent': '#0b1530', focus: '#38bdf8' } },
-  violet: { grounds: 'cool', light: { accent: '#6d28d9', 'accent-strong': '#5b21b6', 'on-accent': '#ffffff' }, dark: { accent: '#bba6fc', 'accent-strong': '#c4b5fd', 'on-accent': '#1a0b33' } },
+  violet: { grounds: 'cool', light: { accent: '#6d28d9', 'accent-strong': '#5b21b6', 'on-accent': '#ffffff' }, dark: { accent: '#bba6fc', 'accent-strong': '#c4b5fd', 'accent-fill': '#6d28d9', 'accent-fill-hover': '#5b21b6', 'on-accent': '#ffffff' } },
   red: { grounds: 'warm', light: { accent: '#b91c1c', 'accent-strong': '#991b1b', 'on-accent': '#ffffff' }, dark: { accent: '#fa9595', 'accent-strong': '#fca5a5', 'on-accent': '#2a0505' } },
 };
 

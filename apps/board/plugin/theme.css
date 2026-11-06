@@ -7,8 +7,10 @@
      --host-text-scale      the text size around the cards, a number (1.25 is the board's own; ui-scale.css)
    Colours and mode, only on a root that carries data-vb-host-styling (plugin/view.ts, while hostStyling is on): each
    lands in a --vb-host-* the tokens read before their own value, so with the flag off nothing of the host's reaches one.
-     --host-accent          --vb-accent, --vb-accent-fill; mixed into the surface for --vb-accent-soft and -line
-     --host-accent-strong   --vb-accent-text, --vb-accent-fill-hover
+     --host-accent          --vb-accent; mixed into the surface for --vb-accent-soft and -line; the fill without the next
+     --host-accent-strong   --vb-accent-text; the fill's hover without the next
+     --host-accent-fill     --vb-accent-fill (else --host-accent)
+     --host-accent-fill-hover  --vb-accent-fill-hover (else --host-accent-strong)
      --host-on-accent       --vb-ink-on-fill
      --host-canvas          --vb-surface-canvas
      --host-surface         --vb-surface-region, -card, -raised
@@ -31,6 +33,8 @@
 .vb-board[data-vb-host-styling] {
   --vb-host-accent: var(--host-accent);
   --vb-host-accent-strong: var(--host-accent-strong);
+  --vb-host-accent-fill: var(--host-accent-fill, var(--host-accent));
+  --vb-host-accent-fill-hover: var(--host-accent-fill-hover, var(--host-accent-strong));
   --vb-host-on-accent: var(--host-on-accent);
   --vb-host-canvas: var(--host-canvas);
   --vb-host-surface: var(--host-surface);

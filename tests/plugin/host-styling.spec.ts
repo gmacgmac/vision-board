@@ -94,7 +94,7 @@ test('no host property: every colour token and the mode as before', async ({ pag
 });
 
 test('each host property reaches the tokens its row names, and the board\'s own colours stay', async ({ page, host }) => {
-  expect(Object.keys(FEEDS)).toHaveLength(11);
+  expect(Object.keys(FEEDS)).toHaveLength(13);
   await open(page, host);
   const before = await tokensIn(page, '.host-root', BOARDS_OWN);
   const given = Object.fromEntries(Object.keys(FEEDS).map((p, i) => [p, shade(i)]));
@@ -129,6 +129,21 @@ test('derived accents: one accent gives the soft ground and its line', async ({ 
   await setOn(page, '.host-root', { '--host-surface': 'rgb(20 20 20)' });
   const onDark = await pixel(page, (await tokensIn(page, '.host-root', ['--vb-accent-soft']))['--vb-accent-soft']!);
   expect(far(onDark, [20, 20, 20])).toBeLessThan(far(onDark, surface!));
+});
+
+test('fill: without its own properties the fill is the accent and its hover the strong form; with them, the host\'s own', async ({ page, host }) => {
+  await open(page, host);
+  const fills = ['--vb-accent', '--vb-accent-text', '--vb-accent-fill', '--vb-accent-fill-hover'];
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await setOn(page, '.host-root', { '--host-accent': 'rgb(190 160 250)', '--host-accent-strong': 'rgb(200 180 250)' });
+    let got = await tokensIn(page, '.host-root', fills);
+    expect([got['--vb-accent-fill'], got['--vb-accent-fill-hover']], `${colorScheme}: as before`).toEqual([got['--vb-accent'], got['--vb-accent-text']]);
+    await setOn(page, '.host-root', { '--host-accent-fill': 'rgb(109 40 217)', '--host-accent-fill-hover': 'rgb(91 33 182)' });
+    got = await tokensIn(page, '.host-root', fills);
+    expect(Object.values(got), `${colorScheme}: the fill apart`).toEqual(['rgb(190, 160, 250)', 'rgb(200, 180, 250)', 'rgb(109, 40, 217)', 'rgb(91, 33, 182)']);
+    await setOn(page, '.host-root', { '--host-accent-fill': null, '--host-accent-fill-hover': null, '--host-accent': null, '--host-accent-strong': null });
+  }
 });
 
 test('mode: --host-color-scheme forces dark on a light system, and light on a dark one', async ({ page, host }) => {
@@ -255,7 +270,7 @@ test('the harness palettes: every pair of the host\'s table meets its tier, ligh
     const focus = p.focus ?? p.accent!;
     const pairs: [string, string, number][] = [
       ...['ink', 'ink-muted'].flatMap((fg) => ['surface', 'canvas', 'surface-sunken'].map((bg) => [p[fg]!, p[bg]!, 60] as [string, string, number])),
-      [p['on-accent']!, p.accent!, 60], [p['on-accent']!, p['accent-strong']!, 60],
+      [p['on-accent']!, p['accent-fill'] ?? p.accent!, 60], [p['on-accent']!, p['accent-fill-hover'] ?? p['accent-strong']!, 60],
       ...['surface', 'canvas'].flatMap((bg) => [[p['accent-strong']!, p[bg]!, 45], [p['line-strong']!, p[bg]!, 30], [focus, p[bg]!, 30]] as [string, string, number][]),
     ];
     for (const [fg, bg, tier] of pairs) expect(lc(rgb(fg), rgb(bg)), `${name} ${mode}: ${fg} on ${bg}`).toBeGreaterThanOrEqual(tier);

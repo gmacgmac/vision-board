@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -302,9 +302,11 @@ keeps the board's own value, light / dark.
 
 | Property | What it means | Feeds | Without it (light / dark) |
 |---|---|---|---|
-| `--host-accent` | Your accent: fills, the selection, the active state | `--vb-accent`, `--vb-accent-fill` | `#d4138a` / `#ff5cbe`; fill `#d4138a` / `#ff85cf` |
-| `--host-accent-strong` | The accent where it carries text, and a fill's hover | `--vb-accent-text`, `--vb-accent-fill-hover` | `#c81784` / `#ff66c2`; hover `#bc0f7a` / `#ff9bd8` |
-| `--host-on-accent` | Text and icons on an accent fill | `--vb-ink-on-fill` | `#ffffff` / `#1a0712` |
+| `--host-accent` | Your accent: the selection, the active state, a highlighted link; a button's fill when you give no `--host-accent-fill` | `--vb-accent` | `#d4138a` / `#ff5cbe` |
+| `--host-accent-strong` | The accent where it carries text; a fill's hover when you give no `--host-accent-fill-hover` | `--vb-accent-text` | `#c81784` / `#ff66c2` |
+| `--host-accent-fill` | A primary button's fill, when yours differs from your accent | `--vb-accent-fill` | Your `--host-accent`, else `#d4138a` / `#ff85cf` |
+| `--host-accent-fill-hover` | That fill under the pointer | `--vb-accent-fill-hover` | Your `--host-accent-strong`, else `#bc0f7a` / `#ff9bd8` |
+| `--host-on-accent` | Text and icons on the fill and its hover | `--vb-ink-on-fill` | `#ffffff` / `#1a0712` |
 | `--host-canvas` | The ground behind the containers | `--vb-surface-canvas` | `#f5f5f6` / `#111112` |
 | `--host-surface` | Containers, cards, menus and popovers | `--vb-surface-region`, `--vb-surface-card`, `--vb-surface-raised` | `#ffffff` / `#1a1a1c` |
 | `--host-surface-sunken` | Wells, fields, the deepest grounds | `--vb-surface-sunken`, `--vb-surface-deep` | `#efeff1` / `#222225`; deep `#e4e4e7` / `#2c2c30` |
@@ -317,11 +319,13 @@ keeps the board's own value, light / dark.
 
 **Derived.** `--vb-accent-soft` (a selected or commented ground) and `--vb-accent-line` (its edge) mix `--host-accent` into
 `--host-surface` (or the board's surface) when you give an accent, so one accent dresses the whole family; without one they
-are the board's own. A token the board defines from one in the table follows it: the focus ring and a highlighted wire are
+are the board's own. The fill is apart from the accent because many hosts fill a button with a deeper colour than they ring a
+selection in: give `--host-accent-fill` and its hover, and the accent keeps the selection, the ring and the soft grounds;
+give neither, and the fill is your accent as before. A token the board defines from one in the table follows it: the focus ring and a highlighted wire are
 the accent, and a state's soft ground mixes into the card surface. **The board's own**, whatever you set: every card kind, a
 decision's pink too, and the state colours (answered, dropped, commented, later, new, updated, the flag), since a card's
 colour says what it is (D-094, point 455); the scrim, the dot grid, the wires, the lane band and the shadows. Proven by `host-styling.spec.ts` "no host property", "each host property reaches", "derived accents",
-`apps/board/tests/plugin-theme.test.ts` "the spec's host table".
+"fill:", `apps/board/tests/plugin-theme.test.ts` "the spec's host table".
 
 **Mode.** The board's root takes `--host-color-scheme` as its `color-scheme`, and every colour, the board's own and the
 defaults above, resolves against it (`light-dark()`, kept native in `view/board.css`). Without it, `data-theme="light"` or
@@ -345,7 +349,7 @@ board's value, so your ink on the board's surface is your pair too.
 |---|---|
 | `--host-ink` on `--host-surface`, `--host-canvas` and `--host-surface-sunken` | Lc 60 |
 | `--host-ink-muted` on the same three | Lc 60 |
-| `--host-on-accent` on `--host-accent` and on `--host-accent-strong` (a fill and its hover) | Lc 60 |
+| `--host-on-accent` on the fill and its hover: `--host-accent-fill` and `--host-accent-fill-hover`, or `--host-accent` and `--host-accent-strong` where you give no fill | Lc 60 |
 | `--host-accent-strong` as text on `--host-surface` and `--host-canvas` | Lc 45 |
 | `--host-focus` on `--host-surface` and `--host-canvas` | Lc 30 |
 

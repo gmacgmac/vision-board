@@ -127,8 +127,8 @@
   --vb-board-accent-soft: light-dark(#fde7f4, #2e1726);
   --vb-accent: var(--vb-host-accent, var(--vb-board-accent));
   --vb-accent-text: var(--vb-host-accent-strong, var(--vb-board-accent-text));
-  --vb-accent-fill: var(--vb-host-accent, light-dark(#d4138a, #ff85cf)); /* dark nudged from #ff5cbe */
-  --vb-accent-fill-hover: var(--vb-host-accent-strong, light-dark(#bc0f7a, #ff9bd8));
+  --vb-accent-fill: var(--vb-host-accent-fill, light-dark(#d4138a, #ff85cf)); /* dark nudged from #ff5cbe */
+  --vb-accent-fill-hover: var(--vb-host-accent-fill-hover, light-dark(#bc0f7a, #ff9bd8));
   /* Under a host's accent, mixed from it into the surface (theme.css), so one accent dresses the family. */
   --vb-accent-soft: var(--vb-host-accent-soft, var(--vb-board-accent-soft));
   --vb-accent-line: var(--vb-host-accent-line, light-dark(#f7b6dc, #5e2449));
