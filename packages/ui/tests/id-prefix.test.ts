@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import type { ViewNode } from '#format';
 import { appMenuId, nodeTemplate, popoverId, proposalsMarkup, regionIds, regionTemplate, stepsId } from '../src/index.ts';
 
+const popover = { layoutTooltip: false }; // the popover's ids; the tooltip's are below
+
 const idsIn = (html: string): string[] => [...html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]!);
 const refsIn = (html: string): string[] =>
   [...html.matchAll(/ aria-(?:controls|describedby|labelledby)="([^"]+)"/g)].flatMap((m) => m[1]!.split(' '));
@@ -25,7 +27,7 @@ test('a card with an id prefix sets every id behind it, and its references name 
 });
 
 test('a frame with an id prefix sets every id behind it, and its references name those ids', () => {
-  const html = regionTemplate(frame, { idPrefix: 'vb2-', remove: true, widths: true });
+  const html = regionTemplate(frame, { ...popover, idPrefix: 'vb2-', remove: true, widths: true });
   const ids = idsIn(html);
   assert.ok(ids.length >= 6, 'the heading, popover, menu, hints, preview and note text');
   assert.ok(ids.every((id) => id.startsWith('vb2-region-review')), ids.join(', '));
@@ -33,7 +35,7 @@ test('a frame with an id prefix sets every id behind it, and its references name
 });
 
 test('without a prefix the ids are what they have always been, so the standalone page and the gallery are unchanged', () => {
-  assert.deepEqual(idsIn(regionTemplate(frame)).slice(0, 2), ['region-review', 'region-review-modes']);
+  assert.deepEqual(idsIn(regionTemplate(frame, popover)).slice(0, 2), ['region-review', 'region-review-modes']);
   assert.equal(regionIds('review').menu, 'region-review-menu');
   assert.equal(popoverId('proposal', item), 'vb-pop-proposal-12');
   assert.equal(stepsId(item), 'vb-steps-12');
@@ -46,6 +48,15 @@ test('the same card in two mounts shares no id', () => {
   assert.deepEqual(idsIn(a).filter((id) => idsIn(b).includes(id)), []);
   const [fa, fb] = [regionTemplate(frame), regionTemplate(frame, { idPrefix: 'vb2-' })];
   assert.deepEqual(idsIn(fa).filter((id) => idsIn(fb).includes(id)), []);
+});
+
+test('a frame with layout tooltips sets each hint id behind the prefix, and every icon describes itself by one', () => {
+  const html = regionTemplate(frame, { layoutTooltip: true, idPrefix: 'vb2-' });
+  const ids = idsIn(html);
+  assert.ok(ids.filter((id) => id.startsWith('vb2-region-review-tip-')).length === 6, ids.join(', '));
+  assert.ok(ids.every((id) => id.startsWith('vb2-region-review')), ids.join(', '));
+  assert.ok(refsIn(html).every((r) => ids.includes(r)));
+  assert.deepEqual(idsIn(regionTemplate(frame, { layoutTooltip: true })).slice(0, 3), ['region-review', 'region-review-tip-grid', 'region-review-tip-flow']);
 });
 
 test('a proposal\'s reason id is behind the prefix too', () => {

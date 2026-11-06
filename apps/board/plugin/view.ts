@@ -8,6 +8,7 @@ import './theme.css';
 import './color-scheme.css';
 import type { BoardHost, BoardStatus, BoardView, MountedBoard } from '../src/board/index.ts';
 import { mount as mountBoard } from '../src/board/index.ts';
+import { flagOf } from '../src/board/host.ts';
 
 /** What a host gives: `BoardHost` without `page`, which is the standalone page's own. */
 export type PluginHost = Omit<BoardHost, 'page'>;
@@ -25,8 +26,15 @@ export interface PluginViewStatus {
 /** The view a host holds. */
 export type PluginView = BoardView & { readonly status: PluginViewStatus } & Pick<MountedBoard, 'send'>;
 
+/** The root's mark while `hostStyling` is on (read at mount): theme.css lets a host's colours and mode through only
+ *  under it. Held equal to theme.css by apps/board/tests/plugin-theme.test.ts. */
+const HOST_STYLING = 'data-vb-host-styling';
+
 /** The board inside `root`, in `host`. */
 export function mount(root: HTMLElement, host: PluginHost): PluginView {
   const { unmount, unsaved, leave, pageChip, reveal, status, send } = mountBoard(root, host);
-  return { unmount, unsaved, leave, pageChip, reveal, status, send };
+  const marked = flagOf(host, 'hostStyling') && !root.hasAttribute(HOST_STYLING);
+  if (marked) root.setAttribute(HOST_STYLING, '');
+  const off = () => { unmount(); if (marked) root.removeAttribute(HOST_STYLING); };
+  return { unmount: off, unsaved, leave, pageChip, reveal, status, send };
 }

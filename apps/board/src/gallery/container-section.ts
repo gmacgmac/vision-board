@@ -54,7 +54,7 @@ function frame(id: string, board: Containers): VbRegionElement {
   const { view, state, owed } = board;
   const region = view.regions.find((r) => r.id === id)!;
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render(region, ownIds());
+  f.render(region, { ...ownIds(), layoutTooltip: false }); // the popover above the row is read here (container-polish.spec.ts); layout-tip-section.ts shows the tooltip
   f.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed));
   const extra = EXTRA[id] ?? {};
   if (extra.look) lookOf(f, extra.look);

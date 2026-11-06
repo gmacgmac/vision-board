@@ -1,14 +1,46 @@
-/* How a host's own look reaches the board. A host sets any of these three custom properties on its page's
-   root element (`:root` or `html`); the board reads them and falls back to its own values (the tokens,
-   packages/tokens/src/tokens.css; ui-scale.css), so a host that sets none looks right. Colours are not on the
-   list: the board's are measured for contrast (D-009). Light or dark follows the system, and `data-theme="light"` or
-   `"dark"` on the page's root forces one; a `color-scheme` of the host's does not move them.
-     --host-font          the text face (a font-family list)
-     --host-font-mono     the face of code and numbers (a font-family list)
-     --host-text-scale    the text size around the cards, a number (1.25 is the board's own; ui-scale.css)
-   Each fallback below is the token's own value, held equal by apps/board/tests/plugin-theme.test.ts. */
-:root {
+/* How a host's own look reaches the board (docs/specification/plugin.md § Theme and host styling). A host sets any of
+   these custom properties on the board's root or any ancestor; the board reads them and falls back to its own values
+   (the tokens, packages/tokens/src/tokens.css; ui-scale.css), so a host that sets none looks as standalone does.
+   Type, always:
+     --host-font            the text face (a font-family list)
+     --host-font-mono       the face of code and numbers (a font-family list)
+     --host-text-scale      the text size around the cards, a number (1.25 is the board's own; ui-scale.css)
+   Colours and mode, only on a root that carries data-vb-host-styling (plugin/view.ts, while hostStyling is on): each
+   lands in a --vb-host-* the tokens read before their own value, so with the flag off nothing of the host's reaches one.
+     --host-accent          --vb-accent, --vb-accent-fill; mixed into the surface for --vb-accent-soft and -line
+     --host-accent-strong   --vb-accent-text, --vb-accent-fill-hover
+     --host-on-accent       --vb-ink-on-fill
+     --host-canvas          --vb-surface-canvas
+     --host-surface         --vb-surface-region, -card, -raised
+     --host-surface-sunken  --vb-surface-sunken, -deep
+     --host-ink             --vb-ink-strong, --vb-ink
+     --host-ink-muted       --vb-ink-subtle
+     --host-line            --vb-line
+     --host-line-strong     --vb-line-strong, --vb-line-contrast
+     --host-focus           --vb-focus (else the accent)
+     --host-color-scheme    the board's root's color-scheme (plugin/color-scheme.css)
+   Each fallback below is the token's own value, held equal by apps/board/tests/plugin-theme.test.ts. Declared on the
+   board's root as well as `:root`, so a property set on the root alone reaches it. */
+:root, .vb-board {
   --vb-font: var(--host-font, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
   --vb-font-mono: var(--host-font-mono, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
   --vb-ui-text-scale: var(--host-text-scale, 1.25);
+}
+/* A property the host leaves out makes its --vb-host-* invalid, so the token takes its own value. The soft ground and
+   its line mix the host's accent into the surface (the host's, else the board's); no accent, no mix. */
+.vb-board[data-vb-host-styling] {
+  --vb-host-accent: var(--host-accent);
+  --vb-host-accent-strong: var(--host-accent-strong);
+  --vb-host-on-accent: var(--host-on-accent);
+  --vb-host-canvas: var(--host-canvas);
+  --vb-host-surface: var(--host-surface);
+  --vb-host-surface-sunken: var(--host-surface-sunken);
+  --vb-host-ink: var(--host-ink);
+  --vb-host-ink-muted: var(--host-ink-muted);
+  --vb-host-line: var(--host-line);
+  --vb-host-line-strong: var(--host-line-strong);
+  --vb-host-focus: var(--host-focus);
+  --vb-host-color-scheme: var(--host-color-scheme);
+  --vb-host-accent-soft: color-mix(in srgb, var(--host-accent) 10%, var(--vb-surface-card));
+  --vb-host-accent-line: color-mix(in srgb, var(--host-accent) 30%, var(--vb-surface-card));
 }

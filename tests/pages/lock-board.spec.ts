@@ -104,7 +104,7 @@ test('"⋯" › Lock board pauses the board in place, says so beside its name, a
 
 test('locked, a press on a paused control says why and writes nothing: a button, a key, a note, a layout, the selection bar', async ({ page, request }) => {
   await setUp(request);
-  await open(page);
+  await open(page, '-layoutTooltip'); // the tiles of the layout popover are its off look
   await mark(page, 'lock');
   await idle(page);
   const before = await head(page);

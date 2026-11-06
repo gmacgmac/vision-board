@@ -60,19 +60,28 @@
       "properties": {"region": {"type": "object", "description": "The container to add, or to update when its id exists.", "properties": {"mode": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/notList"}}}}
     },
     "rules": {
-      "description": "A stored line from v12 on names no `list` mode.",
+      "description": "A stored line from v12 on names no `list` mode, and every stored container names its mode.",
       "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 129",
       "type": "object",
-      "if": {"type": "object", "required": ["v"], "properties": {"v": {"not": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}}}},
-      "then": {"$ref": "https://vision-board.invalid/schema/ledger/19/events/region.schema.json#/$defs/noList"}
+      "allOf": [
+        {
+          "if": {"type": "object", "required": ["v"], "properties": {"v": {"not": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}}}},
+          "then": {"$ref": "https://vision-board.invalid/schema/ledger/19/events/region.schema.json#/$defs/noList"}
+        },
+        {
+          "$comment": "A sent container may leave `mode` out (`region.mode.default`); the line it is stored as always names it.",
+          "if": {"type": "object"},
+          "then": {"properties": {"region": {"type": "object", "required": ["mode"]}}}
+        }
+      ]
     },
     "region": {
       "type": "object",
-      "required": ["id", "title", "mode"],
+      "required": ["id", "title"],
       "properties": {
         "id": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id", "description": "The container's id; an existing id updates that container."},
         "title": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/regionTitle", "description": "The container's title."},
-        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/lineMode", "description": "How the container lays out its cards: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right in card order). `list`, on lines from ledger v11 and older only, reads as `column`."},
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/lineMode", "default": "row", "description": "How the container lays out its cards: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right in card order). Left out: `row`, or an existing container's layout. `list`, on lines from ledger v11 and older only, reads as `column`."},
         "lanes": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/lanes", "description": "Lane names, top to bottom. Required when the mode is `lanes`."},
         "center": {
           "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/nodeNumber",

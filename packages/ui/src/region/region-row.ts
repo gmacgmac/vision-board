@@ -1,7 +1,8 @@
 // Region pattern, the mode row's behaviour (browser only): the row's single Tab stop with arrow
 // keys between the layouts and the cog, the layout popover (opens on hover or keyboard focus of an
 // icon, closes on leave, blur, Esc or a pick) and the cog's settings menu (Esc and an outside click
-// close it, focus goes back to the cog). Open state is `data-open` on the <vb-region> ("modes" or
+// close it, focus goes back to the cog; with the layoutTooltip flag there is no popover, the icons' tips
+// are region-layout-tip.ts). Open state is `data-open` on the <vb-region> ("modes" or
 // "menu"), which region.css reads. Picks and the menu's items are plain clicks that bubble to the
 // page's delegated listener (data-mode, data-reset, data-put-back, data-remove-region); a disabled
 // item is stopped here, but one a locked board paused (`data-paused`) goes on, so the page says why.
@@ -44,6 +45,9 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   const inTools = (n: EventTarget | null) => n instanceof Node && !!tools()?.contains(n);
   const inRow = (n: EventTarget | null) => n instanceof Node && !!q('.vb-mode-row')?.contains(n);
 
+  /** With the layoutTooltip flag the icons carry their own tips (region-layout-tip.ts): no popover to open. */
+  const tooltip = () => host.hasAttribute('data-layout-tooltip');
+
   function rove(to: HTMLElement) {
     for (const b of stops()) b.tabIndex = b === to ? 0 : -1;
   }
@@ -57,6 +61,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   /** Highlight one layout in the popover and tie the popover to its icon (aria-describedby). */
   function highlight(mode: Mode | null) {
+    if (tooltip()) return;
     const pop = regionIdsOf(host).modes;
     for (const b of radios()) {
       const on = b.dataset.mode === mode;
@@ -94,6 +99,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   }
 
   function openModes(mode: Mode) {
+    if (tooltip()) return;
     if (host.dataset.open === 'menu') return;
     host.dataset.open = 'modes';
     highlight(mode);

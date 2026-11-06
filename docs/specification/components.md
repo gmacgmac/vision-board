@@ -695,10 +695,16 @@ on leave, blur or Esc (`region-row.ts`, `data-shut`). At rest its icons draw at 
 or more, dark does not, Lc 16.9 to 17.7 for the unchecked icons and the cog, recorded in
 `container-rail.spec.ts` until the maintainer rules); hovered, focused, with a popover or the note bubble open, or on a touch screen they are at
 full strength, and the badge is never dimmed. Popovers open to the right of the rail, top-aligned with
-the layouts, Comment and the cog. A tile of the layout popover (`region-template.ts` `modePopover`,
+the layouts, Comment and the cog. **Layout tooltip (layoutTooltip flag, on).** Each layout icon shows a tooltip on
+hover and on keyboard focus, its name over what it does (`MODE_LABEL` over `MODE_HINT`): `span.vb-mode-tip` inside the
+icon (`region-template.ts` `modeButton`), shown by the shared hover tip (`region-layout-tip.ts` `bindLayoutTips`,
+`data-tip-open` on the icon), beside the icon and never over it, hoverable, and dismissed by Esc (that Esc does nothing
+else; the next one collapses a short rail). The hint is the icon's accessible description (`aria-describedby`, whether
+or not the tip shows), and no layout popover is drawn (`layout-tooltip.spec.ts`). The popover below is the flag-off form.
+A tile of the layout popover (`region-template.ts` `modePopover`,
 `button.vb-mtile`, out of the tab order) applies its layout on a click or Enter: the page's click wiring
 (`wiring.ts`) sends the rail icon's `setMode` for it, so there is one action; the popover closes, a past
-version and a locked board keep it inert (`layout-tiles.spec.ts`, `lock-board.spec.ts`). A container's title
+version and a locked board keep it inert (`layout-tiles.spec.ts`, `lock-board.spec.ts`; both with `?flags=-layoutTooltip`). A container's title
 (`.vb-region-handle` and its `h2`) takes `--vb-text-md`. Keys: Up and Down move through the rail; on the cog Right opens the
 menu and Left in the menu closes it. Flag off, the row is on the line exactly as before: the template
 places it there, and `region-narrow.css` scopes the row's narrow forms to frames without `data-rail`.

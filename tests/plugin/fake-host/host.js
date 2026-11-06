@@ -3,6 +3,7 @@
 // own Svelte. `window.fakeHost` is what the contract test drives. It imports nothing of the board but the folder.
 import { listenerCount, listenerNames } from './listeners.js';
 import { createChat } from './chat.js';
+import { paletteSwitcher } from './palettes.js';
 
 const link = (href) => document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href }));
 const manifest = await (await fetch('/plugin/manifest.json')).json();
@@ -116,8 +117,13 @@ function hearKeys() {
   });
 }
 
+/** The palette page (`/?palette`, plugin.md § Theme and host styling): the host dresses the board in its own looks. */
+const palettes = new URLSearchParams(location.search).has('palette') ? paletteSwitcher(document.getElementById('host-bar')) : null;
+
 window.fakeHost = {
   open, hearKeys,
+  /** On the palette page: palette `name` (none: the board's own) in `mode` (none: the system's), on every board root. */
+  dress: (name, mode) => palettes.set(name, mode),
   /** Mounts the board an `open({ hold: true })` left out, so a test can count what the pane alone holds. */
   mountHeld() { held(); },
   keys: () => ({ ...keys, heard: [...keys.heard], order: [...keys.order] }),

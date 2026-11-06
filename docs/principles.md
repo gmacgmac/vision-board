@@ -172,7 +172,8 @@ back with Studio.
   coloured labels in sibling apps, and WCAG 2 passes saturated colours on dark that still read
   poorly, so WCAG 2 contrast is not a gate (D-009). Every foreground/background pair is listed,
   with its tier, and checked by the tests; a pair under its bar is reported, never shipped
-  quietly. The maintainer may overrule a tier by eye, recorded as a decision.
+  quietly. Under a host, the colours a host gives replace the tokens they feed, and their pairs
+  are the host's promise (D-094). The maintainer may overrule a tier by eye, recorded as a decision.
 - A failing colour is fixed in its token, by lightness within the same hue, never per screen.
 - Vision Board needs its own semantic groups on top of Studio's: item states, regions,
   connectors, note pins, and change highlights (new, changed, removed).
