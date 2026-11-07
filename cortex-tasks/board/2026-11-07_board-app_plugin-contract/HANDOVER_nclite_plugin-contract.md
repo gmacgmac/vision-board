@@ -6,7 +6,9 @@ done. With this build, `shared/plugin-adapters/board.ts` and the stylesheet waiv
 ## Vendor it
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `<filled in when the maintainer commits this set>` (40 characters, for `scripts/plugin-vendor.ts`)
+- **Commit**: `dda9143f579456ce0a3be45911c069bc881ffa04` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" dda9143f579456ce0a3be45911c069bc881ffa04`
+- **Decision**: the board's D-096 (`docs/decisions.md`).
 - **Seam**: **2** (breaking). In one change: vendor the folder, move the board row's `seam` to 2, set the flags below,
   delete the adapter, its line in `ADAPTERS`, `REVIEWED_BOARD_SHEET` and the board's stored registration
   (`plugins.agents` row for `board`). Keep `shared/plugin-legacy/board-change.ts`: old rows still need it.
