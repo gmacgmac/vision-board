@@ -68,7 +68,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "show-layout", operationId: "show_layout", takesBody: false,
     summary: "Read how one container is arranged",
-    description: "Read how one container is arranged, as structure only. Pass `board` and `region`. Returns the mode and card widths in effect, each card's column and row (and lane in `lanes` mode) by card number, how many of its links cross another, and how many cells are empty. Call it once after you first draw a `flow` or `lanes` container, and redraw if it reads badly (many crossings or empty cells); not after every write. `write_board` does not return it.",
+    description: "Read how one container is arranged, as structure only. Pass `board` and `region`. Returns the mode and card widths in effect, each card's column and row (and lane in `lanes` mode) by card number, how many of its links cross another, and how many cells are empty. Call it once after you first draw a `flow` or `lanes` container, not after every write; redraw at once if a quarter of the links cross (cut those that are no step) or empty cells outnumber cards (regroup by phase in one `flow`).",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
       {"name":"region","in":"path","type":"string","required":true,"description":"The region (container) id."},

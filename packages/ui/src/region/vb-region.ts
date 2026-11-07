@@ -29,7 +29,7 @@ export const VB_REGION_TAG = 'vb-region';
 
 /** What the page holds: a <vb-region> it renders once and updates in place. */
 export interface VbRegionElement extends HTMLElement {
-  /** Build from the template; sets data-region, role, aria-labelledby and `--region`; a fixed
+  /** Build from the template; sets data-region, role, aria-labelledby and `--vb-region`; a fixed
    *  frame (`opts.fixed`, the built-in Later) also carries `data-fixed`, and a frame with its tools
    *  in the rail (`opts.rail`, toolRail flag) `data-rail`. */
   render(r: Region, opts?: RegionFrameOptions): void;
@@ -80,7 +80,7 @@ export function defineVbRegion(): void {
       this.toggleAttribute('data-rail-hover', opts.rail === true && opts.railHover === true);
       this.setAttribute('role', 'region');
       this.setAttribute('aria-labelledby', regionIds(r.id, opts.idPrefix).heading);
-      this.style.setProperty('--region', regionColour(r));
+      this.style.setProperty('--vb-region', regionColour(r));
       this.innerHTML = regionTemplate(r, opts);
       const tip = this.querySelector('.vb-mode-tip') !== null;
       this.toggleAttribute('data-layout-tooltip', tip);

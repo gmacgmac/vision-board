@@ -16,7 +16,7 @@ import type { LedgerState } from '#actions';
 import { applyEvent, foldLedger } from '#actions';
 import { canApply } from './board-data.ts';
 import { answerEvent } from './card-numbers.ts';
-import type { BoardEvent } from './host.ts';
+import type { PluginEvent } from './host.ts';
 import type { Io } from './io.ts';
 import { hearUntilStopped } from './teardown.ts';
 import { work } from './work.ts';
@@ -46,7 +46,7 @@ export type OnLines = (lines: LedgerEvent[], full: boolean) => void;
 export interface LiveDeps {
   readLedger: Io['readLedger'];
   /** The host's change events (`host.events`). */
-  events(listener: (e: BoardEvent) => void): () => void;
+  events(listener: (e: PluginEvent) => void): () => void;
 }
 
 export function createLive(d: LiveDeps, onLines: OnLines): Live {
@@ -138,9 +138,10 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
     },
     watch(failed, worked) {
       // A head past the one held, or no head (catch up on anything appended while not following).
-      return hearUntilStopped<[BoardEvent]>((events) => d.events(events), ({ ref }) => {
-        if (ref.head === 0 && state) { fromZero = true; sync().then(worked, failed); } // the file was replaced: from the start
-        else if (!state || ref.head === undefined || ref.head > state.seq) sync().then(worked, failed);
+      return hearUntilStopped<[PluginEvent]>((events) => d.events(events), ({ ref }) => {
+        const head = typeof ref.head === 'number' && Number.isSafeInteger(ref.head) && ref.head >= 0 ? ref.head : undefined; // else a catch-up
+        if (head === 0 && state) { fromZero = true; sync().then(worked, failed); } // the file was replaced: from the start
+        else if (!state || head === undefined || head > state.seq) sync().then(worked, failed);
       });
     },
     settled: async () => { while (reading) await reading; },

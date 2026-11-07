@@ -10,7 +10,7 @@ import '#tokens/styles.css';
 import '#board/styles.css';
 import type { Chip } from '#actions';
 import { defineBoardElements } from '#ui';
-import type { BoardEvent, BoardHost, ChatWork, ConfirmAsk } from '../../apps/board/src/board/host.ts';
+import type { PluginEvent, BoardHost, ChatWork, ConfirmAsk } from '../../apps/board/src/board/host.ts';
 import { mount, type MountedBoard } from '../../apps/board/src/board/mount.ts';
 
 /** Listeners on the document and the window now: added minus removed, each (type, capture, function) once. */
@@ -51,7 +51,7 @@ const heard: { key: string; prevented: boolean }[] = [];
 /** A fake host over `lines` (the ledger's JSON lines), of which the first `shown` are written. */
 function fakeHost(lines: readonly object[], shown: number, o: HostOptions = {}) {
   let written = shown;
-  const listeners = new Set<(e: BoardEvent) => void>();
+  const listeners = new Set<(e: PluginEvent) => void>();
   const settings = new Set<() => void>();
   const hearing = new Set<() => void>();
   const record = {
@@ -88,7 +88,7 @@ function fakeHost(lines: readonly object[], shown: number, o: HostOptions = {}) 
       // A host with no server of its own: the message goes through its chat, then the board records the Send.
       send(sendAct) {
         record.sends.push(Object.values(record.chips));
-        return sendAct();
+        return sendAct(null);
       },
       status: {
         get now() { return record.work; },

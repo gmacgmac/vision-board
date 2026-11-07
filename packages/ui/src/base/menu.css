@@ -15,7 +15,10 @@
   background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium);
   color: var(--vb-ink-strong); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.vb-menu-item:hover, .vb-menu-item:focus-visible, .vb-menu-item:is([data-look='hover'], [data-look='focus']) { background: var(--vb-surface-sunken); }
+.vb-menu-item:hover, .vb-menu-item:focus-visible { background: var(--vb-surface-sunken); }
+.vb-menu-item {
+  &:is([data-look='hover'], [data-look='focus']) { background: var(--vb-surface-sunken); }
+}
 .vb-menu-item:focus-visible, .vb-menu-item[data-look='focus'] { outline-offset: var(--vb-focus-offset-inset); }
 .vb-menu-item:active, .vb-menu-item[data-look='pressed'] { transform: translateY(1px); }
 .vb-menu-item[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }

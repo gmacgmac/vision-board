@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { FLAG_DESCRIPTIONS, FLAGS, flagOn, parseFlags } from '../src/index.ts';
+import { FLAG_DESCRIPTIONS, FLAGS, HOST_FLAGS, flagOn, parseFlags, withoutHostFlags } from '../src/index.ts';
 import type { FlagName } from '../src/index.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
@@ -113,4 +113,23 @@ test('cardImages is on by default (app-cards orchestrator decision 5, D-048), an
 test('toolRail is on by default (maintainer, 2026-10-25, container tool rail), and -toolRail turns it off', () => {
   assert.equal(flagOn('toolRail'), true);
   assert.equal(flagOn('toolRail', parseFlags('-toolRail').overrides), false);
+});
+
+test('singleAgent is off by default (plugin-contract PLAN decision 3): a host turns it on, standalone leaves it off', () => {
+  assert.equal(flagOn('singleAgent'), false);
+  assert.equal(flagOn('singleAgent', { singleAgent: true }), true);
+  assert.equal(flagOn('singleAgent', parseFlags('singleAgent').overrides), true);
+});
+
+test('followOtherWriters is on by default (plugin-contract PLAN decision 4): a host turns it off', () => {
+  assert.equal(flagOn('followOtherWriters'), true);
+  assert.equal(flagOn('followOtherWriters', { followOtherWriters: false }), false);
+});
+
+test('the host-only flags never reach the board\'s own engine: withoutHostFlags drops them and keeps the rest', () => {
+  assert.deepEqual([...HOST_FLAGS], ['singleAgent', 'followOtherWriters']);
+  assert.deepEqual(withoutHostFlags({ singleAgent: true, followOtherWriters: false, botToolRules: false }), { botToolRules: false });
+  assert.equal(withoutHostFlags(undefined), undefined);
+  const project = readFileSync(path.resolve(import.meta.dirname, '../../../apps/board/server/project.ts'), 'utf8');
+  assert.match(project, /createEngine\(\{.*flags: withoutHostFlags\(o\.apps\?\.flags\)/s, 'the standalone server gives its engine its flags less the host-only ones');
 });

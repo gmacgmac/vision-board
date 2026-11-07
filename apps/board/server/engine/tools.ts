@@ -5,14 +5,15 @@
 // input against the table's JSON Schema, splits it back into the operation's path, query and body by the
 // table's `route`, and runs the operation with the caller its host passes (a host that knows the agent,
 // nclite's run ticket, passes it; no secret, no `join`). Its text is the operation's JSON, and a problem
-// is `isError` with words, as `vb-mcp` answers them (`answerResult`, `problemResult`). A board write also
-// says what it changed in `_meta` (`TOOL_CHANGE`), the one shape any host reads for a change chip; a CLI's
-// stream, which carries only the text, reads the same facts from it (#agent `boardWriteSummary`). The tools
+// is `isError` with words, as `vb-mcp` answers them (`answerResult`, `problemResult`). A board write that appended
+// also says what it changed, the change line (`CHANGE_META`, plugin.md § Tools), the one shape any host reads for it; a
+// CLI's stream, which carries only the text, reads the same facts from it (#agent `boardWriteSummary`). The tools
 // marked `standalone` alone are left out: `list_apps` (the app host's), `read_attachment` (beside its chat)
 // and `join` (the host says who is calling; its `route` still takes `join`, to register its bot once). With the
 // `botToolRules` flag (on), an input the table gives other hosts only (`inputHosts`: `check_responses`'s `wait`) is
 // left out of the listed schema and refused with words when sent, and `instructions` holds the plugin's (words/plugin-tools.ts).
 import { BOARD_WRITE, boardWriteSummary } from '#agent';
+import type { Ref } from '#actions';
 import type { FlagOverrides, OperationId, ProblemDocument } from '#format';
 import { flagOn } from '#format';
 import type { ListedTool, ToolResult } from '#mcp';
@@ -23,6 +24,7 @@ import { toolRows } from '../format-files.ts';
 import { foreignSchemas } from '../schema.ts';
 import * as httpWords from '../words/http.ts';
 import { descriptionEdits, inputEdits, inputRefusals, instructionEdits, ruleEdits } from '../words/plugin-tools.ts';
+import type * as changeText from '../../plugin/words/change.ts';
 
 /** One row of the tool table, as the engine reads it. */
 interface ToolRow {
@@ -36,9 +38,20 @@ interface ToolRow {
   inputHosts?: Record<string, string[]>;
 }
 
-/** The `_meta` key of what a board write changed: `{ board, cards, head }`, the card numbers it drew
- * or changed and the ledger's head after it. */
-export const TOOL_CHANGE = 'vb/change';
+/** The `_meta` key of a tool result's change line: the one home of the key (plugin.md § Tools). It names no host. */
+export const CHANGE_META = 'plugin/change';
+
+/** The words key of a change line by how many cards the write wrote: none, one, more. Each is a text of
+ * plugin/words/change.ts in words.json, and the manifest lists them as `changeWords`. */
+export const CHANGE_WORDS = { board: 'board.change.board', card: 'board.change.card', cards: 'board.change.cards' } as const satisfies Record<keyof typeof changeText, `board.change.${keyof typeof changeText}`>;
+
+/** What a board write says it changed (the contract's `ChangeMeta`): the words key, the cards it wrote, the board's id,
+ * and what a click reveals. A type, so it is a `Ref`'s kind of plain object. */
+export type ChangeMeta = { words: string; count: number; subject: string; reveal?: Ref };
+
+/** The bounds a change line keeps (the contract's `REF_LIMITS` and `CHANGE_LIMITS`, held equal to the copy by
+ * apps/board/tests/plugin-types.test.ts): a reveal over them is left out, never trimmed. */
+export const CHANGE_BOUNDS = { refChars: 4096, refItems: 500, refString: 256, maxCount: 1000000, subjectChars: 120 } as const;
 
 /** What a call runs with: the caller from the host, and a signal that ends a held read
  * (`check_responses` with `wait`). */
@@ -105,10 +118,26 @@ function refusedInput(tool: string, name: string): ToolResult {
   return problemResult(problem('invalid', words.detail, { errors: [{ pointer: `/${name}`, detail: words.pointer }] }).body);
 }
 
-/** A board write's result, with what it changed. */
+/** The change line of a write to `board` that wrote `cards`; its `reveal` left out when it would break the bounds. */
+export function changeOf(board: string, cards: readonly number[]): ChangeMeta {
+  const count = Math.min(cards.length, CHANGE_BOUNDS.maxCount);
+  const words = count === 0 ? CHANGE_WORDS.board : count === 1 ? CHANGE_WORDS.card : CHANGE_WORDS.cards;
+  const reveal = { board, cards: [...cards] };
+  const fits = board.length <= CHANGE_BOUNDS.refString && cards.length <= CHANGE_BOUNDS.refItems && JSON.stringify(reveal).length <= CHANGE_BOUNDS.refChars;
+  return { words, count, subject: board, ...(fits && { reveal }) };
+}
+
+/** Whether a write's answer appended a line: an item that went and was not a retry's replay. */
+const appended = (answer: unknown): boolean => {
+  const results = (answer as { results?: unknown } | null)?.results;
+  return Array.isArray(results) && results.some((r) => (r as { ok?: unknown })?.ok === true && (r as { replayed?: unknown }).replayed !== true);
+};
+
+/** A board write's result, with its change line: none when it failed, or appended nothing (every item refused or
+ * replayed), since nothing changed. */
 function withChange(name: string, input: Record<string, unknown>, result: ToolResult): ToolResult {
-  if (name !== BOARD_WRITE || result.isError) return result;
-  return { ...result, _meta: { [TOOL_CHANGE]: { board: input.board, ...boardWriteSummary(result.content) } } };
+  if (name !== BOARD_WRITE || result.isError || typeof input.board !== 'string' || !appended(result.structuredContent)) return result;
+  return { ...result, _meta: { ...result._meta, [CHANGE_META]: changeOf(input.board, boardWriteSummary(result.content).cards) } };
 }
 
 /** The tools a plugin bot gets (`x-hosts`), each running through `run`; `serves` holds what the engine can run;

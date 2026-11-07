@@ -8,10 +8,12 @@
 // is read or written, and the reads say `readOnly: true`. A read that names another ledger of the folder (`ledger`,
 // D-084 8) reads the one its host gives (`otherLedger`, opened read-only) as an unmarked read: no caller, so no `owed`
 // or `held` (agents are per ledger), and its answer says `ledger` and `readOnly: true`. A host that keeps one ledger
-// gives none, and the input is refused.
+// gives none, and the input is refused. Two flags change who the engine takes a call from and what it listens to
+// (plugin.md § The engine): `singleAgent`, every agent caller the folder's one agent (`callerOf`); `followOtherWriters`
+// off, `watch` never looks at the file for another writer.
 import path from 'node:path';
 import type { FlagOverrides, LedgerEvent, OperationId } from '#format';
-import { IMAGES_DIR, LEDGER_FILE, OPERATIONS, ROUTE_PREFIX } from '#format';
+import { IMAGES_DIR, LEDGER_FILE, LIMITS, OPERATIONS, ROUTE_PREFIX, clip, flagOn } from '#format';
 import type { AnswersRef, AnswersText, BoardRef, CardRef, ChipRefusal, ChipText, NoteRef, SelectionRef } from '#actions';
 import { eventBoard, resolveChip } from '#actions';
 import type { Agents } from '../agents.ts';
@@ -46,8 +48,8 @@ export interface EngineContext {
 }
 
 /** A change to the board's files, from anyone: the board it is on (none for a line on no board,
- * such as an agent's `join`) and the ledger's head after it. */
-export interface EngineChange { board?: string; head: number }
+ * such as an agent's `join`) and the ledger's head after it. A type, so it is a `Ref`'s kind of plain object. */
+export type EngineChange = { board?: string; head: number };
 
 export interface EngineOptions {
   /** The board's data folder: the only place the engine reads or writes. */
@@ -64,8 +66,8 @@ export interface EngineOptions {
   onSend?: SendHook | undefined;
   /** Where the ledger's warnings go (a bad line); default stderr. */
   warn?: ((message: string) => void) | undefined;
-  /** The flags the engine reads itself (svgImages, for `image`; botToolRules, for its tools, reads and keys); default,
-   * each flag's default. */
+  /** The flags the engine reads itself (svgImages, for `image`; botToolRules, for its tools, reads and keys; insertBetween;
+   * singleAgent, `callerOf`; followOtherWriters, `watch` and the held read); default, each flag's default. */
   flags?: FlagOverrides | undefined;
   /** True while the ledger is open read-only (D-085): asked on every call, so a host can flip it (Edit, Stop editing).
    *  Every write answers `read-only` and writes nothing, in `dir` or its ledger (`Ledger.gate`); reads carry
@@ -105,6 +107,35 @@ const OPS: Partial<Record<OperationId, Op>> = { ...READS, ...WRITES };
  * refuses as no caller does and never writes a line that names nobody. */
 const namedCaller = (caller: Caller | undefined): Caller | undefined =>
   (caller?.by === 'agent' && (typeof caller.agent !== 'string' || !caller.agent) ? undefined : caller);
+
+/** The folder's one agent (`singleAgent`): the first agent joined in the ledger, if any. */
+const firstJoined = (ledger: Ledger): string | undefined => ledger.state().index.agents.values().next().value;
+
+/** The folder's one agent, joined now when none has: a `join` line labelled by the folder's name (`name()`), through the
+ * ledger like any line (so read-only refuses it), with no secret stored: no call takes one. */
+function joinedAgent(ledger: Ledger, agents: () => Agents, name: () => string, dir: string): string {
+  const first = firstJoined(ledger);
+  if (first !== undefined) return first;
+  const agent = agents().mint(ledger.state().index.agents);
+  ledger.append({ type: 'join', label: clip(name(), LIMITS.agentLabel) || path.basename(dir) }, { by: 'agent', agent });
+  return agent;
+}
+
+/** Who the operations take a call to be from: the one place that decides it (plugin.md § The bot). `singleAgent` off: the
+ * host's caller (`namedCaller`), which writes as itself. On, an agent caller is the folder's one agent, whatever id the
+ * host passed: that id is never checked against a pattern or the ledger, compared or stored, and only `by` is kept. Its
+ * `agent` is the first joined (empty while none has: no read scopes by it, and the ledger refuses a line stamped with
+ * it), and it writes as `joinedAgent`, joined only when a write gets that far. The person stays the person. */
+function callerOf(given: Caller | undefined, single: boolean, ledger: Ledger, writeAs: () => string):
+  { caller: Caller | undefined; one: boolean; writer: () => string } {
+  const caller = namedCaller(given);
+  const one = single && caller?.by === 'agent';
+  const writer = () => {
+    if (caller?.by !== 'agent') throw new Error('an agent operation ran without an agent caller');
+    return one ? writeAs() : caller.agent;
+  };
+  return { caller: one ? { by: 'agent', agent: firstJoined(ledger) ?? '' } : caller, one, writer };
+}
 
 /** The other ledger a read names (`ledger`), taken out of `params`: none when it names none or the open one; refused
  * when the host keeps one ledger. */
@@ -146,10 +177,12 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
   let agents: Agents | undefined;
   const getAgents = () => (agents ??= openAgents(dir, closed));
 
+  const single = flagOn('singleAgent', flags);
+
   /** Run operation `id`: the caller checked, then its handler; a problem is the reply. */
   async function run(id: OperationId, input: { params: Record<string, unknown>; body: unknown; caller: Caller | undefined; signal: AbortSignal | undefined }) {
     try {
-      const caller = namedCaller(input.caller);
+      const { caller, one, writer } = callerOf(input.caller, single, ledger, () => joinedAgent(ledger, getAgents, name, dir));
       checkCaller(id, caller);
       // Read-only: a write is refused before its body is read (D-085 3, 4); `join` too, so no agents file is written.
       if (OPERATIONS[id].method !== 'GET' && closed()) throw problem('read-only', caller?.by === 'person' ? READ_ONLY_PERSON : READ_ONLY);
@@ -159,8 +192,8 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
       on.refresh();
       const read = input.body;
       const r = await OPS[id]!({
-        params, caller: other ? undefined : caller, signal: input.signal, ledger: on, agents: getAgents, name, ledgerName: other?.name ?? ledgerName, onSend, flags,
-        readOnly: other !== undefined || closed(),
+        params, caller: other ? undefined : caller, one: !other && one, writer, signal: input.signal, ledger: on, agents: getAgents, name,
+        ledgerName: other?.name ?? ledgerName, onSend, flags, readOnly: other !== undefined || closed(),
         body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
       return other && r.status < 400 ? { ...r, body: { ...(r.body as object), ledger: other.name, readOnly: true } } : r;
@@ -194,7 +227,8 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
       if (kind === 'note') return resolveChip(s, 'note', ref as NoteRef);
       if (kind === 'board') return resolveChip(s, 'board', ref as BoardRef);
       if (kind === 'selection') return Array.isArray((ref as SelectionRef).cards) ? resolveChip(s, 'selection', ref as SelectionRef) : { refused: 'gone', reason: httpWords.theChipNamesNothingOn };
-      if (kind === 'answers') return resolveChip(s, 'answers', ref as AnswersRef);
+      // The folder's one agent's chip holds every answer: an `agent` in it is never compared (plugin.md § The engine).
+      if (kind === 'answers') return resolveChip(s, 'answers', single ? { ...(ref as AnswersRef), agent: undefined } : ref as AnswersRef);
       return { refused: 'gone', reason: httpWords.theBoardHasNo(kind) };
     }) as Engine['resolve'],
     tools: makeTools(servesOperation, run, flags),
@@ -204,7 +238,8 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
         onChange({ ...(board !== undefined && { board }), head: e.seq });
       };
       const off = ledger.onAppend(tell);
-      const unfollow = ledger.follow();
+      // `followOtherWriters` off: the file is never looked at for another writer; each call still reads it first (`run`).
+      const unfollow = flagOn('followOtherWriters', flags) ? ledger.follow() : () => {};
       return () => { off(); unfollow(); };
     },
   };

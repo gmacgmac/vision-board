@@ -35,7 +35,7 @@ test('a board-to-chat round trip through the seam alone', async ({ page, host })
   // The board drew it (events), and the chat has the line (the result's `_meta`).
   await expect(page.locator('.host-root vb-node[data-id="2"]')).toContainText('Who reviews, and when?');
   const line = page.locator('#host-lines .host-line');
-  await expect(line).toHaveText('Changed 2');
+  await expect(line, 'its words in words.json, filled').toHaveText('Changed a card on board “plans”');
 
   // The line zooms the board to the card, selecting nothing.
   const before = (await drive(page, 'boardStatus')).zoom;
@@ -47,5 +47,5 @@ test('a board-to-chat round trip through the seam alone', async ({ page, host })
   const card = page.locator('.host-root vb-node[data-id="2"]');
   await card.locator('[data-tab="updates"]').click();
   await card.getByRole('button', { name: 'Show in the chat' }).click();
-  await expect.poll(async () => (await drive(page, 'record')).reveals).toEqual([{ board: 'plans', n: 2 }]);
+  await expect.poll(async () => (await drive(page, 'record')).reveals, 'a plain ref').toEqual([{ board: 'plans', cards: 2 }]);
 });

@@ -20,9 +20,11 @@
 .vb-go-field:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 .vb-go-hint { margin: 0; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
 .vb-go-said { margin: 0; }
-.vb-go-said:not(:empty) {
-  padding: var(--vb-space-1) var(--vb-space-2); color: var(--vb-ink-strong); border-radius: var(--vb-radius-sm);
-  border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft);
+.vb-go-said {
+  &:not(:empty) {
+    padding: var(--vb-space-1) var(--vb-space-2); color: var(--vb-ink-strong); border-radius: var(--vb-radius-sm);
+    border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft);
+  }
 }
 .vb-go-past { justify-self: start; }
 /* Search (cardSearch flag, SEARCH_02). */

@@ -294,6 +294,16 @@ export const FLAGS = {
     // On by default (maintainer, 2026-11-06, PLAN decision 7; host-styling FE_02); ?flags=-layoutTooltip turns it off.
     default: true,
   },
+  singleAgent: {
+    // Off by default (plugin-contract PLAN decision 3, points 484-490): a host with one bot per data folder turns it on, in
+    // the engine's `flags` and the view's settings. Read by the engine and the view; standalone leaves it off.
+    default: false,
+  },
+  followOtherWriters: {
+    // On by default (plugin-contract PLAN decision 4): a host whose engine is the folder's only writer turns it off, in the
+    // engine's `flags`. Read by the engine only; ?flags= does not reach it.
+    default: true,
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
@@ -305,6 +315,18 @@ export const isFlag = (name: string): name is FlagName => Object.hasOwn(FLAGS, n
 export function flagOn(name: FlagName, overrides: FlagOverrides = {}): boolean {
   if (!isFlag(name)) throw new Error(`unknown feature flag "${String(name)}"`);
   return overrides[name] ?? FLAGS[name].default;
+}
+
+/** Flags only a host turns on for its engine (docs/specification/plugin.md § The engine). */
+export const HOST_FLAGS = ['singleAgent', 'followOtherWriters'] as const satisfies readonly FlagName[];
+
+/** `overrides` less {@link HOST_FLAGS}: what the board's own server gives its engine, so its `VB_FLAGS` can't drop the
+ *  grants between its agents or stop it hearing another writer. */
+export function withoutHostFlags(overrides: FlagOverrides | undefined): FlagOverrides | undefined {
+  if (overrides === undefined) return undefined;
+  const own = { ...overrides };
+  for (const name of HOST_FLAGS) delete own[name];
+  return own;
 }
 
 /**
@@ -403,4 +425,6 @@ export const FLAG_DESCRIPTIONS = {
   oneChangeTab: 'A card with both unseen updates and a proposal shows one bottom tab in the updated amber, "1 update · proposal" ("2 updates · 2 proposals"; "· out of date" when every proposal is), named "1 update and a proposal on item 3". Its box lists the proposals first, Accept and Reject as from the proposal tab, and the update steps beneath, Back and Next in the box; opening it shows the first step and closing it folds the steps. A proposal alone and updates alone keep their own tabs. Off, the card shows the two tabs.',
   hostStyling: 'Under a host, the plugin\'s board wears the host\'s colours and mode: each `--host-*` colour property it sets (`--host-accent`, `--host-surface`, `--host-ink` and the rest) replaces the board\'s tokens it feeds, `--vb-accent-soft` and `--vb-accent-line` mix the host\'s accent into its surface, and `--host-color-scheme` sets light or dark at the board\'s root, ahead of `data-theme` and the system; set on the mount root or any ancestor, live (docs/specification/plugin.md § Theme and host styling). A host that sets none, and standalone, look as before. Off, the board keeps its own colours and mode as before; the font properties still apply.',
   layoutTooltip: 'Each layout choice on a container\'s layout control shows a tooltip on hover and keyboard focus, its name and what it does (`MODE_LABEL`, `MODE_HINT`), which is also its accessible description; the big layout overlay (the popover of tiles and its hint line) never opens. Off, the overlay opens as before.',
+  singleAgent: 'One agent per data folder, as a host with one bot per folder has it (docs/specification/plugin.md § The bot). The engine asks no sign-up and takes any caller id, which it never compares: no `needs-grant`, no refusal for another agent\'s card, `request_grant` answers `held`, and every read is unscoped (`check_responses`, `list_open`, the caller\'s marks, the answers chip); each agent line is written as the folder\'s one agent, the first already joined in the ledger, else one the engine joins on its first write, named by `name()`. The view ignores `chat.status.agent`. The person\'s ✓, ✗ and approving stay the person\'s, and a locked board still refuses every write. Off, as before: `POST agents` names each agent, grants and scoping hold.',
+  followOtherWriters: 'The engine polls the ledger file for another program\'s appends (`ledger.ts` `follow`, every `FOLLOW_MS`) while `watch` or a held read listens, so a second writer on the folder reaches the view. Off, it never polls: `watch` hears the engine\'s own writes, and a held read wakes on them alone; a host turns it off where its engine is the folder\'s only writer.',
 } as const satisfies Record<FlagName, string>;

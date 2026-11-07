@@ -16,7 +16,7 @@ import { applyEvents, CHAT_CHANGE_EVENT, EMPTY_CHAT } from '#chat';
 import type { BoardData } from '#actions';
 import { composerContext, createChatBridge, lastChange } from '../src/shell/chat-bridge.ts';
 import { bindChat, cardIds, chatSource, selectedCards } from '../src/board/chat-side.ts';
-import type { ChatWork } from '../src/board/host.ts';
+import type { BoardChat, ChatWork } from '../src/board/host.ts';
 import { createStatus } from '../src/board/status.ts';
 import { showInTheChat } from '../src/board/words/board.ts';
 import { ARCHIVED, blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/shell/chat-rules.ts';
@@ -131,10 +131,10 @@ function bridged() {
   const status = createStatus();
   const offBoard = bridge.board({ reveal: (ref) => {
     log.push(`reveal ${JSON.stringify(ref)}`);
-    if (ref.board) open = ref.board;
+    if (typeof ref.board === 'string') open = ref.board;
     status.set({ drawn: status.now.drawn + 1 });
   } });
-  const offChat = bindChat({ chat: bridge.host, stage: new EventTarget() as HTMLElement, selection, status, data: () => data[open]!, ledger: () => s, id: () => open, readOnly: () => false });
+  const offChat = bindChat({ chat: bridge.host, chatStatus: bridge.host.status, stage: new EventTarget() as HTMLElement, selection, status, data: () => data[open]!, ledger: () => s, id: () => open, readOnly: () => false });
   bridge.chat({
     panel: panel as HTMLElement, composer: composer as unknown as ChatComposerElement, setFiles() {}, upload: () => Promise.reject(new Error('no upload here')), state: () => chat,
     status: () => ({ now: 'idle', agent, staged: false }),
@@ -210,9 +210,9 @@ test('chat to board: a change chip is the view\'s reveal of its board and cards,
   const host = t.bridge.host;
   assert.equal(chatSource(host, 'c', 1), showInTheChat, 'a board write in the chat changed card 1 on board c');
   assert.equal(chatSource(host, 'b', 4), undefined);
-  host.reveal!({ board: 'b', n: 2 });
+  host.reveal!({ board: 'b', cards: 2 });
   assert.equal(t.log.at(-1), 'line e4', 'the line that last changed it');
-  host.reveal!({ board: 'b', n: 4 });
+  host.reveal!({ board: 'b', cards: 4 });
   assert.equal(t.log.at(-1), 'line e4', 'none changed it: nothing to show');
   t.bridge.open('launch');
   assert.equal(t.log.at(-1), 'reveal {"board":"launch"}', 'a folder chat\'s first board (panel-send ruling 2)');
@@ -241,8 +241,9 @@ test('a host that gives only what the agent is doing still gets a working board:
   const hearing = new Set<() => void>();
   const status = createStatus();
   const selection = createSelection();
+  const chat: BoardChat = { attach: (key, chip) => { attached.set(key, chip); }, send: (record) => record(null), status: { get now() { return now; }, on(l) { hearing.add(l); return () => { hearing.delete(l); }; } } };
   const off = bindChat({
-    chat: { attach: (key, chip) => { attached.set(key, chip); }, send: (record) => record(), status: { get now() { return now; }, on(l) { hearing.add(l); return () => hearing.delete(l); } } },
+    chat, chatStatus: chat.status,
     stage: new EventTarget() as HTMLElement, selection, status, data: () => b, ledger: () => s, id: () => 'b', readOnly: () => false,
   });
   status.set({ drawn: 1 });
@@ -252,7 +253,7 @@ test('a host that gives only what the agent is doing still gets a working board:
   now = 'asking';
   for (const l of hearing) l();
   assert.deepEqual([status.now.chatWork, status.now.sendWaiting, status.now.chatAttached], ['asking', false, true], 'the mark follows; its own chips enable Send, with no `staged`');
-  assert.equal(chatSource({ attach() {}, send: (r) => r(), status: { now: 'idle', on: () => () => {} } }, 'b', 1), undefined, 'no reveal, no link');
+  assert.equal(chatSource({ attach() {}, send: (r) => r(null), status: { now: 'idle', on: () => () => {} } }, 'b', 1), undefined, 'no reveal, no link');
   off();
   assert.equal(hearing.size, 0, 'it stops hearing');
   assert.deepEqual([attached.get('selection'), attached.get('answers')], [null, null]);

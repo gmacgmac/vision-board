@@ -6,7 +6,7 @@
   "files": {
     "core": "app-frame-core.ts (createAppBridge: the handshake with the card's saved state in its host context, tools/call forwarding, vision-board/save-state, escape, host-context-changed, JSON-RPC checks and errors, the message and call caps; hostContext, hostStyles, parsePanelMessage, PROBLEM_WORDS, FRAME_CALLS; size-changed to fitHeight; no DOM), app-frame-size.ts (panelSize, panelHeight: the height a panel tells held to APP_SIZE.h.min to APP_LIMITS.toldHeight, APP_FRAME_RESIZE_EVENT; no DOM) and app-frame-state.ts (checkSave, SAVE_WORDS: the save request's check)",
     "element": "vb-app-frame.ts (defineVbAppFrame, VbAppFrameElement, AppFrameWiring, readLook; light DOM; the route is packages/format APP_PANEL_PATH)",
-    "styles": "app-frame.css (scoped by the tag; tokens only; the size from --app-w and --app-h)"
+    "styles": "app-frame.css (scoped by the tag; tokens only; the size from --vb-app-w and --vb-app-h)"
   },
   "states": ["idle", "loading", "ready", "frozen", "focus"],
   "parts": {
@@ -16,7 +16,7 @@
   "attributes": {
     "data-app": "the app's id (APP_ID); the frame is made only for an id that fits, and a new one starts the panel again",
     "data-label": "the app's name: the placeholder's title and the frame's title",
-    "data-w, data-h": "the panel's size in px, held to APP_SIZE (panelSize); set as --app-w and --app-h through the CSSOM; a change tells a ready panel (host-context-changed). With wire's fit (the appFit flag), the height a loaded panel tells (size-changed, panelHeight) takes data-h's place in --app-h until the frame is removed; the host context keeps data-w and data-h",
+    "data-w, data-h": "the panel's size in px, held to APP_SIZE (panelSize); set as --vb-app-w and --vb-app-h through the CSSOM; a change tells a ready panel (host-context-changed). With wire's fit (the appFit flag), the height a loaded panel tells (size-changed, panelHeight) takes data-h's place in --vb-app-h until the frame is removed; the host context keeps data-w and data-h",
     "data-state": "idle | loading | ready (set by the element)",
     "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame draws the focus ring unless data-pointer-focus is set",
     "data-pointer-focus": "focus came into the panel by a click (wire's focusCame said 'pointer'): no ring, as on a card; cleared when focus leaves, and the next focus by keyboard draws the ring",

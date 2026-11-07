@@ -14,10 +14,10 @@
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
 import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
 import { ROW_GAP } from '#layout';
-import { answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, READ_ONLY_PERSON, retiredCounts, sendHead } from '#actions';
+import { acksRead, answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, READ_ONLY_PERSON, retiredCounts, sendHead } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
-import { alignOf, flagOf, markdownOf } from './host.ts';
+import { alignOf, chatStatusOf, flagOf, markdownOf } from './host.ts';
 import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
 import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
@@ -51,6 +51,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const { stage, world } = els;
   const { host, io, status } = b;
   const on = (f: FlagName) => flagOf(host, f);
+  const chatStatus = chatStatusOf(host); // no `agent` under singleAgent
   /** How this board's Markdown renders, on every surface that draws it. */
   const markdown = markdownOf(host);
   const vp = new Viewport(stage, world, on('hideControlsZoomedOut')); // N13, rule 12
@@ -81,7 +82,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** Nothing may change the board: a past version shows, or the ledger is open read-only (D-085 3, its reads say so). */
   const readOnly = () => !!versions.state || live.readOnly;
   // Read-only, the board seen and card seen marks stay in the page (`quiet`): nothing is written.
-  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state, quiet: () => live.readOnly, fresh: on('freshCards'), status, markBoardSeen: io.markBoardSeen, chat: on('sendCountsWhatWent') ? host.chat.status : undefined });
+  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state, quiet: () => live.readOnly, fresh: on('freshCards'), status, markBoardSeen: io.markBoardSeen, chat: on('sendCountsWhatWent') ? chatStatus : undefined });
   /** The version dropdown and a past version, read-only (navigation FE_01), behind the versionView flag. */
   const versions = createVersions({
     world, on: versionView, live: () => live.state, board: () => S.id, fail, status, readLedger: io.readLedger,
@@ -213,7 +214,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const noteHide = createNoteHide({ stage, vp, state: () => S.data?.state ?? null, card: (id) => drawing.cards.get(id), layout: () => drawing.layout, record });
   const history = createHistoryFlow({ stage, state: () => versions.state ?? live.state, board: () => S.id, highlight: (id, part) => noteHide.highlight(id, part) }); // the ⓘ's box (history-flow.ts, card-polish FE_03)
   /** The board's side of its host's chat (chat-side.ts): the selection and the answers as chips, its status, the stepper's link. */
-  const unchat = bindChat({ chat: host.chat, stage, selection, status, data: () => S.data, ledger: () => live.state, id: () => S.id, readOnly });
+  const unchat = bindChat({ chat: host.chat, chatStatus, stage, selection, status, data: () => S.data, ledger: () => live.state, id: () => S.id, readOnly });
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({ node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => status.now.hide, hidden: hiddenSet,
@@ -303,8 +304,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     jump: (id) => switchTo(id, () => boards.jump(id)),
     async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
     access: accessFlow, proposals, go,
-    send(id, read) { // it greys the notes it sent at once (2e_FE_01 ruling 7); only what went counts (point 377)
-      const fields = { action: 'send' as const, ...(on('sendCountsWhatWent') && sendHead(live.state ?? emptyState(), id, read)) };
+    send(id, acks) { // it greys the notes it sent at once (2e_FE_01 ruling 7); only what went counts (point 377)
+      const fields = { action: 'send' as const, ...(on('sendCountsWhatWent') && sendHead(live.state ?? emptyState(), id, acksRead(acks, id))) };
       return id === S.id ? attempt(fields) : sender.actOn(id, fields);
     },
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),

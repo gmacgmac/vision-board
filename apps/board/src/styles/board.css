@@ -7,8 +7,11 @@
 
 /* The board's root holds its controls round the stage (chrome/BoardChrome.svelte), each placed against the
    root, so a host's pane holds them as the window does. The stage keeps its own width to size by: beside a
-   chat, narrower than the root. A host's own `position` on its root wins (`:where`). */
-:where(.vb-board) { position: relative; }
+   chat, narrower than the root. A host's own `position` on its root wins: the rule is nested in the root's, as
+   `:where(&)`, which takes no specificity (tests/pages/host-position.spec.ts). */
+.vb-board {
+  :where(&) { position: relative; }
+}
 /* The root's height is what a control caps by (100cqh: header.css, key-help.css), as the window's was. Everything in
    it is absolute, so it gives up no height of its own: a host sizes it. The class is named twice to
    win over the inline-size container of packages/ui's root.css, which sets the name. */
@@ -43,30 +46,43 @@
    itself): the end group's text buttons (Hide answered, Theme, Reply; with the toolbarMenu flag Agents, Send to
    agent and Chat) show their icon only, and the counts their numbers; the words stay for screen readers and
    the title tooltip says them too. Agents keeps its count beside the icon. */
-[data-narrow] .vb-toolbar-end .vb-btn-icon { display: block; }
-[data-narrow] :is(.vb-toolbar-end .vb-btn-text, .vb-counts .vb-chip:not([data-tier] :is([data-tone='open'], .vb-menu-face)) .vb-chip-word) {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+.vb-toolbar-end {
+  [data-narrow] & .vb-btn-icon { display: block; }
+}
+.vb-btn-text {
+  [data-narrow] :is(.vb-toolbar-end &) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+.vb-chip-word {
+  [data-narrow] :is(.vb-counts .vb-chip:not([data-tier] :is([data-tone='open'], .vb-menu-face)) &) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 /* "Replied" (with the agent, D-046) shares "board updated"'s pink, so on a narrow toolbar it keeps the agent's mark, the
    Agents bot, beside its number (review polish FIX_01): decoration in the chip's own ink, Lc 64.0 light,
    49.1 dark (with-agent task), over the 30 tier. */
-[data-narrow] .vb-counts .vb-chip[data-tone='agent'] .vb-btn-icon { display: block; width: 14px; height: 14px; }
-[data-narrow] .vb-toolbar-end .vb-btn-iconic { display: inline-flex; align-items: center; justify-content: center; width: var(--vb-control-h); padding: 0; }
+.vb-counts {
+  [data-narrow] & .vb-chip[data-tone='agent'] .vb-btn-icon { display: block; width: 14px; height: 14px; }
+}
+.vb-toolbar-end {
+  [data-narrow] & .vb-btn-iconic { display: inline-flex; align-items: center; justify-content: center; width: var(--vb-control-h); padding: 0; }
+}
 /* A board under 1200px wide with every toolbar control showing (Chat, Send to agent): the gaps and side padding
    tighten so the toolbar stays whole; the board picker keeps its 220px. */
 @container vb-board (max-width: 1200px) {
-  .vb-toolbar:not([data-tier]) { gap: var(--vb-space-2); padding-inline: var(--vb-space-2); }
+  .vb-toolbar {
+    &:not([data-tier]) { gap: var(--vb-space-2); padding-inline: var(--vb-space-2); }
+  }
 }
 /* A board of 1000px or less with the toolbarMenu flag (data-menu): every control still shows down to 768px,
    the smallest supported width. The gaps tighten, the app icon steps aside, the board picker may go to 150px,
    the version and containers dropdowns show their choice cut to a set width (their lists still open whole),
    and the count chips draw closer. */
 @container vb-board (max-width: 1000px) {
-  .vb-toolbar[data-menu]:not([data-tier]), .vb-toolbar[data-menu]:not([data-tier]) :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
-  .vb-toolbar[data-menu]:not([data-tier]) .vb-brand { display: none; }
-  .vb-toolbar[data-menu]:not([data-tier]) > [id$='-board'] { min-width: 150px; }
-  .vb-toolbar[data-menu]:not([data-tier]) > select:is([id$='-version'], [id$='-containers']) { width: 6em; flex-shrink: 0; }
-  .vb-toolbar[data-menu]:not([data-tier]) .vb-counts .vb-chip { justify-content: center; min-width: var(--vb-control-target); padding: 0 var(--vb-space-1); }
+  .vb-toolbar {
+    &[data-menu]:not([data-tier]), &[data-menu]:not([data-tier]) :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
+    &[data-menu]:not([data-tier]) .vb-brand { display: none; }
+    &[data-menu]:not([data-tier]) > [id$='-board'] { min-width: 150px; }
+    &[data-menu]:not([data-tier]) > select:is([id$='-version'], [id$='-containers']) { width: 6em; flex-shrink: 0; }
+    &[data-menu]:not([data-tier]) .vb-counts .vb-chip { justify-content: center; min-width: var(--vb-control-target); padding: 0 var(--vb-space-1); }
+  }
 }
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
 .vb-zoom .vb-btn { border: 0; border-radius: 0; }
@@ -93,7 +109,10 @@
    look; the chip draws the hover and pressed looks above and the focus ring the select would. */
 .vb-menu-face { position: relative; cursor: pointer; }
 .vb-menu-over { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font: inherit; cursor: pointer; }
-.vb-menu-face:has(.vb-menu-over:focus-visible:not([data-pointer-focus])), .vb-menu-face[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+.vb-menu-face[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+.vb-menu-face {
+  &:has(.vb-menu-over:focus-visible:not([data-pointer-focus])) { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+}
 .vb-chip[data-tone='flag'] .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-state-flag); }
 
 /* Stage and world */
@@ -116,7 +135,9 @@
 /* An app's panel is a frame: a wheel or a drag over it goes to the panel's own page, never the board.
    While Cmd is held, or a pan runs, it takes no pointer, so Cmd+wheel zooms and Cmd+drag pans over an
    app card too (maintainer, point 313; app-pan-key.spec.ts). Without the key the panel keeps it. */
-.vb-stage:is([data-pan-key], .panning) vb-app-frame { pointer-events: none; }
+.vb-stage {
+  &:is([data-pan-key], .panning) vb-app-frame { pointer-events: none; }
+}
 .vb-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .vb-world.gliding { transition: transform var(--vb-motion) var(--vb-ease); }
 .vb-world.no-anim * { transition: none !important; }
@@ -209,7 +230,9 @@
 .vb-toast[data-tone='error'] { background: var(--vb-state-drop-fill); color: var(--vb-ink-on-fill); }
 /* A toast with an action (Toast.svelte; workAlongside flag's "The agent replied" · Open chat): the words, then
    one button in the toast's own colours, outlined. In the gallery, in the page flow. */
-.vb-toast:has(.vb-toast-act) { display: flex; align-items: center; gap: var(--vb-space-3); padding-right: var(--vb-space-2); }
+.vb-toast {
+  &:has(.vb-toast-act) { display: flex; align-items: center; gap: var(--vb-space-3); padding-right: var(--vb-space-2); }
+}
 .vb-toast-act {
   height: var(--vb-control-target); padding: 0 var(--vb-space-3); border: 1px solid currentColor; border-radius: var(--vb-radius-sm);
   background: transparent; color: inherit; font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font); cursor: pointer;
@@ -239,7 +262,9 @@
 .vb-menu-item.vb-move-item { display: block; }
 /* The "⋯" menu hangs under its button at the toolbar's right end, over the requests strip and the
    reply panel while open; each row is its icon, its words, then its tick and key. */
-.vb-toolbar:has(.vb-menu-btn[aria-expanded='true']) { z-index: var(--vb-z-chrome-open); }
+.vb-toolbar {
+  &:has(.vb-menu-btn[aria-expanded='true']) { z-index: var(--vb-z-chrome-open); }
+}
 .vb-menu { position: relative; }
 .vb-btn.vb-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--vb-control-h); padding: 0; }
 .vb-menu .vb-btn-icon { display: block; }

@@ -1,12 +1,12 @@
 /* App frame pattern styles (<vb-app-frame>, packages/ui/src/app-frame). Scoped by the tag, light
-   DOM; tokens only. The panel's size arrives as --app-w and --app-h, set by the element (CSSOM).
+   DOM; tokens only. The panel's size arrives as --vb-app-w and --vb-app-h, set by the element (CSSOM).
    States (data-state, set by the element): idle, a light placeholder with the app's icon and title;
    loading, the same with "Loading…" while the frame starts behind it, unseen; ready, the panel.
    data-frozen (off screen or zoomed far, D-050): the panel keeps running, unpainted and
    inert, with the placeholder (no "Loading…") in its place. */
 
 vb-app-frame {
-  position: relative; display: block; width: var(--app-w); height: var(--app-h); overflow: hidden;
+  position: relative; display: block; width: var(--vb-app-w); height: var(--vb-app-h); overflow: hidden;
   border-radius: var(--vb-radius-md); background: var(--vb-surface-sunken); box-shadow: 0 0 0 1px var(--vb-line);
 }
 vb-app-frame .vb-af-ph {
@@ -38,4 +38,6 @@ vb-app-frame[data-frozen] .vb-af-wait { display: none; }
 /* Focus in the panel: the ring says keys now go to the app, not to the board's shortcuts.
    data-focus-in is the element's own mark: a frame of another origin never matches :focus-within.
    Focus a pointer brought in (data-pointer-focus) draws none, as on a card; the keyboard's always does. */
-vb-app-frame[data-focus-in]:not([data-pointer-focus]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+vb-app-frame {
+  &[data-focus-in]:not([data-pointer-focus]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+}

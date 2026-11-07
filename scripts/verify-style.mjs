@@ -1,7 +1,7 @@
 // The style and layer rules verify.mjs runs (UI_01; docs/principles.md § Design tokens, § Dependencies,
 // § The board is a plugin): colour literals live only in packages/tokens; network calls and file,
-// socket and process access only in their layers; every rule in the board's stylesheets names a
-// vb- class or element (so it reaches nothing in a host's page) and sizes by the board's own width.
+// socket and process access only in their layers; every rule in the board's stylesheets starts inside
+// the board's scope (so it reaches nothing in a host's page) and sizes by the board's own width.
 // Each check is a pure function over one file's path and text; verify-style.test.mjs proves them.
 
 const fail = (file, message) => ({ level: 'fail', file, message });
@@ -70,15 +70,59 @@ export function checkIO(rel, text) {
 // ---- Scoped styles -------------------------------------------------------------------------------
 
 /** The board's stylesheets: the patterns' and the app's. */
-const BOARD_SHEETS = /^(?:packages\/ui\/src\/|apps\/board\/src\/styles\/).*\.css$/;
+const BOARD_SHEETS = /^(?:packages\/ui\/src\/|apps\/board\/src\/styles\/|apps\/board\/plugin\/).*\.css$/;
 /** The standalone page's own sheets, which may style the page (a host brings its own). */
 const STANDALONE = ['apps/board/src/styles/shell.css', 'apps/board/src/styles/chat-host.css'];
 /** The board's sheet of custom properties on `:root`, as the tokens are: nothing in a host's page reads them. */
 const PROPERTIES_ONLY = 'apps/board/src/styles/ui-scale.css';
+/** Sheets only the standalone page loads (styles/page.ts, after sheets.css): the plugin does not carry them, so a rule needs only to name a vb- class or element. */
+const PAGE_ONLY = ['chat-sidebar', 'folder-dialog', 'current-folder', 'ledgers', 'editing'].map((n) => `apps/board/src/styles/${n}.css`);
 /** A selector that names a vb- class, a vb- element or a vb- class attribute. */
 const SCOPED = /\.vb-|(?:^|[\s>+~(,])vb-[a-z]|\[class[*~^|]?=\s*['"]?vb-/;
+const SCOPE = 'vb';
+
+/** The selector's first compound, up to its first space or combinator outside brackets, and what it holds outside them. */
+function firstCompound(selector) {
+  const whole = splitTop(selector, (c) => /[\s>+~]/.test(c))[0] ?? '';
+  let outer = '';
+  let depth = 0;
+  for (const c of whole) {
+    if (c === '(' || c === '[') depth++;
+    if (depth === 0) outer += c;
+    if (c === ')' || c === ']') depth = Math.max(0, depth - 1);
+  }
+  return { whole, outer };
+}
+
+/**
+ * The host's rule for a plugin's sheet (nclite's `checkStylesheet`, engine/plugins/stylesheet.ts; plugin.md § A guest in the
+ * host's page): the first compound holds the class `.vb` or `.vb-…`, or the element `vb-…`, and no `:is`, `:where`, `:not` or
+ * `:has`. A rule nested in a rule is under its parent and is not checked again: write `vb-node { [data-zoom=far] & .x { … } }`,
+ * not `[data-zoom=far] vb-node .x`, and `.vb-board { :where(&) { … } }` for a rule with no specificity.
+ */
+export function inScope(selector) {
+  if (selector === ':root') return true;
+  const { whole, outer } = firstCompound(selector);
+  if (/:(?:is|where|not|has)\(/i.test(whole)) return false;
+  const element = /^([A-Za-z][\w-]*)/.exec(outer)?.[1];
+  return element?.startsWith(`${SCOPE}-`) || [...outer.matchAll(/\.(-?[A-Za-z_][\w-]*)/g)].some((m) => m[1] === SCOPE || m[1].startsWith(`${SCOPE}-`));
+}
 const WINDOW_WIDTH = /\((?:min-|max-)?width\s*[:<>=]|\(\s*[\d.]+\w*\s*[<>]=?\s*width/;
-const splitTop = (list) => list.split(/,(?![^(]*\))/).map((s) => s.trim()).filter(Boolean);
+/** `text` cut at the top-level characters `at` accepts (outside parentheses, brackets and strings). */
+function splitTop(text, at) {
+  const parts = [];
+  let depth = 0;
+  let from = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"' || c === "'") { for (i++; i < text.length && text[i] !== c; i++) if (text[i] === '\\') i++; } else if (c === '(' || c === '[') depth++;
+    else if (c === ')' || c === ']') depth = Math.max(0, depth - 1);
+    else if (depth === 0 && at(c)) { parts.push(text.slice(from, i)); from = i + 1; }
+  }
+  parts.push(text.slice(from));
+  return parts;
+}
+const selectorList = (prelude) => splitTop(prelude, (c) => c === ',').map((x) => x.trim().replace(/\s+/g, ' ')).filter(Boolean);
 
 /** Every rule in a board stylesheet names a vb- class or element, and no rule sizes by the window. */
 export function checkScope(rel, text) {
@@ -101,11 +145,21 @@ export function checkScope(rel, text) {
       const name = /^@([\w-]+)/.exec(prelude)?.[1] ?? '';
       if (name === 'media' && WINDOW_WIDTH.test(prelude)) out.push(fail(rel, `${prelude}: size by the board's own width (@container), not the window's`));
       if (name === 'property' && !/^@property\s+--vb-/.test(prelude)) out.push(fail(rel, `${prelude}: a registered property is named --vb-`));
+      if (name === 'layer') out.push(fail(rel, `${prelude}: no @layer in a sheet a host loads (the host's own layers would order it)`));
       stack.push(['media', 'container', 'supports', 'layer'].includes(name) ? 'group' : 'skip');
       continue;
     }
-    for (const sel of splitTop(prelude)) {
-      if (!SCOPED.test(sel)) out.push(fail(rel, `"${sel}" reaches outside the board: name a vb- class or element (rules for the page go in the standalone page's shell.css)`));
+    const strict = !PAGE_ONLY.includes(rel);
+    for (const sel of selectorList(prelude)) {
+      if (strict ? !inScope(sel) : !SCOPED.test(sel)) {
+        out.push(fail(rel, `"${sel}" ${strict ? 'does not start inside the board' : 'reaches outside the board'}: ${strict ? "its first compound (up to the first space) names a vb- class or element and holds no :is, :where, :not or :has; nest the rule under that class or element otherwise" : 'name a vb- class or element'} (rules for the page go in the standalone page's shell.css)`));
+      }
+    }
+    if (!PAGE_ONLY.includes(rel) && selectorList(prelude).includes(':root')) {
+      for (const decl of css.slice(i + 1, css.indexOf('}', i)).split(';')) {
+        const name = decl.split(':')[0].trim();
+        if (name && !name.startsWith('--vb-')) out.push(fail(rel, `:root declares "${name}": only --vb- properties (a host's page is not the board's to style)`));
+      }
     }
     stack.push('rule');
   }

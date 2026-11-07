@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import type { LedgerEvent } from '#format';
 import { checkedEvents, lineMaker } from '#format/testing';
 import { createLive } from '../src/board/live.ts';
-import type { BoardEvent } from '../src/board/host.ts';
+import type { PluginEvent } from '../src/board/host.ts';
 import { blockedReason, READ_ONLY } from '../src/shell/chat-rules.ts';
 
 const A = 'a-live0000';
@@ -18,13 +18,13 @@ function host(lines: string[]) {
   let file = checkedEvents(lines);
   let readOnly = false;
   const reads: number[] = [];
-  let tell: ((e: BoardEvent) => void) | undefined;
+  let tell: ((e: PluginEvent) => void) | undefined;
   return {
     readLedger: async (after: number) => {
       reads.push(after);
       return { events: file.filter((e) => e.seq > after), head: file.at(-1)?.seq ?? 0, ...(readOnly && { readOnly: true as const }) };
     },
-    events: (fn: (e: BoardEvent) => void) => { tell = fn; return () => { tell = undefined; }; },
+    events: (fn: (e: PluginEvent) => void) => { tell = fn; return () => { tell = undefined; }; },
     set readOnly(on: boolean) { readOnly = on; },
     replace(next: string[]) { file = checkedEvents(next); },
     emit: (head?: number) => tell?.({ plugin: 'board', ref: head === undefined ? {} : { head } }),

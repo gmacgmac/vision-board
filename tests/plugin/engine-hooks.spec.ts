@@ -118,7 +118,7 @@ test('resolve: every chip kind says its text; a changed or gone one is refused w
   expect(answers.text).toContain('1 (question): ✓');
   expect(answers.count).toBe(1);
   const head = ((await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams() }, { caller: PERSON }))!.body as { events: { seq: number }[] }).events.at(-1)!.seq;
-  expect(answers.head, 'the line it read through, what a Send acknowledges').toBe(head);
+  expect(answers.ack, 'the line it read through, what a Send acknowledges').toEqual({ board: 'plans', head });
   expect(host.engine.resolve('answers', { board: 'plans', since: 999 }).text).toBe('');
   await host.engine.route({ method: 'POST', path: 'boards/plans/act', body: { type: 'act', action: 'comment', n: 2, ver: 1, text: 'Ask the team.' } }, { caller: PERSON });
   const lines = (await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams() }, { caller: PERSON }))!.body as { events: { seq: number; text?: string }[] };
@@ -130,8 +130,21 @@ test('resolve: every chip kind says its text; a changed or gone one is refused w
   expect(host.engine.resolve('picture', {})).toEqual(expect.objectContaining({ refused: 'gone' }));
 });
 
+test('resolve: the answers ack is a plain ref, `{ board, head }`, what a host hands back to the Send\'s record; no other chip carries one', async ({ host }) => {
+  await drawPlans(host);
+  await host.engine.route({ method: 'POST', path: 'boards/plans/act', body: { type: 'act', action: 'ack', n: 1, ver: 1 } }, { caller: PERSON });
+  const read = (await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams() }, { caller: PERSON }))!.body as { head: number };
+  const answers = host.engine.resolve('answers', { board: 'plans', since: 0 });
+  expect(answers.ack).toEqual({ board: 'plans', head: read.head });
+  expect('head' in answers, 'the ack holds it, nothing beside').toBe(false);
+  expect(host.engine.resolve('answers', { board: 'plans', since: 999 }).ack, 'nothing to send still says what it read through').toEqual({ board: 'plans', head: read.head });
+  for (const [kind, ref] of [['card', { board: 'plans', n: 1, ver: 1 }], ['board', { board: 'plans', head: 1 }], ['selection', { board: 'plans', cards: [1] }]] as const) {
+    expect(host.engine.resolve(kind, ref).ack, kind).toBeUndefined();
+  }
+});
+
 test('watch: a change from the engine and from another writer on the folder; stop ends it', async ({ host }) => {
-  const heard: { board?: string; head: number }[] = [];
+  const heard: { board?: string; head?: number }[] = [];
   const stop = host.engine.watch((c) => heard.push(c));
   await drawPlans(host);
   await expect.poll(() => heard.at(-1)?.board).toBe('plans');

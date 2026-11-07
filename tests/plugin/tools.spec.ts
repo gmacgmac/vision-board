@@ -44,7 +44,7 @@ test('tools.call: every listed tool answers in MCP\'s shape, its text the JSON o
   }
 });
 
-test('tools.call: an input that does not fit, an unknown tool and a refusal are isError, never a throw; a board write says its change in _meta', async ({ host }) => {
+test('tools.call: an input that does not fit, an unknown tool and a refusal are isError, never a throw', async ({ host }) => {
   await drawPlans(host);
   const bad = await host.engine.tools.call('write_board', { board: 'plans' }, { caller: host.bot });
   expect(bad.isError).toBe(true);
@@ -52,8 +52,25 @@ test('tools.call: an input that does not fit, an unknown tool and a refusal are 
   expect(unknown.isError).toBe(true);
   const noCaller = await host.engine.tools.call('write_board', { board: 'plans', items: [{ type: 'board', title: 'Mine' }] });
   expect(noCaller.isError).toBe(true);
-  const wrote = await host.engine.tools.call('write_board', { board: 'plans', items: [{ type: 'node', node: { region: 'now', kind: 'question', title: 'One more?' } }] }, { caller: host.bot });
-  expect(wrote._meta!['vb/change']).toEqual({ board: 'plans', cards: [4], head: expect.any(Number) });
+});
+
+test('tools.call: the change line: a board write that wrote carries `_meta[\'plugin/change\']`, its words in the manifest\'s changeWords and words.json; no other tool, and no write that appended nothing', async ({ host }) => {
+  await drawPlans(host);
+  const m = manifest();
+  const words = JSON.parse(readFileSync(path.join(FOLDER, m.words), 'utf8')) as Record<string, string>;
+  const write = (items: unknown[]) => host.engine.tools.call('write_board', { board: 'plans', items }, { caller: host.bot });
+  const one = await write([{ type: 'node', key: 'more', node: { region: 'now', kind: 'question', title: 'One more?' } }]);
+  const change = one._meta!['plugin/change'];
+  expect(change).toEqual({ words: 'board.change.card', count: 1, subject: 'plans', reveal: { board: 'plans', cards: [4] } });
+  expect(m.changeWords).toContain(change.words);
+  expect(words[change.words]!.replace('{subject}', change.subject)).toBe('Changed a card on board “plans”');
+  expect(Object.keys(one._meta!), 'only the change line').toEqual(['plugin/change']);
+  const two = (await write([{ type: 'node', n: 1, node: { region: 'now', kind: 'question', title: 'Ship on Monday?' } }, { type: 'node', n: 2, node: { region: 'now', kind: 'question', title: 'Who reviews it?' } }]))._meta!['plugin/change'];
+  expect(words[two.words]!.replace('{count}', String(two.count)).replace('{subject}', two.subject)).toBe('Changed 2 cards on board “plans”');
+  expect((await write([{ type: 'node', key: 'more', node: { region: 'now', kind: 'question', title: 'One more?' } }]))._meta, 'a retry appended nothing').toBeUndefined();
+  for (const [name, input] of Object.entries(CALLS).filter(([name]) => name !== 'write_board')) {
+    expect((await host.engine.tools.call(name, input, { caller: host.bot }))._meta, name).toBeUndefined();
+  }
 });
 
 test('tools.call: a caller of an agent with no id is refused as no caller is, and nothing is written', async ({ host }) => {
@@ -98,4 +115,21 @@ test('a host\'s own MCP server: JSON-RPC tools/list and tools/call over the engi
   expect((listed.result as { tools: { name: string }[] }).tools.map((t) => t.name)).toContain('write_board');
   const called = await serve({ id: 2, method: 'tools/call', params: { name: 'list_boards' } });
   expect((called.result as { isError: boolean; structuredContent: { boards: unknown[] } }).structuredContent.boards).toHaveLength(1);
+});
+
+test.describe('one bot per folder', () => {
+  // The host's derived id, which no sign-up made and the ledger's own agent ids never take (plugin.md § The bot).
+  test.use({ hostOptions: { flags: { singleAgent: true }, bot: 'bot-0123456789abcdef' } });
+  test('the bot: singleAgent: no sign-up, any id acts as the folder\'s one agent, request_grant answers held, and a locked board still refuses', async ({ host }) => {
+    await drawPlans(host);
+    const grant = await host.tool('request_grant', { board: 'plans', reason: 'To draw here.' });
+    expect(grant.isError, JSON.stringify(grant)).toBe(false);
+    expect(grant.structuredContent).toEqual({ board: 'plans', held: true });
+    const other = await host.engine.tools.call('write_board', { board: 'plans', items: [{ type: 'node', n: 1, node: { region: 'now', kind: 'question', title: 'Another id, the same agent?' } }] }, { caller: { by: 'agent', agent: 'bot-fedcba9876543210' } });
+    expect(other.isError, 'ids are never compared').toBe(false);
+    const locked = await host.engine.route({ method: 'POST', path: 'boards/plans/act', body: { type: 'act', action: 'lock', board: 'plans' } }, { caller: { by: 'person' } });
+    expect(locked!.status).toBeLessThan(300);
+    const refused = await host.tool('write_board', { board: 'plans', items: [{ type: 'node', n: 2, node: { region: 'now', kind: 'question', title: 'While locked?' } }] });
+    expect(refused.isError, 'the lock still refuses every write').toBe(true);
+  });
 });

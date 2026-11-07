@@ -1,6 +1,6 @@
 // What the board gives its host, and what it is made with (controller.ts `createBoard`). Split out
 // of controller.ts (ARCH_06): the board's whole public surface reads in one place.
-import type { AnswersRead, LedgerState } from '#actions';
+import type { LedgerState, Ref } from '#actions';
 import type { AccessFlow } from '../access/index.ts';
 import type { ProposalFlow } from '../cards/index.ts';
 import type { CommandId } from '../input/index.ts';
@@ -24,9 +24,9 @@ export interface Board {
   access: AccessFlow;
   /** The proposals notice's Review and Accept all (proposals flag, proposal-flow.ts). */
   proposals: Pick<ProposalFlow, 'review' | 'acceptAll'>;
-  /** Record Send to agent on board `id`, for `read`, what the host says went (`sendHead`, the
+  /** Record Send to agent on board `id`, for `acks`, what the host says went (`acksRead`, `sendHead`, the
    *  sendCountsWhatWent flag); null when recorded, else the problem's detail. */
-  send(id: string, read?: AnswersRead): Promise<string | null>;
+  send(id: string, acks: readonly Ref[] | null): Promise<string | null>;
   /** New board, Rename board, Archive board, Restore, Lock board and Unlock board (board-edit.ts). */
   boardEdit: BoardEdit;
   /** The toolbar's "N flagged" chip: the next flagged card (cardFlag flag, flag-flow.ts). */

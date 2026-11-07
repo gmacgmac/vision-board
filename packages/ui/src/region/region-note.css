@@ -17,7 +17,9 @@ vb-region .vb-region-badge {
   border-radius: var(--vb-radius-pill); pointer-events: none; background: var(--vb-accent-fill); color: var(--vb-ink-on-fill);
   box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-surface-card); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); line-height: 1;
 }
-vb-region:is([data-badge='unsent'], [data-badge='sent']) .vb-region-badge { display: grid; }
+vb-region {
+  &:is([data-badge='unsent'], [data-badge='sent']) .vb-region-badge { display: grid; }
+}
 vb-region[data-badge='sent'] .vb-region-badge {
   background: var(--vb-surface-raised); color: var(--vb-ink-strong);
   box-shadow: inset 0 0 0 1px var(--vb-line-strong), 0 0 0 var(--vb-focus-w) var(--vb-surface-card);
@@ -32,8 +34,10 @@ vb-region .vb-note-state {
 vb-region .vb-note-state::before {
   content: ''; width: var(--vb-space-2); height: var(--vb-space-2); border-radius: var(--vb-radius-pill); background: var(--vb-accent);
 }
-vb-region:not([data-note-stage='unsent']) .vb-note-state { color: var(--vb-ink-subtle); }
-vb-region:not([data-note-stage='unsent']) .vb-note-state::before { background: none; box-shadow: inset 0 0 0 1px var(--vb-ink-subtle); }
+vb-region {
+  &:not([data-note-stage='unsent']) .vb-note-state { color: var(--vb-ink-subtle); }
+  &:not([data-note-stage='unsent']) .vb-note-state::before { background: none; box-shadow: inset 0 0 0 1px var(--vb-ink-subtle); }
+}
 
 /* Note buttons (preview and block), quiet like mockup 09's ghost buttons. */
 vb-region .vb-note-btn {
@@ -79,12 +83,16 @@ vb-region .vb-region-note-block {
   font-size: var(--vb-text-md); color: var(--vb-ink); pointer-events: auto; cursor: default;
 }
 vb-region .vb-region-note-block[hidden] { display: none; }
-vb-region:not([data-note-stage='unsent']) .vb-region-note-block { border-color: var(--vb-line-strong); background: var(--vb-surface-sunken); }
+vb-region {
+  &:not([data-note-stage='unsent']) .vb-region-note-block { border-color: var(--vb-line-strong); background: var(--vb-surface-sunken); }
+}
 vb-region .vb-nblock-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vb-space-1) var(--vb-space-2); }
 vb-region .vb-nblock-who {
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-accent-text);
 }
-vb-region:not([data-note-stage='unsent']) .vb-nblock-who { color: var(--vb-ink); }
+vb-region {
+  &:not([data-note-stage='unsent']) .vb-nblock-who { color: var(--vb-ink); }
+}
 vb-region .vb-nblock-acts { display: flex; align-items: center; gap: var(--vb-space-1); margin-left: auto; }
 vb-region .vb-nblock-ro { font-size: var(--vb-text-sm); color: var(--vb-ink); }
 vb-region .vb-nblock-ro:empty { display: none; }
@@ -107,8 +115,10 @@ vb-region .vb-nblock-reply {
 /* With updateSignals (D-088) a reply carries the updated amber on its edge, as a card's (node-parking.css):
    muted (50% toward the strong line; Lc on the raised surface 47.2 light, 34.5 dark, edges 30), bright
    while `data-unseen` marks it. So it never reads as one of the person's notes. */
-[data-update-signals] vb-region .vb-nblock-reply { border-left-color: color-mix(in srgb, var(--vb-state-updated) 50%, var(--vb-line-strong)); }
-[data-update-signals] vb-region .vb-nblock-reply[data-unseen] { border-left-color: var(--vb-state-updated); }
+vb-region {
+  [data-update-signals] & .vb-nblock-reply { border-left-color: color-mix(in srgb, var(--vb-state-updated) 50%, var(--vb-line-strong)); }
+  [data-update-signals] & .vb-nblock-reply[data-unseen] { border-left-color: var(--vb-state-updated); }
+}
 vb-region .vb-nblock-reply .vb-nblock-who { color: var(--vb-ink); }
 vb-region .vb-nblock-reply-text {
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;

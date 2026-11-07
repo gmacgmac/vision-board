@@ -199,7 +199,7 @@ function appendInsert(b: Batch, i: number, key: string | undefined, item: Rec, e
   return written(b.ledger.state(), i, key, stored, false, at);
 }
 
-function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): WriteResult {
+function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined, grants: boolean): WriteResult {
   checkProposeWord(i, raw);
   const errors = itemProblems(b, raw);
   if (errors.length) refuse(b, i, raw, errors);
@@ -214,21 +214,23 @@ function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): W
   checkBoard(b, s, i, e);
   checkProposal(s, i, e);
   if (at) checkInsert(b, i, e, at);
-  checkGrant(b, s, i, e);
-  if (at) checkGrant(b, s, i, { type: 'unlink', from: at.after, to: at.before }); // the old link and after→card are in `after`'s container
+  if (grants) checkGrant(b, s, i, e);
+  if (grants && at) checkGrant(b, s, i, { type: 'unlink', from: at.after, to: at.before }); // the old link and after→card are in `after`'s container
   checkOwed(b, s, i, item, e);
   return at ? appendInsert(b, i, key, item, e, at) : written(b.ledger.state(), i, key, append(b, i, item, e));
 }
 
 /** Write `items` for `agent` on `board`, in order, one result each (api.md 34). `keyHelp`: a key conflict says what the
- * key holds (write-replay.ts); `insert`: a node item may carry `insert` (the `insertBetween` flag, default on). */
+ * key holds (write-replay.ts); `insert`: a node item may carry `insert` (the `insertBetween` flag, default on); `grants`:
+ * each item is held to the permissions table (`checkGrant`), false only for the folder's one agent (`singleAgent`,
+ * plugin.md § The bot), which no other agent shares a board with. Every other check, the lock's among them, stays. */
 export function writeItems(ledger: Ledger, agent: string, board: string, items: readonly unknown[], keyHelp = false,
-  insert = flagOn('insertBetween', {})): WriteResult[] {
+  insert = flagOn('insertBetween', {}), grants = true): WriteResult[] {
   const b: Batch = { ledger, agent, board, failed: new Set(), keyHelp, insert };
   return items.map((raw, i) => {
     const key = keyOf(raw);
     try {
-      return writeOne(b, i, raw, key);
+      return writeOne(b, i, raw, key, grants);
     } catch (err) {
       if (!(err instanceof ItemFailed)) throw err;
       if (isRecord(raw) && typeof raw.key === 'string') b.failed.add(raw.key);

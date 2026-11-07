@@ -275,12 +275,12 @@ export function defineVbAppFrame(): void {
       this.prepend(ph);
     }
 
-    /** The panel's size as --app-w and --app-h (CSSOM: the page's CSP refuses style attributes):
+    /** The panel's size as --vb-app-w and --vb-app-h (CSSOM: the page's CSP refuses style attributes):
      * the agent's, with the height the panel told in place of its `h` (appFit). */
     private applySize(): void {
       const { w, h } = this.size;
-      this.style.setProperty('--app-w', `${w}px`);
-      this.style.setProperty('--app-h', `${this.fitted ?? h}px`);
+      this.style.setProperty('--vb-app-w', `${w}px`);
+      this.style.setProperty('--vb-app-h', `${this.fitted ?? h}px`);
     }
   }
 

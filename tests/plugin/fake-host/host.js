@@ -10,6 +10,9 @@ const manifest = await (await fetch('/plugin/manifest.json')).json();
 for (const sheet of manifest.view.styles) link(`/plugin/${sheet}`);
 link('/host/host.css');
 const { mount } = await import(`/plugin/${manifest.view.module}`);
+const words = await (await fetch(`/plugin/${manifest.words}`)).json();
+/** A change line's text: its words key's text in words.json, `{count}` and `{subject}` filled (plugin.md § The chat). */
+const lineText = (line) => (manifest.changeWords.includes(line.words) ? words[line.words].replaceAll('{count}', String(line.count)).replaceAll('{subject}', line.subject) : '');
 const { drawPane } = await import('/host/host-svelte.js');
 
 const boardListeners = new Set();
@@ -68,7 +71,7 @@ function hostFor(o = {}) {
   };
   /** Change events stop, as a dropped stream's would; `catchUp` says a ref with no head. */
   const mute = () => { muted = true; };
-  const catchUp = () => { muted = false; for (const l of heardBoard) l({ plugin: manifest.id, ref: {} }); };
+  const catchUp = (ref = {}) => { muted = false; for (const l of heardBoard) l({ plugin: manifest.id, ref }); };
   const changeSetting = (key, value) => { settings[key] = value; for (const l of settingsHeard) l(); };
   const subscribers = () => heardBoard.size + settingsHeard.size + made.statusListeners();
   return { host, made, record, kept, changeSetting, subscribers, mute, catchUp, setReadsDown: (how) => { readsDown = how; } };
@@ -85,7 +88,7 @@ let statusHeard = 0;
 function open(o = {}) {
   const parts = hostFor(o);
   lineListeners.clear();
-  lineListeners.add((line) => parts.made.addLine(line));
+  lineListeners.add((line) => parts.made.addLine({ ...line, text: lineText(line) }));
   let view = null;
   const opened = new Promise((done) => {
     drawPane(document.getElementById('host'), {
@@ -165,6 +168,8 @@ window.fakeHost = {
   statusHeard: () => statusHeard,
   mute: () => current.mute(),
   catchUp: () => current.catchUp(),
+  /** Events start again with this ref, any the contract allows. */
+  say: (ref) => current.catchUp(ref),
   readsDown: (how) => current.setReadsDown(how),
   pageChip: () => current.view.pageChip(),
   reveal: (ref) => current.view.reveal(ref),

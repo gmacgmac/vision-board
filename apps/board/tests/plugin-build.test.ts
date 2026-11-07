@@ -73,7 +73,7 @@ function runEngine(engine: string, dir: string): any {
     const e = createEngine({ dir: ${JSON.stringify(dir)}, warn: () => {} });
     const joined = await e.route({ method: 'POST', path: 'agents', body: { label: 'Build test' } });
     const caller = { by: 'agent', agent: joined.body.agent };
-    const items = [{ type: 'board', title: 'Plans' }, { type: 'region', region: { id: 'now', title: 'Now', mode: 'grid' } }, { type: 'node', node: { region: 'now', kind: 'question', title: 'Ship on Friday?' } }];
+    const items = [{ type: 'board', title: 'Plans' }, { type: 'region', region: { id: 'now', title: 'Now', mode: 'grid' } }, { type: 'node', node: { region: 'now', kind: 'question', title: 'Ship on Friday?' } }, { type: 'node', node: { region: 'now', kind: 'question', title: 'Who reviews?' } }];
     const wrote = await e.tools.call('write_board', { board: 'plans', items }, { caller });
     const boards = await e.route({ method: 'GET', path: 'boards' });
     const bad = await e.tools.call('write_board', { board: 'plans' }, { caller });
@@ -99,7 +99,21 @@ test('the engine runs from the folder alone: it reads only its own file and its 
     assert.deepEqual(manifest.tools[i].input, t.inputSchema, `${t.name}: the manifest's input is the engine's`);
   }
   assert.deepEqual([ran.wrote, ran.bad, ran.image, ran.boards], [false, true, 404, ['plans']]);
-  assert.deepEqual(ran.change['vb/change'].board, 'plans');
+  assert.deepEqual(ran.change['plugin/change'], { words: 'board.change.cards', count: 2, subject: 'plans', reveal: { board: 'plans', cards: [1, 2] } });
+});
+
+test('the change words are in the manifest and words.json: each key a change line may name, with its text holding `{count}` and `{subject}` as a host fills them', () => {
+  const manifest = JSON.parse(text(first, 'manifest.json'));
+  const words = JSON.parse(text(first, 'words.json')) as Record<string, string>;
+  assert.deepEqual(manifest.changeWords, ['board.change.board', 'board.change.card', 'board.change.cards']);
+  for (const key of manifest.changeWords) {
+    assert.ok(key.startsWith(`${manifest.id}.`), `${key} starts with the plugin's id, as the contract asks`);
+    assert.equal(typeof words[key], 'string', `words.json has ${key}`);
+    assert.match(words[key]!, /\{subject\}/, `${key} names the board`);
+  }
+  assert.match(words['board.change.cards']!, /\{count\}/, 'more than one card: the count');
+  // Word for word what a host stores for the board's lines (plugin-contract PLAN decision 6).
+  assert.deepEqual(manifest.changeWords.map((k: string) => words[k]), ['Changed board “{subject}”', 'Changed a card on board “{subject}”', 'Changed {count} cards on board “{subject}”']);
 });
 
 /** What a bundle loads: the module of every static import or re-export, and of every dynamic `import()`. */
@@ -134,6 +148,21 @@ test('the view bundle is one file with no import, exporting only mount, and one 
   const css = text(first, 'view/board.css');
   assert.ok(!/@import/.test(css) && !/url\((?!["']?data:)/.test(css), 'no other file, no address');
   assert.ok(!/sourceMappingURL/.test(code + css), 'no sourcemap for a host to serve');
+});
+
+test('the built sheet stays in its scope: every selector starts inside `vb`, as a host checks it,', async () => {
+  const css = text(first, 'view/board.css');
+  // The one rule, scripts/verify-style.mjs (which holds the sources to it in `npm run verify`), over what a host loads: a rule's first
+  // compound names `.vb`, a `.vb-` class or a `vb-` element and holds no :is/:where/:not/:has; `:root` declares only `--vb-*`; no @layer.
+  const { checkScope } = (await import(pathToFileURL(path.join(import.meta.dirname, '../../../scripts/verify-style.mjs')).href)) as {
+    checkScope: (rel: string, text: string) => { message: string }[];
+  };
+  assert.deepEqual(checkScope('apps/board/plugin/board.css', css).map((p) => p.message), []);
+  assert.ok(!/@import|@layer/.test(css), 'no @import and no @layer');
+  // A `var()` reads a `--host-*` property (plugin.md § Theme and host styling), a `--vb-*` one, or one the sheet declares.
+  const declared = new Set([...css.matchAll(/(?:^|[;{\s(])(--[\w-]+)\s*:/g), ...css.matchAll(/@property\s+(--[\w-]+)/g)].map((m) => m[1]));
+  const strays = [...new Set([...css.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1]!))].filter((p) => !/^--(?:host|vb)-/.test(p) && !declared.has(p));
+  assert.deepEqual(strays, []);
 });
 
 test('nothing in the folder names the machine that built it, the person, or the host it is meant for', () => {

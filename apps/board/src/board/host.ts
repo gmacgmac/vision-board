@@ -1,12 +1,12 @@
-// The board's host interface (principles § The board is a plugin; nclite's plugin contract, draft
-// v0.1, `docs/plugins.md` § The view and its host). The board mounts in any host as
+// The board's host interface (principles § The board is a plugin; docs/specification/plugin.md, One shape everywhere:
+// seam 2 is a host plugin contract's shapes, `Ref`, `SendRecord`, `PluginEvent`). The board mounts in any host as
 // `mount(root, host)` (mount.ts): everything it does outside its own root goes through `BoardHost`,
 // in the contract's shape, and what a host shows of the board (counts, versions, the open lists)
 // comes out through the view's status (status.ts), never in through the host. Plain TypeScript: no
 // Svelte type crosses it (the board's own controls are Svelte, compiled inside it: chrome/, PLAN Decisions). The standalone app is one host (shell/page-host.ts); a test's fake host
-// is another (tests/pages/board-host.spec.ts). Each difference from nclite's draft is listed in
-// docs/specification/components.md § The board's host interface.
-import type { AnswersRead, Chip } from '#actions';
+// is another (tests/pages/board-host.spec.ts). Where it differs from the contract's `PluginHost` (no `chat.add`; `store`,
+// `imageRoute`, `chat.reveal`, `chat.hasLine` optional) a contract host still fits it: apps/board/tests/plugin-types.test.ts.
+import type { Chip, Ref } from '#actions';
 import type { Transport } from '#client';
 import type { FlagName } from '#format';
 import { flagOn } from '#format';
@@ -24,10 +24,11 @@ export interface ConfirmList { items: readonly ConfirmItem[]; skipped?: readonly
  * access, discarding a note's words. `confirm` is the confirming button's text. */
 export interface ConfirmAsk { heading: string; body: string; confirm: string; list?: ConfirmList }
 
-/** A change to the board's data, from anyone: `ref` carries the board and the ledger's head when
- * the host knows them. A ref with no head says "you may have missed changes": the board catches up
- * (the standalone page sends one each time its change stream opens). */
-export interface BoardEvent { plugin: string; ref: { board?: string; head?: number } }
+/** A change to the board's data, from anyone. `ref` is any `Ref`, as the engine's `watch` gave it: of it the board reads
+ * `head`, the ledger line it changed through (0: the ledger was replaced, read it from the start). A ref with no `head`,
+ * or one that is not a whole number from 0, says "you may have missed changes": the board catches up (the standalone
+ * page sends `{}` each time its change stream opens). Other keys are ignored. */
+export interface PluginEvent { plugin: string; ref: Ref }
 
 /** The board's settings, as the host keeps them: each feature flag by name (`#format` FLAGS; a
  * value the host does not give reads as the flag's default) and the viewer's `align`. */
@@ -120,8 +121,14 @@ export interface ChatStatus {
   on(listener: () => void): () => void;
 }
 
-/** A card on a board, as the chat's line that changed it is asked for. */
-export interface ChatLine { board: string; n: number }
+/** A card on a board, as the chat's line that changed it is asked for: a plain `Ref`, which a change line matches when
+ * its `reveal` has the same `board` and a `cards` list holding `cards`. */
+export type ChatLine = { board: string; cards: number };
+
+/** The board's own record of a Send (the `send` act), which a host calls once the message went. `acks`: every `ack` the
+ * engine's `resolve` answered for the board's chips that went, in the order staged (`[]` when none did, or nothing
+ * went); null only from a host with no chat. Resolves null when recorded, else the problem's words. */
+export type SendRecord = (acks: readonly Ref[] | null) => Promise<string | null>;
 
 /** The host's chat, as the board reaches it: the only way it does. */
 export interface BoardChat {
@@ -136,14 +143,14 @@ export interface BoardChat {
   /** Send to agent: sends what is staged, with no words, and has the Send recorded. `record` is the
    *  board's own record of it (the `send` act, which marks the answers handed over): null when recorded,
    *  else the problem's words. A host calls it once per Send, only after the message has gone (one that
-   *  failed records nothing), and answers with what it answered. It passes `record` what `resolve` answered
-   *  for the answers chip that went (the board reads its `head`: only the answers read count as sent), or
-   *  null when the message went without one; `record()`, as before, only when no chat carried the answers
-   *  (with no chat at all, `send: (record) => record()`, the bot reads the board itself). It leaves `record`
+   *  failed records nothing), and answers with what it answered. It passes `record` the `ack`s that `resolve`
+   *  answered for the chips that went (the answers chip's `{ board, head }`: only the answers read count as sent),
+   *  `[]` when none went; `record(null)` only when no chat carried the answers (with no chat at all,
+   *  `send: (record) => record(null)`, the bot reads the board itself). It leaves `record`
    *  out only when its own server recorded that Send with the message (the standalone server does, for a
    *  message on the board's session), and it still calls it when nothing was staged, or the chat has no
    *  session to send through. Resolves null once done or held for the agent's turn to end, else the problem's words. */
-  send(record: (answers?: AnswersRead) => Promise<string | null>): Promise<string | null>;
+  send(record: SendRecord): Promise<string | null>;
   readonly status: ChatStatus;
   /** Shows the chat's line that last changed this card (a changed card's stepper links to it). */
   reveal?(ref: ChatLine): void;
@@ -166,7 +173,7 @@ export interface BoardHost {
    * transport, `#client` `Transport`). */
   api: Transport;
   /** Every change to the board's data, from anyone; returns the unsubscribe. */
-  events(listener: (e: BoardEvent) => void): () => void;
+  events(listener: (e: PluginEvent) => void): () => void;
   /** The host's chat: the selection and the answers go to it as chips, Send through it. */
   chat: BoardChat;
   settings: BoardSettings;
@@ -193,6 +200,20 @@ export const flagOf = (host: Pick<BoardHost, 'settings'>, f: FlagName): boolean 
 /** How the board's Markdown renders under this host, for every surface that draws it. */
 export const markdownOf = (host: Pick<BoardHost, 'settings' | 'imageRoute'>): MarkdownOptions =>
   ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute, more: flagOf(host, 'markdownMore') });
+
+/** The host's chat status as the board reads it: with the `singleAgent` setting on (read at mount), `agent` is ignored,
+ *  so the answers chip holds every answer and every answer lights Send (plugin.md § What the host gives); else the
+ *  host's own. Each member reads the host's at the time. */
+export function chatStatusOf(host: Pick<BoardHost, 'chat' | 'settings'>): ChatStatus {
+  const { chat } = host;
+  if (!flagOf(host, 'singleAgent')) return chat.status;
+  return {
+    get now() { return chat.status.now; },
+    get held() { return chat.status.held; },
+    get staged() { return chat.status.staged; },
+    on: (listener) => chat.status.on(listener),
+  };
+}
 
 /** A store for one mount, for a host that gives none. */
 export function memoryStore(): BoardStore {
@@ -225,6 +246,7 @@ export interface BoardView {
    *  message; none of them on the board, it says so through `notify`. Another board may ask first,
    *  through `confirm`, while a note holds unsaved words (as `leave()` does): what `ref` names shows once
    *  that board has opened, and Cancel leaves everything as it was. A board not yet in the ledger opens
-   *  once its first line arrives (an agent's first board). */
-  reveal(ref: { board?: string; n?: number; seq?: number; cards?: readonly number[] }): void;
+   *  once its first line arrives (an agent's first board). Any `Ref`: other keys, and a value of the wrong
+   *  kind, are ignored. */
+  reveal(ref: Ref): void;
 }

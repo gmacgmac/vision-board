@@ -53,7 +53,7 @@ test('I/O: file, socket and process access only in the server, bins and Node-sid
 });
 
 test('scope: every selector in the board\'s stylesheets names a vb- class or element', () => {
-  const ok = '.vb-a { color: var(--vb-ink); }\nvb-node .vb-b:hover, :where([class*="vb-"]) kbd { margin: 0; }\n.vb-dialog::backdrop { background: var(--vb-scrim); }';
+  const ok = '.vb-a { color: var(--vb-ink); }\nvb-node .vb-b:hover, .vb .vb-c { margin: 0; }\n.vb-dialog::backdrop { background: var(--vb-scrim); }';
   assert.deepEqual(checkScope('packages/ui/src/a/a.css', ok), []);
   assert.deepEqual(checkScope('apps/board/src/styles/a.css', '@container vb-board (max-width: 600px) { .vb-a { gap: 0; } }'), []);
   assert.deepEqual(checkScope('packages/ui/src/a/a.css', '@keyframes vb-pulse { from { opacity: 0; } 50% { opacity: 1; } }'), []);
@@ -62,6 +62,26 @@ test('scope: every selector in the board\'s stylesheets names a vb- class or ele
     '.vb-a, h2 { margin: 0; }', ':root { --x: 1; }', '[hidden] { display: none; }', '@media (prefers-color-scheme: dark) { p { color: red; } }']) {
     assert.deepEqual(levels(checkScope('apps/board/src/styles/a.css', bad)), ['fail'], bad);
   }
+});
+
+test('scope: a selector outside the scope fails, by the host\'s rule (nclite checkStylesheet): the first compound names vb and holds no :is, :where, :not, :has', () => {
+  const sheet = (css) => checkScope('packages/ui/src/a/a.css', css);
+  for (const bad of ['[data-narrow] .vb-a { gap: 0; }', ':where(.vb-board) { position: relative; }', '.vb-toolbar:not([data-tier]) { gap: 0; }',
+    'vb-node:has(.vb-b) { z-index: 1; }', ':is(vb-node, .vb-g) .vb-pin { top: 0; }', ':where([class*="vb-"]) kbd { margin: 0; }', ':root[data-theme=dark] .vb-board { gap: 0; }',
+    '.gliding vb-region { gap: 0; }', '@layer base { .vb-a { gap: 0; } }']) {
+    assert.deepEqual(levels(sheet(bad)), ['fail'], bad);
+  }
+  // the same reach, in the scope: the class first, the rest nested (a nested rule is under its parent and is not checked again)
+  for (const ok of ['.vb-toolbar { &:not([data-tier]) { gap: 0; } }', 'vb-node { [data-zoom=far] & .vb-b { visibility: hidden; } }',
+    'vb-node, .vb-g { & .vb-pin { top: 0; } }', '.vb-board { :where(&) { position: relative; } :where(&, & *):focus-visible { outline: none; } }',
+    '.vb-a[data-x] .vb-b:hover { gap: 0; }', '@container vb-bar (width < 900px) { .vb-toolbar { &[data-tier=half]:has(.vb-c) .vb-d { gap: 0; } } }']) {
+    assert.deepEqual(sheet(ok), [], ok);
+  }
+  assert.deepEqual(sheet(':root { --vb-x: 1; }'), []);
+  assert.deepEqual(levels(sheet(':root { --x: 1; color-scheme: dark; }')), ['fail', 'fail']);
+  // the standalone page's own sheets (styles/page.ts) are not in the plugin: they keep the looser rule
+  assert.deepEqual(checkScope('apps/board/src/styles/ledgers.css', '[data-narrow] .vb-a:not(.vb-b) { gap: 0; }'), []);
+  assert.deepEqual(levels(checkScope('apps/board/src/styles/header.css', '[data-narrow] .vb-a { gap: 0; }')), ['fail']);
 });
 
 test('scope: the board is sized by its own width, not the window\'s', () => {

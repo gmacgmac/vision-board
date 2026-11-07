@@ -9,7 +9,8 @@
 // until its `ref` changes. Notes are among the answers, so they are no chips: a note goes once, as its
 // answer (chat-no-double-note ruling 2). Chat to board: a change chip zooms to its cards and selects
 // nothing, so nothing goes with the next message, opening their board first when it is another one; a
-// changed card's stepper links to the board write in the chat that last changed it (`host.reveal`); a
+// changed card's stepper links to the board write in the chat that last changed it (`host.reveal`, asked with a plain
+// `Ref`, `{ board, cards: n }`); a
 // chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The board side
 // attaches from the page, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // It also holds the files attached to the next message (D-068 ruling 6: the composer takes them, the host
@@ -206,7 +207,9 @@ export function createChatBridge(): ChatBridge {
       if (spent !== null && refText(selection()) !== spent) spent = null;
       attach();
     },
-    send: (record) => (c ? c.send(record) : record()),
+    // Its server records a Send that went as a message itself; else the board records it, covering every answer up to
+    // its own line, as a Send no chat carried does: `record(null)`.
+    send: (record) => (c ? c.send(() => record(null)) : record(null)),
     status: {
       get now() { return statusNow().now; },
       get agent() { return statusNow().agent; },
@@ -217,11 +220,11 @@ export function createChatBridge(): ChatBridge {
         return () => { hearing.delete(listener); };
       },
     },
-    reveal({ board, n }) {
-      const entry = c && lastChange(c.state(), board, n);
+    reveal({ board, cards }) {
+      const entry = c && lastChange(c.state(), board, cards);
       if (entry) void c!.reveal(entry.key);
     },
-    hasLine: ({ board, n }) => !!c && !!lastChange(c.state(), board, n),
+    hasLine: ({ board, cards }) => !!c && !!lastChange(c.state(), board, cards),
   };
 
   return {

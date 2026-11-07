@@ -35,7 +35,9 @@ vb-region[data-rail] > .vb-region-rail {
   container: vb-rail / size;
   pointer-events: none;
 }
-.gliding vb-region[data-rail] > .vb-region-rail { transition: --vb-zoom var(--vb-motion) var(--vb-ease); }
+vb-region {
+  .gliding &[data-rail] > .vb-region-rail { transition: --vb-zoom var(--vb-motion) var(--vb-ease); }
+}
 
 /* The rail: the tools group, across the left border, from just under the top line. It grows down
    with its row and holds the popovers, so they anchor to it. The canvas-coloured ring is its gap in
@@ -77,8 +79,9 @@ vb-region[data-rail] :is(.vb-mode-pop, .vb-note-pop)::before {
    look with data-look on the rail (lit, and a short frame's rail expanded), as it does for other parts. */
 vb-region[data-rail] :is(.vb-mode-icon, .vb-mode-div) { transition: opacity var(--vb-motion-fast); }
 @media (hover: hover) {
-  vb-region[data-rail]:not([data-open], [data-preview], [data-note-open]) .vb-region-tools:not(:hover, :focus-within, [data-look])
-    :is(.vb-mode-icon, .vb-mode-div) { opacity: var(--vb-rail-rest); }
+  vb-region {
+    &[data-rail]:not([data-open], [data-preview], [data-note-open]) .vb-region-tools:not(:hover, :focus-within, [data-look]) :is(.vb-mode-icon, .vb-mode-div) { opacity: var(--vb-rail-rest); }
+  }
 }
 
 /* Only on the container in use (railOnHover flag, data-rail-hover; point 416): a frame that is neither
@@ -91,10 +94,10 @@ vb-region[data-rail-hover] .vb-mode-row { transition: border-color var(--vb-moti
 @media (hover: hover) {
   /* The row's own box goes with its icons (an empty pill would read as a fault), and so do the checked
      layout's and the switch's fills, which are not icons. Comment keeps its place, so its badge shows. */
-  vb-region[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within)
-    .vb-region-tools:not([data-look]) :is(.vb-mode-icon, .vb-mode-div, .vb-mseg:not(.vb-region-comment)) { opacity: 0; }
-  vb-region[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within)
-    .vb-region-tools:not([data-look]) > .vb-mode-row { border-color: transparent; background-color: transparent; box-shadow: none; }
+  vb-region {
+    &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within) .vb-region-tools:not([data-look]) :is(.vb-mode-icon, .vb-mode-div, .vb-mseg:not(.vb-region-comment)) { opacity: 0; }
+    &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within) .vb-region-tools:not([data-look]) > .vb-mode-row { border-color: transparent; background-color: transparent; box-shadow: none; }
+  }
 }
 
 /* Short frames (Design 4), by the rail's room on screen, mirroring the top line's row. The full rail
@@ -109,12 +112,16 @@ vb-region[data-rail-hover] .vb-mode-row { transition: border-color var(--vb-moti
    blur or Esc (data-shut, set by region-row.ts until the pointer comes back or focus moves; the
    button with focus stays drawn, so focus is always seen). Expanded is the rail's hover or focus, not
    the row's, so it stays expanded while the pointer is on one of its popovers (which sit in it). */
-vb-region[data-rail]:has(.vb-widths) { --rail-widths: 1; }
+vb-region {
+  &[data-rail]:has(.vb-widths) { --rail-widths: 1; }
+}
 @container vb-rail (max-height: 248.98px) or ((max-height: 274.98px) and style(--rail-widths: 1)) {
   /* The foot of the collapsed rail: the checked layout, Comment and the cog (2px padding and a 1px
      border each end, three 26px stops) under its top. */
-  vb-region[data-rail]:not([data-fixed]) .vb-region-tools {
-    top: auto; bottom: calc(100% - var(--rail-top) - 6px - 3 * (var(--rail-btn) + 2px));
+  vb-region {
+    &[data-rail]:not([data-fixed]) .vb-region-tools {
+      top: auto; bottom: calc(100% - var(--rail-top) - 6px - 3 * (var(--rail-btn) + 2px));
+    }
   }
   vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut])
     :is(.vb-mseg[role='radio']:not([aria-checked='true']), .vb-widths, .vb-mode-div):not(:focus) {
@@ -126,17 +133,24 @@ vb-region[data-rail]:has(.vb-widths) { --rail-widths: 1; }
 }
 @container vb-rail (max-height: 111.98px) {
   /* The cog alone, or Comment and the cog while the badge shows. */
-  vb-region[data-rail]:not([data-fixed]) .vb-region-tools { bottom: calc(100% - var(--rail-top) - 6px - (var(--rail-btn) + 2px)); }
-  vb-region[data-rail]:is([data-badge='unsent'], [data-badge='sent']):not([data-fixed]) .vb-region-tools {
-    bottom: calc(100% - var(--rail-top) - 6px - 2 * (var(--rail-btn) + 2px));
+  vb-region {
+    &[data-rail]:not([data-fixed]) .vb-region-tools { bottom: calc(100% - var(--rail-top) - 6px - (var(--rail-btn) + 2px)); }
+    &[data-rail]:is([data-badge='unsent'], [data-badge='sent']):not([data-fixed]) .vb-region-tools {
+      bottom: calc(100% - var(--rail-top) - 6px - 2 * (var(--rail-btn) + 2px));
+    }
   }
-  vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-mseg[role='radio']:not(:focus),
-  vb-region[data-rail]:not([data-badge='unsent'], [data-badge='sent'])
-    :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-region-comment:not(:focus) {
+  vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-mseg[role='radio']:not(:focus) {
     height: 0; padding-block: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
+  }
+  vb-region {
+    &[data-rail]:not([data-badge='unsent'], [data-badge='sent']) :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-region-comment:not(:focus) {
+      height: 0; padding-block: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
+    }
   }
 }
 /* While the rail is hovered or holds focus the frame is drawn above every card, as for an open
    popover (region.css data-open), so an expanded rail is never under the next container's cards;
    only the rail and the top line take the pointer then, so the frame's own cards stay reachable. */
-vb-region[data-rail]:has(> .vb-region-rail .vb-region-tools:is(:hover, :focus-within, [data-look])) { z-index: var(--vb-z-open); pointer-events: none; }
+vb-region {
+  &[data-rail]:has(> .vb-region-rail .vb-region-tools:is(:hover, :focus-within, [data-look])) { z-index: var(--vb-z-open); pointer-events: none; }
+}

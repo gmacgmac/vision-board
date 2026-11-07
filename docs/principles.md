@@ -1,6 +1,6 @@
 ---
 category: project-docs
-last_updated: 2026-10-27
+last_updated: 2026-11-07
 status: draft
 scope: Vision Board's architecture and design principles, the target we build to, and why
 keywords: [principles, architecture, patterns, reuse, components, tokens, actions, plugin, quality, dependencies]
@@ -86,9 +86,10 @@ reasoning, this list says how they land here. Consult the skill before planning 
 ## The board is a plugin
 
 Vision Board's destination is a plugin inside nclite, beside Journal and Organizer; the standalone
-app stays for development and the gallery. It is hosted under nclite's plugin contract
-(`~/ai/nclite/docs/plugins.md`, draft). Where the board needs a different shape, the contract
-changes, not the board (maintainer, 2026-10-26).
+app stays for development and the gallery. It is built to the host plugin contract nclite owns
+(`~/ai/nclite/shared/plugin-host.ts`, `docs/plugins.md`): the board's seam is that contract's
+shapes, everywhere it runs, and what differs inside a host is a switch the host turns on (D-096).
+Where the board needs a shape the contract lacks, it asks for the contract to change.
 
 - **Host-independent.** The board mounts in any host as `mount(root, host)`. The host supplies its
   routes, change events, the chat, settings, notices and confirmations. Nothing in the board imports
@@ -99,8 +100,8 @@ changes, not the board (maintainer, 2026-10-26).
 - **The host's chat, the board's link to it.** The board has no chat of its own in a host. A Send
   from the board reaches the agent through the host's chat, and the agent answers on the board.
 - **Its own storage.** Unlike Journal and Organizer (plain Markdown files), the board keeps its
-  append-only JSONL ledger, in whatever folder the host gives it (`.visionboard/` standalone, the
-  bot's `plugins/board/` in nclite).
+  append-only JSONL ledger, in whatever folder the host gives it (`.visionboard/` standalone, and
+  `.visionboard/` in the bot's workspace in nclite, D-077).
 - **Lives in a host's page.** Its rules style no element outside it (it does set its own `--vb-`
   properties on the page's root), it takes back from a host's plain element rules what it relies on,
   and it lays out by its own width, not the window's.

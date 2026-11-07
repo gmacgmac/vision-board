@@ -14,15 +14,21 @@ vb-node .vb-node-btab:is([data-tab='updates'], [data-tab='proposal'][data-update
   align-self: center; height: 18px; margin-block: 1px; padding: 0 var(--vb-space-1); border-color: var(--vb-line-strong); background: var(--vb-surface-card);
   color: var(--vb-ink-subtle); font-weight: var(--vb-weight-medium); letter-spacing: 0; text-transform: none;
 }
-[data-fresh-cards] vb-node .vb-node-btab[data-tab='updates'] { border-color: var(--vb-accent); color: var(--vb-accent-text); }
-vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']),
-[data-fresh-cards] vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
+vb-node {
+  [data-fresh-cards] & .vb-node-btab[data-tab='updates'] { border-color: var(--vb-accent); color: var(--vb-accent-text); }
+}
+vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
+vb-node {
+  [data-fresh-cards] & .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
+}
 /* Updated in amber (updateSignals flag, D-088): at rest the outline and words take --vb-state-updated, the
    brightest thing on the card until it is seen (APCA in the token's comment: words Lc 61.4 light, 74.2 dark).
    Hovered or open it keeps that amber and gains its soft fill, a step up, never down to the duller changed
    amber (FIX_01; words on the -soft Lc 52.3 light, 70.7 dark). With freshCards off the tab stays grey. */
-[data-fresh-cards][data-update-signals] vb-node .vb-node-btab[data-tab='updates'] { border-color: var(--vb-state-updated); color: var(--vb-state-updated); }
-[data-fresh-cards][data-update-signals] vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { background: var(--vb-state-updated-soft); }
+vb-node {
+  [data-fresh-cards][data-update-signals] & .vb-node-btab[data-tab='updates'] { border-color: var(--vb-state-updated); color: var(--vb-state-updated); }
+  [data-fresh-cards][data-update-signals] & .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { background: var(--vb-state-updated-soft); }
+}
 /* One tab for updates and a proposal (oneChangeTab, point 444): the proposal tab that stands for both takes the
    updates tab's look (above) in the updated amber, whatever freshCards says, hovered or open on its soft fill, as
    the amber tab's. Its steps sit in the proposal box, under the proposals, the stepper in the box too (vb-node.ts

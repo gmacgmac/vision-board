@@ -53,17 +53,28 @@ export type AnswersChip = ChipOf<'answers', AnswersRef>;
  * through unread: it goes back to `resolve` by its `kind` and `ref`. */
 export type Chip = CardChip | NoteChip | BoardChip | SelectionChip | AnswersChip;
 
-/** What a chip says now: `where` it is, then its `text`: one block of the bot's prompt. */
-export interface ChipText { where: string; text: string }
+/** One value of a `Ref`: a short string, a whole number, a boolean, or a short list of strings or numbers. */
+export type RefValue = string | number | boolean | readonly (string | number)[];
+
+/** A small flat object of the board's own keys, the seam's one reference (docs/specification/plugin.md, One shape
+ * everywhere): what an event says changed, what a change line or a chip reveals, what a chip's answer acknowledges.
+ * `{}` is a catch-up: anything may have changed. A type, not an interface, so a plain object of these values is one. */
+export type Ref = { readonly [key: string]: RefValue };
+
+/** What the answers chip's `resolve` acknowledges: the board, and `head`, the ledger line it was read through. */
+export type AnswersAck = { board: string; head: number };
+
+/** What a chip says now: `where` it is, then its `text`: one block of the bot's prompt; `ack`, what its Send acknowledges. */
+export interface ChipText { where: string; text: string; ack?: Ref }
 
 /** What an answers chip says now: its text ('' when nothing was answered since, or the board is
  * locked), how many answer lines, the notes they carry, so a message attaches none of them again, and
- * `head`, the ledger line it was read through: what the Send's record acknowledges (`sendHead`). */
-export type AnswersText = ChipText & Round & { head: number };
+ * `ack`, the board and the ledger line it was read through: what the Send's record is given back (`acksRead`). */
+export type AnswersText = ChipText & Round & { ack: AnswersAck };
 
-/** What a host's `record` is given for the answers chip that went: its `resolve` answer, of which the
- * board reads `head`; null when the message went without one; left out when no chat carried it. */
-export type AnswersRead = Pick<AnswersText, 'head'> | null | undefined;
+/** What the board records for a Send, from what its host says went (`acksRead`): the head the answers were read
+ * through; null when nothing went for this board; left out when no chat carried them. */
+export type AnswersRead = { head: number } | null | undefined;
 
 /** Why a chip, or the turn, is refused: nothing there (an unknown board, card or note, or a note
  * taken away), the card or container was removed (or the board archived), the note is hidden, or its
@@ -183,7 +194,7 @@ export function resolveChip(s: LedgerState, kind: ChipKind, ref: ChipRef): ChipT
     const { board, since, agent } = ref as AnswersRef;
     const turn = boardLocked(s, board) ? undefined : turnOf(s, board, since, agent);
     if (turn && 'refused' in turn) return turn;
-    const said: AnswersText = { where: actionsChipsWords.board(board), ...(turn ?? { text: '', count: 0, notes: new Set<number>() }), head: s.seq };
+    const said: AnswersText = { where: actionsChipsWords.board(board), ...(turn ?? { text: '', count: 0, notes: new Set<number>() }), ack: { board, head: s.seq } };
     return said;
   }
   if (kind === 'selection') {
@@ -222,6 +233,17 @@ export function resolveChip(s: LedgerState, kind: ChipKind, ref: ChipRef): ChipT
  * (with the chips' words) for a board the ledger does not hold. */
 export function turnOf(s: LedgerState, board: string, since: number, agent?: string): Round | ChipRefusal | undefined {
   return s.index.boards.has(board) ? roundOf(s, board, since, agent) : noBoard(board);
+}
+
+const isCount = (n: unknown): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0;
+
+/** What a host's `record(acks)` says went for `board` (plugin.md § The chat): null, a host with no chat, is left out (the
+ * Send covers every answer up to its own line); else the first ack of `board` with a whole-number `head`, its other keys
+ * ignored; none (`[]`, another board's, a head that names no line) acknowledges nothing new. */
+export function acksRead(acks: readonly Ref[] | null, board: string): AnswersRead {
+  if (acks === null) return undefined;
+  const ack = acks.find((a) => a.board === board && isCount(a.head));
+  return ack ? { head: ack.head as number } : null;
 }
 
 /** The `head` the board's Send records for `read`, what the host says went (point 377): left out when no chat

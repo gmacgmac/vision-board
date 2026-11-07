@@ -66,6 +66,33 @@ test('watermark: an answer made after the engine read the answers and before the
   expect(second, 'the ✓ that went does not go again').not.toMatch(/^1 \(/m);
 });
 
+test('acks: the host hands back the acks resolve answered, in the order staged, and the Send counts what the answers chip read', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host);
+  await drawn(page);
+  await ack(page, 0);
+  await page.locator('.host-root vb-node').nth(1).click();
+  await expect.poll(async () => (await drive(page, 'record')).chips.length).toBe(2);
+  const read = (await lines(host)).at(-1)!.seq;
+  await send(page);
+  await expect.poll(async () => (await sends(host)).length).toBe(1);
+  expect(host.messages[0]!.acks, 'only the answers chip carries one: the board and the line it read through').toEqual([{ board: 'plans', head: read }]);
+  expect((await sends(host))[0]!.head).toBe(read);
+  await expect.poll(async () => (await drive(page, 'boardStatus')).unsent, 'the answer went').toBe(false);
+});
+
+test('acks: an ack of another board, or one whose head names no line, acknowledges nothing, and the answers stay', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host, { acks: [{ board: 'other', head: 99 }, { board: 'plans', head: -1 }, { board: 'plans', head: '7' }, { head: 5 }] });
+  await drawn(page);
+  await ack(page, 0);
+  await expect.poll(() => answersChip(page)).toBeTruthy();
+  await send(page);
+  await expect.poll(async () => (await sends(host)).length).toBe(1);
+  expect((await sends(host))[0]!.head, 'nothing new acknowledged').toBe(0);
+  await expect.poll(async () => (await drive(page, 'boardStatus')).unsent, 'the answer is still unsent: it waits for the next Send').toBe(true);
+});
+
 test.describe('a send that fails', () => {
   test.use({ expected: { problems: [/A fetch that failed/] } });
   test('at-least-once: a send that fails records nothing, and the answers stay for the next', async ({ page, host }) => {

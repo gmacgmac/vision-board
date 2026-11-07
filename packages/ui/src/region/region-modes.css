@@ -61,4 +61,6 @@ vb-region[data-rail] .vb-mode-tip::before { left: auto; right: 100%; top: 0; bot
 vb-region .vb-mseg[data-tip-open] .vb-mode-tip { display: grid; gap: 2px; }
 vb-region .vb-mode-tip-name { color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
 vb-region .vb-mode-tip-hint { color: var(--vb-ink); font-size: var(--vb-text-xs); font-weight: var(--vb-weight-regular); }
-vb-region:has(.vb-mseg[data-tip-open]) { z-index: var(--vb-z-open); pointer-events: none; }
+vb-region {
+  &:has(.vb-mseg[data-tip-open]) { z-index: var(--vb-z-open); pointer-events: none; }
+}

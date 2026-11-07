@@ -23,10 +23,10 @@ const PICS = '/pics/';
 const DEFAULT_PICS = '/board-images/';
 
 /** The seam this fake host was written for (plugin.md § The types and the seam version): a folder whose `seam` differs is not loaded. */
-export const SEAM_WRITTEN_FOR = 1;
+export const SEAM_WRITTEN_FOR = 2;
 export const manifest = () => JSON.parse(readFileSync(path.join(FOLDER, 'manifest.json'), 'utf8'));
 
-export interface Message { chips: { kind: string; ref: unknown }[]; blocks: { where: string; text: string }[] }
+export interface Message { chips: { kind: string; ref: unknown }[]; blocks: { where: string; text: string }[]; acks: unknown[] }
 export interface ToolResultShape { content: { type: string; text: string }[]; structuredContent?: any; isError: boolean; _meta?: Record<string, any> }
 export type HostCaller = { by: 'person' } | { by: 'agent'; agent: string };
 export interface PluginEngine {
@@ -34,7 +34,7 @@ export interface PluginEngine {
   image(req: { method: string; path: string; ifNoneMatch?: string }): { status: number; body: unknown; headers?: Record<string, string> };
   resolve(kind: string, ref: unknown): any;
   tools: { list(): { name: string; description: string; inputSchema: unknown }[]; call(name: string, input: Record<string, unknown>, ctx?: { caller?: HostCaller; signal?: AbortSignal }): Promise<ToolResultShape> };
-  watch(onChange: (change: { board?: string; head: number }) => void): () => void;
+  watch(onChange: (ref: Record<string, unknown>) => void): () => void;
 }
 
 interface EngineModule { createEngine(o: { dir: string; name?: () => string; warn?: (m: string) => void; flags?: Record<string, boolean>; readOnly?: () => boolean }): PluginEngine }
@@ -57,8 +57,9 @@ function send(res: ServerResponse, status: number, body: unknown, headers: Recor
 }
 
 /** `readOnly`: this host can open its board read-only (plugin.md § The engine), starting so when true; left out, it never
- * passes the option. */
-export interface HostOptions { flags?: Record<string, boolean>; readOnly?: boolean }
+ * passes the option. `bot`: the one id its bot always calls with, with no sign-up (the `singleAgent` flag, plugin.md
+ * § The bot); left out, it registers its bot through `POST agents`. */
+export interface HostOptions { flags?: Record<string, boolean>; readOnly?: boolean; bot?: string }
 
 /** One fake host: its data folder, engine, bot and web server, on `port`. */
 export async function startHost(port: number, options: HostOptions = {}) {
@@ -67,7 +68,7 @@ export async function startHost(port: number, options: HostOptions = {}) {
   let readOnly = false;
   const engine = createEngine({ dir, name: () => 'The host\'s folder', warn: () => {}, ...(options.flags && { flags: options.flags }), ...(options.readOnly !== undefined && { readOnly: () => readOnly }) });
   // The host names its bot, once, through `route` (plugin.md § The bot): a write, so before it opens read-only.
-  const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: 'The host\'s bot' } }))!.body as { agent: string };
+  const joined = options.bot === undefined ? (await engine.route({ method: 'POST', path: 'agents', body: { label: 'The host\'s bot' } }))!.body as { agent: string } : { agent: options.bot };
   const bot: HostCaller = { by: 'agent', agent: joined.agent };
   readOnly = options.readOnly === true;
   const streams = new Set<ServerResponse>();
@@ -75,12 +76,12 @@ export async function startHost(port: number, options: HostOptions = {}) {
   const tell = (event: object) => { for (const s of streams) s.write(`data: ${JSON.stringify(event)}\n\n`); };
   /** Read-only on or off: asked on the engine's next call; a ref with no head tells the view to read again (plugin.md § The engine). */
   const setReadOnly = (on: boolean) => { readOnly = on; tell({ type: 'board', ref: {} }); };
-  const stop = engine.watch(({ board, head }) => tell({ type: 'board', ref: { ...(board !== undefined && { board }), head } }));
+  const stop = engine.watch((ref) => tell({ type: 'board', ref }));
 
-  /** The bot calls a tool; a board write's change goes to the chat as a line (`_meta`, plugin.md § Tools). */
+  /** The bot calls a tool; a board write's change goes to the chat as a line (`_meta['plugin/change']`, plugin.md § Tools). */
   const tool = async (name: string, input: Record<string, unknown>): Promise<ToolResultShape> => {
     const result = await engine.tools.call(name, input, { caller: bot });
-    const change = result._meta?.['vb/change'];
+    const change = result._meta?.['plugin/change'];
     if (change) tell({ type: 'chat', line: change });
     return result;
   };
@@ -100,15 +101,15 @@ export async function startHost(port: number, options: HostOptions = {}) {
     if (at === '/chat' && req.method === 'POST') {
       const { chips } = await readJson(req)() as { chips: Message['chips'] };
       const blocks: Message['blocks'] = [];
-      let answers: unknown = null;
+      const acks: unknown[] = [];
       for (const chip of chips) {
         const said = engine.resolve(chip.kind, chip.ref);
         if ('refused' in said) return void send(res, 409, { reason: said.reason });
         if (said.text) blocks.push({ where: said.where, text: said.text });
-        if (chip.kind === 'answers') answers = said; // what the Send's record acknowledges: the answers this read
+        if (said.ack !== undefined) acks.push(said.ack); // what the Send's record is given back, in the order staged
       }
-      messages.push({ chips, blocks });
-      return void send(res, 200, { blocks, answers });
+      messages.push({ chips, blocks, acks });
+      return void send(res, 200, { blocks, acks });
     }
     if (at.startsWith(API)) {
       const gone = new AbortController();

@@ -24,9 +24,13 @@
 /* Under a big title (bigTitles flag, point 437; node.css): a card whose body has structure shows its
    title at the `#` size, so its body's `#` steps down to the `##` size and the title stays the one
    heading. A `#` anywhere else (a note, a popover) keeps its size. */
-[data-big-titles] vb-node .vb-node-body:has(:is(.vb-md-h1, .vb-md-h2, .vb-md-table)) .vb-md-h1 { --vb-md-step: var(--vb-text-lg); }
+vb-node {
+  [data-big-titles] & .vb-node-body:has(:is(.vb-md-h1, .vb-md-h2, .vb-md-table)) .vb-md-h1 { --vb-md-step: var(--vb-text-lg); }
+}
 /* Space above, not below, so a heading sits with the text it opens. */
-:is(.vb-md-h1, .vb-md-h2):not(:first-child) { margin-top: var(--vb-space-1); }
+.vb-md-h1, .vb-md-h2 {
+  &:not(:first-child) { margin-top: var(--vb-space-1); }
+}
 
 /* A thematic break (decision 9): one quiet line. */
 .vb-md-rule { width: 100%; margin: var(--vb-space-1) 0; border: 0; border-top: 1px solid var(--vb-line-strong); }
@@ -44,10 +48,10 @@
 .vb-md-table {
   display: grid; grid-template-columns: repeat(var(--vb-md-cols, 1), minmax(0, auto)); width: 100%; max-width: 100%;
   font-size: var(--vb-md-text, var(--vb-text-md)); line-height: 1.4; color: var(--vb-ink);
+  &:has(th:nth-child(2)) { --vb-md-cols: 2; }
+  &:has(th:nth-child(3)) { --vb-md-cols: 3; }
+  &:has(th:nth-child(4)) { --vb-md-cols: 4; }
 }
-.vb-md-table:has(th:nth-child(2)) { --vb-md-cols: 2; }
-.vb-md-table:has(th:nth-child(3)) { --vb-md-cols: 3; }
-.vb-md-table:has(th:nth-child(4)) { --vb-md-cols: 4; }
 .vb-md-table :is(thead, tbody, tr) { display: contents; }
 .vb-md-table :is(th, td) {
   min-width: 0; padding: var(--vb-space-1); border-bottom: 1px solid var(--vb-line); text-align: start; overflow-wrap: break-word;
@@ -103,9 +107,9 @@
 .vb-md-img {
   display: block; width: auto; height: auto; max-width: 100%; max-height: calc(var(--vb-card-w-s) * 1.5); margin-inline: auto;
   border-radius: var(--vb-radius-md); background: var(--vb-surface-sunken); color: transparent;
+  &:not([width]) { width: 100%; aspect-ratio: auto 16 / 10; }
+  &:not([src]) { content: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'); aspect-ratio: 16 / 10; }
 }
-.vb-md-img:not([width]) { width: 100%; aspect-ratio: auto 16 / 10; }
-.vb-md-img:not([src]) { content: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'); aspect-ratio: 16 / 10; }
 /* In an image's place, the box saying why it is not shown: "Image not shown: <path> (reason)", or
    "Image not found: <path>" (ruling 19 and 23). */
 .vb-md-noimg {

@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -319,8 +319,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `tools` (159), gives what a plugin bot gets, which leaves out `join` (the host says who is calling; no
     secret to mint, no second identity for a bot), `read_attachment` (the chat's, beside its files, D-068)
     and `list_apps` (the app host's, which stays with the standalone host, 161). `request_grant` stays for
-    both: a board a person made, or another agent's, answers `needs-grant` under any host, and a request
-    only asks, for the person's click (`gen-tools.test.mjs` "x-hosts says").
+    both: a board a person made, or another agent's, answers `needs-grant` under any host (with `singleAgent` on, none does
+    and it answers `held`, 175), and a request only asks, for the person's click (`gen-tools.test.mjs` "x-hosts says").
 47. Each tool's input is the operation's path, query and body inputs merged into one plain
     object. The generator inlines every referenced schema (no `$ref` at all, for clients that do
     not resolve refs), flattens composed objects into `properties` plus
@@ -1622,16 +1622,17 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     is not the engine's), `resolve(kind, ref)` (`resolveChip`: a card, a note, a board, ref
     `{ board, head }`, refused when gone or archived, never as changed; `selection`, ref `{ board, cards }`,
     refused when a card is gone; `answers`, ref `{ board, since, agent? }`, the person's answers since that
-    line as that agent may read them, with `count` and `notes`, its text '' when there are none or the
+    line as that agent may read them, with `count`, `notes` and `ack: { board, head }` (175), its text '' when there are none or the
     board is locked), `tools` (`engine/tools.ts` `EngineTools`, in MCP's shapes: `list()` gives one
     `{ name, title, description, inputSchema }` per tool the generated table marks `plugin` (46);
     `call(name, input, { caller, signal })` checks the input against that table's JSON Schema and gives MCP's
     `CallToolResult`, its text the operation's JSON; a problem, an input that does not fit or a tool it has not
-    is `isError` with words, and never throws; a board write adds `_meta` `TOOL_CHANGE`, `vb/change`,
-    `{ board, cards, head }`, what a change chip needs), `image({ method, path, ifNoneMatch })` (the image
+    is `isError` with words, and never throws; a board write adds the change line, `_meta` `CHANGE_META`, `plugin/change`
+    (175; plugin.md § Tools)), `image({ method, path, ifNoneMatch })` (the image
     route's answer, 154: its status, headers and bytes, a problem as a reply; only `dir`'s images folder) and
     `watch(onChange)` (`{ board, head }` for every ledger change, this engine's or another writer's on `dir`). A
-    host registers its bot once by `route`'s `join` and passes its id as the caller; `join` is no tool. It
+    host registers its bot once by `route`'s `join` and passes its id as the caller, or, with `singleAgent` on (175), passes
+    any id and registers nothing; `join` is no tool. It
     serves `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`,
     `check_responses`, `read_ledger`, `act`, `mark_seen`, `put_board`, `retire_cards`, `join`,
     `request_grant` and `write_board` (`ENGINE_OPERATIONS`); a caller the operation does not take
@@ -1639,9 +1640,9 @@ headers and answers) is [images.md](./images.md); this section is what the API s
 160. **What the host supplies.** `dir`; optionally the ledger already opened in it (the standalone
     server opens it under its lock, `lock.ts`), the folder's name as the person reads it
     (`list_boards` and `join` answer it as `project`), `onSend` (given the person's Send to record, 170), the flags
-    it reads itself (`svgImages`, for `image`) and where warnings go. The plugin folder's `createEngine` takes `dir`, `name`,
+    it reads itself (`svgImages`, `botToolRules`, `insertBetween`, `singleAgent`, `followOtherWriters`: plugin.md § The engine) and where warnings go. The plugin folder's `createEngine` takes `dir`, `name`,
     `warn` and `flags` (`apps/board/plugin/engine.ts`, plugin.md): the opened ledger and `onSend` are the standalone server's. The ledger's appends by another writer are read in before every operation
-    and append, and polled while anyone watches (`ledger.ts` `refresh`, `follow`), so two engines on
+    and append, and polled while anyone watches unless `followOtherWriters` is off (`ledger.ts` `refresh`, `follow`; 175), so two engines on
     one folder never repeat a `seq`. Held by `engine.test.ts` (watch: the event, the fold, the next `seq`).
 161. **The standalone server is one host.** `dispatch.ts` keeps the HTTP edge: Host and Origin
     (`guard.ts`), the route table and parameters (the engine's `matchRoute`, `readParams`), the
@@ -1660,14 +1661,15 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `createMcpServer` serves any `ToolHost` (`packages/mcp/src/call-tool.ts`): its own `httpTools`, or a
     host's, the engine's `tools` as they are with the caller added, so another host's MCP server is one
     line (`engine.test.ts` "the MCP server serves the engine's tools"). A CLI's stream carries only a tool's
-    text, so the agent adapters read a change from it (`#agent` `boardWriteSummary`), the same facts as `vb/change`.
+    text, so the agent adapters read a change from it (`#agent` `boardWriteSummary`), the same facts as the change line (175).
 163. **Where the engine differs from nclite's draft (v0.1)**, asked of nclite: tool inputs are full
     JSON Schema (`write_board` takes a list of items); `route` and the tools return promises (a body
     read, `check_responses` waiting up to 60 s) and take a signal; a reply carries a problem's
     headers; a tool answers MCP's `CallToolResult` where the draft has a summary and a ref; the
     person's answers since the bot's last message are a chip the view attaches and `resolve` says, with no
     hook of their own (D-074 rule 6); a chip's `ref` is JSON and a refusal is
-    `{ refused, reason }`; the watch event is `{ board, head }`; and the host passes the caller.
+    `{ refused, reason }`; the watch event is `{ board, head }`; and the host passes the caller. Settled by nclite's contract,
+    to which the seam moved (175).
 
 ## Attached files (chat-attachments FILES_01, D-068)
 
@@ -1913,3 +1915,23 @@ headers and answers) is [images.md](./images.md); this section is what the API s
       on both links, no `insert` on the stored line), `show_layout` placing it between its neighbours, an existing card
       by `n` and `base`, cards by key in a `lanes` container, the retry and the conflict, each refusal writing nothing,
       a grant, a failed key, the example, and the flag off (through `writeItems` and through the server).
+
+## The plugin built to the host's contract (plugin-contract, 2026-11-07)
+
+175. **Seam 2: one shape everywhere** (points 458-492; D-096 when the maintainer agrees). The seam is a host plugin
+    contract's shapes, for the board's own page and server as for any host, and `SEAM` is 2; plugin.md holds every
+    member, its promise and its test, and says what moved from seam 1 (§ The types and the seam version). What it changes
+    here, no route, stored line or ledger shape among it:
+    - **The change line.** A `write_board` tool result carries `_meta['plugin/change']` (`engine/tools.ts` `CHANGE_META`,
+      in place of `TOOL_CHANGE` and `vb/change`), `{ words, count, subject, reveal }` (plugin.md § Tools). The manifest
+      lists the three words keys as `changeWords`. `boardWriteSummary` still reads the same facts from a tool's text.
+    - **The answers chip's `ack`.** `resolve('answers', …)` gives `ack: { board, head }`; a host's `chat.send(record)` hands
+      `record` the acks of the chips that went, which the board's `sendHead` reads (plugin.md § The chat). The `send` act
+      and its `head` (169) are unchanged.
+    - **`singleAgent`** (engine flag, off; plugin.md § The bot): no `join` needed, any caller id, never compared; lines are
+      written as the folder's one agent, the first joined, else one the engine joins on its first write; no `needs-grant`,
+      no refusal between agents, `request_grant` answers `held`, reads unscoped. The lock (138-140), `readOnly` (173) and
+      the person's own acts are unchanged. Off, as before.
+    - **`followOtherWriters`** (engine flag, on): off, the engine never polls the ledger file (`ledger.ts` `follow`);
+      another program's lines are read in at its next operation, as 160 says of every operation.
+    - Held by the tests plugin.md names for each.

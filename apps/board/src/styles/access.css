@@ -76,7 +76,9 @@
 
 /* The board's Agents list in the toolbar (D-034): a disclosure whose panel hangs under it, over the
    requests strip and the reply panel while it is open. */
-.vb-toolbar:has(.vb-agents[open]) { z-index: var(--vb-z-chrome-open); }
+.vb-toolbar {
+  &:has(.vb-agents[open]) { z-index: var(--vb-z-chrome-open); }
+}
 .vb-agents { position: relative; }
 .vb-agents > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--vb-space-1); cursor: pointer; }
 .vb-agents > summary::-webkit-details-marker { display: none; }

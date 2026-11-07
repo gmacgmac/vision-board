@@ -1293,3 +1293,14 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   4. A host that gives neither sees no change. The seam stays 1.
 - **Why**: hosts fill a button deeper than they ring a selection. With one colour for both jobs, nclite's dark mode missed a contrast tier whichever colour it gave (Lc 51–58 with the bright accent as the fill; 17–36 with the deep colour as the ring).
 - **Task**: cortex-tasks/board/2026-11-06_board-tokens_host-styling/TASK-STATUS.md
+
+## D-096 The board's seam is the host contract's shapes (seam 2)
+- **Date**: 2026-11-07 · **Status**: Accepted (maintainer, point 496) · **From**: nclite's handover (its N592, N593), points 458-492
+- **Decision**:
+  1. One shape everywhere: the board's seam is the host plugin contract's shapes (`Ref`, `SendRecord`, `ChangeMeta`, `PluginHost`, `CreateEngine`), in its own page and server as in any host; no adapter and no plugin-mode branch. A copy of the contract is a test fixture (`tests/plugin/contract/`), never the spec. The seam moves to 2.
+  2. Events, `chat.reveal`, `chat.hasLine` and `view.reveal` take plain `Ref`s (a line is `{ board, cards: n }`); `chat.send(record)` calls `record(acks)`; the answers chip's `resolve` gives `ack: { board, head }`.
+  3. A board write's change line is `_meta['plugin/change']`, `{ words, count, subject, reveal }`, its words keys `board.change.board|card|cards` listed as the manifest's `changeWords`, their text word for word the lines a host already stores. The key names no host; nclite is asked to rename its `CHANGE_META` to it.
+  4. What differs inside a host is a flag the host turns on, never a fork. `singleAgent` (off): no sign-up, any caller id, never compared, no grants, no scoping, every agent line written as the folder's one agent (the first joined, else one the engine joins, named by `name()`); the board lock, `readOnly` and the person's ✓, ✗ and approving stay. `followOtherWriters` (on): off, the engine never polls the ledger for another writer. Standalone leaves both at their defaults, and its server never passes them to its engine.
+  5. Every top-level selector of the plugin's stylesheet stays in the `vb` scope by the host's rule, and the sheet reads only `--vb-*` and `--host-*` properties, held by `npm run verify` and the plugin build test.
+- **Why**: nclite hosts every plugin through one contract it owns (its ADR-0288), and carried a translator and a stylesheet waiver for the board alone. Built to the contract, the board needs neither, and any host built to it mounts the board as it is.
+- **Task**: cortex-tasks/board/2026-11-07_board-app_plugin-contract/TASK-STATUS.md

@@ -19,7 +19,7 @@
 // folder. An open ledger another server moved between layouts (into `main/`, or back) is followed there, read-only.
 import fs from 'node:fs';
 import path from 'node:path';
-import { MAIN_LEDGER, flagOn, ledgerFiles, ledgerFolder, ledgerOfFolder, projectOfLedger } from '#format';
+import { MAIN_LEDGER, flagOn, ledgerFiles, ledgerFolder, ledgerOfFolder, projectOfLedger, withoutHostFlags } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost, AppHostOptions } from './apps.ts';
 import { createAppHost } from './apps.ts';
@@ -119,7 +119,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   const getLedgerName = () => ledgerOfFolder(data());
   const others = flagOn('ledgerFolders', o.apps?.flags ?? {}) ? otherLedgers(getDir, getLedgerName, () => displayName(o.home, getDir())) : undefined;
   const getEngine = () => (engine ??= createEngine({
-    dir: data(), ledger, name: () => displayName(o.home, getDir()), ledgerName: getLedgerName(), onSend, flags: o.apps?.flags, readOnly: editing.readOnly, otherLedger: others?.get,
+    dir: data(), ledger, name: () => displayName(o.home, getDir()), ledgerName: getLedgerName(), onSend, flags: withoutHostFlags(o.apps?.flags), readOnly: editing.readOnly, otherLedger: others?.get,
   }));
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({

@@ -9,7 +9,7 @@
 // leavePrompt flag it guards its own tab: a close or reload while a note holds unsaved words gets the
 // browser's "Leave site?" prompt (`guardLeave`).
 import { flagOn, isFlag } from '#format';
-import type { BoardChat, BoardHost, BoardEvent, BoardPageParts } from '../board/host.ts';
+import type { BoardChat, BoardHost, BoardPageParts, PluginEvent } from '../board/host.ts';
 import type { Status } from '../board/status.ts';
 import { pageFlags } from '../flags.ts';
 import { readEditing } from './editing.ts';
@@ -50,7 +50,7 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
    *  built page: the first id is kept, and a different one reloads the page, whose view is already
    *  saved (FE_02 ruling 6). With the openFolder flag the stream is ended by a folder switch;
    *  reopened, it reloads the page when the folder changed, else the board catches up. */
-  function events(listener: (e: BoardEvent) => void): () => void {
+  function events(listener: (e: PluginEvent) => void): () => void {
     let build: string | null = null;
     let opened = false;
     const catchUp = () => listener({ plugin: PLUGIN, ref: {} });

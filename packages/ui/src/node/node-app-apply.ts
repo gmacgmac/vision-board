@@ -10,15 +10,15 @@ import type { VbAppFrameElement } from '../app-frame/vb-app-frame.ts';
 import { appStateMarkup } from './node-template.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
 
-/** The panel's size as --app-w and --app-h on the card (CSSOM: the CSP refuses style attributes);
+/** The panel's size as --vb-app-w and --vb-app-h on the card (CSSOM: the CSP refuses style attributes);
  * none on other kinds. */
 export function applyPanelSize(card: HTMLElement, size: AppSize | undefined): void {
   if (size) {
-    card.style.setProperty('--app-w', `${size.w}px`);
-    card.style.setProperty('--app-h', `${size.h}px`);
+    card.style.setProperty('--vb-app-w', `${size.w}px`);
+    card.style.setProperty('--vb-app-h', `${size.h}px`);
   } else {
-    card.style.removeProperty('--app-w');
-    card.style.removeProperty('--app-h');
+    card.style.removeProperty('--vb-app-w');
+    card.style.removeProperty('--vb-app-h');
   }
 }
 

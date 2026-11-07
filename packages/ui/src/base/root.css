@@ -13,39 +13,44 @@
 /* The root's width, in pixels, for what sits in a nearer container (a tip in a container's frame) and so can't ask `cqw`. */
 @property --vb-root-w { syntax: '<length>'; inherits: true; initial-value: 100000px; }
 .vb-board > * { --vb-root-w: 100cqw; }
-:where([class*='vb-'], [class*='vb-'] *) { box-sizing: border-box; }
-/* Author display rules (flex, grid) beat the browser's [hidden]; this keeps hidden hidden. */
-:where([class*='vb-'], [class*='vb-'] *)[hidden] { display: none !important; }
-/* A host styles these elements globally (nclite draws every h2 small and in capitals, and styles p,
-   button, input and select); inside the board each starts again from the browser's own look, which
-   the board's rules then set. The element named twice (specificity 0,0,2) is over a host's element
-   rule and under every rule of the board's, which all name a class. */
-:is(h1, h2, h3, p, button, input, select, textarea, dialog):where([class*='vb-'], [class*='vb-'] *):not(html) {
-  all: revert;
-  box-sizing: border-box;
+/* The rules below are nested in the root's, which names the board's scope for a stylesheet that may hold only rules of
+   its own (plugin.md § A guest in the host's page). `:where(&, & *)` is the root and everything in it, as `[class*='vb-']`
+   with its descendants was: the board adds no element outside its root, and takes no specificity. */
+.vb-board {
+  :where(&, & *) { box-sizing: border-box; }
+  /* Author display rules (flex, grid) beat the browser's [hidden]; this keeps hidden hidden. */
+  :where(&, & *)[hidden] { display: none !important; }
+  /* A host styles these elements globally (nclite draws every h2 small and in capitals, and styles p,
+     button, input and select); inside the board each starts again from the browser's own look, which
+     the board's rules then set. The element named twice (specificity 0,0,2) is over a host's element
+     rule and under every rule of the board's, which all name a class. */
+  :is(h1, h2, h3, p, button, input, select, textarea, dialog):where(&, & *):not(html) {
+    all: revert;
+    box-sizing: border-box;
+  }
+  /* The same for what a host's rule on a bare element reaches otherwise (`span`, `div`, a link, a list), and only inside
+     the root: the root is the host's own element. The properties a page's element rule sets, one by one: there are
+     thousands of these elements on a big board, and `all` costs each one every property there is (perf.spec.ts). */
+  :is(span, div, a, ul, ol, li, label, b, strong, em, i, code, pre, kbd, small, time, header, aside, section, main, nav, footer, details, summary, h4, h5, h6, table, thead, tbody, tr, th, td, blockquote, hr):where(& *):not(html) {
+    display: revert; float: revert; position: revert; vertical-align: revert; opacity: revert; transform: revert;
+    width: revert; height: revert; min-width: revert; min-height: revert; max-width: revert; max-height: revert;
+    margin: revert; padding: revert; border: revert; border-radius: revert; outline: revert; background: revert; box-shadow: revert;
+    color: revert; font: revert; letter-spacing: revert; word-spacing: revert; text-align: revert; text-indent: revert;
+    text-transform: revert; text-decoration: revert; white-space: revert; list-style: revert; cursor: revert;
+    box-sizing: border-box;
+  }
+  /* An svg or a picture carries its size, and an svg its paint, as attributes, which `all: revert` would take away: so
+     the properties a host's rule on them might set, one by one (a Tailwind-like reset's `display`, `max-width`, `height`,
+     an icon set's `fill: currentColor`). Only two svgs of the board's carry paint as attributes, and only these values
+     (AppIcon, ButtonIcon); `guest.spec.ts` "a host's loud element rules" fails on any other. */
+  :is(svg, img):where(& *):not(html) {
+    display: revert; vertical-align: revert; margin: 0; padding: 0; border: 0; max-width: none; max-height: none; min-width: 0; min-height: 0;
+    float: none; opacity: revert; filter: none; transform: none; box-shadow: none; background: none; position: revert;
+  }
+  :is(svg, img):where(& *):not(html):where(:not([width])) { width: revert; }
+  :is(svg, img):where(& *):not(html):where(:not([height])) { height: revert; }
+  svg:where(& *):not(html):where(:not([fill])) { fill: revert; }
+  svg:where(& *):not(html):where(:not([stroke])) { stroke: revert; }
+  svg:where(& *):not(html):where([fill='none']) { fill: none; }
+  svg:where(& *):not(html):where([stroke='currentColor']) { stroke: currentColor; }
 }
-/* The same for what a host's rule on a bare element reaches otherwise (`span`, `div`, a link, a list), and only inside
-   the root: the root is the host's own element. The properties a page's element rule sets, one by one: there are
-   thousands of these elements on a big board, and `all` costs each one every property there is (perf.spec.ts). */
-:is(span, div, a, ul, ol, li, label, b, strong, em, i, code, pre, kbd, small, time, header, aside, section, main, nav, footer, details, summary, h4, h5, h6, table, thead, tbody, tr, th, td, blockquote, hr):where(.vb-board *):not(html) {
-  display: revert; float: revert; position: revert; vertical-align: revert; opacity: revert; transform: revert;
-  width: revert; height: revert; min-width: revert; min-height: revert; max-width: revert; max-height: revert;
-  margin: revert; padding: revert; border: revert; border-radius: revert; outline: revert; background: revert; box-shadow: revert;
-  color: revert; font: revert; letter-spacing: revert; word-spacing: revert; text-align: revert; text-indent: revert;
-  text-transform: revert; text-decoration: revert; white-space: revert; list-style: revert; cursor: revert;
-  box-sizing: border-box;
-}
-/* An svg or a picture carries its size, and an svg its paint, as attributes, which `all: revert` would take away: so
-   the properties a host's rule on them might set, one by one (a Tailwind-like reset's `display`, `max-width`, `height`,
-   an icon set's `fill: currentColor`). Only two svgs of the board's carry paint as attributes, and only these values
-   (AppIcon, ButtonIcon); `guest.spec.ts` "a host's loud element rules" fails on any other. */
-:is(svg, img):where(.vb-board *):not(html) {
-  display: revert; vertical-align: revert; margin: 0; padding: 0; border: 0; max-width: none; max-height: none; min-width: 0; min-height: 0;
-  float: none; opacity: revert; filter: none; transform: none; box-shadow: none; background: none; position: revert;
-}
-:is(svg, img):where(.vb-board *):not(html):where(:not([width])) { width: revert; }
-:is(svg, img):where(.vb-board *):not(html):where(:not([height])) { height: revert; }
-svg:where(.vb-board *):not(html):where(:not([fill])) { fill: revert; }
-svg:where(.vb-board *):not(html):where(:not([stroke])) { stroke: revert; }
-svg:where(.vb-board *):not(html):where([fill='none']) { fill: none; }
-svg:where(.vb-board *):not(html):where([stroke='currentColor']) { stroke: currentColor; }

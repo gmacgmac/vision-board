@@ -46,7 +46,7 @@ export const RESET_NONE_HINT = regionWords.noCardsMoved;
 export const PUT_BACK_NONE_HINT = regionWords.notMoved;
 
 /**
- * The colour a region's frame is drawn in, as a CSS value: the element sets it as `--region` and
+ * The colour a region's frame is drawn in, as a CSS value: the element sets it as `--vb-region` and
  * `region.css` mixes the frame line, the title and the count from it. Every region takes the
  * neutral default for now; a region colour later is this one function (and one property).
  */

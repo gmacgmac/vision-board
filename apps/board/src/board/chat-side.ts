@@ -6,7 +6,7 @@
 // the standalone chat and any other host's are told the same. No DOM but the stage's click.
 import type { BoardData, Chip, LedgerState, SelectedCard } from '#actions';
 import { answersChip, selectionChip } from '#actions';
-import type { BoardChat } from './host.ts';
+import type { BoardChat, ChatStatus } from './host.ts';
 import type { Selection } from './selection/index.ts';
 import type { Status } from './status.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
@@ -33,11 +33,13 @@ export function cardIds(d: BoardData, cards: readonly number[]): string[] {
 /** The words of card `n`'s stepper link, when the chat has the line that changed it. */
 export function chatSource(chat: BoardChat, board: string, n: number): string | undefined {
   if (!chat.reveal) return undefined;
-  return !chat.hasLine || chat.hasLine({ board, n }) ? boardWords.showInTheChat : undefined;
+  return !chat.hasLine || chat.hasLine({ board, cards: n }) ? boardWords.showInTheChat : undefined;
 }
 
 export interface ChatSideDeps {
   chat: BoardChat;
+  /** The chat's status as the board reads it (host.ts `chatStatusOf`: no `agent` under `singleAgent`). */
+  chatStatus: ChatStatus;
   stage: HTMLElement;
   selection: Selection;
   status: Status;
@@ -52,7 +54,7 @@ export interface ChatSideDeps {
 
 /** Joins the board to its host's chat; returns the function that parts them, taking its chips back. */
 export function bindChat(d: ChatSideDeps): () => void {
-  const { chat, stage, selection, status } = d;
+  const { chat, chatStatus, stage, selection, status } = d;
   /** Each key's chip as last attached, as text: the same chip is not attached twice. */
   const shown = new Map<string, string>();
   /** Each attached chip's `ref`, as text, and the `ref` under each key that last went with a Send: spent until it changes. */
@@ -68,7 +70,7 @@ export function bindChat(d: ChatSideDeps): () => void {
   };
   /** Send is enabled for what the chat holds: the host's say, with `staged`; with none, a chip of the board's own that hasn't gone. */
   function markAttached() {
-    const attached = chat.status.staged ?? [...live].some(([key, ref]) => spent.get(key) !== ref);
+    const attached = chatStatus.staged ?? [...live].some(([key, ref]) => spent.get(key) !== ref);
     if (status.now.chatAttached !== attached) status.set({ chatAttached: attached });
   }
 
@@ -83,12 +85,12 @@ export function bindChat(d: ChatSideDeps): () => void {
       for (const [key, ref] of live) spent.set(key, ref);
     }
     put(SELECTION_KEY, s && selectionChip(d.id(), selectedCards(data, selection.selected())));
-    put(ANSWERS_KEY, s && answersChip(s, d.id(), chat.status.agent));
+    put(ANSWERS_KEY, s && answersChip(s, d.id(), chatStatus.agent));
     markAttached();
   }
 
   function hear() {
-    status.set({ chatWork: chat.status.now, sendWaiting: chat.status.held === true });
+    status.set({ chatWork: chatStatus.now, sendWaiting: chatStatus.held === true });
     attach();
     markAttached();
   }
@@ -96,11 +98,11 @@ export function bindChat(d: ChatSideDeps): () => void {
   /** The stepper's link on a changed card (packages/ui `stepMarkup`). */
   const onStage = (e: MouseEvent) => {
     const link = (e.target as Element).closest<HTMLElement>('vb-node [data-source]');
-    if (link) chat.reveal?.({ board: d.id(), n: Number(link.closest<HTMLElement>('vb-node')?.dataset.id) });
+    if (link) chat.reveal?.({ board: d.id(), cards: Number(link.closest<HTMLElement>('vb-node')?.dataset.id) });
   };
 
   stage.addEventListener('click', onStage);
-  const stops = [selection.onChange(attach), status.on((patch) => { if ('drawn' in patch) attach(); }), hearUntilStopped((heard) => chat.status.on(heard), hear)];
+  const stops = [selection.onChange(attach), status.on((patch) => { if ('drawn' in patch) attach(); }), hearUntilStopped((heard) => chatStatus.on(heard), hear)];
   hear();
   return () => finishAll([...stops, () => stage.removeEventListener('click', onStage), () => put(SELECTION_KEY, null), () => put(ANSWERS_KEY, null)]);
 }

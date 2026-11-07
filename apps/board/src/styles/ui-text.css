@@ -12,5 +12,9 @@
 
 /* What a person picks or types reads at the size of the labels beside it, one step under the text around it
    (maintainer, 2026-10-31). A toolbar's buttons sit beside them, so they match too. */
-:is(.vb-toolbar, .vb-toolbar-end, .vb-dialog, .vb-go, .vb-reply, .vb-access) :is(select, input, textarea, .vb-select, .vb-input),
-:is(.vb-toolbar, .vb-toolbar-end) .vb-btn { font-size: var(--vb-ui-text-sm); }
+.vb-toolbar, .vb-toolbar-end, .vb-dialog, .vb-go, .vb-reply, .vb-access {
+  & :is(select, input, textarea, .vb-select, .vb-input) { font-size: var(--vb-ui-text-sm); }
+}
+.vb-toolbar, .vb-toolbar-end {
+  & .vb-btn { font-size: var(--vb-ui-text-sm); }
+}

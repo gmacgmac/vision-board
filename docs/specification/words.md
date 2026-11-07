@@ -69,8 +69,9 @@ layer: its words import nothing, not even `node:`.
 
 | File | Area | Holds |
 |---|---|---|
+| `apps/board/plugin/words/change.ts` | `change` | The line a host's chat draws for a board write, one per count (no card, one, more), with the host's `{count}` and `{subject}` slots (the manifest's `changeWords`; plugin.md § Tools). |
 | `apps/board/plugin/words/plugin.ts` | `plugin` | The plugin's name and its chip kinds, as a host shows them (the manifest names them by key). |
-| `apps/board/plugin/words/skill-edits.ts` | `skill-edits` | The edits that make the skill a plugin's bot reads from the standalone skill: what it loses (join, the chat panel's permissions, pictures' folder, apps) and what it says instead. |
+| `apps/board/plugin/words/skill-edits.ts` | `skill-edits` | The edits that make the skill a plugin's bot reads from the standalone skill: one per section, each cut to what a host's bot needs (within 8 KiB; no join, grants, chat panel, other ledgers or apps; pictures' folder) and what it says instead. |
 
 ### The standalone page around the board
 

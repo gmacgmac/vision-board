@@ -46,11 +46,12 @@ test('the plugin skill has an Images section: the board folder\'s images/, the e
   assert.ok(!/nclite|\.visionboard|\bapp\b|upload|put_image/i.test(section), 'it names no host, no standalone path, no app, no upload tool');
   assert.ok(!/^### Images in cards$/m.test(source.replace(/^### Images in cards$/m, '')) , 'the standalone skill has its own, once');
   assert.ok(source.includes('Keep it in the open ledger\'s `images/`: `.visionboard/<ledger>/images/`'), 'the standalone words are untouched');
-  assert.ok(plugin.includes('It also shows pictures inside a card.') && !plugin.includes('small apps you build'));
+  assert.ok(plugin.includes('or to show a picture in a card.') && !plugin.includes('app you build'), 'the description keeps pictures, not apps');
 });
 
-test('every tool a plugin bot has is in the skill, and its sentences about the person\'s answers are the standalone skill\'s own', () => {
-  for (const name of given) assert.ok(plugin.includes(`\`${name}\``), `${name} is in the plugin skill`);
+test('every tool a plugin bot has (but request_grant) is in the skill, and its sentences about the person\'s answers are the standalone skill\'s own', () => {
+  // `request_grant` is left to its description and the instructions: under `singleAgent` (a host's) it answers `held`.
+  for (const name of given) assert.equal(plugin.includes(`\`${name}\``), name !== 'request_grant', `${name}: in the plugin skill unless it is request_grant`);
   for (const kept of ['"Waiting for your reply" is yours.', "**Don't fetch it again**", 'Never hold your turn open: no `check_responses` with `wait`.']) {
     assert.ok(source.includes(kept) && plugin.includes(kept), kept);
   }
@@ -75,7 +76,7 @@ test('v3.30 (insert-markdown-signals BOT_01): both skills point to list_open, dr
 test('each skill edit finds its place exactly once, and a change under one stops the build', () => {
   assert.ok(skillEdits.length > 0);
   for (const e of skillEdits) assert.ok(source.split(e.from).length === 2, `${JSON.stringify(e.from.slice(0, 50))} must occur once in SKILL.md`);
-  assert.throws(() => skillFor(source.replace('## Apps on the board', '## Other apps')), /exactly once/);
+  assert.throws(() => skillFor(source.replace('The board is how you and the person chat.', 'The board is how we chat.')), /exactly once/);
   assert.throws(() => skillFor(`${source}\n${skillEdits[0]!.from}`), /exactly once/);
 });
 

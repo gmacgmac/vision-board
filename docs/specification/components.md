@@ -344,13 +344,14 @@ host; nclite's pane will be another.
   (`#actions` `selectionChip`, `answersChip`), replaced as they change, none on a past version, taken back at
   `unmount`. Each may carry `preview`; a host may pass any chip through unread, and its `kind` and `ref` go
   to the engine's `resolve` as the message goes. A chip that went is spent until its key's `ref` changes.
-  `chat.send(record)` sends what is staged with no words and calls `record` (the `send` act), unless the
-  host's own server recorded that Send with the message; a host with no chat answers `record()`. `chat.status`
+  `chat.send(record)` sends what is staged with no words and calls `record(acks)` (the `send` act, with the
+  answers' `head` from the ack for this board, `#actions` `acksRead`), unless the host's own server recorded that
+  Send with the message; a host with no chat answers `record(null)` (plugin.md § The chat). `chat.status`
   is read only: `now` (idle, working, asking) is all a host need give and drives the status's `chatWork`;
-  optional `agent` scopes the answers chip, `held` drives `sendWaiting`, and `staged` has the full say over `chatAttached`; with no
+  optional `agent` scopes the answers chip (ignored with the `singleAgent` setting on, `host.ts` `chatStatusOf`), `held` drives `sendWaiting`, and `staged` has the full say over `chatAttached`; with no
   `staged`, a chip of the board's own that hasn't gone with a Send enables it (`chat-side.ts` `markAttached`).
-  Optional `chat.reveal` and `chat.hasLine` are a changed card's stepper link to the chat's line; without
-  `reveal` there is no link. `BoardView.reveal({ cards })` zooms to cards by number and selects nothing, and
+  Optional `chat.reveal` and `chat.hasLine` (each given `{ board, cards: n }`) are a changed card's stepper link
+  to the chat's line; without `reveal` there is no link. `BoardView.reveal({ cards })` zooms to cards by number and selects nothing, and
   a `board` the ledger does not hold yet opens when its first line arrives. Proven by
   `apps/board/tests/chat-bridge.test.ts` (with a host that gives only `now`) and
   `tests/pages/board-host.spec.ts` "the chat seam", whose fake host imports nothing from `shell/`.
@@ -610,7 +611,7 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
 
 **Frames and hover boxes (review polish FE_01).** A container's frame and every hover box's border
 (`.vb-tip`) read one token, `--vb-line-contrast`, the Lines scale's next step above `--vb-line-strong`
-(`regionColour` returns it as `REGION_COLOUR_DEFAULT`; the frame reads `--region` whole). The container
+(`regionColour` returns it as `REGION_COLOUR_DEFAULT`; the frame reads `--vb-region` whole). The container
 keeps no fill. Chosen by eye, not by the APCA tier (D-009): the measured scores are in
 `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_01_colours.md`.
 
@@ -1481,7 +1482,7 @@ section is how the board draws one. Two patterns share the work.
    room: it scrolls when the panel is too small for it (`node-app.css` `.vb-app-state`).
 2. **Its size.** `app-frame-core.ts` `panelSize` is the panel's size: the agent's `app.w`/`app.h`,
    else the manifest's `size`, else the default, held to `APP_SIZE`. `node-app-apply.ts` sets it as
-   `--app-w` and `--app-h` through the CSSOM (`applyPanelSize` from `vb-node.ts` `render`, then
+   `--vb-app-w` and `--vb-app-h` through the CSSOM (`applyPanelSize` from `vb-node.ts` `render`, then
    `applyApp` once list_apps names a manifest size); `node.css` makes the card that wide plus its border, whatever its emphasis: the
    panel runs edge to edge inside the border (the slot reaches past the content's side padding, so
    the title, tags and notes keep theirs; `app-cards.spec.ts` "end to end: …" and

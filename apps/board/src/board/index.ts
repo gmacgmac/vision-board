@@ -7,7 +7,8 @@ import { mount as mountBoard } from './mount.ts';
 import type { BoardHost } from './host.ts';
 
 export type {
-  BoardChat, BoardEvent, BoardHost, BoardPage, BoardPageParts, BoardSettings, BoardStore, BoardView, ChatStatus, ChatWork, ConfirmAsk,
+  BoardChat, BoardHost, BoardPage, BoardPageParts, BoardSettings, BoardStore, BoardView, ChatLine, ChatStatus, ChatWork, ConfirmAsk,
+  PluginEvent, SendRecord,
 } from './host.ts';
 export type { MountedBoard } from './mount.ts';
 export type { BoardStatus } from './status.ts';

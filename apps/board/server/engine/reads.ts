@@ -1,9 +1,9 @@
 // The read operations (api.md Operations, 31, 41, 43, 44, 133): every answer carries `head`, the
 // ledger's latest `seq`. The shapes are built by packages/actions (`get_board`'s with the page's own
 // `boardData`) and packages/layout (`show_layout`'s); nothing is folded here. A read with an agent
-// caller is scoped to that agent (`list_open`, `check_responses`, api.md 41). Every read naming a
-// board an agent may call names it through `requireBoard` (visibility.ts), so an archived board is
-// not found (api.md 136); `read_ledger` is the person's and names any board. The change streams are
+// caller is scoped to that agent (`list_open`, `check_responses`, api.md 41), but the folder's one agent's (`singleAgent`,
+// operations.ts `scopeOf`) are not. Every read naming a board an agent may call names it through `requireBoard`
+// (visibility.ts), so an archived board is not found (api.md 136); `read_ledger` is the person's and names any board. The change streams are
 // the host's (the standalone server's streams.ts, from `watch`). What a read tells its caller about itself (`owed`,
 // `answered`, `held`; the `botToolRules` flag) is caller-marks.ts.
 import type { LedgerEvent } from '#format';
@@ -19,7 +19,7 @@ import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './calle
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
-import { readOnlyMark, reply, whereAnswer } from './operations.ts';
+import { readOnlyMark, reply, scopeOf, whereAnswer } from './operations.ts';
 import * as writesWords from '../words/writes.ts';
 
 /** At most `limit` of `list`, and `more: true` when it was cut (api.md 31). */
@@ -29,21 +29,21 @@ function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true }
 }
 
 const listBoards: Op = (ctx) => {
-  const { ledger, caller, flags } = ctx;
+  const { ledger, flags } = ctx;
   const s = ledger.state();
   const rules = flagOn('botToolRules', flags);
-  const boards = boardList(s).map((b) => (rules && holds(s, b.board, caller) ? { ...b, held: true as const } : b));
+  const boards = boardList(s).map((b) => (rules && holds(s, b.board, ctx) ? { ...b, held: true as const } : b));
   return reply(200, { ...whereAnswer(ctx), boards, head: s.seq, ...readOnlyMark(ctx) });
 };
 
-const getBoard: Op = ({ params, ledger, caller, flags, readOnly }) => {
+const getBoard: Op = ({ params, ledger, caller, one, flags, readOnly }) => {
   const s = ledger.state();
   const id = requireBoard(s, params.board);
   // The page draws the same `boardData`; `locked` is the server's (api.md 139): read-only for everyone until the person unlocks it.
-  return reply(200, { ...markBoard(boardJson(boardData(s, id)), marksFor(s, id, caller, flags)), ...(isLocked(s, id) && { locked: true }), ...readOnlyMark({ readOnly }) });
+  return reply(200, { ...markBoard(boardJson(boardData(s, id)), marksFor(s, id, { caller, one }, flags)), ...(isLocked(s, id) && { locked: true }), ...readOnlyMark({ readOnly }) });
 };
 
-const showNode: Op = ({ params, ledger, caller, flags }) => {
+const showNode: Op = ({ params, ledger, caller, one, flags }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const n = Number(params.n);
@@ -52,18 +52,18 @@ const showNode: Op = ({ params, ledger, caller, flags }) => {
   if (id === undefined || !detail) {
     throw problem('not-found', writesWords.thereIsNoNodeOn(n, board));
   }
-  const m = marksFor(s, board, caller, flags);
+  const m = marksFor(s, board, { caller, one }, flags);
   const linked = params.linked === true ? linkedDetails(s, id).map((d) => (d.board === board ? markDetail(d, m) : d)) : undefined;
   return reply(200, { head: s.seq, ...markDetail(detail, m), ...(linked && { linked }) });
 };
 
-const showContainer: Op = ({ params, ledger, caller, flags }) => {
+const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const region = String(params.region);
   const detail = containerDetail(s, board, region);
   if (!detail) throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
-  const m = marksFor(s, board, caller, flags);
+  const m = marksFor(s, board, { caller, one }, flags);
   const marked = m ? { ...detail, notes: markRegionNotes(detail.notes, m, region), nodes: detail.nodes.map((d) => markDetail(d, m)) } : detail;
   return reply(200, { head: s.seq, ...marked });
 };
@@ -95,14 +95,11 @@ const showLayout: Op = ({ params, ledger }) => {
   });
 };
 
-/** The agent a scoped read is for: the agent caller, if any (api.md 41). */
-const scopeOf = (caller: OpCtx['caller']): string | undefined => (caller?.by === 'agent' ? caller.agent : undefined);
-
-const listOpen: Op = ({ params, ledger, caller }) => {
-  const s = ledger.state();
-  const board = requireBoard(s, params.board);
-  const containers = openContainers(s, board, scopeOf(caller));
-  return reply(200, { head: s.seq, items: openItems(s, board, scopeOf(caller)), ...(containers.length > 0 && { containers }) });
+const listOpen: Op = (ctx) => {
+  const s = ctx.ledger.state();
+  const board = requireBoard(s, ctx.params.board);
+  const containers = openContainers(s, board, scopeOf(ctx));
+  return reply(200, { head: s.seq, items: openItems(s, board, scopeOf(ctx)), ...(containers.length > 0 && { containers }) });
 };
 
 /** A person act that ends a `check_responses` wait on `board`: Send, or an answer to a grant
@@ -112,8 +109,9 @@ const wakes = (s: LedgerState, board: string, e: LedgerEvent, agent: string | un
   (agent === undefined || responsesAfter(s, board, e.seq - 1, agent).some((x) => x.seq === e.seq));
 
 /** Hold until `stop` says so, `seconds` pass, or the host's signal ends it (the caller went away, the
- * folder closed: a switch, api.md 111). The ledger is followed meanwhile, so another writer's Send wakes it too. */
-function hold({ ledger, signal }: OpCtx, seconds: number, stop: (e: LedgerEvent) => boolean): Promise<void> {
+ * folder closed: a switch, api.md 111). The ledger is followed meanwhile, so another writer's Send wakes it too; with
+ * `followOtherWriters` off it is not, and only this engine's own lines wake it (plugin.md § The engine `watch`). */
+function hold({ ledger, signal, flags }: OpCtx, seconds: number, stop: (e: LedgerEvent) => boolean): Promise<void> {
   return new Promise((resolve) => {
     if (signal?.aborted) return resolve();
     const done = () => {
@@ -125,7 +123,7 @@ function hold({ ledger, signal }: OpCtx, seconds: number, stop: (e: LedgerEvent)
     };
     const timer = setTimeout(done, seconds * 1000);
     const off = ledger.onAppend((e) => { if (stop(e)) done(); });
-    const unfollow = ledger.follow();
+    const unfollow = flagOn('followOtherWriters', flags) ? ledger.follow() : () => {};
     signal?.addEventListener('abort', done);
   });
 }
@@ -139,7 +137,7 @@ const checkResponses: Op = async (ctx) => {
   const board = requireBoard(ledger.state(), params.board);
   const after = Number(params.after);
   const wait = Number(params.wait);
-  const agent = scopeOf(ctx.caller);
+  const agent = scopeOf(ctx);
   const since = () => responsesAfter(ledger.state(), board, after, agent);
   const wake = (e: LedgerEvent) => wakes(ledger.state(), board, e, agent);
   if (wait > 0 && !since().some(wake)) await hold(ctx, wait, wake);

@@ -104,7 +104,7 @@ test.describe('the view', () => {
 });
 
 test('watch: a ledger file replaced is said as a change with head 0, and the view reads it from the start', async ({ page, host }) => {
-  const heard: { board?: string; head: number }[] = [];
+  const heard: Record<string, unknown>[] = [];
   const stop = host.engine.watch((c) => heard.push(c));
   await drawPlans(host);
   await openHost(page, host);

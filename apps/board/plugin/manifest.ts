@@ -1,9 +1,11 @@
 // The plugin's manifest (`manifest.json`, checked by manifest.schema.json): what a host reads before it loads anything.
 // Its tools are the engine's `tools.list()` (so a host that checks the engine against the manifest finds no
-// difference), its chips the kinds `#actions` resolves, its text only keys into words.json.
+// difference), its chips the kinds `#actions` resolves, its text only keys into words.json; `changeWords`, the keys a
+// board write's change line may name (`CHANGE_WORDS`, the engine's one home of them).
 import type { ChipKind } from '#actions';
 import { CHIP_PLUGIN } from '#actions';
 import type { ListedTool } from '#mcp';
+import { CHANGE_WORDS } from '../server/engine/index.ts';
 import { SEAM } from './seam.ts';
 
 /** Every chip kind, once: the type makes a new kind in `ChipKind` stop this file until it is listed. */
@@ -23,5 +25,6 @@ export function manifestOf(version: string, tools: readonly ListedTool[], writes
     chips: (Object.keys(CHIPS) as ChipKind[]).map((kind) => ({ kind, words: `board.plugin.chips.${kind}` })),
     tools: tools.map((t) => ({ name: t.name, words: toolKey(t.name), input: t.inputSchema, writes: writes.has(t.name) })),
     skill: PARTS.skill, words: PARTS.words,
+    changeWords: Object.values(CHANGE_WORDS),
   };
 }

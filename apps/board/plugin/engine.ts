@@ -14,8 +14,15 @@ export type PluginEngineOptions = Pick<EngineOptions, 'dir' | 'name' | 'warn'> &
    *  Left out: never read-only, as before. */
   readOnly?: (() => boolean) | undefined;
 };
+/** A change `watch` says, a plain `Ref`: the board it is on (none for a line on no board) and the ledger's head after it;
+ *  `{ head: 0 }` when the ledger file was replaced. */
+export type PluginChange = { board?: string; head: number };
 /** What a host holds. */
-export type PluginEngine = Pick<Engine, 'route' | 'image' | 'resolve' | 'tools' | 'watch'>;
+export type PluginEngine = Pick<Engine, 'route' | 'image' | 'resolve' | 'tools'> & {
+  /** Every change to the ledger, from anyone (this engine, or another writer on `dir` while `followOtherWriters` is on).
+   *  Returns the stop. */
+  watch(onChange: (change: PluginChange) => void): () => void;
+};
 
 /** The board's engine on the data folder `dir`. */
 export function createEngine({ dir, name, warn, flags, readOnly }: PluginEngineOptions): PluginEngine {

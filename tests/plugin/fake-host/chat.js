@@ -1,6 +1,6 @@
 // The fake host's chat, from docs/specification/plugin.md § The chat: it holds chips by key, spends what went, sends
-// through its own server (which resolves each chip, as a host must), then records the Send with what the engine read
-// for the answers chip that went (null with none), and keeps the lines a tool's change made. A chip the person removes
+// through its own server (which resolves each chip, as a host must), then records the Send with the acks the engine's
+// answers carried (`[]` with none), and keeps the change lines a tool's result named. A chip the person removes
 // (`drop`) is left out of that message only. It uses only the seam: `attach`, `send(record)`, `status`, `reveal`, `hasLine`.
 export function createChat(flags) {
   const chips = new Map();
@@ -34,18 +34,19 @@ export function createChat(flags) {
         log.problems.push(reason);
         return reason;
       }
-      const { answers } = await r.json();
+      const { acks } = await r.json();
       for (const [key, chip] of going) { spent.set(key, refOf(chip)); chips.delete(key); }
       dropped.clear();
       say();
-      return record(answers);
+      return record(flags.acks ?? acks); // `acks`: a host that hands back other acks than its engine's (a test's)
     },
     status,
     reveal(ref) { log.reveals.push(ref); },
-    hasLine: ({ board, n }) => lines.some((l) => l.board === board && l.cards.includes(n)),
+    // A line matches a plain ref `{ board, cards: n }` when its reveal has that board and a cards list holding n.
+    hasLine: ({ board, cards }) => lines.some((l) => l.reveal?.board === board && Array.isArray(l.reveal.cards) && l.reveal.cards.includes(cards)),
   };
   const given = flags.noChat
-    ? { attach() {}, send: (record) => record(), status: { now: 'idle', staged: false, on: (listener) => { statusHeard.add(listener); return () => statusHeard.delete(listener); } } }
+    ? { attach() {}, send: (record) => record(null), status: { now: 'idle', staged: false, on: (listener) => { statusHeard.add(listener); return () => statusHeard.delete(listener); } } }
     : flags.noReveal ? { attach: chat.attach, send: chat.send, status } : chat;
   return {
     chat: given,

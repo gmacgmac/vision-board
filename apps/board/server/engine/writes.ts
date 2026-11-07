@@ -3,7 +3,8 @@
 // `retire_cards`, an agent for `request_grant` and `write_board`, nobody for `join`, the one
 // credential-free write. Each body fits the operation's request schema first (pointers into the
 // body, api.md 38), its cards turn from board numbers into identities (edge.ts), then the ledger
-// module's own checks as it appends. Answers name cards by board number.
+// module's own checks as it appends. Answers name cards by board number. An agent's lines are written as `writer()`, and
+// with `singleAgent` that is the folder's one agent, which asks for no grant (engine.ts `callerOf`, plugin.md § The bot).
 import { eventOut, holders, openContainers, openItems, retireCards as cardsOf } from '#actions';
 import type { OperationId } from '#format';
 import { flagOn, openRequestOf } from '#format';
@@ -15,7 +16,7 @@ import { SPECS, bodyProblems } from '../spec.ts';
 import { writeItems } from '../write-board.ts';
 import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } from '../visibility.ts';
 import type { Op, OpCtx } from './operations.ts';
-import { reply, whereAnswer } from './operations.ts';
+import { reply, scopeOf, whereAnswer } from './operations.ts';
 import { compileSchema } from '../schema.ts';
 import * as writesWords from '../words/writes.ts';
 
@@ -40,12 +41,6 @@ export function checkBody(id: OperationId, value: unknown): Record<string, unkno
 }
 
 const body = async (id: OperationId, ctx: OpCtx, limit?: number) => checkBody(id, await ctx.body(limit));
-
-/** The agent the host passed (an agent operation always has one). */
-function agentOf(caller: OpCtx['caller']): string {
-  if (caller?.by !== 'agent') throw new Error('an agent operation ran without an agent caller');
-  return caller.agent;
-}
 
 /** One person action from the action registry, on the board in the path (rule 8). A Send is the
  * host's to record (`onSend`): the standalone one records it once the board's chat session has the
@@ -112,10 +107,10 @@ const join: Op = async (ctx) => {
 
 /** Ask the person for one container, or with no `region` for the board (api.md 25-26, 81): a
  * locked board refuses it (api.md 139); a holder is told so, an open request from this agent is returned again, a retry key sent before
- * returns its request; else a new one. */
+ * returns its request; else a new one. The folder's one agent (`one`, plugin.md § The bot) holds every board: told so,
+ * with nothing written. */
 const requestGrant: Op = async (ctx) => {
-  const { ledger, caller } = ctx;
-  const agent = agentOf(caller);
+  const { ledger } = ctx;
   const b = await body('request_grant', ctx);
   const s = ledger.state();
   const board = requireBoard(s, b.board);
@@ -125,6 +120,8 @@ const requestGrant: Op = async (ctx) => {
     throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
   }
   const what = { board, ...(region !== undefined && { region }) };
+  if (ctx.one) return reply(200, { ...what, held: true });
+  const agent = ctx.writer();
   if (holders(s, board, region).includes(agent)) return reply(200, { ...what, held: true });
   const open = openRequestOf(s.index, agent, board, region);
   if (open !== undefined) return reply(200, { request: open, ...what, replayed: true });
@@ -147,8 +144,7 @@ const requestGrant: Op = async (ctx) => {
  * with no `board` item, a batch making a board whose id isn't available (api.md 136), or a batch
  * on a locked board (api.md 139), is one problem; otherwise 200 with a result per item. */
 const writeBoard: Op = async (ctx) => {
-  const { params, ledger, caller } = ctx;
-  const agent = agentOf(caller);
+  const { params, ledger } = ctx;
   const value = await ctx.body(WRITE_LIMIT);
   const items = (value as { items?: unknown } | null)?.items;
   const most = maxItems();
@@ -161,10 +157,11 @@ const writeBoard: Op = async (ctx) => {
   const list = items as unknown[];
   const board = String(params.board);
   writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));
-  const results = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags));
+  const agent = ctx.writer(); // after the up-front refusals, so a locked board joins nobody
+  const results = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags), !ctx.one);
   const s = ledger.state();
-  const pending = s.boards.has(board) ? openItems(s, board, agent).filter((x) => x.pending !== undefined) : [];
-  const containers = s.boards.has(board) ? openContainers(s, board, agent) : [];
+  const pending = s.boards.has(board) ? openItems(s, board, scopeOf(ctx)).filter((x) => x.pending !== undefined) : [];
+  const containers = s.boards.has(board) ? openContainers(s, board, scopeOf(ctx)) : [];
   return reply(200, { results, head: s.seq, pending, ...(containers.length > 0 && { containers }) });
 };
 

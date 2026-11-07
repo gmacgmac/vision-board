@@ -5,5 +5,7 @@
    `[data-theme]` (`hostKeepsColorScheme`). The standalone page, which is the board's own, has the tokens' as they
    are, and does not load this. */
 .vb-board { color-scheme: var(--vb-host-color-scheme, light dark); }
-:root[data-theme='light'] .vb-board { color-scheme: var(--vb-host-color-scheme, light); }
-:root[data-theme='dark'] .vb-board { color-scheme: var(--vb-host-color-scheme, dark); }
+.vb-board {
+  :root[data-theme='light'] & { color-scheme: var(--vb-host-color-scheme, light); }
+  :root[data-theme='dark'] & { color-scheme: var(--vb-host-color-scheme, dark); }
+}

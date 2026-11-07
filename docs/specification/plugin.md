@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -13,6 +13,14 @@ keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, rea
 A plugin is the board built once as one folder, which a host takes and runs: the person sees the board in the host's
 page, and the host's bot works on the same board through tools. The standalone app is one host of it, through the same
 seam (D-074). This page is all a host needs. If it doesn't say it, a host may not rely on it.
+
+**One shape everywhere.** The seam is a host plugin contract's shapes (a `Ref`, a `SendRecord`, a `ChangeMeta`, the
+contract's `PluginHost` and `CreateEngine`), kept as a copy for the tests in `tests/plugin/contract/` (its `README.md` says
+where from and the one change). The board's own page and server use the same shapes, so a host built to that contract
+mounts the board and runs its engine with no adapter: the built `mount` is a `Mount<HTMLElement>` and `createEngine` a
+`CreateEngine` of the copy. Where a host's board behaves differently from standalone's, it is a flag the host turns on
+(§ The engine `flags`, § What the host gives `settings`), never a second shape. Proven by
+`apps/board/tests/plugin-types.test.ts` "the types satisfy the host contract", `tests/plugin/contract/plugin-host.test.ts`.
 
 Every claim holds a symbol and a named test. "Proven by" names a spec in `tests/plugin/` (`npm run test:plugin`), where a
 fake host written from this page mounts the built folder, unless the path says otherwise. `tests/plugin/spec-truth.test.ts`
@@ -51,7 +59,7 @@ mount(root: HTMLElement, host: PluginHost): PluginView   // apps/board/plugin/vi
 `root` is an element the host gives, empty, with **a definite size**: everything the board draws is placed against it, so
 it has no height of its own. Load `view/board.css` first. The board draws all of itself inside `root`: its header, strips,
 dialogs, search and help. There is no second element to give and no control a host must draw. A host's own `position` on
-`root` wins.
+`root` wins, from a sheet loaded before the board's or after it (`tests/pages/host-position.spec.ts` "a host's own position on the root wins").
 
 ### What the host gives
 
@@ -61,7 +69,7 @@ dialogs, search and help. There is no second element to give and no control a ho
 | Member | Promise | Left out | Proven by |
 |---|---|---|---|
 | `api(path, init)` | Calls the engine's routes: `path` is relative (`ledger?after=0`); resolves the `fetch` `Response`, as the person (§ The engine) | Required | `view-hooks.spec.ts` "api and events" |
-| `events(listener)` | Calls `listener({ plugin, ref: { board?, head? } })` for every change to the data, from anyone; returns the unsubscribe. A `ref` with no `head` says "you may have missed changes": the board catches up. Say one each time your stream opens. **A first read that fails** (`api` answers a problem or rejects, an engine still starting) says so through `notify` and over the stage, keeps listening and reads again on the next call of `listener`, with no retry of its own: so say one when your engine is up. **While reads keep failing**, at any time, there is one notice until one works | Required | `view-hooks.spec.ts` "api and events", "events: a ref with no head", "events: a first read that fails", "events: while reads keep failing" |
+| `events(listener)` | Calls `listener({ plugin, ref })` for every change to the data, from anyone; returns the unsubscribe. `ref` is any `Ref`, as `watch` gave it (§ The engine): `{ head }` says the ledger changed through line `head` (with `board`, the board it changed); `{ head: 0 }` says read from the start (a ledger file replaced); a `ref` with no `head`, `{}` above all, says "you may have missed changes": the board catches up. Other keys are ignored, and so is a `head` that is not a whole number from 0. Say `{}` each time your stream opens. **A first read that fails** (`api` answers a problem or rejects, an engine still starting) says so through `notify` and over the stage, keeps listening and reads again on the next call of `listener`, with no retry of its own: so say one when your engine is up. **While reads keep failing**, at any time, there is one notice until one works | Required | `view-hooks.spec.ts` "api and events", "events: a ref with no head", "events: a ref of the contract", "events: a first read that fails", "events: while reads keep failing" |
 | `chat` | § The chat | Required: give the three lines there if you have no chat | `view-hooks.spec.ts` "a host with no chat at all" |
 | `settings.get(key)`, `settings.on(listener)` | Each flag by name, a boolean, and `align` (`center` or `start`). A value you don't give reads as the flag's default. Flags are read once, at mount; `on` is for `align`, which lays out again, and returns the unsubscribe | Required | `view-hooks.spec.ts` "settings: a flag comes" |
 | `notify(text, tone?)` | A short notice outside the board; `tone` `error` for a refusal | Required | `view-hooks.spec.ts` "notify and confirm" |
@@ -71,7 +79,10 @@ dialogs, search and help. There is no second element to give and no control a ho
 
 **Flags a host needs to know.** Set `appCards` off unless you host apps: on, the board asks a route only an app host
 answers, and a bot has no `list_apps` to draw with (`view-hooks.spec.ts` "settings: appCards off"). `cardImages` and `svgImages`
-off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags` too. Leave the rest at their defaults.
+off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags` too. `singleAgent` (off by default) goes to
+both, the view's settings and the engine's `flags`, when your bot is the folder's one agent (§ The bot): in the view it means
+`chat.status.agent` is ignored, so the answers chip holds every answer and every answer lights Send
+(`view-hooks.spec.ts` "chat.status: singleAgent"). Leave the rest at their defaults.
 
 ### What the view gives
 
@@ -83,7 +94,7 @@ off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags`
 | `unsaved()` | Synchronous: a note holds changed words. For your `beforeunload` or your own question | `view-gives.spec.ts` "unsaved and leave" |
 | `leave()` | True at once when nothing is unsaved; else asks through `confirm`. True: the words are discarded and you unmount. False: the board stays, focus in the words | `view-gives.spec.ts` "unsaved and leave" |
 | `pageChip()` | The chip for the board on show, for your own Add to chat; null with none | `view-gives.spec.ts` "pageChip" |
-| `reveal({ board?, n?, seq?, cards? })` | Brings into view a board, a card, a note, or several cards. `cards` zooms and selects nothing. Not on the board, or a card hidden or removed: says so through `notify`, and takes no focus. Another board may ask through `confirm` first. A board not yet in the ledger opens when its first line arrives, which is how a bot's first board opens | `view-gives.spec.ts` "reveal: a board", "reveal of what is not" |
+| `reveal(ref)` | Any `Ref`, of which the board reads `board`, `n` (a card), `seq` (a note) and `cards` (a list of card numbers), and ignores the rest: what a change line's `reveal` holds (§ Tools) or a sent chip's `ref`. Brings into view a board, a card, a note, or several cards. `cards` zooms and selects nothing. Not on the board, or a card hidden or removed: says so through `notify`, and takes no focus; it never throws. Another board may ask through `confirm` first. A board not yet in the ledger opens when its first line arrives, which is how a bot's first board opens | `view-gives.spec.ts` "reveal: a board", "reveal of what is not", "reveal: a ref of the contract" |
 | `status.now`, `status.on(listener)` | What the board shows, read only: `boardId`, `title`, `counts`, `unsaved` and `chatWork`, which are all the types promise (`PluginStatus`: the status holds more, and a host may read it but not rely on it); `on` says each change, with the fields that changed | `view-gives.spec.ts` "status and send" |
 | `send()` | Send to agent, for a button of your own. The board's header has its own. Resolves null, or the problem's words | `view-gives.spec.ts` "status and send" |
 
@@ -91,15 +102,16 @@ Nothing else is there (`view-gives.spec.ts` "the view holds no more").
 
 ### The chat
 
-`BoardChat`, `host.ts`: the only way the board reaches the host's chat.
+`BoardChat`, `host.ts`: the only way the board reaches the host's chat. It is the contract's `PluginChat` less `add`, which
+the board never calls: its own chips come and go through `attach`, and a host's Add to chat stages `pageChip()`.
 
 ```ts
 chat: {
   attach(key, chip | null),                  // add, replace or remove the chip under `key`
-  send(record),                              // Send to agent; record(answers | null) once it went
+  send(record),                              // Send to agent; record(acks) once it went
   status: { now, agent?, held?, staged?, on(listener) },
-  reveal?({ board, n }),                     // show the chat's line that last changed this card
-  hasLine?({ board, n }),                    // synchronous: is there such a line
+  reveal?({ board, cards: n }),              // show the chat's newest change line that holds this card
+  hasLine?({ board, cards: n }),             // synchronous: is there such a line
 }
 ```
 
@@ -111,35 +123,45 @@ chat: {
   selecting the same card again stays spent; keep what is spent across a null, as `tests/plugin/fake-host/chat.js` does.
   A chip the person removes from a message is left out of that message only: stage it again for the next, since the
   board attaches it again only when it changes. Proven by `view-hooks.spec.ts` "chat.attach"; `send-what-went.spec.ts` "removed chip".
-- **As a message goes**, call the engine's `resolve(chip.kind, chip.ref)` for every chip. `{ where, text }` is one block of
-  the bot's prompt; no block when `text` is empty. `{ refused, reason }` stops the send: answer with your words. Proven by
-  `view-hooks.spec.ts` "chat.send: Send sends", "chat.send: a chip the engine refuses".
-- **`send(record)`** sends what is staged, with no words, then answers `record(answers)`, the board's own record of the Send:
-  null, or the problem's words. **Only a message that carried the answers counts as their Send** (point 377): pass `record`
-  what `resolve` answered for the answers chip that went (the board reads its `head`: the answers it read count as sent,
-  one made after the read waits for the next Send), or `null` when the message went without one (none was staged, or the
-  person removed it): the Send then acknowledges nothing new, and the answers stay. Call `record` only once the message has
-  gone: one that failed records nothing, and a crash before the record sends the answers again (a duplicate, never a loss).
-  `record()` with nothing is for a Send no chat carried (no chat at all: the bot reads the board itself); it covers every
-  answer up to the Send's own line, as before. Call it even when nothing was staged. Leave it out only when your own server
-  recorded that Send with the message (the `send` act, with its `head`). The record goes to the board the Send was pressed
-  on. Resolves null when done or held for the bot's turn to end. One that rejects, a `fetch` that failed, is Send's error
-  state, with the board's own words (the standalone server's own `send` act is that rejection, a 409 saying why, when its chat session can't be loaded: api.md 170). Behind the `sendCountsWhatWent` setting, on by default; off, every Send covers every
-  answer up to its own line. Proven by the same, "chat.send: a rejection", and `send-what-went.spec.ts` "removed chip",
-  "watermark", "at-least-once", "flag off"
+- **As a message goes**, call the engine's `resolve(chip.kind, chip.ref)` for every chip. `{ where, text, ack? }` is one
+  block of the bot's prompt; no block when `text` is empty. `{ refused, reason }` stops the send: answer with your words.
+  Proven by `view-hooks.spec.ts` "chat.send: Send sends", "chat.send: a chip the engine refuses".
+- **`send(record)`** sends what is staged, with no words, then answers `record(acks)`, the board's own record of the Send:
+  null, or the problem's words. `acks` is the contract's: every `ack` the `resolve` answers of the board's chips that went
+  carried, in the order staged. Only the answers chip carries one, `{ board, head }` (§ The engine `resolve`). **Only a
+  message that carried the answers counts as their Send** (point 377), and the board reads `acks` so:
+  - an ack whose `board` is the board the Send was pressed on: the answers read through its `head` count as sent, and one
+    made after the read waits for the next Send. The first such ack counts, and its keys other than `board` and `head`
+    are ignored; an ack of another board, or whose `head` is not a whole number from 0, is passed over;
+  - `[]`, or no ack for that board (none was staged, the person removed it, nothing went): the Send acknowledges nothing
+    new, and the answers stay;
+  - `null`, only from a host with no chat (the bot reads the board itself): the Send covers every answer up to its own
+    line, as a Send no chat carried always has.
+
+  Call `record` only once the message has gone: one that failed records nothing, and a crash before the record sends the
+  answers again (a duplicate, never a loss). Call it even when nothing was staged (`record([])`). Leave it out only when
+  your own server recorded that Send with the message (the `send` act, with its `head`). The record goes to the board the
+  Send was pressed on. Resolves null when done or held for the bot's turn to end. One that rejects, a `fetch` that failed,
+  is Send's error state, with the board's own words (the standalone server's own `send` act is that rejection, a 409 saying
+  why, when its chat session can't be loaded: api.md 170). Behind the `sendCountsWhatWent` setting, on by default; off,
+  every Send covers every answer up to its own line. Proven by the same, "chat.send: a rejection", and
+  `send-what-went.spec.ts` "removed chip", "watermark", "at-least-once", "flag off", "acks:"
 - **`status`** is read only. `now` (`idle`, `working`, `asking`) drives the board's working mark, and is all you must give.
   With only that, Send is enabled by an answer no Send has carried, or by a chip of the board's own that hasn't gone with a
   Send. `on` returns the unsubscribe. `staged`: you hold what Send would carry. Given at all it has the full say over the chips, the
   board's included, so give it if your chat holds more of its own, a file say, or drops the chips. An answer no Send has carried
   enables Send either way; with `agent`, only one that agent may read. `held`: Send waits for the bot's turn. `agent`: the id your
   chat talks to, which scopes the answers chip, and the answers that light Send, to what it may read; an answer only another agent
-  may read leaves Send off, and that agent reads it with `check_responses` (`chat-send-scope.spec.ts`). Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
-- **`reveal` and `hasLine`** give a changed card's stepper its link to your chat. Without `reveal`, no link; with `reveal` and
-  no `hasLine`, always a link. Proven by `view-hooks.spec.ts` "chat.reveal and chat.hasLine", "chat.reveal left out".
-- **A change chip.** A board write's tool result carries `_meta['vb/change']`, `{ board, cards, head }` (§ Tools). Draw it as a
-  line, and `view.reveal({ board, cards })` on a click. Proven by `round-trip.spec.ts` "a board-to-chat round trip".
+  may read leaves Send off, and that agent reads it with `check_responses` (`chat-send-scope.spec.ts`). With the
+  `singleAgent` setting on, `agent` is ignored (§ What the host gives). Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
+- **`reveal` and `hasLine`** give a changed card's stepper its link to your chat. The board asks with `{ board, cards: n }`, a
+  plain `Ref`: a change line matches when its `reveal` (§ Tools) has the same `board` and a `cards` list holding `n`.
+  Without `reveal`, no link; with `reveal` and no `hasLine`, always a link. Proven by `view-hooks.spec.ts` "chat.reveal and chat.hasLine", "chat.reveal left out".
+- **A change line.** A board write's tool result carries `_meta['plugin/change']`, `{ words, count, subject, reveal }`
+  (§ Tools). Draw it as a line, the text of `words` in `words.json` with `{count}` and `{subject}` filled, and
+  `view.reveal(reveal)` on a click. Proven by `round-trip.spec.ts` "a board-to-chat round trip".
 
-With no chat at all, where nothing carries a chip, and the bot reads the board itself: `chat: { attach() {}, send: (record) => record(), status: { now: 'idle', staged: false, on: () => () => {} } }`.
+With no chat at all, where nothing carries a chip, and the bot reads the board itself: `chat: { attach() {}, send: (record) => record(null), status: { now: 'idle', staged: false, on: () => () => {} } }`.
 
 ### A guest in the host's page
 
@@ -159,9 +181,18 @@ With no chat at all, where nothing carries a chip, and the bot reads the board i
   down the board sets. What doesn't hold: a rule of yours with a class or an id that matches inside, one with `!important`, a rule naming
   two elements (`body span`, `main div`), which ties the board's guard and wins when your sheet comes later, a rule on `*` (`box-sizing`
   among them), one on an element not named there or on an svg's inner shapes, a less usual property on `span` or `div` (the sheet lists what it
-  takes back; `all` costs a big board too much), or a `width` or `height` on an `svg` or `img` that carries its own. The board's rules stay under its own `vb-` names, but the sheet does
-  set `--vb-*` on `:root` and again on the board's root (§ Theme and host styling, Scope), registers `--vb-root-w`, and selects
-  `vb-node` and `vb-region`. It reads `--host-*` and never sets one. A `color-scheme` of yours stays yours: the board's is on its
+  takes back; `all` costs a big board too much), or a `width` or `height` on an `svg` or `img` that carries its own.
+  **The sheet stays in its scope, `vb`.** Every top-level selector of `view/board.css` holds, in its first compound (up to its first
+  space or combinator), the class `vb` or a `vb-…` class, or a `vb-…` element (`vb-node`, `vb-region`), and no `:is`,
+  `:where`, `:not` or `:has` there. A rule that needs a pseudo-class or an outside attribute first is nested in a scoped
+  rule and written round `&` (`vb-node { [data-zoom=far] & .vb-size {…} }`, `.vb-board { :where(&) {…} }`): it is under its
+  parent and is not checked again. Its subject is always one of the board's own elements, by review: neither check reads
+  a selector's subject; `:root` declares only `--vb-*` (and again on the board's root, § Theme and host styling,
+  Scope); `@property` and `@keyframes` are named `--vb-…` and `vb-…`, and no other at-rule but `@media`, `@supports` and
+  `@container` (no `@layer`, no `@import`); `url()` only of a `data:` address; every `var()` reads a `--host-*` property or a
+  `--vb-*` one (the properties the board's script sets are `--vb-app-w`, `--vb-app-h` and `--vb-region`). The board reads `--host-*` and never sets one. Proven by
+  `scripts/verify-style.test.mjs` "a selector outside the scope" (`npm run verify` holds the source sheets to it,
+  `scripts/verify-style.mjs` `checkScope`), `apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope". A `color-scheme` of yours stays yours: the board's is on its
   root. Proven by `guest.spec.ts` "a host's loud element rules", "a picture stands too", "a host's color-scheme",
   `host-styling.spec.ts` "the sheet:", `tests/pages/host-styles.spec.ts`.
 - **Size.** What opens stays inside the root, by the root's size and not the window's, but for a modal (above). The Reply panel and the
@@ -187,7 +218,18 @@ createEngine({ dir, name?, warn?, flags?, readOnly? }): PluginEngine   // apps/b
 
 `dir` is the board's data folder, one per bot or project, and the only place it reads or writes: the ledger, the agents'
 hashes and `images/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
-`warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself: `svgImages`. Flag names are plain strings in `plugin.d.ts` (`{ [name: string]: boolean }`), so a new flag is never a change to the seam, and a name the engine does not know is ignored (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone").
+`warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself, each at its
+default (`packages/format/src/flags.ts` `FLAGS`) when left out:
+
+| Flag | Default | What it switches in the engine |
+|---|---|---|
+| `svgImages` | on | `image` serves svg pictures (§ Theme and host styling has the view's half) |
+| `botToolRules` | on | The tools keep a bot's rules and its reads give it the facts (§ Tools) |
+| `insertBetween` | on | A `node` item of `write_board` may carry `insert` |
+| `singleAgent` | off | One agent per folder: no sign-up, no grants, no scoping (§ The bot) |
+| `followOtherWriters` | on | `watch` and a held read hear another program's writes to `dir` (`watch`, below) |
+
+Flag names are plain strings in `plugin.d.ts` (`{ [name: string]: boolean }`), so a new flag is never a change to the seam, and a name the engine does not know is ignored (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone"; `apps/board/tests/engine-switches.test.ts` "every flag the engine reads is in the spec").
 
 **Read-only** (D-085 7). `readOnly()` is asked on every call, so you flip it in place: no new engine, no reload. While it
 answers true, every write, your person's through `route` and your bot's through `tools.call`, answers the problem
@@ -203,22 +245,52 @@ a write too: do it while open. Left out, the engine is never read-only and no an
 |---|---|---|
 | `route(req, { caller, signal })` | One request, with no HTTP. `req` is `{ method, path, query?, body? }`. Split what `api` got: `path` is the part before the `?` (`ledger`), `query` the rest as a `URLSearchParams`; a `path` holding its query answers null. `body` is the JSON value, or a function the engine calls for it when the operation reads one (one that throws is a 400); leave it out when there is none. Answers `{ status, body, headers? }`, `body` to send as JSON, a problem as a reply, or null for a path not its own. **It trusts `caller`**: `{ by: 'person' }` for your person's door, never your bot's; `{ by: 'agent' }` with no id is refused, as no caller is. `signal` ends a held read | `engine-hooks.spec.ts` "route:", "route and tools.call", "route: a body", `tools.spec.ts` "tools.call: a caller of an agent" |
 | `image({ method, path, ifNoneMatch? })` | Answers `imageRoute`: `path` is the text after the prefix, as the request wrote it. `GET` or `HEAD` of a picture in `dir`'s `images/` and only there, held to the same checks as standalone's route (`images.md`). A card names a picture relative to that folder: `![Flow](flow.png)` is `<dir>/images/flow.png`, and `images/flow.png` is missing. `body` is its bytes or null. Send `headers` as given: they carry the type, the no-sniff and the svg's policy | `engine-hooks.spec.ts` "image:" |
-| `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`, and `head`, the ledger line it read through (what the Send's `record` is given, § The chat). Never throws | `engine-hooks.spec.ts` "resolve:" |
+| `resolve(kind, ref)` | What a chip says now: `{ where, text }`, or `{ refused, reason }` when it changed or went. `answers` also gives `count`, and `ack: { board, head }`, `head` the ledger line it read through (what the Send's `record` is given back, § The chat). With `singleAgent` on, the answers chip's `agent` is ignored: it holds every answer. Never throws | `engine-hooks.spec.ts` "resolve:", "resolve: the answers ack" |
 | `tools.list()`, `tools.call(name, input, ctx)`, `tools.instructions` | § Tools | `tools.spec.ts`, `apps/board/tests/bot-tool-rules.test.ts` "the right instructions per host" |
-| `watch(onChange)` | `{ board?, head }` for every ledger change, this engine's or another writer's on `dir`. A ledger file replaced rather than grown (a sync, a git pull, a copy dropped in) is read again from the start and said as `{ head: 0 }`, which the view reads from the start. Returns the stop. Turn each into an `events` call | `engine-hooks.spec.ts` "watch:", `read-only.spec.ts` "watch: a ledger file replaced" |
+| `watch(onChange)` | A `Ref`, `{ board?, head }`, for every ledger change, this engine's or another writer's on `dir`. A ledger file replaced rather than grown (a sync, a git pull, a copy dropped in) is read again from the start and said as `{ head: 0 }`, which the view reads from the start. Returns the stop. Turn each into an `events` call. **Another writer** is heard because the engine looks at the file every `FOLLOW_MS` while anyone watches or a held read waits (`apps/board/server/ledger.ts` `follow`). With `followOtherWriters` off it never looks: `watch` hears this engine's own writes only, a held `check_responses` wakes on them alone, and a file replaced or grown by another program is read in at the engine's next call (every call reads the file's new lines first), said then | `engine-hooks.spec.ts` "watch:", `read-only.spec.ts` "watch: a ledger file replaced", `apps/board/tests/engine-switches.test.ts` "followOtherWriters off:" |
 
 Nothing else is there (`engine-hooks.spec.ts` "createEngine and the engine hold no more").
 
 ## The bot
 
-**The host names its bot.** Register it once, `route({ method: 'POST', path: 'agents', body: { label } })`, with no second argument and
-not through your person's door, which answers 403. Keep the `agent` it answers, and ignore the secret: no call takes one. Pass
-`{ caller: { by: 'agent', agent } }` on every tool call. **Keep the id yourself**, with the bot's own data: no call of the engine's
-gives it back. It holds on another engine over the same `dir`, so don't register again on a restart (`tools.spec.ts` "the bot").
+Pass `{ caller: { by: 'agent', agent } }` on every tool call: the engine trusts it (§ The engine `route`). Which `agent` it
+takes depends on one flag, `singleAgent`, which you give the engine's `flags` and the view's settings alike.
 
-**Words differ per host.** `skill.md` and the engine's tool descriptions are standalone's less what a bot under a host doesn't
-have: `join` and its secret, the chat panel, attachments and apps; its pictures go in the board folder's `images/` (`apps/board/plugin/words/skill-edits.ts`,
-`apps/board/server/words/plugin-tools.ts`). Give the bot `skill.md` while the plugin is on. Proven by
+**One bot per folder: `singleAgent` on.** No sign-up. Pass any id you like, a non-empty string that is the same for the bot every time
+(a derived one does); the engine never compares it with another and never stores it. Every agent line the bot's calls write
+is written as **the folder's one agent**: the first agent already joined in the ledger, so a bot that drew there before keeps
+its boards and its cards, else one the engine joins itself on the first write, labelled by `name()` (cut to an agent label's 80 characters; the
+folder's own name when `name()` is blank). A folder belongs to one host: one opened both by the board's own app and by a
+host shares its first agent between them. The board's own server never passes `singleAgent` or `followOtherWriters` to
+its engine (`#format` `withoutHostFlags`; `packages/format/tests/flags.test.ts` "the host-only flags never reach"). So
+with the flag on:
+
+- no write answers `needs-grant`, and no item is refused because another agent made the card or the board: there is no
+  other agent;
+- `request_grant` answers `held` for any board, writing nothing;
+- every read is unscoped: `check_responses` and `list_open` give every answer and every open item, the reads' marks
+  (§ Tools) say `held` on every board and `owed` on every note an agent owes, and the answers chip holds every answer (§ The engine `resolve`);
+- the view ignores `chat.status.agent` (§ What the host gives).
+
+What it does **not** change: ✓, ✗ and approving are still the person's, through `route` with `{ by: 'person' }`, and
+refused to a bot; **a locked board still refuses every write**, the bot's and the person's (`locked`); `readOnly` still
+refuses every write (§ The engine); a caller `{ by: 'agent' }` with no id is still refused. `POST agents` still answers as
+below, and you need not call it. Proven by `apps/board/tests/engine-switches.test.ts` "singleAgent: no sign-up",
+"singleAgent: the folder's one agent", "singleAgent: no grants and no scoping", "singleAgent: the lock and the person's acts",
+`tools.spec.ts` "the bot: singleAgent".
+
+**Agents of their own: `singleAgent` off** (the default, and standalone's). The host names its bot. Register it once,
+`route({ method: 'POST', path: 'agents', body: { label } })`, with no second argument and not through your person's door,
+which answers 403. Keep the `agent` it answers, and ignore the secret: no call takes one. **Keep the id yourself**, with the
+bot's own data: no call of the engine's gives it back. It holds on another engine over the same `dir`, so don't register
+again on a restart. Grants and scoping hold between agents as standalone's do (api.md 81-86) (`tools.spec.ts` "the bot").
+
+**Words differ per host.** The engine's tool descriptions are standalone's less what a bot under a host doesn't have:
+`join` and its secret, the chat panel, attachments and apps (`apps/board/server/words/plugin-tools.ts`). `skill.md` is the
+standalone skill cut, section by section, to what a host's bot needs with `singleAgent` on, within 8 KiB: no grants, no
+other ledgers, no apps, its pictures in the board folder's `images/`, and detail about one tool in that tool's description
+(`apps/board/plugin/words/skill-edits.ts`). A change to it lands only with `npm run eval:bot` passing. Give the bot
+`skill.md` while the plugin is on. Proven by
 `apps/board/tests/plugin-skill.test.ts` "the plugin skill names no tool". The MCP instructions a bot reads before its first
 call are the plugin's too (`tools.instructions`, below).
 
@@ -231,7 +303,22 @@ Tools reach any bot as MCP tools (D-074 rule 4). The engine gives both halves in
   `structuredContent`, `isError`. An input that doesn't fit, an unknown tool or a refusal is `isError` with words for the bot;
   it never throws. The engine checks `input` against the schema itself, so a host need not. `signal` ends a held call
   (`check_responses` with `wait`, with the `botToolRules` flag off: on, a bot under a host has no `wait`, below).
-- `_meta['vb/change']` on a board write is `{ board, cards, head }`.
+- **The change line.** A `write_board` call that answers without `isError` and wrote a line (an item that went, not a
+  retry's replay of one written before) carries `_meta['plugin/change']`, the contract's `ChangeMeta` under its
+  `CHANGE_META` key (one home in the board's code: `apps/board/server/engine/tools.ts` `CHANGE_META`); one that wrote
+  nothing carries none, and no other tool carries one:
+  - `words`: `board.change.board` when no card was written, `board.change.card` for one, `board.change.cards` for more; each
+    is in the manifest's `changeWords` and has its text in `words.json` (`apps/board/plugin/words/change.ts`), holding
+    `{count}` and `{subject}` for you to fill;
+  - `count`: how many cards the write wrote, a whole number from 0, the length of `reveal.cards`;
+  - `subject`: the board's id, which `packages/format/src/view.ts` `ID_PATTERN` keeps short and plain enough for the
+    contract's subject bound;
+  - `reveal`: `{ board, cards }`, the board's id and the written cards' numbers, for `view.reveal` on a click and for
+    `chat.reveal` and `chat.hasLine` to match (§ The chat).
+
+  It stays within the contract's `CHANGE_LIMITS` and `REF_LIMITS`. The facts are those a CLI's stream reads from the tool's
+  text (`#agent` `boardWriteSummary`). Proven by `tools.spec.ts` "tools.call: the change line",
+  `apps/board/tests/engine.test.ts` "a board write says what it changed".
 - `tools.instructions` is what to tell the bot before its first call, MCP's server `instructions`: standalone's less `join`,
   the secret, `wait` and the folder header (`words/plugin-tools.ts` `instructionEdits`). `createMcpServer({ tools })` sends it;
   send it from your own MCP server too. Left out with the `botToolRules` flag off.
@@ -401,6 +488,21 @@ decides, and review checks. What the build does is make the decision unavoidable
 types (their tokens: a comment or a line break moves nothing), and the build and `npm test` fail with the hash and the
 rule until it is set again, whichever way the change goes. A change that does not touch the types leaves both alone.
 
+*Seam 2* (this page) moved the seam to a host contract's shapes (§ One shape everywhere, at the top). A host built for 1
+would not survive it:
+
+| What | Seam 1 | Seam 2 |
+|---|---|---|
+| `events` | `ref: { board?, head? }` | `ref` any `Ref`; `{}` catches up (§ What the host gives) |
+| `chat.send(record)` | `record(answers)`: the answers chip's `resolve` answer, `null`, or nothing | `record(acks)`: a list of `Ref`s, `[]`, or `null` with no chat (§ The chat) |
+| `chat.reveal`, `chat.hasLine` | `{ board, n }` | `{ board, cards: n }` |
+| `resolve('answers', …)` | `head` | `ack: { board, head }` (§ The engine) |
+| A board write's `_meta` | `vb/change`: `{ board, cards, head }` | `plugin/change`: `{ words, count, subject, reveal }` (§ Tools) |
+| `view.reveal` | `{ board?, n?, seq?, cards? }` | any `Ref`, the rest ignored (§ What the view gives) |
+
+The two flags of § The bot and § The engine, and `changeWords` in the manifest, are additions: at their defaults the board
+behaves as on seam 1, and a host that ignores `changeWords` loses nothing.
+
 *What a host does with it.* Read `seam` before anything else is loaded, and compare it with the number it was built for. The
 same number: load. Any other: don't load that folder, keep the one it has, and say both numbers: a higher one means the host is
 the one to update (compile against the new `plugin.d.ts`), a lower one that the folder is old. A host never needs to
@@ -424,6 +526,7 @@ Proven by `apps/board/tests/plugin-types.test.ts` "the manifest holds the seam n
 | `chips` | Each `{ kind, words }`: `card`, `note`, `board`, `selection`, `answers` |
 | `tools` | Each `{ name, words, input, writes }`, exactly `tools.list()`; `input` is its JSON Schema; `writes` says it changes the ledger |
 | `skill`, `words` | The two files |
+| `changeWords` | The words keys a change line may name: `board.change.board`, `board.change.card`, `board.change.cards`, each with its text in `words.json` (§ Tools, the change line). Proven by `apps/board/tests/plugin-build.test.ts` "the change words are in the manifest and words.json" |
 
 It has **no `settings` and no `icon`**: the board declares no settings for a host to draw (flags and `align` come through
 `host.settings`), and an icon is a name in a host's own list. Proven by `engine-hooks.spec.ts` "the folder",
@@ -463,7 +566,7 @@ Reviewed by the maintainer (D-074 rule 7): all settled, 2026-11-02. Each is stil
    limits, and how a card names a picture, with no host named (`apps/board/tests/plugin-skill.test.ts` "the plugin skill has an Images section").
 2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. **Settled**
    (point 377): a host may let the person drop them; the Send then counts only what went, by what `resolve` read
-   (`record(answers)`, § The chat), so nothing is lost and the seam stays small.
+   (`record(acks)`, § The chat), so nothing is lost and the seam stays small.
 3. **`chat.send(record)`, not `chat.send()`.** **Settled** (D-075): The host sends, then runs the board's record of the Send, so the board keeps the
    act's outcome and a host with its own server may record it with the message. Cost: a callback in a seam otherwise plain.
    Keep: it is what makes Send's wait and refusal the same on every host, and its argument is how the board knows what went.
@@ -494,55 +597,46 @@ Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
     `images/` (open point 1) is stopped only by the host's own file rules while the board is read-only.
 14. **A lock of the host's own.** Standalone takes the ledger's lock on Edit, so two computers never write one ledger; the
     engine takes none. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
-    the lock in the seam.
+    the lock in the seam. With `followOtherWriters` off, such a second writer is not even heard until the engine's next call.
 
 ## What nclite needs
 
-Against nclite's draft contract v0.1 (`docs/plugins.md`) and its spike (`prototypes/plugin-host/`), read and run in a copy under
-`temp/`; nothing was written in nclite. Run as it stands, the spike refuses the folder at `checkManifest`, naming the problems in
-rows 1 and 2. With a throwaway manifest and engine shim it loads, and `mount` stops at the first thing its `createAppHost` lacks:
-"Cannot read properties of undefined (reading 'status')", `host.chat`. Its CSP (`img-src 'self' data:`) already fits. Its Svelte
-(5.56.1, in `app/node_modules`) was the second runtime in `guest.spec.ts` "a second Svelte", beside the bundle's 5.57.1.
+Against nclite's plugin contract (`shared/plugin-host.ts`, its ADR-0288; `docs/plugins.md`) at the commit the board's copy
+names (`tests/plugin/contract/README.md`). The gaps this section listed against its draft v0.1 are closed by that contract
+and seam 2, and its board adapter (`shared/plugin-adapters/board.ts`) and stylesheet waiver (`REVIEWED_BOARD_SHEET`) have
+nothing left to translate: B1 is § Tools' change line, B2 § The chat's acks, B3 `singleAgent`, B4 the plain refs, B5 the
+scoped sheet (§ A guest in the host's page), C2 `followOtherWriters`.
 
-| # | Gap | Why | Suggested change |
+**Taking seam 2**, in one change: vendor the folder, move the board row's `seam` to 2, set the flags below, and delete the
+adapter, its line in `ADAPTERS`, the waiver and the board's stored registration.
+
+| Where | Flag | Set | Why |
 |---|---|---|---|
-| 1 | Manifest: `icon`, `settings`, `data`, `view.dir`, `view.modules` required; `version` a whole number | The board has none of them, and a string `version` | Make those optional, `version` a string; add `engine: { module, export }` in place of the fixed `engine.ts` (`registry.ts`) |
-| 2 | Tool input is a flat object of strings and booleans, with `required` (`checkTool`, `checkInput`) | `write_board` takes nested arrays; numbers elsewhere; `list_boards` has no `required` | Real JSON Schema. The engine checks input itself, so the host may only pass it |
-| 3 | `route` and `tools[name]` are synchronous, with no caller and no signal | The board's are async, check the caller on every call, and `check_responses` holds | `route(req, { caller, signal })`, `tools.list()`, `tools.call(name, input, ctx)`; the caller from the run ticket |
-| 4 | Tool result `{ ok, summary, ref }`; `resolve` `{ ok, where, text }`; `createEngine(dir)` | Shapes differ | MCP's `CallToolResult`, the chat's line from `_meta['vb/change']`; `{ where, text } \| { refused, reason }`; `createEngine({ dir, name, warn, flags })` |
-| 5 | `addToChat` only adds | The selection and the answers come, change and go | `chat.attach(key, chip \| null)`, with a chip spent until its key's `ref` changes |
-| 6 | Nothing lets a view send | Send to agent makes the host's chat send | `chat.send(record)` |
-| 7 | Nothing says what the bot is doing | The board's working mark, Send's wait | `chat.status` |
-| 8 | No link back to a chat line; `reveal` takes one thing | A changed card links to the line; a change chip zooms to several cards and selects none | Optional `chat.reveal`, `chat.hasLine`; `reveal` with `cards` |
-| 9 | The spike's `api` answers the parsed body | The board's client reads status and problems | `api` resolves the `Response` |
-| 10 | No `confirm`, no tone on `notify`, no `store`, no `imageRoute` | Four acts ask first; a refusal is `error`; the saved view; a picture loads by address | Add them, a per-bot `store`, and a route answering `engine.image` |
-| 11 | `settings` from the manifest only; two types | The board reads flags by name and declares none | `settings.get` answers undefined for what isn't set, and nclite sets `appCards: false` |
-| 12 | `unmount()` saves anything being written | The person decides whether half-written words are kept | The pane's Close calls `leave()`, then `unmount()` |
-| 13 | "Framework-free view"; "every selector starts with its root class" | The board is Svelte inside, and its sheet selects `vb-node` and sets `:root` tokens | "Framework-free to the host: it only calls `mount`"; "every selector under the plugin's own prefix" |
-| 14 | The pane's header is the host's; nothing about a plugin's own | The board draws its own header in `root`, under the pane's | Say so; Add to chat stays the pane's, by `pageChip`. A short pane works |
-| 15 | One bot, no joins | The board's ledger names agents, and `request_grant` is for a person's board | Register the bot once at turn-on (`POST agents`), keep its id with the bot's plugin data; the grants strip is inside the board |
-| 16 | `prefers-color-scheme` and the app's theme | Colours follow `--host-color-scheme`, else `data-theme` on `<html>`, else the system | Set `--host-color-scheme` on the pane's root from `data-mode` (its `data-theme` holds palette names, which the board ignores) |
-| 17 | No `--host-*` | Fonts, text size, colours and mode (§ Theme and host styling) | Set the bot's colours and the mode on the pane's root, or leave them for the board's own look |
+| The row's `engineFlags` | `singleAgent` | `true` | Each bot has its own folder: no sign-up; pass the bot's derived id as the caller (§ The bot) |
+| The row's `engineFlags` | `followOtherWriters` | `false` | The bot's engine is its folder's only writer; its own writes reach `watch` without polling |
+| The row's `viewSettings` | `singleAgent` | `true` | The answers chip and Send ignore `chat.status.agent` (§ What the host gives) |
+| The row's `viewSettings` | `appCards` | `false` | As before: no app host |
 
-**How the tools should reach its bot (recommended, its choice).** One generic plugin pass-through in the existing container MCP
-server: `tools/list` from the engine for the plugins on for this bot; `tools/call` becomes `POST /api/run/plugins/{id}/tools/{name}`
-with the run token, and the engine runs `engine.tools.call` with the run ticket's bot. The same pattern as `webFetchTool`: the call
-happens on the engine side, and the container learns no board code. It keeps one MCP server, one token, one ceiling and one approval
-path, and one tool list here. A board-specific server would need a second copy of the list; a tool the host serves directly isn't
-possible under `--strict-mcp-config`.
+Leave `svgImages`, `botToolRules` and `insertBetween` at their defaults.
 
-Not settled there: whether `NCLITE_TOOLS` covers plugin tools by name; how a tool's name is spelled (`${plugin}.${tool}` in the spike,
-`mcp__nclite__<name>` for its own, and whether each CLI takes a `.`); the cap on a held run-door call against `check_responses`' 60 s;
-whether a `writes: true` tool asks the person.
+**Two asks.**
 
-**Attachments there.** Its chat already uploads on submit and tells the bot the path, and the reader runs in its container: nothing
-to add for the board.
+1. **Rename `CHANGE_META` to `'plugin/change'`**: a key that names no host, so a plugin writes it the same under any. The
+   board's copy carries the rename already, and its writes use that key, so nclite reads the board's change lines once it
+   renames. The stored `v: 2` body does not change, and the board's `changeWords` texts are word for word the ones
+   `readBoardChange` draws for rows stored before, so old and new lines read alike.
+2. **No sign-up, no stored ids, no special case for old bots.** With `singleAgent` on, the board needs no `POST agents`,
+   keeps nothing for the bot, and takes the derived id on every call. A bot that registered before keeps its boards and
+   cards with no migration: the engine writes as the folder's first joined agent, which is that registration.
+
+**Attachments there.** Its chat already uploads on submit and tells the bot the path, and the reader runs in its container:
+nothing to add for the board.
 
 ### Where the board lives in nclite
 
 Decided (point 377.1); open point 1 rests on it:
 
 - **The whole board folder lives inside each bot's workspace**: `.visionboard`, with its ledger, its `images/` and its apps. That folder is the `dir` the host gives `createEngine`.
-- **Each bot has its own board**: one engine and one `dir` per bot, and the bot's id (§ The bot) is kept with that bot.
+- **Each bot has its own board**: one engine and one `dir` per bot, so the bot is its folder's one agent (`singleAgent`, § The bot), and nothing of its id is kept.
 - **A bot writes its pictures straight into the board's `images/` folder**, and `engine.image` reads them with its usual checks (§ The engine). There is no `put_image` tool.
 - **Accepted for now**: the bot can reach the ledger file (`.visionboard/ledger.jsonl`) because it is in the bot's workspace. Splitting the ledger out of the bot's reach is a later option.

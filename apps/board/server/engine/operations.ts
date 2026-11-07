@@ -35,6 +35,12 @@ export interface OpCtx {
   flags: FlagOverrides;
   /** The ledger is open read-only now (`EngineOptions.readOnly`): the reads say so. */
   readOnly: boolean;
+  /** The caller is the folder's one agent (`singleAgent`, plugin.md § The bot; engine.ts `callerOf`): no grant is asked,
+   *  no read is scoped (`scopeOf`), and every board is held. */
+  one: boolean;
+  /** The agent an agent operation writes as (engine.ts `callerOf`): the caller's; with `one`, the folder's one agent,
+   *  joined now when none has. Asked only once nothing else refuses the write up front, so a refused one joins nobody. */
+  writer(): string;
 }
 
 /** The person's Send on `board`, given to the host with `record`, which appends its `send` line (with `head`: what its
@@ -122,6 +128,11 @@ export function checkCaller(id: OperationId, caller: Caller | undefined): void {
   if (auth === 'agent' && caller?.by !== 'agent') throw problem('not-authenticated', NO_AGENT);
   if (auth === 'agent-or-person' && caller === undefined) throw problem('not-authenticated', NO_AGENT);
 }
+
+/** The agent a read is scoped to and marked for (api.md 41): the agent caller; none for the person, or for the folder's
+ * one agent (`one`), whose reads are unscoped (plugin.md § The bot). */
+export const scopeOf = ({ caller, one }: Pick<OpCtx, 'caller' | 'one'>): string | undefined =>
+  (caller?.by === 'agent' && !one ? caller.agent : undefined);
 
 /** `readOnly: true` for a read's answer while the ledger is open read-only (D-085 4); nothing otherwise. */
 export const readOnlyMark = ({ readOnly }: Pick<OpCtx, 'readOnly'>): { readOnly?: true } => (readOnly ? { readOnly: true } : {});

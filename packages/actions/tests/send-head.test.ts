@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { LedgerState } from '../src/index.ts';
-import { answersChip, conditionsOf, resolveChip, sendHead, sentAfter } from '../src/index.ts';
+import { acksRead, answersChip, conditionsOf, resolveChip, sendHead, sentAfter } from '../src/index.ts';
 import { B, scene } from './ledger-v3.ts';
 
 const unsent = (s: LedgerState) => conditionsOf(s, { board: 'b' }).filter((c) => c.kind === 'board.unsent').map((c) => c.seq);
@@ -27,9 +27,9 @@ test('watermark: the Send acknowledges answers through its head; an answer after
   const l = v19();
   l.act({ action: 'ack', n: 1, ver: 1 });
   const read = resolveChip(l.state(), 'answers', { board: 'b', since: 0 });
-  assert.ok(!('refused' in read) && read.head === l.seq, 'resolve answers the line it read through');
+  assert.ok(!('refused' in read) && read.ack.head === l.seq && read.ack.board === 'b', 'resolve acknowledges the board and the line it read through');
   const late = l.act({ action: 'drop', n: 2, ver: 1 });
-  l.act({ action: 'send', board: 'b', head: (read as { head: number }).head });
+  l.act({ action: 'send', board: 'b', ...sendHead(l.state(), 'b', acksRead(['refused' in read ? {} : read.ack], 'b')) });
   const s = l.state();
   assert.equal(s.sentHead.get('b'), late - 1);
   assert.deepEqual(unsent(s), [late], 'the late ✗ is unsent');
@@ -114,4 +114,11 @@ test('sendHead: what the board records for what the host says went', () => {
   assert.deepEqual(sendHead(s, 'b', null), { head: 0 }, 'null: nothing new acknowledged');
   assert.deepEqual(sendHead(s, 'b', { head: 7 }), { head: 7 });
   assert.deepEqual(sendHead(s, 'b', { head: 'x' } as never), { head: 0 }, 'a read with no head acknowledges nothing');
+});
+
+test('acksRead: what a host\'s record(acks) says went for the board (plugin.md § The chat)', () => {
+  assert.equal(acksRead(null, 'b'), undefined, 'null, a host with no chat: the Send covers every answer up to its own line');
+  assert.equal(acksRead([], 'b'), null, '[]: nothing new acknowledged');
+  assert.deepEqual(acksRead([{ board: 'c', head: 3 }, { board: 'b', head: 5, extra: 'kept out' }, { board: 'b', head: 9 }], 'b'), { head: 5 }, 'the first ack of this board; another board\'s passed over');
+  assert.equal(acksRead([{ board: 'b', head: -1 }, { board: 'b', head: 1.5 }, { board: 'b', head: '4' }, { head: 4 }], 'b'), null, 'a head that names no line, or no board: passed over');
 });

@@ -1,6 +1,6 @@
 // The eval's host, from the fake host (tests/plugin/fake-host/server.ts) and the live run's throwaway one: the plugin
 // folder's engine loaded by its manifest (`loadEngine`; under `--dry`, the same engine from source, so `npm test` needs
-// no build), the bot named once through `route`, and one door for the bot's MCP pass-through: `POST /list`, `POST
+// no build), the bot named once through `route` (or, with `singleAgent`, by the host's own id and no sign-up), and one door for the bot's MCP pass-through: `POST /list`, `POST
 // /call` (plugin.md § Tools, "one generic pass-through"), `POST /note` for what the pass-through saw. The door is
 // 127.0.0.1 only and asks a per-run token. Every call is logged as the bot asked it, then `wait` is clamped and the
 // engine is given a deadline. The person acts through the person's door (`engine.route`, caller person), and Send
@@ -13,6 +13,9 @@ import type { Call, Person } from './types.ts';
 
 const PERSON: HostCaller = { by: 'person' };
 const BOT_LABEL = 'The host\'s bot';
+/** With `singleAgent` the host asks no sign-up: its bot's id is the host's own (a nclite-style derived id, which the
+ * ledger's agent pattern refuses), so the run proves the engine never needs, checks or stores it (plugin.md § The bot). */
+const HOST_BOT_ID = 'bot-0123456789abcdef';
 
 async function engineFor(dir: string, dry: boolean, readOnly: () => boolean, flags?: Record<string, boolean>): Promise<PluginEngine> {
   const { createEngine } = dry ? await import('#board/engine') : await loadEngine();
@@ -41,8 +44,8 @@ const json = (res: ServerResponse, status: number, value: unknown) => {
 export async function startEvalHost(o: { dir: string; port: number; dry: boolean; flags?: Record<string, boolean> }) {
   let readOnly = false;
   const engine = await engineFor(o.dir, o.dry, () => readOnly, o.flags);
-  const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: BOT_LABEL } }))!.body as { agent: string };
-  const bot: HostCaller = { by: 'agent', agent: joined.agent };
+  const signUp = async () => ((await engine.route({ method: 'POST', path: 'agents', body: { label: BOT_LABEL } }))!.body as { agent: string }).agent;
+  const bot: HostCaller = { by: 'agent', agent: o.flags?.singleAgent ? HOST_BOT_ID : await signUp() };
   const token = randomBytes(18).toString('base64url');
   const calls: Call[] = [];
   const seen: { instructions: string | null } = { instructions: null };

@@ -44,7 +44,9 @@ vb-node[data-selected] {
   box-shadow: 0 0 0 0.5px var(--select), 0 0 18px -6px color-mix(in srgb, var(--select) 65%, transparent), var(--vb-shadow-card);
 }
 vb-node[data-selected]::before { background: var(--select); }
-vb-node[data-selected]:not([data-emphasis])::before { height: 1.5px; }
+vb-node {
+  &[data-selected]:not([data-emphasis])::before { height: 1.5px; }
+}
 vb-node.dragging { transition: none; box-shadow: var(--vb-shadow-lift); z-index: var(--vb-z-drag); }
 vb-node.dragging, vb-node.dragging .vb-node-kind { cursor: grabbing; }
 vb-node[data-emphasis] { width: var(--vb-card-w-wide); }
@@ -55,11 +57,15 @@ vb-node[data-size='s'] { width: var(--vb-card-w-s); }
 vb-node[data-size='m'] { width: var(--vb-card-w-m); }
 vb-node[data-size='l'] { width: var(--vb-card-w-l); }
 /* An app card with its panel (D-047; with the appCards flag off it is a plain card): as wide as the
-   panel (--app-w, set by the element) plus the border, whatever its emphasis: the panel runs edge to
+   panel (--vb-app-w, set by the element) plus the border, whatever its emphasis: the panel runs edge to
    edge inside the border (card-polish FE_01); no size tier applies (node-app.css). */
-vb-node[data-kind='app']:has(> .vb-node-content > .vb-app) { width: calc(var(--app-w) + 2px); }
+vb-node {
+  &[data-kind='app']:has(> .vb-node-content > .vb-app) { width: calc(var(--vb-app-w) + 2px); }
+}
 /* The size pill draws over the card above, so an open card sits over its neighbours. */
-vb-node[data-size]:is(:hover, :focus-within) { z-index: var(--vb-z-hover); }
+vb-node {
+  &[data-size]:is(:hover, :focus-within) { z-index: var(--vb-z-hover); }
+}
 
 vb-node[data-kind='topic'] { --surface: var(--card-surface-sunken, var(--vb-surface-sunken)); }
 vb-node[data-kind='note'] {
@@ -118,8 +124,10 @@ vb-node .vb-node-title {
    table, as the renderer drew it) shows its title at the body's `#` size and weight (bold, point 442), as
    the card's one heading over a bold `##`; markdown.css steps that `#` down to `##`. Other cards keep the
    medium title. */
-[data-big-titles] vb-node .vb-node-content:has(> .vb-node-body :is(.vb-md-h1, .vb-md-h2, .vb-md-table)) > .vb-node-title {
-  font-size: var(--vb-text-xl); font-weight: var(--vb-weight-bold);
+vb-node {
+  [data-big-titles] & .vb-node-content:has(> .vb-node-body :is(.vb-md-h1, .vb-md-h2, .vb-md-table)) > .vb-node-title {
+    font-size: var(--vb-text-xl); font-weight: var(--vb-weight-bold);
+  }
 }
 /* The body is Markdown (markdown.css styles its blocks); its blocks sit on the content's rhythm. */
 vb-node .vb-node-body {
@@ -163,7 +171,9 @@ vb-node .vb-node-note-text {
    data-tip-open is on the note, which also raises the card above its neighbours. The note is a tab
    stop (focus shows the tip), so it takes the focus ring. The bridge spans the gap to the card. */
 vb-node .vb-node-note { position: relative; --reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2)); }
-vb-node:has(.vb-node-note[data-tip-open]) { z-index: var(--vb-z-open); }
+vb-node {
+  &:has(.vb-node-note[data-tip-open]) { z-index: var(--vb-z-open); }
+}
 vb-node .vb-note-tip {
   top: 0; left: calc(100% + var(--reach)); width: var(--vb-pop-w); max-width: none; padding: 0;
   font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text); line-height: 1.45;
@@ -183,17 +193,19 @@ vb-node :is(.vb-node-note-text, .vb-note-tip) :is(.vb-md-icode, .vb-md-code) { b
 /* The note pin (ruling 7, 05 `.card .pin`): a numbered drop hanging off the top-right corner,
    the latest note's number. It clears the size control's hit area (tracker N10). A group's pin
    (groupNoteOnce flag) wears the same look in its own layer (node-notes.css `.vb-group-notes`). */
-:is(vb-node, .vb-group-notes) .vb-note-pin {
-  position: absolute; z-index: var(--vb-z-open); top: -12px; right: -12px; display: grid; place-items: center;
-  width: 26px; height: 26px; padding: 0; cursor: pointer;
-  border: 2px solid var(--gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
-  color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); box-shadow: var(--vb-shadow-card);
-  transition: scale var(--vb-motion-fast);
-}
-:is(vb-node, .vb-group-notes) .vb-note-pin[hidden] { display: none; }
-:is(vb-node, .vb-group-notes) .vb-note-pin:hover { scale: 1.1; }
-:is(vb-node, .vb-group-notes) .vb-note-pin[data-sent] {
-  background: var(--vb-surface-raised); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong), var(--vb-shadow-card);
+vb-node, .vb-group-notes {
+  & .vb-note-pin {
+    position: absolute; z-index: var(--vb-z-open); top: -12px; right: -12px; display: grid; place-items: center;
+    width: 26px; height: 26px; padding: 0; cursor: pointer;
+    border: 2px solid var(--gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
+    color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); box-shadow: var(--vb-shadow-card);
+    transition: scale var(--vb-motion-fast);
+  }
+  & .vb-note-pin[hidden] { display: none; }
+  & .vb-note-pin:hover { scale: 1.1; }
+  & .vb-note-pin[data-sent] {
+    background: var(--vb-surface-raised); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong), var(--vb-shadow-card);
+  }
 }
 /* While its bubble is open, the card draws over its neighbours (05 `.card.has-ovl`). */
 vb-node[data-bubble] { z-index: var(--vb-z-drag); }
@@ -237,7 +249,9 @@ vb-node .vb-flag[aria-pressed='true'] .vb-flag-cloth { fill: currentColor; }
    polish round 2 ruling 2, the maintainer's pick after trying it; it was 0.75), where the buttons
    would draw too small to press. They are hidden but keep their space, so no card changes size; the keyboard shortcuts still act on the
    focused card. */
-[data-zoom='far'] vb-node .vb-node-actions { visibility: hidden; }
+vb-node {
+  [data-zoom='far'] & .vb-node-actions { visibility: hidden; }
+}
 
 /* The size control (D-030, option A, mockup 07): a faint glyph in the top-right border gap. It
    opens like the region mode picker (region.css), through :hover and :focus-within, with no JS
@@ -290,4 +304,6 @@ vb-node .vb-size-opt[data-auto] { box-shadow: inset 0 0 0 1px var(--vb-line-stro
 vb-node .vb-size-opt:focus-visible, vb-node .vb-size-trig:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 vb-node .vb-size-sep { width: 1px; align-self: stretch; margin: var(--vb-space-1) 2px; background: var(--vb-line-strong); }
 /* The size control hides the same way, the pill included, which would otherwise stay visible. */
-[data-zoom='far'] vb-node .vb-size, [data-zoom='far'] vb-node .vb-size .vb-size-menu { visibility: hidden; }
+vb-node {
+  [data-zoom='far'] & .vb-size, [data-zoom='far'] & .vb-size .vb-size-menu { visibility: hidden; }
+}

@@ -168,6 +168,28 @@ test('a stopped mount ignores what a host keeps calling, when its unsubscribes h
   expect(after.notices, 'no notice').toEqual(before.notices);
 });
 
+test('reveal: a ref of the contract: a change line\'s `reveal` as it came, its other keys and values of the wrong kind ignored, never a throw', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host);
+  await drawn(page);
+  const zoom = async () => (await drive(page, 'boardStatus')).zoom;
+  // What a board write's change line holds (plugin.md § Tools), with a key the board does not read.
+  const change = (await host.tool('write_board', { board: 'plans', items: [{ type: 'node', n: 2, node: { region: 'now', kind: 'question', title: 'Who reviews, and when?' } }] }))._meta!['plugin/change'];
+  const before = await zoom();
+  await drive(page, 'reveal', { ...change.reveal, from: 'the host', at: 3 });
+  await expect.poll(zoom, 'the cards it names').not.toBe(before);
+  expect((await drive(page, 'record')).chips, 'nothing selected').toEqual([]);
+  // A value of the wrong kind is not read: no card, no note, no board switch, no refusal said, nothing thrown.
+  // (The bot's write is said as news, "The agent drew", which is not the reveal's.)
+  const said = async () => (await drive(page, 'record')).notices.filter((n: { text: string }) => !n.text.startsWith('The agent drew'));
+  for (const ref of [{ n: '3' }, { n: -1 }, { seq: 1.5 }, { cards: ['2'] }, { board: 7 }, {}]) await drive(page, 'reveal', ref);
+  await expect(page.locator('.host-root vb-node[data-id="3"]')).not.toBeFocused();
+  expect((await drive(page, 'boardStatus')).boardId).toBe('plans');
+  expect(await said(), 'nothing said').toEqual([]);
+  await drive(page, 'reveal', { board: 'plans', n: 3, extra: [1, 'x'] });
+  await expect(page.locator('.host-root vb-node[data-id="3"]'), 'the keys it reads still go').toBeFocused();
+});
+
 test('reveal of what is not on the board says so through notify, and takes no focus', async ({ page, host }) => {
   await drawPlans(host);
   await openHost(page, host);

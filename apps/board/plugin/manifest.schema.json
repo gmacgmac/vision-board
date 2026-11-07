@@ -55,7 +55,8 @@
       }
     },
     "skill": { "description": "The file the bot reads while the plugin is on.", "$ref": "#/$defs/path" },
-    "words": { "description": "The words file: every key above and the view's own text, as a flat JSON object.", "$ref": "#/$defs/path" }
+    "words": { "description": "The words file: every key above and the view's own text, as a flat JSON object.", "$ref": "#/$defs/path" },
+    "changeWords": { "description": "The words keys a board write's change line may name (its `_meta['plugin/change']` `words`), each with its text in words.json, holding `{count}` and `{subject}`.", "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/wordsKey" } }
   },
   "$defs": {
     "path": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*(/[a-z0-9][a-z0-9_.-]*)*\\.[a-z]+$" },

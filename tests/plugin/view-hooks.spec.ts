@@ -23,6 +23,28 @@ test('events: a ref with no head makes the board catch up on what it missed', as
   await expect(page.locator('.host-root vb-node')).toHaveCount(4);
 });
 
+test('events: a ref of the contract: any keys, of which the board reads `head`; one with a head that names no line catches up', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host);
+  await drawn(page);
+  const wrote = async (title: string) => (await host.tool('write_board', { board: 'plans', items: [{ type: 'node', node: { region: 'now', kind: 'question', title } }] })).structuredContent.head as number;
+  await drive(page, 'mute');
+  const head = await wrote('A fourth?');
+  await page.waitForTimeout(300);
+  await drawn(page);
+  await drive(page, 'say', { board: 'plans', head, cards: [4], seen: true, by: 'a host of its own' });
+  await expect(page.locator('.host-root vb-node'), 'the head is past the board\'s: it reads').toHaveCount(4);
+  for (const [i, bad] of [-1, 1.5, '9', true].entries()) {
+    await drive(page, 'mute');
+    await wrote(`Missed ${i}?`);
+    await page.waitForTimeout(300);
+    await expect(page.locator('.host-root vb-node')).toHaveCount(4 + i);
+    await drive(page, 'say', { head: bad, board: 'plans' });
+    await expect(page.locator('.host-root vb-node'), `a head of ${JSON.stringify(bad)} is a catch-up`).toHaveCount(5 + i);
+  }
+  expect((await drive(page, 'record')).refused).toEqual([]);
+});
+
 for (const firstRead of [500, 404, 'reject', 'html'] as const) {
   test(`events: a first read that fails (${firstRead}) waits for the next events, with no retry of its own, then the board comes`, async ({ page, host }) => {
     await drawPlans(host);
@@ -272,6 +294,21 @@ test('chat.status: now drives the working mark; held and staged drive Send; agen
   await expect.poll(answers).toEqual(expect.objectContaining({ kind: 'answers', ref: expect.objectContaining({ board: 'plans', agent: (host.bot as { agent: string }).agent }) }));
 });
 
+test('chat.status: singleAgent: with the setting on, `agent` is ignored: the answers chip holds every answer, for no agent, and lights Send', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host, { settings: { singleAgent: true } });
+  await drawn(page);
+  // An id no ledger line carries, as a host's derived id is: without the setting the chip would hold nothing for it.
+  await drive(page, 'status', { agent: 'bot-0123456789abcdef' });
+  const send = page.locator('.host-root #vb1-send');
+  await expect(send).toHaveAttribute('aria-disabled', 'true');
+  await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
+  const answers = async () => (await drive(page, 'record')).chips.find((c: { kind: string }) => c.kind === 'answers');
+  await expect.poll(async () => (await answers())?.ref).toEqual({ board: 'plans', since: expect.any(Number) });
+  await expect(send, 'the answer lights Send').not.toHaveAttribute('aria-disabled', 'true');
+  expect((await answers()).label).toBe('1 answer');
+});
+
 test('chat.status: with no staged, Send is enabled by the board\'s own chip until it has gone; a host that gives staged has the full say', async ({ page, host }) => {
   await drawPlans(host);
   await openHost(page, host);
@@ -303,7 +340,7 @@ test('chat.reveal and chat.hasLine: a changed card links to the chat\'s line onl
   const link = card.getByRole('button', { name: 'Show in the chat' });
   await expect(link).toBeVisible();
   await link.click();
-  await expect.poll(async () => (await drive(page, 'record')).reveals).toEqual([{ board: 'plans', n: 1 }]);
+  await expect.poll(async () => (await drive(page, 'record')).reveals, 'a plain ref').toEqual([{ board: 'plans', cards: 1 }]);
 });
 
 test('chat.reveal left out: no link, and the card still changes', async ({ page, host }) => {

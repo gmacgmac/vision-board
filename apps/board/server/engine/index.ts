@@ -7,8 +7,8 @@ export { createEngine, ENGINE_OPERATIONS, servesOperation } from './engine.ts';
 export type { Engine, EngineChange, EngineContext, EngineOperation, EngineOptions, EngineRequest } from './engine.ts';
 export { matchRoute, ONLY_PERSON, readParams } from './operations.ts';
 export type { EngineReply } from './operations.ts';
-export { TOOL_CHANGE } from './tools.ts';
-export type { EngineTools, ToolContext } from './tools.ts';
+export { CHANGE_BOUNDS, CHANGE_META, CHANGE_WORDS, changeOf } from './tools.ts';
+export type { ChangeMeta, EngineTools, ToolContext } from './tools.ts';
 export { checkBody } from './writes.ts';
 export type { Caller } from '../ledger.ts';
 /** The board's JSON Schemas, compiled as the engine checks against them (by `$id`). */

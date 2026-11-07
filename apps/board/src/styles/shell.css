@@ -26,3 +26,16 @@ code { font-family: var(--vb-font-mono); }
 /* Where the page puts the board: the whole window, the chat over its right edge (the root's stage shrinks by
    --vb-chat-w, ChatSidebar.svelte, board.css). The root takes no z-index, so the header's menus still open over the chat. */
 body > .vb-board { position: absolute; inset: 0; }
+/* What the board's base sets under its own root (packages/ui/src/base/root.css, a11y.css, text.css; nested in `.vb-board`, as a
+   host's page needs it), here for everything with a vb- class in the standalone page and the gallery, whose samples sit in no root
+   (host-styles.spec.ts draws them under a host's loud element rules). Not in the plugin's sheet, which names no rule of the page. */
+:where([class*='vb-'], [class*='vb-'] *) { box-sizing: border-box; }
+:where([class*='vb-'], [class*='vb-'] *)[hidden] { display: none !important; }
+:is(h1, h2, h3, p, button, input, select, textarea, dialog):where([class*='vb-'], [class*='vb-'] *):not(html) { all: revert; box-sizing: border-box; }
+:where([class*='vb-'], [class*='vb-'] *):focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+:where([class*='vb-'], [class*='vb-'] *)[data-pointer-focus]:focus-visible { outline: none; }
+:where([class*='vb-']) kbd:not(html) {
+  font: var(--vb-text-xs) var(--vb-font-mono); padding: 0 4px; border-radius: 4px;
+  border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
+}
+:where([class*='vb-']) code:not(html) { font-family: var(--vb-font-mono); }

@@ -2,9 +2,11 @@
    Design 3 and 4, region-fresh.ts): it holds new or updated cards the person has not engaged with.
    After region.css and region-narrow.css. Tokens only.
    Its border takes --vb-state-fresh, the app icon's teal, a few steps brighter than the plain frame
-   line (--region, --vb-line-contrast): APCA on the canvas Lc 58.6 light, 67.4 dark (decoration tier
+   line (--vb-region, --vb-line-contrast): APCA on the canvas Lc 58.6 light, 67.4 dark (decoration tier
    30; the plain line is 33.7 light). A dragged frame keeps its drag look; a drop target its own. */
-vb-region[data-fresh]:not([data-dragging], [data-drop]) { border-color: var(--vb-state-fresh); }
+vb-region {
+  &[data-fresh]:not([data-dragging], [data-drop]) { border-color: var(--vb-state-fresh); }
+}
 
 /* The pill after the count: "3 new · 1 updated", teal words on the -soft fill (APCA Lc 54.8 light,
    63.5 dark; label tier 45), its full words for screen readers and in its tooltip. It follows the
@@ -29,4 +31,6 @@ vb-region .vb-region-fresh[hidden] { display: none; }
 /* Updated in amber (updateSignals flag, D-088): the pill's "updated" count takes --vb-state-updated, "new"
    stays teal, so each meaning has one colour; the border stays teal, also when only updated cards are
    inside (point 432). APCA on the pill's -soft fill: Lc 61.6 light, 71.2 dark (labels, 45). */
-[data-update-signals] vb-region .vb-region-fresh-updated { color: var(--vb-state-updated); }
+vb-region {
+  [data-update-signals] & .vb-region-fresh-updated { color: var(--vb-state-updated); }
+}

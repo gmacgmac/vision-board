@@ -556,7 +556,7 @@ Example:
 
 `GET /api/boards/{board}/regions/{region}/layout` · who: anyone (no credentials) · MCP tool `show_layout`, `vb` command `vb show-layout`
 
-Read how one container is arranged, as structure only. Pass `board` and `region`. Returns the mode and card widths in effect, each card's column and row (and lane in `lanes` mode) by card number, how many of its links cross another, and how many cells are empty. Call it once after you first draw a `flow` or `lanes` container, and redraw if it reads badly (many crossings or empty cells); not after every write. `write_board` does not return it.
+Read how one container is arranged, as structure only. Pass `board` and `region`. Returns the mode and card widths in effect, each card's column and row (and lane in `lanes` mode) by card number, how many of its links cross another, and how many cells are empty. Call it once after you first draw a `flow` or `lanes` container, not after every write; redraw at once if a quarter of the links cross (cut those that are no step) or empty cells outnumber cards (regroup by phase in one `flow`).
 
 ### Inputs
 

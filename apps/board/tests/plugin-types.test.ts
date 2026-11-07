@@ -12,6 +12,9 @@ import { pluginTypes, seamProblem, typesHash } from '../bin/plugin-types.ts';
 import { SEAM, SEAM_TYPES, TYPES_FILE } from '../plugin/seam.ts';
 import { manifestOf } from '../plugin/manifest.ts';
 import { FLAGS } from '#format';
+import { CHANGE_BOUNDS, CHANGE_META, changeOf, createEngine } from '../server/engine/index.ts';
+import { toolRows } from '../server/format-files.ts';
+import * as contract from '../../../tests/plugin/contract/plugin-host.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const dts = pluginTypes();
@@ -19,10 +22,10 @@ const dts = pluginTypes();
 /** A host written from docs/specification/plugin.md alone, using every member the seam has. */
 const HOST = `
 import { createEngine, mount } from './plugin';
-import type { AnswersRead, Caller, Chip, PluginEngine, PluginHost, PluginView } from './plugin';
+import type { Caller, Chip, PluginEngine, PluginHost, PluginView, Ref } from './plugin';
 
 const held = new Map<string, Chip>();
-const headOf = (read: AnswersRead): number | undefined => read?.head;
+const acks: Ref[] = [];
 const whoOf = (caller: Caller): string => (caller.by === 'agent' ? caller.agent : caller.by);
 const refOf = (chip: Chip): unknown[] => {
   switch (chip.kind) {
@@ -35,13 +38,13 @@ const refOf = (chip: Chip): unknown[] => {
 };
 const host: PluginHost = {
   api: (path, init) => fetch(path, init),
-  events: (listener) => { listener({ plugin: 'board', ref: { board: 'plans', head: 4 } }); return () => undefined; },
+  events: (listener) => { listener({ plugin: 'board', ref: { board: 'plans', head: 4, cards: [1, 2], seen: true } }); return () => undefined; },
   chat: {
     attach: (key, chip) => { if (chip) held.set(key, chip); else held.delete(key); },
-    send: (record) => record({ head: 3 }).then((problem) => problem ?? String(headOf({ head: 3 }))),
+    send: (record) => record(acks.length ? acks : null).then((problem) => problem ?? null),
     status: { now: 'working', agent: 'a1', held: false, staged: true, on: (listener) => { listener(); return () => undefined; } },
-    reveal: (ref) => void [ref.board, ref.n],
-    hasLine: (ref) => ref.n > 0,
+    reveal: (ref) => void [ref.board, ref.cards],
+    hasLine: (ref) => ref.cards > 0,
   },
   settings: { get: (key) => (key === 'align' ? 'center' : undefined), on: (listener) => { listener(); return () => undefined; } },
   notify: (text, tone) => void [text, tone === 'error'],
@@ -68,8 +71,8 @@ export async function useEngine(signal: AbortSignal): Promise<unknown[]> {
   const picture = engine.image({ method: 'GET', path: 'flow.png', ifNoneMatch: '"v1"' });
   const answers = engine.resolve('answers', { board: 'plans', since: 0, agent: 'a1' });
   const card = engine.resolve('card', { board: 'plans', n: 1, ver: 1 });
-  const text = 'refused' in answers ? answers.reason + answers.refused : answers.text + answers.where + answers.count + answers.head + answers.notes.size;
-  const other = 'refused' in card ? card.reason : card.text + card.where;
+  const text = 'refused' in answers ? answers.reason + answers.refused : answers.text + answers.where + answers.count + answers.ack.board.toLowerCase() + answers.ack.head.toFixed() + answers.notes.size;
+  const other = 'refused' in card ? card.reason : card.text + card.where + JSON.stringify(card.ack);
   const listed = engine.tools.list().map((t) => [t.name, t.title, t.description, t.inputSchema, t.annotations]);
   const called = await engine.tools.call('list_boards', {}, { caller: { by: 'agent', agent: 'a1' }, signal });
   const stop = engine.watch((change) => void [change.board, change.head]);
@@ -102,6 +105,21 @@ function problems(types: string, host = HOST): string[] {
   return [path.join(DIR, 'host.ts'), path.join(DIR, 'plugin.d.ts')].flatMap((f) => {
     const file = program.getSourceFile(f)!;
     return [...program.getSyntacticDiagnostics(file), ...program.getSemanticDiagnostics(file)].map((d) => `${path.basename(f)}: ${ts.flattenDiagnosticMessageText(d.messageText, ' ')}`);
+  });
+}
+
+/** The contract's copy (tests/plugin/contract/, a test fixture: shipped code never imports it). */
+const CONTRACT = fs.readFileSync(path.join(ROOT, 'tests/plugin/contract/plugin-host.ts'), 'utf8');
+
+/** What the compiler says of `check`, compiled against `plugin.d.ts` text and the contract's copy beside it. */
+function contractProblems(types: string, check: string): string[] {
+  fs.writeFileSync(path.join(DIR, 'plugin.d.ts'), types);
+  fs.writeFileSync(path.join(DIR, 'plugin-host.ts'), CONTRACT);
+  fs.writeFileSync(path.join(DIR, 'contract.ts'), check);
+  const program = ts.createProgram([path.join(DIR, 'contract.ts')], OPTIONS, compilerHost);
+  return ['contract.ts', 'plugin.d.ts', 'plugin-host.ts'].flatMap((f) => {
+    const file = program.getSourceFile(path.join(DIR, f))!;
+    return [...program.getSyntacticDiagnostics(file), ...program.getSemanticDiagnostics(file)].map((d) => `${f}: ${ts.flattenDiagnosticMessageText(d.messageText, ' ')}`);
   });
 }
 
@@ -160,7 +178,7 @@ test('the seam number cannot stay behind the types: a change to them fails until
   assert.equal(typesHash(`// another comment\n${dts.replace(/\/\*\*[\s\S]*?\*\//g, '').replace(/;\n/g, ';\n\n')}`), SEAM_TYPES, 'comments and layout move nothing');
   const widened = dts.replace("export type ChatWork = 'idle' | 'working' | 'asking';", "export type ChatWork = 'idle' | 'working' | 'asking' | 'stopped';");
   assert.notEqual(widened, dts, 'the sample change was made');
-  assert.match(seamProblem(widened) ?? '', /raises SEAM to 2/);
+  assert.match(seamProblem(widened) ?? '', /raises SEAM to 3/);
   assert.match(seamProblem(dts.replace('hasLine?(ref', 'hasLine(ref')) ?? '', /SEAM_TYPES/);
 });
 
@@ -170,4 +188,82 @@ test('a new flag leaves the types alone: flag names are strings at the seam, so 
   assert.deepEqual(named, [], 'no flag name is in plugin.d.ts');
   assert.doesNotMatch(code, /\bFlagName\b|\bFlagOverrides\b/);
   assert.match(dts, /flags\?: Record<string, boolean>/);
+});
+
+/** A host built to the contract takes the board as it is, with no adapter: the built entries are the contract's entries,
+ * the seam's shared shapes the contract's own, and the manifest a contract manifest. Held by the compiler, so the day the
+ * shapes drift this fails. */
+const CHECK = (manifest: string) => `
+import type * as Host from './plugin-host';
+import type { ChangeMeta, ChipText, CreateEngine, Mount, PluginEvent, PluginManifest, Ref, SendRecord } from './plugin-host';
+import { createEngine, mount } from './plugin';
+import type * as Board from './plugin';
+
+/** The same type, member for member (the compiler's identity, not assignability). */
+type Same<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+export const entries: [Mount<HTMLElement>, CreateEngine] = [mount, createEngine];
+export const shapes: [Same<Board.Ref, Ref>, Same<Board.SendRecord, SendRecord>, Same<Board.PluginEvent, PluginEvent>] = [true, true, true];
+export const same: true[] = [
+  {} as Same<Board.RefValue, Host.RefValue>, {} as Same<Board.ChatWork, Host.ChatWork>, {} as Same<Board.ChatStatus, Host.ChatStatus>,
+  {} as Same<Board.ConfirmAsk, Host.ConfirmAsk>, {} as Same<Board.ConfirmList, Host.ConfirmList>, {} as Same<Board.ConfirmItem, Host.ConfirmItem>,
+  {} as Same<Board.Caller, Host.Caller>, {} as Same<Board.Transport, Host.Transport>, {} as Same<Board.EngineReply, Host.EngineReply>,
+  {} as Same<Board.ListedTool, Host.ListedTool>, {} as Same<Board.ToolResult, Host.ToolResult>,
+];
+export const refs = (ack: Board.AnswersAck, line: Board.ChatLine, change: Board.PluginChange): Ref[] => [ack, line, change];
+export const said = (answers: Board.AnswersText, other: Board.ChipText): ChipText[] => [answers, other];
+export const meta = (change: { words: string; count: number; subject: string; reveal: Board.Ref }): ChangeMeta => change;
+export const manifest: PluginManifest = ${manifest};
+`;
+
+const isCount = (n: unknown, most = Number.MAX_SAFE_INTEGER) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 && n <= most;
+/** A ref within the contract's REF_LIMITS: few keys of its pattern, short strings, short lists, short JSON. */
+function fitsRef(ref: unknown): boolean {
+  const L = contract.REF_LIMITS;
+  if (typeof ref !== 'object' || ref === null || Array.isArray(ref)) return false;
+  const value = (v: unknown): boolean => (typeof v === 'string' ? v.length <= L.maxString : typeof v === 'number' ? Number.isSafeInteger(v) : typeof v === 'boolean');
+  const entries = Object.entries(ref);
+  return entries.length <= L.maxKeys && JSON.stringify(ref).length <= L.maxChars && entries.every(([k, v]) => new RegExp(L.keyPattern).test(k)
+    && (Array.isArray(v) ? v.length <= L.maxItems && v.every((x) => typeof x !== 'boolean' && value(x)) : value(v)));
+}
+/** Whether a tool result's `_meta` holds a change the contract stores, by its rules: a words key the manifest lists for
+ * the plugin `id`, a count, a plain subject within CHANGE_LIMITS, a reveal that is a ref. */
+function storesChange(meta: unknown, id: string, changeWords: readonly string[]): boolean {
+  const c = (meta as Record<string, unknown> | undefined)?.[contract.CHANGE_META] as Record<string, unknown> | undefined;
+  if (typeof c !== 'object' || c === null) return false;
+  const { words, count, subject, reveal } = c;
+  return typeof words === 'string' && words.startsWith(`${id}.`) && changeWords.includes(words) && isCount(count, contract.CHANGE_LIMITS.maxCount)
+    && typeof subject === 'string' && subject.length <= contract.CHANGE_LIMITS.subjectChars && !/[\p{Cc}\p{Cf}]/u.test(subject)
+    && (reveal === undefined || fitsRef(reveal));
+}
+
+test('the types satisfy the host contract: the built `mount` is a `Mount<HTMLElement>`, `createEngine` a `CreateEngine`, the shared shapes the contract\'s, the manifest a `PluginManifest`, and a write\'s change line one the contract stores', async () => {
+  const dir = makeTempDir('vb-plugin-contract-');
+  try {
+    const engine = createEngine({ dir, warn: () => {} });
+    const writes = new Set((toolRows() as { name: string; writes: boolean }[]).filter((r) => r.writes).map((r) => r.name));
+    const manifest = manifestOf('1.2.3', engine.tools.list(), writes);
+    assert.deepEqual(contractProblems(dts, CHECK(JSON.stringify(manifest))), []);
+    const drifts = [
+      ['an event of seam 1', 'export interface PluginEvent { plugin: string; ref: Ref }', 'export interface PluginEvent { plugin: string; ref: { board?: string; head?: number } }'],
+      ['a record of seam 1', 'export type SendRecord = (acks: readonly Ref[] | null)', 'export type SendRecord = (answers?: { head: number } | null)'],
+      ['a watch of seam 1', 'export type PluginChange = { board?: string; head: number };', 'export interface PluginChange { board?: string; head: number }'],
+    ] as const;
+    for (const [cut, from, to] of drifts) {
+      const drifted = dts.replace(from, to);
+      assert.notEqual(drifted, dts, `the sample drift of ${cut} was made`);
+      assert.notDeepEqual(contractProblems(drifted, CHECK(JSON.stringify(manifest))), [], `a ${cut} that drifts from the contract fails`);
+    }
+
+    // The bounds are the contract's, and the board's change line is one it stores, by the contract's worked example's rules.
+    assert.equal(CHANGE_META, contract.CHANGE_META);
+    assert.deepEqual(CHANGE_BOUNDS, { refChars: contract.REF_LIMITS.maxChars, refItems: contract.REF_LIMITS.maxItems, refString: contract.REF_LIMITS.maxString, maxCount: contract.CHANGE_LIMITS.maxCount, subjectChars: contract.CHANGE_LIMITS.subjectChars });
+    assert.ok(storesChange(contract.CHANGE_EXAMPLES.meta, 'example', ['example.change.edited']), 'the check takes the contract\'s example');
+    for (const none of contract.CHANGE_EXAMPLES.none) assert.equal(storesChange(none, 'example', ['example.change.edited']), false, JSON.stringify(none));
+    const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: 'Contract test' } }))!.body as { agent: string };
+    const items = [{ type: 'board', title: 'Plans' }, { type: 'region', region: { id: 'now', title: 'Now', mode: 'grid' } }, { type: 'node', node: { region: 'now', kind: 'question', title: 'Ship on Friday?' } }];
+    const wrote = await engine.tools.call('write_board', { board: 'plans', items }, { caller: { by: 'agent', agent: joined.agent } });
+    assert.ok(storesChange(wrote._meta, manifest.id, manifest.changeWords), JSON.stringify(wrote._meta));
+    const most = changeOf('a'.repeat(64), Array.from({ length: 500 }, (_, i) => 100000 + i));
+    assert.ok(storesChange({ [CHANGE_META]: most }, manifest.id, manifest.changeWords), 'at the bounds, the reveal left out where it would not fit');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

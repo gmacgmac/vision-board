@@ -18,8 +18,10 @@ vb-node .vb-node-btab[hidden] { display: none; }
    clears them (WCAG 2.5.8) while the card keeps its size and the row stays clear of the card below. The one
    tab that stands for updates and a proposal (data-updated, oneChangeTab) counts as two: it is as wide as
    two on an S card. */
-vb-node:not([data-update-signals] *):has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), .vb-node-btab[data-updated]:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
-vb-node:not([data-update-signals] *) .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), > .vb-node-btab[data-updated]:not([hidden])) { bottom: -13px; }
+vb-node {
+  &:not([data-update-signals] *):has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), .vb-node-btab[data-updated]:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
+  &:not([data-update-signals] *) .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), > .vb-node-btab[data-updated]:not([hidden])) { bottom: -13px; }
+}
 /* With updateSignals (D-091, tab lower) the tabs hang below the footer: the row's top is 2px inside the
    card's edge (3px over its border, still on it), so a tab's 24px target starts below the footer buttons,
    which end 5.5px above the edge, and the buttons never rise, on any size, with any number of tabs. The
@@ -28,11 +30,13 @@ vb-node:not([data-update-signals] *) .vb-node-btabs:has(> .vb-node-btab:not([hid
    footer's own, border, left padding, kind icon, two gaps, the divider, room for the state word ("Open";
    3em of the footer's text size) and a space. The row lets the pointer through to the footer; the tabs
    take it back. */
-[data-update-signals] vb-node .vb-node-btabs {
-  bottom: -18px; font-size: var(--vb-text-sm); pointer-events: none;
-  left: calc(1px + var(--vb-space-2) + 14px + 2 * var(--vb-space-1) + 1px + 3em + var(--vb-space-2));
+vb-node {
+  [data-update-signals] & .vb-node-btabs {
+    bottom: -18px; font-size: var(--vb-text-sm); pointer-events: none;
+    left: calc(1px + var(--vb-space-2) + 14px + 2 * var(--vb-space-1) + 1px + 3em + var(--vb-space-2));
+  }
+  [data-update-signals] & .vb-node-btab:not([data-tab='new']) { pointer-events: auto; }
 }
-[data-update-signals] vb-node .vb-node-btab:not([data-tab='new']) { pointer-events: auto; }
 /* A 24px hit area, without growing the tab. */
 vb-node .vb-node-btab::after { content: ''; position: absolute; inset: -3px -2px; }
 vb-node .vb-node-btab:hover, vb-node .vb-node-btab[aria-expanded='true'] { border-color: var(--vb-accent); }
@@ -49,8 +53,10 @@ vb-node .vb-node-btab[data-tab='new']::after { content: none; }
 /* With updateSignals (D-088, one colour per meaning) new is teal, as the container's pill and the toolbar's
    chip: the words --vb-state-fresh on its -soft (Lc 54.8 light, 63.5 dark; labels 45), the edge as the
    stale tab's, the colour 45% toward the line. */
-[data-update-signals] vb-node .vb-node-btab[data-tab='new'] {
-  border-color: color-mix(in srgb, var(--vb-state-fresh) 45%, var(--vb-line)); background: var(--vb-state-fresh-soft); color: var(--vb-state-fresh);
+vb-node {
+  [data-update-signals] & .vb-node-btab[data-tab='new'] {
+    border-color: color-mix(in srgb, var(--vb-state-fresh) 45%, var(--vb-line)); background: var(--vb-state-fresh-soft); color: var(--vb-state-fresh);
+  }
 }
 
 /* The box: beside the card at its top, with a bridge over the gap so the pointer can cross onto it.
@@ -63,7 +69,9 @@ vb-node .vb-card-pop {
 }
 vb-node .vb-card-pop::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--vb-space-3); height: auto; }
 vb-node .vb-card-pop[data-open] { display: grid; gap: var(--vb-space-3); }
-vb-node:has(.vb-card-pop[data-open]) { z-index: var(--vb-z-open); }
+vb-node {
+  &:has(.vb-card-pop[data-open]) { z-index: var(--vb-z-open); }
+}
 
 /* A proposal in the box: who, what, from where and when, the reason it is out of date, the buttons. */
 vb-node .vb-prop { display: grid; gap: var(--vb-space-1); }
@@ -100,7 +108,9 @@ vb-node .vb-history { flex: none; }
 /* Opened from the ⓘ at the card's bottom, so it sits level with the card's bottom and grows upward
    (maintainer, 2026-10-19). */
 vb-node .vb-card-pop[data-pop='history'] { top: auto; bottom: 0; }
-[data-zoom='far'] vb-node .vb-history { visibility: hidden; }
+vb-node {
+  [data-zoom='far'] & .vb-history { visibility: hidden; }
+}
 vb-node .vb-history[aria-expanded='true'] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
 vb-node .vb-history-list { display: grid; margin: 0 calc(-1 * var(--vb-space-2)); padding: 0; list-style: none; }
 vb-node .vb-history-row {

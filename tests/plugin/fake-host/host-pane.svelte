@@ -21,6 +21,6 @@
 <aside class="host-chat" aria-label="The host's chat">
   <ul id="host-chips">{#each chips as chip}<li>{chip.label}</li>{/each}</ul>
   <ul id="host-lines">
-    {#each lines as line}<li><button type="button" class="host-line" onclick={() => board().reveal({ board: line.board, cards: line.cards })}>Changed {line.cards.join(', ')}</button></li>{/each}
+    {#each lines as line}<li><button type="button" class="host-line" onclick={() => { if (line.reveal) board().reveal(line.reveal); }}>{line.text}</button></li>{/each}
   </ul>
 </aside>

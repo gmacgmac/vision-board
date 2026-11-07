@@ -2,7 +2,7 @@
    only. The element is only the frame (D-013 layering): cards and wires draw in their own layers.
    The page sets transform, width and height. The look is board v3's open frame (D-024, mockup
    05's fieldset): no fill, a thin line, and a top line whose title and buttons sit in gaps cut
-   from the border. The frame's colour is --region, set by the element (regionColour), read whole. */
+   from the border. The frame's colour is --vb-region, set by the element (regionColour), read whole. */
 
 /* The zoom the board is drawn at: the viewport writes it once on the world (viewport.ts apply), a
    runtime value, not a token. Registered as a number so a glide can animate it with the world's
@@ -15,7 +15,7 @@
 vb-region {
   --region-line-w: 1.5px;
   display: block; position: absolute; left: 0; top: 0; container-type: inline-size; border-radius: var(--vb-radius-lg);
-  border: var(--region-line-w) solid var(--region);
+  border: var(--region-line-w) solid var(--vb-region);
   /* The top line's room: REGION_HEAD in packages/layout/src/types.ts (38). Keep the two equal. */
   padding-top: 38px;
   transition: transform var(--vb-motion) var(--vb-ease), width var(--vb-motion) var(--vb-ease), height var(--vb-motion) var(--vb-ease);
@@ -52,11 +52,16 @@ vb-region .vb-region-bar {
 vb-region .vb-region-label { grid-column: 2; }
 vb-region .vb-region-tools { grid-column: 3; justify-self: end; margin-inline-start: var(--vb-space-3); }
 /* A glide (Fit, Z) animates the world's transform; the line's zoom follows it, so it never jumps. */
-.gliding vb-region .vb-region-head { transition: --vb-zoom var(--vb-motion) var(--vb-ease); }
+vb-region {
+  .gliding & .vb-region-head { transition: --vb-zoom var(--vb-motion) var(--vb-ease); }
+}
 /* A drag on the label (its own buttons aside) moves the container (FE_02, superseding 3_FE_01 ruling 6
    for the label; pointer.ts), so it shows a hand; a closed one while it moves or pans (Cmd + drag). */
 vb-region .vb-region-label { cursor: grab; }
-:is(.panning, [data-dragging]) .vb-region-label, vb-region .vb-region-handle:active { cursor: grabbing; }
+vb-region .vb-region-handle:active { cursor: grabbing; }
+.vb-region-label {
+  :is(.panning, [data-dragging]) & { cursor: grabbing; }
+}
 vb-region .vb-region-label, vb-region .vb-region-tools { display: flex; align-items: center; pointer-events: auto; }
 vb-region .vb-region-label {
   --label-gap: var(--vb-space-2);
@@ -95,13 +100,13 @@ vb-region .vb-region-handle:hover, vb-region .vb-region-handle[data-look], vb-re
 }
 /* On the tint the title takes the strong ink in its mix, as the grip does, so it keeps Lc 60 (rule 3). */
 vb-region :is(.vb-region-handle:hover, .vb-region-handle[data-look], [data-dragging] .vb-region-handle) h2 {
-  color: color-mix(in srgb, var(--region) 20%, var(--vb-ink-strong));
+  color: color-mix(in srgb, var(--vb-region) 20%, var(--vb-ink-strong));
 }
 vb-region .vb-region-head h2 {
   margin: 0; flex: 1 0 0; max-width: max-content; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   min-width: 0; min-width: calc-size(max-content, min(size, calc(4.2 * (1ch + 0.22em))));
   font: var(--vb-weight-bold) var(--vb-text-lg) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
+  color: color-mix(in srgb, var(--vb-region) 20%, var(--vb-ink));
 }
 /* Focused by a click inside the container (data-pointer-focus, set by the page, as on a card): no ring
    when a key that moves no focus (Z) lights :focus-visible; focused by the keyboard it keeps one. */
@@ -170,10 +175,10 @@ vb-region[data-fixed] .vb-mode-row { gap: 0; }
 
 /* The mode row (README pick 1, mockup 05 .mode-row / .mseg): six layout icons, a divider and the
    settings cog in one box on the top line's right. The ring in the canvas colour is its gap in the
-   border. The active icon takes the same neutral mix of --region that 05 takes of --gc. */
+   border. The active icon takes the same neutral mix of --vb-region that 05 takes of --gc. */
 vb-region .vb-mode-row {
   position: relative; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: var(--vb-radius-md);
-  border: 1px solid color-mix(in srgb, var(--region) 55%, var(--vb-line));
+  border: 1px solid color-mix(in srgb, var(--vb-region) 55%, var(--vb-line));
   background: var(--vb-surface-card); box-shadow: 0 0 0 6px var(--vb-surface-canvas);
 }
 /* The row's narrow forms, and the retired marker's, live in region-narrow.css (loaded next). */
@@ -185,7 +190,7 @@ vb-region .vb-mseg:hover, vb-region .vb-mseg[data-hover], vb-region .vb-mseg[ari
   background: var(--vb-surface-sunken); color: var(--vb-ink-strong);
 }
 vb-region .vb-mseg[aria-checked='true'] {
-  background: color-mix(in srgb, var(--region) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
+  background: color-mix(in srgb, var(--vb-region) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
 }
 vb-region .vb-mseg:active, vb-region .vb-mseg[data-look='pressed'] { transform: translateY(1px); }
 vb-region .vb-mseg:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
@@ -216,7 +221,9 @@ vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
    (decision 6), but the controls still hide like the cards' buttons: the row with its popover and
    menu, the grip, the retired marker and the holders. They leave the line, so the title takes their
    room (FE_02). */
-[data-zoom='far'] vb-region :is(.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-region-holders) { display: none; }
+vb-region {
+  [data-zoom='far'] & :is(.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-region-holders) { display: none; }
+}
 
 /* The grip (3_FE_04 ruling 5), at the start of the label: with the title and the count it moves the
    container (FE_02), and it is the container's keyboard handle (Alt+arrows). Always there for the
@@ -247,7 +254,7 @@ vb-region .vb-region-grip:is(:focus-visible, [data-look='focus'])::after {
   outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight);
 }
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
-vb-region[data-dragging] { transition: none; z-index: var(--vb-z-open); border-color: color-mix(in srgb, var(--region) 85%, var(--vb-ink-strong)); }
+vb-region[data-dragging] { transition: none; z-index: var(--vb-z-open); border-color: color-mix(in srgb, var(--vb-region) 85%, var(--vb-ink-strong)); }
 
 /* The title's full-text tip (titleTip flag, WCAG 1.4.13; box: tip/tip.css), below the label over the
    frame's top room while data-title-tip-open is on the frame, which also raises the frame above the

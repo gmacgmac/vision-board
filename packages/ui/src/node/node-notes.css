@@ -37,5 +37,7 @@ vb-node :is(.vb-node-note, .vb-node-reply)[data-flash] { box-shadow: 0 0 0 3px v
 .vb-group-notes { position: absolute; left: 0; top: 0; --gap: var(--vb-surface-canvas); }
 .vb-group-notes .vb-note-pin { top: 0; right: auto; left: 0; }
 .vb-group-notes .vb-note-pin[aria-expanded='true'] { scale: 1.1; }
-vb-node[data-group-ring]:not(:focus-visible) { outline: 2px dashed var(--vb-accent); outline-offset: 5px; }
-vb-node[data-group-ring='sent']:not(:focus-visible) { outline-color: var(--vb-ink-subtle); }
+vb-node {
+  &[data-group-ring]:not(:focus-visible) { outline: 2px dashed var(--vb-accent); outline-offset: 5px; }
+  &[data-group-ring='sent']:not(:focus-visible) { outline-color: var(--vb-ink-subtle); }
+}
