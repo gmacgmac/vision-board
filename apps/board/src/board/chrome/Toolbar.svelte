@@ -121,9 +121,15 @@
   const tier = $derived(form ?? headerTier(width));
   $effect(() => {
     if (!adaptive || form) return;
-    const seen = new ResizeObserver(() => { width = bar.getBoundingClientRect().width; });
+    // On the next frame: a new tier changes the bar's own size, and changed inside the observer's callback that is a
+    // resize loop, which WebKit (a host's webview) reports as an error.
+    let frame = 0;
+    const seen = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => { width = bar.getBoundingClientRect().width; });
+    });
     seen.observe(bar);
-    return () => seen.disconnect();
+    return () => { cancelAnimationFrame(frame); seen.disconnect(); };
   });
   const here = (c: HeaderControl) => !adaptive || inBar(tier, c);
   const holders = $derived(givenHolders !== undefined ? givenHolders : facts.agentAccess && facts.version !== null && !facts.past ? facts.boardHolders : null);

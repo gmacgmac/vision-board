@@ -186,3 +186,14 @@ Third review (told the settled decisions): 7/10; it ran nclite's `scripts/plugin
 - **526**: a board-only change line (`cards: []`) opens the board with no "no longer there" notice (`mount.ts` `show`;
   `view-gives.spec.ts`, shown to fail without the fix); the `plugin-types` message says what it tests; one `isCount`
   (`#actions`) for `mount.ts`, `live.ts` and `chips.ts`; the contract README says its sha test catches edits, not drift.
+
+### WebKit run (point 529, maintainer yes)
+
+Playwright's WebKit 26.6 downloaded (77.5 MB). First run: 25/104. Every failure but one was WebKit reporting
+"ResizeObserver loop completed with undelivered notifications" as a page error; a tagged trace named the observers:
+- `Toolbar.svelte`: the bar's width set inside the observer changed its tier, so its own size; now set on the next frame.
+- `AccessRequests.svelte`: the strip's height (`bind:offsetHeight`) wrote `--vb-strip-h` and moved the stage in the same
+  pass; now written on the next frame, removed at once when the strip goes.
+- `ReplyPanel.svelte`: WebKit gives a clicked button no focus, so the close button found the focus already on the page
+  and the stage never took it; `close()` moves it to the stage itself.
+Then 104/104 in WebKit and 104/104 in Chromium. Handover's WebKit note rewritten.

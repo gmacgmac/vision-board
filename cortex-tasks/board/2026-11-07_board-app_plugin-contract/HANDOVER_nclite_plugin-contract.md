@@ -10,8 +10,8 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `af9faa469d19d3adad20bf05b751258d9b6e34e8` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" af9faa469d19d3adad20bf05b751258d9b6e34e8`
+- **Commit**: `<COMMIT>` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" <COMMIT>`
 - **Decisions**: the board's D-096 and D-097 (`docs/decisions.md`). **Seam**: **2** (breaking).
 
 In the same change, in this order:
@@ -108,10 +108,12 @@ and its page strips them from the address and its storage (`withoutHostFlags`; t
   needs a pseudo-class or an outside attribute first as a nested rule round `&`. Your `checkStylesheet` does not look
   inside nested rules, and neither does the board's (`.vb-x { :root:has(&) .app-nav { … } }` passes both). Every subject
   in the board's sheet is a `vb` element or class, by review. If you want that enforced, it is your check to tighten.
-- **Not run in WebKit yet.** Every board test runs in Chromium. Your app's webview on macOS is WebKit: the rule older
-  WebKit enforces on nested selectors is held by `npm run verify`, and `npm run test:plugin:webkit` runs the plugin
-  specs in WebKit, but it has not run yet (it needs Playwright's current WebKit downloaded). Look at the board in your
-  app on macOS, light and dark, before you call it done.
+- **WebKit.** The plugin specs pass in WebKit 26.6 too, 104 of 104 (`npm run test:plugin:webkit`). That run found three
+  things Chromium hid, now fixed: two resize-observer loops (the toolbar's width, the access strip's height), which WebKit
+  reports as page errors, and focus lost to the page when Reply's close button is clicked (WebKit gives a clicked button
+  no focus). The rule older WebKit (before Safari 17.2, macOS 14.0 and 14.1) enforces on nested selectors is held by
+  `npm run verify`; Playwright's WebKit is current, so that one rests on the check. Look at the board in your app on
+  macOS, light and dark, before you call it done.
 - **Drift.** The board's test compares its shared shapes with your contract by type identity: plain assignability lets a
   seam-1 `events` or line ref through as a `Mount<HTMLElement>`, so your per-plugin type block alone would miss it.
 

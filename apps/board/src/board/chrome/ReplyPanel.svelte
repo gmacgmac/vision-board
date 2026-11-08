@@ -12,10 +12,17 @@
   $effect(() => {
     if (shown.replyOpen) void tick().then(() => text.focus());
   });
+  const toStage = () => root.querySelector<HTMLElement>(':scope > .vb-stage')?.focus({ preventScroll: true });
   // Closing with the focus inside: it goes to the stage, so the next key still reaches the board.
   $effect.pre(() => {
-    if (!shown.replyOpen && panel?.contains(document.activeElement)) root.querySelector<HTMLElement>(':scope > .vb-stage')?.focus({ preventScroll: true });
+    if (!shown.replyOpen && panel?.contains(document.activeElement)) toStage();
   });
+  /** The close button: the stage takes the focus itself, since WebKit (a host's webview) gives a clicked button none, so
+   *  the focus has already left the panel for the page when the click arrives. */
+  function close() {
+    toStage();
+    shown.replyOpen = false;
+  }
 
   async function copy() {
     try {
@@ -32,7 +39,7 @@
     <h2>{replyWords.yourReply}</h2>
     <button type="button" class="vb-btn vb-btn-primary" id={id('copy')} onclick={copy}>{chromeCommonWords.copy}</button>
     <button type="button" class="vb-btn" id={id('reply-close')} aria-label={replyWords.closeReply}
-      onclick={() => { shown.replyOpen = false; }}>✕</button>
+      onclick={close}>✕</button>
   </header>
   <p class="vb-reply-hint">{#if help?.reply}{help.reply.lead} <code>{help.reply.command}</code>.{:else}{replyWords.pasteItIntoChat}{/if}</p>
   <!-- Focusable so keyboard users can scroll a long reply (WCAG 2.1.1). -->

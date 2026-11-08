@@ -61,11 +61,20 @@
   /** On the board the strip pushes the stage down by its height (board.css, --vb-strip-h), so
    * it never covers the top of the board; the property goes when the strip does. */
   let height = $state(0);
+  // Written on the next frame: `height` comes from a resize observer (bind:offsetHeight), and moving the stage inside
+  // that observer's pass is a resize loop, which WebKit (a host's webview) reports as an error.
+  let frame = 0;
   $effect(() => {
     if (placement !== 'board' || !where) return;
     const root = where.style;
-    root.setProperty('--vb-strip-h', `${requests.length ? height : 0}px`);
-    return () => root.removeProperty('--vb-strip-h');
+    const px = `${requests.length ? height : 0}px`;
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => root.setProperty('--vb-strip-h', px));
+  });
+  $effect(() => {
+    if (placement !== 'board' || !where) return;
+    const root = where.style;
+    return () => { cancelAnimationFrame(frame); root.removeProperty('--vb-strip-h'); };
   });
 
   const heading = $derived(chromeAccessWords.askForAccess(byBot ? groups.length : requests.length));
