@@ -8,7 +8,7 @@
 // and `root` is emptied and given back as it was. Each mount has its own calls (io.ts), status and
 // controller, so two boards on one page work apart.
 import type { Ref } from '#actions';
-import { boardChip } from '#actions';
+import { boardChip, isCount } from '#actions';
 import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
 import { memoryStore } from './host.ts';
@@ -24,7 +24,6 @@ import * as boardWords from './words/board.ts';
 /** The class a host's root takes: the board's scope and its `@container vb-board` (D-061). */
 export const BOARD_ROOT = 'vb-board';
 const SVG = 'http://www.w3.org/2000/svg';
-const isCount = (n: unknown): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0;
 
 /** What the board's controls call (chrome/), and the standalone page's test door (`rebuild`, `idle`,
  *  work.ts). No chat goes through it: that is `BoardView` and `BoardChat`. */
@@ -126,7 +125,8 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   /** Bring into view, on the board open now, the cards, the card `n` or the note `seq` (`reveal`): each read only when it
    *  is of its kind (a list of whole numbers, a whole number), the rest of the ref ignored. */
   function show({ n, seq, cards }: Ref) {
-    if (Array.isArray(cards) && cards.every(isCount)) return board.zoomToCards(cards as readonly number[]);
+    // A change to the board alone (`cards: []`) has nothing to zoom to: opening the board is the reveal.
+    if (Array.isArray(cards) && cards.length > 0 && cards.every(isCount)) return board.zoomToCards(cards as readonly number[]);
     if (isCount(n)) return board.revealCard(n);
     if (isCount(seq)) board.revealNote(seq);
   }

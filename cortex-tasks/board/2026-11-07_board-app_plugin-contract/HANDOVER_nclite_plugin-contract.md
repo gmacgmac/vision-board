@@ -3,15 +3,16 @@
 Answers `HANDOVER_board_nclite-contract.md` (nclite, 2026-11-07; tracker N592, N593). The board meets Part 1 and Part 2
 **given two things on your side, in the same change as vendoring**: the change key's rename, and a two-field entry
 for the board that stays in `ADAPTERS` (its icon and its stylesheet's scope; below). Everything else the adapter and the
-stylesheet waiver do goes. Revised 2026-11-08 after two independent reviews: this version claims only what a test shows,
-and says which tests run your own code.
+stylesheet waiver do goes. Revised 2026-11-08 after three independent reviews (the last ran your
+`scripts/plugin-vendor.ts` on the build: it vendored and passed your manifest, content and skill checks): this version
+claims only what a test or that run shows, and says which tests run your own code.
 
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `da6cbce72abafc2b4307a6032d4a572b65d2c197` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" da6cbce72abafc2b4307a6032d4a572b65d2c197`
-- **Decision**: the board's D-096 (`docs/decisions.md`). **Seam**: **2** (breaking).
+- **Commit**: `<COMMIT>` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" <COMMIT>`
+- **Decisions**: the board's D-096 and D-097 (`docs/decisions.md`). **Seam**: **2** (breaking).
 
 In the same change, in this order:
 
@@ -22,19 +23,26 @@ In the same change, in this order:
    `storedChangeOf` and asserts exactly that).
 2. **Move the board row's `seam` to 2 first**: `scripts/plugin-vendor.ts` refuses a manifest whose seam differs from
    the row's. Then vendor the folder and set the flags below.
-3. **Cut the board's adapter to `board: { icon: 'board', css: { scope: 'vb' } }`**. Your manifest has no field for a
+3. **Set the row's `provenanceSha256` to the pin `vendor()` prints.** Your registry refuses the folder until the row
+   carries it (`checkFolder`).
+4. **Cut the board's adapter to `board: { icon: 'board', css: { scope: 'vb' } }`** (the board's D-097 point 1). Your manifest has no field for a
    stylesheet scope that is not the plugin's id, so `checkPluginStylesheet` takes it from this entry. Without it the
-   scope is `board` and the loader refuses the sheet (11 problems; the board's `plugin-build.test.ts` asserts both
-   outcomes). The icon is a name in your own list, so it stays with you. A manifest `scope` field would let this entry go
+   scope is `board` and the loader refuses the sheet (over a thousand problems; your check lists ten and counts the rest;
+   the board's `plugin-build.test.ts` asserts both outcomes). The icon is a name in your own list, so it stays with you. A manifest `scope` field would let this entry go
    too; that is a contract change, and your call.
-4. Delete everything else of `shared/plugin-adapters/board.ts` (register, change, ack, reveal, host, `reads`),
+5. **Replace `BoardSeams` in `app/src/lib/plugins/seams.ts`** with the Journal's form, which needs nothing from the
+   adapter: `Holds<Mount<HTMLElement>, typeof Board.mount>`, `Holds<CreateEngine, typeof Board.createEngine>` (the board's
+   `plugin-types.test.ts` compiles exactly those two against your contract). The old block imports `boardHost` from the
+   adapter, so your type check fails the moment step 6 removes it. Your board tests that use `registerAgent` or
+   `boardHost` (`engine/plugins/host-testing.ts`) change with it.
+6. Delete everything else of `shared/plugin-adapters/board.ts` (register, change, ack, reveal, host, `reads`),
    `REVIEWED_BOARD_SHEET`, and the board's stored registration (`plugins.agents` row for `board`). Keep
    `shared/plugin-legacy/board-change.ts`: old rows still need it.
 
 Built and tested against byte-for-byte copies of your `shared/plugin-host.ts`, `shared/plugin-checks.ts`,
 `engine/plugins/stylesheet.ts`, `engine/plugins/provenance.ts` and `engine/words/plugins.ts`, at nclite `4356abee`
 (identical to `a975c1ca` for these files). Their sha256s are in the board's `tests/plugin/contract/README.md`; a test
-fails if a copy differs from them. The one stand-in is `shared/plugin-adapters.ts`, which holds exactly the entry step 3 keeps, so
+fails if a copy differs from them. The one stand-in is `shared/plugin-adapters.ts`, which holds exactly the entry step 4 keeps, so
 `checkPluginStylesheet` runs as your loader will. No new dependencies. The board's spec: `docs/specification/plugin.md`.
 
 ## The flags
@@ -45,6 +53,9 @@ fails if a copy differs from them. The one stand-in is `shared/plugin-adapters.t
 | The row's `engineFlags` | `followOtherWriters` | `false` |
 | The row's `engineFlags` | `botToolRules` | `true` (as now) |
 | The row's `viewSettings` | `appCards` | `false` (as now) |
+
+Your row's other `viewSettings` (`sendCountsWhatWent`, `botToolRules`, `align`) can stay as they are: each is the board's
+default.
 
 `singleAgent` is set once, on the engine. The engine's ledger read says so (`oneAgent: true`), and the view follows it,
 so the two can't disagree; a `singleAgent` view setting does nothing (`apps/board/tests/engine-switches.test.ts`,
@@ -63,7 +74,7 @@ and its page strips them from the address and its storage (`withoutHostFlags`; t
 | B2 | `chat.send(record)` calls `record(acks)`; the answers chip's `resolve` gives `ack: { board, head }` (no top-level `head`). | `tests/plugin/send-what-went.spec.ts`, `engine-hooks.spec.ts` "resolve: the answers ack" |
 | B3 | With `singleAgent`: no sign-up; any non-empty caller id; ids never compared or stored; no `needs-grant` (on any board, the person's own included: the maintainer's ruling, the lock being the person's guard); `request_grant` answers `held`; reads unscoped. Lines are written as the folder's first joined agent (an old bot's registration, so it keeps its boards), else one the engine joins on its first write, labelled by `name()`. The lock, `readOnly` and the person's ✓, ✗ and approving are unchanged, and a write refused whole (locked, read-only, no such board) joins nobody; one whose items are each refused may still write the join line. | `apps/board/tests/engine-switches.test.ts` (what lands in the ledger), `tests/plugin/tools.spec.ts` "the bot: singleAgent" |
 | B4 | `events` take any `Ref` (`{}` catch up, `head: 0` from the start); `chat.reveal` / `hasLine` get `{ board, cards: n }`. | `tests/plugin/view-hooks.spec.ts`, `round-trip.spec.ts`; `plugin-types.test.ts`: the ack and line refs, at the longest board id, pass your `checkRef` |
-| B5 | `view/board.css` passes your `checkPluginStylesheet('board', …)`, the loader's own path, with 0 problems, given step 3's entry (scope `vb`), with **no `reads` and no waiver**: the properties the board's script sets are `--vb-app-w`, `--vb-app-h`, `--vb-region`. | `apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope" (your `checkPluginStylesheet`; your `checkStylesheet` refusing it under scope `board`; then the board's own rule) |
+| B5 | `view/board.css` passes your `checkPluginStylesheet('board', …)`, the loader's own path, with 0 problems, given step 4's entry (scope `vb`), with **no `reads` and no waiver**: every property the sheet reads is `--vb-*` or `--host-*`, the ones the board's script sets included (`--vb-app-w`, `--vb-app-h`, `--vb-region`, `--vb-kind`, `--vb-arrow`, …), so a name on your page can't reach the board. Every nested selector starts with a symbol, never an element name, which WebKit before Safari 17.2 (macOS 14.0 and 14.1) drops. | `apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope" (your `checkPluginStylesheet`; your `checkStylesheet` refusing it under scope `board`; then the board's own rule); `npm run verify` (`scripts/verify-style.mjs`: what a sheet reads, how a nested selector starts) |
 
 ## Part 2
 
@@ -97,6 +108,10 @@ and its page strips them from the address and its storage (`withoutHostFlags`; t
   needs a pseudo-class or an outside attribute first as a nested rule round `&`. Your `checkStylesheet` does not look
   inside nested rules, and neither does the board's (`.vb-x { :root:has(&) .app-nav { … } }` passes both). Every subject
   in the board's sheet is a `vb` element or class, by review. If you want that enforced, it is your check to tighten.
+- **Not run in WebKit yet.** Every board test runs in Chromium. Your app's webview on macOS is WebKit: the rule older
+  WebKit enforces on nested selectors is held by `npm run verify`, and `npm run test:plugin:webkit` runs the plugin
+  specs in WebKit, but it has not run yet (it needs Playwright's current WebKit downloaded). Look at the board in your
+  app on macOS, light and dark, before you call it done.
 - **Drift.** The board's test compares its shared shapes with your contract by type identity: plain assignability lets a
   seam-1 `events` or line ref through as a `Mount<HTMLElement>`, so your per-plugin type block alone would miss it.
 
@@ -108,3 +123,4 @@ and its page strips them from the address and its storage (`withoutHostFlags`; t
 - Send carries the answers; the next Send carries only newer ones.
 - An existing bot's old boards still take its writes, with no grant asked.
 - A locked board refuses the bot's write.
+- The board looks right in your app on macOS, light and dark.

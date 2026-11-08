@@ -13,7 +13,7 @@ import { FAR_K } from '../../apps/board/src/board/canvas/viewport.ts';
 export type Box = { x: number; y: number; width: number; height: number };
 export const THEMES: Theme[] = ['light', 'dark'];
 export const TITLE = 'Pricing questions for the plans';
-/** The rail's canvas ring (region-rail.css --rail-ring), part of its reach. */
+/** The rail's canvas ring (region-rail.css --vb-rail-ring), part of its reach. */
 export const RING = 2;
 /** Design 3's hard bounds, on screen, at every zoom down to FAR_K. */
 export const INSIDE = REGION_PAD * FAR_K - 2;

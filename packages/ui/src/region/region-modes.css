@@ -55,9 +55,9 @@ vb-region .vb-mode-foot {
 vb-region .vb-mseg[role='radio'] { position: relative; }
 vb-region .vb-mode-tip { top: calc(100% + var(--vb-space-1)); right: 0; text-align: left; cursor: default; }
 vb-region[data-rail] .vb-mode-tip {
-  top: 50%; right: auto; left: calc(100% + var(--rail-ring) + var(--vb-space-1)); transform: translateY(-50%);
+  top: 50%; right: auto; left: calc(100% + var(--vb-rail-ring) + var(--vb-space-1)); transform: translateY(-50%);
 }
-vb-region[data-rail] .vb-mode-tip::before { left: auto; right: 100%; top: 0; bottom: 0; width: calc(var(--rail-ring) + var(--vb-space-1)); height: auto; }
+vb-region[data-rail] .vb-mode-tip::before { left: auto; right: 100%; top: 0; bottom: 0; width: calc(var(--vb-rail-ring) + var(--vb-space-1)); height: auto; }
 vb-region .vb-mseg[data-tip-open] .vb-mode-tip { display: grid; gap: 2px; }
 vb-region .vb-mode-tip-name { color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
 vb-region .vb-mode-tip-hint { color: var(--vb-ink); font-size: var(--vb-text-xs); font-weight: var(--vb-weight-regular); }

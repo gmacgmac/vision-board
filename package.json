@@ -52,6 +52,7 @@
     "gen": "node scripts/gen-api.mjs",
     "test:pages": "playwright test --config tests/pages/playwright.config.ts",
     "test:plugin": "playwright test --config tests/plugin/playwright.config.ts",
+    "test:plugin:webkit": "VB_TEST_BROWSER=webkit playwright test --config tests/plugin/playwright.config.ts",
     "eval:bot": "node tests/evals/bot/run.ts"
   },
   "dependencies": {

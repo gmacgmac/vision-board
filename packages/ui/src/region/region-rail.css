@@ -8,7 +8,7 @@
 
 /* Top line: the label alone, centred on the whole line. The tools' column goes; the label keeps its
    shrink order (holders, title to "…", count) and its tip (region.css). Centred at every zoom: no
-   tool shares the line, so nothing pushes it to the start (the far zoom's --region-lead is unused). */
+   tool shares the line, so nothing pushes it to the start (the far zoom's --vb-region-lead is unused). */
 vb-region[data-rail] .vb-region-bar { grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr); }
 
 /* The rail's room: one box over the whole frame, counter-scaled like the top line (region.css), so it
@@ -26,11 +26,11 @@ vb-region[data-rail] > .vb-region-rail {
      Comment's badge (on its outer side, below): under REGION_GAP x FAR_K - 2 (56 x 0.55 - 2 = 28.8px),
      so it never touches the next container (packages/layout types.ts; viewport.ts FAR_K). Top: just
      under the top line, whose label reaches 12px below the border. Foot: the room kept under it. */
-  --rail-w: 30px; --rail-out: 20px; --rail-ring: 2px; --rail-top: var(--vb-space-4); --rail-foot: var(--vb-space-3);
-  --rail-btn: var(--vb-control-target); --vb-zoom: inherit;
-  position: absolute; left: calc(-1 * var(--region-line-w)); top: calc(-1 * var(--region-line-w));
+  --vb-rail-w: 30px; --vb-rail-out: 20px; --vb-rail-ring: 2px; --vb-rail-top: var(--vb-space-4); --rail-foot: var(--vb-space-3);
+  --vb-rail-btn: var(--vb-control-target); --vb-zoom: inherit;
+  position: absolute; left: calc(-1 * var(--vb-region-line-w)); top: calc(-1 * var(--vb-region-line-w));
   width: calc((100cqw - 2 * var(--vb-space-4)) * var(--vb-zoom));
-  height: calc((100% + 2 * var(--region-line-w)) * var(--vb-zoom));
+  height: calc((100% + 2 * var(--vb-region-line-w)) * var(--vb-zoom));
   transform-origin: 0 0; transform: scale(calc(1 / var(--vb-zoom)));
   container: vb-rail / size;
   pointer-events: none;
@@ -43,14 +43,14 @@ vb-region {
    with its row and holds the popovers, so they anchor to it. The canvas-coloured ring is its gap in
    the border, as the row's was on the top line. */
 vb-region[data-rail] .vb-region-tools {
-  position: absolute; top: var(--rail-top); left: calc(-1 * var(--rail-out)); width: var(--rail-w);
+  position: absolute; top: var(--vb-rail-top); left: calc(-1 * var(--vb-rail-out)); width: var(--vb-rail-w);
   margin: 0; align-items: stretch;
 }
 vb-region[data-rail] .vb-mode-row {
-  flex: 1 1 auto; flex-direction: column; gap: 0; padding: 2px; box-shadow: 0 0 0 var(--rail-ring) var(--vb-surface-canvas);
+  flex: 1 1 auto; flex-direction: column; gap: 0; padding: 2px; box-shadow: 0 0 0 var(--vb-rail-ring) var(--vb-surface-canvas);
 }
 /* Each button is the 24px target; 1px above and below makes the 2px between two. */
-vb-region[data-rail] .vb-mseg { width: var(--rail-btn); height: var(--rail-btn); margin-block: 1px; }
+vb-region[data-rail] .vb-mseg { width: var(--vb-rail-btn); height: var(--vb-rail-btn); margin-block: 1px; }
 vb-region[data-rail] .vb-mode-div { width: var(--vb-space-4); height: 1px; margin: 3px 0; }
 /* Comment's badge sits on the rail's outer side, so the rail's reach into the frame stays its own. */
 vb-region[data-rail] .vb-region-badge { right: auto; left: calc(var(--vb-space-2) * -1); }
@@ -62,14 +62,14 @@ vb-region[data-rail] .vb-region-badge { right: auto; left: calc(var(--vb-space-2
    raised by data-open or data-preview (region.css, region-note.css). The bridge on their left keeps
    the pointer inside while it crosses the gap (WCAG 1.4.13: hoverable). */
 vb-region[data-rail] :is(.vb-mode-pop, .vb-note-pop, .vb-region-menu) {
-  --rail-gap: calc(var(--rail-ring) + var(--vb-space-1));
-  left: calc(100% + var(--rail-gap)); right: auto;
+  --vb-rail-gap: calc(var(--vb-rail-ring) + var(--vb-space-1));
+  left: calc(100% + var(--vb-rail-gap)); right: auto;
 }
 vb-region[data-rail] .vb-mode-pop { top: 0; }
-vb-region[data-rail] .vb-region-menu { top: calc(100% - 4px - var(--rail-btn)); }
-vb-region[data-rail] .vb-note-pop { top: calc(100% - 6px - 2 * var(--rail-btn)); }
+vb-region[data-rail] .vb-region-menu { top: calc(100% - 4px - var(--vb-rail-btn)); }
+vb-region[data-rail] .vb-note-pop { top: calc(100% - 6px - 2 * var(--vb-rail-btn)); }
 vb-region[data-rail] :is(.vb-mode-pop, .vb-note-pop)::before {
-  left: auto; right: 100%; top: 0; bottom: 0; width: var(--rail-gap); height: auto;
+  left: auto; right: 100%; top: 0; bottom: 0; width: var(--vb-rail-gap); height: auto;
 }
 
 /* Dimmed at rest (Design 5): the icons and the divider at --vb-rail-rest (tokens.css; each icon keeps
@@ -120,7 +120,7 @@ vb-region {
      border each end, three 26px stops) under its top. */
   vb-region {
     &[data-rail]:not([data-fixed]) .vb-region-tools {
-      top: auto; bottom: calc(100% - var(--rail-top) - 6px - 3 * (var(--rail-btn) + 2px));
+      top: auto; bottom: calc(100% - var(--vb-rail-top) - 6px - 3 * (var(--vb-rail-btn) + 2px));
     }
   }
   vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut])
@@ -128,15 +128,15 @@ vb-region {
     height: 0; padding-block: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
   }
   vb-region[data-rail] .vb-region-tools:is(:hover, :focus-within, [data-look]) > .vb-mode-row:not([data-shut]) {
-    box-shadow: 0 0 0 var(--rail-ring) var(--vb-surface-canvas), var(--vb-shadow-lift);
+    box-shadow: 0 0 0 var(--vb-rail-ring) var(--vb-surface-canvas), var(--vb-shadow-lift);
   }
 }
 @container vb-rail (max-height: 111.98px) {
   /* The cog alone, or Comment and the cog while the badge shows. */
   vb-region {
-    &[data-rail]:not([data-fixed]) .vb-region-tools { bottom: calc(100% - var(--rail-top) - 6px - (var(--rail-btn) + 2px)); }
+    &[data-rail]:not([data-fixed]) .vb-region-tools { bottom: calc(100% - var(--vb-rail-top) - 6px - (var(--vb-rail-btn) + 2px)); }
     &[data-rail]:is([data-badge='unsent'], [data-badge='sent']):not([data-fixed]) .vb-region-tools {
-      bottom: calc(100% - var(--rail-top) - 6px - 2 * (var(--rail-btn) + 2px));
+      bottom: calc(100% - var(--vb-rail-top) - 6px - 2 * (var(--vb-rail-btn) + 2px));
     }
   }
   vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-mseg[role='radio']:not(:focus) {

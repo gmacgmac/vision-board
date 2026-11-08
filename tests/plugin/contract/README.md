@@ -27,7 +27,8 @@ same change that vendors this build (the handover). `plugin-host.test.ts` "the o
 copy says `plugin/change`: then delete that test and the line in `apps/board/tests/plugin-types.test.ts` that moves the
 change line under the contract's key.
 
-`plugin-host.test.ts` holds this table: every copy is its source's bytes, by the sha256 above.
+`plugin-host.test.ts` holds this table: every copy is its source's bytes, by the sha256 above. It catches an edit to a
+copy, not a change in nclite: that shows only when the copies are refreshed (below), so refresh them before each handover.
 
 ## Refreshing it
 

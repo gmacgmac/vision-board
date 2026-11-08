@@ -23,13 +23,13 @@
     "data-mode": "new | edit | sent | thread (set by show); thread: the conversation, read-only, the × only",
     "data-side": "right | left | below: where it opened beside the card (set by place)",
     "data-phase": "idle | saving | error (set by setPhase); aria-busy while saving",
-    "--kind": "the card's kind colour, for the border and the arrow (set by show through the CSSOM); on a whole container, the container's line colour (show's `line`)",
+    "--vb-kind": "the card's kind colour, for the border and the arrow (set by show through the CSSOM); on a whole container, the container's line colour (show's `line`)",
     "data-on": "container: the bubble is about a container's title line, placed from titleAnchor; its edge follows the frame's line, fainter at rest (set by show)",
-    "--arrow": "where the arrow meets the bubble's edge (set by place)"
+    "--vb-arrow": "where the arrow meets the bubble's edge (set by place)"
   },
   "methods": {
     "show(v: BubbleView, card: { kind, number, line? })": "draws it from noteBubbleTemplate; `line` (a container's regionColour) in place of kind and number for a note on a whole container",
-    "place(p: Placement)": "left, top, data-side and --arrow from placeBubble, in its offset parent's pixels",
+    "place(p: Placement)": "left, top, data-side and --vb-arrow from placeBubble, in its offset parent's pixels",
     "setPhase(phase, message?)": "saving disables the buttons and reads 'Saving…'; error shows the message and keeps the text",
     "focusText()": "focus into the text with the caret at the end; in the conversation, the entry reveal chose; on a sent note, the ×",
     "dirty (getter)": "whether the words typed differ from those show() drew (isDirty: line endings and surrounding whitespace do not count); always false when read-only. The page reads it before opening another bubble over this one (3_FE_04 step 4G ruling 4)",

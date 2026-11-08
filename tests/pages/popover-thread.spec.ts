@@ -34,7 +34,7 @@ async function exchange(page: Page, request: Parameters<typeof draw>[0], texts: 
 async function pointsAt(page: Page, part: Locator): Promise<void> {
   await expect(bubble(page)).not.toHaveAttribute('data-side', 'below');
   const [b, p] = [(await bubble(page).boundingBox())!, (await part.boundingBox())!];
-  const arrow = parseFloat(await css(bubble(page), '--arrow'));
+  const arrow = parseFloat(await css(bubble(page), '--vb-arrow'));
   expect(Math.abs(b.y + arrow - (p.y + p.height / 2))).toBeLessThanOrEqual(2);
 }
 

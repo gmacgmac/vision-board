@@ -1,21 +1,21 @@
 /* Node pattern styles (<vb-node>, packages/ui/src/node). Scoped by the tag, light DOM; tokens only.
-   Every state in pattern.json has a rule here. A kind's colour arrives as --kind, set by the
+   Every state in pattern.json has a rule here. A kind's colour arrives as --vb-kind, set by the
    element from --vb-kind-<kind>, so no rule here lists kinds for colour. The look is board v3's
    card (D-024, mockup 01b): a soft top-down tint of the kind colour, tabs in gaps cut from the
    top border, and a footer with the kind icon, the state word and the quick actions. */
 
 vb-node {
-  --kind: var(--vb-ink-subtle);
-  --state: var(--vb-ink-subtle);
+  --vb-kind: var(--vb-ink-subtle);
+  --vb-state: var(--vb-ink-subtle);
   /* What shows through the gaps cut from the border around the tabs. */
-  --gap: var(--vb-surface-canvas);
-  /* --card-surface, --card-surface-sunken and --note-surface: see-through fills the page sets
+  --vb-gap: var(--vb-surface-canvas);
+  /* --vb-card-surface, --vb-card-surface-sunken and --vb-note-surface: see-through fills the page sets
      (wireLayers flag, D-032) so a connector behind a card shows; solid, a note clear, if unset. */
-  --surface: var(--card-surface, var(--vb-surface-card));
+  --vb-surface: var(--vb-card-surface, var(--vb-surface-card));
   position: absolute; left: 0; top: 0; width: var(--vb-card-w);
   display: flex; flex-direction: column;
-  border: 1px solid color-mix(in srgb, var(--kind) 38%, var(--vb-line)); border-radius: var(--vb-radius-lg);
-  background: linear-gradient(170deg, color-mix(in srgb, var(--kind) 9%, var(--surface)) 0%, var(--surface) 55%);
+  border: 1px solid color-mix(in srgb, var(--vb-kind) 38%, var(--vb-line)); border-radius: var(--vb-radius-lg);
+  background: linear-gradient(170deg, color-mix(in srgb, var(--vb-kind) 9%, var(--vb-surface)) 0%, var(--vb-surface) 55%);
   /* Only the kind tab moves a card (3_FE_01 ruling 4); the content is text to select and copy
      (ruling 5), so the card itself is neither a grab handle nor selectable: its tabs, size
      control, pin and footer stay out of a text selection. */
@@ -26,9 +26,9 @@ vb-node {
 /* The hairline accent on the top edge. */
 vb-node::before {
   content: ''; position: absolute; left: var(--vb-space-4); right: var(--vb-space-4); top: -1px; height: 1.5px;
-  border-radius: 0 0 2px 2px; background: color-mix(in srgb, var(--kind) 75%, transparent);
+  border-radius: 0 0 2px 2px; background: color-mix(in srgb, var(--vb-kind) 75%, transparent);
 }
-vb-node:hover { border-color: color-mix(in srgb, var(--kind) 70%, var(--vb-line)); }
+vb-node:hover { border-color: color-mix(in srgb, var(--vb-kind) 70%, var(--vb-line)); }
 vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-card); z-index: var(--vb-z-hover); }
 /* A card a pointer press focused (data-pointer-focus, set by the page) draws no ring when a key that
    moves no focus makes the browser match :focus-visible (Z, Esc, Space); focus the keyboard moved
@@ -39,18 +39,18 @@ vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outlin
    full strength, with a soft glow.
    It is not focus: the focus ring above still draws for the keyboard. */
 vb-node[data-selected] {
-  --select: oklch(from color-mix(in srgb, var(--vb-ink-strong) var(--vb-select-lift), var(--kind)) l calc(c * var(--vb-select-chroma)) h);
-  border-color: var(--select);
-  box-shadow: 0 0 0 0.5px var(--select), 0 0 18px -6px color-mix(in srgb, var(--select) 65%, transparent), var(--vb-shadow-card);
+  --vb-select: oklch(from color-mix(in srgb, var(--vb-ink-strong) var(--vb-select-lift), var(--vb-kind)) l calc(c * var(--vb-select-chroma)) h);
+  border-color: var(--vb-select);
+  box-shadow: 0 0 0 0.5px var(--vb-select), 0 0 18px -6px color-mix(in srgb, var(--vb-select) 65%, transparent), var(--vb-shadow-card);
 }
-vb-node[data-selected]::before { background: var(--select); }
+vb-node[data-selected]::before { background: var(--vb-select); }
 vb-node {
   &[data-selected]:not([data-emphasis])::before { height: 1.5px; }
 }
 vb-node.dragging { transition: none; box-shadow: var(--vb-shadow-lift); z-index: var(--vb-z-drag); }
 vb-node.dragging, vb-node.dragging .vb-node-kind { cursor: grabbing; }
 vb-node[data-emphasis] { width: var(--vb-card-w-wide); }
-vb-node[data-emphasis]::before { height: 2px; background: var(--kind); }
+vb-node[data-emphasis]::before { height: 2px; background: var(--vb-kind); }
 /* Size tiers (D-030, the nodeSize flag): the page sets data-size before it measures the card,
    so it wins over the flag-off widths above. Emphasis is already one tier up in data-size. */
 vb-node[data-size='s'] { width: var(--vb-card-w-s); }
@@ -67,32 +67,32 @@ vb-node {
   &[data-size]:is(:hover, :focus-within) { z-index: var(--vb-z-hover); }
 }
 
-vb-node[data-kind='topic'] { --surface: var(--card-surface-sunken, var(--vb-surface-sunken)); }
+vb-node[data-kind='topic'] { --vb-surface: var(--vb-card-surface-sunken, var(--vb-surface-sunken)); }
 vb-node[data-kind='note'] {
-  background: var(--note-surface, transparent); box-shadow: none; border-style: dashed;
+  background: var(--vb-note-surface, transparent); box-shadow: none; border-style: dashed;
 }
 
 /* The state word's colour; open is muted. ✓ and ✗ show no word, only their lit mark (D-045): ✗ no
    longer fades the card or strikes its title through, so it reads like ✓. */
-vb-node[data-status='commented'] { --state: var(--vb-state-comment); }
-vb-node[data-status='later'] { --state: var(--vb-state-later); }
+vb-node[data-status='commented'] { --vb-state: var(--vb-state-comment); }
+vb-node[data-status='later'] { --vb-state: var(--vb-state-later); }
 
 /* Tabs on the top border, each in a gap cut from the line: number left, kind centred, the
    moved-by-you marker right. */
 vb-node .vb-node-num, vb-node .vb-node-kind, vb-node .vb-node-pin {
   position: absolute; top: -11px; display: inline-flex; align-items: center; gap: 5px;
   height: 20px; padding: 0 var(--vb-space-2); border-radius: var(--vb-radius-sm);
-  box-shadow: 0 0 0 var(--vb-space-1) var(--gap); white-space: nowrap;
+  box-shadow: 0 0 0 var(--vb-space-1) var(--vb-gap); white-space: nowrap;
 }
 vb-node .vb-node-num {
-  left: 14px; border: 1px solid color-mix(in srgb, var(--kind) 50%, var(--vb-line));
+  left: 14px; border: 1px solid color-mix(in srgb, var(--vb-kind) 50%, var(--vb-line));
   background: var(--vb-surface-card); color: var(--vb-ink-strong);
   font: var(--vb-weight-medium) var(--vb-text-xs) var(--vb-font-mono); font-variant-numeric: tabular-nums;
 }
 vb-node .vb-node-kind {
   left: 50%; transform: translateX(-50%); border-radius: var(--vb-radius-pill);
-  border: 1px solid color-mix(in srgb, var(--kind) 55%, transparent);
-  background: color-mix(in srgb, var(--kind) 16%, var(--gap)); color: var(--kind);
+  border: 1px solid color-mix(in srgb, var(--vb-kind) 55%, transparent);
+  background: color-mix(in srgb, var(--vb-kind) 16%, var(--vb-gap)); color: var(--vb-kind);
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.08em; text-transform: uppercase;
 }
 /* The kind tab is the drag handle (3_FE_01 ruling 4): grab it to move the card. */
@@ -170,12 +170,12 @@ vb-node .vb-node-note-text {
 /* The note's full-text tip (notePreview flag, WCAG 1.4.13; box: tip/tip.css), beside the card while
    data-tip-open is on the note, which also raises the card above its neighbours. The note is a tab
    stop (focus shows the tip), so it takes the focus ring. The bridge spans the gap to the card. */
-vb-node .vb-node-note { position: relative; --reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2)); }
+vb-node .vb-node-note { position: relative; --vb-reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2)); }
 vb-node {
   &:has(.vb-node-note[data-tip-open]) { z-index: var(--vb-z-open); }
 }
 vb-node .vb-note-tip {
-  top: 0; left: calc(100% + var(--reach)); width: var(--vb-pop-w); max-width: none; padding: 0;
+  top: 0; left: calc(100% + var(--vb-reach)); width: var(--vb-pop-w); max-width: none; padding: 0;
   font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text); line-height: 1.45;
   font-weight: var(--vb-weight-regular); cursor: text; user-select: text;
 }
@@ -185,7 +185,7 @@ vb-node .vb-note-tip .vb-tip-body {
   max-height: calc(var(--vb-pop-max-h) - 2px); overflow: auto; border-radius: inherit;
   padding: var(--vb-space-2) var(--vb-pop-pad);
 }
-vb-node .vb-note-tip::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--reach); height: auto; }
+vb-node .vb-note-tip::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--vb-reach); height: auto; }
 vb-node .vb-node-note[data-tip-open] .vb-note-tip { display: block; }
 /* The note is Markdown too, on a tint, so its code sits one step deeper. */
 vb-node :is(.vb-node-note-text, .vb-note-tip) :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
@@ -197,7 +197,7 @@ vb-node, .vb-group-notes {
   & .vb-note-pin {
     position: absolute; z-index: var(--vb-z-open); top: -12px; right: -12px; display: grid; place-items: center;
     width: 26px; height: 26px; padding: 0; cursor: pointer;
-    border: 2px solid var(--gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
+    border: 2px solid var(--vb-gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
     color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); box-shadow: var(--vb-shadow-card);
     transition: scale var(--vb-motion-fast);
   }
@@ -214,13 +214,13 @@ vb-node[data-bubble] { z-index: var(--vb-z-drag); }
 vb-node .vb-node-foot {
   display: flex; align-items: center; gap: var(--vb-space-1); min-height: 38px;
   padding: var(--vb-space-1) var(--vb-space-1) var(--vb-space-1) var(--vb-space-2);
-  border-top: 1px solid color-mix(in srgb, var(--kind) 18%, var(--vb-line));
-  font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--state);
+  border-top: 1px solid color-mix(in srgb, var(--vb-kind) 18%, var(--vb-line));
+  font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--vb-state);
 }
 /* Tighter than 01b's spacing so the longest word fits beside the buttons on a 248px card. */
 vb-node .vb-node-state { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: var(--vb-space-1); }
 vb-node .vb-node-status { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-vb-node .vb-node-kico { flex: none; width: 14px; height: 14px; color: var(--kind); }
+vb-node .vb-node-kico { flex: none; width: 14px; height: 14px; color: var(--vb-kind); }
 vb-node .vb-node-sep { flex: none; width: 1px; height: 12px; background: var(--vb-line-strong); }
 /* No word to set off (✓, ✗, or a card that only informs: D-045), so no divider either. */
 vb-node .vb-node-sep:has(+ .vb-node-status:empty) { display: none; }
@@ -263,7 +263,7 @@ vb-node .vb-size-trig {
   position: relative; display: inline-grid; grid-auto-flow: column; place-items: center; gap: var(--vb-space-1);
   height: 20px; min-width: 22px; padding: 0 5px; cursor: pointer;
   border: 1px solid transparent; border-radius: var(--vb-radius-sm); background: var(--vb-surface-card);
-  box-shadow: 0 0 0 var(--vb-space-1) var(--gap); color: var(--vb-ink-subtle); white-space: nowrap; opacity: 0.5;
+  box-shadow: 0 0 0 var(--vb-space-1) var(--vb-gap); color: var(--vb-ink-subtle); white-space: nowrap; opacity: 0.5;
   transition: opacity var(--vb-motion-fast), color var(--vb-motion-fast), border-color var(--vb-motion-fast);
 }
 /* A 24px hit area at rest, without growing the glyph. */
@@ -297,7 +297,7 @@ vb-node .vb-size-opt {
 vb-node .vb-size-opt:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
 vb-node .vb-size-opt:active { transform: translateY(1px); }
 vb-node .vb-size-opt[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--kind) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
+  background: color-mix(in srgb, var(--vb-kind) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
 }
 /* While Auto is on, the tier it chose is outlined. */
 vb-node .vb-size-opt[data-auto] { box-shadow: inset 0 0 0 1px var(--vb-line-strong); }

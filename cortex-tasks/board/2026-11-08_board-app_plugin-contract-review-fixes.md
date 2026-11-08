@@ -167,3 +167,22 @@ The second independent review scored 5/10 and found a blocker the first missed. 
   (comment in `operations.ts` too: making the join lazy would thread through retry-key lookups; not worth it);
   "80/80" said to be one run per scenario.
 - No bot-facing words changed in this round, so no new `eval:bot` run.
+
+### Third review's fixes (points 523–527, maintainer yes at 528)
+
+Third review (told the settled decisions): 7/10; it ran nclite's `scripts/plugin-vendor.ts` on the build, which passed.
+- **523, two missing vendoring steps**: the row's `provenanceSha256` (the pin `vendor()` prints) and `BoardSeams` in
+  nclite's `app/src/lib/plugins/seams.ts` (it imports `boardHost` from the adapter). Both in the handover and plugin.md.
+- **524, older WebKit**: `scripts/verify-style.mjs` now checks nested rules: a nested selector starts with a symbol,
+  never an element name (WebKit before Safari 17.2 drops it). Four selectors in `packages/ui/src/base/root.css` became
+  `:is(svg):where(& *)…`. `npm run test:plugin:webkit` (config `VB_TEST_BROWSER=webkit`) is added but has not run: the
+  WebKit build this Playwright needs is not downloaded (needs the maintainer's yes). Playwright's WebKit is current, so it
+  would not reproduce the older-Safari rule anyway; the static check does.
+- **525, wrong claims made true or corrected**: the 20 unprefixed properties the board's sheets read or the script sets
+  (`--kind`, `--surface`, `--gap`, `--card-surface`, `--arrow`, …) are renamed `--vb-*` (no exact clash; 25 files), and
+  verify now fails a board sheet that reads any other than `--vb-*` / `--host-*` (`ownReads`). D-096 point 5 is now true.
+  D-097 appended (maintainer, 527–528): the two-field entry nclite keeps, `singleAgent` from the engine alone, the nesting
+  rule. Handover: "11 problems" is over a thousand; `flags.ts` comment and plugin.md "no adapter" corrected.
+- **526**: a board-only change line (`cards: []`) opens the board with no "no longer there" notice (`mount.ts` `show`;
+  `view-gives.spec.ts`, shown to fail without the fix); the `plugin-types` message says what it tests; one `isCount`
+  (`#actions`) for `mount.ts`, `live.ts` and `chips.ts`; the contract README says its sha test catches edits, not drift.

@@ -1,6 +1,6 @@
 /* Note bubble pattern styles (<vb-note-bubble>, packages/ui/src/note-bubble). Scoped by the tag,
    light DOM; tokens only. Mockup 05 section 1 `.ovl` with `spec.css`: a bubble whose 1px
-   border and arrow wear the card's colour (--kind, set by the element), faint at rest and full
+   border and arrow wear the card's colour (--vb-kind, set by the element), faint at rest and full
    while you type (README pick 12). The page places it beside its card in stage pixels, above the
    board, so it never covers the card, moves nothing and stays readable at any zoom (picks 5, 11).
    Its sizes are the shared popover tokens (--vb-pop-*): one text size for everything in it, so the
@@ -8,28 +8,28 @@
    thread rulings 1 and 4, and the maintainer's changes, chats 698 and 701). */
 
 vb-note-bubble {
-  --kind: var(--vb-ink-subtle);
-  /* The card's own border colour (node.css: --kind 38% into --vb-line), fainter at rest and the
+  --vb-kind: var(--vb-ink-subtle);
+  /* The card's own border colour (node.css: --vb-kind 38% into --vb-line), fainter at rest and the
      same as the card while you type: the bubble never outshines its card (maintainer, 749). */
-  --edge: color-mix(in srgb, var(--kind) 24%, var(--vb-line));
-  --arrow: 22px;
+  --vb-edge: color-mix(in srgb, var(--vb-kind) 24%, var(--vb-line));
+  --vb-arrow: 22px;
   position: absolute; z-index: var(--vb-z-bubble); left: 0; top: 0;
   display: grid; gap: var(--vb-space-2); width: var(--vb-pop-w); padding: var(--vb-pop-pad);
-  border: 1px solid var(--edge); border-radius: var(--vb-radius-lg); background: var(--vb-surface-raised);
+  border: 1px solid var(--vb-edge); border-radius: var(--vb-radius-lg); background: var(--vb-surface-raised);
   box-shadow: var(--vb-shadow-lift); color: var(--vb-ink); font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text);
   cursor: default; user-select: text;
 }
 vb-note-bubble[hidden] { display: none; }
 /* Full colour while you type in it; data-typing draws that look for a gallery sample. */
 vb-note-bubble {
-  &:is(:focus-within, [data-typing]) { --edge: color-mix(in srgb, var(--kind) 38%, var(--vb-line)); }
+  &:is(:focus-within, [data-typing]) { --vb-edge: color-mix(in srgb, var(--vb-kind) 38%, var(--vb-line)); }
 }
-/* On a whole container (3_FE_04 ruling 3): --kind is the container's own line colour, and the
+/* On a whole container (3_FE_04 ruling 3): --vb-kind is the container's own line colour, and the
    edge follows the frame's line (region.css: --vb-region 70% into --vb-line) the way a card's bubble
    follows its card: fainter at rest, the same as the frame while you type. */
-vb-note-bubble[data-on='container'] { --edge: color-mix(in srgb, var(--kind) 45%, var(--vb-line)); }
+vb-note-bubble[data-on='container'] { --vb-edge: color-mix(in srgb, var(--vb-kind) 45%, var(--vb-line)); }
 vb-note-bubble {
-  &[data-on='container']:is(:focus-within, [data-typing]) { --edge: color-mix(in srgb, var(--kind) 70%, var(--vb-line)); }
+  &[data-on='container']:is(:focus-within, [data-typing]) { --vb-edge: color-mix(in srgb, var(--vb-kind) 70%, var(--vb-line)); }
 }
 
 /* The arrow: a square turned 45deg, bordered on the two sides that face the card. */
@@ -37,14 +37,14 @@ vb-note-bubble::before {
   content: ''; position: absolute; width: 12px; height: 12px; rotate: 45deg; background: var(--vb-surface-raised);
 }
 vb-note-bubble[data-side='right']::before {
-  left: -7px; top: calc(var(--arrow) - 6px); border-left: 1px solid var(--edge); border-bottom: 1px solid var(--edge);
+  left: -7px; top: calc(var(--vb-arrow) - 6px); border-left: 1px solid var(--vb-edge); border-bottom: 1px solid var(--vb-edge);
 }
 vb-note-bubble[data-side='left']::before {
-  right: -7px; top: calc(var(--arrow) - 6px); border-right: 1px solid var(--edge); border-top: 1px solid var(--edge);
+  right: -7px; top: calc(var(--vb-arrow) - 6px); border-right: 1px solid var(--vb-edge); border-top: 1px solid var(--vb-edge);
 }
 /* Below the card (05 draws none): the arrow sits on the top edge and points up at the card. */
 vb-note-bubble[data-side='below']::before {
-  top: -7px; left: calc(var(--arrow) - 6px); border-left: 1px solid var(--edge); border-top: 1px solid var(--edge);
+  top: -7px; left: calc(var(--vb-arrow) - 6px); border-left: 1px solid var(--vb-edge); border-top: 1px solid var(--vb-edge);
 }
 
 vb-note-bubble .vb-nb-head {
@@ -65,7 +65,7 @@ vb-note-bubble .vb-nb-x-icon { width: var(--vb-space-4); height: var(--vb-space-
 /* The card's number chip (05 `.nref`). */
 vb-note-bubble .vb-nb-num {
   display: inline-grid; place-items: center; flex: none; min-width: 32px; height: 22px; padding: 0 var(--vb-space-2);
-  border: 1px solid color-mix(in srgb, var(--kind) 50%, var(--vb-line)); border-radius: var(--vb-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--vb-kind) 50%, var(--vb-line)); border-radius: var(--vb-radius-sm);
   background: var(--vb-surface-card); color: var(--vb-ink-strong);
   font: var(--vb-weight-medium) var(--vb-text-md) var(--vb-font-mono); font-variant-numeric: tabular-nums;
 }

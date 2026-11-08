@@ -23,7 +23,7 @@ vb-node .vb-app-state {
 }
 vb-node .vb-app-state p { margin: 0; max-width: 100%; overflow-wrap: anywhere; }
 vb-node .vb-app-icon {
-  flex: none; width: 28px; height: 28px; fill: none; stroke: var(--kind); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+  flex: none; width: 28px; height: 28px; fill: none; stroke: var(--vb-kind); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
 }
 vb-node .vb-app:is([data-app-state='invalid'], [data-app-state='broken']) .vb-app-icon { stroke: var(--vb-state-drop); }
 vb-node .vb-app-head { font-size: var(--vb-text-lg); font-weight: var(--vb-weight-medium); line-height: 1.3; color: var(--vb-ink-strong); }
@@ -87,12 +87,12 @@ vb-node {
 }
 /* Selected keeps the selection's border (node.css). */
 vb-node {
-  [data-app-title] &[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app) { border-color: color-mix(in srgb, var(--kind) 60%, var(--vb-line)); }
-  [data-app-title] &[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app):hover { border-color: color-mix(in srgb, var(--kind) 85%, var(--vb-line)); }
+  [data-app-title] &[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app) { border-color: color-mix(in srgb, var(--vb-kind) 60%, var(--vb-line)); }
+  [data-app-title] &[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app):hover { border-color: color-mix(in srgb, var(--vb-kind) 85%, var(--vb-line)); }
   [data-app-title] &:has(> .vb-node-content > .vb-app) > .vb-node-foot {
-    border-top-color: color-mix(in srgb, var(--kind) 60%, var(--vb-line));
+    border-top-color: color-mix(in srgb, var(--vb-kind) 60%, var(--vb-line));
     border-radius: 0 0 calc(var(--vb-radius-lg) - 1px) calc(var(--vb-radius-lg) - 1px);
-    position: relative; background: color-mix(in srgb, var(--kind) 10%, var(--surface));
+    position: relative; background: color-mix(in srgb, var(--vb-kind) 10%, var(--vb-surface));
   }
   [data-app-title] & .vb-app-status { flex: none; }
 }

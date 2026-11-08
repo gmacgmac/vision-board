@@ -31,7 +31,7 @@ export const VB_NODE_TAG = 'vb-node';
 
 /** What the page holds: a <vb-node> it renders once and updates in place. */
 export interface VbNodeElement extends HTMLElement {
-  /** Build from the template; sets data-id, data-kind, data-emphasis, role, tabindex, --kind.
+  /** Build from the template; sets data-id, data-kind, data-emphasis, role, tabindex, --vb-kind.
    *  `opts.sizeControl` draws the size control (the nodeSize flag). */
   render(n: ViewNode, opts?: NodeTemplateOptions): void;
   /** Apply the person's current state (from `nodeState`) without rebuilding the markup. */
@@ -79,7 +79,7 @@ export function defineVbNode(): void {
       this.setAttribute('role', 'listitem');
       this.tabIndex = 0;
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
-      this.style.setProperty('--kind', `var(--vb-kind-${n.kind})`);
+      this.style.setProperty('--vb-kind', `var(--vb-kind-${n.kind})`);
       // An app card is as wide as its panel plus its padding (node.css); no size word applies to it.
       const app = n.kind === 'app' && opts.appCards !== false;
       applyPanelSize(this, app ? panelSize(n.app ?? { id: '' }) : undefined);

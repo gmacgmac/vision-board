@@ -13,9 +13,9 @@
 .vb-regions, vb-region, vb-region > .vb-region-head { --vb-zoom: inherit; }
 
 vb-region {
-  --region-line-w: 1.5px;
+  --vb-region-line-w: 1.5px;
   display: block; position: absolute; left: 0; top: 0; container-type: inline-size; border-radius: var(--vb-radius-lg);
-  border: var(--region-line-w) solid var(--vb-region);
+  border: var(--vb-region-line-w) solid var(--vb-region);
   /* The top line's room: REGION_HEAD in packages/layout/src/types.ts (38). Keep the two equal. */
   padding-top: 38px;
   transition: transform var(--vb-motion) var(--vb-ease), width var(--vb-motion) var(--vb-ease), height var(--vb-motion) var(--vb-ease);
@@ -31,7 +31,7 @@ vb-region {
    narrow forms below, so they follow the room on screen. */
 vb-region .vb-region-head {
   position: absolute; left: var(--vb-space-4); width: calc((100cqw - 2 * var(--vb-space-4)) * var(--vb-zoom));
-  top: calc(var(--region-line-w) / -2); transform-origin: 0 0; transform: scale(calc(1 / var(--vb-zoom))) translateY(-50%);
+  top: calc(var(--vb-region-line-w) / -2); transform-origin: 0 0; transform: scale(calc(1 / var(--vb-zoom))) translateY(-50%);
   container-type: inline-size;
   pointer-events: none; cursor: default;
 }
@@ -45,9 +45,9 @@ vb-region .vb-region-head {
    the line. The tools' width is read by the grid as
    it is at every zoom (their narrow forms too, region-narrow.css): nothing is measured, and a zoom
    step lays out only this line, as before (rule 15). The line is the query container, so the
-   columns are on this bar inside it, whose first column (--region-lead) its narrow forms may close. */
+   columns are on this bar inside it, whose first column (--vb-region-lead) its narrow forms may close. */
 vb-region .vb-region-bar {
-  display: grid; grid-template-columns: var(--region-lead, minmax(0, 1fr)) minmax(0, auto) minmax(max-content, 1fr); align-items: center;
+  display: grid; grid-template-columns: var(--vb-region-lead, minmax(0, 1fr)) minmax(0, auto) minmax(max-content, 1fr); align-items: center;
 }
 vb-region .vb-region-label { grid-column: 2; }
 vb-region .vb-region-tools { grid-column: 3; justify-self: end; margin-inline-start: var(--vb-space-3); }
@@ -64,8 +64,8 @@ vb-region .vb-region-handle:active { cursor: grabbing; }
 }
 vb-region .vb-region-label, vb-region .vb-region-tools { display: flex; align-items: center; pointer-events: auto; }
 vb-region .vb-region-label {
-  --label-gap: var(--vb-space-2);
-  min-width: 0; gap: var(--label-gap); padding: 0 var(--vb-space-2); background: var(--vb-surface-canvas);
+  --vb-label-gap: var(--vb-space-2);
+  min-width: 0; gap: var(--vb-label-gap); padding: 0 var(--vb-space-2); background: var(--vb-surface-canvas);
 }
 vb-region .vb-region-tools { position: relative; flex: none; }
 vb-region .vb-region-label { position: relative; }
@@ -90,9 +90,9 @@ vb-region .vb-region-handle, vb-region .vb-region-holders {
   row-gap: var(--vb-space-2); height: var(--vb-space-5); overflow: clip; overflow-clip-margin: var(--vb-space-1);
 }
 vb-region .vb-region-handle::before, vb-region .vb-region-holders::before { content: ''; height: 100%; }
-vb-region .vb-region-handle::before { margin-inline-end: calc(-1 * var(--label-gap)); }
+vb-region .vb-region-handle::before { margin-inline-end: calc(-1 * var(--vb-label-gap)); }
 vb-region .vb-region-handle {
-  column-gap: var(--label-gap); flex: 0 1000000 auto; font-size: var(--vb-text-lg);
+  column-gap: var(--vb-label-gap); flex: 0 1000000 auto; font-size: var(--vb-text-lg);
   padding-inline-end: var(--vb-space-1); border-radius: var(--vb-radius-sm);
 }
 vb-region .vb-region-handle:hover, vb-region .vb-region-handle[data-look], vb-region[data-dragging] .vb-region-handle {
@@ -135,10 +135,10 @@ vb-region .vb-region-retired[aria-disabled='true'] { cursor: default; text-decor
    is on its first holder, so an empty-looking slot adds no room. The bubble's box is the label's (a
    holder is not positioned; pressed, it moves by its padding), so the slot's clip never cuts it. A
    holder with keyboard focus (or the gallery's hover look) keeps its room, the title giving way (WCAG 2.4.11). */
-vb-region .vb-region-holders { flex: 0 1e12 auto; margin-inline-start: calc(-1 * var(--label-gap)); }
+vb-region .vb-region-holders { flex: 0 1e12 auto; margin-inline-start: calc(-1 * var(--vb-label-gap)); }
 vb-region .vb-region-holders:empty { display: none; }
 vb-region .vb-region-holders:has(:focus-visible, [data-look='hover']) { flex-shrink: 0; }
-vb-region .vb-holder:first-child { margin-inline-start: var(--label-gap); }
+vb-region .vb-holder:first-child { margin-inline-start: var(--vb-label-gap); }
 vb-region .vb-holder + .vb-holder { margin-inline-start: var(--vb-space-1); }
 vb-region .vb-holder {
   display: inline-flex; flex: none; align-items: center; gap: var(--vb-space-1); white-space: nowrap;

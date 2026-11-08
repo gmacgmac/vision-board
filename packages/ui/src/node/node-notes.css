@@ -34,7 +34,7 @@ vb-node :is(.vb-node-note, .vb-node-reply)[data-flash] { box-shadow: 0 0 0 3px v
    focusing it, and its bubble being open, ring each card of the group with a dashed line in the
    note's tone: the accent while it can be edited, the subtle ink once it is history (`data-group-ring`
    "sent"). The keyboard focus ring wins on the card that has focus. */
-.vb-group-notes { position: absolute; left: 0; top: 0; --gap: var(--vb-surface-canvas); }
+.vb-group-notes { position: absolute; left: 0; top: 0; --vb-gap: var(--vb-surface-canvas); }
 .vb-group-notes .vb-note-pin { top: 0; right: auto; left: 0; }
 .vb-group-notes .vb-note-pin[aria-expanded='true'] { scale: 1.1; }
 vb-node {

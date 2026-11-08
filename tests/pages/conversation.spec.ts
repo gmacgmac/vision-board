@@ -67,7 +67,7 @@ async function inView(page: Page, part: Locator): Promise<void> {
 /** The bubble's arrow points at the middle of `part` on the card. */
 async function pointsAt(page: Page, part: Locator): Promise<void> {
   const [b, p] = [(await bubble(page).boundingBox())!, (await part.boundingBox())!];
-  const arrow = parseFloat(await bubble(page).evaluate((e) => getComputedStyle(e).getPropertyValue('--arrow')));
+  const arrow = parseFloat(await bubble(page).evaluate((e) => getComputedStyle(e).getPropertyValue('--vb-arrow')));
   expect(Math.abs(b.y + arrow - (p.y + p.height / 2))).toBeLessThanOrEqual(2);
 }
 

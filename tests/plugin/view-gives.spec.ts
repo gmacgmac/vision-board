@@ -203,6 +203,11 @@ test('reveal of what is not on the board says so through notify, and takes no fo
   await expect.poll(said).toHaveLength(2);
   await drive(page, 'reveal', { cards: [996] });
   await expect.poll(said).toHaveLength(3);
+  // A change to the board alone (`cards: []`, a "Changed board" line) opens the board and says nothing is gone.
+  await drive(page, 'reveal', { board: 'plans', cards: [] });
+  await drive(page, 'reveal', { n: 998 });
+  await expect.poll(async () => (await said()).some((t: string) => t.includes('998'))).toBe(true);
+  expect(await said(), 'only the miss is said, not the board change').toHaveLength(4);
   await expect(page.locator('#host-input'), 'the host keeps its focus').toBeFocused();
   await expect(page.locator('.host-root .vb-go'), 'no field opened').toHaveCount(0);
   await drive(page, 'reveal', { n: 2 });

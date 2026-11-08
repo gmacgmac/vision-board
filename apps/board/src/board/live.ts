@@ -15,7 +15,7 @@
 // head 0 says the ledger file was replaced (a git pull, a sync, D-085 6): the whole ledger is read again.
 import type { LedgerEvent, LedgerLine } from '#format';
 import type { LedgerState } from '#actions';
-import { applyEvent, foldLedger } from '#actions';
+import { applyEvent, foldLedger, isCount } from '#actions';
 import { canApply } from './board-data.ts';
 import { answerEvent } from './card-numbers.ts';
 import type { PluginEvent } from './host.ts';
@@ -146,7 +146,7 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
     watch(failed, worked) {
       // A head past the one held, or no head (catch up on anything appended while not following).
       return hearUntilStopped<[PluginEvent]>((events) => d.events(events), ({ ref }) => {
-        const head = typeof ref.head === 'number' && Number.isSafeInteger(ref.head) && ref.head >= 0 ? ref.head : undefined; // else a catch-up
+        const head = isCount(ref.head) ? ref.head : undefined; // else a catch-up
         if (head === 0 && state) { fromZero = true; sync().then(worked, failed); } // the file was replaced: from the start
         else if (!state || head === undefined || head > state.seq) sync().then(worked, failed);
       });

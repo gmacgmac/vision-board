@@ -70,9 +70,9 @@ export function defineVbNoteBubble(): void {
       this.setAttribute('aria-label', v.heading);
       this.dataset.mode = v.mode;
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
-      if (card.line) this.style.setProperty('--kind', card.line);
-      else if (card.kind) this.style.setProperty('--kind', `var(--vb-kind-${card.kind})`);
-      else this.style.removeProperty('--kind');
+      if (card.line) this.style.setProperty('--vb-kind', card.line);
+      else if (card.kind) this.style.setProperty('--vb-kind', `var(--vb-kind-${card.kind})`);
+      else this.style.removeProperty('--vb-kind');
       if (card.line) this.dataset.on = 'container';
       else delete this.dataset.on;
       this.innerHTML = noteBubbleTemplate(v, card.number, md);
@@ -87,7 +87,7 @@ export function defineVbNoteBubble(): void {
       this.dataset.side = p.side;
       this.style.left = `${Math.round(p.x)}px`;
       this.style.top = `${Math.round(p.y)}px`;
-      this.style.setProperty('--arrow', `${Math.round(p.arrow)}px`);
+      this.style.setProperty('--vb-arrow', `${Math.round(p.arrow)}px`);
     }
 
     setPhase(phase: BubblePhase, message = ''): void {

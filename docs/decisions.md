@@ -1304,3 +1304,12 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   5. Every top-level selector of the plugin's stylesheet stays in the `vb` scope by the host's rule, and the sheet reads only `--vb-*` and `--host-*` properties, held by `npm run verify` and the plugin build test.
 - **Why**: nclite hosts every plugin through one contract it owns (its ADR-0288), and carried a translator and a stylesheet waiver for the board alone. Built to the contract, the board needs neither, and any host built to it mounts the board as it is.
 - **Task**: cortex-tasks/board/2026-11-07_board-app_plugin-contract/TASK-STATUS.md
+
+## D-097 What a host still supplies, and one source for `singleAgent` (corrects D-096)
+- **Date**: 2026-11-08 · **Status**: Accepted (maintainer, points 527-528) · **From**: the third independent review of seam 2, points 523-527
+- **Decision**:
+  1. D-096's "the board needs neither" (no adapter, no waiver) holds for the waiver and every translation, not for two facts the contract's manifest has no field for: the board's icon (a name in the host's own list) and its stylesheet's scope, `vb` (the plugin's id is `board`). The host keeps one entry for the board with those two, `{ icon: 'board', css: { scope: 'vb' } }`, until its manifest can say them; the board's test runs the host's own loader check with exactly that entry.
+  2. `singleAgent` is set once, on the engine. The engine's ledger read says so (`oneAgent: true`), and the view follows it; a `singleAgent` view setting does nothing. The engine and the view can't disagree.
+  3. The board's sheets hold to what every webview a host runs accepts: a nested selector starts with a symbol (`&`, a class, a pseudo-class, `:is(…)`), never an element name, which WebKit before Safari 17.2 drops. `npm run verify` holds it, beside D-096 point 5's rule, which it now enforces too (every property a board sheet reads is `--vb-*` or `--host-*`).
+- **Why**: Three independent reviews found that the handover overstated what the host could delete (its loader would refuse the sheet), that one fact had two sources, and that the sheet's nesting and unprefixed properties were untested against the host's real webview and page.
+- **Task**: cortex-tasks/board/2026-11-08_board-app_plugin-contract-review-fixes.md

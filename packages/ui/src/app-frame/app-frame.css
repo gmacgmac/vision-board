@@ -14,7 +14,7 @@ vb-app-frame .vb-af-ph {
   gap: var(--vb-space-2); padding: var(--vb-space-4); text-align: center;
 }
 vb-app-frame .vb-af-icon {
-  width: 28px; height: 28px; fill: none; stroke: var(--kind, var(--vb-ink-subtle)); stroke-width: 1.6;
+  width: 28px; height: 28px; fill: none; stroke: var(--vb-kind, var(--vb-ink-subtle)); stroke-width: 1.6;
   stroke-linecap: round; stroke-linejoin: round;
 }
 vb-app-frame .vb-af-title {

@@ -40,7 +40,7 @@ pattern's markup or styles it.
   content), as `Record<Kind, …>` so the compiler fails when a kind is added and its entry is not.
 - `KINDS` stays the list; `Kind` is its type. A new kind is one entry in `KINDS`, one in
   `NODE_TYPES` and the compiler-required UI entries. Nothing else lists kinds: CSS reads a kind's
-  colour through `--kind`, which the element sets from `--vb-kind-<kind>`.
+  colour through `--vb-kind`, which the element sets from `--vb-kind-<kind>`.
 - **The app card** (`app`, D-047, ledger v17) was added that way: `NODE_TYPES.app` is
   `tells('App')` (a note and Later, a number, no status word), `KIND_ICON.app` a small window, and
   `--vb-kind-app` a cyan measured against the label tier in light and dark. What it shows (the
@@ -64,7 +64,7 @@ pattern's markup or styles it.
   it, places it with `style.transform`, and sizes regions.
 - **No inline styles.** The page's CSP has no `style-src`, so `style=""` attributes and `<style>`
   tags in templates are refused. Per-instance values (a kind's colour, a position) go through the
-  CSSOM: `el.style.setProperty('--kind', …)`, `el.style.transform = …`.
+  CSSOM: `el.style.setProperty('--vb-kind', …)`, `el.style.transform = …`.
 - **Self-describing.** The element sets its own `role`, `tabindex` and label. Custom elements are
   `display: inline` by default, so `<pattern>.css` sets `display`.
 - **Don't shadow built-in names** (steering rule 16).
@@ -80,7 +80,7 @@ the default.
 - **`outline`** names the shape: `card` (default), `diamond`, `pill`, `circle`. It is a word, not a path, so
   the agent never draws coordinates (rule 9). The node pattern owns one drawing per outline in
   `node.css` (CSS `clip-path` or a background SVG, tokens only); a kind's colour still arrives
-  through `--kind`.
+  through `--vb-kind`.
 - **`ports`** say where connectors may attach, as sides and positions on the outline's box:
   `{ side: 't' | 'r' | 'b' | 'l', at?: 0..1 }` (at defaults to the middle). Card: every side,
   spread as today. Diamond: its four points (`t`, `r`, `b`, `l` at 0.5). Pill: its two ends
@@ -661,7 +661,7 @@ narrows on screen (zooming out) the tools' column stops at the tools' width and 
 what is left, so the label slides left beside the tools, never onto them, until the first column is
 gone; only then is the title cut. Nothing is measured: the grid reads the tools as they are at each
 zoom, their narrow forms included. In the collapsed forms the first column is closed
-(`region-narrow.css` `--region-lead`), since the expanded row leaves the flow; the full row leaves no
+(`region-narrow.css` `--vb-region-lead`), since the expanded row leaves the flow; the full row leaves no
 room to centre there, so the label never jumps. Below `FAR_K`, where the tools leave the line, it is
 closed too: zooming out only ever moves a title left, and it takes the tools' room. A drag on the
 label (its other buttons and its tip aside) moves the container as the grip does, at any zoom, and

@@ -49,8 +49,8 @@
   }
   :is(svg, img):where(& *):not(html):where(:not([width])) { width: revert; }
   :is(svg, img):where(& *):not(html):where(:not([height])) { height: revert; }
-  svg:where(& *):not(html):where(:not([fill])) { fill: revert; }
-  svg:where(& *):not(html):where(:not([stroke])) { stroke: revert; }
-  svg:where(& *):not(html):where([fill='none']) { fill: none; }
-  svg:where(& *):not(html):where([stroke='currentColor']) { stroke: currentColor; }
+  :is(svg):where(& *):not(html):where(:not([fill])) { fill: revert; }
+  :is(svg):where(& *):not(html):where(:not([stroke])) { stroke: revert; }
+  :is(svg):where(& *):not(html):where([fill='none']) { fill: none; }
+  :is(svg):where(& *):not(html):where([stroke='currentColor']) { stroke: currentColor; }
 }

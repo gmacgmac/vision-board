@@ -18,12 +18,12 @@ vb-region {
 vb-region .vb-region-fresh-slot {
   display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; flex: 0 1e9 auto; min-width: 0;
   row-gap: var(--vb-space-2); height: var(--vb-space-5); overflow: clip; overflow-clip-margin: var(--vb-space-1);
-  margin-inline-start: calc(-1 * var(--label-gap));
+  margin-inline-start: calc(-1 * var(--vb-label-gap));
 }
 vb-region .vb-region-fresh-slot::before { content: ''; height: 100%; }
 vb-region .vb-region-fresh-slot:not(:has(> .vb-region-fresh:not([hidden]))) { display: none; }
 vb-region .vb-region-fresh {
-  flex: none; margin-inline-start: var(--label-gap); padding: 1px 7px; border-radius: var(--vb-radius-pill); white-space: nowrap;
+  flex: none; margin-inline-start: var(--vb-label-gap); padding: 1px 7px; border-radius: var(--vb-radius-pill); white-space: nowrap;
   background: var(--vb-state-fresh-soft); color: var(--vb-state-fresh);
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold);
 }

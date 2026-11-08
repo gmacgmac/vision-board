@@ -78,6 +78,16 @@ test('scope: a selector outside the scope fails, by the host\'s rule (nclite che
     assert.deepEqual(sheet(ok), [], ok);
   }
   assert.deepEqual(sheet(':root { --vb-x: 1; }'), []);
+  // a sheet reads only its own --vb-* properties and a host's --host-* ones
+  assert.deepEqual(levels(sheet('.vb-a { --gap: 1px; margin: var(--gap); }')), ['fail']);
+  assert.deepEqual(sheet('.vb-a { --vb-gap: 1px; margin: var(--vb-gap); color: var(--host-ink, var(--vb-ink)); }'), []);
+  // a nested selector starts with a symbol: WebKit before Safari 17.2 drops one that starts with an element name
+  for (const bad of ['.vb-a { svg:where(& *) { fill: none; } }', 'vb-node { body & { gap: 0; } }', '.vb-a { @media (prefers-reduced-motion) { p & { gap: 0; } } }']) {
+    assert.deepEqual(levels(sheet(bad)), ['fail'], bad);
+  }
+  for (const ok of ['.vb-a { :is(svg):where(& *) { fill: none; } }', '.vb-a { > p { gap: 0; } * { gap: 0; } [x] & { gap: 0; } }']) {
+    assert.deepEqual(sheet(ok), [], ok);
+  }
   assert.deepEqual(levels(sheet(':root { --x: 1; color-scheme: dark; }')), ['fail', 'fail']);
   // the standalone page's own sheets (styles/page.ts) are not in the plugin: they keep the looser rule
   assert.deepEqual(checkScope('apps/board/src/styles/ledgers.css', '[data-narrow] .vb-a:not(.vb-b) { gap: 0; }'), []);

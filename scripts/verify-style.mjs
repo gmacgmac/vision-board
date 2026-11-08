@@ -122,6 +122,8 @@ function splitTop(text, at) {
   parts.push(text.slice(from));
   return parts;
 }
+/** How a nested selector may start, for every webview a host runs (see `checkScope`). */
+const NESTED_START = /^[&.#:[*>+~]/;
 const selectorList = (prelude) => splitTop(prelude, (c) => c === ',').map((x) => x.trim().replace(/\s+/g, ' ')).filter(Boolean);
 
 /** Every rule in a board stylesheet names a vb- class or element, and no rule sizes by the window. */
@@ -140,13 +142,23 @@ export function checkScope(rel, text) {
     if (c !== '{') continue;
     const prelude = css.slice(start, i).trim();
     start = i + 1;
-    if (stack.includes('skip') || stack.at(-1) === 'rule') { stack.push('skip'); continue; }
+    if (stack.includes('skip')) { stack.push('skip'); continue; }
     if (prelude.startsWith('@')) {
       const name = /^@([\w-]+)/.exec(prelude)?.[1] ?? '';
       if (name === 'media' && WINDOW_WIDTH.test(prelude)) out.push(fail(rel, `${prelude}: size by the board's own width (@container), not the window's`));
       if (name === 'property' && !/^@property\s+--vb-/.test(prelude)) out.push(fail(rel, `${prelude}: a registered property is named --vb-`));
       if (name === 'layer') out.push(fail(rel, `${prelude}: no @layer in a sheet a host loads (the host's own layers would order it)`));
       stack.push(['media', 'container', 'supports', 'layer'].includes(name) ? 'group' : 'skip');
+      continue;
+    }
+    if (stack.includes('rule')) {
+      // A nested rule is under its parent, so its scope is the parent's. Each selector starts with a symbol (`&`, a class,
+      // a pseudo-class…), never an element name: WebKit before Safari 17.2 (macOS 14.0 and 14.1, a host's oldest
+      // webview) drops a nested rule whose selector starts with a letter; write `:is(svg)` for `svg`.
+      for (const sel of selectorList(prelude)) {
+        if (!NESTED_START.test(sel)) out.push(fail(rel, `"${sel}" is nested and starts with an element name: older WebKit drops it; start it with & or wrap the element in :is()`));
+      }
+      stack.push('rule');
       continue;
     }
     const strict = !PAGE_ONLY.includes(rel);
@@ -163,7 +175,15 @@ export function checkScope(rel, text) {
     }
     stack.push('rule');
   }
-  return out;
+  return [...out, ...ownReads(rel, css)];
+}
+
+/** A property a board sheet reads is its own (`--vb-*`) or one a host gives (`--host-*`), so nothing on a host's page
+ * reaches the board through a name it happens to share (plugin.md § A guest in the host's page; D-096). */
+function ownReads(rel, css) {
+  if (PAGE_ONLY.includes(rel)) return [];
+  return [...new Set([...css.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1]))].filter((name) => !/^--(?:vb|host)-/.test(name))
+    .map((name) => fail(rel, `reads ${name}: a board sheet reads only --vb-* and --host-* properties (name its own --vb-)`));
 }
 
 /** All three, for one file. */

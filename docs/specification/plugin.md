@@ -18,8 +18,9 @@ seam (D-074). This page is all a host needs. If it doesn't say it, a host may no
 contract's `PluginHost` and `CreateEngine`), kept for the tests in `tests/plugin/contract/` as byte-for-byte copies
 of the contract and of the checks the host runs on a plugin (its `README.md` says where from, by sha256, and the one known
 difference, the change key). The board's own page and server use the same shapes, so a host built to that contract
-mounts the board and runs its engine with no adapter: the built `mount` is a `Mount<HTMLElement>` and `createEngine` a
-`CreateEngine` of the copy. Where a host's board behaves differently from standalone's, it is a flag the host turns on
+mounts the board and runs its engine with nothing translated: the built `mount` is a `Mount<HTMLElement>` and
+`createEngine` a `CreateEngine` of the copy. The host supplies only what its manifest has no field for: the board's icon
+and its stylesheet's scope, `vb` (D-097). Where a host's board behaves differently from standalone's, it is a flag the host turns on
 (§ The engine `flags`, § What the host gives `settings`), never a second shape. Proven by
 `apps/board/tests/plugin-types.test.ts` "the types satisfy the host contract" (with the host's own `storedChangeOf`),
 `apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope" (with the host's own `checkStylesheet`),
@@ -622,7 +623,9 @@ scoped sheet (§ A guest in the host's page), C2 `followOtherWriters`.
 of it), move the board row's `seam` to 2 (the vendoring script refuses a manifest whose seam differs from the row's), vendor
 the folder, set the flags below, cut the board's adapter down to its icon and its stylesheet's scope (`board: { icon: 'board', css: { scope: 'vb' } }`:
 the contract's manifest has no field for a scope that is not the plugin's id, and without it the loader checks the sheet
-against `board` and refuses it), and delete the waiver and the board's stored registration. Without the rename the host stores none of the board's change
+against `board` and refuses it), set the row's `provenanceSha256` to the pin vendoring prints, replace the board's type
+block in `app/src/lib/plugins/seams.ts` with the contract's two (`Mount<HTMLElement>`, `CreateEngine`, as the Journal's),
+and delete the waiver and the board's stored registration. Without the rename the host stores none of the board's change
 lines: the board writes `plugin/change`, and the host as it is reads only `nclite/change` (`plugin-types.test.ts` holds
 both).
 

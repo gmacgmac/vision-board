@@ -250,7 +250,7 @@ test('the types satisfy the host contract: the built `mount` is a `Mount<HTMLEle
     assert.equal(stored(wrote._meta), JSON.stringify({ v: 2, plugin: manifest.id, ...(wrote._meta?.[CHANGE_META] as object) }), JSON.stringify(wrote._meta));
     assert.equal(storedChangeOf(manifest.id, wrote._meta, manifest.changeWords), null, 'under the board\'s key, the host as it is stores nothing: why the rename is part of vendoring');
     const most = changeOf('a'.repeat(64), Array.from({ length: 500 }, (_, i) => 100000 + i));
-    assert.notEqual(stored({ [CHANGE_META]: most }), null, 'at the bounds, the reveal left out where it would not fit');
+    assert.notEqual(stored({ [CHANGE_META]: most }), null, 'the longest board id and the most cards the host counts: stored, its reveal within REF_LIMITS (the reveal left out is engine.test.ts\'s)');
     // The answers ack and a chat line's ref, at the longest board id, are refs the host's own check takes.
     const ack: AnswersAck = { board: 'a'.repeat(64), head: Number.MAX_SAFE_INTEGER };
     const line: ChatLine = { board: 'a'.repeat(64), cards: Number.MAX_SAFE_INTEGER };

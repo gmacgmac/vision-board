@@ -235,7 +235,8 @@ export function turnOf(s: LedgerState, board: string, since: number, agent?: str
   return s.index.boards.has(board) ? roundOf(s, board, since, agent) : noBoard(board);
 }
 
-const isCount = (n: unknown): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0;
+/** A whole number from 0, as a ref's `head`, `n`, `seq` and `cards` hold one: the one check every reader of a ref uses. */
+export const isCount = (n: unknown): n is number => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0;
 
 /** What a host's `record(acks)` says went for `board` (plugin.md § The chat): null, a host with no chat, is left out (the
  * Send covers every answer up to its own line); else the first ack of `board` with a whole-number `head`, its other keys

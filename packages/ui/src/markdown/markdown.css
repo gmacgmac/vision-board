@@ -1,6 +1,6 @@
 /* Markdown pattern styles (packages/ui/src/markdown, D-023): the CSS hooks renderMarkdown writes.
    Tokens only, no inline styles. The look is mockup 01b: paragraph = .p, label = .lbl, lists =
-   .ul, quote = the .reply box without its "who" line. A quote takes its tint from --kind, which a
+   .ul, quote = the .reply box without its "who" line. A quote takes its tint from --vb-kind, which a
    card sets; outside a card it falls back to the accent. Imported by the page beside node.css.
    Text size: --vb-md-text, which a popover sets to its own (--vb-pop-text, popovers-larger-thread),
    else the card's --vb-text-md. */
@@ -74,7 +74,7 @@ vb-node {
 .vb-md-quote {
   display: grid; gap: var(--vb-space-1); margin: 0; padding: var(--vb-space-2) var(--vb-space-3);
   border-radius: var(--vb-radius-md);
-  background: color-mix(in srgb, var(--kind, var(--vb-accent)) 9%, var(--vb-surface-sunken));
+  background: color-mix(in srgb, var(--vb-kind, var(--vb-accent)) 9%, var(--vb-surface-sunken));
   font-size: var(--vb-md-text, var(--vb-text-md)); color: var(--vb-ink);
 }
 

@@ -14,7 +14,7 @@ const THEMES: Theme[] = ['dark', 'light'];
 /** The alpha of the card fill, read from a probe so the card's own gradient doesn't hide it. */
 const fillAlpha = (page: Page) => page.locator('.vb-world').evaluate((world) => {
   const probe = document.createElement('div');
-  probe.style.background = 'var(--card-surface, var(--vb-surface-card))';
+  probe.style.background = 'var(--vb-card-surface, var(--vb-surface-card))';
   world.append(probe);
   const colour = getComputedStyle(probe).backgroundColor;
   probe.remove();

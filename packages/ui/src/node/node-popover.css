@@ -8,7 +8,7 @@ vb-node .vb-node-btabs { position: absolute; left: 14px; bottom: -11px; display:
 vb-node .vb-node-btab {
   position: relative; display: inline-flex; align-items: center; height: 20px; padding: 0 var(--vb-space-2); cursor: pointer;
   border: 1px solid var(--vb-accent-line); border-radius: var(--vb-radius-sm); background: var(--vb-accent-soft);
-  box-shadow: 0 0 0 var(--vb-space-1) var(--gap); color: var(--vb-accent-text); white-space: nowrap;
+  box-shadow: 0 0 0 var(--vb-space-1) var(--vb-gap); color: var(--vb-accent-text); white-space: nowrap;
   font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); letter-spacing: 0.06em; text-transform: uppercase;
   transition: border-color var(--vb-motion-fast), background var(--vb-motion-fast);
 }

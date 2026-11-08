@@ -152,9 +152,9 @@
    shows, and the top layer repeats the focused card's connectors above the cards. A hovered,
    dragged or open card (z-index 2 and up) still draws over the top layer. */
 .vb-world[data-wire-layers] {
-  --card-surface: color-mix(in srgb, var(--vb-surface-card) var(--vb-card-fill), transparent);
-  --card-surface-sunken: color-mix(in srgb, var(--vb-surface-sunken) var(--vb-card-fill), transparent);
-  --note-surface: var(--card-surface);
+  --vb-card-surface: color-mix(in srgb, var(--vb-surface-card) var(--vb-card-fill), transparent);
+  --vb-card-surface-sunken: color-mix(in srgb, var(--vb-surface-sunken) var(--vb-card-fill), transparent);
+  --vb-note-surface: var(--vb-card-surface);
 }
 .vb-world[data-wire-layers] .vb-wires:not(.vb-wires-top) { z-index: -1; }
 .vb-wires-top { z-index: var(--vb-z-raised); }

@@ -32,7 +32,7 @@
   },
   "attributes": {
     "data-id": "the node id; the page finds a node with closest('vb-node')",
-    "data-kind": "one of KINDS; see NODE_TYPES in packages/format/src/node-types.ts. Colour comes from --kind, which render() sets to var(--vb-kind-<kind>)",
+    "data-kind": "one of KINDS; see NODE_TYPES in packages/format/src/node-types.ts. Colour comes from --vb-kind, which render() sets to var(--vb-kind-<kind>)",
     "data-status": "open | acknowledged | dropped | commented | later (set by update; an old context note reads as commented). commented is with the agent: the person's latest note waits for its answer, footer 'Replied' (D-046; agents read with-agent). acknowledged and dropped colour only the lit button: no word, no fade, no strike-through (D-045)",
     "data-pinned": "present when the person moved it (set by update)",
     "data-selected": "present while the person has it selected (3_FE_01; view state the page passes to nodeState, set by update): mockup 05's look, 1.5px in the card's own colour lifted about two-thirds of a step toward the strong ink (--vb-select-lift, 35%) and a little more saturated (--vb-select-chroma, 1.25: OKLCH chroma scaled; review polish round 2 ruling 5), every kind alike, with a soft glow",
@@ -48,7 +48,7 @@
     "data-open": "on a card popover's box (vb-card-pop), while it shows: hover or keyboard focus on its tab previews it, a click or Enter on the tab opens it (set by the card popover, which also sets the tab's aria-expanded); the card is drawn above its neighbours meanwhile",
     "aria-busy": "on a proposal (vb-prop) while its answer is on its way (set by the page)",
     "data-tip-open": "on a note (vb-node-note), while its full-text tip is open beside the card, and the card is drawn above its neighbours: the pointer on the note or the tip, or focus on the note, while the note is cut (set by the note-tip behaviour; notePreview flag, which the page shows as data-note-preview on its world); Esc dismisses it, a click opens the bubble instead",
-    "--card-surface, --card-surface-sunken, --note-surface": "wireLayers flag only (D-032): fills the page sets on the world (board.css, [data-wire-layers]) as --vb-card-fill of the card, topic and note surface over transparent, so a connector drawn behind a card shows through. node.css reads them with the solid token as fallback (--surface; a note's background), so with the flag off the colours are exactly as before",
+    "--vb-card-surface, --vb-card-surface-sunken, --vb-note-surface": "wireLayers flag only (D-032): fills the page sets on the world (board.css, [data-wire-layers]) as --vb-card-fill of the card, topic and note surface over transparent, so a connector drawn behind a card shows through. node.css reads them with the solid token as fallback (--vb-surface; a note's background), so with the flag off the colours are exactly as before",
     "data-zoom": "on the stage, not the node: 'far' below FAR_K, only with the hideControlsZoomedOut flag (on by default, tracker N13), hides the quick actions and the size control (keeping their space); the keyboard shortcuts still work",
     "data-awaiting": "present while the handover is owed (FE_03, set by update): the footer reads \"Awaiting\"",
     "data-status-tip-open": "on the card while the tip over \"Awaiting\" shows (hover over the state; set by the shared hover tip)",
@@ -60,7 +60,7 @@
     "data-name-tip-open": "app cards (card-polish FE_04): the footer name's tip shows (set by bindAppNameTip; gallery samples set it to show it)"
   },
   "methods": {
-    "render(n: ViewNode, opts?: { sizeControl, flag })": "once per view version: data-*, role, tabindex, --kind, innerHTML = nodeTemplate(n, opts)",
+    "render(n: ViewNode, opts?: { sizeControl, flag })": "once per view version: data-*, role, tabindex, --vb-kind, innerHTML = nodeTemplate(n, opts)",
     "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, data-selected, aria-label, aria-pressed, status word, note who, and the note text as Markdown when it changed; with st.size, data-size, data-size-picked and the size control's label, letter and pressed choice; with st.proposal, the proposal tab's word and label and, when the proposals changed, the box's contents), with st.handover, the handover tab and, when it changed, its box; with st.awaiting, the footer word, data-awaiting and the tip; with st.updates, the updates tab's word, label and aria-expanded, the step section (rebuilt only when its step changed) and the stepper's count; so focus survives"
   },
   "events": [
