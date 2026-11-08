@@ -1,5 +1,5 @@
 // Words: globals. The flags every command takes.
-// Keys: board.globals.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.globals.<name>. Plain code: no imports but other words files and types.
 
 // ---- globals.ts
 export const theWholeRequestBodyAs = 'The whole request body as JSON, from a file or from stdin (-). Flags for body inputs override its fields.';

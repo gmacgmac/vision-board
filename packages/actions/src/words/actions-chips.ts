@@ -1,5 +1,5 @@
 // Words: actions-chips. What a chip says (a card, a note, a board) and why one is refused.
-// Keys: board.actions-chips.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.actions-chips.<name>. Plain code: no imports but other words files and types.
 
 // ---- chips.ts
 export const thereIsNoBoard = (board: string): string => `There is no board "${board}".`;

@@ -7,9 +7,10 @@
   "additionalProperties": false,
   "required": ["id", "name", "version", "seam", "view", "engine", "chips", "tools", "skill", "words"],
   "properties": {
-    "id": { "description": "Lowercase letters and hyphens: the folder name, and the plugin's id in a chip and a change event.", "type": "string", "pattern": "^[a-z]+(-[a-z]+)*$" },
+    "id": { "description": "A lowercase letter, then 1 to 30 lowercase letters, digits or hyphens: the folder's name, the plugin's id in a chip and a change event, the first part of every words key, and the prefix a host gives the bot's tools (`<id>_<tool>`).", "type": "string", "pattern": "^[a-z][a-z0-9-]{1,30}$" },
     "name": { "$ref": "#/$defs/wordsKey" },
     "version": { "description": "The board API's version (openapi.json info.version).", "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "scope": { "description": "The prefix of the stylesheet's classes, elements and properties (`vb-`, `--vb-`) when it is not the id: a host checks the sheet against it. Lowercase letters and digits, from a letter, 2 to 16; never `host` or `ui`.", "type": "string", "pattern": "^[a-z][a-z0-9]{1,15}$", "not": { "enum": ["host", "ui"] } },
     "seam": { "description": "The version of the seam a host implements: the view's `mount` and its host, the engine's `createEngine` and what it gives back (plugin.d.ts). It moves only for a change a host built against the last one would not survive; a host compares it with the one it was built for before it loads the folder.", "type": "integer", "minimum": 1 },
     "view": {
       "description": "The view: an ES module that exports `mount(root, host)`, and its one stylesheet.",
@@ -60,6 +61,6 @@
   },
   "$defs": {
     "path": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*(/[a-z0-9][a-z0-9_.-]*)*\\.[a-z]+$" },
-    "wordsKey": { "type": "string", "pattern": "^board\\.[a-z0-9-]+(\\.[A-Za-z0-9_]+)+$" }
+    "wordsKey": { "type": "string", "pattern": "^vision-board\\.[a-z0-9-]+(\\.[A-Za-z0-9_]+)+$" }
   }
 }

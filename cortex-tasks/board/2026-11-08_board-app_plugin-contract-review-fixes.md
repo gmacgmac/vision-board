@@ -197,3 +197,16 @@ Playwright's WebKit 26.6 downloaded (77.5 MB). First run: 25/104. Every failure 
 - `ReplyPanel.svelte`: WebKit gives a clicked button no focus, so the close button found the focus already on the page
   and the stage never took it; `close()` moves it to the stage itself.
 Then 104/104 in WebKit and 104/104 in Chromium. Handover's WebKit note rewritten.
+
+### nclite's two asks before vendoring (maintainer, 2026-11-08)
+
+- **The id is `vision-board`.** One home: `#actions` `CHIP_PLUGIN`. The manifest's `id`, the folder
+  (`build-plugin.ts` `DEFAULT_OUT`, `dist/plugin/vision-board/`), every words key (`plugin-words.ts`, `manifest.ts`
+  `toolKey`, `tools.ts` `CHANGE_WORDS`, the schema's `wordsKey`, `scripts/words.test.mjs`, the 71 words files' `Keys:`
+  comments), chips and events. The schema's `id` takes nclite's rule. The seam types' hash moved (the chip's `plugin`
+  literal); SEAM stays 2, as no host has it yet. skill.md is byte for byte unchanged (8,166 B), so no bot eval; the
+  skill and tool descriptions name tools bare, which reads right beside `vision-board_write_board`.
+- **The manifest's `scope`, `vb`** (`manifest.ts` `SCOPE`; schema: nclite's pattern, not `host`/`ui`). The stand-in
+  adapter is `'vision-board': { icon: 'board' }`. Two copied nclite lines changed for the field (`PluginManifest`
+  `scope?`, `checkPluginStylesheet`'s `scope` parameter); `plugin-host.test.ts` undoes them and checks the source sha256,
+  and the contract README names them.

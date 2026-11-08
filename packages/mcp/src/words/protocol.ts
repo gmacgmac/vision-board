@@ -1,5 +1,5 @@
 // Words: protocol. The protocol's errors and the tool call's refusals.
-// Keys: board.protocol.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.protocol.<name>. Plain code: no imports but other words files and types.
 
 // ---- call-tool.ts
 export const example = (stringify: string): string => `Example: ${stringify}`;

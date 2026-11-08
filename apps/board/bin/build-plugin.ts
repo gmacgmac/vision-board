@@ -1,4 +1,4 @@
-// `npm run build:plugin [-- --watch] [-- --out <folder>]`: the board as one plugin folder, `dist/plugin/board/` (D-074;
+// `npm run build:plugin [-- --watch] [-- --out <folder>]`: the board as one plugin folder, `dist/plugin/vision-board/` (D-074;
 // docs/specification/plugin.md): manifest.json, view/board.js and view/board.css, engine/engine.js, words.json,
 // skill.md and plugin.d.ts (the seam's types, with its version checked against them). A host links or copies the
 // folder; nothing in it depends on how it was made. The same input gives the same bytes (a test builds twice and compares).
@@ -10,6 +10,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { build } from 'vite';
+import { CHIP_PLUGIN } from '#actions';
 import { createEngine } from '../server/engine/index.ts';
 import { openapiDoc, toolRows } from '../server/format-files.ts';
 import { engineBuild, viewBuild } from '../vite.plugin.config.ts';
@@ -20,7 +21,7 @@ import { pluginTypes, seamProblem } from './plugin-types.ts';
 import { wordsFile } from './plugin-words.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
-export const DEFAULT_OUT = path.join(ROOT, 'dist/plugin/board');
+export const DEFAULT_OUT = path.join(ROOT, 'dist/plugin', CHIP_PLUGIN);
 
 const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
 

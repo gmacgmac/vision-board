@@ -1,5 +1,5 @@
 // Words: reply. The reply panel.
-// Keys: board.reply.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.reply.<name>. Plain code: no imports but other words files and types.
 
 // ---- ReplyPanel.svelte
 export const replyCopied = 'Reply copied';

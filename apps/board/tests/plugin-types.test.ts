@@ -41,7 +41,7 @@ const refOf = (chip: Chip): unknown[] => {
 };
 const host: PluginHost = {
   api: (path, init) => fetch(path, init),
-  events: (listener) => { listener({ plugin: 'board', ref: { board: 'plans', head: 4, cards: [1, 2], seen: true } }); return () => undefined; },
+  events: (listener) => { listener({ plugin: 'vision-board', ref: { board: 'plans', head: 4, cards: [1, 2], seen: true } }); return () => undefined; },
   chat: {
     attach: (key, chip) => { if (chip) held.set(key, chip); else held.delete(key); },
     send: (record) => record(acks.length ? acks : null).then((problem) => problem ?? null),

@@ -15,14 +15,17 @@ const CHIPS = { card: 1, note: 1, board: 1, selection: 1, answers: 1 } satisfies
 export const PARTS = { view: 'view/board.js', styles: 'view/board.css', engine: 'engine/engine.js', words: 'words.json', skill: 'skill.md' } as const;
 
 /** The key of a tool's description in words.json. */
-export const toolKey = (name: string): string => `board.tool.${name}`;
+export const toolKey = (name: string): string => `${CHIP_PLUGIN}.tool.${name}`;
+
+/** The prefix every class, element and property of the stylesheet starts with, when it is not the id (`vb-`, `--vb-`). */
+export const SCOPE = 'vb';
 
 export function manifestOf(version: string, tools: readonly ListedTool[], writes: ReadonlySet<string>) {
   return {
-    id: CHIP_PLUGIN, name: 'board.plugin.name', version, seam: SEAM,
+    id: CHIP_PLUGIN, name: `${CHIP_PLUGIN}.plugin.name`, version, seam: SEAM, scope: SCOPE,
     view: { module: PARTS.view, styles: [PARTS.styles], export: 'mount' },
     engine: { module: PARTS.engine, export: 'createEngine' },
-    chips: (Object.keys(CHIPS) as ChipKind[]).map((kind) => ({ kind, words: `board.plugin.chips.${kind}` })),
+    chips: (Object.keys(CHIPS) as ChipKind[]).map((kind) => ({ kind, words: `${CHIP_PLUGIN}.plugin.chips.${kind}` })),
     tools: tools.map((t) => ({ name: t.name, words: toolKey(t.name), input: t.inputSchema, writes: writes.has(t.name) })),
     skill: PARTS.skill, words: PARTS.words,
     changeWords: Object.values(CHANGE_WORDS),

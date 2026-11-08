@@ -1,5 +1,5 @@
 // Words: apps-host. The refusals for an app that cannot be called, and the app panel's.
-// Keys: board.apps-host.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.apps-host.<name>. Plain code: no imports but other words files and types.
 
 // ---- host.ts
 export const appCardsAreOffOn = 'App cards are off on this board server (the appCards flag).';

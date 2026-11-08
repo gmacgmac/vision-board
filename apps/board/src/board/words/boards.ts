@@ -1,5 +1,5 @@
 // Words: boards. The board picker, rename, archive, lock and the archived list.
-// Keys: board.boards.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.boards.<name>. Plain code: no imports but other words files and types.
 
 // ---- board-edit.ts
 export const archive = (title: string): string => `Archive '${title}'?`;

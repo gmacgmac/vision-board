@@ -2,7 +2,7 @@
 // words (openapi.json, D-056) are written for the standalone bot, which joins, holds a secret and has the app
 // host; a plugin bot does none of these, so these edits take them out. The standalone bot is told the table's
 // words as they are. Each edit's `from` must occur once in its tool's description (a test holds it).
-// Keys: board.plugin-tools.<name>. Plain code: no imports.
+// Keys: vision-board.plugin-tools.<name>. Plain code: no imports.
 /** `from` becomes `to`; with `until`, so does the text after it up to `until` (kept), and with `until: ''`, to the end. */
 export interface DescriptionEdit { tool: string; from: string; to: string; until?: string }
 

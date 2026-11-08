@@ -1,5 +1,5 @@
 // Words: region. A container: modes, widths, notes, retired and fresh counts, settings and its answered count.
-// Keys: board.region.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.region.<name>. Plain code: no imports but other words files and types.
 
 // ---- region-core.ts
 export const grid = 'Grid';

@@ -13,7 +13,7 @@ import { gzipSync } from 'node:zlib';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { parseAst } from 'vite';
 import { makeTempDir } from '#format/testing';
-import { buildPlugin } from '../bin/build-plugin.ts';
+import { buildPlugin, DEFAULT_OUT } from '../bin/build-plugin.ts';
 import { pluginTypes } from '../bin/plugin-types.ts';
 import { SEAM } from '../plugin/seam.ts';
 import { checkPluginStylesheet, checkStylesheet } from '../../../tests/plugin/contract/nclite/engine/plugins/stylesheet.ts';
@@ -31,8 +31,8 @@ let first = '';
 let second = '';
 
 before(async () => {
-  first = path.join(temp(), 'board');
-  second = path.join(temp(), 'board');
+  first = path.join(temp(), 'vision-board');
+  second = path.join(temp(), 'vision-board');
   await buildPlugin({ out: first });
   await buildPlugin({ out: second });
 });
@@ -53,18 +53,23 @@ test('the manifest fits its schema and every file and words key it names exists'
   const check = new Ajv2020({ strict: true, allErrors: true });
   const fits = (value: object): boolean => check.validate(schema, value);
   assert.ok(fits(manifest), check.errorsText(check.errors));
-  assert.equal(manifest.id, 'board');
+  assert.equal(manifest.id, 'vision-board');
+  assert.equal(path.basename(DEFAULT_OUT), manifest.id, 'the folder is named by the id: a host refuses one that is not');
+  assert.match(manifest.id, /^[a-z][a-z0-9-]{1,30}$/, 'nclite\'s id rule');
+  assert.equal(manifest.scope, 'vb', 'the stylesheet\'s scope, which is not the id');
   assert.equal(manifest.seam, SEAM);
   assert.equal(text(first, 'plugin.d.ts'), pluginTypes(), 'the types are the code\'s own');
   const words = JSON.parse(text(first, 'words.json')) as Record<string, string>;
   for (const f of [manifest.view.module, ...manifest.view.styles, manifest.engine.module, manifest.skill, manifest.words]) assert.ok(FILES.includes(f), `${f} is in the folder`);
   const keys = [manifest.name, ...manifest.chips.map((c: { words: string }) => c.words), ...manifest.tools.map((t: { words: string }) => t.words)];
   for (const k of keys) assert.equal(typeof words[k], 'string', `words.json has ${k}`);
-  assert.ok(Object.keys(words).every((k) => /^board\.[a-z0-9-]+\.[A-Za-z0-9_.]+$/.test(k)), 'keys are board.<area>.<name>');
+  assert.ok(Object.keys(words).every((k) => /^vision-board\.[a-z0-9-]+\.[A-Za-z0-9_.]+$/.test(k)), 'keys are vision-board.<area>.<name>, the id first: a host refuses a change words key that is not');
   assert.equal(fits({ ...manifest, engine: undefined }), false, 'a manifest without its engine is refused');
   assert.equal(fits({ ...manifest, seam: undefined }), false, 'a manifest without its seam version is refused');
   assert.equal(fits({ ...manifest, seam: 0 }), false, 'a seam version below 1 is refused');
   assert.equal(fits({ ...manifest, view: { ...manifest.view, module: '/etc/passwd' } }), false, 'a path that leaves the folder is refused');
+  for (const scope of ['host', 'ui', 'v', 'vb-x', 'Vb', '1vb', 'a2345678901234567']) assert.equal(fits({ ...manifest, scope }), false, `the scope ${scope} is refused`);
+  assert.equal(fits({ ...manifest, scope: undefined }), true, 'no scope: the id is the scope');
 });
 
 /** The engine from a copy of the folder, away from the repository, with Node's permission model letting it read its one file and use its data folder. */
@@ -100,19 +105,19 @@ test('the engine runs from the folder alone: it reads only its own file and its 
     assert.deepEqual(manifest.tools[i].input, t.inputSchema, `${t.name}: the manifest's input is the engine's`);
   }
   assert.deepEqual([ran.wrote, ran.bad, ran.image, ran.boards], [false, true, 404, ['plans']]);
-  assert.deepEqual(ran.change['plugin/change'], { words: 'board.change.cards', count: 2, subject: 'plans', reveal: { board: 'plans', cards: [1, 2] } });
+  assert.deepEqual(ran.change['plugin/change'], { words: 'vision-board.change.cards', count: 2, subject: 'plans', reveal: { board: 'plans', cards: [1, 2] } });
 });
 
 test('the change words are in the manifest and words.json: each key a change line may name, with its text holding `{count}` and `{subject}` as a host fills them', () => {
   const manifest = JSON.parse(text(first, 'manifest.json'));
   const words = JSON.parse(text(first, 'words.json')) as Record<string, string>;
-  assert.deepEqual(manifest.changeWords, ['board.change.board', 'board.change.card', 'board.change.cards']);
+  assert.deepEqual(manifest.changeWords, ['vision-board.change.board', 'vision-board.change.card', 'vision-board.change.cards']);
   for (const key of manifest.changeWords) {
     assert.ok(key.startsWith(`${manifest.id}.`), `${key} starts with the plugin's id, as the contract asks`);
     assert.equal(typeof words[key], 'string', `words.json has ${key}`);
     assert.match(words[key]!, /\{subject\}/, `${key} names the board`);
   }
-  assert.match(words['board.change.cards']!, /\{count\}/, 'more than one card: the count');
+  assert.match(words['vision-board.change.cards']!, /\{count\}/, 'more than one card: the count');
   // Word for word what a host stores for the board's lines (plugin-contract PLAN decision 6).
   assert.deepEqual(manifest.changeWords.map((k: string) => words[k]), ['Changed board “{subject}”', 'Changed a card on board “{subject}”', 'Changed {count} cards on board “{subject}”']);
 });
@@ -153,12 +158,14 @@ test('the view bundle is one file with no import, exporting only mount, and one 
 
 test('the built sheet stays in its scope: the host\'s own check passes it with no reads and no waiver, and so does the board\'s', async () => {
   const css = text(first, 'view/board.css');
-  // The host's check, byte for byte (tests/plugin/contract/README.md), on the path the host runs as it loads the plugin:
-  // `checkPluginStylesheet` takes the scope from the host's entry for the plugin, else the plugin's id. With the one entry
-  // left (scope `vb`, no reads, no waiver: every property the board's script sets is a `--vb-*` one), it passes; with none,
-  // the id `board` is the scope and it fails, which is why the handover asks the host to keep that entry.
-  assert.deepEqual(checkPluginStylesheet('board', fs.readFileSync(path.join(first, 'view/board.css'))), []);
-  assert.notDeepEqual(checkStylesheet(css, { scope: 'board' }), [], 'without the entry, the host refuses the sheet');
+  // The host's check (tests/plugin/contract/README.md: its source's bytes, but for the manifest's `scope`), on the path the
+  // host runs as it loads the plugin: `checkPluginStylesheet` takes the manifest's scope, else the plugin's id. With `vb`
+  // and no reads and no waiver (every property the board's script sets is a `--vb-*` one), it passes; without it, the id
+  // is the scope and it fails, which is why the manifest carries it.
+  const { id, scope } = JSON.parse(text(first, 'manifest.json')) as { id: string; scope: string };
+  assert.deepEqual(checkPluginStylesheet(id, fs.readFileSync(path.join(first, 'view/board.css')), scope), []);
+  assert.notDeepEqual(checkPluginStylesheet(id, fs.readFileSync(path.join(first, 'view/board.css'))), [], 'without the manifest\'s scope, the host refuses the sheet');
+  assert.notDeepEqual(checkStylesheet(css, { scope: id }), [], 'under the id, the sheet is out of scope');
   // The board's own rule, scripts/verify-style.mjs (which holds the sources to it in `npm run verify`): the same first
   // compound rule, and no @layer.
   const { checkScope } = (await import(pathToFileURL(path.join(import.meta.dirname, '../../../scripts/verify-style.mjs')).href)) as {

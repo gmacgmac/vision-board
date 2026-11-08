@@ -22,8 +22,9 @@ import { boardVisibility } from '../archive.ts';
 import { boardData, boardJson } from './board-data.ts';
 import * as actionsChipsWords from '../words/actions-chips.ts';
 
-/** This plugin's id in a chip. */
-export const CHIP_PLUGIN = 'board';
+/** This plugin's id: in a chip, the manifest's `id`, the plugin folder's name, and the first part of every words key in
+ * words.json (`vision-board.<area>.<name>`). A host names the bot's tools `<id>_<tool>`. */
+export const CHIP_PLUGIN = 'vision-board';
 /** What the board can add to the chat: a card, a note, the board itself, the selected cards, or the answers. */
 export type ChipKind = 'card' | 'note' | 'board' | 'selection' | 'answers';
 

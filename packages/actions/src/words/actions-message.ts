@@ -1,5 +1,5 @@
 // Words: actions-message. The lines the Send message adds from the board.
-// Keys: board.actions-message.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.actions-message.<name>. Plain code: no imports but other words files and types.
 
 // ---- board-message.ts
 export const thePersonUpdatedTheBoard = 'The person updated the board:';

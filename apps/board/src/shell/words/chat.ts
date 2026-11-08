@@ -1,5 +1,5 @@
 // Words: chat. The chat panel's sentences that the page owns.
-// Keys: board.chat.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.chat.<name>. Plain code: no imports but other words files and types.
 
 // ---- ChatSidebar.svelte
 export const chatWithTheAgent = 'Chat with the agent';

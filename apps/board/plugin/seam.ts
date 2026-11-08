@@ -8,6 +8,6 @@
  *  contract's shapes (plugin.md § The types and the seam version, Seam 2). */
 export const SEAM = 2;
 /** sha256, in hex, of the seam's types (see above). */
-export const SEAM_TYPES = '4937e920c33efec907f929002ae8ca62b15d6c91891de6ada761b4dc4fdefb80';
+export const SEAM_TYPES = 'b4f3d59acabd0ffbca47a68912382a20596355ecf90e718b77c9fbe1a4ade3d4';
 /** The types' file in the plugin folder. */
 export const TYPES_FILE = 'plugin.d.ts';

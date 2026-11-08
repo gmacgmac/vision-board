@@ -186,20 +186,20 @@ test('a board write says what it changed: the change line under `plugin/change`,
   assert.equal(CHANGE_META, 'plugin/change');
   const write = (items: unknown[]) => engine.tools.call('write_board', { board: 'plans', items }, { caller: agent });
   const one = await write([{ type: 'node', n: 1, key: 'monday', node: { region: 'now', kind: 'question', title: 'Ship on Monday?' } }]);
-  assert.deepEqual(one._meta?.[CHANGE_META], { words: 'board.change.card', count: 1, subject: 'plans', reveal: { board: 'plans', cards: [1] } });
+  assert.deepEqual(one._meta?.[CHANGE_META], { words: 'vision-board.change.card', count: 1, subject: 'plans', reveal: { board: 'plans', cards: [1] } });
   assert.deepEqual((one._meta?.[CHANGE_META] as { reveal: { cards: number[] } }).reveal.cards, boardWriteSummary(one.content).cards, 'the cards a CLI\'s stream reads');
   const two = await write([{ type: 'node', n: 1, node: { region: 'now', kind: 'question', title: 'Ship on Tuesday?' } }, { type: 'node', n: 2, node: { region: 'now', kind: 'question', title: 'Who reviews it?' } }]);
-  assert.deepEqual(two._meta?.[CHANGE_META], { words: 'board.change.cards', count: 2, subject: 'plans', reveal: { board: 'plans', cards: [1, 2] } });
+  assert.deepEqual(two._meta?.[CHANGE_META], { words: 'vision-board.change.cards', count: 2, subject: 'plans', reveal: { board: 'plans', cards: [1, 2] } });
   const board = await write([{ type: 'region', region: { id: 'next', title: 'Next', mode: 'grid' } }]);
-  assert.deepEqual(board._meta?.[CHANGE_META], { words: 'board.change.board', count: 0, subject: 'plans', reveal: { board: 'plans', cards: [] } }, 'the board changed (a container), no card');
+  assert.deepEqual(board._meta?.[CHANGE_META], { words: 'vision-board.change.board', count: 0, subject: 'plans', reveal: { board: 'plans', cards: [] } }, 'the board changed (a container), no card');
   const again = await write([{ type: 'node', n: 1, key: 'monday', node: { region: 'now', kind: 'question', title: 'Ship on Monday?' } }]);
   assert.equal(again.isError, false);
   assert.equal(again._meta, undefined, 'a retry\'s replay appended nothing: no change line');
   assert.equal((await write([{ type: 'node', n: 99, node: { region: 'now', kind: 'question', title: 'No such card' } }]))._meta, undefined, 'a write whose every item failed');
   assert.equal((await engine.tools.call('get_board', { board: 'plans' }, { caller: agent }))._meta, undefined, 'a read changed nothing');
-  assert.deepEqual(Object.values(CHANGE_WORDS), ['board.change.board', 'board.change.card', 'board.change.cards']);
+  assert.deepEqual(Object.values(CHANGE_WORDS), ['vision-board.change.board', 'vision-board.change.card', 'vision-board.change.cards']);
   const many = changeOf('plans', Array.from({ length: 501 }, (_, i) => i + 1));
-  assert.deepEqual([many.words, many.count, many.subject, many.reveal], ['board.change.cards', 501, 'plans', undefined], 'a reveal over the bounds is left out, not trimmed');
+  assert.deepEqual([many.words, many.count, many.subject, many.reveal], ['vision-board.change.cards', 501, 'plans', undefined], 'a reveal over the bounds is left out, not trimmed');
 });
 
 test('tools: a held call ends when its host\'s signal does (botToolRules off: on, a host\'s bot has no wait, bot-tool-rules.test.ts)', async () => {
@@ -222,7 +222,7 @@ test('the MCP server serves the engine\'s tools as it serves its own: one list, 
   assert.equal((await ask('server/discover', {})).result.instructions, INSTRUCTIONS_JOINED, 'the host vouches for the caller: no join, no secret');
   const wrote = (await ask('tools/call', { name: 'write_board', arguments: { board: 'plans', items: [{ type: 'node', node: { region: 'now', kind: 'question', title: 'Which day?' } }] } })).result;
   assert.equal(wrote.isError, false);
-  assert.deepEqual(wrote._meta[CHANGE_META], { words: 'board.change.card', count: 1, subject: 'plans', reveal: { board: 'plans', cards: [3] } }, 'the change goes through beside the server\'s own `_meta`');
+  assert.deepEqual(wrote._meta[CHANGE_META], { words: 'vision-board.change.card', count: 1, subject: 'plans', reveal: { board: 'plans', cards: [3] } }, 'the change goes through beside the server\'s own `_meta`');
   assert.ok(wrote._meta['io.modelcontextprotocol/serverInfo']);
   assert.equal((await ask('tools/call', { name: 'get_board', arguments: { board: 'Not An Id' } })).result.isError, true);
   assert.equal((await ask('tools/call', { name: 'read_attachment', arguments: {} })).error.code, -32602, 'a tool not listed is a protocol error, as MCP says');

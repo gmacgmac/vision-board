@@ -1,5 +1,5 @@
 // Words: ui-common. Sentences more than one area of the patterns says, said once.
-// Keys: board.ui-common.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.ui-common.<name>. Plain code: no imports but other words files and types.
 
 // ---- app-frame-core.ts
 export const appCardsAreOff = 'App cards are off.';

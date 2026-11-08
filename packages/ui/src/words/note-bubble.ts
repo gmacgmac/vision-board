@@ -1,5 +1,5 @@
 // Words: note-bubble. The note window: its accessible names, hint, buttons and thread labels.
-// Keys: board.note-bubble.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.note-bubble.<name>. Plain code: no imports but other words files and types.
 
 // ---- note-bubble-core.ts
 export const yourNoteForTheAgent = 'Your note for the agent';

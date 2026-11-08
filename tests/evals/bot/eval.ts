@@ -17,7 +17,7 @@ import { startStandaloneHost } from './standalone.ts';
 import type { BotHost, RunRecord, Scenario, Stage } from './types.ts';
 
 export const ROOT = path.resolve(import.meta.dirname, '../../..');
-export const SKILL = path.join(ROOT, 'dist/plugin/board/skill.md');
+export const SKILL = path.join(ROOT, 'dist/plugin/vision-board/skill.md');
 const MCP_BOT = path.join(import.meta.dirname, 'mcp-bot.ts');
 const FAKE_BOT = path.join(import.meta.dirname, 'fake-bot.ts');
 const SERVER = 'vision-board';

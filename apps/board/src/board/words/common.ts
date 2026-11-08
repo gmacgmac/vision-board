@@ -1,5 +1,5 @@
 // Words: common. Sentences more than one area of the page says, said once.
-// Keys: board.common.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.common.<name>. Plain code: no imports but other words files and types.
 
 // ---- access.ts
 export const removeAccess = 'Remove access';

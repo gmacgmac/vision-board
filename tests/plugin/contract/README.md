@@ -18,8 +18,17 @@ Source: the nclite repo (`/Users/dev/AI/nclite`), read only. nclite HEAD when co
 | `nclite/engine/words/plugins.ts` | `6e1912fe725904777296fba04d174db155437a75e9f5d5611a736e01de547833` | `da90f265` |
 
 **One stand-in, not a copy**: `nclite/shared/plugin-adapters.ts` holds only what the handover asks nclite to keep of
-the board's entry, its icon and its stylesheet's scope (`board: { icon: 'board', css: { scope: 'vb' } }`), so `checkPluginStylesheet` runs as the
-host's loader will. The real file imports the board's seam-1 adapter, which nclite deletes when it vendors this build.
+the board's entry, its icon (`'vision-board': { icon: 'board' }`), so `checkPluginStylesheet` runs as the host's loader
+will. The real file imports the board's seam-1 adapter, which nclite deletes when it vendors this build.
+
+**Edits for the manifest's `scope`, held by a test**: the contract has no `scope` in its manifest yet; nclite adds it when
+it vendors this build (the handover), and the board's manifest carries `"scope": "vb"`. Two copies have the lines nclite
+changes, and nothing else (`plugin-host.test.ts` undoes them and checks the source's sha256 above):
+
+- `nclite/shared/plugin-host.ts`, `PluginManifest`: after `icon?: string;`, the line `scope?: string;`.
+- `nclite/engine/plugins/stylesheet.ts`, `checkPluginStylesheet`: `(id: string, bytes: Uint8Array): string[] {` becomes
+  `(id: string, bytes: Uint8Array, scope?: string): string[] {`, and `{ scope: css?.scope ?? id, reads:` becomes
+  `{ scope: scope ?? id, reads:`. The caller passes the manifest's `scope`.
 
 **One known difference, held by a test, never by an edit**: the board writes its change line under `plugin/change`
 (`apps/board/server/engine/tools.ts` `CHANGE_META`); the contract still says `nclite/change`. nclite renames it in the
@@ -27,12 +36,13 @@ same change that vendors this build (the handover). `plugin-host.test.ts` "the o
 copy says `plugin/change`: then delete that test and the line in `apps/board/tests/plugin-types.test.ts` that moves the
 change line under the contract's key.
 
-`plugin-host.test.ts` holds this table: every copy is its source's bytes, by the sha256 above. It catches an edit to a
+`plugin-host.test.ts` holds this table: every copy is its source's bytes, by the sha256 above, once the edits are undone. It catches an edit to a
 copy, not a change in nclite: that shows only when the copies are refreshed (below), so refresh them before each handover.
 
 ## Refreshing it
 
-1. Copy each file in the table from the nclite repo to the same path under `nclite/`.
+1. Copy each file in the table from the nclite repo to the same path under `nclite/`. Once nclite has the manifest's
+   `scope`, drop the edits above and their lines in `plugin-host.test.ts` `EDITS`.
 2. Set the HEAD (`git -C /Users/dev/AI/nclite rev-parse HEAD`), each sha256 (`shasum -a 256`) and each last change
    (`git -C /Users/dev/AI/nclite log -1 --format=%h -- <file>`) above.
 3. Run `node --test tests/plugin/contract/plugin-host.test.ts`, then `npm test` and `npm run test:plugin`. A type test that

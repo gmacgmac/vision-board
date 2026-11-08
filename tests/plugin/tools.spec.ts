@@ -61,7 +61,7 @@ test('tools.call: the change line: a board write that wrote carries `_meta[\'plu
   const write = (items: unknown[]) => host.engine.tools.call('write_board', { board: 'plans', items }, { caller: host.bot });
   const one = await write([{ type: 'node', key: 'more', node: { region: 'now', kind: 'question', title: 'One more?' } }]);
   const change = one._meta!['plugin/change'];
-  expect(change).toEqual({ words: 'board.change.card', count: 1, subject: 'plans', reveal: { board: 'plans', cards: [4] } });
+  expect(change).toEqual({ words: 'vision-board.change.card', count: 1, subject: 'plans', reveal: { board: 'plans', cards: [4] } });
   expect(m.changeWords).toContain(change.words);
   expect(words[change.words]!.replace('{subject}', change.subject)).toBe('Changed a card on board “plans”');
   expect(Object.keys(one._meta!), 'only the change line').toEqual(['plugin/change']);

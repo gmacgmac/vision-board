@@ -10,7 +10,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { hostSvelteBundle } from './host-svelte.ts';
 
-export const FOLDER = path.resolve(import.meta.dirname, '../../../dist/plugin/board');
+export const FOLDER = path.resolve(import.meta.dirname, '../../../dist/plugin/vision-board');
 const HERE = import.meta.dirname;
 
 /** The strict policy the spec names: no inline script or style, pictures only from the host's route and `data:`. */

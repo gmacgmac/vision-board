@@ -1,5 +1,5 @@
 // Words: server-chat. The chat session: what the agent is told, and the refusals a chat call gets.
-// Keys: board.server-chat.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.server-chat.<name>. Plain code: no imports but other words files and types.
 
 // ---- chat-access.ts
 export const claudeCode = 'Claude Code';

@@ -1,5 +1,5 @@
 // Words: failure. The failure lines.
-// Keys: board.failure.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.failure.<name>. Plain code: no imports but other words files and types.
 
 // ---- failure.ts
 export const example = (stringify: string): string => `Example: ${stringify}`;

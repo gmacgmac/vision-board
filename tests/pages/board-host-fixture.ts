@@ -107,7 +107,7 @@ function fakeHost(lines: readonly object[], shown: number, o: HostOptions = {}) 
   /** Write the rest of the lines, and say so as one change event. */
   const appendRest = () => {
     written = lines.length;
-    for (const l of listeners) l({ plugin: 'board', ref: { board: 'roadmap', head: written } });
+    for (const l of listeners) l({ plugin: 'vision-board', ref: { board: 'roadmap', head: written } });
   };
   /** The fake chat's agent turns to `w`. */
   const work = (w: ChatWork) => {

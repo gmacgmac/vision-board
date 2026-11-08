@@ -1,5 +1,5 @@
 // Words: folders. The folder picker, the folder chip and the page title that names the folder.
-// Keys: board.folders.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.folders.<name>. Plain code: no imports but other words files and types.
 
 // ---- FolderChip.svelte
 export const folderOpenAnotherFolder = (folderName: string | number, path: string | number): string => `Folder ${folderName}: ${path}. Open another folder`;

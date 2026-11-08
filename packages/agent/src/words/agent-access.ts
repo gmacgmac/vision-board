@@ -1,6 +1,6 @@
 // Words: agent-access. Why the agent's access rules allow, ask or refuse a file or a command: what the
 // agent reads when it is refused, and what each row of the rules means.
-// Keys: board.agent-access.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.agent-access.<name>. Plain code: no imports but other words files and types.
 
 // ---- access-rules.ts (each row's why; a refused call tells the agent its row's)
 export const filesInTheFolder = 'Files in the board\'s folder are read freely; a change is asked.';

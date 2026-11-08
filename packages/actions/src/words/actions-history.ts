@@ -1,5 +1,5 @@
 // Words: actions-history. A card's history: what the person or the agent did, in a row.
-// Keys: board.actions-history.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.actions-history.<name>. Plain code: no imports but other words files and types.
 
 // ---- card-history.ts
 export const drewV = (ver: number | undefined): string => `drew v${ver}`;

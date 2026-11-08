@@ -218,7 +218,7 @@ test('chat.attach: a chip is added, replaced and removed under one key, and one 
   await expect.poll(selection).toEqual([[1], [1, 2], null]);
   await expect(page.locator('#host-chips li')).toHaveCount(0);
   const chip = (await drive(page, 'record')).attaches[0].chip;
-  expect(chip).toEqual(expect.objectContaining({ plugin: 'board', kind: 'selection', label: expect.any(String), detail: expect.any(String), preview: expect.any(String) }));
+  expect(chip).toEqual(expect.objectContaining({ plugin: 'vision-board', kind: 'selection', label: expect.any(String), detail: expect.any(String), preview: expect.any(String) }));
 });
 
 test('chat.send: Send sends what is staged with no words, each chip resolved by the engine, then records it; what went is spent', async ({ page, host }) => {

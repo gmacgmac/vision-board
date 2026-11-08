@@ -1,5 +1,5 @@
 // Words: cards. Cards: flag, move, select, finder and history.
-// Keys: board.cards.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.cards.<name>. Plain code: no imports but other words files and types.
 
 // ---- finder.ts
 export const later = 'Later';

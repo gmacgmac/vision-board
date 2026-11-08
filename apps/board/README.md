@@ -164,7 +164,7 @@ replaces them on purpose. The board's test support (`startTestBoard`, the API ha
   `npm run board:watch` is for working on the board: it rebuilds the page on save, restarts the
   server only when server code changes, and reloads the open page with its view kept (dev only;
   `npm run board` never reloads). `npm run watch` alone only rebuilds. `npm run check` type-checks `src/`.
-- **The plugin folder**: `npm run build:plugin` writes `dist/plugin/board/` (git-ignored), the board as
+- **The plugin folder**: `npm run build:plugin` writes `dist/plugin/vision-board/` (git-ignored), the board as
   one folder for another host: `manifest.json` (checked by `plugin/manifest.schema.json`; its tools are
   `engine.tools.list()`, its text keys into `words.json`), `view/board.js` (exports `mount`, carries its own
   Svelte) with `view/board.css`, `engine/engine.js` (exports `createEngine`, imports only `node:` modules,

@@ -27,7 +27,7 @@ function host(lines: string[]) {
     events: (fn: (e: PluginEvent) => void) => { tell = fn; return () => { tell = undefined; }; },
     set readOnly(on: boolean) { readOnly = on; },
     replace(next: string[]) { file = checkedEvents(next); },
-    emit: (head?: number) => tell?.({ plugin: 'board', ref: head === undefined ? {} : { head } }),
+    emit: (head?: number) => tell?.({ plugin: 'vision-board', ref: head === undefined ? {} : { head } }),
     reads,
   };
 }

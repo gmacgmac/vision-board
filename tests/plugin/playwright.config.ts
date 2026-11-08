@@ -1,5 +1,5 @@
 // The contract test (docs/specification/plugin.md): a fake host, written from that spec alone, mounts the built
-// folder `dist/plugin/board/` and uses every hook and every tool. `npm run test:plugin`. The folder is built
+// folder `dist/plugin/vision-board/` and uses every hook and every tool. `npm run test:plugin`. The folder is built
 // first (global-setup.ts). Chromium, as the page tests (tests/pages/playwright.config.ts); `npm run test:plugin:webkit`
 // runs the same specs in WebKit, the engine of a host's webview on macOS (a desktop host such as nclite).
 import os from 'node:os';

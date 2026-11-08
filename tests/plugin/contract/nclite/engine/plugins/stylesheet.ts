@@ -230,8 +230,8 @@ export function checkStylesheet(text: string, rules: StylesheetRules): string[] 
  * The problems of plugin `id`'s stylesheet `bytes`, under the rules its adapter gives (scope, reads, and the selector rule
  * waived when the bytes are the ones it reviewed), else its id with no reads and no waiver.
  */
-export function checkPluginStylesheet(id: string, bytes: Uint8Array): string[] {
+export function checkPluginStylesheet(id: string, bytes: Uint8Array, scope?: string): string[] {
 	const css = adapterOf(id)?.css;
 	const waiveSelectors = css?.reviewedSha256 !== undefined && css.reviewedSha256 === sha256Of(bytes);
-	return checkStylesheet(Buffer.from(bytes).toString('utf8'), { scope: css?.scope ?? id, reads: css?.reads ?? [], waiveSelectors });
+	return checkStylesheet(Buffer.from(bytes).toString('utf8'), { scope: scope ?? id, reads: css?.reads ?? [], waiveSelectors });
 }

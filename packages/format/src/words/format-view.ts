@@ -1,5 +1,5 @@
 // Words: format-view. Why a view or a card's state is refused.
-// Keys: board.format-view.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.format-view.<name>. Plain code: no imports but other words files and types.
 
 // ---- validate.ts
 export const viewMustBeAnObject = 'view: must be an object';

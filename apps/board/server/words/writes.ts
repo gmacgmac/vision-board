@@ -1,5 +1,5 @@
 // Words: writes. The refusals for a write: a board, node, key, grant or batch that does not fit.
-// Keys: board.writes.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.writes.<name>. Plain code: no imports but other words files and types.
 
 // ---- edge.ts
 export const boardHasNoCard = (board: string, String: string): string => `board ${board} has no card ${String}`;

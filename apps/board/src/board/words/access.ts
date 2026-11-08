@@ -1,5 +1,5 @@
 // Words: access. Access requests and the revoke confirm: what an agent asks for and what the person is told.
-// Keys: board.access.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.access.<name>. Plain code: no imports but other words files and types.
 
 // ---- access.ts
 export const anAgent = 'An agent';

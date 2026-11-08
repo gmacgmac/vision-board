@@ -1,5 +1,5 @@
 // Words: node-app. An app card: its states, notices and buttons.
-// Keys: board.node-app.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.node-app.<name>. Plain code: no imports but other words files and types.
 
 // ---- node-app.ts
 export const appNotFound = (id: string): string => `App ${id} not found`;

@@ -1,5 +1,5 @@
 // Words: info. What the server says about itself and how to use it.
-// Keys: board.info.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.info.<name>. Plain code: no imports but other words files and types.
 
 // ---- info.ts
 export const visionBoard = 'Vision Board';

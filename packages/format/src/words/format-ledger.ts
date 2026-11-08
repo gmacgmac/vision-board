@@ -1,5 +1,5 @@
 // Words: format-ledger. Why a ledger line or an act is refused: the field, what it must be, and what it names.
-// Keys: board.format-ledger.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.format-ledger.<name>. Plain code: no imports but other words files and types.
 
 // ---- access-rules.ts
 export const board = (board: string): string => `board ${board}`;

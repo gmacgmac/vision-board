@@ -1,5 +1,5 @@
 // Words: commands. Tooltips of the board's commands (name and what they do).
-// Keys: board.commands.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.commands.<name>. Plain code: no imports but other words files and types.
 
 // ---- commands.ts
 export const zoomOut = 'Zoom out';

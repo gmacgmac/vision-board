@@ -1,5 +1,5 @@
 // Words: proposals. Proposal counts, the accept-all confirm and its toast.
-// Keys: board.proposals.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.proposals.<name>. Plain code: no imports but other words files and types.
 
 // ---- proposals.ts
 export const accepted = 'Accepted';

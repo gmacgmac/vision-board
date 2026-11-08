@@ -1,5 +1,5 @@
 // Words: actions-registry. The names of the actions, as buttons, tooltips and tools say them.
-// Keys: board.actions-registry.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.actions-registry.<name>. Plain code: no imports but other words files and types.
 
 // ---- registry.ts
 export const check = 'Check';

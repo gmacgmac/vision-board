@@ -1,5 +1,5 @@
 // Words: node-notes. The notes on a card: who wrote them, how many are new, and the hide and show labels.
-// Keys: board.node-notes.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.node-notes.<name>. Plain code: no imports but other words files and types.
 
 // ---- node-notes.ts
 export const agentReply = (agent: string): string => `Agent reply${agent}`;

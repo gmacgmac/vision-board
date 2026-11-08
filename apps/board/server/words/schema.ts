@@ -1,5 +1,5 @@
 // Words: schema. How a schema failure is told to the agent.
-// Keys: board.schema.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.schema.<name>. Plain code: no imports but other words files and types.
 
 // ---- schema.ts
 export const doesNotFitAnyOf = 'does not fit any of the shapes the tool takes';

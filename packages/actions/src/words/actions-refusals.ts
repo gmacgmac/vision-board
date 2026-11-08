@@ -1,5 +1,5 @@
 // Words: actions-refusals. Why an act or a write is refused, in the words an agent or the page shows.
-// Keys: board.actions-refusals.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.actions-refusals.<name>. Plain code: no imports but other words files and types.
 
 // ---- act.ts
 export const boardUnknown = (String: string): string => `board: unknown "${String}"`;

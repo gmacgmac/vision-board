@@ -1,5 +1,5 @@
 // Words: chrome-access. Access requests and the revoke confirm: what an agent asks for and what the person is told.
-// Keys: board.chrome-access.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.chrome-access.<name>. Plain code: no imports but other words files and types.
 
 // ---- AccessRequests.svelte
 export const askForAccess = (count: number): string => (count === 1 ? 'An agent asks for access' : `${count} agents ask for access`);

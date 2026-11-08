@@ -1,5 +1,5 @@
 // Words: chrome-proposals. Proposal counts, the accept-all confirm and its toast.
-// Keys: board.chrome-proposals.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.chrome-proposals.<name>. Plain code: no imports but other words files and types.
 
 // ---- ProposalsBar.svelte
 export const theAgent = 'The agent';

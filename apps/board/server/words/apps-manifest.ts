@@ -1,5 +1,5 @@
 // Words: apps-manifest. What is wrong in an app's files, as list_apps tells the agent.
-// Keys: board.apps-manifest.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.apps-manifest.<name>. Plain code: no imports but other words files and types.
 
 // ---- manifest.ts
 export const linksOutsideTheAppS = 'links outside the app\'s folder. Make it a real file.';

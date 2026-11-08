@@ -1,5 +1,5 @@
 // Words: chrome-boards. The board picker, rename, archive, lock and the archived list.
-// Keys: board.chrome-boards.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.chrome-boards.<name>. Plain code: no imports but other words files and types.
 
 // ---- ArchivedList.svelte
 export const archivedBoards = 'Archived boards';

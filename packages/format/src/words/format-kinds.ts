@@ -1,5 +1,5 @@
 // Words: format-kinds. The names of the kinds of card.
-// Keys: board.format-kinds.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.format-kinds.<name>. Plain code: no imports but other words files and types.
 
 // ---- node-types.ts
 export const question = 'Question';

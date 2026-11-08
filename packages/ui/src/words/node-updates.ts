@@ -1,5 +1,5 @@
 // Words: node-updates. A card's updates since you last looked: the step labels and counts.
-// Keys: board.node-updates.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.node-updates.<name>. Plain code: no imports but other words files and types.
 
 // ---- node-updates.ts
 export const drawnAgainWithNoChange = 'Drawn again with no change';

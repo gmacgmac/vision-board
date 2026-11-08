@@ -1,5 +1,5 @@
 // Words: editing. The read-only state in the header, Edit and Stop editing (readOnlyStart flag, D-085).
-// Keys: board.editing.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.editing.<name>. Plain code: no imports but other words files and types.
 
 // ---- EditChip.svelte: the state, its name and tooltip
 export const readOnly = 'Read-only';

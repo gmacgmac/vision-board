@@ -1,5 +1,5 @@
 // Words: app-frame. The app panel frame: the refusals it shows for a tool call and the protocol's messages.
-// Keys: board.app-frame.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.app-frame.<name>. Plain code: no imports but other words files and types.
 
 // ---- app-frame-core.ts
 export const allowThisAppOnIts = 'Allow this app on its card first.';

@@ -1,5 +1,5 @@
 // Words: http. The refusals every call can meet: the path, method, body, caller and origin.
-// Keys: board.http.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.http.<name>. Plain code: no imports but other words files and types.
 
 // ---- app.ts
 export const thePageAnswersGETOnly = 'The page answers GET only.';

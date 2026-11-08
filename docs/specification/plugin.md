@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-08 (the id `vision-board`, the manifest's `scope`); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -17,13 +17,14 @@ seam (D-074). This page is all a host needs. If it doesn't say it, a host may no
 **One shape everywhere.** The seam is a host plugin contract's shapes (a `Ref`, a `SendRecord`, a `ChangeMeta`, the
 contract's `PluginHost` and `CreateEngine`), kept for the tests in `tests/plugin/contract/` as byte-for-byte copies
 of the contract and of the checks the host runs on a plugin (its `README.md` says where from, by sha256, and the one known
-difference, the change key). The board's own page and server use the same shapes, so a host built to that contract
+difference, the change key, and the two lines that add the manifest's `scope`). The board's own page and server use the same shapes, so a host built to that contract
 mounts the board and runs its engine with nothing translated: the built `mount` is a `Mount<HTMLElement>` and
-`createEngine` a `CreateEngine` of the copy. The host supplies only what its manifest has no field for: the board's icon
-and its stylesheet's scope, `vb` (D-097). Where a host's board behaves differently from standalone's, it is a flag the host turns on
+`createEngine` a `CreateEngine` of the copy. The plugin's id is `vision-board` (`#actions` `CHIP_PLUGIN`): the folder's
+name, the first part of every words key, and the prefix a host gives the bot's tools. Its stylesheet's scope, `vb`, is the
+manifest's `scope`; the host supplies only the board's icon, a name in its own list. Where a host's board behaves differently from standalone's, it is a flag the host turns on
 (§ The engine `flags`, § What the host gives `settings`), never a second shape. Proven by
 `apps/board/tests/plugin-types.test.ts` "the types satisfy the host contract" (with the host's own `storedChangeOf`),
-`apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope" (with the host's own `checkStylesheet`),
+`apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope" (with the host's own `checkPluginStylesheet`),
 `tests/plugin/contract/plugin-host.test.ts`.
 
 Every claim holds a symbol and a named test. "Proven by" names a spec in `tests/plugin/` (`npm run test:plugin`), where a
@@ -32,7 +33,7 @@ fake host written from this page mounts the built folder, unless the path says o
 
 ## The folder
 
-`npm run build:plugin` writes `dist/plugin/board/`, and only that (`apps/board/bin/build-plugin.ts` `buildPlugin`). A host
+`npm run build:plugin` writes `dist/plugin/vision-board/`, and only that (`apps/board/bin/build-plugin.ts` `buildPlugin`). A host
 links or copies the folder. It imports nothing else from this repo, and needs nothing installed: the same input gives
 the same bytes, and neither bundle imports anything a host must supply but Node's own modules in the engine.
 
@@ -42,7 +43,7 @@ the same bytes, and neither bundle imports anything a host must supply but Node'
 | `view/board.js` | Browser ES module, one export: `mount`. Its own Svelte is inside; no dynamic import, no chunk |
 | `view/board.css` | The one stylesheet, no `@import`, no address |
 | `engine/engine.js` | Node ES module, one export: `createEngine`. Reads and writes only the folder it is given |
-| `words.json` | The manifest's words keys, and the board's fixed words, by `board.<area>.<name>` |
+| `words.json` | The manifest's words keys, and the board's fixed words, by `vision-board.<area>.<name>` |
 | `skill.md` | What the bot reads while the plugin is on (§ The bot) |
 | `plugin.d.ts` | The seam's types for a TypeScript host (§ The types and the seam version) |
 
@@ -306,7 +307,9 @@ with no flags. Proven by `apps/board/tests/plugin-skill.test.ts` "singleAgent (T
 
 ### Tools
 
-Tools reach any bot as MCP tools (D-074 rule 4). The engine gives both halves in MCP's shapes, and the transport is yours:
+Tools reach any bot as MCP tools (D-074 rule 4). The engine gives both halves in MCP's shapes, and the transport is yours: A host may
+name them for the bot with the id in front (`vision-board_write_board`); the skill and the descriptions name them bare
+(`write_board`), which reads the same either way.
 
 - `tools.list()` gives `{ name, title, description, inputSchema }`, `inputSchema` being JSON Schema. It equals the manifest's `tools`.
 - `tools.call(name, input, { caller, signal })` gives a `CallToolResult`: `content` (one text, the answer's JSON),
@@ -317,7 +320,7 @@ Tools reach any bot as MCP tools (D-074 rule 4). The engine gives both halves in
   retry's replay of one written before) carries `_meta['plugin/change']`, the contract's `ChangeMeta` under its
   `CHANGE_META` key (one home in the board's code: `apps/board/server/engine/tools.ts` `CHANGE_META`); one that wrote
   nothing carries none, and no other tool carries one:
-  - `words`: `board.change.board` when no card was written, `board.change.card` for one, `board.change.cards` for more; each
+  - `words`: `vision-board.change.board` when no card was written, `vision-board.change.card` for one, `vision-board.change.cards` for more; each
     is in the manifest's `changeWords` and has its text in `words.json` (`apps/board/plugin/words/change.ts`), holding
     `{count}` and `{subject}` for you to fill;
   - `count`: how many cards the write wrote, a whole number from 0, the length of `reveal.cards`;
@@ -529,8 +532,9 @@ Proven by `apps/board/tests/plugin-types.test.ts` "the manifest holds the seam n
 
 | Field | Means |
 |---|---|
-| `id` | `board` |
+| `id` | `vision-board`, the folder's name (a host refuses a folder named otherwise) |
 | `name` | A words key |
+| `scope` | `vb`: the prefix of the stylesheet's classes, elements and properties, against which a host checks the sheet. Without it the id is the scope, and the sheet fails that check (§ A guest in the host's page) |
 | `version` | The API's version (`info.version` in `openapi.json`), a string |
 | `seam` | The seam's version, a whole number from 1 (§ The types and the seam version) |
 | `view` | `{ module, styles, export }`: `view/board.js`, `[view/board.css]`, `mount` |
@@ -538,7 +542,7 @@ Proven by `apps/board/tests/plugin-types.test.ts` "the manifest holds the seam n
 | `chips` | Each `{ kind, words }`: `card`, `note`, `board`, `selection`, `answers` |
 | `tools` | Each `{ name, words, input, writes }`, exactly `tools.list()`; `input` is its JSON Schema; `writes` says it changes the ledger |
 | `skill`, `words` | The two files |
-| `changeWords` | The words keys a change line may name: `board.change.board`, `board.change.card`, `board.change.cards`, each with its text in `words.json` (§ Tools, the change line). Proven by `apps/board/tests/plugin-build.test.ts` "the change words are in the manifest and words.json" |
+| `changeWords` | The words keys a change line may name: `vision-board.change.board`, `vision-board.change.card`, `vision-board.change.cards`, each with its text in `words.json` (§ Tools, the change line). Proven by `apps/board/tests/plugin-build.test.ts` "the change words are in the manifest and words.json" |
 
 It has **no `settings` and no `icon`**: the board declares no settings for a host to draw (flags and `align` come through
 `host.settings`), and an icon is a name in a host's own list. Proven by `engine-hooks.spec.ts` "the folder",
@@ -616,14 +620,14 @@ Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
 Against nclite's plugin contract (`shared/plugin-host.ts`, its ADR-0288; `docs/plugins.md`) at the commit the board's copy
 names (`tests/plugin/contract/README.md`). The gaps this section listed against its draft v0.1 are closed by that contract
 and seam 2, and its board adapter (`shared/plugin-adapters/board.ts`) and stylesheet waiver (`REVIEWED_BOARD_SHEET`) have
-nothing left to translate but the board's icon and its stylesheet's scope, which the contract's manifest has no field for: B1 is § Tools' change line, B2 § The chat's acks, B3 `singleAgent`, B4 the plain refs, B5 the
+nothing left to translate but the board's icon, a name in nclite's own list; its stylesheet's scope is the manifest's `scope`, which nclite adds to the contract: B1 is § Tools' change line, B2 § The chat's acks, B3 `singleAgent`, B4 the plain refs, B5 the
 scoped sheet (§ A guest in the host's page), C2 `followOtherWriters`.
 
 **Taking seam 2**, in one change: rename the contract's `CHANGE_META` to `'plugin/change'` (and the Journal plugin's writes
 of it), move the board row's `seam` to 2 (the vendoring script refuses a manifest whose seam differs from the row's), vendor
-the folder, set the flags below, cut the board's adapter down to its icon and its stylesheet's scope (`board: { icon: 'board', css: { scope: 'vb' } }`:
-the contract's manifest has no field for a scope that is not the plugin's id, and without it the loader checks the sheet
-against `board` and refuses it), set the row's `provenanceSha256` to the pin vendoring prints, replace the board's type
+the folder under its id, `vision-board`, set the flags below, add the manifest's `scope` to the contract and have
+`checkPluginStylesheet` take it (without it the loader checks the sheet against `vision-board` and refuses it), cut the
+board's adapter down to its icon (`'vision-board': { icon: 'board' }`), set the row's `provenanceSha256` to the pin vendoring prints, replace the board's type
 block in `app/src/lib/plugins/seams.ts` with the contract's two (`Mount<HTMLElement>`, `CreateEngine`, as the Journal's),
 and delete the waiver and the board's stored registration. Without the rename the host stores none of the board's change
 lines: the board writes `plugin/change`, and the host as it is reads only `nclite/change` (`plugin-types.test.ts` holds

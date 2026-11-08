@@ -1,10 +1,11 @@
 // `words.json`: every fixed sentence the view shows, by its key (docs/specification/words.md § Keys,
-// `board.<area>.<name>`), and each tool's description as a bot reads it (`board.tool.<name>`). A host merges
+// `vision-board.<area>.<name>`, the plugin's id first), and each tool's description as a bot reads it (`vision-board.tool.<name>`). A host merges
 // it into its own words. Made from the words files of the parts the view is built of; a sentence with a
 // value in it is a function there and has no fixed text, so it is not in the file.
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { CHIP_PLUGIN } from '#actions';
 import type { ListedTool } from '#mcp';
 import { toolKey } from '../plugin/manifest.ts';
 
@@ -14,7 +15,7 @@ export const VIEW_WORDS = ['apps/board/src/board/words', 'packages/ui/src/words'
 /** Words files that are not the view's text: the edits that make the bot's skill. */
 const NOT_VIEW_TEXT = new Set(['skill-edits.ts']);
 
-/** A file's fixed text: `board.<area>.<name>` for each string, an object's members dotted on. */
+/** A file's fixed text: `<id>.<area>.<name>` for each string, an object's members dotted on. */
 async function stringsOf(file: string): Promise<[string, string][]> {
   const area = path.basename(file, '.ts');
   const out: [string, string][] = [];
@@ -22,7 +23,7 @@ async function stringsOf(file: string): Promise<[string, string][]> {
     if (typeof value === 'string') out.push([key, value]);
     else if (value && typeof value === 'object') for (const [k, v] of Object.entries(value)) walk(`${key}.${k}`, v);
   };
-  for (const [name, value] of Object.entries(await import(pathToFileURL(file).href))) walk(`board.${area}.${name}`, value);
+  for (const [name, value] of Object.entries(await import(pathToFileURL(file).href))) walk(`${CHIP_PLUGIN}.${area}.${name}`, value);
   return out;
 }
 

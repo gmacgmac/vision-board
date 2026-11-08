@@ -336,6 +336,7 @@ export interface PluginManifest {
 	seam: number;
 	/** A name from the app's own icon list; one the app lacks draws its plugin glyph. */
 	icon?: string;
+	scope?: string;
 	view: { module: string; styles: string[]; export: string };
 	engine: { module: string; export: string };
 	chips: ChipDecl[];

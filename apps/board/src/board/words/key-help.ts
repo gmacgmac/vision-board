@@ -1,5 +1,5 @@
 // Words: key-help. The key command list and its headings.
-// Keys: board.key-help.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.key-help.<name>. Plain code: no imports but other words files and types.
 
 // ---- key-help.ts
 export const items = 'Items';

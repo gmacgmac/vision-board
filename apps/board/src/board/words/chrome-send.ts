@@ -1,5 +1,5 @@
 // Words: chrome-send. The Send button, its states and tooltips.
-// Keys: board.chrome-send.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.chrome-send.<name>. Plain code: no imports but other words files and types.
 
 // ---- SendButton.svelte
 export const sendToAgent = 'Send to agent';

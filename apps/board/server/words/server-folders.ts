@@ -1,5 +1,5 @@
 // Words: server-folders. Opening a folder, the ledger lock and the files on disk.
-// Keys: board.server-folders.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.server-folders.<name>. Plain code: no imports but other words files and types.
 
 // ---- folders.ts
 export const onlyFoldersUnderYourHome = 'Only folders under your home folder can be opened, and not hidden ones or node_modules. Choose a folder under ~.';

@@ -1,5 +1,5 @@
 // Words: ledgers. The ledger chip, its list, New ledger… and the New ledger dialog (ledgerFolders flag, D-084).
-// Keys: board.ledgers.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.ledgers.<name>. Plain code: no imports but other words files and types.
 
 // ---- LedgerPart.svelte (its name, "Ledger", is board/words/chrome-common.ts `ledger`: the "⋯" tooltip says it too)
 export const ledgerChoose = (name: string): string => `Ledger ${name}: choose another ledger of this folder, or make a new one`;

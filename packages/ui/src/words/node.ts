@@ -1,5 +1,5 @@
 // Words: node. A card: state labels, accessible names, proposals, handover, history, times and the buttons on it.
-// Keys: board.node.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.node.<name>. Plain code: no imports but other words files and types.
 
 // ---- node-core.ts
 export const replied = 'Replied';

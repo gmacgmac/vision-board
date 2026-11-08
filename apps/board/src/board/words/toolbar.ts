@@ -1,5 +1,5 @@
 // Words: toolbar. The toolbar, its menu, zoom level, chips and the version banner.
-// Keys: board.toolbar.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.toolbar.<name>. Plain code: no imports but other words files and types.
 
 // ---- LockedChip.svelte
 export const theMenu = (LOCKED_PERSON: string | number): string => `${LOCKED_PERSON} (the "⋯" menu)`;

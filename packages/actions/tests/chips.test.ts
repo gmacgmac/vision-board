@@ -22,7 +22,7 @@ const refused = (c: unknown, code: string, reason: RegExp) => {
 test('a card chip is the contract\'s shape: the plugin, kind, a ref with the board, number and version, a label and a detail', () => {
   const s = base().state();
   assert.deepEqual(chip(cardChip(s, 'b', 1)), {
-    plugin: 'board', kind: 'card', ref: { board: 'b', n: 1, ver: 1 }, label: 'Node 1', detail: 'Card 1 on board "b"',
+    plugin: 'vision-board', kind: 'card', ref: { board: 'b', n: 1, ver: 1 }, label: 'Node 1', detail: 'Card 1 on board "b"',
   });
 });
 
@@ -64,7 +64,7 @@ test('a note chip: the ref is the board, the note\'s sequence and its last edit;
   const seq = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why is this late?' });
   const c = chip(noteChip(l.state(), 'b', seq));
   assert.deepEqual(c, {
-    plugin: 'board', kind: 'note', ref: { board: 'b', seq, rev: seq }, label: 'Why is this late?', detail: `Note ${seq} on card 1 "Node 1"`,
+    plugin: 'vision-board', kind: 'note', ref: { board: 'b', seq, rev: seq }, label: 'Why is this late?', detail: `Note ${seq} on card 1 "Node 1"`,
   });
   assert.deepEqual(resolveChip(l.state(), 'note', noteRef(c)), { where: `Board "b", note ${seq} on card 1 "Node 1"`, text: 'Why is this late?' });
 });
@@ -135,7 +135,7 @@ test('a board chip is the board\'s title and its head; it resolves to the board 
   const l = base();
   const s = l.state();
   const c = chip(boardChip(s, 'b'));
-  assert.deepEqual(c, { plugin: 'board', kind: 'board', ref: { board: 'b', head: s.seq }, label: c.label, detail: 'Board "b"' });
+  assert.deepEqual(c, { plugin: 'vision-board', kind: 'board', ref: { board: 'b', head: s.seq }, label: c.label, detail: 'Board "b"' });
   assert.equal(c.label, s.boards.get('b')!.title);
   const now = resolveChip(s, 'board', c.ref as BoardRef);
   assert.deepEqual(now, { where: 'Board "b"', text: JSON.stringify(boardJson(boardData(s, 'b'))) });

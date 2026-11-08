@@ -1,5 +1,5 @@
 // Words: chrome-go-to-card. Go to card and the open-items chip.
-// Keys: board.chrome-go-to-card.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.chrome-go-to-card.<name>. Plain code: no imports but other words files and types.
 
 // ---- GoToCard.svelte
 export const enter = 'Enter';

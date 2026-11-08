@@ -39,7 +39,7 @@ test('no sentence a person or an agent reads stands outside a words file', () =>
   assert.deepEqual(sentencesOutside(), []);
 });
 
-/** `board.<area>.<name>` for each export of a words file; an object's members are dotted on. */
+/** `vision-board.<area>.<name>` for each export of a words file; an object's members are dotted on. */
 async function keysOf(file) {
   const area = path.basename(file, '.ts');
   const keys = [];
@@ -47,14 +47,14 @@ async function keysOf(file) {
     if (value && typeof value === 'object') for (const [k, v] of Object.entries(value)) walk(`${prefix}.${k}`, v);
     else keys.push(prefix);
   };
-  for (const [name, value] of Object.entries(await import(pathToFileURL(path.resolve(file)).href))) walk(`board.${area}.${name}`, value);
+  for (const [name, value] of Object.entries(await import(pathToFileURL(path.resolve(file)).href))) walk(`vision-board.${area}.${name}`, value);
   return keys;
 }
 
-test('every sentence has a key, board.<area>.<name>, and no two share one', async () => {
+test('every sentence has a key, vision-board.<area>.<name>, and no two share one', async () => {
   const all = (await Promise.all(wordsFiles.map(keysOf))).flat();
   assert.ok(all.length > 0, 'no words found');
-  assert.deepEqual(all.filter((k) => !/^board\.[a-z0-9-]+\.[A-Za-z0-9.]+$/.test(k)), []);
+  assert.deepEqual(all.filter((k) => !/^vision-board\.[a-z0-9-]+\.[A-Za-z0-9.]+$/.test(k)), []);
   const twice = all.filter((k, i) => all.indexOf(k) !== i);
   assert.deepEqual(twice, [], 'a key is used twice: two words files share an area name');
 });

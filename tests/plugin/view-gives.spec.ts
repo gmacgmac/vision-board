@@ -9,7 +9,7 @@ test('pageChip: the chip for the board on show, or null with none', async ({ pag
   await drive(page, 'reveal', { board: 'plans' });
   await drawn(page);
   const chip = await drive(page, 'pageChip');
-  expect(chip).toEqual(expect.objectContaining({ plugin: 'board', kind: 'board', ref: expect.objectContaining({ board: 'plans' }), label: expect.any(String) }));
+  expect(chip).toEqual(expect.objectContaining({ plugin: 'vision-board', kind: 'board', ref: expect.objectContaining({ board: 'plans' }), label: expect.any(String) }));
   const said = host.engine.resolve(chip.kind, chip.ref);
   expect(said.where).toContain('plans');
 });

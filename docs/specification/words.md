@@ -20,7 +20,7 @@ Exemptions, with its reason.
 
 ## Keys
 
-A sentence's key is `board.<area>.<name>`: the area is the words file's name, the name is the
+A sentence's key is `vision-board.<area>.<name>`, the plugin's id first: the area is the words file's name, the name is the
 export (an object's members are dotted on). Areas are unique across the homes, so a key is. The
 keys are what the plugin's one words file, `words.json`, is built from (`apps/board/bin/plugin-words.ts`: every
 fixed sentence of the board's, the patterns' and the plugin's words, and each tool's description as a bot reads it);
@@ -229,7 +229,7 @@ homes, the unscanned roots and the exemptions the code holds").
 
 ### Keys are unique; a words file imports only words
 
-**Property** — `board.<area>.<name>` is unique across the homes; a words file's imports are other
+**Property** — `vision-board.<area>.<name>` is unique across the homes; a words file's imports are other
 words files and types.
 **Proven by** — `scripts/words.test.mjs` ("every sentence has a key", "a words file imports only other
 words files, and types", "a fixed sentence has one home in a part").

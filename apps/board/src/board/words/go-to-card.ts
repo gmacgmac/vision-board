@@ -1,5 +1,5 @@
 // Words: go-to-card. Go to card and the open-items chip.
-// Keys: board.go-to-card.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.go-to-card.<name>. Plain code: no imports but other words files and types.
 
 // ---- go-to-card.ts
 export const noCard = (n: number): string => `No card ${n}`;

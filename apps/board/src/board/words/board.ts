@@ -1,5 +1,5 @@
 // Words: board. The board page's own text: its heading, status, empty states and errors.
-// Keys: board.board.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.board.<name>. Plain code: no imports but other words files and types.
 
 // ---- chat-side.ts
 export const showInTheChat = 'Show in the chat';

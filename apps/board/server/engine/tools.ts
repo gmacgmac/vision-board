@@ -14,7 +14,7 @@
 // left out of the listed schema and refused with words when sent, and `instructions` holds the plugin's (words/plugin-tools.ts).
 // With `singleAgent` (a host's one bot per folder), the instructions and descriptions lose the grant steps too.
 import { BOARD_WRITE, boardWriteSummary } from '#agent';
-import type { Ref } from '#actions';
+import type { CHIP_PLUGIN, Ref } from '#actions';
 import type { FlagOverrides, OperationId, ProblemDocument } from '#format';
 import { flagOn } from '#format';
 import type { ListedTool, ToolResult } from '#mcp';
@@ -45,7 +45,7 @@ export const CHANGE_META = 'plugin/change';
 
 /** The words key of a change line by how many cards the write wrote: none, one, more. Each is a text of
  * plugin/words/change.ts in words.json, and the manifest lists them as `changeWords`. */
-export const CHANGE_WORDS = { board: 'board.change.board', card: 'board.change.card', cards: 'board.change.cards' } as const satisfies Record<keyof typeof changeText, `board.change.${keyof typeof changeText}`>;
+export const CHANGE_WORDS = { board: 'vision-board.change.board', card: 'vision-board.change.card', cards: 'vision-board.change.cards' } as const satisfies Record<keyof typeof changeText, `${typeof CHIP_PLUGIN}.change.${keyof typeof changeText}`>;
 
 /** What a board write says it changed (the contract's `ChangeMeta`): the words key, the cards it wrote, the board's id,
  * and what a click reveals. A type, so it is a `Ref`'s kind of plain object. */

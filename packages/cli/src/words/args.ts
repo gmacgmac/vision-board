@@ -1,5 +1,5 @@
 // Words: args. How a flag is refused.
-// Keys: board.args.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.args.<name>. Plain code: no imports but other words files and types.
 
 // ---- args.ts
 export const needsAValue = (flag: string): string => `${flag} needs a value.`;

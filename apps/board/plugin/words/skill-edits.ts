@@ -7,7 +7,7 @@
 // needs (plugin.md § The bot: `singleAgent`, no sign-up, no grants to wait on, no panel, no apps, one ledger); what is
 // about one tool is in that tool's description. A section the standalone skill gains flows through unedited.
 // `npm run eval:bot` (live) passes before a change here lands (T_02: sizes and runs in its notes).
-// Keys: board.skill-edits.<name>. Plain code: no imports.
+// Keys: vision-board.skill-edits.<name>. Plain code: no imports.
 export interface SkillEdit { from: string; until?: string; toEnd?: boolean; to: string }
 
 const INTRO = `The board is how you and the person chat: each point you would number in a chat reply is its own

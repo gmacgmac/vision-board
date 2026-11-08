@@ -7,5 +7,5 @@ import { fileURLToPath } from 'node:url';
 export default function globalSetup(): void {
   const root = fileURLToPath(new URL('../..', import.meta.url));
   execFileSync('npm', ['run', 'build:plugin'], { cwd: root, stdio: 'inherit' });
-  if (!existsSync(`${root}dist/plugin/board/manifest.json`)) throw new Error('dist/plugin/board/ is missing: `npm run build:plugin` wrote no folder');
+  if (!existsSync(`${root}dist/plugin/vision-board/manifest.json`)) throw new Error('dist/plugin/vision-board/ is missing: `npm run build:plugin` wrote no folder');
 }

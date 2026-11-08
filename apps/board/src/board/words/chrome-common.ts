@@ -1,5 +1,5 @@
 // Words: chrome-common. Sentences more than one area of the page says, said once.
-// Keys: board.chrome-common.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.chrome-common.<name>. Plain code: no imports but other words files and types.
 
 // ---- AccessRequests.svelte
 export const cancel = 'Cancel';

@@ -1,5 +1,5 @@
 // Words: apps-supervisor. The app supervisor's refusals: an app that crashed, timed out or was stopped, and the tool checks.
-// Keys: board.apps-supervisor.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.apps-supervisor.<name>. Plain code: no imports but other words files and types.
 
 // ---- child.ts
 export const didNotFinishLoadingWithin = (callMs: number): string => `did not finish loading within ${callMs} s. Make its top-level code quicker.`;

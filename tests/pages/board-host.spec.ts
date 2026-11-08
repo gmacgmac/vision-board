@@ -48,7 +48,7 @@ test('the board mounts in a fake host: it draws, Send goes through the chat with
 
   // The board on show is the page's chip: the board, and the head it was added at.
   const pageChip = await call(page, (h) => h.pageChip('a'));
-  expect(pageChip).toEqual({ plugin: 'board', kind: 'board', ref: { board: 'roadmap', head: SHOWN }, label: expect.any(String), detail: 'Board "roadmap"' });
+  expect(pageChip).toEqual({ plugin: 'vision-board', kind: 'board', ref: { board: 'roadmap', head: SHOWN }, label: expect.any(String), detail: 'Board "roadmap"' });
 
   // Send: the selected card is the chat's chip already; Send goes through it, then the send act through `api`.
   await a.first().click();
@@ -56,7 +56,7 @@ test('the board mounts in a fake host: it draws, Send goes through the chat with
   expect(await call(page, (h) => h.status('b').selection), 'the other board keeps its own selection').toBe('');
   const problem = await call(page, (h) => h.send('a'));
   const rec = await call(page, (h) => h.record('a'));
-  expect(rec.chips.selection).toEqual(expect.objectContaining({ plugin: 'board', kind: 'selection', ref: expect.objectContaining({ board: 'roadmap' }), label: '1 selected' }));
+  expect(rec.chips.selection).toEqual(expect.objectContaining({ plugin: 'vision-board', kind: 'selection', ref: expect.objectContaining({ board: 'roadmap' }), label: '1 selected' }));
   expect(rec.sends).toEqual([expect.arrayContaining([expect.objectContaining({ kind: 'selection' })])]);
   expect(rec.calls).toContain('POST boards/roadmap/act');
   expect(problem).toBe('The fake host refuses it.');

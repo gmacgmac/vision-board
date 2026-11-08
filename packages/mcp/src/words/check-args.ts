@@ -1,5 +1,5 @@
 // Words: check-args. How a tool call's arguments are refused.
-// Keys: board.check-args.<name>. Plain code: no imports but other words files and types.
+// Keys: vision-board.check-args.<name>. Plain code: no imports but other words files and types.
 
 // ---- check-args.ts
 export const theArguments = 'the arguments';
