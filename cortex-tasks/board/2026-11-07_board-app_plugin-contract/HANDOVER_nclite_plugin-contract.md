@@ -11,10 +11,32 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `ac4bba01e36f049468426ed67e75b206ca449211` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" ac4bba01e36f049468426ed67e75b206ca449211`
+- **Commit**: `5fdbda835573bbc8a8802410f3c35f82826480ba` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" 5fdbda835573bbc8a8802410f3c35f82826480ba`
 - **Decisions**: the board's D-096, D-097 and D-098 (`docs/decisions.md`); D-098 replaces D-097 point 1, the two-field
   entry, with steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
+
+**New in `5fdbda8`: your bug report of 2026-11-08, a deleted data folder.** With your flags, deleting the data folder
+or its ledger while the engine ran made every later write a 409 `conflict` ("The ledger file this board read has gone…")
+until a restart. Now the engine recovers at its next call, with no restart and nothing you do:
+- **The folder or the ledger file deleted, or an empty folder put in its place**: a new, empty folder. The next write
+  (the bot's or the person's) goes and makes them again; `watch` says `{ head: 0 }` first, so the view reads from the
+  start; `get_board` reads what is on disk now.
+- **The folder put back from a copy, or replaced by another folder**: read again from the start, as before, and said as
+  `{ head: 0 }`.
+- **The same with `followOtherWriters` on.** The fix is in the ledger the engine opens itself (`apps/board/server/ledger.ts`
+  `openLedger`, the new option `startAgainWhenGone`, passed by `engine.ts` `createEngine`), whatever the flags.
+- **Standalone keeps today's message, on purpose.** The standalone server opens its own ledger and keeps the refusal:
+  there a gone file is most often one another server moved into a ledger folder (`main/`), and writing anew would start
+  a second ledger beside the moved one; its person has "Open folder". Your engine never takes that path.
+- **Tests**: `apps/board/tests/engine-folder-gone.test.ts` runs the engine with your three flags, `followOtherWriters` off
+  and on, for each case (folder deleted, ledger file deleted, folder replaced with an older copy, a new empty folder):
+  the bot's `write_board` and the person's `PUT boards/<id>` go, the ledger file holds what they wrote, `watch` said
+  `{ head: 0 }`, and `get_board` reads the disk. Also the person's write first, a folder from elsewhere, and an empty
+  ledger file deleted. All but the older-copy case failed before the fix. `tests/plugin/engine-folder-gone.spec.ts` runs
+  the deleted and older-copy cases on the built bundle you vendor.
+- **No seam or flag change**: the seam's types are unchanged (the build checks their hash), SEAM stays 2, and no flag was
+  added or changed. Nothing else changes on your side.
 
 In the same change, in this order:
 
@@ -133,7 +155,7 @@ and its page strips them from the address and its storage (`withoutHostFlags`; t
   needs a pseudo-class or an outside attribute first as a nested rule round `&`. Your `checkStylesheet` does not look
   inside nested rules, and neither does the board's (`.vb-x { :root:has(&) .app-nav { … } }` passes both). Every subject
   in the board's sheet is a `vb` element or class, by review. If you want that enforced, it is your check to tighten.
-- **WebKit.** The plugin specs pass in WebKit 26.6 too, 104 of 104 (`npm run test:plugin:webkit`). That run found three
+- **WebKit.** The plugin specs pass in WebKit 26.6 too, 106 of 106 (`npm run test:plugin:webkit`). That run found three
   things Chromium hid, now fixed: two resize-observer loops (the toolbar's width, the access strip's height), which WebKit
   reports as page errors, and focus lost to the page when Reply's close button is clicked (WebKit gives a clicked button
   no focus). The rule older WebKit (before Safari 17.2, macOS 14.0 and 14.1) enforces on nested selectors is held by
