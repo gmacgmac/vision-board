@@ -9,8 +9,8 @@ and says which tests run your own code.
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `<COMMIT>` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" <COMMIT>`
+- **Commit**: `da6cbce72abafc2b4307a6032d4a572b65d2c197` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" da6cbce72abafc2b4307a6032d4a572b65d2c197`
 - **Decision**: the board's D-096 (`docs/decisions.md`). **Seam**: **2** (breaking).
 
 In the same change, in this order:
