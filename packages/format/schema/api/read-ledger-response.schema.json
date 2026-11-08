@@ -25,6 +25,10 @@
     },
     "readOnly": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/readOnly"
+    },
+    "oneAgent": {
+      "const": true,
+      "description": "The engine takes every agent as its folder's one agent (the `singleAgent` flag, a host's): the person's page then gives the bot every answer, not one agent's. Left out otherwise."
     }
   },
   "unevaluatedProperties": false

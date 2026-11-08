@@ -12,9 +12,12 @@ import { pluginTypes, seamProblem, typesHash } from '../bin/plugin-types.ts';
 import { SEAM, SEAM_TYPES, TYPES_FILE } from '../plugin/seam.ts';
 import { manifestOf } from '../plugin/manifest.ts';
 import { FLAGS } from '#format';
+import type { AnswersAck } from '#actions';
+import type { ChatLine } from '../src/board/host.ts';
 import { CHANGE_BOUNDS, CHANGE_META, changeOf, createEngine } from '../server/engine/index.ts';
 import { toolRows } from '../server/format-files.ts';
-import * as contract from '../../../tests/plugin/contract/plugin-host.ts';
+import * as contract from '../../../tests/plugin/contract/nclite/shared/plugin-host.ts';
+import { checkRef, storedChangeOf } from '../../../tests/plugin/contract/nclite/shared/plugin-checks.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const dts = pluginTypes();
@@ -108,8 +111,8 @@ function problems(types: string, host = HOST): string[] {
   });
 }
 
-/** The contract's copy (tests/plugin/contract/, a test fixture: shipped code never imports it). */
-const CONTRACT = fs.readFileSync(path.join(ROOT, 'tests/plugin/contract/plugin-host.ts'), 'utf8');
+/** The contract's copy (tests/plugin/contract/nclite/, a test fixture: shipped code never imports it). */
+const CONTRACT = fs.readFileSync(path.join(ROOT, 'tests/plugin/contract/nclite/shared/plugin-host.ts'), 'utf8');
 
 /** What the compiler says of `check`, compiled against `plugin.d.ts` text and the contract's copy beside it. */
 function contractProblems(types: string, check: string): string[] {
@@ -215,26 +218,9 @@ export const meta = (change: { words: string; count: number; subject: string; re
 export const manifest: PluginManifest = ${manifest};
 `;
 
-const isCount = (n: unknown, most = Number.MAX_SAFE_INTEGER) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 && n <= most;
-/** A ref within the contract's REF_LIMITS: few keys of its pattern, short strings, short lists, short JSON. */
-function fitsRef(ref: unknown): boolean {
-  const L = contract.REF_LIMITS;
-  if (typeof ref !== 'object' || ref === null || Array.isArray(ref)) return false;
-  const value = (v: unknown): boolean => (typeof v === 'string' ? v.length <= L.maxString : typeof v === 'number' ? Number.isSafeInteger(v) : typeof v === 'boolean');
-  const entries = Object.entries(ref);
-  return entries.length <= L.maxKeys && JSON.stringify(ref).length <= L.maxChars && entries.every(([k, v]) => new RegExp(L.keyPattern).test(k)
-    && (Array.isArray(v) ? v.length <= L.maxItems && v.every((x) => typeof x !== 'boolean' && value(x)) : value(v)));
-}
-/** Whether a tool result's `_meta` holds a change the contract stores, by its rules: a words key the manifest lists for
- * the plugin `id`, a count, a plain subject within CHANGE_LIMITS, a reveal that is a ref. */
-function storesChange(meta: unknown, id: string, changeWords: readonly string[]): boolean {
-  const c = (meta as Record<string, unknown> | undefined)?.[contract.CHANGE_META] as Record<string, unknown> | undefined;
-  if (typeof c !== 'object' || c === null) return false;
-  const { words, count, subject, reveal } = c;
-  return typeof words === 'string' && words.startsWith(`${id}.`) && changeWords.includes(words) && isCount(count, contract.CHANGE_LIMITS.maxCount)
-    && typeof subject === 'string' && subject.length <= contract.CHANGE_LIMITS.subjectChars && !/[\p{Cc}\p{Cf}]/u.test(subject)
-    && (reveal === undefined || fitsRef(reveal));
-}
+/** The board's change line moved under the contract's key: the one known difference (tests/plugin/contract/README.md),
+ * until nclite renames its key to the board's in the change that vendors it. Then this goes, and `meta` is read as is. */
+const underContractKey = (meta: Record<string, unknown> | undefined) => ({ [contract.CHANGE_META]: meta?.[CHANGE_META] });
 
 test('the types satisfy the host contract: the built `mount` is a `Mount<HTMLElement>`, `createEngine` a `CreateEngine`, the shared shapes the contract\'s, the manifest a `PluginManifest`, and a write\'s change line one the contract stores', async () => {
   const dir = makeTempDir('vb-plugin-contract-');
@@ -254,16 +240,20 @@ test('the types satisfy the host contract: the built `mount` is a `Mount<HTMLEle
       assert.notDeepEqual(contractProblems(drifted, CHECK(JSON.stringify(manifest))), [], `a ${cut} that drifts from the contract fails`);
     }
 
-    // The bounds are the contract's, and the board's change line is one it stores, by the contract's worked example's rules.
-    assert.equal(CHANGE_META, contract.CHANGE_META);
+    // The bounds are the contract's, and the board's change line is one the host stores, by the host's own check.
+    assert.equal(contract.CHANGE_META, 'nclite/change', 'the one known difference; see tests/plugin/contract/README.md');
     assert.deepEqual(CHANGE_BOUNDS, { refChars: contract.REF_LIMITS.maxChars, refItems: contract.REF_LIMITS.maxItems, refString: contract.REF_LIMITS.maxString, maxCount: contract.CHANGE_LIMITS.maxCount, subjectChars: contract.CHANGE_LIMITS.subjectChars });
-    assert.ok(storesChange(contract.CHANGE_EXAMPLES.meta, 'example', ['example.change.edited']), 'the check takes the contract\'s example');
-    for (const none of contract.CHANGE_EXAMPLES.none) assert.equal(storesChange(none, 'example', ['example.change.edited']), false, JSON.stringify(none));
+    const stored = (meta: Record<string, unknown> | undefined) => storedChangeOf(manifest.id, underContractKey(meta), manifest.changeWords);
     const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: 'Contract test' } }))!.body as { agent: string };
     const items = [{ type: 'board', title: 'Plans' }, { type: 'region', region: { id: 'now', title: 'Now', mode: 'grid' } }, { type: 'node', node: { region: 'now', kind: 'question', title: 'Ship on Friday?' } }];
     const wrote = await engine.tools.call('write_board', { board: 'plans', items }, { caller: { by: 'agent', agent: joined.agent } });
-    assert.ok(storesChange(wrote._meta, manifest.id, manifest.changeWords), JSON.stringify(wrote._meta));
+    assert.equal(stored(wrote._meta), JSON.stringify({ v: 2, plugin: manifest.id, ...(wrote._meta?.[CHANGE_META] as object) }), JSON.stringify(wrote._meta));
+    assert.equal(storedChangeOf(manifest.id, wrote._meta, manifest.changeWords), null, 'under the board\'s key, the host as it is stores nothing: why the rename is part of vendoring');
     const most = changeOf('a'.repeat(64), Array.from({ length: 500 }, (_, i) => 100000 + i));
-    assert.ok(storesChange({ [CHANGE_META]: most }, manifest.id, manifest.changeWords), 'at the bounds, the reveal left out where it would not fit');
+    assert.notEqual(stored({ [CHANGE_META]: most }), null, 'at the bounds, the reveal left out where it would not fit');
+    // The answers ack and a chat line's ref, at the longest board id, are refs the host's own check takes.
+    const ack: AnswersAck = { board: 'a'.repeat(64), head: Number.MAX_SAFE_INTEGER };
+    const line: ChatLine = { board: 'a'.repeat(64), cards: Number.MAX_SAFE_INTEGER };
+    for (const ref of [ack, line, {}]) assert.deepEqual(checkRef(ref), ref, JSON.stringify(ref));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

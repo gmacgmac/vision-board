@@ -265,3 +265,12 @@ test('singleAgent: the lock and the person\'s acts: a locked board and a read-on
     assert.equal(r?.status, 403, `${body.action} is the person's`);
   }
 });
+
+test('singleAgent: the page\'s ledger read says so (`oneAgent`), so the view takes it from the engine; off, it says nothing', async () => {
+  const query = new URLSearchParams({ after: '0' });
+  const one = (await open(folder(), ONE).route({ method: 'GET', path: 'ledger', query }, { caller: PERSON }))!;
+  assert.equal(one.status, 200);
+  assert.equal((one.body as { oneAgent?: true }).oneAgent, true);
+  const plain = (await open(folder()).route({ method: 'GET', path: 'ledger', query }, { caller: PERSON }))!;
+  assert.equal('oneAgent' in (plain.body as object), false);
+});

@@ -1,26 +1,39 @@
-# The host contract, a copy for the tests
+# The host contract and its checks, copied for the tests
 
-`plugin-host.ts` here is a copy of a host's plugin contract, the shapes the board's seam is built to
-(`docs/specification/plugin.md`). It is a **test fixture, not the spec**: the board's own types are made from its code
-(`plugin.d.ts`, § The types and the seam version), and the tests compile them against this copy, so the day the two
-drift, a test fails. Nothing in `apps/` or `packages/` imports it.
+`nclite/` holds byte-for-byte copies of a host's plugin contract and the code the host runs to check a plugin against it,
+at the same paths as in the host's repo, so their imports resolve unchanged. It is a **test fixture, not the spec**: the
+board's own types are made from its code (`plugin.d.ts`, `docs/specification/plugin.md` § The types and the seam
+version), and the tests run the host's own checks on the board's build, so the day the two drift, a test fails. Nothing
+in `apps/` or `packages/` imports it.
 
-| | |
-|---|---|
-| Source | `shared/plugin-host.ts` in the nclite repo (`/Users/dev/AI/nclite`), read only |
-| nclite commit | `a975c1ca361645d3c2e854a91d88fe7a254901f0` (HEAD when copied, 2026-11-07; the file last changed in `da90f265d26bba450cc193a356ea54ecc83aa02a`) |
-| Source sha256 | `63622aada38a5024b2638754dca79ba656c2643af6cde658e3c1bce7a1ffe275` |
-| The one change | `CHANGE_META` is `'plugin/change'`, where the source has `'nclite/change'`: the change key is neutral (the plugin-contract set's PLAN, Decision 5), and the handover asks nclite to rename it. The line carries a comment saying so. Nothing else differs |
+Source: the nclite repo (`/Users/dev/AI/nclite`), read only. nclite HEAD when copied: `4356abee6a7fa57398b0c13f1e4595cb5aba84c6`
+(2026-11-08).
 
-`plugin-host.test.ts` holds this table: the copy with that one line put back is the source's bytes, by the sha256 above,
-and the key is `plugin/change`.
+| Copy | Source sha256 | Last changed in nclite |
+|---|---|---|
+| `nclite/shared/plugin-host.ts` | `63622aada38a5024b2638754dca79ba656c2643af6cde658e3c1bce7a1ffe275` | `da90f265` |
+| `nclite/shared/plugin-checks.ts` | `db84025ebff710ad560d45bb74f8824efe790e659fbdf94755850b0f22a5f9d6` | `da90f265` |
+| `nclite/engine/plugins/stylesheet.ts` | `6162e0e30cbf078375dcebc9e24b49debd4e582af6f269afa3365494954e92c9` | `673ff140` |
+| `nclite/engine/plugins/provenance.ts` | `6efaa8ae7c9c66e4353bfd530eb057c72337e52b3a2408a90d221294144278ec` | `673ff140` |
+| `nclite/engine/words/plugins.ts` | `6e1912fe725904777296fba04d174db155437a75e9f5d5611a736e01de547833` | `da90f265` |
+
+**One stand-in, not a copy**: `nclite/shared/plugin-adapters.ts` holds only what the handover asks nclite to keep of
+the board's entry, its icon and its stylesheet's scope (`board: { icon: 'board', css: { scope: 'vb' } }`), so `checkPluginStylesheet` runs as the
+host's loader will. The real file imports the board's seam-1 adapter, which nclite deletes when it vendors this build.
+
+**One known difference, held by a test, never by an edit**: the board writes its change line under `plugin/change`
+(`apps/board/server/engine/tools.ts` `CHANGE_META`); the contract still says `nclite/change`. nclite renames it in the
+same change that vendors this build (the handover). `plugin-host.test.ts` "the one known difference" fails the day the
+copy says `plugin/change`: then delete that test and the line in `apps/board/tests/plugin-types.test.ts` that moves the
+change line under the contract's key.
+
+`plugin-host.test.ts` holds this table: every copy is its source's bytes, by the sha256 above.
 
 ## Refreshing it
 
-1. `cp /Users/dev/AI/nclite/shared/plugin-host.ts tests/plugin/contract/plugin-host.ts`
-2. Make the one change again: the `CHANGE_META` line exactly as it stands in the copy you replaced (until nclite has
-   renamed the key; then there is no change, and this README and the test say so).
-3. Set the commit (`git -C /Users/dev/AI/nclite rev-parse HEAD`) and the sha256 (`shasum -a 256` of the source) above.
-4. Run `node --test tests/plugin/contract/plugin-host.test.ts`, then `npm test` and `npm run test:plugin`. A type test that
+1. Copy each file in the table from the nclite repo to the same path under `nclite/`.
+2. Set the HEAD (`git -C /Users/dev/AI/nclite rev-parse HEAD`), each sha256 (`shasum -a 256`) and each last change
+   (`git -C /Users/dev/AI/nclite log -1 --format=%h -- <file>`) above.
+3. Run `node --test tests/plugin/contract/plugin-host.test.ts`, then `npm test` and `npm run test:plugin`. A type test that
    fails is the contract moving under the board: a member taken out or renamed, or a bound made tighter, raises the
-   board's `SEAM` (`apps/board/plugin/seam.ts`).
+   board's `SEAM` (`apps/board/plugin/seam.ts`). A check that fails is the host asking more of the board.

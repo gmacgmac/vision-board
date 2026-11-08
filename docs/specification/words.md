@@ -127,7 +127,7 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/server/words/apps-supervisor.ts` | `apps-supervisor` | The app supervisor's refusals: an app that crashed, timed out or was stopped, and the tool checks. |
 | `apps/board/server/words/bin.ts` | `bin` | The board's command-line tools. |
 | `apps/board/server/words/http.ts` | `http` | The refusals every call can meet: the path, method, body, caller and origin. |
-| `apps/board/server/words/plugin-tools.ts` | `plugin-tools` | The edits that make a tool's description true for a bot a host names (no secret, no `list_apps`); the standalone bot reads the table's words as they are. |
+| `apps/board/server/words/plugin-tools.ts` | `plugin-tools` | The edits that make a tool's description and the MCP instructions true for a bot a host names (no secret, no `list_apps`; with `botToolRules`, no `wait`, no re-reading what the Send message lists, and the quiet rule in the instructions; with `singleAgent`, no grants and `request_grant` saying it is not needed); the standalone bot reads the table's words as they are. |
 | `apps/board/server/words/schema.ts` | `schema` | How a schema failure is told to the agent. |
 | `apps/board/server/words/server-chat.ts` | `server-chat` | The chat session: what the agent is told, and the refusals a chat call gets. |
 | `apps/board/server/words/server-common.ts` | `server-common` | Sentences more than one area of the server says, said once. |

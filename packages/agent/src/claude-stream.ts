@@ -31,14 +31,15 @@ function resultText(content: unknown): string {
   return content.map((b) => (isRecord(b) && b.type === 'text' && typeof b.text === 'string' ? b.text : '')).join('');
 }
 
-/** The cards a board write drew or changed, and the head after it, from its result's JSON. */
+/** The cards a board write drew or changed, and the head after it, from its result's JSON. A retry's replay
+ * (`replayed: true`) changed nothing, so its card is not counted. */
 export function boardWriteSummary(content: unknown): { cards: number[]; head?: number } {
   let answer: unknown;
   try { answer = JSON.parse(resultText(content)); } catch { return { cards: [] }; }
   if (!isRecord(answer)) return { cards: [] };
   const results = Array.isArray(answer.results) ? answer.results : [];
   const cards = [...new Set(results.flatMap((r) =>
-    isRecord(r) && r.ok === true && Number.isInteger(r.n) && (r.n as number) >= 1 ? [r.n as number] : []))].slice(0, MAX_CARDS);
+    isRecord(r) && r.ok === true && r.replayed !== true && Number.isInteger(r.n) && (r.n as number) >= 1 ? [r.n as number] : []))].slice(0, MAX_CARDS);
   const head = Number.isInteger(answer.head) && (answer.head as number) >= 0 ? answer.head as number : undefined;
   return { cards, ...(head !== undefined && { head }) };
 }

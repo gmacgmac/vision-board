@@ -51,7 +51,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const { stage, world } = els;
   const { host, io, status } = b;
   const on = (f: FlagName) => flagOf(host, f);
-  const chatStatus = chatStatusOf(host); // no `agent` under singleAgent
+  const chatStatus = chatStatusOf(host, () => live.oneAgent); // no `agent` while the engine runs singleAgent
   /** How this board's Markdown renders, on every surface that draws it. */
   const markdown = markdownOf(host);
   const vp = new Viewport(stage, world, on('hideControlsZoomedOut')); // N13, rule 12

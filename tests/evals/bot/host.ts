@@ -112,6 +112,7 @@ export async function startEvalHost(o: { dir: string; port: number; dry: boolean
       await act(board, { action: 'send', head: said.head });
       return String(said.text ?? '');
     },
+    async board(board, title) { await route('PUT', `boards/${board}`, { title }); },
   };
 
   return {

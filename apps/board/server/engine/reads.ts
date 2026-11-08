@@ -147,15 +147,16 @@ const checkResponses: Op = async (ctx) => {
 };
 
 /** Ledger lines after `after`, oldest first, optionally one board's, as the file holds them (cards
- * by identity, flags included): the page's only (api.md 130). The standalone host sends `events`
+ * by identity, flags included): the page's only (api.md 130). `oneAgent` tells the page the engine runs `singleAgent`, so the
+ * view takes it from the engine, never from a second setting (plugin.md § What the host gives). The standalone host sends `events`
  * as JSON Lines when the caller asks for `application/jsonl` (api.md 44). */
-const readLedger: Op = ({ params, ledger, readOnly }) => {
+const readLedger: Op = ({ params, ledger, readOnly, flags }) => {
   const s = ledger.state();
   const board = params.board === undefined ? undefined : personBoard(s, params.board);
   const after = Number(params.after);
   const lines = ledger.events().filter((e) => e.seq > after && (board === undefined || eventBoard(s, e) === board)).map(toLine);
   const { list, more } = page(lines, params.limit);
-  return reply(200, { events: list, head: s.seq, ...(more && { more }), ...readOnlyMark({ readOnly }) });
+  return reply(200, { events: list, head: s.seq, ...(more && { more }), ...readOnlyMark({ readOnly }), ...(flagOn('singleAgent', flags) && { oneAgent: true }) });
 };
 
 export const READS = {

@@ -294,19 +294,34 @@ test('chat.status: now drives the working mark; held and staged drive Send; agen
   await expect.poll(answers).toEqual(expect.objectContaining({ kind: 'answers', ref: expect.objectContaining({ board: 'plans', agent: (host.bot as { agent: string }).agent }) }));
 });
 
-test('chat.status: singleAgent: with the setting on, `agent` is ignored: the answers chip holds every answer, for no agent, and lights Send', async ({ page, host }) => {
+test.describe('the engine runs singleAgent', () => {
+  test.use({ hostOptions: { flags: { singleAgent: true }, bot: 'bot-0123456789abcdef' } });
+  test('chat.status: singleAgent: the view follows the engine, with no setting of its own: `agent` is ignored, the answers chip holds every answer, for no agent, and lights Send', async ({ page, host }) => {
+    await drawPlans(host);
+    await openHost(page, host);
+    await drawn(page);
+    // The host's derived id, which no ledger line carries: scoped to it, the chip would hold nothing.
+    await drive(page, 'status', { agent: 'bot-0123456789abcdef' });
+    const send = page.locator('.host-root #vb1-send');
+    await expect(send).toHaveAttribute('aria-disabled', 'true');
+    await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
+    const answers = async () => (await drive(page, 'record')).chips.find((c: { kind: string }) => c.kind === 'answers');
+    await expect.poll(async () => (await answers())?.ref).toEqual({ board: 'plans', since: expect.any(Number) });
+    await expect(send, 'the answer lights Send').not.toHaveAttribute('aria-disabled', 'true');
+    expect((await answers()).label).toBe('1 answer');
+  });
+});
+
+test('chat.status: a `singleAgent` view setting alone changes nothing: the engine is the one source', async ({ page, host }) => {
   await drawPlans(host);
   await openHost(page, host, { settings: { singleAgent: true } });
   await drawn(page);
-  // An id no ledger line carries, as a host's derived id is: without the setting the chip would hold nothing for it.
   await drive(page, 'status', { agent: 'bot-0123456789abcdef' });
-  const send = page.locator('.host-root #vb1-send');
-  await expect(send).toHaveAttribute('aria-disabled', 'true');
-  await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
-  const answers = async () => (await drive(page, 'record')).chips.find((c: { kind: string }) => c.kind === 'answers');
-  await expect.poll(async () => (await answers())?.ref).toEqual({ board: 'plans', since: expect.any(Number) });
-  await expect(send, 'the answer lights Send').not.toHaveAttribute('aria-disabled', 'true');
-  expect((await answers()).label).toBe('1 answer');
+  const ack = page.locator('.host-root vb-node').first().locator('button[data-act="ack"]');
+  await ack.click();
+  await expect(ack, 'the answer is in').toHaveAttribute('aria-pressed', 'true');
+  await drive(page, 'status', {}); // one more status change, so the chips are worked out again after the answer
+  expect((await drive(page, 'record')).chips.some((c: { kind: string }) => c.kind === 'answers'), 'scoped to an agent with no cards: no answers chip').toBe(false);
 });
 
 test('chat.status: with no staged, Send is enabled by the board\'s own chip until it has gone; a host that gives staged has the full say', async ({ page, host }) => {

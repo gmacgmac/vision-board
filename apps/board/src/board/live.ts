@@ -9,7 +9,9 @@
 // only when the ledger went back (another project, a reset) or a line has a format the page cannot
 // apply. Reloading the page (a rebuilt page, another folder) is the standalone host's (page-host.ts). Every read
 // also says whether the ledger is open read-only (`readOnly`, D-085 4), so any host's board learns it from its reads;
-// a change of it alone is handed on as an empty batch, so the board draws its controls again. A change event with
+// a change of it alone is handed on as an empty batch, so the board draws its controls again. It says too whether the
+// engine takes every agent as its folder's one agent (`oneAgent`, the engine's `singleAgent`), so the view never needs a
+// second setting for it. A change event with
 // head 0 says the ledger file was replaced (a git pull, a sync, D-085 6): the whole ledger is read again.
 import type { LedgerEvent, LedgerLine } from '#format';
 import type { LedgerState } from '#actions';
@@ -26,6 +28,8 @@ export interface Live {
   readonly state: LedgerState | null;
   /** The ledger is open read-only, as the last read said (D-085 4). */
   readonly readOnly: boolean;
+  /** The engine takes every agent as the folder's one agent, as the last read said (`singleAgent`). */
+  readonly oneAgent: boolean;
   /** Read and fold the whole ledger (a full fetch). */
   load(): Promise<void>;
   /** Read the lines after the held head and apply them. Calls made while a read is in flight
@@ -54,12 +58,14 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
   let reading: Promise<void> | null = null;
   let again = false;
   let readOnly = false;
+  let oneAgent = false;
   /** The next read is from the start: the file was replaced. */
   let fromZero = false;
   /** What a read said of read-only; true when that changed. */
-  const heard = (page: { readOnly?: true }): boolean => {
+  const heard = (page: { readOnly?: true; oneAgent?: true }): boolean => {
     const was = readOnly;
     readOnly = page.readOnly === true;
+    oneAgent = page.oneAgent === true;
     return was !== readOnly;
   };
 
@@ -130,6 +136,7 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
   return {
     get state() { return state; },
     get readOnly() { return readOnly; },
+    get oneAgent() { return oneAgent; },
     load,
     sync,
     async own(line, board) {

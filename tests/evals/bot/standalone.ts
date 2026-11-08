@@ -74,6 +74,7 @@ export async function startStandaloneHost(o: { base: string; port: number; flags
     async mark(b, n, mark) { await act(b, n, { action: mark }); },
     async note(b, n, text) { await act(b, n, { action: 'comment', text }); return events().filter((e) => e.action === 'comment').at(-1)!.seq; },
     async send() { throw new Error('standalone: no Send; the person writes in their own chat'); },
+    async board() { throw new Error('standalone: no scenario has the person make a board'); },
   };
 
   return {

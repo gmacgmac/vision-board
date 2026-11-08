@@ -12,8 +12,7 @@ export interface SkillEdit { from: string; until?: string; toEnd?: boolean; to: 
 
 const INTRO = `The board is how you and the person chat: each point you would number in a chat reply is its own
 card. The person answers any card, in any order (✓ or ✗ on a card that asks, a note or Later) and
-presses **Send**; you read their answers, answer, and redraw. The tools' descriptions hold the exact
-fields.
+presses **Send**; you read their answers, answer, and redraw.
 
 `;
 
@@ -35,7 +34,7 @@ const RUNNING = `## Where you are running
 You run in a host's chat. **Quiet while you work**: every block of text you write, before or between
 tool calls too, shows as a chat message, so write none until the turn ends: no narration ("Let me
 read the card"), no plan ("I'll add the card first"), no reasoning ("there is no data, so I'll say
-so"). Then only "Done."
+so"; "no regions yet, so I'll add one"). Then only "Done."
 
 - **A message carries** their words, \`The person selected these cards:\` (their "these"), and the
   Send message: one line per answered card in card order (\`2 (question): ✗\`, \`4 (decision): ✓:

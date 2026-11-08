@@ -775,7 +775,7 @@ Example:
 
 `GET /api/ledger` · who: the person (the board page cookie) · not offered to agents (`x-agent: false`)
 
-Read raw ledger lines after a position, oldest first, from every writer: the person's page reads the whole ledger once and folds it. Pass `after` (a `seq`, 0 for the start), `limit` (default 100, at most 500) and optionally `board` to keep only one board's lines. It returns JSON `{ events, head, more?, readOnly? }` (`readOnly: true` while the ledger is open read-only), or just the lines as `application/jsonl` when you ask for that; a jsonl reader pages by the last line's `seq` and stops on an empty page. The lines are as the file holds them: a card is named by its ledger number, and the person's private flags are there. So it is the person's alone, not an agent operation: an agent reads `check_responses`, `get_board`, `show_node` and `list_open`, which name cards by their board number and never show a flag.
+Read raw ledger lines after a position, oldest first, from every writer: the person's page reads the whole ledger once and folds it. Pass `after` (a `seq`, 0 for the start), `limit` (default 100, at most 500) and optionally `board` to keep only one board's lines. It returns JSON `{ events, head, more?, readOnly?, oneAgent? }` (`readOnly: true` while the ledger is open read-only; `oneAgent: true` when the engine takes every agent as the folder's one agent), or just the lines as `application/jsonl` when you ask for that; a jsonl reader pages by the last line's `seq` and stops on an empty page. The lines are as the file holds them: a card is named by its ledger number, and the person's private flags are there. So it is the person's alone, not an agent operation: an agent reads `check_responses`, `get_board`, `show_node` and `list_open`, which name cards by their board number and never show a flag.
 
 ### Inputs
 
@@ -797,6 +797,7 @@ Media type `application/json`.
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `more` | `true` | no | Present, and true, only when there is more to read or the answer repeats an earlier one |
 | `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
+| `oneAgent` | `true` | no | The engine takes every agent as its folder's one agent (the `singleAgent` flag, a host's): the person's page then gives the bot every answer, not one agent's. Left out otherwise. |
 
 Example:
 

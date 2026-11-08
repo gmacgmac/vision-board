@@ -9,6 +9,7 @@ import { ledgerPicture } from './ledger-picture.ts';
 import { newCardNumber } from './new-card-number.ts';
 import { otherLedger } from './other-ledger.ts';
 import { ownBoard } from './own-board.ts';
+import { personBoard } from './person-board.ts';
 import { picture } from './picture.ts';
 import { readOnly } from './read-only.ts';
 import { refusals } from './refusals.ts';
@@ -20,7 +21,7 @@ import { whereCardsStand } from './where-cards-stand.ts';
 
 export const SCENARIOS: readonly Scenario[] = [
   draw, sendRound, picture, refusals, wait, answeredNote, ownBoard, twoTurns, readOnly,
-  whereCardsStand, newCardNumber, insertStep, summaryCard,
+  whereCardsStand, newCardNumber, insertStep, summaryCard, personBoard,
 ];
 export const STANDALONE: readonly Scenario[] = [ledgerPicture, otherLedger, joinLedger];
 

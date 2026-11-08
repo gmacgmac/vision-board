@@ -70,6 +70,8 @@ export interface Person {
   note(board: string, n: number, text: string): Promise<number>;
   /** Send: the answers chip resolved as a host does, and the Send recorded; answers the message's text. */
   send(board: string): Promise<string>;
+  /** A board the person makes, as the board page does (`put_board`): no agent made it. */
+  board(board: string, title: string): Promise<void>;
 }
 
 /** What setup and turns get: the bot's own tools as the host's earlier turn (not logged as the bot's), the person,
@@ -138,6 +140,8 @@ export interface Scenario {
   setup?: (s: Stage) => Promise<void>;
   turns: Turn[];
   checks: Check[];
+  /** Engine flags this scenario runs with, over the eval's (`--flags`): one about a host's switch holds it on. */
+  flags?: Record<string, boolean>;
   /** `good` keeps every rule; `bad` breaks the ones the dry test expects to see fail. */
   fake: { good: FakeTurn[]; bad?: FakeTurn[]; badFails?: string[] };
 }

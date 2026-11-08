@@ -84,7 +84,8 @@ async function pluginHost(o: EvalOptions, base: string): Promise<BotHost> {
 async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: number): Promise<{ record: RunRecord; problem: string | null }> {
   mkdirSync(runDir, { recursive: true });
   const base = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'vb-eval-')));
-  const host = o.standalone ? await startStandaloneHost({ base, port: o.port, ...(o.flags && { flags: o.flags }) }) : await pluginHost(o, base);
+  const flags = s.flags ? { ...o.flags, ...s.flags } : o.flags;
+  const host = o.standalone ? await startStandaloneHost({ base, port: o.port, ...(flags && { flags }) }) : await pluginHost({ ...o, ...(flags && { flags }) }, base);
   const { dir } = host;
   try {
     const facts: Record<string, number | string> = { boardDir: dir };

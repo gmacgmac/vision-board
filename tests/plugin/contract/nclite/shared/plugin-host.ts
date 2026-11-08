@@ -361,7 +361,7 @@ export type Vendored = Readonly<Record<string, string>>;
 /* ── The change line ──────────────────────────────────────────────────────────────────────────────────────────────── */
 
 /** The `_meta` key of a tool result that names what the call changed. */
-export const CHANGE_META = 'plugin/change'; // THE ONE CHANGE from the source, which says 'nclite/change' (README.md).
+export const CHANGE_META = 'nclite/change';
 
 /**
  * What a write says it changed, under {@link CHANGE_META}: a words key of the plugin's (one its manifest's `changeWords`

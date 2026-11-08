@@ -12,6 +12,7 @@
 // and `join` (the host says who is calling; its `route` still takes `join`, to register its bot once). With the
 // `botToolRules` flag (on), an input the table gives other hosts only (`inputHosts`: `check_responses`'s `wait`) is
 // left out of the listed schema and refused with words when sent, and `instructions` holds the plugin's (words/plugin-tools.ts).
+// With `singleAgent` (a host's one bot per folder), the instructions and descriptions lose the grant steps too.
 import { BOARD_WRITE, boardWriteSummary } from '#agent';
 import type { Ref } from '#actions';
 import type { FlagOverrides, OperationId, ProblemDocument } from '#format';
@@ -23,7 +24,8 @@ import { problem } from '../problem.ts';
 import { toolRows } from '../format-files.ts';
 import { foreignSchemas } from '../schema.ts';
 import * as httpWords from '../words/http.ts';
-import { descriptionEdits, inputEdits, inputRefusals, instructionEdits, ruleEdits } from '../words/plugin-tools.ts';
+import type { DescriptionEdit } from '../words/plugin-tools.ts';
+import { descriptionEdits, inputEdits, inputRefusals, instructionEdits, ruleEdits, singleAgentEdits, singleAgentInstructionEdits } from '../words/plugin-tools.ts';
 import type * as changeText from '../../plugin/words/change.ts';
 
 /** One row of the tool table, as the engine reads it. */
@@ -63,7 +65,7 @@ export interface EngineTools {
   list(): readonly ListedTool[];
   call(name: string, input: Record<string, unknown>, ctx?: ToolContext): Promise<ToolResult>;
   /** What the MCP server tells a bot before its first call (`createMcpServer({ tools })` sends it): the plugin's
-   * instructions, with no `join`, secret or `wait`. A host's own MCP server may send it too. With the `botToolRules`
+   * instructions, with no `join`, secret or `wait` (and no grants with `singleAgent`). A host's own MCP server may send it too. With the `botToolRules`
    * flag off it is left out, and `createMcpServer` sends standalone's joined text, as before. */
   readonly instructions?: string;
 }
@@ -75,16 +77,19 @@ export type RunOp = (id: OperationId, input: {
 
 const ROWS = toolRows() as readonly ToolRow[];
 
-/** `text` with each edit made, each `from` found exactly once (`what` names the text in the error). */
-const edited = (text: string, edits: readonly { from: string; to: string }[], what: string): string => edits.reduce((t, { from, to }) => {
+/** `text` with each edit made, each `from` found exactly once and cut to its `until` (`what` names the text in the error). */
+const edited = (text: string, edits: readonly Omit<DescriptionEdit, 'tool'>[], what: string): string => edits.reduce((t, { from, to, until }) => {
   if (t.split(from).length !== 2) throw new Error(`${what} must hold ${JSON.stringify(from)} once`);
-  return t.replace(from, () => to);
+  const at = t.indexOf(from);
+  const end = until === undefined ? at + from.length : until === '' ? t.length : t.indexOf(until, at + from.length);
+  if (end < 0) throw new Error(`${what} must hold ${JSON.stringify(until)} after ${JSON.stringify(from)}`);
+  return t.slice(0, at) + to + t.slice(end);
 }, text);
 
 /** A tool's description as a plugin bot reads it (words/plugin-tools.ts): what only the standalone bot has is taken
- * out, and with the rules on, what a host's bot may not do. */
-function forPlugin(row: ToolRow, rules: boolean): string {
-  const edits = [...descriptionEdits, ...(rules ? ruleEdits : [])].filter((e) => e.tool === row.name);
+ * out, with the rules on, what a host's bot may not do, and with `singleAgent` on, the grants. */
+function forPlugin(row: ToolRow, rules: boolean, single: boolean): string {
+  const edits = [...descriptionEdits, ...(rules ? ruleEdits : []), ...(single ? singleAgentEdits : [])].filter((e) => e.tool === row.name);
   return edited(row.description, edits, row.name);
 }
 
@@ -141,19 +146,20 @@ function withChange(name: string, input: Record<string, unknown>, result: ToolRe
 }
 
 /** The tools a plugin bot gets (`x-hosts`), each running through `run`; `serves` holds what the engine can run;
- * `flags`, the engine's (`botToolRules`). */
+ * `flags`, the engine's (`botToolRules`, `singleAgent`). */
 export function makeTools(serves: (id: string) => id is OperationId, run: RunOp, flags: FlagOverrides = {}): EngineTools {
   const rules = flagOn('botToolRules', flags);
+  const single = flagOn('singleAgent', flags);
   const check = foreignSchemas();
   const rows = new Map(ROWS.flatMap((row) => {
     if (!row.hosts.includes('plugin') || !serves(row.name)) return [];
     const input = givenInput(row, rules);
     return [[row.name as string, { row, id: row.name, input, gone: notGiven(row, rules), problems: check(input) }] as const];
   }));
-  const listed: readonly ListedTool[] = [...rows.values()].map(({ row, input }) => ({ name: row.name, title: row.title, description: forPlugin(row, rules), inputSchema: inputForPlugin(row, input) }));
+  const listed: readonly ListedTool[] = [...rows.values()].map(({ row, input }) => ({ name: row.name, title: row.title, description: forPlugin(row, rules, single), inputSchema: inputForPlugin(row, input) }));
   return {
     list: () => listed,
-    ...(rules && { instructions: edited(INSTRUCTIONS_JOINED, instructionEdits, 'INSTRUCTIONS_JOINED') }),
+    ...(rules && { instructions: edited(INSTRUCTIONS_JOINED, [...instructionEdits, ...(single ? singleAgentInstructionEdits : [])], 'INSTRUCTIONS_JOINED') }),
     async call(name, input, { caller, signal } = {}) {
       const tool = rows.get(name);
       if (!tool) return unknownToolResult(name);

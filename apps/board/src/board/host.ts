@@ -201,16 +201,17 @@ export const flagOf = (host: Pick<BoardHost, 'settings'>, f: FlagName): boolean 
 export const markdownOf = (host: Pick<BoardHost, 'settings' | 'imageRoute'>): MarkdownOptions =>
   ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute, more: flagOf(host, 'markdownMore') });
 
-/** The host's chat status as the board reads it: with the `singleAgent` setting on (read at mount), `agent` is ignored,
- *  so the answers chip holds every answer and every answer lights Send (plugin.md § What the host gives); else the
- *  host's own. Each member reads the host's at the time. */
-export function chatStatusOf(host: Pick<BoardHost, 'chat' | 'settings'>): ChatStatus {
+/** The host's chat status as the board reads it: while the engine takes every agent as its folder's one agent
+ *  (`oneAgent`, from the engine's reads: its `singleAgent` flag, set once, on the engine), `agent` is ignored, so the
+ *  answers chip holds every answer and every answer lights Send (plugin.md § What the host gives); else the host's own.
+ *  Each member reads the host's, and `oneAgent`, at the time. */
+export function chatStatusOf(host: Pick<BoardHost, 'chat'>, oneAgent: () => boolean): ChatStatus {
   const { chat } = host;
-  if (!flagOf(host, 'singleAgent')) return chat.status;
   return {
     get now() { return chat.status.now; },
     get held() { return chat.status.held; },
     get staged() { return chat.status.staged; },
+    get agent() { return oneAgent() ? undefined : chat.status.agent; },
     on: (listener) => chat.status.on(listener),
   };
 }

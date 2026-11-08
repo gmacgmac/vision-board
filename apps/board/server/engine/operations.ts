@@ -39,7 +39,8 @@ export interface OpCtx {
    *  no read is scoped (`scopeOf`), and every board is held. */
   one: boolean;
   /** The agent an agent operation writes as (engine.ts `callerOf`): the caller's; with `one`, the folder's one agent,
-   *  joined now when none has. Asked only once nothing else refuses the write up front, so a refused one joins nobody. */
+   *  joined now when none has. Asked only once nothing refuses the whole write up front (the lock, read-only, a missing board), so such a write joins
+   *  nobody; one whose items are each refused may still join it. */
   writer(): string;
 }
 

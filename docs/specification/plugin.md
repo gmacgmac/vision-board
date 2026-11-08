@@ -15,12 +15,15 @@ page, and the host's bot works on the same board through tools. The standalone a
 seam (D-074). This page is all a host needs. If it doesn't say it, a host may not rely on it.
 
 **One shape everywhere.** The seam is a host plugin contract's shapes (a `Ref`, a `SendRecord`, a `ChangeMeta`, the
-contract's `PluginHost` and `CreateEngine`), kept as a copy for the tests in `tests/plugin/contract/` (its `README.md` says
-where from and the one change). The board's own page and server use the same shapes, so a host built to that contract
+contract's `PluginHost` and `CreateEngine`), kept for the tests in `tests/plugin/contract/` as byte-for-byte copies
+of the contract and of the checks the host runs on a plugin (its `README.md` says where from, by sha256, and the one known
+difference, the change key). The board's own page and server use the same shapes, so a host built to that contract
 mounts the board and runs its engine with no adapter: the built `mount` is a `Mount<HTMLElement>` and `createEngine` a
 `CreateEngine` of the copy. Where a host's board behaves differently from standalone's, it is a flag the host turns on
 (§ The engine `flags`, § What the host gives `settings`), never a second shape. Proven by
-`apps/board/tests/plugin-types.test.ts` "the types satisfy the host contract", `tests/plugin/contract/plugin-host.test.ts`.
+`apps/board/tests/plugin-types.test.ts` "the types satisfy the host contract" (with the host's own `storedChangeOf`),
+`apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope" (with the host's own `checkStylesheet`),
+`tests/plugin/contract/plugin-host.test.ts`.
 
 Every claim holds a symbol and a named test. "Proven by" names a spec in `tests/plugin/` (`npm run test:plugin`), where a
 fake host written from this page mounts the built folder, unless the path says otherwise. `tests/plugin/spec-truth.test.ts`
@@ -79,10 +82,11 @@ dialogs, search and help. There is no second element to give and no control a ho
 
 **Flags a host needs to know.** Set `appCards` off unless you host apps: on, the board asks a route only an app host
 answers, and a bot has no `list_apps` to draw with (`view-hooks.spec.ts` "settings: appCards off"). `cardImages` and `svgImages`
-off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags` too. `singleAgent` (off by default) goes to
-both, the view's settings and the engine's `flags`, when your bot is the folder's one agent (§ The bot): in the view it means
-`chat.status.agent` is ignored, so the answers chip holds every answer and every answer lights Send
-(`view-hooks.spec.ts` "chat.status: singleAgent"). Leave the rest at their defaults.
+off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags` too. `singleAgent` is not a view setting:
+give it to the engine's `flags` alone (§ The bot). The engine's ledger read says so (`oneAgent`), and the view follows it:
+`chat.status.agent` is ignored, so the answers chip holds every answer and every answer lights Send. A `singleAgent` view
+setting changes nothing (`view-hooks.spec.ts` "chat.status: singleAgent", "chat.status: a `singleAgent` view setting alone"). Leave the
+rest at their defaults.
 
 ### What the view gives
 
@@ -153,7 +157,7 @@ chat: {
   enables Send either way; with `agent`, only one that agent may read. `held`: Send waits for the bot's turn. `agent`: the id your
   chat talks to, which scopes the answers chip, and the answers that light Send, to what it may read; an answer only another agent
   may read leaves Send off, and that agent reads it with `check_responses` (`chat-send-scope.spec.ts`). With the
-  `singleAgent` setting on, `agent` is ignored (§ What the host gives). Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
+  engine's `singleAgent` on, `agent` is ignored (§ What the host gives). Proven by `view-hooks.spec.ts` "chat.status", "chat.status: with no staged".
 - **`reveal` and `hasLine`** give a changed card's stepper its link to your chat. The board asks with `{ board, cards: n }`, a
   plain `Ref`: a change line matches when its `reveal` (§ Tools) has the same `board` and a `cards` list holding `n`.
   Without `reveal`, no link; with `reveal` and no `hasLine`, always a link. Proven by `view-hooks.spec.ts` "chat.reveal and chat.hasLine", "chat.reveal left out".
@@ -254,7 +258,7 @@ Nothing else is there (`engine-hooks.spec.ts` "createEngine and the engine hold 
 ## The bot
 
 Pass `{ caller: { by: 'agent', agent } }` on every tool call: the engine trusts it (§ The engine `route`). Which `agent` it
-takes depends on one flag, `singleAgent`, which you give the engine's `flags` and the view's settings alike.
+takes depends on one flag, `singleAgent`, which you give the engine's `flags`; the view learns it from the engine's reads.
 
 **One bot per folder: `singleAgent` on.** No sign-up. Pass any id you like, a non-empty string that is the same for the bot every time
 (a derived one does); the engine never compares it with another and never stores it. Every agent line the bot's calls write
@@ -262,7 +266,8 @@ is written as **the folder's one agent**: the first agent already joined in the 
 its boards and its cards, else one the engine joins itself on the first write, labelled by `name()` (cut to an agent label's 80 characters; the
 folder's own name when `name()` is blank). A folder belongs to one host: one opened both by the board's own app and by a
 host shares its first agent between them. The board's own server never passes `singleAgent` or `followOtherWriters` to
-its engine (`#format` `withoutHostFlags`; `packages/format/tests/flags.test.ts` "the host-only flags never reach"). So
+its engine, and its page never takes them from the address or its storage (`#format` `withoutHostFlags`;
+`packages/format/tests/flags.test.ts` "the host-only flags never reach", `apps/board/tests/page-flags.test.ts`). So
 with the flag on:
 
 - no write answers `needs-grant`, and no item is refused because another agent made the card or the board: there is no
@@ -292,7 +297,11 @@ other ledgers, no apps, its pictures in the board folder's `images/`, and detail
 (`apps/board/plugin/words/skill-edits.ts`). A change to it lands only with `npm run eval:bot` passing. Give the bot
 `skill.md` while the plugin is on. Proven by
 `apps/board/tests/plugin-skill.test.ts` "the plugin skill names no tool". The MCP instructions a bot reads before its first
-call are the plugin's too (`tools.instructions`, below).
+call are the plugin's too (`tools.instructions`, below). With `singleAgent` on, the descriptions and the instructions also
+drop every grant step: `request_grant` stays listed (the manifest's tools are the engine's with no flags) and its
+description says it is not needed (`words/plugin-tools.ts` `singleAgentEdits`, `singleAgentInstructionEdits`). So give
+the bot the descriptions from `tools.list()` of the engine you run, never the manifest's or `words.json`'s, which are built
+with no flags. Proven by `apps/board/tests/plugin-skill.test.ts` "singleAgent (T_02-R4)".
 
 ### Tools
 
@@ -321,7 +330,9 @@ Tools reach any bot as MCP tools (D-074 rule 4). The engine gives both halves in
   `apps/board/tests/engine.test.ts` "a board write says what it changed".
 - `tools.instructions` is what to tell the bot before its first call, MCP's server `instructions`: standalone's less `join`,
   the secret, `wait` and the folder header (`words/plugin-tools.ts` `instructionEdits`). `createMcpServer({ tools })` sends it;
-  send it from your own MCP server too. Left out with the `botToolRules` flag off.
+  send it from your own MCP server too. Left out with the `botToolRules` flag off. With it on, it also carries the quiet
+  rule, and `list_open` and `check_responses` say not to re-read what the Send's message already lists; with `singleAgent`
+  on too, no grant step.
 
 A bot under a host gets `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`, `check_responses`,
 `request_grant` and `write_board`, as `x-hosts` in `packages/format/schema/openapi.json` says. It does not get `join` (you name it),
@@ -604,27 +615,30 @@ Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
 Against nclite's plugin contract (`shared/plugin-host.ts`, its ADR-0288; `docs/plugins.md`) at the commit the board's copy
 names (`tests/plugin/contract/README.md`). The gaps this section listed against its draft v0.1 are closed by that contract
 and seam 2, and its board adapter (`shared/plugin-adapters/board.ts`) and stylesheet waiver (`REVIEWED_BOARD_SHEET`) have
-nothing left to translate: B1 is § Tools' change line, B2 § The chat's acks, B3 `singleAgent`, B4 the plain refs, B5 the
+nothing left to translate but the board's icon and its stylesheet's scope, which the contract's manifest has no field for: B1 is § Tools' change line, B2 § The chat's acks, B3 `singleAgent`, B4 the plain refs, B5 the
 scoped sheet (§ A guest in the host's page), C2 `followOtherWriters`.
 
-**Taking seam 2**, in one change: vendor the folder, move the board row's `seam` to 2, set the flags below, and delete the
-adapter, its line in `ADAPTERS`, the waiver and the board's stored registration.
+**Taking seam 2**, in one change: rename the contract's `CHANGE_META` to `'plugin/change'` (and the Journal plugin's writes
+of it), move the board row's `seam` to 2 (the vendoring script refuses a manifest whose seam differs from the row's), vendor
+the folder, set the flags below, cut the board's adapter down to its icon and its stylesheet's scope (`board: { icon: 'board', css: { scope: 'vb' } }`:
+the contract's manifest has no field for a scope that is not the plugin's id, and without it the loader checks the sheet
+against `board` and refuses it), and delete the waiver and the board's stored registration. Without the rename the host stores none of the board's change
+lines: the board writes `plugin/change`, and the host as it is reads only `nclite/change` (`plugin-types.test.ts` holds
+both).
 
 | Where | Flag | Set | Why |
 |---|---|---|---|
 | The row's `engineFlags` | `singleAgent` | `true` | Each bot has its own folder: no sign-up; pass the bot's derived id as the caller (§ The bot) |
 | The row's `engineFlags` | `followOtherWriters` | `false` | The bot's engine is its folder's only writer; its own writes reach `watch` without polling |
-| The row's `viewSettings` | `singleAgent` | `true` | The answers chip and Send ignore `chat.status.agent` (§ What the host gives) |
 | The row's `viewSettings` | `appCards` | `false` | As before: no app host |
 
 Leave `svgImages`, `botToolRules` and `insertBetween` at their defaults.
 
 **Two asks.**
 
-1. **Rename `CHANGE_META` to `'plugin/change'`**: a key that names no host, so a plugin writes it the same under any. The
-   board's copy carries the rename already, and its writes use that key, so nclite reads the board's change lines once it
-   renames. The stored `v: 2` body does not change, and the board's `changeWords` texts are word for word the ones
-   `readBoardChange` draws for rows stored before, so old and new lines read alike.
+1. **The change key names no host** (`'plugin/change'`), so a plugin writes it the same under any; the rename is part of
+   taking seam 2, above. The stored `v: 2` body does not change, and the board's `changeWords` texts are word for word the
+   ones `readBoardChange` draws for rows stored before, so old and new lines read alike.
 2. **No sign-up, no stored ids, no special case for old bots.** With `singleAgent` on, the board needs no `POST agents`,
    keeps nothing for the bot, and takes the derived id on every call. A bot that registered before keeps its boards and
    cards with no migration: the engine writes as the folder's first joined agent, which is that registration.

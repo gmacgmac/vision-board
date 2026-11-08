@@ -44,7 +44,7 @@ export function createIo(api: Transport, asPerson: PersonCall = (run) => run()) 
      * its identity, `id`, and an old `list` mode reads `column`; api.md 125, 129); `more` when there
      * are more. The one place the board turns a line into an event (live.ts, versions.ts read here). */
     /** `readOnly`: the ledger is open read-only now (D-085 4): the board pauses every write (live.ts, controller.ts). */
-    async readLedger(after: number): Promise<{ events: LedgerEvent[]; head: number; more?: true; readOnly?: true }> {
+    async readLedger(after: number): Promise<{ events: LedgerEvent[]; head: number; more?: true; readOnly?: true; oneAgent?: true }> {
       const page = await asApiError(() => client.call('read_ledger', { after, limit: PAGE }));
       return { ...page, events: page.events.map(fromLine) };
     },

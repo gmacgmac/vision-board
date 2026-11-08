@@ -609,6 +609,7 @@ type ReadLedgerResponse = {
   head: number;
   more?: true;
   readOnly?: true;
+  oneAgent?: true;
 };
 type LedgerEvent = BoardStored | RegionStored | NodeStored | LinkStored | UnlinkStored | ActStored | SeenStored | ReplyStored | ProposeStored | ParkStored | JoinStored | GrantRequestStored | RetireStored;
 type RegionStored = {

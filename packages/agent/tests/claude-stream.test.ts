@@ -69,6 +69,8 @@ test('a board write: its board from the input, its cards and head from the resul
   assert.deepEqual(run([INIT, say(use('w2', 'mcp__vision-board__write_board', { board: '../etc' })), RESULT]).updates[0],
     { type: 'tool', call: 'w2', tool: 'write_board', state: 'running' }, 'a board id that is not one is left out');
   assert.deepEqual(boardWriteSummary('not json'), { cards: [] });
+  const replays = JSON.stringify({ results: [{ index: 0, ok: true, seq: 10, n: 5 }, { index: 1, ok: true, seq: 3, n: 2, replayed: true }, { index: 2, ok: true, seq: 4, n: 3, replayed: true }], head: 10 });
+  assert.deepEqual(boardWriteSummary(replays), { cards: [5], head: 10 }, 'a retry\'s replay changed nothing: one card, not three');
 });
 
 test('tool names are short and fit the chat schema; a result for an unknown call is passed over', () => {

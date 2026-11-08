@@ -12,8 +12,9 @@ import { makeTempDir } from '#format/testing';
 import { createEngine } from '../server/engine/index.ts';
 import { toolRows } from '../server/format-files.ts';
 import { skillFor } from '../plugin/skill.ts';
+import { SKILL_BYTES } from '../../../tests/plugin/contract/nclite/shared/plugin-host.ts';
 import { skillEdits } from '../plugin/words/skill-edits.ts';
-import { descriptionEdits } from '../server/words/plugin-tools.ts';
+import { descriptionEdits, singleAgentEdits } from '../server/words/plugin-tools.ts';
 
 const SKILL_FILE = path.resolve(import.meta.dirname, '../../../skills/vision-board/SKILL.md');
 const source = fs.readFileSync(SKILL_FILE, 'utf8');
@@ -104,4 +105,34 @@ test('v3.31 (host-styling FE_03): both skills say a container with no `mode` is 
   const kept = 'unless you have a reason for another layout: leave `mode` out and a new container is a `row`';
   assert.ok(source.includes(kept) && plugin.includes(kept), kept);
   assert.ok(!source.includes('`column`s side by side') && !plugin.includes('`column`s side by side'), 'a column is no default for a few cards');
+});
+
+test('singleAgent (T_02-R4): nothing a host\'s one bot reads tells it to join, keep a secret or ask for a grant; request_grant, still listed, says it is not needed; off, as before', () => {
+  const GRANTS = /\bjoin|secret|grant|another agent|did not create|creator|containers you hold/i;
+  for (const flags of [{ singleAgent: true }, { singleAgent: true, botToolRules: false }]) {
+    const tools = createEngine({ dir, flags }).tools;
+    const said = tools.list();
+    assert.deepEqual(said.map((t) => t.name), listed.map((t) => t.name), 'the same tools as the manifest\'s (built with no flags)');
+    for (const t of said.filter((x) => x.name !== 'request_grant')) {
+      assert.doesNotMatch(t.description, GRANTS, `${t.name}'s words`);
+      assert.doesNotMatch(JSON.stringify(t.inputSchema), GRANTS, `${t.name}'s input`);
+    }
+    const grant = said.find((t) => t.name === 'request_grant')!.description;
+    assert.ok(grant.includes('Not needed here') && grant.includes('never call it') && !/needs-grant|reason/.test(grant), grant);
+    for (const e of singleAgentEdits) {
+      const off = listed.find((t) => t.name === e.tool)!.description;
+      assert.ok(off.includes(e.from) && !said.find((t) => t.name === e.tool)!.description.includes(e.from), `${e.tool}: ${e.from}`);
+    }
+    if (flags.botToolRules === false) assert.equal(tools.instructions, undefined, 'rules off: no instructions of its own, as before');
+    else assert.doesNotMatch(tools.instructions!, /\bjoin|secret|grant|held/i, 'the instructions');
+  }
+  const off = createEngine({ dir, flags: { singleAgent: false } }).tools;
+  assert.deepEqual(off.list(), listed, 'off: every word as before');
+  assert.equal(off.instructions, createEngine({ dir }).tools.instructions);
+  assert.match(off.instructions!, /call `request_grant`.*`needs-grant`/s, 'off: the grant steps stay');
+});
+
+test('the plugin skill fits the host\'s budget: at most SKILL_BYTES (the contract\'s), so a host needs no extra allowance', () => {
+  const bytes = Buffer.byteLength(plugin, 'utf8');
+  assert.ok(bytes <= SKILL_BYTES, `skill.md is ${bytes} bytes, over the host's ${SKILL_BYTES}: cut skill-edits.ts or SKILL.md`);
 });

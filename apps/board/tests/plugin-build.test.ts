@@ -16,6 +16,7 @@ import { makeTempDir } from '#format/testing';
 import { buildPlugin } from '../bin/build-plugin.ts';
 import { pluginTypes } from '../bin/plugin-types.ts';
 import { SEAM } from '../plugin/seam.ts';
+import { checkPluginStylesheet, checkStylesheet } from '../../../tests/plugin/contract/nclite/engine/plugins/stylesheet.ts';
 
 const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
 const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_layout', 'list_open', 'check_responses', 'request_grant', 'write_board'];
@@ -150,19 +151,21 @@ test('the view bundle is one file with no import, exporting only mount, and one 
   assert.ok(!/sourceMappingURL/.test(code + css), 'no sourcemap for a host to serve');
 });
 
-test('the built sheet stays in its scope: every selector starts inside `vb`, as a host checks it,', async () => {
+test('the built sheet stays in its scope: the host\'s own check passes it with no reads and no waiver, and so does the board\'s', async () => {
   const css = text(first, 'view/board.css');
-  // The one rule, scripts/verify-style.mjs (which holds the sources to it in `npm run verify`), over what a host loads: a rule's first
-  // compound names `.vb`, a `.vb-` class or a `vb-` element and holds no :is/:where/:not/:has; `:root` declares only `--vb-*`; no @layer.
+  // The host's check, byte for byte (tests/plugin/contract/README.md), on the path the host runs as it loads the plugin:
+  // `checkPluginStylesheet` takes the scope from the host's entry for the plugin, else the plugin's id. With the one entry
+  // left (scope `vb`, no reads, no waiver: every property the board's script sets is a `--vb-*` one), it passes; with none,
+  // the id `board` is the scope and it fails, which is why the handover asks the host to keep that entry.
+  assert.deepEqual(checkPluginStylesheet('board', fs.readFileSync(path.join(first, 'view/board.css'))), []);
+  assert.notDeepEqual(checkStylesheet(css, { scope: 'board' }), [], 'without the entry, the host refuses the sheet');
+  // The board's own rule, scripts/verify-style.mjs (which holds the sources to it in `npm run verify`): the same first
+  // compound rule, and no @layer.
   const { checkScope } = (await import(pathToFileURL(path.join(import.meta.dirname, '../../../scripts/verify-style.mjs')).href)) as {
     checkScope: (rel: string, text: string) => { message: string }[];
   };
   assert.deepEqual(checkScope('apps/board/plugin/board.css', css).map((p) => p.message), []);
   assert.ok(!/@import|@layer/.test(css), 'no @import and no @layer');
-  // A `var()` reads a `--host-*` property (plugin.md § Theme and host styling), a `--vb-*` one, or one the sheet declares.
-  const declared = new Set([...css.matchAll(/(?:^|[;{\s(])(--[\w-]+)\s*:/g), ...css.matchAll(/@property\s+(--[\w-]+)/g)].map((m) => m[1]));
-  const strays = [...new Set([...css.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1]!))].filter((p) => !/^--(?:host|vb)-/.test(p) && !declared.has(p));
-  assert.deepEqual(strays, []);
 });
 
 test('nothing in the folder names the machine that built it, the person, or the host it is meant for', () => {
