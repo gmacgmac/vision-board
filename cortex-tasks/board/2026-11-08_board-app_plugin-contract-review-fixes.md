@@ -210,3 +210,27 @@ Then 104/104 in WebKit and 104/104 in Chromium. Handover's WebKit note rewritten
   adapter is `'vision-board': { icon: 'board' }`. Two copied nclite lines changed for the field (`PluginManifest`
   `scope?`, `checkPluginStylesheet`'s `scope` parameter); `plugin-host.test.ts` undoes them and checks the source sha256,
   and the contract README names them.
+
+### nclite's bug report: a deleted data folder left the engine stuck (maintainer, 2026-11-08)
+
+With nclite's flags (`singleAgent`, `followOtherWriters` off, `botToolRules`), deleting the data folder or its ledger
+file while the engine ran made every later write a 409 `conflict` (`ledgerFileGone`) until a restart: the ledger's
+`gone` refusal (FIX_01 F1) is there for standalone, where another server moves the file into `main/`, but a host has no
+"open the folder again".
+- **Fix**: `openLedger`'s new option `startAgainWhenGone` (`ledger.ts`): a file or folder deleted since it was read is a
+  new, empty ledger, read again from the start (reset listeners told, so the plugin's `watch` says `{ head: 0 }`) and
+  made again by the next append. The engine passes it when it opens its own ledger (`engine.ts` `createEngine`, no
+  host `ledger`): every host's engine, either `followOtherWriters`. The standalone server opens its ledger itself and
+  keeps the refusal (`api-ledger-gone.test.ts` unchanged), because there a gone file is most often one another server
+  moved into a ledger folder, and writing anew would start a second ledger beside it; the person has Open folder.
+- **Tests first** (all failed before the fix but the older-copy case, which already worked):
+  `apps/board/tests/engine-folder-gone.test.ts`, the plugin engine with nclite's flags, `followOtherWriters` off and
+  on: the folder deleted, the ledger file deleted, the folder replaced with an older copy, a new empty folder in its
+  place, then the bot's `write_board` and the person's `PUT boards/<id>` go, the file holds what they wrote, `watch`
+  said `{ head: 0 }` first, and `get_board` reads the disk; the person's write first; a folder from elsewhere; an empty
+  file deleted is never later taken for a replaced one (fails without that line). `tests/plugin/engine-folder-gone.spec.ts`
+  runs the deleted and older-copy cases on the built bundle.
+- Tried and dropped, as no test needed them with `singleAgent` (its one agent holds every board): reading the file
+  before the caller is taken, and reading the agents file again after a reset.
+- Seam types unchanged (the build's check passed), SEAM stays 2, no flag added or changed. Spec: plugin.md § The engine
+  `watch` row; api.md's "A watcher follows a move" says the refusal is standalone's only.

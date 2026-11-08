@@ -12,8 +12,10 @@
 // and the next `seq` stay current and every listener hears of them too. A file replaced rather than grown (a git
 // pull, a sync, a copy dropped in: another inode, shorter, or its first bytes changed) is read again from the start
 // and every reset listener is told (D-085 6). While the host's read-only check says so, nothing is appended at all
-// (`read-only`, D-085 3): the one gate every line passes, whoever writes it. A file that had lines and has gone (moved
-// into `main/` by another server) reads as empty, and nothing is appended until it is back (`conflict`).
+// (`read-only`, D-085 3): the one gate every line passes, whoever writes it. A file that had lines and has gone reads as
+// empty. By default nothing is appended until it is back (`conflict`): the standalone server's file has usually been moved
+// into `main/` by another server. With `startAgainWhenGone` (a host's engine, which keeps one ledger in its own folder) a
+// gone file is a new, empty one, and the next line makes it again.
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -191,8 +193,10 @@ function replaced(file: string, h: Held, stat: fs.Stats | undefined): boolean {
 /** Open a ledger file (absent = empty). Bad lines are reported through `warn` and skipped, so one
  * bad line never hides the rest. The next `seq` is above every `seq` seen, valid or not. `readOnly`:
  * while it says so, every append is refused with `read-only` before anything is stamped or written (D-085 3);
- * default never, so a host with no read-only opening writes as before. */
-export function openLedger(file: string, warn: (m: string) => void = (m) => console.error(m), opts: { readOnly?: () => boolean } = {}): Ledger {
+ * default never, so a host with no read-only opening writes as before. `startAgainWhenGone`: a file (or its folder)
+ * deleted since it was read is a new, empty ledger, read again from the start (every reset listener told) and made
+ * again by the next append; default, it is refused while gone (`conflict`). */
+export function openLedger(file: string, warn: (m: string) => void = (m) => console.error(m), opts: { readOnly?: () => boolean; startAgainWhenGone?: boolean } = {}): Ledger {
   const first = readHeld(file, warn, false);
   let h: Held = first;
   let readOnly = opts.readOnly ?? (() => false);
@@ -225,12 +229,14 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
   };
   /** The file held lines (or was there) when last read and is gone now: moved into `main/` by another server
    * (decision 7) or deleted. Read as empty, but nothing is appended until it is back, so no second ledger starts in
-   * the old place (FIX_01 F1). */
+   * the old place (FIX_01 F1); with `startAgainWhenGone`, never set: the file is a new, empty one. */
   let gone = false;
   const refresh = () => {
     const stat = fs.statSync(file, { throwIfNoEntry: false });
-    if (!stat && (h.size > 0 || h.ino !== 0)) gone = true;
-    else if (stat) gone = false;
+    if (!stat && (h.size > 0 || h.ino !== 0)) {
+      if (!opts.startAgainWhenGone) gone = true;
+      else if (h.size === 0) h.ino = 0; // an empty file gone: nothing to read again, and the next append makes a new one
+    } else if (stat) gone = false;
     if (replaced(file, h, stat)) return reopen();
     if (!h.ino && stat) h.ino = stat.ino; // the file was made since it was opened
     const now = stat?.size ?? 0;

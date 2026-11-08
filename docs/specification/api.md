@@ -924,7 +924,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
       layout read-only, when another server's Edit moves it into `main/` (or `ledgers:undo` moves it back), opens it
       again where it is, read-only, on its next request or Edit, its streams ended as on a switch. Its Edit then takes
       `main/`'s lock or is refused. A ledger whose file held lines and has gone appends nothing until it is back
-      (`ledger.ts` `checkWritable`, `conflict`), so no second ledger starts in the old place; a `join` asks it before
+      (`ledger.ts` `checkWritable`, `conflict`), so no second ledger starts in the old place (standalone only: a host's
+      engine opens its ledger with `startAgainWhenGone`, plugin.md § The engine `watch`); a `join` asks it before
       storing the agent's hash, so none is left behind. An agent's secret is checked against the file as it is now
       (`callers.ts` looks again first), so its first call after the file is back goes. Tests:
       `api-ledger-moved.test.ts`, `api-ledger-gone.test.ts`, `ledger-replace.test.ts` ("a file that held lines and is

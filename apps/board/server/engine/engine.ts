@@ -10,7 +10,9 @@
 // or `held` (agents are per ledger), and its answer says `ledger` and `readOnly: true`. A host that keeps one ledger
 // gives none, and the input is refused. Two flags change who the engine takes a call from and what it listens to
 // (plugin.md § The engine): `singleAgent`, every agent caller the folder's one agent (`callerOf`); `followOtherWriters`
-// off, `watch` never looks at the file for another writer.
+// off, `watch` never looks at the file for another writer. A ledger the engine opens itself (no host's `ledger`) starts
+// again when its file or `dir` is deleted, and is read again from the start when the file is replaced, at the next call:
+// a host's engine never waits for a restart (nclite, 2026-11-08).
 import path from 'node:path';
 import type { FlagOverrides, LedgerEvent, OperationId } from '#format';
 import { IMAGES_DIR, LEDGER_FILE, LIMITS, OPERATIONS, ROUTE_PREFIX, clip, flagOn } from '#format';
@@ -171,7 +173,7 @@ const toReply = (err: unknown): EngineReply => {
 };
 
 export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {}, readOnly, otherLedger }: EngineOptions): Engine {
-  const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn);
+  const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn, { startAgainWhenGone: true });
   if (readOnly) ledger.gate(readOnly);
   const closed = readOnly ?? (() => false);
   let agents: Agents | undefined;
