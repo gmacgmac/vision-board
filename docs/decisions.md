@@ -1313,3 +1313,12 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   3. The board's sheets hold to what every webview a host runs accepts: a nested selector starts with a symbol (`&`, a class, a pseudo-class, `:is(…)`), never an element name, which WebKit before Safari 17.2 drops. `npm run verify` holds it, beside D-096 point 5's rule, which it now enforces too (every property a board sheet reads is `--vb-*` or `--host-*`).
 - **Why**: Three independent reviews found that the handover overstated what the host could delete (its loader would refuse the sheet), that one fact had two sources, and that the sheet's nesting and unprefixed properties were untested against the host's real webview and page.
 - **Task**: cortex-tasks/board/2026-11-08_board-app_plugin-contract-review-fixes.md
+
+## D-098 The plugin's id is `vision-board`, and its stylesheet's scope is in the manifest (replaces D-097 point 1)
+- **Date**: 2026-11-08 · **Status**: Accepted (maintainer, point 531) · **From**: nclite's two asks before vendoring, 2026-11-08
+- **Decision**:
+  1. The plugin's id is `vision-board`: the manifest's `id`, the plugin folder's name, a chip's `plugin`, and the first part of every words key (`vision-board.<area>.<name>`, so the change line's keys are `vision-board.change.board|card|cards`). It has one home, `#actions` `CHIP_PLUGIN`. `.visionboard`, `plugin/change` and the icon name `board` are unchanged.
+  2. The stylesheet's scope, `vb`, is the manifest's optional `scope` (absent means the id; present, it matches `^[a-z][a-z0-9]{1,15}$` and is not `host` or `ui`). The host's loader takes the scope from the manifest, and the host's entry for the board keeps only its icon, `{ icon: 'board' }`. This replaces D-097 point 1.
+  3. The seam stays 2: the chip's id is part of the seam's types and changed, but no host had taken seam 2 yet.
+- **Why**: nclite asked for an id that names the product and for the scope to come from the plugin rather than from a host-side entry, so the host keeps nothing for the board but its icon.
+- **Task**: cortex-tasks/board/2026-11-08_board-app_plugin-contract-review-fixes.md

@@ -13,8 +13,8 @@ claims only what a test or that run shows, and says which tests run your own cod
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
 - **Commit**: `ac4bba01e36f049468426ed67e75b206ca449211` (on main)
 - `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" ac4bba01e36f049468426ed67e75b206ca449211`
-- **Decisions**: the board's D-096 and D-097 (`docs/decisions.md`); D-097 point 1, the two-field entry, is replaced by
-  steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
+- **Decisions**: the board's D-096, D-097 and D-098 (`docs/decisions.md`); D-098 replaces D-097 point 1, the two-field
+  entry, with steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
 
 In the same change, in this order:
 
