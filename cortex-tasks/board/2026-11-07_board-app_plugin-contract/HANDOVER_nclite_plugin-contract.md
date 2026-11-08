@@ -10,8 +10,8 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `<COMMIT>` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" <COMMIT>`
+- **Commit**: `4a3f2327cf57e146bfb8a1e3421bf78c7c304ffd` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" 4a3f2327cf57e146bfb8a1e3421bf78c7c304ffd`
 - **Decisions**: the board's D-096 and D-097 (`docs/decisions.md`). **Seam**: **2** (breaking).
 
 In the same change, in this order:
