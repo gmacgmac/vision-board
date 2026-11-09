@@ -203,7 +203,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), focusLeads: on('focusLeads'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
     ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }) });
-  vp.onApply = () => { status.set({ zoom: zoomPercent(vp.k) }); notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
+  // With no board shown ("No boards yet") a pan or zoom moves only the empty stage: nothing is placed or kept.
+  vp.onApply = () => { status.set({ zoom: zoomPercent(vp.k) }); if (!S.data) return; notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
   status.set({ zoom: zoomPercent(vp.k) });
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record, status, confirm: (a) => host.confirm(a), notify: (t) => toast(t) });
