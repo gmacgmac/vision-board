@@ -11,12 +11,18 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `9fa516e099cde89812fedd752cc77273c55cb242` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" 9fa516e099cde89812fedd752cc77273c55cb242`
+- **Commit**: `d491dbdce053860052e49c84979db7c2e1d75e37` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" d491dbdce053860052e49c84979db7c2e1d75e37`
 - **Decisions**: the board's D-096, D-097 and D-098 (`docs/decisions.md`); D-098 replaces D-097 point 1, the two-field
   entry, with steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
 
-**New in `9fa516e`: your item 160, and the skill as a skill.**
+**New in `d491dbd` (and `9fa516e` before it): your item 160, the skill as a skill, and two tool rules.**
+- **The bot can't set `size` or `widths`** (with `botToolRules`, which you run): `write_board`'s schema leaves them out
+  and one sent anyway is dropped. The engine places cards; the person's arrangement wins.
+- **A picture it can't show is named**: a written card's result carries `images`, each path its text names that your
+  image route would not serve, with why, so the bot fixes it in the same turn (`write-result.schema.json`, additive).
+- **The contract copy the board's tests check against is your main's** (`dde6d037`): `plugin/change`, the manifest's
+  `scope`, `scopeOf`, the adapter table with the board's icon. The one line it adds is `pageChanged`, below.
 - **`pageChanged()`** (your `temp/panel-layout/plugin-handover-160.md`): the board calls it once its first draw settles,
   then whenever `pageChip()`'s board, label or detail would change: a board opens or is switched to, the board on show is
   renamed, archived (the next board shows) or restored, the last board goes, or a bot's first board arrives and opens.
