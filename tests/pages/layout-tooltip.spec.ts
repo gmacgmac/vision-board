@@ -42,6 +42,18 @@ test('hover on each of the six icons: its name over what it does, beside the ico
   }
 });
 
+test('moving the pointer down the icons: one tip at a time, the last one closes the moment the next opens, no trail of fading tips', async ({ page, request }) => {
+  await board(page, request);
+  await zoomTo(page, 1);
+  await frame(page).locator('.vb-region-tools').hover();
+  for (const mode of MODES) {
+    await radio(page, mode).hover();
+    await expect(tip(page, mode), mode).toBeVisible();
+    // At once, not after the leave grace: the tip just left is gone by the time the next one shows.
+    expect(await frame(page).locator('.vb-mseg[data-tip-open]').count(), `${mode}: one tip open`).toBe(1);
+  }
+});
+
 test('focus on each of the six icons: the tip shows, the hint is the description, Esc dismisses the tip and keeps the focus', async ({ page, request }) => {
   await board(page, request);
   await zoomTo(page, 1);

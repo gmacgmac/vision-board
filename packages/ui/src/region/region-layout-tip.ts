@@ -18,7 +18,12 @@ export interface LayoutTips {
 
 export function bindLayoutTips(host: HTMLElement): LayoutTips {
   const icons = [...host.querySelectorAll<HTMLElement>('.vb-mseg[role="radio"]')];
-  const tips: HoverTip[] = icons.map((b) => bindHoverTip(b, { anchor: ':host', tip: '.vb-mode-tip', attr: 'data-tip-open' }));
+  // One tip at a time: the icons touch, so the pointer reaches the next one while the last waits out its leave grace,
+  // which drew a trail of fading tips. A tip that opens closes the others at once.
+  const tips: HoverTip[] = icons.map((b, i) => bindHoverTip(b, {
+    anchor: ':host', tip: '.vb-mode-tip', attr: 'data-tip-open',
+    onToggle: (on) => { if (on) tips.forEach((t, j) => { if (j !== i) t.close(); }); },
+  }));
   return {
     close: () => tips.forEach((t) => t.close()),
     show: (mode) => icons.find((b) => b.dataset.mode === mode)?.setAttribute('data-tip-open', ''),
