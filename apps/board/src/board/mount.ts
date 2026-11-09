@@ -7,7 +7,7 @@
 // nothing outlives `unmount`: every listener on the document or the window goes, the image view goes,
 // and `root` is emptied and given back as it was. Each mount has its own calls (io.ts), status and
 // controller, so two boards on one page work apart.
-import type { Ref } from '#actions';
+import type { Chip, Ref } from '#actions';
 import { boardChip, isCount } from '#actions';
 import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
@@ -111,7 +111,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   };
   const start = () => {
     board = createBoard(els, { host, io, status, say, page, ids: ids.prefix, store });
-    void board.boot();
+    void board.boot().then(() => tell(true));
   };
   const stop = () => finishAll([board.destroy, () => els.world.remove(), () => els.message.remove()]);
   function restart() {
@@ -121,6 +121,32 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     start();
   }
   start();
+
+  function pageChip(): Chip | null {
+    if (gone) return null;
+    const s = board.ledger();
+    const id = board.id();
+    const chip = s && id ? boardChip(s, id) : undefined;
+    return chip && !('refused' in chip) ? chip : null;
+  }
+  /** What the host was last told `pageChip()` is (`pageChanged`), by the board, title and detail: the head moves with every
+   *  line on any board, and the host reads it fresh when it asks. Undefined until the first draw has settled. */
+  let told: string | undefined;
+  const keyOf = (c: Chip | null) => (c ? JSON.stringify([c.ref.board, c.label, c.detail]) : '');
+  function tell(first = false) {
+    if (gone || (told === undefined && !first)) return;
+    const key = keyOf(pageChip());
+    if (key === told) return;
+    told = key;
+    host.pageChanged?.();
+  }
+  // Every status change (a board opened, closed, archived, renamed, a batch) is looked at once its batch is done.
+  let looking = false;
+  const unlook = status.on(() => {
+    if (looking) return;
+    looking = true;
+    queueMicrotask(() => { looking = false; tell(); });
+  });
 
   /** Bring into view, on the board open now, the cards, the card `n` or the note `seq` (`reveal`): each read only when it
    *  is of its kind (a list of whole numbers, a whole number), the rest of the ref ignored. */
@@ -137,13 +163,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     send,
     unsaved: () => !gone && board.unsaved(),
     leave: () => (gone ? Promise.resolve(true) : board.leave()),
-    pageChip() {
-      if (gone) return null;
-      const s = board.ledger();
-      const id = board.id();
-      const chip = s && id ? boardChip(s, id) : undefined;
-      return chip && !('refused' in chip) ? chip : null;
-    },
+    pageChip,
     reveal(ref) {
       if (gone) return;
       // Another board opens first, and may ask (a note's unsaved words, `Board.switchTo`): what `ref`
@@ -155,7 +175,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     },
     unmount() {
       gone = true;
-      finishAll([stop, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
+      finishAll([stop, unlook, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
         chrome.unmount, () => root.replaceChildren(), () => root.classList.remove(...added)]);
     },
   };

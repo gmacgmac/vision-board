@@ -51,7 +51,7 @@ const PAST = 'A past version of the board is showing. Go back to now to send a m
 const SELECTED = [{ n: 7, title: 'Book the venue' }, { n: 3, title: 'Ship on Friday?' }];
 const ROUND = [
   ROUND_HEAD, 'Board "Launch" (v4)', '2 (question): ✓', '5 (finding): comment: Check this with the support team first', '7 (action): ✓',
-  'Still open: 3', 'These are the person\'s answers up to head 42. To read anything newer, call check_responses on board "launch" with after 42.',
+  'Still open: 3', 'These are the person\'s answers up to head 42. Answer from them; only if the person says they changed more since, call check_responses on board "launch" with after 42.',
 ].join('\n');
 const ANSWERS: ComposerContext = { label: '3 answers · 1 selected', text: `${selectionText(SELECTED.slice(0, 1))}\n\n${ROUND}` };
 const PICKED: ComposerContext = { label: '2 selected', text: selectionText(SELECTED) };

@@ -54,6 +54,7 @@ const host: PluginHost = {
   confirm: async (ask) => ask.list !== undefined && [ask.heading, ask.body, ask.confirm, ...ask.list.items.map((i) => i.ref + i.text), ...(ask.list.skipped ?? []).map((i) => i.ref + i.text)].length > 0,
   store: { get: (key) => (key ? null : ''), set: (key, value) => void [key, value] },
   imageRoute: '/board-images/',
+  pageChanged: () => {},
 };
 
 export async function useView(root: HTMLElement): Promise<unknown[]> {

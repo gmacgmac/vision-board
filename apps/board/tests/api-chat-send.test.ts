@@ -61,7 +61,7 @@ test('with a session, Send hands it the answers in card order, ✓ and ✗ as ma
   assert.equal(sent.head, sent.seq - 1, 'the Send records the line its message read through');
   assert.deepEqual(lines.slice(2), [
     `${q} (question): ✓`, 'Nothing left open.',
-    `These are the person's answers up to head ${sent.head}. To read anything newer, call check_responses on board "pricing" with after ${sent.head}.`,
+    `These are the person's answers up to head ${sent.head}. Answer from them; only if the person says they changed more since, call check_responses on board "pricing" with after ${sent.head}.`,
     '', 'Board: pricing',
   ]);
   const events = await readChat(h.base, h.cookie, session, turns(1));

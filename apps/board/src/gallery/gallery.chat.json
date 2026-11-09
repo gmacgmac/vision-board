@@ -34,6 +34,6 @@
     {"kind":"tool_activity","call":"toolu_fixture20","tool":"write_board","state":"done","board":"scratch","cards":[1,2],"head":5,"at":"2026-10-10T09:12:04Z","session":"5a8e3c71-2d4f-4b96-8e05-9c1b7f2a6d43","seq":4},
     {"kind":"message_out","text":"I drew two questions on the \"Scratch\" board.","at":"2026-10-10T09:12:05Z","session":"5a8e3c71-2d4f-4b96-8e05-9c1b7f2a6d43","seq":5},
     {"kind":"system","text":"Done.","turn":"done","at":"2026-10-10T09:12:06Z","session":"5a8e3c71-2d4f-4b96-8e05-9c1b7f2a6d43","seq":6},
-    {"kind":"message_in","text":"The person updated the board:\nBoard \"Scratch\" (v1)\n1 (question): ✓\n2 (question): comment: Only if the release slips.\nStill open: 2\nThese are the person's answers up to head 9. To read anything newer, call check_responses on board \"scratch\" with after 9.","at":"2026-10-10T09:12:06Z","session":"5a8e3c71-2d4f-4b96-8e05-9c1b7f2a6d43","seq":7}
+    {"kind":"message_in","text":"The person updated the board:\nBoard \"Scratch\" (v1)\n1 (question): ✓\n2 (question): comment: Only if the release slips.\nStill open: 2\nThese are the person's answers up to head 9. Answer from them; only if the person says they changed more since, call check_responses on board \"scratch\" with after 9.","at":"2026-10-10T09:12:06Z","session":"5a8e3c71-2d4f-4b96-8e05-9c1b7f2a6d43","seq":7}
   ]
 }

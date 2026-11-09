@@ -47,7 +47,7 @@ test('the plugin skill has an Images section: the board folder\'s images/, the e
   assert.ok(!/nclite|\.visionboard|\bapp\b|upload|put_image/i.test(section), 'it names no host, no standalone path, no app, no upload tool');
   assert.ok(!/^### Images in cards$/m.test(source.replace(/^### Images in cards$/m, '')) , 'the standalone skill has its own, once');
   assert.ok(source.includes('Keep it in the open ledger\'s `images/`: `.visionboard/<ledger>/images/`'), 'the standalone words are untouched');
-  assert.ok(plugin.includes('or to show a picture in a card.') && !plugin.includes('app you build'), 'the description keeps pictures, not apps');
+  assert.ok(plugin.includes('or a picture should show in a card.') && !plugin.includes('app you build'), 'the description keeps pictures, not apps');
 });
 
 test('every tool a plugin bot has (but request_grant) is in the skill, and its sentences about the person\'s answers are the standalone skill\'s own', () => {
@@ -130,6 +130,19 @@ test('singleAgent (T_02-R4): nothing a host\'s one bot reads tells it to join, k
   assert.deepEqual(off.list(), listed, 'off: every word as before');
   assert.equal(off.instructions, createEngine({ dir }).tools.instructions);
   assert.match(off.instructions!, /call `request_grant`.*`needs-grant`/s, 'off: the grant steps stay');
+});
+
+// A host lists a plugin's skill by its front matter and opens the rest when the bot needs it (nclite, 2026-11-09): `name`
+// the plugin's id, `label` the few plain words its Skills page names it by, `description` one line saying when to read it.
+// Simple `key: value` lines, as nclite reads them, and no standalone history (`status`).
+test('the plugin skill opens with front matter naming the plugin, labelling it, and saying when to read it', () => {
+  const m = /^---\nname: (.+)\nlabel: (.+)\ndescription: (.+)\n---\n\n# /.exec(plugin);
+  assert.ok(m, 'front matter with name, label and description, then the title');
+  assert.equal(m[1], 'vision-board');
+  assert.ok(m[2]!.split(' ').length <= 5, `a few words: ${m[2]}`);
+  assert.ok(m[3]!.length <= 1000, `${m[3]!.length} characters`);
+  assert.match(m[3]!, /^The Vision Board.*Read this before/);
+  assert.match(source, /^---\nname: vision-board\nlabel: (.+)\ndescription: .*Read this before.*\nstatus: /, 'the standalone skill has the same, and its history');
 });
 
 test('the plugin skill fits the host\'s budget: at most SKILL_BYTES (the contract\'s), so a host needs no extra allowance', () => {

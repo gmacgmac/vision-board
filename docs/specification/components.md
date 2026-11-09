@@ -247,7 +247,8 @@ host; nclite's pane will be another.
   (`board/mount-ids.ts` `takeIdPrefix`: `vb1-`, `vb2-`, ..., the first mount on the board's own page too;
   `NodeTemplateOptions.idPrefix`, `RegionFrameOptions.idPrefix`), so no id repeats on a page and an
   `aria-controls` never points into another board. `pageChip` is `#actions` `boardChip` for the board on
-  show (null with none shown, or an archived one). Proven by `tests/pages/board-host.spec.ts` (a fake
+  show (null with none shown, or an archived one); each time it would change (by board, title or detail, not head),
+  `mount` calls the host's optional `pageChanged` (`tests/plugin/page-changed.spec.ts`). Proven by `tests/pages/board-host.spec.ts` (a fake
   host, no Svelte, no server: draw, Send, the page chip, confirm, a change event, two boards with no id
   twice, unmount), `apps/board/tests/mount-ids.test.ts` and `packages/ui/tests/id-prefix.test.ts`.
 - **Keys stay inside the board** (nclite: "a view stays inside its root"; `input/keys.ts` `bindKeys`).

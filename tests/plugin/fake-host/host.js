@@ -35,7 +35,7 @@ function hostFor(o = {}) {
   /** Every read fails this way until it is cleared (`readsDown`, below). */
   let readsDown = null;
   const made = createChat(o);
-  const record = { notices: [], confirms: [], answer: true, calls: [], refused: [] };
+  const record = { notices: [], confirms: [], answer: true, calls: [], refused: [], pageChanged: 0 };
   const host = {
     async api(path, init) {
       if ((badRead || readsDown) && path.startsWith('ledger')) {
@@ -68,6 +68,8 @@ function hostFor(o = {}) {
     async confirm(ask) { record.confirms.push(ask); return record.answer; },
     ...(!o.noStore && { store: { get: (key) => kept.get(key) ?? null, set(key, value) { kept.set(key, value); } } }),
     ...(!o.noImageRoute && { imageRoute: '/pics/' }),
+    // Counted: a test then asks `pageChip()`, as nclite's pane does soon after (its handover, item 160).
+    ...(!o.noPageChanged && { pageChanged() { record.pageChanged += 1; } }),
   };
   /** Change events stop, as a dropped stream's would; `catchUp` says a ref with no head. */
   const mute = () => { muted = true; };
@@ -155,7 +157,7 @@ window.fakeHost = {
   view: () => current.view,
   record: () => {
     const r = current.record;
-    return { notices: r.notices, confirms: r.confirms, calls: r.calls, refused: r.refused, attaches: current.made.log.attaches, sends: current.made.log.sends, reveals: current.made.log.reveals, problems: current.made.log.problems, chips: current.made.chips() };
+    return { notices: r.notices, confirms: r.confirms, calls: r.calls, refused: r.refused, pageChanged: r.pageChanged, attaches: current.made.log.attaches, sends: current.made.log.sends, reveals: current.made.log.reveals, problems: current.made.log.problems, chips: current.made.chips() };
   },
   answer(ok) { current.record.answer = ok; },
   subscribers: () => current.subscribers(),

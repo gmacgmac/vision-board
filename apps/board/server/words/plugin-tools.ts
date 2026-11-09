@@ -71,7 +71,7 @@ export const inputRefusals: readonly { tool: string; input: string; detail: stri
 export const instructionEdits: readonly Omit<DescriptionEdit, 'tool'>[] = [
   {
     from: 'so a retry never writes twice.',
-    to: 'so a retry never writes twice. Every block of text you write shows in the person\'s chat, so write none while you work: not what a read showed ("The board is empty"), nor your next step ("I\'ll add a region first"); a turn that changed the board ends "Done."',
+    to: 'so a retry never writes twice. Open your `vision-board` skill before your first `write_board`: it says how to lay cards out, number them and read the answers. Every block of text you write shows in the person\'s chat, so write none while you work: not what a read showed ("The board is empty"), nor your next step ("I\'ll add a region first"); a turn that changed the board ends "Done."',
   },
   { from: 'You already have an identity on the board, set for you: do not call `join`, and leave `secret` out of every call. ', to: '' },
   {

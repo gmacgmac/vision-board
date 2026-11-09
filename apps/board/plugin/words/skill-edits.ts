@@ -68,7 +68,7 @@ const ACCESS = `## Access
 
 const LAYOUT = `## Layout: fit the task and the screen
 
-- Chatting (most boards): cards in containers, one per group, **no links**. A \`row\` per container (up to about 6 cards each; containers stack down the screen) unless you have a reason for another layout: leave \`mode\` out and a new container is a \`row\`.
+- Chatting (most boards): cards in containers, one per group, **no links**. A \`row\` per container (up to about 6 cards each) unless you have a reason for another layout: leave \`mode\` out and a new container is a \`row\`.
   More cards: a \`grid\`. A process: \`flow\`, linked by its real steps; work between owners: \`lanes\`.
 - **Links stay inside a container**, never for reading order; a reference goes in the card's text
   ("needs card 5").
@@ -86,7 +86,7 @@ const WRITING = `## Writing cards
   Name a new card by its \`key\`. Never guess its number in text in the same call: its \`n\` comes in the answer to the call
   that draws it, so a reply that names it ("Added as card 7.") goes in a second call, this turn.
 - **Give every item a \`key\` that names it**, starting with the board, so no later turn reuses it
-  (\`pricing-card-flat-fee\`, \`pricing-reply-n3-s41\`); a new version takes a new key.
+  (\`pricing-reply-n3-s41\`); a new version takes a new key.
 - **Body**: Markdown. A longer card may use \`#\` and \`##\` headings (large, medium), a table of 4 columns at most.
 - **Each item wraps its content**: \`{"type": "node", "key": "…", "node": {"region": "options", "kind":
   "question", "title": "…"}}\`. A refused item comes back with an example: copy it, and resend only
@@ -132,7 +132,8 @@ const ANSWERS = `## What the person's answers mean
 
 const RETIRING = `## Retiring and distilling
 
-- Only when the person asks, or after their ✓ on your proposal to.
+- Only when the person asks (to sum cards up in one card is to retire them), or after their ✓ on your
+  proposal to.
 - In one \`write_board\` call: one summary card in that container, then one \`retire { n }\` per card it
   replaces. Keep a card that still asks and is unanswered. Answer what a card owes first.
 - **A summary card** reads at a glance: a \`##\` heading per part (what was found, what ✓ and ✗
@@ -160,8 +161,9 @@ for the person**: say in one line that the mark is theirs to press, and propose 
 export const skillEdits: readonly SkillEdit[] = [
   // Front matter: no chat panel, no apps (pictures stay).
   { from: ' or its chat panel,', to: ',' },
-  { from: 'a picture or an app you build in a card.', to: 'a picture in a card.' },
-  { from: 'status: ', until: '\n---\n', to: 'status: for a bot that a host names' },
+  { from: 'a picture or an app you build should show', to: 'a picture should show' },
+  // The standalone history is not the host's: no `status` line.
+  { from: '\nstatus: ', until: '\n---\n', to: '' },
   // Each section, cut to what a host's bot needs, in the standalone skill's order.
   { from: 'The board is how you and the person chat.', until: '## The conversation', to: INTRO },
   { from: '## The conversation\n', until: '## Where you are running', to: CONVERSATION },

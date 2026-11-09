@@ -5,9 +5,10 @@
 // whether the change is breaking. Breaking: raise `SEAM` with it, and say so in the change's log entry.
 
 /** The seam a host implements. Raised by one for each breaking change to the types, never lowered. 2: the host
- *  contract's shapes (plugin.md § The types and the seam version, Seam 2). */
+ *  contract's shapes (plugin.md § The types and the seam version, Seam 2). The host's optional `pageChanged` (nclite
+ *  item 160) is an addition, not a break: seam 2 still. */
 export const SEAM = 2;
 /** sha256, in hex, of the seam's types (see above). */
-export const SEAM_TYPES = 'b4f3d59acabd0ffbca47a68912382a20596355ecf90e718b77c9fbe1a4ade3d4';
+export const SEAM_TYPES = '93b6e44a8c3bf44003681f4e77621a681eb4e60d3434b3528678edc155d32c82';
 /** The types' file in the plugin folder. */
 export const TYPES_FILE = 'plugin.d.ts';

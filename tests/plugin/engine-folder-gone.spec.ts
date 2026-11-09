@@ -22,8 +22,8 @@ for (const [name, change] of [
     const dir = path.join(parent, 'vision-board');
     try {
       const engine = (await loadEngine()).createEngine({ dir, warn: () => {}, flags: FLAGS });
-      const heard: { board?: string; head: number }[] = [];
-      const stop = engine.watch((c: { board?: string; head: number }) => heard.push(c));
+      const heard: Record<string, unknown>[] = [];
+      const stop = engine.watch((c: Record<string, unknown>) => { heard.push(c); });
       const write = async (board: string, title: string) => {
         const out = await engine.tools.call('write_board', { board, items: items(title) }, BOT);
         expect(out.isError, JSON.stringify(out)).not.toBe(true);

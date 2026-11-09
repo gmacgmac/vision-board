@@ -11,9 +11,21 @@ import { CHANGE_META } from './nclite/shared/plugin-host.ts';
 const read = (name: string) => fs.readFileSync(path.join(import.meta.dirname, name), 'utf8');
 const ROWS = [...read('README.md').matchAll(/^\| `(nclite\/[^`]+)` \| `([0-9a-f]{64})` \|/gm)].map((m) => ({ file: m[1]!, sha: m[2]! }));
 
+/** nclite's member for item 160, word for word as its handover gives it (the README). */
+const PAGE_CHANGED = `\t/**
+\t * Says that what \`pageChip()\` would answer may have changed: something else is on show, it emptied, or it filled.
+\t * The host asks \`pageChip()\` again soon after and reads nothing from this call. Call it on every such change: the host
+\t * coalesces calls. Never call it from \`unmount\` or after it.
+\t */
+\tpageChanged(): void;
+`;
+
 /** The README's edits, each `[the copy's text, the source's]`: the only lines in which a copy is not its source. */
 const EDITS: Readonly<Record<string, readonly (readonly [string, string])[]>> = {
-  'nclite/shared/plugin-host.ts': [['\ticon?: string;\n\tscope?: string;\n', '\ticon?: string;\n']],
+  'nclite/shared/plugin-host.ts': [
+    ['\ticon?: string;\n\tscope?: string;\n', '\ticon?: string;\n'],
+    [`\timageRoute: string;\n${PAGE_CHANGED}}`, '\timageRoute: string;\n}'],
+  ],
   'nclite/engine/plugins/stylesheet.ts': [
     ['(id: string, bytes: Uint8Array, scope?: string): string[] {', '(id: string, bytes: Uint8Array): string[] {'],
     ['{ scope: scope ?? id, reads:', '{ scope: css?.scope ?? id, reads:'],

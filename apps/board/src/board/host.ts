@@ -187,6 +187,10 @@ export interface BoardHost {
    *  browser's own cookies (a picture can't go through `api`). A host answers it with the engine's `image`.
    *  Left out, `IMAGE_ROUTE` on the page's origin. */
   imageRoute?: string;
+  /** Says that what `pageChip()` answers may have changed (another board on show, none, or the shown one archived, back
+   *  or renamed): the board calls it once its first draw settles, then on each such change. The host asks `pageChip()`
+   *  again and reads nothing from the call. Left out, the board tells no one. */
+  pageChanged?(): void;
   /** The standalone page's own part; a host leaves it out. */
   page?: BoardPage;
 }
@@ -240,7 +244,8 @@ export interface BoardView {
    *  False (Cancel): the board stays, focus back in the words. A call while one is asking gets the
    *  same answer, not a second question. */
   leave(): Promise<boolean>;
-  /** The chip for the board on show (what a pane header's Add to chat sends); null when no board is shown (or the one shown is archived). */
+  /** The chip for the board on show (what a pane header's Add to chat sends); null when no board is shown (or the one shown
+   *  is archived). Each time it would change, the board calls the host's `pageChanged`. */
   pageChip(): Chip | null;
   /** Brings into view what a chip or a change names: a board, a card (`n`), a note (`seq`), or several
    *  cards by number (`cards`), which it zooms to and selects nothing, so nothing goes with the next

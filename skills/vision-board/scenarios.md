@@ -273,7 +273,7 @@ Board "Checkout review" (v4)
 6 (finding): comment: Only on the card path
 9 (action): ✓
 Still open: 11
-These are the person's answers up to head 212. To read anything newer, call check_responses on board "checkout-review" with after 212.
+These are the person's answers up to head 212. Answer from them; only if the person says they changed more since, call check_responses on board "checkout-review" with after 212.
 ```
 
 **A good run**
@@ -360,7 +360,7 @@ Board "Checkout review" (v6)
 5 (question): ✓
 7 (finding): comment: Also on the refund path
 Still open: 9
-These are the person's answers up to head 240. To read anything newer, call check_responses on board "checkout-review" with after 240.
+These are the person's answers up to head 240. Answer from them; only if the person says they changed more since, call check_responses on board "checkout-review" with after 240.
 
 Board: checkout-review
 ```

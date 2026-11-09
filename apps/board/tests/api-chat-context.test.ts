@@ -34,7 +34,7 @@ const act = (body: Record<string, unknown>) => h.ok('act', { board: 'pricing', b
 const message = (body: Record<string, unknown>) => h.ok('send_chat', { session, body });
 const sends = () => h.ledger.state().acts.filter((e) => e.action === 'send' && e.board === 'pricing').length;
 const turns = (n: number) => (events: Event[]) => events.filter((e) => e.kind === 'system' && e.turn !== undefined).length >= n;
-const headLine = (seq: number) => `These are the person's answers up to head ${seq}. To read anything newer, call check_responses on board "pricing" with after ${seq}.`;
+const headLine = (seq: number) => `These are the person's answers up to head ${seq}. Answer from them; only if the person says they changed more since, call check_responses on board "pricing" with after ${seq}.`;
 
 test('a session names the agent id it writes as, the one in the index', async () => {
   const started = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } });

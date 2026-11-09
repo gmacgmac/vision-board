@@ -4,5 +4,5 @@
 // ---- board-message.ts
 export const thePersonUpdatedTheBoard = 'The person updated the board:';
 export const thePersonSelectedTheseCards = 'The person selected these cards:';
-export const theseAreThePersonS = (seq: number, board: string, seq2: number): string => `These are the person's answers up to head ${seq}. To read anything newer, call check_responses on board "${board}" with after ${seq2}.`;
+export const theseAreThePersonS = (seq: number, board: string, seq2: number): string => `These are the person's answers up to head ${seq}. Answer from them; only if the person says they changed more since, call check_responses on board "${board}" with after ${seq2}.`;
 export const card = (n: number, title: string): string => `- Card ${n}: ${title}`;

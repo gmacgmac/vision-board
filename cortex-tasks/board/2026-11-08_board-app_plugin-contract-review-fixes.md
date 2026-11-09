@@ -234,3 +234,51 @@ file while the engine ran made every later write a 409 `conflict` (`ledgerFileGo
   before the caller is taken, and reading the agents file again after a reset.
 - Seam types unchanged (the build's check passed), SEAM stays 2, no flag added or changed. Spec: plugin.md § The engine
   `watch` row; api.md's "A watcher follows a move" says the refusal is standalone's only.
+
+### nclite's item 160: the host's `pageChanged` (maintainer, 2026-11-09)
+
+nclite's pane header greys its Add to chat when `pageChip()` is null, and could only ask, never hear, when that changed
+(nclite `temp/panel-layout/plugin-handover-160.md`).
+- **Contract copy**: `pageChanged(): void` added to `PluginHost` in `tests/plugin/contract/nclite/shared/plugin-host.ts`,
+  word for word as the handover gives it, as a README edit that `plugin-host.test.ts` undoes before its sha256 check
+  (like `scope`). The board's own `BoardHost` has it **optional** (`host.ts`), so a host without it still fits: an
+  addition, `SEAM_TYPES` set again, `SEAM` stays 2 (`plugin-types.test.ts`'s host uses it, so taking it out fails).
+- **When** (`board/mount.ts` `tell`): once after each boot's first draw settles, then, a microtask after any status
+  change, when the chip's board, label or detail differs from what the host was last told. The chip's `head` is left out
+  of the comparison: it moves with every line on any board, and the host reads it fresh. Never after `unmount` (the
+  status listener goes with it, and `gone` stops a late call).
+- **Tests**: `tests/plugin/page-changed.spec.ts` on the fake host (which counts the calls): the first draw (null), an
+  agent's first board arriving and opening, a card added and another board drawn (no call), switching to another board
+  and back, a rename, the shown board archived (the next board shows), the last board archived (null), one restored and
+  opened; a board already there at mount (one call), none after unmount; a host without it. Run three times, stable.
+- Spec: plugin.md's host table has a `pageChanged` row and the view table's `pageChip` names it; components.md says it.
+- Fixed on the way: `tests/plugin/engine-folder-gone.spec.ts`'s `watch` listener type failed `npm run check` (from 5fdbda8).
+
+### The skill for a host that lists skills, and Haiku's two gaps (maintainer, 2026-11-09)
+
+From the Haiku 5.5 eval (points 538, 539) and nclite's skills-as-skills handover (the Journal's `label`, b331fde there).
+- **Front matter** (`SKILL.md`, both skills): `name`, then `label: Chats through the board` (Bot › Skills names the row
+  by it), then a `description` that says what the board is and when to read the skill ("Read this before you draw on
+  it or answer what they sent, and when ..."). The plugin's has no `status` line (`skill-edits.ts`); the standalone keeps
+  its history. `plugin-skill.test.ts` "the plugin skill opens with front matter" holds the order, the few words and
+  the 1,000 characters. Still within `SKILL_BYTES` (8,174 of 8,192 B), since nclite's main still has the budget:
+  examples trimmed (one key example, "containers stack down the screen").
+- **Instructions** (`plugin-tools.ts` `instructionEdits`): "Open your `vision-board` skill before your first
+  `write_board`", for a host that shows only the description until the bot opens the skill.
+- **538, summary**: "to sum cards up in one card is to retire them" beside "Only when the person asks" (plugin), and
+  the same in the standalone's words.
+- **539, the Send line** (`actions-message.ts` `theseAreThePersonS`): "Answer from them; only if the person says they
+  changed more since, call check_responses ... with after N", no longer an invitation to read again. Tests, gallery,
+  api.md and scenarios.md quote it.
+- **Evals** (nclite's flags on Haiku; `VB_TEST_PORT` 9800/9900/10000, ports 6080/6180/6280; $3.16 in all):
+  - Haiku, the five failed scenarios ×3: 92/93; `cards-retired` 3/3 (0/2 before), `no-re-read` 3/3 (0/2 before); the
+    one miss is new-card-number's reply in the same call (model miss, 1 of 3 as before). Haiku full set: 80/80 (76, 77).
+  - Sonnet, plugin (the gate): 79/80, and 78/80 after the last trim. The misses: `person-board/done-only`, Sonnet
+    narrating "Empty board; needs a region first", which fails 2 of 3 on the old words too (pre-existing; the scenario
+    came after T_02); `refusals/no-propose-without-source` 2 of 10 on the new words, 0 of 4 on the old, 5 of 5 in a row
+    on the new: read as a flake.
+  - Standalone (Sonnet): 17/19. `ledger-picture/done-only` (narration; 1 of 3 on the old words, known since 11-05) and
+    `join-ledger/one-line` (2 of 3 on the old words): both pre-existing.
+- Not done (proposed): `write_board` result flagging a picture path that does not resolve (540); `size`/`widths` left
+  out of the bot's schema under `botToolRules` (541); a done-only check in new-card-number (542); a fix for Sonnet's
+  narration on an empty board (the instructions' "no regions yet" example may prime it).
