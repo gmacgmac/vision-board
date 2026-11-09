@@ -11,14 +11,17 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `befe6628da739af0d42897014dae8dc5b7a52828` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" befe6628da739af0d42897014dae8dc5b7a52828`
+- **Commit**: `9539ea60570afc4682c07b1c71681a203b115918` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" 9539ea60570afc4682c07b1c71681a203b115918`
 - **Decisions**: the board's D-096, D-097 and D-098 (`docs/decisions.md`); D-098 replaces D-097 point 1, the two-field
   entry, with steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
 
-**New in `befe662`: the rail's layout tips show one at a time.** Moving the pointer down the icons no longer
-leaves a trail of fading tips (`region-layout-tip.ts` `bindLayoutTips`). Not yet fixed: the rail drawn large and blurry
-in your window while zoomed, which does not happen in Chromium or WebKit outside it (see the board's task file).
+**New in `9539ea6`: the rail and the top line keep their size in your desktop window.** macOS 15's WebKit never
+passed a new `--vb-zoom` down the board's `inherit` chain, so the rail kept the first zoom it saw and grew, blurred, with
+each zoom after. The value is now registered inherited and written on the regions layer, with no `inherit` chain; the
+cards never take it, so zooming costs no more. View only.
+
+**In `befe662`: the rail's layout tips show one at a time** (`region-layout-tip.ts` `bindLayoutTips`).
 
 **In `aab8a47`: panning or zooming with no board open no longer throws** ("Cannot read properties of null
 (reading 'state')", your report). With no board shown, a pan or zoom now only moves the empty stage
