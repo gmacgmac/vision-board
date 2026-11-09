@@ -53,7 +53,7 @@ function titlesOnDisk(dir: string): string[] {
     .filter((e) => e.type === 'board' && typeof e.title === 'string').map((e) => e.title as string);
 }
 
-const NCLITE = (followOtherWriters: boolean) => ({ singleAgent: true, followOtherWriters, botToolRules: true });
+const HOST_FLAGS = (followOtherWriters: boolean) => ({ singleAgent: true, followOtherWriters, botToolRules: true });
 
 /** What happens to the folder between two writes; `copy` was taken after the first board was drawn. */
 const CASES: { name: string; change: (dir: string, copy: string) => void; kept: boolean }[] = [
@@ -71,7 +71,7 @@ for (const follow of [false, true]) {
     test(`nclite's flags, followOtherWriters ${follow ? 'on' : 'off'}, ${c.name}: the next write goes, watch says head 0, get_board reads the disk`, async () => {
       const dir = folder();
       const copy = `${dir}-copy`;
-      const engine = createEngine({ dir, name: () => 'Plans folder', warn: () => {}, flags: NCLITE(follow) });
+      const engine = createEngine({ dir, name: () => 'Plans folder', warn: () => {}, flags: HOST_FLAGS(follow) });
       const heard: PluginChange[] = [];
       const stop = engine.watch((change) => heard.push(change));
       try {
@@ -102,7 +102,7 @@ for (const follow of [false, true]) {
 
 test('nclite\'s flags: the person\'s first write after the folder is deleted goes too, and the bot\'s next one after it', async () => {
   const dir = folder();
-  const engine = createEngine({ dir, name: () => 'Plans folder', warn: () => {}, flags: NCLITE(false) });
+  const engine = createEngine({ dir, name: () => 'Plans folder', warn: () => {}, flags: HOST_FLAGS(false) });
   await draw(engine, 'first', 'First');
   fs.rmSync(dir, { recursive: true, force: true });
   const put = await engine.route({ method: 'PUT', path: 'boards/mine', body: { title: 'Mine' } }, { caller: PERSON });
@@ -114,9 +114,9 @@ test('nclite\'s flags: the person\'s first write after the folder is deleted goe
 test('nclite\'s flags: a folder from elsewhere put in its place (another first agent) is read as it is, and the bot writes on', async () => {
   const dir = folder();
   const elsewhere = folder();
-  const engine = createEngine({ dir, name: () => 'Plans folder', warn: () => {}, flags: NCLITE(false) });
+  const engine = createEngine({ dir, name: () => 'Plans folder', warn: () => {}, flags: HOST_FLAGS(false) });
   await draw(engine, 'first', 'First');
-  await draw(createEngine({ dir: elsewhere, warn: () => {}, flags: NCLITE(false) }), 'theirs', 'Theirs');
+  await draw(createEngine({ dir: elsewhere, warn: () => {}, flags: HOST_FLAGS(false) }), 'theirs', 'Theirs');
   fs.rmSync(dir, { recursive: true, force: true });
   fs.cpSync(elsewhere, dir, { recursive: true });
   const read = await call(engine, 'get_board', { board: 'theirs' });
