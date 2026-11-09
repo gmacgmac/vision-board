@@ -534,3 +534,4 @@
 [[2026-11-08 23:40]] [project-docs] Handover to nclite: vendor 5fdbda8, the deleted-folder fix and its tests → Task: [[cortex-tasks/board/2026-11-08_board-app_plugin-contract-review-fixes.md]]
 [[2026-11-09 16:30]] [board-app] Host's pageChanged (nclite item 160): the board tells the host when pageChip would change; optional in BoardHost, seam 2 still; fake-host spec → Task: [[cortex-tasks/board/2026-11-08_board-app_plugin-contract-review-fixes.md]]
 [[2026-11-09 16:31]] [board-agent] Skill v3.33: label and a when-to-read description for a host's Skills page, retire on a sum-up ask, the Send line no longer invites a re-read; Haiku 80/80 with nclite's flags → Task: [[cortex-tasks/board/2026-11-08_board-app_plugin-contract-review-fixes.md]]
+[[2026-11-09 16:45]] [board-app] Handover to nclite: vendor 9fa516e (pageChanged, the skill's front matter) → Notes: `cortex-tasks/board/2026-11-07_board-app_plugin-contract/HANDOVER_nclite_plugin-contract.md` (New in 9fa516e)

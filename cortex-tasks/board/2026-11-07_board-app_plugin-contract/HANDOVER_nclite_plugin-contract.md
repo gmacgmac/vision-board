@@ -11,10 +11,27 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `5fdbda835573bbc8a8802410f3c35f82826480ba` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" 5fdbda835573bbc8a8802410f3c35f82826480ba`
+- **Commit**: `9fa516e099cde89812fedd752cc77273c55cb242` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" 9fa516e099cde89812fedd752cc77273c55cb242`
 - **Decisions**: the board's D-096, D-097 and D-098 (`docs/decisions.md`); D-098 replaces D-097 point 1, the two-field
   entry, with steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
+
+**New in `9fa516e`: your item 160, and the skill as a skill.**
+- **`pageChanged()`** (your `temp/panel-layout/plugin-handover-160.md`): the board calls it once its first draw settles,
+  then whenever `pageChip()`'s board, label or detail would change: a board opens or is switched to, the board on show is
+  renamed, archived (the next board shows) or restored, the last board goes, or a bot's first board arrives and opens.
+  Not for a new line alone: the chip's `head` moves with every line, so read `pageChip()` again on Add to chat. Never from
+  `unmount` or after it. The board's own type has the member **optional**, so the build fits your host before or after you
+  add it; add it in `shared/plugin-host.ts` in the same change anyway, as your handover says. **Seam stays 2**; the types'
+  hash moved (an addition). Tests: `tests/plugin/page-changed.spec.ts` (fake host, every case of your list, a host
+  without it); plugin.md's host table has the row.
+- **`skill.md`'s front matter**: `name: vision-board`, `label: Chats through the board`, then a one-line `description`
+  that says when to read it; no `status` line now. 8,174 B, so within `SKILL_BYTES` while your main still has it.
+  The instructions (`tools.instructions`) now say "Open your `vision-board` skill before your first `write_board`".
+- **Words a bot reads**: asking to sum cards up in one card is asking to retire them; the Send message's last line is
+  "Answer from them; only if the person says they changed more since, call check_responses ... with after N."
+- **Evals** (your three flags, Haiku 5.5): 80/80 on the full set, after 76 and 77 on `5fdbda8`. Sonnet 79/80 and 78/80.
+  Each miss also happens on the old words, except one flake. No flag change.
 
 **New in `5fdbda8`: your bug report of 2026-11-08, a deleted data folder.** With your flags, deleting the data folder
 or its ledger while the engine ran made every later write a 409 `conflict` ("The ledger file this board read has gone…")
