@@ -195,7 +195,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
       const read = input.body;
       const r = await OPS[id]!({
         params, caller: other ? undefined : caller, one: !other && one, writer, signal: input.signal, ledger: on, agents: getAgents, name,
-        ledgerName: other?.name ?? ledgerName, onSend, flags, readOnly: other !== undefined || closed(),
+        ledgerName: other?.name ?? ledgerName, onSend, flags, readOnly: other !== undefined || closed(), images: path.join(dir, IMAGES_DIR),
         body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
       return other && r.status < 400 ? { ...r, body: { ...(r.body as object), ledger: other.name, readOnly: true } } : r;

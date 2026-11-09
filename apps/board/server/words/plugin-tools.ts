@@ -30,6 +30,8 @@ export const ruleEdits: readonly DescriptionEdit[] = [
   },
   { tool: 'check_responses', from: '; a wait that times out returns `{ responses: [], head }`.', to: '.' },
   { tool: 'check_responses', from: ': this reads what they did, and never waits.', to: ': never call this to read what that message lists. It never waits.' },
+  // The engine places cards (engine/tools.ts `PLACED`): no `widths` or `size` to set.
+  { tool: 'write_board', from: '; `widths` is `match` or `own`.', to: '.' },
   {
     tool: 'list_open', from: 'List a board\'s open cards.',
     to: 'List a board\'s open cards, when no message lists the person\'s answers: never call it to read again what your host\'s message lists.',

@@ -116,6 +116,35 @@ function inputForPlugin(row: ToolRow, input: Record<string, unknown>): Record<st
   }, JSON.stringify(input))) as Record<string, unknown>;
 }
 
+/** With the rules on, what a host's bot never sets on a `write_board` item, by the item's field: the engine places cards
+ * and the person's arrangement wins, so it is left out of the schema the bot reads and dropped from what it sends. */
+const PLACED: Readonly<Record<string, string>> = { region: 'widths', node: 'size' };
+
+/** `write_board`'s input without the `PLACED` fields, in each item shape that has one. */
+function unplacedInput(input: Record<string, unknown>): Record<string, unknown> {
+  const out = structuredClone(input) as { properties?: { items?: { items?: { oneOf?: { properties?: Record<string, { properties?: Record<string, unknown>; required?: string[] }> }[] } } } };
+  for (const shape of out.properties?.items?.items?.oneOf ?? []) {
+    for (const [field, name] of Object.entries(PLACED)) {
+      const part = shape.properties?.[field];
+      if (!part?.properties?.[name]) continue;
+      delete part.properties[name];
+      if (part.required) part.required = part.required.filter((r) => r !== name);
+    }
+  }
+  return out as Record<string, unknown>;
+}
+
+/** `write_board`'s items with the `PLACED` fields a bot sent anyway taken out. */
+const unplacedItems = (items: readonly unknown[]): unknown[] => items.map((item) => {
+  if (!item || typeof item !== 'object') return item;
+  const out = { ...(item as Record<string, unknown>) };
+  for (const [field, name] of Object.entries(PLACED)) {
+    const part = out[field];
+    if (part && typeof part === 'object' && name in part) out[field] = Object.fromEntries(Object.entries(part).filter(([k]) => k !== name));
+  }
+  return out;
+});
+
 /** The refusal of an input a host does not give, sent anyway: `invalid`, with the words for that input. */
 function refusedInput(tool: string, name: string): ToolResult {
   const words = inputRefusals.find((r) => r.tool === tool && r.input === name);
@@ -153,16 +182,18 @@ export function makeTools(serves: (id: string) => id is OperationId, run: RunOp,
   const check = foreignSchemas();
   const rows = new Map(ROWS.flatMap((row) => {
     if (!row.hosts.includes('plugin') || !serves(row.name)) return [];
-    const input = givenInput(row, rules);
+    const given = givenInput(row, rules);
+    const input = rules && row.name === BOARD_WRITE ? unplacedInput(given) : given;
     return [[row.name as string, { row, id: row.name, input, gone: notGiven(row, rules), problems: check(input) }] as const];
   }));
   const listed: readonly ListedTool[] = [...rows.values()].map(({ row, input }) => ({ name: row.name, title: row.title, description: forPlugin(row, rules, single), inputSchema: inputForPlugin(row, input) }));
   return {
     list: () => listed,
     ...(rules && { instructions: edited(INSTRUCTIONS_JOINED, [...instructionEdits, ...(single ? singleAgentInstructionEdits : [])], 'INSTRUCTIONS_JOINED') }),
-    async call(name, input, { caller, signal } = {}) {
+    async call(name, sentInput, { caller, signal } = {}) {
       const tool = rows.get(name);
       if (!tool) return unknownToolResult(name);
+      const input = rules && name === BOARD_WRITE && Array.isArray(sentInput.items) ? { ...sentInput, items: unplacedItems(sentInput.items) } : sentInput;
       const sent = tool.gone.find((n) => input[n] !== undefined);
       if (sent !== undefined) return refusedInput(name, sent);
       const errors = tool.problems(input);

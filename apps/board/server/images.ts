@@ -19,7 +19,7 @@ import {
   IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, flagOn, imageCap, imageHeadProblem, imagePathProblem, imageTypeByName, ledgerFiles, ledgerFolder,
 } from '#format';
 import { isUnder } from './folders.ts';
-import { problem } from './problem.ts';
+import { ProblemError, problem } from './problem.ts';
 import * as httpWords from './words/http.ts';
 
 const missing = () => problem('not-found', IMAGE_WORDS.missing);
@@ -117,6 +117,18 @@ export function serveImage(req: IncomingMessage, res: ServerResponse, raw: strin
 
 /** The same answer for a host with no socket of the board's (the engine's `image`), its bytes whole: at
  * most the image's cap. A host's own server has no header of ours, so the no-sniff header comes with it. */
+/** Why the image route would not show picture `path` (as a card's Markdown names it) from the images folder `images`, in
+ * `IMAGE_WORDS`' words, or undefined when it would: the same checks a request for it meets (`openImage`). */
+export function imageProblem(path: string, images: string, flags: FlagOverrides = {}): string | undefined {
+  try {
+    fs.closeSync(openImage(path, images, flags).fd);
+    return undefined;
+  } catch (err) {
+    if (!(err instanceof ProblemError)) throw err;
+    return err.message;
+  }
+}
+
 export function imageReply(req: { method: string; ifNoneMatch?: string | undefined }, raw: string, images: string, flags: FlagOverrides = {}): { status: number; body: Buffer | null; headers: Record<string, string> } {
   onlyRead(req.method);
   const { fd, size, etag, contentType, headers } = openImage(raw, images, flags);

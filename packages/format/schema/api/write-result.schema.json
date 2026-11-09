@@ -107,6 +107,21 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more",
           "description": "The key was sent before with the same content; nothing was written now",
           "$comment": "Was: api.md 29"
+        },
+        "images": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "required": ["path", "problem"],
+            "properties": {
+              "path": {"type": "string", "maxLength": 2048, "description": "The picture's path as the card's Markdown names it."},
+              "problem": {"type": "string", "maxLength": 500, "description": "Why the board can't show it."}
+            },
+            "additionalProperties": false
+          },
+          "description": "Pictures in this card's text the board can't show (no such file in `images/`, or a path it refuses), each with why; left out when every picture shows. Save the file there, or rewrite the card with a path that starts inside `images/`.",
+          "$comment": "With the botToolRules flag on."
         }
       },
       "unevaluatedProperties": false

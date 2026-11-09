@@ -219,10 +219,6 @@ export const meta = (change: { words: string; count: number; subject: string; re
 export const manifest: PluginManifest = ${manifest};
 `;
 
-/** The board's change line moved under the contract's key: the one known difference (tests/plugin/contract/README.md),
- * until nclite renames its key to the board's in the change that vendors it. Then this goes, and `meta` is read as is. */
-const underContractKey = (meta: Record<string, unknown> | undefined) => ({ [contract.CHANGE_META]: meta?.[CHANGE_META] });
-
 test('the types satisfy the host contract: the built `mount` is a `Mount<HTMLElement>`, `createEngine` a `CreateEngine`, the shared shapes the contract\'s, the manifest a `PluginManifest`, and a write\'s change line one the contract stores', async () => {
   const dir = makeTempDir('vb-plugin-contract-');
   try {
@@ -242,14 +238,13 @@ test('the types satisfy the host contract: the built `mount` is a `Mount<HTMLEle
     }
 
     // The bounds are the contract's, and the board's change line is one the host stores, by the host's own check.
-    assert.equal(contract.CHANGE_META, 'nclite/change', 'the one known difference; see tests/plugin/contract/README.md');
+    assert.equal(contract.CHANGE_META, CHANGE_META, 'the board writes its change line under the contract\'s key');
     assert.deepEqual(CHANGE_BOUNDS, { refChars: contract.REF_LIMITS.maxChars, refItems: contract.REF_LIMITS.maxItems, refString: contract.REF_LIMITS.maxString, maxCount: contract.CHANGE_LIMITS.maxCount, subjectChars: contract.CHANGE_LIMITS.subjectChars });
-    const stored = (meta: Record<string, unknown> | undefined) => storedChangeOf(manifest.id, underContractKey(meta), manifest.changeWords);
+    const stored = (meta: Record<string, unknown> | undefined) => storedChangeOf(manifest.id, meta, manifest.changeWords);
     const joined = (await engine.route({ method: 'POST', path: 'agents', body: { label: 'Contract test' } }))!.body as { agent: string };
     const items = [{ type: 'board', title: 'Plans' }, { type: 'region', region: { id: 'now', title: 'Now', mode: 'grid' } }, { type: 'node', node: { region: 'now', kind: 'question', title: 'Ship on Friday?' } }];
     const wrote = await engine.tools.call('write_board', { board: 'plans', items }, { caller: { by: 'agent', agent: joined.agent } });
     assert.equal(stored(wrote._meta), JSON.stringify({ v: 2, plugin: manifest.id, ...(wrote._meta?.[CHANGE_META] as object) }), JSON.stringify(wrote._meta));
-    assert.equal(storedChangeOf(manifest.id, wrote._meta, manifest.changeWords), null, 'under the board\'s key, the host as it is stores nothing: why the rename is part of vendoring');
     const most = changeOf('a'.repeat(64), Array.from({ length: 500 }, (_, i) => 100000 + i));
     assert.notEqual(stored({ [CHANGE_META]: most }), null, 'the longest board id and the most cards the host counts: stored, its reveal within REF_LIMITS (the reveal left out is engine.test.ts\'s)');
     // The answers ack and a chat line's ref, at the longest board id, are refs the host's own check takes.

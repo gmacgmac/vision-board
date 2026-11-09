@@ -1,6 +1,6 @@
 // Written scenario 41: a new card named in a reply. The bot draws the card first and names it, in a later call, by the
 // `n` the board gave it (PLAN decision 4, point 422): no text in a write names a card number the board had not given
-// before that call, even a guess that happens to be right.
+// before that call, even a guess that happens to be right; and no card is drawn only to be retired (Haiku, 2026-11-09).
 import { answersTo, callsTo, cardAdded, check, doneOnly, noKeyConflict, resultsOf } from '../checks.ts';
 import type { RunRecord, Scenario } from '../types.ts';
 import { BOARD, drawOffsite } from './offsite.ts';
@@ -44,6 +44,12 @@ export const newCardNumber: Scenario = {
       const answers = answersTo(r, 2, Number(r.facts.noteSeq));
       return [answers.length === 1, `${answers.length} answer(s)`];
     }),
+    check('no-throwaway-card', 'no card is drawn and retired in the same run: its number would be used up for good', (r) => {
+      const drawn = new Set(newCards(r));
+      const gone = callsTo(r, 'write_board').flatMap(resultsOf).flatMap((x) => (x.ok && Array.isArray(x.retired) ? x.retired as number[] : []));
+      const wasted = gone.filter((n) => drawn.has(n));
+      return [wasted.length === 0, wasted.length ? `drawn and retired: ${wasted.join(', ')}` : 'none'];
+    }),
     noKeyConflict(), doneOnly(),
   ],
   fake: {
@@ -60,8 +66,10 @@ export const newCardNumber: Scenario = {
         { type: 'node', key: 'offsite-card-coworking', node: { region: 'venues', kind: 'decision', title: 'Co-working space downtown', body: '✓ pick it · ✗ rule it out' } },
         { type: 'reply', key: 'offsite-reply-n2-coworking', n: 2, to: seq, text: 'Added as card 4. ✓ to pick the cabin.' },
       ] });
+      const extra = await bot.call('write_board', { board: BOARD, items: [{ type: 'node', key: 'offsite-card-placeholder', node: { region: 'venues', kind: 'note', title: 'Placeholder' } }] });
+      await bot.call('write_board', { board: BOARD, items: [{ type: 'retire', key: 'offsite-retire-placeholder', n: extra.results[0].n }] });
       bot.say('Done.');
     }],
-    badFails: ['no-guessed-number'],
+    badFails: ['no-guessed-number', 'no-throwaway-card'],
   },
 };

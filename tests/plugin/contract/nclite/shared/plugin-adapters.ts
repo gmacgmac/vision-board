@@ -1,7 +1,20 @@
-// NOT A COPY: the one stand-in in this fixture (README.md). nclite's `shared/plugin-adapters.ts` holds what it supplies
-// for a plugin; with the board built to the contract, all that is left of its entry is its icon, a name in nclite's own
-// list (its stylesheet's scope is the manifest's `scope`). The handover asks nclite to keep exactly this entry when it
-// deletes the rest. Only `stylesheet.ts` `checkPluginStylesheet` reads it, for `reads` and a waiver the board has neither of.
-export interface PluginAdapter { icon?: string; css?: { scope?: string; reviewedSha256?: string; reads?: readonly string[] } }
-const ADAPTERS: Readonly<Record<string, PluginAdapter>> = { 'vision-board': { icon: 'board' } };
-export const adapterOf = (id: string): PluginAdapter | undefined => (Object.hasOwn(ADAPTERS, id) ? ADAPTERS[id] : undefined);
+/**
+ * WHAT NCLITE SUPPLIES THAT A PLUGIN'S MANIFEST LACKS (`docs/plugins.md` § The adapter table): one entry per plugin id,
+ * read by the engine's plugin list. Today that is an icon alone. A plugin whose manifest carries everything has no entry.
+ */
+
+/** What nclite supplies for a plugin. Every member is optional. */
+export interface PluginAdapter {
+	/** The icon its manifest lacks: a name from the app's own icon list. */
+	icon?: string;
+}
+
+/** Every adapter, by plugin id. */
+export const ADAPTERS: Readonly<Record<string, PluginAdapter>> = {
+	'vision-board': { icon: 'board' },
+};
+
+/** The adapter of plugin `id`, or undefined when it has none. */
+export function adapterOf(id: string): PluginAdapter | undefined {
+	return Object.hasOwn(ADAPTERS, id) ? ADAPTERS[id] : undefined;
+}

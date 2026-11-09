@@ -239,3 +239,50 @@ test('a key conflict, flag off: the words are as before', async () => {
   const p = await failedItem(engine, bot, { type: 'node', node: { region: 'now', kind: 'question', title: 'Other' }, key: 'plans-card-friday' });
   assert.equal(p.detail, 'The key "plans-card-friday" was used before for different content. Use a new key for new content, or resend the same content to get the first result.');
 });
+
+test('the engine places cards: with the rules on, a bot\'s write_board has no `size` or `widths` to set, and one sent anyway is dropped; off, as before', async () => {
+  const sizes = (engine: Engine) => engine.ledger.events().flatMap((e) => {
+    const line = e as { node?: { size?: unknown }; region?: { widths?: unknown } };
+    return [line.node?.size, line.region?.widths].filter((v) => v !== undefined);
+  });
+  const items = [
+    { type: 'region', region: { id: 'next', title: 'Next', mode: 'grid', widths: 'own' }, key: 'plans-next' },
+    { type: 'node', node: { region: 'next', kind: 'question', title: 'Which folder?', size: 'l' }, key: 'plans-card-folder' },
+  ];
+  for (const [flags, kept] of [[{}, false], [OFF, true]] as const) {
+    const { engine, bot } = await withPlans(flags);
+    const listed = engine.tools.list().find((t) => t.name === 'write_board')!;
+    const schema = JSON.stringify(listed.inputSchema);
+    assert.equal(/"size":\{"enum"/.test(schema), kept, 'node.size in the schema');
+    assert.equal(/"widths":\{"enum"/.test(schema), kept, 'region.widths in the schema');
+    assert.equal(listed.description.includes('`widths`'), kept, 'the description');
+    const before = sizes(engine).length;
+    await tool(engine, 'write_board', { board: 'plans', items }, bot);
+    assert.deepEqual(sizes(engine).slice(before), kept ? ['own', 'l'] : [], 'what the ledger holds');
+  }
+});
+
+test('a picture the board can\'t show: with the rules on, write_board\'s result names it and why, so the bot fixes it this turn; off, as before', async () => {
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEBgIApD5fRAAAAABJRU5ErkJggg==', 'base64');
+  const body = '![Day plan](day-plan.png) and ![Twice](images/day-plan.png), ![Away](https://example.com/a.png), ![Gone](gone.png)';
+  for (const [flags, told] of [[{}, true], [OFF, false]] as const) {
+    const dir = makeTempDir('vb-bot-pictures-');
+    dirs.push(dir);
+    fs.mkdirSync(path.join(dir, 'images'));
+    fs.writeFileSync(path.join(dir, 'images/day-plan.png'), PNG);
+    const engine = createEngine({ dir, warn: () => {}, flags: { ...flags, singleAgent: true } });
+    const bot: Caller = { by: 'agent', agent: 'bot-0123456789abcdef' };
+    const out = await tool(engine, 'write_board', { board: 'pics', items: [
+      { type: 'board', title: 'Pics', key: 'pics-board' },
+      { type: 'region', region: { id: 'now', title: 'Now' }, key: 'pics-now' },
+      { type: 'node', node: { region: 'now', kind: 'note', title: 'Pictures', body }, key: 'pics-card' },
+      { type: 'node', node: { region: 'now', kind: 'note', title: 'Shown', body: '![Day plan](day-plan.png)' }, key: 'pics-shown' },
+    ] }, bot);
+    checkAnswer('write_board', { status: 200, headers: new Headers(), media: 'application/json', body: out }); // the answer fits the contract
+    const [, , card, shown] = out.results as { images?: { path: string; problem: string }[] }[];
+    assert.equal(shown!.images, undefined, 'every picture shows: no `images`');
+    if (!told) { assert.equal(card!.images, undefined); continue; }
+    assert.deepEqual(card!.images!.map((x) => x.path), ['images/day-plan.png', 'https://example.com/a.png', 'gone.png']);
+    assert.ok(card!.images!.every((x) => x.problem.length > 0), JSON.stringify(card!.images));
+  }
+});

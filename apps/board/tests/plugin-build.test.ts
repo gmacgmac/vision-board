@@ -17,6 +17,7 @@ import { buildPlugin, DEFAULT_OUT } from '../bin/build-plugin.ts';
 import { pluginTypes } from '../bin/plugin-types.ts';
 import { SEAM } from '../plugin/seam.ts';
 import { checkPluginStylesheet, checkStylesheet } from '../../../tests/plugin/contract/nclite/engine/plugins/stylesheet.ts';
+import { scopeOf } from '../../../tests/plugin/contract/nclite/shared/plugin-checks.ts';
 
 const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
 const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_layout', 'list_open', 'check_responses', 'request_grant', 'write_board'];
@@ -158,12 +159,14 @@ test('the view bundle is one file with no import, exporting only mount, and one 
 
 test('the built sheet stays in its scope: the host\'s own check passes it with no reads and no waiver, and so does the board\'s', async () => {
   const css = text(first, 'view/board.css');
-  // The host's check (tests/plugin/contract/README.md: its source's bytes, but for the manifest's `scope`), on the path the
-  // host runs as it loads the plugin: `checkPluginStylesheet` takes the manifest's scope, else the plugin's id. With `vb`
-  // and no reads and no waiver (every property the board's script sets is a `--vb-*` one), it passes; without it, the id
-  // is the scope and it fails, which is why the manifest carries it.
-  const { id, scope } = JSON.parse(text(first, 'manifest.json')) as { id: string; scope: string };
-  assert.deepEqual(checkPluginStylesheet(id, fs.readFileSync(path.join(first, 'view/board.css')), scope), []);
+  // The host's check (tests/plugin/contract/README.md: its source's bytes), on the path the host runs as it loads the
+  // plugin: `checkPluginStylesheet` under the scope `scopeOf` gives, the manifest's `scope`, else the plugin's id. With `vb`
+  // and no reads and no waiver (every property the board's script sets is a `--vb-*` one), it passes; under the id it
+  // fails, which is why the manifest carries it.
+  const manifest = JSON.parse(text(first, 'manifest.json')) as { id: string; scope: string };
+  const { id } = manifest;
+  assert.equal(scopeOf(manifest), 'vb');
+  assert.deepEqual(checkPluginStylesheet(scopeOf(manifest), fs.readFileSync(path.join(first, 'view/board.css'))), []);
   assert.notDeepEqual(checkPluginStylesheet(id, fs.readFileSync(path.join(first, 'view/board.css'))), [], 'without the manifest\'s scope, the host refuses the sheet');
   assert.notDeepEqual(checkStylesheet(css, { scope: id }), [], 'under the id, the sheet is out of scope');
   // The board's own rule, scripts/verify-style.mjs (which holds the sources to it in `npm run verify`): the same first

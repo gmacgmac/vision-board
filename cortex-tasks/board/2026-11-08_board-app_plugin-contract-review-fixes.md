@@ -282,3 +282,22 @@ From the Haiku 5.5 eval (points 538, 539) and nclite's skills-as-skills handover
 - Not done (proposed): `write_board` result flagging a picture path that does not resolve (540); `size`/`widths` left
   out of the bot's schema under `botToolRules` (541); a done-only check in new-card-number (542); a fix for Sonnet's
   narration on an empty board (the instructions' "no regions yet" example may prime it).
+
+### Before the handover to nclite: points 540, 541, 542 and 544 (maintainer, 2026-11-09)
+
+- **544, the contract copy refreshed** from nclite `dde6d037`: six files now (the adapter table is a real copy, its one
+  entry the board's icon), the `scope` edits and the `nclite/change` difference gone (nclite has both), the one edit left
+  `pageChanged`. `plugin-build.test.ts` checks the sheet under nclite's `scopeOf`; `plugin-types.test.ts` reads the change
+  line under the contract's own key.
+- **541, the engine places cards**: under `botToolRules`, `write_board`'s schema has no `node.size` or `region.widths`
+  and its description no `widths`; one sent anyway is dropped (`engine/tools.ts` `PLACED`). Off, as before.
+- **540, a picture it can't show**: the write result's `written` gains `images` (contract first:
+  `write-result.schema.json`, generated types and reference), each path a written card's text names that the image route
+  would not serve, with the route's own words (`images.ts` `imageProblem`, the checks `openImage` makes;
+  `engine/writes.ts` `withPictures`, botToolRules on). `OpCtx.images` is the folder's `images/`.
+- **542**: `new-card-number` gains `no-throwaway-card` (no card drawn and retired in the run; the fake bad bot proves it
+  fails). Its `done-only` was already there; "Done." plus one short line is what the skill allows, so it stays.
+- Tests: `bot-tool-rules.test.ts` "the engine places cards", "a picture the board can't show"; `engine.test.ts`'s tools
+  test expects the schema without them. Unit 2452/2452, plugin 109/109, pages 1008/1008, verify and check clean.
+- Evals: Sonnet plugin 81/81; Haiku with nclite's flags 80/81 (one `get_board` in where-cards-stand); standalone 17/19
+  (the two misses the old words have). $0.86.

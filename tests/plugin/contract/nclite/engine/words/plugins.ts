@@ -28,6 +28,10 @@ export const PLUGIN_WORDS = {
 		fileInside: (field: string): string => `${field} must be a file inside the plugin.`,
 		fileMissing: (field: string, path: string): string => `${field} names ${path}, which is not in the folder.`,
 		icon: 'icon must be a non-empty string.',
+		scopeForm: 'scope must be 2 to 16 lowercase letters and digits, starting with a letter.',
+		/** The plugin's scope (its manifest's `scope`, else its id) is one of the app's own, or sits under one. */
+		scopeReserved: (scope: string, reserved: string): string =>
+			`The stylesheet scope ${scope} is the app’s own (${reserved}). Give the manifest a scope of its own.`,
 		settingKey: (at: string): string => `${at}.key must be lowercase letters, digits and hyphens.`,
 		settingWords: (at: string): string => `${at}.words must be a words key.`,
 		settingOptions: (at: string): string => `${at}.options must list two or more.`,
@@ -53,6 +57,9 @@ export const PLUGIN_WORDS = {
 		/** The record's sha256 is not the one the plugin's row pins (`provenanceSha256`): a folder edited and its record made again. */
 		provenancePin: (id: string): string =>
 			`provenance.json is not the record nclite’s plugin table pins for ${id}, so the folder is not the reviewed build. Vendor it again with scripts/plugin-vendor.ts, then pin the record it prints in a reviewed change.`,
+		/** Two plugins whose stylesheet scopes overlap: the later folder, by name, is left out. */
+		scopeTaken: (scope: string, other: string, otherScope: string): string =>
+			`The stylesheet scope ${scope} overlaps ${other}’s (${otherScope}), so one could restyle the other. Give one manifest a scope of its own.`,
 		fileUnreadable: (path: string): string => `${path} could not be read.`,
 		shaDiffers: (path: string): string => `${path} differs from the build recorded in provenance.json. Vendor it again with scripts/plugin-vendor.ts.`,
 		fileNotRecorded: (path: string): string => `${path} is in the folder but not in provenance.json, so it is not part of the recorded build. Vendor it again with scripts/plugin-vendor.ts.`,

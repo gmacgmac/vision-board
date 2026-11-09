@@ -152,7 +152,9 @@ test('tools: one per tool the table marks for a plugin (x-hosts), listed in MCP\
     // The botToolRules flag (on): an input the table gives other hosts only is not this host's (bot-tool-rules.test.ts).
     const gone = Object.entries(row.inputHosts ?? {}).filter(([, hosts]) => !hosts.includes('plugin')).map(([name]) => name);
     const given = { ...row.input, properties: Object.fromEntries(Object.entries(row.input.properties).filter(([name]) => !gone.includes(name))) };
-    const input: unknown = JSON.parse(inputEdits.filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replaceAll(from, to), JSON.stringify(given)));
+    const input: any = JSON.parse(inputEdits.filter((e) => e.tool === t.name).reduce((text, { from, to }) => text.replaceAll(from, to), JSON.stringify(given)));
+    // And the engine places cards (engine/tools.ts `PLACED`): no `widths` on a region, no `size` on a node.
+    if (t.name === 'write_board') for (const shape of input.properties.items.items.oneOf) { delete shape.properties?.region?.properties?.widths; delete shape.properties?.node?.properties?.size; }
     assert.deepEqual([t.description, t.inputSchema], [words, input], `${t.name}: the table's words (less what only the standalone bot has, words/plugin-tools.ts) and JSON Schema`);
   }
   const inputs: Record<string, Record<string, unknown>> = {

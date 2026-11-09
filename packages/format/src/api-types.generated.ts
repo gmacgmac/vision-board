@@ -857,6 +857,10 @@ type WriteResultWritten = {
     before: number;
   };
   replayed?: true;
+  images?: {
+    path: string;
+    problem: string;
+  }[];
 };
 type WriteResultFailed = {
   index: number;

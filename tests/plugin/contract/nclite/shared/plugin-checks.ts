@@ -44,9 +44,33 @@ export function checkRef(value: unknown): Ref | null {
 export const PLUGIN_ID = /^[a-z][a-z0-9-]{1,30}$/;
 
 /**
+ * A stylesheet scope a manifest declares (`PluginManifest.scope`): a lowercase letter, then 1 to 15 lowercase letters and
+ * digits. No hyphen, so a scope never reads as another's `<scope>-…` prefix by itself. The one home of the rule, with
+ * {@link RESERVED_SCOPES} and {@link scopesOverlap}: the manifest check (`checkManifest`, `engine/plugins/manifest.ts`) and
+ * the registry (`loadRegistry`, `engine/plugins/registry.ts`) hold it.
+ */
+export const PLUGIN_SCOPE = /^[a-z][a-z0-9]{1,15}$/;
+
+/** The scopes no plugin may hold or sit under: the app's own (`--host-*` properties, `ui` classes). */
+export const RESERVED_SCOPES: readonly string[] = ['host', 'ui'];
+
+/** A plugin's stylesheet scope: its manifest's `scope`, else its id. */
+export function scopeOf(manifest: { id: string; scope?: string }): string {
+	return manifest.scope ?? manifest.id;
+}
+
+/**
+ * True when a sheet under scope `a` could name what one under `b` names: the same scope, or one is the other's
+ * `<scope>-…` prefix (a sheet scoped `vb` may write `.vb-notes-x`, which is plugin `vb-notes`'s).
+ */
+export function scopesOverlap(a: string, b: string): boolean {
+	return a === b || a.startsWith(`${b}-`) || b.startsWith(`${a}-`);
+}
+
+/**
  * An agent id, the contract's `Caller` id: 1 to 64 letters, digits, `_` and `-`. The one home of the rule: the bot's derived
- * id is one (`pluginAgent`), a registration's answer is kept only when it is one (`ensurePluginAgent`,
- * `engine/store/plugin-agents.ts`), and `PluginEngineHost.callTool` (`engine/plugins/host.ts`) refuses any other.
+ * id is one (`pluginAgent`, `engine/store/plugin-agents.ts`), and `PluginEngineHost.callTool` (`engine/plugins/host.ts`)
+ * refuses any other.
  */
 export const AGENT_ID = /^[A-Za-z0-9_-]{1,64}$/;
 /** Any control (`Cc`: C0, DEL, C1) or format (`Cf`: bidi overrides and isolates, zero-width marks, a soft hyphen) character. */
@@ -79,8 +103,7 @@ export function storedChangeOf(plugin: string, meta: Readonly<Record<string, unk
 
 /**
  * A stored `plugin_change` body (the text, or the value parsed from it) read back as the contract's {@link StoredChange},
- * or null for one of another shape: a body in a plugin's own older shape is its stored-shape reader's
- * (`LEGACY_CHANGES`, `./plugin-legacy.ts`). The engine checked it when it stored it; a reader of stored data checks again.
+ * or null for one of any other shape. The engine checked it when it stored it; a reader of stored data checks again.
  */
 export function readStoredChange(body: unknown): StoredChange | null {
 	let raw = body;

@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-09 (the host's `pageChanged`); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -358,8 +358,13 @@ person's, through `route`, and refused to a bot. Proven by `tools.spec.ts` "tool
   newer version, or the person's ✓ or ✗; api.md 172), and a board it holds is `held` (`list_boards`, `get_board`: what
   `request_grant` answers `held` for), so it never answers a note twice or asks for a board it has.
 - *A key conflict says what the key holds* (a card by number, title and version, or the line's kind) and names a free key.
+- *The engine places cards.* `write_board`'s input has no `size` on a card and no `widths` on a container, and one sent
+  anyway is dropped (`engine/tools.ts` `PLACED`).
+- *A picture it can't show is named.* A written `node` or `append` result carries `images`, each picture its text names
+  that the image route would not serve, with why (no such file in `images/`, a path it refuses), so the bot fixes it in
+  the same turn.
 
-Proven by `apps/board/tests/bot-tool-rules.test.ts` "no holding the turn", "reads tell the truth", "reads say what answered a note", "a key conflict helps", and `engine-hooks.spec.ts` "route and tools.call".
+Proven by `apps/board/tests/bot-tool-rules.test.ts` "no holding the turn", "reads tell the truth", "reads say what answered a note", "a key conflict helps", "the engine places cards", "a picture the board can't show", and `engine-hooks.spec.ts` "route and tools.call".
 
 **Two worked transports.**
 

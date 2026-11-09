@@ -1,7 +1,5 @@
-import { adapterOf } from '../../shared/plugin-adapters.ts';
 import { HOST_PROPERTIES } from '../../shared/plugin-host.ts';
 import { PLUGIN_WORDS } from '../words/plugins.ts';
-import { sha256Of } from './provenance.ts';
 
 /**
  * A PLUGIN'S STYLESHEET STAYS UNDER ITS OWN SCOPE (`docs/plugins.md` § A guest in the app's page; journal-plugin DESIGN_01
@@ -16,19 +14,14 @@ import { sha256Of } from './provenance.ts';
  * - `:root` declares only `--<scope>-*`;
  * - `@property` and `@keyframes` are named `--<scope>-…` and `<scope>-…`; no other at-rule but the three groups above;
  * - no `@import`, and `url()` only of a `data:` address;
- * - every `var()` reads a host property (`HOST_PROPERTIES`), a `--<scope>-*` one, one the sheet declares, or one of `reads`.
+ * - every `var()` reads a host property (`HOST_PROPERTIES`), a `--<scope>-*` one, or one the sheet declares.
  *
- * `waiveSelectors` lifts the first rule alone, for a sheet reviewed against its own guest rules: the board's, by the sha256
- * its adapter names (`css.reviewedSha256`, `shared/plugin-adapters/board.ts`; {@link checkPluginStylesheet}).
+ * No rule is waived for any plugin: a sheet passes as written, or the plugin is left out.
  */
 
 export interface StylesheetRules {
-	/** The plugin's id, or its adapter's `css.scope`. */
+	/** The plugin's scope: its manifest's `scope`, else its id (`scopeOf`, `shared/plugin-checks.ts`). */
 	scope: string;
-	/** Properties its own script sets, which the sheet may read. */
-	reads?: readonly string[];
-	/** True only for a sheet whose bytes were reviewed: the selector rule is not applied. */
-	waiveSelectors?: boolean;
 }
 
 const S = PLUGIN_WORDS.stylesheet;
@@ -175,7 +168,7 @@ function checkNodes(nodes: Node[], rules: StylesheetRules, nested: boolean, prob
 			continue;
 		}
 		const selectors = splitTop(node.prelude, (c) => c === ',').map((s) => s.trim().replace(/\s+/g, ' '));
-		if (!nested && !rules.waiveSelectors) for (const selector of selectors) if (!scoped(selector, scope)) problems.push(S.selector(selector, scope));
+		if (!nested) for (const selector of selectors) if (!scoped(selector, scope)) problems.push(S.selector(selector, scope));
 		if (selectors.includes(':root')) {
 			for (const [property] of declarations(node.body)) if (!property.startsWith(`--${scope}-`)) problems.push(S.root(property, scope));
 		}
@@ -214,7 +207,7 @@ export function checkStylesheet(text: string, rules: StylesheetRules): string[] 
 	checkNodes(nodes, rules, false, problems);
 	for (const address of urls(css.replace(/@import\b[^;]*;?/gi, ''))) if (!/^data:/i.test(address)) problems.push(S.url(address));
 	const declared = new Set([...css.matchAll(/(?:^|[;{\s(])(--[\w-]+)\s*:/g), ...css.matchAll(/@property\s+(--[\w-]+)/g)].map((m) => m[1]!));
-	const readable = new Set<string>([...HOST_PROPERTIES, ...(rules.reads ?? []), ...declared]);
+	const readable = new Set<string>([...HOST_PROPERTIES, ...declared]);
 	const unread = new Set<string>();
 	for (const m of css.matchAll(/var\(\s*(--[\w-]+)/g)) {
 		const property = m[1]!;
@@ -226,12 +219,7 @@ export function checkStylesheet(text: string, rules: StylesheetRules): string[] 
 	return problems.length > MAX_PROBLEMS ? [...problems.slice(0, MAX_PROBLEMS), S.more(problems.length - MAX_PROBLEMS)] : problems;
 }
 
-/**
- * The problems of plugin `id`'s stylesheet `bytes`, under the rules its adapter gives (scope, reads, and the selector rule
- * waived when the bytes are the ones it reviewed), else its id with no reads and no waiver.
- */
-export function checkPluginStylesheet(id: string, bytes: Uint8Array, scope?: string): string[] {
-	const css = adapterOf(id)?.css;
-	const waiveSelectors = css?.reviewedSha256 !== undefined && css.reviewedSha256 === sha256Of(bytes);
-	return checkStylesheet(Buffer.from(bytes).toString('utf8'), { scope: scope ?? id, reads: css?.reads ?? [], waiveSelectors });
+/** The problems of a plugin's stylesheet `bytes` under its `scope` (`scopeOf`, `shared/plugin-checks.ts`). */
+export function checkPluginStylesheet(scope: string, bytes: Uint8Array): string[] {
+	return checkStylesheet(Buffer.from(bytes).toString('utf8'), { scope });
 }

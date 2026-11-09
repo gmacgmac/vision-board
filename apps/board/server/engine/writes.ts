@@ -14,6 +14,7 @@ import { bodyExample } from '../examples.ts';
 import { problem } from '../problem.ts';
 import { SPECS, bodyProblems } from '../spec.ts';
 import { writeItems } from '../write-board.ts';
+import { imageProblem } from '../images.ts';
 import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } from '../visibility.ts';
 import type { Op, OpCtx } from './operations.ts';
 import { reply, scopeOf, whereAnswer } from './operations.ts';
@@ -140,6 +141,23 @@ const requestGrant: Op = async (ctx) => {
   return reply(201, { request: e.seq, ...what });
 };
 
+/** A picture in Markdown, `![alt](path)` or `![alt](path "title")`: its path, as the renderer reads it (packages/ui
+ * markdown/image.ts) for every path with no space. */
+const PICTURE = /!\[[^\]\n]*\]\(([^)\s]+)[^)\n]*\)/g;
+
+/** Each written `node` or `append` item's result with the pictures its text names that the board can't show (botToolRules):
+ * a path that is not in `images/`, or one the route refuses, so the bot can fix it in the same turn. */
+function withPictures<R extends { ok: boolean }>(results: R[], items: unknown[], ctx: OpCtx): R[] {
+  return results.map((r, i) => {
+    const item = items[i] as { type?: unknown; node?: { body?: unknown }; text?: unknown } | null;
+    const text = item?.type === 'node' ? item.node?.body : item?.type === 'append' ? item.text : undefined;
+    if (!r.ok || typeof text !== 'string') return r;
+    const paths = [...new Set([...text.matchAll(PICTURE)].map((m) => m[1]!))];
+    const images = paths.flatMap((p) => { const problem = imageProblem(p, ctx.images, ctx.flags); return problem ? [{ path: p, problem }] : []; }).slice(0, 20);
+    return images.length ? { ...r, images } : r;
+  });
+}
+
 /** One batch of write items (api.md 34, 37): a body that cannot be read at all, an unknown board
  * with no `board` item, a batch making a board whose id isn't available (api.md 136), or a batch
  * on a locked board (api.md 139), is one problem; otherwise 200 with a result per item. */
@@ -158,7 +176,8 @@ const writeBoard: Op = async (ctx) => {
   const board = String(params.board);
   writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));
   const agent = ctx.writer(); // after the up-front refusals, so a locked board joins nobody
-  const results = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags), !ctx.one);
+  const written = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags), !ctx.one);
+  const results = flagOn('botToolRules', ctx.flags) ? withPictures(written, list, ctx) : written;
   const s = ledger.state();
   const pending = s.boards.has(board) ? openItems(s, board, scopeOf(ctx)).filter((x) => x.pending !== undefined) : [];
   const containers = s.boards.has(board) ? openContainers(s, board, scopeOf(ctx)) : [];

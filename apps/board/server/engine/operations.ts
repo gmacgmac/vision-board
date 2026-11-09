@@ -31,6 +31,8 @@ export interface OpCtx {
   ledgerName: string | undefined;
   /** A Send the person made (`act`), handed to the host to record (`SendHook`). */
   onSend: SendHook;
+  /** The board folder's pictures (`images/` in its `dir`): where `write_board` looks for the ones a card names. */
+  images: string;
   /** The engine's flags (`botToolRules`: the reads' `owed` and `held`, a key conflict's words). */
   flags: FlagOverrides;
   /** The ledger is open read-only now (`EngineOptions.readOnly`): the reads say so. */
