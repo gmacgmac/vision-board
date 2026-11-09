@@ -4,13 +4,14 @@
    05's fieldset): no fill, a thin line, and a top line whose title and buttons sit in gaps cut
    from the border. The frame's colour is --vb-region, set by the element (regionColour), read whole. */
 
-/* The zoom the board is drawn at: the viewport writes it once on the world (viewport.ts apply), a
+/* The zoom the board is drawn at: the viewport writes it once on the regions layer (viewport.ts apply), a
    runtime value, not a token. Registered as a number so a glide can animate it with the world's
-   transform; 1 outside a board (the gallery's loose frames). Not inherited, so a zoom step restyles
-   no card: only the path down to each frame's top line takes it (the world's regions layer, the
-   frame, the line). Inherited everywhere, a step cost about 25 ms more on a 1,000-card board. */
-@property --vb-zoom { syntax: '<number>'; inherits: false; initial-value: 1; }
-.vb-regions, vb-region, vb-region > .vb-region-head { --vb-zoom: inherit; }
+   transform; 1 outside a board (the gallery's loose frames). Inherited, from the regions layer only, so
+   each frame, its top line and its rail take it, and the cards layer, a sibling, never does: a zoom step
+   restyles no card (inherited from the world, a step cost about 25 ms more on a 1,000-card board). Never
+   handed down by `inherit`: macOS 15's WebKit (nclite's desktop window) did not pass a new value down such
+   a chain, so the rail kept the first zoom it saw (tests/pages/zoom-counter-scale.spec.ts). */
+@property --vb-zoom { syntax: '<number>'; inherits: true; initial-value: 1; }
 
 vb-region {
   --vb-region-line-w: 1.5px;

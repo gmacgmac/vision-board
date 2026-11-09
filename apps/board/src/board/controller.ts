@@ -54,7 +54,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const chatStatus = chatStatusOf(host, () => live.oneAgent); // no `agent` while the engine runs singleAgent
   /** How this board's Markdown renders, on every surface that draws it. */
   const markdown = markdownOf(host);
-  const vp = new Viewport(stage, world, on('hideControlsZoomedOut')); // N13, rule 12
+  const vp = new Viewport(stage, world, on('hideControlsZoomedOut'), els.regions); // N13, rule 12
   // Behind flags (rule 12): card size tiers and their control (nodeSize, D-030); grant requests, holders and Send (agentAccess, D-027);
   // connectors behind frames and cards (wireLayers, D-032); the agent's proposals (proposals, FE_01); changed cards and seen (cardUpdates,
   // FE_02); NEW (newCards); link labels, the viewer's alignment and the widths switch (linkLabels, alignSetting, widthsControl, batch 3).

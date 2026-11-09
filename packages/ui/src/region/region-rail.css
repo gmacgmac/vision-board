@@ -27,7 +27,7 @@ vb-region[data-rail] > .vb-region-rail {
      so it never touches the next container (packages/layout types.ts; viewport.ts FAR_K). Top: just
      under the top line, whose label reaches 12px below the border. Foot: the room kept under it. */
   --vb-rail-w: 30px; --vb-rail-out: 20px; --vb-rail-ring: 2px; --vb-rail-top: var(--vb-space-4); --rail-foot: var(--vb-space-3);
-  --vb-rail-btn: var(--vb-control-target); --vb-zoom: inherit;
+  --vb-rail-btn: var(--vb-control-target);
   position: absolute; left: calc(-1 * var(--vb-region-line-w)); top: calc(-1 * var(--vb-region-line-w));
   width: calc((100cqw - 2 * var(--vb-space-4)) * var(--vb-zoom));
   height: calc((100% + 2 * var(--vb-region-line-w)) * var(--vb-zoom));

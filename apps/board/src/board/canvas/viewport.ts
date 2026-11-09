@@ -61,6 +61,8 @@ export class Viewport {
   k = 1;
   stage: HTMLElement;
   world: HTMLElement;
+  /** Where the zoom is written as `--vb-zoom` (the regions layer), for the frames inside it to counter-scale by. */
+  zoomOn: HTMLElement;
   /** Whether the stage turns "far" below FAR_K: the hideControlsZoomedOut flag (on by default). */
   hideFar: boolean;
   /** Called after every change of pan or zoom, so overlays can follow their card. */
@@ -70,19 +72,20 @@ export class Viewport {
   /** The zoom last written as `--vb-zoom`, so a pan writes nothing. */
   private zoomWritten = Number.NaN;
 
-  constructor(stage: HTMLElement, world: HTMLElement, hideFar = false) {
+  constructor(stage: HTMLElement, world: HTMLElement, hideFar = false, zoomOn: HTMLElement = world) {
     this.stage = stage;
     this.world = world;
+    this.zoomOn = zoomOn;
     this.hideFar = hideFar;
   }
 
   apply(): void {
     this.world.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.k})`;
-    // A container's top line keeps one on-screen size (review-polish ruling 2): region.css counter-scales
-    // it from this one value on the world, written only when the zoom changed; never per container.
+    // A container's top line and rail keep one on-screen size (review-polish ruling 2): region.css counter-scales
+    // them from this one value on the regions layer, written only when the zoom changed; never per container.
     if (this.k !== this.zoomWritten) {
       this.zoomWritten = this.k;
-      this.world.style.setProperty('--vb-zoom', String(this.k));
+      this.zoomOn.style.setProperty('--vb-zoom', String(this.k));
     }
     // Below FAR_K the cards' buttons would draw under the 24px target size (N8), so the stage is "far"
     // and they hide (tracker N13). With the flag off they stay visible at every zoom: never "far".

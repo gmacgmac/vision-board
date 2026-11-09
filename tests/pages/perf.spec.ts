@@ -146,7 +146,7 @@ test('one act on the 1,000-card board is shown in under 50 ms, updating one card
 });
 
 // Review polish ruling 2 (FE_02): a container's top line keeps its on-screen size by a counter-transform
-// read from one value the viewport writes on the world (--vb-zoom), so a zoom step updates no card and
+// read from one value the viewport writes on the regions layer (--vb-zoom), so a zoom step updates no card and
 // no frame and lays nothing out; the style and layout it costs stay inside the one-change budget.
 test('a zoom step on the 1,000-card board is under 50 ms and updates no card or frame', async ({ page }) => {
   await open(page);
