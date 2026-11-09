@@ -11,12 +11,16 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `aab8a47bf482f8e4959e7a99677ef321b2a47a10` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" aab8a47bf482f8e4959e7a99677ef321b2a47a10`
+- **Commit**: `befe6628da739af0d42897014dae8dc5b7a52828` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" befe6628da739af0d42897014dae8dc5b7a52828`
 - **Decisions**: the board's D-096, D-097 and D-098 (`docs/decisions.md`); D-098 replaces D-097 point 1, the two-field
   entry, with steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
 
-**New in `aab8a47`: panning or zooming with no board open no longer throws** ("Cannot read properties of null
+**New in `befe662`: the rail's layout tips show one at a time.** Moving the pointer down the icons no longer
+leaves a trail of fading tips (`region-layout-tip.ts` `bindLayoutTips`). Not yet fixed: the rail drawn large and blurry
+in your window while zoomed, which does not happen in Chromium or WebKit outside it (see the board's task file).
+
+**In `aab8a47`: panning or zooming with no board open no longer throws** ("Cannot read properties of null
 (reading 'state')", your report). With no board shown, a pan or zoom now only moves the empty stage
 (`board/controller.ts` `vp.onApply`); `tests/plugin/no-board-pan.spec.ts` covers "No boards yet" and the last board
 archived. No seam, flag or contract change.
