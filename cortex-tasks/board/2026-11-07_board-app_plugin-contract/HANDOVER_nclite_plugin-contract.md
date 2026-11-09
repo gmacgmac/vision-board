@@ -11,12 +11,17 @@ claims only what a test or that run shows, and says which tests run your own cod
 ## Vendor it, in one change
 
 - **Repo**: `/Users/dev/Dropbox (Personal)/Developer/web-apps/vision-board`
-- **Commit**: `d491dbdce053860052e49c84979db7c2e1d75e37` (on main)
-- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" d491dbdce053860052e49c84979db7c2e1d75e37`
+- **Commit**: `aab8a47bf482f8e4959e7a99677ef321b2a47a10` (on main)
+- `node --experimental-strip-types scripts/plugin-vendor.ts "<repo>" aab8a47bf482f8e4959e7a99677ef321b2a47a10`
 - **Decisions**: the board's D-096, D-097 and D-098 (`docs/decisions.md`); D-098 replaces D-097 point 1, the two-field
   entry, with steps 4 and 5 (your ask of 2026-11-08). **Seam**: **2** (breaking).
 
-**New in `d491dbd` (and `9fa516e` before it): your item 160, the skill as a skill, and two tool rules.**
+**New in `aab8a47`: panning or zooming with no board open no longer throws** ("Cannot read properties of null
+(reading 'state')", your report). With no board shown, a pan or zoom now only moves the empty stage
+(`board/controller.ts` `vp.onApply`); `tests/plugin/no-board-pan.spec.ts` covers "No boards yet" and the last board
+archived. No seam, flag or contract change.
+
+**In `d491dbd` (and `9fa516e` before it): your item 160, the skill as a skill, and two tool rules.**
 - **The bot can't set `size` or `widths`** (with `botToolRules`, which you run): `write_board`'s schema leaves them out
   and one sent anyway is dropped. The engine places cards; the person's arrangement wins.
 - **A picture it can't show is named**: a written card's result carries `images`, each path its text names that your
