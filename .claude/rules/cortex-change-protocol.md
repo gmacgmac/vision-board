@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 1.6 | **Updated**: 2026-10-21
+> **Version**: 1.7 | **Updated**: 2026-11-03
 
 One change lifecycle: gates **before** you edit, a record **after** you edit.
 
@@ -10,7 +10,7 @@ One change lifecycle: gates **before** you edit, a record **after** you edit.
 
 | Path | Do this first |
 |------|---------------|
-| `cortex/PROFILE.md` · `cortex/REGISTRY.md` | Edit → bump `last_updated` → confirm `cortex/readme.md` still describes them accurately |
+| `cortex/PROFILE.md` · `cortex/REGISTRY.md` | Edit → confirm `cortex/readme.md` still describes them accurately |
 | Any other `cortex/*`, or `cortex-*`-prefixed files under `.kiro/` (managed — copier-owned) | **Don't.** Overwritten/conflict-marked on next update. Wrong or missing something? Report upstream, don't patch. (Template-repo context only: edit → bump `Version`.) |
 | A doc-surface path | `/cortex-docs` — resolve per `router.md § Resolution`, apply its template and naming (kebab-case, 3–4 words), and audit the claims the change made untrue |
 | Anything else under `.kiro/` | Edit freely. Never edit `.agent/` or `.claude/` cortex-* files — kernel mirrors. |
@@ -35,8 +35,8 @@ fails → plan it in a task (`cortex-write-task`).
 
 Trivial still needs a record:
 - a LOG entry with the `Informal change` trail (§ After editing);
-- a commit. Several trivial changes may share one commit; its message names each. Commit only
-  when the user asks — otherwise tell them what is ready to commit.
+- a commit, once the change is verified. Stage the changed files by name. Several trivial changes
+  may share one commit; its message names each. The user can say not to commit yet.
 
 ## After editing — LOG.md
 

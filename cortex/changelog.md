@@ -16,6 +16,45 @@
 
 ---
 
+## v4.3.1 — 2026-11-08
+**`CLAUDE.md` imports `AGENTS.md` when a project has one.**
+### Synced
+- `CLAUDE.md`: adds `@AGENTS.md`, so Claude Code loads a project's `AGENTS.md` if present.
+### Migrations
+- None. No change to `PROFILE.md` or `REGISTRY.md`.
+---
+## v4.3.0 — 2026-11-08
+**Architecture: an action layer reference for people and agents.**
+
+### Synced
+- New `cortex-architecture/references/actions.md`: everything a person or agent can do through the app is one typed action run through one function (`runAction`), with the same checks, reasons and audit for every caller. § Is it an action? (always / name-only / never / on commit; unsure → ask the user, record in steering). Core: definition fields, run order, availability (`enabled` / `dimmed` / `no-fit`, never hidden), closed input schema, permissions, one audit record per act, fixed words. Where the trust boundary sits. Extensions, each with its trigger: guided flows, proposals, batches, long-running actions, billed requests sent once, pre-checks, placeholders, ports, agent adapters (MCP, WebMCP, CLI). Language-neutral.
+- `cortex-architecture` SKILL.md: description names the action layer; Before-you-build question 4 and rule 5 point to `actions.md`; Planning outputs record each new action's id, permission, flags and agent exposure.
+- `contracts.md` § MCP from the same source: agent limits now point to `actions.md` (one home).
+
+### Migrations
+- None. No change to `PROFILE.md` or `REGISTRY.md`.
+
+---
+
+## v4.2.0 — 2026-11-03
+**Git worktrees only when a task set calls for them; the planner and orchestrator commit checked work.**
+
+### Synced
+- New `cortex-task-exe/references/worktrees.md`, read only when a task has `Own worktree: yes`: the orchestrator creates a git worktree per such task each wave, puts a Where You Work block in its brief, then checks, commits and merges each in task order, runs the wave gate and removes them. Records stay in the main checkout. `git -C`, never `cd`, for the orchestrator; no bare `git stash`; pre-flight reports leftover worktrees and merges finished work a stopped run left behind. Branches, pull requests and merging finished work stay the user's call.
+- `cortex-task-exe` SKILL.md: new § Commits (orchestrator commits each checked task or wave and the close; a single task run directly commits once verified; stage by name; never push) and § Git Worktrees. Sub-agents run no git commands that change state.
+- `sequential.md`, `parallel.md`: commits per § Commits; parallel pre-flight reads `worktrees.md` only when a task needs it, and the wave gate merges task worktrees first; Where You Work block only for those tasks; sequential sets never use worktrees; the `cwd` / never-`cd` line removed.
+- `cortex-write-task`: the planner writes in the current checkout and commits what it wrote (`Plan: {task_name}`, by path); branch and pull-request policy is recorded from the user, never invented; TASK-STATUS gains an `Own worktree` column. `granularity.md`: prefer fewer, larger tasks; new § Own Worktree (`yes` only for parallel tasks that write files and run builds or tests, and only if the project can build and test in a fresh worktree).
+- Templates: TASK-STATUS `Own worktree` column, worktree instruction and a commit step on close; PLAN House Rules gain worktree commands (only when needed), and commits are on by default; single-task On Completion commits once verified.
+- `cortex-change-protocol`: trivial changes are committed once verified, not only when asked. The `last_updated` bump for PROFILE/REGISTRY is dropped (neither file has the field); same in `router.md` and the Gardener's engine.
+- `cortex-rules`: rule 10a (always use `cwd`) removed.
+- Seed `REGISTRY.md`: new optional `git_worktrees` block (`create_command`, `remove_command`, `per_task_resources`). `/cortex-setup` fills it only if the project has its own worktree script or clashing resources.
+
+### Migrations
+- None. `/cortex-setup` upgrade step 4 adds the `git_worktrees` block to an existing `REGISTRY.md` from the seed. Older task sets have no `Own worktree` column; every task then works in the main checkout, as before.
+- Behaviour change, no file edits: commits are now on by default. An older PLAN.md with no `Commits` line gets orchestrator commits; add `Commits: none` to its House Rules to keep the old behaviour.
+
+---
+
 ## v4.1.2 — 2026-10-21
 **Testing by tier; architecture is a reference that project steering overrides.**
 ### Synced

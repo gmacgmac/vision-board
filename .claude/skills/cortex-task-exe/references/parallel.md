@@ -9,12 +9,15 @@ You never do task work yourself, with one exception: a task that needs a person 
 ## Pre-Flight
 
 1. User provides a path to a TASK-STATUS.md (or a task folder).
-2. Read TASK-STATUS.md — extract the task table.
-3. Read PLAN.md — understand the full context, including its **House Rules** if present.
-4. Identify pending tasks — filter for `Pending` or `In Progress` status.
-5. Build wave plan (see Wave Assignment below).
-6. Frontmatter Lifecycle (SKILL.md): flip `status` to `in-progress` if needed.
-7. Confirm with user: "I found N pending tasks in M waves: [wave breakdown]. Proceeding."
+2. Read PLAN.md — understand the full context, including its **House Rules** if present.
+3. Read TASK-STATUS.md — extract the task table.
+4. Any task's `Own worktree` cell is `yes` → read `references/worktrees.md` and run its
+   Pre-flight (it also merges finished work a stopped run left behind). None, or no
+   `Own worktree` column (an older set) → no worktrees; every task works in the main checkout.
+5. Identify pending tasks — filter for `Pending` or `In Progress` status.
+6. Build wave plan (see Wave Assignment below).
+7. Frontmatter Lifecycle (SKILL.md): flip `status` to `in-progress` if needed.
+8. Confirm with user: "I found N pending tasks in M waves: [wave breakdown]. Proceeding."
 
 ---
 
@@ -60,16 +63,19 @@ For each wave:
 
 ### 1. Dispatch Wave (Parallel)
 
-Invoke ALL task-execution sub-agents for this wave simultaneously.
+Invoke ALL task-execution sub-agents for this wave simultaneously. Any task in the wave with
+`Own worktree: yes` → create its worktree first (`references/worktrees.md` § Before each wave).
 
 For each sub-agent, provide:
 
-**contextFiles**: TASK-STATUS.md, PLAN.md, the specific task file, and any additional reference files listed in the task's Inputs section.
+**contextFiles**: TASK-STATUS.md, PLAN.md, the specific task file, and any additional reference files listed in the task's Inputs section. A task with `Own worktree: yes` gets its code files under its worktree path; the records stay in the main checkout.
 
-**Prompt** (persona lines only when the task's `Persona` cell is set; `—` → omit both):
+**Prompt** (persona lines only when the task's `Persona` cell is set; `—` → omit both. Where You Work block only for a task with `Own worktree: yes` — `references/worktrees.md`):
 ```
 {Persona, verbatim from TASK-STATUS.md}
 This is your point of view. Use it to notice problems the task doesn't mention. It never changes your scope, file ownership or stop rules — report what you notice (REQUESTS / NOTES / BLOCKED), don't act outside your task.
+
+{Where You Work block}
 
 Complete [TASK_ID] ([task title]) from the provided TASK-STATUS.md.
 
@@ -79,13 +85,13 @@ PARALLEL SAFETY: Other tasks are running simultaneously. Only modify the files y
 
 SHARED CODE: Check TASK-STATUS.md's Shared Foundations table before creating any helper, type, or component. If it is listed, an earlier wave already built it — import it. If the repo already has it, reuse it — never copy it. If you need something shared that is NOT listed and does not exist, do not invent it: report DEVIATION, because a parallel sibling may be building the same thing.
 
-Survival-critical (workspace rules, non-negotiable): use `cwd` for commands, never `cd path &&`. Any write >50 lines: CREATE first section, then APPEND in chunks. If you hit repeated connection-reset errors, STOP — do not retry in a loop — report it as a violation and switch to chunked appends.
+Survival-critical (workspace rules, non-negotiable): any write >50 lines: CREATE first section, then APPEND in chunks. If you hit repeated connection-reset errors, STOP — do not retry in a loop — report it as a violation and switch to chunked appends.
 
 Update your task file and TASK-STATUS.md when done, then follow your task file's On Completion — including your own single LOG entry. Append exactly one line ending in a newline; other sub-agents are appending to the same file right now. Don't close the set (`status: completed`, the set LOG entry) — the orchestrator does that.
 
 Test by tier (SKILL.md § Testing by Tier), with a time limit on every run, and name the tier in VERIFICATION. The orchestrator runs the full gates.
 
-No git commits.
+No git commands that change state (commit, merge, branch, stash, checkout). The orchestrator commits.
 
 Return Contract — your final message MUST end with this block, exactly:
 ---
@@ -109,6 +115,9 @@ If an earlier wave routed a request to a task in this wave, add it to that task'
 
 Before the next wave starts, all of these must hold:
 
+0. **Task worktrees merged** — tasks in this wave with `Own worktree: yes` are checked, committed
+   and merged into the main checkout (`references/worktrees.md` § After a wave returns). The steps
+   below run on the merged result.
 1. **Every request routed.** Re-read TASK-STATUS.md (this wave's sub-agents have updated it).
    Add each `REQUESTS` item to its Requests table (`{TASK_ID}-R{n}`) and route it: a later task
    that owns the file · you, if the file is orchestrator-owned · a tracker row, if it is outside
@@ -120,7 +129,7 @@ Before the next wave starts, all of these must hold:
 3. **Tests green** — the project's fast set, if it defines one, or build and type-check. The full
    gates only if a return block in this wave reported tier `wide`. A failure stops the pipeline;
    report it.
-4. **Commit** only if PLAN.md's House Rules ask for one per wave — never otherwise.
+4. **Wave committed** (SKILL.md § Commits), then this wave's merged task worktrees removed.
 
 Then: `[check] Wave [N] complete ([task_ids]). [R] requests routed. [M] waves remaining.`
 
@@ -133,7 +142,8 @@ Then: `[check] Wave [N] complete ([task_ids]). [R] requests routed. [M] waves re
 2. Append the **set** entry to `LOG.md` — one line, terminated with `\n`. `[CATEGORY]` from `PROFILE.md` §2:
    `[[YYYY-MM-DD HH:MM]] [CATEGORY] Completed set: {task_name} → Task: [[path/to/TASK-STATUS.md]]`
    The per-task entries are already there, written by the sub-agents. Don't restate them, and don't write AUDITED.
-3. Report to user: `All [N] tasks complete across [M] waves. TASK-STATUS.md updated. LOG entry created.`
+3. Commit the close (SKILL.md § Commits).
+4. Report to user: `All [N] tasks complete across [M] waves. TASK-STATUS.md updated. LOG entry created.`
 
 ---
 

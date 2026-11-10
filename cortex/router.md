@@ -1,6 +1,6 @@
 # Cortex — Router
 
-> **Version**: 5.1 · **Managed** · **On-demand** (loaded by a skill or reflex when something
+> **Version**: 5.2 · **Managed** · **On-demand** (loaded by a skill or reflex when something
 > must be routed — NOT resident every turn).
 > Labels in, handler out. It does NOT index skills (skill descriptions do that). It owns only
 > what description-matching cannot: the resolution algorithm, safety routes, and the unknown-item
@@ -14,7 +14,7 @@
 ## Safety routes (fire on the rule, never on a description match)
 | Trigger | Route |
 |---|---|
-| Change under `cortex/` or `.kiro/` | **No archive** — git is their history. Edit → bump `Version` / `last_updated` → log `[cortex-infra]`. After a `cortex/` change, check whether `cortex/readme.md` needs updating. Never edit `.agent/` or `.claude/` — generated mirrors. |
+| Change under `cortex/` or `.kiro/` | **No archive** — git is their history. Edit → bump `Version` → log `[cortex-infra]`. After a `cortex/` change, check whether `cortex/readme.md` needs updating. Never edit `.agent/` or `.claude/` — generated mirrors. |
 | Retire / delete existing content | `cortex-archive` skill first |
 
 ## Resolution (canonical — the only statement of this algorithm)

@@ -4,9 +4,9 @@
 > filing, gardening, or checking the doc fence). Renames the old `ROUTES.md`.
 > Because it isn't in-context every turn, it can grow without costing per-turn budget.
 >
-> Three blocks: `categories` (where each category lives), `docs` (the drift fence),
-> `handlers` (how to act). The resolution algorithm itself lives in `router.md § Resolution` —
-> this file is data, not mechanics.
+> Four blocks: `categories` (where each category lives), `docs` (the drift fence),
+> `handlers` (how to act), `git_worktrees` (how task sets use git worktrees). The resolution
+> algorithm itself lives in `router.md § Resolution` — this file is data, not mechanics.
 
 ---
 
@@ -109,4 +109,32 @@ handlers:
   # "sync api docs":   handlers/api-doc-sync.md
   # category overrides (run instead of / after the default drift check):
   # {project}-api:     handlers/api-doc-sync.md
+```
+
+---
+
+## Git Worktrees (how task sets use them)
+
+Used only when a task set gives a task its own git worktree (TASK-STATUS.md `Own worktree: yes`,
+for parallel tasks that write files and run builds or tests). The planner copies these into PLAN.md House Rules; the
+orchestrator then works from PLAN.md alone. Empty values → the defaults in `cortex-task-exe`
+`references/worktrees.md` (plain `git worktree`, folders beside the repo). Branch and pull-request
+policy is not set here; that is the user's or the project's call.
+
+```yaml
+git_worktrees:
+  # Command that makes a worktree: folder, branch, dependencies, untracked config (e.g. `.env`).
+  # Called with two arguments, the worktree name and the commit to start from (the main
+  # checkout's HEAD); should print the absolute path and any per-task resources it assigns.
+  # Empty → git worktree add <folder> -b <branch> HEAD. A new worktree has no installed
+  # dependencies, so a project whose builds or tests need them should set this.
+  create_command:
+
+  # Command that removes a worktree and its branch, called with the worktree name.
+  # Empty → git worktree remove + git branch -d.
+  remove_command:
+
+  # Resources that parallel tasks must not share, and how each task gets its own.
+  # e.g. "test port: 3000 + 100 × the task's position in its wave". Empty → none.
+  per_task_resources:
 ```

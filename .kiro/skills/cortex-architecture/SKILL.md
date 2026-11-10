@@ -1,6 +1,6 @@
 ---
 name: cortex-architecture
-description: "How code is organized so it stays reusable, consistent and testable: reuse-before-create, one job per file, one source per contract (schema → code → OpenAPI → MCP), one layer per concern, central registries for dependencies, conditions and jobs, and one home per sentence (words files). Use when planning or building front-end, back-end, API, MCP, schema, data-layer or shared-component work. Not for visual design — how the UI looks."
+description: "How code is organized so it stays reusable, consistent and testable: reuse-before-create, one job per file, one source per contract (schema → code → OpenAPI → MCP), one layer per concern, one action layer for people and agents, central registries for dependencies, conditions and jobs, and one home per sentence (words files). Use when planning or building front-end, back-end, API, MCP, schema, data-layer or shared-component work. Not for visual design — how the UI looks."
 ---
 
 # Architecture
@@ -32,6 +32,7 @@ where the task names it.
 3. **Is the contract defined?** Data shapes and endpoints exist in the schema / spec first. Missing
    → change the contract, then build.
 4. **Does an action already exist?** Anything a user or agent can do goes through the action layer.
+   Not everything is an action; unsure → ask the user (`references/actions.md` § Is it an action?).
 5. **Does a decision already cover it?** Follow it, or plan a superseding decision.
 6. **Will a second place need to know this?** If yes, it goes in a registry (rule 6,
    `references/registries.md`), not a local check.
@@ -54,8 +55,8 @@ where the task names it.
    past it to the storage or mechanism behind. That single point is where logging, routing,
    testing and later swaps (memory → database, one provider → another) happen, without touching
    a caller. Defaults: one request / I/O layer (only it calls APIs or touches files; it validates
-   what it reads and writes). One action layer shared by people and agents. A button never calls
-   an API directly.
+   what it reads and writes). One action layer shared by people and agents
+   (`references/actions.md`). A button never calls an API directly.
 6. **App-wide awareness goes through registries.** Once a second place needs to know, a local
    check moves to a table. Dependencies are edges in a references table; facts more than one
    place must know are rows in a conditions table; long-running work, once there is more than one
@@ -81,6 +82,8 @@ where the task names it.
 When this skill shapes a plan, PLAN.md / task files record:
 - the existing pattern or module each piece reuses (path + symbol);
 - the contract change that comes first, and the tests that hold code to it;
+- any new action: its id, permission, flags (changes data, needs a click, cost) and which
+  agents may call it;
 - any new registry row (reference edge, condition or job kind) and who reads it;
 - the words file each new sentence goes in;
 - shared artifacts in TASK-STATUS.md Shared Foundations.

@@ -30,18 +30,21 @@ tracker:             # optional: path#ID[,ID]
 8. **Update your row** in the Task List table below when you finish
 9. **Add implementation notes** to your task file and brief notes here. Re-run? Add a `Run N:`
    line here and a `### Run N` block in your task file; never overwrite an earlier run
-10. **No git commits** — sub-agents never commit; the orchestrator commits only if PLAN.md's
-    House Rules ask
+10. **No git commands that change state** (commit, merge, branch, stash, checkout) — the
+    orchestrator commits each checked task or wave (`cortex-task-exe` § Commits)
+11. **Working in a git worktree?** Follow the Where You Work block in your prompt. Edit this file,
+    your task file and `cortex/LOG.md` only in the main checkout it names
 
 ---
 
 ## Task List
 
-| # | ID | Wave | Model | Persona | Task | Status | Notes |
-|---|-----|------|-------|---------|------|--------|-------|
-| 1 | PREP_01 | 1 | strong | [Job title] — [what this role won't compromise on]. | [Preparation](./PREP_01_task-name.md) | Pending | |
-| 2 | IMPL_01 | 2 | standard | — | [Implementation](./IMPL_01_task-name.md) | Pending | |
-| 3 | VERIFY_01 | 3 | standard | [User role] — [what they expect to just work, seen with no builder context]. | [Final verification](./VERIFY_01_testing.md) | Pending | |
+| # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
+|---|-----|------|-------|--------------|---------|------|--------|-------|
+| 1 | PREP_01 | 1 | strong | no | [Job title] — [what this role won't compromise on]. | [Preparation](./PREP_01_task-name.md) | Pending | |
+| 2 | IMPL_01 | 2 | standard | no | — | [Implementation](./IMPL_01_task-name.md) | Pending | |
+| 3 | IMPL_02 | 2 | standard | no | — | [Implementation](./IMPL_02_task-name.md) | Pending | |
+| 4 | VERIFY_01 | 3 | standard | no | [User role] — [what they expect to just work, seen with no builder context]. | [Final verification](./VERIFY_01_testing.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -49,6 +52,11 @@ tracker:             # optional: path#ID[,ID]
 Waves run in ascending order; a wave completes before the next starts. All-distinct numbers
 = fully sequential. The orchestrator reads waves from this column only — it does not read task
 files to schedule.
+
+**Own worktree**: `no` is the usual value. `yes` = the task runs in its own git worktree, which the orchestrator creates
+before the wave and merges after it. `no` = the task works in the checkout the set runs in. Set by
+the planner: `yes` only when the task writes files, shares its wave with another task that writes files, and
+either one runs builds or tests (`cortex-write-task` granularity.md § Own Worktree).
 
 **Persona**: a real job title + 1–2 sentences on what that role won't compromise on; `—` for none.
 Optional; required for review and `strong` tasks. A point of view only — it never overrides
@@ -73,7 +81,7 @@ _Written by the planner. Required when two or more tasks share a wave, or when s
 orchestrator-only (any mode); omit otherwise. A file has one owner per wave. The `orchestrator`
 row holds files no sub-agent may touch — e.g. lockfiles, generated code, version files. Shared by
 design, not owned: TASK-STATUS.md (each task edits its own row and notes) and `cortex/LOG.md`
-(append-only)._
+(append-only), both edited in the main checkout only, never in a task's own worktree._
 
 | Wave | Owner | Files |
 |------|-------|-------|
@@ -112,6 +120,12 @@ _Notes:_
 
 ---
 
+### IMPL_02: [Task Name]
+_Status:_ Pending  
+_Notes:_ 
+
+---
+
 ### VERIFY_01: Final Verification
 _Status:_ Pending  
 _Notes:_ 
@@ -141,5 +155,6 @@ those.
    ```
    `[CATEGORY]` from `PROFILE.md` §2.
 3. If `tracker` is set, delete those rows and rewrite Status. Whoever closes the set, after the full set.
-4. `cortex-garden` picks the entries up from `LOG.md` later and coalesces them into one thread.
+4. Commit the close (`cortex-task-exe` § Commits).
+5. `cortex-garden` picks the entries up from `LOG.md` later and coalesces them into one thread.
    Nothing here writes to `AUDITED.md`.

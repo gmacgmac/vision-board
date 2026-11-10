@@ -24,21 +24,24 @@ Pick the branch, then follow the steps below.
 3. **Fill content** — `model` (`standard` | `strong`), problem statement, numbered steps, files involved, constraints, success criteria, references, implementation notes section. Fill `persona:` when a point of view helps (see § Personas).
 4. **Name the skills the task needs** — fill the `skills:` frontmatter field (see § Skill Routing below).
 5. **Research variant** — if `type: research`, see `references/research-variant.md` for the research-task format additions (banner, research objectives, result file).
+6. **Commit the task file** — per § On Finishing Authoring.
 
 ## Branch B: Multi-Task Set
 
 1. **Determine category and concern** — same as Branch A.
-2. **Create folder** — `cortex-tasks/{concern}/{YYYY-MM-DD}_{category}[_{subdomain}]_{title}/`
-3. **Write PLAN.md** — use `cortex/templates/tasks/plan-template.md`. Problem, solution, key changes, dependencies, House Rules if the project has any (orchestrator-only files, commit policy, project checks, test time limit), and Decisions: every ruling the user made in conversation, so executing agents never re-derive intent from chat.
+2. **Create folder** — `cortex-tasks/{concern}/{YYYY-MM-DD}_{category}[_{subdomain}]_{title}/`, in the current checkout.
+3. **Write PLAN.md** — use `cortex/templates/tasks/plan-template.md`. Problem, solution, key changes, dependencies, House Rules if the project has any (orchestrator-only files, commit policy, project checks, test time limit, and — only when a task has `Own worktree: yes` — the git worktree commands and per-task resources from REGISTRY.md `git_worktrees`), and Decisions: every ruling the user made in conversation, so executing agents never re-derive intent from chat. Branches, protected branches and pull requests are the user's or the project's call: record what they asked for in Decisions, never invent a policy.
 4. **Write TASK-STATUS.md** — use `cortex/templates/tasks/task-status-template.md`. Frontmatter, task table, implementation notes sections.
 5. **Write individual task files** — use `cortex/templates/tasks/task-template.md`. Name format: `[TYPE]_{##}_{task-title}.md`, where `[TYPE]` marks the work type and drives agent assignment: `BE` (Backend), `FE` (Frontend), `VERIFY` (Verification), `MANUAL` (Human action), a domain tag (e.g. `API`), or a generic `T` when the work is a single stream with no separate-agent split. Split along surface boundaries (e.g. FE/BE) — separate agents may complete those tasks. Include a final `VERIFY_01` task when the set has a wide change (`cortex-task-exe` § Testing by Tier); it tests the implementation (targeted, not a generic `npm test`), and if the set touches code a doc describes, it also runs the `cortex-docs` doc audit. A set of small changes needs none — the closing gates verify it. Each file: objective, inputs, steps, validation, notes section, and its `Skills` (see § Skill Routing).
    - **Needs a person live** (a login, a one-time code, hardware, an outside account) → make it a `MANUAL` task, or say so in the task's Objective, with what the person must have ready. The orchestrator then runs it in the foreground, one action or code per exchange.
 6. **Fill the TASK-STATUS columns and tables** — the planner's call, not the executor's: the orchestrator schedules from PLAN.md and TASK-STATUS.md alone, never task files, so anything left blank it must guess.
    - **Wave** and **Model** (`standard` | `strong`, never a model name) columns.
+   - **Own worktree** column (`yes` | `no`) per `references/granularity.md` § Own Worktree. Sequential sets and read-only tasks are always `no`.
    - **Persona** column (`—` for none) per § Personas. TASK-STATUS.md only: not in PLAN.md or task files.
    - **Shared Foundations** table.
    - **File Ownership** table — required when two or more tasks share a wave (each file has one owner per wave), or when some files are orchestrator-only, in any mode. The `orchestrator` row lists files no sub-agent may touch (e.g. lockfiles, generated code, version files), mirroring PLAN.md's House Rules.
-7. **Apply granularity heuristics** — before finalising, run the split-vs-merge and wave self-checks (see `references/granularity.md`).
+7. **Apply granularity heuristics** — before finalising, run the split-vs-merge, wave and own-worktree self-checks (see `references/granularity.md`).
+8. **Commit the set** — per § On Finishing Authoring.
 
 ---
 
@@ -99,7 +102,7 @@ Reuse only works if you wire it up. An agent can find a pattern that already exi
 
 - If deviation needed, collaborate with user — do not make breaking changes silently.
 - No PII in examples.
-- No git commits by executing agents. The orchestrator commits only if PLAN.md's House Rules ask.
+- No git commands that change state by executing sub-agents. The orchestrator commits each checked task or wave (`cortex-task-exe` § Commits).
 - Update task file with implementation notes on completion.
 
 ## On Finishing Authoring (this skill's own completion)
@@ -109,3 +112,8 @@ Reuse only works if you wire it up. An agent can find a pattern that already exi
 - Do NOT log to `LOG.md`. Logging `status: completed` / implementation notes / a `LOG.md`
   entry happens when the task is later *executed* (see `cortex-task-exe`), not when it is
   written.
+- **Commit what you wrote**, on the current branch: stage only the task file or the set folder,
+  by name, never `git add -A`, then commit those paths alone
+  (`git commit -m "Plan: {task_name}" -- <paths>`), so other work in the checkout, staged or
+  not, stays out. A set may sit for a while before it runs; committing it keeps it safe, and git
+  worktrees made later only see committed work. The user can say not to commit yet.

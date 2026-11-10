@@ -23,6 +23,8 @@ In BOTH cases, spawn a task-execution sub-agent for EACH task (except the live-p
    `orchestrator` row of files only you may touch. Note PLAN.md's **House Rules** if present.
 5. Frontmatter Lifecycle (SKILL.md): flip `status` to `in-progress` if needed.
 
+Sequential tasks never run in git worktrees: `Own worktree` applies to parallel waves only.
+
 ### Individual Mode
 1. Read each task file provided by the user.
 2. Tasks execute in the order provided.
@@ -68,7 +70,7 @@ Rules:
 - Read the task file and PLAN.md for full context; load the skills its Skills field names before starting
 - Read notes from completed tasks before starting
 - Only modify the files your task owns (TASK-STATUS.md File Ownership if present, otherwise your task's Files to modify / Files Involved). Need a change in a file you don't own? Don't make it — list it under REQUESTS
-- No git commits
+- No git commands that change state (commit, merge, branch, stash, checkout) — the orchestrator commits
 - Don't close the set (`status: completed`, the set LOG entry) — the orchestrator does that
 - Don't over-engineer — be concise
 - Reuse existing patterns: search the repo first, import or follow what exists, never copy it
@@ -78,7 +80,7 @@ Rules:
 - Follow the task file's On Completion, including your own single LOG entry (one line, ends with a newline)
 - Test by tier (SKILL.md § Testing by Tier), with a time limit on every run, and name the tier in VERIFICATION. The orchestrator runs the full gates.
 - No new external dependencies unless the task file calls for them
-- Survival-critical (workspace rules, non-negotiable): use `cwd` for commands, never `cd path &&`. Any write >50 lines: CREATE first section, then APPEND in chunks. If you hit repeated connection-reset errors, STOP — do not retry in a loop — report it as a violation and switch to chunked appends.
+- Survival-critical (workspace rules, non-negotiable): any write >50 lines: CREATE first section, then APPEND in chunks. If you hit repeated connection-reset errors, STOP — do not retry in a loop — report it as a violation and switch to chunked appends.
 
 Return Contract — your final message MUST end with this block, exactly:
 ---
@@ -105,8 +107,8 @@ Re-running a blocked task? Tell the sub-agent it is Run N; it adds a Run N block
 - **Mark a request `Done`** once a return block (or your own change) shows it handled.
 - If `STATUS: BLOCKED` or `DEVIATION` — STOP, inform user with the sub-agent's NOTES.
 - If the return block is missing or malformed — treat as failure, ask the sub-agent to re-report.
-- If `STATUS: COMPLETED` — commit only if PLAN.md's House Rules ask for it (never otherwise),
-  give a brief status update, proceed to the next task.
+- If `STATUS: COMPLETED` — commit the task (SKILL.md § Commits), give a brief status update,
+  proceed to the next task.
 
 ### 4. Status Update
 After each task: `[check] [TASK_ID] complete. [N] remaining.`
@@ -139,7 +141,8 @@ Before anything below: run the project's full gates (build, tests, lint). On a f
 1. Frontmatter Lifecycle (SKILL.md): flip `status: completed`, `completed: YYYY-MM-DD`.
 2. Append the **set** entry to `LOG.md` — one line, terminated with `\n`. `[CATEGORY]` from `PROFILE.md` §2:
    `[[YYYY-MM-DD HH:MM]] [CATEGORY] Completed set: {task_name} → Task: [[path/to/TASK-STATUS.md]]`
-3. Report to user: `All [N] tasks complete. TASK-STATUS.md updated. LOG entry created.`
+3. Commit the close (SKILL.md § Commits).
+4. Report to user: `All [N] tasks complete. TASK-STATUS.md updated. LOG entry created.`
 
 ### Individual Mode
 1. Each task file's On Completion is handled by its sub-agent — including its LOG entry.

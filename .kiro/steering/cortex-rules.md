@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 2.9 | **Updated**: 2026-10-21
+> **Version**: 3.0 | **Updated**: 2026-11-03
 
 0. When writing documentation or comments, NEVER include PII as examples. Always use non-identifiable examples.
 1. We opt for Concise Code
@@ -15,7 +15,6 @@ inclusion: always
 8. Any interim test file that are NOT part of a test suite must be written to workspace  `temp` folder at the root of the project. If it doesn't exist, then add the folder. DO NOT scatter tests all over the project. If you must, ensure you tidy up.
 9. Report ANY issues you encounter during task or skill completions or general coding to the human. They might require you log a `[needs-human-input]` item to the LOG.
 10. Long File Strategy (survival-critical): a single write that runs ~60s can break the connection, after which you loop on connection resets and ALL work in that call is lost on cancel. This is disastrous for sub-agents. So: any write >50 lines MUST be CREATEd with the first section only, then APPENDed in chunks. If you ever see repeated connection-reset errors, STOP immediately — do NOT retry in a loop. Report it as a Long File Strategy violation and switch to chunked appends.
-10a. Command Execution: always pass the working directory via the `cwd` parameter rather than prefixing commands with `cd /path &&`. Only use a `cd` prefix when a tool genuinely has no `cwd`/working-directory option (e.g. it's disallowed by command allowlisting).
 11. Dependency Supply Chain Security: Treat all package installs across ALL ecosystems as high-risk.
    NPM: ALWAYS remove ^ and ~ from package.json. Audit preinstall/postinstall scripts on unknown packages.
    PyPI: Pin exact versions in requirements.txt and pyproject.toml (no >=, ~=, or *). Avoid installing unverified packages.

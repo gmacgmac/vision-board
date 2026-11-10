@@ -1,6 +1,6 @@
 # Cortex System
 
-> **Version**: 3.3 | **Updated**: 2026-10-21
+> **Version**: 3.4 | **Updated**: 2026-11-03
 
 A structured kernel for AI-augmented development and project management. Designed for Kiro agents operating autonomously across any project.
 
@@ -78,7 +78,7 @@ Eleven skills under `.kiro/skills/`, each a self-contained folder with a `SKILL.
 | `cortex-archive` | Retire or supersede content into `.archive/` |
 | `cortex-search` | Layered search across the doc surface and project |
 | `cortex-write-task` | Create task files (single or multi-file) from templates |
-| `cortex-task-exe` | Execute tasks: single, sequential, or parallel modes |
+| `cortex-task-exe` | Execute tasks: single, sequential, or parallel modes; commits checked work; runs git worktrees when the plan asks |
 | `cortex-research` | Deep research with methodology and source tracking |
 | `cortex-task-audit` | Audit task files for completeness, staleness, and status accuracy |
 | `cortex-setup` | Install or upgrade Cortex: detects fresh-vs-existing, then bootstraps (PROFILE + REGISTRY) or runs the kernel upgrade + migrations |
@@ -89,10 +89,10 @@ Eleven skills under `.kiro/skills/`, each a self-contained folder with a `SKILL.
 
 | Component | Count | Size (bytes) | ~Tokens |
 |-----------|-------|-------------|---------|
-| Steering (5 files inline: rules, change-protocol, routing, profile, principles) | 5 files | ~14,651 | ~3,662 |
+| Steering (5 files inline: rules, change-protocol, routing, profile, principles) | 5 files | ~14,381 | ~3,595 |
 | `PROFILE.md` (resolved by the `cortex-profile` link) | 1 | ~3,097 | ~774 |
 | Skill descriptions (name + description × 11) | 11 | ~3,703 | ~925 |
-| **Total always-in-context** | **17** | **~21,451** | **~5,362** |
+| **Total always-in-context** | **17** | **~21,181** | **~5,295** |
 
 **On-demand (NOT resident):** `router.md`, `REGISTRY.md`, and every skill *body* — loaded only
 when a skill or reflex needs them. Token estimate uses ~4 chars/token. A project's resident cost
@@ -116,7 +116,7 @@ grows only with its §2 category list, not with its paths/docs (those live in RE
 | Path | Purpose | Loaded |
 |------|---------|--------|
 | `PROFILE.md` | Switches (§1) + category vocabulary (§2, name + terse scope) + conventions. | Resident |
-| `REGISTRY.md` | Per-category records (paths, concern overrides), the doc surface, handlers. Renames the old `ROUTES.md`. | On-demand |
+| `REGISTRY.md` | Per-category records (paths, concern overrides), the doc surface, handlers, git worktree settings for task sets. Renames the old `ROUTES.md`. | On-demand |
 
 The **conventions** (in PROFILE) derive the rest: concern = the category name's prefix;
 subdomain = the folder a file sits in; a file's category = the longest path match in REGISTRY.

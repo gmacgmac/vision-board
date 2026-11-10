@@ -100,6 +100,8 @@ _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier 
    ```
    `[CATEGORY]` from `PROFILE.md` §2. Cite files by path + symbol, never by line number.
 3. If `tracker` is set, delete those rows and rewrite Status.
+4. Not a sub-agent → commit the task once verified (`cortex-task-exe` § Commits). A sub-agent →
+   don't; the orchestrator commits.
 
 > This is a standalone task, so this entry is the whole record — there is no set entry. Do not write
 > to `AUDITED.md`; that is `cortex-garden`'s ledger alone.

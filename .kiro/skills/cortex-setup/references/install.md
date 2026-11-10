@@ -64,6 +64,9 @@ Present the proposed PROFILE for confirmation, then write it.
   found (a manuscript, generated output, vendored trees).
 - **`handlers`** — leave mostly empty; add intent→skill or category overrides only where a real
   handler exists. Default for every category is the `cortex-garden` drift check.
+- **`git_worktrees`** — fill `create_command` / `remove_command` only if the project has its own
+  worktree script (look in the manifest's scripts), and `per_task_resources` only if parallel
+  tasks would clash (test ports, databases). Otherwise leave them empty.
 
 Present the seeded REGISTRY for confirmation, then write it.
 

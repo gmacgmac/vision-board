@@ -10,6 +10,10 @@ A task should justify the cost of a fresh agent context. The orchestrator spawns
 divider, a tooltip) go in one task, even across several files. Each task pays for a fresh context
 and its own verification.
 
+**Prefer fewer, larger tasks.** Current models handle a whole surface in one task. Split only for
+a reason in the table below. Every extra parallel task that writes files can also cost a git
+worktree and a merge (§ Own Worktree).
+
 **Don't let an open question block settled work.** If a design choice is unresolved, make it a
 design-only task in the first wave that offers 2–3 genuinely different options, with the settled
 rules written in so they aren't reopened. Only the task that needs the decision waits for it.
@@ -78,3 +82,33 @@ of adding a wave.
 
 **Test**: for each parallel group, ask what these tasks would each have to invent to finish. If
 they would invent the same thing, it belongs in an earlier wave.
+
+---
+
+## Own Worktree
+
+File Ownership keeps parallel tasks out of each other's files. It doesn't stop one task's build or
+tests from running against a sibling's half-finished edits. A task's own git worktree does: a
+separate checkout on its own branch, which the orchestrator merges after the wave.
+
+Set `Own worktree: yes` only if all of these hold:
+- The task writes files.
+- Another task in the same wave writes files.
+- Either of them runs builds, tests, a type-check or anything else that reads the whole tree.
+
+Otherwise `no`. Sequential sets and read-only tasks are always `no`; they pay nothing.
+
+Before setting `yes`, check that the project can build and test in a fresh worktree: either
+REGISTRY.md `git_worktrees.create_command` sets up dependencies, or the project needs none. A
+default worktree has no installed dependencies. If it can't, don't use `yes`: merge the tasks, or
+put them in separate waves.
+
+A `no` task works in the checkout the set runs in. Git worktrees are never a default; this column
+is the only thing that calls for one.
+
+PLAN.md House Rules `Commits: none` → no git worktrees at all. A new worktree only sees committed
+work, so the next wave would miss the last one.
+
+**Test**: for each wave with two or more writing tasks, ask whether one task's checks could fail
+because of another task's unfinished work. If yes, give each of them `yes`. If the tasks are
+small, merging them into one task is often cheaper than two worktrees.

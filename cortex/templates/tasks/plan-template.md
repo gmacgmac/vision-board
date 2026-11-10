@@ -38,10 +38,12 @@
 
 ## House Rules
 
-_Optional — omit if none. Project rules every task and the orchestrator follow for this set._
+_Optional. Project rules every task and the orchestrator follow for this set. Omit a line that
+keeps its default, or the whole section if every line does._
 
 - **Orchestrator-only files**: [e.g. lockfiles, generated code, version files — mirror TASK-STATUS.md File Ownership]
-- **Commits**: none during the set (default) / [e.g. orchestrator commits once per wave]
+- **Commits**: orchestrator commits each checked task (sequential) or each passed wave gate (parallel) (default) / `none` (then no git worktrees)
+- **Git worktree commands and resources**: [only when a task has `Own worktree: yes` — copied from REGISTRY.md `git_worktrees`: create command, remove command, per-task resources; omit if the defaults apply]
 - **Project checks**: [e.g. file-length limits, required type-check]
 - **Test time limit**: [e.g. 150 s per run]
 

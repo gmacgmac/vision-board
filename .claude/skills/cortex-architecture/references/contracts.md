@@ -55,9 +55,8 @@ enforced when the module loads, so a malformed route refuses to start, naming it
 ## MCP from the same source
 
 MCP tools and CLI commands are generated from, or tested against, the same spec and schemas —
-so an agent calls the same action, with the same validation and permissions, as a person. Agents
-act with the user's permissions or fewer; anything destructive, public or costly needs human
-confirmation, and every agent action is recorded.
+so an agent calls the same action, with the same validation and permissions, as a person. How
+agents are limited, confirmed and recorded lives in `actions.md`.
 
 ## Versioning
 

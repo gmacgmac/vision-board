@@ -50,12 +50,54 @@ Test in proportion to what the change can break. Judge the tier from the change 
 
 ---
 
+## Commits
+
+Sub-agents never run git commands that change state (commit, merge, branch, stash, checkout).
+Whoever runs the work commits it, once it is checked:
+
+| Who | Commits |
+|---|---|
+| Planner (`cortex-write-task`) | The task file or set folder, once written (`Plan: {task_name}`) |
+| Orchestrator, sequential | Each task, once its return block checks out |
+| Orchestrator, parallel | Each wave, once its gate passes |
+| Orchestrator, set close | Once more, after the full gates and the set LOG entry |
+| Single task, run directly (not a sub-agent) | Once your verification passes |
+
+- **Check first**: `git status --short` shows only the files the work changed (the return blocks'
+  `FILES`, when there are sub-agents), any orchestrator-owned files you changed, and the records:
+  the set folder (PLAN.md, TASK-STATUS.md, task files) or the single task file, and
+  `cortex/LOG.md`. Anything else stays unstaged; if it might belong to this work (a file the task
+  changed but didn't list), stop and ask.
+- **Stage by name**, never `git add -A`, then commit the same paths
+  (`git commit -m "…" -- <paths>`): the checkout may hold someone else's work, staged or not,
+  and this keeps it out.
+- **Message**: `{TASK_ID}: {task title}` · `Wave {N}: {TASK_IDs}` · `Completed set: {task_name}`.
+- PLAN.md House Rules `Commits: none` → the orchestrator and executors skip their commits, and the
+  set can't use git worktrees: a task with `Own worktree: yes` as well → stop and ask. The
+  planner's `Plan:` commit comes before the set runs and is not affected.
+- The user can always say not to commit.
+- Never push. The only merges are task worktrees back into the main checkout
+  (`references/worktrees.md`). Branches, pull requests and merging the finished work are the
+  user's call.
+
+---
+
+## Git Worktrees
+
+Not a default. Only when the task set calls for it: a task whose `Own worktree` cell in
+TASK-STATUS.md is `yes`. The planner sets that only for parallel tasks that write files and run
+builds or tests (`cortex-write-task`). Then read `references/worktrees.md` at pre-flight; the orchestrator
+creates, merges and removes those worktrees. Otherwise skip it: the set runs in the checkout and
+branch it was started in.
+
+---
+
 ## Mode: Single Task (Direct Execution)
 
 You are the executor. Read the task file, do the work, report back.
 
 1. Read the task file — note its steps, inputs, and constraints. Check your testing environment is ready before you start.
-2. If the task references PLAN.md or TASK-STATUS.md, read those for context (prior task notes) and apply the **Task-Set Frontmatter Lifecycle** above.
+2. If the task references PLAN.md or TASK-STATUS.md, read those for context (prior task notes) and apply the **Task-Set Frontmatter Lifecycle** above. Ignore `Own worktree` when running a task directly; it applies to parallel waves only.
 3. Adopt the persona, if the task has one — its `persona:` field, or its Persona cell in TASK-STATUS.md. It is your point of view: it helps you notice problems, never changes scope, ownership or stop rules. Report what you notice; record it under **Caught Beyond the Brief** in the task file's Implementation Notes.
 4. Execute the steps. If issues arise, work through them — collaborate with the user if needed.
 5. Do NOT deviate from the plan silently. If deviation is needed, stop and discuss.
@@ -64,13 +106,14 @@ You are the executor. Read the task file, do the work, report back.
 8. Record any security concerns you surface in the task's Implementation Notes (or TASK-STATUS.md in a set).
 9. Update your row in TASK-STATUS.md's table. Not a sub-agent and this was the last row → close the set per the Lifecycle above (full gates first).
 10. Follow the task file's **On Completion** — append your own LOG entry for this task. One line, terminated with a newline, append-only; never `str_replace`. If you closed the set in step 9, also append the set entry.
-11. Keep the user informed of progress and material findings along the way.
+11. Not a sub-agent → commit the task (§ Commits). A sub-agent → don't; the orchestrator commits.
+12. Keep the user informed of progress and material findings along the way.
 
 **Constraints**:
-- No git commits unless the user asks. As a sub-agent, never.
+- Git per § Commits. As a sub-agent, no git commands that change state.
 - Be concise — don't over-engineer.
 - **Never write to `cortex/AUDITED.md`** in any mode. That is `cortex-garden`'s ledger — it records what has been *verified*. Task execution's record is the LOG entry.
-- Long File Strategy and `cwd` usage are MANDATORY per workspace rules (survival-critical — see steering). Do not skip these even under time pressure.
+- Long File Strategy is MANDATORY per workspace rules (survival-critical — see steering). Do not skip it even under time pressure.
 
 **Return Contract** (when operating as a sub-agent):
 ```
@@ -103,6 +146,7 @@ For the full sequential protocol (read-discipline checkpoint, dispatch loop, rea
 - Trust the sub-agent's return block; check its work yourself only where you judge it worthwhile.
 - If any sub-agent reports BLOCKED or DEVIATION, stop and inform user.
 - Route every `REQUESTS` item before the next dispatch.
+- Commit each task once its return block checks out (§ Commits).
 
 ---
 
@@ -117,7 +161,7 @@ For the full parallel protocol (wave assignment, dispatch, error handling), read
 - Logging is two-level, same as sequential: each sub-agent logs its own task, the orchestrator logs the set. A whole wave appends at once, so one line ending in `\n`, append-only.
 - Waves run in order; tasks within a wave run in parallel.
 - Parallel tasks MUST NOT modify the same files — TASK-STATUS.md's File Ownership says who owns what.
-- A wave gate runs between waves: every request routed, orchestrator-owned files updated, tests green (full gates only after a wide wave).
+- A wave gate runs between waves: task worktrees merged (if any), every request routed, orchestrator-owned files updated, tests green (full gates only after a wide wave), then the wave committed (§ Commits).
 - Waves come from TASK-STATUS.md's `Wave` column, assigned by the planner. No Wave column → run sequential and say so.
 - When in doubt about independence, run sequentially within that wave.
 
