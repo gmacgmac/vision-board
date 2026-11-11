@@ -4,7 +4,7 @@
 // once per view version. The look is board v3's card (D-024, mockup 01b): content first, number
 // and kind as tabs in gaps cut from the top border, kind icon, state word and buttons in a footer.
 import type { ActionId, NodeSize, ViewNode } from '#format';
-import { NODE_TYPES } from '#format';
+import { NODE_TYPES, flagOn } from '#format';
 import { ACTIONS } from '#actions';
 import type { HandoverView, NotesView, ProposalsView, ReplyEntry } from './node-core.ts';
 import type { UpdatesView } from './node-updates.ts';
@@ -135,7 +135,8 @@ function appStatus(n: ViewNode, prefix?: string): string {
  * whole name in a hover tip (`bindAppNameTip`) for sighted readers only: it is the same text. */
 const appName = (n: ViewNode): string =>
   `<span class="vb-app-name"><span class="vb-app-name-text">${esc(n.title)}</span>`
-  + `<span class="vb-tip vb-app-name-tip" aria-hidden="true">${esc(n.title)}</span></span>`;
+  + `<span class="vb-tip vb-app-name-tip" aria-hidden="true">${esc(n.title)}</span></span>`
+  + (flagOn('appStage') ? `<button type="button" class="vb-pop-btn vb-app-open" data-app-act="stage">${uiCommonWords.open}</button>` : '');
 
 /** The stepper (FE_02 ruling 3), which takes the footer's place while a changed card is open:
  * "Update 2 of 3", Back and Next. Shown and counted by `update()`. */

@@ -41,3 +41,24 @@ vb-app-frame[data-frozen] .vb-af-wait { display: none; }
 vb-app-frame {
   &[data-focus-in]:not([data-pointer-focus]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
 }
+
+/* On stage (appStage, spike): the same frame in the top layer, filling the page, under a bar with
+   the app's name and Back to card. A popover, so no ancestor's pan or zoom reaches it. */
+vb-app-frame .vb-af-bar { display: none; }
+vb-app-frame[data-stage] {
+  position: fixed; inset: var(--vb-space-3); width: auto; height: auto; margin: 0; padding: 0; border: 0;
+  border-radius: var(--vb-radius-lg); background: var(--vb-surface-card); color: var(--vb-ink);
+  box-shadow: 0 0 0 1px var(--vb-line-contrast), var(--vb-shadow-lift);
+  overflow: hidden;
+}
+vb-app-frame[data-stage]::backdrop { background: var(--vb-scrim); }
+vb-app-frame[data-stage] .vb-af-bar {
+  position: absolute; inset: 0 0 auto 0; height: 40px; display: flex; align-items: center; gap: var(--vb-space-3);
+  padding-inline: var(--vb-space-4) var(--vb-space-2); border-bottom: 1px solid var(--vb-line);
+}
+vb-app-frame[data-stage] .vb-af-bar-title {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong);
+}
+vb-app-frame[data-stage] .vb-af-frame { inset: 40px 0 0 0; height: calc(100% - 40px); }
+vb-app-frame[data-stage] .vb-af-ph { inset: 40px 0 0 0; }

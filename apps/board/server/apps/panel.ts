@@ -30,7 +30,7 @@ export function panelCsp(csp: AppCsp | undefined): string {
   const plus = (base: string) => [base, ...resource].join(' ');
   return [
     'sandbox allow-scripts', "default-src 'none'", "script-src 'unsafe-inline'", plus("style-src 'unsafe-inline'"),
-    plus('img-src data:'), plus('font-src data:'), connect.length ? `connect-src ${connect.join(' ')}` : "connect-src 'none'",
+    plus('img-src data:'), plus('font-src data:'), ...(resource.length ? [['media-src', 'blob:', ...resource].join(' ')] : []), connect.length ? `connect-src ${connect.join(' ')}` : "connect-src 'none'",
     "frame-ancestors 'self'", "base-uri 'none'", "form-action 'none'",
   ].join('; ');
 }

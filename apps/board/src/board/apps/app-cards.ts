@@ -23,6 +23,7 @@
 import type { ActionId, LedgerEvent, ViewNode } from '#format';
 import type { LedgerState } from '#actions';
 import { ACTIONS, READ_ONLY_PERSON } from '#actions';
+import { HOST_REPLY } from '#format';
 import type { BoardLayout } from '#layout';
 import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } from '#ui';
 import type { OpenMenu } from '#ui';
@@ -62,6 +63,12 @@ export interface AppCardsDeps {
   fail(err: unknown): void;
   /** list_apps said something new: draw the board again (only the app cards change). */
   redraw(): void;
+  /** The appStage flag (spike): Open on an app card, a panel's picks as notes, replies told to it. */
+  staging?: boolean;
+  /** The version of card `id` the person sees, for a note's act. */
+  ver?(id: string): number | undefined;
+  /** The agent's replies on card `id`, oldest first. */
+  replies?(id: string): readonly { seq: number; text: string }[];
   /** The board's calls (io.ts). */
   io: Pick<Io, 'listApps' | 'callAppTool' | 'panelState' | 'savePanelState'>;
 }
@@ -136,6 +143,29 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   const saved = createPanelStates({ read: (k) => d.io.panelState(k.board, k.n), write: (k, state) => d.io.savePanelState(k.board, k.n, state) });
   /** The loaded frames, by node id, least recently on screen first (LIVE_PANELS). */
   const used = new Map<string, VbAppFrameElement>();
+  /** The replies each loaded panel was told (appStage); a panel that starts again is told them all. */
+  const toldTo = new WeakMap<VbAppFrameElement, Set<number>>();
+
+  /** Tell `frame`'s panel each agent reply on its card it has not heard (HOST_REPLY). */
+  function tellReplies(id: string, frame: VbAppFrameElement): void {
+    if (!d.staging || !d.replies) return;
+    if (!frame.loaded) return void toldTo.delete(frame);
+    const heard = toldTo.get(frame) ?? new Set<number>();
+    toldTo.set(frame, heard);
+    for (const r of d.replies(id)) {
+      if (heard.has(r.seq)) continue;
+      if (!frame.tell(HOST_REPLY, { seq: r.seq, text: r.text })) return;
+      heard.add(r.seq);
+    }
+  }
+
+  /** A pick in a card's panel: the person's note on that card, through the one sender. */
+  async function note(card: VbNodeElement, text: string): Promise<void> {
+    const id = card.dataset.id ?? '';
+    const ver = d.ver?.(id);
+    const problem = await d.act({ action: 'comment', n: Number(id), ...(ver !== undefined && { ver }), text } as ActFields);
+    if (problem !== null) throw { problem: 'app-failed', detail: problem };
+  }
 
   /** The app as list_apps last gave it (none until it answered); a past version keeps its size. */
   const input = (n: ViewNode): AppCardInput => {
@@ -166,7 +196,8 @@ export function createAppCards(d: AppCardsDeps): AppCards {
       loadState: () => saved.load(key()),
       focusCame,
       onEscape: () => card.focus({ preventScroll: true }),
-      onLoad: () => void states.refresh(),
+      onLoad: () => { toldTo.delete(frame); void states.refresh(); },
+      ...(d.staging && { note: (text: string) => note(card, text), onReady: () => tellReplies(card.dataset.id ?? '', frame) }),
     });
   }
 
@@ -184,6 +215,8 @@ export function createAppCards(d: AppCardsDeps): AppCards {
       if (!el || !frame) continue;
       wire(el, frame);
       const b = layout?.nodes.get(id);
+      tellReplies(id, frame);
+      if (frame.staged) { live.add(id); continue; }
       if (!appView(n, input(n)).frame) frame.unload();
       else if (near && b && !el.hidden && !outside(b, seen)) {
         frame.load();
@@ -211,6 +244,12 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     if (!app) return;
     const info = states.info(app);
     const name = info?.title ?? n.title;
+    if (what === 'stage') {
+      const frame = card.querySelector<VbAppFrameElement>('vb-app-frame');
+      frame?.load();
+      frame?.stage();
+      return;
+    }
     if (what === 'retry') {
       const before = info?.state;
       await states.refresh();

@@ -180,6 +180,14 @@ export const FLAGS = {
     // On by default (maintainer, 2026-10-27, point 312: app cards fit their content; app-panel-fits-content task); ?flags=-appFit turns it off.
     default: true,
   },
+  cardDetails: {
+    // Spike (maintainer's go, 2026-11-10, point 24: stage apps spike); on by default on the spike branch; ?flags=-cardDetails turns it off.
+    default: true,
+  },
+  appStage: {
+    // Spike (maintainer's go, 2026-11-10, point 24: stage apps spike); on by default on the spike branch; ?flags=-appStage turns it off.
+    default: true,
+  },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
     default: false,
@@ -398,6 +406,8 @@ export const FLAG_DESCRIPTIONS = {
   toolRail: 'A container\'s tools (the layout icons, Match card widths, Comment and the settings cog) sit in a slim vertical rail on the frame\'s left edge, dimmed until hovered or focused, so the top line holds only the title, centred, with the whole line for it; a short frame\'s rail collapses and expands over the cards on hover or focus, and its popovers open to the right of it. Off, the tools sit on the top line after the title as before.',
   freshCards: 'New and updated cards are found at board scale: the "N updates" tab is outlined in pink at rest; a container holding a card that is new or updated since the person last engaged with any card in it (`container.fresh`, api.md 158) has a teal border and a "3 new · 1 updated" pill on its title line, until they select or act on one of its cards; and the toolbar\'s "N new" chip lists those cards as "number · title" (updated ones end "· updated") in board order, choosing one going to it as Go to card does. None of it shows in a past version. Off, the tab is grey until hovered and no container, pill or chip shows.',
   groupNoteOnce: 'A note on a selection of cards (one note with `nodes`, api.md 62) is drawn once: one pin per group, on the right edge of the group\'s lowest-numbered card just under that card\'s own note pin (or its next card, when an earlier group\'s pin is already there), in its own layer above the cards. Hovering or focusing it, and its bubble being open, ring each card of the group with a dashed line (never a box); pressing it selects the group\'s cards and opens the note, to edit or remove it, with the agent\'s replies to it shown once there. The cards\' own pins, "Your note" blocks and conversations leave the group\'s notes and replies out. Off, the note and its replies show on every card of the group.',
+  cardDetails: 'Spike. A card\'s body may hide detail behind a disclosure triangle: a line `+++ Label` opens it and a line `+++` closes it; the lines between show only when the person opens the triangle, and the card is measured again. Off, the lines stay text.',
+  appStage: 'Spike. An app card has Open: its panel leaves the card and fills the board (the top layer; the same sandboxed frame, never reloaded), and Esc or Back to card returns it. The panel may send `vision-board/note` (a pick in the app becomes the person\'s note on its card) and gets `vision-board/notifications/reply` (each agent reply on its card), and its policy lets it play media from the manifest\'s `resourceDomains`. Off, an app card is as before.',
   appFit: 'An app card fits its panel\'s content: a panel that tells its height (MCP Apps\' `ui/notifications/size-changed`, `{ height }`) gets a frame that height, rounded and held to 120 to 1080 px (APP_LIMITS.toldHeight; never stored, so above the agent\'s 800), as wide as the agent drew it; the card is measured again and the cards under it move, with nothing written to the ledger. The agent\'s `h` is the height until the panel tells one, and again once its frame is removed; a frozen panel keeps its last. A panel that tells nothing keeps the agent\'s size. Off, size-changed is ignored and the panel is the size the agent drew (docs/specification/apps.md § Panel size).',
   goAfterPause: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/find/go-to-card.ts). Off, only Enter goes.',
   findKeepsMarks: 'Finding a card never changes it: going to a card from Go to card, search, the open, new and updated lists or the Review list selects and shows it without marking it seen, so its NEW and updated marks stay; the person\'s own click on the card, and every act, still clear them. Off, a found card is marked seen as a selected one is.',

@@ -73,7 +73,8 @@ test('the board\'s own panel methods start with its host name, so none can colli
   assert.equal(PANEL_METHODS[PANEL_SAVE_STATE], 'request');
   assert.ok(PANEL_SAVE_STATE.startsWith(`${APP_HOST_NAME}/`));
   const standard = (m: string) => m.startsWith('ui/') || m === 'tools/call' || m === 'ping';
-  assert.deepEqual(Object.keys(PANEL_METHODS).filter((m) => !standard(m)), [PANEL_SAVE_STATE]);
+  // `vision-board/note` is the appStage spike's (a pick in the panel becomes the person's note).
+  assert.deepEqual(Object.keys(PANEL_METHODS).filter((m) => !standard(m)), [PANEL_SAVE_STATE, `${APP_HOST_NAME}/note`]);
 });
 
 test('the saved state comes back under the board\'s own host-context key, so a future MCP Apps field can\'t collide (apps.md § Host context)', () => {

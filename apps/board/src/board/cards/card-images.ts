@@ -169,6 +169,8 @@ export function createCardImages(d: CardImagesDeps): CardImages {
   }, true);
   // An app card's panel told a new height, or its frame went: its card measured again, as for a picture.
   d.host.addEventListener(APP_FRAME_RESIZE_EVENT, (e) => grew(e.target as Element));
+  // Detail opened or closed behind its triangle (cardDetails, spike): its card measured again too.
+  d.host.addEventListener('toggle', (e) => { if ((e.target as Element).matches?.('details.vb-md-details')) grew(e.target as Element); }, true);
   // One that would not draw: the route says why, or its bytes were not a picture after all.
   d.host.addEventListener('error', (e) => {
     const img = e.target as HTMLImageElement;

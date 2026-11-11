@@ -84,6 +84,16 @@ export const APP_HOST_NAME = 'vision-board';
  * state). MCP Apps (2026-01-26 and its draft) has no state method. */
 export const PANEL_SAVE_STATE = `${APP_HOST_NAME}/save-state` as const;
 
+/** The board's own request (appStage, spike): the person picked something in the panel, and the
+ * panel asks for it to be the person's note on its card: params `{ text }`, at most `PANEL_NOTE_CHARS`.
+ * The agent reads it as any note and answers on the card. */
+export const PANEL_NOTE = `${APP_HOST_NAME}/note` as const;
+export const PANEL_NOTE_CHARS = 2000;
+
+/** The board's own notification to a panel (appStage, spike): one agent reply on the panel's card,
+ * `{ seq, text }`; every reply on the card is sent once to a panel after it starts, oldest first. */
+export const HOST_REPLY = `${APP_HOST_NAME}/notifications/reply` as const;
+
 /** The board's own field in the host context a panel gets in answer to `ui/initialize`: the value the
  * panel last saved for its card, left out when none (apps.md § Host context). Under the board's name,
  * so a field MCP Apps adds later can't collide. */
@@ -104,11 +114,12 @@ export const PANEL_METHODS = {
   'ui/notifications/size-changed': 'notification',
   'ui/notifications/escape': 'notification',
   [PANEL_SAVE_STATE]: 'request',
+  [PANEL_NOTE]: 'request',
 } as const;
 export type PanelMethod = keyof typeof PANEL_METHODS;
 
 /** What the board sends a panel, besides its answers: a new host context on a theme change. */
-export const HOST_NOTIFICATIONS = ['ui/notifications/host-context-changed'] as const;
+export const HOST_NOTIFICATIONS = ['ui/notifications/host-context-changed', HOST_REPLY] as const;
 
 /** The JSON-RPC error codes the board answers a panel with. `failed` (MCP Apps' implementation
  * error) carries the board's problem code in `data.problem`. */

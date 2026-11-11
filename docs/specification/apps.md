@@ -172,12 +172,14 @@ and keeps its name.
 | `ui/notifications/size-changed` | notification | Params: `{ height }`, the content's height in px; sets the panel's height (§ Panel size). A `width` is ignored. |
 | `ui/notifications/escape` | notification | The board's own: the person pressed Esc in the panel; focus goes back to the card. |
 | `vision-board/save-state` | request | The board's own. Params: `{ state }`. Answers `{}` (§ Saving the panel's state). |
+| `vision-board/note` | request | The board's own (spike, the `appStage` flag). Params: `{ text }`, at most 2000 characters: a pick in the panel becomes the person's note on its card, through the action layer. Answers `{}`. |
 
 ### Board to panel
 
 | Method | What it carries |
 |---|---|
 | `ui/notifications/host-context-changed` | The parts of the host context that changed: `theme` and `styles` when the board's theme changes. |
+| `vision-board/notifications/reply` | The board's own (spike, the `appStage` flag): one agent reply on the panel's card, `{ seq, text }`; a panel is told every reply on its card once after it starts, oldest first. |
 
 ### Host context
 
