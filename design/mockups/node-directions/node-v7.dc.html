@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Node anatomy: after the review</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&amp;family=Figtree:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.v7{--ground:#111112;--surface:#1a1a1c;--sunk:#222225;--deep:#2c2c30;--line:#2a2a2e;--line2:#3a3a40;--line3:#4a4a52;--ink:#ededef;--ink2:#c7c7cc;--mut:#b8b8c0;--need:#ededef;--acc:#ff5cbe;--acc-ink:#1a0712;--ok:#4cc47f;--bad:#f07474;--upd:#ffc21a;--new:#2dd4bf;--bm:#fb923c;--k-action:#e8b04a;--k-topic:#a48ef2;--k-live:#4fc3b0;--k-decision:#ff5cbe;--k-question:#72a6f2;--k-risk:#f38860;--agent:#c3dc5c;--dot:rgb(255 255 255 / .07);--sh:0 1px 2px rgb(0 0 0 / .4),0 4px 14px rgb(0 0 0 / .3);--shl:0 10px 40px rgb(0 0 0 / .6);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sys:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+box-sizing:border-box;width:1440px;min-height:2920px;padding:56px 48px 90px;background-color:var(--ground);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.3px);background-size:24px 24px;color:var(--ink);font:13px/1.5 var(--sys);-webkit-font-smoothing:antialiased}
+.v7.light{--ground:#f5f5f6;--surface:#ffffff;--sunk:#efeff1;--deep:#e4e4e7;--line:#e1e1e5;--line2:#cbcbd1;--line3:#b5b5bd;--ink:#18181b;--ink2:#3f3f46;--mut:#6b6b74;--need:#18181b;--acc:#c81784;--acc-ink:#ffffff;--ok:#278f52;--bad:#cc3b3b;--upd:#b85e00;--new:#0d7d74;--bm:#c2410c;--k-action:#9a6907;--k-topic:#6a4fc0;--k-live:#1a7d6e;--k-decision:#c81784;--k-question:#3471d0;--k-risk:#c8461c;--agent:#5f7a0e;--dot:rgb(24 24 27 / .09);--sh:0 1px 2px rgb(24 24 27 / .06),0 4px 14px rgb(24 24 27 / .06);--shl:0 10px 40px rgb(24 24 27 / .18)}
+.v7 *{box-sizing:border-box}
+.ic{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+h1.pg{margin:0 0 6px;font:680 24px/1.2 var(--sys)}
+p.lede{margin:0 0 44px;max-width:940px;color:var(--mut);font-size:14px}
+.g{display:grid;grid-template-columns:250px 420px 420px;column-gap:44px;row-gap:66px;align-items:start}
+.ch{padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.ch b{display:block;font:680 15px/1.3 var(--sys)}
+.ch span{color:var(--mut);font-size:12.5px}
+.rl{padding-top:6px;font:600 11px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.rl small{display:block;margin-top:6px;font:400 12px/1.45 var(--sys);letter-spacing:0;text-transform:none}
+.sec{margin:84px 0 26px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.sec b{display:block;font:680 15px/1.3 var(--sys)}
+.sec span{display:block;max-width:980px;color:var(--mut);font-size:12.5px}
+
+/* at rest a node carries states only; controls come when it is pointed at, focused or selected */
+.n{position:relative;flex:none;width:300px;border:1px solid color-mix(in srgb,var(--k) 42%,var(--line2));border-radius:14px;background:var(--surface);box-shadow:var(--sh)}
+.n.sel{outline:2px solid var(--acc);outline-offset:4px}
+.nb{padding:22px 14px 16px}
+.num{position:absolute;top:-11px;left:14px;height:22px;padding:0 7px;border:1px solid var(--line3);border-radius:7px;background:var(--sunk);color:var(--ink);font:600 12px/20px var(--mono)}
+.kind{position:absolute;top:-11px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid color-mix(in srgb,var(--k) 70%,transparent);border-radius:999px;background:color-mix(in srgb,var(--k) 14%,var(--surface));color:var(--k);font:700 10.5px/1 var(--sys);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.kind::before{content:"";width:8px;height:12px;background:radial-gradient(currentColor 1.1px,transparent 1.3px) 0 0/4px 4px}
+.rib{position:absolute;top:-10px;left:56px;width:15px;height:27px;background:var(--bm);clip-path:polygon(0 0,100% 0,100% 100%,50% 74%,0 100%)}
+.ans{position:absolute;top:-14px;right:22px;display:grid;place-items:center;width:28px;height:28px;padding:0;border:2.5px solid var(--need);border-radius:50%;background:var(--surface);color:var(--mut);cursor:pointer}
+.ans::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--need)}
+.ans.ok,.ans.no{border:0;color:#fff}
+.ans.ok{background:#0c8f5f} .ans.no{background:#cf3a3a}
+.ans.ok::after,.ans.no::after,.ans.open::after{content:none}
+.ans.ok .ic,.ans.no .ic,.ans.open .ic{stroke-width:2.6;width:15px;height:15px}
+.ans.open{border-color:var(--line3);color:var(--ink)}
+.pick{position:absolute;top:-24px;right:56px;z-index:3;display:flex;gap:4px;padding:4px;border:1px solid var(--line3);border-radius:999px;background:var(--deep);box-shadow:var(--shl)}
+.pick button{display:grid;place-items:center;width:44px;height:38px;border:0;border-radius:999px;background:var(--surface);cursor:pointer}
+.pick .y{color:var(--ok)} .pick .x{color:var(--bad)}
+.badge{position:absolute;bottom:-11px;left:14px;height:22px;padding:0 8px;border:1.5px solid var(--upd);border-radius:7px;background:var(--surface);color:var(--upd);font:700 11.5px/19px var(--sys);white-space:nowrap}
+.badge.new{border-color:var(--new);color:var(--new)}
+.nc{position:absolute;bottom:-11px;right:14px;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border:1.5px solid var(--acc);border-radius:999px;background:var(--surface);color:var(--acc);font:700 11.5px/1 var(--mono);cursor:pointer}
+.nc .ic{width:12px;height:12px;stroke-width:2.2}
+.rail{position:absolute;left:calc(100% + 8px);top:8px;z-index:3;display:grid;gap:2px;padding:4px;border:1px solid var(--line3);border-radius:12px;background:var(--deep);box-shadow:var(--shl)}
+.rb{position:relative;display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:9px;background:none;color:var(--mut);cursor:pointer}
+.rb:hover,.rb.open{background:var(--surface);color:var(--ink)}
+.rb.on{color:var(--bm)} .rb.on .ic{fill:currentColor}
+.rb:focus-visible,.ans:focus-visible,.pick button:focus-visible,.nc:focus-visible,.bt:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.ttl{margin:0 0 6px;font:680 15px/1.3 var(--sys);color:var(--ink)}
+.bd{margin:0;color:var(--ink2);font-size:13px}
+ol.bd{padding-left:20px}
+/* architecture look: no kind tab; the icon tile and a thin top line say what it is */
+.n.ar{background:linear-gradient(170deg,color-mix(in srgb,var(--k) 9%,var(--surface)) 0%,var(--surface) 55%);font-family:"Figtree",var(--sys)}
+.n.ar::before{content:"";position:absolute;left:60px;right:60px;top:-1px;height:2px;border-radius:0 0 2px 2px;background:color-mix(in srgb,var(--k) 80%,transparent)}
+.n.ar .hd{display:flex;align-items:flex-start;gap:10px}
+.n.ar .tt{flex:1;min-width:0}
+.n.ar .ttl{margin:0;font:600 15px/1.22 "Bricolage Grotesque","Figtree",var(--sys);letter-spacing:-.01em}
+.n.ar .sub{font-size:12.5px;font-weight:600;color:var(--k)}
+.kick{font:700 10.5px/1.5 "Figtree",var(--sys);letter-spacing:.08em;text-transform:uppercase;color:var(--k)}
+.tile{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,var(--k) 16%,var(--surface));color:var(--k)}
+.tile .ic{width:19px;height:19px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 0}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;background:var(--sunk);color:var(--ink2);font-size:11.5px;font-weight:600}
+.chip.att{background:color-mix(in srgb,var(--acc) 13%,transparent);color:var(--acc)}
+.chip .ic{width:12px;height:12px}
+.n.ar ul.bd{margin-top:8px;padding-left:16px;font-size:12.5px;color:var(--mut)}
+/* far view */
+.far{zoom:.4;display:grid;gap:96px;padding:30px 0 10px}
+.frow{display:flex;align-items:center}
+.wire{flex:none;position:relative;width:90px;height:3px;background:var(--line3)}
+.wire::after{content:"";position:absolute;right:-1px;top:-6px;border:7.5px solid transparent;border-left:11px solid var(--line3);border-right:0}
+/* the conversation floats over the board; it is not a node */
+.scene{position:relative;height:500px}
+.scene>.n{position:absolute}
+.cv{position:absolute;left:372px;top:14px;z-index:5;width:340px;border:1px solid var(--line3);border-radius:14px;background:var(--sunk);box-shadow:var(--shl)}
+.cv::before{content:"";position:absolute;left:-7px;top:78px;width:12px;height:12px;transform:rotate(45deg);background:var(--sunk);border-left:1px solid var(--line3);border-bottom:1px solid var(--line3)}
+.cvh{display:flex;align-items:center;gap:8px;padding:8px 6px 8px 12px;border-bottom:1px solid var(--line2)}
+.cvh .num{position:static}
+.cvh b{flex:1;font:600 14px var(--sys)}
+.msgs{display:grid;gap:8px;padding:12px}
+.msg{padding:9px 11px;border:1px solid var(--line2);border-radius:9px;background:var(--surface);font-size:13px;color:var(--ink2)}
+.msg i{display:block;margin-bottom:3px;font:700 10px/1.4 var(--sys);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.msg.me{border-left:3px solid var(--acc)}
+.msg.ag{border-left:3px solid var(--agent)}
+.cmp{display:grid;gap:8px;padding:10px 12px 12px;border-top:1px solid var(--line2)}
+.cmp label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.cmp textarea{display:block;width:100%;min-height:36px;max-height:78px;field-sizing:content;padding:7px 11px;border:1px solid var(--line3);border-radius:9px;background:var(--ground);color:var(--ink);font:13px/1.5 var(--sys);resize:none}
+.cmp textarea::placeholder{color:var(--mut)}
+.bts{display:flex;justify-content:flex-end;gap:8px}
+.bt{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--line3);border-radius:8px;background:var(--surface);color:var(--ink);font:650 12.5px var(--sys);cursor:pointer}
+.bt.pri{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
+.bt kbd{font:600 10.5px var(--mono);color:var(--mut)}
+.cap{margin:14px 0 0;max-width:980px;color:var(--mut);font-size:12.5px}
+</style>
+</helmet>
+<div class="v7 {{mode}}">
+<h1 class="pg">Node anatomy: after the review</h1>
+<p class="lede">The same node as artboard 6 with the reviewer's fixes, to compare side by side. At rest a node shows only its states: waiting, answered, bookmarked, notes, new or updated. The buttons come when you point at it, focus it or select it. Keys stay as today: A tick, X cross, C comment, L later.</p>
+<div class="g">
+<div></div>
+<div class="ch"><b>Current look</b><span>Kind tab kept on the top border.</span></div>
+<div class="ch"><b>Architecture look</b><span>No kind tab: the icon tile and a thin top line say what it is.</span></div>
+
+<div class="rl">At rest<small>A node that tells. Nothing on it is a control, so it is as sparse as the original plan view.</small></div>
+<div><div class="n" style="--k: var(--k-topic)"><span class="num">28</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div></div></div>
+<div><div class="n ar" style="--k: var(--k-live)"><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div></div></div>
+
+<div class="rl">Bookmarked, 3 notes, 1 update<small>The bookmark is a ribbon standing out of the top edge, so it shows on the outline. Notes are a count on the bottom right; press it to open the conversation. What changed stays bottom left.</small></div>
+<div><div class="n" style="--k: var(--k-topic)"><span class="num">28</span><span class="rib" role="img" aria-label="Bookmarked"></span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><span class="badge">1 update</span><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div></div>
+<div><div class="n ar" style="--k: var(--k-live)"><span class="num">4</span><span class="rib" role="img" aria-label="Bookmarked"></span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div><span class="badge">1 update</span><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div></div>
+
+<div class="rl">Waiting for your answer<small>A solid ring with a dot, in one strong neutral colour whatever the kind, so "this needs you" is never lost in the border. The current-look node is also new.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><span class="badge new">New</span></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div></div></div>
+
+<div class="rl">Pointed at or selected<small>The rail appears beside the node, outside it, so the node keeps its size and nothing on the board moves. Selection is a ring outside the border. On a touch screen a tap selects. Later and History are under More.</small></div>
+<div><div class="n sel" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><div class="rail"><button class="rb" aria-label="Bookmark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="rb" aria-label="Comment"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="rb" aria-label="More: Save for later, History, Width"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div></div></div>
+<div style="padding-bottom: 30px"><div class="n ar sel" style="--k: var(--k-decision)"><span class="num">10</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div><div class="rail"><button class="rb" aria-label="Bookmark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="rb" aria-label="Comment"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="rb" aria-label="More: Save for later, History, Width"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div></div></div>
+
+<div class="rl">Choosing<small>Click the ring and tick and cross open beside it, never on top of it. A second click on the ring only closes them, so a double-click can't approve by accident. No opening on hover.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><div class="pick"><button class="y" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><button class="ans open" aria-label="Close tick or cross" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l8 8M16 8l-8 8"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><div class="pick"><button class="y" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><button class="ans open" aria-label="Close tick or cross" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l8 8M16 8l-8 8"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div></div></div>
+
+<div class="rl">Ticked, and crossed<small>Unchanged from artboard 6: the filled disc reads from across the board.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><button class="ans ok" aria-label="Ticked. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><button class="ans no" aria-label="Crossed. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div></div></div>
+
+<div class="rl">The shortest and a tall one<small>With no rail inside it, a one-line node stays one line. On a tall node the marks stay on the corners.</small></div>
+<div><div class="n" style="--k: var(--k-question)"><span class="num">41</span><span class="kind">Question</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb" style="padding-bottom: 12px"><h3 class="ttl" style="margin: 0">Same encoder profile for both feeds?</h3></div></div></div>
+<div><div class="n ar" style="--k: var(--k-risk)"><span class="num">17</span><span class="rib" role="img" aria-label="Bookmarked"></span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Risk</div><h3 class="ttl">Rain fade on the satellite link after 21:00</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></svg></span></div><ul class="bd"><li>Showers forecast from 20:45</li><li>Ku-band margin is 3 dB</li><li>The fibre path is the primary, so the risk is to the backup only</li><li>A second fibre path is not available at this venue</li><li>Switching back after a fade takes about 2 s</li><li>The operator on shift decides, not the automation</li></ul></div><span class="badge">2 updates</span><button class="nc" aria-label="5 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>5</button></div></div>
+</div>
+<div class="sec"><b>From a distance, at 40%</b><span>Ten nodes with connectors, drawn at the size you see when zoomed out. Find the three that wait for you, the two you bookmarked, the one ticked and the one crossed. With no rail on the right edge, connectors leave from the node itself.</span></div>
+<div class="far">
+<div class="frow">
+<div class="n ar" style="--k: var(--k-live)"><span class="num">1</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Live signal</h3><div class="sub">Stadium feed</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M8 8a5.500 5.500 0 0 0 0 8M16 8a5.500 5.500 0 0 1 0 8"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-decision)"><span class="num">2</span><span class="rib" role="img" aria-label="Bookmarked"></span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cloud ingest</h3><div class="sub">Uplynk slicer</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.500-1A4.500 4.500 0 0 1 17 18z"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-decision)"><span class="num">3</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Transcode</h3><div class="sub">Standard ABR ladder</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l8 4-8 4-8-4zM4 12l8 4 8-4"/></svg></span></div></div><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div></div><span class="badge">1 update</span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-question)"><span class="num">5</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">OTT apps</h3><div class="sub">HLS and DASH</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10.5 9l4 3-4 3z"/></svg></span></div></div><span class="badge new">New</span></div>
+</div>
+<div class="frow">
+<div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-action)"><span class="num">11</span><button class="ans ok" aria-label="Ticked"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Action</div><h3 class="ttl">Book the uplink slot</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10.5 9l4 3-4 3z"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-question)"><span class="num">12</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Question</div><h3 class="ttl">Same profile for both feeds?</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.700.400-1 .900-1 1.700M12 16.500v.5"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-decision)"><span class="num">13</span><button class="ans no" aria-label="Crossed"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Ads on the live event</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-risk)"><span class="num">17</span><span class="rib" role="img" aria-label="Bookmarked"></span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Question</div><h3 class="ttl">Who decides on a rain fade?</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></svg></span></div></div><button class="nc" aria-label="5 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>5</button></div>
+</div>
+</div>
+
+<div class="sec"><b>The conversation at a node</b><span>It floats over the board from the node's Comment button, and no node moves when it opens or closes. It is drawn as its own surface, not as a second node. Two buttons, no switch: Add note keeps it until you press Send to agent; Ask now sends it straight away.</span></div>
+<div class="scene">
+<div class="n sel" style="--k: var(--k-action); left: 0; top: 24px"><span class="num">34</span><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory, and whether the 4090 machine is Linux or Windows and reachable from here (SSH).</p></div><button class="nc" aria-label="2 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>2</button><div class="rail"><button class="rb" aria-label="Bookmark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="rb open" aria-label="Comment" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="rb" aria-label="More: Save for later, History, Width"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div></div>
+<div class="n" style="--k: var(--k-action); left: 470px; top: 352px"><span class="num">35</span><span class="kind">Action</span><button class="ans ok" aria-label="Ticked. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div></div>
+<div class="n" style="--k: var(--k-topic); left: 800px; top: 24px"><span class="num">28</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div></div>
+<div class="cv"><div class="cvh"><span class="num">34</span><b>Conversation on 34</b><button class="rb" aria-label="Close conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+<div class="msgs"><div class="msg me"><i>You</i>It's a Mac Studio, 96 GB memory, about 100 GB of free storage.</div><div class="msg ag"><i>Agent</i>96 GB fits every base model on the Mac. I'd start Mac-only and add the 4090 later if speed needs it. Is it Linux or Windows, and reachable from the Mac?</div></div>
+<div class="cmp"><label for="v34">Reply or ask about node 34</label><textarea id="v34" rows="1" placeholder="Reply or ask about 34"></textarea><div class="bts"><button class="bt">Ask now <kbd>Cmd Enter</kbd></button><button class="bt pri">Add note <kbd style="color: inherit">Enter</kbd></button></div></div></div>
+</div>
+<p class="cap">Node 35 sits partly under the box and has not moved. Close the box and the board is exactly as you left it.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":2920}}'>
+class Component extends DCLogic {
+renderVals() {
+return { mode: (this.props.theme ?? 'dark') === 'light' ? 'light' : '' };
+}
+}
+</script>
+</body>
+</html>

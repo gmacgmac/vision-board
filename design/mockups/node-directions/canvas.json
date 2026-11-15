@@ -1,0 +1,290 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Main.dc.html": {
+      "h": 1120,
+      "title": "1A Shaped Nodes · node language",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "ar-anatomy.dc.html": {
+      "h": 1780,
+      "title": "5 Architecture · node anatomy",
+      "w": 1440,
+      "x": 0,
+      "y": 6080
+    },
+    "ar-board.dc.html": {
+      "h": 1080,
+      "is_interactive": true,
+      "title": "4B Architecture · board at rest and active",
+      "w": 1440,
+      "x": 1520,
+      "y": 4500
+    },
+    "ar-mid.dc.html": {
+      "h": 1080,
+      "is_interactive": true,
+      "title": "4C In between · everyday candidate",
+      "w": 1440,
+      "x": 3040,
+      "y": 4500
+    },
+    "ar-nodes.dc.html": {
+      "h": 1160,
+      "title": "4A Architecture · node language (dark)",
+      "w": 1440,
+      "x": 0,
+      "y": 4500
+    },
+    "cl-node.dc.html": {
+      "h": 1680,
+      "page": "anatomy",
+      "title": "12 Command Lens node",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "d1-board-dark.dc.html": {
+      "h": 960,
+      "is_interactive": true,
+      "title": "1B Shaped Nodes · board, dark",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "d1-board.dc.html": {
+      "h": 960,
+      "is_interactive": true,
+      "title": "1B Shaped Nodes · board (drawer and Raise / Live work)",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "d1-stage.dc.html": {
+      "h": 900,
+      "is_interactive": true,
+      "title": "1C Shaped Nodes · the stage",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "d2-board.dc.html": {
+      "h": 960,
+      "title": "2B Thread Drawers · board",
+      "w": 1440,
+      "x": 1520,
+      "y": 1500
+    },
+    "d2-nodes.dc.html": {
+      "h": 1120,
+      "title": "2A Thread Drawers · node language",
+      "w": 1440,
+      "x": 0,
+      "y": 1500
+    },
+    "d2-stage.dc.html": {
+      "h": 900,
+      "title": "2C Thread Drawers · the stage",
+      "w": 1440,
+      "x": 3040,
+      "y": 1500
+    },
+    "d3-board.dc.html": {
+      "h": 960,
+      "title": "3B Command Lens · board",
+      "w": 1440,
+      "x": 1520,
+      "y": 3000
+    },
+    "d3-nodes.dc.html": {
+      "h": 1120,
+      "title": "3A Command Lens · node language",
+      "w": 1440,
+      "x": 0,
+      "y": 3000
+    },
+    "d3-stage.dc.html": {
+      "h": 900,
+      "title": "3C Command Lens · the stage",
+      "w": 1440,
+      "x": 3040,
+      "y": 3000
+    },
+    "next-node.dc.html": {
+      "h": 2260,
+      "title": "6 Node anatomy · today and next",
+      "w": 1440,
+      "x": 1520,
+      "y": 6080
+    },
+    "node-v10.dc.html": {
+      "h": 4870,
+      "page": "anatomy",
+      "title": "10 Node anatomy · after the third review",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "node-v11.dc.html": {
+      "h": 4920,
+      "page": "anatomy",
+      "title": "11 Command Lens skin",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "node-v7.dc.html": {
+      "h": 2920,
+      "title": "7 Node anatomy · after the review",
+      "w": 1440,
+      "x": 3040,
+      "y": 6080
+    },
+    "node-v8.dc.html": {
+      "h": 3560,
+      "title": "8 Node anatomy · your feedback and the second review",
+      "w": 1440,
+      "x": 4560,
+      "y": 6080
+    },
+    "node-v9.dc.html": {
+      "h": 3940,
+      "page": "anatomy",
+      "title": "9 Node anatomy · every action on the edges",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-11T12:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "page": "anatomy",
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "t1",
+    "s1",
+    "t2",
+    "s2",
+    "t3",
+    "s3",
+    "t4",
+    "s4",
+    "t5"
+  ],
+  "notes": {
+    "s1": {
+      "fill": "blue",
+      "size": 24,
+      "text": "The kind is the silhouette: a question is a speech shape, a decision a two-ended hexagon, an action a ticket whose tear-off stub holds the tick and cross, a risk a chamfered plate. You ask at the node itself; the agent answers by rewriting that node, and its earlier versions stack behind it as layers.",
+      "w": 460,
+      "x": -560,
+      "y": 0
+    },
+    "s2": {
+      "fill": "teal",
+      "size": 24,
+      "text": "Calm, typographic nodes: the number sits in a gutter that also holds the answer rail, so shape comes from structure rather than outline. Every node, app or not, opens the same thread drawer on its right and pushes its neighbours aside: one way to talk, everywhere.",
+      "w": 460,
+      "x": -560,
+      "y": 1500
+    },
+    "s3": {
+      "fill": "orange",
+      "size": 24,
+      "text": "Nodes are instrument modules: items carry a heavy plate and a two-position tick or cross switch, information sits light. One command lens follows your focus or selection, several nodes at once; you type, and the answer lands inside the node as tracked changes, with no thread to scroll.",
+      "w": 460,
+      "x": -560,
+      "y": 3000
+    },
+    "s4": {
+      "fill": "pink",
+      "size": 24,
+      "text": "The original plan view, made into a board theme: icon tiles, product subtitles, tinted feature chips and IN / MAKE / OUT lanes, with nothing on a node at rest that is a control. Answering appears only when you point, select or type into the lens; at rest a node carries just its number and, when it waits for you, a small ring.",
+      "w": 460,
+      "x": -560,
+      "y": 4500
+    },
+    "t1": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "1 · Shaped Nodes",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "2 · Thread Drawers",
+      "w": 240,
+      "x": 0,
+      "y": 1200
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "3 · Command Lens",
+      "w": 240,
+      "x": 0,
+      "y": 2700
+    },
+    "t4": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "4 · Architecture",
+      "w": 240,
+      "x": 0,
+      "y": 4200
+    },
+    "t5": {
+      "kind": "title1",
+      "maxW": 1440,
+      "text": "5 · Architecture node anatomy",
+      "w": 240,
+      "x": 0,
+      "y": 5780
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "d1-board.dc.html",
+    "d1-stage.dc.html",
+    "d1-board-dark.dc.html",
+    "d2-nodes.dc.html",
+    "d2-board.dc.html",
+    "d2-stage.dc.html",
+    "d3-nodes.dc.html",
+    "d3-board.dc.html",
+    "d3-stage.dc.html",
+    "ar-nodes.dc.html",
+    "ar-board.dc.html",
+    "ar-mid.dc.html",
+    "ar-anatomy.dc.html",
+    "next-node.dc.html",
+    "node-v7.dc.html",
+    "node-v8.dc.html",
+    "node-v9.dc.html",
+    "node-v10.dc.html",
+    "node-v11.dc.html",
+    "cl-node.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "explore",
+      "name": "Explorations 1 to 8"
+    },
+    {
+      "id": "anatomy",
+      "name": "Node anatomy"
+    }
+  ],
+  "title": "Vision Board node directions"
+}

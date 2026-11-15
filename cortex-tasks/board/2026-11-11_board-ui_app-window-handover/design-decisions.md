@@ -47,6 +47,13 @@ that shows it on the design canvas "Vision Board node directions", page "Node an
   grip in the middle of the top line; a kind word on every node, grey when the node only tells (10).
 - **DD-14 Decision moves off the accent pink** (to fuchsia in the drawings), so pink means notes and
   buttons only. A token change: protected, needs the maintainer's yes.
+- **DD-16 Two skins chosen:** the default skin (with Architecture content) and Command Lens. In
+  Command Lens the plate holds number, kind, history badge and notes; the switch is the answer; the
+  bookmark is the number square with a notched tail below the plate. Both work in dark and light
+  (10, 12; `design/mockups/node-skins/`).
+- **DD-17 Agent rewriting** is drawn as changes appearing in the node, underlined and struck, with an
+  "Agent writing" mark (12). It needs streamed board updates, which the board does not have yet
+  (tracker M51).
 - **DD-15 App cards** lose Later; the app window's drawer pushes its neighbours aside (handover § 5).
   A node's conversation floats instead (DD-05).
 
@@ -65,8 +72,5 @@ Headline guidance, not hard rules. The skill change needs `npm run eval:bot` bef
 - **DO-01 A tone per node, set by the agent.** Recommended: an optional named colour from about
   eight palette tones; it tints the body, top line and icon tile, while the kind keeps its tab or
   dot. A contract change.
-- **DO-02 The Command Lens bookmark:** the number square with a tail below the plate, or raised
-  above it with its notch at the plate's edge (12).
-- **DO-03 States not yet drawn:** saved for later, moved, locked, a write that failed. Agent
-  rewriting is drawn on 12.
+- **DO-03 States not yet drawn:** saved for later, moved, locked, a write that failed.
 - **DO-04 Thread Drawers skin:** parked.
