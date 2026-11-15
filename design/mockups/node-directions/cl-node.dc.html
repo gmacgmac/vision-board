@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Command Lens node</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.cl{--bg:#0f1013;--grid:#1b1d22;--surface:#1a1b1f;--surface2:#222429;--plate:#0e1115;--plate2:#26282e;--ink:#ededef;--ink2:#c5c7cd;--mut:#a0a4ac;--line:#3a3c43;--line2:#2b2d33;--pl:#2b323c;--q:#86a7f7;--dec:#e879f9;--act:#e8b04a;--risk:#f39a5e;--find:#5ec4d8;--topic:#a48ef2;--live:#4fc3b0;--tick:#0c8f5f;--cross:#cf3a3a;--bm:#fb923c;--bm-ink:#2a1203;--acc:#ff5cbe;--acc-ink:#1a0712;--upd:#ffc21a;--new:#2dd4bf;--agent:#c3dc5c;--sh:0 1px 0 rgb(0 0 0 / .6),0 12px 26px rgb(0 0 0 / .45);
+--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--disp:"Space Grotesk",system-ui,sans-serif;
+box-sizing:border-box;width:1440px;min-height:1680px;padding:56px 56px 80px;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;color:var(--ink);font:13px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.cl.light{--bg:#f2f1ed;--grid:#e3e0d7;--surface:#ffffff;--surface2:#f5f4f0;--plate:#16171a;--plate2:#2a2c31;--ink:#16171a;--ink2:#3e4148;--mut:#5b5f67;--line:#cfccc3;--line2:#e7e4dc;--q:#2452c2;--dec:#a21caf;--act:#9a6907;--risk:#b0440b;--find:#0d6a7b;--topic:#6a4fc0;--live:#1a7d6e;--bm:#c2410c;--bm-ink:#ffffff;--acc:#c81784;--acc-ink:#ffffff;--upd:#b85e00;--new:#0d7d74;--agent:#5f7a0e;--sh:0 1px 1px rgb(25 22 15 / .08),0 8px 18px rgb(25 22 15 / .07)}
+.cl *{box-sizing:border-box}
+.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+h1{margin:0 0 6px;font:700 30px/1.15 var(--disp);letter-spacing:-.01em}
+.lede{margin:0 0 40px;max-width:1000px;color:var(--mut);font-size:14px}
+.row{display:grid;grid-template-columns:repeat(3,400px);gap:52px 48px;align-items:start}
+.cap{margin:0 0 10px;font:600 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.cap small{display:block;margin-top:4px;font:400 12px/1.45 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none}
+
+/* the module */
+.m{position:relative;border:1.5px solid var(--line);border-radius:6px;background:var(--surface);box-shadow:var(--sh)}
+.m.sel{border-color:var(--k);border-width:2px;margin:-.5px}
+/* the plate: the drag handle, and the home of number, kind, history and notes */
+.pl{display:flex;align-items:center;gap:8px;height:40px;padding:0 6px 0 0;border-bottom:1px solid var(--line2);border-radius:4.5px 4.5px 0 0;background:var(--surface2);cursor:grab}
+.m.asks .pl{background:var(--plate);border-bottom-color:var(--pl);color:#eef1f4}
+.no{position:relative;display:grid;place-items:center;align-self:stretch;min-width:44px;padding:0 10px;border:0;border-right:1px solid var(--line2);border-radius:4.5px 0 0 0;background:none;color:inherit;font:700 15px/1 var(--mono);cursor:pointer}
+.m.asks .no{border-right-color:var(--pl)}
+.no.bm{border-right:0;background:var(--bm);color:var(--bm-ink)}
+.no.bm::after{content:"";position:absolute;left:0;right:0;top:100%;height:8px;background:var(--bm);clip-path:polygon(0 0,100% 0,100% 100%,50% 0,0 100%)}
+.no.bmB{align-self:flex-start;height:48px;margin-top:-8px;padding-bottom:8px;border-right:0;border-radius:4px 4px 0 0;background:var(--bm);color:var(--bm-ink);clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 7px),0 100%)}
+.m.writing .pl{box-shadow:inset 0 -2px 0 var(--agent)}
+.wr{display:inline-flex;align-items:center;gap:6px;color:var(--agent);font:600 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.wr::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--agent);box-shadow:0 0 0 3px color-mix(in srgb,var(--agent) 30%,transparent)}
+.bd ins{text-decoration:underline;text-decoration-color:var(--agent);text-underline-offset:3px;color:var(--ink)}
+.bd del{color:var(--mut)}
+.caret{display:inline-block;width:2px;height:15px;margin-left:1px;vertical-align:-2px;background:var(--agent)}
+.kd{display:inline-flex;align-items:center;gap:7px;font:600 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.kd .dot{width:7px;height:7px;border-radius:50%;background:var(--k)}
+.kd .ic{width:14px;height:14px;color:var(--k)}
+.sp{flex:1}
+.hb{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border:1.5px solid var(--upd);border-radius:3px;background:none;color:var(--upd);font:700 10.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.hb.new{border-color:var(--new);color:var(--new)}
+.hb.ver{border:1px solid var(--line);color:var(--mut);text-transform:none}
+.m.asks .hb.ver{border-color:var(--pl);color:#8b95a3}
+.hb .ic{width:12px;height:12px;stroke-width:2.2}
+.ch{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:36px;height:28px;padding:0 8px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--mut);font:700 12px/1 var(--mono);cursor:pointer}
+.m.asks .ch{border-color:var(--pl);color:#8b95a3}
+.cl .m .ch.has{color:var(--acc)}
+.cl .m .ch.unread{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
+.ch .ic{width:15px;height:15px}
+/* the body */
+.bd{padding:14px 16px 16px}
+.ttl{margin:0 0 6px;font:600 16px/1.28 var(--disp);color:var(--ink)}
+.tx{margin:0;color:var(--ink2)}
+.tbl{width:100%;margin:8px 0 0;border-collapse:collapse;font-size:12px}
+.tbl th{padding:3px 8px 3px 0;border-bottom:1px solid var(--line);color:var(--mut);font-weight:600;text-align:left}
+.tbl td{padding:4px 8px 4px 0;border-bottom:1px solid var(--line2);color:var(--ink)}
+.hd{display:flex;gap:12px;align-items:flex-start}
+.hd .tt{flex:1;min-width:0}
+.sub{margin-top:3px;font-size:12.5px;font-weight:600;color:var(--k)}
+.tile{display:grid;place-items:center;flex:none;width:40px;height:40px;border:1px solid var(--line2);border-radius:4px;background:color-mix(in srgb,var(--k) 12%,var(--surface));color:var(--k)}
+.tile .ic{width:22px;height:22px}
+.chips{display:flex;gap:4px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:3px;background:var(--surface2);color:var(--ink2);font:600 11px/1 var(--mono)}
+/* the switch: the answer, on nodes that ask */
+.sw{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+.sw button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;border:0;background:none;color:var(--ink2);font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
+.sw button+button{border-left:1px solid var(--line)}
+.sw button:hover{background:var(--surface2)}
+.sw .on-t{background:var(--tick);color:#fff}
+.sw .on-x{background:var(--cross);color:#fff}
+.sw button:first-child{border-radius:0 0 0 4.5px} .sw button:last-child{border-radius:0 0 4.5px 0}
+.no:focus-visible,.hb:focus-visible,.ch:focus-visible,.sw button:focus-visible,.menu button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+/* the number's menu */
+.menu{position:absolute;left:0;bottom:calc(100% + 8px);z-index:4;display:grid;gap:2px;width:200px;padding:5px;border:1px solid var(--pl);border-radius:10px;background:var(--plate);box-shadow:0 22px 48px rgb(10 15 25 / .35)}
+.menu button{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border:0;border-radius:6px;background:none;color:#eef1f4;font:500 13px Inter,system-ui,sans-serif;text-align:left;cursor:pointer}
+.menu button.hl{background:#1c222b}
+.menu .ic{color:#8b95a3}
+.menu kbd{margin-left:auto;font:600 11px var(--mono);color:#8b95a3}
+.note{margin-top:40px;max-width:1000px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink2);font-size:13px}
+.note b{display:block;margin-bottom:6px;font:600 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.note ul{margin:0;padding-left:18px}
+/* light theme: marks that sit on a dark plate keep the dark-theme colours, so they read */
+.cl.light .m.asks .pl{--upd:#ffc21a;--new:#2dd4bf;--acc:#ff85cf;--acc-ink:#1a0712;--q:#86a7f7;--dec:#e879f9;--act:#e8b04a;--risk:#f39a5e;--find:#5ec4d8;--live:#4fc3b0}
+.cl.light .m.asks .kd .dot{background:color-mix(in srgb,var(--k) 55%,#fff)}
+.cl.light .m.asks .kd .ic{color:color-mix(in srgb,var(--k) 55%,#fff)}
+</style>
+</helmet>
+<div class="cl {{mode}}">
+<h1>Command Lens node</h1>
+<p class="lede">One node in Command Lens, in its states. The same six actions as the other skins, placed where this skin wants them. The plate along the top is the handle and holds the number (click: bookmark, hold: save for later), the kind, what changed (history) and the notes. The switch along the bottom is the answer, one click. A dark plate and a switch mean the node needs you; a node that only tells has a light plate and no switch.</p>
+
+<div class="row">
+<div><p class="cap">Waiting for your answer<small>One click on either half answers.</small></p>
+<div class="m asks" style="--k: var(--dec)"><div class="pl"><button class="no" aria-label="15. Bookmark">15</button><span class="kd"><span class="dot"></span>Decision</span><span class="sp"></span><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><h3 class="ttl">Switch the second half to SAT-1 when CAM-3 loss passes 2%</h3><table class="tbl"><tr><th>Trigger</th><th>Switch time</th><th>On air</th></tr><tr><td>Automatic, 2% for 60 s</td><td>about 2 s</td><td>one freeze</td></tr><tr><td>Gallery call</td><td>10 to 20 s</td><td>longer freeze</td></tr></table></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div>
+
+<div><p class="cap">Ticked<small>Only the switch changes colour.</small></p>
+<div class="m asks is-ok" style="--k: var(--dec)"><div class="pl"><button class="no" aria-label="15. Bookmark">15</button><span class="kd"><span class="dot"></span>Decision</span><span class="sp"></span><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><h3 class="ttl">Switch the second half to SAT-1 when CAM-3 loss passes 2%</h3><table class="tbl"><tr><th>Trigger</th><th>Switch time</th><th>On air</th></tr><tr><td>Automatic, 2% for 60 s</td><td>about 2 s</td><td>one freeze</td></tr><tr><td>Gallery call</td><td>10 to 20 s</td><td>longer freeze</td></tr></table></div>
+<div class="sw"><button class="on-t" aria-pressed="true" title="Ticked. Press to clear (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Ticked</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div>
+
+<div><p class="cap">Crossed<small>Press the lit half again to clear it.</small></p>
+<div class="m asks is-no" style="--k: var(--dec)"><div class="pl"><button class="no" aria-label="15. Bookmark">15</button><span class="kd"><span class="dot"></span>Decision</span><span class="sp"></span><button class="ch has" aria-label="1 note. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg>1</button></div>
+<div class="bd"><h3 class="ttl">Switch the second half to SAT-1 when CAM-3 loss passes 2%</h3><table class="tbl"><tr><th>Trigger</th><th>Switch time</th><th>On air</th></tr><tr><td>Automatic, 2% for 60 s</td><td>about 2 s</td><td>one freeze</td></tr><tr><td>Gallery call</td><td>10 to 20 s</td><td>longer freeze</td></tr></table></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button class="on-x" aria-pressed="true" title="Crossed. Press to clear (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Crossed</button></div></div></div>
+
+<div><p class="cap">Bookmarked, agent replied, 1 update<small>The number becomes the bookmark. The notes fill pink until you read the reply. "1 update" opens history.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no bm" aria-label="16, bookmarked">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb" aria-label="1 update. Open history" title="History (H)">1 update</button><button class="ch unread" aria-label="3 notes, agent replied. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg>3</button></div>
+<div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3><p class="tx">The request goes to the teleport desk as one booking.</p></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div>
+
+<div><p class="cap">Selected<small>The module's own border in its kind colour, a step brighter.</small></p>
+<div class="m asks sel" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb new" aria-label="New. Open history" title="History (H)">New</button><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3><p class="tx">The request goes to the teleport desk as one booking.</p></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div>
+
+<div><p class="cap">Holding the number<small>Bookmark and Save for later, at full size at any zoom.</small></p>
+<div style="padding-top: 100px"><div class="m asks" style="--k: var(--act)"><div class="menu" role="menu"><button class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"></path></svg>Bookmark<kbd>B</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l3 2"></path></svg>Save for later<kbd>L</kbd></button></div><div class="pl"><button class="no" aria-label="16. Bookmark" aria-expanded="true" style="background: #1c222b">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div></div>
+
+<div><p class="cap">A node that only tells<small>Light plate, no switch. Once you've seen the change, the badge settles to the version.</small></p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="hb ver" aria-label="Version 3. Open history" title="History (H)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.500-5.800L4 8.500M4 4v4.500h4.500M12 8v4l3 2"></path></svg>v3</button><button class="ch has" aria-label="2 notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg>2</button></div>
+<div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3><p class="tx">Loss climbs to about 2.4% for 20 s, then clears.</p><table class="tbl"><tr><th>Time</th><th>Loss</th><th>Lasted</th></tr><tr><td>21:02:10</td><td>2.4%</td><td>18 s</td></tr><tr><td>21:03:40</td><td>2.2%</td><td>21 s</td></tr></table></div></div></div>
+
+<div><p class="cap">Architecture content<small>The icon tile sits in the body; the kind's icon replaces the dot in the plate.</small></p>
+<div class="m" style="--k: var(--live)"><div class="pl"><button class="no bm" aria-label="2, bookmarked">2</button><span class="kd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.500-1A4.500 4.500 0 0 1 17 18z"></path></svg>Ingest</span><span class="sp"></span><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><div class="hd"><div class="tt"><h3 class="ttl">Cloud ingest</h3><div class="sub">Uplynk slicer</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.500-1A4.500 4.500 0 0 1 17 18z"></path></svg></span></div><div class="chips"><span class="chip">SRT</span><span class="chip">SCTE-35</span></div></div></div></div>
+
+<div><p class="cap">A risk, still waiting<small>A risk can ask too: then it has the dark plate and the switch.</small></p>
+<div class="m asks" style="--k: var(--risk)"><div class="pl"><button class="no" aria-label="14. Bookmark">14</button><span class="kd"><span class="dot"></span>Risk</span><span class="sp"></span><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><h3 class="ttl">Rain fade on SAT-1 after 21:00</h3><p class="tx">Showers from 20:45; Ku-band margin is 3 dB. Accept the risk?</p></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div>
+</div>
+
+<div class="row" style="margin-top: 56px">
+<div><p class="cap">Bookmark A: tail below the plate<small>The number square itself, with a notched tail hanging below it.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no bm" aria-label="16, bookmarked" style="top: 0px">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div>
+<div><p class="cap">Bookmark B: raised above the plate<small>The square rises above the node, its notch at the plate edge.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no bmB" aria-label="16, bookmarked" style="top: 0px">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch" aria-label="No notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg></button></div>
+<div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3></div>
+<div class="sw"><button title="Tick (A)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Tick</button><button title="Cross (X)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Cross</button></div></div></div>
+<div><p class="cap">Agent rewriting<small>Changes appear in place, underlined and struck, as it writes.</small></p>
+<div class="m writing" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><span class="wr">Agent writing</span><button class="ch has" aria-label="3 notes. Open conversation" title="Conversation (C)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"></path></svg>3</button></div>
+<div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3><p class="tx">Loss climbs to about 2.4% for <del>a few seconds</del> <ins>18 to 21 s</ins>, then clears. <ins>Both bursts line up with the stadium's floodlight test<span class="caret"></span></ins></p></div></div></div>
+</div>
+
+<div class="note"><b>Where each action lives in this skin</b><ul><li>Bookmark: click the number. Save for later: hold the number (or L).</li><li>History: the "1 update", "New" or "v3" badge in the plate (or H).</li><li>Comment: the notes button at the plate's right end (or C). It fills pink when the agent replied.</li><li>Tick and cross: the switch, one click (or A and X). Pressing the lit half clears it.</li><li>Move: drag the plate. Right-click anywhere on the module for every action in one list.</li></ul></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1680}}'>
+class Component extends DCLogic {
+renderVals() {
+return { mode: (this.props.theme ?? 'dark') === 'light' ? 'light' : '' };
+}
+}
+</script>
+</body>
+</html>

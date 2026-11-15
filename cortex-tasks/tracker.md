@@ -111,6 +111,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 
 | ID | Item | Why | Source |
 |---|---|---|---|
+| M51 | Stream board updates as the agent writes | **Problem:** an agent sends a whole update in one message, so a node changes all at once. **Example:** "give me more context" on a node; the person sees nothing until the agent finishes. **Solution:** stream an update into the node as it is written, drawn as "Agent writing" with changes underlined and struck (design DD-17, artboard 12); needs a streaming path from agent to board. | Maintainer, 2026-11-15 |
 | M1 | Versions, change highlights, Confirm these, Approve | **Problem:** you re-read the whole board each version. **Example:** Architect's v1/v2/v3 with Changed and New badges. **Solution:** port the behaviour, not the code. | `docs/vision.md` |
 | M3 | Generated pattern index | **Problem:** "does this pattern exist?" has no generated answer yet. **Example:** D-006. **Solution:** generate `docs/patterns/` from each `pattern.json`. | D-006 |
 | M5 | App cards are all app; notes go beside them | **Problem:** an app card also holds the person's notes under its panel, so the card is not 100% the app, and Z zooms to the notes too. **Example:** the clip-and-export app card with a long note thread (2026-10-19). **Solution:** an app card holds only its panel; notes on it show in a note beside the card (linked), and Z fills the screen with the panel alone. Until then, hiding a card's notes (card-polish FE_02) covers it. Design to be discussed. | Maintainer, 2026-10-19 |

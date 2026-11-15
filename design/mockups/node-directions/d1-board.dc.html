@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shaped Nodes: board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+.root{--bg:#F2F1ED;--dot:#D3D0C6;--zone:rgba(255,255,255,.55);--zoneline:#CFCBC0;--surface:#FFFFFF;--surface2:#F5F4F0;--ink:#16171A;--ink2:#3E4148;--muted:#5B5F67;--line:#CFCCC3;--line2:#E7E4DC;--q:#2452C2;--dec:#6A3CC2;--act:#0A7656;--risk:#B0440B;--find:#0D6A7B;--topic:#2B2E35;--notefill:#FFF3BF;--noteedge:#E3C64D;--tick:#127A46;--cross:#BF3F0B;--flag:#B42318;--onfill:#FFFFFF;--hl:#FFEFA8;--agent:#2452C2;--agentbg:#EAF0FD;--appbg:#F7F8FA;--tile:#FFFFFF;--tileline:#DDE1E7;--ok:#0F7A4E;--warn:#A84B00;--winline:#C9CCD3;--barbg:#ECEDF0;
+font-family:Inter,system-ui,sans-serif;font-size:13px;line-height:1.45;color:var(--ink);background-color:var(--bg);background-image:radial-gradient(var(--dot) 1px,transparent 1.2px);background-size:22px 22px;position:relative;overflow:hidden;box-sizing:border-box}
+.root.dark{--bg:#0F1013;--dot:#24262B;--zone:rgba(255,255,255,.025);--zoneline:#2E3036;--surface:#1A1B1F;--surface2:#222429;--ink:#EDEDEF;--ink2:#C5C7CD;--muted:#A0A4AC;--line:#3A3C43;--line2:#2B2D33;--q:#86A7F7;--dec:#B69CF4;--act:#4FC99B;--risk:#F39A5E;--find:#5EC4D8;--topic:#D5D7DC;--notefill:#2D2916;--noteedge:#8A7426;--tick:#4CC98A;--cross:#F58A4E;--flag:#F26B5B;--onfill:#0F1013;--hl:#3B3313;--agent:#86A7F7;--agentbg:#1C2540;--appbg:#121418;--tile:#191C21;--tileline:#2C3038;--ok:#4CC98A;--warn:#F2A35E;--winline:#363941;--barbg:#202227}
+.root *{box-sizing:border-box}
+.abs{position:absolute}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.s{width:14px;height:14px}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.hd{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.num{margin-left:auto;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:0;min-width:28px;height:22px;padding:0 7px;border-radius:11px;border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center}
+.ttl{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;line-height:1.28;color:var(--ink);margin:9px 0 6px;text-wrap:pretty}
+.bd{color:var(--ink2);font-size:13px}
+.bd p{margin:0 0 6px}
+.bd ul,.bd ol{margin:4px 0 6px;padding-left:18px}
+.bd li{margin:2px 0}
+.bd strong{color:var(--ink);font-weight:600}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0 4px}
+.tbl th{text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);padding:3px 8px 3px 0}
+.tbl td{border-bottom:1px solid var(--line2);padding:4px 8px 4px 0;color:var(--ink)}
+.tbl td.r,.tbl th.r{text-align:right;font-variant-numeric:tabular-nums}
+.code{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;background:var(--surface2);border:1px solid var(--line2);border-radius:6px;padding:5px 8px;color:var(--ink);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:6px 0}
+code.i{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;background:var(--surface2);border-radius:4px;padding:1px 4px;color:var(--ink)}
+details.dt{margin-top:8px;border-top:1px solid var(--line2);padding-top:7px}
+details.dt summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--ink2);list-style:none;display:flex;align-items:center;gap:7px;min-height:24px}
+details.dt summary::-webkit-details-marker{display:none}
+.tri{width:0;height:0;border-left:6px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .15s}
+details.dt[open] .tri{transform:rotate(90deg)}
+.acts{display:flex;align-items:center;gap:2px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line2)}
+.b{appearance:none;border:1px solid transparent;background:transparent;color:var(--muted);height:32px;min-width:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 8px;font:inherit;font-size:12px;font-weight:500;cursor:pointer}
+.b:hover{background:var(--surface2);color:var(--ink)}
+.b:focus-visible{outline:2px solid var(--agent);outline-offset:2px}
+.b.on-t{background:var(--tick);color:var(--onfill)}
+.b.on-x{background:var(--cross);color:var(--onfill)}
+.b.on-f{color:var(--flag)}
+.b.ln{border-color:var(--line);color:var(--ink2)}
+.b.pri{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.push-r{margin-left:auto}
+.nd{position:relative;filter:drop-shadow(0 1px 1px rgba(25,22,15,.08)) drop-shadow(0 8px 18px rgba(25,22,15,.07))}
+.dark .nd{filter:drop-shadow(0 1px 0 rgba(0,0,0,.6)) drop-shadow(0 12px 26px rgba(0,0,0,.5))}
+.edge{padding:1.5px;background:var(--line)}
+.in{background:var(--surface);padding:14px 16px 8px}
+.k-q{color:var(--q)} .k-q .edge{border-radius:22px 22px 22px 4px;background:var(--q)} .k-q .in{border-radius:20.5px 20.5px 20.5px 3px;padding:14px 18px 8px}
+.k-d{color:var(--dec)} .k-d .edge,.k-d .in{clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,18px 100%,0 50%)} .k-d .edge{background:var(--dec);padding:2px} .k-d .in{padding:14px 30px 8px}
+.k-a{color:var(--act)} .k-a .edge{border-radius:7px;background:var(--act)} .k-a .in{border-radius:5.5px;display:flex;padding:0;overflow:hidden}
+.k-a .main{flex:1;min-width:0;padding:14px 16px 8px}
+.k-a .stub{width:56px;flex:none;border-left:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--surface2)}
+.punch{position:absolute;right:48px;width:16px;height:16px;border-radius:50%;background:var(--bg)}
+.k-f{color:var(--find)} .k-f .edge,.k-f .in{clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,0 100%)} .k-f .edge{background:var(--line)}
+.fold{position:absolute;top:0;right:0;width:22px;height:22px;background:var(--line);clip-path:polygon(0 0,0 100%,100% 100%);border-radius:0 0 0 3px}
+.k-r{color:var(--risk)} .k-r .edge,.k-r .in{clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 13px,100% calc(100% - 13px),calc(100% - 13px) 100%,13px 100%,0 calc(100% - 13px),0 13px)} .k-r .edge{background:var(--risk);padding:2px}
+.k-t{color:var(--topic)} .k-t .edge{border-radius:3px;padding:1px} .k-t .in{border-radius:2px;border-top:7px solid var(--topic);padding-top:12px}
+.k-n{color:var(--ink2)} .k-n .edge{background:var(--noteedge);padding:0 0 3px 0;border-radius:2px 2px 16px 2px} .k-n .in{background:var(--notefill);border-radius:2px 2px 16px 2px}
+.seal{position:absolute;top:-11px;right:22px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--onfill);z-index:2;box-shadow:0 0 0 3px var(--bg)}
+.seal.t{background:var(--tick)} .seal.x{background:var(--cross)}
+.flg{position:absolute;top:-11px;left:22px;height:24px;padding:0 8px 0 6px;border-radius:12px;background:var(--flag);color:var(--onfill);display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;z-index:2;box-shadow:0 0 0 3px var(--bg)}
+.is-t .edge{background:var(--tick)} .is-x .edge{background:var(--cross)}
+.is-x .ttl{color:var(--ink2)}
+.state{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.tab{margin:0 14px;background:var(--surface);border:1.5px solid var(--line);border-top:none;border-radius:0 0 12px 12px;padding:7px 10px 8px;font-size:12px;color:var(--ink);display:flex;gap:7px;align-items:flex-start}
+.tab .who{font-weight:600;color:var(--muted);white-space:nowrap}
+.win{border-radius:11px;overflow:hidden;background:var(--appbg);border:1px solid var(--winline);box-shadow:0 1px 1px rgba(0,0,0,.06),0 14px 32px rgba(20,20,30,.12);display:flex;flex-direction:column}
+.dark .win{box-shadow:0 1px 0 rgba(0,0,0,.6),0 16px 36px rgba(0,0,0,.55)}
+.bar{height:36px;flex:none;display:flex;align-items:center;gap:2px;padding:0 4px 0 12px;background:var(--barbg);border-bottom:1px solid var(--winline);font-size:12.5px;font-weight:600;color:var(--ink)}
+.bar .nm{display:flex;align-items:center;gap:8px;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .nb{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:var(--muted);border:1.5px solid var(--line);border-radius:10px;padding:0 6px;height:20px;display:inline-flex;align-items:center}
+.bar .b{height:28px;min-width:28px;padding:0 6px}
+.ap{padding:12px;display:flex;flex-direction:column;gap:10px;color:var(--ink);font-size:12px;flex:1;min-width:0}
+.ap h4{margin:0;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.air{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--flag);display:inline-flex;align-items:center;gap:5px}
+.air:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--flag)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tl{background:var(--tile);border:1px solid var(--tileline);border-radius:8px;padding:8px 9px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tl .r1{display:flex;justify-content:space-between;font-weight:600;font-size:12px}
+.tl .st{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--ok)}
+.tl.w{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)} .tl.w .st{color:var(--warn)}
+.tl .nm2{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .mx{font-variant-numeric:tabular-nums;font-size:11px;color:var(--ink2);display:flex;gap:8px}
+.spark{width:100%;height:18px;fill:none;stroke:var(--ok);stroke-width:1.4}
+.tl.w .spark{stroke:var(--warn)}
+.drw{width:320px;flex:none;border-left:1px solid var(--winline);background:var(--surface);display:flex;flex-direction:column;min-height:0}
+.dh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line2);font-size:12px;font-weight:600}
+.ctx{margin:10px 14px 0;display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink2);background:var(--surface2);border:1px solid var(--line2);border-radius:8px;padding:6px 8px}
+.thr{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:12px;font-size:13px}
+.me{align-self:flex-end;max-width:86%;background:var(--surface2);border:1px solid var(--line2);border-radius:14px 14px 4px 14px;padding:8px 11px;color:var(--ink)}
+.me.held{background:transparent;border:1.5px dashed var(--line)}
+.meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:6px;align-items:center}
+.ag{max-width:94%;color:var(--ink)}
+.ag .who{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--agent);margin-bottom:3px}
+.dot{width:8px;height:8px;border-radius:2px;background:var(--agent);transform:rotate(45deg)}
+.cmp{border-top:1px solid var(--line2);padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.cmp textarea{width:100%;resize:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;height:58px}
+.cmp textarea::placeholder{color:var(--muted)}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:2px;gap:2px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:600;height:28px;padding:0 10px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.send{appearance:none;border:0;background:var(--agent);color:var(--onfill);font:inherit;font-size:12px;font-weight:600;height:32px;padding:0 12px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin-left:auto}
+.dark .send{color:#0F1013}
+.top{position:absolute;left:0;right:0;top:0;height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--line2);z-index:5}
+.crumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+.crumb strong{color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:14px;background:var(--surface2);border:1px solid var(--line2);font-size:12px;color:var(--ink2)}
+.hint{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+kbd{font-family:'JetBrains Mono',monospace;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--ink2);background:var(--surface)}
+.zone{position:absolute;border:1.5px solid var(--zoneline);border-radius:18px;background:var(--zone)}
+.zl{position:absolute;top:-13px;left:20px;background:var(--bg);padding:0 8px;display:flex;align-items:center;gap:8px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--ink)}
+.zl span{font-family:Inter,sans-serif;font-size:11px;font-weight:500;color:var(--muted)}
+.wire{position:absolute;overflow:visible;fill:none;stroke:var(--muted);stroke-width:1.6}
+.wire .hd2{fill:var(--muted);stroke:none}
+.slide{transition:left .38s cubic-bezier(.2,.8,.2,1)}
+.trail{position:absolute;border:1.5px solid var(--line);border-radius:10px;opacity:.5}
+.ask{position:relative;margin:-2px 10px 0;background:var(--surface);border:1.5px solid var(--agent);border-top:none;border-radius:0 0 16px 16px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.ask:before{content:"";position:absolute;left:28px;top:-8px;width:14px;height:14px;background:var(--surface);border-left:1.5px solid var(--agent);border-top:1.5px solid var(--agent);transform:rotate(45deg)}
+.askq{display:flex;gap:8px;align-items:baseline;font-size:12.5px;color:var(--ink)}
+.askq .who{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.aska{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--ink)}
+.askin{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:0 4px 0 10px;height:36px;background:var(--surface2)}
+.askin input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--ink);outline:none}
+.askin input::placeholder{color:var(--muted)}
+.ins{background:var(--hl);border-radius:3px;box-shadow:0 0 0 3px var(--hl)}
+.rev{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;border-radius:10px;background:var(--agentbg);color:var(--agent);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none}
+.layer{position:absolute;border-radius:2px;background:var(--surface);border:1.5px solid var(--line)}
+.cap{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.h1{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;letter-spacing:-.02em;margin:0;color:var(--ink)}
+.sec{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:baseline;gap:12px}
+.sec span{font-family:Inter,sans-serif;font-size:12.5px;font-weight:400;color:var(--muted)}
+</style>
+</helmet>
+<div class="root {{themeClass}}" style="width: 1440px; height: 960px">
+<div class="top">
+<div class="crumb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--q)"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.3 11l7.4-3.8M8.3 13l7.4 3.8"/></svg><strong>Cup final live ops</strong><span>/</span><span>Build plan</span><span class="pill">v12</span></div>
+<span class="hint" style="margin-left: 24px">Point at any node and type to ask it <kbd>Esc</kbd> closes</span>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+<span class="pill"><span class="dot"></span>Planner is drawing</span>
+<span class="pill" style="font-variant-numeric: tabular-nums">80%</span>
+<button class="b ln">Fit</button>
+<button class="b ln" aria-label="More"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" style="stroke-width: 3"/></svg></button>
+</div>
+</div>
+
+<div class="zone" style="left: 24px; top: 84px; width: 1460px; height: 460px"><div class="zl">Contribution feeds <span>flow</span></div></div>
+
+<div class="abs nd k-r" style="left: 48px; top: 112px; width: 260px"><div class="edge"><div class="in">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>Risk<span class="num">14</span></div>
+<div class="ttl">Rain fade on SAT-1 after 21:00</div>
+<div class="bd"><ul><li>Showers forecast from 20:45</li><li>Ku-band margin is 3 dB</li></ul></div>
+<div class="acts"><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b" aria-label="Flag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4.5L17 13H6"/></svg></button><button class="b push-r">Later</button></div>
+</div></div></div>
+
+<svg class="wire" style="left: 172px; top: 290px; width: 12px; height: 26px" viewBox="0 0 12 26" aria-hidden="true"><path d="M6 0v19"/><path class="hd2" d="M1.5 18h9L6 25z"/></svg>
+
+<div class="abs nd k-q" style="left: 48px; top: 318px; width: 260px"><div class="edge"><div class="in">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 1 1 3.7 2.4c-.7.3-1.2.9-1.2 1.6v.6M12 17.2h.01"/></svg>Question<span class="num">12</span></div>
+<div class="ttl">Which feed carries the second half if CAM-3 keeps dropping?</div>
+<div class="acts"><button class="b" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button><button class="b" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b" aria-label="Flag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4.5L17 13H6"/></svg></button><button class="b push-r">Later</button></div>
+</div></div></div>
+
+<svg class="wire" style="left: 308px; top: 395px; width: 32px; height: 12px" viewBox="0 0 32 12" aria-hidden="true"><path d="M0 6h25"/><path class="hd2" d="M24 1.5v9L31 6z"/></svg>
+
+<div class="abs win slide" style="left: 340px; top: 108px; width: {{winW}}px; height: 420px; transition: width .38s cubic-bezier(.2,.8,.2,1)">
+<div class="bar"><span class="nm"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18"/></svg>Live event mission control<span class="nb">9</span></span>
+<button class="b" aria-label="Open on the stage"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></svg></button>
+<button class="b" aria-label="Flag"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4.5L17 13H6"/></svg></button>
+<button class="b" aria-label="{{chevLabel}}" aria-expanded="{{expanded}}" onClick="{{toggle}}" style="color: var(--ink)"><sc-if value="{{open}}" hint-placeholder-val="{{ true }}"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 6l-6 6 6 6M11 6l-6 6 6 6"/></svg></sc-if><sc-if value="{{closed}}" hint-placeholder-val="{{ false }}"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6l6 6-6 6M13 6l6 6-6 6"/></svg></sc-if></button>
+</div>
+<div style="display: flex; flex: 1; min-height: 0">
+<div class="ap" style="width: 500px; flex: none">
+<div style="display: flex; align-items: center; justify-content: space-between"><h4>Cup final · live <span class="air">ON AIR</span></h4><span style="font-size: 11.5px; color: var(--ink2)"><strong>7</strong> ok · <strong>1</strong> degraded · <strong>0</strong> down</span></div>
+<div class="tiles">
+<div class="tl"><div class="r1">CAM-1<span class="st">OK</span></div><div class="nm2">Stadium wide</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,9 12,8 24,10 36,9 48,9 60,8 72,10 84,9 100,9"/></svg><div class="mx">8.2 Mbps<span>0.2%</span></div></div>
+<div class="tl"><div class="r1">CAM-2<span class="st">OK</span></div><div class="nm2">Touchline left</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,10 12,9 24,9 36,10 48,8 60,9 72,9 84,10 100,9"/></svg><div class="mx">8.0 Mbps<span>0.1%</span></div></div>
+<div class="tl w"><div class="r1">CAM-3<span class="st">DEGRADED</span></div><div class="nm2">Touchline right</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,8 12,8 20,15 28,8 46,8 54,16 62,8 80,8 88,15 100,8"/></svg><div class="mx">6.9 Mbps<span>2.4%</span></div></div>
+<div class="tl"><div class="r1">CAM-4<span class="st">OK</span></div><div class="nm2">Goal cam north</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,9 12,9 24,8 36,9 48,10 60,9 72,9 84,8 100,9"/></svg><div class="mx">5.8 Mbps<span>0.1%</span></div></div>
+<div class="tl"><div class="r1">CAM-5<span class="st">OK</span></div><div class="nm2">Goal cam south</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,9 12,10 24,9 36,9 48,8 60,9 72,10 84,9 100,9"/></svg><div class="mx">5.8 Mbps<span>0.2%</span></div></div>
+<div class="tl"><div class="r1">SAT-1<span class="st">OK</span></div><div class="nm2">Satellite backup</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,8 12,9 24,8 36,8 48,9 60,8 72,8 84,9 100,8"/></svg><div class="mx">11.9 Mbps<span>0.1%</span></div></div>
+<div class="tl"><div class="r1">COM-1<span class="st">OK</span></div><div class="nm2">Commentary</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,9 12,9 24,9 36,8 48,9 60,9 72,9 84,9 100,9"/></svg><div class="mx">0.3 Mbps<span>0.1%</span></div></div>
+<div class="tl"><div class="r1">GFX-1<span class="st">OK</span></div><div class="nm2">Graphics return</div><svg class="spark" viewBox="0 0 100 18" preserveAspectRatio="none" aria-hidden="true"><polyline points="0,9 12,8 24,9 36,9 48,10 60,9 72,8 84,9 100,9"/></svg><div class="mx">3.9 Mbps<span>0.2%</span></div></div>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; border: 1px solid var(--tileline); background: var(--tile); border-radius: 8px; padding: 8px 10px; font-size: 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none"></span><span style="flex: 1; min-width: 0"><strong>CAM-3</strong> Touchline right: 2.4% loss in bursts, 55 ms</span><button class="b ln" style="height: 28px">Raise</button></div>
+</div>
+<sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+<div class="drw">
+<div class="dh"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--agent)"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg>About this app<span style="margin-left: auto; font-weight: 500; color: var(--muted)">Planner</span></div>
+<div class="ctx"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 14h6v6h-6z"/><path d="M10 7h4a3 3 0 0 1 3 3v4"/></svg><span>Selected in the app: <strong>CAM-3</strong>, 2.4% loss</span></div>
+<div class="thr">
+<div class="me">CAM-3 dropped again. Switch now?<div class="meta">21:04 · sent</div></div>
+<div class="ag"><div class="who"><span class="dot"></span>Planner</div>Not yet. The bursts clear in about 20 s, and decision 15 switches only after 60 s above 2%. I'm watching it.</div>
+<sc-if value="{{raise}}" hint-placeholder-val="{{ true }}"><div class="me held">Show me the last 10 minutes for CAM-3<div class="meta"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>Held until you send</div></div></sc-if>
+<sc-if value="{{live}}" hint-placeholder-val="{{ false }}"><div class="me">Show me the last 10 minutes for CAM-3<div class="meta">21:06 · sent</div></div><div class="ag"><div class="who"><span class="dot"></span>Planner · answering</div>Three bursts at 21:02, 21:03 and 21:05, each about 20 s. I'm adding them to finding 13.</div></sc-if>
+</div>
+<div class="cmp">
+<label for="d1msg" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Message about this app</label>
+<textarea id="d1msg" style="height: 44px" placeholder="Ask about mission control"></textarea>
+<div style="display: flex; align-items: center; gap: 8px">
+<div class="seg" role="group" aria-label="How messages go"><button aria-pressed="{{raisePressed}}" onClick="{{setRaise}}"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>Raise</button><button aria-pressed="{{livePressed}}" onClick="{{setLive}}"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M8 8a5.6 5.6 0 0 0 0 8M16 8a5.6 5.6 0 0 1 0 8M5.2 5.2a9.6 9.6 0 0 0 0 13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/></svg>Live</button></div>
+<sc-if value="{{raise}}" hint-placeholder-val="{{ true }}"><button class="send">Send to agent · 1</button></sc-if>
+<sc-if value="{{live}}" hint-placeholder-val="{{ false }}"><button class="send"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg>Send</button></sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+<svg class="wire slide" style="left: {{wireL}}px; top: 186px; width: 32px; height: 12px" viewBox="0 0 32 12" aria-hidden="true"><path d="M0 6h25"/><path class="hd2" d="M24 1.5v9L31 6z"/></svg>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+<div class="trail" style="left: 1150px; top: 118px; width: 270px; height: 176px; opacity: .22"></div>
+<div class="trail" style="left: 1170px; top: 116px; width: 270px; height: 178px; opacity: .4"></div>
+<div class="abs cap" style="left: 1192px; top: 94px; background: var(--bg); padding: 0 6px"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg>Moved aside for the chat</div>
+</sc-if>
+
+<div class="abs nd k-d slide" style="left: {{nbLeft}}px; top: 116px; width: 270px"><div class="edge"><div class="in">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v6M12 9l-6 6v6M12 9l6 6v6"/></svg>Decision<span class="num">15</span></div>
+<div class="ttl">Switch to SAT-1 when CAM-3 loss stays over 2% for 60 s</div>
+<div class="acts"><button class="b" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button><button class="b" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b push-r">Later</button></div>
+</div></div></div>
+
+<div class="abs nd k-a slide" style="left: {{nbLeft}}px; top: 330px; width: 270px"><div class="edge"><div class="in">
+<div class="main">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M13 8.5l3.5 3.5-3.5 3.5"/></svg>Action<span class="num">16</span></div>
+<div class="ttl">Book a backup uplink slot, 20:30 to 22:30</div>
+<div class="acts"><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b push-r">Later</button></div>
+</div>
+<div class="stub"><button class="b ln" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button><button class="b ln" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+</div></div><div class="punch" style="top: -8px"></div><div class="punch" style="bottom: -8px"></div></div>
+
+<div class="zone" style="left: 24px; top: 562px; width: 1392px; height: 386px"><div class="zl">Second half <span>flow</span></div></div>
+
+<div class="layer" style="left: 64px; top: 572px; width: 440px; height: 200px; opacity: .55"></div>
+<div class="layer" style="left: 56px; top: 580px; width: 440px; height: 200px; opacity: .8"></div>
+<div class="abs" style="left: 48px; top: 588px; width: 440px">
+<div class="nd k-f"><div class="edge" style="background: var(--agent)"><div class="in">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>Finding<span class="rev"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>Rewritten after your ask</span><span class="num" style="margin-right: 16px">13</span></div>
+<div class="ttl">CAM-3 loss comes in bursts</div>
+<div class="bd"><p>Loss on CAM-3 climbs to about 2.4% for 20 s, then clears.</p><p><span class="ins">The bursts repeat every 90 s, in step with the LED ribbon's refresh. The touchline encoder shares a power strip with the ribbon controller (rigging sheet, row 14).</span></p></div>
+<div class="acts"><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b" aria-label="Flag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4.5L17 13H6"/></svg></button><button class="b ln" style="margin-left: 4px"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>Version 2 of 2</button><button class="b push-r">Later</button></div>
+</div></div><div class="fold" style="background: var(--agent)"></div></div>
+<div class="ask">
+<div class="askq"><span class="who">You</span><span>Give me more context on this</span></div>
+<div class="aska"><span class="dot" style="margin-top: 5px; flex: none"></span><span>Added the 90 s pattern and its likely cause, highlighted. The earlier version is one step back.</span></div>
+<div class="askin"><label for="ask13" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Ask node 13</label><input id="ask13" placeholder="Ask node 13 anything"><kbd>Enter</kbd><button class="b" aria-label="Close the ask" style="height: 28px; min-width: 28px"><svg class="ic s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+</div>
+</div>
+<svg class="wire" style="left: 488px; top: 664px; width: 40px; height: 12px" viewBox="0 0 40 12" aria-hidden="true"><path d="M0 6h33"/><path class="hd2" d="M32 1.5v9L39 6z"/></svg>
+
+<div class="abs nd k-t" style="left: 528px; top: 598px; width: 280px"><div class="edge"><div class="in">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h10M4 20h7"/></svg>Topic<span class="num">17</span></div>
+<div class="ttl" style="font-size: 18px">Second-half failover</div>
+<div class="bd"><p>One command moves a feed. The gallery hears the cue first.</p><code class="code">feeds switch CAM-3 --to SAT-1</code></div>
+<div class="acts"><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b" aria-label="Flag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4.5L17 13H6"/></svg></button><button class="b push-r">Later</button></div>
+</div></div></div>
+
+<svg class="wire" style="left: 808px; top: 650px; width: 44px; height: 12px" viewBox="0 0 44 12" aria-hidden="true"><path d="M0 6h37"/><path class="hd2" d="M36 1.5v9L43 6z"/></svg>
+
+<div class="abs nd k-a" style="left: 852px; top: 598px; width: 320px"><div class="edge"><div class="in">
+<div class="main">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M13 8.5l3.5 3.5-3.5 3.5"/></svg>Action<span class="num">18</span></div>
+<div class="ttl">Brief the gallery on the switch cue</div>
+<div class="bd"><ol><li>Director calls "SAT-1 standby"</li><li>Vision mixer cuts on "go"</li></ol></div>
+<div class="acts"><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b" aria-label="Flag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4.5L17 13H6"/></svg></button><button class="b push-r">Later</button></div>
+</div>
+<div class="stub"><button class="b on-t" aria-label="Tick" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button><button class="b ln" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+</div></div><div class="punch" style="top: -8px"></div><div class="punch" style="bottom: -8px"></div></div>
+
+<svg class="wire" style="left: 662px; top: 754px; width: 12px; height: 34px" viewBox="0 0 12 34" aria-hidden="true"><path d="M6 0v27"/><path class="hd2" d="M1.5 26h9L6 33z"/></svg>
+
+<div class="abs nd k-q" style="left: 528px; top: 790px; width: 300px"><div class="edge"><div class="in">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 1 1 3.7 2.4c-.7.3-1.2.9-1.2 1.6v.6M12 17.2h.01"/></svg>Question<span class="num">19</span></div>
+<div class="ttl">Does commentary follow the switch to SAT-1?</div>
+<div class="acts"><button class="b" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button><button class="b" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b" aria-label="Flag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4.5L17 13H6"/></svg></button><button class="b push-r">Later</button></div>
+</div></div></div>
+
+<div class="abs nd k-n" style="left: 1212px; top: 598px; width: 190px"><div class="edge"><div class="in">
+<div class="hd"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v10l-6 6H5z"/><path d="M13 20v-6h6"/></svg>Note<span class="num">20</span></div>
+<div class="bd" style="margin-top: 8px; color: var(--ink)"><p>Kick-off 20:00. Second half from about 21:02.</p></div>
+<div class="acts" style="border-top-color: var(--noteedge)"><button class="b" aria-label="Note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-5 4v-4H4z"/></svg></button><button class="b push-r">Later</button></div>
+</div></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: true, mode: 'raise' }; }
+  renderVals() {
+    const open = this.state.open;
+    const raise = this.state.mode === 'raise';
+    return {
+      themeClass: (this.props.theme ?? 'light') === 'dark' ? 'dark' : '',
+      open: open,
+      closed: !open,
+      raise: raise,
+      live: !raise,
+      winW: open ? 820 : 500,
+      nbLeft: open ? 1192 : 872,
+      wireL: open ? 1160 : 840,
+      chevLabel: open ? 'Hide chat' : 'Show chat',
+      expanded: open ? 'true' : 'false',
+      raisePressed: raise ? 'true' : 'false',
+      livePressed: raise ? 'false' : 'true',
+      toggle: () => this.setState({ open: !open }),
+      setRaise: () => this.setState({ mode: 'raise' }),
+      setLive: () => this.setState({ mode: 'live' })
+    };
+  }
+}
+</script>
+</body>
+</html>

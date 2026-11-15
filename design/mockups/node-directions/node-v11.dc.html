@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Command Lens skin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&amp;family=Figtree:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;family=JetBrains+Mono:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.v9{--k-decision:#e879f9;--ground:#111112;--surface:#1a1a1c;--sunk:#222225;--deep:#2c2c30;--line:#2a2a2e;--line2:#3a3a40;--line3:#4a4a52;--ink:#ededef;--ink2:#c7c7cc;--mut:#b8b8c0;--acc:#ff5cbe;--acc-ink:#1a0712;--ok:#4cc47f;--bad:#f07474;--ok-fill:#0c8f5f;--bad-fill:#cf3a3a;--upd:#ffc21a;--new:#2dd4bf;--bm:#fb923c;--bm-ink:#2a1203;--k-action:#e8b04a;--k-topic:#a48ef2;--k-live:#4fc3b0;--k-question:#72a6f2;--k-risk:#f38860;--agent:#c3dc5c;--dot:rgb(255 255 255 / .07);--sh:0 1px 2px rgb(0 0 0 / .4),0 4px 14px rgb(0 0 0 / .3);--shl:0 10px 40px rgb(0 0 0 / .6);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sys:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+box-sizing:border-box;width:1440px;min-height:4920px;padding:56px 48px 90px;background-color:var(--ground);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.3px);background-size:24px 24px;color:var(--ink);font:13px/1.5 var(--sys);-webkit-font-smoothing:antialiased}
+.v9.light{--ground:#f5f5f6;--surface:#ffffff;--sunk:#efeff1;--deep:#e4e4e7;--line:#e1e1e5;--line2:#cbcbd1;--line3:#b5b5bd;--ink:#18181b;--ink2:#3f3f46;--mut:#6b6b74;--acc:#c81784;--acc-ink:#ffffff;--ok:#278f52;--bad:#cc3b3b;--upd:#b85e00;--new:#0d7d74;--bm:#c2410c;--bm-ink:#ffffff;--k-action:#9a6907;--k-topic:#6a4fc0;--k-live:#1a7d6e;--k-decision:#a21caf;--k-question:#3471d0;--k-risk:#c8461c;--agent:#5f7a0e;--dot:rgb(24 24 27 / .09);--sh:0 1px 2px rgb(24 24 27 / .06),0 4px 14px rgb(24 24 27 / .06);--shl:0 10px 40px rgb(24 24 27 / .18)}
+.v9 *{box-sizing:border-box}
+.ic{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+h1.pg{margin:0 0 6px;font:680 24px/1.2 var(--sys)}
+p.lede{margin:0 0 30px;max-width:980px;color:var(--mut);font-size:14px}
+.map{display:grid;grid-template-columns:repeat(5,auto);justify-content:start;gap:8px 28px;margin:0 0 50px;padding:14px 18px;border:1px solid var(--line2);border-radius:12px;background:var(--surface);font-size:12.5px;color:var(--ink2)}
+.map b{display:block;font:600 10.5px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.g{display:grid;grid-template-columns:250px 440px 440px;column-gap:44px;row-gap:70px;align-items:start}
+.ch{padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.ch b{display:block;font:680 15px/1.3 var(--sys)}
+.ch span{color:var(--mut);font-size:12.5px}
+.rl{padding-top:6px;font:600 11px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.rl small{display:block;margin-top:6px;font:400 12px/1.45 var(--sys);letter-spacing:0;text-transform:none}
+.sec{margin:90px 0 26px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.sec b{display:block;font:680 15px/1.3 var(--sys)}
+.sec span{display:block;max-width:980px;color:var(--mut);font-size:12.5px}
+.cap{margin:14px 0 0;max-width:980px;color:var(--mut);font-size:12.5px}
+
+.n{--edge:color-mix(in srgb,var(--k) 42%,var(--line2));position:relative;flex:none;width:300px;border:1px solid var(--edge);border-radius:14px;background:var(--surface);box-shadow:var(--sh)}
+.n.sel{--edge:var(--k);margin:-1px;border:2px solid var(--k);background:color-mix(in srgb,var(--k) 7%,var(--surface));box-shadow:var(--shl)}
+.nb{padding:22px 14px 18px}
+.num{position:absolute;top:-11px;left:14px;z-index:2;height:22px;min-width:26px;padding:0 7px;border:1px solid var(--line3);border-radius:7px;background:var(--sunk);color:var(--ink);font:600 12px/20px var(--mono);text-align:center;cursor:pointer}
+.num.bm{top:-20px;height:31px;padding-bottom:9px;border:0;border-radius:6px 6px 0 0;background:var(--bm);color:var(--bm-ink);font-weight:700;line-height:22px;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 7px),0 100%)}
+.num.hov{box-shadow:0 0 0 2px var(--ground),0 0 0 3px var(--line3)}
+.kind{position:absolute;top:-11px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid color-mix(in srgb,var(--k) 70%,transparent);border-radius:999px;background:color-mix(in srgb,var(--k) 14%,var(--surface));color:var(--k);font:700 10.5px/1 var(--sys);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.kind::before{content:"";width:8px;height:12px;background:radial-gradient(currentColor 1.1px,transparent 1.3px) 0 0/4px 4px}
+.ans{position:absolute;top:-14px;right:20px;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:var(--k);box-shadow:0 0 0 2px var(--ground);color:#fff;cursor:pointer}
+.ans::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--ground)}
+.ans.ok{background:var(--ok-fill)} .ans.no{background:var(--bad-fill)}
+.ans.ok::after,.ans.no::after{content:none}
+.ans .ic{stroke-width:2.6;width:15px;height:15px}
+/* bottom edge: what changed (left) and the conversation (right) */
+.badge{position:absolute;bottom:-11px;left:14px;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border:1.5px solid var(--upd);border-radius:7px;background:var(--surface);color:var(--upd);font:700 11.5px/1 var(--sys);white-space:nowrap;cursor:pointer}
+.badge.new{border-color:var(--new);color:var(--new)}
+.badge.ver{border:1px solid color-mix(in srgb,var(--k) 42%,var(--line2));color:var(--mut);font:600 11px/1 var(--mono)}
+.badge .ic{width:12px;height:12px;stroke-width:2.2}
+/* the notes mark sits on the same vertical line as the answer disc and the icon tile: 34px in from the right edge */
+.nc{position:absolute;bottom:-11px;right:34px;transform:translateX(50%);display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:32px;height:22px;padding:0 8px;border:1px solid color-mix(in srgb,var(--k) 42%,var(--line2));border-radius:999px;background:var(--surface);color:var(--acc);font:700 11.5px/1 var(--mono);cursor:pointer}
+.nc.none{color:var(--mut);padding:0 7px}
+.nc .ic{width:13px;height:13px;stroke-width:2.1}
+.ttl{margin:0 0 6px;font:680 15px/1.3 var(--sys);color:var(--ink)}
+.bd{margin:0;color:var(--ink2);font-size:13px}
+ol.bd{padding-left:20px}
+/* architecture look */
+.n.ar{background:linear-gradient(170deg,color-mix(in srgb,var(--k) 9%,var(--surface)) 0%,var(--surface) 55%);font-family:"Figtree",var(--sys)}
+.n.ar.sel{background:linear-gradient(170deg,color-mix(in srgb,var(--k) 16%,var(--surface)) 0%,color-mix(in srgb,var(--k) 7%,var(--surface)) 55%)}
+.n.ar::before{content:"";position:absolute;left:60px;right:60px;top:-1px;height:2px;border-radius:0 0 2px 2px;background:color-mix(in srgb,var(--k) 80%,transparent)}
+.n.ar.sel::before{content:none}
+/* architecture look: the grip sits in the middle of the top line, where the kind tab is in the current look */
+.grip{position:absolute;top:-7px;left:50%;transform:translateX(-50%);z-index:2;width:40px;height:14px;padding:0;border:1px solid color-mix(in srgb,var(--k) 60%,var(--line2));border-radius:7px;background:radial-gradient(var(--k) 1.3px,transparent 1.5px) 7px 3px/6px 4px,var(--surface);cursor:grab}
+.kick.q{color:var(--mut)}
+.nc.unread{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
+.badge.many{min-width:0}
+.n.narrow{width:248px}
+/* right-click menu */
+.pop.ctx{top:46px;left:150px;width:220px}
+.pop.ctx .sep{height:1px;margin:3px 6px;background:var(--line3)}
+.pop .y .ic{color:var(--ok)} .pop .x .ic{color:var(--bad)}
+.n.ar .hd{display:flex;align-items:flex-start;gap:12px}
+.n.ar .tt{flex:1;min-width:0}
+.n.ar .nb{padding:24px 14px 22px 16px}
+.n.ar .ttl{margin:0;font:600 15px/1.25 "Bricolage Grotesque","Figtree",var(--sys);letter-spacing:-.01em}
+.n.ar .sub{margin-top:4px;font-size:12.5px;font-weight:600;color:var(--k)}
+.n.ar .kick{margin-bottom:3px}
+.n.ar .chips{margin-top:14px}
+.kick{font:700 10.5px/1.5 "Figtree",var(--sys);letter-spacing:.08em;text-transform:uppercase;color:var(--k)}
+.tile{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:11px;background:color-mix(in srgb,var(--k) 16%,var(--surface));color:var(--k)}
+.tile .ic{width:24px;height:24px;stroke-width:1.7}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 0}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;background:var(--sunk);color:var(--ink2);font-size:11.5px;font-weight:600}
+.chip.att{background:color-mix(in srgb,var(--acc) 13%,transparent);color:var(--acc)}
+.chip .ic{width:12px;height:12px}
+.n.ar ul.bd{margin-top:8px;padding-left:16px;font-size:12.5px;color:var(--mut)}
+/* small popovers off an edge mark */
+.pop{position:absolute;z-index:6;display:grid;gap:2px;padding:5px;border:1px solid var(--line3);border-radius:12px;background:var(--deep);box-shadow:var(--shl)}
+.pop.numpop{bottom:calc(100% + 18px);left:4px;width:196px}
+.pop button{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border:0;border-radius:8px;background:none;color:var(--ink);font:500 13px var(--sys);text-align:left;cursor:pointer}
+.pop button:hover,.pop button.hl{background:var(--surface)}
+.pop .ic{color:var(--mut)}
+.pop kbd{margin-left:auto;font:600 11px var(--mono);color:var(--mut)}
+.pop.hist{top:calc(100% + 18px);left:2px;width:300px;padding:0}
+.hh{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 12px;border-bottom:1px solid var(--line2);font:600 13px var(--sys)}
+.hh span{flex:1}
+.hl-list{display:grid;gap:0;padding:6px}
+.hv{display:grid;grid-template-columns:34px 1fr;gap:2px 8px;padding:7px 8px;border-radius:8px;font-size:12.5px;color:var(--ink2)}
+.hv.cur{background:var(--surface)}
+.hv b{grid-row:span 2;font:600 11.5px/1.5 var(--mono);color:var(--ink)}
+.hv i{font-style:normal;color:var(--mut);font-size:11.5px}
+.hv ins{text-decoration:underline;text-decoration-color:var(--ok);text-underline-offset:2px;color:var(--ink)}
+.xb{display:grid;place-items:center;width:30px;height:30px;padding:0;border:0;border-radius:8px;background:none;color:var(--mut);cursor:pointer}
+.xb .ic{width:15px;height:15px}
+.num:focus-visible,.ans:focus-visible,.nc:focus-visible,.badge:focus-visible,.pop button:focus-visible,.xb:focus-visible,.bt:focus-visible,.sb button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+/* the selection bar */
+.selscene{position:relative;display:flex;align-items:flex-start;gap:44px;padding-top:86px}
+.sb{position:absolute;top:0;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:2px;padding:5px;border:1px solid var(--line3);border-radius:12px;background:var(--deep);box-shadow:var(--shl);white-space:nowrap}
+.sb .cnt{padding:0 10px 0 8px;font:600 12.5px var(--sys);color:var(--mut)}
+.sb button{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 11px;border:0;border-radius:8px;background:none;color:var(--ink);font:500 13px var(--sys);cursor:pointer}
+.sb button:hover{background:var(--surface)}
+.sb .ic{color:var(--mut);width:16px;height:16px}
+.sb .sp{width:1px;height:20px;margin:0 4px;background:var(--line3)}
+/* the conversation bubble */
+.scene{position:relative;height:420px}
+.scene>.n{position:absolute}
+.cv{position:absolute;z-index:5;width:340px;border:1px solid var(--line3);border-radius:14px;background:var(--deep);box-shadow:var(--shl)}
+.cv::before{content:"";position:absolute;left:-7px;top:16px;width:12px;height:12px;transform:rotate(45deg);background:var(--deep);border-left:1px solid var(--line3);border-bottom:1px solid var(--line3)}
+.cvh{display:flex;align-items:center;gap:8px;height:40px;padding:0 5px 0 10px;border-bottom:1px solid var(--line2)}
+.cvh .num{position:static;cursor:default}
+.cvh .cvt{flex:1;font:600 13px var(--sys);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgs{display:grid;gap:6px;padding:10px}
+.msg{padding:8px 10px;border:1px solid var(--line2);border-radius:9px;background:var(--surface);font-size:13px;line-height:1.45;color:var(--ink2)}
+.msg i{display:block;margin-bottom:2px;font:700 10px/1.4 var(--sys);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.msg.me{border-left:3px solid var(--acc)}
+.msg.ag{border-left:3px solid var(--agent)}
+.cmp{display:grid;gap:8px;padding:8px 10px 10px;border-top:1px solid var(--line2)}
+.cmp label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.cmp textarea{display:block;width:100%;min-height:34px;max-height:76px;field-sizing:content;padding:6px 10px;border:1px solid var(--line3);border-radius:9px;background:var(--ground);color:var(--ink);font:13px/1.5 var(--sys);resize:none}
+.cmp textarea::placeholder{color:var(--mut)}
+.bts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bt{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;padding:0 11px;border:1px solid var(--line3);border-radius:8px;background:var(--surface);color:var(--ink);font:650 12.5px var(--sys);cursor:pointer}
+.bt.pri{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
+.bt kbd{font:600 10.5px var(--mono);opacity:.75}
+/* ===== Command Lens skin: presentation only; every selector below restyles a mark that exists in every skin ===== */
+.v9.cl{--ground:#0f1013;--surface:#1a1b1f;--sunk:#222429;--deep:#26282e;--line:#2b2d33;--line2:#3a3c43;--line3:#4a4d55;--ink:#ededef;--ink2:#c5c7cd;--mut:#a0a4ac;--plate:#0e1115;--plate-ink:#eef1f4;--plate-mut:#8b95a3;--plate-line:#2b323c;--plate-hi:#1c222b;--grid:#1b1d22;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;font-family:Inter,var(--sys)}
+.v9.cl.light{--ground:#f2f1ed;--surface:#ffffff;--sunk:#f5f4f0;--deep:#ecebe6;--line:#e7e4dc;--line2:#cfccc3;--line3:#b9b5aa;--ink:#16171a;--ink2:#3e4148;--mut:#5b5f67;--grid:#e3e0d7}
+.cl h1.pg,.cl .ch b,.cl .sec b{font-family:"Space Grotesk",var(--sys);letter-spacing:-.01em}
+.cl .map{border-radius:6px}
+.cl .n,.cl .n.ar{border-radius:6px;background:var(--surface)}
+.cl .n:has(> .ans){box-shadow:inset 0 3px 0 var(--k),var(--sh)}
+.cl .n.sel:has(> .ans){box-shadow:inset 0 3px 0 var(--k),var(--shl)}
+.cl .n.ar::before{content:none}
+.cl .num{border-radius:3px;border-color:var(--plate-line);background:var(--plate);color:var(--plate-ink);font:700 13px/20px "JetBrains Mono",var(--mono)}
+.cl .num.bm{border-radius:3px 3px 0 0;background:var(--bm);color:var(--bm-ink)}
+.cl .kind{gap:7px;border-radius:3px;border:1px solid var(--plate-line);background:var(--plate);color:var(--plate-ink);font:600 10.5px/1 "JetBrains Mono",var(--mono);letter-spacing:.14em;cursor:grab}
+.cl .kind::before{width:7px;height:7px;border-radius:50%;background:var(--k)}
+.cl .grip{width:34px;height:12px;top:-6px;border-radius:3px;border-color:var(--plate-line);background:radial-gradient(var(--k) 1.2px,transparent 1.4px) 5px 2px/6px 4px,var(--plate)}
+.cl .ans{border-radius:7px}
+.cl .ans::after{border-radius:2px}
+.cl .badge{border-radius:3px;font:700 10.5px/1 "JetBrains Mono",var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.cl .badge.ver{text-transform:none}
+.cl .nc{border-radius:3px;font-family:"JetBrains Mono",var(--mono)}
+.cl .ttl,.cl .n.ar .ttl{font:600 16px/1.28 "Space Grotesk",var(--sys);letter-spacing:-.005em}
+.cl .kick{font:600 10.5px/1.5 "JetBrains Mono",var(--mono);letter-spacing:.14em}
+.cl .tile{border-radius:4px;border:1px solid var(--plate-line);background:var(--plate)}
+.cl .chip{border-radius:3px;font:600 11px/1 "JetBrains Mono",var(--mono)}
+.cl .bd{font-size:13px}
+/* the lens's dark glass for everything that opens over the board, in both themes */
+.cl .pop,.cl .pick,.cl .sb,.cl .cv{border-color:var(--plate-line);background:var(--plate);color:var(--plate-ink);box-shadow:0 22px 48px rgb(10 15 25 / .35),0 2px 6px rgb(10 15 25 / .25)}
+.cl .pop,.cl .sb{border-radius:10px}
+.cl .pop button,.cl .sb button{color:var(--plate-ink);border-radius:6px}
+.cl .pop button.hl,.cl .pop button:hover,.cl .sb button:hover{background:var(--plate-hi)}
+.cl .pop .ic,.cl .sb .ic,.cl .pop kbd,.cl .sb .cnt{color:var(--plate-mut)}
+.cl .pop .y .ic{color:var(--ok)} .cl .pop .x .ic{color:var(--bad)}
+.cl .pop kbd,.cl .sb .cnt{font-family:"JetBrains Mono",var(--mono)}
+.cl .pop .sep,.cl .sb .sp{background:var(--plate-line)}
+.cl .pick{border-radius:10px}
+.cl .pick button{border-radius:6px;background:var(--plate-hi)}
+.cl .hh,.cl .cvh,.cl .cmp{border-color:var(--plate-line)}
+.cl .hh,.cl .cvh .cvt{color:var(--plate-ink)}
+.cl .hv{color:#c9d1db} .cl .hv.cur{background:var(--plate-hi)} .cl .hv b{color:var(--plate-ink)} .cl .hv i{color:var(--plate-mut)} .cl .hv ins{color:var(--plate-ink)}
+.cl .xb{color:var(--plate-mut)}
+.cl .cv{border-radius:12px}
+.cl .cv::before{background:var(--plate);border-color:var(--plate-line)}
+.cl .cvh .num{background:var(--plate-hi)}
+.cl .msgs{gap:10px;padding:12px}
+.cl .msg{padding:0;border:0;background:none;color:#c9d1db;font:12.5px/1.55 "JetBrains Mono",var(--mono)}
+.cl .msg i{display:inline;margin:0 8px 0 0;font:600 12.5px "JetBrains Mono",var(--mono);letter-spacing:0;text-transform:lowercase}
+.cl .msg.me i{color:#ff85cf} .cl .msg.ag i{color:#86a7f7}
+.cl .msg.me i::after,.cl .msg.ag i::after{content:" \203A";color:var(--plate-mut)}
+.cl .cmp textarea{border-color:var(--plate-line);background:#151a21;color:var(--plate-ink);font-family:"JetBrains Mono",var(--mono);font-size:12.5px}
+.cl .cmp textarea::placeholder{color:var(--plate-mut)}
+.cl .bt{border-radius:6px;border-color:var(--plate-line);background:var(--plate-hi);color:var(--plate-ink)}
+.cl .bt.pri{border-color:var(--plate-ink);background:var(--plate-ink);color:var(--plate)}
+/* zoom demo: node at 40%, menu at full size */
+.zoomdemo{display:flex;gap:120px;padding-top:20px}
+.zoomdemo figure{position:relative;margin:0;padding-top:112px}
+.zn{zoom:.4}
+.zn .ans,.far .ans{transform:scale(1.6)}
+.zn .nc,.far .nc{transform:translateX(50%) scale(1.6)}
+.zn .num,.far .num,.zn .badge,.far .badge{transform:scale(1.6);transform-origin:left center}
+.zoomdemo figcaption{margin-top:22px;color:var(--mut);font-size:12.5px}
+.pick{position:absolute;z-index:7;display:flex;gap:4px;padding:4px;border:1px solid var(--line3);border-radius:999px;background:var(--deep);box-shadow:var(--shl)}
+.pick button{display:grid;place-items:center;width:44px;height:38px;border:0;border-radius:999px;background:var(--surface);cursor:pointer}
+.pick .y{color:var(--ok)} .pick .x{color:var(--bad)}
+/* far view */
+.far{zoom:.4;display:grid;gap:96px;padding:30px 0 10px}
+.frow{display:flex;align-items:center}
+.wire{flex:none;position:relative;width:90px;height:3px;background:var(--line3)}
+.wire::after{content:"";position:absolute;right:-1px;top:-6px;border:7.5px solid transparent;border-left:11px solid var(--line3);border-right:0}
+</style>
+</helmet>
+<div class="v9 cl {{mode}}">
+<h1 class="pg">Command Lens skin</h1>
+<p class="lede">The same nodes, the same marks in the same places and the same behaviour as artboard 10: only the skin changes. Instrument panels: square corners, monospace labels, dark plates, a grid instead of dots. A lit line along the top marks a node that needs your answer. The menus and the conversation take the lens's dark glass.</p>
+<div class="map">
+<div><b>Top left · number</b>Click: bookmark<br>Hold: save for later</div>
+<div><b>Top centre · kind or grip</b>What it is<br>Drag to move</div>
+<div><b>Top right · disc</b>Tick or cross<br>Keys A and X</div>
+<div><b>Bottom left · badge</b>New, updated or v3<br>Click or H: history</div>
+<div><b>Bottom right · notes</b>On every node<br>Click or C: conversation</div>
+</div>
+<div class="g">
+<div></div>
+<div class="ch"><b>Current look</b><span>Kind tab on the top border.</span></div>
+<div class="ch"><b>Architecture look</b><span>Larger icon tile, no kind tab.</span></div>
+
+<div class="rl">At rest<small>The notes mark is on every node, quiet when there are none, so commenting is always one click. It sits under the answer disc, on one line with the icon tile, and keeps a thin border even when the node is selected.</small></div>
+<div><div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+<div><div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="4. Bookmark">4</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+
+<div class="rl">Bookmarked, 3 notes, 1 update<small>The number is the bookmark. The notes mark takes the node's own border and adds the count.</small></div>
+<div><div class="n" style="--k: var(--k-topic)"><button class="num bm" aria-label="28, bookmarked. Remove bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><button class="badge" aria-label="1 update. Open history">1 update</button><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div></div>
+<div><div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><button class="num bm" aria-label="4, bookmarked. Remove bookmark">4</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div><button class="badge" aria-label="1 update. Open history">1 update</button><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div></div>
+
+<div class="rl">Waiting for your answer<small>The disc in the node's colour with a dark dot. Click it and tick and cross open beside it.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="badge new" aria-label="New. Open history">New</button><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="10. Bookmark">10</button><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+
+<div class="rl">Ticked, and crossed<small>The filled disc reads from across the board. Decision is now fuchsia, so it no longer shares the accent pink used for notes and buttons.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans ok" aria-label="Ticked. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="10. Bookmark">10</button><button class="ans no" aria-label="Crossed. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div><button class="nc" aria-label="1 note. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>1</button></div></div>
+
+<div class="rl">Selected<small>The node's own border, brighter and thicker. Nothing appears beside the node; the selection bar appears above it (see below), for one node or several.</small></div>
+<div><div class="n sel" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc" aria-label="2 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>2</button></div></div>
+<div><div class="n ar sel" style="--k: var(--k-decision)"><span class="grip" aria-hidden="true"></span><button class="num bm" aria-label="10, bookmarked. Remove bookmark">10</button><button class="ans ok" aria-label="Ticked. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+
+<div class="rl">Agent replied, unread<small>The notes mark fills in when the agent has answered and you haven't read it yet. It goes back to its outline once you open the conversation.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><button class="num" aria-label="34. Bookmark">34</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory, and whether the 4090 machine is Linux or Windows.</p></div><button class="nc unread" aria-label="2 notes, agent replied. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>2</button></div></div>
+<div><div class="n ar" style="--k: var(--k-risk)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="17. Bookmark">17</button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Risk</div><h3 class="ttl">Rain fade on the satellite link</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></svg></span></div><ul class="bd"><li>Showers forecast from 20:45</li></ul></div><button class="nc unread" aria-label="5 notes, agent replied. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>5</button></div></div>
+
+<div class="rl">Right-click a node<small>Every action in one list with its key, for anyone who prefers a menu, and for touch with a long press. It opens where you clicked.</small></div>
+<div style="padding-bottom: 250px"><div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><div class="pop ctx" role="menu"><button class="y"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Tick<kbd>A</kbd></button><button class="x"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Cross<kbd>X</kbd></button><span class="sep"></span><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>Comment<kbd>C</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg>Bookmark<kbd>B</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Save for later<kbd>L</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.500-5.800L4 8.500M4 4v4.500h4.500M12 8v4l3 2"/></svg>History<kbd>H</kbd></button></div></div></div>
+<div class="none" style="padding-top: 8px; color: var(--mut); font-size: 12.5px; max-width: 360px">The same list on every look and every kind; a node that only tells shows no tick or cross.</div>
+
+<div class="rl">Narrow, and big numbers<small>The board's narrowest node, a three-digit bookmarked number, 99+ notes and 12 updates: the edge marks still fit without touching.</small></div>
+<div><div class="n narrow" style="--k: var(--k-question)"><button class="num bm" aria-label="128, bookmarked">128</button><span class="kind">Question</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Same encoder profile for both feeds?</h3></div><button class="badge" aria-label="12 updates. Open history">12 updates</button><button class="nc" aria-label="99 or more notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>99+</button></div></div>
+<div><div class="n ar narrow" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><button class="num bm" aria-label="104, bookmarked">104</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Second-screen stats feed</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div></div><button class="badge" aria-label="12 updates. Open history">12 updates</button><button class="nc" aria-label="99 or more notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>99+</button></div></div>
+
+<div class="rl">Hold the number<small>A click bookmarks at once. Holding the pointer on it for a moment offers both, with their keys.</small></div>
+<div style="padding-top: 90px"><div class="n" style="--k: var(--k-topic)"><button class="num hov" aria-label="28. Bookmark" aria-expanded="true">28</button><span class="kind">Topic</span><div class="pop numpop"><button class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg>Bookmark<kbd>B</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Save for later<kbd>L</kbd></button></div><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+<div style="padding-top: 90px"><div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><button class="num bm hov" aria-label="4, bookmarked" aria-expanded="true">4</button><div class="pop numpop"><button class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="fill: currentColor"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg>Remove bookmark<kbd>B</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Save for later<kbd>L</kbd></button></div><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div></div>
+
+<div class="rl">History from the badge<small>Click "1 update" for what changed. Once seen, the badge settles to the version number, still one click to history. A node that never changed has no badge and no history.</small></div>
+<div style="padding-bottom: 230px"><div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><button class="badge" aria-label="1 update. History" aria-expanded="true">1 update</button><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button><div class="pop hist"><div class="hh"><span>History of 28</span><button class="xb" aria-label="Close history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button></div><div class="hl-list"><div class="hv cur"><b>v3</b><span>Added <ins>Ad-break candidates</ins></span><i>Agent · today 10:42 · after your note</i></div><div class="hv"><b>v2</b><span>Reranking moved to later</span><i>Agent · yesterday 16:05</i></div><div class="hv"><b>v1</b><span>First drawn</span><i>Agent · yesterday 15:20</i></div></div></div></div></div>
+<div><div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="4. Bookmark">4</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div><button class="badge ver" aria-label="Version 3. Open history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.500-5.800L4 8.500M4 4v4.500h4.500M12 8v4l3 2"/></svg>v3</button><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div></div>
+</div>
+<div class="sec"><b>The selection bar</b><span>Select one node or several and the bar appears above them: bookmark or save them all, set the width, or match widths. Width lives here because nodes size themselves and it is rarely changed.</span></div>
+<div class="selscene">
+<div class="sb"><span class="cnt">2 selected</span><span class="sp"></span><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg>Bookmark all</button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Save for later</button><span class="sp"></span><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6v12M20 6v12M8 12h8M10 10l-2 2 2 2M14 10l2 2-2 2"/></svg>Width</button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>Match widths</button><span class="sp"></span><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>Ask about both</button></div>
+<div class="n sel" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div>
+<div class="n sel" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div>
+<div class="n" style="--k: var(--k-question)"><button class="num" aria-label="41. Bookmark">41</button><span class="kind">Question</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb" style="padding-bottom: 14px"><h3 class="ttl" style="margin: 0">Same encoder profile for both feeds?</h3></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button></div>
+</div>
+
+<div class="sec"><b>The conversation</b><span>Click the notes mark and the conversation opens beside the node, pointing at it and lined up with its top, as on the board today. Compact header, a reply field of one line that grows to three, and two buttons sharing the width. Their keys are in their tooltips: Cmd Enter asks now, Enter adds the note.</span></div>
+<div class="scene">
+<div class="n sel" style="--k: var(--k-action); left: 1px; top: 25px"><button class="num" aria-label="34. Bookmark">34</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory, and whether the 4090 machine is Linux or Windows and reachable from here (SSH).</p></div><button class="nc" aria-label="2 notes. Conversation open" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>2</button></div>
+<div class="cv" style="left: 318px; top: 24px"><div class="cvh"><span class="num">34</span><span class="cvt">Hardware</span><button class="xb" aria-label="Close conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button></div>
+<div class="msgs"><div class="msg me"><i>You</i>It's a Mac Studio, 96 GB memory, about 100 GB of free storage.</div><div class="msg ag"><i>Agent</i>96 GB fits every base model on the Mac. I'd start Mac-only and add the 4090 later if speed needs it. Is it Linux or Windows, and reachable from the Mac?</div></div>
+<div class="cmp"><label for="c34">Reply or ask about node 34</label><textarea id="c34" rows="1" placeholder="Reply or ask about 34"></textarea><div class="bts"><button class="bt" title="Ask now (Cmd Enter)">Ask now</button><button class="bt pri" title="Add note (Enter)">Add note</button></div></div></div>
+<div class="n" style="--k: var(--k-topic); left: 760px; top: 25px"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div>
+</div>
+
+<div class="sec"><b>Menus stay the same size at any zoom</b><span>Tick and cross, the number's menu and history open at full size however far out you are, so you can answer, bookmark or check history from a distance. Only the conversation scales with the board, since it reads as part of the node. An open menu stays open while you zoom out and look elsewhere, until you answer or press Escape. When zoomed out, the edge marks keep a minimum size so they can still be clicked.</span></div>
+<div class="zoomdemo">
+<figure><div class="zn"><div class="n ar" style="--k: var(--k-decision)"><span class="grip" aria-hidden="true"></span><span class="num">10</span><span class="ans"></span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div></div><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div></div><div class="pick" style="left: 8px; top: 56px"><button class="y" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><figcaption>Tick or cross on a node at 40%</figcaption></figure>
+<figure><div class="zn"><div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div></div><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div></div><div class="pop" style="left: -2px; top: 10px; width: 196px"><button class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg>Bookmark<kbd>B</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Save for later<kbd>L</kbd></button></div><figcaption>The number's menu at 40%</figcaption></figure>
+</div>
+
+<div class="sec"><b>From a distance, at 40%</b><span>Three wait, two are bookmarked, one is ticked, one crossed; notes and changes show on the bottom edge.</span></div>
+<div class="far">
+<div class="frow">
+<div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><span class="num">1</span><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Live signal</h3><div class="sub">Stadium feed</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M8 8a5.500 5.500 0 0 0 0 8M16 8a5.500 5.500 0 0 1 0 8"/></svg></span></div></div><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><span class="num bm">2</span><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cloud ingest</h3><div class="sub">Uplynk slicer</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.500-1A4.500 4.500 0 0 1 17 18z"/></svg></span></div></div><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><span class="num">3</span><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Transcode</h3><div class="sub">Standard ABR ladder</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l8 4-8 4-8-4zM4 12l8 4 8-4"/></svg></span></div></div><span class="nc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div></div><span class="badge">1 update</span><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><span class="num">5</span><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">OTT apps</h3><div class="sub">HLS and DASH</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10.5 9l4 3-4 3z"/></svg></span></div></div><span class="badge new">New</span><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div>
+</div>
+<div class="frow">
+<div class="n ar" style="--k: var(--k-decision)"><span class="grip" aria-hidden="true"></span><span class="num">10</span><span class="ans"></span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div></div><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-action)"><span class="grip" aria-hidden="true"></span><span class="num">11</span><span class="ans ok"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Action</div><h3 class="ttl">Book the uplink slot</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10.5 9l4 3-4 3z"/></svg></span></div></div><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-question)"><span class="grip" aria-hidden="true"></span><span class="num">12</span><span class="ans"></span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Question</div><h3 class="ttl">Same profile for both feeds?</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.700.400-1 .900-1 1.700M12 16.500v.5"/></svg></span></div></div><span class="nc none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-decision)"><span class="grip" aria-hidden="true"></span><span class="num">13</span><span class="ans no"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Ads on the live event</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div></div><span class="nc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>1</span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-risk)"><span class="grip" aria-hidden="true"></span><span class="num bm">17</span><span class="ans"></span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Risk</div><h3 class="ttl">Who decides on a rain fade?</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></svg></span></div></div><span class="nc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>5</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":4920}}'>
+class Component extends DCLogic {
+renderVals() {
+return { mode: (this.props.theme ?? 'dark') === 'light' ? 'light' : '' };
+}
+}
+</script>
+</body>
+</html>

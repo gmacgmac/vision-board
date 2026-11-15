@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Node anatomy: your feedback and the second review</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&amp;family=Figtree:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.v8{--ground:#111112;--surface:#1a1a1c;--sunk:#222225;--deep:#2c2c30;--line:#2a2a2e;--line2:#3a3a40;--line3:#4a4a52;--ink:#ededef;--ink2:#c7c7cc;--mut:#b8b8c0;--acc:#ff5cbe;--acc-ink:#1a0712;--ok:#4cc47f;--bad:#f07474;--ok-fill:#0c8f5f;--bad-fill:#cf3a3a;--upd:#ffc21a;--new:#2dd4bf;--bm:#fb923c;--bm-ink:#2a1203;--k-action:#e8b04a;--k-topic:#a48ef2;--k-live:#4fc3b0;--k-decision:#ff5cbe;--k-question:#72a6f2;--k-risk:#f38860;--agent:#c3dc5c;--dot:rgb(255 255 255 / .07);--sh:0 1px 2px rgb(0 0 0 / .4),0 4px 14px rgb(0 0 0 / .3);--shl:0 10px 40px rgb(0 0 0 / .6);
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sys:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+box-sizing:border-box;width:1440px;min-height:3560px;padding:56px 48px 90px;background-color:var(--ground);background-image:radial-gradient(var(--dot) 1.2px,transparent 1.3px);background-size:24px 24px;color:var(--ink);font:13px/1.5 var(--sys);-webkit-font-smoothing:antialiased}
+.v8.light{--ground:#f5f5f6;--surface:#ffffff;--sunk:#efeff1;--deep:#e4e4e7;--line:#e1e1e5;--line2:#cbcbd1;--line3:#b5b5bd;--ink:#18181b;--ink2:#3f3f46;--mut:#6b6b74;--acc:#c81784;--acc-ink:#ffffff;--ok:#278f52;--bad:#cc3b3b;--upd:#b85e00;--new:#0d7d74;--bm:#e2681c;--bm-ink:#ffffff;--k-action:#9a6907;--k-topic:#6a4fc0;--k-live:#1a7d6e;--k-decision:#c81784;--k-question:#3471d0;--k-risk:#c8461c;--agent:#5f7a0e;--dot:rgb(24 24 27 / .09);--sh:0 1px 2px rgb(24 24 27 / .06),0 4px 14px rgb(24 24 27 / .06);--shl:0 10px 40px rgb(24 24 27 / .18)}
+.v8 *{box-sizing:border-box}
+.ic{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+h1.pg{margin:0 0 6px;font:680 24px/1.2 var(--sys)}
+p.lede{margin:0 0 44px;max-width:960px;color:var(--mut);font-size:14px}
+.g{display:grid;grid-template-columns:250px 440px 440px;column-gap:44px;row-gap:66px;align-items:start}
+.ch{padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.ch b{display:block;font:680 15px/1.3 var(--sys)}
+.ch span{color:var(--mut);font-size:12.5px}
+.rl{padding-top:6px;font:600 11px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.rl small{display:block;margin-top:6px;font:400 12px/1.45 var(--sys);letter-spacing:0;text-transform:none}
+.sec{margin:84px 0 26px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.sec b{display:block;font:680 15px/1.3 var(--sys)}
+.sec span{display:block;max-width:980px;color:var(--mut);font-size:12.5px}
+.duo{display:flex;gap:70px;align-items:flex-start;padding-top:22px}
+.duo figure{margin:0}
+.duo figcaption{margin-top:22px;max-width:300px;color:var(--mut);font-size:12.5px}
+.duo figcaption b{display:block;color:var(--ink);font-weight:650}
+
+.n{position:relative;flex:none;width:300px;border:1px solid color-mix(in srgb,var(--k) 42%,var(--line2));border-radius:14px;background:var(--surface);box-shadow:var(--sh)}
+/* selected: the node's own border, brighter and thicker, a faint tint, a lift. No outer ring. */
+.n.sel{margin:-1px;border:2px solid var(--k);background:color-mix(in srgb,var(--k) 7%,var(--surface));box-shadow:var(--shl)}
+.n.sel.has-pn{border-radius:14px 0 0 14px}
+.nb{padding:22px 14px 16px}
+.num{position:absolute;top:-11px;left:14px;z-index:2;height:22px;padding:0 7px;border:1px solid var(--line3);border-radius:7px;background:var(--sunk);color:var(--ink);font:600 12px/20px var(--mono)}
+/* bookmarked: the number tag itself becomes the bookmark */
+.num.bm{height:31px;padding-bottom:9px;border:0;border-radius:6px 6px 0 0;background:var(--bm);color:var(--bm-ink);font-weight:700;line-height:22px;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 7px),0 100%)}
+.kind{position:absolute;top:-11px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border:1px solid color-mix(in srgb,var(--k) 70%,transparent);border-radius:999px;background:color-mix(in srgb,var(--k) 14%,var(--surface));color:var(--k);font:700 10.5px/1 var(--sys);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.kind::before{content:"";width:8px;height:12px;background:radial-gradient(currentColor 1.1px,transparent 1.3px) 0 0/4px 4px}
+.itab{position:absolute;top:-16px;left:50%;transform:translateX(-50%);display:grid;place-items:center;width:32px;height:32px;border:1px solid color-mix(in srgb,var(--k) 60%,transparent);border-radius:10px;background:color-mix(in srgb,var(--k) 18%,var(--surface));color:var(--k)}
+.rib{position:absolute;top:-10px;left:76px;width:15px;height:27px;background:var(--bm);clip-path:polygon(0 0,100% 0,100% 100%,50% 74%,0 100%)}
+/* the answer: waiting is a filled disc in the node's own colour with a dark dot */
+.ans{position:absolute;top:-14px;right:22px;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:var(--k);box-shadow:0 0 0 2px var(--ground);color:#fff;cursor:pointer}
+.ans::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--ground)}
+.ans.ok{background:var(--ok-fill)} .ans.no{background:var(--bad-fill)}
+.ans.ok::after,.ans.no::after,.ans.open::after{content:none}
+.ans .ic{stroke-width:2.6;width:15px;height:15px}
+.ans.open{background:var(--deep);color:var(--ink);box-shadow:0 0 0 1px var(--line3)}
+.pick{position:absolute;top:-24px;right:60px;z-index:7;display:flex;gap:4px;padding:4px;border:1px solid var(--line3);border-radius:999px;background:var(--deep);box-shadow:var(--shl)}
+.pick button{display:grid;place-items:center;width:44px;height:38px;border:0;border-radius:999px;background:var(--surface);cursor:pointer}
+.pick .y{color:var(--ok)} .pick .x{color:var(--bad)}
+.badge{position:absolute;bottom:-11px;left:14px;height:22px;padding:0 8px;border:1.5px solid var(--upd);border-radius:7px;background:var(--surface);color:var(--upd);font:700 11.5px/19px var(--sys);white-space:nowrap}
+.badge.new{border-color:var(--new);color:var(--new)}
+.nc{position:absolute;bottom:-11px;right:14px;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border:1px solid var(--line3);border-radius:999px;background:var(--surface);color:var(--acc);font:700 11.5px/1 var(--mono);cursor:pointer}
+.nc .ic{width:12px;height:12px;stroke-width:2.2}
+/* the panel: part of the selected node, joined to its right edge, top aligned */
+.pn{position:absolute;left:100%;top:-2px;z-index:5;display:grid;align-content:start;gap:2px;width:50px;min-height:calc(100% + 4px);padding:5px 4px;border:2px solid var(--k);border-left:1px solid color-mix(in srgb,var(--k) 55%,var(--line2));border-radius:0 14px 14px 0;background:color-mix(in srgb,var(--k) 7%,var(--surface));box-shadow:var(--shl)}
+.pb{position:relative;display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:9px;background:none;color:var(--mut);cursor:pointer}
+.pb:hover,.pb.open{background:var(--deep);color:var(--ink)}
+.pb.y{color:var(--ok)} .pb.x{color:var(--bad)}
+.pb.y .ic,.pb.x .ic{width:19px;height:19px;stroke-width:2.2}
+.pb.on{color:var(--bm)} .pb.on .ic{fill:currentColor}
+.dv{height:1px;margin:3px 6px;background:var(--line3)}
+.pb:focus-visible,.ans:focus-visible,.pick button:focus-visible,.nc:focus-visible,.bt:focus-visible,.menu button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.menu{position:absolute;left:calc(100% + 8px);bottom:-2px;z-index:7;display:grid;gap:2px;width:190px;padding:5px;border:1px solid var(--line3);border-radius:12px;background:var(--deep);box-shadow:var(--shl)}
+.menu button{display:flex;align-items:center;gap:10px;height:44px;padding:0 11px;border:0;border-radius:8px;background:none;color:var(--ink);font:500 13.5px var(--sys);text-align:left;cursor:pointer}
+.menu .ic{color:var(--mut)}
+.menu kbd{margin-left:auto;font:600 11px var(--mono);color:var(--mut)}
+.ttl{margin:0 0 6px;font:680 15px/1.3 var(--sys);color:var(--ink)}
+.bd{margin:0;color:var(--ink2);font-size:13px}
+ol.bd{padding-left:20px}
+.n.ar{background:linear-gradient(170deg,color-mix(in srgb,var(--k) 9%,var(--surface)) 0%,var(--surface) 55%);font-family:"Figtree",var(--sys)}
+.n.ar.sel{background:linear-gradient(170deg,color-mix(in srgb,var(--k) 16%,var(--surface)) 0%,color-mix(in srgb,var(--k) 7%,var(--surface)) 55%)}
+.n.ar::before{content:"";position:absolute;left:60px;right:60px;top:-1px;height:2px;border-radius:0 0 2px 2px;background:color-mix(in srgb,var(--k) 80%,transparent)}
+.n.ar.sel::before,.n.ar.tabbed::before{content:none}
+.n.ar .hd{display:flex;align-items:flex-start;gap:10px}
+.n.ar .tt{flex:1;min-width:0}
+.n.ar .ttl{margin:0;font:600 15px/1.22 "Bricolage Grotesque","Figtree",var(--sys);letter-spacing:-.01em}
+.n.ar .sub{font-size:12.5px;font-weight:600;color:var(--k)}
+.kick{font:700 10.5px/1.5 "Figtree",var(--sys);letter-spacing:.08em;text-transform:uppercase;color:var(--k)}
+.tile{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,var(--k) 16%,var(--surface));color:var(--k)}
+.tile .ic,.itab .ic{width:19px;height:19px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 0}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;background:var(--sunk);color:var(--ink2);font-size:11.5px;font-weight:600}
+.chip.att{background:color-mix(in srgb,var(--acc) 13%,transparent);color:var(--acc)}
+.chip .ic{width:12px;height:12px}
+.n.ar ul.bd{margin-top:8px;padding-left:16px;font-size:12.5px;color:var(--mut)}
+/* far view */
+.far{zoom:.4;display:grid;gap:96px;padding:30px 0 10px}
+.frow{display:flex;align-items:center}
+.wire{flex:none;position:relative;width:90px;height:3px;background:var(--line3)}
+.wire::after{content:"";position:absolute;right:-1px;top:-6px;border:7.5px solid transparent;border-left:11px solid var(--line3);border-right:0}
+/* the conversation: the same panel, widened */
+.scene{position:relative;height:470px}
+.scene>.n{position:absolute}
+.pn.wide{display:block;width:344px;padding:0}
+.pnh{display:flex;align-items:center;gap:2px;padding:4px 4px 4px 6px;border-bottom:1px solid color-mix(in srgb,var(--k) 35%,var(--line2))}
+.pnh b{flex:1;padding-left:6px;font:600 13.5px var(--sys)}
+.msgs{display:grid;gap:8px;padding:12px}
+.msg{padding:9px 11px;border:1px solid var(--line2);border-radius:9px;background:var(--surface);font-size:13px;color:var(--ink2)}
+.msg i{display:block;margin-bottom:3px;font:700 10px/1.4 var(--sys);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.msg.me{border-left:3px solid var(--acc)}
+.msg.ag{border-left:3px solid var(--agent)}
+.cmp{display:grid;gap:8px;padding:10px 12px 12px;border-top:1px solid color-mix(in srgb,var(--k) 35%,var(--line2))}
+.cmp label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.cmp textarea{display:block;width:100%;min-height:36px;max-height:78px;field-sizing:content;padding:7px 11px;border:1px solid var(--line3);border-radius:9px;background:var(--ground);color:var(--ink);font:13px/1.5 var(--sys);resize:none}
+.cmp textarea::placeholder{color:var(--mut)}
+.bts{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.bts small{margin-right:auto;color:var(--mut);font-size:11.5px}
+.bt{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--line3);border-radius:8px;background:var(--surface);color:var(--ink);font:650 12.5px var(--sys);cursor:pointer}
+.bt.pri{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
+.cap{margin:14px 0 0;max-width:980px;color:var(--mut);font-size:12.5px}
+</style>
+</helmet>
+<div class="v8 {{mode}}">
+<h1 class="pg">Node anatomy: your feedback and the second review</h1>
+<p class="lede">Artboard 7 redrawn with your points and the reviewer's answers to them. No outer ring and no white. The number is the bookmark. Buttons live in one panel that is part of the selected node, and the conversation is that same panel made wider.</p>
+<div class="g">
+<div></div>
+<div class="ch"><b>Current look</b><span>Kind tab on the top border.</span></div>
+<div class="ch"><b>Architecture look</b><span>Icon tile, no kind tab.</span></div>
+
+<div class="rl">At rest<small>Unchanged from 7: states only, no buttons.</small></div>
+<div><div class="n" style="--k: var(--k-topic)"><span class="num">28</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div></div></div>
+<div><div class="n ar" style="--k: var(--k-live)"><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div></div></div>
+
+<div class="rl">Bookmarked, 3 notes, 1 update<small>The number tag is the bookmark: it fills orange and grows a notched tail. The note count has a grey border with the icon and number in pink.</small></div>
+<div><div class="n" style="--k: var(--k-topic)"><span class="num bm" aria-label="28, bookmarked">28</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><span class="badge">1 update</span><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div></div>
+<div><div class="n ar" style="--k: var(--k-live)"><span class="num bm" aria-label="4, bookmarked">4</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div><span class="badge">1 update</span><button class="nc" aria-label="3 notes. Open conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div></div>
+
+<div class="rl">Waiting for your answer<small>A filled disc in the node's own colour with a dark dot. No white. Ticked and crossed keep their green and red with a mark, so the dot is what says "still open".</small></div>
+<div><div class="n" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><span class="badge new">New</span></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div></div></div>
+
+<div class="rl">Pointed at or selected<small>The node's own border goes brighter and thicker, with a faint tint. A panel joins its right edge, lined up with its top, as part of the node. On a node that asks, tick and cross are the panel's first two buttons: one click to answer. A node that tells gets Bookmark, Comment and More only.</small></div>
+<div style="padding-bottom: 120px"><div class="n sel has-pn" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><div class="pn"><button class="pb y" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="pb x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span class="dv"></span><button class="pb" aria-label="Bookmark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="pb" aria-label="Comment"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="pb" aria-label="More: Save for later, History, Width"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div></div></div>
+<div><div class="n ar sel has-pn" style="--k: var(--k-live)"><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div><ul class="bd"><li>Captions from the venue; starts 20:00</li></ul></div><div class="pn"><button class="pb" aria-label="Bookmark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="pb" aria-label="Comment"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="pb" aria-label="More: Save for later, History, Width"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div></div></div>
+
+<div class="rl">Answering from the disc<small>Still there for anyone who goes to the disc first. Tick and cross open beside it, and the disc shows an arrow, not a cross, so closing can't be mistaken for crossing.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><div class="pick"><button class="y" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><button class="ans open" aria-label="Close tick or cross" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l5 5-5 5"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><div class="pick"><button class="y" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><button class="ans open" aria-label="Close tick or cross" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 7l5 5-5 5"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div></div></div>
+
+<div class="rl">Ticked, and crossed<small>As before. The fills are now named colours, not fixed values.</small></div>
+<div><div class="n" style="--k: var(--k-action)"><span class="num">35</span><span class="kind">Action</span><button class="ans ok" aria-label="Ticked. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div></div></div>
+<div><div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><button class="ans no" aria-label="Crossed. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div></div></div>
+
+<div class="rl">Selected and bookmarked; More open<small>Left: a selected Decision. Pink border on a pink kind still reads as selected, because nothing else uses that border. Right: More, with rows tall enough for a finger.</small></div>
+<div style="padding-bottom: 130px"><div class="n ar sel has-pn" style="--k: var(--k-decision)"><span class="num bm" aria-label="10, bookmarked">10</span><button class="ans ok" aria-label="Ticked. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div><div class="pn"><button class="pb y open" aria-label="Ticked. Press to clear" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="pb x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span class="dv"></span><button class="pb on" aria-label="Bookmarked. Press to remove" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="pb" aria-label="Comment"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="pb" aria-label="More: Save for later, History, Width"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div></div></div>
+<div style="padding-bottom: 130px"><div class="n sel has-pn" style="--k: var(--k-topic)"><span class="num">28</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><div class="pn"><button class="pb" aria-label="Bookmark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="pb" aria-label="Comment"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="pb open" aria-label="More" aria-expanded="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button><div class="menu"><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Save for later<kbd>L</kbd></button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.500-5.800L4 8.500M4 4v4.500h4.500M12 8v4l3 2"/></svg>History</button><button><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6v12M20 6v12M8 12h8M10 10l-2 2 2 2M14 10l2 2-2 2"/></svg>Width</button></div></div></div></div>
+</div>
+<div class="sec"><b>Two things to choose between</b><span>Each pair is the same node drawn both ways.</span></div>
+<div class="duo">
+<figure><div class="n" style="--k: var(--k-topic)"><span class="num bm" aria-label="28, bookmarked">28</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li></ol></div></div><figcaption><b>Bookmark A: the number is the bookmark</b>One mark, tied to the node's name. Used in the rows above.</figcaption></figure>
+<figure><div class="n" style="--k: var(--k-topic)"><span class="num">28</span><span class="rib" role="img" aria-label="Bookmarked"></span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li></ol></div></div><figcaption><b>Bookmark B: a ribbon halfway between number and tab</b>The number stays plain; the ribbon is a second mark.</figcaption></figure>
+<figure><div class="n ar" style="--k: var(--k-risk)"><span class="num bm" aria-label="17, bookmarked">17</span><div class="nb"><div class="hd"><div class="tt"><div class="kick">Risk</div><h3 class="ttl">Rain fade on the satellite link</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></svg></span></div></div></div><figcaption><b>Bookmark A on a Risk node</b>The hard case: bookmark orange next to Risk orange.</figcaption></figure>
+</div>
+<div class="duo" style="padding-top: 56px">
+<figure><div class="n ar" style="--k: var(--k-live)"><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div></div></div><figcaption><b>Icon A: the tile inside the node</b>As in your original plan view.</figcaption></figure>
+<figure><div class="n ar tabbed" style="--k: var(--k-live)"><span class="num">4</span><span class="itab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div></div><div class="chips"><span class="chip att"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M10.5 10.5H8v3h2.5M16 10.5h-2.5v3H16"/></svg>Captions</span></div></div></div><figcaption><b>Icon B: the icon is the tab</b>Your idea. The title gets the full width, and the tab is the handle in both looks.</figcaption></figure>
+<figure><div class="n ar tabbed" style="--k: var(--k-decision)"><span class="num">10</span><span class="itab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div></div><div class="chips"><span class="chip">Auto, about 2 s</span></div></div></div><figcaption><b>Icon B on a node that asks</b>Number, icon tab and answer disc share the top border.</figcaption></figure>
+</div>
+
+<div class="sec"><b>From a distance, at 40%</b><span>Pipeline nodes share one colour here; the asking nodes use their kind's colour. Three wait, two are bookmarked, one is ticked, one crossed.</span></div>
+<div class="far">
+<div class="frow">
+<div class="n ar" style="--k: var(--k-live)"><span class="num">1</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Live signal</h3><div class="sub">Stadium feed</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M8 8a5.500 5.500 0 0 0 0 8M16 8a5.500 5.500 0 0 1 0 8"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="num bm">2</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cloud ingest</h3><div class="sub">Uplynk slicer</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.500-1A4.500 4.500 0 0 1 17 18z"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="num">3</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Transcode</h3><div class="sub">Standard ABR ladder</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l8 4-8 4-8-4zM4 12l8 4 8-4"/></svg></span></div></div><button class="nc" aria-label="3 notes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>3</button></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="num">4</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></svg></span></div></div><span class="badge">1 update</span></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-live)"><span class="num">5</span><div class="nb"><div class="hd"><div class="tt"><h3 class="ttl">OTT apps</h3><div class="sub">HLS and DASH</div></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10.5 9l4 3-4 3z"/></svg></span></div></div><span class="badge new">New</span></div>
+</div>
+<div class="frow">
+<div class="n ar" style="--k: var(--k-decision)"><span class="num">10</span><button class="ans" aria-label="Waiting"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Satellite backup at 2% loss</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-action)"><span class="num">11</span><button class="ans ok" aria-label="Ticked"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Action</div><h3 class="ttl">Book the uplink slot</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10.5 9l4 3-4 3z"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-question)"><span class="num">12</span><button class="ans" aria-label="Waiting"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Question</div><h3 class="ttl">Same profile for both feeds?</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.700.400-1 .900-1 1.700M12 16.500v.5"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-decision)"><span class="num">13</span><button class="ans no" aria-label="Crossed"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Decision</div><h3 class="ttl">Ads on the live event</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></svg></span></div></div></div><span class="wire"></span>
+<div class="n ar" style="--k: var(--k-risk)"><span class="num bm">17</span><button class="ans" aria-label="Waiting"></button><div class="nb"><div class="hd"><div class="tt"><div class="kick">Risk</div><h3 class="ttl">Who decides on a rain fade?</h3></div><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></svg></span></div></div><button class="nc" aria-label="5 notes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>5</button></div>
+</div>
+</div>
+
+<div class="sec"><b>The conversation at a node</b><span>Press Comment, or the note count, and the node's own panel widens into the conversation. One thing attached to the node, not a rail and then a box. It floats over neighbours without moving them.</span></div>
+<div class="scene">
+<div class="n sel has-pn" style="--k: var(--k-action); left: 1px; top: 25px"><span class="num">34</span><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory, and whether the 4090 machine is Linux or Windows and reachable from here (SSH).</p></div><button class="nc" aria-label="2 notes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg>2</button>
+<div class="pn wide"><div class="pnh"><button class="pb y" aria-label="Tick"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><button class="pb x" aria-label="Cross"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><button class="pb" aria-label="Bookmark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"/></svg></button><button class="pb open" aria-label="Comment" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></svg></button><button class="pb" aria-label="More: Save for later, History, Width"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button><b></b><button class="pb" aria-label="Close conversation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 7l-5 5 5 5"/></svg></button></div>
+<div class="msgs"><div class="msg me"><i>You</i>It's a Mac Studio, 96 GB memory, about 100 GB of free storage.</div><div class="msg ag"><i>Agent</i>96 GB fits every base model on the Mac. I'd start Mac-only and add the 4090 later if speed needs it. Is it Linux or Windows, and reachable from the Mac?</div></div>
+<div class="cmp"><label for="w34">Reply or ask about node 34</label><textarea id="w34" rows="1" placeholder="Reply or ask about 34"></textarea><div class="bts"><small>Shift Enter for a new line</small><button class="bt">Ask now</button><button class="bt pri">Add note</button></div></div></div></div>
+<div class="n" style="--k: var(--k-action); left: 560px; top: 250px"><span class="num">35</span><span class="kind">Action</span><button class="ans ok" aria-label="Ticked. Change answer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div></div>
+<div class="n" style="--k: var(--k-topic); left: 900px; top: 25px"><span class="num">28</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div></div>
+</div>
+<p class="cap">Enter adds the note and keeps it until Send to agent; Ask now (Cmd Enter) sends it straight away. Node 35 is partly under the panel and has not moved.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":3560}}'>
+class Component extends DCLogic {
+renderVals() {
+return { mode: (this.props.theme ?? 'dark') === 'light' ? 'light' : '' };
+}
+}
+</script>
+</body>
+</html>
