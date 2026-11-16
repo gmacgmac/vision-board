@@ -1,6 +1,6 @@
 ---
 name: cortex-architecture
-description: "How code is organized so it stays reusable, consistent and testable: reuse-before-create, one job per file, one source per contract (schema → code → OpenAPI → MCP), one layer per concern, one action layer for people and agents, central registries for dependencies, conditions and jobs, and one home per sentence (words files). Use when planning or building front-end, back-end, API, MCP, schema, data-layer or shared-component work. Not for visual design — how the UI looks."
+description: "How code is organized so it stays reusable, consistent and testable: reuse-before-create, one job per file, one source per contract (schema → code → OpenAPI → MCP), one layer per concern, one action layer for people and agents, central registries for dependencies, conditions and jobs, one home per sentence (words files), and one home per icon and brand asset. Use when planning or building front-end, back-end, API, MCP, schema, data-layer or shared-component work. Not for visual design — how the UI looks."
 ---
 
 # Architecture
@@ -37,6 +37,7 @@ where the task names it.
 6. **Will a second place need to know this?** If yes, it goes in a registry (rule 6,
    `references/registries.md`), not a local check.
 7. **Does it show or send a sentence?** It goes in a words file (rule 7), not in the code.
+8. **Does it draw an icon or brand asset?** It comes from its home (rule 8), never inline.
 
 ## The rules
 
@@ -67,14 +68,22 @@ where the task names it.
    never in the code that shows or sends it. Code imports the words. Start the home with the
    first screen; add the test that enforces it once text spans several files. See
    `references/words.md`.
-8. **Mock the data, not the screens.** Fixtures in the exact contract shape; switching to real
+8. **Visual assets have one home.** UI icons come from one icon set: a module mapping each name
+   to a drawing. Components render icons by name, never inline SVG. Each meaning has one icon,
+   and each icon one meaning; a new icon joins the set before use. Brand assets (characters,
+   illustrations, app icons, motion) live in one source folder, such as `brand/` at the root,
+   and a script deploys them to every place that uses them. Change the source once; never
+   hand-edit a deployed copy. Data drawings (charts, meters, progress rings) aren't assets;
+   draw them where used. A test fails on an inline icon and names the fix. Existing offenders
+   go on a list that may only shrink, so the rule lands before the clean-up.
+9. **Mock the data, not the screens.** Fixtures in the exact contract shape; switching to real
    data is a setting, not a rebuild.
-9. **UI structure is pattern-owned.** Each control in a plan names the component it reuses,
-   decided at planning; no fit → ask the user. Style comes only from design tokens. Every state
-   (idle, hover, focus, pressed, loading, success, error, disabled; data: loading, empty, error,
-   partial, stale) belongs to the pattern, so a screen gets it by reuse. Accessibility is a gate.
-10. **A bug fix starts with the failing test.**
-11. **Prompts and agent instructions are code** — versioned, reviewed, and run against scenarios
+10. **UI structure is pattern-owned.** Each control in a plan names the component it reuses,
+    decided at planning; no fit → ask the user. Style comes only from design tokens. Every state
+    (idle, hover, focus, pressed, loading, success, error, disabled; data: loading, empty, error,
+    partial, stale) belongs to the pattern, so a screen gets it by reuse. Accessibility is a gate.
+11. **A bug fix starts with the failing test.**
+12. **Prompts and agent instructions are code** — versioned, reviewed, and run against scenarios
     before they change.
 
 ## Planning outputs
@@ -86,6 +95,7 @@ When this skill shapes a plan, PLAN.md / task files record:
   agents may call it;
 - any new registry row (reference edge, condition or job kind) and who reads it;
 - the words file each new sentence goes in;
+- when a UI task needs a new icon, the icon set as a file it may change;
 - shared artifacts in TASK-STATUS.md Shared Foundations.
 
 Docs that describe this code are held true by `cortex-docs`.

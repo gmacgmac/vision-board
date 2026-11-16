@@ -39,7 +39,7 @@ Pick the branch, then follow the steps below.
    - **Own worktree** column (`yes` | `no`) per `references/granularity.md` § Own Worktree. Sequential sets and read-only tasks are always `no`.
    - **Persona** column (`—` for none) per § Personas. TASK-STATUS.md only: not in PLAN.md or task files.
    - **Shared Foundations** table.
-   - **File Ownership** table — required when two or more tasks share a wave (each file has one owner per wave), or when some files are orchestrator-only, in any mode. The `orchestrator` row lists files no sub-agent may touch (e.g. lockfiles, generated code, version files), mirroring PLAN.md's House Rules.
+   - **File Ownership** table — required when two or more tasks share a wave (each file has one owner per wave), or when some files are orchestrator-only, in any mode. The `orchestrator` row lists files no sub-agent may touch (e.g. lockfiles, generated code, version files), mirroring PLAN.md's House Rules. The icon set is a shared file: one owner per wave.
 7. **Apply granularity heuristics** — before finalising, run the split-vs-merge, wave and own-worktree self-checks (see `references/granularity.md`).
 8. **Commit the set** — per § On Finishing Authoring.
 
@@ -68,14 +68,17 @@ A persona gives the executing agent a point of view, so it notices problems the 
 mentioned (methodology, technical requirements, security). It is not a rule set.
 
 - **Format**: `<real job title> — <1–2 sentences: what they care about / won't compromise on>`.
-  E.g. "Platform engineer — a child process is a liability until it is bounded, restartable and
-  refuses everything it wasn't asked to do."
+  E.g. "Principal platform engineer — a child process is a liability until it is bounded,
+  restartable and refuses everything it wasn't asked to do."
+- **Best in field** — the persona is the best person in that role (`cortex-rules` rule 15).
+  The title stays real; the 1–2 sentences say what the best would never let through.
 - **When**: optional. Required for review tasks (e.g. `VERIFY`) and `strong` tasks. Skip it for
   mechanical work (rename a field, bump a version).
 - **Real job titles** — never invented characters or names.
 - **Match the main risk** — layout engineer for reflow, auditor for data contracts,
   trust-and-safety reviewer for anything an AI proposes.
-- **Review tasks get a user persona** with no builder context — fresh eyes.
+- **Review tasks get a user persona** with no builder context — fresh eyes: a user of the best
+  products in the category.
 - **Model ≠ persona** — model is how much capability; persona is what to watch for.
 - **Never overrides** scope, file ownership, working rules or stop conditions. A problem outside
   the task is reported (`REQUESTS` · `NOTES` · `BLOCKED` if unsafe to finish), never fixed.
