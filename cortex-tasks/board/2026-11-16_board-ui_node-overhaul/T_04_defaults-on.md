@@ -44,7 +44,7 @@ most of them, once.
        behaviour. Delete the old code paths they guarded, with their tests, gallery entries, words and doc lines: the
        old footer (`node-template.ts` `footer`, `bottomTabs`, `flagButton`, `sizeControl` and their CSS and
        handlers), the note bubble modes FE_03 replaced, the mode popover FE_07 replaced, and anything else a flag
-       kept alive. Old ledger lines are handled by the ledger migration the plan names, never by a second reader.
+       kept alive. Old ledger lines are handled by the ledger migration (BE_02, D-103), never by a second reader.
        A search for each removed symbol and flag name finds nothing outside `docs/decisions.md` and `cortex/`.
 2. [ ] Make Decision's colour the token's value; remove the scoped rule. Put the `tokens.css` diff in your notes.
 3. [ ] `NODE_TYPES.app` no longer lists Save for later; an old ledger with a saved app card still opens.

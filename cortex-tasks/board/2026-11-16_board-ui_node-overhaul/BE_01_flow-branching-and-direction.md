@@ -7,14 +7,17 @@
 
 ## Objective
 
-Make a linked sequence inside a container branch into rows instead of sending its links round the cards, and let
-the person choose whether sequences run across or down.
+Make a linked sequence inside a container branch into rows instead of sending its links round the cards, and draw
+a `flow` across or down as the board's record says: set by whoever draws it, changed by the person.
 
 ---
 
 ## Context
 
-PLAN.md § Decisions 19, 20 and § Planner's call 7 (tracker N51, N52). The maintainer's example: a container "From
+PLAN.md § Decisions 19, 20, 25 and § Planner's calls 7, 16 (tracker N51, N52). Direction is in the ledger, not a
+page preference: an agent sets `direction` on a region with any redraw, the person changes it with the `direction`
+act (`auto` clears their choice), and T_01's `directionOf` gives the one answer every reader uses (the ledger
+review § 4 O5). The maintainer's example: a container "From
 idea to production line" with seven cards in one line and a side branch from the second card; the links run over
 and under the cards to reach cards further along. What is known (`CODE-MAP.md` § 9): `row` and `column` place
 cards in card order and ignore links; `flow` layers by links, left to right only, and stacks a fork's branches in
@@ -30,10 +33,11 @@ container with links. Layout is a pure function; keep it one.
 - **Files to modify**: `packages/layout/src/` (`modes/`, `board.ts`, `types.ts`, `layers.ts`, `route/`),
   `packages/layout/tests/`, `packages/format/src/flags.ts` (one flag for the branching rule),
   `apps/board/src/board/canvas/` (pass the options), `apps/board/src/board/chrome/` (the toolbar control),
+  `apps/board/src/board/io/acts.ts` (the `direction` act's sender, if it needs a line),
   `apps/board/src/board/words/`, `apps/board/tests/`, `tests/pages/`, `docs/specification/components.md`
 - **Files to reference**: `CODE-MAP.md` § 9; `packages/layout/src/route/frame.ts` (one direction, mirrored or
-  rotated); `packages/layout/src/structure.ts` (`show_layout`'s answer); how the page keeps a board's zoom
-  (`keepView`, `docs/specification/plugin.md` § store); `.kiro/steering/svelte-conventions.md`
+  rotated); `packages/layout/src/structure.ts` (`show_layout`'s answer); T_01's `directionOf`, `Region.direction`
+  and the `direction` act (`widthsOf` and the `widths` act are the same pattern); `.kiro/steering/svelte-conventions.md`
 - **Skills**: `cortex-architecture`, `cortex-docs`
 
 > Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
@@ -53,13 +57,18 @@ container with links. Layout is a pure function; keep it one.
 3. [ ] **In `flow`**: each branch of a fork keeps its own straight row to its end; a branch that rejoins comes back
        with one clean link. Fix what the reproduction shows; routing round a card remains only where no gap
        exists.
-4. [ ] **Direction** (flag `flowDirection`): a layout option `across` or `down` for linked sequences. `flow` in
-       `down` layers top to bottom. The router and labels work in both.
-5. [ ] **The choice**: a toolbar control, Rows or Columns, kept per board by the page as its zoom is kept (the
-       host's store under a host), not written to the ledger. It redraws in place.
-6. [ ] `show_layout`'s answer to an agent stays true for what is drawn, in both directions.
-7. [ ] Tests: the reproduction now passes; no-overlap, routing and timing tests in both directions; a page spec
-       for the control. Update `components.md`.
+4. [ ] **Direction** (flag `flowDirection`): each `flow` container is laid out `across` or `down` by
+       `directionOf` for that container (the person's choice for it, else theirs for the board, else the region's,
+       else `across`). `flow` in `down` layers top to bottom. The router and labels work in both. With the flag off
+       every `flow` is `across`, as today.
+5. [ ] **The board's choice**: a toolbar control, Across, Down or Auto, that writes the `direction` act with no
+       `region` through the one sender (Auto clears the person's board-wide choice). It redraws in place. A
+       container's own choice is FE_07's, in its layout control. On a read-only board it is disabled with its
+       reason.
+6. [ ] `show_layout`'s answer to an agent is worked out from the same fold and stays true for what is drawn, in
+       both directions.
+7. [ ] Tests: the reproduction now passes; no-overlap, routing and timing tests in both directions; the precedence
+       of `directionOf` as the layout sees it; a page spec for the control. Update `components.md`.
 
 ---
 
@@ -69,6 +78,8 @@ container with links. Layout is a pure function; keep it one.
 - [ ] With both flags off every layout test and page screenshot is unchanged
 - [ ] With them on: in the example no link crosses or rounds a card, and the same view always draws the same
       picture (determinism test)
+- [ ] A `flow` region an agent wrote `down` draws down; the person's Across wins; Auto brings the agent's back; the
+      same board read by another page draws the same (tests)
 
 ---
 

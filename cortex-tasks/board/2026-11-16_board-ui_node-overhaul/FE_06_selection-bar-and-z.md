@@ -51,7 +51,8 @@ several nodes selected. The cause is not established: find it before changing an
        and **Width** (a menu: S, M, L, Auto, applied to each selected node by the existing `size` act). Each is a
        row in the command table with its words and key help; nothing is wired outside it.
 4. [ ] **A note on the selection**: the bar's Comment opens today's group note with Ask now beside Add note, as a
-       node's conversation has.
+       node's conversation has: Ask now writes the group note and an `ask` act for it, by FE_03's path and setting;
+       Add note leaves it for the board's Send.
 5. [ ] **Place**: centred above the selection's bounding box at one size; below when there is no room above; kept
        inside the stage; clear of a container's title line. While a menu, the history box or the conversation of
        a selected node is open, the bar steps aside so it never covers it.

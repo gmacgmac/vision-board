@@ -14,7 +14,9 @@ behind `layoutControl`, and give the maintainer a page to compare the six layout
 
 ## Context
 
-PLAN.md § Decision 20 (tracker U16). Today a container draws one button per mode (`modeButton`, six `MODES`) in its
+PLAN.md § Decisions 20, 25 (tracker U16). A `flow` container's direction is in the ledger: the agent's
+`direction` on the region, the person's `direction` act, one answer from T_01's `directionOf`, laid out by BE_01.
+It is never a page preference. Today a container draws one button per mode (`modeButton`, six `MODES`) in its
 rail or top line and collapses them by container queries; a popover of mode tiles already exists (`modePopover`,
 `.vb-mode-pop`, `.vb-mtile`) (`CODE-MAP.md` § 8). No mode is removed: which stay is the maintainer's decision after
 trying them.
@@ -27,11 +29,13 @@ trying them.
 
 - **Files to modify**: `packages/ui/src/region/` (template, core, styles, `region-row.ts`, `region-layout-tip.ts`,
   `pattern.json`), `packages/ui/src/words/region.ts`, `packages/ui/tests/`, `apps/board/src/board/canvas/`
-  (`draw.ts`, `render.ts`: pass the flag), `apps/board/src/board/input/wiring.ts`, `apps/board/src/gallery/`,
+  (`draw.ts`, `render.ts`: pass the flag), `apps/board/src/board/input/wiring.ts`, `apps/board/src/board/io/acts.ts`
+  (only if the container's `direction` act needs a line), `apps/board/src/gallery/`,
   `tests/pages/`, `docs/specification/components.md`
 - **Files to reference**: `CODE-MAP.md` § 8; `region-narrow.css` and `region-rail.css` (the collapse rules);
   `apps/board/src/board/canvas/places.ts` (`setMode`)
-- **Shared artifacts to reuse**: the menu pattern and icons (FE_01)
+- **Shared artifacts to reuse**: the menu pattern and icons (FE_01); T_01's `directionOf` and `direction` act;
+  BE_01's board-wide control (its words and act sender)
 - **Skills**: `cortex-architecture`, `cortex-docs`
 
 > Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
@@ -47,6 +51,10 @@ trying them.
        tiles; Escape closes and returns focus.
 3. [ ] The other tools (card widths, Comment, settings) stay; the collapse rules get simpler, since one button
        replaces six. Below `FAR_K` the control follows today's far rules.
+3a. [ ] **Direction** (with `flowDirection` on too): on a `flow` container the popover also offers Across, Down
+       and Auto, the current one marked from `directionOf`; choosing one writes the `direction` act for that
+       container through the one sender (Auto clears the person's choice, so the agent's shows again). The button's
+       name says it ("Layout: Flow, down"). On a read-only board the choices are disabled with their reason.
 4. [ ] The popover keeps one size at any zoom (the menu pattern's rule).
 5. [ ] **A page to compare layouts**: a gallery section that draws the same eight linked cards in each of the six
        modes side by side, so the maintainer can decide which to keep. Name it in your return block.
@@ -60,6 +68,8 @@ trying them.
       `layout-tooltip.spec.ts`, `container-rail*.spec.ts` pass with the flag off and no new baseline
 - [ ] With the flag on, a container at every width and zoom shows exactly one layout button, and every mode can
       be chosen by pointer and by keyboard
+- [ ] With `flowDirection` on too, a container's Down redraws it down and writes one `direction` act naming it;
+      Auto returns the agent's direction (tests)
 
 ---
 

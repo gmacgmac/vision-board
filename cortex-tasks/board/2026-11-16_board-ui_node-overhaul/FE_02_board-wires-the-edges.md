@@ -15,7 +15,7 @@ changed.
 
 ## Context
 
-PLAN.md § Decisions 2 to 8, 15, 16 and § Planner's calls 3. FE_01 built the markup; this task is the page
+PLAN.md § Decisions 2 to 8, 15, 16, 24 and § Planner's calls 3, 11, 12. FE_01 built the markup; this task is the page
 (`apps/board/src/`). Every action goes through the one sender as today (`CODE-MAP.md` § 4): no new way to write.
 Overlays live on the stage, outside the scaled world, placed in stage pixels (`CODE-MAP.md` § 6).
 
@@ -28,14 +28,14 @@ Overlays live on the stage, outside the scaled world, placed in stage pixels (`C
 - **Files to modify**: `apps/board/src/board/` (`cards/`, `input/`, `canvas/`, `selection/`, `chrome/`, `io/acts.ts`,
   `controller.ts` and `controller/`, `words/`), `apps/board/src/shell/` (the toolbar's menu, for the skin control),
   `apps/board/src/styles/`, `apps/board/src/gallery/`, `apps/board/tests/`, `tests/pages/`; for the rename only:
-  `packages/ui/src/node/`, `packages/ui/src/words/`, `packages/ui/tests/`, `packages/actions/src/` (remove the
-  `flagsOn` alias), `packages/format/src/flags.ts` (`cardFlag` becomes `cardBookmark`), `packages/tokens/src/tokens.css`
+  `packages/ui/src/node/`, `packages/ui/src/words/`, `packages/ui/tests/`, `packages/format/src/flags.ts` (`cardFlag`
+  becomes `cardBookmark`), `packages/tokens/src/tokens.css`
   (remove the `--vb-state-flag` alias only); `docs/specification/components.md`
 - **Files to reference**: `CODE-MAP.md` §§ 4 to 7, 12; `apps/board/src/board/cards/flag-flow.ts`, `item-acts.ts`,
   `update-flow.ts`, `history-flow.ts`; `apps/board/src/board/input/` (`pointer.ts` `HANDLE`, `keys.ts`,
   `commands.ts`, `wiring.ts`); `apps/board/src/shell/ThemeControl.svelte`; `.kiro/steering/svelte-conventions.md`
 - **Shared artifacts to reuse**: `packages/ui/src/menu/`, `packages/ui/src/skins.ts`, `packages/ui/src/icons/`
-  (FE_01); the acts and folds from T_01; `placeBar` and the hover tip's placing for where an overlay goes
+  (FE_01); the acts and folds from T_01 (`bookmarksOn`, `containerSeenDue`); `list_icons` with `paths` (BE_04); `placeBar` and the hover tip's placing for where an overlay goes
 - **Skills**: `cortex-architecture`, `cortex-docs`
 
 > Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
@@ -46,11 +46,12 @@ Overlays live on the stage, outside the scaled world, placed in stage pixels (`C
 
 1. [ ] **Flags to the page**: with `nodeEdges` on, the root carries `data-vb-edges` and the node is drawn with its
        edges; with `skins` on, the root carries `data-vb-skin` from the board's skin.
-2. [ ] **Bookmark, renamed everywhere**: the page writes `bookmark` and `unbookmark`; flag becomes Bookmark in
+2. [ ] **Bookmark, renamed everywhere**: the page already writes `bookmark` and `unbookmark` (T_01 changed the
+       sender) and T_01 renamed the fold; flag becomes Bookmark in the rest of the page:
        identifiers, class names, files (`flag-flow.ts`, `FlaggedChip.svelte`, the gallery section), words (the
        toolbar chip reads "Bookmarked"), tests and docs. The key is B; Shift+F is removed from the key help. With
-       `nodeEdges` off, the old footer's button keeps its place and glyph and is named Bookmark. Start with a
-       failing test for a format-19 board whose flags must show as bookmarks.
+       `nodeEdges` off, the old footer's button keeps its place and glyph and is named Bookmark. Start with a test
+       that a format-19 ledger with flags, migrated on open (BE_02, T_01's step), shows them as bookmarks.
 3. [ ] **The number**: a click toggles Bookmark at once. Press and hold (about 400 ms; a long press on touch) opens
        the number menu instead and toggles nothing. From the keyboard, the menu key or Shift+F10 on the number
        opens it. Report at the gate that a hover pause was not built, so the maintainer can ask for it.
@@ -64,7 +65,11 @@ Overlays live on the stage, outside the scaled world, placed in stage pixels (`C
 7. [ ] **Menus**: one open at a time; fixed size at any zoom; they stay open and stay attached while the person
        zooms or pans; Escape and a click outside close them; focus moves in and returns.
 8. [ ] **Seen**: on a board that isn't read-only, a click inside a container, on its background or frame, writes
-       the container's `seen` line (T_01). Selecting a node already marks it seen; keep that.
+       the container's `seen` line with the `head` the person saw, only when T_01's `containerSeenDue` says it
+       changes something. Selecting a node already marks it seen; keep that.
+8a. [ ] **Library icons**: the page reads `list_icons` with `paths: true` when it opens a ledger and again when an
+       `icon` line arrives, and passes the library to the node (FE_01's `icon(name, cls, library)`). A missing or
+       failing icon draws the plain tile; nothing else on the board waits for it.
 9. [ ] **Dragging**: a node with an icon is dragged by its grip; add it to `HANDLE`.
 10. [ ] **Skin control**: a control beside the theme control lists `SKINS` and writes the `skin` act; add the act
         to `NAMES_BOARD`. On a read-only board it is disabled with its reason.

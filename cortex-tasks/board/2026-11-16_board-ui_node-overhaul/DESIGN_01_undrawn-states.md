@@ -63,7 +63,7 @@ settled rules in PLAN.md § Decisions are not reopened; you only place what is m
 - [x] Every state in step 1's list is drawn or named as unchanged, in both skins, dark and light
 - [x] The pages open from the file system with no network (fonts fall back) and no console error
 - [x] `npm run verify` passes (the new files are within its length rules)
-- [x] Your return block lists the open choices; the orchestrator takes them to the maintainer before wave 3
+- [x] Your return block lists the open choices; the orchestrator takes them to the maintainer before FE_01 (wave 4)
 
 ---
 

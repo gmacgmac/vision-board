@@ -14,7 +14,9 @@ Make the `vb-node` pattern draw the new node in the default skin (edge marks, ic
 
 ## Context
 
-PLAN.md § Decisions 1 to 8, 11, 12, 17. The look is `design/mockups/node-skins/default-skin-dark.html` and
+PLAN.md § Decisions 1 to 8, 11, 12, 17, 24. A node's icon is a name: a built-in, drawn here, or one from the
+project's library (`x-` names), whose checked path data the page passes in (BE_04; FE_02 loads it). A tone is a
+palette name or a hue (T_01, T_02). The look is `design/mockups/node-skins/default-skin-dark.html` and
 `-light.html`; the states those pages lack are in `design/mockups/node-states/` as the maintainer agreed them
 (TASK-STATUS.md notes for DESIGN_01). This task is `packages/ui` and the gallery only: it builds markup, styles and
 state; the page's clicks, menus opening and acts are FE_02. Extend the pattern; do not write a second node.
@@ -29,16 +31,18 @@ state; the page's clicks, menus opening and acts are FE_02. Extend the pattern; 
   `node-history.ts`, `node-updates.ts`), `packages/ui/src/icons/` (new), `packages/ui/src/skins.ts` (new),
   `packages/ui/src/menu/` (new, or the existing menu look made a pattern), `packages/ui/src/words/`,
   `packages/ui/src/patterns.ts`, `packages/ui/src/index.ts`, `packages/ui/src/styles.css`, `packages/ui/tests/`,
-  `packages/format/fixtures/gallery.ledger.jsonl` (cards with an icon and a tone), `apps/board/src/gallery/`,
+  `packages/format/fixtures/gallery.ledger.jsonl` (cards with a built-in icon, a library icon, a palette tone and a hue; the gallery passes a library for its
+  `x-` name), `apps/board/src/gallery/`,
   `tests/pages/` (a new spec for the node with the flag on, and its screenshots),
   `docs/specification/components.md`
 - **Files to reference**: `CODE-MAP.md` § 1; `packages/ui/src/node/node-template.ts` (`footer`, `tabs`,
-  `bottomTabs`, `flagButton`, `historyButton`, `sizeControl`); `packages/ui/src/node/node-icons.ts` (`svgIcon`);
+  `bottomTabs`, `flagButton`, `historyButton`, `sizeControl`); `packages/ui/src/node/node-icons.ts` (`svgIcon`); BE_04's notes;
   `packages/ui/src/region/region-icons.ts`; the `.vb-menu-list`, `.vb-size-menu` and `.vb-region-menu` markup (the
   board's menus today)
 - **Patterns to follow**: core, template, element (`docs/principles.md` § Component model); update in place
-- **Shared artifacts to reuse**: T_01's `ICON_NAMES`, `TONES`, `SKINS`, `bookmarksOn`; T_02's tokens. Import
-  them; do not re-create them
+- **Shared artifacts to reuse**: T_01's `ICON_NAMES`, `isLibraryIcon`, `TONES`, `SKINS`, `bookmarksOn` and the
+  `list_icons` reply's library icon type; BE_04's `ICON_BOX` and `iconPathProblem` (`packages/format/src/icon-file.ts`);
+  T_02's tokens and `--vb-tone-h`. Import them; do not re-create them
 - **Skills**: `cortex-architecture`, `cortex-docs`
 
 > Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
@@ -48,10 +52,13 @@ state; the page's clicks, menus opening and acts are FE_02. Extend the pattern; 
 ## Steps
 
 1. [ ] **Icon set** (`packages/ui/src/icons/`): `ICONS`, a record from every `ICON_NAMES` name and every mark's
-       icon (bookmark, clock, history, notes, tick, cross, grip, more) to a 24-box stroke drawing, and
-       `icon(name, cls)` built on `svgIcon`. Draw them here in one consistent stroke style; the shapes in the
-       mockups are the reference. The compiler fails when a name has no drawing. The existing kind, action and mode
-       icon records stay as they are.
+       icon (bookmark, clock, history, notes, tick, cross, grip, more) to a stroke drawing on BE_04's `ICON_BOX`,
+       and `icon(name, cls, library?)` built on `svgIcon`. Draw them here in one consistent stroke style; the shapes
+       in the mockups are the reference. The compiler fails when a name has no drawing. A library name (`x-…`) is
+       drawn from `library`, the checked icons the page passes in (name to `d` strings): each `d` is checked again
+       with `iconPathProblem` and drawn as a `path` the code builds, with the built-in set's stroke, never from a
+       file's text. A library name that is missing, or a path that fails, draws the plain tile. The existing kind,
+       action and mode icon records stay as they are.
 2. [ ] **Skin registry** (`packages/ui/src/skins.ts`): `SKIN_DEFS`, one row per `SKINS` name saying where the
        answer sits (`disc` or `switch`) and where the marks sit (`edges` or `plate`). Add the `default` row and a
        `command-lens` row that FE_04 completes. The template reads a row, never a skin's name.
@@ -61,7 +68,9 @@ state; the page's clicks, menus opening and acts are FE_02. Extend the pattern; 
 4. [ ] **Template**, when `opts.edges` is set: no footer; the number is a button (Bookmark, pressed when set);
        the kind tab, or for a node with an icon a grip and a kind word; the answer disc on nodes that ask; the
        change badge bottom left (it opens the history box, which also holds the "N updates" stepper); the notes
-       mark bottom right; the icon tile; `data-tone`. Proposal, handover and the other states as DESIGN_01 placed
+       mark bottom right; the icon tile; the tone: `data-tone="<name>"` for a palette name, and for a hue the
+       element sets `--vb-tone-h` with `style.setProperty` from the checked number (a `style` attribute in the
+       markup may be blocked by the page's CSP; check it). Proposal, handover and the other states as DESIGN_01 placed
        them. With `opts.edges` unset the markup is byte-for-byte what it is today.
 5. [ ] **Menus** as markup only, one fixed-size menu look: the number menu (Bookmark, Save for later), the answer
        picker (Tick, Cross; it opens beside the disc), the right-click list (the six actions with their keys; no
@@ -83,6 +92,7 @@ state; the page's clicks, menus opening and acts are FE_02. Extend the pattern; 
 - [ ] `npm run verify`, `npm run check`, `npm test` pass; the new page spec passes with `?flags=nodeEdges`
 - [ ] With the flag off: `npm run test:pages -- every-node.spec.ts gallery.spec.ts board.spec.ts` passes with no
       new baseline
+- [ ] A library icon draws from its paths; a missing one and one with a failing path draw the plain tile (tests)
 - [ ] axe finds nothing on the new gallery sections; every mark is reachable and named by keyboard
 - [ ] Side by side with `design/mockups/node-skins/default-skin-*.html` in a browser, light and dark, the node
       matches; differences are listed in your notes with the reason

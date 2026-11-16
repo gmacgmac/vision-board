@@ -14,11 +14,15 @@ board.
 
 ## Context
 
-PLAN.md § Decisions 13, 14, 17, 21 and § Planner's calls 2, 4. Colour literals live only in
+PLAN.md § Decisions 13, 14, 17, 21 and § Planner's calls 2, 4. A tone is a palette name or a hue (decision 17;
+the ledger review's § 4 O3, row R26): the board derives every tint from the hue, so the tints are built, not
+listed, and contrast is proven by a sweep. Colour literals live only in
 `packages/tokens/src/tokens.css`, each as one `light-dark()` value fronted by its `--vb-host-*` where a host may give
 it (`CODE-MAP.md` § 11). That file is protected: this task changes it under decision 13 and lists its exact diff.
 The mockups' values are in the `<style>` of `design/mockups/node-skins/*.html`; they were picked by eye, so measure
 them.
+
+You run in your own git worktree beside BE_03 and BE_04 (PLAN.md § House Rules; TASK-STATUS.md § File Ownership).
 
 **Read previous task notes in TASK-STATUS.md before starting.**
 
@@ -28,12 +32,14 @@ them.
 
 - **Files to modify**: `packages/tokens/src/tokens.css`, `packages/tokens/src/` (a new `skins.css`, `fonts.css`),
   `packages/tokens/fonts/` (new), `packages/tokens/README.md`, `packages/tokens/tests/` or the contrast tests that
-  list token pairs, `apps/board/plugin/theme.css`, `apps/board/server/` (only to serve the font files and keep the
-  CSP right), `apps/board/vite*.config.ts` (only so the build and the plugin build carry the fonts),
+  list token pairs, `apps/board/plugin/theme.css`, `apps/board/server/static.ts` and `app.ts` (only to serve the
+  font files and keep the CSP right), `apps/board/vite*.config.ts` (only so the build and the plugin build carry the fonts),
   `docs/specification/dependencies.md`, `docs/specification/plugin.md` § Theme and host styling, `tests/plugin/`
-  (one test that the built plugin carries its fonts)
+  (one new test that the built plugin carries its fonts; not `contract/nclite/shared/`, which is BE_03's in this
+  wave)
 - **Files to reference**: `design/mockups/node-skins/*.html`; `tests/pages/apca.ts`; `apps/board/tests/plugin-theme.test.ts`;
-  `packages/format/src/view.ts` (`TONES`, `SKINS`, from T_01)
+  `packages/format/src/view.ts` (`TONES`, the tone's hue, `SKINS`, from T_01); the review § 4 O3 ("How the board
+  draws it"); `scripts/verify-style.mjs` (`FUNC`: channels given as variables pass)
 - **Skills**: `cortex-architecture`, `cortex-docs`
 
 > Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
@@ -44,10 +50,20 @@ them.
 
 1. [ ] **Semantic tokens** for: the answer (waiting, ticked fill, crossed fill, the mark on a fill), the bookmark
        (fill and ink; it replaces `--vb-state-flag`, which stays as an alias until FE_02 removes its last use), the
-       notes mark (quiet, counted, unread), the change badge (new, updated, settled), the icon tile, one
-       `--vb-tone-<name>` per name in `TONES`, selection (how much brighter and thicker), and the minimum mark size
-       FE_05 uses. Decision's new colour (decision 13) applies only under `[data-vb-edges]`, the root attribute
+       notes mark (quiet, counted, unread), the change badge (new, updated, settled), the icon tile, selection (how
+       much brighter and thicker), and the minimum mark size FE_05 uses. Decision's new colour (decision 13) applies only under `[data-vb-edges]`, the root attribute
        FE_02 sets when `nodeEdges` is on, so no existing screenshot changes; T_04 makes it the token's own value.
+1a. [ ] **Tones from a hue** (R26): one hue property, `--vb-tone-h`, which FE_01 sets on a node from the checked
+       number (never from text). Each name in `TONES` is a fixed hue token (`--vb-tone-hue-<name>`), so a name and
+       a number go through one derivation. The tints (the body, the top line, the icon tile, and their borders) are
+       built in `tokens.css` with `oklch()` from lightness and strength tokens per theme and per skin plus that hue;
+       a name with almost no colour (`slate`) gets its own strength. Text on a tint carries no hue. Check that
+       `oklch()` renders in Chromium and in WebKit (`npm run test:plugin:webkit`; nclite's webview) and record what
+       you saw; if WebKit fails, stop and report.
+1b. [ ] **The sweep**: a contrast test over all 360 hues and every palette name, light and dark, each skin, each
+       tinted surface against the text and marks drawn on it, at the project's tiers. Tune the lightness and
+       strength tokens until it passes. Report any hue whose tint reads as the notes pink or Tick's green or Cross's
+       red (call 2); no hue band is refused unless the maintainer says so.
 2. [ ] **Measure** every new foreground and background pair with APCA in light and dark and add it to the pair
        list the tests check (Lc 60 reading text, 45 short coloured labels, 30 decoration). A failing colour is fixed
        by lightness within its hue. Report any pair you could not bring to its tier.
@@ -77,7 +93,8 @@ them.
 ## Validation
 
 - [ ] `npm run verify` (no colour literal outside the tokens), `npm run check`, `npm test`, `npm run test:plugin` pass
-- [ ] The contrast tests list and pass every new pair, light and dark
+- [ ] The contrast tests list and pass every new pair, light and dark, and the hue sweep passes for every hue, name,
+      theme and skin
 - [ ] With the network blocked (the page tests' default) the board loads its fonts from itself; with the font
       files removed it falls back with no error
 - [ ] With no flag on, `npm run test:pages -- board.spec.ts every-node.spec.ts host-styles.spec.ts` passes with no

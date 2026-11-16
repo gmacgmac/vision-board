@@ -14,11 +14,15 @@ and two buttons, Add note and Ask now.
 
 ## Context
 
-PLAN.md § Decision 5 and § Planner's call 1. The look is the conversation section of
+PLAN.md § Decision 5 and § Planner's call 1. Ask now is node-scoped: it sends that one message for that node at
+once, apart from the board's Send, and the ledger records it as an `ask` act naming the lines it carried and the
+context the agent was given (T_01; the ledger review § 4 O6). Add note keeps the note for the board's Send, as
+today. The look is the conversation section of
 `design/mockups/node-skins/default-skin-*.html`. Today `vb-note-bubble` has four modes (new, edit, sent, thread);
 "Conversation on N" is thread mode and has no field (`CODE-MAP.md` § 10). Extend that pattern: with `nodeEdges` on,
-opening a node's notes always opens the thread with its field. Nothing sends one note straight to the agent today;
-Ask now is Add note followed by the board's Send.
+opening a node's notes always opens the thread with its field. Send (`controller.ts` `send`, through the chat
+bridge's `boardSend`) is how a message reaches the agent today; Ask now goes the same way with an `ask` act in
+place of the `send` act, so the agent reads it through `check_responses` (T_01's `pending.ts`).
 
 **Read previous task notes in TASK-STATUS.md before starting.**
 
@@ -28,13 +32,16 @@ Ask now is Add note followed by the board's Send.
 
 - **Files to modify**: `packages/ui/src/note-bubble/` (core, template, element, styles, `pattern.json`),
   `packages/ui/src/words/note-bubble.ts`, `packages/ui/tests/`, `apps/board/src/board/notes/`,
-  `apps/board/src/board/words/notes.ts`, `apps/board/src/gallery/note-bubble-section.ts`, `tests/pages/`,
+  `apps/board/src/board/words/notes.ts`, `apps/board/src/board/boards/kept-view.ts` (the setting),
+  `apps/board/src/board/controller.ts` and `controller/` (Ask now's path beside `send`),
+  `apps/board/src/gallery/note-bubble-section.ts`, `tests/pages/`,
   `docs/specification/components.md`
 - **Files to reference**: `CODE-MAP.md` § 10; `packages/ui/src/note-bubble/note-bubble-core.ts` (`placeBubble`,
   `bubbleView`, `saveIntent`, `cancelIntent`, `NOTE_DISCARD_EVENT`); `apps/board/src/board/notes/notes.ts`
   (`openWith`); `apps/board/src/board/controller.ts` (`send`); `apps/board/src/shell/chat-panel.ts` (`boardSend`);
   tracker M24 and M35 (unsaved words)
-- **Shared artifacts to reuse**: T_02's tokens; FE_01's icons
+- **Shared artifacts to reuse**: T_02's tokens; FE_01's icons; T_01's `ask` act, `ASK_CONTEXTS` and the fold's
+  asked lines (`unsent.ts`, `note-lock.ts`)
 - **Skills**: `cortex-architecture`, `cortex-docs`
 
 > Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
@@ -48,9 +55,20 @@ Ask now is Add note followed by the board's Send.
        line that grows to three and then scrolls. It sits beside the node on the side with room, top-aligned,
        with a pointer at the node, floats over neighbours and never moves them, and scales with the board.
 2. [ ] **Two buttons** sharing the width: **Add note** (Enter) writes the `comment` act as today and keeps the box
-       open; **Ask now** (Cmd or Ctrl Enter) writes the note and then runs the board's Send. Shift Enter is a new
-       line. The keys are in the buttons' tooltips. While Send is not possible (no agent, read-only, a turn
-       running) Ask now is disabled and its tooltip says why, from the existing words.
+       open; the note waits, unsent, for the board's Send. **Ask now** (Cmd or Ctrl Enter) sends the node's note at
+       once and then writes the `ask` act with `lines` (the note's `seq`) and `context`, as a Send is written once
+       the message went (D-075). A node holds at most one unsent note (`api.md` 59): if it has one, Ask now sends
+       it, with any words in the field saved to it first as an edit; if not, it writes the field's words as the
+       note and sends that. DESIGN_01's open choice on queued notes, as the maintainer answered it at the wave-4
+       gate, decides any difference. Ask now never sends the board's other unsent answers; they stay unsent.
+       Shift Enter is a new line. The keys are
+       in the buttons' tooltips. While a message cannot go (no agent, read-only, a turn running) Ask now is disabled
+       and its tooltip says why, from the existing words.
+2a. [ ] **The context setting** (call 1): `askContext`, a page setting kept as the board's other page settings are
+       (`apps/board/src/board/boards/kept-view.ts`; the host's store under a host), default `board`, recorded on
+       every `ask`. This set builds what `board` gives the agent (the asked note with the board, as Send gives
+       it); `node` and `session` stay values of the contract only, so the setting has no control on screen until a
+       second mode is built (a tracker row).
 3. [ ] **States**: empty (no notes yet: only the field), a note not yet sent (it can still be edited or removed,
        as today's edit mode allows), sending, sent, a reply arriving while the box is open, failed (the words stay
        in the field), closed with unsaved words (ask before discarding, as today).
@@ -70,6 +88,8 @@ Ask now is Add note followed by the board's Send.
       and `popover-thread.spec.ts` pass with the flag off and no new baseline
 - [ ] Words typed in the field survive a redraw of the board, a failed write and an accidental Escape (tests)
 - [ ] Enter never sends to the agent; only Ask now does (test)
+- [ ] Ask now writes one `ask` with the note's `seq` and `context: "board"`, leaves the board's other unsent
+      answers unsent, locks the asked note, and the next Send does not carry it (tests)
 - [ ] The box is usable by keyboard alone and axe finds nothing
 
 ---
