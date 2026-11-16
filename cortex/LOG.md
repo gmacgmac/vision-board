@@ -561,3 +561,4 @@
 [[2026-11-16 09:30]] [project-docs] Dropped M6: replaced by the node overhaul (U14 to U20), maintainer point 207 → Notes: `cortex-tasks/tracker.md`
 [[2026-11-16 09:30]] [project-docs] Dropped L1: replaced by the node overhaul (U14 to U20), maintainer point 207 → Notes: `cortex-tasks/tracker.md`
 [[2026-11-16 09:30]] [project-docs] Tracker L8 (a radial view for relationship nodes), U14 skin per board, U16 radial stays, N47 container seen decided; decisions draft DD-18 (skin per board), DD-19 (seen), DO-05 (seen on a read-only board) → Notes: `cortex-tasks/board/2026-11-11_board-ui_app-window-handover/design-decisions.md` (`Settled`)
+[[2026-11-16 10:00]] [project-docs] Dropped U1: board v3 items 7 (decision flow mode) and 8 (the plan's verification) are replaced by the node overhaul (N51 branching, U16 layout review), maintainer point 209 → Notes: `cortex-tasks/tracker.md`
