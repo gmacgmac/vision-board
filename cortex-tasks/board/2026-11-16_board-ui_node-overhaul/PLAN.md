@@ -246,6 +246,10 @@ wave 1 and records any change here.
   details come from the ledger review.
 - **Agent colours (point 242)**: a node's tone is a palette name or any hue the agent picks; the board derives the
   tints from the hue so contrast passes in light and dark (T_01 contract, T_02 tokens).
+- **How the agent uses tone (point 246)**: a node's kind keeps its own colour by default; when the kind already says
+  it, leave the tone off. Use tone where it helps the person read the board: to set apart parts of a flow, and to
+  show which nodes belong together (the same tone means related), for example a flow of many topic nodes. A few
+  bullets in the skill (T_03). The feature can be turned off later without changing the contract.
 - **Call 7 changed: flow direction has a default per view**, set by whoever writes the view, and the person can
   change it on the board. Where it is stored comes from the ledger review; BE_01 and FE_07 are amended before they run.
 - **Calls 8 and old code: no legacy.** T_04 makes the new node the only node and deletes the old footer, the flags
