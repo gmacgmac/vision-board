@@ -86,9 +86,24 @@ const toFormat12: UpgradeStep = {
   },
 };
 
-/** The steps from format 2, oldest first, one per format below LEDGER_FORMAT. T_01 appends 19 to 20. */
+/** The person's private mark format 20 renamed (D-099 2, api.md 182): `flag` is `bookmark`, `unflag` `unbookmark`. */
+const BOOKMARKED: Readonly<Record<string, string>> = { flag: 'bookmark', unflag: 'unbookmark' };
+
+/** Format 20 renamed the flag Bookmark: a `flag` or `unflag` act becomes a `bookmark` or `unbookmark`. Nothing else
+ * changes; every other line only takes the new format. */
+const toFormat20: UpgradeStep = {
+  from: 19,
+  to: 20,
+  up(line) {
+    const out = stamped(line, 20);
+    if (line.type === 'act' && typeof line.action === 'string' && Object.hasOwn(BOOKMARKED, line.action)) out.action = BOOKMARKED[line.action];
+    return out;
+  },
+};
+
+/** The steps from format 2, oldest first, one per format below LEDGER_FORMAT. */
 export const FORMAT_STEPS: readonly UpgradeStep[] = [
   fromFormat2,
   restamp(3), restamp(4), toFormat6, restamp(6), restamp(7), restamp(8), restamp(9), toFormat11, toFormat12,
-  restamp(12), restamp(13), restamp(14), restamp(15), restamp(16), restamp(17), restamp(18),
+  restamp(12), restamp(13), restamp(14), restamp(15), restamp(16), restamp(17), restamp(18), toFormat20,
 ];

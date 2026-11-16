@@ -38,6 +38,8 @@ function oldEventBoard(s: LedgerState, e: LedgerEvent): string | undefined {
 /** pending.ts `cardsOfAct`. */
 function oldCardsOfAct(s: LedgerState, e: ActEvent): number[] {
   if (e.nodes) return e.nodes;
+  // An ask is v20 (api.md 188), newer than the definitions it replaced: the cards of the notes it carried.
+  if (e.action === 'ask') return [...new Set(e.lines!.flatMap((seq) => { const a = s.asks.get(seq); return a ? cardsOf(a) : []; }))];
   const ask = e.note === undefined ? undefined : s.asks.get(e.note);
   if (ask) return cardsOf(ask);
   return e.id === undefined ? [] : [e.id];
@@ -121,8 +123,8 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:send', l.act({ action: 'send', board: 'b' }), { board: 'b', cards: [] });
   at('a card in Later', l.agent(A, { type: 'reply', n: 1, text: 'Parked.' }), on('b', LATER_REGION, [1]));
   l.v = 12; // api.md 126, 128
-  at('act:flag', l.act({ action: 'flag', n: 3 }), on('b', 'q', [3]));
-  at('act:unflag', l.act({ action: 'unflag', n: 3 }), on('b', 'q', [3]));
+  at('act:bookmark', l.act({ action: 'bookmark', n: 3 }), on('b', 'q', [3]));
+  at('act:unbookmark', l.act({ action: 'unbookmark', n: 3 }), on('b', 'q', [3]));
   at('retire', l.agent(B, { type: 'retire', board: 'b', cards: [3] }), { board: 'b', cards: [3] });
   l.v = 14; // api.md 135
   at('act:archive', l.act({ action: 'archive', board: 'b2' }), { board: 'b2', cards: [] });
@@ -137,6 +139,13 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   l.v = 18; // api.md 156: the hidden notes name a card, as the flag does (card 2 was moved to Later)
   at('act:notes-hide', l.act({ action: 'notes-hide', n: 2 }), on('b', LATER_REGION, [2]));
   at('act:notes-show', l.act({ action: 'notes-show', n: 2 }), on('b', LATER_REGION, [2]));
+  l.v = 20; // api.md 183-189: a skin is on its board; a direction on its container or board; an ask on the cards of the
+  // notes it carried; an icon is the project's, on no board; a container seen on its container.
+  at('act:skin', l.act({ action: 'skin', board: 'b', skin: 'command-lens' }), { board: 'b', cards: [] });
+  at('act:direction', l.act({ action: 'direction', board: 'b', region: 'q', direction: 'down' }), on('b', 'q'));
+  const note = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why now?' });
+  at('act:ask', l.act({ action: 'ask', board: 'b', lines: [note], context: 'board' }), { board: 'b', cards: [1] });
+  at('icon', l.agent(A, { type: 'icon', name: 'x-encoder', hash: 'c'.repeat(64) }), { cards: [] });
   return { l, want };
 }
 

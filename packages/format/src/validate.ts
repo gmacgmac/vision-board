@@ -2,6 +2,7 @@ import { FORBIDDEN_KEYS, FORMAT_VERSION, ID_PATTERN, KINDS, MODES } from './view
 import type { View } from './view.ts';
 import { NODE_SIZES } from './ledger.ts';
 import { appNodeRules, appRefProblems } from './app-shape.ts';
+import { directionProblems, iconProblems, toneProblems } from './view-shape.ts';
 import * as formatViewWords from './words/format-view.ts';
 import * as formatCommonWords from './words/format-common.ts';
 import { isRecord } from './records.ts';
@@ -32,6 +33,7 @@ export function validateView(input: unknown): string[] {
     if (!MODES.includes(r.mode as never)) p.push(formatViewWords.modeOneOf(at, MODES.join(', ')));
     if (r.mode === 'lanes' && (!Array.isArray(r.lanes) || r.lanes.length === 0))
       p.push(formatCommonWords.lanesRequiredForLanesMode(at));
+    if (r.direction !== undefined) directionProblems(r.direction, `${at}.direction`, p);
   });
 
   const nodeIds = new Set<string>();
@@ -50,6 +52,8 @@ export function validateView(input: unknown): string[] {
     if (!isStr(n.title)) p.push(formatViewWords.titleRequired(at));
     if (n.size !== undefined && !NODE_SIZES.includes(n.size as never)) p.push(formatViewWords.sizeOneOf(at, NODE_SIZES.join(', ')));
     if (n.app !== undefined) appRefProblems(n.app, `${at}.app`, p);
+    if (n.icon !== undefined) iconProblems(n.icon, `${at}.icon`, p);
+    if (n.tone !== undefined) toneProblems(n.tone, `${at}.tone`, p);
     appNodeRules(n, at, p);
     if (n.n !== undefined) {
       if (!Number.isInteger(n.n) || (n.n as number) < 1) p.push(`${at}.n: integer >= 1`);

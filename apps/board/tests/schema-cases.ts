@@ -4,8 +4,8 @@
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 19, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 19, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 20, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 20, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -32,6 +32,7 @@ export const VALID: Record<string, Rec> = {
   seen: { ...PERSON, type: 'seen', n: 1, ver: 1 },
   act: { ...PERSON, type: 'act', action: 'ack', n: 1, ver: 1 },
   retire: { ...AGENT, type: 'retire', board: 'b', cards: [3], key: 'x-1' },
+  icon: { ...AGENT, type: 'icon', name: 'x-encoder', hash: 'b'.repeat(64), key: 'i-1' },
 };
 export const ACTS: Record<string, Rec> = {
   ack: { n: 1, ver: 1 }, drop: { n: 1, ver: 1, proposal: 4 }, comment: { n: 1, ver: 1, text: 'Why?' },
@@ -40,11 +41,13 @@ export const ACTS: Record<string, Rec> = {
   deny: { request: 5, text: 'Not this one.' }, revoke: { holder: 'a-abcd1234', board: 'b', region: 'plan' },
   size: { n: 1, size: 'auto' }, send: { board: 'b' },
   'note-edit': { n: 1, note: 7, text: 'Why per seat, not per use?', kind: 'context' }, 'note-remove': { n: 1, note: 7 },
-  move: { n: 1, ver: 1, region: 'plan' }, reject: { n: 1, proposal: 4 }, flag: { n: 1 }, unflag: { n: 1 },
+  move: { n: 1, ver: 1, region: 'plan' }, reject: { n: 1, proposal: 4 }, bookmark: { n: 1 }, unbookmark: { n: 1 },
   'notes-hide': { n: 1 }, 'notes-show': { n: 1 },
   widths: { board: 'b', region: 'plan', widths: 'match' }, archive: { board: 'b' }, restore: { board: 'b' },
   lock: { board: 'b' }, unlock: { board: 'b' },
   'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
+  skin: { board: 'b', skin: 'command-lens' }, ask: { board: 'b', lines: [7], context: 'board' },
+  direction: { board: 'b', region: 'plan', direction: 'down' },
 };
 export const act = (action: string, extra: Rec = {}) => ({ ...PERSON, type: 'act', action, ...ACTS[action], ...extra });
 
@@ -94,7 +97,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v20', patch(V.board!, 'v', 20)],
+  ['unknown format v21', patch(V.board!, 'v', 21)],
   ['head on an act that is no send', act('ack', { head: 1 })],
   ['a send head below 0', act('send', { head: -1 })],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
@@ -218,12 +221,15 @@ export const BROKEN: [string, Rec][] = [
   ['retire with n (a stored line names cards)', { ...V.retire!, n: 3 }],
   // api.md 141: the person writes a `retire` line from v16 only.
   ['retire written by a person before v16', { ...V.retire!, v: 15, by: 'person', agent: undefined, key: undefined }],
-  // api.md 128: the flag names one card, and nothing else.
-  ['flag without n', act('flag', { n: undefined })],
-  ['flag with a version', act('flag', { ver: 1 })],
-  ['flag of a container', act('flag', { n: undefined, ...CONTAINER })],
-  ['unflag of a group', act('unflag', { n: undefined, nodes: [1, 2] })],
-  // api.md 156: the hidden notes name one card, and nothing else, like the flag.
+  // api.md 128, 182: the bookmark names one card, and nothing else.
+  ['bookmark without n', act('bookmark', { n: undefined })],
+  ['bookmark with a version', act('bookmark', { ver: 1 })],
+  ['bookmark of a container', act('bookmark', { n: undefined, ...CONTAINER })],
+  ['unbookmark of a group', act('unbookmark', { n: undefined, nodes: [1, 2] })],
+  // api.md 182: the flag was renamed Bookmark; no line names it, and the chain migrates older ones.
+  ['flag (renamed bookmark)', { ...PERSON, type: 'act', action: 'flag', n: 1 }],
+  ['unflag (renamed unbookmark)', { ...PERSON, type: 'act', action: 'unflag', n: 1 }],
+  // api.md 156: the hidden notes name one card, and nothing else, like the bookmark.
   ['notes-hide without n', act('notes-hide', { n: undefined })],
   ['notes-hide with a version', act('notes-hide', { ver: 1 })],
   ['notes-hide of a container', act('notes-hide', { n: undefined, ...CONTAINER })],

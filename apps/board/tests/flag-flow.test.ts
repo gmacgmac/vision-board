@@ -29,7 +29,7 @@ function state(flags = true) {
     agent({ type: 'board', board: 'b', title: 'B' }), agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
     card('b', 3), card('b', 4, 'finding'), card('b', 5), card('b', 6),
     person({ type: 'act', action: 'comment', n: 3, ver: 1, text: 'Why?' }),
-    ...(flags ? [person({ type: 'act', action: 'flag', n: 6 }), person({ type: 'act', action: 'flag', n: 4 }), person({ type: 'act', action: 'flag', n: 1 })] : []),
+    ...(flags ? [person({ type: 'act', action: 'bookmark', n: 6 }), person({ type: 'act', action: 'bookmark', n: 4 }), person({ type: 'act', action: 'bookmark', n: 1 })] : []),
   ];
   const { events, problems } = readLedger(lines);
   assert.deepEqual(problems, []);
@@ -38,14 +38,14 @@ function state(flags = true) {
 
 test('the flagged cards on the open board, by board number, in number order', () => {
   const b = boardData(state(), 'b');
-  assert.deepEqual([...b.state.flags].sort(), ['2', '4'], 'the ledger\'s 4 and 6 are board b\'s 2 and 4');
-  assert.deepEqual(flaggedIds(b.view, b.state.flags), ['2', '4']);
-  assert.deepEqual([...boardData(state(), 'a').state.flags], ['1'], 'board a has its own');
+  assert.deepEqual([...b.state.bookmarks].sort(), ['2', '4'], 'the ledger\'s 4 and 6 are board b\'s 2 and 4');
+  assert.deepEqual(flaggedIds(b.view, b.state.bookmarks), ['2', '4']);
+  assert.deepEqual([...boardData(state(), 'a').state.bookmarks], ['1'], 'board a has its own');
 });
 
 test('a press sends flag or unflag naming the card by its number, with no version', () => {
-  assert.deepEqual(flagAct('2', false), { action: 'flag', n: 2 });
-  assert.deepEqual(flagAct('2', true), { action: 'unflag', n: 2 });
+  assert.deepEqual(flagAct('2', false), { action: 'bookmark', n: 2 });
+  assert.deepEqual(flagAct('2', true), { action: 'unbookmark', n: 2 });
 });
 
 test('the chip steps through the flagged cards from the focused one, wrapping', () => {
@@ -72,7 +72,7 @@ test('the flow: a press records the act; the chip focuses the next drawn flagged
   await flow.toggle('2');
   await flow.toggle('3');
   await flow.toggle('99');
-  assert.deepEqual(sent, [{ action: 'unflag', n: 2 }, { action: 'flag', n: 3 }], 'a card the board does not have sends nothing');
+  assert.deepEqual(sent, [{ action: 'unbookmark', n: 2 }, { action: 'bookmark', n: 3 }], 'a card the board does not have sends nothing');
   flow.next();
   focused = null; // a press on the chip took focus off the card
   flow.next();

@@ -107,7 +107,7 @@ function onCards(s: LedgerState, e: ActEvent): Scope {
 const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   ack: onCards, drop: onCards, later: onCards, reopen: onCards, size: onCards,
   comment: onCards, context: onCards, 'note-edit': onCards, 'note-remove': onCards, pin: onCards, unpin: onCards,
-  reject: onCards, flag: onCards, unflag: onCards, 'notes-hide': onCards, 'notes-show': onCards,
+  reject: onCards, bookmark: onCards, unbookmark: onCards, 'notes-hide': onCards, 'notes-show': onCards,
   move: (s, e) => ({ ...onCards(s, e), container: e.region! }),
   mode: onContainer, widths: onContainer, revoke: onAccess,
   grant: (s, e) => R.request.lookup(s, e.request!) ?? none(),
@@ -119,6 +119,11 @@ const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   unlock: (s, e) => R.board.lookup(s, e.board!),
   // An allow is on its app, which is on no board and no card (api.md 150).
   'app-allow': none, 'app-revoke': none,
+  skin: (s, e) => R.board.lookup(s, e.board!),
+  // A flow's direction is on its container, or with no `region` on the whole board (api.md 189).
+  direction: (s, e) => (e.region === undefined ? R.board.lookup(s, e.board!) : onContainer(s, e)),
+  // An ask is on its board and on every card of the notes it carried (api.md 188).
+  ask: (s, e) => ({ ...R.board.lookup(s, e.board!), cards: [...new Set(e.lines!.flatMap((seq) => R.note.lookup(s, seq)?.cards ?? []))] }),
 };
 
 type Rule<T extends LedgerEvent['type']> = (s: LedgerState, e: LedgerEvent & { type: T }) => Scope;
@@ -134,10 +139,12 @@ const EVENT_SCOPES: { [T in LedgerEvent['type']]: Rule<T> } = {
   reply: (s, e) => onCard(s, e.id),
   propose: (s, e) => onCard(s, e.id),
   park: (s, e) => onCard(s, e.id),
-  seen: (s, e) => ('id' in e ? onCard(s, e.id) : R.board.lookup(s, e.board)),
+  seen: (s, e) => ('id' in e ? onCard(s, e.id) : e.region === undefined ? R.board.lookup(s, e.board) : onContainer(s, e)),
   // A retire is on its board, or the container it names, and on every card it took (api.md 126).
   retire: (s, e) => ({ ...(e.region === undefined ? R.board.lookup(s, e.board) : R.container.lookup(s, { board: e.board, region: e.region })), cards: [...e.cards] }),
   join: none,
+  // A library icon is the project's, on no board (api.md 185): its line moves no board's head.
+  icon: none,
   act: (s, e) => ACT_SCOPES[e.action](s, e),
 };
 

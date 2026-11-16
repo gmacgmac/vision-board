@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json",
+  "title": "Icon event",
+  "description": "Which drawing a name of the project's icon library means: the SHA-256 of its file in `.visionboard/icons/`. Written by an agent (add_icon, or the server when a node first names a library icon) or by the person (accepting a changed drawing). It names no board.",
+  "$comment": "Was: api.md 185, D-100 3",
+  "$defs": {
+    "core": {
+      "type": "object",
+      "required": [
+        "name",
+        "hash"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName",
+          "description": "The icon's name: `x-`, then what it shows."
+        },
+        "hash": {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/iconHash",
+          "description": "The SHA-256 of the icon's file, in lowercase hex."
+        }
+      }
+    },
+    "sent": {
+      "description": "The person's accept of a changed drawing, as the page sends it: the name and the new file's hash.",
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "icon"
+        },
+        "key": {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/key"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/core"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "stored": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "icon"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/stamp"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/stampAgent"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/core"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/rules"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "by": {
+              "enum": [
+                "agent",
+                "person"
+              ],
+              "description": "Who wrote the line: `agent`, or from v20 `person` (accepting a changed drawing)."
+            },
+            "key": {
+              "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/key"
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "rules": {
+      "description": "A person's line is from v20, as is every icon line.",
+      "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 185",
+      "type": "object",
+      "if": {
+        "type": "object",
+        "required": [
+          "by"
+        ],
+        "properties": {
+          "by": {
+            "const": "person"
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "v": {
+            "const": 20
+          }
+        }
+      }
+    }
+  }
+}

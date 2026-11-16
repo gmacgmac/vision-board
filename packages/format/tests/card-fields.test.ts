@@ -62,7 +62,7 @@ test('the table as it stands; an unknown type has no card fields', () => {
     node: [{ field: 'n' }, { field: 'after', in: 'insert' }, { field: 'before', in: 'insert' }],
     link: [{ field: 'from' }, { field: 'to' }], unlink: [{ field: 'from' }, { field: 'to' }],
     act: [{ field: 'n' }, { field: 'nodes', list: true }], seen: [{ field: 'n' }], reply: [{ field: 'n' }],
-    propose: [{ field: 'n' }], park: [{ field: 'n' }], join: [], 'grant-request': [],
+    propose: [{ field: 'n' }], park: [{ field: 'n' }], join: [], 'grant-request': [], icon: [],
     retire: [{ field: 'cards', list: true }, { field: 'n' }], append: [{ field: 'n' }],
   });
   assert.deepEqual([cardFields('nope'), cardFields('constructor'), cardFields(undefined)], [[], [], []]);

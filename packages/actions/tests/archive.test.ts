@@ -114,7 +114,7 @@ test('on an archived board every other act is refused until it is restored', () 
   const s = l.state();
   const acts = [
     { action: 'ack', id: 4, ver: 1 }, { action: 'comment', id: 4, ver: 1, text: 'Why?' }, { action: 'send', board: 'b2' },
-    { action: 'mode', board: 'b2', region: 'x', mode: 'flow' }, { action: 'flag', id: 4 },
+    { action: 'mode', board: 'b2', region: 'x', mode: 'flow' }, { action: 'bookmark', id: 4 },
   ];
   for (const a of acts) assert.deepEqual(validateAct(asAct(s, a), s, 'b2'), ['board: "b2" is archived; restore it from the board picker first'], a.action);
   l.act({ action: 'restore', board: 'b2' });

@@ -194,7 +194,7 @@ async function longNames(page: Page, request: APIRequestContext) {
     { type: 'node', node: { region: 'roles', kind: 'question', title: 'Which role first?' } }] } });
   expect(wrote.status(), await wrote.text()).toBe(200);
   const n = (await wrote.json() as { results: { n?: number }[] }).results[2]!.n!;
-  for (const action of [{ action: 'flag', n }, { action: 'lock' }]) {
+  for (const action of [{ action: 'bookmark', n }, { action: 'lock' }]) {
     const r = await page.request.post(`${srv.base}/api/boards/long-board/act`, { data: { type: 'act', board: 'long-board', ...action } });
     expect(r.status(), await r.text()).toBe(201);
   }

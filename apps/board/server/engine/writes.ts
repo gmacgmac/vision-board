@@ -184,6 +184,14 @@ const writeBoard: Op = async (ctx) => {
   return reply(200, { results, head: s.seq, pending, ...(containers.length > 0 && { containers }) });
 };
 
+/** Add a drawing to the project's icon library (api.md 186). A stub until the library is built (node-overhaul BE_04):
+ * the body is checked, then refused. */
+const addIcon: Op = async (ctx) => {
+  await body('add_icon', ctx);
+  throw problem('not-found', writesWords.addingIconsIsNotBuiltYet);
+};
+
 export const WRITES = {
   act, mark_seen: markSeen, put_board: putBoard, retire_cards: retireCards, join, request_grant: requestGrant, write_board: writeBoard,
+  add_icon: addIcon,
 } satisfies Record<string, Op>;

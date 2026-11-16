@@ -354,7 +354,8 @@ name them for the bot with the id in front (`vision-board_write_board`); the ski
 
 A bot under a host gets `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`, `check_responses`,
 `request_grant` and `write_board`, as `x-hosts` in `packages/format/schema/openapi.json` says. It does not get `join` (you name it),
-`list_apps` (the app host's) or `read_attachment` (the standalone chat's). No tool answers ✓ or ✗, or approves: those are the
+`list_apps` (the app host's), `read_attachment` (the standalone chat's), or `list_icons` and `add_icon` (the project's icon
+library, api.md 186, the standalone server's until the engine takes its `icons` folder). No tool answers ✓ or ✗, or approves: those are the
 person's, through `route`, and refused to a bot. Proven by `tools.spec.ts` "tools.list", "tools.call: every listed tool",
 "tools.call: an input", `engine-hooks.spec.ts` "route:".
 

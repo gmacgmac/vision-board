@@ -11,7 +11,7 @@ import { nodeState, nodeTemplate, regionState } from '../src/index.ts';
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '3', region: 'r', kind: 'question', title: 'T', n: 3, ...f });
 const board = (locked: boolean): BoardState => ({
   items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(),
-  regionNotes: new Map(), flags: new Set(), ...(locked && { locked: true as const }),
+  regionNotes: new Map(), bookmarks: new Set(), ...(locked && { locked: true as const }),
 });
 const region: Region = { id: 'r', title: 'R', mode: 'grid' };
 const view: View = { format: 1, session: 'b', version: 1, title: 'B', regions: [region], nodes: [node({})], links: [] };

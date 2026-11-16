@@ -14,9 +14,9 @@ test('v14 or later is the format written; v14 lines still read', () => {
   assert.ok((LEDGER_FORMATS as readonly number[]).includes(14));
 });
 
-test('archive and restore are the person\'s board marks, private like the flag', () => {
+test('archive and restore are the person\'s board marks, private like the bookmark', () => {
   for (const a of ['archive', 'restore']) assert.ok(BOARD_MARKS.has(a as never), a);
-  for (const a of ['flag', 'unflag', 'archive', 'restore']) assert.ok(PRIVATE_ACTIONS.has(a as never), a);
+  for (const a of ['bookmark', 'unbookmark', 'archive', 'restore']) assert.ok(PRIVATE_ACTIONS.has(a as never), a);
 });
 
 test('a v14 ledger: archive and restore a board that exists; an unknown board is refused', () => {

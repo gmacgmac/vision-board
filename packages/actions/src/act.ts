@@ -12,6 +12,8 @@ import { appRules } from './apps.ts';
 import { archiveRules } from './archive.ts';
 import { lockRules, writeProblem } from './lock.ts';
 import { lockOf } from './note-lock.ts';
+import { askedBy } from './asked.ts';
+import { REFERENCES } from './references.ts';
 import { containerLog } from './containers.ts';
 import { grantRequests } from './grants.ts';
 import type { Ask } from './notes.ts';
@@ -47,7 +49,36 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
   // On the app, sent from any board one of its cards is on (api.md 150).
   'app-allow': (e, s, _board, p) => appRules(e, s, p),
   'app-revoke': (e, s, _board, p) => appRules(e, s, p),
+  // A board's skin (api.md 183), on the board it was sent to.
+  skin: (e, s, board, p) => {
+    onBoard(e.board, board, p);
+    if (!s.boards.has(e.board!)) p.push(actionsRefusalsWords.boardUnknown(String(e.board)));
+  },
+  // A flow's direction (api.md 189): a container on the board it was sent to, or with none the whole board.
+  direction: (e, s, board, p) => {
+    if (e.region !== undefined) return onContainer(e, s, board, p);
+    onBoard(e.board, board, p);
+    if (!s.boards.has(e.board!)) p.push(actionsRefusalsWords.boardUnknown(String(e.board)));
+  },
+  ask: (e, s, board, p) => askProblems(e, s, board, p),
 };
+
+/** An ask (Ask now, api.md 188): on the board it was sent to, and each line it carried a note of the person's on that
+ * board, not removed, not sent and not asked before. */
+function askProblems(e: ActEvent, s: LedgerState, board: string | undefined, p: string[]): void {
+  onBoard(e.board, board, p);
+  if (!s.boards.has(e.board!)) return void p.push(actionsRefusalsWords.boardUnknown(String(e.board)));
+  for (const seq of e.lines!) {
+    const a = s.asks.get(seq);
+    const on = REFERENCES.note.lookup(s, seq)?.board;
+    if (!isNote(a)) p.push(actionsRefusalsWords.linesIsNotANote(seq));
+    else if (on !== e.board) p.push(actionsRefusalsWords.linesNoteIsOnBoard(seq, String(on), e.board!));
+    else if (a.removed !== undefined) p.push(actionsRefusalsWords.linesNoteWasRemoved(seq));
+    else if (askedBy(s, e.board!, seq)) p.push(actionsRefusalsWords.linesNoteWasAsked(seq));
+    else if (lockOf(s, e.board!, a) === 'sent') p.push(actionsRefusalsWords.linesNoteWasSent(seq));
+    else if (a.person !== e.person) p.push(actionsRefusalsWords.linesNoteIsNotYours(seq));
+  }
+}
 
 /** A move (3_FE_03 rulings 1 and 6, api.md 66): every card on one board, the one the act was
  * sent to; the container one of that board's, or its Later, which takes only cards whose kind can

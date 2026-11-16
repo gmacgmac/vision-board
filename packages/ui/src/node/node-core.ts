@@ -234,7 +234,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const proposal = oneTab ? changeTab(n, own, updates) : own;
   const fresh = isItem(n) && c.new === true;
   const notes = notesView(n, s.items.get(n.id)?.notes ?? [], litReplies(c.replies, c.new === true || (!!updates && !updates.done)), s.notesHidden?.get(n.id), c.groupNotesApart);
-  const flagged = isItem(n) && s.flags.has(n.id);
+  const flagged = isItem(n) && s.bookmarks.has(n.id);
   const app = n.kind === 'app' && c.app ? appView(n, c.app) : undefined;
   return {
     status,

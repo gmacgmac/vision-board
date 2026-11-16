@@ -45,10 +45,11 @@ test('a frozen ledger migrates line for line: every line current, the backup the
     assert.deepEqual(backupsOf(dir), [`ledger.f${Math.min(...formats)}-${Math.max(...formats)}.${head}.20261116T102030Z.jsonl`]);
     assert.deepEqual(fs.readFileSync(path.join(ledgerFiles(dir).backups, backupsOf(dir)[0]!)), bytes);
     assert.ok(fs.readFileSync(ledgerFiles(dir).gitignore, 'utf8').split('\n').includes('backups/'));
-    const before = readLedger(linesOf(bytes));
+    // Every line as the file held it (format 20 reads a `flag` line only migrated, so not through the reader).
+    const before = linesOf(bytes).filter(Boolean).map((l) => JSON.parse(l) as { seq: number; at: string; by: string; type: string });
     const now = readLedger(linesOf(after));
     assert.deepEqual(now.problems, []);
-    assert.deepEqual(now.events.map((e) => [e.seq, e.at, e.by, e.type]), before.events.map((e) => [e.seq, e.at, e.by, e.type]));
+    assert.deepEqual(now.events.map((e) => [e.seq, e.at, e.by, e.type]), before.map((e) => [e.seq, e.at, e.by, e.type]));
     assert.ok(linesOf(after).filter(Boolean).every((l) => (JSON.parse(l) as { v: number }).v === LEDGER_FORMAT));
     assert.equal(fs.existsSync(`${ledgerFiles(dir).ledger}${MIGRATING_SUFFIX}`), false);
   }
@@ -124,7 +125,8 @@ test('a line from a newer build, or a line the chain stops on: nothing written, 
 test('--check counts what would change and writes nothing', () => {
   const dir = folder();
   const m = planMigration(dir);
-  assert.ok(m.status === 'migrated' && m.changed === 204 && m.byFormat['7'] === 49 && m.byFormat['19'] === undefined);
+  // Every line of the mixed ledger (formats 7 to 19) changes on the way to format 20: its 47 v19 lines too.
+  assert.ok(m.status === 'migrated' && m.changed === 251 && m.byFormat['7'] === 49 && m.byFormat['19'] === 47, JSON.stringify(m));
   assert.deepEqual(ledgerOf(dir), MIXED);
   assert.deepEqual(backupsOf(dir), []);
 });

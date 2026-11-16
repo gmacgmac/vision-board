@@ -127,7 +127,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     const drew = S.drew && !full;
     S.fresh = S.drew = false;
     const d = boardData(s, S.id);
-    if (!flagging) d.state.flags.clear(); // the person's flags show only with the flag on
+    if (!flagging) d.state.bookmarks.clear(); // the person's bookmarks show only with the flag on
     if (live.readOnly && !versions.state) d.state.readOnly = true; // the reads' word, for the elements (D-085)
     S.retired = retiring ? retiredCounts(s, S.id, versionView) : new Map();
     S.drawn = d.view;

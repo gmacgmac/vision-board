@@ -19,7 +19,7 @@ export function flagSection(fx: Fixture): HTMLElement {
     return node;
   });
   const chip = el('div', 'g-toolbar vb-counts');
-  mount(FlaggedChip, { target: chip, props: { count: state.flags.size, onclick: () => undefined } });
+  mount(FlaggedChip, { target: chip, props: { count: state.bookmarks.size, onclick: () => undefined } });
   const box = el('section', 'g-section');
   box.dataset.feature = 'cardFlag';
   box.setAttribute('aria-labelledby', 'feature-cardFlag');

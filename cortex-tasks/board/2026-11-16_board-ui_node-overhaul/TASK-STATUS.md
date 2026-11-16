@@ -41,7 +41,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | BE_02 | 1 | strong | yes | Principal data engineer for event-sourced systems — a migration that can lose or reorder one line is not a migration; it proves the same board line for line, keeps a backup and gives the same bytes when run twice. | [Ledger migration](./BE_02_ledger-migration.md) | Completed | Chain, runner, command, newer read-only; 2 existing tests need `backups` (REQUESTS) |
 | 2 | DESIGN_01 | 1 | strong | no | Principal product designer — a state nobody drew is a state that ships broken; every one gets a place before a line of code. | [The states nobody drew](./DESIGN_01_undrawn-states.md) | Completed | 8 pages × dark/light in `design/mockups/node-states/`; 10 open choices in its README for the wave-3 gate |
-| 3 | T_01 | 2 | strong | no | Principal API engineer — a contract is one source; a record that needs a second reader or a field an agent can abuse never ships. | [Contract first](./T_01_contract-first.md) | Pending | |
+| 3 | T_01 | 2 | strong | no | Principal API engineer — a contract is one source; a record that needs a second reader or a field an agent can abuse never ships. | [Contract first](./T_01_contract-first.md) | Completed | Format 20 and its step; all checks green but page weight 200.7/200 KB (needs a ruling) and `npm run map` |
 | 4 | T_02 | 3 | strong | yes | Design-systems engineer — a colour has one home and a measured contrast; a skin is values, never a fork. | [Tokens, skin layer and fonts](./T_02_tokens-skins-fonts.md) | Pending | |
 | 5 | BE_03 | 3 | strong | yes | Staff engineer for data formats — one format, one reader; a version branch kept just in case is a second format nobody tests. | [One format in the reader](./BE_03_one-format-reader.md) | Pending | |
 | 6 | BE_04 | 3 | strong | yes | Application security engineer — an agent-supplied drawing is hostile until cleaned: only what the path grammar allows reaches a page, on add and on every read. | [The icon library](./BE_04_icon-library.md) | Pending | |
@@ -132,8 +132,16 @@ logged and the ledger opens as before. Requests: `backups` in `access-layout.tes
 `npm run map`, the format README's name list.
 
 ### T_01: Contract first
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1. Format 20: `bookmark`/`unbookmark` (step 19 in `FORMAT_STEPS` renames `flag`/`unflag`; `bookmarks.ts`
+`bookmarksOn`, `LedgerState`/`BoardState.bookmarks`), `BoardEvent.skin` + `skin` act (`skins.ts` `skinOf`, a rename
+keeps it), `ViewNode.icon`/`tone` (`ICON_NAMES` 50, `isLibraryIcon`, `TONES`, `isTone`), `Region.direction` + `direction`
+act (`directionOf` in `view.ts`), the `icon` line (`LedgerIndex.icons`), `ICONS_DIR`, a container `seen`
+(`containerSeenDue`, `unseenContainerReplies`), the `ask` act (`asked.ts` `askedBy`; it wakes `check_responses`),
+`list_icons`/`add_icon` stubs in `engine/reads.ts`/`writes.ts` for BE_04 to replace, flags off, `appStage` off. For BE_03:
+the reader still takes 2-20 where they lie except `flag`; `legacy-folds.test.ts` maps `flags`. For FE_02: `flag-flow.ts`
+sends `bookmark` only; the rest of the page still says flag. `verify` fails the page weight (200.7 KB, HEAD 198.7 KB):
+needs the maintainer's ruling. Requests: `npm run map`; files touched outside the list are named in the task's notes.
 
 ### DESIGN_01: The states nobody drew
 _Status:_ Completed  

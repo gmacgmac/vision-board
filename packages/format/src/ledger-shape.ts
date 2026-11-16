@@ -4,11 +4,13 @@
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
 import type { ActionId, EventType } from './ledger.ts';
 import {
-  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, BOARD_MARKS, CARD_MARKS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED, LEDGER_FORMATS, LIST_RENAMED,
-  NODE_SIZES, NOTE_KINDS, PERSON_EVENTS, PERSON_TOO,
+  ACTION_IDS, ACT_DIRECTIONS, ACT_SIZES, AGENT_EVENTS, ASK_CONTEXTS, BOARD_MARKS, CARD_MARKS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED,
+  LEDGER_FORMATS, LIST_RENAMED, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS, PERSON_TOO,
 } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, RENAMED_MODES, WIDTHS } from './view.ts';
 import { appActRules, appHashProblems, appNodeRules, appRefProblems } from './app-shape.ts';
+import { directionProblems, iconHashProblems, iconProblems, libraryIconProblems, skinProblems, toneProblems } from './view-shape.ts';
+import { v20ActRules } from './act-shape.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
 import * as formatCommonWords from './words/format-common.ts';
 import { isRecord } from './records.ts';
@@ -80,8 +82,20 @@ function fieldProblems(o: Rec, shape: Shape, prefix: string, p: string[]): void 
     p.push(prefix === 'node.' && FORBIDDEN_KEYS.includes(k)
       ? formatLedgerWords.nodeNoCoordinatesTheEngine(k) : formatLedgerWords.unknownField2(prefix, k));
   }
-  for (const [k, check] of Object.entries(shape.fields))
-    if (o[k] !== undefined || shape.req.includes(k)) check(o[k], `${prefix}${k}`, p);
+  const { entries, req } = planOf(shape);
+  for (const [k, check] of entries) {
+    const v = o[k];
+    if (v !== undefined || req.has(k)) check(v, prefix ? prefix + k : k, p);
+  }
+}
+
+/** A shape's fields in order and its required ones, worked out once per shape: every line of a ledger is checked
+ * against them, twice when it is upgraded on open (the 100,000-line start budget, performance.md). */
+const PLANS = new WeakMap<Shape, { entries: [string, Check][]; req: ReadonlySet<string> }>();
+function planOf(shape: Shape): { entries: [string, Check][]; req: ReadonlySet<string> } {
+  let plan = PLANS.get(shape);
+  if (!plan) PLANS.set(shape, plan = { entries: Object.entries(shape.fields), req: new Set(shape.req) });
+  return plan;
 }
 
 const nodeNumber = int(formatLedgerWords.nodeNumber);
@@ -104,6 +118,7 @@ const REGION: Shape = {
   fields: {
     id, title: text(LIMITS.regionTitle), mode: oneOf(LINE_MODES), lanes: list(text(LIMITS.lane), LIMITS.lanes),
     center: nodeNumber, columns: int(formatLedgerWords.wholeNumberFrom1To(LIMITS.columns), LIMITS.columns), widths: oneOf(WIDTHS),
+    direction: directionProblems,
   },
 };
 const lanesRule = (r: Rec, f: string, p: string[]) => {
@@ -116,6 +131,7 @@ const NODE: Shape = {
   fields: {
     region: id, kind: oneOf(KINDS), title: text(LIMITS.title), body: text(LIMITS.body), item: bool,
     lane: text(LIMITS.lane), tags: list(text(LIMITS.tag), LIMITS.tags), emphasis: bool, size: oneOf(NODE_SIZES), app: appRefProblems,
+    icon: iconProblems, tone: toneProblems,
   },
 };
 
@@ -131,7 +147,7 @@ const link: Shape = { req: ['from', 'to'], fields: { from: nodeNumber, to: nodeN
 
 /** Fields of each event type, besides the stamp and `type`. */
 const SHAPES: Record<EventType, Shape> = {
-  board: { req: ['board', 'title'], fields: { board: id, title: text(LIMITS.title), summary: text(LIMITS.summary), key } },
+  board: { req: ['board', 'title'], fields: { board: id, title: text(LIMITS.title), summary: text(LIMITS.summary), skin: skinProblems, key } },
   region: { req: ['board', 'region'], fields: { board: id, region: obj(REGION, lanesRule), key } },
   node: { req: ['board', 'n', 'ver', 'node'], fields: { board: id, n: int(), ver: int(), node: obj(NODE), key } },
   link, unlink: link,
@@ -143,9 +159,11 @@ const SHAPES: Record<EventType, Shape> = {
       request: int(formatLedgerWords.seqOfAGrantRequest), holder: agentId, size: oneOf(ACT_SIZES),
       note: int(formatLedgerWords.seqOfTheCommentOr), kind: oneOf(NOTE_KINDS),
       nodes: nodeNumbers, widths: oneOf(WIDTHS), app: id, hash: appHashProblems, head: line,
+      skin: skinProblems, lines: list(int(formatLedgerWords.seqOfALine), LIMITS.nodes), context: oneOf(ASK_CONTEXTS),
+      direction: oneOf(ACT_DIRECTIONS),
     },
   },
-  seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, head: int(formatLedgerWords.seqOfALine) } },
+  seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, region: id, head: int(formatLedgerWords.seqOfALine) } },
   reply: { req: ['n', 'text'], fields: { n: nodeNumber, text: text(LIMITS.text), to: int(formatLedgerWords.seqOfTheActIt), key } },
   propose: {
     req: ['n', 'ver', 'action', 'reason'],
@@ -155,11 +173,12 @@ const SHAPES: Record<EventType, Shape> = {
   join: { req: ['label'], fields: { label: text(LIMITS.agentLabel) } },
   'grant-request': { req: ['board', 'reason'], fields: { board: id, region: id, reason: text(LIMITS.text), key } },
   retire: { req: ['board', 'cards'], fields: { board: id, cards: cardList, region: id, key } },
+  icon: { req: ['name', 'hash'], fields: { name: libraryIconProblems, hash: iconHashProblems, key } },
 };
 
 /** Actions on one node version; actions on a node's place or size; actions that name no node. */
 const ON_VERSION = new Set(['ack', 'drop', 'comment', 'context', 'later', 'reopen']);
-const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag', 'notes-hide', 'notes-show']);
+const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move', 'reject', 'bookmark', 'unbookmark', 'notes-hide', 'notes-show']);
 /** Acts that change a person's note, named by the `seq` of the act that made it (api.md 58-61). */
 const ON_NOTE = new Set(['note-edit', 'note-remove']);
 const NO_NODE = new Set(['grant', 'deny', 'revoke', 'send']);
@@ -221,7 +240,7 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'note-edit') need('text', 'text: required');
   if (a === 'reject') need('proposal', formatLedgerWords.proposalTheSeqOfThe);
   if (NO_NODE.has(a) && has('n')) p.push(formatLedgerWords.nNamesNoNode(a));
-  // The flag and the hidden notes mark one card, whatever its version (api.md 128, 156).
+  // The bookmark and the hidden notes mark one card, whatever its version (api.md 128, 156, 182).
   if (CARD_MARKS.has(a as ActionId)) for (const f of ['ver', 'region']) if (has(f)) p.push(formatLedgerWords.aNamesOneCardWith(f, a));
   // Archive, restore, lock and unlock mark a whole board (api.md 135, 138).
   if (BOARD_MARKS.has(a as ActionId)) {
@@ -229,6 +248,7 @@ function actRules(e: Rec, p: string[]): void {
     for (const f of ['n', 'ver', 'region', 'nodes']) if (has(f)) p.push(formatLedgerWords.namesItsBoardAndNothing(f, /^[aeiou]/.test(a) ? 'an' : 'a', a));
   }
   appActRules(e, p);
+  v20ActRules(e, p);
 }
 
 /** A `retire` names its cards, and with `region` the container they were in (api.md 126); without a
@@ -245,11 +265,11 @@ function modeRules(e: Rec, p: string[]): void {
   if (e.type === 'act' && typeof e.mode === 'string' && e.mode in RENAMED_MODES) p.push(formatLedgerWords.mode(LIST_RENAMED));
 }
 
-/** A `seen` names one node version (`n`, `ver`) or one board up to a line (`board`, `head`), never
- * both (api.md 87). */
+/** A `seen` names one node version (`n`, `ver`) or one board up to a line (`board`, `head`), from v20 with `region`
+ * one container of it (api.md 87, 187), never both. */
 function seenRules(e: Rec, p: string[]): void {
   const node = e.n !== undefined || e.ver !== undefined;
-  if (node && (e.board !== undefined || e.head !== undefined)) p.push(formatLedgerWords.seenANodeNAnd);
+  if (node && (e.board !== undefined || e.head !== undefined || e.region !== undefined)) p.push(formatLedgerWords.seenANodeNAnd);
   else if (node || e.board === undefined) for (const f of ['n', 'ver']) { if (e[f] === undefined) p.push(formatLedgerWords.required(f)); }
   else if (e.head === undefined) p.push(formatLedgerWords.headRequiredTheBoardS);
 }
@@ -263,6 +283,11 @@ const STAMP: Shape = {
   },
 };
 
+/** Each event type's whole line: the stamp's fields, then its own. */
+const LINES = Object.fromEntries(EVENT_TYPES.map((t): [EventType, Shape] => [t, {
+  req: [...STAMP.req, ...SHAPES[t].req], fields: { ...STAMP.fields, ...SHAPES[t].fields },
+}])) as Record<EventType, Shape>;
+
 /** Every shape problem in one event. Empty means well formed. */
 export function eventProblems(input: unknown): string[] {
   if (!isRecord(input)) return ['event: must be an object'];
@@ -274,9 +299,7 @@ export function eventProblems(input: unknown): string[] {
     return [...p, formatLedgerWords.typeOneOf(EVENT_TYPES.join(', '))];
   }
   const t = type as EventType;
-  const shape = SHAPES[t];
-  const fields = { ...STAMP.fields, ...shape.fields };
-  fieldProblems(rest, { req: [...STAMP.req, ...shape.req], fields }, '', p);
+  fieldProblems(rest, LINES[t], '', p);
   // From v3 the stamped agent is an agent id; on v2 any name (api.md 11).
   if (agent !== undefined) (e.v === 2 ? text() : agentId)(agent, 'agent', p);
   const personToo = e.by === 'person' && (e.v as number) >= (PERSON_TOO[t] ?? Infinity);

@@ -2,15 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/seen-request.schema.json",
   "title": "Seen request",
-  "description": "`{ n, ver }`: the person has seen this version; or `{ board, head }`: the person has looked at this board up to this line.",
+  "description": "`{ n, ver }`: the person has seen this version; or `{ board, head }`: the person has looked at this board up to this line; or `{ board, region, head }`: at this container up to this line.",
   "$comment": "Was: D-018; api.md 87",
   "type": "object",
   "allOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/19/events/seen.schema.json#/$defs/core"
+      "$ref": "https://vision-board.invalid/schema/ledger/20/events/seen.schema.json#/$defs/core"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/19/events/seen.schema.json#/$defs/rules"
+      "$ref": "https://vision-board.invalid/schema/ledger/20/events/seen.schema.json#/$defs/rules"
     }
   ],
   "unevaluatedProperties": false

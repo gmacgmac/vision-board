@@ -95,3 +95,11 @@ export const nodesAMoveNamesCards = (value: string | number): string => `nodes: 
 export const nodesANoteOnA = (value: string | number): string => `nodes: a note on a group names items on one board; these are on ${value}`;
 export const noteNoteIsOnNot = (note: string | number | undefined, nodes: string | number, region: string | number): string => `note: note ${note} is on ${nodes}, not container "${region}"`;
 export const noteNoteIsOnContainerNot = (note: string | number | undefined, region: string | number, region2: string | number, region3: string | number): string => `note: note ${note} is on container "${region}"${region2}, not "${region3}"`;
+
+// ---- act.ts: the person's ask (Ask now, api.md 188)
+export const linesIsNotANote = (seq: number): string => `lines: ${seq} is not a note`;
+export const linesNoteIsOnBoard = (seq: number, on: string, board: string): string => `lines: note ${seq} is on board "${on}", not "${board}"`;
+export const linesNoteWasRemoved = (seq: number): string => `lines: note ${seq} was removed`;
+export const linesNoteWasSent = (seq: number): string => `lines: note ${seq} was already sent to the agent`;
+export const linesNoteWasAsked = (seq: number): string => `lines: note ${seq} was already asked about`;
+export const linesNoteIsNotYours = (seq: number): string => `lines: note ${seq} is not yours`;

@@ -10,7 +10,7 @@ import { nodeState } from '../src/index.ts';
 
 const q: ViewNode = { id: '3', n: 3, region: 'r', kind: 'question', title: 'Move to monthly billing?' };
 const board = (): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), bookmarks: new Set() });
 const prop = (f: Partial<CardProposal> = {}): CardProposal =>
   ({ seq: 20, action: 'ack', reason: 'both agreed', when: 'Nov 5, 16:10', stale: false, ...f });
 const st = (c: CardConditions) => nodeState(q, board(), undefined, false, c);

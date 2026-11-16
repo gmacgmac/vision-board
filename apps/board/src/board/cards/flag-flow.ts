@@ -2,18 +2,18 @@
 // 128): the flag button beside Later and Shift+F on a focused card set or clear it, and the toolbar's
 // "N flagged" chip steps through the flagged cards, one card after another in number order, from the
 // focused one (or, since pressing the chip takes focus off the card, from the one it went to last),
-// wrapping. A flag is the person's private mark: one act, `flag` or `unflag`, naming
+// wrapping. A flag is the person's private mark: one act, `bookmark` or `unbookmark` (ledger v20), naming
 // the card by its board number and no version, so it stays through a redraw; nothing here reaches an
 // agent (the server keeps it out of every agent read, and the Send message reads no flag). Which
-// cards are flagged is `BoardState.flags`, as the page reads the board. Nothing acts while a past
+// cards are flagged is `BoardState.bookmarks`, as the page reads the board. Nothing acts while a past
 // version shows (versions.ts `guard`, sender.ts).
 import type { View } from '#format';
 import type { BoardState } from '#actions';
 import type { ActFields } from '../io.ts';
 import * as cardsWords from '../words/cards.ts';
 
-/** The act that turns card `id`'s flag over: `flag` when it has none, `unflag` when it has one. */
-export const flagAct = (id: string, flagged: boolean): ActFields => ({ action: flagged ? 'unflag' : 'flag', n: Number(id) });
+/** The act that turns card `id`'s flag over: `bookmark` when it has none, `unbookmark` when it has one (ledger v20). */
+export const flagAct = (id: string, flagged: boolean): ActFields => ({ action: flagged ? 'unbookmark' : 'bookmark', n: Number(id) });
 
 /** The flagged cards on the board, in number order (reading order for cards with a number). */
 export const flaggedIds = (view: View, flags: ReadonlySet<string>): string[] =>
@@ -60,13 +60,13 @@ export function createFlagFlow(d: FlagDeps): FlagFlow {
   let last: string | null = null;
   const ids = (): string[] => {
     const [view, state] = [d.view(), d.state()];
-    return d.on && view && state ? flaggedIds(view, state.flags) : [];
+    return d.on && view && state ? flaggedIds(view, state.bookmarks) : [];
   };
   return {
     async toggle(id) {
       const state = d.state();
       if (!d.on || !state || !d.view()?.nodes.some((n) => n.id === id && n.n !== undefined)) return;
-      const flagged = state.flags.has(id);
+      const flagged = state.bookmarks.has(id);
       if (await d.record(flagAct(id, flagged))) d.toast(`${id} ${flagged ? cardsWords.flagRemoved : 'flagged'}`);
     },
     ids,

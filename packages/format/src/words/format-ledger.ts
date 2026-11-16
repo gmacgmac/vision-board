@@ -103,7 +103,7 @@ export const namesItsBoardAndNothing = (f: string, value: string, a: string): st
 export const cardsAtLeast1Card = 'cards: at least 1 card, or a region';
 export const regionMode = (LIST_RENAMED: string): string => `region.mode: ${LIST_RENAMED}`;
 export const mode = (LIST_RENAMED: string): string => `mode: ${LIST_RENAMED}`;
-export const seenANodeNAnd = 'seen: a node (n and ver) or a board (board and head), not both';
+export const seenANodeNAnd = 'seen: a node (n and ver) or a board (board and head, with region for one container), not both';
 export const headRequiredTheBoardS = 'head: required, the board\'s last line the person has seen';
 export const uTCTimestampLike202610 = (f: string): string => `${f}: UTC timestamp, like 2026-10-05T09:00:00Z`;
 export const typeOneOf = (join: string): string => `type: one of ${join}`;
@@ -131,3 +131,26 @@ export const lineNewer = (i: number, v: number, current: number): string => `lin
 export const noFormatNotFormat2 = (problems: string): string => `a line with no \`v\` is read as format 2 only when it is a format-2 line, and this one is not (${problems}); it is not guessed at`;
 export const laterBeforeFormat6 = (board: string): string => `an agent named a container "later" on board "${board}" before format 6 made "later" every board's own Later; it can't be upgraded one line at a time`;
 export const joinNotAnAgentId = (agent: string): string => `a format-2 join names its agent "${agent}", not an agent id, so it can't be upgraded`;
+
+// ---- view-shape.ts (a node's icon and tone, a board's skin, a flow's direction: ledger v20, api.md 183-189)
+export const iconName = (f: string): string => `${f}: a built-in icon (list_icons), or "x-" and a library name`;
+export const libraryIconName = (f: string): string => `${f}: "x-", then lowercase letters, digits or "-", up to 40 in all`;
+export const toneOneOf = (f: string, names: string): string => `${f}: one of ${names}, or a whole hue from 0 to 359`;
+export const iconHash = (f: string): string => `${f}: the file's SHA-256, 64 lowercase hex characters`;
+
+// ---- act-shape.ts (the person's skin, ask and direction acts: ledger v20, api.md 183, 188, 189)
+export const skinBoardAndSkinRequired = 'skin: board and skin required';
+export const askBoardLinesAndContextRequired = 'ask: board, lines and context required';
+export const directionBoardAndDirectionRequired = 'direction: board and direction required';
+export const namesItsBoardAnd = (f: string, a: string, what: string): string => `${f}: a ${a} names its board and ${what} only`;
+export const onlyANames = (f: string, a: string): string => `${f}: only a ${a} names it`;
+export const linesAtLeast1 = (f: string): string => `${f}: at least 1 line`;
+export const linesEachOnce = (f: string): string => `${f}: each line once`;
+export const theSkin = 'its skin';
+export const theLinesItCarriedAndItsContext = 'its lines and context';
+export const oneContainerOrNoneAndTheDirection = 'its direction, on one container or none';
+
+// ---- ledger-index.ts (ledger v20)
+export const linesTheLedgerIsAt = (seq: number): string => `lines: each a line before this one; the ledger is at line ${seq}`;
+export const iconNameIsTaken = (name: string): string => `name: "${name}" names another drawing; reuse it, or pick a more specific name`;
+export const nodeIconNotInLibrary = (name: string): string => `node.icon: "${name}" is not in the icon library; add it with add_icon, or use one list_icons names`;

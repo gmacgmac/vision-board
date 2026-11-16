@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/add-icon-request.schema.json",
+  "title": "Add an icon",
+  "description": "A drawing for the project's icon library: its name, a few words saying what it shows, and the SVG, drawn as the built-in set is (the same box, paths only, one colour, no text). It is reduced to path data and checked; a name is given once.",
+  "$comment": "Was: api.md 186, D-100 3",
+  "type": "object",
+  "required": [
+    "name",
+    "title",
+    "svg"
+  ],
+  "properties": {
+    "name": {
+      "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName",
+      "description": "`x-`, then what it shows: a singular noun, then a qualifier if needed (`x-encoder`, `x-encoder-audio`). No board names, numbers or colours."
+    },
+    "title": {
+      "$ref": "https://vision-board.invalid/schema/api/add-icon-request.schema.json#/$defs/title",
+      "description": "A few words saying what it shows."
+    },
+    "svg": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000,
+      "description": "The drawing, as SVG: paths only, in the built-in set's box; text, pictures, styles and scripts are refused."
+    },
+    "key": {
+      "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/key"
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "title": {
+      "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/text",
+      "type": "string",
+      "maxLength": 80,
+      "description": "A few words saying what an icon shows."
+    }
+  },
+  "examples": [
+    {
+      "name": "x-encoder",
+      "title": "A video encoder",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M4 6h16v12H4z\"/></svg>",
+      "key": "icon-encoder"
+    }
+  ]
+}

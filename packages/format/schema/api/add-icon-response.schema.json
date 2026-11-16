@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/add-icon-response.schema.json",
+  "title": "Icon added",
+  "description": "The icon is in the project's library: its name, and the hash of its file, which the ledger's `icon` line holds. `replayed: true` when the same drawing already had that name.",
+  "$comment": "Was: api.md 186",
+  "type": "object",
+  "required": [
+    "name",
+    "hash"
+  ],
+  "properties": {
+    "name": {
+      "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName",
+      "description": "The icon's name, for a node's `icon`."
+    },
+    "hash": {
+      "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/iconHash",
+      "description": "The SHA-256 of its file."
+    },
+    "replayed": {
+      "const": true,
+      "description": "Present, and true, when this name already had this drawing: nothing new was written."
+    }
+  },
+  "unevaluatedProperties": false
+}

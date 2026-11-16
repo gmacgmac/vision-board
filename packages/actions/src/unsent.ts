@@ -3,7 +3,8 @@
 // message is built from (pending.ts `replyScope` from there). A Send empties it of what it carried: the
 // answers after the line its answers were read through are folded again, for the next one (point 377); an answer
 // (registry.ts `isAnswer`) adds its line; a note removed before it was sent takes the note's line
-// out, and a change to a note is folded into the note, so neither counts on its own; a card's ✓,
+// out, and a change to a note is folded into the note, so neither counts on its own; a note asked about at once (an
+// `ask`, asked.ts, api.md 188) went then, so it is taken out too and no Send carries it again; a card's ✓,
 // ✗, Later and clear are folded to its latest, which counts only when it leaves the card otherwise
 // than at the last Send (D-045 ruling 9: ✓ then cleared leaves nothing to send); an answer on
 // cards that have all left the board (a retire, the agent's or the person's) is no longer there to
@@ -23,6 +24,7 @@ export function foldUnsent(s: LedgerState, board: string, e: ActEvent): void {
   s.unsent.set(board, lines);
   if (e.action === 'send') sent(s, board, lines, e.seq);
   else if (e.action === 'note-remove') lines.delete(e.note!);
+  else if (e.action === 'ask') for (const seq of e.lines!) lines.delete(seq);
   else if (MARK_ACTIONS.has(e.action)) foldMark(s, board, lines, e);
   else if (e.action !== 'note-edit' && isAnswer(e.action)) lines.add(e.seq);
 }

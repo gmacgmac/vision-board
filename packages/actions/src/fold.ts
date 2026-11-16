@@ -5,12 +5,13 @@
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
 // and each board's own last line, last drawing line, last agent line, runs and from where its cards are new (rounds.ts),
 // what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
-// flags (card-flags.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
+// bookmarks (bookmarks.ts), each board's skin (skins.ts), the person's flow directions (directions.ts), the notes the
+// person asked about at once (asked.ts), each container seen (fresh.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
 // board's dates, the agent's clears (clears.ts), each app's allowed hash (apps.ts) and each card's times (card-times.ts). Every map is
 // keyed by a card's identity (`id`); the reads give board numbers (numbers.ts, api.md 125). One board
 // as the page reads it: board-state.ts. Pure: same events, same state; events are assumed valid.
 import type {
-  ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Widths,
+  ActEvent, DirectionChoices, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Skin, Widths,
 } from '#format';
 import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '#format';
 import { type BoardDates, foldArchive } from './archive.ts';
@@ -23,7 +24,11 @@ import { askOf, askVer, cardsOf, foldNoteAct, itemOf, latestAsk } from './notes.
 import { eventBoard } from './references.ts';
 import { closeProposals, endProposal } from './proposals.ts';
 import { foldRetire, keepRetiredRegion } from './retire.ts';
-import { foldFlag } from './card-flags.ts';
+import { foldBookmark } from './bookmarks.ts';
+import { foldSkin } from './skins.ts';
+import { foldDirection } from './directions.ts';
+import { type Asked, foldAsk } from './asked.ts';
+import { seeContainer } from './fresh.ts';
 import { foldNotesHidden } from './card-notes-hidden.ts';
 import { addDrawing, seeBoard } from './rounds.ts';
 import { foldUnsent } from './unsent.ts';
@@ -128,9 +133,17 @@ export interface LedgerState extends DrawnState, AppAllows {
   firstCards: Map<string, { seq: number; run: number }>;
   /** `containerKey` -> a retired container as it was, and its retire line (`show_container`, api.md 127). */
   retiredRegions: Map<string, { region: LedgerRegion; seq: number }>;
-  /** Card id -> `seq` of the person's `flag` on it, while it stands (card-flags.ts, api.md 128).
+  /** Card id -> `seq` of the person's `bookmark` on it, while it stands (bookmarks.ts, api.md 128, 182).
    * The page's only: no agent read looks here. */
-  flags: Map<number, number>;
+  bookmarks: Map<number, number>;
+  /** board -> the skin the latest line naming one set (skins.ts, api.md 183); absent, `default`. */
+  skins: Map<string, Skin>;
+  /** board -> the person's flow directions, for the board and per container (directions.ts, api.md 189). */
+  directions: Map<string, DirectionChoices>;
+  /** board -> note `seq` -> the `ask` that carried it at once (asked.ts, api.md 188). */
+  asked: Map<string, Map<number, Asked>>;
+  /** board -> region -> the highest `head` of the person's container seen (fresh.ts, api.md 187). */
+  seenContainers: Map<string, Map<string, number>>;
   /** Card id -> `seq` of the person's `notes-hide` on it, while it stands; the page's only (card-notes-hidden.ts, api.md 156). */
   notesHidden: Map<number, number>;
   /** board -> `seq` of the person's `archive` of it, while it stands (archive.ts, api.md 135). Read
@@ -161,7 +174,7 @@ export const emptyState = (): LedgerState => ({
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
-  retiredRegions: new Map(), flags: new Map(), notesHidden: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(), times: new Map(),
+  retiredRegions: new Map(), bookmarks: new Map(), skins: new Map(), directions: new Map(), asked: new Map(), seenContainers: new Map(), notesHidden: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(), times: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -171,10 +184,10 @@ export function foldLedger(events: readonly LedgerEvent[]): LedgerState {
   return s;
 }
 
-/** One of the person's private marks: a flag, hidden notes, an archive or restore, a lock or unlock. */
+/** One of the person's private marks: a bookmark, hidden notes, an archive or restore, a lock or unlock. */
 function foldMark(s: LedgerState, e: ActEvent): void {
   if (e.action === 'notes-hide' || e.action === 'notes-show') return foldNotesHidden(s, e);
-  if (!BOARD_MARKS.has(e.action)) return foldFlag(s, e);
+  if (!BOARD_MARKS.has(e.action)) return foldBookmark(s, e);
   return e.action === 'lock' || e.action === 'unlock' ? foldLock(s, e) : foldArchive(s, e);
 }
 
@@ -186,7 +199,7 @@ const marksOf = (s: LedgerState, id: number): Marks => {
 };
 
 /** Apply one valid event to `s`: the drawn part and the index in format, the rest here. The
- * person's private marks fold into `flags`, `notesHidden`, `archived` and `locked` only: they move no head, see no
+ * person's private marks fold into `bookmarks`, `notesHidden`, `archived` and `locked` only: they move no head, see no
  * card and are no answer (api.md 128, 135, 138, 156). */
 export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   if (e.type === 'retire') keepRetiredRegion(s, e);
@@ -210,10 +223,15 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
     s.keys.set(e.agent, keys.set(e.key, e.seq));
   }
   switch (e.type) {
+    case 'board': foldSkin(s, e); break;
     case 'join': if (e.agent !== undefined) s.agents.set(e.agent, e.label); break;
     case 'grant-request': s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
     case 'act': s.acts.push(e); applyAct(s, e); seeCards(s, e); if (board !== undefined) foldUnsent(s, board, e); break;
-    case 'seen': if ('id' in e) look(s, e.id, e.ver, e.seq); else seeBoard(s, e.board, e.head); break;
+    case 'seen':
+      if ('id' in e) look(s, e.id, e.ver, e.seq);
+      else if (e.region !== undefined) seeContainer(s, e.board, e.region, e.head);
+      else seeBoard(s, e.board, e.head);
+      break;
     case 'retire': foldRetire(s, e); break;
     case 'reply':
       push(s.replies, e.id, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }) });
@@ -262,6 +280,9 @@ function applyAct(s: LedgerState, e: ActEvent): void {
     case 'deny': { const note = s.grantNotes.get(e.request!); if (note && e.text) note.text = e.text; break; }
     case 'grant': case 'revoke': break; // holders live in the index
     case 'app-allow': case 'app-revoke': foldAppAct(s, e); break;
+    case 'skin': foldSkin(s, e); break;
+    case 'direction': foldDirection(s, e); break;
+    case 'ask': foldAsk(s, e); break;
     default: applyItemAct(s, e);
   }
 }

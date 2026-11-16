@@ -28,7 +28,7 @@ async function story(page: Page, request: Parameters<typeof draw>[0]): Promise<{
   const d = await draw(request, 2, 'history');
   const [n] = d.n as [number];
   const note = await act(page, d, { action: 'comment', n, ver: 1, text: NOTE });
-  await act(page, d, { action: 'flag', n });
+  await act(page, d, { action: 'bookmark', n });
   await act(page, d, { action: 'ack', n, ver: 1 });
   await reply(request, d, n, REPLY, note);
   await open(page, d);

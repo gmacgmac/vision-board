@@ -10,7 +10,7 @@ import type { ActEvent } from '#format';
 import { accessKey, isContainerAct, latest } from '#format';
 import type { LedgerState } from './fold.ts';
 import type { Container } from './references.ts';
-import { placeOf, scopeOf } from './references.ts';
+import { placeOf, REFERENCES, scopeOf } from './references.ts';
 
 /** One write item as the server holds it after resolving it: keys and board numbers turned into
  * card identities, the board taken from the path (api.md 34, 35, 125), a retire's cards filled in
@@ -103,9 +103,18 @@ export const mayAnswerIn = (s: LedgerState, agent: string, c: Container): boolea
   (s.index.boards.get(c.board)?.has(c.region) ?? false)
   && canWrite(s, agent, { type: 'region', board: c.board, region: { id: c.region } }) === 'ok';
 
+/** Does note `seq` concern `agent`: a note on a container it may answer for, or on a card it may answer on. */
+function noteConcerns(s: LedgerState, seq: number, agent: string): boolean {
+  const at = REFERENCES.note.lookup(s, seq);
+  if (!at) return false;
+  return at.cards.length ? at.cards.some((id) => mayAnswer(s, agent, id))
+    : at.board !== undefined && at.container !== undefined && mayAnswerIn(s, agent, { board: at.board, region: at.container });
+}
+
 /** Does the person's act concern `agent` (`check_responses`, pending.ts; what Send carries, unsent.ts)? Send always;
- * answers to its own requests and its own removals; anything else in a container it may answer for, on any card it
- * is on (api.md 41). */
+ * answers to its own requests and its own removals; an ask, when a note it carried does (api.md 188); a board's skin
+ * or flow direction, the agents that hold the board (api.md 183, 189); anything else in a container it may answer
+ * for, on any card it is on (api.md 41). */
 export function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
   // A note on or a place for a whole container: the agents that may answer on it (api.md 75).
   if (isContainerAct(e)) return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
@@ -114,6 +123,9 @@ export function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
     case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;
     case 'revoke': return e.holder === agent;
     case 'mode': case 'widths': return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
+    case 'ask': return e.lines!.some((seq) => noteConcerns(s, seq, agent));
+    case 'skin': return holds(s, agent, e.board!);
+    case 'direction': return e.region === undefined ? holds(s, agent, e.board!) : mayAnswerIn(s, agent, { board: e.board!, region: e.region });
     default: return scopeOf(s, e).cards.some((id) => mayAnswer(s, agent, id));
   }
 }

@@ -185,8 +185,29 @@ export const FLAGS = {
     default: true,
   },
   appStage: {
-    // Spike (maintainer's go, 2026-11-10, point 24: stage apps spike); on by default on the spike branch; ?flags=-appStage turns it off.
-    default: true,
+    // Spike (maintainer's go, 2026-11-10, point 24: stage apps spike); off by default from node-overhaul T_01 (its Open button
+    // in the app card's footer failed 13 page tests); ?flags=appStage tries it.
+    default: false,
+  },
+  nodeEdges: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, D-099); ?flags=nodeEdges tries it.
+    default: false,
+  },
+  skins: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, D-100); ?flags=skins tries it.
+    default: false,
+  },
+  layoutControl: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, PLAN decision 20); ?flags=layoutControl tries it.
+    default: false,
+  },
+  flowDirection: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, PLAN decision 25); ?flags=flowDirection tries it.
+    default: false,
+  },
+  appWindow: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, D-099 5); ?flags=appWindow tries it.
+    default: false,
   },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
@@ -409,6 +430,11 @@ export const FLAG_DESCRIPTIONS = {
   cardDetails: 'Spike. A card\'s body may hide detail behind a disclosure triangle: a line `+++ Label` opens it and a line `+++` closes it; the lines between show only when the person opens the triangle, and the card is measured again. Off, the lines stay text.',
   appStage: 'Spike. An app card has Open: its panel leaves the card and fills the board (the top layer; the same sandboxed frame, never reloaded), and Esc or Back to card returns it. The panel may send `vision-board/note` (a pick in the app becomes the person\'s note on its card) and gets `vision-board/notifications/reply` (each agent reply on its card), and its policy lets it play media from the manifest\'s `resourceDomains`. Off, an app card is as before.',
   appFit: 'An app card fits its panel\'s content: a panel that tells its height (MCP Apps\' `ui/notifications/size-changed`, `{ height }`) gets a frame that height, rounded and held to 120 to 1080 px (APP_LIMITS.toldHeight; never stored, so above the agent\'s 800), as wide as the agent drew it; the card is measured again and the cards under it move, with nothing written to the ledger. The agent\'s `h` is the height until the panel tells one, and again once its frame is removed; a frozen panel keeps its last. A panel that tells nothing keeps the agent\'s size. Off, size-changed is ignored and the panel is the size the agent drew (docs/specification/apps.md § Panel size).',
+  nodeEdges: 'A node carries its actions on its edges (D-099): the number is the bookmark (a click toggles it, held it also offers Save for later), the answer disc opens Tick and Cross, the change badge opens history, the notes mark opens the conversation box; right-click or a long press lists the six actions with their keys (A, X, C, B, L, H). An optional icon and tone draw as the node names them. Off, the node keeps its footer row.',
+  skins: 'A board has a skin (D-100): `default` or `command-lens`, set on its `board` line by whoever made it and changed by the person (the `skin` act); the board draws its nodes in it. Off, every board draws in the default look and the skin is not offered.',
+  layoutControl: 'Each container shows one layout control with the other layouts behind it (PLAN decision 20), and the control offers a flow\'s direction. Off, a container draws one button per layout.',
+  flowDirection: 'A `flow` container runs across or down: the agent\'s `direction` on the container, else the person\'s choice for the container or the whole board (the `direction` act; Auto gives back the agent\'s). Off, every flow runs across.',
+  appWindow: 'An app card is a window (D-099 5): a thin title bar with Open, the bookmark and a drawer arrow; the drawer pushes its neighbours aside and holds the card\'s conversation; no Save for later. Off, an app card is as before.',
   goAfterPause: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/find/go-to-card.ts). Off, only Enter goes.',
   findKeepsMarks: 'Finding a card never changes it: going to a card from Go to card, search, the open, new and updated lists or the Review list selects and shows it without marking it seen, so its NEW and updated marks stay; the person\'s own click on the card, and every act, still clear them. Off, a found card is marked seen as a selected one is.',
   accessByBot: 'The access requests strip groups the requests by bot (the agent id the server stamps on each), named by its label, with each container\'s row and, for a bot with more than one request, one Allow all; the heading counts bots (two bots with one label are numbered). Off, one row per request under a count of requests.',

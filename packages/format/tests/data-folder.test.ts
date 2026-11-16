@@ -63,7 +63,7 @@ test('ledgerFiles: every file of one ledger folder', () => {
 test('projectFiles: the repo-wide files, absolute or relative to the project', () => {
   assert.deepEqual(projectFiles(P), {
     root: `${P}/.visionboard`, gitignore: `${P}/.visionboard/.gitignore`, chatSessions: `${P}/.visionboard/chat-sessions.json`,
-    permissions: `${P}/.visionboard/permissions.json`, attachments: `${P}/.visionboard/attachments`,
+    permissions: `${P}/.visionboard/permissions.json`, attachments: `${P}/.visionboard/attachments`, icons: `${P}/.visionboard/icons`,
   });
   assert.equal(projectFiles('').attachments, '.visionboard/attachments', 'what an agent is told');
 });

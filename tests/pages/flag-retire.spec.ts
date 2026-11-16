@@ -74,7 +74,7 @@ test('the flag: a button beside Later on every card, Shift+F, stored by identity
   await expect(chip(page)).toHaveText(/2\s*flagged/);
   await idle(page);
   // The page sent board numbers 2 and 4; the ledger holds the identities, which are not those.
-  const flags = (await linesAfter(page, before)).filter((e) => e.action === 'flag');
+  const flags = (await linesAfter(page, before)).filter((e) => e.action === 'bookmark');
   expect(flags.map((e) => [e.board ?? null, 'ver' in e])).toEqual([[null, false], [null, false]]);
   expect(flags.map((e) => e.n)).not.toEqual([2, 4]);
   // The agent redraws card 2: its flag stays. A reload keeps both.
@@ -93,7 +93,7 @@ test('the flag: a button beside Later on every card, Shift+F, stored by identity
 
 test('the chip steps through the flagged cards in number order from the focused one, wrapping', async ({ page, request }) => {
   const d = await draw(request);
-  for (const n of [3, 1]) await act(page, d, { action: 'flag', n });
+  for (const n of [3, 1]) await act(page, d, { action: 'bookmark', n });
   await open(page, d, '?vbwork', 4);
   await chip(page).click();
   expect(await focusedId(page)).toBe('1');
@@ -125,7 +125,7 @@ test('a flag is nothing new to send, and an agent never reads it', async ({ page
 
 test('with the cardFlag flag off: no button, Shift+F is Fit, no chip', async ({ page, request }) => {
   const d = await draw(request);
-  await act(page, d, { action: 'flag', n: 1 });
+  await act(page, d, { action: 'bookmark', n: 1 });
   await open(page, d, '?vbwork&flags=-cardFlag', 4);
   await expect(page.locator('button[data-flag]')).toHaveCount(0);
   await expect(chip(page)).toHaveCount(0);
@@ -134,14 +134,14 @@ test('with the cardFlag flag off: no button, Shift+F is Fit, no chip', async ({ 
   await card(page, 2).focus();
   await page.keyboard.press('Shift+F');
   await idle(page);
-  expect((await linesAfter(page, before)).filter((e) => e.action === 'flag')).toEqual([]);
+  expect((await linesAfter(page, before)).filter((e) => e.action === 'bookmark')).toEqual([]);
 });
 
 for (const theme of THEMES) {
   test(`axe passes with flagged cards and the chip (${theme})`, async ({ page, request }) => {
     await setTheme(page, theme);
     const d = await draw(request);
-    await act(page, d, { action: 'flag', n: 2 });
+    await act(page, d, { action: 'bookmark', n: 2 });
     await open(page, d, '?vbwork', 4);
     await expect(chip(page)).toBeVisible();
     await expectNoAxeViolations(page);

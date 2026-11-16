@@ -13,7 +13,7 @@ import { INSTRUCTIONS, INSTRUCTIONS_JOINED, TOOL_FILE, routeOf } from '../src/in
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const { tools } = TOOL_FILE;
-const WRITES = ['join', 'read_attachment', 'request_grant', 'write_board'];
+const WRITES = ['add_icon', 'join', 'read_attachment', 'request_grant', 'write_board'];
 
 test('tools.generated.json is current with openapi.json (gen-api --check)', () => {
   const out = execFileSync(process.execPath, ['scripts/gen-api.mjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
@@ -140,11 +140,13 @@ test('no tool description carries an example: examples live in the skill, the sc
  * list plus about 10% (task 2026-10-25_board-agent_tool-list-trim); raise it only on purpose. Raised for the
  * three reads' `ledger` input (CONSOLIDATE_01, D-084 8), for `readOnly: true` on list_boards and get_board (SKILL_01, D-085), and
  * for a node item's `insert`, two card references (insert-markdown-signals ACT_01, point 424), and for a container's
- * `mode` default (`"default": "row"`, host-styling FE_03). */
-const LIST_CAP = 32_050;
+ * `mode` default (`"default": "row"`, host-styling FE_03), and for ledger v20 (node-overhaul T_01): a node's `icon` (the
+ * built-in names) and `tone`, a board's `skin`, a flow's `direction`, and the icon library's two tools. */
+const LIST_CAP = 38_000;
 const TOOL_CAPS: Record<string, number> = {
   list_boards: 760, get_board: 1150, show_node: 1150, show_container: 850, show_layout: 1050, list_open: 1150,
-  check_responses: 2600, join: 1600, request_grant: 1900, write_board: 17_350, list_apps: 1350, read_attachment: 2450,
+  check_responses: 2600, join: 1600, request_grant: 1900, write_board: 19_400, list_apps: 1350, read_attachment: 2450,
+  list_icons: 1050, add_icon: 1900,
 };
 
 test('the tool list fits its size budget, as a whole and per tool', () => {

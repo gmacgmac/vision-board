@@ -30,7 +30,7 @@ function ledger(): string[] {
       case 2: add({ type: 'reply', by: 'agent', agent: AGENT, n: CARD, to: note, text: `Invented reply ${i}` }); break;
       case 3: add({ type: 'node', by: 'agent', agent: AGENT, board: 'big', n: CARD, ver: ++ver, node: { region: 'r10', kind: 'question', title: `Card ${i}` } }); break;
       case 4: person({ action: i % 16 === 4 ? 'ack' : 'drop', n: CARD, ver }); break;
-      case 5: person({ action: i % 16 === 5 ? 'flag' : 'unflag', n: CARD }); break;
+      case 5: person({ action: i % 16 === 5 ? 'bookmark' : 'unbookmark', n: CARD }); break;
       case 6: add({ type: 'seen', by: 'person', n: CARD, ver }); break;
       default: person({ action: 'reopen', n: CARD, ver });
     }

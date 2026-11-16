@@ -86,3 +86,6 @@ export const cardsInTwoContainers = (region: string, region2: string): string =>
 export const containerLaysOutAs = (region: string, mode: string): string => `"${region}" lays out as \`${mode}\``;
 export const notTheContainer = (container: string): string => `not "${container}"`;
 export const thePersonMovedIt = (region: string): string => `the person moved it to "${region}"`;
+
+// ---- writes.ts (add_icon, api.md 186: a stub until the icon library is built)
+export const addingIconsIsNotBuiltYet = 'Adding icons is not built yet. Give a node one of the built-in icons list_icons names, or leave its icon out.';

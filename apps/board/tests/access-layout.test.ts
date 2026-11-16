@@ -22,10 +22,10 @@ const PER_LEDGER: Record<keyof LedgerFiles, Verdicts> = {
 };
 /** Each repo-wide file, at `.visionboard/` only. */
 const REPO_WIDE: Record<Exclude<keyof ProjectFiles, 'root'>, Verdicts> = {
-  gitignore: READ_ONLY, chatSessions: REFUSED, permissions: READ_ONLY, attachments: READ_ONLY,
+  gitignore: READ_ONLY, chatSessions: REFUSED, permissions: READ_ONLY, attachments: READ_ONLY, icons: READ_ONLY,
 };
 /** The folders among them: the rules are asked about a file inside. */
-const FOLDERS = new Set<string>(['images', 'apps', 'appState', 'attachments', 'backups']);
+const FOLDERS = new Set<string>(['images', 'apps', 'appState', 'attachments', 'backups', 'icons']);
 /** Refused wherever it sits: its rows reach a nested project too (`**`). */
 const SECRET = new Set<string>(['agents', 'appState', 'chatSessions']);
 

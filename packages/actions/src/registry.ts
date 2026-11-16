@@ -95,11 +95,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // Ledger v10 (api.md 93): turn down an agent's proposal, named by its `seq`. Not a decision on
   // the item, so no status; accepting is the proposal's own action (`ack` or `drop`) with `proposal`.
   reject: { id: 'reject', label: actionsRegistryWords.reject, ...person, onItem: true },
-  // Ledger v12 (api.md 128): the person's private mark on any card. Not an answer (`onItem` false,
-  // so Send never carries it) and no agent reads it. Its key (F in assumption A) is the page's to
-  // bind: F is Fit today.
-  flag: { id: 'flag', label: actionsRegistryWords.flag, ...person, onItem: false },
-  unflag: { id: 'unflag', label: actionsRegistryWords.removeFlag, ...person, onItem: false },
+  // Ledger v12 (api.md 128), named Bookmark from v20 (api.md 182, D-099 2): the person's private mark on any card.
+  // Not an answer (`onItem` false, so Send never carries it) and no agent reads it. B toggles it (PLAN call 3).
+  bookmark: { id: 'bookmark', label: actionsRegistryWords.bookmark, key: 'b', ...person, onItem: false },
+  unbookmark: { id: 'unbookmark', label: actionsRegistryWords.removeBookmark, key: 'b', ...person, onItem: false },
   // Ledger v18 (api.md 156): the person puts one card's notes away, and brings them back. Private like
   // the flag: not an answer (`onItem` false) and no agent reads it. No key; the card's own buttons do it.
   'notes-hide': { id: 'notes-hide', label: actionsRegistryWords.hideNotes, ...person, onItem: false },
@@ -118,6 +117,13 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // code, and stops them. Only a person's click does either (rule 8), so the page asks first.
   'app-allow': { id: 'app-allow', label: actionsRegistryWords.allowApp, ...decision, onItem: false },
   'app-revoke': { id: 'app-revoke', label: actionsRegistryWords.stopApp, ...decision, onItem: false },
+  // Ledger v20 (api.md 183): the board's skin, how its nodes look. A choice about the picture, like the mode: no answer.
+  skin: { id: 'skin', label: actionsRegistryWords.boardSkin, ...person, onItem: false },
+  // Ledger v20 (api.md 188): the person's notes sent at once, apart from Send (Ask now). Not a Send and not an answer
+  // of its own: the notes it carried are (asked.ts).
+  ask: { id: 'ask', label: actionsRegistryWords.askNow, ...person, onItem: false },
+  // Ledger v20 (api.md 189): which way a flow runs, for one container or the whole board. Arranging, like the mode.
+  direction: { id: 'direction', label: actionsRegistryWords.flowDirection, ...person, onItem: false },
 };
 
 /** The review buttons an item offers: an act among them must be one its kind offers (act.ts). */
@@ -173,7 +179,7 @@ export interface BoardActionDef extends Common {
   inputs: Readonly<Record<string, 'required' | 'optional'>>;
 }
 
-const boardInputs = { title: actionsRegistryWords.required, summary: actionsRegistryWords.optional } as const;
+const boardInputs = { title: actionsRegistryWords.required, summary: actionsRegistryWords.optional, skin: actionsRegistryWords.optional } as const;
 
 export const BOARD_ACTIONS: Record<BoardActionId, BoardActionDef> = {
   'new-board': { id: 'new-board', label: actionsRegistryWords.newBoard, ...person, inputs: boardInputs },

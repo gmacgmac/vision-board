@@ -165,20 +165,113 @@ runner; this task adds the 19-to-20 step and nothing that reads `flag`. The read
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-16 (see the LOG line for the time)  
+
+### Run 1
 
 ### Changes Made
-- 
+- **Rulings used** (PLAN § Decisions 2, 3, 5, 13, 15-17, 23-25; calls 1-3, 5, 10-12, 15; review § 4 O1-O7 as the
+  design): tone names `teal blue violet magenta amber orange green slate`; library prefix `x-`; key B for Bookmark;
+  `ask` context default `board` is the page's (FE_03), the contract keeps `node`, `board`, `session`.
+- **Built-in icon names** (proposed here before coding, 50; generic nouns, none starting `x-`): signal, camera, encoder,
+  ingest, cloud, transcode, packager, storage, database, server, network, cdn, player, apps, ad, lock, key, captions,
+  audio, video, clip, schedule, channel, live, share, user, team, monitor, alert, chart, api, code, queue, function,
+  gateway, shield, route, satellite, fibre, file, document, folder, mail, chat, search, settings, target, milestone,
+  idea, globe. FE_01 draws them; the maintainer may trim at the FE_01 gate (a removal is a contract change then).
+- **Schema first** (`packages/format/schema/`): every ledger `$id` to `.../ledger/20/`, `v` enum 2-20; `common.schema.json`
+  `skin`, `direction`, `actDirection`, `iconName` (enum of the built-ins or `libraryIconName`), `libraryIconName`,
+  `iconHash`, `tone` (enum or integer 0-359), `askContext`; `board.schema.json` `skin`; `region.schema.json`
+  `direction`; `node.schema.json` `icon`, `tone`; `seen.schema.json` `region` (board form only); `act.schema.json`
+  `bookmark`/`unbookmark` in place of `flag`/`unflag`, `skin`, `ask` (`lines`, `context`), `direction`, each field its
+  act's alone and each act naming nothing else; new `events/icon.schema.json` (core, sent, stored; person from v20);
+  `ledger-event.schema.json` icon; api: `list-icons-response`, `add-icon-request`, `add-icon-response`, `view` (icon,
+  tone, direction), `get-board-response` `state.skin`, `list-boards-response` `skin`, `check-responses-response`
+  actions, `seen-request` words, `common` `iconPaths`; `openapi.json` 1.42.0, `list_icons` (GET /api/icons,
+  agent-or-person, `paths` query) and `add_icon` (POST /api/icons, agent), `x-hosts: standalone`, components `icon`,
+  `listIconsResponse`, `addIconRequest`, `addIconResponse`, parameter `iconPaths`. `npm run gen` run.
+- **Format** (`packages/format/src/`): `view.ts` `ICON_NAMES`, `LIBRARY_ICON_PATTERN`, `isLibraryIcon`, `isIconName`,
+  `TONES`, `TONE_HUE_MAX`, `isTone`, `Tone`, `SKINS`, `Skin`, `DEFAULT_SKIN`, `DIRECTIONS`, `Direction`,
+  `DirectionChoices`, `directionOf`, `ViewNode.icon/tone`, `Region.direction`; `ledger.ts` `LEDGER_FORMAT` 20,
+  `ACTION_IDS`, `CARD_MARKS`, `ACT_DIRECTIONS`, `ASK_CONTEXTS`, `EVENT_TYPES`/`AGENT_EVENTS` + `icon`, `PERSON_TOO.icon`
+  20, `IconEvent`, `BoardEvent.skin`, `ActEvent.skin/lines/context/direction`, `SeenEvent` region form; new
+  `view-shape.ts` and `act-shape.ts` (the hand twins, as `app-shape.ts`); `ledger-shape.ts` uses them and now plans each
+  shape once (`planOf`, `LINES`); `ledger-index.ts` `LedgerIndex.icons`, the library-icon and given-once rules, seen
+  container, `ask` lines, `skin`/`direction` acts; `validate.ts` (view icon, tone, direction); `data-folder.ts`
+  `ICONS_DIR`, `ProjectFiles.icons`, `DATA_FOLDER_NAMES`; `flags.ts` `nodeEdges`, `skins`, `layoutControl`,
+  `flowDirection`, `appWindow` (off) and `appStage` off; `migrate/steps.ts` `toFormat20` appended to `FORMAT_STEPS`;
+  words in `words/format-ledger.ts`.
+- **Actions** (`packages/actions/src/`): `card-flags.ts` became `bookmarks.ts` (`foldBookmark`, `bookmarksOn`),
+  `LedgerState.bookmarks`, `BoardState.bookmarks`; new `skins.ts` (`foldSkin`, `skinOf`: own map, a rename keeps it),
+  `directions.ts` (`foldDirection`), `asked.ts` (`foldAsk`, `askedBy`); `fresh.ts` `seeContainer`, `containerSeenAt`,
+  `unseenContainerReplies`, `freshContainers` honours the container seen; `answers/updates.ts` `containerSeenDue`;
+  `unsent.ts`, `note-lock.ts` `sentAfter`, `pending.ts` `replyScope` consult asked lines; `references.ts` scopes;
+  `permissions.ts` `concerns` (ask by its notes, skin and board direction to board holders); `registry.ts` rows
+  (bookmark key `b`, `boardInputs.skin`); `act.ts` rules for skin, direction, ask (`askProblems`); `board-state.ts`
+  `skin`; `reads.ts` `boardList` skin; `answers/board-data.ts` `state.skin`; `conditions.ts` container.fresh text;
+  words in `actions-refusals.ts`, `actions-registry.ts`.
+- **Server**: `engine/reads.ts` `listIcons` stub (built-ins, empty library); `engine/writes.ts` `addIcon` stub (body
+  checked, then `not-found` with `writes.ts` `addingIconsIsNotBuiltYet`). **Page** (rename only): `flag-flow.ts`
+  `flagAct` sends `bookmark`/`unbookmark`; `controller.ts`, `gallery/flag-section.ts`, `packages/ui/src/node/node-core.ts`
+  read `bookmarks`.
+- **Fixtures**: `fixtures/gallery.ledger.jsonl` lines 270-271 brought to v20 through `upgradeLines` (script
+  `temp/t01/upgrade-flags.ts`), not by hand. `fixtures/legacy/` untouched; `legacy-folds.test.ts` maps the frozen
+  `flags` to `bookmarks` and keeps the read-as-it-lies hold for the four files with no flag line.
+- **Tests** (new): `packages/format/tests/node-look.test.ts`, `packages/actions/tests/{ask-now,skin,flow-direction,
+  container-seen}.test.ts`, `bookmarks.test.ts` (was `card-flags.test.ts`), `apps/board/tests/schema-v20.test.ts`,
+  `api-v20.test.ts`; `migrate.test.ts` "step 19". Existing tests updated for the rename, the new acts and the counts.
+- **Docs**: `api.md` point 11 (format 20), operations table (`list_icons`, `add_icon`, `mark_seen`, `list_boards`), new
+  § Ledger v20 points 182-189; `plugin.md` names the two tools a bot under a host does not get (forced by
+  `spec-truth.test.ts`).
 
 ### Issues & Resolutions
-- 
+- **Files outside the list, touched because the contract forced them** (each a rename or a count; the orchestrator may
+  move them): `scripts/gen-contract.mjs` (`LEDGER_EVENT_ID` to ledger/20, as the format-19 bump did);
+  `packages/mcp/tests/tools.test.ts` (`WRITES` gains `add_icon`; size caps raised on purpose, see below);
+  `packages/ui/tests/*` (BoardState `flags` to `bookmarks`); `tests/pages/{card-history,flag-retire,header-tiers,
+  ledgers,read-only}.spec.ts` (the API act `flag` to `bookmark`, step 10); `docs/specification/plugin.md` (one
+  sentence); `apps/board/tests/contract-walk.ts` (the icon tools are on no board).
+- **Server start budget**: before this task it was already 975-996 ms of 1000 on the 100,000-line v2 ledger (BE_02's
+  in-memory upgrade checks every line twice); the extra chain step and the v20 act rules took it to ~1070 ms. Fixed in
+  owned code: `ledger-shape.ts` plans each shape once (`planOf`, `LINES`) and `act-shape.ts` `v20ActRules` reads four
+  fields for any other act: now ~830 ms. The chain's per-step spread (`steps.ts` `stamped`) is the top self-time left.
+- The MCP tool list grew: the built-in icon enum sits in `write_board`'s node schema. `LIST_CAP` 32,050 to 38,000,
+  `write_board` 17,350 to 19,400, `list_icons` 1,050, `add_icon` 1,900 (measured 36,565; 18,779; 977; 1,768).
+- `schema-cases.ts` "unknown format v20" became v21; the shared valid lines are stamped v20.
+- **An ask ends a `check_responses` wait**, as a Send does (`engine/reads.ts` `wakes`; `api-v20.test.ts`): without it an
+  agent waiting in `check_responses` would hear of Ask now only at the next Send or the wait's end. api.md 188 says so.
+- **Checks**: `npm test` 2537 + timing 14/14 (server start ~820 ms, was 975-996 ms before the task); `npm run check` 0
+  errors; `npm run gen -- --check` current; page specs `board.spec.ts flag-retire.spec.ts` and the eight spike specs
+  (`app-fit app-gallery app-states card-history chat-attach-gallery gallery host-styles size`) with `header-tiers
+  ledgers read-only`: 180 passed, no new baselines (VB_TEST_PORT=6110; the `board.spec.ts` filter also ran
+  `new-board.spec.ts`). `npm run verify` fails twice: `modules.md` (the orchestrator's `npm run map`) and **the page
+  weight: 200.7 KB gzip against the 200 KB budget**. HEAD built the same way is 198.7 KB (203,432 bytes); this task adds
+  2.1 KB gzip (~6.9 KB minified) of contract code the page folds and checks with (`#format` shape and context rules,
+  the folds of skin, directions, asked lines and container seen, `validateAct`'s ask rules, their words). Shortening
+  the new words saved 55 bytes. Not decided here: raise the budget (a recorded ruling), or move something out of the
+  start bundle. Every later task adds to it (FE_01's icon set, the skins).
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- **The page-weight budget had 1.3 KB of room before this set**; the overhaul cannot fit under it as it stands.
+- **An agent-written `act` line passes the shape check**: only `validateAct` refuses it, so a hand-edited ledger
+  holding one is read. A record a reader trusts should refuse it at the shape (`PERSON_EVENTS` has `seen` only).
+- **The 50 built-in icon names are inlined into every agent's `write_board` tool** (~600 characters). The schema must
+  hold the enum while the schema and the hand check give one verdict; trimming the built-in set is the lever.
+- **`ask` lines are judged at write only** (that each is the person's live, unsent, unasked note on the board), as a
+  `note-edit`'s `note` is; the reader checks only that the line exists. A hand-edited ledger could ask about any line,
+  harmlessly (it only locks that seq). BE_03 could move it into context if one reader must hold it.
+- **`list_icons` is agent-or-person** while every other board read takes no credential; the brief said agent and
+  person. Say if it should be open like `list_boards`.
+- **`put_board` may now carry `skin`** (its body is the board line's core): the person can make a board in a skin,
+  and a rename that names one changes it. api.md 183 says so; the page sends none.
+- **Until BE_03, a pre-20 line naming `bookmark`, `skin` or `ask` reads** (no version branch was added, as asked): a
+  line form that never existed. Harmless; it goes with the one-format reader.
+- **The chain's restamp steps copy the whole line once per format** (`steps.ts` `stamped`): the top cost of a
+  migrated open now. Folding a run of restamps into one jump would roughly halve it (BE_03 or later).
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None in the records. Files outside the list were touched only where the contract forced a rename or a count (listed
+  above). `appStage` is off by default, as the brief asked.
 
 ---
 

@@ -107,7 +107,7 @@ test('nothing more is written on a retired card or container', () => {
     node('b', 5, 't', 'Again', 2),
     agent({ type: 'link', from: 3, to: 5 }),
     agent({ type: 'reply', n: 5, text: 'Ok.' }),
-    person({ action: 'flag', n: 5 }),
+    person({ action: 'bookmark', n: 5 }),
     agent({ type: 'retire', board: 'b', cards: [5] }),
     agent({ type: 'region', board: 'b', region: { id: 's', title: 'S again', mode: 'grid' } }),
     node('b', 6, 's', 'Into a retired container'),
@@ -140,7 +140,7 @@ test('a retire names its board\'s cards and containers; the built-in Later is no
   ]);
 });
 
-test('the flag is the person\'s mark on one card, kept by identity', () => {
-  const lines = [...twoBoards(), person({ action: 'flag', n: 4 }), person({ action: 'unflag', n: 4 })];
+test('the bookmark is the person\'s mark on one card, kept by identity', () => {
+  const lines = [...twoBoards(), person({ action: 'bookmark', n: 4 }), person({ action: 'unbookmark', n: 4 })];
   assert.deepEqual(read(lines).problems, []);
 });

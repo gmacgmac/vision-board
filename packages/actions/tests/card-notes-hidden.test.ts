@@ -65,7 +65,7 @@ test('a redraw keeps the mark, and it is no flag', () => {
   l.agent(A, { type: 'node', board: 'b', n: 1, ver: 2, node: { region: 'r', kind: 'finding', title: 'Redrawn' } });
   const s = l.state();
   assert.deepEqual([...boardState(s, 'b').notesHidden!.keys()], ['1']);
-  assert.deepEqual([...boardState(s, 'b').flags], []);
+  assert.deepEqual([...boardState(s, 'b').bookmarks], []);
 });
 
 test('no agent read changes when the person hides or shows a card\'s notes, and Send has nothing new', () => {

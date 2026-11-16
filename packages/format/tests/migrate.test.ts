@@ -57,6 +57,20 @@ test('step 2: a join keeps an agent that is an id, and stops on any other name',
   assert.ok(isUpgradeStop(named) && named.stop.includes('"kiro"'));
 });
 
+test('step 19: flag becomes bookmark and unflag unbookmark, keys in their places; every other line only takes v20', () => {
+  const flag = { ...stamp(19, 7), by: 'person', type: 'act', action: 'flag', n: 3 };
+  const up = step(19).up(flag);
+  assert.deepEqual(up, { ...flag, v: 20, action: 'bookmark' });
+  assert.deepEqual(Object.keys(up), Object.keys(flag));
+  assert.deepEqual(step(19).up({ ...flag, action: 'unflag' }), { ...flag, v: 20, action: 'unbookmark' });
+  for (const line of [{ ...flag, action: 'ack', ver: 1 }, { ...stamp(19), by: 'agent', agent: 'a-abcdefgh', type: 'board', board: 'flag', title: 'flag' }])
+    assert.deepEqual(step(19).up(line), { ...line, v: 20 });
+  assert.equal(step(19).to, 20);
+  // A v12 flag (the format that added it) comes up the whole chain as a bookmark, and reads.
+  const old = upgradeLine({ ...flag, v: 12 });
+  assert.deepEqual([(old as Line).v, (old as Line).action, eventProblems(old)], [20, 'bookmark', []]);
+});
+
 test('steps 3 to 9 and 12 to 18 restamp only', () => {
   for (const from of [3, 4, 6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18].filter((f) => f < LEDGER_FORMAT)) {
     const line = { ...stamp(from), by: 'person', type: 'act', action: 'comment', n: 4, ver: 2, text: 'list' };
@@ -125,12 +139,16 @@ test('upgradeLines: a newer line is named and kept; a stop is named and the line
   assert.equal(out.changed, 0);
 });
 
-/** What no step may change on a line (D-103 1, review V2). */
+/** The one action a step renames: format 20's Bookmark (api.md 182). */
+const BOOKMARKED: Readonly<Record<string, string>> = { flag: 'bookmark', unflag: 'unbookmark' };
+
+/** What no step may change on a line (D-103 1, review V2), the flag read as the bookmark it became. */
 const identity = (text: string) => {
   const e = JSON.parse(text) as Line;
   const region = e.region as Line | string | undefined;
+  const action = typeof e.action === 'string' ? BOOKMARKED[e.action] ?? e.action : e.action;
   return JSON.stringify([e.seq, e.at, e.by, e.type, e.n, e.board, typeof region === 'object' ? region.id : region,
-    e.from, e.to, e.nodes, e.cards, e.proposal, e.note, e.request, e.head, e.action, e.id]);
+    e.from, e.to, e.nodes, e.cards, e.proposal, e.note, e.request, e.head, action, e.id]);
 };
 
 for (const f of FROZEN) {

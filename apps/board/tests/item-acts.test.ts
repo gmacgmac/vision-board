@@ -17,7 +17,7 @@ function harness(focusLeft?: (id: string) => boolean) {
   const focused: string[] = [];
   const state = (): BoardState => ({
     items: new Map([['12', { status, notes: [] }]]), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(),
-    moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(),
+    moves: new Map(), regionPins: new Map(), regionNotes: new Map(), bookmarks: new Set(),
   });
   const set: Partial<Record<ActionId, ItemStatus>> = { ack: 'acknowledged', drop: 'dropped', later: 'later', reopen: 'open' };
   const act = createItemActs({

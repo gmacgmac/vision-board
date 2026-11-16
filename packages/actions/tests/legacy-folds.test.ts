@@ -7,6 +7,8 @@
 // this test, never the frozen file.
 // Two holds: the file read as it lies folds to its result (true while the reader still reads old formats; BE_03
 // removes this one), and the file migrated (`upgradeLines`) folds to the same result, line for line.
+// Format 20 (T_01) renamed the flag Bookmark: the fold's `flags` is `bookmarks` (mapped here in `renamed`), and a
+// `flag` line no longer reads as it lies, only migrated, so the first hold is kept for the files that hold none.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -37,7 +39,18 @@ function foldOf(lines: string[]): unknown {
 }
 
 const linesOf = (name: string): string[] => fs.readFileSync(`${LEGACY}${name}.ledger.jsonl`, 'utf8').split('\n').filter(Boolean);
-const frozen = (name: string): unknown => JSON.parse(fs.readFileSync(`${LEGACY}${name}.fold.json`, 'utf8'));
+
+/** A frozen result in the fold's shape now: format 20 renamed each board state's `flags` to `bookmarks`. */
+function renamed(result: { boards: Record<string, { state: Record<string, unknown> }> }): unknown {
+  for (const b of Object.values(result.boards)) {
+    const { flags, ...rest } = b.state;
+    b.state = { ...rest, bookmarks: flags };
+  }
+  return result;
+}
+const frozen = (name: string): unknown => renamed(JSON.parse(fs.readFileSync(`${LEGACY}${name}.fold.json`, 'utf8')));
+/** A file with a `flag` or `unflag` line, which format 20 reads only migrated (a `bookmark`). */
+const holdsFlags = (name: string): boolean => linesOf(name).some((l) => /"action":"(un)?flag"/.test(l));
 
 test('the frozen set: every fixture, the performance ledger and the mixed one, each with its result', () => {
   assert.deepEqual(NAMES.sort(), ['gallery', 'login-layout', 'login-review', 'mixed', 'perf', 'roadmap']);
@@ -52,7 +65,11 @@ test('the mixed ledger is shaped like a real one: formats 7 to 19, four boards, 
   assert.equal(lines.filter((e) => e.type === 'board' && e.v !== 9).length, 4);
 });
 
-for (const name of NAMES) {
+test('the frozen files that hold a flag are the gallery and the mixed ledger: each folds to its bookmarks migrated', () => {
+  assert.deepEqual(NAMES.filter(holdsFlags).sort(), ['gallery', 'mixed']);
+});
+
+for (const name of NAMES.filter((x) => !holdsFlags(x))) {
   test(`${name}: read as it lies, today's code folds it to its frozen result`, () => {
     assert.deepEqual(foldOf(linesOf(name)), frozen(name));
   });

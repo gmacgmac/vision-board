@@ -7,7 +7,7 @@
 // the host's (the standalone server's streams.ts, from `watch`). What a read tells its caller about itself (`owed`,
 // `answered`, `held`; the `botToolRules` flag) is caller-marks.ts.
 import type { LedgerEvent } from '#format';
-import { boardView, containerKey, flagOn, toLine, widthsOf } from '#format';
+import { boardView, containerKey, flagOn, ICON_NAMES, toLine, widthsOf } from '#format';
 import type { LedgerState } from '#actions';
 import {
   boardData, boardJson, boardList, boardState, containerDetail, eventBoard, linkedDetails, nodeDetail, openContainers, openItems,
@@ -102,10 +102,10 @@ const listOpen: Op = (ctx) => {
   return reply(200, { head: s.seq, items: openItems(s, board, scopeOf(ctx)), ...(containers.length > 0 && { containers }) });
 };
 
-/** A person act that ends a `check_responses` wait on `board`: Send, or an answer to a grant
- * request on it (api.md Operations); for a scoped caller, only one that concerns it. */
+/** A person act that ends a `check_responses` wait on `board`: Send, Ask now (an `ask`, api.md 188), or an answer to
+ * a grant request on it (api.md Operations); for a scoped caller, only one that concerns it. */
 const wakes = (s: LedgerState, board: string, e: LedgerEvent, agent: string | undefined): boolean =>
-  e.type === 'act' && (e.action === 'send' || e.action === 'grant' || e.action === 'deny') && eventBoard(s, e) === board &&
+  e.type === 'act' && (e.action === 'send' || e.action === 'ask' || e.action === 'grant' || e.action === 'deny') && eventBoard(s, e) === board &&
   (agent === undefined || responsesAfter(s, board, e.seq - 1, agent).some((x) => x.seq === e.seq));
 
 /** Hold until `stop` says so, `seconds` pass, or the host's signal ends it (the caller went away, the
@@ -159,7 +159,11 @@ const readLedger: Op = ({ params, ledger, readOnly, flags }) => {
   return reply(200, { events: list, head: s.seq, ...(more && { more }), ...readOnlyMark({ readOnly }), ...(flagOn('singleAgent', flags) && { oneAgent: true }) });
 };
 
+/** The icons a node may name (api.md 186): the built-in set and the project's library. A stub until the library is
+ * built (node-overhaul BE_04): the built-ins, and an empty library. */
+const listIcons: Op = () => reply(200, { builtIn: [...ICON_NAMES], library: [] });
+
 export const READS = {
   list_boards: listBoards, get_board: getBoard, show_node: showNode, show_container: showContainer, show_layout: showLayout,
-  list_open: listOpen, check_responses: checkResponses, read_ledger: readLedger,
+  list_open: listOpen, check_responses: checkResponses, read_ledger: readLedger, list_icons: listIcons,
 } satisfies Record<string, Op>;

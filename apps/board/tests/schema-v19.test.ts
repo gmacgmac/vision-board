@@ -8,7 +8,7 @@ import { LEDGER_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import { VALID, act } from './schema-cases.ts';
 
 test('old ledgers read unchanged: every event type and action, written as v18, still reads', () => {
-  assert.equal(LEDGER_FORMAT, 19);
+  assert.ok(LEDGER_FORMAT >= 19);
   for (const [type, e] of Object.entries(VALID)) {
     const old = { ...e, v: 18 };
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, old), [], type);

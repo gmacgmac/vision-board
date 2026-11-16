@@ -60,7 +60,7 @@ async function crowd(page: Page, request: APIRequestContext) {
   await writeAs(request, QUIET, [node(`Another card ${Date.now()}`)]);
   if (!flagged) { // once: a press flags or unflags, and a card holds one note not yet sent
     await act(page, { action: 'comment', n: cards[0], ver: 1, text: 'Which team?' });
-    await act(page, { action: 'flag', n: cards[2] });
+    await act(page, { action: 'bookmark', n: cards[2] });
   }
   flagged = true;
   await act(page, { action: 'lock' });

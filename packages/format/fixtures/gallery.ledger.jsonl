@@ -267,8 +267,8 @@
 {"v":12,"seq":267,"at":"2026-10-11T09:00:16Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":116,"ver":1,"node":{"region":"retired-here","kind":"action","title":"Draft the rename email"}}
 {"v":12,"seq":268,"at":"2026-10-11T09:00:17Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":117,"ver":1,"node":{"region":"retired-here","kind":"finding","title":"Support tickets mention the names"}}
 {"v":12,"seq":269,"at":"2026-10-11T09:00:18Z","by":"person","type":"act","action":"ack","n":114,"ver":1}
-{"v":12,"seq":270,"at":"2026-10-11T09:00:19Z","by":"person","type":"act","action":"flag","n":112}
-{"v":12,"seq":271,"at":"2026-10-11T09:00:20Z","by":"person","type":"act","action":"flag","n":113}
+{"v":20,"seq":270,"at":"2026-10-11T09:00:19Z","by":"person","type":"act","action":"bookmark","n":112}
+{"v":20,"seq":271,"at":"2026-10-11T09:00:20Z","by":"person","type":"act","action":"bookmark","n":113}
 {"v":12,"seq":272,"at":"2026-10-11T09:00:21Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":113,"ver":2,"node":{"region":"flagged","kind":"decision","title":"Keep the free tier","body":"Redrawn after the flag: the flag stays."}}
 {"v":12,"seq":273,"at":"2026-10-11T09:00:22Z","by":"agent","agent":"a-pricing1","type":"retire","board":"marks","cards":[115],"key":"retire-115"}
 {"v":12,"seq":274,"at":"2026-10-11T09:00:23Z","by":"agent","agent":"a-pricing1","type":"retire","board":"marks","cards":[117],"key":"retire-117"}

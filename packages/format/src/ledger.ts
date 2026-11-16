@@ -7,11 +7,12 @@
 // The shape's one source is the JSON Schema in packages/format/schema/ (rule 6, api.md 5-11);
 // these types are hand-written and a test checks they agree with it (api.md 2).
 import type { AppRef } from './apps.ts';
-import type { Kind, Region, Widths } from './view.ts';
+import type { Direction, Kind, Region, Skin, Tone, Widths } from './view.ts';
+import { DIRECTIONS } from './view.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 19;
+export const LEDGER_FORMAT = 20;
 /** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
  * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
@@ -29,20 +30,22 @@ export const LEDGER_FORMAT = 19;
  * a container (api.md 141). v17 adds the app card, kind `app` naming its app in `node.app`, and the
  * person's `app-allow` and `app-revoke` of an app's code (api.md 150, D-047). v18 adds the person's
  * `notes-hide` and `notes-show` of one card's notes (api.md 156). v19 adds a Send's `head`, the line its
- * answers were read through (api.md 169). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] as const;
+ * answers were read through (api.md 169). v20 renames the person's `flag` and `unflag` to `bookmark` and `unbookmark`
+ * (older ledgers are migrated, D-103) and adds a board's skin, a node's icon and tone, the `icon` line, a container's
+ * `seen`, the person's `ask` and a flow's `direction` (api.md 182-189). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
-  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag', 'notes-hide', 'notes-show', 'widths',
-  'archive', 'restore', 'lock', 'unlock', 'app-allow', 'app-revoke',
+  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'bookmark', 'unbookmark', 'notes-hide', 'notes-show', 'widths',
+  'archive', 'restore', 'lock', 'unlock', 'app-allow', 'app-revoke', 'skin', 'ask', 'direction',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 
-/** The person's marks on one card: the flag (api.md 128), and putting its notes away or back (api.md 156). */
-export const CARD_MARKS: ReadonlySet<ActionId> = new Set(['flag', 'unflag', 'notes-hide', 'notes-show']);
+/** The person's marks on one card: the bookmark (api.md 128, 182), and putting its notes away or back (api.md 156). */
+export const CARD_MARKS: ReadonlySet<ActionId> = new Set(['bookmark', 'unbookmark', 'notes-hide', 'notes-show']);
 /** The person's marks on a whole board: archive hides it from every agent, restore brings it back
  * (api.md 135); lock makes it read-only for everyone, unlock ends that (api.md 138). Each names its
  * `board` and nothing else. */
@@ -81,18 +84,19 @@ export const actCard = (e: { id?: number | undefined; nodes?: number[] | undefin
 
 export const EVENT_TYPES = [
   'board', 'region', 'node', 'link', 'unlink', 'act', 'seen', 'reply', 'propose', 'park',
-  'join', 'grant-request', 'retire',
+  'join', 'grant-request', 'retire', 'icon',
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
 /** Event types only an agent writes; the rest of the rules for people live in the action layer. */
 export const AGENT_EVENTS: ReadonlySet<EventType> = new Set([
-  'board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'join', 'grant-request', 'retire',
+  'board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'join', 'grant-request', 'retire', 'icon',
 ]);
 /** Agent event types a person may also write, from the format given: the person's `board` line
  * creates a board or renames one (`put_board`, api.md 90); the person's `retire` line removes cards or
- * a container (`retire_cards`, api.md 141). */
-export const PERSON_TOO: Partial<Record<EventType, LedgerFormat>> = { board: 9, retire: 16 };
+ * a container (`retire_cards`, api.md 141); the person's `icon` line accepts a changed drawing of a library icon
+ * (api.md 185). */
+export const PERSON_TOO: Partial<Record<EventType, LedgerFormat>> = { board: 9, retire: 16, icon: 20 };
 /** Event types only a person writes. */
 export const PERSON_EVENTS: ReadonlySet<EventType> = new Set(['seen']);
 
@@ -102,6 +106,13 @@ export type NodeSize = (typeof NODE_SIZES)[number];
 /** The person's `size` action; `auto` clears it, like `unpin` (api.md 16). */
 export const ACT_SIZES = [...NODE_SIZES, 'auto'] as const;
 export type ActSize = (typeof ACT_SIZES)[number];
+/** The person's `direction` act (api.md 189): `across`, `down`, or `auto`, which gives back the agent's. */
+export const ACT_DIRECTIONS = [...DIRECTIONS, 'auto'] as const;
+export type ActDirection = (typeof ACT_DIRECTIONS)[number];
+/** What the agent was given with an `ask` (api.md 188): the node, the board, or the board's own chat session. The
+ * ledger records the fact, so which one the board gives can change without a format change. */
+export const ASK_CONTEXTS = ['node', 'board', 'session'] as const;
+export type AskContext = (typeof ASK_CONTEXTS)[number];
 /** What a person's note asks for: a `comment`, or more context (api.md 59). */
 export const NOTE_KINDS = ['comment', 'context'] as const;
 export type NoteKind = (typeof NOTE_KINDS)[number];
@@ -147,6 +158,10 @@ export interface NodeBody {
   size?: NodeSize;
   /** On an app card only, and always there: which app, and its panel size (api.md 150). */
   app?: AppRef;
+  /** A built-in icon or one of the project's library, by name (api.md 184). */
+  icon?: string;
+  /** A palette name or a whole OKLCH hue angle (api.md 184). */
+  tone?: Tone;
 }
 
 /** Handover written when an item is parked (D-020). */
@@ -162,7 +177,8 @@ export interface ParkBundle {
  * View's `Region` names it by node id, its board number as text, instead. */
 export type LedgerRegion = Omit<Region, 'center'> & { center?: number };
 
-export interface BoardEvent extends Base, Keyed { type: 'board'; board: string; title: string; summary?: string }
+/** `skin`: how the board looks, set by whoever makes it (api.md 183); a rename leaves it out and keeps the board's. */
+export interface BoardEvent extends Base, Keyed { type: 'board'; board: string; title: string; summary?: string; skin?: Skin }
 export interface RegionEvent extends Base, Keyed { type: 'region'; board: string; region: LedgerRegion }
 /** A new version of card `id`. The server assigns `id` (per project, never reused) and `ver`;
  * the card's board number follows from the order its board's cards were first drawn (api.md 125). */
@@ -181,7 +197,7 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * one container; `region` = that container for a `move` (api.md 66). With `board` + `region` in
  * place of `n` (and `ver`, `nodes`), a `comment`, `context`, `note-edit` or `note-remove` is about a
  * note on that whole container and a `pin` or `unpin` about its place, `x`/`y` then in board
- * coordinates (api.md 71). `nodes` are card identities. A `flag`, `unflag`, `notes-hide` or `notes-show` names one card by `id`
+ * coordinates (api.md 71). `nodes` are card identities. A `bookmark`, `unbookmark`, `notes-hide` or `notes-show` names one card by `id`
  * and nothing else (api.md 128). A `widths` act sets a container's card widths (`board`, `region`,
  * `widths`), like `mode` (api.md 132). An `archive`, `restore`, `lock` or `unlock` names its `board` and nothing else
  * (api.md 135). An `app-allow` names its `app` and `hash`, an `app-revoke` its `app` (api.md 150). */
@@ -192,10 +208,16 @@ export interface ActEvent extends Base {
   app?: string; hash?: string;
   /** A Send's answers were read through this line (v19, api.md 169); left out, through the Send's own line. */
   head?: number;
+  /** The board's skin, for `skin` (api.md 183). */
+  skin?: Skin;
+  /** For `ask` (api.md 188): the `seq` of each note of the person's it carried, and what the agent was given with it. */
+  lines?: number[]; context?: AskContext;
+  /** For `direction` (api.md 189): which way a flow runs, on one container (`region`) or with none the whole board. */
+  direction?: ActDirection;
 }
 /** The person has seen version `ver` of card `id` (D-018), or, from v8, has looked at `board` up to
- * its line `head` (api.md 87). */
-export type SeenEvent = Base & { type: 'seen' } & ({ id: number; ver: number } | { board: string; head: number });
+ * its line `head` (api.md 87), or, from v20, at container `region` of `board` up to `head` (api.md 187). */
+export type SeenEvent = Base & { type: 'seen' } & ({ id: number; ver: number } | { board: string; head: number; region?: string });
 /** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */
 export interface ReplyEvent extends Base, Keyed { type: 'reply'; id: number; text: string; to?: number }
 /** The agent proposes a decision; only the person can make it (D-018). */
@@ -217,9 +239,14 @@ export interface GrantRequestEvent extends Base, Keyed {
   type: 'grant-request'; board: string; region?: string; reason: string;
 }
 
+/** Which drawing a name of the project's icon library means (api.md 185): the SHA-256 of its file in
+ * `.visionboard/icons/`. Written by an agent (`add_icon`, or the server on a node's first use) or by the person
+ * (accepting a changed drawing). It names no board and moves no board's head. */
+export interface IconEvent extends Base, Keyed { type: 'icon'; name: string; hash: string }
+
 export type LedgerEvent =
   | BoardEvent | RegionEvent | NodeEvent | LinkEvent | ActEvent
-  | SeenEvent | ReplyEvent | ProposeEvent | ParkEvent | JoinEvent | GrantRequestEvent | RetireEvent;
+  | SeenEvent | ReplyEvent | ProposeEvent | ParkEvent | JoinEvent | GrantRequestEvent | RetireEvent | IconEvent;
 
 /** Event types whose line names one card in `n` (the file) and `id` (code): ledger-line.ts. */
 export const CARD_EVENTS: ReadonlySet<EventType> = new Set(['node', 'act', 'seen', 'reply', 'propose', 'park']);

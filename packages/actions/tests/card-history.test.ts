@@ -60,8 +60,8 @@ function everything(l: Ledger) {
   const ack = l.agent(B, { type: 'propose', n: 1, ver: 2, action: 'ack', reason: REASON });
   l.act({ action: 'reject', n: 1, proposal: ack });
   const marks = [
-    l.act({ action: 'flag', n: 1 }), l.act({ action: 'notes-hide', n: 1 }),
-    l.act({ action: 'unflag', n: 1 }), l.act({ action: 'notes-show', n: 1 }), l.seen(1, 2),
+    l.act({ action: 'bookmark', n: 1 }), l.act({ action: 'notes-hide', n: 1 }),
+    l.act({ action: 'unbookmark', n: 1 }), l.act({ action: 'notes-show', n: 1 }), l.seen(1, 2),
   ];
   l.agent(A, { type: 'retire', board: 'b', cards: [1] });
   return { note, group, reply, marks };

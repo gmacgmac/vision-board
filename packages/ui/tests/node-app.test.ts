@@ -15,7 +15,7 @@ const info = (f: Partial<AppInfo> = {}): AppInfo =>
   ({ id: 'calculator', state: 'ready', title: 'Calculator', version: '1.0.0', tools: ['evaluate', 'history'], hash: 'a'.repeat(64), allowed: true, ...f });
 
 const board = (): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() } as unknown as BoardState);
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), bookmarks: new Set() } as unknown as BoardState);
 
 test('checking: until list_apps answers, "Loading…" in place of the panel, no frame', () => {
   const v = appView(card());
