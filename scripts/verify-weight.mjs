@@ -15,12 +15,13 @@ export const PAGE = { html: 'apps/board/dist/index.html', budgetKb: 200 };
  * board/chat-view.ts), so it is not counted. `read(name)` gives an asset's text, or null. */
 export function pageAssets(html, read) {
   const seen = new Set();
-  const queue = [...html.matchAll(/(?:src|href)="\/assets\/([\w.-]+\.(?:js|css))"/g)].map((m) => m[1]);
+  // Any name the bundler gives (a group's chunk may hold `~` or `$`), up to the quote that closes it.
+  const queue = [...html.matchAll(/(?:src|href)="\/assets\/([^"/]+\.(?:js|css))"/g)].map((m) => m[1]);
   while (queue.length) {
     const name = queue.shift();
     if (seen.has(name)) continue;
     seen.add(name);
-    if (name.endsWith('.js')) for (const m of (read(name) ?? '').matchAll(/(?:\bfrom|\bimport)\s*["']\.\/([\w.-]+\.(?:js|css))["']/g)) queue.push(m[1]);
+    if (name.endsWith('.js')) for (const m of (read(name) ?? '').matchAll(/(?:\bfrom|\bimport)\s*["']\.\/([^"'/]+\.(?:js|css))["']/g)) queue.push(m[1]);
   }
   return [...seen];
 }

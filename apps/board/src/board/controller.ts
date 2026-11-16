@@ -92,7 +92,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
-    els, vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), layoutTooltip: on('layoutTooltip'), fresh: () => attention.freshIn(),
     facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n), ...(oneTab && { oneTab }) }), appCards: apping, placed: () => apps.place(),
   });

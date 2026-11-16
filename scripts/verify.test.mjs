@@ -123,6 +123,12 @@ test('page weight: the board page is its HTML\'s assets and what they import at 
   assert.deepEqual(pageAssets(html, (name) => files[name] ?? null).sort(), ['index-a.js', 'shared-b.css', 'shared-c.js', 'shared-g.js', 'side-f.js']);
 });
 
+test('page weight: a chunk named with `~` or `$` is counted like any other', () => {
+  const html = '<script type="module" src="/assets/index~main-a.js"></script>';
+  const files = { 'index~main-a.js': 'import{x}from"./board~index~gallery-b.js";', 'board~index~gallery-b.js': 'import"./x$y-c.js";', 'x$y-c.js': '' };
+  assert.deepEqual(pageAssets(html, (name) => files[name] ?? null).sort(), ['board~index~gallery-b.js', 'index~main-a.js', 'x$y-c.js']);
+});
+
 test('page weight: over the gzip budget fails and names the size, at or under it is silent', () => {
   assert.deepEqual(checkWeight('apps/board/dist/index.html', 150 * 1024, 150), []);
   const over = checkWeight('apps/board/dist/index.html', 150 * 1024 + 1, 150);

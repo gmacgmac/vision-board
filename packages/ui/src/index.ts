@@ -21,7 +21,6 @@ export type { NoteChoice, NoteEventDetail, VbNoteBubbleElement } from './note-bu
 export * from './app-frame/app-frame-core.ts';
 export * from './app-frame/app-frame-state.ts';
 export type { AppFrameWiring, VbAppFrameElement } from './app-frame/vb-app-frame.ts';
-export { readLook } from './app-frame/vb-app-frame.ts';
 export * from './node/node-app.ts';
 export * from './image-view/image-view-core.ts';
 export { imageButton, IMAGE_BUTTON, showProblem } from './image-view/card-image.ts';
@@ -35,7 +34,7 @@ export type { MarkdownOptions } from './markdown/render.ts';
 export { bindHoverTip } from './tip/hover-tip.ts';
 export type { HoverTip, HoverTipOptions } from './tip/hover-tip.ts';
 export { pauseControls } from './paused/paused.ts';
-export { defineBoardElements } from './elements.ts';
+export { defineAppFrame, defineBoardElements, defineImageView } from './elements.ts';
 export { PATTERNS } from './patterns.ts';
 export type { PatternInfo } from './patterns.ts';
 // The shared base (UI_01): menu, dismissable layer and modal dialog, for every screen and plugin.

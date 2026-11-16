@@ -46,12 +46,27 @@ view is one file (`codeSplitting: false`), so there each part is already inside.
 (`FolderDialog`, `FolderPicker`), the New ledger dialog (`LedgerDialog`, `LedgerForm`), New board / Rename board
 (`BoardDialog`) and the Archived list (`ArchivedDialog`, `ArchivedList`). `apps/board/tests/lazy-parts.test.ts`
 fails if a file the page imports statically from `main.ts` reaches one of them.
-What it bought depends on how the build cuts chunks: the bundler puts every module a lazy part shares with the
-page in a chunk of its own, and each extra file costs gzip (each file is compressed alone) and an import list. With
-today's build (one build for the board page, the gallery and the PDF frame) the page went from 200.7 KB to 200.1 KB
-in 7 files; with the board page built alone and its start in one chunk (`codeSplitting.groups`, `$initial`), the
-same parts make it 192.1 KB in 2 files. Not done: a part that is always on screen (the toolbar's menus, the key
-help, the strips that announce what an agent asked) or that keys type into while it opens (Go to card).
+Two elements are defined the same way, on first use (`#ui` `elements.ts` `defineAppFrame`, `defineImageView`, not
+in `defineBoardElements`): `<vb-app-frame>` when the board first places an app card (`apps/app-cards.ts` places nothing
+until it is defined), `<vb-image-view>` when a person first opens a picture (`cards/card-images.ts`). Their sheets stay
+in the board's stylesheet, so an app card has its size before its element is defined. The gallery defines both before
+it draws.
+
+**One start chunk.** The bundler puts every module a lazy part shares with the page in a chunk of its own, and each
+extra file costs gzip (each is compressed alone) and an import list. So the page is built on its own
+(`apps/board/vite.config.ts`: environment `client`, index.html only, `codeSplitting.groups` `$initial`: everything it
+runs at start is one chunk) and the gallery and the PDF frame in a second build (`pages`) into the same `dist/`; neither
+empties it on a rebuild (`apps/board/bin/build-output.ts` `ownOutput`). `pageAssets` counts any asset name.
+
+**What the page never runs.** The upgrade chain (`#format` `migrate/`) runs only in the server, which upgrades every
+line before a page sees it (D-103); nothing in it runs when its module loads (`restamp` has no side effects, the step
+map is made on the first upgrade), so the page and the plugin's view leave it out, and with it its words.
+
+Measured (`npm run build`, gzip per file, JS + CSS at start): 200.7 KB in 3 files before (T_01); 201.1 KB after the
+skins' tokens (T_02); 193.1 KB with one start chunk and the four dialogs; 190.4 KB with the two elements; 187.5 KB
+in 2 files without the upgrade chain (2026-11-16, PERF_01 run 2).
+Not done: a part that is always on screen (the toolbar's menus, the key help, the strips that announce what an
+agent asked) or that keys type into while it opens (Go to card).
 
 ## Approach
 

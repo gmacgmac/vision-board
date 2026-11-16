@@ -5,7 +5,7 @@ import '../styles/page.ts';
 import '../styles/chat.ts';
 import './gallery.css';
 import { flagOn } from '#format';
-import { defineBoardElements, PATTERNS } from '#ui';
+import { defineAppFrame, defineBoardElements, defineImageView, PATTERNS } from '#ui';
 import type { PatternInfo } from '#ui';
 import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
@@ -182,4 +182,5 @@ function build(): void {
 
 defineBoardElements();
 defineChatElements();
-build();
+// The two elements the board defines on first use (`#ui` elements.ts), defined before any section draws one.
+void Promise.all([defineAppFrame(), defineImageView()]).then(build);

@@ -34,6 +34,14 @@ test('no part a person opens is imported statically from the page\'s start', () 
   assert.deepEqual(LAZY.filter((f) => start.has(path.join(SRC, f))), []);
 });
 
+test('the app panel and the zoomed picture are defined on first use, not with the board\'s other elements', () => {
+  const elements = readFileSync(path.resolve(SRC, '../../../packages/ui/src/elements.ts'), 'utf8');
+  for (const file of ['vb-app-frame.ts', 'vb-image-view.ts']) {
+    assert.doesNotMatch(elements, new RegExp(`^import[^;]*${file.replace('.', '\\.')}`, 'm'), file);
+    assert.match(elements, new RegExp(`import\\('[^']*${file.replace('.', '\\.')}'\\)`), file);
+  }
+});
+
 test('a part loads once, says when it is ready, and loads again after a failure', async () => {
   let calls = 0;
   let fail = true;

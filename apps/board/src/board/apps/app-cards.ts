@@ -27,9 +27,10 @@ import { HOST_REPLY } from '#format';
 import type { BoardLayout } from '#layout';
 import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } from '#ui';
 import type { OpenMenu } from '#ui';
-import { appView, openMenu } from '#ui';
+import { appView, defineAppFrame, openMenu } from '#ui';
 import { createAppStates } from './app-state.ts';
 import { appAsk, appDone, retryDone } from '../words/app-cards.ts';
+import { partDidNotLoad } from '../words/chrome-board.ts';
 import type { ActFields, AppCallRefusal, Io } from '../io.ts';
 import type { PanelKey } from './panel-states.ts';
 import { createPanelStates } from './panel-states.ts';
@@ -201,8 +202,16 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     });
   }
 
+  /** The panel's element is defined the first time an app card is placed (`#ui` `defineAppFrame`); until then
+   *  nothing is placed, and once it is, everything is; a load that failed is said once and tried on the next place. */
+  const framesReady = () => !!customElements.get('vb-app-frame');
+  let said = false;
   function place(): void {
     if (!d.on || !shown.size) return;
+    if (!framesReady()) {
+      void defineAppFrame().then(place, () => { if (!said) d.toast(partDidNotLoad); said = true; });
+      return;
+    }
     const layout = d.layout();
     const cards = d.cards();
     const near = !isFar(d.vp.k);
@@ -246,6 +255,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     const name = info?.title ?? n.title;
     if (what === 'stage') {
       const frame = card.querySelector<VbAppFrameElement>('vb-app-frame');
+      if (!framesReady()) return;
       frame?.load();
       frame?.stage();
       return;
@@ -295,7 +305,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   };
   if (d.on) d.stage.addEventListener('click', onClick);
   const stops = d.on ? [
-    watchTheme(() => { for (const f of frames()) f.lookChanged(); }),
+    watchTheme(() => { if (framesReady()) for (const f of frames()) f.lookChanged(); }),
     // One read for every app card a change selected.
     d.selection.onChange((c) => { if (c.changed.some((id) => shown.has(id) && d.selection.has(id))) void states.refresh(); }),
   ] : [];

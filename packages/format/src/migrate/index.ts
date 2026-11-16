@@ -32,9 +32,11 @@ const noVersion: UpgradeStep = {
 };
 
 /** Every step, the line with no `v` first, then one per format from 2. */
-export const UPGRADE_STEPS: readonly UpgradeStep[] = [noVersion, ...FORMAT_STEPS];
+export const UPGRADE_STEPS: readonly UpgradeStep[] = /* @__PURE__ */ [noVersion].concat(FORMAT_STEPS);
 
-const BY_FROM = new Map<number | 'none', UpgradeStep>(UPGRADE_STEPS.map((s) => [s.from, s]));
+/** The steps by the format they upgrade from, made on the first upgrade: nothing runs when this module loads, so a
+ * bundle that never upgrades a line (the board's page and view: the server upgrades first) leaves the chain out. */
+let byFrom: Map<number | 'none', UpgradeStep> | undefined;
 
 /** One parsed line in the current format, or why it can't be. A line already current comes back untouched (the same
  * object), and so does one whose `v` the chain does not know (newer, or not a format): the reader judges it. */
@@ -42,7 +44,7 @@ export function upgradeLine(line: Readonly<Line>): Line | UpgradeStop {
   let v: unknown = line.v === undefined ? 'none' : line.v;
   let cur = line as Line;
   while (v !== LEDGER_FORMAT) {
-    const step = BY_FROM.get(v as number | 'none');
+    const step = (byFrom ??= new Map(UPGRADE_STEPS.map((s) => [s.from, s]))).get(v as number | 'none');
     if (!step) return cur;
     const out = step.up(cur);
     if (isUpgradeStop(out)) return out;

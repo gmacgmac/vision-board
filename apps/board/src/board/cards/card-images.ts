@@ -13,7 +13,8 @@
 //   flag), through the same path: the one re-measure for a card that changed height by itself.
 import { IMAGE_ROUTE, imageNotReal, imageTypeByName } from '#format';
 import type { VbImageViewElement } from '#ui';
-import { APP_FRAME_RESIZE_EVENT, IMAGE_BUTTON, imageButton, showProblem } from '#ui';
+import { APP_FRAME_RESIZE_EVENT, defineImageView, IMAGE_BUTTON, imageButton, showProblem } from '#ui';
+import { partDidNotLoad } from '../words/chrome-board.ts';
 import { imageVersion } from '../io.ts';
 
 export interface CardImagesDeps {
@@ -29,6 +30,8 @@ export interface CardImagesDeps {
   /** Cards whose height changed by itself (an image, an app panel's height): measure them again, and
    * nothing else (rule 15). */
   grown(ids: string[]): void;
+  /** Tell the person something went wrong (the zoomed view's code did not load). */
+  say?(text: string): void;
 }
 
 export interface CardImages {
@@ -148,6 +151,9 @@ export function createCardImages(d: CardImagesDeps): CardImages {
       });
       if (!ok || !img.isConnected) return;
     }
+    // The zoomed view's element is defined the first time a picture opens (`#ui` `defineImageView`).
+    if (!(await defineImageView().then(() => true, () => false))) return d.say?.(partDidNotLoad);
+    if (!img.isConnected) return;
     view ??= d.viewIn().appendChild(document.createElement('vb-image-view') as VbImageViewElement);
     view.open(img);
     const s = shown.get(path);

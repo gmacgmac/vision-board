@@ -42,6 +42,8 @@ export interface BoardElements {
 
 export interface DrawDeps {
   els: BoardElements;
+  /** Tell the person something went wrong (a part's code did not load). */
+  say?: (text: string) => void;
   vp: Viewport;
   /** The nodeSize flag: cards carry a size tier and its control (D-030). */
   sizing: boolean;
@@ -132,7 +134,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   let settle = 0;
   // A card's images load while it is within a screen of the visible stage and the zoom is not far (ruling 23).
   const images = createCardImages({
-    host: els.cards, route: d.markdown?.imageRoute, viewIn: () => els.stage.parentElement!, grown: (ids) => resized(ids),
+    host: els.cards, route: d.markdown?.imageRoute, viewIn: () => els.stage.parentElement!, grown: (ids) => resized(ids), say: d.say,
     near: (el) => { const b = layout?.nodes.get(el.dataset.id!); return !!b && !isFar(d.vp.k) && !outside(b, viewBounds(d.vp, els.stage)); },
   });
 

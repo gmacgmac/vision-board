@@ -121,7 +121,7 @@ test('read as it lies, an older ledger is refused line by line, each with the wo
   const lines = legacy('gallery');
   const read = readLedger(lines);
   assert.deepEqual([read.events.length, read.problems.length], [0, lines.length]);
-  for (const p of read.problems) assert.match(p, /^line \d+: v: this line is in ledger format \d+, older than this Vision Board reads \(20\); migrate the ledger first: npm run ledger:migrate/);
+  for (const p of read.problems) assert.match(p, /^line \d+: v: this line is in ledger format \d+, older than this Vision Board reads \(20\); the ledger must be migrated first$/);
 });
 
 /** Every valid line of the current format: one per event type, one per action. */
@@ -131,14 +131,14 @@ test('a line one format below the current one, of every event type and action, i
   for (const [name, e] of EVERY) {
     const old = { ...JSON.parse(JSON.stringify(e)) as Rec, v: LEDGER_FORMAT - 1 };
     assert.deepEqual(verdict(old), { schema: false, hand: false }, name);
-    assert.deepEqual(eventProblems(old), [`v: this line is in ledger format ${LEDGER_FORMAT - 1}, older than this Vision Board reads (${LEDGER_FORMAT}); migrate the ledger first: npm run ledger:migrate -- <folder>`], name);
+    assert.deepEqual(eventProblems(old), [`v: this line is in ledger format ${LEDGER_FORMAT - 1}, older than this Vision Board reads (${LEDGER_FORMAT}); the ledger must be migrated first`], name);
     const up = upgradeLine(old);
     assert.ok(!isUpgradeStop(up), name);
     assert.deepEqual(verdict(up as Rec), { schema: true, hand: true }, `${name}, migrated`);
   }
   const none = { ...VALID.board! };
   delete none.v;
-  assert.match(eventProblems(none).join(), /^v: this line names no ledger format, older than .*npm run ledger:migrate/);
+  assert.match(eventProblems(none).join(), /^v: this line names no ledger format, older than .*the ledger must be migrated first$/);
 });
 
 test('a format-20 ledger round-trips: read, every line written back is the line it was, and the chain leaves it be', () => {

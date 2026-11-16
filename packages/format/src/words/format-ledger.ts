@@ -108,9 +108,10 @@ export const typeOneOf = (join: string): string => `type: one of ${join}`;
 export const writtenByAnAgent = (t: string): string => `${t}: written by an agent`;
 export const writtenByAPerson = (t: string): string => `${t}: written by a person`;
 export const agentRequiredAJoinIs = 'agent: required; a join is stamped with the new agent id';
-/** A line in an older ledger format (D-103): the reader knows one format, so the ledger is migrated first. */
+/** A line in an older ledger format (D-103): the reader knows one format, so the ledger is migrated first. Host-neutral:
+ * the board's view says it under any host, so it names no command (the standalone's is `bin.ts` `ledgerMigrateUsage`). */
 export const olderFormat = (v: number | undefined, current: number): string =>
-  `v: ${v === undefined ? 'this line names no ledger format' : `this line is in ledger format ${v}`}, older than this Vision Board reads (${current}); migrate the ledger first: npm run ledger:migrate -- <folder>`;
+  `v: ${v === undefined ? 'this line names no ledger format' : `this line is in ledger format ${v}`}, older than this Vision Board reads (${current}); the ledger must be migrated first`;
 
 // ---- ledger.ts
 export const itemIsGoneTheKind = '`item` is gone: the kind decides. ';

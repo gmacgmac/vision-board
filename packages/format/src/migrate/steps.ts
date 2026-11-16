@@ -24,8 +24,13 @@ export interface UpgradeStep {
 /** `line` stamped `to`, its keys in their places (`v` replaced where it stands). */
 const stamped = (line: Readonly<Line>, to: number): Line => ({ ...line, v: to });
 
+// Marked free of side effects, so a bundle that never upgrades a line (the board's page and view: the server upgrades
+// first) leaves the chain out (performance.md).
 /** A format that only added: its lines are the next format's as they are. */
-const restamp = (from: number): UpgradeStep => ({ from, to: from + 1, up: (line) => stamped(line, from + 1) });
+/* @__NO_SIDE_EFFECTS__ */
+function restamp(from: number): UpgradeStep {
+  return { from, to: from + 1, up: (line) => stamped(line, from + 1) };
+}
 
 /** Format 2 named its agent by any text and made no creator (review V3). Current lines need an agent id and do make a
  * creator, and no `join` can be added, so the name is dropped: access stays as it was (no creator) and only the name

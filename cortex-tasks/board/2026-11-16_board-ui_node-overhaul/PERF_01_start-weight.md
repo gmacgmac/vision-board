@@ -94,6 +94,50 @@ sheets are about 0.7 KB gzip).
 board-guest, board-host, board, ledgers, new-board, picker-archive, note-folder, open-folder, read-only, chat-lazy,
 gallery: 143 passed, no new baselines (their light and dark screenshots included).
 
+### Run 2
+
+**Status**: Completed to the orchestrator's run-2 target (at or under 190 KB; 185 not required): **187.47 KB** gzip
+at start in 2 files (was 201.09 KB after T_02's tokens). The plugin's CSS room (point 4) is not found: why below.
+
+1. **One start chunk.** `apps/board/vite.config.ts` builds two environments into `dist/`: `client` (index.html only,
+   `codeSplitting.groups: [{ name: 'board', tags: ['$initial'] }]`) and `pages` (gallery.html and the pdf-frame).
+   `npm run build` is unchanged (Vite's `builder.buildApp` runs both); `npm run watch` rebuilds both. Neither uses
+   `emptyOutDir`, which would wipe the other build's files on every watch rebuild: `apps/board/bin/build-output.ts`
+   `ownOutput('client')` empties `dist/` once and has each build remove only its own stale files (Node file access,
+   so it lives with the build tools: `verify` refuses `node:fs` in the config). Names stay plain (`index-*.js`).
+   `scripts/verify-weight.mjs` `pageAssets` now reads any asset name (`~`, `$`); a case in `scripts/verify.test.mjs`.
+   201.09 to 193.10 KB.
+2. **`vb-app-frame` and `vb-image-view` on first use.** `packages/ui/src/elements.ts` `defineAppFrame` and
+   `defineImageView` (each one `import()`, a failed load tried again); `defineBoardElements` no longer defines them;
+   `index.ts` drops the unused `readLook` re-export. `app-cards.ts` `place` places nothing until the frame is defined,
+   then places all (a failed load said once: `partDidNotLoad`); `card-images.ts` `open` defines the view first
+   (`say`, plumbed through `draw.ts` `DrawDeps.say` from the controller's toast). The plugin's view inlines both
+   (`codeSplitting: false`). Their sheets stay in the board's sheet, so an app card is its size before its element is
+   defined. The gallery defines both before it draws. 193.10 to 190.39 KB.
+3. **The upgrade chain out.** Nothing called it in the page; it stayed for its load-time work. `migrate/index.ts`:
+   `UPGRADE_STEPS` built by a pure `concat`, the step map made on the first upgrade; `migrate/steps.ts`: `restamp` a
+   function marked `@__NO_SIDE_EFFECTS__`. Page and plugin view now hold no step, no migration words, no `npm run`.
+   `words/format-ledger.ts` `olderFormat` is host-neutral ("…; the ledger must be migrated first"; the standalone's
+   command stays in `server/words/bin.ts`); `apps/board/tests/schema-v20.test.ts` holds the new words.
+   `tests/plugin/engine-hooks.spec.ts` passes. 190.39 to 187.47 KB (`ledger-shape.ts` 6.7k to 3.9k raw).
+   These two migrate files and the test were outside the run's list: the only way to stop load-time work, no behaviour change.
+4. **Plugin `view/board.css` (21,946 of 22,000): not found.** In one file, CSS can leave only by being loaded later
+   by JS (a constructable sheet adopted by a lazily defined part), which changes the host styling contract (one sheet
+   a host loads, its CSP) and is the maintainer's call. And what could go is too small: measured as rules removed
+   from the built sheet, the Archived list 207 B, the zoomed view's rules about 17 B, the skins' values 288 B, the
+   fonts 17 B, and even Go to card (311 B) and the key help (399 B), always on screen, make 1,119 B together. The
+   app frame's sheet must stay (an undefined frame keeps its size). Room for FE_01: its edge CSS replaces the
+   footer's controls, so the footer rules it supersedes should go in the same change, behind the same flag split,
+   or by T_04 at the latest; or the skins' values load with a non-default skin (FE_04).
+
+**Checks**: `npm run build`; `npm run verify`: only `docs/specification/modules.md` out of date (`npm run map`,
+the orchestrator's file); `npm run check` 0 errors; `npm run gen -- --check` current; `npm test` 2552 + 14 pass;
+`npm run test:plugin` 116 pass; page specs (3 workers, VB_TEST_PORT=6550): app-alive, app-cards, app-fit, app-follow,
+app-gallery, app-pan-key, app-safety, app-states, card-image-states, card-image-svg-motion, card-image-svg,
+card-images, chat-attach-pages, chat-attach-gallery, board, board-host, board-guest, board-chrome, gallery, chat-lazy,
+ledgers, new-board, picker-archive, open-folder: 223 passed, no new baselines; 1 failed only on its port
+(card-image-svg-motion: `fetch` refuses 6566, inside 6550's block; it passes on VB_TEST_PORT=6750).
+
 ## On Completion
 
 Fill the notes, update your TASK-STATUS row, and append your own LOG line:
