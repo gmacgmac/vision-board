@@ -17,7 +17,9 @@ async function fixture(): Promise<{ js: string; css: string }> {
   const out = await build({
     configFile: false, logLevel: 'silent', root: ROOT, plugins: [svelte()],
     build: { write: false, target: 'es2022', cssCodeSplit: false, minify: false,
-      lib: { entry: path.join(ROOT, 'tests/pages/board-host-fixture.ts'), formats: ['es'], fileName: 'fixture' } },
+      lib: { entry: path.join(ROOT, 'tests/pages/board-host-fixture.ts'), formats: ['es'], fileName: 'fixture' },
+      // One file, as the plugin's view is (vite.plugin.config.ts): the parts the page loads later (board/lazy.ts) are inside.
+      rollupOptions: { output: { codeSplitting: false } } },
   });
   const files = (Array.isArray(out) ? out : [out]).flatMap((o) => ('output' in o ? o.output : []));
   const js = files.find((f) => f.type === 'chunk');

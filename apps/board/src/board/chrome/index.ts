@@ -37,6 +37,7 @@ export { default as ButtonIcon } from './ButtonIcon.svelte';
 export { default as FlaggedChip } from './FlaggedChip.svelte';
 export { default as GoToCard } from './GoToCard.svelte';
 export { default as KeyHelp } from './KeyHelp.svelte';
+export { default as Lazy } from './Lazy.svelte';
 export { default as LockedChip } from './LockedChip.svelte';
 export { default as OpenChip } from './OpenChip.svelte';
 export { newTone, updatedTone } from './chip-tone.ts';
