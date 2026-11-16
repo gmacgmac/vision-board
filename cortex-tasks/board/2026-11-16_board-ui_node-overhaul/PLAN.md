@@ -145,7 +145,7 @@ them on and renews the screenshots.
    seen, the skin picker.
 6. **One conversation box** (FE_03), **the Command Lens skin** (FE_04), **zoom groups** (FE_05), **the selection
    bar and Z** (FE_06), **one layout control** (FE_07), **flow branching and direction** (BE_01), **the app window**
-   (FE_08), **the agent skill** (T_03), **verification** (VERIFY_01), **defaults on** (T_04).
+   (FE_08), **the agent skill** (T_03), **verification** (VERIFY_01), **switch over and remove the old** (T_04).
 
 ### How it meets the principles
 
@@ -224,10 +224,33 @@ wave 1 and records any change here.
    bottom border between the change badge and the notes mark.
 7. **Flow direction** (N52) is a per-board view preference kept by the page (as zoom is), not a ledger line, and
    applies to `flow` containers.
-8. **The old footer** stays behind `nodeEdges` off until T_04; removing its code is a tracker row, not this set.
+8. **The old footer** stays behind `nodeEdges` off until T_04, which deletes it with every other old code path and the flags (kickoff answer below).
 9. **History** opens one box holding what the "N updates" stepper and the history list show today.
 
 ---
+
+### Kickoff answers (maintainer, 2026-11-16, points 219-231)
+
+- **Confirmed as written**: calls 2, 3, 4, 6, 9; drafts D-099 to D-102 (appended together, in order, once the ledger
+  review below is in, since D-099 point 2 and D-100 point 3 touch the ledger); the font downloads, if safe (T_02);
+  the live skill run, on Haiku 5.5 as the reference model (T_03); the tokens diff shown at T_02's gate.
+- **Call 1 changed: Ask now is node-scoped.** Add note queues a note for the board-wide Send, as today. Ask now sends
+  that one message for that node at once, and the reply comes back in the node's conversation box. How much context
+  the agent gets (the node, the node plus the board, or the board's own session) is undecided: the record must keep
+  those modes open. Shape comes from the ledger review; T_01 and FE_03 are amended before they run.
+- **Call 4 extended: fonts ship with the plugin**, and `plugin.md` tells a host what the plugin brings (T_02 step 5a).
+- **Call 5 changed: agents may add their own icons** to a board's icon set (cleaned single-colour drawings, stored
+  once per board, used by name). Agent-chosen colours: see the open point in the orchestrator's reply. Contract shape
+  from the ledger review.
+- **Call 7 changed: flow direction has a default per view**, set by whoever writes the view, and the person can
+  change it on the board. Where it is stored comes from the ledger review; BE_01 and FE_07 are amended before they run.
+- **Calls 8 and old code: no legacy.** T_04 makes the new node the only node and deletes the old footer, the flags
+  and every old code path; old ledger lines go through a migration, not a second reader.
+- **Ledger review**: a separate session (Fable 5.2) reviews the ledger format for health, scale, versioning and
+  migration, and the overhaul's ledger changes. Result:
+  `cortex-tasks/board/2026-11-16_board-format_research_ledger-review.md`. T_01 waits for it.
+- **Speed**: the maintainer needs the board in nclite soon. Where later waves touch no common files, the
+  orchestrator may run them together.
 
 ## Decision entries to append
 

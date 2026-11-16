@@ -2,7 +2,7 @@
 task_name: Node Overhaul
 created: 2026-11-16
 completed:
-status: planned
+status: in-progress
 categories: [board-ui, board-format, board-actions, board-tokens, board-layout, board-app, board-agent]
 tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 ---
@@ -53,7 +53,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 12 | FE_08 | 11 | strong | no | Front-end engineer for sandboxed embeds — the app owns everything under its title bar, and the sandbox is never loosened. | [The app window](./FE_08_app-window.md) | Pending | |
 | 13 | T_03 | 12 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The agent skill](./T_03_agent-skill.md) | Pending | |
 | 14 | VERIFY_01 | 13 | strong | no | Operations lead who plans live events on boards like this all day — expects every mark to do what it shows, at any zoom, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
-| 15 | T_04 | 14 | standard | no | — | [Defaults on](./T_04_defaults-on.md) | Pending | |
+| 15 | T_04 | 14 | strong | no | Staff engineer who owns deprecations — a removal is done only when nothing, not code, tests, words nor docs, still points at the old thing. | [Switch over and remove the old](./T_04_defaults-on.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -161,7 +161,7 @@ _Notes:_
 _Status:_ Pending  
 _Notes:_ 
 
-### T_04: Defaults on
+### T_04: Switch over and remove the old
 _Status:_ Pending  
 _Notes:_ 
 

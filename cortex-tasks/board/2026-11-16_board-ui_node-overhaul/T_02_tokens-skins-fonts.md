@@ -30,7 +30,8 @@ them.
   `packages/tokens/fonts/` (new), `packages/tokens/README.md`, `packages/tokens/tests/` or the contrast tests that
   list token pairs, `apps/board/plugin/theme.css`, `apps/board/server/` (only to serve the font files and keep the
   CSP right), `apps/board/vite*.config.ts` (only so the build and the plugin build carry the fonts),
-  `docs/specification/dependencies.md`, `docs/specification/plugin.md` § Theme and host styling
+  `docs/specification/dependencies.md`, `docs/specification/plugin.md` § Theme and host styling, `tests/plugin/`
+  (one test that the built plugin carries its fonts)
 - **Files to reference**: `design/mockups/node-skins/*.html`; `tests/pages/apca.ts`; `apps/board/tests/plugin-theme.test.ts`;
   `packages/format/src/view.ts` (`TONES`, `SKINS`, from T_01)
 - **Skills**: `cortex-architecture`, `cortex-docs`
@@ -55,12 +56,18 @@ them.
        pattern never names a skin. A test fails if a `SKINS` name has no block or a block names an unknown skin.
 4. [ ] **Hosts**: host colours and `--host-font` still win over a skin (D-094); extend
        `plugin-theme.test.ts` to hold that, and say it in `plugin.md`.
-5. [ ] **Fonts** (needs the maintainer): list, for each of Figtree, Bricolage Grotesque, Space Grotesk and
-       JetBrains Mono, the file name, the source URL (the family's own repository or Google Fonts), the size, the
-       licence and a checksum, and **stop for the maintainer's go before any download**. Then vendor Latin-subset
+5. [ ] **Fonts** (the maintainer gave his go at kickoff, point 219A, on condition they are safe): download only
+       from the family's own repository or the official Google Fonts repository, over HTTPS, font and licence files
+       only (no scripts, no packages, no install step); check each file opens as a valid font; list, for each of
+       Figtree, Bricolage Grotesque, Space Grotesk and JetBrains Mono, the file name, the source URL, the size, the
+       licence and its SHA-256 in your notes. Then vendor Latin-subset
        `woff2` files into `packages/tokens/fonts/` with each licence file, add `@font-face` rules
        (`font-display: swap`) in `fonts.css`, and type tokens (`--vb-font-display`, the skin's text and label
        fonts) that fall back to today's system stacks. A font loads only when a skin uses it.
+5a. [ ] **Fonts in the plugin** (point 226): the font files ship inside the plugin's folder, so a host that loads
+       the plugin has them with no network. `plugin.md` says which fonts the plugin brings, that its stylesheet loads
+       them from its own folder, and how a host gives its own font instead (`--host-font`). A plugin test holds that
+       the built plugin contains the font files and its CSS points only at them.
 6. [ ] **Register** the fonts in `dependencies.md` under a new section for vendored assets (name, version, source,
        licence, why).
 7. [ ] Put the exact `tokens.css` diff in your notes.

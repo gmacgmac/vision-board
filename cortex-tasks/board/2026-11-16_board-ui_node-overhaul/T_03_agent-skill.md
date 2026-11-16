@@ -16,7 +16,7 @@ few tidy links between containers), and prove it on scenarios.
 
 PLAN.md § Decisions 12, 15, 17, 19. The skill is `skills/vision-board/SKILL.md` (`CODE-MAP.md` § 14); a change to
 it merges only after `npm run eval:bot` passes (project rule). The guidance is headline guidance, not hard rules.
-The agent never sees bookmarks. The live eval costs money: it needs the maintainer's go.
+The agent never sees bookmarks. The live eval costs money; the maintainer gave his go at kickoff and it runs on Haiku 5.5.
 
 **Read previous task notes in TASK-STATUS.md before starting.**
 
@@ -53,8 +53,9 @@ The agent never sees bookmarks. The live eval costs money: it needs the maintain
 5. [ ] **Scenarios**: add two, a linked pipeline (pass: one container, linked cards, at most one link between
        containers) and an architecture board (pass: valid icon and tone names, kinds still chosen by meaning). Run
        `npm run eval:bot -- --dry`.
-6. [ ] **Needs the maintainer**: ask the orchestrator for his go for the live run (`npm run eval:bot`, default cap
-       3 US dollars). Run it once; if a scenario that passed before now fails, fix the skill, not the scenario.
+6. [ ] **Live run** (the maintainer gave his go at kickoff, point 219B): `npm run eval:bot -- --model haiku --port
+       7310` (default cap 3 US dollars). Haiku 5.5 is the reference model on purpose: a skill that works on the
+       smallest model works more deterministically on the stronger ones. Run it once; if a scenario that passed before now fails, fix the skill, not the scenario.
 7. [ ] Bump the skill's version in its front matter, add the version's section to `NOTES.md` and the versioned
        test to `plugin-skill.test.ts`.
 

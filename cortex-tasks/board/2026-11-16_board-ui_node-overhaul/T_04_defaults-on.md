@@ -1,4 +1,4 @@
-# T_04_defaults-on: Defaults On
+# T_04_defaults-on: Switch Over and Remove the Old
 
 > **Parent**: [TASK-STATUS.md](./TASK-STATUS.md)  
 > **Plan**: [PLAN.md](./PLAN.md)
@@ -7,8 +7,9 @@
 
 ## Objective
 
-After the maintainer's yes, turn the set's flags on by default, renew the screenshots once, and write the
-follow-up rows.
+After the maintainer's yes, make the new node the only node: remove the flags this set added and every old code
+path they kept alive, renew the screenshots once, and write the follow-up rows. The maintainer wants no legacy left
+(kickoff, points 230-231).
 
 ---
 
@@ -38,17 +39,20 @@ most of them, once.
 
 ## Steps
 
-1. [ ] Set `nodeEdges`, `skins`, `layoutControl`, `flowDirection`, `appWindow`, `appStage` and BE_01's flag to
-       default on, unless the maintainer held one back (the orchestrator says which).
+1. [ ] Remove `nodeEdges`, `skins`, `layoutControl`, `flowDirection`, `appWindow`, `appStage` and BE_01's flag
+       (unless the maintainer held one back; the orchestrator says which), so the new behaviour is the only
+       behaviour. Delete the old code paths they guarded, with their tests, gallery entries, words and doc lines: the
+       old footer (`node-template.ts` `footer`, `bottomTabs`, `flagButton`, `sizeControl` and their CSS and
+       handlers), the note bubble modes FE_03 replaced, the mode popover FE_07 replaced, and anything else a flag
+       kept alive. Old ledger lines are handled by the ledger migration the plan names, never by a second reader.
+       A search for each removed symbol and flag name finds nothing outside `docs/decisions.md` and `cortex/`.
 2. [ ] Make Decision's colour the token's value; remove the scoped rule. Put the `tokens.css` diff in your notes.
 3. [ ] `NODE_TYPES.app` no longer lists Save for later; an old ledger with a saved app card still opens.
 4. [ ] Renew the page and plugin screenshots once (`--update-snapshots`), then look at a sample of at least 40
        across specs, light and dark, before accepting them; list any that look wrong and fix the cause, not the
        picture.
 5. [ ] Run every check, the full page suite and the plugin suite.
-6. [ ] Write the follow-up tracker rows as text in your return block for the orchestrator to add: remove the old
-       footer's code and the flags once settled; fold the kind, action and mode icon records into the icon set; a
-       send scoped to one node, if wanted; a hover pause on the number, if wanted; seen on a read-only board
+6. [ ] Write the follow-up tracker rows as text in your return block for the orchestrator to add: fold the kind, action and mode icon records into the icon set; a hover pause on the number, if wanted; seen on a read-only board
        (DO-05); which layout modes to keep (U16's decision); anything VERIFY_01 left as "should fix".
 
 ---
@@ -58,7 +62,7 @@ most of them, once.
 - [ ] `npm run verify`, `npm run check`, `npm test`, `npm run gen -- --check`, `npm run test:pages`,
       `npm run test:plugin` pass
 - [ ] A board opened with no `?flags=` draws the new node in its skin
-- [ ] `?flags=-nodeEdges` still gives the old node, until its code is removed
+- [ ] No flag from this set and no old node code path remains; the removed symbols are listed in your notes
 
 ---
 
