@@ -95,7 +95,8 @@ export function planMigration(dir: string): Migration {
 /** The fields no migration may change on a line (D-103 1); a card's identity and its board too. */
 const KEPT = ['seq', 'at', 'by', 'type', 'n', 'board'] as const;
 
-/** Refuse, writing nothing, a result that is not the same ledger line for line, or that reads worse. */
+/** Refuse, writing nothing, a result that is not the same ledger line for line, or that reads worse than the old file
+ * upgraded in memory (the read-only open's reading): a line the reader already skips (D-019) is no new problem. */
 function checkSame(before: readonly string[], after: readonly string[]): void {
   if (after.length !== before.length) throw new Error(serverFoldersWords.migrationCheckFailed(before.length, 'line count'));
   before.forEach((text, i) => {
@@ -103,7 +104,7 @@ function checkSame(before: readonly string[], after: readonly string[]): void {
     const [a, b] = [JSON.parse(text) as Record<string, unknown>, JSON.parse(after[i]!) as Record<string, unknown>];
     for (const k of KEPT) if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) throw new Error(serverFoldersWords.migrationCheckFailed(i + 1, k));
   });
-  const had = new Set(readLedger([...before]).problems);
+  const had = new Set(readLedger(upgradeLines([...before]).lines).problems);
   const worse = readLedger([...after]).problems.filter((p) => !had.has(p));
   if (worse.length) throw new Error(serverFoldersWords.migrationNewProblems(worse.slice(0, 3).join('; ')));
 }

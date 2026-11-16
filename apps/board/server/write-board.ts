@@ -75,8 +75,7 @@ function appended(b: Batch, i: number, item: Rec, key: string | undefined): Rec 
   const node = s.nodes.get(id)!;
   const stored = key === undefined ? undefined : storedFor(b, key);
   const from = stored?.type === 'node' && stored.id === id ? node.versions[stored.ver - 2] : undefined;
-  // An old card's `item` mark stays behind: a v11 line names none (api.md 118).
-  const { ver: _ver, at: _at, agent: _agent, item: _item, ...was } = from ?? latest(node);
+  const { ver: _ver, at: _at, agent: _agent, ...was } = from ?? latest(node);
   const body = was.body === undefined ? String(item.text) : `${was.body}\n\n${String(item.text)}`;
   if (codePoints(body) > LIMITS.body) {
     fail('invalid', writesWords.withThisTextNodeS(numberOf(s, id), codePoints(body), LIMITS.body),

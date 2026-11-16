@@ -47,7 +47,7 @@
         { "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName" }
       ]
     },
-    "libraryIconName": { "type": "string", "pattern": "^x-[a-z0-9][a-z0-9-]{0,37}$", "description": "A name in the project's icon library: `x-`, then what it shows, in lowercase letters, digits and `-`; the file is `<name>.svg` in `.visionboard/icons/`.", "$comment": "packages/format LIBRARY_ICON_PATTERN; was: api.md 185" },
+    "libraryIconName": { "type": "string", "pattern": "^x-[a-z0-9][a-z0-9-]{0,37}$", "description": "A name in the project's icon library: `x-`, then what it shows, in lowercase letters, digits and `-`; the file is `<name>.svg` in the library.", "$comment": "packages/format LIBRARY_ICON_PATTERN; was: api.md 185" },
     "iconHash": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "The SHA-256 of a library icon's file, in lowercase hex.", "$comment": "packages/format APP_HASH_PATTERN; was: api.md 185" },
     "tone": {
       "description": "A node's tone: a palette name, or a hue, a whole number from 0 to 359, the OKLCH hue angle (not text). The board derives the tints from it so contrast passes in light and dark; the kind keeps its own colour.",

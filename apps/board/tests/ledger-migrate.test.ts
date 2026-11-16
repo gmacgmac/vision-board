@@ -122,6 +122,15 @@ test('a line from a newer build, or a line the chain stops on: nothing written, 
   assert.deepEqual([backupsOf(a), backupsOf(b)], [[], []]);
 });
 
+test('a v19 `send` to an unknown board migrates, and the line the reader skips is still skipped after (D-019)', () => {
+  const line = '{"v":19,"seq":252,"at":"2026-11-16T10:00:00Z","by":"person","type":"act","action":"send","board":"nowhere"}';
+  const dir = folder(`${MIXED.toString('utf8')}\n${line}\n`);
+  const text = (b: Uint8Array) => Buffer.from(b).toString('utf8');
+  const skipped = readLedger(upgradeLines(text(ledgerOf(dir)).split('\n')).lines).problems.length;
+  assert.equal(migrateHeld(dir).status, 'migrated');
+  assert.equal(readLedger(linesOf(ledgerOf(dir))).problems.length, skipped);
+});
+
 test('--check counts what would change and writes nothing', () => {
   const dir = folder();
   const m = planMigration(dir);

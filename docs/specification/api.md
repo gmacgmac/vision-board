@@ -1963,7 +1963,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
 179. **How it writes** (`apps/board/server/ledger-migrate.ts` `migrateHeld`). The file is read once; every line current:
     nothing is written and no backup made, so a second run is a no-op. The result is checked before anything is
     replaced: as many lines, the same `seq`, `at`, `by`, `type`, `n` and `board` on every line, and no reader problem the
-    old file did not have. Then the new text goes to `ledger.jsonl.migrating` (flushed), the old bytes to
+    old file, upgraded in memory as the read-only open does, did not have. Then the new text goes to `ledger.jsonl.migrating` (flushed), the old bytes to
     `backups/ledger.f<lowest>-<highest>.<head seq>.<UTC time>.jsonl` (flushed; `backups/` is git-ignored and moves with
     the ledger, `data-folder.ts` `BACKUPS_DIR`), and the new file is renamed over the ledger and the folder flushed. A
     file that changed meanwhile is not replaced. A crash before the rename leaves the original whole and a stale
