@@ -151,7 +151,7 @@ test('the view bundle is one file with no import, exporting only mount, and one 
   const code = text(first, 'view/board.js');
   assert.deepEqual(loads(code), [], 'it loads nothing by path');
   assert.equal((code.match(/\bexport\s*[{*]|\bexport\s+(?:default|const|function|class)\b/g) ?? []).length, 1);
-  assert.match(code.trimEnd(), /export\s*\{\s*\w+\s+as\s+mount\s*\};?$/);
+  assert.match(code.trimEnd(), /export\s*\{\s*[\w$]+\s+as\s+mount\s*\};?$/);
   const css = text(first, 'view/board.css');
   assert.ok(!/@import/.test(css) && !/url\((?!["']?data:)/.test(css), 'no other file, no address');
   assert.ok(!/sourceMappingURL/.test(code + css), 'no sourcemap for a host to serve');
