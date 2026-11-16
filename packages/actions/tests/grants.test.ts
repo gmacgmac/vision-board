@@ -7,7 +7,7 @@ import { A, B, C, Ledger, scene } from './ledger-v3.ts';
 
 const need = (board: string, region: string) => ({ board, region });
 
-test('holders: the creator, plus grants, minus revocations; a v2 region has none', () => {
+test('holders: the creator, plus grants, minus revocations; a region no agent id drew has none', () => {
   const l = scene();
   const req = l.request(C, 'r');
   l.act({ action: 'grant', request: req });
@@ -37,7 +37,7 @@ test('a new node needs its region', () => {
   assert.deepEqual(canWrite(s, C, { type: 'node', board: 'b', n: 50, node: { region: 'r' } }), need('b', 'r'));
 });
 
-test('a region written by a v2 line needs a grant for any v3 write', () => {
+test('a region no agent id drew (a format-2 line, migrated) needs a grant for any write', () => {
   const s = scene().state();
   assert.deepEqual(canWrite(s, A, { type: 'node', board: 'b', n: 50, node: { region: 'old' } }), need('b', 'old'));
   assert.deepEqual(canWrite(s, A, { type: 'reply', n: 3 }), need('b', 'old'));
@@ -77,18 +77,18 @@ test('reply, propose and park: a holder of the node\'s region may; anyone else m
   }
 });
 
-test('an author parks a node it moved into Later after losing Later', () => {
+test('an author parks a node it moved into B\'s container after losing that container', () => {
   const l = scene();
-  l.act({ action: 'grant', request: l.request(A, 'later') });
-  l.node(A, 1, 2, { region: 'later' });
-  l.act({ action: 'revoke', holder: A, board: 'b', region: 'later' });
+  l.act({ action: 'grant', request: l.request(A, 'side') });
+  l.node(A, 1, 2, { region: 'side' });
+  l.act({ action: 'revoke', holder: A, board: 'b', region: 'side' });
   const s = l.state();
-  assert.deepEqual(holders(s, 'b', 'later'), [B]);
+  assert.deepEqual(holders(s, 'b', 'side'), [B]);
   assert.equal(canWrite(s, A, { type: 'park', n: 1 }), 'ok');
   assert.equal(canWrite(s, A, { type: 'reply', n: 1 }), 'ok');
-  assert.deepEqual(canWrite(s, C, { type: 'park', n: 1 }), need('b', 'later'));
-  // A no longer holds Later, so a new version there still needs it.
-  assert.deepEqual(canWrite(s, A, { type: 'node', board: 'b', n: 1, node: { region: 'later' } }), need('b', 'later'));
+  assert.deepEqual(canWrite(s, C, { type: 'park', n: 1 }), need('b', 'side'));
+  // A no longer holds `side`, so a new version there still needs it.
+  assert.deepEqual(canWrite(s, A, { type: 'node', board: 'b', n: 1, node: { region: 'side' } }), need('b', 'side'));
 });
 
 test('unknown regions and nodes are left to the context check', () => {
@@ -129,26 +129,26 @@ test('boardAccess: open requests with the agent\'s label, and holders per region
   l.act({ action: 'grant', request: granted });
   const refused = l.request(C, 'q');
   l.act({ action: 'deny', request: refused, text: 'No.' });
-  const open = l.request(C, 'later');
+  const open = l.request(C, 'side');
   l.request(C, 'x', 'b2');
   const s = l.state();
   const at = grantRequests(s).find((r) => r.seq === open)!.at;
   assert.deepEqual(boardAccess(s, 'b'), {
-    requests: [{ seq: open, region: 'later', reason: 'Adding to later.', at, agent: C, label: 'Spare chat' }],
+    requests: [{ seq: open, region: 'side', reason: 'Adding to side.', at, agent: C, label: 'Spare chat' }],
     // D-034: the board's creator, and every agent that made or was granted a container on it.
     boardHolders: [{ agent: A, label: 'Pricing chat', creator: true }, { agent: B, label: 'Review chat' }, { agent: C, label: 'Spare chat' }],
     holders: {
       r: [{ agent: A, label: 'Pricing chat', creator: true }, { agent: C, label: 'Spare chat' }],
       q: [{ agent: B, label: 'Review chat', creator: true }],
-      later: [{ agent: B, label: 'Review chat', creator: true }],
+      side: [{ agent: B, label: 'Review chat', creator: true }],
     },
   });
 });
 
 test('boardAccess: a board with no agents, or none waiting, leaves both out (api.md 32)', () => {
   const l = new Ledger();
-  l.v2({ type: 'board', board: 'old', title: 'Old' });
-  l.v2({ type: 'region', board: 'old', region: { id: 'r', title: 'R', mode: 'grid' } });
+  l.anonymous({ type: 'board', board: 'old', title: 'Old' });
+  l.anonymous({ type: 'region', board: 'old', region: { id: 'r', title: 'R', mode: 'grid' } });
   assert.deepEqual(boardAccess(l.state(), 'old'), {});
   assert.equal('requests' in boardAccess(scene().state(), 'b'), false);
 });

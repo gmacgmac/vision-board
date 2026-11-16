@@ -1,11 +1,13 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v18 line for every event type and
+// Ledger lines for the schema tests (schema.test.ts): a valid current-format line for every event type and
 // action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118, 125-130, 132, 135, 138, 141 and 156
 // (the app card's, api.md 150, are in schema-apps.test.ts).
+import { LEDGER_FORMAT } from '#format';
+
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 20, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 20, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: LEDGER_FORMAT, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: LEDGER_FORMAT, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -97,11 +99,14 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v21', patch(V.board!, 'v', 21)],
+  ['a format newer than this build\'s', patch(V.board!, 'v', LEDGER_FORMAT + 1)],
+  // D-103: older ledgers are migrated; the reader knows one format.
+  ['a line one format below the current one', patch(V.board!, 'v', LEDGER_FORMAT - 1)],
+  ['a line in the first format', patch(V.board!, 'v', 2)],
   ['head on an act that is no send', act('ack', { head: 1 })],
   ['a send head below 0', act('send', { head: -1 })],
-  ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
-  ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
+  ['a line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
+  ['a line with a blank agent', patch(V.board!, 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
   ['bad board id', patch(V.board!, 'board', 'Bad_Id')],
   ['node title over 200', patch(V.node!, 'node.title', long(201))],
@@ -199,8 +204,7 @@ export const BROKEN: [string, Rec][] = [
   ['seen with a node and a head', { ...V.seen!, head: 3 }],
   ['seen with a head of 0', { ...PERSON, type: 'seen', board: 'b', head: 0 }],
   ['seen with a bad board id', { ...PERSON, type: 'seen', board: 'Plan A', head: 3 }],
-  // api.md 90: the person writes a `board` line from v9 only, with the board's fields only.
-  ['a person board line before v9', { ...PERSON, v: 8, type: 'board', board: 'b', title: 'Mine' }],
+  // api.md 90: the person's `board` line names the board's fields only.
   ['a person board line without a title', { ...PERSON, type: 'board', board: 'b' }],
   ['a person board line with a region', { ...PERSON, type: 'board', board: 'b', title: 'Mine', region: 'plan' }],
   // api.md 93: a reject names its card and the proposal it turns down.
@@ -208,9 +212,9 @@ export const BROKEN: [string, Rec][] = [
   ['reject without n', act('reject', { n: undefined })],
   ['reject of a group', act('reject', { n: undefined, nodes: [1, 2] })],
   ['reject with proposal 0', act('reject', { proposal: 0 })],
-  // api.md 118: from v11 the kind decides; a node line naming `item` is refused, true or false.
-  ['a v11 node naming item', patch(V.node!, 'node.item', true)],
-  ['a v11 node with item false', patch(V.node!, 'node.item', false)],
+  // api.md 118: the kind decides; a node line naming `item` is refused, true or false.
+  ['a node naming item', patch(V.node!, 'node.item', true)],
+  ['a node with item false', patch(V.node!, 'node.item', false)],
   // api.md 126: a retire names its board and its cards; without a container, at least one card.
   ['retire without cards', patch(V.retire!, 'cards', DROP)],
   ['retire without board', patch(V.retire!, 'board', DROP)],
@@ -219,8 +223,6 @@ export const BROKEN: [string, Rec][] = [
   ['retire naming card 0', patch(V.retire!, 'cards', [0])],
   ['retire with a bad region id', { ...V.retire!, region: 'Plan A' }],
   ['retire with n (a stored line names cards)', { ...V.retire!, n: 3 }],
-  // api.md 141: the person writes a `retire` line from v16 only.
-  ['retire written by a person before v16', { ...V.retire!, v: 15, by: 'person', agent: undefined, key: undefined }],
   // api.md 128, 182: the bookmark names one card, and nothing else.
   ['bookmark without n', act('bookmark', { n: undefined })],
   ['bookmark with a version', act('bookmark', { ver: 1 })],
@@ -235,9 +237,9 @@ export const BROKEN: [string, Rec][] = [
   ['notes-hide of a container', act('notes-hide', { n: undefined, ...CONTAINER })],
   ['notes-show of a group', act('notes-show', { n: undefined, nodes: [1, 2] })],
   ['notes-show with a region', act('notes-show', { region: 'plan' })],
-  // api.md 129: from v12 `list` is `column`.
-  ['a v12 region in list mode', patch(V.region!, 'region.mode', 'list')],
-  ['a v12 mode act to list', act('mode', { mode: 'list' })],
+  // api.md 129: `list` is `column`.
+  ['a region in list mode', patch(V.region!, 'region.mode', 'list')],
+  ['a mode act to list', act('mode', { mode: 'list' })],
   ['a region in an unknown mode', patch(V.region!, 'region.mode', 'stack')],
   // api.md 132: a container's card widths are `match` or `own`; the act names its container.
   ['a region with widths auto', patch(V.region!, 'region.widths', 'auto')],

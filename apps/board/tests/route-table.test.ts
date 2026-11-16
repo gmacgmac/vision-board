@@ -30,7 +30,7 @@ test('the route table has one entry per operation, with the right auth', () => {
     start_chat: 'person', list_chats: 'person', start_folder_chat: 'person', list_folder_chats: 'person', send_chat: 'person', stop_chat: 'person', answer_approval: 'person', watch_chat: 'person',
     ask_approval: 'run', list_permissions: 'person', forget_permission: 'person', attach_chat_file: 'person', read_attachment: 'agent', get_project: 'person', edit_ledger: 'person', stop_editing: 'person', list_folders: 'person', open_project: 'person',
     list_apps: 'agent-or-person', call_app_tool: 'person', get_panel_state: 'person', put_panel_state: 'person',
-    list_icons: 'agent-or-person', add_icon: 'agent',
+    list_icons: 'none', add_icon: 'agent',
   });
 });
 

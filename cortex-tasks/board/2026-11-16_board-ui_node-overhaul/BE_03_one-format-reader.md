@@ -100,20 +100,76 @@ You run in your own git worktree beside T_02 and BE_04 (PLAN.md § House Rules; 
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-16 12:29  
+
+### Run 1: Step 1, every place that read a version (before any change)
+- `ledger.ts`: `LEDGER_FORMATS`, `LedgerFormat` (`Base.v`), `PERSON_TOO` (format per type), `NodeBody.item`.
+- `ledger-shape.ts`: `STAMP.v` `oneOf(LEDGER_FORMATS)`; `eventProblems` `e.v === 2` (agent any name), `PERSON_TOO`
+  version test, `>= 11` `item` rule; `modeRules` `< 12`; `LINE_MODES`; `NODE.item`.
+- `ledger-index.ts`: `contextProblems` `e.v >= 6` (Later); `indexEvent` `e.v !== 2` (board and region creator).
+- `ledger-line.ts` `fromLine` + `view.ts` `RENAMED_MODES`. `board-view.ts` `viewNode` and `packages/actions/src/reads.ts`
+  `versionView` strip `item`; `packages/actions/src/changes.ts` comment on `item`.
+- Schemas: `common` `stamp.v` enum 2-20, `stampAgent` `if v in 3..20`; `act` `lineRules`, `region` `rules`, `node`
+  `rules` (`if` on `v`), `board` `rules` (person from v9), `retire` `rules` (person from v16), `icon` `rules` (person v20).
+- Outside my files (not changed): `apps/board/server/write-board.ts` `appended` strips `item` (REQUEST);
+  `apps/board/src/board/board-data.ts` `canApply` (`e.v <= LEDGER_FORMAT`, the newer guard; kept).
 
 ### Changes Made
-- 
+- Step 2, lines first: the four fixtures migrated by `temp/be03/migrate-fixtures.ts` (`upgradeLines`; each equals its
+  frozen copy migrated, byte for byte); the 11 stored-line examples in `openapi.json` restamped (the chain changed
+  nothing else, checked by `temp/be03/openapi-lines.ts`). Lines built in test code take `LEDGER_FORMAT`; their content
+  follows the chain: no `item`, `column` for `list`, no free-text agent (`ledger-v3.ts` `anonymous`, replacing `v2`),
+  `bookmark` for `flag`. `lineMaker` lost its `v` option. `perfLedger` is current lines with no agent id (V3), equal to
+  the frozen `perf` migrated. The shared scene's region `later` (an agent's, refused from format 6, a chain stop) is
+  now `side`; grants, pending and retire tests follow.
+- Step 3, one format: `LEDGER_FORMATS`, `LedgerFormat`, `RENAMED_MODES`, `LINE_MODES`, `modeRules`, `NodeBody.item`
+  and every `v` test above are gone. `Base.v` is `typeof LEDGER_FORMAT`; `PERSON_TOO` is a set. `eventProblems`
+  refuses a line with no `v` or an older one first, with one problem (`format-ledger.ts` `olderFormat`: "migrate the
+  ledger first: npm run ledger:migrate -- <folder>"). Schemas: `stamp.v` `const` 20, `stampAgent` unconditional,
+  `noList`/`noItem` always applied to stored lines (through `if: {type: object}` so the generators keep reading the
+  fields from `core`, as `CARD_FIELDS` needs), the `board`, `retire` and `icon` person-version rules removed. The
+  `$id` scheme is unchanged.
+- Step 4, proof: `legacy-folds.test.ts` keeps only the migrated hold (all six frozen files fold to their frozen
+  results with the one-format reader) and adds "today's fixtures and the performance ledger are the frozen files
+  migrated, byte for byte". `schema-v20.test.ts`: an older ledger read as it lies is refused line by line with the
+  migrate words; a line one format below, of every type and action, is refused by both checks and reads once
+  migrated. BE_02's read-only format-7 open (`ledger-migrate-open.test.ts`) passes; its through-server test now
+  replaces the ledger with the frozen roadmap (the fixtures are current).
+- Step 5: `npm run gen`; `api.md` points 6, 11, 66, 90, 118, 129, 141, 178 and all 14 "Only adds: v2 ... lines stay
+  valid" now say one format, migrated. Orchestrator-routed BE_04 requests: the `list_icons` stub test deleted from
+  `api-v20.test.ts`; `list_icons` `security: []`; `route-table.test.ts` `'none'`; `list-icons-response` `library`
+  words; api.md operations row and point 186.
 
 ### Issues & Resolutions
-- 
+- `apps/board/server/write-board.ts` (BE_04's) destructures `item: _item` from a `NodeVersion`: `npm run check` fails
+  there (the only error) until the REQUEST is applied.
+- Applying `noList` unconditionally as a plain `$ref` made `gen-contract.mjs` lose a region's `center` from
+  `CARD_FIELDS`; fixed in the schema with the file's own always-true `if`, not in the generator.
+- `api-ledgers.test.ts` "the folder open now, still in the old layout..." fails on the base commit too (no
+  `set-cookie`): not this task.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- The runner's check compares two readings: `ledger-migrate.ts` `checkSame` refuses "problems the old one did not
+  have". With one reader, the old file's lines read only as "older format", so any ledger with a line the reader
+  already skipped (D-019) now never migrates (probe `temp/be03/checksame.ts`: a v19 `send` to an unknown board
+  throws). The reader comparison can't be made any more; the frozen folds are the proof. REQUEST.
+- `packages/actions/src/moves.ts` keeps "a board whose older lines drew a region named later keeps one Later frame":
+  unreachable now (the chain stops on such a line), and its test was removed. A second format nobody can build.
+- `apps/board/src/board/board-data.ts` `canApply` is `e.v <= LEDGER_FORMAT` while `v` is typed `20`: the newer guard
+  is still right at runtime, but the type no longer admits what it guards.
+- `apps/board/bin/validate.ts` on an unmigrated ledger prints one "migrate" line per line; and an old line that was
+  malformed before now reports only "older format" (the migration keeps it byte for byte).
+- `docs/specification/chat.md` point 7 still says the ledger's "new versions only add, so older events stay valid";
+  `packages/format/README.md` still lists `LEDGER_FORMATS` and `RENAMED_MODES`. Neither is mine.
+- `writes.ts` `addingIconsIsNotBuiltYet` is now used by no test (BE_04's code removes the stub).
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- Touched beyond the literal list, each to keep the one format: `packages/actions/src/reads.ts` and `changes.ts` (an
+  `item` strip and its comment, a fold-side read of the version-only field); `api.md`'s point 186 and
+  `route-table.test.ts`, `api-v20.test.ts`, `list-icons-response.schema.json` on BE_04's routed requests.
+- The hand twin no longer has the `item` and `list` words (it says "unknown field" and "one of ..."); the schema,
+  checked first on every append and on every sent item, keeps `ITEM_REMOVED` and `LIST_RENAMED`.
 
 ---
 

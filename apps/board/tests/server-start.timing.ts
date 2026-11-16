@@ -11,6 +11,7 @@ import type { AddressInfo } from 'node:net';
 import { createBoardServer } from '../server/app.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import { makeTempDir, perfLedger } from '#format/testing';
+import { LEDGER_FORMAT } from '#format';
 
 const BUDGET_MS = 1000;
 const LINES = 100_000;
@@ -25,9 +26,9 @@ function bigLedger(): string[] {
     const n = ns[i % ns.length]!;
     const a = acts[i % acts.length]!;
     const seq = out.length + 1;
-    if (a === 'seen') out.push({ v: 2, seq, at, by: 'person', type: 'seen', n, ver: 1 });
-    else if (a === 'pin') out.push({ v: 2, seq, at, by: 'person', type: 'act', action: 'pin', n, x: i % 300, y: i % 200 });
-    else out.push({ v: 2, seq, at, by: 'person', type: 'act', action: a, n, ver: 1 });
+    if (a === 'seen') out.push({ v: LEDGER_FORMAT, seq, at, by: 'person', type: 'seen', n, ver: 1 });
+    else if (a === 'pin') out.push({ v: LEDGER_FORMAT, seq, at, by: 'person', type: 'act', action: 'pin', n, x: i % 300, y: i % 200 });
+    else out.push({ v: LEDGER_FORMAT, seq, at, by: 'person', type: 'act', action: a, n, ver: 1 });
   }
   return out.map((e) => JSON.stringify(e));
 }

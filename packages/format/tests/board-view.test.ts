@@ -30,12 +30,4 @@ test('an unknown board is refused', () => {
 test('every node carries its number, an item or not', () => {
   const view = boardView(foldDrawn(events), BOARD);
   for (const node of view.nodes) assert.equal(node.n, Number(node.id), node.id);
-  assert.ok(events.some((e) => e.type === 'node' && !e.node.item), 'the fixture has a node with no item mark');
-});
-
-test('an old item mark never reaches the view', () => {
-  const view = boardView(foldDrawn(events), BOARD);
-  for (const node of view.nodes) assert.equal('item' in node, false, node.id);
-  const unmarked = events.map((e) => (e.type === 'node' ? { ...e, node: { ...e.node, item: undefined } } : e));
-  assert.deepEqual(boardView(foldDrawn(unmarked), BOARD), view);
 });

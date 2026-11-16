@@ -40,21 +40,20 @@ const seqs = (s: LedgerState) => new Map([...s.runs].map(([b, rs]) => [b, rs.map
 
 test('versions: runs of one agent\'s drawing lines, newest first; now is the board\'s own head', () => {
   const l = new Ledger();
-  l.v = 8;
   const types: string[] = [];
   const draw = (who: string, e: { type: string; [k: string]: unknown }) => { types.push(e.type); return l.agent(who, e); };
   draw(A, { type: 'board', board: 'b', title: 'Board' });
   draw(A, { type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } });
-  draw(A, { type: 'node', board: 'b', n: 1, ver: 1, node: { region: 'r', kind: 'question', title: 'One', item: true } });
-  const v1 = draw(A, { type: 'node', board: 'b', n: 2, ver: 1, node: { region: 'r', kind: 'question', title: 'Two', item: true } });
+  draw(A, { type: 'node', board: 'b', n: 1, ver: 1, node: { region: 'r', kind: 'question', title: 'One' } });
+  const v1 = draw(A, { type: 'node', board: 'b', n: 2, ver: 1, node: { region: 'r', kind: 'question', title: 'Two' } });
   l.act({ action: 'ack', n: 1, ver: 1 }); // a person act on the board ends the run
   const v2 = draw(A, { type: 'link', from: 1, to: 2 });
   // Another board's lines and the person's board seen are not this board's lines.
   draw(A, { type: 'board', board: 'other', title: 'Other' });
   l.seenBoard('b', v2);
   const v3 = draw(A, { type: 'unlink', from: 1, to: 2 }); // continues the run v2 ended
-  const b1 = draw(B, { type: 'node', board: 'b', n: 3, ver: 1, node: { region: 'r', kind: 'question', title: 'Three', item: true } });
-  const now = draw(B, { type: 'node', board: 'b', n: 3, ver: 2, node: { region: 'r', kind: 'question', title: 'Three again', item: true } });
+  const b1 = draw(B, { type: 'node', board: 'b', n: 3, ver: 1, node: { region: 'r', kind: 'question', title: 'Three' } });
+  const now = draw(B, { type: 'node', board: 'b', n: 3, ver: 2, node: { region: 'r', kind: 'question', title: 'Three again' } });
   const s = l.state();
   assert.ok(b1 < now && v2 < v3);
   const at = (seq: number) => s.runs.get('b')!.find((r) => r.seq === seq)!.at;
@@ -69,7 +68,6 @@ test('versions: runs of one agent\'s drawing lines, newest first; now is the boa
   assert.deepEqual(boardVersions(s, 'other'), { now: s.heads.get('other'), past: [] });
   assert.equal(boardVersions(s, 'none'), undefined);
   // A retire takes cards off the board: a drawing line, so a version of its own (api.md 127).
-  l.v = 12;
   const gone = draw(A, { type: 'retire', board: 'b', cards: [2] });
   assert.deepEqual(boardVersions(l.state(), 'b'), { now: gone, past: [now, v3, v1].map((x) => ({ ...l.state().runs.get('b')!.find((r) => r.seq === x)! })) });
   // Coverage: every drawing type has a case above.

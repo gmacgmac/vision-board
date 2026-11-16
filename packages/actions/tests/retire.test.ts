@@ -5,7 +5,7 @@
 // board numbers 4 and 5 are identities 5 and 6: a read that slips from one to the other fails.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardView, readLedger } from '#format';
+import { boardView, readLedger, LEDGER_FORMAT } from '#format';
 import {
   boardState, conditionsOf, containerDetail, counts, nodeDetail, openItems, owedNotice, pendingItems, retireCards, retireProblem,
 } from '../src/index.ts';
@@ -22,7 +22,6 @@ const draw = (l: Scene, n: number, ver: number, node: { region: string; kind: st
 /** The scene at v12 with a finding (5) and a question (6) in A's container `r`. */
 function cards() {
   const l = scene();
-  l.v = 12;
   draw(l, 5, 1, { region: 'r', kind: 'finding' });
   draw(l, 6, 1, { region: 'r', kind: 'question' });
   return l;
@@ -94,12 +93,12 @@ test('a retired container leaves the board with its cards; show_container still 
   const l = cards();
   const gone = l.agent(B, { type: 'retire', board: 'b', region: 'q', cards: [2] });
   const s = l.state();
-  assert.deepEqual(boardView(s, 'b').regions.map((r) => r.id), ['r', 'later', 'old']);
+  assert.deepEqual(boardView(s, 'b').regions.map((r) => r.id), ['r', 'side', 'old']);
   const box = containerDetail(s, 'b', 'q')!;
   assert.deepEqual([box.retired, box.region.id, box.nodes.map((x) => [x.n, x.retired])], [gone, 'q', [[2, gone]]]);
   assert.equal(containerDetail(s, 'b', 'r')!.retired, undefined);
   // The ledger refuses its id again, and a card into it.
-  const again = readLedger([...l.lines, JSON.stringify({ v: 12, seq: l.seq + 1, at: '2026-10-11T10:00:00Z', by: 'agent', agent: B, type: 'region', board: 'b', region: { id: 'q', title: 'Q', mode: 'grid' } })]);
+  const again = readLedger([...l.lines, JSON.stringify({ v: LEDGER_FORMAT, seq: l.seq + 1, at: '2026-10-11T10:00:00Z', by: 'agent', agent: B, type: 'region', board: 'b', region: { id: 'q', title: 'Q', mode: 'grid' } })]);
   assert.match(again.problems.join(), /container "q" was retired; pick another id/);
 });
 
@@ -118,7 +117,6 @@ test('board numbers out: a group note and a proposal on board b name its cards b
 // The person removes cards (N24, api.md 141): the same line, by the person, from v16.
 /** A person's v16 retire line of `cards` (identities), or of container `region` with them. */
 const personRetire = (l: Scene, cards: number[], region?: string) => {
-  l.v = 16;
   return l.agent('', { type: 'retire', board: 'b', cards, ...(region && { region }), by: 'person', agent: undefined });
 };
 
@@ -156,15 +154,13 @@ test('the person\'s retire: owed cards go, owe nothing after, and an answer on t
   assert.equal(s.heads.get('b'), gone, 'the board\'s own last line moves');
 });
 
-test('the person\'s retire of a container: a note on it waits for no Send; a line before v16 is refused', () => {
+test('the person\'s retire of a container: a note on it waits for no Send', () => {
   const l = cards();
   l.act({ action: 'comment', board: 'b', region: 'q', text: 'Still needed?' });
   personRetire(l, [2], 'q');
   const s = l.state();
   assert.deepEqual([...(s.unsent.get('b') ?? [])], []);
   assert.equal(containerDetail(s, 'b', 'q')!.retired !== undefined, true);
-  const old = readLedger([...l.lines, JSON.stringify({ v: 15, seq: l.seq + 1, at: '2026-10-12T10:00:00Z', by: 'person', type: 'retire', board: 'b', cards: [5] })]);
-  assert.match(old.problems.join(), /retire: written by an agent/);
 });
 
 test('a retire ends every proposal on its cards, open or out of date, by card or by container: none stands, none is a condition', () => {

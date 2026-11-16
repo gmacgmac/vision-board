@@ -5,15 +5,16 @@
 // NO TASK EDITS THE FILES IN `fixtures/legacy/`, EVER: once the old reader is gone they are the only proof that a
 // migrated ledger shows the same boards. A change of the fold's shape (a field renamed) maps the frozen result in
 // this test, never the frozen file.
-// Two holds: the file read as it lies folds to its result (true while the reader still reads old formats; BE_03
-// removes this one), and the file migrated (`upgradeLines`) folds to the same result, line for line.
-// Format 20 (T_01) renamed the flag Bookmark: the fold's `flags` is `bookmarks` (mapped here in `renamed`), and a
-// `flag` line no longer reads as it lies, only migrated, so the first hold is kept for the files that hold none.
+// The hold: each file migrated (`upgradeLines`) folds, with the one-format reader (D-103 3, BE_03), to its frozen
+// result, line for line. Read as it lies, nothing of it reads (schema-v20.test.ts). Format 20 (T_01) renamed the flag
+// Bookmark: the fold's `flags` is `bookmarks` (mapped here in `renamed`). Today's fixtures and the performance ledger
+// are these frozen files migrated, byte for byte.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { boardView, readLedger, upgradeLines } from '#format';
 import { FIXTURES_DIR } from '#format/files';
+import { perfLedger } from '#format/testing';
 import { boardState, foldLedger } from '../src/index.ts';
 
 const LEGACY = `${FIXTURES_DIR}legacy/`;
@@ -49,8 +50,6 @@ function renamed(result: { boards: Record<string, { state: Record<string, unknow
   return result;
 }
 const frozen = (name: string): unknown => renamed(JSON.parse(fs.readFileSync(`${LEGACY}${name}.fold.json`, 'utf8')));
-/** A file with a `flag` or `unflag` line, which format 20 reads only migrated (a `bookmark`). */
-const holdsFlags = (name: string): boolean => linesOf(name).some((l) => /"action":"(un)?flag"/.test(l));
 
 test('the frozen set: every fixture, the performance ledger and the mixed one, each with its result', () => {
   assert.deepEqual(NAMES.sort(), ['gallery', 'login-layout', 'login-review', 'mixed', 'perf', 'roadmap']);
@@ -65,15 +64,13 @@ test('the mixed ledger is shaped like a real one: formats 7 to 19, four boards, 
   assert.equal(lines.filter((e) => e.type === 'board' && e.v !== 9).length, 4);
 });
 
-test('the frozen files that hold a flag are the gallery and the mixed ledger: each folds to its bookmarks migrated', () => {
-  assert.deepEqual(NAMES.filter(holdsFlags).sort(), ['gallery', 'mixed']);
+test('today\'s fixtures and the performance ledger are the frozen files migrated, byte for byte', () => {
+  const migrated = (name: string) => upgradeLines(fs.readFileSync(`${LEGACY}${name}.ledger.jsonl`, 'utf8').split('\n')).lines.join('\n');
+  for (const name of NAMES.filter((x) => x !== 'mixed' && x !== 'perf')) {
+    assert.equal(fs.readFileSync(`${FIXTURES_DIR}${name}.ledger.jsonl`, 'utf8'), migrated(name), name);
+  }
+  assert.equal(`${perfLedger().join('\n')}\n`, migrated('perf'));
 });
-
-for (const name of NAMES.filter((x) => !holdsFlags(x))) {
-  test(`${name}: read as it lies, today's code folds it to its frozen result`, () => {
-    assert.deepEqual(foldOf(linesOf(name)), frozen(name));
-  });
-}
 
 for (const name of NAMES) {
   test(`${name}: migrated, it folds to the same frozen result, line for line`, () => {

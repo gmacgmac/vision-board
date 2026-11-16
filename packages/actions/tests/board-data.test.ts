@@ -36,7 +36,7 @@ test('boardJson: the stored statuses named at the edge, each map an object, the 
 });
 
 test('answeredIds: the decided cards, but not one the agent still owes an answer', () => {
-  const maker = lineMaker({ v: 12, at: '2026-10-11T11' });
+  const maker = lineMaker({ at: '2026-10-11T11' });
   const { line } = maker;
   const agent = (e: object) => line({ by: 'agent', agent: 'a-aaaa1111', ...e });
   const ask = (n: number) => agent({ type: 'node', board: 'b', n, ver: 1, node: { region: 'p', kind: 'question', title: `Question ${n}?` } });

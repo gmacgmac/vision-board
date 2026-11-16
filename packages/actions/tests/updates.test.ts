@@ -9,11 +9,11 @@ import { lineMaker } from '#format/testing';
 import { clearsOn } from '../src/conditions.ts';
 
 const A = 'a-aaaa1111';
-const maker = lineMaker({ v: 10, at: '2026-10-08T13' });
+const maker = lineMaker({ at: '2026-10-08T13' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const node = (n: number, ver: number, body: string, title = `Card ${n}`) =>
-  agent({ type: 'node', board: 'b', n, ver, node: { region: 'r', kind: 'question', title, body, item: true } });
+  agent({ type: 'node', board: 'b', n, ver, node: { region: 'r', kind: 'question', title, body } });
 
 /** Card 1 at version 1. Card 2: seen at 2, then appended and retitled. Card 3: rewritten, never seen. */
 function ledger() {
@@ -101,7 +101,7 @@ test('a card selected by a find marks nothing seen; the person\'s own select mar
 test('two boards: counts, steps and seen marks name a card by its number on the open board', () => {
   maker.reset();
   const on = (board: string, n: number, ver: number, body: string) =>
-    agent({ type: 'node', board, n, ver, node: { region: 'r', kind: 'question', title: `Card ${n}`, body, item: true } });
+    agent({ type: 'node', board, n, ver, node: { region: 'r', kind: 'question', title: `Card ${n}`, body } });
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }),
     agent({ type: 'board', board: 'a', title: 'A' }), agent({ type: 'region', board: 'a', region: { id: 'r', title: 'R', mode: 'grid' } }),

@@ -1,11 +1,8 @@
 // Ledger v20 over the API (api.md 182-189): a board's skin through write_board, put_board's rename and the person's
 // act, said by get_board and list_boards; a container seen through mark_seen; Ask now as an act whose lines are
-// `seq`s, not cards; the bookmark; and the icon library's operations, stubs until it is built (BE_04): list_icons
-// answers the built-in set and an empty library, add_icon checks its body and then refuses in words.
+// `seq`s, not cards; the bookmark. The icon library's operations are in icon-library.test.ts.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { ICON_NAMES } from '#format';
-import * as writesWords from '../server/words/writes.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 
@@ -78,15 +75,4 @@ test('an ask ends an agent\'s check_responses wait, as a Send does', async () =>
   const got = await waiting;
   assert.ok(Date.now() - t < 10_000, 'woken, not timed out');
   assert.deepEqual(got.responses.map((e: { action: string; context?: string }) => [e.action, e.context]), [['ask', 'node']]);
-});
-
-test('list_icons (a stub): the built-in set and an empty library; add_icon checks its body, then refuses in words', async () => {
-  const listed = await h.ok('list_icons', {}, { as: bot.client });
-  assert.deepEqual(listed, { builtIn: [...ICON_NAMES], library: [] });
-  assert.deepEqual(await h.ok('list_icons', { paths: true }, { as: h.person }), { builtIn: [...ICON_NAMES], library: [] }, 'the page asks too');
-  const body = { name: 'x-encoder', title: 'An encoder', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/></svg>' };
-  const refused = await h.fails('add_icon', { body }, 404, 'not-found', bot.client);
-  assert.equal(refused.detail, writesWords.addingIconsIsNotBuiltYet);
-  await h.fails('add_icon', { body: { ...body, name: 'encoder' } }, 422, 'invalid', bot.client);
-  await h.fails('add_icon', { body }, 401, 'not-authenticated');
 });

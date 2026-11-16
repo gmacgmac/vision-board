@@ -13,7 +13,6 @@ import { A, scene } from './ledger-v3.ts';
  * (identity 6, board number 5) in A's `r`. */
 function board() {
   const l = scene();
-  l.v = 8;
   l.node(A, 5, 1, { region: 'r', kind: 'decision' });
   l.node(A, 6, 1, { region: 'r', kind: 'finding' });
   return l;

@@ -9,7 +9,7 @@ import { boardData, foldLedger, goTarget } from '../src/index.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-const maker = lineMaker({ v: 12, at: '2026-10-15T10' });
+const maker = lineMaker({ at: '2026-10-15T10' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const region = (board: string) => agent({ type: 'region', board, region: { id: 'p', title: 'P', mode: 'grid' } });

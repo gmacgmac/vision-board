@@ -428,13 +428,13 @@ type BoardCore = {
 };
 type BoardStored = {
   type: "board";
-} & CommonStamp & BoardCore & {
+} & CommonStamp & CommonStampAgent & BoardCore & {
   by?: "agent" | "person";
   board: string;
   key?: CommonKey;
 };
 type CommonStamp = {
-  v: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
+  v: 20;
   seq: number;
   at: string;
   by: "person" | "agent";
@@ -442,6 +442,9 @@ type CommonStamp = {
   person?: CommonPerson;
 };
 type CommonPerson = string;
+type CommonStampAgent = {
+  agent?: string;
+};
 type CommonKey = string;
 type ShowNodeResponse = {
   head: number;
@@ -598,11 +601,11 @@ type CheckResponsesResponseMark = {
   n: number;
   ver: number;
   proposal?: number;
-} & CommonStamp;
+} & CommonStamp & CommonStampAgent;
 type CheckResponsesResponseAct = {
   type: "act";
   action?: "comment" | "context" | "later" | "reopen" | "pin" | "unpin" | "mode" | "grant" | "deny" | "revoke" | "size" | "send" | "note-edit" | "note-remove" | "move" | "reject" | "bookmark" | "unbookmark" | "widths" | "archive" | "restore" | "lock" | "unlock" | "skin" | "ask" | "direction";
-} & CommonStamp & ActCore;
+} & CommonStamp & CommonStampAgent & ActCore;
 type ActCore = {
   action: "ack" | "drop" | "comment" | "context" | "later" | "reopen" | "pin" | "unpin" | "mode" | "grant" | "deny" | "revoke" | "size" | "send" | "note-edit" | "note-remove" | "move" | "reject" | "bookmark" | "unbookmark" | "notes-hide" | "notes-show" | "widths" | "archive" | "restore" | "lock" | "unlock" | "app-allow" | "app-revoke" | "skin" | "ask" | "direction";
   n?: number;
@@ -641,7 +644,7 @@ type ReadLedgerResponse = {
 type LedgerEvent = BoardStored | RegionStored | NodeStored | LinkStored | UnlinkStored | ActStored | SeenStored | ReplyStored | ProposeStored | ParkStored | JoinStored | GrantRequestStored | RetireStored | IconStored;
 type RegionStored = {
   type: "region";
-} & CommonStamp & RegionCore & {
+} & CommonStamp & CommonStampAgent & RegionCore & {
   by?: "agent";
   board: string;
   key?: CommonKey;
@@ -651,7 +654,7 @@ type RegionCore = {
 };
 type NodeStored = {
   type: "node";
-} & CommonStamp & NodeCore & NodeRules & {
+} & CommonStamp & CommonStampAgent & NodeCore & NodeRules & {
   by?: "agent";
   board: string;
   n: number;
@@ -667,7 +670,7 @@ type NodeAppRule = {
 };
 type LinkStored = {
   type: "link";
-} & CommonStamp & LinkCore & {
+} & CommonStamp & CommonStampAgent & LinkCore & {
   by?: "agent";
   from: number;
   to: number;
@@ -678,7 +681,7 @@ type LinkCore = {
 };
 type UnlinkStored = {
   type: "unlink";
-} & CommonStamp & LinkCore & {
+} & CommonStamp & CommonStampAgent & LinkCore & {
   by?: "agent";
   from: number;
   to: number;
@@ -686,10 +689,10 @@ type UnlinkStored = {
 };
 type ActStored = {
   type: "act";
-} & CommonStamp & ActCore;
+} & CommonStamp & CommonStampAgent & ActCore;
 type SeenStored = {
   type: "seen";
-} & CommonStamp & SeenCore & {
+} & CommonStamp & CommonStampAgent & SeenCore & {
   by?: "person";
 };
 type SeenCore = {
@@ -701,7 +704,7 @@ type SeenCore = {
 };
 type ReplyStored = {
   type: "reply";
-} & CommonStamp & ReplyCore & {
+} & CommonStamp & CommonStampAgent & ReplyCore & {
   by?: "agent";
   n: number;
   key?: CommonKey;
@@ -712,7 +715,7 @@ type ReplyCore = {
 };
 type ProposeStored = {
   type: "propose";
-} & CommonStamp & ProposeCore & {
+} & CommonStamp & CommonStampAgent & ProposeCore & {
   by?: "agent";
   n: number;
   key?: CommonKey;
@@ -725,7 +728,7 @@ type ProposeCore = {
 };
 type ParkStored = {
   type: "park";
-} & CommonStamp & ParkCore & {
+} & CommonStamp & CommonStampAgent & ParkCore & {
   by?: "agent";
   n: number;
   key?: CommonKey;
@@ -735,7 +738,7 @@ type ParkCore = {
 };
 type JoinStored = {
   type: "join";
-} & CommonStamp & JoinCore & {
+} & CommonStamp & CommonStampAgent & JoinCore & {
   by?: "agent";
   agent: string;
 };
@@ -744,7 +747,7 @@ type JoinCore = {
 };
 type GrantRequestStored = {
   type: "grant-request";
-} & CommonStamp & GrantRequestCore & {
+} & CommonStamp & CommonStampAgent & GrantRequestCore & {
   by?: "agent";
   key?: CommonKey;
 };
@@ -755,7 +758,7 @@ type GrantRequestCore = {
 };
 type RetireStored = {
   type: "retire";
-} & CommonStamp & RetireCore & {
+} & CommonStamp & CommonStampAgent & RetireCore & {
   by?: "agent" | "person";
   board: string;
   cards: CommonCards;
@@ -767,7 +770,7 @@ type RetireCore = {
 type CommonCards = number[];
 type IconStored = {
   type: "icon";
-} & CommonStamp & IconCore & {
+} & CommonStamp & CommonStampAgent & IconCore & {
   by?: "agent" | "person";
   key?: CommonKey;
 };

@@ -5,19 +5,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { boardView, eventProblems, LATER_REGION, readLedger } from '#format';
+import { boardView, eventProblems, LATER_REGION, readLedger, LEDGER_FORMAT } from '#format';
 import {
   boardState, canWrite, nodeDetail, openItems, placedView, responsesAfter, validateAct,
 } from '../src/index.ts';
 import { A, B, Ledger } from './ledger-v3.ts';
 
 const AT = '2026-10-05T10:00:00Z';
-const base = { v: 6, seq: 9, at: AT, by: 'person', type: 'act' };
+const base = { v: LEDGER_FORMAT, seq: 9, at: AT, by: 'person', type: 'act' };
 
 /** Board `b`: A holds `r` (items 1 and 2, topic 5), B holds `q` (item 3). Board `b2`: A, `x`, item 4. */
 function moves(): Ledger {
   const l = new Ledger();
-  l.v = 6;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.agent(B, { type: 'join', label: 'Review chat' });
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });
@@ -29,12 +28,12 @@ function moves(): Ledger {
   l.agent(A, { type: 'board', board: 'b2', title: 'Board two' });
   l.region(A, 'x', 'b2');
   l.node(A, 4, 1, { region: 'x' }, 'b2');
-  l.node(A, 5, 1, { region: 'r', kind: 'topic', item: false });
+  l.node(A, 5, 1, { region: 'r', kind: 'topic' });
   return l;
 }
 
 const next = (l: Ledger, f: Partial<ActEvent>): ActEvent =>
-  ({ v: 6, seq: l.seq + 1, at: AT, by: 'person', type: 'act', action: 'move', ...f } as ActEvent);
+  ({ v: LEDGER_FORMAT, seq: l.seq + 1, at: AT, by: 'person', type: 'act', action: 'move', ...f } as ActEvent);
 
 test('shape: move names one card with n, or a group with nodes, and a region', () => {
   assert.deepEqual(eventProblems({ ...base, action: 'move', n: 1, region: 'q' }), []);
@@ -67,15 +66,11 @@ test('context: the region is a container on the cards\' board, or the built-in l
   }
 });
 
-test('the built-in Later is reserved from ledger v6: an agent cannot draw a region named later', () => {
+test('the built-in Later is reserved: an agent cannot draw a region named later', () => {
   const l = moves();
   l.region(A, LATER_REGION);
   assert.ok(readLedger(l.lines).problems.some((p) => p.includes('region.id') && p.includes('Later')));
-  // An older line keeps its meaning (api.md 11): a v3 region named later stays valid.
-  const old = moves();
-  old.v = 3;
-  old.region(A, LATER_REGION);
-  assert.deepEqual(readLedger(old.lines).problems, []);
+  // A line written before format 6 that named one stops the migration (migrate.test.ts): no ledger read has it.
 });
 
 test('the person\'s latest move wins; an agent\'s later version naming its old region does not pull it back', () => {
@@ -145,16 +140,6 @@ test('placedView: each card in its container, the built-in Later last, shown onl
   assert.deepEqual(v.nodes.map((n) => [n.id, n.region]), [['1', LATER_REGION], ['2', 'r'], ['3', 'r'], ['4', 'r']]);
   // Ids and numbers never change on a move (rule 10).
   assert.deepEqual(v.nodes.map((n) => n.n), [1, 2, 3, 4]);
-});
-
-test('a board whose older lines drew its own region named later keeps one Later frame', () => {
-  const l = moves();
-  l.v = 3;
-  l.region(A, LATER_REGION);
-  l.v = 6;
-  l.act({ action: 'move', n: 1, region: LATER_REGION });
-  const v = placedView(boardView(l.state(), 'b'), boardState(l.state(), 'b'), { later: true });
-  assert.deepEqual(v.regions.map((r) => r.id), ['r', 'q', LATER_REGION]);
 });
 
 test('check_responses shows a move to the agents whose cards it moved', () => {

@@ -76,7 +76,6 @@ const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendatio
  * Each named line is a case: an event type, `act:<action>`, or a named situation. */
 function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> } {
   const l = new Ledger();
-  l.v = 7;
   const want = new Map<string, { seq: number; scope: Scope }>();
   const at = (name: string, seq: number, scope: Scope) => { want.set(name, { seq, scope }); return seq; };
   at('join', l.agent(A, { type: 'join', label: 'Pricing chat' }), { cards: [] });
@@ -104,9 +103,8 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:deny', l.act({ action: 'deny', request: refused, text: 'Not now.' }), on('b', 'r'));
   at('act:revoke', l.act({ action: 'revoke', board: 'b', region: 'q', holder: A }), on('b', 'q'));
   at('act:ack', l.act({ action: 'ack', n: 1, ver: 1 }), on('b', 'r', [1]));
-  l.v = 10; // api.md 93
+  // api.md 93
   at('act:reject', l.act({ action: 'reject', n: 4, proposal: proposed }), on('b2', 'x', [4]));
-  l.v = 7;
   at('act:drop', l.act({ action: 'drop', n: 4, ver: 1 }), on('b2', 'x', [4]));
   at('act:reopen', l.act({ action: 'reopen', n: 1, ver: 1 }), on('b', 'r', [1]));
   const group = at('act:comment', l.act({ action: 'comment', nodes: [1, 2], text: 'Same question.' }), on('b', 'r', [1, 2]));
@@ -122,24 +120,24 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:move', l.act({ action: 'move', nodes: [1, 2], region: LATER_REGION }), on('b', LATER_REGION, [1, 2]));
   at('act:send', l.act({ action: 'send', board: 'b' }), { board: 'b', cards: [] });
   at('a card in Later', l.agent(A, { type: 'reply', n: 1, text: 'Parked.' }), on('b', LATER_REGION, [1]));
-  l.v = 12; // api.md 126, 128
+  // api.md 126, 128
   at('act:bookmark', l.act({ action: 'bookmark', n: 3 }), on('b', 'q', [3]));
   at('act:unbookmark', l.act({ action: 'unbookmark', n: 3 }), on('b', 'q', [3]));
   at('retire', l.agent(B, { type: 'retire', board: 'b', cards: [3] }), { board: 'b', cards: [3] });
-  l.v = 14; // api.md 135
+  // api.md 135
   at('act:archive', l.act({ action: 'archive', board: 'b2' }), { board: 'b2', cards: [] });
   at('act:restore', l.act({ action: 'restore', board: 'b2' }), { board: 'b2', cards: [] });
-  l.v = 15; // api.md 138
+  // api.md 138
   at('act:lock', l.act({ action: 'lock', board: 'b2' }), { board: 'b2', cards: [] });
   at('act:unlock', l.act({ action: 'unlock', board: 'b2' }), { board: 'b2', cards: [] });
-  l.v = 17; // api.md 150: an app card, and the person's allow of its app, which is on no board and no card
+  // api.md 150: an app card, and the person's allow of its app, which is on no board and no card
   l.agent(A, { type: 'node', board: 'b', n: 5, ver: 1, node: { region: 'r', kind: 'app', title: 'Calculator', app: { id: 'calculator' } } });
   at('act:app-allow', l.act({ action: 'app-allow', app: 'calculator', hash: 'a'.repeat(64) }), { cards: [] });
   at('act:app-revoke', l.act({ action: 'app-revoke', app: 'calculator' }), { cards: [] });
-  l.v = 18; // api.md 156: the hidden notes name a card, as the flag does (card 2 was moved to Later)
+  // api.md 156: the hidden notes name a card, as the flag does (card 2 was moved to Later)
   at('act:notes-hide', l.act({ action: 'notes-hide', n: 2 }), on('b', LATER_REGION, [2]));
   at('act:notes-show', l.act({ action: 'notes-show', n: 2 }), on('b', LATER_REGION, [2]));
-  l.v = 20; // api.md 183-189: a skin is on its board; a direction on its container or board; an ask on the cards of the
+  // api.md 183-189: a skin is on its board; a direction on its container or board; an ask on the cards of the
   // notes it carried; an icon is the project's, on no board; a container seen on its container.
   at('act:skin', l.act({ action: 'skin', board: 'b', skin: 'command-lens' }), { board: 'b', cards: [] });
   at('act:direction', l.act({ action: 'direction', board: 'b', region: 'q', direction: 'down' }), on('b', 'q'));

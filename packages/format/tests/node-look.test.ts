@@ -5,12 +5,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DIRECTIONS, ICON_NAMES, LIBRARY_ICON_PATTERN, SKINS, TONES, eventProblems, isIconName, isLibraryIcon, isTone, readLedger, validateView,
+  DIRECTIONS, ICON_NAMES, LEDGER_FORMAT, LIBRARY_ICON_PATTERN, SKINS, TONES, eventProblems, isIconName, isLibraryIcon, isTone, readLedger, validateView,
 } from '../src/index.ts';
 
 const AT = '2026-11-16T09:00:00Z';
-const agent = (seq: number, e: object) => JSON.stringify({ v: 20, seq, at: AT, by: 'agent', agent: 'a-abcd1234', ...e });
-const person = (seq: number, e: object) => JSON.stringify({ v: 20, seq, at: AT, by: 'person', ...e });
+const agent = (seq: number, e: object) => JSON.stringify({ v: LEDGER_FORMAT, seq, at: AT, by: 'agent', agent: 'a-abcd1234', ...e });
+const person = (seq: number, e: object) => JSON.stringify({ v: LEDGER_FORMAT, seq, at: AT, by: 'person', ...e });
 const HASH = 'a'.repeat(64);
 const OTHER = 'b'.repeat(64);
 const board = [
@@ -71,7 +71,6 @@ test('a name is given once: an agent\'s other drawing is refused, the same one i
   assert.deepEqual([accepted.problems, accepted.index.icons.get('x-encoder')], [[], OTHER]);
   assert.match(readLedger([...board, agent(4, { type: 'icon', name: 'encoder', hash: HASH })]).problems.join(), /name: "x-", then lowercase/);
   assert.match(readLedger([...board, agent(4, { type: 'icon', name: 'x-encoder', hash: 'ABC' })]).problems.join(), /hash: the file's SHA-256/);
-  assert.match(eventProblems(JSON.parse(person(4, { type: 'icon', name: 'x-encoder', hash: HASH }).replace('"v":20', '"v":19'))).join(), /icon: written by an agent/);
 });
 
 test('the view check holds a view to the same icons, tones and directions', () => {

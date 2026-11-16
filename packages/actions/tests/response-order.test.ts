@@ -14,7 +14,6 @@ const named = <T extends { action: string }>(e: T) =>
 /** Board `b` at v8: cards 1, 5, 6 in `r`, 2 in `q`, 3 in `old`, and an empty container `none`. */
 function clicks() {
   const l = scene();
-  l.v = 8;
   l.node(A, 5, 1, { region: 'r', kind: 'finding' });
   l.node(A, 6, 1, { region: 'r', kind: 'note' });
   l.region(A, 'none');
@@ -25,7 +24,7 @@ function clicks() {
     on1: l.act({ action: 'context', n: 1, ver: 1 }),
     onQ: l.act({ action: 'comment', board: 'b', region: 'q', text: 'All of q.' }),
     on2: l.act({ action: 'comment', n: 2, ver: 1, text: 'And why?' }),
-    modeR: l.act({ action: 'mode', board: 'b', region: 'r', mode: 'list' }),
+    modeR: l.act({ action: 'mode', board: 'b', region: 'r', mode: 'column' }),
     send: l.act({ action: 'send', board: 'b' }),
     drop1: 0, onNone: 0, grant: 0, send2: 0,
   };

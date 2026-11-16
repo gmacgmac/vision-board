@@ -64,9 +64,6 @@
           "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/core"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/rules"
-        },
-        {
           "type": "object",
           "properties": {
             "by": {
@@ -74,7 +71,7 @@
                 "agent",
                 "person"
               ],
-              "description": "Who wrote the line: `agent`, or from v20 `person` (accepting a changed drawing)."
+              "description": "Who wrote the line: `agent`, or `person` (accepting a changed drawing)."
             },
             "key": {
               "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/key"
@@ -83,30 +80,6 @@
         }
       ],
       "unevaluatedProperties": false
-    },
-    "rules": {
-      "description": "A person's line is from v20, as is every icon line.",
-      "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 185",
-      "type": "object",
-      "if": {
-        "type": "object",
-        "required": [
-          "by"
-        ],
-        "properties": {
-          "by": {
-            "const": "person"
-          }
-        }
-      },
-      "then": {
-        "type": "object",
-        "properties": {
-          "v": {
-            "const": 20
-          }
-        }
-      }
     }
   }
 }

@@ -209,7 +209,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 9,
+                  "v": 20,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -229,7 +229,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 9,
+                  "v": 20,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -726,7 +726,7 @@
                 "example": {
                   "responses": [
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 50,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -737,7 +737,7 @@
                       "text": "Rule 6 needs an example."
                     },
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 51,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -808,7 +808,7 @@
                 "example": {
                   "events": [
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 1,
                       "at": "2026-10-05T08:00:00Z",
                       "by": "agent",
@@ -819,7 +819,7 @@
                       "key": "pricing-board"
                     },
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 2,
                       "at": "2026-10-05T08:00:01Z",
                       "by": "agent",
@@ -851,7 +851,7 @@
                     "summary": "Two lines",
                     "dataValue": [
                       {
-                        "v": 3,
+                        "v": 20,
                         "seq": 1,
                         "at": "2026-10-05T08:00:00Z",
                         "by": "agent",
@@ -862,7 +862,7 @@
                         "key": "pricing-board"
                       },
                       {
-                        "v": 3,
+                        "v": 20,
                         "seq": 2,
                         "at": "2026-10-05T08:00:01Z",
                         "by": "agent",
@@ -879,7 +879,7 @@
                         "key": "pricing-q"
                       }
                     ],
-                    "serializedValue": "{\"v\":3,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":3,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
+                    "serializedValue": "{\"v\":20,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":20,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
                   }
                 }
               }
@@ -1308,7 +1308,7 @@
                   "$ref": "#/components/schemas/act"
                 },
                 "example": {
-                  "v": 3,
+                  "v": 20,
                   "seq": 50,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -1406,7 +1406,7 @@
                   "$ref": "#/components/schemas/retire"
                 },
                 "example": {
-                  "v": 16,
+                  "v": 20,
                   "seq": 61,
                   "at": "2026-10-12T09:00:00Z",
                   "by": "person",
@@ -1504,7 +1504,7 @@
                   "$ref": "#/components/schemas/seen"
                 },
                 "example": {
-                  "v": 3,
+                  "v": 20,
                   "seq": 53,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -2925,15 +2925,8 @@
           "standalone"
         ],
         "summary": "List the icons a node may name",
-        "description": "List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's. Needs your secret.",
-        "security": [
-          {
-            "agentSecret": []
-          },
-          {
-            "personCookie": []
-          }
-        ],
+        "description": "List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's.",
+        "security": [],
         "parameters": [
           {
             "$ref": "#/components/parameters/iconPaths"

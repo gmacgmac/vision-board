@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { boardView, readLedger } from '#format';
+import { boardView, readLedger, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   boardList, boardState, conditionsOf, bookmarksOn, nodeDetail, openItems, replyScope, replyText, responsesAfter, validateAct,
@@ -16,7 +16,6 @@ import { A, scene } from './ledger-v3.ts';
 /** The scene at v20, the person having looked at both boards. */
 function seen() {
   const l = scene();
-  l.v = 20;
   l.seenBoard('b', l.seq);
   l.seenBoard('b2', l.seq);
   return l;
@@ -76,7 +75,7 @@ test('a bookmark is not seeing the card: NEW and updates stay', () => {
 });
 
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 20, seq: 999, at: '2026-10-11T10:00:00Z', by: 'person', type: 'act', action: 'bookmark', id: 1, ...f });
+  ({ v: LEDGER_FORMAT, seq: 999, at: '2026-10-11T10:00:00Z', by: 'person', type: 'act', action: 'bookmark', id: 1, ...f });
 
 test('validateAct: the person bookmarks any card of any kind; an agent never does; the ledger refuses a retired card', () => {
   const l = seen();
@@ -86,6 +85,6 @@ test('validateAct: the person bookmarks any card of any kind; an agent never doe
   assert.match(validateAct(act({ by: 'agent', agent: A }), s, 'b')[0]!, /only the person/);
   assert.match(validateAct(act({ id: 4 }), s, 'b')[0]!, /is on board "b2", not "b"/);
   l.agent(A, { type: 'retire', board: 'b', cards: [5] });
-  const read = readLedger([...l.lines, JSON.stringify({ v: 20, seq: l.seq + 1, at: '2026-10-11T10:00:00Z', by: 'person', type: 'act', action: 'bookmark', n: 5 })]);
+  const read = readLedger([...l.lines, JSON.stringify({ v: LEDGER_FORMAT, seq: l.seq + 1, at: '2026-10-11T10:00:00Z', by: 'person', type: 'act', action: 'bookmark', n: 5 })]);
   assert.match(read.problems.join(), /card 5 is retired/);
 });

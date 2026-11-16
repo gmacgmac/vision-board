@@ -151,7 +151,7 @@ test('a current proposal is accepted and marked decided', () => {
 test('a corrupt line is reported while the rest loads, and the next seq is above it', () => {
   const { file } = seeded(2);
   fs.appendFileSync(file, 'not json\n');
-  fs.appendFileSync(file, `${JSON.stringify({ v: 2, seq: 6, at: '2026-10-02T09:00:00Z', by: 'agent', type: 'node' })}\n`);
+  fs.appendFileSync(file, `${JSON.stringify({ v: LEDGER_FORMAT, seq: 6, at: '2026-10-02T09:00:00Z', by: 'agent', type: 'node' })}\n`);
   const warned: string[] = [];
   const ledger = openLedger(file, (m) => warned.push(m));
   assert.equal(ledger.problems.length >= 2, true, ledger.problems.join('; '));
@@ -167,7 +167,7 @@ test('a corrupt line is reported while the rest loads, and the next seq is above
 
 test('a torn last line does not swallow the next event', () => {
   const { file } = seeded(1);
-  fs.appendFileSync(file, '{"v":2,"seq":4,"at":"2026');
+  fs.appendFileSync(file, `{"v":${LEDGER_FORMAT},"seq":4,"at":"2026`);
   const ledger = openLedger(file, quiet);
   ledger.append(node('Second'), AGENT);
   const again = openLedger(file, quiet);

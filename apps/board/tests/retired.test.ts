@@ -10,7 +10,7 @@ import { regionState } from '#ui';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-const maker = lineMaker({ v: 12, at: '2026-10-11T11' });
+const maker = lineMaker({ at: '2026-10-11T11' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
@@ -104,7 +104,7 @@ test('cards retired over two rounds: the version before the latest, the answers 
 test('the person\'s own retire (D-044) is the cut like an agent\'s', () => {
   const events = asked(() => [
     check(1), cross(2), check(3), cross(4), // 11
-    line({ v: 16, by: 'person', type: 'retire', board: 'c', cards: [1, 2] }), // 12
+    line({ by: 'person', type: 'retire', board: 'c', cards: [1, 2] }), // 12
   ]);
   assert.deepEqual(pastView(events, 7, 12), { cards: ALL, count: '4 of 4 answered' });
   assert.deepEqual([...retiredCounts(foldLedger(events), 'c')], [['p', { count: 2, version: 7, until: 12 }]]);

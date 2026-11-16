@@ -134,7 +134,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "list-icons", operationId: "list_icons", takesBody: false,
     summary: "List the icons a node may name",
-    description: "List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's. Needs your secret.",
+    description: "List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's.",
     inputs: [
       {"name":"paths","in":"query","type":"boolean","required":false,"description":"True also returns each library icon's checked path data (the page's read)."},
     ],

@@ -11,30 +11,13 @@ import type { Direction, Kind, Region, Skin, Tone, Widths } from './view.ts';
 import { DIRECTIONS } from './view.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
 
-/** The format new lines are written in. */
+/** The ledger format: the one the server writes and the one the reader, the schema and the fold know (D-103). An
+ * older ledger is migrated to it, line for line (`migrate/`, `npm run ledger:migrate`); a line in an older format is
+ * refused with words that say so, and one in a newer format leaves the ledger read-only (D-103 4). What each format
+ * added: api.md's "Ledger vN" points; v20 renamed the person's `flag` and `unflag` to `bookmark` and `unbookmark` and
+ * added a board's skin, a node's icon and tone, the `icon` line, a container's `seen`, the person's `ask` and a flow's
+ * `direction` (api.md 182-189). */
 export const LEDGER_FORMAT = 20;
-/** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
- * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
- * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
- * container (api.md 66-70); v7 adds notes on and places for a whole container, `board` + `region`
- * in place of `n` (api.md 71-76); v8 adds a grant request and a revoke for a whole board, `region`
- * left out (api.md 81-86), and a `seen` for a whole board, `board` + `head` (api.md 87); v9 lets
- * the person write a `board` line, creating or renaming a board (api.md 90); v10 adds `reject`,
- * the person turning down an agent's proposal (api.md 93); v11 takes `item` away from a node: the
- * kind decides (api.md 118). Older lines carrying it stay valid and every reader ignores it. v12
- * adds `retire` and the person's `flag` and `unflag`, renames mode `list` to `column` (older lines
- * read as `column`, a v12 line naming `list` is refused) and adds `row` (api.md 125-130). v13 adds a
- * container's card `widths`, on a region and as the person's `widths` act (api.md 132). v14 adds the
- * person's `archive` and `restore` of a whole board (api.md 135). v15 adds the person's `lock` and
- * `unlock` of a whole board (api.md 138). v16 lets the person write a `retire` line, removing cards or
- * a container (api.md 141). v17 adds the app card, kind `app` naming its app in `node.app`, and the
- * person's `app-allow` and `app-revoke` of an app's code (api.md 150, D-047). v18 adds the person's
- * `notes-hide` and `notes-show` of one card's notes (api.md 156). v19 adds a Send's `head`, the line its
- * answers were read through (api.md 169). v20 renames the person's `flag` and `unflag` to `bookmark` and `unbookmark`
- * (older ledgers are migrated, D-103) and adds a board's skin, a node's icon and tone, the `icon` line, a container's
- * `seen`, the person's `ask` and a flow's `direction` (api.md 182-189). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] as const;
-export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
@@ -64,7 +47,7 @@ export const isPrivateAct = (e: { type: string; action?: string }): boolean =>
 export const APP_ACTIONS: ReadonlySet<ActionId> = new Set(['app-allow', 'app-revoke']);
 
 /** The id of every board's built-in Later container (3_FE_03 ruling 5, api.md 66): a `move` may
- * name it; no agent draws it, and from ledger v6 no region may take its id. */
+ * name it; no agent draws it, and no region may take its id. */
 export const LATER_REGION = 'later';
 
 /** Acts that may name a whole container with `board` + `region` in place of `n` (and `ver` and
@@ -92,11 +75,10 @@ export type EventType = (typeof EVENT_TYPES)[number];
 export const AGENT_EVENTS: ReadonlySet<EventType> = new Set([
   'board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'join', 'grant-request', 'retire', 'icon',
 ]);
-/** Agent event types a person may also write, from the format given: the person's `board` line
- * creates a board or renames one (`put_board`, api.md 90); the person's `retire` line removes cards or
- * a container (`retire_cards`, api.md 141); the person's `icon` line accepts a changed drawing of a library icon
- * (api.md 185). */
-export const PERSON_TOO: Partial<Record<EventType, LedgerFormat>> = { board: 9, retire: 16, icon: 20 };
+/** Agent event types a person may also write: the person's `board` line creates a board or renames one (`put_board`,
+ * api.md 90); the person's `retire` line removes cards or a container (`retire_cards`, api.md 141); the person's `icon`
+ * line accepts a changed drawing of a library icon (api.md 185). */
+export const PERSON_TOO: ReadonlySet<EventType> = new Set(['board', 'retire', 'icon']);
 /** Event types only a person writes. */
 export const PERSON_EVENTS: ReadonlySet<EventType> = new Set(['seen']);
 
@@ -117,11 +99,11 @@ export type AskContext = (typeof ASK_CONTEXTS)[number];
 export const NOTE_KINDS = ['comment', 'context'] as const;
 export type NoteKind = (typeof NOTE_KINDS)[number];
 
-/** Stamped by the server on every event. `agent` names the caller: from v3 an agent id from
- * `join` (D-027), on v2 any name. `person` is written only once a board has more than one person
- * (D-018), so a single-person agent never sees it. */
+/** Stamped by the server on every event. `agent` names the caller, an agent id from `join` (D-027); an agent's line
+ * with none was drawn in format 2, before agents had ids, and makes no creator (review V3). `person` is written only
+ * once a board has more than one person (D-018), so a single-person agent never sees it. */
 interface Base {
-  v: LedgerFormat;
+  v: typeof LEDGER_FORMAT;
   seq: number;
   at: string;
   by: 'person' | 'agent';
@@ -132,13 +114,13 @@ interface Base {
 /** On every agent-written event but `join`: the agent's retry key (api.md 13, 29). */
 interface Keyed { key?: string }
 
-/** Why a v11 node line may not name `item` (api.md 118); the node schema's `noItem` says the same
- * and a test checks they agree. */
+/** Why a node line or a sent node may not name `item` (api.md 118); the node schema's `noItem` says the same and a
+ * test checks they agree. */
 export const ITEM_REMOVED = formatLedgerWords.itemIsGoneTheKind
   + formatLedgerWords.aQuestionDecisionOrAction;
 
-/** Why a v12 line (or a sent item) may not name mode `list` (api.md 129); the common schema's
- * `noList` says the same and a test checks they agree. */
+/** Why a line or a sent item may not name mode `list` (api.md 129); the common schema's `notList` says the same and
+ * a test checks they agree. */
 export const LIST_RENAMED = formatLedgerWords.listIsNowColumnTop
   + formatLedgerWords.rowRunsLeftToRight;
 
@@ -149,8 +131,6 @@ export interface NodeBody {
   kind: Kind;
   title: string;
   body?: string;
-  /** On lines from v10 and older only; every reader ignores it (api.md 118). */
-  item?: boolean;
   lane?: string;
   tags?: string[];
   emphasis?: boolean;
@@ -206,7 +186,7 @@ export interface ActEvent extends Base {
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode']; widths?: Widths;
   request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind; nodes?: number[];
   app?: string; hash?: string;
-  /** A Send's answers were read through this line (v19, api.md 169); left out, through the Send's own line. */
+  /** A Send's answers were read through this line (api.md 169); left out, through the Send's own line. */
   head?: number;
   /** The board's skin, for `skin` (api.md 183). */
   skin?: Skin;
@@ -215,8 +195,8 @@ export interface ActEvent extends Base {
   /** For `direction` (api.md 189): which way a flow runs, on one container (`region`) or with none the whole board. */
   direction?: ActDirection;
 }
-/** The person has seen version `ver` of card `id` (D-018), or, from v8, has looked at `board` up to
- * its line `head` (api.md 87), or, from v20, at container `region` of `board` up to `head` (api.md 187). */
+/** The person has seen version `ver` of card `id` (D-018), or has looked at `board` up to its
+ * line `head` (api.md 87), or at container `region` of `board` up to `head` (api.md 187). */
 export type SeenEvent = Base & { type: 'seen' } & ({ id: number; ver: number } | { board: string; head: number; region?: string });
 /** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */
 export interface ReplyEvent extends Base, Keyed { type: 'reply'; id: number; text: string; to?: number }
@@ -226,7 +206,7 @@ export interface ProposeEvent extends Base, Keyed {
 }
 export interface ParkEvent extends Base, Keyed { type: 'park'; id: number; bundle: ParkBundle }
 /** The agent takes cards off `board` for good (api.md 126): one card, or with `region` a whole
- * container and every card in it at this line; from v16 the person too, one or more cards or a
+ * container and every card in it at this line; the person too, one or more cards or a
  * container (api.md 141). `cards` = their identities, which the server fills in, so a reader needs
  * no other fold to know what left. Retired cards keep their versions, notes and number; they leave
  * the board, its counts and every list. */

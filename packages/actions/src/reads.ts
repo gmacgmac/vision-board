@@ -86,8 +86,8 @@ export interface OpenItem {
   unseen?: true;
 }
 
-/** One version as `show_node` gives it; an old line's `item` mark is left out (api.md 118). */
-const versionView = ({ ver, at, agent, item: _item, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
+/** One version as `show_node` gives it. */
+const versionView = ({ ver, at, agent, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
   ({ ver, at, ...(agent !== undefined && { agent }), node });
 
 /** Where card `id` is, and where the agent has it when the person moved it (api.md 68). */

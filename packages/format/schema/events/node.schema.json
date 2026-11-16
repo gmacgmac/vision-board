@@ -65,20 +65,21 @@
       "unevaluatedProperties": false
     },
     "noItem": {
-      "description": "From ledger v11 a node names no `item`: its kind decides whether it asks for an answer.",
-      "$comment": "Kept apart from `body` so a stored line from v10 or older, which may carry `item`, still reads. Was: api.md 118",
+      "description": "A node names no `item`: its kind decides whether it asks for an answer.",
+      "$comment": "Kept apart from `body`, which names `item`, so a line or item naming it gets these words alone. Was: api.md 118",
       "type": "object",
       "properties": {
         "node": {"type": "object", "description": "The node, which names no `item`.", "properties": {"item": {"not": {}, "description": "`item` is gone: the kind decides. A `question`, `decision` or `action` card asks the person; any other kind takes a note or Later."}}}
       }
     },
     "rules": {
-      "description": "A stored line from v11 on names no `item`; an app card names its app and no other card names one (on every line: no line before v17 names either).",
+      "description": "A stored line names no `item`; an app card names its app and no other card names one.",
       "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 118, 150",
       "type": "object",
       "allOf": [
         {
-          "if": {"type": "object", "required": ["v"], "properties": {"v": {"not": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10]}}}},
+          "$comment": "Always applies; through `if`/`then` so the generators read the node's fields from `core`, not from this piece.",
+          "if": {"type": "object"},
           "then": {"$ref": "https://vision-board.invalid/schema/ledger/20/events/node.schema.json#/$defs/noItem"}
         },
         {"$ref": "https://vision-board.invalid/schema/ledger/20/events/node.schema.json#/$defs/appRule"}
@@ -113,7 +114,7 @@
         "kind": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/kind", "description": "`question`, `decision` and `action` ask the person for ✓ or ✗; `finding`, `risk`, `topic` and `note` don't; `app` shows an app you built in a panel (name it in `app`). The person can note or save any node."},
         "title": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/title", "description": "The node's title."},
         "body": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/nodeBody", "description": "The node's text."},
-        "item": {"type": "boolean", "deprecated": true, "description": "On lines from ledger v10 and older only, and ignored: the node's kind decides whether it asks for an answer.", "$comment": "Was: api.md 118"},
+        "item": {"type": "boolean", "deprecated": true, "description": "Gone: the node's kind decides whether it asks for an answer. A line or item naming it is refused (`noItem`).", "$comment": "Was: api.md 118"},
         "lane": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/lane", "description": "The lane the node sits in, for a container in `lanes` mode."},
         "tags": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/tags", "description": "Short labels for the node."},
         "emphasis": {"type": "boolean", "description": "True draws the card emphasised; never over the person's size."},

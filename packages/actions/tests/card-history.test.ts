@@ -23,7 +23,6 @@ const WORDS = [NOTE, EDITED, GROUP, REPLY, REASON, ...Object.values(BUNDLE)];
 /** The scene at v18 with app card 5 (`calculator`) on board b. */
 function base(): Ledger {
   const l = scene();
-  l.v = 18;
   l.agent(A, { type: 'node', board: 'b', n: 5, ver: 1, node: { region: 'r', kind: 'app', title: 'Calculator', app: { id: 'calculator' } } });
   return l;
 }
@@ -123,7 +122,6 @@ test('every kind the model names is drawn by some line, and the app\'s allow and
 
 test('an allow before the card names the app is not on it', () => {
   const l = scene();
-  l.v = 18;
   l.act({ action: 'app-allow', app: 'calculator', hash: 'a'.repeat(64) });
   l.agent(A, { type: 'node', board: 'b', n: 5, ver: 1, node: { region: 'r', kind: 'app', title: 'Calculator', app: { id: 'calculator' } } });
   assert.deepEqual(said(cardHistory(events(l), 5)), [['drawn', 'Agent drew v1']]);

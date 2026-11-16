@@ -32,7 +32,7 @@
     "columns": { "type": "integer", "minimum": 1, "maximum": 12 },
     "kind": { "enum": ["question", "finding", "decision", "risk", "action", "topic", "note", "app"] },
     "mode": { "enum": ["grid", "flow", "lanes", "radial", "column", "row"], "description": "How a container lays out its cards: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right in card order).", "$comment": "Was: api.md 129" },
-    "lineMode": { "enum": ["grid", "flow", "lanes", "radial", "column", "row", "list"], "description": "A mode as a ledger line may name it: `list` on lines from ledger v11 and older only, read as `column`.", "$comment": "Was: api.md 129" },
+    "lineMode": { "enum": ["grid", "flow", "lanes", "radial", "column", "row", "list"], "description": "A mode as a line or a sent item may name it: one of `mode`, or `list`, which `notList` refuses with words saying it is `column` now.", "$comment": "Was: api.md 129" },
     "notList": { "not": { "const": "list" }, "description": "`list` is now `column` (top to bottom in card order); `row` runs left to right, `flow` follows the links.", "$comment": "Was: api.md 129" },
     "widths": { "enum": ["match", "own"], "description": "How wide a container's cards are: `match`, every card in a column as wide as the column's widest card, or `own`, each card its own width. Left out, the container's mode decides: `match` for `grid` and `column`, `own` for `flow`, `row`, `lanes` and `radial`.", "$comment": "Was: api.md 132" },
     "direction": { "enum": ["across", "down"], "description": "Which way a `flow` container runs: `across`, left to right, or `down`, top to bottom. Left out: `across`. The person's choice wins.", "$comment": "packages/format DIRECTIONS; was: api.md 189" },
@@ -90,28 +90,24 @@
       ]
     },
     "stamp": {
-      "description": "What the server writes on every stored line. A sent body never sets these. On v2 `agent` is any name; from v3 an agent id.",
+      "description": "What the server writes on every stored line. A sent body never sets these.",
       "$comment": "Was: api.md 6; api.md 11",
       "type": "object",
       "required": ["v", "seq", "at", "by"],
       "properties": {
-        "v": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], "description": "The ledger format version of the line: 2 to 20."},
+        "v": {"const": 20, "description": "The ledger format of the line: 20. A ledger in an older format is migrated before it is read (`npm run ledger:migrate`); one in a newer format opens read-only."},
         "seq": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/seq", "description": "The line's position in the ledger."},
         "at": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/timestamp", "description": "When the server wrote the line."},
         "by": {"enum": ["person", "agent"], "description": "Who wrote the line: `person` or `agent`."},
-        "agent": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/text", "description": "The agent that wrote the line: an agent id from v3, any name on v2."},
+        "agent": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/text", "description": "The agent that wrote the line: an agent id. An agent's line with none was drawn in format 2, before agents had ids, and was migrated."},
         "person": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/person", "description": "The person's name, written only once a board has more than one person."}
       }
     },
     "stampAgent": {
-      "description": "From v3 `agent` is an agent id.",
+      "description": "`agent` is an agent id.",
       "$comment": "Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
       "type": "object",
-      "if": { "type": "object", "required": ["v"], "properties": { "v": { "enum": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] } } },
-      "then": {
-        "type": "object",
-        "properties": { "agent": { "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/agentId" } }
-      }
+      "properties": { "agent": { "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/agentId", "description": "The agent that wrote the line: an agent id." } }
     }
   }
 }

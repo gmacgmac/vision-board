@@ -9,7 +9,6 @@ import { boardChip, boardData, boardJson, cardChip, noteChip, resolveChip, round
 import { A, scene } from './ledger-v3.ts';
 
 /** The scene at v18 (notes can be hidden): board b's cards 1, 2 and 3, and board b2's card 4. */
-const base = () => { const l = scene(); l.v = 18; return l; };
 const chip = (c: Chip | ChipRefusal): Chip => { assert.ok(!('refused' in c), JSON.stringify(c)); return c; };
 const cardRef = (c: Chip) => c.ref as CardRef;
 const noteRef = (c: Chip) => c.ref as NoteRef;
@@ -20,20 +19,20 @@ const refused = (c: unknown, code: string, reason: RegExp) => {
 };
 
 test('a card chip is the contract\'s shape: the plugin, kind, a ref with the board, number and version, a label and a detail', () => {
-  const s = base().state();
+  const s = scene().state();
   assert.deepEqual(chip(cardChip(s, 'b', 1)), {
     plugin: 'vision-board', kind: 'card', ref: { board: 'b', n: 1, ver: 1 }, label: 'Node 1', detail: 'Card 1 on board "b"',
   });
 });
 
 test('a card chip resolves to where it is and its title now', () => {
-  const s = base().state();
+  const s = scene().state();
   const c = chip(cardChip(s, 'b', 2));
   assert.deepEqual(resolveChip(s, 'card', cardRef(c)), { where: 'Board "b", card 2', text: 'Node 2' });
 });
 
 test('a card chip survives edits elsewhere, and is refused once the card itself changed', () => {
-  const l = base();
+  const l = scene();
   const c = chip(cardChip(l.state(), 'b', 1));
   l.act({ action: 'comment', n: 2, ver: 1, text: 'Elsewhere.' });
   l.node(A, 2, 2, { region: 'q', title: 'Node 2, redrawn', item: undefined });
@@ -43,7 +42,7 @@ test('a card chip survives edits elsewhere, and is refused once the card itself 
 });
 
 test('a card chip is refused when the card is not there: no such number, no such board', () => {
-  const s = base().state();
+  const s = scene().state();
   refused(cardChip(s, 'b', 99), 'gone', /no card 99 on board "b"/);
   refused(cardChip(s, 'b', 4), 'gone', /no card 4 on board "b"/);
   refused(cardChip(s, 'nope', 1), 'gone', /no board "nope"/);
@@ -52,7 +51,7 @@ test('a card chip is refused when the card is not there: no such number, no such
 });
 
 test('a card chip is refused once the card was removed', () => {
-  const l = base();
+  const l = scene();
   const c = chip(cardChip(l.state(), 'b', 1));
   l.agent(A, { type: 'retire', board: 'b', cards: [1] });
   refused(resolveChip(l.state(), 'card', cardRef(c)), 'retired', /Card 1 on board "b" was removed/);
@@ -60,7 +59,7 @@ test('a card chip is refused once the card was removed', () => {
 });
 
 test('a note chip: the ref is the board, the note\'s sequence and its last edit; it resolves to where it is and its words', () => {
-  const l = base();
+  const l = scene();
   const seq = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why is this late?' });
   const c = chip(noteChip(l.state(), 'b', seq));
   assert.deepEqual(c, {
@@ -70,7 +69,7 @@ test('a note chip: the ref is the board, the note\'s sequence and its last edit;
 });
 
 test('a note chip on a group of cards names each card; one on a container names the container', () => {
-  const l = base();
+  const l = scene();
   const group = l.act({ action: 'comment', nodes: [1, 2], text: 'Both?' });
   const region = l.act({ action: 'comment', board: 'b', region: 'r', text: 'This container.' });
   const s = l.state();
@@ -79,7 +78,7 @@ test('a note chip on a group of cards names each card; one on a container names 
 });
 
 test('a note chip is refused once its own words were edited, and a new chip of it resolves', () => {
-  const l = base();
+  const l = scene();
   const seq = l.act({ action: 'comment', n: 1, ver: 1, text: 'First words.' });
   const old = chip(noteChip(l.state(), 'b', seq));
   const edit = l.act({ action: 'note-edit', n: 1, note: seq, text: 'Second words.' });
@@ -90,7 +89,7 @@ test('a note chip is refused once its own words were edited, and a new chip of i
 });
 
 test('a note chip survives a note elsewhere being edited', () => {
-  const l = base();
+  const l = scene();
   const seq = l.act({ action: 'comment', n: 1, ver: 1, text: 'Mine.' });
   const other = l.act({ action: 'comment', n: 2, ver: 1, text: 'Theirs.' });
   const c = chip(noteChip(l.state(), 'b', seq));
@@ -99,7 +98,7 @@ test('a note chip survives a note elsewhere being edited', () => {
 });
 
 test('a note chip is refused when the note is gone: removed, unknown, on another board, or on a board that is not there', () => {
-  const l = base();
+  const l = scene();
   const seq = l.act({ action: 'comment', n: 1, ver: 1, text: 'Soon gone.' });
   const c = chip(noteChip(l.state(), 'b', seq));
   refused(noteChip(l.state(), 'b', 9999), 'gone', /no note 9999 on board "b"/);
@@ -110,7 +109,7 @@ test('a note chip is refused when the note is gone: removed, unknown, on another
 });
 
 test('a note chip is refused when its card was removed, and when its container was', () => {
-  const l = base();
+  const l = scene();
   const onCard = l.act({ action: 'comment', n: 1, ver: 1, text: 'On a card.' });
   const onRegion = l.act({ action: 'comment', board: 'b', region: 'r', text: 'On a container.' });
   const cards = chip(noteChip(l.state(), 'b', onCard));
@@ -122,7 +121,7 @@ test('a note chip is refused when its card was removed, and when its container w
 });
 
 test('a note chip is refused while the notes on its card are hidden, and resolves again once shown', () => {
-  const l = base();
+  const l = scene();
   const seq = l.act({ action: 'comment', n: 1, ver: 1, text: 'Put away.' });
   const c = chip(noteChip(l.state(), 'b', seq));
   l.act({ action: 'notes-hide', n: 1 });
@@ -132,7 +131,7 @@ test('a note chip is refused while the notes on its card are hidden, and resolve
 });
 
 test('a board chip is the board\'s title and its head; it resolves to the board as the bot reads it, and is never "changed"', () => {
-  const l = base();
+  const l = scene();
   const s = l.state();
   const c = chip(boardChip(s, 'b'));
   assert.deepEqual(c, { plugin: 'vision-board', kind: 'board', ref: { board: 'b', head: s.seq }, label: c.label, detail: 'Board "b"' });
@@ -146,7 +145,7 @@ test('a board chip is the board\'s title and its head; it resolves to the board 
 });
 
 test('a board chip is refused when the board is not there, and when it is archived', () => {
-  const l = base();
+  const l = scene();
   const c = chip(boardChip(l.state(), 'b2'));
   refused(boardChip(l.state(), 'nope'), 'gone', /no board "nope"/);
   refused(resolveChip(l.state(), 'board', { board: 'nope', head: 1 }), 'gone', /no board "nope"/);
@@ -156,7 +155,7 @@ test('a board chip is refused when the board is not there, and when it is archiv
 });
 
 test('turnOf: the answers since the last message are roundOf\'s, none is none, and a board that is not there is refused', () => {
-  const l = base();
+  const l = scene();
   assert.equal(turnOf(l.state(), 'b', 0), undefined, 'nothing answered');
   l.act({ action: 'ack', n: 1, ver: 1 });
   const s = l.state();
