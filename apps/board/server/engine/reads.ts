@@ -16,6 +16,7 @@ import {
 import { structureOf } from '#layout';
 import { cardOn } from '../edge.ts';
 import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
+import { readLibrary } from '../icons.ts';
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
@@ -159,9 +160,15 @@ const readLedger: Op = ({ params, ledger, readOnly, flags }) => {
   return reply(200, { events: list, head: s.seq, ...(more && { more }), ...readOnlyMark({ readOnly }), ...(flagOn('singleAgent', flags) && { oneAgent: true }) });
 };
 
-/** The icons a node may name (api.md 186): the built-in set and the project's library. A stub until the library is
- * built (node-overhaul BE_04): the built-ins, and an empty library. */
-const listIcons: Op = () => reply(200, { builtIn: [...ICON_NAMES], library: [] });
+/** The icons a node may name (api.md 186): the built-in set and the project's library, each library file checked as it
+ * is read (icons.ts `readLibrary`); one that fails, or no longer matches this ledger's hash for it, is under `problems`
+ * and its paths are never served. `paths=true` (the page's read, PLAN call 11) adds each icon's checked `d` strings; an
+ * agent's call carries none unless it asks. */
+const listIcons: Op = ({ params, ledger, icons }) => {
+  const { icons: found, problems } = readLibrary(icons, ledger.state().index.icons);
+  const library = found.map(({ name, title, paths }) => ({ name, title, ...(params.paths === true && { paths }) }));
+  return reply(200, { builtIn: [...ICON_NAMES], library, ...(problems.length > 0 && { problems }) });
+};
 
 export const READS = {
   list_boards: listBoards, get_board: getBoard, show_node: showNode, show_container: showContainer, show_layout: showLayout,

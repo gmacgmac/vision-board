@@ -20,3 +20,4 @@ export * from './data-folder.ts';
 export * from './geometry.ts';
 export * from './clip.ts';
 export * from './constants.ts';
+export * from './icon-file.ts';

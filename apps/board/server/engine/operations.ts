@@ -33,6 +33,9 @@ export interface OpCtx {
   onSend: SendHook;
   /** The board folder's pictures (`images/` in its `dir`): where `write_board` looks for the ones a card names. */
   images: string;
+  /** The project's icon library (`EngineOptions.icons`): what `list_icons` reads, `add_icon` writes, and where a node's
+   *  first use of a library icon finds its file. */
+  icons: string;
   /** The engine's flags (`botToolRules`: the reads' `owed` and `held`, a key conflict's words). */
   flags: FlagOverrides;
   /** The ledger is open read-only now (`EngineOptions.readOnly`): the reads say so. */

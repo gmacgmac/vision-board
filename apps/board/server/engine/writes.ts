@@ -15,6 +15,8 @@ import { problem } from '../problem.ts';
 import { SPECS, bodyProblems } from '../spec.ts';
 import { writeItems } from '../write-board.ts';
 import { imageProblem } from '../images.ts';
+import type { AddIconBody } from '../icons.ts';
+import { addIcon as addToLibrary } from '../icons.ts';
 import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } from '../visibility.ts';
 import type { Op, OpCtx } from './operations.ts';
 import { reply, scopeOf, whereAnswer } from './operations.ts';
@@ -176,7 +178,7 @@ const writeBoard: Op = async (ctx) => {
   const board = String(params.board);
   writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));
   const agent = ctx.writer(); // after the up-front refusals, so a locked board joins nobody
-  const written = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags), !ctx.one);
+  const written = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags), !ctx.one, ctx.icons);
   const results = flagOn('botToolRules', ctx.flags) ? withPictures(written, list, ctx) : written;
   const s = ledger.state();
   const pending = s.boards.has(board) ? openItems(s, board, scopeOf(ctx)).filter((x) => x.pending !== undefined) : [];
@@ -184,11 +186,12 @@ const writeBoard: Op = async (ctx) => {
   return reply(200, { results, head: s.seq, pending, ...(containers.length > 0 && { containers }) });
 };
 
-/** Add a drawing to the project's icon library (api.md 186). A stub until the library is built (node-overhaul BE_04):
- * the body is checked, then refused. */
+/** Add a drawing to the project's icon library (api.md 186; icons.ts `addIcon`): reduced to paths, checked, written
+ * where no file has its name, then its `icon` line. A read-only ledger refused it before the body was read (engine.ts). */
 const addIcon: Op = async (ctx) => {
-  await body('add_icon', ctx);
-  throw problem('not-found', writesWords.addingIconsIsNotBuiltYet);
+  const b = (await body('add_icon', ctx)) as unknown as AddIconBody;
+  const { status, body: answer } = addToLibrary(ctx.ledger, ctx.icons, ctx.writer, b);
+  return reply(status, answer);
 };
 
 export const WRITES = {

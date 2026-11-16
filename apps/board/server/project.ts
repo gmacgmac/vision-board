@@ -22,7 +22,7 @@
 // by a newer build opens read-only, its lock let go, and Edit refuses it, saying why (D-103 4).
 import fs from 'node:fs';
 import path from 'node:path';
-import { MAIN_LEDGER, flagOn, ledgerFiles, ledgerFolder, ledgerOfFolder, projectOfLedger, withoutHostFlags } from '#format';
+import { MAIN_LEDGER, flagOn, ledgerFiles, ledgerFolder, ledgerOfFolder, projectFiles, projectOfLedger, withoutHostFlags } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost, AppHostOptions } from './apps.ts';
 import { createAppHost } from './apps.ts';
@@ -127,6 +127,7 @@ function hold(ledger: Ledger, taken: Lock | undefined, o: ProjectOptions): Held 
   const others = flagOn('ledgerFolders', o.apps?.flags ?? {}) ? otherLedgers(getDir, getLedgerName, () => displayName(o.home, getDir())) : undefined;
   const getEngine = () => (engine ??= createEngine({
     dir: data(), ledger, name: () => displayName(o.home, getDir()), ledgerName: getLedgerName(), onSend, flags: withoutHostFlags(o.apps?.flags), readOnly: editing.readOnly, otherLedger: others?.get,
+    icons: projectFiles(getDir()).icons, // the project's library, shared by every ledger of it (api.md 185)
   }));
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({
