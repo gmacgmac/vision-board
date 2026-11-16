@@ -56,6 +56,23 @@ export const hostKeepsColorScheme = (): Plugin => ({
   },
 });
 
+/** The board's faces (packages/tokens/src/fonts.css) are the standalone page's: a host's check refuses `@font-face` and
+ *  any `url()` but `data:` (tests/plugin/contract/nclite/engine/plugins/stylesheet.ts), so the view's sheet takes none
+ *  and carries no font file. Under a host the type tokens fall back to `--host-font`, else the system's stacks
+ *  (plugin.md § Theme and host styling, Fonts). Four rules go, or the build stops. */
+export const hostTakesNoFontFaces = (): Plugin => ({
+  name: 'host-takes-no-font-faces',
+  enforce: 'post',
+  generateBundle(_, bundle) {
+    for (const [name, file] of Object.entries(bundle)) if (/\.woff2$/.test(name)) delete bundle[name];
+    const sheet = Object.values(bundle).find((f) => f.type === 'asset' && f.fileName.endsWith('.css'));
+    if (sheet?.type !== 'asset') throw new Error('the view bundle has no stylesheet');
+    let taken = 0;
+    sheet.source = String(sheet.source).replace(/@font-face\{[^}]*\}/g, () => { taken += 1; return ''; });
+    if (taken !== 4) throw new Error(`the board's faces: expected 4 @font-face rules, took ${taken}`);
+  },
+});
+
 /** The browsers the view's sheet is written for: each has `light-dark()`, so the minifier keeps it native and every colour
  *  resolves against the `color-scheme` at the board's root (a host's `--host-color-scheme`; plugin.md § Theme and host
  *  styling, Mode), not against the media query a lowered `--lightningcss-*` pair would follow. */
@@ -70,7 +87,7 @@ const common = (outDir: string, watch: boolean) => ({
 export const viewBuild = (outDir: string, watch = false): InlineConfig => {
   const base = common(path.join(outDir, 'view'), watch);
   return {
-    ...base, plugins: [svelte({ configFile: here('svelte.config.js') }), hostKeepsColorScheme()],
+    ...base, plugins: [svelte({ configFile: here('svelte.config.js') }), hostKeepsColorScheme(), hostTakesNoFontFaces()],
     build: {
       ...base.build, target: 'es2022', cssTarget: CSS_TARGET, cssCodeSplit: false,
       lib: { entry: here('plugin/view.ts'), formats: ['es'], fileName: () => 'board.js', cssFileName: 'board' },
@@ -87,8 +104,13 @@ export const engineBuild = (outDir: string, watch = false): InlineConfig => {
     build: {
       ...base.build, ssr: true, target: 'node22', minify: false,
       lib: { entry: here('plugin/engine.ts'), formats: ['es'], fileName: () => 'engine.js' },
-      // The engine's imports are by each package's front door; what it does not use is dropped, whole.
-      rollupOptions: { external: [/^node:/], treeshake: { moduleSideEffects: false }, output: { codeSplitting: false } },
+      // The engine's imports are by each package's front door; what it does not use is dropped, whole. Unminified, so a
+      // host can read it, but without the sources' doc comments, which are most of its weight (the budget,
+      // plugin-build.test.ts); a licence comment stays, and so does an annotation the next bundler reads.
+      rollupOptions: {
+        external: [/^node:/], treeshake: { moduleSideEffects: false },
+        output: { codeSplitting: false, comments: { legal: true, annotation: true, jsdoc: false } },
+      },
     },
   };
 };

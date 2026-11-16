@@ -1,0 +1,38 @@
+/* Skins (D-100; decisions 1, 14): a skin is a set of token values on the board's root, `data-vb-skin`, which the
+   board sets from the board's skin (view.ts `SKINS`). `default` is tokens.css as it stands, so it has no block. A block
+   sets only tokens tokens.css declares, and a colour a host may give keeps its `--vb-host-*` in front, so a host's
+   colours and fonts win over any skin (D-094). No pattern names a skin: where a skin puts a mark is the skin
+   registry's (packages/ui/src/skins.ts), how it looks is these values. Held by packages/tokens/tests/skins.test.ts,
+   apps/board/tests/plugin-theme.test.ts and tests/plugin/token-contrast.spec.ts. */
+
+/* Command Lens (DD-16; design/mockups/node-skins/command-lens-skin-*.html): paper and ink, square corners, a plate
+   along each node's top, a ruled grid, Space Grotesk titles and JetBrains Mono labels. The mockups' values, measured:
+   its muted ink is lighter in dark (#b6bac2, was #a0a4ac: Lc 60.8 on the deepest surface, was 49) and so is the
+   plate's (#aab5c3, was #8b95a3: Lc 60.7, was 43.6), each within its hue. Its deep surface and strongest line are
+   the next step of its own scales, which the mockups never drew. */
+.vb-board[data-vb-skin='command-lens'] {
+  --vb-surface-canvas: var(--vb-host-canvas, light-dark(#f2f1ed, #0f1013));
+  --vb-surface-region: var(--vb-host-surface, light-dark(#ffffff, #1a1b1f));
+  --vb-surface-card: var(--vb-host-surface, light-dark(#ffffff, #1a1b1f));
+  --vb-surface-raised: var(--vb-host-surface, light-dark(#ffffff, #1a1b1f));
+  --vb-surface-sunken: var(--vb-host-surface-sunken, light-dark(#f5f4f0, #222429));
+  --vb-surface-deep: var(--vb-host-surface-sunken, light-dark(#ebe9e3, #2a2c31));
+  --vb-ink-strong: var(--vb-host-ink, light-dark(#16171a, #ededef));
+  --vb-ink: var(--vb-host-ink, light-dark(#3e4148, #c5c7cd));
+  --vb-ink-subtle: var(--vb-host-ink-muted, light-dark(#5b5f67, #b6bac2));
+  --vb-line: var(--vb-host-line, light-dark(#e7e4dc, #2b2d33));
+  --vb-line-strong: var(--vb-host-line-strong, light-dark(#cfccc3, #3a3c43));
+  --vb-line-contrast: var(--vb-host-line-strong, light-dark(#b7b3a8, #4a4c53));
+  --vb-plate: light-dark(#16171a, #0e1115);
+  --vb-plate-ink: #eef1f4;
+  --vb-plate-muted: #aab5c3;
+  --vb-plate-line: #2b323c;
+  --vb-grid: light-dark(#e3e0d7, #1b1d22);
+  --vb-canvas-image: linear-gradient(var(--vb-grid) 1px, transparent 1px), linear-gradient(90deg, var(--vb-grid) 1px, transparent 1px);
+  --vb-node-radius: 6px;
+  --vb-mark-radius: 4px;
+  --vb-tile-radius: 4px;
+  --vb-font-text: var(--vb-host-font, var(--vb-font));
+  --vb-font-display: var(--vb-host-font, 'vb-space-grotesk', var(--vb-font));
+  --vb-font-label: var(--vb-host-font-mono, 'vb-jetbrains-mono', var(--vb-font-mono));
+}
