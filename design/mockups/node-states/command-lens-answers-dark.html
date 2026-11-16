@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node states: answers, handover and the board's rules, Command Lens (dark)</title>
+<link rel="stylesheet" href="command-lens.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="notes2" viewBox="0 0 24 24"><path d="M3 4h12v8H8l-3 3v-3H3zM18 8h3v8h-2v3l-3-3h-5v-1"/></symbol>
+<symbol id="bm" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20z"/></symbol>
+<symbol id="later" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+<symbol id="doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M9 14l-5-5 5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+<symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="open" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+<symbol id="retry" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="drawer" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M14 5v14"/></symbol>
+<symbol id="move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+<symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></symbol>
+<symbol id="fork" viewBox="0 0 24 24"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></symbol>
+<symbol id="encoder" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M10 9v6M13 11v2M17 10.5h1M17 13.5h1"/></symbol>
+<symbol id="app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</defs></svg>
+<div class="cl ">
+<h1>Node states: answers, handover and the board's rules</h1>
+<p class="lede">The states the Command Lens page never drew. The plate is the handle and holds the number, the kind, history and the notes; the switch is the answer, one click. Where a state has two honest answers both are drawn and one is marked recommended. Boxes and menus are drawn under the node; on the board they open beside what opens them, at one size at any zoom.</p>
+
+<div class="sec"><b>A proposal waiting</b><span>The agent proposes a tick or a cross; only the person's click answers. Here one click on a half answers, so the proposal can't open from the switch: a "Proposal" chip in the plate opens its box (Reject, Accept), and the proposed half is outlined, dashed, so the answer's place says it too. Pressing the outlined half is Accept.</span></div>
+<div class="row">
+<div><p class="cap rec">A · the chip and the outlined half</p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb prop f" aria-haspopup="dialog" aria-expanded="true"><svg class="ic"><use href="#tick"/></svg>Proposal</button><button class="ch has" aria-label="1 note"><svg class="ic"><use href="#note"/></svg>1</button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3><p class="tx">The request goes to the teleport desk as one booking.</p></div><div class="sw"><button class="pr-t" title="Tick (A): accept the proposal"><svg class="ic"><use href="#tick"/></svg>Tick <small>proposed</small></button><button title="Cross (X)"><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div>
+<div class="box" role="dialog" aria-label="Proposal on item 16"><div class="bx"><span class="who">The agent proposes: Tick</span><p>The teleport desk confirmed the slot is free.</p><span class="when">After your note · today 10:42</span><div class="bts"><button class="bt">Reject</button><button class="bt pri">Accept: tick</button></div></div></div></div>
+<div><p class="cap">B · the chip alone<small>Planner's call 6 as it reads in this skin. The switch shows nothing, so a person who answers from the switch never sees what was proposed.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb prop"><svg class="ic"><use href="#tick"/></svg>Proposal</button><button class="ch has" aria-label="1 note"><svg class="ic"><use href="#note"/></svg>1</button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3><p class="tx">The request goes to the teleport desk as one booking.</p></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div><p class="cap">Out of date (A)<small>The node changed after the agent proposed: the chip and the outline turn amber, Accept stays focusable, aria-disabled, and says why.</small></p>
+<div class="m asks" style="--k: var(--dec)"><div class="pl"><button class="no" aria-label="15. Bookmark">15</button><span class="kd"><span class="dot"></span>Decision</span><span class="sp"></span><button class="hb"><svg class="ic"><use href="#warn"/></svg>Out of date</button><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Switch the second half to SAT-1 when CAM-3 loss passes 2%</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button class="pr-s"><svg class="ic"><use href="#cross"/></svg>Cross <small>proposed</small></button></div></div>
+<div class="box"><div class="bx"><span class="who">The agent proposed: Cross · out of date</span><div class="why"><svg class="ic"><use href="#warn"/></svg>15 changed after this was proposed. Ask the agent to look again.</div><div class="bts"><button class="bt">Reject</button><button class="bt pri" aria-disabled="true">Accept: cross</button></div></div></div></div>
+</div>
+
+<div class="sec"><b>Handover and Awaiting</b><span>A node saved for later: the agent owes a handover ("Awaiting", dashed, not a control), then writes it ("Handover", which opens the box). Both are chips in the plate, before the notes; they show in the Later container. The other answer, the handover inside the conversation, is drawn on the default skin's page and costs the same here.</span></div>
+<div class="row">
+<div><p class="cap">Awaiting, on a node that asks</p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><span class="hb await" title="Awaiting context"><svg class="ic"><use href="#later"/></svg>Awaiting</span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div><p class="cap">Awaiting, on a node that tells</p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><span class="hb await"><svg class="ic"><use href="#later"/></svg>Awaiting</span><button class="ch has" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3><p class="tx">Loss climbs to about 2.4% for 20 s, then clears.</p></div></div></div>
+<div><p class="cap">Handover written, open</p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="hb hand f" aria-expanded="true"><svg class="ic"><use href="#doc"/></svg>Handover</button><button class="ch has" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div>
+<div class="box"><div class="bx"><h4>Situation</h4><p>Two bursts since 21:02.</p></div><div class="bx"><h4>Assessment</h4><p>Both match the floodlight test.</p></div><div class="bx"><h4>Recommendation</h4><p>Watch again at 21:30; no switch yet.</p></div><div class="bx"><h4>Sources</h4><p>Loss log, CAM-3</p></div></div></div>
+</div>
+
+<div class="sec"><b>A write on its way, and one that failed</b><span>The pressed half is busy while its act is in flight (aria-busy; a second press within 400 ms is ignored) and, refused, shows its error until the next press, which tries again. An outline and "!", never a fill: a red fill is Crossed.</span></div>
+<div class="row">
+<div><p class="cap">On its way<small>Shown only past about 150 ms; most writes land first.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3></div><div class="sw"><button class="busy" aria-busy="true">Saving</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div><p class="cap">Failed<small>The tip names what failed; the answer before the press stays.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3></div><div class="sw"><button class="err" aria-label="Tick not saved. Press to try again"><span class="err-g">!</span>Not saved</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div><span class="tip bad" style="left:20px;bottom:-44px"><b>Tick not saved.</b> Press to try again.</span></div></div>
+<div><p class="cap">Failed: the number<small>A bookmark that did not save: the same outline and "!" on the number square.</small></p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no err" aria-label="13. Bookmark not saved. Press to try again">13 !</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div></div>
+</div>
+
+<div class="sec"><b>A locked board, and a read-only ledger</b><span>Everything keeps its place and its tab stop, aria-disabled, with the not-allowed pointer; a press says why. The halves show a padlock and the muted ink; a half already lit keeps its colour. A lock never pauses Bookmark; read-only does, so the number shows a padlock too. A past version draws as read-only.</span></div>
+<div class="row">
+<div><span class="banner"><svg class="ic"><use href="#lock"/></svg>Locked</span>
+<div class="m asks paused" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch has" aria-label="2 notes. Read conversation"><svg class="ic"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot, 20:30 to 22:30</h3></div><div class="sw"><button aria-disabled="true"><svg class="ic"><use href="#lock"/></svg>Tick</button><button aria-disabled="true" class="hov"><svg class="ic"><use href="#lock"/></svg>Cross</button></div><span class="tip" style="right:10px;bottom:-44px">Board is locked. Unlock it to answer.</span></div>
+<div class="m asks paused" style="--k: var(--dec);margin-top:64px"><div class="pl"><button class="no bm" aria-label="15, bookmarked">15</button><span class="kd"><span class="dot"></span>Decision</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Switch the second half to SAT-1</h3></div><div class="sw"><button class="on-t" aria-disabled="true" aria-pressed="true"><svg class="ic"><use href="#tick"/></svg>Ticked</button><button aria-disabled="true"><svg class="ic"><use href="#lock"/></svg>Cross</button></div></div></div>
+<div><span class="banner"><svg class="ic"><use href="#eye"/></svg>Read-only</span>
+<div class="m asks paused" style="--k: var(--dec)"><div class="pl"><button class="no off" aria-disabled="true" aria-label="15. Bookmark. Read-only">15<svg class="ic"><use href="#lock"/></svg></button><span class="kd"><span class="dot"></span>Decision</span><span class="sp"></span><button class="hb ver"><svg class="ic"><use href="#hist"/></svg>v3</button><button class="ch has" aria-label="1 note. Read conversation"><svg class="ic"><use href="#note"/></svg>1</button></div><div class="bd"><h3 class="ttl">Switch the second half to SAT-1</h3></div><div class="sw"><button aria-disabled="true"><svg class="ic"><use href="#lock"/></svg>Tick</button><button aria-disabled="true"><svg class="ic"><use href="#lock"/></svg>Cross</button></div></div></div>
+<div><p class="cap">Right-click, locked and read-only<small>The reason once, at the top; every row and key stays, the writes dimmed. Locked keeps Bookmark; read-only dims it too.</small></p>
+<div class="menu flow" role="menu"><span class="reason"><svg class="ic"><use href="#lock"/></svg>Board is locked</span><button class="y" aria-disabled="true"><svg class="ic"><use href="#tick"/></svg>Tick<kbd>A</kbd></button><button class="x" aria-disabled="true"><svg class="ic"><use href="#cross"/></svg>Cross<kbd>X</kbd></button><span class="sep"></span><button><svg class="ic"><use href="#note"/></svg>Read conversation<kbd>C</kbd></button><button class="hl"><svg class="ic"><use href="#bm"/></svg>Bookmark<kbd>B</kbd></button><button aria-disabled="true"><svg class="ic"><use href="#later"/></svg>Save for later<kbd>L</kbd></button><button><svg class="ic"><use href="#hist"/></svg>History<kbd>H</kbd></button></div>
+<div class="menu flow" role="menu"><span class="reason"><svg class="ic"><use href="#eye"/></svg>This ledger is read-only</span><button class="y" aria-disabled="true"><svg class="ic"><use href="#tick"/></svg>Tick<kbd>A</kbd></button><button class="x" aria-disabled="true"><svg class="ic"><use href="#cross"/></svg>Cross<kbd>X</kbd></button><span class="sep"></span><button><svg class="ic"><use href="#note"/></svg>Read conversation<kbd>C</kbd></button><button aria-disabled="true"><svg class="ic"><use href="#bm"/></svg>Bookmark<kbd>B</kbd></button><button aria-disabled="true"><svg class="ic"><use href="#later"/></svg>Save for later<kbd>L</kbd></button><button><svg class="ic"><use href="#hist"/></svg>History<kbd>H</kbd></button></div></div>
+</div>
+</div>
+</body>
+</html>

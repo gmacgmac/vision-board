@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node states: focus, hover, history and the conversation, Command Lens (dark)</title>
+<link rel="stylesheet" href="command-lens.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="notes2" viewBox="0 0 24 24"><path d="M3 4h12v8H8l-3 3v-3H3zM18 8h3v8h-2v3l-3-3h-5v-1"/></symbol>
+<symbol id="bm" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20z"/></symbol>
+<symbol id="later" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+<symbol id="doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M9 14l-5-5 5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+<symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="open" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+<symbol id="retry" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="drawer" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M14 5v14"/></symbol>
+<symbol id="move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+<symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></symbol>
+<symbol id="fork" viewBox="0 0 24 24"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></symbol>
+<symbol id="encoder" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M10 9v6M13 11v2M17 10.5h1M17 13.5h1"/></symbol>
+<symbol id="app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</defs></svg>
+<div class="cl ">
+<h1>Node states: focus, hover, history and the conversation</h1>
+<p class="lede">How each mark in the plate and each half of the switch answers the keyboard and the pointer; right-click; the "N updates" stepper inside history; the conversation box in this skin, with a note queued for Send and one asked now; and an icon an agent added.</p>
+
+<div class="sec"><b>Keyboard focus</b><span>The node is one tab stop; its ring sits outside the border, so it never reads as selection. Tab goes on through the plate in reading order (number, history, notes), then the two halves. The plate is not a tab stop: Alt+Arrows move the focused node. On the dark plate the ring is light.</span></div>
+<div class="row">
+<div><p class="cap">The node</p>
+<div class="m asks kf" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb">1 update</button><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div><p class="cap">The number, the badge</p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no f" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb f">1 update</button><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div><p class="cap" style="margin-top:10px"><small>Two rings at once only to save room.</small></p></div>
+<div><p class="cap">The notes, a half of the switch</p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb">1 update</button><button class="ch f" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button class="f" style="outline-offset:-4px"><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+</div>
+
+<div class="sec"><b>Hover, and right-click</b><span>A step lighter and a one-line tip with the key, after a short pause; never a change of meaning. Right-click (or a long press) lists the six actions with their keys, in the dark plate's look; a node that only tells shows no Tick or Cross.</span></div>
+<div class="row">
+<div class="tipspace"><div class="m asks" style="--k: var(--act)"><span class="tip" style="left:0;top:-46px">Bookmark <kbd>B</kbd> · hold for more</span><span class="tip" style="right:0;top:-46px">Conversation <kbd>C</kbd></span><div class="pl"><button class="no hov" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb">1 update</button><button class="ch hov" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div class="tipspace"><div class="m asks" style="--k: var(--act)"><span class="tip" style="right:40px;top:-46px">History <kbd>H</kbd></span><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="hb hov">1 update</button><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button class="hov"><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div><span class="tip" style="left:30px;bottom:-44px">Tick <kbd>A</kbd></span></div><p class="cap" style="margin-top:56px"><small>Tips drawn two at once only to save room.</small></p></div>
+<div><div class="menu flow" role="menu" style="margin-top:0"><button class="y"><svg class="ic"><use href="#tick"/></svg>Tick<kbd>A</kbd></button><button class="x"><svg class="ic"><use href="#cross"/></svg>Cross<kbd>X</kbd></button><span class="sep"></span><button><svg class="ic"><use href="#note"/></svg>Comment<kbd>C</kbd></button><button class="hl"><svg class="ic"><use href="#bm"/></svg>Bookmark<kbd>B</kbd></button><button><svg class="ic"><use href="#later"/></svg>Save for later<kbd>L</kbd></button><button><svg class="ic"><use href="#hist"/></svg>History<kbd>H</kbd></button></div></div>
+</div>
+
+<div class="sec"><b>History holds the stepper</b><span>Planner's call 9. "N updates" in the plate opens history with the stepper on top: one step at a time, what changed and what the text gained; Back and Next. Past the last step, "You're up to date", and the chip settles to the version.</span></div>
+<div class="row">
+<div><div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="hb f" aria-expanded="true">3 updates</button><button class="ch has" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3><p class="tx">Loss climbs to about 2.4% for 20 s, then clears.</p></div></div></div>
+<div><div class="box" style="margin-top:0" role="dialog" aria-label="Card 13 history"><div class="boxh"><span class="no">13</span><span class="t">History</span><button class="x" aria-label="Close history"><svg class="ic"><use href="#close"/></svg></button></div><div class="step" aria-live="polite"><div class="sh">Update 1 of 3 · v3<i>Agent · 21:04</i></div><div class="chg"><span>~ body</span></div><p>Loss climbs to about <ins>2.4% for 20 s</ins>, then clears.</p><div class="bts"><button class="bt" aria-disabled="true"><svg class="ic"><use href="#left"/></svg>Back</button><button class="bt">Next<svg class="ic"><use href="#right"/></svg></button></div></div><div class="vs cur"><b>v3</b><span>Bursts measured</span><i>Agent · 21:04</i></div><div class="vs"><b>v2</b><span>Table added</span><i>Agent · 20:51</i></div></div></div>
+<div><div class="box" style="margin-top:0"><div class="boxh"><span class="no">13</span><span class="t">History</span><button class="x" aria-label="Close history"><svg class="ic"><use href="#close"/></svg></button></div><div class="step done"><svg class="ic"><use href="#tick"/></svg>You're up to date</div><div class="vs cur"><b>v5</b><span>Floodlight test matched</span><i>Agent · 21:20</i></div><div class="vs"><b>v4</b><span>Reply to your note</span><i>Agent · 21:12</i></div></div></div>
+</div>
+
+<div class="sec"><b>The conversation: a note queued, and one asked now</b><span>The notes button opens one box beside the node, in this skin's look: the plate's dark header with the number and title. Add note (Enter) queues the note for the board's Send, as today; Ask now (Cmd Enter) sends this one message for this node at once, and the agent answers in the box. How much of the board the agent sees is not decided, so nothing here says.</span></div>
+<div class="row">
+<div><p class="cap">Queued: goes with Send<small>The button's outline goes dashed while a note waits; the note says so in words.</small></p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="ch unsent f" aria-expanded="true" aria-label="1 note, not sent yet"><svg class="ic"><use href="#note"/></svg>1</button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div>
+<div class="box"><div class="boxh"><span class="no">13</span><span class="t">CAM-3 loss comes in bursts</span><button class="x" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me unsent"><i>You · <em>not sent yet · goes with Send</em></i>Check it against the floodlight test.</div></div><div class="cmp"><textarea rows="1" aria-label="Reply or ask about node 13" placeholder="Reply or ask about 13"></textarea><div class="bts"><button class="bt" title="Ask now (Cmd Enter)">Ask now</button><button class="bt pri" title="Add note (Enter)">Add note</button></div></div></div></div>
+<div><p class="cap">Asked now: waiting<small>Sent at once; the box says it is waiting, the button shows three dots. The field stays open for a follow-up.</small></p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="ch has" aria-expanded="true" aria-label="1 note, waiting for the agent"><svg class="ic"><use href="#note"/></svg>1<span class="dots"><i></i><i></i><i></i></span></button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div>
+<div class="box"><div class="boxh"><span class="no">13</span><span class="t">CAM-3 loss comes in bursts</span><button class="x" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me"><i>You · <em>asked now</em></i>Do the bursts line up with the floodlight test?</div><div class="msg wait" role="status"><span class="dots"><i></i><i></i><i></i></span>Waiting for the agent</div></div><div class="cmp"><textarea rows="1" aria-label="Reply or ask about node 13" placeholder="Reply or ask about 13"></textarea><div class="bts"><button class="bt" title="Ask now (Cmd Enter)">Ask now</button><button class="bt pri" title="Add note (Enter)">Add note</button></div></div></div></div>
+<div><p class="cap">The reply, and a send that failed<small>With the box open the reply is read at once; closed, the button fills pink until opened. Failed: the message stays, outlined, with Try again; nothing typed is lost.</small></p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="ch err" aria-expanded="true" aria-label="1 note not sent"><svg class="ic"><use href="#note"/></svg><span class="err-g">!</span></button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div>
+<div class="box"><div class="boxh"><span class="no">13</span><span class="t">CAM-3 loss comes in bursts</span><button class="x" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me"><i>You · <em>asked now</em></i>Do the bursts line up with the floodlight test?</div><div class="msg ag"><i>Agent</i>Yes: both bursts start within 2 s of a floodlight switch.</div><div class="msg me fail"><i>You · <em>asked now</em></i>Then can we ignore them?<div class="retry"><span class="err-g">!</span>Not sent.<button>Try again</button></div></div></div><div class="cmp"><textarea rows="1" aria-label="Reply or ask about node 13" placeholder="Reply or ask about 13"></textarea><div class="bts"><button class="bt" title="Ask now (Cmd Enter)">Ask now</button><button class="bt pri" title="Add note (Enter)">Add note</button></div></div></div></div>
+</div>
+
+<div class="sec"><b>An icon an agent added</b><span>An agent may add its own icon to the board's set, by name. The board keeps only a cleaned single-colour line drawing, so in the tile it is drawn exactly as a set icon. The rules are the default skin's page; this skin draws the tile square-cornered.</span></div>
+<div class="row">
+<div><p class="cap">A set icon: cloud</p>
+<div class="m" style="--k: var(--live)"><div class="pl"><button class="no" aria-label="2. Bookmark">2</button><span class="kd"><svg class="ic"><use href="#cloud"/></svg>Ingest</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><div class="hd"><div class="tt"><h3 class="ttl">Cloud ingest</h3><div class="sub">Uplynk slicer</div></div><span class="tile"><svg class="ic"><use href="#cloud"/></svg></span></div></div></div></div>
+<div><p class="cap">An agent's icon: venue-encoder</p>
+<div class="m" style="--k: var(--live)"><div class="pl"><button class="no" aria-label="3. Bookmark">3</button><span class="kd"><svg class="ic"><use href="#encoder"/></svg>Ingest</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><div class="hd"><div class="tt"><h3 class="ttl">Venue encoder</h3><div class="sub">SRT out</div></div><span class="tile"><svg class="ic"><use href="#encoder"/></svg></span></div></div></div></div>
+<div><p class="cap">Sent, cleaned, in the tile</p>
+<div class="pair"><span class="raw"><svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="10" width="40" height="28" rx="5" fill="#2563eb"/><rect x="11" y="18" width="4" height="12" rx="1" fill="#fbbf24"/><rect x="19" y="16" width="4" height="16" rx="1" fill="#fff"/><circle cx="36" cy="24" r="3" fill="#f43f5e"/></svg></span><span class="arrow">→</span><span class="tile grid24" style="--k: var(--live)"><svg class="ic"><use href="#encoder"/></svg></span><span class="arrow">→</span><span class="tile" style="--k: var(--live)"><svg class="ic"><use href="#encoder"/></svg></span></div>
+<ul class="spec"><li><code>24 × 24</code>, lines only in <code>currentColor</code>, stroke 1.7, round caps.</li><li>Also the plate's kind icon, at 14 px: the same drawing must read small.</li></ul></div>
+</div>
+</div>
+</body>
+</html>

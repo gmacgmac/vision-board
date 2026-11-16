@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node states: focus, hover, history and the conversation, default skin (dark)</title>
+<link rel="stylesheet" href="default.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="notes2" viewBox="0 0 24 24"><path d="M3 4h12v8H8l-3 3v-3H3zM18 8h3v8h-2v3l-3-3h-5v-1"/></symbol>
+<symbol id="bm" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20z"/></symbol>
+<symbol id="later" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+<symbol id="doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M9 14l-5-5 5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+<symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="open" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+<symbol id="retry" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="drawer" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M14 5v14"/></symbol>
+<symbol id="move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+<symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></symbol>
+<symbol id="fork" viewBox="0 0 24 24"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></symbol>
+<symbol id="encoder" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M10 9v6M13 11v2M17 10.5h1M17 13.5h1"/></symbol>
+<symbol id="app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</defs></svg>
+<div class="v9 ">
+<h1 class="pg">Node states: focus, hover, history and the conversation</h1>
+<p class="lede">How each mark answers the keyboard and the pointer, the "N updates" stepper inside history, a note queued for Send beside one asked now, and an icon an agent added. Boxes are drawn under the node here; on the board they open beside their mark.</p>
+<div class="g">
+<div></div>
+<div class="ch"><b>Recommended</b><span>Where it sits, and why.</span></div>
+<div class="ch"><b>More of the same state</b><span>Or the other answer.</span></div>
+
+<div class="rl">Keyboard focus: the node, then its marks<small>The node is one tab stop; its ring sits outside the border, so it never reads as selection (a selected node keeps the ring too). Tab goes on through its marks in reading order: number, disc, badge, notes. The kind tab and the grip are not tab stops: Alt+Arrows move the focused node.</small></div>
+<div class="st"><p class="oc">The node, then the number</p>
+<div class="n kf" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><div class="btm"><button class="badge new">New</button></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="n" style="--k: var(--k-action);margin-top:44px"><button class="num f" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><div class="btm"><button class="badge new">New</button></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+<div class="st"><p class="oc">The disc, the badge, the notes</p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans f" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><div class="btm"><button class="badge new f">New</button></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="n ar" style="--k: var(--k-live);margin-top:44px"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="4. Bookmark">4</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic"><use href="#pin"/></svg></span></div></div><button class="nc f" aria-label="3 notes. Open conversation"><svg class="ic"><use href="#note"/></svg>3</button></div>
+<p class="cap">Two rings drawn on one node only to save room; focus is on one mark at a time.</p>
+</div>
+
+<div class="rl">Hover on each mark<small>A halo and a one-line tip with the key, after a short pause; never a change of meaning, and nothing opens (the disc opens on a click only). The tips keep one size at any zoom.</small></div>
+<div class="st"><p class="oc">The number, the disc</p>
+<div class="n tipspace" style="--k: var(--k-action)"><button class="num hov" aria-label="35. Bookmark">35</button><span class="tip" style="left:-4px;top:-50px">Bookmark <kbd>B</kbd> · hold for more</span><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="n tipspace" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans hov" aria-label="Waiting for your answer"></button><span class="tip" style="right:-14px;top:-50px">Answer <kbd>A</kbd> tick · <kbd>X</kbd> cross</span><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+<div class="st"><p class="oc">The kind tab, the badge, the notes</p>
+<div class="n tipspace" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind hov">Action</span><span class="tip" style="left:70px;top:-50px">Drag to move · <kbd>Alt</kbd>+arrows</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><div class="btm"><button class="badge hov">2 updates</button><span class="tip" style="left:-4px;top:34px">History <kbd>H</kbd></span></div><button class="nc hov" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button><span class="tip" style="right:-30px;bottom:-56px">Conversation <kbd>C</kbd></span></div>
+<p class="cap" style="margin-top:70px">Three tips drawn at once only to save room.</p>
+</div>
+
+<div class="rl">History holds the stepper<small>Planner's call 9. "N updates" opens history with the stepper on top: one step at a time, what changed and what the text gained; Back and Next. Each step shown marks it seen. Past the last step: "You're up to date", and the badge settles to the version.</small></div>
+<div class="st"><p class="oc">Stepping: update 1 of 3</p>
+<div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><div class="btm"><button class="badge f" aria-expanded="true">3 updates</button></div><button class="nc" aria-label="3 notes"><svg class="ic"><use href="#note"/></svg>3</button></div>
+<div class="box flow" role="dialog" aria-label="Card 28 history"><div class="hh"><span>History of 28</span><button class="xb" aria-label="Close history"><svg class="ic"><use href="#close"/></svg></button></div>
+<div class="step" role="region" aria-live="polite" aria-label="Update 1 of 3, v3"><div class="sh">Update 1 of 3 · v3<i>Agent · today 10:42</i></div><div class="chg"><span>+ body</span><span>~ title</span></div><p>Added <ins>Ad-break candidates</ins></p><div class="nav"><button class="bt" aria-disabled="true"><svg class="ic"><use href="#left"/></svg>Back</button><button class="bt">Next<svg class="ic"><use href="#right"/></svg></button></div></div>
+<div class="hl-list"><div class="hv cur"><b>v3</b><span>Added Ad-break candidates</span><i>Agent · today 10:42 · after your note</i></div><div class="hv"><b>v2</b><span>Reranking moved to later</span><i>Agent · yesterday 16:05</i></div><div class="hv"><b>v1</b><span>First drawn</span><i>Agent · yesterday 15:20</i></div></div></div>
+</div>
+<div class="st"><p class="oc">Past the last step</p>
+<div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><ol class="bd"><li>Base search (this board)</li><li>Scorecard and model bake-off</li><li>Ad-break candidates</li></ol></div><div class="btm"><button class="badge ver f" aria-expanded="true"><svg class="ic"><use href="#hist"/></svg>v5</button></div><button class="nc" aria-label="3 notes"><svg class="ic"><use href="#note"/></svg>3</button></div>
+<div class="box flow"><div class="hh"><span>History of 28</span><button class="xb" aria-label="Close history"><svg class="ic"><use href="#close"/></svg></button></div><div class="step done"><svg class="ic"><use href="#tick"/></svg>You're up to date</div>
+<div class="hl-list"><div class="hv cur"><b>v5</b><span>Scorecard due Friday</span><i>Agent · today 11:20</i></div><div class="hv"><b>v4</b><span>Reply to your note</span><i>Agent · today 11:02</i></div><div class="hv"><b>v3</b><span>Added Ad-break candidates</span><i>Agent · today 10:42</i></div></div></div>
+</div>
+
+<div class="rl">A note queued, and one asked now<small>Add note (Enter) queues the note for the board's Send, as today. Ask now (Cmd Enter) sends this one message for this node at once; the agent answers in the box. How much of the board the agent sees is not decided, so nothing here says.</small></div>
+<div class="st"><p class="oc">Queued: goes with Send<small>The notes mark's outline goes dashed while a note waits for Send; the note says so in words.</small></p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="34. Bookmark">34</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory.</p></div><button class="nc unsent f" aria-label="1 note, not sent yet. Conversation open" aria-expanded="true"><svg class="ic"><use href="#note"/></svg>1</button></div>
+<div class="cv flow"><div class="cvh"><span class="num">34</span><span class="cvt">Hardware</span><button class="xb" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me unsent"><i>You · <em>not sent yet · goes with Send</em></i>It's a Mac Studio, 96 GB memory.</div></div><div class="cmp"><label for="q34">Reply or ask about node 34</label><textarea id="q34" rows="1" placeholder="Reply or ask about 34"></textarea><div class="bts"><button class="bt" title="Ask now (Cmd Enter)">Ask now</button><button class="bt pri" title="Add note (Enter)">Add note</button></div></div></div>
+</div>
+<div class="st"><p class="oc">Asked now: waiting for the reply<small>Sent at once; the box shows it is waiting. The mark shows three dots in place of nothing new. The field stays open for a follow-up.</small></p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="34. Bookmark">34</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory.</p></div><button class="nc" aria-label="1 note, waiting for the agent. Conversation open" aria-expanded="true"><svg class="ic"><use href="#note"/></svg>1<span class="dots"><i></i><i></i><i></i></span></button></div>
+<div class="cv flow"><div class="cvh"><span class="num">34</span><span class="cvt">Hardware</span><button class="xb" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me"><i>You · <em>asked now</em></i>Is 96 GB enough for every base model?</div><div class="msg wait" role="status"><span class="dots"><i></i><i></i><i></i></span>Waiting for the agent</div></div><div class="cmp"><label for="w34">Reply or ask about node 34</label><textarea id="w34" rows="1" placeholder="Reply or ask about 34"></textarea><div class="bts"><button class="bt">Ask now</button><button class="bt pri">Add note</button></div></div></div>
+</div>
+
+<div class="rl">Asked now: the reply, and a send that failed<small>The reply lands in the box. With the box open it is read at once; closed, the notes mark fills (as on the skins page) until it is opened.</small></div>
+<div class="st"><p class="oc">The reply arrived, box open</p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="34. Bookmark">34</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory.</p></div><button class="nc f" aria-label="2 notes. Conversation open" aria-expanded="true"><svg class="ic"><use href="#note"/></svg>2</button></div>
+<div class="cv flow"><div class="cvh"><span class="num">34</span><span class="cvt">Hardware</span><button class="xb" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me"><i>You · <em>asked now</em></i>Is 96 GB enough for every base model?</div><div class="msg ag"><i>Agent</i>Yes: the largest base model needs about 70 GB, so every one fits.</div></div><div class="cmp"><label for="r34">Reply or ask about node 34</label><textarea id="r34" rows="1" placeholder="Reply or ask about 34"></textarea><div class="bts"><button class="bt">Ask now</button><button class="bt pri">Add note</button></div></div></div>
+</div>
+<div class="st"><p class="oc">Not sent<small>The message stays in the box, outlined, with what failed and Try again; nothing typed is lost. The notes mark takes the error outline until the next press.</small></p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="34. Bookmark">34</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Hardware</h3><p class="bd">The Mac Studio's chip and memory.</p></div><button class="nc err" aria-label="1 note not sent. Conversation open" aria-expanded="true"><svg class="ic"><use href="#note"/></svg><span class="err-g">!</span></button></div>
+<div class="cv flow"><div class="cvh"><span class="num">34</span><span class="cvt">Hardware</span><button class="xb" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me fail"><i>You · <em>asked now</em></i>Is 96 GB enough for every base model?<div class="retry"><span class="err-g">!</span>Not sent.<button>Try again</button></div></div></div><div class="cmp"><label for="f34">Reply or ask about node 34</label><textarea id="f34" rows="1" placeholder="Reply or ask about 34"></textarea><div class="bts"><button class="bt">Ask now</button><button class="bt pri">Add note</button></div></div></div>
+</div>
+
+<div class="rl">An icon an agent added<small>An agent may add its own icon to the board's set, by name. The board keeps only a cleaned single-colour line drawing, so in the tile it is drawn exactly as a set icon: same box, stroke and colour.</small></div>
+<div class="st"><p class="oc">A set icon, and an agent's, side by side</p>
+<div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="2. Bookmark">2</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Ingest</div><h3 class="ttl">Cloud ingest</h3><div class="sub">Set icon: cloud</div></div><span class="tile"><svg class="ic"><use href="#cloud"/></svg></span></div></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="n ar" style="--k: var(--k-live);margin-top:34px"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="3. Bookmark">3</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Ingest</div><h3 class="ttl">Venue encoder</h3><div class="sub">Agent's icon: venue-encoder</div></div><span class="tile"><svg class="ic"><use href="#encoder"/></svg></span></div></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+<div class="st"><p class="oc">What the agent sends, and what the board keeps</p>
+<div class="pair"><span class="raw" title="As sent"><svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="10" width="40" height="28" rx="5" fill="#2563eb"/><rect x="11" y="18" width="4" height="12" rx="1" fill="#fbbf24"/><rect x="19" y="16" width="4" height="16" rx="1" fill="#fff"/><circle cx="36" cy="24" r="3" fill="#f43f5e"/></svg></span><span class="arrow">→</span><span class="tile grid24" style="--k: var(--k-live)"><svg class="ic"><use href="#encoder"/></svg></span><span class="arrow">→</span><span class="tile" style="--k: var(--k-live)"><svg class="ic"><use href="#encoder"/></svg></span></div>
+<ul class="spec"><li>A <code>24 × 24</code> box with 2 px clear at each side, drawn at 24 px in the 40 px tile.</li><li>Lines only, in <code>currentColor</code>: stroke 1.7 at 24 px, round caps and joins; no fill but dots of 2 px or less.</li><li>No colour, text, image, gradient, filter, script or link; a name in kebab-case, unique on the board.</li><li>Cleaned when added; one that can't be cleaned is refused with the reason, and the node shows its kind with no tile.</li></ul>
+</div>
+</div>
+</div>
+</body>
+</html>

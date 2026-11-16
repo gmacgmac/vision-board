@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node states: where a node is and how it is shown, default skin (light)</title>
+<link rel="stylesheet" href="default.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="notes2" viewBox="0 0 24 24"><path d="M3 4h12v8H8l-3 3v-3H3zM18 8h3v8h-2v3l-3-3h-5v-1"/></symbol>
+<symbol id="bm" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20z"/></symbol>
+<symbol id="later" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+<symbol id="doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M9 14l-5-5 5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+<symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="open" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+<symbol id="retry" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="drawer" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M14 5v14"/></symbol>
+<symbol id="move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+<symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></symbol>
+<symbol id="fork" viewBox="0 0 24 24"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></symbol>
+<symbol id="encoder" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M10 9v6M13 11v2M17 10.5h1M17 13.5h1"/></symbol>
+<symbol id="app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</defs></svg>
+<div class="v9 light">
+<h1 class="pg">Node states: where a node is, and how it is shown</h1>
+<p class="lede">Saved for later, moved by you, dragged, emphasised, tagged, the note kind, and a note on several nodes. Where a state has two honest answers both are drawn; the left one is recommended.</p>
+<div class="g">
+<div></div>
+<div class="ch"><b>Recommended</b><span>Where it sits, and why.</span></div>
+<div class="ch"><b>The other answer, or the other look</b><span>What it costs.</span></div>
+
+<div class="rl">Saved for later<small>Save for later leaves the node's face: the node moves into the built-in Later container, last on the board, and looks as it did. Holding the number there offers Bring back in place of Save for later, with the same key, L.</small></div>
+<div class="st"><p class="oc">In the Later container, holding the number</p>
+<div class="frame"><div class="frame-h"><svg class="ic"><use href="#later"/></svg>Later<i>2 nodes</i></div>
+<div class="n" style="--k: var(--k-action);margin-top:112px"><button class="num hov" aria-label="35. Bookmark" aria-expanded="true">35</button><div class="pop numpop" role="menu"><button><svg class="ic"><use href="#bm"/></svg>Bookmark<kbd>B</kbd></button><button class="hl"><svg class="ic"><use href="#back"/></svg>Bring back<kbd>L</kbd></button></div><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><div class="btm"><span class="tab await"><svg class="ic"><use href="#later"/></svg>Awaiting</span></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><p class="bd">Base search first, then the scorecard.</p></div><div class="btm"><button class="tab hand"><svg class="ic"><use href="#doc"/></svg>Handover</button></div><button class="nc" aria-label="2 notes. Open conversation"><svg class="ic"><use href="#note"/></svg>2</button></div>
+</div></div>
+<div class="st"><p class="oc">Right-click in Later<small>Bring back takes the row and key of Save for later and sends the node back where its agent drew it (today's Reopen, O). Dragging it out of Later does the same into the container it is dropped on.</small></p>
+<div class="pop flow" role="menu"><button class="y"><svg class="ic"><use href="#tick"/></svg>Tick<kbd>A</kbd></button><button class="x"><svg class="ic"><use href="#cross"/></svg>Cross<kbd>X</kbd></button><span class="sep"></span><button><svg class="ic"><use href="#note"/></svg>Comment<kbd>C</kbd></button><button><svg class="ic"><use href="#bm"/></svg>Bookmark<kbd>B</kbd></button><button class="hl"><svg class="ic"><use href="#back"/></svg>Bring back<kbd>L</kbd></button><button><svg class="ic"><use href="#hist"/></svg>History<kbd>H</kbd></button></div>
+</div>
+
+<div class="rl">Moved by you<small>The person dragged the node, so the layout no longer places it; R puts it back. Today a ◆ tab on the top border, right.</small></div>
+<div class="st"><p class="oc rec">A · a quiet marker on the top border<small>Not a control: its tip says "Moved by you · R puts it back". Left of the disc, or at the right on a node that only tells. It answers "why doesn't this one follow the layout?" at rest.</small></p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><span class="moved" title="Moved by you">◆</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="n" style="--k: var(--k-topic);margin-top:40px"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><span class="moved tell" title="Moved by you">◆</span><div class="nb"><h3 class="ttl">Order of work</h3><p class="bd">Base search first, then the scorecard.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+<div class="st"><p class="oc">B · only when selected<small>Nothing at rest; selected, the marker shows and the bar offers Reset places. Sparser, but at rest a moved node looks placed by the layout, and nobody knows why it stays put.</small></p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="n sel" style="--k: var(--k-action);margin-top:40px"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><span class="moved" title="Moved by you">◆</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+
+<div class="rl">Being dragged<small>Grabbed by the kind tab (or the grip), the node lifts; the container that can take it shows the drop look. Boxes and menus close when a drag starts. Today's drop look is the accent pink; here it is drawn in ink, since pink now means notes and buttons only.</small></div>
+<div class="st"><p class="oc">Current look, over a container</p>
+<div class="frame drop" style="height:250px"><div class="frame-h">Running order<i>Drop to move here</i></div>
+<div class="n drag" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind grab">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed.</p></div><button class="nc" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div>
+</div></div>
+<div class="st"><p class="oc">Architecture look, by the grip</p>
+<div class="n ar drag" style="--k: var(--k-live);margin-top:20px"><span class="grip hov" aria-hidden="true"></span><button class="num bm" aria-label="4, bookmarked">4</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic"><use href="#pin"/></svg></span></div></div><div class="btm"><button class="badge">1 update</button></div><button class="nc" aria-label="3 notes"><svg class="ic"><use href="#note"/></svg>3</button></div>
+</div>
+
+<div class="rl">Emphasis<small>The agent marked the node as the one to look at: one width tier up, and a full top line in the kind's colour. The marks keep their places, on the wider node.</small></div>
+<div class="st"><p class="oc">Current look</p>
+<div class="n emph" style="--k: var(--k-decision)"><button class="num" aria-label="15. Bookmark">15</button><span class="kind">Decision</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Switch the second half to SAT-1 when CAM-3 loss passes 2%</h3><p class="bd">Automatic after 60 s at 2%, or a gallery call.</p></div><div class="btm"><span class="badge new">New</span></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+<div class="st"><p class="oc">Architecture look</p>
+<div class="n ar emph" style="--k: var(--k-risk)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="17. Bookmark">17</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Risk</div><h3 class="ttl">Rain fade on the satellite link</h3></div><span class="tile"><svg class="ic"><use href="#warn"/></svg></span></div><ul class="bd"><li>Showers forecast from 20:45</li></ul></div><button class="nc" aria-label="5 notes"><svg class="ic"><use href="#note"/></svg>5</button></div>
+</div>
+
+<div class="rl">Tags<small>Chips under the body, in both looks; grey, never a hue, so they never read as a kind or as the accent. (The architecture page's pink "Captions" chip is the one exception today: pink is for notes and buttons.)</small></div>
+<div class="st"><p class="oc">Current look</p>
+<div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><p class="bd">Base search first, then the scorecard.</p><div class="chips"><span class="chip">search</span><span class="chip">this week</span><span class="chip">owner: board</span></div></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+<div class="st"><p class="oc">Architecture look</p>
+<div class="n ar" style="--k: var(--k-live)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="4. Bookmark">4</button><div class="nb"><div class="hd"><div class="tt"><div class="kick q">Topic</div><h3 class="ttl">Cup final</h3><div class="sub">Uplynk live event</div></div><span class="tile"><svg class="ic"><use href="#pin"/></svg></span></div><div class="chips"><span class="chip">Captions</span><span class="chip">SRT</span></div></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+
+<div class="rl">The note kind<small>An agent's aside: dashed, no fill, no shadow, as today. It only tells: number, kind and notes; no disc.</small></div>
+<div class="st"><p class="oc">Current look</p>
+<div class="n note" style="--k: var(--mut)"><button class="num" aria-label="41. Bookmark">41</button><span class="kind">Note</span><div class="nb"><p class="bd">Times are the venue's local time.</p></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+<div class="st"><p class="oc">Architecture look</p>
+<div class="n note ar" style="--k: var(--mut)"><span class="grip" aria-hidden="true"></span><button class="num" aria-label="41. Bookmark">41</button><div class="nb"><div class="kick q">Note</div><p class="bd">Times are the venue's local time.</p></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+
+<div class="rl">A note on several nodes<small>Comment on a selection writes one note for the group. Today it is drawn once, as a pin on the group's lowest-numbered card, with a dashed ring on the group while it is pointed at.</small></div>
+<div class="st"><p class="oc rec">A · on every member's notes mark<small>Each member's mark counts the group's note and swaps to a two-bubble glyph; its conversation shows the group's notes under a header naming every member. No new mark; a count can include the same note on two nodes.</small></p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3></div><button class="nc grp f" aria-label="1 note, with 28. Open conversation" aria-expanded="true"><svg class="ic"><use href="#notes2"/></svg>1</button></div>
+<div class="n" style="--k: var(--k-topic);margin-top:34px"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3></div><button class="nc grp" aria-label="3 notes, 1 with 35. Open conversation"><svg class="ic"><use href="#notes2"/></svg>3</button></div>
+<div class="cv flow"><div class="cvh"><span class="grpn"><span class="num">28</span><span class="num">35</span></span><span class="cvt">2 nodes</span><button class="xb" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me"><i>You · 28 and 35</i>Do these two clash on Thursday?</div></div></div>
+</div>
+<div class="st"><p class="oc">B · one group mark, as today<small>A second pink mark on the lowest-numbered node, left of its notes mark; members ring while it is pointed at. Faithful to today, but a node can show two pink marks, and the other members show nothing.</small></p>
+<div class="n ring" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3></div><button class="gpin hov" aria-label="Note 1 on items 28, 35"><svg class="ic"><use href="#notes2"/></svg>28·35</button><button class="nc" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div>
+<div class="n ring" style="--k: var(--k-action);margin-top:34px"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3></div><button class="nc none" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div>
+</div>
+</div>
+</div>
+</body>
+</html>

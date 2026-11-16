@@ -38,32 +38,32 @@ settled rules in PLAN.md § Decisions are not reopened; you only place what is m
 
 ## Steps
 
-1. [ ] List every state, part and tab of today's node from `pattern.json` and the template. Mark each as drawn in
+1. [x] List every state, part and tab of today's node from `pattern.json` and the template. Mark each as drawn in
        `node-skins/` or not. Put the list in your notes.
-2. [ ] For each undrawn one, place it on the new node in both skins. At least: a proposal waiting (the agent
+2. [x] For each undrawn one, place it on the new node in both skins. At least: a proposal waiting (the agent
        proposes a tick or a cross; the person accepts or rejects), the handover box and "Awaiting", saved for later
        (the node in the Later container, and how to bring it back), moved by you (today's ◆), a board that is locked
        or read-only (marks that can't be pressed), a write that failed (a mark shows its error until the next
        press), the "N updates" stepper inside the history box, tags, emphasis, a node being dragged, keyboard focus
        on the node and on each mark, hover on each mark, and an app node's states.
-3. [ ] Start from PLAN.md § Planner's calls 6 and 9 (tabs stay on the bottom border between the badge and the notes
+3. [x] Start from PLAN.md § Planner's calls 6 and 9 (tabs stay on the bottom border between the badge and the notes
        mark; history holds the stepper). Where a state has two honest answers, draw both side by side and say which
        you recommend and what the other costs. Never more than three.
-4. [ ] Hold the rules: nothing on a node at rest is a control except its edge marks; the disc, the icon tile and
+4. [x] Hold the rules: nothing on a node at rest is a control except its edge marks; the disc, the icon tile and
        the notes mark share one vertical line; a mark's hit area is at least 24 px; colour is never the only signal.
-5. [ ] Render every page in dark and light (Playwright is in `node_modules`; write screenshots to `temp/`), look
+5. [x] Render every page in dark and light (Playwright is in `node_modules`; write screenshots to `temp/`), look
        at each one, and fix what is misaligned, clipped or unreadable before you finish.
-6. [ ] Write `design/mockups/node-states/README.md`: one line per state saying where it sits and why, and a short
+6. [x] Write `design/mockups/node-states/README.md`: one line per state saying where it sits and why, and a short
        list of the choices that need the maintainer's answer.
 
 ---
 
 ## Validation
 
-- [ ] Every state in step 1's list is drawn or named as unchanged, in both skins, dark and light
-- [ ] The pages open from the file system with no network (fonts fall back) and no console error
-- [ ] `npm run verify` passes (the new files are within its length rules)
-- [ ] Your return block lists the open choices; the orchestrator takes them to the maintainer before wave 3
+- [x] Every state in step 1's list is drawn or named as unchanged, in both skins, dark and light
+- [x] The pages open from the file system with no network (fonts fall back) and no console error
+- [x] `npm run verify` passes (the new files are within its length rules)
+- [x] Your return block lists the open choices; the orchestrator takes them to the maintainer before wave 3
 
 ---
 
@@ -82,20 +82,47 @@ settled rules in PLAN.md § Decisions are not reopened; you only place what is m
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-16 10:45  
 
 ### Changes Made
-- 
+- `design/mockups/node-states/`: 16 pages (`default-` and `command-lens-` `answers`, `places`, `input`, `app`, each
+  `-dark` and `-light`), four shared stylesheets (`default.css` and `command-lens.css` copy the skins pages' styles,
+  then add the states; `default-app.css`, `command-lens-app.css` the window), and `README.md`: the step 1 list (every
+  state, part and attribute of `pattern.json` with where it now sits, or "unchanged" / "retires"), the rules the
+  drawings hold, and the open choices.
+- `design/README.md`: one row for `node-states/`.
+- Kickoff changes drawn: Ask now node-scoped (queued note, sent and waiting, reply arrived, failed); an agent's own
+  icon in the tile with its drawing rules; nothing designed around the old footer.
 
 ### Issues & Resolutions
-- 
+- Command Lens's own styles named `.wr` (the "Agent writing" mark); the app bar's reason first reused it. Renamed to
+  `.wrs`.
+- App names in a crowded bar did not cut with "…" (an inline-flex parent); wrapped in `.nm`.
+- A label wrapping the reply field hid it in Command Lens (the label is visually hidden); the field now carries
+  `aria-label`.
+- Checks: every page rendered in Chromium (Playwright from `node_modules`) dark and light, screenshots in
+  `temp/node-states-shots/`, looked at and fixed (tips over captions, a read-only number stacking, missing switches,
+  a crowded app bar). No console error and no network request on any page. `npm run verify` ok (it does not scan
+  `design/`; every file there is under 300 lines).
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- The architecture page's pink "Captions" chip breaks DD-14 (pink only for notes and buttons); today's drop look is
+  pink too. Drawn grey and ink here.
+- The Command Lens page shows "A risk can ask too", but `NODE_TYPES.risk` only tells
+  (`packages/format/src/node-types.ts`). Either the drawing or the contract is wrong: for T_01 and the maintainer.
+- Command Lens's skin page never drew the conversation box, history or right-click; FE_04 needs them (drawn here).
+- The marks drawn 22 px tall (number, badge, notes, tabs) are under the 24 px hit-area rule as drawn; the README asks
+  for a transparent edge so the look stays.
+- With the footer gone, the state word ("Replied", "Saved for later", "Awaiting") leaves the face; "Replied" lives on
+  only in the name and as the notes mark's waiting dots. Worth a line in the words and accessibility specs.
+- No state was drawn for Ask now with no agent attached, nor for whether Ask now takes the node's queued notes:
+  choices 6 and 7.
+- A past version of the board: the conversation opens read-only ("Read conversation"), as on a locked board.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None. Pages link shared stylesheets in the same folder (still standalone, no network) rather than repeating
+  ~250 lines of CSS in 16 files; the light pages are the dark pages with the `light` class, as in `node-skins/`.
 
 ---
 

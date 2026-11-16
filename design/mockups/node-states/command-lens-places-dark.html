@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node states: where a node is and how it is shown, Command Lens (dark)</title>
+<link rel="stylesheet" href="command-lens.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="notes2" viewBox="0 0 24 24"><path d="M3 4h12v8H8l-3 3v-3H3zM18 8h3v8h-2v3l-3-3h-5v-1"/></symbol>
+<symbol id="bm" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20z"/></symbol>
+<symbol id="later" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+<symbol id="doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M9 14l-5-5 5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+<symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="open" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+<symbol id="retry" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="drawer" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M14 5v14"/></symbol>
+<symbol id="move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+<symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></symbol>
+<symbol id="fork" viewBox="0 0 24 24"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></symbol>
+<symbol id="encoder" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M10 9v6M13 11v2M17 10.5h1M17 13.5h1"/></symbol>
+<symbol id="app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</defs></svg>
+<div class="cl ">
+<h1>Node states: where a node is, and how it is shown</h1>
+<p class="lede">Saved for later, moved by you, dragged, emphasised, tagged, the note kind, and a note on several nodes, in Command Lens. Where a state has two honest answers both are drawn and one is marked recommended.</p>
+
+<div class="sec"><b>Saved for later</b><span>Save for later leaves the node's face: the node moves into the built-in Later container, last on the board, and looks as it did. Holding the number there offers Bring back in place of Save for later, same key L; right-click lists Bring back in the same row; dragging it out does the same into where it lands.</span></div>
+<div class="row" style="grid-template-columns:848px 400px">
+<div class="frame"><div class="frame-h"><svg class="ic"><use href="#later"/></svg>Later<i>2 nodes</i></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;padding-top:104px">
+<div class="m asks" style="--k: var(--act)"><div class="menu" role="menu"><button><svg class="ic"><use href="#bm"/></svg>Bookmark<kbd>B</kbd></button><button class="hl"><svg class="ic"><use href="#back"/></svg>Bring back<kbd>L</kbd></button></div><div class="pl"><button class="no hov" aria-expanded="true" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><span class="hb await"><svg class="ic"><use href="#later"/></svg>Awaiting</span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="hb hand"><svg class="ic"><use href="#doc"/></svg>Handover</button><button class="ch has" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div>
+</div></div>
+<div><p class="cap">Right-click in Later</p>
+<div class="menu flow" role="menu" style="margin-top:0"><button class="y"><svg class="ic"><use href="#tick"/></svg>Tick<kbd>A</kbd></button><button class="x"><svg class="ic"><use href="#cross"/></svg>Cross<kbd>X</kbd></button><span class="sep"></span><button><svg class="ic"><use href="#note"/></svg>Comment<kbd>C</kbd></button><button><svg class="ic"><use href="#bm"/></svg>Bookmark<kbd>B</kbd></button><button class="hl"><svg class="ic"><use href="#back"/></svg>Bring back<kbd>L</kbd></button><button><svg class="ic"><use href="#hist"/></svg>History<kbd>H</kbd></button></div></div>
+</div>
+
+<div class="sec"><b>Moved by you</b><span>The person dragged the node, so the layout no longer places it; R puts it back.</span></div>
+<div class="row">
+<div><p class="cap rec">A · a ◆ in the plate, after the kind<small>Not a control; its tip says "Moved by you · R puts it back". The plate has room, and it answers "why doesn't this one follow?" at rest.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="mv" title="Moved by you">◆</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div><p class="cap">A, on a node that tells</p>
+<div class="m" style="--k: var(--find)"><div class="pl"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="mv" title="Moved by you">◆</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div></div>
+<div><p class="cap">B · only when selected<small>Sparser at rest, but a moved node then looks placed by the layout, and nobody knows why it stays put.</small></p>
+<div class="m asks sel" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="mv" title="Moved by you">◆</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+</div>
+
+<div class="sec"><b>Being dragged</b><span>Grabbed by the plate, the node lifts and the plate shows the closed hand; the container that can take it shows the drop look, drawn in ink (today's is the accent pink, which now means notes and buttons only). Boxes and menus close when a drag starts.</span></div>
+<div class="row" style="grid-template-columns:848px 400px">
+<div class="frame drop" style="height:230px"><div class="frame-h">Running order<i>Drop to move here</i></div>
+<div class="m asks drag" style="--k: var(--act);width:400px"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch has" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div><p class="cap">Pointing at the plate<small>Before the press: the plate lightens a step, the open hand shows, the tip says how to move without a pointer.</small></p>
+<div class="m tipspace" style="--k: var(--find)"><span class="tip" style="left:90px;top:-46px">Drag to move · <kbd>Alt</kbd>+arrows</span><div class="pl hov"><button class="no" aria-label="13. Bookmark">13</button><span class="kd"><span class="dot"></span>Finding</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">CAM-3 loss comes in bursts</h3></div></div></div>
+</div>
+
+<div class="sec"><b>Emphasis, tags and the note kind</b><span>Emphasis: one width tier up and a line in the kind's colour along the plate's top (selection already owns the border). Tags: grey chips under the body, never a hue. The note kind: dashed, no fill, a clear plate; it only tells.</span></div>
+<div class="row" style="grid-template-columns:520px 340px 340px">
+<div><p class="cap">Emphasis</p>
+<div class="m asks emph" style="--k: var(--dec)"><div class="pl"><button class="no" aria-label="15. Bookmark">15</button><span class="kd"><span class="dot"></span>Decision</span><span class="sp"></span><button class="hb new">New</button><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Switch the second half to SAT-1 when CAM-3 loss passes 2%</h3><p class="tx">Automatic after 60 s at 2%, or a gallery call.</p></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+<div><p class="cap">Tags</p>
+<div class="m" style="--k: var(--topic)"><div class="pl"><button class="no" aria-label="28. Bookmark">28</button><span class="kd"><span class="dot"></span>Topic</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Order of work</h3><p class="tx">Base search first, then the scorecard.</p><div class="chips"><span class="chip">search</span><span class="chip">this week</span><span class="chip">owner: board</span></div></div></div></div>
+<div><p class="cap">The note kind</p>
+<div class="m note" style="--k: var(--mut)"><div class="pl"><button class="no" aria-label="41. Bookmark">41</button><span class="kd"><span class="dot"></span>Note</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><p class="tx">Times are the venue's local time.</p></div></div></div>
+</div>
+
+<div class="sec"><b>A note on several nodes</b><span>Comment on a selection writes one note for the group. Today it is drawn once, as a pin on the lowest-numbered card, with a dashed ring on the group while it is pointed at.</span></div>
+<div class="row">
+<div><p class="cap rec">A · on every member's notes button<small>Each member's button counts it with a two-bubble glyph; the conversation names every member. No new mark; a count can include the same note on two nodes.</small></p>
+<div class="m asks" style="--k: var(--act)"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch has f" aria-expanded="true" aria-label="1 note, with 28. Open conversation"><svg class="ic"><use href="#notes2"/></svg>1</button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div>
+<div class="m" style="--k: var(--topic);margin-top:20px"><div class="pl"><button class="no" aria-label="28. Bookmark">28</button><span class="kd"><span class="dot"></span>Topic</span><span class="sp"></span><button class="ch has" aria-label="3 notes, 1 with 16"><svg class="ic"><use href="#notes2"/></svg>3</button></div><div class="bd"><h3 class="ttl">Order of work</h3></div></div></div>
+<div><p class="cap">A · the conversation</p>
+<div class="box" style="margin-top:0"><div class="boxh"><span class="grpn"><span class="no">16</span><span class="no">28</span></span><span class="t">2 nodes</span><button class="x" aria-label="Close conversation"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg me"><i>You · <em>16 and 28</em></i>Do these two clash on Thursday?</div></div><div class="cmp"><label for="g">Reply or ask about 16 and 28</label><textarea id="g" rows="1" placeholder="Reply or ask about 16 and 28"></textarea><div class="bts"><button class="bt">Ask now</button><button class="bt pri">Add note</button></div></div></div></div>
+<div><p class="cap">B · one group button, as today<small>A second pink button in the lowest-numbered node's plate; members ring while it is pointed at. Faithful to today, but the other members show nothing.</small></p>
+<div class="m ring" style="--k: var(--topic)"><div class="pl"><button class="no" aria-label="28. Bookmark">28</button><span class="kd"><span class="dot"></span>Topic</span><span class="sp"></span><button class="ch gp hov" aria-label="Note 1 on items 16, 28"><svg class="ic"><use href="#notes2"/></svg>16·28</button><button class="ch has" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">Order of work</h3></div></div>
+<div class="m asks ring" style="--k: var(--act);margin-top:20px"><div class="pl"><button class="no" aria-label="16. Bookmark">16</button><span class="kd"><span class="dot"></span>Action</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Book a backup uplink slot</h3></div><div class="sw"><button><svg class="ic"><use href="#tick"/></svg>Tick</button><button><svg class="ic"><use href="#cross"/></svg>Cross</button></div></div></div>
+</div>
+</div>
+</body>
+</html>
