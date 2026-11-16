@@ -37,6 +37,22 @@ defaults, all the page reads), and `packages/format/tests/flags.test.ts` fails i
 anything but `default` or a page file names `FLAG_DESCRIPTIONS`. On 2026-11-03 (T_03) that took the
 page from 200.6 KB to 192.3 KB gzip.
 
+**Parts a person opens load later** (PERF_01, 2026-11-16). A dialog the person opens is reached only by
+`import()`: `lazyPart` (`apps/board/src/board/lazy.ts`) loads it once, and `chrome/Lazy.svelte` draws it the first
+time its state wants it (the click that opened it has already set that state, so nothing is lost), kept from then
+on. Once the board has first drawn, `loadPartsWhenIdle` loads every part while the browser is idle, so a first open
+seldom waits; a load that fails is put back and said (`partDidNotLoad`), and the next open tries again. The plugin's
+view is one file (`codeSplitting: false`), so there each part is already inside. Moved so far: the folder picker
+(`FolderDialog`, `FolderPicker`), the New ledger dialog (`LedgerDialog`, `LedgerForm`), New board / Rename board
+(`BoardDialog`) and the Archived list (`ArchivedDialog`, `ArchivedList`). `apps/board/tests/lazy-parts.test.ts`
+fails if a file the page imports statically from `main.ts` reaches one of them.
+What it bought depends on how the build cuts chunks: the bundler puts every module a lazy part shares with the
+page in a chunk of its own, and each extra file costs gzip (each file is compressed alone) and an import list. With
+today's build (one build for the board page, the gallery and the PDF frame) the page went from 200.7 KB to 200.1 KB
+in 7 files; with the board page built alone and its start in one chunk (`codeSplitting.groups`, `$initial`), the
+same parts make it 192.1 KB in 2 files. Not done: a part that is always on screen (the toolbar's menus, the key
+help, the strips that announce what an agent asked) or that keys type into while it opens (Go to card).
+
 ## Approach
 
 1. **Work in proportion to what changed.** An event updates only the cards it touches. Nothing

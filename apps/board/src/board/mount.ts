@@ -13,6 +13,7 @@ import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
 import { memoryStore } from './host.ts';
 import { createIo } from './io.ts';
+import { loadPartsWhenIdle } from './lazy.ts';
 import type { Board, BoardElements } from './controller.ts';
 import { createBoard } from './controller.ts';
 import { takeIdPrefix } from './mount-ids.ts';
@@ -140,6 +141,8 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     told = key;
     host.pageChanged?.();
   }
+  // The parts a person opens (lazy.ts) load once the board has first drawn, while the browser is idle.
+  const unwarm = status.on((patch) => { if (patch.drawn) { unwarm(); loadPartsWhenIdle(); } });
   // Every status change (a board opened, closed, archived, renamed, a batch) is looked at once its batch is done.
   let looking = false;
   const unlook = status.on(() => {
@@ -175,7 +178,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     },
     unmount() {
       gone = true;
-      finishAll([stop, unlook, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
+      finishAll([stop, unlook, unwarm, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
         chrome.unmount, () => root.replaceChildren(), () => root.classList.remove(...added)]);
     },
   };

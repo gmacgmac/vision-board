@@ -4,6 +4,14 @@
      (while the server names a ledger, M51) and the parts it draws in the board's header (page-parts.ts). With the
      openFolder flag the folder is read before the board mounts, so the board's store keys on its ledger from the
      first read (kept.ts `pageStore`, M52). -->
+<script lang="ts" module>
+  import type { Component } from 'svelte';
+  import { lazyPart } from '../board/lazy.ts';
+
+  // The folder picker and the New ledger dialog, loaded the first time they open (board/lazy.ts; performance.md).
+  const folderDialog = lazyPart(() => import('./FolderDialog.svelte').then((m) => m.default));
+  const ledgerDialog = lazyPart(() => import('./LedgerDialog.svelte').then((m): Component => m.default)); // it takes no props
+</script>
 <script lang="ts">
   import * as chromeBoardWords from '../board/words/chrome-board.ts';
   import { onMount, tick, untrack } from 'svelte';
@@ -15,8 +23,7 @@
   import { applyTheme } from './theme.ts';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import ChatSidebar from './ChatSidebar.svelte';
-  import FolderDialog from './FolderDialog.svelte';
-  import LedgerDialog from './LedgerDialog.svelte';
+  import { Lazy } from '../board/chrome/index.ts';
   import { loadFolder } from './folder.ts';
   import { guardLedgers } from './ledgers.ts';
   import Toast from './Toast.svelte';
@@ -26,6 +33,9 @@
   import { guardFileDrops } from './file-drops.ts';
   import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
+
+  /** A dialog that did not load: it is shut again, so the next try loads again, and the person is told. */
+  const failed = (shut: () => void) => () => { shut(); toast(chromeBoardWords.partDidNotLoad, 'error'); };
 
   /** The board's root: the page hosts the board in it (board/mount.ts), as nclite hosts it in a pane. */
   let root = $state<HTMLElement>();
@@ -118,5 +128,7 @@
 <Toast />
 
 <ConfirmDialog />
-{#if openFolder}<FolderDialog guard={leavePrompt ? view : null} />{/if}
-{#if openFolder && shell.folder?.ledger}<LedgerDialog />{/if}
+{#if openFolder}
+  <Lazy part={folderDialog} when={shell.folderDialog} onfail={failed(() => { shell.folderDialog = false; })} guard={leavePrompt ? view : null} />
+{/if}
+{#if openFolder && shell.folder?.ledger}<Lazy part={ledgerDialog} when={shell.ledgerDialog} onfail={failed(() => { shell.ledgerDialog = false; })} />{/if}
