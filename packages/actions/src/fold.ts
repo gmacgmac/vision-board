@@ -6,7 +6,7 @@
 // and each board's own last line, last drawing line, last agent line, runs and from where its cards are new (rounds.ts),
 // what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
 // bookmarks (bookmarks.ts), each board's skin (skins.ts), the person's flow directions (directions.ts), the notes the
-// person asked about at once (asked.ts), each container seen (fresh.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
+// person asked about at once (asked.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
 // board's dates, the agent's clears (clears.ts), each app's allowed hash (apps.ts) and each card's times (card-times.ts). Every map is
 // keyed by a card's identity (`id`); the reads give board numbers (numbers.ts, api.md 125). One board
 // as the page reads it: board-state.ts. Pure: same events, same state; events are assumed valid.
@@ -28,7 +28,6 @@ import { foldBookmark } from './bookmarks.ts';
 import { foldSkin } from './skins.ts';
 import { foldDirection } from './directions.ts';
 import { type Asked, foldAsk } from './asked.ts';
-import { seeContainer } from './fresh.ts';
 import { foldNotesHidden } from './card-notes-hidden.ts';
 import { addDrawing, seeBoard } from './rounds.ts';
 import { foldUnsent } from './unsent.ts';
@@ -142,8 +141,6 @@ export interface LedgerState extends DrawnState, AppAllows {
   directions: Map<string, DirectionChoices>;
   /** board -> note `seq` -> the `ask` that carried it at once (asked.ts, api.md 188). */
   asked: Map<string, Map<number, Asked>>;
-  /** board -> region -> the highest `head` of the person's container seen (fresh.ts, api.md 187). */
-  seenContainers: Map<string, Map<string, number>>;
   /** Card id -> `seq` of the person's `notes-hide` on it, while it stands; the page's only (card-notes-hidden.ts, api.md 156). */
   notesHidden: Map<number, number>;
   /** board -> `seq` of the person's `archive` of it, while it stands (archive.ts, api.md 135). Read
@@ -174,7 +171,7 @@ export const emptyState = (): LedgerState => ({
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
-  retiredRegions: new Map(), bookmarks: new Map(), skins: new Map(), directions: new Map(), asked: new Map(), seenContainers: new Map(), notesHidden: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(), times: new Map(),
+  retiredRegions: new Map(), bookmarks: new Map(), skins: new Map(), directions: new Map(), asked: new Map(), notesHidden: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(), times: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -227,11 +224,7 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
     case 'join': if (e.agent !== undefined) s.agents.set(e.agent, e.label); break;
     case 'grant-request': s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
     case 'act': s.acts.push(e); applyAct(s, e); seeCards(s, e); if (board !== undefined) foldUnsent(s, board, e); break;
-    case 'seen':
-      if ('id' in e) look(s, e.id, e.ver, e.seq);
-      else if (e.region !== undefined) seeContainer(s, e.board, e.region, e.head);
-      else seeBoard(s, e.board, e.head);
-      break;
+    case 'seen': if ('id' in e) look(s, e.id, e.ver, e.seq); else seeBoard(s, e.board, e.head); break;
     case 'retire': foldRetire(s, e); break;
     case 'reply':
       push(s.replies, e.id, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }) });

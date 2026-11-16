@@ -700,7 +700,6 @@ type SeenCore = {
   ver?: number;
   board?: string;
   head?: number;
-  region?: string;
 };
 type ReplyStored = {
   type: "reply";

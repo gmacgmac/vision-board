@@ -79,10 +79,10 @@ one; where they differ, stop and ask.
     square with a notched tail below the plate.
 15. **A board's skin** (DD-18) is stored with the board in the ledger, set by whoever makes the board, and the person
     can change it on the board.
-16. **Seen** (DD-19). On a board that isn't read-only, clicking a node marks it seen, and clicking anywhere inside a
-    container marks the container seen (this also settles tracker N47), stored with the `head` it saw and only when
-    it changes something. This replaces D-054's "nothing stored" for a container. Read-only boards are left as they
-    are (DO-05).
+16. **Seen** (DD-19; changed by point 308). On a board that isn't read-only, clicking a node marks it seen, as today.
+    Clicking anywhere inside a container clears its new-and-updated pill on the person's screen only: page-local
+    state, like zoom, until the container's next change. Nothing is stored for a container and D-054 stands; a
+    `seen` names a card or a board, never a container. Read-only boards are left as they are (DO-05).
 17. **A tone per node** (DO-01, U19, points 211, 242, 246): an agent may give a node an optional tone, a palette
     name or a hue (a whole number from 0 to 359, the OKLCH hue angle). The board derives the tints from the hue so
     contrast passes in light and dark, proven by a sweep of every hue (T_02). It tints the body, the top line and the
@@ -133,7 +133,7 @@ one; where they differ, stop and ask.
 - **The private mark** is the acts `flag` and `unflag` (`CARD_MARKS`, fold `packages/actions/src/card-flags.ts`
   `flagsOn`, page `apps/board/src/board/cards/flag-flow.ts`, key Shift+F, feature flag `cardFlag`).
 - **Seen**: selecting a card already writes a `seen` line (`apps/board/src/board/cards/update-flow.ts`); nothing is
-  stored for a container (`packages/actions/src/fresh.ts` derives it).
+  stored for a container (`packages/actions/src/fresh.ts` derives it), and nothing will be (point 308).
 - **Notes** are the `vb-note-bubble` pattern with modes new, edit, sent and thread ("Conversation on N" is thread
   mode). Nothing sends one note straight to the agent; Send (`controller.ts` `send`) sends everything unsent.
 - **Zoom**: `Viewport` writes `--vb-zoom` on the regions layer; a container's title line and rail counter-scale
@@ -165,7 +165,7 @@ them on and renews the screenshots.
 2. **Undrawn states** (DESIGN_01): where proposal, handover, awaiting, saved for later, moved, locked and failed
    states sit on the new node, drawn for the maintainer before the node is built.
 3. **Contract** (T_01): node `icon` (built-in or library) and `tone` (a palette name or a hue); a board's `skin`;
-   Bookmark replaces flag; a container's `seen` with its `head`; the `ask` act; `direction` on a region and the
+   Bookmark replaces flag; the `ask` act; `direction` on a region and the
    `direction` act; the `icon` line, `list_icons`, `add_icon` and the library's folder; every flag the set uses.
    Ledger format 20, with its 19-to-20 step in the chain.
 4. **Tokens, skin layer and fonts** (T_02): tokens for the edge marks, tone tints derived from a hue and swept for
@@ -178,7 +178,7 @@ them on and renews the screenshots.
 7. **The node's edges and the icon set** (FE_01): the pattern draws the marks; one icon set renders icons by name,
    built-in or from the library; a skin registry says where each skin puts the answer and the marks.
 8. **The board wires the edges** (FE_02): clicks, the number menu, the answer picker, right-click, keys, bookmark,
-   seen, the library's drawings, the skin picker.
+   a container's pill cleared on screen by a click (page-local, point 308), the library's drawings, the skin picker.
 9. **One conversation box** with Ask now (FE_03), **the Command Lens skin** (FE_04), **zoom groups** (FE_05), **the
    selection bar and Z** (FE_06), **flow branching and direction** (BE_01), **one layout control** (FE_07), **the
    app window** (FE_08), **the agent skill** (T_03), **verification** (VERIFY_01), **switch over and remove the
@@ -192,7 +192,7 @@ them on and renews the screenshots.
   (`packages/format/src/icon-file.ts`, shared as `imagePathProblem` is), all Shared Foundations.
 - **Contract first**: T_01 lands the schema, the generated files and their tests before any drawing; BE_02 before it
   makes the format cheap to change, and BE_03 after it leaves the reader one format.
-- **One action layer**: Bookmark, Save for later, seen, the skin choice, Ask now and a flow's direction are acts
+- **One action layer**: Bookmark, Save for later, a card's seen, the skin choice, Ask now and a flow's direction are acts
   through the one sender; agents add icons only through `add_icon`, never by writing a file; Tick and Cross stay
   the person's clicks.
 - **Registries**: skins are rows in one table; a second skin is a row and a stylesheet, never a branch in the node.
@@ -304,7 +304,8 @@ wave 1 and records any change here.
     `--undo` are its safety.
 14. **Under a host** the engine migrates when it opens a `dir` it may write, with no lock: `plugin.md` states that
     a host opens one `dir` with one engine at a time (BE_02). A host lock (review R20) stays later.
-15. **D-054 is not edited** (an accepted entry never is): D-099 point 4 says which part of it is replaced.
+15. **D-054 is not edited** (an accepted entry never is), and after point 308 nothing of it is replaced: D-099 point 4
+    keeps a container's seen on the person's screen only.
 16. **BE_01 runs before FE_07**: a container's direction choice, in the layout control, redraws when it lands; the
     board-wide choice is BE_01's toolbar control.
 17. **The review's other rows** (Should R12 to R16, Later R17 to R25) are tracker rows, not part of this set.
@@ -342,6 +343,14 @@ wave 1 and records any change here.
 - **Ledger review**: a separate session (Fable 5.2) reviews the ledger format for health, scale, versioning and
   migration, and the overhaul's ledger changes. Result:
   `cortex-tasks/board/2026-11-16_board-format_research_ledger-review.md`. T_01 waits for it.
+- **Point 308 (after T_01): a container's "seen" is not stored in the ledger.** A card's own `seen` is stored as
+  before. Clicking inside a container clears its fresh pill on the person's screen only, page-local state like zoom,
+  until the container's next change; D-054 ("nothing stored" for a container) stands unchanged. Format 20 had reached no real ledger (every real
+  ledger is format 19), so T_01's container form of `seen` (`{ board, region, head }`, `containerSeenDue`, its schema,
+  shape rules, fold, tests and api.md 187) was removed from format 20 outright: no migration step, no format bump. A
+  `seen` carrying `region` is refused as an unknown field (api.md 187). Changed: decision 16, call 15, the D-099 draft
+  point 4, FE_02 step 8, VERIFY_01 step 2. Tracker N47 (a container's reply bright until the container is seen) is no
+  longer settled by a stored seen: the maintainer rules whether FE_02's page-local click also mutes those replies.
 
 ### Ledger review answers (maintainer, 2026-11-16)
 
@@ -371,7 +380,7 @@ an agent)` becomes `bookmark (the person's private mark, never sent to an agent)
   1. A node offers six actions: Tick, Cross, Comment, Bookmark, Save for later, History (keys A, X, C, B, L, H). Right-click or a long press lists them. Each mark on the node's edge is the control for what it shows: the number (Bookmark; held, Save for later too), the answer (Tick, Cross), the change badge (History), the notes mark (the conversation). The footer row goes.
   2. The person's private mark is called Bookmark, in words, code and docs. Ledgers written before format 20 are migrated (D-103): `flag` and `unflag` become `bookmark` and `unbookmark`. The bookmark glyph means Bookmark; Save for later takes the clock.
   3. Notes open one conversation box, to read and to write. Add note keeps the note for the board's Send; Ask now sends that message for its node at once, and the ledger records what context the agent was given with it. Selection is the node's own border. Width moves to the selection bar.
-  4. Clicking a node marks it seen; clicking inside a container marks the container seen, stored with the head it saw and only when it changes something. This replaces D-054's "nothing stored" for a container. A read-only board is unchanged.
+  4. Clicking a node marks it seen. Clicking inside a container clears its new-and-updated pill on the person's screen; nothing more is stored (D-054 stands). A read-only board is unchanged.
   5. An app node offers no Save for later: it is a window, with a title bar and a drawer for its conversation.
 - **Why**: the footer made every node busy and hid the sparse look; marks that are also controls keep a node calm and every action one click or one key away.
 - **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md

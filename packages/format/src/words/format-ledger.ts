@@ -101,7 +101,7 @@ export const aNamesOneCardWith = (f: string, a: string): string => `${f}: a ${a}
 export const boardRequired = (a: string): string => `${a}: board required`;
 export const namesItsBoardAndNothing = (f: string, value: string, a: string): string => `${f}: ${value} ${a} names its board, and nothing else`;
 export const cardsAtLeast1Card = 'cards: at least 1 card, or a region';
-export const seenANodeNAnd = 'seen: a node (n and ver) or a board (board and head, with region for one container), not both';
+export const seenANodeNAnd = 'seen: a node (n and ver) or a board (board and head), not both';
 export const headRequiredTheBoardS = 'head: required, the board\'s last line the person has seen';
 export const uTCTimestampLike202610 = (f: string): string => `${f}: UTC timestamp, like 2026-10-05T09:00:00Z`;
 export const typeOneOf = (join: string): string => `type: one of ${join}`;

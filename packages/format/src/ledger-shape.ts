@@ -161,7 +161,7 @@ const SHAPES: Record<EventType, Shape> = {
       direction: oneOf(ACT_DIRECTIONS),
     },
   },
-  seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, region: id, head: int(formatLedgerWords.seqOfALine) } },
+  seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, head: int(formatLedgerWords.seqOfALine) } },
   reply: { req: ['n', 'text'], fields: { n: nodeNumber, text: text(LIMITS.text), to: int(formatLedgerWords.seqOfTheActIt), key } },
   propose: {
     req: ['n', 'ver', 'action', 'reason'],
@@ -255,11 +255,11 @@ function retireRules(e: Rec, p: string[]): void {
   if (e.region === undefined && Array.isArray(e.cards) && !e.cards.length) p.push(formatLedgerWords.cardsAtLeast1Card);
 }
 
-/** A `seen` names one node version (`n`, `ver`) or one board up to a line (`board`, `head`), with `region` one
- * container of it (api.md 87, 187), never both. */
+/** A `seen` names one node version (`n`, `ver`) or one board up to a line (`board`, `head`), never
+ * both (api.md 87). */
 function seenRules(e: Rec, p: string[]): void {
   const node = e.n !== undefined || e.ver !== undefined;
-  if (node && (e.board !== undefined || e.head !== undefined || e.region !== undefined)) p.push(formatLedgerWords.seenANodeNAnd);
+  if (node && (e.board !== undefined || e.head !== undefined)) p.push(formatLedgerWords.seenANodeNAnd);
   else if (node || e.board === undefined) for (const f of ['n', 'ver']) { if (e[f] === undefined) p.push(formatLedgerWords.required(f)); }
   else if (e.head === undefined) p.push(formatLedgerWords.headRequiredTheBoardS);
 }

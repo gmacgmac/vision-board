@@ -108,7 +108,6 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
     case 'seen':
       if ('id' in e) verAtMost(e.id, e.ver);
       else if (!ix.boards.has(e.board)) p.push(formatLedgerWords.boardUnknown(e.board));
-      else if (e.region !== undefined && !ix.boards.get(e.board)!.has(e.region)) p.push(formatLedgerWords.regionUnknownOnBoard(e.region, e.board));
       else if (e.head > ix.seq) p.push(formatLedgerWords.headTheLedgerIsAt(ix.seq));
       break;
     // A name is given once (api.md 185): an agent's line for a held name with another drawing is refused; only the

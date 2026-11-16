@@ -1420,7 +1420,6 @@ Record that the person has seen a version of a node (`n` and `ver`), so its "upd
 | `ver` | body | integer | no | The version of that node the person has seen. |
 | `board` | body | string | no | The board the person has looked at, with `head`, in place of `n` and `ver`. |
 | `head` | body | integer | no | The board's last line the person has seen: its `seq` in `list_boards` when the page showed it. |
-| `region` | body | string | no | With `board` and `head`: the container the person looked at, up to that line. |
 
 Example request (A node version):
 
@@ -1458,7 +1457,6 @@ Media type `application/json`.
 | `ver` | integer | no | The version of that node the person has seen. |
 | `board` | string | no | The board the person has looked at, with `head`, in place of `n` and `ver`. |
 | `head` | integer | no | The board's last line the person has seen: its `seq` in `list_boards` when the page showed it. |
-| `region` | string | no | With `board` and `head`: the container the person looked at, up to that line. |
 | `type` | `"seen"` | yes |  |
 
 Example:

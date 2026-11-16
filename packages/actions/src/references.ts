@@ -139,7 +139,7 @@ const EVENT_SCOPES: { [T in LedgerEvent['type']]: Rule<T> } = {
   reply: (s, e) => onCard(s, e.id),
   propose: (s, e) => onCard(s, e.id),
   park: (s, e) => onCard(s, e.id),
-  seen: (s, e) => ('id' in e ? onCard(s, e.id) : e.region === undefined ? R.board.lookup(s, e.board) : onContainer(s, e)),
+  seen: (s, e) => ('id' in e ? onCard(s, e.id) : R.board.lookup(s, e.board)),
   // A retire is on its board, or the container it names, and on every card it took (api.md 126).
   retire: (s, e) => ({ ...(e.region === undefined ? R.board.lookup(s, e.board) : R.container.lookup(s, { board: e.board, region: e.region })), cards: [...e.cards] }),
   join: none,

@@ -138,7 +138,7 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:notes-hide', l.act({ action: 'notes-hide', n: 2 }), on('b', LATER_REGION, [2]));
   at('act:notes-show', l.act({ action: 'notes-show', n: 2 }), on('b', LATER_REGION, [2]));
   // api.md 183-189: a skin is on its board; a direction on its container or board; an ask on the cards of the
-  // notes it carried; an icon is the project's, on no board; a container seen on its container.
+  // notes it carried; an icon is the project's, on no board.
   at('act:skin', l.act({ action: 'skin', board: 'b', skin: 'command-lens' }), { board: 'b', cards: [] });
   at('act:direction', l.act({ action: 'direction', board: 'b', region: 'q', direction: 'down' }), on('b', 'q'));
   const note = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why now?' });

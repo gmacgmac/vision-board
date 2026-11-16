@@ -2,14 +2,12 @@
 // table finds new (`item.new`) or updated (`item.unseen`, as its "N updates" tab shows it), with the
 // container it is in now and the line of its newest change; and the containers they make fresh: one
 // holding such a card whose newest change is after the person's latest engagement with any card in it
-// (`LedgerState.looked`: their latest card seen or act naming it) and after their latest container seen (D-099 4,
-// api.md 187): engaging with one card of a container ends it for the whole container, and so does a click inside it,
-// stored as a `seen` naming the container with the `head` it saw, so a line that arrives meanwhile stays fresh. The
-// same container seen marks the agent's replies to the container's notes seen (tracker N47).
+// (`LedgerState.looked`: their latest card seen or act naming it). Nothing is stored: engaging with
+// one card of a container ends it for the whole container, and a click on the frame changes nothing.
 // conditions.ts gives these their rows (`freshCards`, `container.fresh`). Pure.
 import { latest, nodesOf } from '#format';
 import type { LedgerNode } from '#format';
-import type { LedgerReply, LedgerState } from './fold.ts';
+import type { LedgerState } from './fold.ts';
 import { unseenReply } from './clears.ts';
 import { numberOf } from './numbers.ts';
 import { placeOf } from './references.ts';
@@ -40,30 +38,12 @@ export function freshOf(s: LedgerState, board: string, isNew: ReadonlySet<number
   }).sort((a, b) => a.n - b.n);
 }
 
-/** Fold the person's container seen: `region` of `board` up to line `head`, raised, never lowered. */
-export function seeContainer(s: LedgerState, board: string, region: string, head: number): void {
-  const regions = s.seenContainers.get(board) ?? new Map<string, number>();
-  s.seenContainers.set(board, regions.set(region, Math.max(regions.get(region) ?? 0, head)));
-}
-
-/** The line the person last saw container `region` of `board` up to (0: never). */
-export const containerSeenAt = (s: LedgerState, board: string, region: string): number => s.seenContainers.get(board)?.get(region) ?? 0;
-
-/** The agent's replies to the notes on container `region` of `board` that the person has not seen: after their latest
- * container seen (tracker N47), oldest first. */
-export function unseenContainerReplies(s: LedgerState, board: string, region: string): LedgerReply[] {
-  const notes = new Set((s.regionLogs.get(board)?.get(region)?.asks ?? []).map((a) => a.seq));
-  const since = containerSeenAt(s, board, region);
-  return [...s.replies.values()].flat().filter((r) => r.to !== undefined && notes.has(r.to) && r.seq > since).sort((a, b) => a.seq - b.seq);
-}
-
 /** The fresh containers of `board` among `cards` (`freshOf`): container -> the `seq` of its newest
- * change, when that is after the person's latest card seen or act on any card in it now, and after their latest seen
- * of the container itself. */
+ * change, when that is after the person's latest card seen or act on any card in it now. */
 export function freshContainers(s: LedgerState, board: string, cards: readonly FreshCard[]): Map<string, number> {
   const newest = new Map<string, number>();
   for (const c of cards) newest.set(c.container, Math.max(newest.get(c.container) ?? 0, c.seq));
-  const looked = new Map([...newest.keys()].map((container) => [container, containerSeenAt(s, board, container)]));
+  const looked = new Map<string, number>();
   for (const x of nodesOf(s, board)) {
     const at = s.looked.get(x.id);
     const where = at === undefined ? undefined : placeOf(s, x.id)?.region;

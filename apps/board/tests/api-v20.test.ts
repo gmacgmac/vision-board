@@ -1,5 +1,5 @@
 // Ledger v20 over the API (api.md 182-189): a board's skin through write_board, put_board's rename and the person's
-// act, said by get_board and list_boards; a container seen through mark_seen; Ask now as an act whose lines are
+// act, said by get_board and list_boards; mark_seen refuses a container (point 308); Ask now as an act whose lines are
 // `seq`s, not cards; the bookmark. The icon library's operations are in icon-library.test.ts.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -48,11 +48,10 @@ test('a library icon no `icon` line names is refused with words; a hue as text i
   assert.equal(h.ledger.state().nodes.size, cards, 'nothing drawn');
 });
 
-test('mark_seen takes a container with the head it saw', async () => {
+test('mark_seen refuses a container: its seen is the page\'s alone, never stored (D-054, point 308)', async () => {
   const head = h.ledger.state().seq;
-  const seen = await h.ok('mark_seen', { board: 'pricing', body: { board: 'pricing', region: 'options', head } });
-  assert.deepEqual([seen.type, seen.region, seen.head], ['seen', 'options', head]);
-  await h.fails('mark_seen', { board: 'pricing', body: { board: 'pricing', region: 'nowhere', head } }, 422, 'invalid');
+  await h.fails('mark_seen', { board: 'pricing', body: { board: 'pricing', region: 'options', head } }, 422, 'invalid');
+  assert.equal(h.ledger.state().seq, head, 'nothing written');
 });
 
 test('Ask now: an `ask` naming a note by its seq, with its context; the ✓ that waits is not sent', async () => {

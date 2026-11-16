@@ -8,8 +8,8 @@
 ## Objective
 
 Make the new node work on the board: each mark does its action, the menus open, the keys and right-click work,
-flag is renamed Bookmark everywhere, a container can be marked seen, and a board's skin is applied and can be
-changed.
+flag is renamed Bookmark everywhere, a click inside a container clears its new-and-updated pill on the person's
+screen (page-local, point 308), and a board's skin is applied and can be changed.
 
 ---
 
@@ -30,12 +30,13 @@ Overlays live on the stage, outside the scaled world, placed in stage pixels (`C
   `apps/board/src/styles/`, `apps/board/src/gallery/`, `apps/board/tests/`, `tests/pages/`; for the rename only:
   `packages/ui/src/node/`, `packages/ui/src/words/`, `packages/ui/tests/`, `packages/format/src/flags.ts` (`cardFlag`
   becomes `cardBookmark`), `packages/tokens/src/tokens.css`
-  (remove the `--vb-state-flag` alias only); `docs/specification/components.md`
+  (remove the `--vb-state-flag` alias only); `docs/specification/components.md`; for step 8's words only:
+  `packages/actions/src/conditions.ts` (`container.fresh` `endsWhen`) and `docs/specification/api.md` 158
 - **Files to reference**: `CODE-MAP.md` §§ 4 to 7, 12; `apps/board/src/board/cards/flag-flow.ts`, `item-acts.ts`,
   `update-flow.ts`, `history-flow.ts`; `apps/board/src/board/input/` (`pointer.ts` `HANDLE`, `keys.ts`,
   `commands.ts`, `wiring.ts`); `apps/board/src/shell/ThemeControl.svelte`; `.kiro/steering/svelte-conventions.md`
 - **Shared artifacts to reuse**: `packages/ui/src/menu/`, `packages/ui/src/skins.ts`, `packages/ui/src/icons/`
-  (FE_01); the acts and folds from T_01 (`bookmarksOn`, `containerSeenDue`); `list_icons` with `paths` (BE_04); `placeBar` and the hover tip's placing for where an overlay goes
+  (FE_01); the acts and folds from T_01 (`bookmarksOn`); `container.fresh` and its `seq` (`conditionsOf`, `fresh.ts` `freshContainers`) for step 8; `list_icons` with `paths` (BE_04); `placeBar` and the hover tip's placing for where an overlay goes
 - **Skills**: `cortex-architecture`, `cortex-docs`
 
 > Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
@@ -64,9 +65,13 @@ Overlays live on the stage, outside the scaled world, placed in stage pixels (`C
        on the background. Shift+F10 opens it for the focused node.
 7. [ ] **Menus**: one open at a time; fixed size at any zoom; they stay open and stay attached while the person
        zooms or pans; Escape and a click outside close them; focus moves in and returns.
-8. [ ] **Seen**: on a board that isn't read-only, a click inside a container, on its background or frame, writes
-       the container's `seen` line with the `head` the person saw, only when T_01's `containerSeenDue` says it
-       changes something. Selecting a node already marks it seen; keep that.
+8. [ ] **Seen** (point 308): on a board that isn't read-only, a click inside a container, on its background or
+       frame, clears its new-and-updated pill and teal border on the person's screen only. It is page-local state,
+       as zoom is: the page keeps, per board and container, the newest change it cleared (`container.fresh`'s `seq`)
+       and shows the pill again when a later change arrives; a reload shows it again. Nothing is written: no
+       `seen` names a container (`mark_seen` refuses one, api.md 187) and D-054 stands. Selecting a node already
+       marks it seen; keep that. Update `container.fresh`'s `endsWhen` and api.md 158 ("a click on the frame
+       changes nothing") to say the click clears the pill on screen only.
 8a. [ ] **Library icons**: the page reads `list_icons` with `paths: true` when it opens a ledger and again when an
        `icon` line arrives, and passes the library to the node (FE_01's `icon(name, cls, library)`). A missing or
        failing icon draws the plain tile; nothing else on the board waits for it.

@@ -1,6 +1,6 @@
 // Ledger v20 (api.md 182-189, D-099, D-100, D-103): the flag is Bookmark, migrated, never read as a flag; a board's
-// skin, a node's icon and tone, a flow's direction, the `icon` line, a container's `seen`, the person's `skin`, `ask`
-// and `direction`. The schema and `eventProblems` agree on every line, good and broken; an old ledger with flags
+// skin, a node's icon and tone, a flow's direction, the `icon` line, the person's `skin`, `ask` and `direction`; a
+// container's `seen` is the page's alone, refused as an unknown field (D-054, point 308). The schema and `eventProblems` agree on every line, good and broken; an old ledger with flags
 // migrates through the chain to the same boards, the flags as bookmarks, and a second run changes nothing; a v20
 // ledger round-trips. The reader knows this one format (D-103 3): a line of any older one, of every type and action,
 // is refused by both checks with words to migrate it, and reads once the chain has brought it here.
@@ -26,7 +26,6 @@ const GOOD: [string, Rec][] = [
   ['hue 359', node({ tone: 359 })],
   ['an agent\'s icon line', { ...AGENT, type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64), key: 'icon-encoder' }],
   ['the person\'s icon line (an accepted drawing)', { ...PERSON, type: 'icon', name: 'x-encoder', hash: 'b'.repeat(64) }],
-  ['a container seen', { ...PERSON, type: 'seen', board: 'b', region: 'plan', head: 9 }],
   ['a bookmark', act('bookmark')],
   ['an unbookmark', act('unbookmark')],
   ['a skin act', act('skin', { skin: 'default' })],
@@ -52,8 +51,7 @@ const BROKEN: [string, Rec][] = [
   ['an icon line without a hash', { ...AGENT, type: 'icon', name: 'x-encoder' }],
   ['an icon line with an uppercase hash', { ...AGENT, type: 'icon', name: 'x-encoder', hash: 'A'.repeat(64) }],
   ['an icon line naming a board', { ...AGENT, type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64), board: 'b' }],
-  ['a container seen without its head', { ...PERSON, type: 'seen', board: 'b', region: 'plan' }],
-  ['a container seen naming a card', { ...PERSON, type: 'seen', board: 'b', region: 'plan', head: 9, n: 1 }],
+  ['a container seen: the page\'s alone, never stored (point 308)', { ...PERSON, type: 'seen', board: 'b', region: 'plan', head: 9 }],
   ['a card seen with a region', { ...PERSON, type: 'seen', n: 1, ver: 1, region: 'plan' }],
   ['a skin act without the skin', act('skin', { skin: undefined })],
   ['a skin act without its board', act('skin', { board: undefined })],
@@ -84,6 +82,10 @@ test('ledger v20: every new line is accepted by both checks', () => {
 
 test(`ledger v20: ${BROKEN.length} broken lines, each refused by both checks`, () => {
   for (const [name, e] of BROKEN) assert.deepEqual(verdict(JSON.parse(JSON.stringify(e)) as Rec), { schema: false, hand: false }, name);
+});
+
+test('a seen naming a container is refused as an unknown field, as any other (point 308)', () => {
+  assert.deepEqual(eventProblems({ ...PERSON, type: 'seen', board: 'b', region: 'plan', head: 9 }), ['region: unknown field']);
 });
 
 /** A frozen ledger of BE_02 (fixtures/legacy/, never edited), as its lines. */

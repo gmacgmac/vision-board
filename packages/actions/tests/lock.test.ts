@@ -133,7 +133,6 @@ test('on a locked board every agent line is refused in plain words; the person\'
   }
   assert.equal(lockedProblem(s, agent({ type: 'join', label: 'New chat' })), undefined, 'a join names no board');
   assert.equal(lockedProblem(s, agent({ type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64) })), undefined, 'a library icon is on no board');
-  assert.equal(lockedProblem(s, person({ type: 'seen', board: 'b2', region: 'x', head: s.seq })), undefined, 'a container seen goes');
   assert.equal(lockedProblem(s, agent({ type: 'node', board: 'b', id: 99, ver: 1, node: { region: 'r', kind: 'note', title: 'T' } })), undefined);
   assert.equal(lockedProblem(s, person({ type: 'seen', board: 'b2', head: s.seq })), undefined);
   assert.equal(lockedProblem(s, person({ type: 'seen', id: 4, ver: 1 })), undefined);

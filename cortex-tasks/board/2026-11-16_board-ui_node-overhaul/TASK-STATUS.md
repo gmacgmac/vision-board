@@ -78,10 +78,10 @@ on the result. Waves 1 and 3 run tasks in their own git worktrees, merged after 
 | `apps/board/server/ledger-migrate.ts` (the runner: lock, backup, atomic replace; run on a writable open), `npm run ledger:migrate` | BE_02 | T_01, BE_03, VERIFY_01 |
 | `packages/format/fixtures/legacy/` (today's fixtures, the mixed-format ledger and their frozen folds; never edited) | BE_02 | T_01, BE_03, VERIFY_01 |
 | `packages/format/src/view.ts` (`ViewNode.icon`, `ViewNode.tone`, `ICON_NAMES`, `isLibraryIcon`, `TONES`, `SKINS`, `Skin`, `Region.direction`, `directionOf`) | T_01 | T_02, BE_04, FE_01, FE_02, FE_04, BE_01, FE_07, T_03 |
-| `packages/format/src/ledger.ts` (acts `bookmark`, `unbookmark`, `skin`, `ask` with `ASK_CONTEXTS`, `direction`; the `icon` event; a container's `seen` with `head`; `LEDGER_FORMAT` 20) | T_01 | BE_03, BE_04, FE_02, FE_03, FE_06, BE_01, FE_07, FE_08 |
+| `packages/format/src/ledger.ts` (acts `bookmark`, `unbookmark`, `skin`, `ask` with `ASK_CONTEXTS`, `direction`; the `icon` event; `LEDGER_FORMAT` 20; a `seen` names a card or a board, never a container: point 308) | T_01 | BE_03, BE_04, FE_02, FE_03, FE_06, BE_01, FE_07, FE_08 |
 | `packages/format/src/data-folder.ts` (`ICONS_DIR`, `ProjectFiles.icons`) and `openapi.json` (`list_icons` with `paths`, `add_icon`) | T_01 | BE_04, FE_02, T_03 |
 | `packages/format/src/flags.ts` (`nodeEdges`, `skins`, `layoutControl`, `flowDirection`, `appWindow`) | T_01 | every later task |
-| `packages/actions/src/` (`bookmarksOn`, `containerSeenDue`, the fold of a board's skin, a seen container, asked lines and directions) | T_01 | FE_02, FE_03, FE_06, BE_01, FE_07 |
+| `packages/actions/src/` (`bookmarksOn`, the fold of a board's skin, asked lines and directions; no container seen, point 308) | T_01 | FE_02, FE_03, FE_06, BE_01, FE_07 |
 | `design/mockups/node-states/` (the agreed place of every undrawn state) | DESIGN_01 | FE_01, FE_04, FE_08 |
 | `packages/tokens/src/tokens.css` (edge-mark, answer and skin tokens; tone tints from `--vb-tone-h`; `[data-vb-skin]` values), `packages/tokens/fonts/` | Completed | Tokens, skins.css, four OFL fonts vendored (whole files, pinned commits, SHA-256 held by fonts.test.ts); 360-hue tone sweep passes in Chromium and WebKit. Step 5a deviation: nclite refuses @font-face, so the plugin brings no font yet (option C now, A later; maintainer ruling). Plugin board.css 21,951 of 22,000. tokens.css diff in task notes. |
 | `packages/format/src/icon-file.ts` (`ICON_BOX`, `ICON_LIMITS`, `iconPathProblem`, `iconFileProblem`, `iconPathsOf`), `apps/board/server/icons.ts`, `EngineOptions.icons` | Completed | Shared check `icon-file.ts`, handlers `icons.ts` (add once per name, every read checked, first use writes the line), `EngineOptions.icons`, access row; `list_icons` takes no credential. |
@@ -143,6 +143,8 @@ act (`directionOf` in `view.ts`), the `icon` line (`LedgerIndex.icons`), `ICONS_
 the reader still takes 2-20 where they lie except `flag`; `legacy-folds.test.ts` maps `flags`. For FE_02: `flag-flow.ts`
 sends `bookmark` only; the rest of the page still says flag. `verify` fails the page weight (200.7 KB, HEAD 198.7 KB):
 needs the maintainer's ruling. Requests: `npm run map`; files touched outside the list are named in the task's notes.
+Point 308 (after the run): the container `seen` (`{ board, region, head }`, `containerSeenDue`, `unseenContainerReplies`,
+`seenContainers`) was taken out of format 20; a container's pill clears on the page only (FE_02 step 8, PLAN.md).
 
 ### DESIGN_01: The states nobody drew
 _Status:_ Completed  

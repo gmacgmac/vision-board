@@ -44,7 +44,8 @@ answer it, comment, ask now, bookmark, zoom, select, switch skin, turn a flow do
        read back from the ledger: Ask now on one node while other answers wait (one `ask` line with its `lines` and
        `context`; the others still unsent; the agent's reply lands in that node's box); a skin change and a rename
        (the skin stays); a flow's Across, Down and Auto, for a container and for the board; a click inside a
-       container (one `seen` line with its `head`, and none on a second click that changes nothing); an icon added
+       container (its pill clears on screen, no line is written, and it shows again on the container's next change;
+       point 308); an icon added
        through `add_icon` and used on two boards; a hostile SVG offered to `add_icon` and one dropped into
        `.visionboard/icons/` by hand (neither is drawn).
 3. [ ] **Keyboard only**, then with a screen reader's names (the accessibility tree): every mark, menu and box.

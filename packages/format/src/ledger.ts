@@ -15,7 +15,7 @@ import * as formatLedgerWords from './words/format-ledger.ts';
  * older ledger is migrated to it, line for line (`migrate/`, `npm run ledger:migrate`); a line in an older format is
  * refused with words that say so, and one in a newer format leaves the ledger read-only (D-103 4). What each format
  * added: api.md's "Ledger vN" points; v20 renamed the person's `flag` and `unflag` to `bookmark` and `unbookmark` and
- * added a board's skin, a node's icon and tone, the `icon` line, a container's `seen`, the person's `ask` and a flow's
+ * added a board's skin, a node's icon and tone, the `icon` line, the person's `ask` and a flow's
  * `direction` (api.md 182-189). */
 export const LEDGER_FORMAT = 20;
 
@@ -196,8 +196,8 @@ export interface ActEvent extends Base {
   direction?: ActDirection;
 }
 /** The person has seen version `ver` of card `id` (D-018), or has looked at `board` up to its
- * line `head` (api.md 87), or at container `region` of `board` up to `head` (api.md 187). */
-export type SeenEvent = Base & { type: 'seen' } & ({ id: number; ver: number } | { board: string; head: number; region?: string });
+ * line `head` (api.md 87). A container's seen is the page's alone, never stored (D-054, point 308). */
+export type SeenEvent = Base & { type: 'seen' } & ({ id: number; ver: number } | { board: string; head: number });
 /** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */
 export interface ReplyEvent extends Base, Keyed { type: 'reply'; id: number; text: string; to?: number }
 /** The agent proposes a decision; only the person can make it (D-018). */

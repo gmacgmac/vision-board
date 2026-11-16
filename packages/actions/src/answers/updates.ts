@@ -9,8 +9,7 @@ import { versionChanges } from '../changes.ts';
 import type { FieldChange } from '../changes.ts';
 import { unseenAnswer, unseenReply } from '../clears.ts';
 import type { SelectedBy } from '../conditions.ts';
-import { clearsOn, freshCards } from '../conditions.ts';
-import { containerSeenAt, freshContainers, unseenContainerReplies } from '../fresh.ts';
+import { clearsOn } from '../conditions.ts';
 import type { LedgerState } from '../fold.ts';
 
 /** Card `n` on `board` as the held state names it (0 for a number the board has not given). */
@@ -63,16 +62,6 @@ export const seenVer = (s: LedgerState, board: string, n: number): number => s.s
  *  the agent's answer or reply the person has not looked at (D-045, round 2 ruling 4). */
 export const seenDue = (s: LedgerState, board: string, n: number, ver: number): boolean =>
   seenVer(s, board, n) < ver || unseenAnswer(s, idOf(s, board, n)) || answerOf(s, board, n) !== undefined;
-
-/** Whether a container seen line for `region` of `board` up to `head` would change anything (D-099 4, api.md 187): the
- *  container is fresh and its newest change is at or before `head`, or an agent's reply to one of its notes the
- *  person has not seen is (tracker N47). A line after `head` stays fresh, so a seen that clears nothing is never
- *  written. The page writes the line only then, and never on a read-only ledger. */
-export function containerSeenDue(s: LedgerState, board: string, region: string, head: number): boolean {
-  if (head <= containerSeenAt(s, board, region)) return false;
-  const newest = freshContainers(s, board, freshCards(s, board)).get(region);
-  return (newest !== undefined && newest <= head) || unseenContainerReplies(s, board, region).some((r) => r.seq <= head);
-}
 
 /** The items a selection marks seen: for each card condition the page shows, those it holds for when
  *  the row's `clearedBy` names select (`clearsOn`, never a list of kinds here). A card selected
