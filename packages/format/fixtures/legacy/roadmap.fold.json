@@ -1,0 +1,255 @@
+{
+ "problems": [],
+ "head": 36,
+ "boards": {
+  "roadmap": {
+   "view": {
+    "format": 1,
+    "session": "roadmap",
+    "version": 36,
+    "title": "Where Vision Board goes from here",
+    "summary": "The roadmap from chat, drawn as a board. Numbers run across every region.",
+    "regions": [
+     {
+      "id": "review",
+      "title": "Review",
+      "mode": "grid",
+      "columns": 3
+     },
+     {
+      "id": "prove",
+      "title": "Prove the idea before code",
+      "mode": "flow"
+     },
+     {
+      "id": "decide",
+      "title": "Formats and decisions",
+      "mode": "radial",
+      "center": "7"
+     },
+     {
+      "id": "build",
+      "title": "Build in thin slices",
+      "mode": "lanes",
+      "lanes": [
+       "Foundation",
+       "Board",
+       "Agent"
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "review",
+      "kind": "question",
+      "title": "Review the rules and principles",
+      "body": "Say what is wrong or missing.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "review",
+      "kind": "decision",
+      "title": "Accept or change D-001 to D-008",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "review",
+      "kind": "action",
+      "title": "Cortex setup",
+      "body": "Categories and the registry.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "prove",
+      "kind": "action",
+      "title": "Paper prototype",
+      "body": "Hand-write a view and transcript for a real review.",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "prove",
+      "kind": "finding",
+      "title": "Use this roadmap as test case 1",
+      "body": "It is the numbered, cross-category output the board replaces.",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "prove",
+      "kind": "question",
+      "title": "Define item kinds and their buttons",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "decide",
+      "kind": "topic",
+      "title": "Decide the stack",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "decide",
+      "kind": "action",
+      "title": "Format spec v0",
+      "body": "JSON Schema and a validator.",
+      "n": 8
+     },
+     {
+      "id": "9",
+      "region": "decide",
+      "kind": "decision",
+      "title": "Framework",
+      "body": "### Options\n\n- **SvelteKit**, to match Studio\n- **Plain Vite**",
+      "n": 9
+     },
+     {
+      "id": "10",
+      "region": "decide",
+      "kind": "decision",
+      "title": "Layout engine",
+      "body": "Our own per mode, or ELK.",
+      "n": 10
+     },
+     {
+      "id": "11",
+      "region": "decide",
+      "kind": "risk",
+      "title": "Reuse from sibling projects",
+      "body": "Dropped by the maintainer.",
+      "n": 11
+     },
+     {
+      "id": "12",
+      "region": "build",
+      "kind": "action",
+      "title": "Scaffold",
+      "body": "Workspace, tokens, ui base, checks.",
+      "lane": "Foundation",
+      "n": 12
+     },
+     {
+      "id": "13",
+      "region": "build",
+      "kind": "action",
+      "title": "Walking skeleton",
+      "body": "### Parts\n\n- Grid and item card\n- Actions and the transcript",
+      "lane": "Board",
+      "emphasis": true,
+      "n": 13
+     },
+     {
+      "id": "14",
+      "region": "build",
+      "kind": "action",
+      "title": "Agent skill v0",
+      "body": "Write a view, read the transcript.",
+      "lane": "Agent",
+      "n": 14
+     },
+     {
+      "id": "15",
+      "region": "build",
+      "kind": "action",
+      "title": "More modes",
+      "body": "List, flow, lanes, radial.",
+      "lane": "Board",
+      "n": 15
+     },
+     {
+      "id": "16",
+      "region": "build",
+      "kind": "action",
+      "title": "Versions, Confirm these, Approve",
+      "lane": "Board",
+      "n": 16
+     },
+     {
+      "id": "17",
+      "region": "build",
+      "kind": "action",
+      "title": "WebMCP or plugin",
+      "body": "No manual \"go read it\" step.",
+      "lane": "Agent",
+      "n": 17
+     }
+    ],
+    "links": [
+     {
+      "from": "4",
+      "to": "5"
+     },
+     {
+      "from": "5",
+      "to": "6"
+     },
+     {
+      "from": "7",
+      "to": "8"
+     },
+     {
+      "from": "7",
+      "to": "9"
+     },
+     {
+      "from": "7",
+      "to": "10"
+     },
+     {
+      "from": "7",
+      "to": "11"
+     },
+     {
+      "from": "6",
+      "to": "8"
+     },
+     {
+      "from": "9",
+      "to": "12"
+     },
+     {
+      "from": "12",
+      "to": "13"
+     },
+     {
+      "from": "13",
+      "to": "14"
+     },
+     {
+      "from": "13",
+      "to": "15"
+     },
+     {
+      "from": "15",
+      "to": "16"
+     },
+     {
+      "from": "14",
+      "to": "17"
+     },
+     {
+      "from": "10",
+      "to": "15",
+      "label": "informs"
+     }
+    ]
+   },
+   "state": {
+    "items": {},
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  }
+ }
+}

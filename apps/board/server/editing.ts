@@ -6,6 +6,8 @@
 // after a sleep) reads as read-only, so a writer stops before its next line. The ledger, the engine and the agents store
 // ask `readOnly` (ledger.ts `gate`); the change streams hear `onChange`: after Edit and Stop editing, and when the lock's
 // beat finds it changed hands elsewhere (`look`: this server's lock taken over, another computer starting or stopping).
+// A ledger written by a newer build (D-103 4, the ledger's `newer`) is read-only whatever else holds, and nobody is
+// editing it: Edit refuses it in its own words (project.ts `edit`).
 import type { Lock, LockEnv } from './lock.ts';
 import { lockHolder } from './lock.ts';
 
@@ -37,12 +39,12 @@ export interface Editing {
 
 /** `lock`: the one the opener took. `writable`: open for writing at first. `guard`: read-only opening is on, so a lock
  * lost to another server reads as read-only. `startsReadOnly`: and no `--edit`. `env`: what another server's lock is
- * read with (tests). */
-export function createEditing(lock: Lock | undefined, writable: boolean, guard: boolean, startsReadOnly: boolean, env?: LockEnv): Editing {
+ * read with (tests). `newer`: the ledger holds a newer build's line (ledger.ts `newer`), default never. */
+export function createEditing(lock: Lock | undefined, writable: boolean, guard: boolean, startsReadOnly: boolean, env?: LockEnv, newer: () => boolean = () => false): Editing {
   let held = lock;
   let editing = writable;
   const listeners = new Set<(readOnly: boolean) => void>();
-  const readOnly = () => !editing || (guard && held !== undefined && !held.held());
+  const readOnly = () => newer() || !editing || (guard && held !== undefined && !held.held());
   const tell = () => { for (const fn of [...listeners]) fn(readOnly()); };
   /** What the last `look` saw: whether read-only, and who held the lock since when. */
   let seen: string | undefined;
@@ -69,6 +71,7 @@ export function createEditing(lock: Lock | undefined, writable: boolean, guard: 
     },
     info(dir) {
       seen = state(dir); // what the page is told now: a later look tells it of any change from this
+      if (newer()) return undefined;
       if (!readOnly()) return { here: true };
       const x = lockHolder(dir, env);
       return x && { host: x.host, since: x.started };

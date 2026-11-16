@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -47,7 +47,8 @@ packages/format/schema/openapi.json               every operation, input, output
 
 ## Schemas
 
-5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/4/<file>`.
+5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/<LEDGER_FORMAT>/<file>`
+   (today `.../ledger/19/<file>`).
    `.invalid` is reserved (RFC 2606), so it is plainly a name and is never fetched. Every `$ref`
    uses the target's `$id`. API body schemas live under `.../schema/api/<file>` and version with
    `openapi.json` `info.version`, not with the ledger.
@@ -83,10 +84,13 @@ packages/format/schema/openapi.json               every operation, input, output
     - limits: node and board title 200, region title 80, node body 8000, text and reason 4000,
       summary 2000, link label 80, agent label 80, tags 12 of 40, lanes 12 of 40, columns 1-12,
       sources 20 of 500, propose source 500, park bundle fields 4000, key 64, person 80
-11. **Versions.** `LEDGER_FORMAT` is 4 (v3 below, v4 in 58). Every change to a ledger schema
-    bumps it and the `$id` path. Readers accept every `v` they know (2, 3 and 4); each format only
-    adds, so older lines stay valid. On a v2 line `agent` is any non-blank name (the fixtures say
-    `kiro`); from v3 it is an agent id (`if`/`then` on `v`).
+11. **Versions.** `LEDGER_FORMAT` is 19 (`packages/format/src/ledger.ts`; each format's additions are in the
+    `LEDGER_FORMATS` comment and the "Ledger vN" sections below). Every change to a ledger schema bumps it and the `$id`
+    path. Older ledgers are migrated to the current format when they are opened for writing (D-103; § Migration,
+    176-181), and read through the same upgrade in memory when they are not; a ledger written in a newer format opens
+    read-only (180). Until the one-format reader lands (node-overhaul BE_03), the reader still accepts every format from
+    2 to 19 where it lies: on a v2 line `agent` is any non-blank name (the fixtures say `kiro`); from v3 it is an agent
+    id (`if`/`then` on `v`).
 12. **Where ajv runs.** `Ajv2020`, strict mode on, `discriminator: true`, only in tests and in the
     server's I/O layer (`apps/board/server`). Never from a front door the page imports, so it never
     reaches the page bundle (rule 15).
@@ -1936,3 +1940,45 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     - **`followOtherWriters`** (engine flag, on): off, the engine never polls the ledger file (`ledger.ts` `follow`);
       another program's lines are read in at its next operation, as 160 says of every operation.
     - Held by the tests plugin.md names for each.
+
+## Migration (node-overhaul BE_02, D-103)
+
+176. **The rule.** When the ledger format changes, a migration brings older ledgers to the current format, line for
+    line. It never adds, removes or reorders a line, and never changes `seq`, `at`, `by`, `type`, a card's identity
+    (`n`) or a board id: lines point at each other by `seq`, and an agent holds a `head` (43). It is the one rewrite an
+    append-only ledger allows (D-017). Held by `packages/format/tests/migrate.test.ts` (over every frozen ledger) and
+    `packages/actions/tests/legacy-folds.test.ts`.
+177. **The chain.** `packages/format/src/migrate/` is the one module that knows the old formats: `UPGRADE_STEPS`, one
+    `UpgradeStep` per format (`from`, `to`, `up`: one parsed line in, one line out, or an `UpgradeStop` with its words).
+    No `v`: read as format 2 only when, so read, it upgrades to a well-formed line, else it stops. 2: the free-text
+    `agent` is dropped (no creator, as before; a `join` keeps an agent id and stops on any other name). 5: a container an
+    agent named `later` stops. 10: `node.item` goes. 11: mode `list` becomes `column`, on a container and in a `mode`
+    act. Every other format is restamped. `upgradeLine` returns a current line untouched; `upgradeLines` keeps a
+    current, blank, not-JSON or badly shaped line byte for byte, replaces `v` in place on the rest, and names the
+    stops and the newer lines. A test fails when a format below `LEDGER_FORMAT` has no step.
+178. **When it runs.** On open for writing, straight after the lock is taken (`apps/board/server/project.ts`; the first
+    ledger, opened by the server under its lock, is migrated and read again); on Edit of a ledger opened read-only,
+    after Edit takes the lock; under a host, when the engine opens a `dir` it may write (`createEngine`, no lock:
+    plugin.md § The engine). Never on a read-only open, never while another server holds the lock. A ledger opened
+    read-only, another ledger a read names, and lines another writer appends pass through `upgradeLines` in memory
+    (`ledger.ts` `readHeld`, `refresh`), so `read_ledger` and the page get current lines and nothing is written
+    (D-085). A line the chain stops on stops the whole migration: nothing is written, the server log says which line
+    and why, and the ledger is read as it lies.
+179. **How it writes** (`apps/board/server/ledger-migrate.ts` `migrateHeld`). The file is read once; every line current:
+    nothing is written and no backup made, so a second run is a no-op. The result is checked before anything is
+    replaced: as many lines, the same `seq`, `at`, `by`, `type`, `n` and `board` on every line, and no reader problem the
+    old file did not have. Then the new text goes to `ledger.jsonl.migrating` (flushed), the old bytes to
+    `backups/ledger.f<lowest>-<highest>.<head seq>.<UTC time>.jsonl` (flushed; `backups/` is git-ignored and moves with
+    the ledger, `data-folder.ts` `BACKUPS_DIR`), and the new file is renamed over the ledger and the folder flushed. A
+    file that changed meanwhile is not replaced. A crash before the rename leaves the original whole and a stale
+    `.migrating` file the next run deletes. Anyone following the file sees a new inode and reads it again (`reset`,
+    D-085 6). Held by `apps/board/tests/ledger-migrate.test.ts` and `ledger-migrate-open.test.ts`.
+180. **A newer format** (D-103 4). A line whose `v` is above `LEDGER_FORMAT` is its own kind to the reader
+    (`ReadLedger.newer`, not a problem; `validateLedger` still names it). Such a line, at open or appended later, makes
+    the ledger read-only (`Ledger.newer`, `readOnly`): the reads say `readOnly: true`, every write answers `read-only`
+    in words that say a newer Vision Board wrote it (`server-folders.ts` `newerLedgerPerson`, `newerLedgerAgent`), its
+    lock is let go, and Edit is refused (`conflict`) in the person's words, which the page shows as Edit's refusal.
+181. **The command.** `npm run ledger:migrate -- <folder> [--check | --undo]`: a project folder means each of its
+    ledgers, a ledger's folder that one. It migrates under each ledger's lock; `--check` says what would change (lines
+    by format) and exits 1 when anything would, writing nothing; `--undo` puts the newest backup back only while the
+    ledger's head `seq` is the one the backup was taken at, else refuses and says why (`apps/board/bin/ledger-migrate.ts`).

@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -237,6 +237,16 @@ default (`packages/format/src/flags.ts` `FLAGS`) when left out:
 | `followOtherWriters` | on | `watch` and a held read hear another program's writes to `dir` (`watch`, below) |
 
 Flag names are plain strings in `plugin.d.ts` (`{ [name: string]: boolean }`), so a new flag is never a change to the seam, and a name the engine does not know is ignored (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone"; `apps/board/tests/engine-switches.test.ts` "every flag the engine reads is in the spec").
+
+**One engine per `dir`, and the ledger's format** (D-103). Open a `dir` with one engine at a time, and never let a second
+program write its ledger while the engine is open: the engine takes no lock (open point 14). When `createEngine` opens a
+`dir` it may write (`readOnly` left out, or answering false), it first migrates an older ledger there to the current
+format, line for line, with a copy of the file as it was in `dir`'s `backups/` (`apps/board/server/ledger-migrate.ts`;
+`api.md` § Migration). A `dir` opened read-only is never migrated: its ledger is upgraded in memory as it is read, and
+nothing is written. A ledger written by a newer Vision Board is read-only whatever `readOnly` says: every read says
+`readOnly: true` and every write answers `read-only` in words saying a newer Vision Board wrote it, until the plugin is
+updated. Proven by `apps/board/tests/ledger-migrate-open.test.ts` "a host's engine migrates a dir it may write",
+"a host's engine on a newer build's ledger".
 
 **Read-only** (D-085 7). `readOnly()` is asked on every call, so you flip it in place: no new engine, no reload. While it
 answers true, every write, your person's through `route` and your bot's through `tools.call`, answers the problem
@@ -621,7 +631,7 @@ Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
 13. **A bot's own file writes.** `readOnly` stops every write through the engine. A bot that writes pictures straight into
     `images/` (open point 1) is stopped only by the host's own file rules while the board is read-only.
 14. **A lock of the host's own.** Standalone takes the ledger's lock on Edit, so two computers never write one ledger; the
-    engine takes none. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
+    engine takes none, and § The engine now states the rule it migrates on: one engine opens a `dir` at a time. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
     the lock in the seam. With `followOtherWriters` off, such a second writer is not even heard until the engine's next call.
 
 ## What nclite needs

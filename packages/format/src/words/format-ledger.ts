@@ -123,3 +123,11 @@ export const regionIsTheBoardS = (LATER_REGION: string): string => `region: "${L
 export const cardsUnknownNode = (id: number): string => `cards: unknown node ${id}`;
 export const cardsCardIsOnBoard = (name: string, board: string, board2: string): string => `cards: card ${name} is on board "${board}", not "${board2}"`;
 export const cardsCardIsAlreadyRetired = (name: string): string => `cards: card ${name} is already retired`;
+
+// ---- ledger-read.ts (a line from a newer build, D-103 4)
+export const lineNewer = (i: number, v: number, current: number): string => `line ${i}: written in ledger format ${v} by a newer Vision Board; this one reads up to format ${current}`;
+
+// ---- migrate/ (the upgrade chain, D-103): why a line can't be upgraded, said once per line
+export const noFormatNotFormat2 = (problems: string): string => `a line with no \`v\` is read as format 2 only when it is a format-2 line, and this one is not (${problems}); it is not guessed at`;
+export const laterBeforeFormat6 = (board: string): string => `an agent named a container "later" on board "${board}" before format 6 made "later" every board's own Later; it can't be upgraded one line at a time`;
+export const joinNotAnAgentId = (agent: string): string => `a format-2 join names its agent "${agent}", not an agent id, so it can't be upgraded`;

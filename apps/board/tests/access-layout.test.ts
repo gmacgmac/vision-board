@@ -18,14 +18,14 @@ const WRITABLE: Verdicts = ['allow', 'allow'];
 
 /** Each file of a ledger folder, and what an agent may do with it (a folder: with a file inside it). */
 const PER_LEDGER: Record<keyof LedgerFiles, Verdicts> = {
-  ledger: READ_ONLY, agents: REFUSED, lock: READ_ONLY, images: WRITABLE, apps: WRITABLE, appState: REFUSED, gitignore: READ_ONLY,
+  ledger: READ_ONLY, agents: REFUSED, lock: READ_ONLY, images: WRITABLE, apps: WRITABLE, appState: REFUSED, backups: READ_ONLY, gitignore: READ_ONLY,
 };
 /** Each repo-wide file, at `.visionboard/` only. */
 const REPO_WIDE: Record<Exclude<keyof ProjectFiles, 'root'>, Verdicts> = {
   gitignore: READ_ONLY, chatSessions: REFUSED, permissions: READ_ONLY, attachments: READ_ONLY,
 };
 /** The folders among them: the rules are asked about a file inside. */
-const FOLDERS = new Set<string>(['images', 'apps', 'appState', 'attachments']);
+const FOLDERS = new Set<string>(['images', 'apps', 'appState', 'attachments', 'backups']);
 /** Refused wherever it sits: its rows reach a nested project too (`**`). */
 const SECRET = new Set<string>(['agents', 'appState', 'chatSessions']);
 

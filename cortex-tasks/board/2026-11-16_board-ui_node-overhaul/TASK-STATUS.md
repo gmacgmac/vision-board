@@ -39,7 +39,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
-| 1 | BE_02 | 1 | strong | yes | Principal data engineer for event-sourced systems — a migration that can lose or reorder one line is not a migration; it proves the same board line for line, keeps a backup and gives the same bytes when run twice. | [Ledger migration](./BE_02_ledger-migration.md) | Pending | |
+| 1 | BE_02 | 1 | strong | yes | Principal data engineer for event-sourced systems — a migration that can lose or reorder one line is not a migration; it proves the same board line for line, keeps a backup and gives the same bytes when run twice. | [Ledger migration](./BE_02_ledger-migration.md) | Completed | Chain, runner, command, newer read-only; 2 existing tests need `backups` (REQUESTS) |
 | 2 | DESIGN_01 | 1 | strong | no | Principal product designer — a state nobody drew is a state that ships broken; every one gets a place before a line of code. | [The states nobody drew](./DESIGN_01_undrawn-states.md) | Completed | 8 pages × dark/light in `design/mockups/node-states/`; 10 open choices in its README for the wave-3 gate |
 | 3 | T_01 | 2 | strong | no | Principal API engineer — a contract is one source; a record that needs a second reader or a field an agent can abuse never ships. | [Contract first](./T_01_contract-first.md) | Pending | |
 | 4 | T_02 | 3 | strong | yes | Design-systems engineer — a colour has one home and a measured contrast; a skin is values, never a fork. | [Tokens, skin layer and fonts](./T_02_tokens-skins-fonts.md) | Pending | |
@@ -120,8 +120,16 @@ Later waves hold one task each; a task's *Files to modify* is its ownership.
 ## Implementation Notes
 
 ### BE_02: Ledger migration
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1. Frozen first (11:08): `fixtures/legacy/` (4 fixtures, `perf`, `mixed` 251 lines formats 7-19) with
+`.fold.json` beside each; `legacy-folds.test.ts` holds both the as-is and the migrated fold. For T_01: append your
+19-to-20 step to `FORMAT_STEPS` (`packages/format/src/migrate/steps.ts`); `migrate.test.ts` fails until a path exists;
+map renamed fold keys (`flags`) in `legacy-folds.test.ts`, never the frozen files. For BE_03: old names live as literals
+in `steps.ts`, so `RENAMED_MODES`, `LEDGER_FORMATS` and the version branches can go; delete the "read as it lies" half
+of `legacy-folds.test.ts`. Runner: `apps/board/server/ledger-migrate.ts` (`migrateHeld`, `migrateLedger`,
+`migrateOnOpen`, `planMigration`, `undoMigration`); `Ledger.newer()` and `readOnlyWords` in `ledger.ts`. A stop is
+logged and the ledger opens as before. Requests: `backups` in `access-layout.test.ts` and `data-folder.test.ts`,
+`npm run map`, the format README's name list.
 
 ### T_01: Contract first
 _Status:_ Pending  

@@ -15,13 +15,16 @@
 // (`read-only`, D-085 3): the one gate every line passes, whoever writes it. A file that had lines and has gone reads as
 // empty. By default nothing is appended until it is back (`conflict`): the standalone server's file has usually been moved
 // into `main/` by another server. With `startAgainWhenGone` (a host's engine, which keeps one ledger in its own folder) a
-// gone file is a new, empty one, and the next line makes it again.
+// gone file is a new, empty one, and the next line makes it again. Every line read passes the upgrade chain first
+// (`upgradeLines`, D-103 2): a ledger nobody migrated (opened read-only, another ledger of the folder, an older writer's
+// line) is read in the current format and nothing is written. A line from a newer build (D-103 4) makes the ledger
+// read-only, whatever the gate says, with its own words (`newer`, `readOnlyWords`).
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ActEvent, LedgerEvent, LedgerIndex } from '#format';
 import {
-  LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, ledgerFiles, ledgerFolder, readLedger, readLine,
+  LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, ledgerFiles, ledgerFolder, readLedger, readLine, upgradeLines,
 } from '#format';
 import type { LedgerState } from '#actions';
 import { applyEvent, cardName, foldLedger, READ_ONLY, READ_ONLY_PERSON, validateAct, writeProblem } from '#actions';
@@ -50,8 +53,11 @@ export interface Ledger {
   onAppend(fn: (e: LedgerEvent) => void): () => void;
   /** Called after the file was found replaced and read again from the start (`refresh`). Returns an unsubscribe. */
   onReset(fn: () => void): () => void;
-  /** True while the host's read-only check says nothing may be appended (`gate`). */
+  /** True while nothing may be appended: the host's read-only check says so (`gate`), or the file holds a line from a
+   * newer build (`newer`). */
   readOnly(): boolean;
+  /** True while the file holds a line written in a newer ledger format than this build's (D-103 4). */
+  newer(): boolean;
   /** Throw what `append` would refuse before any line is read (`read-only` while the gate says so, `conflict` while
    * the file has gone), so a write beside the ledger (the agents file, on `join`) goes only when its line can. */
   checkWritable(caller: Caller): void;
@@ -134,6 +140,11 @@ function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: 
   return hand(rules.length ? rules : contextProblems(ix, event, cardName(s)));
 }
 
+/** What a write on a read-only ledger is refused with: a newer build's ledger says so (D-103 4); else the read-only
+ * words of D-085 (`#actions`). */
+export const readOnlyWords = (newer: boolean, by: Caller['by']): string =>
+  (newer ? (by === 'agent' ? serverFoldersWords.newerLedgerAgent : serverFoldersWords.newerLedgerPerson) : by === 'agent' ? READ_ONLY : READ_ONLY_PERSON);
+
 /** How many of the file's first bytes are kept as a digest: a file whose start changed was replaced. */
 const HEAD_BYTES = 4096;
 
@@ -146,6 +157,8 @@ interface Held {
   size: number;
   /** A torn last line (no newline) must not swallow the next event. */
   torn: boolean;
+  /** A line from a newer build was read (D-103 4). */
+  newer: boolean;
   /** The file as last looked at: its inode and the digest of its first bytes (up to `HEAD_BYTES`). */
   ino: number;
   head: { length: number; digest: string };
@@ -170,14 +183,15 @@ function readHeld(file: string, warn: (m: string) => void, whole: boolean): Held
   const all = stat ? fs.readFileSync(file) : Buffer.alloc(0);
   const raw = whole ? all.subarray(0, all.lastIndexOf(0x0a) + 1) : all;
   const text = raw.toString('utf8');
-  const lines = text.split('\n');
+  const lines = upgradeLines(text.split('\n')).lines;
   const read = readLedger(lines);
   for (const m of read.problems) warn(`ledger: ${m}`);
+  if (read.newer.length) warn(serverFoldersWords.newerLines(read.newer.length, read.newer[0]!));
   const ix = read.index;
   ix.seq = Math.max(ix.seq, highestSeq(lines));
   const length = Math.min(HEAD_BYTES, raw.length);
   return {
-    ix, s: foldLedger(read.events), events: [...read.events], size: raw.length, torn: text.length > 0 && !text.endsWith('\n'),
+    ix, s: foldLedger(read.events), events: [...read.events], size: raw.length, torn: text.length > 0 && !text.endsWith('\n'), newer: read.newer.length > 0,
     ino: stat?.ino ?? 0, head: { length, digest: digestOf(raw.subarray(0, length)) }, problems: read.problems,
   };
 }
@@ -215,8 +229,12 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
   };
   /** One line another writer appended, checked as `readLedger` checks a line on open (`readLine`). */
   const takeLine = (line: string) => {
-    const read = readLine(h.ix, line);
+    const read = readLine(h.ix, upgradeLines([line]).lines[0]!);
     if (read.event) return add(read.event);
+    if (read.newer !== undefined) {
+      h.newer = true;
+      return warn(serverFoldersWords.newerLines(1, h.ix.seq));
+    }
     if (read.notJSON) return warn('ledger: a line another writer appended is not JSON');
     for (const p of read.problems) warn(`ledger: a line another writer appended: ${p}`);
   };
@@ -258,8 +276,9 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
   /** Read-only: refused before anything is read, stamped or written (D-085 3), in the caller's words; then the file
    * looked at again, and refused while it has gone (FIX_01 F1). */
   const checkWritable = (caller: Caller) => {
-    if (readOnly()) throw problem('read-only', caller.by === 'agent' ? READ_ONLY : READ_ONLY_PERSON);
+    if (h.newer || readOnly()) throw problem('read-only', readOnlyWords(h.newer, caller.by));
     refresh();
+    if (h.newer) throw problem('read-only', readOnlyWords(true, caller.by));
     if (gone) throw problem('conflict', serverFoldersWords.ledgerFileGone);
   };
 
@@ -268,7 +287,8 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
     problems: first.problems,
     state: () => h.s,
     events: () => h.events,
-    readOnly: () => readOnly(),
+    readOnly: () => h.newer || readOnly(),
+    newer: () => h.newer,
     gate(fn) { readOnly = fn; },
     onAppend(fn) {
       listeners.add(fn);

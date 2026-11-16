@@ -1,0 +1,251 @@
+{"v":7,"seq":1,"at":"2026-10-06T11:50:00Z","by":"agent","agent":"a-mixkiro1","type":"join","label":"Kiro"}
+{"v":7,"seq":2,"at":"2026-10-06T14:40:00Z","by":"agent","agent":"a-mixkiro1","type":"board","board":"roadmap","title":"Where Vision Board goes from here","summary":"The roadmap from chat, drawn as a board. Numbers run across every region."}
+{"v":7,"seq":3,"at":"2026-10-06T17:30:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"roadmap","region":{"id":"review","title":"Review","mode":"grid","columns":3}}
+{"v":7,"seq":4,"at":"2026-10-06T20:20:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"roadmap","region":{"id":"prove","title":"Prove the idea before code","mode":"flow"}}
+{"v":7,"seq":5,"at":"2026-10-06T23:10:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"roadmap","region":{"id":"decide","title":"Formats and decisions","mode":"radial","center":7}}
+{"v":7,"seq":6,"at":"2026-10-07T02:00:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"roadmap","region":{"id":"build","title":"Build in thin slices","mode":"lanes","lanes":["Foundation","Board","Agent"]}}
+{"v":7,"seq":7,"at":"2026-10-07T04:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":1,"ver":1,"node":{"region":"review","kind":"question","title":"Review the rules and principles","body":"Say what is wrong or missing.","item":true}}
+{"v":7,"seq":8,"at":"2026-10-07T07:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":2,"ver":1,"node":{"region":"review","kind":"decision","title":"Accept or change D-001 to D-008","item":true}}
+{"v":7,"seq":9,"at":"2026-10-07T10:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":3,"ver":1,"node":{"region":"review","kind":"action","title":"Cortex setup","body":"Categories and the registry.","item":true}}
+{"v":7,"seq":10,"at":"2026-10-07T13:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":4,"ver":1,"node":{"region":"prove","kind":"action","title":"Paper prototype","body":"Hand-write a view and transcript for a real review.","item":true}}
+{"v":7,"seq":11,"at":"2026-10-07T16:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":5,"ver":1,"node":{"region":"prove","kind":"finding","title":"Use this roadmap as test case 1","body":"It is the numbered, cross-category output the board replaces.","item":true}}
+{"v":7,"seq":12,"at":"2026-10-07T19:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":6,"ver":1,"node":{"region":"prove","kind":"question","title":"Define item kinds and their buttons","item":true}}
+{"v":7,"seq":13,"at":"2026-10-07T21:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":7,"ver":1,"node":{"region":"decide","kind":"topic","title":"Decide the stack"}}
+{"v":7,"seq":14,"at":"2026-10-08T00:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":8,"ver":1,"node":{"region":"decide","kind":"action","title":"Format spec v0","body":"JSON Schema and a validator.","item":true}}
+{"v":7,"seq":15,"at":"2026-10-08T03:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":9,"ver":1,"node":{"region":"decide","kind":"decision","title":"Framework","body":"### Options\n\n- **SvelteKit**, to match Studio\n- **Plain Vite**","item":true}}
+{"v":7,"seq":16,"at":"2026-10-08T06:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":10,"ver":1,"node":{"region":"decide","kind":"decision","title":"Layout engine","body":"Our own per mode, or ELK.","item":true}}
+{"v":7,"seq":17,"at":"2026-10-08T09:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":11,"ver":1,"node":{"region":"decide","kind":"risk","title":"Reuse from sibling projects","body":"Dropped by the maintainer.","item":true}}
+{"v":7,"seq":18,"at":"2026-10-08T12:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":12,"ver":1,"node":{"region":"build","kind":"action","title":"Scaffold","body":"Workspace, tokens, ui base, checks.","item":true,"lane":"Foundation"}}
+{"v":7,"seq":19,"at":"2026-10-08T14:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":13,"ver":1,"node":{"region":"build","kind":"action","title":"Walking skeleton","body":"### Parts\n\n- Grid and item card\n- Actions and the transcript","item":true,"lane":"Board","emphasis":true}}
+{"v":7,"seq":20,"at":"2026-10-08T17:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":14,"ver":1,"node":{"region":"build","kind":"action","title":"Agent skill v0","body":"Write a view, read the transcript.","item":true,"lane":"Agent"}}
+{"v":7,"seq":21,"at":"2026-10-08T20:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":15,"ver":1,"node":{"region":"build","kind":"action","title":"More modes","body":"List, flow, lanes, radial.","item":true,"lane":"Board"}}
+{"v":7,"seq":22,"at":"2026-10-08T23:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":16,"ver":1,"node":{"region":"build","kind":"action","title":"Versions, Confirm these, Approve","item":true,"lane":"Board"}}
+{"v":7,"seq":23,"at":"2026-10-09T02:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":17,"ver":1,"node":{"region":"build","kind":"action","title":"WebMCP or plugin","body":"No manual \"go read it\" step.","item":true,"lane":"Agent"}}
+{"v":7,"seq":24,"at":"2026-10-09T05:00:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":4,"to":5}
+{"v":7,"seq":25,"at":"2026-10-09T07:50:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":5,"to":6}
+{"v":7,"seq":26,"at":"2026-10-09T10:40:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":7,"to":8}
+{"v":7,"seq":27,"at":"2026-10-09T13:30:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":7,"to":9}
+{"v":7,"seq":28,"at":"2026-10-09T16:20:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":7,"to":10}
+{"v":7,"seq":29,"at":"2026-10-09T19:10:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":7,"to":11}
+{"v":7,"seq":30,"at":"2026-10-09T22:00:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":6,"to":8}
+{"v":7,"seq":31,"at":"2026-10-10T00:50:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":9,"to":12}
+{"v":7,"seq":32,"at":"2026-10-10T03:40:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":12,"to":13}
+{"v":7,"seq":33,"at":"2026-10-10T06:30:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":13,"to":14}
+{"v":7,"seq":34,"at":"2026-10-10T09:20:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":13,"to":15}
+{"v":7,"seq":35,"at":"2026-10-10T12:10:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":15,"to":16}
+{"v":7,"seq":36,"at":"2026-10-10T15:00:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":14,"to":17}
+{"v":7,"seq":37,"at":"2026-10-10T17:50:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":10,"to":15,"label":"informs"}
+{"v":7,"seq":38,"at":"2026-10-10T20:40:00Z","by":"person","type":"act","action":"comment","n":1,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":7,"seq":39,"at":"2026-10-10T23:30:00Z","by":"person","type":"act","action":"ack","n":2,"ver":1}
+{"v":7,"seq":40,"at":"2026-10-11T02:20:00Z","by":"person","type":"act","action":"later","n":3,"ver":1}
+{"v":7,"seq":41,"at":"2026-10-11T05:10:00Z","by":"person","type":"act","action":"pin","n":4,"x":40,"y":24}
+{"v":7,"seq":42,"at":"2026-10-11T08:00:00Z","by":"person","type":"act","action":"comment","board":"roadmap","region":"review","text":"Looks right, but check the edge case."}
+{"v":7,"seq":43,"at":"2026-10-11T10:50:00Z","by":"person","type":"act","action":"pin","board":"roadmap","region":"build","x":900,"y":40}
+{"v":7,"seq":44,"at":"2026-10-11T13:40:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":1,"text":"Yes: the trial starts without a card.","to":38}
+{"v":7,"seq":45,"at":"2026-10-11T16:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":1,"ver":2,"node":{"region":"review","kind":"question","title":"Review the rules and principles","body":"Two options, one afternoon to decide.","item":true}}
+{"v":7,"seq":46,"at":"2026-10-11T19:20:00Z","by":"person","type":"seen","n":1,"ver":2}
+{"v":7,"seq":47,"at":"2026-10-11T22:10:00Z","by":"person","type":"act","action":"size","n":5,"size":"l"}
+{"v":7,"seq":48,"at":"2026-10-12T01:00:00Z","by":"person","type":"act","action":"context","n":6,"ver":1,"text":"Explain this in plain terms."}
+{"v":7,"seq":49,"at":"2026-10-12T03:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":6,"ver":2,"node":{"region":"prove","kind":"question","title":"Define item kinds and their buttons","item":true,"body":"Cold caches add four minutes."}}
+{"v":8,"seq":50,"at":"2026-10-12T06:40:00Z","by":"agent","agent":"a-mixkiro1","type":"board","board":"login-review","title":"Login page review"}
+{"v":8,"seq":51,"at":"2026-10-12T09:30:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"login-review","region":{"id":"findings","title":"Findings","mode":"grid","columns":2}}
+{"v":8,"seq":52,"at":"2026-10-12T12:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-review","n":18,"ver":1,"node":{"region":"findings","kind":"question","title":"Keep the remember-me box?","item":true}}
+{"v":8,"seq":53,"at":"2026-10-12T15:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-review","n":19,"ver":1,"node":{"region":"findings","kind":"topic","title":"Sign-in flow"}}
+{"v":8,"seq":54,"at":"2026-10-12T18:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-review","n":20,"ver":1,"node":{"region":"findings","kind":"decision","title":"Drop the legacy SSO button","item":true}}
+{"v":8,"seq":55,"at":"2026-10-12T20:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-review","n":21,"ver":1,"node":{"region":"findings","kind":"risk","title":"Rate limiting is per IP only","item":true}}
+{"v":8,"seq":56,"at":"2026-10-12T23:40:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":19,"to":18}
+{"v":8,"seq":57,"at":"2026-10-13T02:30:00Z","by":"person","type":"act","action":"comment","n":18,"ver":1,"text":"Who asked for it?"}
+{"v":8,"seq":58,"at":"2026-10-13T05:20:00Z","by":"person","type":"act","action":"later","n":21,"ver":1}
+{"v":8,"seq":59,"at":"2026-10-13T08:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-review","n":18,"ver":2,"node":{"region":"findings","kind":"question","title":"Keep the remember-me box?","body":"Support asked for it in the March survey.","item":true}}
+{"v":8,"seq":60,"at":"2026-10-13T11:00:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":18,"text":"Added the source to the card.","to":57}
+{"v":8,"seq":61,"at":"2026-10-13T13:50:00Z","by":"agent","agent":"a-mixkiro1","type":"park","n":21,"bundle":{"situation":"Login rate limiting is per IP only.","background":"Shared office IPs hit the limit; attackers rotate IPs.","assessment":"Per-account limits close the gap.","recommendation":"Add a per-account limit next sprint.","sources":["login-review board, item 4"]}}
+{"v":8,"seq":62,"at":"2026-10-13T16:40:00Z","by":"agent","agent":"a-mixkiro1","type":"propose","n":20,"ver":1,"action":"drop","reason":"The client's email says SSO stays for now.","source":"email pasted in chat"}
+{"v":8,"seq":63,"at":"2026-10-13T19:30:00Z","by":"person","type":"seen","n":18,"ver":2}
+{"v":8,"seq":64,"at":"2026-10-13T22:20:00Z","by":"person","type":"act","action":"drop","n":20,"ver":1,"proposal":62}
+{"v":8,"seq":65,"at":"2026-10-14T01:10:00Z","by":"person","type":"seen","board":"roadmap","head":64}
+{"v":8,"seq":66,"at":"2026-10-14T04:00:00Z","by":"agent","agent":"a-mixdocs1","type":"join","label":"Docs chat"}
+{"v":8,"seq":67,"at":"2026-10-14T06:50:00Z","by":"agent","agent":"a-mixdocs1","type":"grant-request","board":"roadmap","reason":"Looks right, but check the edge case."}
+{"v":8,"seq":68,"at":"2026-10-14T09:40:00Z","by":"person","type":"act","action":"grant","request":67}
+{"v":8,"seq":69,"at":"2026-10-14T12:30:00Z","by":"agent","agent":"a-mixdocs1","type":"node","board":"roadmap","n":7,"ver":2,"node":{"region":"decide","kind":"topic","title":"Decide the stack","body":"JSON Lines or a database."}}
+{"v":8,"seq":70,"at":"2026-10-14T15:20:00Z","by":"person","type":"act","action":"comment","n":7,"ver":2,"text":"Looks right, but check the edge case."}
+{"v":8,"seq":71,"at":"2026-10-14T18:10:00Z","by":"agent","agent":"a-mixdocs1","type":"reply","n":7,"text":"Yes: **three** accounts, all on the 2024 plan. I can list them if that helps.","to":70}
+{"v":8,"seq":72,"at":"2026-10-14T21:00:00Z","by":"person","type":"act","action":"comment","nodes":[8,9],"text":"Looks right, but check the edge case."}
+{"v":9,"seq":73,"at":"2026-10-14T23:50:00Z","by":"person","type":"board","board":"login-review","title":"Login page review, round two"}
+{"v":9,"seq":74,"at":"2026-10-15T02:40:00Z","by":"person","type":"act","action":"send","board":"roadmap"}
+{"v":10,"seq":75,"at":"2026-10-15T05:30:00Z","by":"agent","agent":"a-mixkiro1","type":"board","board":"login-layout","title":"Add passwordless login: what it touches","summary":"A sample code review: the agent researched a feature request and came back with touch points, questions and risks."}
+{"v":10,"seq":76,"at":"2026-10-15T08:20:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"login-layout","region":{"id":"touch","title":"Touch points","mode":"flow"}}
+{"v":10,"seq":77,"at":"2026-10-15T11:10:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"login-layout","region":{"id":"questions","title":"Questions for you","mode":"list"}}
+{"v":10,"seq":78,"at":"2026-10-15T14:00:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"login-layout","region":{"id":"risks","title":"Risks","mode":"grid","columns":2}}
+{"v":10,"seq":79,"at":"2026-10-15T16:50:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"login-layout","region":{"id":"plan","title":"Proposed plan","mode":"lanes","lanes":["Backend","Frontend","Ops"]}}
+{"v":10,"seq":80,"at":"2026-10-15T19:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":22,"ver":1,"node":{"region":"touch","kind":"finding","title":"Login form","body":"Swap the password field for an email-only step.","item":true,"tags":["web/login"]}}
+{"v":10,"seq":81,"at":"2026-10-15T22:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":23,"ver":1,"node":{"region":"touch","kind":"finding","title":"Auth API","body":"New endpoint to send and verify a one-time link.","item":true,"tags":["api/auth"]}}
+{"v":10,"seq":82,"at":"2026-10-16T01:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":24,"ver":1,"node":{"region":"touch","kind":"finding","title":"Mailer","body":"Needs a new template and rate limits.","item":true,"tags":["services/mail"]}}
+{"v":10,"seq":83,"at":"2026-10-16T04:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":25,"ver":1,"node":{"region":"touch","kind":"finding","title":"Session store","body":"Unchanged, but link tokens need their own table.","item":true}}
+{"v":10,"seq":84,"at":"2026-10-16T07:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":26,"ver":1,"node":{"region":"questions","kind":"question","title":"Keep passwords as a fallback?","body":"Removing them is simpler; keeping them avoids lock-outs.","item":true}}
+{"v":10,"seq":85,"at":"2026-10-16T09:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":27,"ver":1,"node":{"region":"questions","kind":"question","title":"How long should a link live?","body":"15 minutes is common.","item":true}}
+{"v":10,"seq":86,"at":"2026-10-16T12:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":28,"ver":1,"node":{"region":"questions","kind":"question","title":"Is SSO in scope?","item":true}}
+{"v":10,"seq":87,"at":"2026-10-16T15:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":29,"ver":1,"node":{"region":"risks","kind":"risk","title":"Email delivery delays","body":"Links arrive late and expire.","item":true}}
+{"v":10,"seq":88,"at":"2026-10-16T18:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":30,"ver":1,"node":{"region":"risks","kind":"risk","title":"Link phishing","body":"Users trained to click login links.","item":true}}
+{"v":10,"seq":89,"at":"2026-10-16T21:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":31,"ver":1,"node":{"region":"risks","kind":"risk","title":"Shared inboxes","body":"Anyone with the inbox can sign in.","item":true}}
+{"v":10,"seq":90,"at":"2026-10-17T00:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":32,"ver":1,"node":{"region":"plan","kind":"action","title":"Token table and migration","item":true,"lane":"Backend"}}
+{"v":10,"seq":91,"at":"2026-10-17T02:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":33,"ver":1,"node":{"region":"plan","kind":"action","title":"Send and verify endpoints","item":true,"lane":"Backend"}}
+{"v":10,"seq":92,"at":"2026-10-17T05:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":34,"ver":1,"node":{"region":"plan","kind":"action","title":"Email-only login screen","item":true,"lane":"Frontend"}}
+{"v":10,"seq":93,"at":"2026-10-17T08:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":35,"ver":1,"node":{"region":"plan","kind":"action","title":"\"Check your inbox\" state","item":true,"lane":"Frontend"}}
+{"v":10,"seq":94,"at":"2026-10-17T11:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":36,"ver":1,"node":{"region":"plan","kind":"decision","title":"Rate limits per address","body":"5 links an hour?","item":true,"lane":"Ops"}}
+{"v":10,"seq":95,"at":"2026-10-17T14:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":37,"ver":1,"node":{"region":"plan","kind":"action","title":"Delivery-failure alerts","item":true,"lane":"Ops"}}
+{"v":10,"seq":96,"at":"2026-10-17T17:00:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":22,"to":23}
+{"v":11,"seq":97,"at":"2026-10-17T19:50:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":23,"to":24}
+{"v":11,"seq":98,"at":"2026-10-17T22:40:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":23,"to":25}
+{"v":11,"seq":99,"at":"2026-10-18T01:30:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":32,"to":33}
+{"v":11,"seq":100,"at":"2026-10-18T04:20:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":33,"to":34}
+{"v":11,"seq":101,"at":"2026-10-18T07:10:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":34,"to":35}
+{"v":11,"seq":102,"at":"2026-10-18T10:00:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":33,"to":36}
+{"v":11,"seq":103,"at":"2026-10-18T12:50:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":36,"to":37}
+{"v":11,"seq":104,"at":"2026-10-18T15:40:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":26,"to":22,"label":"shapes"}
+{"v":11,"seq":105,"at":"2026-10-18T18:30:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":29,"to":24}
+{"v":11,"seq":106,"at":"2026-10-18T21:20:00Z","by":"agent","agent":"a-mixkiro1","type":"link","from":27,"to":32}
+{"v":10,"seq":107,"at":"2026-10-19T00:10:00Z","by":"agent","agent":"a-mixkiro1","type":"propose","n":22,"ver":1,"action":"drop","reason":"The enterprise floor. I have also checked the self-serve page and it reads the same.","source":"email pasted in chat"}
+{"v":10,"seq":108,"at":"2026-10-19T03:00:00Z","by":"person","type":"act","action":"reject","n":22,"proposal":107}
+{"v":10,"seq":109,"at":"2026-10-19T05:50:00Z","by":"agent","agent":"a-mixkiro1","type":"propose","n":23,"ver":1,"action":"ack","reason":"Yes, annual too: the same terms apply. Check it again if that still works for you."}
+{"v":10,"seq":110,"at":"2026-10-19T08:40:00Z","by":"person","type":"act","action":"ack","n":23,"ver":1,"proposal":109}
+{"v":10,"seq":111,"at":"2026-10-19T11:30:00Z","by":"person","type":"seen","n":24,"ver":1}
+{"v":10,"seq":112,"at":"2026-10-19T14:20:00Z","by":"person","type":"act","action":"later","n":19,"ver":1}
+{"v":11,"seq":113,"at":"2026-10-19T17:10:00Z","by":"person","type":"act","action":"mode","board":"login-layout","region":"risks","mode":"list"}
+{"v":11,"seq":114,"at":"2026-10-19T20:00:00Z","by":"person","type":"act","action":"mode","board":"login-layout","region":"touch","mode":"grid"}
+{"v":11,"seq":115,"at":"2026-10-19T22:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":25,"ver":2,"node":{"region":"touch","kind":"finding","title":"Session store","body":"No contract term past June."}}
+{"v":11,"seq":116,"at":"2026-10-20T01:40:00Z","by":"person","type":"act","action":"comment","n":25,"ver":2,"text":"Looks right, but check the edge case."}
+{"v":11,"seq":117,"at":"2026-10-20T04:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":10,"ver":2,"node":{"region":"decide","kind":"decision","title":"Layout engine","body":"One script, run once."}}
+{"v":12,"seq":118,"at":"2026-10-20T07:20:00Z","by":"person","type":"act","action":"flag","n":11}
+{"v":12,"seq":119,"at":"2026-10-20T10:10:00Z","by":"person","type":"act","action":"mode","board":"login-layout","region":"questions","mode":"row"}
+{"v":12,"seq":120,"at":"2026-10-20T13:00:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"login-layout","region":{"id":"later-on","title":"Later on","mode":"column"}}
+{"v":12,"seq":121,"at":"2026-10-20T15:50:00Z","by":"agent","agent":"a-mixkiro1","type":"retire","board":"roadmap","cards":[17],"key":"retire-roadmap-last"}
+{"v":13,"seq":122,"at":"2026-10-20T18:40:00Z","by":"person","type":"act","action":"widths","board":"login-layout","region":"risks","widths":"own"}
+{"v":14,"seq":123,"at":"2026-10-20T21:30:00Z","by":"person","type":"act","action":"archive","board":"login-review"}
+{"v":14,"seq":124,"at":"2026-10-21T00:20:00Z","by":"person","type":"act","action":"restore","board":"login-review"}
+{"v":15,"seq":125,"at":"2026-10-21T03:10:00Z","by":"person","type":"act","action":"lock","board":"roadmap"}
+{"v":15,"seq":126,"at":"2026-10-21T06:00:00Z","by":"person","type":"act","action":"unlock","board":"roadmap"}
+{"v":16,"seq":127,"at":"2026-10-21T08:50:00Z","by":"person","type":"retire","board":"login-layout","cards":[37]}
+{"v":17,"seq":128,"at":"2026-10-21T11:40:00Z","by":"agent","agent":"a-mixkiro1","type":"board","board":"gallery","title":"Pattern gallery","summary":"Every pattern in every state, drawn from this fixture ledger (project rule 11)."}
+{"v":17,"seq":129,"at":"2026-10-21T14:30:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"kinds","title":"Every kind in every status","mode":"grid","columns":5}}
+{"v":17,"seq":130,"at":"2026-10-21T17:20:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"other","title":"Other node states","mode":"grid","columns":4}}
+{"v":17,"seq":131,"at":"2026-10-21T20:10:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-grid","title":"Grid mode","mode":"grid","columns":2}}
+{"v":17,"seq":132,"at":"2026-10-21T23:00:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-flow","title":"Flow mode","mode":"flow"}}
+{"v":17,"seq":133,"at":"2026-10-22T01:50:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-lanes","title":"Lanes mode","mode":"lanes","lanes":["Now","Next"]}}
+{"v":17,"seq":134,"at":"2026-10-22T04:40:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-radial","title":"Radial mode","mode":"radial"}}
+{"v":17,"seq":135,"at":"2026-10-22T07:30:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-list","title":"List mode","mode":"column"}}
+{"v":17,"seq":136,"at":"2026-10-22T10:20:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-pinned","title":"Reset places showing","mode":"grid"}}
+{"v":17,"seq":137,"at":"2026-10-22T13:10:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-empty","title":"Empty message showing","mode":"grid"}}
+{"v":17,"seq":138,"at":"2026-10-22T16:00:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"frame-bare","title":"Nothing to decide, so no count","mode":"grid"}}
+{"v":17,"seq":139,"at":"2026-10-22T18:50:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":38,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide."}}
+{"v":17,"seq":140,"at":"2026-10-22T21:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":39,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes."}}
+{"v":17,"seq":141,"at":"2026-10-23T00:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":40,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database."}}
+{"v":17,"seq":142,"at":"2026-10-23T03:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":41,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June."}}
+{"v":17,"seq":143,"at":"2026-10-23T06:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":42,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once."}}
+{"v":17,"seq":144,"at":"2026-10-23T09:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":43,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide."}}
+{"v":17,"seq":145,"at":"2026-10-23T11:50:00Z","by":"person","type":"act","action":"ack","n":43,"ver":1}
+{"v":17,"seq":146,"at":"2026-10-23T14:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":44,"ver":1,"node":{"region":"kinds","kind":"topic","title":"Topic: the release plan","body":"The cards around it are about the release."}}
+{"v":17,"seq":147,"at":"2026-10-23T17:30:00Z","by":"person","type":"act","action":"comment","n":44,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":17,"seq":148,"at":"2026-10-23T20:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":45,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database."}}
+{"v":17,"seq":149,"at":"2026-10-23T23:10:00Z","by":"person","type":"act","action":"ack","n":45,"ver":1}
+{"v":17,"seq":150,"at":"2026-10-24T02:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":46,"ver":1,"node":{"region":"kinds","kind":"note","title":"Note: the numbers come from the beta","body":"Nothing to decide; ask if it matters."}}
+{"v":17,"seq":151,"at":"2026-10-24T04:50:00Z","by":"person","type":"act","action":"comment","n":46,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":17,"seq":152,"at":"2026-10-24T07:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":47,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once."}}
+{"v":17,"seq":153,"at":"2026-10-24T10:30:00Z","by":"person","type":"act","action":"ack","n":47,"ver":1}
+{"v":17,"seq":154,"at":"2026-10-24T13:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":48,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide."}}
+{"v":17,"seq":155,"at":"2026-10-24T16:10:00Z","by":"person","type":"act","action":"drop","n":48,"ver":1}
+{"v":17,"seq":156,"at":"2026-10-24T19:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":49,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database."}}
+{"v":17,"seq":157,"at":"2026-10-24T21:50:00Z","by":"person","type":"act","action":"drop","n":49,"ver":1}
+{"v":17,"seq":158,"at":"2026-10-25T00:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":50,"ver":1,"node":{"region":"kinds","kind":"topic","title":"Topic: the release plan","body":"The cards around it are about the release."}}
+{"v":17,"seq":159,"at":"2026-10-25T03:30:00Z","by":"person","type":"act","action":"context","n":50,"ver":1,"text":"Explain this in plain terms."}
+{"v":17,"seq":160,"at":"2026-10-25T06:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":51,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once."}}
+{"v":17,"seq":161,"at":"2026-10-25T09:10:00Z","by":"person","type":"act","action":"drop","n":51,"ver":1}
+{"v":17,"seq":162,"at":"2026-10-25T12:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":52,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide."}}
+{"v":17,"seq":163,"at":"2026-10-25T14:50:00Z","by":"person","type":"act","action":"comment","n":52,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":17,"seq":164,"at":"2026-10-25T17:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":53,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes."}}
+{"v":17,"seq":165,"at":"2026-10-25T20:30:00Z","by":"person","type":"act","action":"comment","n":53,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":17,"seq":166,"at":"2026-10-25T23:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":54,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database."}}
+{"v":17,"seq":167,"at":"2026-10-26T02:10:00Z","by":"person","type":"act","action":"comment","n":54,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":17,"seq":168,"at":"2026-10-26T05:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":55,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June."}}
+{"v":17,"seq":169,"at":"2026-10-26T07:50:00Z","by":"person","type":"act","action":"comment","n":55,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":17,"seq":170,"at":"2026-10-26T10:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":56,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once."}}
+{"v":17,"seq":171,"at":"2026-10-26T13:30:00Z","by":"person","type":"act","action":"comment","n":56,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":17,"seq":172,"at":"2026-10-26T16:20:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":57,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide."}}
+{"v":17,"seq":173,"at":"2026-10-26T19:10:00Z","by":"person","type":"act","action":"ack","n":57,"ver":1}
+{"v":17,"seq":174,"at":"2026-10-26T22:00:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"markdown","title":"Markdown text","mode":"grid","columns":3}}
+{"v":17,"seq":175,"at":"2026-10-27T00:50:00Z","by":"agent","agent":"a-mixkiro1","type":"region","board":"gallery","region":{"id":"sizes","title":"Card sizes","mode":"grid","columns":4}}
+{"v":17,"seq":176,"at":"2026-10-27T03:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":58,"ver":1,"node":{"region":"kinds","kind":"app","title":"App: a price calculator","body":"Work out a price in the panel.","app":{"id":"calculator","w":280,"h":160}}}
+{"v":17,"seq":177,"at":"2026-10-27T06:30:00Z","by":"person","type":"act","action":"app-allow","app":"calculator","hash":"803afddfad10767c240b8173a1da2a5965bde06b4aa4491f9184c52eb4d575af"}
+{"v":18,"seq":178,"at":"2026-10-27T09:20:00Z","by":"person","type":"act","action":"notes-hide","n":38}
+{"v":18,"seq":179,"at":"2026-10-27T12:10:00Z","by":"person","type":"act","action":"notes-show","n":38}
+{"v":18,"seq":180,"at":"2026-10-27T15:00:00Z","by":"person","type":"act","action":"comment","n":39,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":18,"seq":181,"at":"2026-10-27T17:50:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":39,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":180}
+{"v":18,"seq":182,"at":"2026-10-27T20:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":39,"ver":2,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Two options, one afternoon to decide."}}
+{"v":18,"seq":183,"at":"2026-10-27T23:30:00Z","by":"person","type":"act","action":"comment","n":40,"ver":1,"text":"Explain this in plain terms."}
+{"v":18,"seq":184,"at":"2026-10-28T02:20:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":40,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":183}
+{"v":18,"seq":185,"at":"2026-10-28T05:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":40,"ver":2,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"The cards around it are about the release."}}
+{"v":18,"seq":186,"at":"2026-10-28T08:00:00Z","by":"person","type":"act","action":"comment","n":26,"ver":1,"text":"Explain this in plain terms."}
+{"v":18,"seq":187,"at":"2026-10-28T10:50:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":26,"text":"In plain terms: the cards around this one together decide what ships in the release.","to":186}
+{"v":18,"seq":188,"at":"2026-10-28T13:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":26,"ver":2,"node":{"region":"questions","kind":"question","title":"Keep passwords as a fallback?","body":"JSON Lines or a database."}}
+{"v":18,"seq":189,"at":"2026-10-28T16:30:00Z","by":"person","type":"act","action":"comment","n":27,"ver":1,"text":"Ship it after the review."}
+{"v":18,"seq":190,"at":"2026-10-28T19:20:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":27,"text":"In plain terms: it slows each release by about a day until we fix it.","to":189}
+{"v":18,"seq":191,"at":"2026-10-28T22:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":27,"ver":2,"node":{"region":"questions","kind":"question","title":"How long should a link live?","body":"Nothing to decide; ask if it matters."}}
+{"v":18,"seq":192,"at":"2026-10-29T01:00:00Z","by":"person","type":"act","action":"comment","n":12,"ver":1,"text":"First thought."}
+{"v":18,"seq":193,"at":"2026-10-29T03:50:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":12,"text":"In plain terms: the vendor can raise its prices at any time, since nothing is signed yet.","to":192}
+{"v":18,"seq":194,"at":"2026-10-29T06:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":12,"ver":2,"node":{"region":"build","kind":"action","title":"Scaffold","body":"One script, run once.","lane":"Foundation"}}
+{"v":18,"seq":195,"at":"2026-10-29T09:30:00Z","by":"person","type":"act","action":"comment","n":41,"ver":1,"text":"Second thought, which replaces the first on the card."}
+{"v":18,"seq":196,"at":"2026-10-29T12:20:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":41,"text":"In plain terms: the figures come from beta users, so treat them as early numbers.","to":195}
+{"v":18,"seq":197,"at":"2026-10-29T15:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":41,"ver":2,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"Two options, one afternoon to decide."}}
+{"v":18,"seq":198,"at":"2026-10-29T18:00:00Z","by":"person","type":"act","action":"comment","n":18,"ver":2,"text":"First thought."}
+{"v":18,"seq":199,"at":"2026-10-29T20:50:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":18,"text":"Yes: finance can sign it off on **Thursday**.","to":198}
+{"v":18,"seq":200,"at":"2026-10-29T23:40:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-review","n":18,"ver":3,"node":{"region":"findings","kind":"question","title":"Keep the remember-me box?","body":"JSON Lines or a database."}}
+{"v":18,"seq":201,"at":"2026-10-30T02:30:00Z","by":"person","type":"act","action":"comment","n":42,"ver":1,"text":"Second thought."}
+{"v":18,"seq":202,"at":"2026-10-30T05:20:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":42,"text":"The pricing sheet now has the new prices.","to":201}
+{"v":18,"seq":203,"at":"2026-10-30T08:10:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":42,"ver":2,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"The cards around it are about the release."}}
+{"v":18,"seq":204,"at":"2026-10-30T11:00:00Z","by":"person","type":"act","action":"unflag","n":11}
+{"v":19,"seq":205,"at":"2026-10-30T13:50:00Z","by":"person","type":"act","action":"send","board":"roadmap","head":204}
+{"v":19,"seq":206,"at":"2026-10-30T16:40:00Z","by":"person","type":"act","action":"send","board":"login-layout","head":205}
+{"v":19,"seq":207,"at":"2026-10-30T19:30:00Z","by":"person","type":"act","action":"send","board":"gallery","head":206}
+{"v":19,"seq":208,"at":"2026-10-30T22:20:00Z","by":"person","type":"act","action":"comment","n":43,"ver":1,"text":"Please explain the trade-off between the two options, the cost of changing our mind later, and who else is affected, in plain terms with one example for each."}
+{"v":19,"seq":209,"at":"2026-10-31T01:10:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":43,"text":"Their lead tells them on Friday.","to":208}
+{"v":19,"seq":210,"at":"2026-10-31T04:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":43,"ver":2,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"One script, run once."}}
+{"v":19,"seq":211,"at":"2026-10-31T06:50:00Z","by":"person","type":"act","action":"comment","n":44,"ver":1,"text":"Looks right, but **check the date** and the `deploy.md` steps."}
+{"v":19,"seq":212,"at":"2026-10-31T09:40:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":44,"text":"Yes: it rounds to whole numbers, and the exact sum shows under it.","to":211}
+{"v":19,"seq":213,"at":"2026-10-31T12:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":44,"ver":2,"node":{"region":"kinds","kind":"topic","title":"Topic: the release plan","body":"Two options, one afternoon to decide."}}
+{"v":19,"seq":214,"at":"2026-10-31T15:20:00Z","by":"person","type":"act","action":"comment","n":28,"ver":1,"text":"Which teams are under 10 seats?"}
+{"v":19,"seq":215,"at":"2026-10-31T18:10:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":28,"text":"Yes: 14 days, then the plan starts.","to":214}
+{"v":19,"seq":216,"at":"2026-10-31T21:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":28,"ver":2,"node":{"region":"questions","kind":"question","title":"Is SSO in scope?","body":"Cold caches add four minutes."}}
+{"v":19,"seq":217,"at":"2026-10-31T23:50:00Z","by":"person","type":"act","action":"comment","n":13,"ver":1,"text":"And how many of them churned in the first month?"}
+{"v":19,"seq":218,"at":"2026-11-01T02:40:00Z","by":"agent","agent":"a-mixdocs1","type":"reply","n":13,"text":"Yes, Monday works.","to":217}
+{"v":19,"seq":219,"at":"2026-11-01T05:30:00Z","by":"agent","agent":"a-mixdocs1","type":"node","board":"roadmap","n":13,"ver":2,"node":{"region":"build","kind":"action","title":"Walking skeleton","body":"JSON Lines or a database.","lane":"Board","emphasis":true}}
+{"v":19,"seq":220,"at":"2026-11-01T08:20:00Z","by":"person","type":"act","action":"comment","n":45,"ver":1,"text":"Check with finance before we commit to a floor number."}
+{"v":19,"seq":221,"at":"2026-11-01T11:10:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":45,"text":"The team plan, by a wide margin.","to":220}
+{"v":19,"seq":222,"at":"2026-11-01T14:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":45,"ver":2,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"No contract term past June."}}
+{"v":19,"seq":223,"at":"2026-11-01T16:50:00Z","by":"person","type":"act","action":"comment","n":29,"ver":1,"text":"Draft the email before we decide."}
+{"v":19,"seq":224,"at":"2026-11-01T19:40:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":29,"text":"Agreed. I will answer them as one change.","to":223}
+{"v":19,"seq":225,"at":"2026-11-01T22:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":29,"ver":2,"node":{"region":"risks","kind":"risk","title":"Email delivery delays","body":"One script, run once."}}
+{"v":19,"seq":226,"at":"2026-11-02T01:20:00Z","by":"person","type":"act","action":"comment","n":14,"ver":1,"text":"What drives the onboarding confusion? Is it the plan picker?"}
+{"v":19,"seq":227,"at":"2026-11-02T04:10:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":14,"text":"Yes: the trial starts without a card.","to":226}
+{"v":19,"seq":228,"at":"2026-11-02T07:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":14,"ver":2,"node":{"region":"build","kind":"action","title":"Agent skill v0","body":"Two options, one afternoon to decide.","lane":"Agent"}}
+{"v":19,"seq":229,"at":"2026-11-02T09:50:00Z","by":"person","type":"act","action":"comment","n":46,"ver":1,"text":"Explain the **1.4x** in plain terms."}
+{"v":19,"seq":230,"at":"2026-11-02T12:40:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":46,"text":"Yes: **three** accounts, all on the 2024 plan. I can list them if that helps.","to":229}
+{"v":19,"seq":231,"at":"2026-11-02T15:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":46,"ver":2,"node":{"region":"kinds","kind":"note","title":"Note: the numbers come from the beta","body":"Cold caches add four minutes."}}
+{"v":19,"seq":232,"at":"2026-11-02T18:20:00Z","by":"person","type":"act","action":"comment","n":47,"ver":1,"text":"Should this wait for the next release?"}
+{"v":19,"seq":233,"at":"2026-11-02T21:10:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":47,"text":"The enterprise floor. I have also checked the self-serve page and it reads the same.","to":232}
+{"v":19,"seq":234,"at":"2026-11-03T00:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":47,"ver":2,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"JSON Lines or a database."}}
+{"v":19,"seq":235,"at":"2026-11-03T02:50:00Z","by":"person","type":"act","action":"comment","n":48,"ver":1,"text":"Is this group in the right order?"}
+{"v":19,"seq":236,"at":"2026-11-03T05:40:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":48,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":235}
+{"v":19,"seq":237,"at":"2026-11-03T08:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":48,"ver":2,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"No contract term past June."}}
+{"v":19,"seq":238,"at":"2026-11-03T11:20:00Z","by":"person","type":"act","action":"comment","n":30,"ver":1,"text":"Say more about where these risks come from."}
+{"v":19,"seq":239,"at":"2026-11-03T14:10:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":30,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":238}
+{"v":19,"seq":240,"at":"2026-11-03T17:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":30,"ver":2,"node":{"region":"risks","kind":"risk","title":"Link phishing","body":"One script, run once."}}
+{"v":19,"seq":241,"at":"2026-11-03T19:50:00Z","by":"person","type":"act","action":"comment","n":49,"ver":1,"text":"Can we decide this before the launch call?"}
+{"v":19,"seq":242,"at":"2026-11-03T22:40:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":49,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":241}
+{"v":19,"seq":243,"at":"2026-11-04T01:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"gallery","n":49,"ver":2,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"Two options, one afternoon to decide."}}
+{"v":19,"seq":244,"at":"2026-11-04T04:20:00Z","by":"person","type":"act","action":"comment","n":15,"ver":1,"text":"Should the trial skip the card step?"}
+{"v":19,"seq":245,"at":"2026-11-04T07:10:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":15,"text":"In plain terms: the cards around this one together decide what ships in the release.","to":244}
+{"v":19,"seq":246,"at":"2026-11-04T10:00:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"roadmap","n":15,"ver":2,"node":{"region":"build","kind":"action","title":"More modes","body":"Cold caches add four minutes.","lane":"Board"}}
+{"v":19,"seq":247,"at":"2026-11-04T12:50:00Z","by":"person","type":"act","action":"comment","n":31,"ver":1,"text":"Before we settle the order of this group, check three things with the team: whether annual plans really sell better once the discount is gone, whether the trial numbers hold for teams as well as for single seats, and whether finance can live with the lower first-month revenue. If any of the three is a no, move the pricing question to the top and park the rest until the next review."}
+{"v":19,"seq":248,"at":"2026-11-04T15:40:00Z","by":"agent","agent":"a-mixkiro1","type":"reply","n":31,"text":"In plain terms: it slows each release by about a day until we fix it.","to":247}
+{"v":19,"seq":249,"at":"2026-11-04T18:30:00Z","by":"agent","agent":"a-mixkiro1","type":"node","board":"login-layout","n":31,"ver":2,"node":{"region":"risks","kind":"risk","title":"Shared inboxes","body":"JSON Lines or a database."}}
+{"v":19,"seq":250,"at":"2026-11-04T21:20:00Z","by":"person","type":"seen","board":"gallery","head":249}
+{"v":19,"seq":251,"at":"2026-11-05T00:10:00Z","by":"person","type":"act","action":"send","board":"gallery","head":250}

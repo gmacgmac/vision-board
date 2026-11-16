@@ -1,0 +1,91 @@
+{
+ "problems": [],
+ "head": 15,
+ "boards": {
+  "login-review": {
+   "view": {
+    "format": 1,
+    "session": "login-review",
+    "version": 15,
+    "title": "Login page review",
+    "regions": [
+     {
+      "id": "findings",
+      "title": "Findings",
+      "mode": "grid",
+      "columns": 2
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "findings",
+      "kind": "question",
+      "title": "Keep the remember-me box?",
+      "body": "Support asked for it in the March survey.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "findings",
+      "kind": "topic",
+      "title": "Sign-in flow",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "findings",
+      "kind": "decision",
+      "title": "Drop the legacy SSO button",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "findings",
+      "kind": "risk",
+      "title": "Rate limiting is per IP only",
+      "n": 4
+     }
+    ],
+    "links": [
+     {
+      "from": "2",
+      "to": "1"
+     }
+    ]
+   },
+   "state": {
+    "items": {
+     "1": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 8,
+        "kind": "comment",
+        "text": "Who asked for it?",
+        "at": "2026-10-02T09:05:00Z",
+        "locked": true
+       }
+      ]
+     },
+     "3": {
+      "status": "dropped",
+      "notes": []
+     },
+     "4": {
+      "status": "later",
+      "notes": []
+     }
+    },
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  }
+ }
+}

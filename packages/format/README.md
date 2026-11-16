@@ -37,12 +37,16 @@ never a file. The format-1 view files and transcript are archived in
 - **The data folder** (`src/data-folder.ts`, D-084 2, [api.md](../../docs/specification/api.md) 113a): the one home
   of every name in a project's `.visionboard/` and of every path built from them. The names (`DATA_DIR`,
   `LEDGER_FILE`, `AGENTS_FILE`, `LOCK_FILE`, `IMAGES_DIR`, `APPS_DIR`, `APP_STATE_DIR`, `GITIGNORE_FILE`,
-  `CHAT_SESSIONS_FILE`, `PERMISSIONS_FILE`, `ATTACHMENTS_DIR`, `RECENT_FILE`), `DATA_FOLDER_NAMES` (all of them) and
+  `CHAT_SESSIONS_FILE`, `PERMISSIONS_FILE`, `ATTACHMENTS_DIR`, `RECENT_FILE`, `BACKUPS_DIR`), `DATA_FOLDER_NAMES` (all of them) and
   `PER_LEDGER_NAMES`; `ledgerFolder(project, ledger?)` (`.visionboard/<ledger>`, or the old layout's `.visionboard`),
   `ledgerFiles`, `projectFiles` (the repo-wide files), `projectOfLedger` and `ledgerOfFolder` (either layout),
   `homeFiles`; `MAIN_LEDGER`, `LEDGER_NAME_MAX` and `ledgerNameProblem` (the ledger name rule). Pure string logic:
   its one import is its words file. `npm run verify` holds that nothing else names a data-folder file
   (`scripts/verify-data-folder.mjs`); `tests/data-folder.test.ts`.
+- **The upgrade chain** (`src/migrate/`, D-103): `upgradeLine` and `upgradeLines` take a ledger line of any
+  older format to the current one, one pure step per format (`UPGRADE_STEPS`); a line it cannot upgrade stops it
+  (`UpgradeStop`). The server's runner (`apps/board/server/ledger-migrate.ts`, `npm run ledger:migrate`) writes the
+  result back under the lock after a backup; a read-only open upgrades in memory. `tests/migrate.test.ts`.
 - **App cards** (`src/apps.ts`, D-047, [apps.md](../../docs/specification/apps.md)): `APP_ID`,
   `APP_HASH_PATTERN`, `APP_TOOL_NAME`, `APP_FILES`, `APP_SIZE`, `APP_LIMITS`,
   `APP_STATES`, the panel protocol (`APP_PROTOCOL_VERSION`, `PANEL_METHODS`, `HOST_NOTIFICATIONS`,

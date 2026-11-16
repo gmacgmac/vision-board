@@ -56,7 +56,7 @@ test('ledgerFiles: every file of one ledger folder', () => {
   const d = `${P}/.visionboard`;
   assert.deepEqual(ledgerFiles(d), {
     ledger: `${d}/ledger.jsonl`, agents: `${d}/agents.json`, lock: `${d}/lock`, images: `${d}/images`,
-    apps: `${d}/apps`, appState: `${d}/app-state`, gitignore: `${d}/.gitignore`,
+    apps: `${d}/apps`, appState: `${d}/app-state`, backups: `${d}/backups`, gitignore: `${d}/.gitignore`,
   });
 });
 

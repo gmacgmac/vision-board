@@ -74,3 +74,21 @@ export const openedReadOnly = (holder: string): string =>
 export const editingElsewhere = (host: string, since: string): string => ` Computer "${host}" has been editing it since ${since}.`;
 /** A seed ledger is not copied into a ledger opened read-only. */
 export const seedNotCopied = (seed: string): string => `${seed} was not copied in: the ledger is open read-only. Start with --edit to seed it.`;
+
+// ---- ledger.ts (a ledger written by a newer build, D-103 4)
+/** What the person is told: why the ledger is read-only, and Edit's refusal. */
+export const newerLedgerPerson = 'This ledger was written by a newer Vision Board. It opens read-only; update the board to edit it.';
+/** What an agent is told when it writes: nothing was written, and why. */
+export const newerLedgerAgent = 'This ledger was written by a newer Vision Board, so this board can only read it: nothing was written. The person updates the board to edit it.';
+export const newerLines = (count: number, first: number): string => `ledger: ${count} line(s) from line ${first} on were written by a newer Vision Board; the ledger is read-only here`;
+
+// ---- ledger-migrate.ts (the migration, D-103)
+export const migrated = (file: string, changed: number, backup: string): string => `ledger: migrated ${file} to the current format (${changed} line(s) upgraded); the ledger as it was is in ${backup}`;
+export const stoppedLine = (line: number, stop: string): string => `line ${line}: ${stop}`;
+export const migrationStopped = (file: string, stops: string): string => `ledger: ${file} was not migrated, and nothing was written: ${stops}. It is read as it lies.`;
+export const migrationFailed = (file: string, why: string): string => `ledger: ${file} was not migrated, and the ledger is whole as it was: ${why}`;
+export const migrationChangedWhileRead = 'the ledger changed while it was being migrated (another writer?), so nothing was replaced; the next open tries again';
+export const migrationCheckFailed = (line: number, what: string): string => `line ${line} would change its ${what}, which a migration never does; nothing was written`;
+export const migrationNewProblems = (problems: string): string => `the migrated ledger reads with problems the old one did not have (${problems}); nothing was written`;
+export const noBackupToUndo = (dir: string): string => `There is no backup in ${dir} to put back: this ledger was never migrated here.`;
+export const appendedSinceBackup = (backup: string, head: number, now: number): string => `The backup ${backup} was taken at line ${head}, and the ledger has gone on to line ${now} since. Putting it back would lose those lines, so nothing was changed.`;

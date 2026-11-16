@@ -1,0 +1,15 @@
+{"v":2,"seq":1,"at":"2026-10-02T09:00:00Z","by":"agent","agent":"kiro","type":"board","board":"login-review","title":"Login page review"}
+{"v":2,"seq":2,"at":"2026-10-02T09:00:01Z","by":"agent","agent":"kiro","type":"region","board":"login-review","region":{"id":"findings","title":"Findings","mode":"grid","columns":2}}
+{"v":2,"seq":3,"at":"2026-10-02T09:00:02Z","by":"agent","agent":"kiro","type":"node","board":"login-review","n":1,"ver":1,"node":{"region":"findings","kind":"question","title":"Keep the remember-me box?","item":true}}
+{"v":2,"seq":4,"at":"2026-10-02T09:00:03Z","by":"agent","agent":"kiro","type":"node","board":"login-review","n":2,"ver":1,"node":{"region":"findings","kind":"topic","title":"Sign-in flow"}}
+{"v":2,"seq":5,"at":"2026-10-02T09:00:04Z","by":"agent","agent":"kiro","type":"node","board":"login-review","n":3,"ver":1,"node":{"region":"findings","kind":"decision","title":"Drop the legacy SSO button","item":true}}
+{"v":2,"seq":6,"at":"2026-10-02T09:00:05Z","by":"agent","agent":"kiro","type":"node","board":"login-review","n":4,"ver":1,"node":{"region":"findings","kind":"risk","title":"Rate limiting is per IP only","item":true}}
+{"v":2,"seq":7,"at":"2026-10-02T09:00:06Z","by":"agent","agent":"kiro","type":"link","from":2,"to":1}
+{"v":2,"seq":8,"at":"2026-10-02T09:05:00Z","by":"person","type":"act","action":"comment","n":1,"ver":1,"text":"Who asked for it?"}
+{"v":2,"seq":9,"at":"2026-10-02T09:05:10Z","by":"person","type":"act","action":"later","n":4,"ver":1}
+{"v":2,"seq":10,"at":"2026-10-02T09:06:00Z","by":"agent","agent":"kiro","type":"node","board":"login-review","n":1,"ver":2,"node":{"region":"findings","kind":"question","title":"Keep the remember-me box?","body":"Support asked for it in the March survey.","item":true}}
+{"v":2,"seq":11,"at":"2026-10-02T09:06:01Z","by":"agent","agent":"kiro","type":"reply","n":1,"text":"Added the source to the card.","to":8}
+{"v":2,"seq":12,"at":"2026-10-02T09:06:02Z","by":"agent","agent":"kiro","type":"park","n":4,"bundle":{"situation":"Login rate limiting is per IP only.","background":"Shared office IPs hit the limit; attackers rotate IPs.","assessment":"Per-account limits close the gap.","recommendation":"Add a per-account limit next sprint.","sources":["login-review board, item 4"]}}
+{"v":2,"seq":13,"at":"2026-10-02T09:06:03Z","by":"agent","agent":"kiro","type":"propose","n":3,"ver":1,"action":"drop","reason":"The client's email says SSO stays for now.","source":"email pasted in chat"}
+{"v":2,"seq":14,"at":"2026-10-02T09:08:00Z","by":"person","type":"seen","n":1,"ver":2}
+{"v":2,"seq":15,"at":"2026-10-02T09:08:05Z","by":"person","type":"act","action":"drop","n":3,"ver":1,"proposal":13}

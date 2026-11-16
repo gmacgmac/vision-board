@@ -177,20 +177,98 @@ You run in your own git worktree (PLAN.md § House Rules), beside DESIGN_01, whi
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-16 11:21  
+
+### Run 1
 
 ### Changes Made
-- 
+- **Truth frozen first (step 1, R4)**, at 11:08, before any file of `packages/format/src/migrate/` existed and with the
+  reader untouched: `packages/format/fixtures/legacy/` holds the four fixtures (byte copies), `perfLedger()`'s lines
+  (`perf`) and `mixed.ledger.jsonl` (251 lines, 4 boards, 58 cards, formats 7 to 19: 49/23/2/28/15/4/1/2/2/1/50/27/47,
+  heavy where the maintainer's file is; built from fixture lines by a script in `temp/be02/freeze.ts`, no private
+  data; it holds a `list` container at v10, `item` nodes at v7-10, every act family by its era). Beside each,
+  `<name>.fold.json`: the reader's problems (none), the head, and per board `boardView` + `boardState` as JSON.
+  `packages/actions/tests/legacy-folds.test.ts` (header: no task edits those files) proved today's code folds each to
+  its result (11:09) before the chain was written; it now also holds the migrated file folds to the same result.
+- **The chain** `packages/format/src/migrate/` (`index.ts` public: `UPGRADE_STEPS`, `upgradeLine`, `upgradeLines`,
+  `isUpgradeStop`, `UpgradedLines`; `steps.ts`: `UpgradeStep`, `UpgradeStop`, `FORMAT_STEPS`, one step per format
+  2 to 18; T_01 appends 19 to 20 to `FORMAT_STEPS`). Steps: no `v` (read as 2 only when, so read, it upgrades to a
+  well-formed line; else stop), 2 (drop the free-text `agent`; a `join` keeps an agent id, else stop), 5 (`later`
+  container: stop), 10 (delete `node.item`), 11 (`list` to `column` in `region.mode` and a `mode` act), the rest
+  restamp. Old names are literals in `steps.ts`, not imports of `RENAMED_MODES`, so BE_03 can delete those.
+  `upgradeLines` also returns `byFormat` (for `--check`); a line starting `{"v":19,` is kept without a parse.
+  Exported from `packages/format/src/index.ts`.
+- **A newer format** (R3, H7): `ledger-read.ts` `readLine` returns `newer` (its own kind, not a problem), `ReadLedger`
+  gains `newer: number[]`; `validateLedger` still names such a line (`lineNewer`). Server `ledger.ts`: `Ledger.newer()`,
+  `readOnly()` true while newer (at open, after a reopen, or when another writer appends one), writes refused
+  `read-only` in `readOnlyWords` (`newerLedgerPerson` / `newerLedgerAgent`). The reason reuses the existing paths:
+  the reads' `readOnly`, the `read-only` problem's detail, and Edit's refusal (`conflict`, shown by the page's
+  `toggleEditing` toast in the server's words): no page change. `editing.ts` `createEditing(..., newer)`: read-only and
+  nobody editing; `project.ts` `hold` lets the lock go on a newer ledger, `edit` refuses it.
+- **The runner** `apps/board/server/ledger-migrate.ts`: `migrateHeld` (review § 3 steps 2-7: read once; current =
+  no write, no backup; newer/stop = no write; `checkSame`: count, `seq`/`at`/`by`/`type`/`n`/`board` per line, no new
+  reader problem; `.migrating` written and fsynced with the file's mode; backup
+  `backups/ledger.f<lo>-<hi>.<head>.<YYYYMMDDTHHMMSSZ>.jsonl` fsynced, `backups/` git-ignored via `ignoreInGit`; a file
+  changed meanwhile is not replaced; rename; folder fsynced), `migrateLedger` (takes the lock: `holdLock`,
+  `holderMessage`), `migrateOnOpen` (on open: words to the log), `planMigration` (`--check`), `undoMigration`.
+  `BACKUPS_DIR` in `data-folder.ts` (`DATA_FOLDER_NAMES`, `PER_LEDGER_NAMES`, `LedgerFiles.backups`), so the layout
+  move carries it into `main/`.
+- **When it runs**: `project.ts` `ledgerOf` (straight after the lock, before `openLedger`); the first ledger (opened by
+  `server.ts` under its lock) is migrated in `openProject` and read again (`refresh`, new inode); Edit migrates after
+  it takes the lock (`migrated`). `engine.ts` `createEngine` migrates a `dir` it opens itself when `readOnly()` is
+  false, no lock. Never on a read-only open.
+- **In memory** (step 7): `ledger.ts` `readHeld` and `takeLine` pass every line through `upgradeLines`: a read-only
+  ledger, another ledger a read names (`otherLedgers` uses `openLedger`) and another writer's lines.
+- **Command** `apps/board/bin/ledger-migrate.ts`, `npm run ledger:migrate -- <folder> [--check | --undo]` (a project
+  folder = each ledger, via `ledgerFoldersIn`; or a ledger folder). Words in `server/words/bin.ts`.
+- **Tests** (new): `packages/format/tests/migrate.test.ts` (19: per step, paths for every format, the frozen-file
+  invariants and idempotence, the reader's newer kind), `apps/board/tests/ledger-migrate.test.ts` (10: line for line +
+  backup + gitignore, no-op twice and on a current ledger, crash at temp/backup/rename, an append mid-run, live lock,
+  newer and stop, `--check`, `--undo`), `apps/board/tests/ledger-migrate-open.test.ts` (8: read-only in memory with
+  bytes and time unchanged and the migrated file's events, another writer's old lines, newer at open and appended,
+  engine writable/read-only/newer, through the server: read-only open writes nothing, Edit migrates, newer refuses Edit).
+- **Docs**: `api.md` points 5 and 11 corrected (format 19, migrated on open, newer read-only), new § Migration (176-181);
+  `plugin.md` § The engine (migrates on a writable open; one engine per `dir`), open point 14 points to it.
+- **Words**: `format-ledger.ts` (`lineNewer`, `noFormatNotFormat2`, `laterBeforeFormat6`, `joinNotAnAgentId`),
+  `server-folders.ts` (newer reasons, migration log lines, undo refusals, `stoppedLine`), `bin.ts` (the command).
 
 ### Issues & Resolutions
-- 
+- **Checks**: `npm run verify` fails only on `modules.md` (orchestrator's `npm run map`). `npm test` (2503) fails only
+  `access-layout.test.ts` "every file the paths module names has a verdict" and `data-folder.test.ts` "ledgerFiles:
+  every file", and `npm run check` only on the former's type: both are existing tests that hold the exact list of a
+  ledger folder's files, which `BACKUPS_DIR` in `PER_LEDGER_NAMES` (the brief) must grow. Exact edits in REQUESTS;
+  patched copies in `temp/be02/req/` pass (17/17). `npm run test:timing` 14/14 (server start under the in-memory
+  upgrade). `npm run gen -- --check` current. Page specs `read-only`, `read-only-writes`, `ledgers`, `ledger-folders`:
+  37 passed, no new baseline (VB_TEST_PORT=6150).
+- The worktree had no built page (`apps/board/dist`), so `api-ledgers.test.ts` failed on a missing cookie before any
+  change of mine; `npm run build` fixed it.
+- A test stand-in ledger (`api-errors.test.ts`) has no `newer`: `project.ts` calls `ledger.newer?.()`.
+- **A call the brief left open**: a line the chain stops on (only the no-`v`, format-2 `join` and pre-6 `later`
+  cases; no known ledger has one) stops the whole migration, writes nothing and is logged with its line and words; the
+  ledger then opens as before (writable when asked), read through the in-memory upgrade. The command exits 1 and
+  says the same. The alternative, opening read-only, would lock the person out of a ledger today's code reads fine.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- **The no-`v` step changes a fold**: today such a line is a skipped problem; upgraded to a v19 line it is read, so
+  the board can change. It is the review's design and the runner's check allows it (fewer problems), but it is the
+  one step that is not fold-preserving; the maintainer may prefer "always stop".
+- **Format-2 `grant-request` lines**, if any existed, would lose their requester with the dropped `agent`, so a later
+  grant makes no holder; today it makes the free-text name a holder nobody can call as. No fixture or real ledger has
+  one (the review: lowest real format 7).
+- **T_01 renames `BoardState.flags`** (Bookmark): `legacy-folds.test.ts` must then map the frozen result's key in the
+  test, never edit the frozen file; its header says so.
+- **The page's paused controls** on a newer ledger still say "Read-only: switch to Editing" (`READ_ONLY_PERSON`); the
+  newer reason reaches the person when they press Edit (the toast). Open point 12 (`readOnly` answering a reason)
+  would close that gap.
+- **`server.ts` opens the first ledger before the project migrates it**, so a writable start reads an old ledger
+  twice. Moving `migrateOnOpen` into `server.ts` before `openLedger` would read it once (not mine to change).
+- **Backups are never pruned**; each migration of a ledger with old lines adds one (a full copy). Fine at today's
+  sizes; a retention rule belongs with the review's later rows.
+- `ledger.ts` is now 332 lines and `project.ts` 316 (verify warns, under 500).
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None.
 
 ---
 

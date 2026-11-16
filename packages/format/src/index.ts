@@ -8,6 +8,7 @@ export * from './ledger-shape.ts';
 export * from './ledger-line.ts';
 export * from './ledger-index.ts';
 export * from './ledger-read.ts';
+export * from './migrate/index.ts';
 export * from './board-view.ts';
 export * from './node-types.ts';
 export * from './operations.generated.ts';
