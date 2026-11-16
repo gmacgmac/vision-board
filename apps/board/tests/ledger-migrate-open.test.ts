@@ -112,8 +112,11 @@ test('through the server: a read-only open writes nothing; Edit migrates under i
   const h = await startBoard({ edit: false, flags: { ledgerFolders: false, readOnlyStart: true } });
   try {
     const file = ledgerPath(h.project);
+    // The fixtures are current (BE_03): the ledger is replaced by the frozen roadmap, in format 2, and read again.
+    fs.writeFileSync(file, fs.readFileSync(`${FIXTURES_DIR}legacy/roadmap.ledger.jsonl`, 'utf8'));
+    h.ledger.refresh();
     const before = fs.readFileSync(file, 'utf8');
-    assert.ok(before.split('\n').some((l) => l.startsWith('{"v":2,')), 'the fixture holds format-2 lines');
+    assert.ok(before.split('\n').some((l) => l.startsWith('{"v":2,')), 'the frozen roadmap holds format-2 lines');
     const board = await h.ok<{ title: string }>('get_board', { board: 'roadmap' });
     assert.equal(fs.readFileSync(file, 'utf8'), before, 'a read-only open and read wrote nothing');
     await h.ok('edit_ledger');

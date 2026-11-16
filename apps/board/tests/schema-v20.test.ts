@@ -2,15 +2,16 @@
 // skin, a node's icon and tone, a flow's direction, the `icon` line, a container's `seen`, the person's `skin`, `ask`
 // and `direction`. The schema and `eventProblems` agree on every line, good and broken; an old ledger with flags
 // migrates through the chain to the same boards, the flags as bookmarks, and a second run changes nothing; a v20
-// ledger round-trips.
+// ledger round-trips. The reader knows this one format (D-103 3): a line of any older one, of every type and action,
+// is refused by both checks with words to migrate it, and reads once the chain has brought it here.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { LEDGER_FORMAT, boardView, eventProblems, readLedger, toLine, upgradeLines } from '#format';
+import { ACTION_IDS, LEDGER_FORMAT, boardView, eventProblems, isUpgradeStop, readLedger, toLine, upgradeLine, upgradeLines } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import { boardState, foldLedger } from '#actions';
 import { LEDGER_EVENT_ID, schemaProblems } from '../server/schema.ts';
-import { AGENT, PERSON, act } from './schema-cases.ts';
+import { AGENT, PERSON, VALID, act } from './schema-cases.ts';
 
 type Rec = Record<string, unknown>;
 const verdict = (e: Rec) => ({ schema: schemaProblems(LEDGER_EVENT_ID, e).length === 0, hand: eventProblems(e).length === 0 });
@@ -51,7 +52,6 @@ const BROKEN: [string, Rec][] = [
   ['an icon line without a hash', { ...AGENT, type: 'icon', name: 'x-encoder' }],
   ['an icon line with an uppercase hash', { ...AGENT, type: 'icon', name: 'x-encoder', hash: 'A'.repeat(64) }],
   ['an icon line naming a board', { ...AGENT, type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64), board: 'b' }],
-  ['the person\'s icon line before v20', { ...PERSON, v: 19, type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64) }],
   ['a container seen without its head', { ...PERSON, type: 'seen', board: 'b', region: 'plan' }],
   ['a container seen naming a card', { ...PERSON, type: 'seen', board: 'b', region: 'plan', head: 9, n: 1 }],
   ['a card seen with a region', { ...PERSON, type: 'seen', n: 1, ver: 1, region: 'plan' }],
@@ -117,16 +117,35 @@ test('a format-19 ledger with flag lines migrates to the same boards, its flags 
   }
 });
 
-test('read as it lies, a v19 flag is refused: no reader takes the old act, only the chain', () => {
-  const read = readLedger(legacy('gallery'));
-  assert.match(read.problems.join('\n'), /action: one of .*bookmark/);
+test('read as it lies, an older ledger is refused line by line, each with the words to migrate it: only the chain reads it', () => {
+  const lines = legacy('gallery');
+  const read = readLedger(lines);
+  assert.deepEqual([read.events.length, read.problems.length], [0, lines.length]);
+  for (const p of read.problems) assert.match(p, /^line \d+: v: this line is in ledger format \d+, older than this Vision Board reads \(20\); migrate the ledger first: npm run ledger:migrate/);
+});
+
+/** Every valid line of the current format: one per event type, one per action. */
+const EVERY = [...Object.entries(VALID), ...ACTION_IDS.map((a): [string, Rec] => [a, act(a)])];
+
+test('a line one format below the current one, of every event type and action, is refused by both checks with the words to migrate it', () => {
+  for (const [name, e] of EVERY) {
+    const old = { ...JSON.parse(JSON.stringify(e)) as Rec, v: LEDGER_FORMAT - 1 };
+    assert.deepEqual(verdict(old), { schema: false, hand: false }, name);
+    assert.deepEqual(eventProblems(old), [`v: this line is in ledger format ${LEDGER_FORMAT - 1}, older than this Vision Board reads (${LEDGER_FORMAT}); migrate the ledger first: npm run ledger:migrate -- <folder>`], name);
+    const up = upgradeLine(old);
+    assert.ok(!isUpgradeStop(up), name);
+    assert.deepEqual(verdict(up as Rec), { schema: true, hand: true }, `${name}, migrated`);
+  }
+  const none = { ...VALID.board! };
+  delete none.v;
+  assert.match(eventProblems(none).join(), /^v: this line names no ledger format, older than .*npm run ledger:migrate/);
 });
 
 test('a format-20 ledger round-trips: read, every line written back is the line it was, and the chain leaves it be', () => {
   const lines = upgradeLines(legacy('mixed')).lines;
   const extra = [
-    { v: 20, seq: 252, at: '2026-11-16T09:00:00Z', by: 'agent', agent: JSON.parse(lines.find((l) => l.includes('"type":"join"'))!).agent, type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64) },
-    { v: 20, seq: 253, at: '2026-11-16T09:00:01Z', by: 'person', type: 'act', action: 'skin', board: JSON.parse(lines.find((l) => l.includes('"type":"board"'))!).board, skin: 'command-lens' },
+    { v: LEDGER_FORMAT, seq: 252, at: '2026-11-16T09:00:00Z', by: 'agent', agent: JSON.parse(lines.find((l) => l.includes('"type":"join"'))!).agent, type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64) },
+    { v: LEDGER_FORMAT, seq: 253, at: '2026-11-16T09:00:01Z', by: 'person', type: 'act', action: 'skin', board: JSON.parse(lines.find((l) => l.includes('"type":"board"'))!).board, skin: 'command-lens' },
   ].map((e) => JSON.stringify(e));
   const all = [...lines, ...extra];
   const read = readLedger(all);

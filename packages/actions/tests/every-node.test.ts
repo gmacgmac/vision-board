@@ -13,7 +13,6 @@ import { A, scene } from './ledger-v3.ts';
 /** The shared scene at v8 plus a finding (5) and a note (6) in A's container `r`. */
 function cards() {
   const l = scene();
-  l.v = 8;
   l.node(A, 5, 1, { region: 'r', kind: 'finding' });
   l.node(A, 6, 1, { region: 'r', kind: 'note' });
   return l;
@@ -109,7 +108,6 @@ test('show_node: every card has a status', () => {
 
 test('proposals: a comment leaves one standing (only ✓ or ✗ ends it); an old board\'s on a finding never shows', () => {
   const l = cards();
-  l.v = 10;
   const on1 = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'ack', reason: 'Agreed in chat.' });
   const on5 = l.agent(A, { type: 'propose', n: 5, ver: 1, action: 'drop', reason: 'Out of date.' });
   l.act({ action: 'comment', n: 1, ver: 1, text: 'Yes, and also this.' });

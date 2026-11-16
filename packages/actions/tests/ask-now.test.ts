@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { readLedger } from '#format';
+import { readLedger, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { askedBy, conditionsOf, replyScope, responsesAfter, sentNotes, validateAct } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';
@@ -16,14 +16,13 @@ const unsent = (s: LedgerState) => conditionsOf(s, { board: 'b' }).filter((c) =>
 /** The scene at v20: a note on card 1, and a ✓ on card 2, neither sent. */
 function noted() {
   const l = scene();
-  l.v = 20;
   const note = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why this one?' });
   const check = l.act({ action: 'ack', n: 2, ver: 1 });
   return { l, note, check };
 }
 
 const ask = (s: LedgerState, f: Partial<ActEvent>): ActEvent =>
-  ({ v: 20, seq: s.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'ask', board: 'b', context: 'board', ...f }) as ActEvent;
+  ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'ask', board: 'b', context: 'board', ...f }) as ActEvent;
 
 test('an ask is no Send: the asked note leaves what Send carries, the other answers stay, lastSend and sentHead stay', () => {
   const { l, note, check } = noted();
@@ -39,7 +38,6 @@ test('an ask is no Send: the asked note leaves what Send carries, the other answ
 
 test('an ask alone lights no Send', () => {
   const l = scene();
-  l.v = 20;
   const note = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why?' });
   l.act({ action: 'ask', board: 'b', lines: [note], context: 'node' });
   assert.deepEqual(unsent(l.state()), []);
@@ -50,7 +48,7 @@ test('the asked note is locked as a sent one, and the card can take a new note',
   l.act({ action: 'ask', board: 'b', lines: [note], context: 'board' });
   const s = l.state();
   assert.deepEqual(sentNotes(s, 'b', s.items.get(1)!.notes).map((x) => [x.seq, x.sent, x.locked]), [[note, true, true]]);
-  const edit = { v: 20, seq: s.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'note-edit', id: 1, note, text: 'Edited' } as ActEvent;
+  const edit = { v: LEDGER_FORMAT, seq: s.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'note-edit', id: 1, note, text: 'Edited' } as ActEvent;
   assert.match(validateAct(edit, s, 'b').join(), /was sent to the agent/);
   const again = { ...edit, action: 'comment', ver: 1, text: 'And another thing.', note: undefined } as ActEvent;
   assert.deepEqual(validateAct(again, s, 'b'), [], 'the one-unsent-note rule counts the asked note as sent');
@@ -90,7 +88,7 @@ test('validateAct: only the person asks, about a note of theirs on the board, no
 
 test('the ledger: an ask names lines it already holds', () => {
   const { l, note } = noted();
-  const line = (lines: number[]) => JSON.stringify({ v: 20, seq: l.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'ask', board: 'b', lines, context: 'session' });
+  const line = (lines: number[]) => JSON.stringify({ v: LEDGER_FORMAT, seq: l.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'ask', board: 'b', lines, context: 'session' });
   assert.deepEqual(readLedger([...l.lines, line([note])]).problems, []);
   assert.match(readLedger([...l.lines, line([note, l.seq + 5])]).problems.join(), /lines: each a line before this one/);
 });

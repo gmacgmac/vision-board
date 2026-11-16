@@ -28,7 +28,7 @@
       "items": {
         "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/agentId"
       },
-      "description": "Empty for a region written by a v2 line",
+      "description": "Empty for a region no agent id drew (a format-2 line, migrated)",
       "$comment": "Was: api.md 23"
     },
     "nodes": {

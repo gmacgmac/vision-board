@@ -9,11 +9,9 @@ import { acksRead, answersChip, conditionsOf, resolveChip, sendHead, sentAfter }
 import { B, scene } from './ledger-v3.ts';
 
 const unsent = (s: LedgerState) => conditionsOf(s, { board: 'b' }).filter((c) => c.kind === 'board.unsent').map((c) => c.seq);
-const v19 = () => { const l = scene(); l.v = 19; return l; };
 
 test('a Send with no head covers every answer up to its own line, as every Send before v19 did', () => {
   const l = scene();
-  l.v = 18;
   l.act({ action: 'ack', n: 1, ver: 1 });
   const send = l.act({ action: 'send', board: 'b' });
   const s = l.state();
@@ -24,7 +22,7 @@ test('a Send with no head covers every answer up to its own line, as every Send 
 });
 
 test('watermark: the Send acknowledges answers through its head; an answer after the read stays for the next round', () => {
-  const l = v19();
+  const l = scene();
   l.act({ action: 'ack', n: 1, ver: 1 });
   const read = resolveChip(l.state(), 'answers', { board: 'b', since: 0 });
   assert.ok(!('refused' in read) && read.ack.head === l.seq && read.ack.board === 'b', 'resolve acknowledges the board and the line it read through');
@@ -40,7 +38,7 @@ test('watermark: the Send acknowledges answers through its head; an answer after
 });
 
 test('a mark changed after the read counts against what was read: ✓ went, then cleared, the clear is owed', () => {
-  const l = v19();
+  const l = scene();
   l.act({ action: 'ack', n: 1, ver: 1 });
   const head = l.seq;
   const clear = l.act({ action: 'reopen', n: 1, ver: 1 });
@@ -50,7 +48,7 @@ test('a mark changed after the read counts against what was read: ✓ went, then
 });
 
 test('an answer after the read on a card that has since left the board is not owed', () => {
-  const l = v19();
+  const l = scene();
   l.act({ action: 'ack', n: 1, ver: 1 });
   const head = l.seq;
   l.act({ action: 'drop', n: 2, ver: 1 });
@@ -60,7 +58,7 @@ test('an answer after the read on a card that has since left the board is not ow
 });
 
 test('removed chip: a Send whose head is the watermark acknowledges nothing; the answers stay unsent', () => {
-  const l = v19();
+  const l = scene();
   const ack = l.act({ action: 'ack', n: 1, ver: 1 });
   const before = l.state();
   const chip = answersChip(before, 'b')!;
@@ -72,7 +70,7 @@ test('removed chip: a Send whose head is the watermark acknowledges nothing; the
 });
 
 test('a retry never double-counts: a stale or repeated head never moves the watermark back', () => {
-  const l = v19();
+  const l = scene();
   l.act({ action: 'ack', n: 1, ver: 1 });
   const first = l.seq;
   l.act({ action: 'drop', n: 2, ver: 1 });
@@ -86,7 +84,7 @@ test('a retry never double-counts: a stale or repeated head never moves the wate
 });
 
 test('rounds: answer, Send, answer while the bot works, Send again: each round carries its own; a note is history once its round went', () => {
-  const l = v19();
+  const l = scene();
   const note1 = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why?' });
   const read1 = l.seq;
   const note2 = l.act({ action: 'comment', n: 2, ver: 1, text: 'And this?' });
@@ -107,7 +105,7 @@ test('rounds: answer, Send, answer while the bot works, Send again: each round c
 });
 
 test('sendHead: what the board records for what the host says went', () => {
-  const l = v19();
+  const l = scene();
   l.act({ action: 'ack', n: 1, ver: 1 });
   const s = l.state();
   assert.deepEqual(sendHead(s, 'b', undefined), {}, 'left out: no chat carried it, the Send covers its own line');

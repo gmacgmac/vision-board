@@ -12,7 +12,6 @@ import { A, scene } from './ledger-v3.ts';
  * cards 1 and 2 together, and a note taken back. */
 function fixture() {
   const l = scene();
-  l.v = 5;
   l.agent(A, { type: 'region', board: 'b', region: { id: 'r', title: 'Pricing questions', mode: 'grid' } });
   l.node(A, 1, 2, { region: 'r', title: 'Annual pricing', body: 'Per seat, billed yearly.' });
   const note = l.act({ action: 'comment', n: 1, ver: 2, text: 'Too high for small teams?' });

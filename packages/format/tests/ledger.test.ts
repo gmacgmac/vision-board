@@ -50,7 +50,7 @@ test('an out-of-date proposal can still be rejected (api.md 93)', () => {
   const ls = lines().slice(0, 14);
   ls.push(JSON.stringify({ ...ev(4), seq: 15, ver: 2, node: { ...ev(4).node, title: 'Changed' } }));
   const { ver: _ver, action: _action, ...accept } = ev(14);
-  ls.push(JSON.stringify({ ...accept, v: 10, seq: 16, action: 'reject' }));
+  ls.push(JSON.stringify({ ...accept, seq: 16, action: 'reject' }));
   assert.deepEqual(validateLedger(ls), []);
 });
 

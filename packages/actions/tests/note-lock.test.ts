@@ -8,11 +8,11 @@ import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
 import { boardState, validateAct } from '../src/index.ts';
 import { A, B, Ledger } from './ledger-v3.ts';
+import { LEDGER_FORMAT } from '#format';
 
 /** Board `b`: A drew and holds `r` (item 1), B holds `q` (item 2). */
 function board(): Ledger {
   const l = new Ledger();
-  l.v = 7;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.agent(B, { type: 'join', label: 'Review chat' });
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });
@@ -24,7 +24,7 @@ function board(): Ledger {
 }
 
 const next = (l: Ledger, f: Partial<ActEvent>): ActEvent =>
-  ({ v: 7, seq: l.seq + 1, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act', action: 'ack', ...f } as ActEvent);
+  ({ v: LEDGER_FORMAT, seq: l.seq + 1, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act', action: 'ack', ...f } as ActEvent);
 const notesOn = (l: Ledger, n: number) => boardState(l.state(), 'b').items.get(String(n))?.notes ?? [];
 const regionNotes = (l: Ledger) => boardState(l.state(), 'b').regionNotes.get('r') ?? [];
 

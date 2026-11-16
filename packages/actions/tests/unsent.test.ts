@@ -25,10 +25,9 @@ function carried(s: LedgerState, board: string): number {
   return scope.cards.size + scope.regions.size;
 }
 
-const v8 = () => { const l = scene(); l.v = 8; return l; };
 
 test('an answer since the last Send holds it, with that line; a Send ends it', () => {
-  const l = v8();
+  const l = scene();
   assert.deepEqual(unsent(l.state()), [], 'nothing answered yet');
   const ack = l.act({ action: 'ack', n: 1, ver: 1 });
   assert.deepEqual(unsent(l.state()), [{ kind: 'board.unsent', board: 'b', seq: ack }]);
@@ -41,7 +40,7 @@ test('an answer since the last Send holds it, with that line; a Send ends it', (
 });
 
 test('the open board only, and the person\'s row only', () => {
-  const l = v8();
+  const l = scene();
   l.act({ action: 'ack', n: 4, ver: 1 });
   assert.deepEqual(unsent(l.state()), [], 'an answer on another board');
   assert.equal(unsent(l.state(), { board: 'b2' }).length, 1);
@@ -50,17 +49,17 @@ test('the open board only, and the person\'s row only', () => {
 });
 
 test('arranging the board is not an answer: pin, size, mode and a move between containers', () => {
-  const l = v8();
+  const l = scene();
   l.act({ action: 'pin', n: 1, x: 10, y: 20 });
   l.act({ action: 'size', n: 1, size: 'l' });
-  l.act({ action: 'mode', board: 'b', region: 'r', mode: 'list' });
+  l.act({ action: 'mode', board: 'b', region: 'r', mode: 'column' });
   l.act({ action: 'move', n: 2, region: 'r' });
   assert.deepEqual(unsent(l.state()), []);
   assert.equal(carried(l.state(), 'b'), 0);
 });
 
 test('moves that count: into Later writes Later, out of it Reopen', () => {
-  const l = v8();
+  const l = scene();
   l.act({ action: 'move', n: 1, ver: 1, region: LATER_REGION });
   const later = l.act({ action: 'later', n: 1, ver: 1 });
   assert.deepEqual(unsent(l.state()).map((c) => c.seq), [later]);
@@ -71,8 +70,7 @@ test('moves that count: into Later writes Later, out of it Reopen', () => {
 });
 
 test('a note on a whole container counts; More context and a proposal turned down count', () => {
-  const l = v8();
-  l.v = 10;
+  const l = scene();
   const note = l.act({ action: 'comment', board: 'b', region: 'q', text: 'On all of q.' });
   assert.deepEqual(unsent(l.state()).map((c) => c.seq), [note]);
   l.act({ action: 'send', board: 'b' });
@@ -85,7 +83,7 @@ test('a note on a whole container counts; More context and a proposal turned dow
 });
 
 test('a note written and removed before Send leaves nothing; an edited note still counts once', () => {
-  const l = v8();
+  const l = scene();
   const note = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why?' });
   l.act({ action: 'note-remove', n: 1, note });
   assert.deepEqual(unsent(l.state()), []);
@@ -96,7 +94,7 @@ test('a note written and removed before Send leaves nothing; an edited note stil
 });
 
 test('the agent\'s own lines never make something new to send', () => {
-  const l = v8();
+  const l = scene();
   const ask = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why?' });
   l.act({ action: 'send', board: 'b' });
   l.agent(A, { type: 'reply', n: 1, text: 'Because.', to: ask });
@@ -107,7 +105,7 @@ test('the agent\'s own lines never make something new to send', () => {
 // Send lights only for what the chat's agent may read (point 384): with `sendTo` the row holds for the latest unsent
 // line that concerns that agent (permissions.ts `concerns`, as `check_responses` and the answers chip read it).
 test('with the chat\'s agent, an answer in another agent\'s container holds nothing; one of its own holds it', () => {
-  const l = v8();
+  const l = scene();
   const theirs = l.act({ action: 'ack', n: 2, ver: 1 });
   const forA = { board: 'b', sendTo: A };
   assert.deepEqual(unsent(l.state(), forA), [], 'only B\'s card answered');

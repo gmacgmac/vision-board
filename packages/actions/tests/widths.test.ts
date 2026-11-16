@@ -7,13 +7,13 @@ import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
 import { boardState, inCardOrder, responsesAfter, validateAct } from '../src/index.ts';
 import { A, B, C, scene } from './ledger-v3.ts';
+import { LEDGER_FORMAT } from '#format';
 
 const widths = (region: string, w: string, board = 'b') => ({ action: 'widths', board, region, widths: w });
-const asAct = (e: object): ActEvent => ({ v: 13, seq: 999, at: '2026-10-11T09:00:00Z', by: 'person', type: 'act', ...e }) as ActEvent;
+const asAct = (e: object): ActEvent => ({ v: LEDGER_FORMAT, seq: 999, at: '2026-10-11T09:00:00Z', by: 'person', type: 'act', ...e }) as ActEvent;
 
 function picked() {
   const l = scene();
-  l.v = 13;
   const at = {
     ack1: l.act({ action: 'ack', n: 1, ver: 1 }),
     r1: l.act(widths('r', 'match')),

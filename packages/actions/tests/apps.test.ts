@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { APP_ACTIONS } from '#format';
+import { APP_ACTIONS, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { ACTIONS, appCards, appOf, passesLock, REFERENCES, responsesAfter, scopeOf, validateAct } from '../src/index.ts';
 import { isAnswer } from '../src/registry.ts';
@@ -15,12 +15,11 @@ import { A, scene } from './ledger-v3.ts';
 const OLD = 'a'.repeat(64);
 const NEW = 'b'.repeat(64);
 const AT = '2026-10-17T09:00:00Z';
-const asAct = (s: LedgerState, e: object): ActEvent => ({ v: 17, seq: s.seq + 1, at: AT, by: 'person', type: 'act', ...e }) as ActEvent;
+const asAct = (s: LedgerState, e: object): ActEvent => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, by: 'person', type: 'act', ...e }) as ActEvent;
 
 /** The scene (boards `b` and `b2`) with an app card for `calculator` on `b` (ledger number 5). */
 function withApp() {
   const l = scene();
-  l.v = 17;
   l.agent(A, { type: 'node', board: 'b', n: 5, ver: 1, node: { region: 'r', kind: 'app', title: 'Calculator', app: { id: 'calculator', w: 360, h: 440 } } });
   return l;
 }

@@ -5,7 +5,7 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { LedgerEvent, LedgerLine } from '#format';
-import { fromLine } from '#format';
+import { fromLine, LEDGER_FORMAT } from '#format';
 import { applyEvent, boardData, boardJson, eventBoard, foldLedger, pageConditions } from '#actions';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -51,7 +51,7 @@ test('pageConditions: the page reads the conditions table; marks never the open 
   assert.deepEqual(open.marks, { roadmap: 'new' }, 'every board but the open one, before any board seen');
   assert.equal(open.drawn, Math.max(...lines.filter((e) => e.type === 'node' && e.board === 'pricing').map((e) => e.seq)));
   const head = s.heads.get('roadmap')!;
-  applyEvent(s, { v: 8, seq: s.seq + 1, at: '2026-10-07T00:00:00Z', by: 'person', type: 'seen', board: 'roadmap', head });
+  applyEvent(s, { v: LEDGER_FORMAT, seq: s.seq + 1, at: '2026-10-07T00:00:00Z', by: 'person', type: 'seen', board: 'roadmap', head });
   assert.deepEqual(pageConditions(s, 'pricing').marks, {}, 'the board seen ends it');
   const comment = lines.find((e) => e.type === 'act' && e.action === 'comment' && eventBoard(s, e) === 'roadmap')!;
   applyEvent(s, { ...comment, seq: s.seq + 1 } as LedgerEvent);
@@ -60,7 +60,7 @@ test('pageConditions: the page reads the conditions table; marks never the open 
 
 test('pageConditions: unsent (`board.unsent`) is what Send to agent waits for, on the open board only', async () => {
   const s = foldLedger(await allLines());
-  const act = (f: object) => applyEvent(s, { v: 8, seq: s.seq + 1, at: '2026-10-11T00:00:00Z', by: 'person', type: 'act', ...f } as LedgerEvent);
+  const act = (f: object) => applyEvent(s, { v: LEDGER_FORMAT, seq: s.seq + 1, at: '2026-10-11T00:00:00Z', by: 'person', type: 'act', ...f } as LedgerEvent);
   for (const board of ['pricing', 'roadmap']) act({ action: 'send', board });
   assert.equal(pageConditions(s, 'pricing').unsent, false, 'nothing new since the Send');
   act({ action: 'comment', board: 'pricing', region: s.boards.get('pricing')!.regions[0]!.id, text: 'Why?' });
@@ -79,7 +79,7 @@ test('a container note and a container place (3_FE_04): the folded board still e
 });
 
 test('canApply: a line from a newer ledger format is not applied in place', () => {
-  const e = { v: 4, seq: 1, type: 'seen' } as unknown as LedgerEvent;
+  const e = { v: LEDGER_FORMAT, seq: 1, type: 'seen' } as unknown as LedgerEvent;
   assert.equal(canApply(e), true);
-  assert.equal(canApply({ ...e, v: 99 } as unknown as LedgerEvent), false);
+  assert.equal(canApply({ ...e, v: LEDGER_FORMAT + 1 } as unknown as LedgerEvent), false);
 });

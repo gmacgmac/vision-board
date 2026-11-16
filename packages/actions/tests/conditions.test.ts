@@ -91,11 +91,10 @@ for (const file of FIXTURES) {
 // ---- One case per row: when it is true, and when it ends. ----
 
 const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendation: 'R' };
-const v8 = (): Ledger => { const l = scene(); l.v = 8; return l; };
 
 const ROW_CASES: Record<ConditionKind, () => void> = {
   'item.owed': () => {
-    const l = v8();
+    const l = scene();
     const ask = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why?' });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'item.owed'), [{ kind: 'item.owed', board: 'b', id: 1, seq: ask }]);
     assert.equal(of(l.state(), { board: 'b', agent: A }, 'item.owed').length, 1, 'A drew it');
@@ -108,7 +107,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), { board: 'b' }, 'item.owed'), [], 'a park ends it');
   },
   'container.owed': () => {
-    const l = v8();
+    const l = scene();
     const note = l.act({ action: 'context', board: 'b', region: 'r', text: 'Say more.' });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'container.owed'), [{ kind: 'container.owed', board: 'b', container: 'r', seq: note }]);
     assert.equal(of(l.state(), { board: 'b', agent: A }, 'container.owed').length, 1, 'A holds r');
@@ -117,7 +116,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), { board: 'b' }, 'container.owed'), [], 'a reply naming it ends it');
   },
   'item.new': () => { // from where cards are new, in detail: rounds.test.ts
-    const l = v8();
+    const l = scene();
     const fresh = () => of(l.state(), { board: 'b' }, 'item.new').map((c) => c.id);
     l.seenBoard('b', l.seq);
     l.node(B, 5, 1, { region: 'q' });
@@ -126,7 +125,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(fresh(), [], 'the person\'s seen ends it');
   },
   'container.fresh': () => { // in detail: fresh.test.ts
-    const l = v8();
+    const l = scene();
     const fresh = () => of(l.state(), { board: 'b' }, 'container.fresh').map((c) => c.container);
     l.seenBoard('b', l.seq);
     const drew = l.node(B, 5, 1, { region: 'q' });
@@ -136,7 +135,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(fresh(), [], 'the person\'s seen of a card in it ends it');
   },
   'item.unseen': () => {
-    const l = v8();
+    const l = scene();
     const unseen = (board: string) => of(l.state(), { board }, 'item.unseen').map((c) => c.id);
     assert.deepEqual(unseen('b'), [1, 2, 3]);
     for (const n of [1, 2, 3]) l.seen(n, 1);
@@ -146,7 +145,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(unseen('b2'), [4]);
   },
   'item.awaiting': () => {
-    const l = v8();
+    const l = scene();
     const awaiting = (ctx: ConditionContext = { board: 'b' }) => of(l.state(), ctx, 'item.awaiting');
     const later = l.act({ action: 'later', n: 1, ver: 1 });
     assert.deepEqual(awaiting(), [{ kind: 'item.awaiting', board: 'b', id: 1, seq: later }]);
@@ -160,8 +159,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(awaiting(), [], 'leaving Later ends it');
   },
   'proposal.open': () => {
-    const l = v8();
-    l.v = 10;
+    const l = scene();
     const open = (ctx: ConditionContext = { board: 'b' }) => of(l.state(), ctx, 'proposal.open');
     const drop = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'drop', reason: 'The client declined.' });
     assert.deepEqual(open(), [{ kind: 'proposal.open', board: 'b', id: 1, seq: drop }]);
@@ -176,8 +174,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(open(), [], 'a newer version makes it stale');
   },
   'proposal.stale': () => {
-    const l = v8();
-    l.v = 10;
+    const l = scene();
     const stale = () => of(l.state(), { board: 'b' }, 'proposal.stale');
     const drop = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'drop', reason: 'The client declined.' });
     assert.deepEqual(stale(), []);
@@ -193,7 +190,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(stale(), [], 'a decision on the card ends it');
   },
   'grant.requested': () => {
-    const l = v8();
+    const l = scene();
     const r = l.request(C, 'r');
     const whole = l.agent(C, { type: 'grant-request', board: 'b', reason: 'I review this board.' });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'grant.requested'), [
@@ -205,7 +202,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), {}, 'grant.requested'), [], 'grant and deny end it');
   },
   'board.drawn': () => {
-    const l = v8();
+    const l = scene();
     const drew = l.seq - 3; // the v2 node 3 line: board b's last drawing line
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn'), [{ kind: 'board.drawn', board: 'b', seq: drew }]);
     assert.deepEqual(of(l.state(), {}, 'board.drawn'), [], 'only the open board');
@@ -213,7 +210,6 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn'), [], 'the board seen ends it');
     l.act({ action: 'ack', n: 1, ver: 1 });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn'), [], 'the person acting is not drawing');
-    l.v = 9;
     l.personBoard('b', 'Renamed'); // api.md 90
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn'), [], 'nor is the person renaming it');
     assert.deepEqual([l.state().boards.get('b')!.title, l.state().boards.get('b')!.regions.length], ['Renamed', 4], 'a rename keeps its containers');
@@ -221,7 +217,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn').map((c) => c.seq), [again]);
   },
   'board.new': () => {
-    const l = v8();
+    const l = scene();
     const heads = l.state().heads;
     assert.deepEqual(of(l.state(), {}, 'board.new'), [
       { kind: 'board.new', board: 'b', seq: heads.get('b') }, { kind: 'board.new', board: 'b2', seq: heads.get('b2') },
@@ -231,7 +227,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), {}, 'board.new').map((c) => c.board), ['b'], 'any board seen ends it');
   },
   'board.changed': () => {
-    const l = v8();
+    const l = scene();
     l.seenBoard('b2', l.state().heads.get('b2')!);
     assert.deepEqual(of(l.state(), {}, 'board.changed'), [], 'seen at its latest line');
     l.act({ action: 'ack', n: 4, ver: 1 });
@@ -248,7 +244,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.equal(boardNews(l.state(), 'b2')?.kind, 'board.changed', 'the same answer for the open board');
   },
   'board.unsent': () => { // what counts in detail: unsent.test.ts
-    const l = v8();
+    const l = scene();
     const ack = l.act({ action: 'ack', n: 1, ver: 1 });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.unsent'), [{ kind: 'board.unsent', board: 'b', seq: ack }]);
     l.act({ action: 'send', board: 'b' });

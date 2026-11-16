@@ -1,15 +1,15 @@
-// Ledger v3 context rules (api.md 14-16, 23): joins, grant requests and their answers, revokes,
+// Ledger context rules (api.md 14-16, 23): joins, grant requests and their answers, revokes,
 // sizes and sends, judged against what came before.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { containerKey, indexEvent, readLedger, readLine } from '../src/index.ts';
+import { containerKey, indexEvent, LEDGER_FORMAT, readLedger, readLine } from '../src/index.ts';
 
 const A = 'a-abcd1234';
 const B = 'a-wxyz9876';
 let seq = 0;
 const at = '2026-10-05T09:00:00Z';
-const agent = (who: string, e: object) => ({ v: 3, seq: ++seq, at, by: 'agent', agent: who, ...e });
-const person = (e: object) => ({ v: 3, seq: ++seq, at, by: 'person', type: 'act', ...e });
+const agent = (who: string, e: object) => ({ v: LEDGER_FORMAT, seq: ++seq, at, by: 'agent', agent: who, ...e });
+const person = (e: object) => ({ v: LEDGER_FORMAT, seq: ++seq, at, by: 'person', type: 'act', ...e });
 
 /** A joins, opens board b with region r and one node; B joins and asks for r. */
 function base() {
@@ -79,10 +79,9 @@ test('size needs a known node; send needs a known board', () => {
   assert.deepEqual(read(events).problems, ['line 7: n: unknown node 9', 'line 8: board: unknown "zz"']);
 });
 
-test('a region written by a v2 line has no holder', () => {
+test('a region no agent id drew (a format-2 line, migrated) has no holder', () => {
   const events = base();
-  (events[2] as { v: number; agent: string }).v = 2;
-  (events[2] as { agent: string }).agent = 'kiro';
+  delete (events[2] as { agent?: string }).agent;
   const { problems, index } = read(events);
   assert.deepEqual(problems, []);
   assert.equal(index.holders.has(containerKey('b', 'r')), false);
@@ -105,7 +104,7 @@ test('board access (D-034): a request for the whole board, once while open; a gr
 });
 
 test('board seen (api.md 87): a known board, up to a line already written', () => {
-  const seen = (board: string, head: number) => ({ v: 8, seq: ++seq, at, by: 'person', type: 'seen', board, head });
+  const seen = (board: string, head: number) => ({ v: LEDGER_FORMAT, seq: ++seq, at, by: 'person', type: 'seen', board, head });
   const ok = read([...base(), seen('b', 6), seen('b', 2)]);
   assert.deepEqual(ok.problems, []);
   assert.deepEqual(read([...base(), seen('nope', 6)]).problems, ['line 7: board: unknown "nope"']);
@@ -113,9 +112,9 @@ test('board seen (api.md 87): a known board, up to a line already written', () =
 });
 
 test('a person board line (api.md 90): creates a board with no creator, renames any board; an agent may not rename', () => {
-  const board = (e: object) => ({ v: 9, seq: ++seq, at, by: 'person', type: 'board', ...e });
+  const board = (e: object) => ({ v: LEDGER_FORMAT, seq: ++seq, at, by: 'person', type: 'board', ...e });
   const events = [...base(), board({ board: 'mine', title: 'Mine' }), board({ board: 'b', title: 'Renamed' }),
-    { ...agent(A, { type: 'board', board: 'b', title: 'Again' }), v: 9 }, { ...agent(A, { type: 'board', board: 'mine', title: 'Taken' }), v: 9 }];
+    agent(A, { type: 'board', board: 'b', title: 'Again' }), agent(A, { type: 'board', board: 'mine', title: 'Taken' })];
   const { problems, index } = read(events);
   assert.deepEqual(problems, ['line 9: board: "b" already exists', 'line 10: board: "mine" already exists']);
   assert.equal(index.creators.has('mine'), false);
@@ -136,7 +135,7 @@ test('readLine: a good line is the event, a bad one is what is wrong with it and
   assert.equal('notJSON' in bad && bad.notJSON, false);
   assert.ok('problems' in bad && bad.problems.length > 0);
   assert.equal(ix.seq, 99);
-  const torn = readLine(ix, '{"v":3,');
+  const torn = readLine(ix, `{"v":${LEDGER_FORMAT},`);
   assert.deepEqual(torn, { notJSON: true, problems: [] });
   assert.equal(ix.seq, 100);
 });

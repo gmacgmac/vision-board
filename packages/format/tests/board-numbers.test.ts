@@ -1,17 +1,17 @@
 // Ledger v12 (api.md 125-130, D-041 proposed): each board numbers its cards from 1 in the order
 // drawn; the project-wide ledger number is the card's identity (`id` in code, `n` in the file);
-// `retire` takes cards and whole containers off a board for good; `list` reads as `column`.
+// `retire` takes cards and whole containers off a board for good.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  boardNumber, boardView, cardId, everyNodeOf, foldDrawn, fromLine, nodesOf, readLedger, toLine, validateView,
+  boardNumber, boardView, cardId, everyNodeOf, foldDrawn, fromLine, LEDGER_FORMAT, nodesOf, readLedger, toLine, validateView,
 } from '../src/index.ts';
 
 const A = 'a-abcd1234';
 const at = '2026-10-11T09:00:00Z';
 let seq = 0;
-const agent = (e: object, v = 12) => ({ v, seq: ++seq, at, by: 'agent', agent: A, ...e });
-const person = (e: object, v = 12) => ({ v, seq: ++seq, at, by: 'person', type: 'act', ...e });
+const agent = (e: object) => ({ v: LEDGER_FORMAT, seq: ++seq, at, by: 'agent', agent: A, ...e });
+const person = (e: object) => ({ v: LEDGER_FORMAT, seq: ++seq, at, by: 'person', type: 'act', ...e });
 const node = (board: string, n: number, region: string, title: string, ver = 1) =>
   agent({ type: 'node', board, n, ver, node: { region, kind: 'question', title } });
 const read = (lines: object[]) => readLedger(lines.map((e) => JSON.stringify(e)));
@@ -42,19 +42,6 @@ test('the file names a card n; in code it is id, and toLine gives the line back'
   for (const [i, e] of events.entries()) assert.deepEqual(toLine(e), lines[i], `line ${i + 1}`);
   const act = fromLine({ ...person({ action: 'ack', n: 4, ver: 1 }) });
   assert.equal(act.type === 'act' && act.id, 4);
-});
-
-test('older lines read the same way: n is the card, list reads as column', () => {
-  seq = 0;
-  const old = [
-    agent({ type: 'board', board: 'a', title: 'A' }, 11),
-    agent({ type: 'region', board: 'a', region: { id: 'r', title: 'R', mode: 'list' } }, 11),
-    person({ action: 'mode', board: 'a', region: 'r', mode: 'list' }, 11),
-  ];
-  const { events, problems } = read(old);
-  assert.deepEqual(problems, []);
-  assert.equal(events[1]!.type === 'region' && events[1]!.region.mode, 'column');
-  assert.equal(events[2]!.type === 'act' && events[2]!.mode, 'column');
 });
 
 test('each board numbers its cards from 1 in the order drawn', () => {

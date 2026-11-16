@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/ledger/20/events/seen.schema.json",
   "title": "Seen event",
-  "description": "The person has seen version `ver` of node `n`, or (from v8) board `board` up to line `head`, or (from v20) container `region` of board `board` up to line `head`.",
+  "description": "The person has seen version `ver` of node `n`, or board `board` up to line `head`, or container `region` of board `board` up to line `head`.",
   "$comment": "Was: D-018; api.md 87",
   "$defs": {
     "core": {
@@ -12,7 +12,7 @@
         "ver": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/version", "description": "The version of that node the person has seen."},
         "board": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id", "description": "The board the person has looked at, with `head`, in place of `n` and `ver`."},
         "head": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/seq", "description": "The board's last line the person has seen: its `seq` in `list_boards` when the page showed it."},
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id", "description": "With `board` and `head`: the container the person looked at, up to that line (from v20).", "$comment": "Was: api.md 187"}
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id", "description": "With `board` and `head`: the container the person looked at, up to that line.", "$comment": "Was: api.md 187"}
       }
     },
     "rules": {

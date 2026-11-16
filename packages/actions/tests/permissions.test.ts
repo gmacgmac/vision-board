@@ -19,7 +19,6 @@ const node = (board: string, n: number, region: string): WriteItem => ({ type: '
 /** The scene, then C asks for the whole board `b` and the person answers `answer`. */
 function boardAsked(answer?: 'grant' | 'deny'): Ledger {
   const l = scene();
-  l.v = 8;
   const request = l.agent(C, { type: 'grant-request', board: 'b', reason: 'I review this board.' });
   if (answer) l.act({ action: answer, request });
   return l;
@@ -28,7 +27,6 @@ function boardAsked(answer?: 'grant' | 'deny'): Ledger {
 /** The scene with B's access to board `b` revoked: B still holds its containers q and later. */
 function boardRevoked(): LedgerState {
   const l = scene();
-  l.v = 8;
   l.act({ action: 'revoke', holder: B, board: 'b' });
   return l.state();
 }
@@ -43,7 +41,6 @@ function answers(type: 'reply' | 'propose' | 'park'): void {
   // B redraws card 1 under a grant on r, then loses r: as its author it still answers it, but not
   // once it loses the board.
   const l = scene();
-  l.v = 8;
   l.act({ action: 'grant', request: l.request(B, 'r') });
   l.node(B, 1, 2, { region: 'r' });
   l.act({ action: 'revoke', holder: B, board: 'b', region: 'r' });
@@ -63,7 +60,6 @@ const ROW_CASES: Record<WriteKind, () => void> = {
     // A board the person made (api.md 90) has no agent creator: no agent writes its line, and every
     // agent asks for the board before writing on it (D-034), until the person grants it.
     const l = scene();
-    l.v = 9;
     l.personBoard('mine', 'Mine');
     const p = l.state();
     for (const agent of [A, B, C]) {
@@ -146,13 +142,13 @@ test('a board grant lets the agent make and fill its own containers, not write i
   assert.deepEqual(canWrite(s, C, { type: 'region', board: 'b2', region: { id: 'mine' } }), need('b2'), 'one board only');
 });
 
-test('a board revoke removes the board, never its creator; a v2 board has none', () => {
+test('a board revoke removes the board, never its creator; a board no agent id drew has none', () => {
   const s = boardRevoked();
   assert.deepEqual([holders(s, 'b'), holders(s, 'b', 'q')], [[A], [B]]);
-  const v2 = new Ledger();
-  v2.v2({ type: 'board', board: 'old', title: 'Old' });
-  assert.deepEqual(holders(v2.state(), 'old'), []);
-  assert.deepEqual(canWrite(v2.state(), C, { type: 'region', board: 'old', region: { id: 'r' } }), need('old'));
+  const old = new Ledger();
+  old.anonymous({ type: 'board', board: 'old', title: 'Old' });
+  assert.deepEqual(holders(old.state(), 'old'), []);
+  assert.deepEqual(canWrite(old.state(), C, { type: 'region', board: 'old', region: { id: 'r' } }), need('old'));
 });
 
 // ---- The oracle: the rule this table replaced (grants.ts `canWrite`), as it was. ----
@@ -196,7 +192,7 @@ function replay(events: readonly LedgerEvent[]): { checked: number; refused: str
   let checked = 0;
   const refused: string[] = [];
   for (const e of events) {
-    if (e.by === 'agent' && e.agent !== undefined && e.v !== 2 && e.type in PERMISSIONS) {
+    if (e.by === 'agent' && e.agent !== undefined && e.type in PERMISSIONS) {
       const board = scopeOf(s, e).board;
       const held = REFERENCES.agent.lookup(s, e.agent).some((c) => c.board === board);
       const item = toLine(e) as unknown as WriteItem;

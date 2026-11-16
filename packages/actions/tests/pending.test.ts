@@ -61,15 +61,15 @@ test('pending, scoped to an agent: only items it may answer', () => {
   assert.deepEqual(pendingItems(s, 'b', C), []);
 });
 
-test('pending, scoped: an author still owes the park on a node it moved to Later', () => {
+test('pending, scoped: an author still owes the park on a node it moved to B\'s container', () => {
   const l = scene();
-  l.act({ action: 'grant', request: l.request(A, 'later') });
-  l.node(A, 1, 2, { region: 'later' });
-  l.act({ action: 'revoke', holder: A, board: 'b', region: 'later' });
+  l.act({ action: 'grant', request: l.request(A, 'side') });
+  l.node(A, 1, 2, { region: 'side' });
+  l.act({ action: 'revoke', holder: A, board: 'b', region: 'side' });
   const later = l.act({ action: 'later', n: 1, ver: 2 });
   const s = l.state();
   assert.deepEqual(pendingItems(s, 'b', A), [{ n: 1, later }]);
-  assert.deepEqual(pendingItems(s, 'b', B), [{ n: 1, later }], 'B holds Later');
+  assert.deepEqual(pendingItems(s, 'b', B), [{ n: 1, later }], 'B holds `side`');
   assert.deepEqual(pendingItems(s, 'b', C), []);
 });
 

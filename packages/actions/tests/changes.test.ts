@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import type { NodeBody } from '#format';
 import { versionChanges } from '../src/index.ts';
 
-const v1: NodeBody = { region: 'r', kind: 'risk', title: 'The floor undercuts self-serve', body: 'A 35-seat team pays less.', item: true };
+const v1: NodeBody = { region: 'r', kind: 'risk', title: 'The floor undercuts self-serve', body: 'A 35-seat team pays less.' };
 
 test('the same version: no change', () => {
   assert.deepEqual(versionChanges(v1, { ...v1 }), []);
@@ -31,15 +31,13 @@ test('the title, kind and container change; the title carries what it now reads'
   ]);
 });
 
-test('tags and size: added, changed and removed; an old item mark is no change (api.md 118)', () => {
+test('tags and size: added, changed and removed', () => {
   const tagged = { ...v1, tags: ['pricing'], size: 's' as const };
   assert.deepEqual(versionChanges(v1, tagged), [{ field: 'tags', change: 'added' }, { field: 'size', change: 'added' }]);
   assert.deepEqual(versionChanges(tagged, { ...tagged, tags: ['pricing', 'renewals'], size: 'l' }),
     [{ field: 'tags', change: 'changed' }, { field: 'size', change: 'changed' }]);
-  assert.deepEqual(versionChanges(tagged, { ...v1, tags: [], item: false }),
+  assert.deepEqual(versionChanges(tagged, { ...v1, tags: [] }),
     [{ field: 'tags', change: 'removed' }, { field: 'size', change: 'removed' }]);
-  const { item: _item, ...unmarked } = v1;
-  assert.deepEqual(versionChanges(v1, unmarked), []);
 });
 
 test('no previous version: every field it has is added', () => {

@@ -6,12 +6,12 @@
 // Board b's numbers differ from the ledger's identities throughout.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '#format';
+import { readLedger, LEDGER_FORMAT } from '#format';
 import { boardData, foldLedger, pastLines, retiredCounts } from '../src/index.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-const maker = lineMaker({ v: 12, at: '2026-10-11T11' });
+const maker = lineMaker({ at: '2026-10-11T11' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
@@ -72,7 +72,7 @@ test('without past versions (the versionView flag off), a marker opens none', ()
 test('the person\'s removal of several cards in one line (N24, a v16 line) counts like an agent\'s, each on its container', () => {
   const s = ledger(() => [
     card('b', 7, 'p'), card('b', 8, 'q'), // 18, 19: run 3
-    line({ v: 16, by: 'person', type: 'retire', board: 'b', cards: [2, 7, 8] }), // 20
+    line({ v: LEDGER_FORMAT, by: 'person', type: 'retire', board: 'b', cards: [2, 7, 8] }), // 20
   ]);
   assert.deepEqual([...retiredCounts(s, 'b')], [['p', { count: 4, version: 19, until: 20 }], ['q', { count: 1, version: 19, until: 20 }]],
     'p: 3, 5, then 2 and 7; q: 8; each opens the last version before the removal');

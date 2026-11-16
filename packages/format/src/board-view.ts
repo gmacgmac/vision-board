@@ -93,7 +93,7 @@ export const latest = (node: LedgerNode): NodeVersion => node.versions[node.vers
 /** One board as the `View` the layout engine and the page read, in board numbers (api.md 125):
  * node id = `String(n)`, every node carries its number `n`, and links and a radial centre name
  * nodes the same way. Retired cards and containers are left out, and so are links and a centre
- * that name one (api.md 126); an old `item` mark is left out. `version` = the ledger position. */
+ * that name one (api.md 126). `version` = the ledger position. */
 export function boardView(s: DrawnState, board: string): View {
   const b = s.boards.get(board);
   if (!b) throw new Error(`unknown board "${board}"`);
@@ -113,6 +113,6 @@ export function boardView(s: DrawnState, board: string): View {
 }
 
 function viewNode(n: number, v: NodeVersion): ViewNode {
-  const { ver: _ver, at: _at, agent: _agent, item: _item, ...body } = v;
+  const { ver: _ver, at: _at, agent: _agent, ...body } = v;
   return { id: String(n), ...body, n };
 }

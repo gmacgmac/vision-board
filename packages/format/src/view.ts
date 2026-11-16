@@ -11,10 +11,6 @@ export const FORMAT_VERSION = 1;
 export const MODES = ['grid', 'flow', 'lanes', 'radial', 'column', 'row'] as const;
 export type Mode = (typeof MODES)[number];
 
-/** Mode names older ledger lines may carry, and what they read as now: ledger v12 renamed `list`
- * to `column` (api.md 129). A v12 line naming one is refused with `LIST_RENAMED` (ledger.ts). */
-export const RENAMED_MODES: Readonly<Record<string, Mode>> = { list: 'column' };
-
 /** How wide a container's cards are (api.md 132): `match`, every card in a column as wide as the
  * column's widest card, or `own`, each card its own width. */
 export const WIDTHS = ['match', 'own'] as const;

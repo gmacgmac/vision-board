@@ -9,7 +9,7 @@ import { cardsWords, containerWords, foldLedger } from '../src/index.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-const maker = lineMaker({ v: 16, at: '2026-10-12T11' });
+const maker = lineMaker({ at: '2026-10-12T11' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });

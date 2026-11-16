@@ -164,7 +164,7 @@ export const OPERATIONS = {
   },
   list_icons: {
     operationId: 'list_icons', method: 'GET', path: '/api/icons',
-    pathParams: [], xAgent: true, auth: 'agent-or-person',
+    pathParams: [], xAgent: true, auth: 'none',
   },
   add_icon: {
     operationId: 'add_icon', method: 'POST', path: '/api/icons',

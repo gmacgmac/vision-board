@@ -1,7 +1,8 @@
-// A small ledger v3 builder for the action tests: agents join, draw, ask for grants, and the
-// person answers. Every line goes through readLedger, so a test never folds an invalid ledger.
+// A small ledger builder for the action tests: agents join, draw, ask for grants, and the person
+// answers. Every line is in the current format (D-103) and goes through readLedger, so a test never
+// folds an invalid ledger.
 import assert from 'node:assert/strict';
-import { readLedger } from '#format';
+import { readLedger, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { foldLedger } from '../src/index.ts';
 
@@ -15,11 +16,9 @@ const stamp = (seq: number) =>
 export class Ledger {
   lines: string[] = [];
   seq = 0;
-  /** The format new lines are stamped with; the note tests write v4 lines. */
-  v = 3;
 
   private add(e: object): number {
-    this.lines.push(JSON.stringify({ v: this.v, seq: ++this.seq, at: stamp(this.seq), ...e }));
+    this.lines.push(JSON.stringify({ v: LEDGER_FORMAT, seq: ++this.seq, at: stamp(this.seq), ...e }));
     return this.seq;
   }
 
@@ -32,14 +31,15 @@ export class Ledger {
   seenBoard(board: string, head: number): number { return this.add({ by: 'person', type: 'seen', board, head }); }
   /** The person creates or renames `board` (a v9 line, api.md 90). */
   personBoard(board: string, title: string): number { return this.add({ by: 'person', type: 'board', board, title }); }
-  /** A v2 line, written by a named agent the old way. */
-  v2(e: object): number {
-    this.lines.push(JSON.stringify({ v: 2, seq: ++this.seq, at: stamp(this.seq), by: 'agent', agent: 'kiro', ...e }));
+  /** An agent's line with no agent id on it, as a format-2 line reads once migrated (review V3): it makes no
+   * creator and no holder. */
+  anonymous(e: object): number {
+    this.lines.push(JSON.stringify({ v: LEDGER_FORMAT, seq: ++this.seq, at: stamp(this.seq), by: 'agent', ...e }));
     return this.seq;
   }
 
   node(who: string, n: number, ver: number, node: object, board = 'b'): number {
-    return this.agent(who, { type: 'node', board, n, ver, node: { kind: 'question', title: `Node ${n}`, item: true, ...node } });
+    return this.agent(who, { type: 'node', board, n, ver, node: { kind: 'question', title: `Node ${n}`, ...node } });
   }
   region(who: string, id: string, board = 'b'): number {
     return this.agent(who, { type: 'region', board, region: { id, title: id, mode: 'grid' } });
@@ -57,8 +57,8 @@ export class Ledger {
 
 /**
  * The shared scene. A and B join; A opens board `b` with region `r` (A holds it) and item 1; B
- * creates region `q` with item 2 and region `later`; a v2 line adds region `old` with item 3;
- * C joins and holds nothing. Board `b2` (A) has region `x` and item 4.
+ * creates region `q` with item 2 and region `side`; a line with no agent id (a format-2 line, migrated)
+ * adds region `old` with item 3; C joins and holds nothing. Board `b2` (A) has region `x` and item 4.
  */
 export function scene(): Ledger {
   const l = new Ledger();
@@ -70,9 +70,9 @@ export function scene(): Ledger {
   l.node(A, 1, 1, { region: 'r' });
   l.region(B, 'q');
   l.node(B, 2, 1, { region: 'q' });
-  l.region(B, 'later');
-  l.v2({ type: 'region', board: 'b', region: { id: 'old', title: 'Old', mode: 'grid' } });
-  l.v2({ type: 'node', board: 'b', n: 3, ver: 1, node: { region: 'old', kind: 'question', title: 'Old item', item: true } });
+  l.region(B, 'side');
+  l.anonymous({ type: 'region', board: 'b', region: { id: 'old', title: 'Old', mode: 'grid' } });
+  l.anonymous({ type: 'node', board: 'b', n: 3, ver: 1, node: { region: 'old', kind: 'question', title: 'Old item' } });
   l.agent(A, { type: 'board', board: 'b2', title: 'Board two' });
   l.region(A, 'x', 'b2');
   l.node(A, 4, 1, { region: 'x' }, 'b2');

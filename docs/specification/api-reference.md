@@ -42,7 +42,7 @@ API version 1.42.0. Every operation on the project ledger, defined once. The MCP
 | [`edit_ledger`](#edit_ledger) | `POST /api/project/edit` | person | no |
 | [`stop_editing`](#stop_editing) | `DELETE /api/project/edit` | person | no |
 | [`list_folders`](#list_folders) | `GET /api/folders` | person | no |
-| [`list_icons`](#list_icons) | `GET /api/icons` | agent-or-person | yes |
+| [`list_icons`](#list_icons) | `GET /api/icons` | anyone | yes |
 | [`add_icon`](#add_icon) | `POST /api/icons` | agent | yes |
 | [`list_apps`](#list_apps) | `GET /api/apps` | agent-or-person | yes |
 | [`call_app_tool`](#call_app_tool) | `POST /api/apps/{app}/calls` | person | no |
@@ -233,11 +233,11 @@ Media type `application/json`.
 
 | Field | Type | Always there | Description |
 |---|---|---|---|
-| `v` | `2` or `3` or `4` or `5` or `6` or `7` or `8` or `9` or `10` or `11` or `12` or `13` or `14` or `15` or `16` or `17` or `18` or `19` or `20` | yes | The ledger format version of the line: 2 to 20. |
+| `v` | `20` | yes | The ledger format of the line: 20. A ledger in an older format is migrated before it is read (`npm run ledger:migrate`); one in a newer format opens read-only. |
 | `seq` | integer | yes | The line's position in the ledger. |
 | `at` | string | yes | When the server wrote the line. |
-| `by` | `"agent"` or `"person"` | yes | Who wrote the line: `agent`, or from v9 `person` (put_board). |
-| `agent` | string | no | The agent that wrote the line: an agent id from v3, any name on v2. |
+| `by` | `"agent"` or `"person"` | yes | Who wrote the line: `agent`, or `person` (put_board). |
+| `agent` | string | no | The agent that wrote the line: an agent id. |
 | `person` | string | no | The person's name, written only once a board has more than one person. |
 | `title` | string | yes | The board's title. |
 | `summary` | string | no | One or two sentences on what the board is for. |
@@ -250,7 +250,7 @@ Example:
 
 ```json
 {
-  "v": 9,
+  "v": 20,
   "seq": 60,
   "at": "2026-10-08T09:00:00Z",
   "by": "person",
@@ -267,11 +267,11 @@ Media type `application/json`.
 
 | Field | Type | Always there | Description |
 |---|---|---|---|
-| `v` | `2` or `3` or `4` or `5` or `6` or `7` or `8` or `9` or `10` or `11` or `12` or `13` or `14` or `15` or `16` or `17` or `18` or `19` or `20` | yes | The ledger format version of the line: 2 to 20. |
+| `v` | `20` | yes | The ledger format of the line: 20. A ledger in an older format is migrated before it is read (`npm run ledger:migrate`); one in a newer format opens read-only. |
 | `seq` | integer | yes | The line's position in the ledger. |
 | `at` | string | yes | When the server wrote the line. |
-| `by` | `"agent"` or `"person"` | yes | Who wrote the line: `agent`, or from v9 `person` (put_board). |
-| `agent` | string | no | The agent that wrote the line: an agent id from v3, any name on v2. |
+| `by` | `"agent"` or `"person"` | yes | Who wrote the line: `agent`, or `person` (put_board). |
+| `agent` | string | no | The agent that wrote the line: an agent id. |
 | `person` | string | no | The person's name, written only once a board has more than one person. |
 | `title` | string | yes | The board's title. |
 | `summary` | string | no | One or two sentences on what the board is for. |
@@ -284,7 +284,7 @@ Example:
 
 ```json
 {
-  "v": 9,
+  "v": 20,
   "seq": 60,
   "at": "2026-10-08T09:00:00Z",
   "by": "person",
@@ -472,7 +472,7 @@ Media type `application/json`.
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `board` | string | yes | The board the container is on. |
 | `region` | object | yes | The container itself: its id, title, mode and lanes. |
-| `holders` | list of string | yes | Empty for a region written by a v2 line |
+| `holders` | list of string | yes | Empty for a region no agent id drew (a format-2 line, migrated) |
 | `nodes` | list of object | yes | Every node the container has held, each with all its versions and notes; a retired card carries `retired`. |
 | `notes` | list of object | no | The person's notes on the whole container, oldest first; a removed note is left out. |
 | `retired` | integer | no | The ledger line that took the container off the board with its cards, for a retired container; left out while it is on the board. |
@@ -740,7 +740,7 @@ Example:
 {
   "responses": [
     {
-      "v": 3,
+      "v": 20,
       "seq": 50,
       "at": "2026-10-05T09:12:00Z",
       "by": "person",
@@ -751,7 +751,7 @@ Example:
       "text": "Rule 6 needs an example."
     },
     {
-      "v": 3,
+      "v": 20,
       "seq": 51,
       "at": "2026-10-05T09:12:00Z",
       "by": "person",
@@ -810,7 +810,7 @@ Example:
 {
   "events": [
     {
-      "v": 3,
+      "v": 20,
       "seq": 1,
       "at": "2026-10-05T08:00:00Z",
       "by": "agent",
@@ -821,7 +821,7 @@ Example:
       "key": "pricing-board"
     },
     {
-      "v": 3,
+      "v": 20,
       "seq": 2,
       "at": "2026-10-05T08:00:01Z",
       "by": "agent",
@@ -851,7 +851,7 @@ Example (Two lines):
 ```json
 [
   {
-    "v": 3,
+    "v": 20,
     "seq": 1,
     "at": "2026-10-05T08:00:00Z",
     "by": "agent",
@@ -862,7 +862,7 @@ Example (Two lines):
     "key": "pricing-board"
   },
   {
-    "v": 3,
+    "v": 20,
     "seq": 2,
     "at": "2026-10-05T08:00:01Z",
     "by": "agent",
@@ -1230,7 +1230,7 @@ Record one action by the person: ✓ (`ack`), ✗ (`drop`), a note (`comment`; a
 | `nodes` | body | list of integer | no | A group of cards, two or more, all on one board, in place of `n` (and `ver`): the items a note is on, for `comment` and `context`, or the cards a `move` puts in one container. Board numbers in a request or an answer, ledger numbers on a stored line. |
 | `app` | body | string | no | The app, for `app-allow` and `app-revoke`: its folder's name in `.visionboard/apps/`. |
 | `hash` | body | string | no | The version of the app's code to allow, for `app-allow`: its hash, as list_apps gives it. |
-| `head` | body | integer | no | For `send`: the ledger line its answers were read through, when a chat carried them; only the answers up to it count as sent, and a later one stays for the next Send. Left out, the Send covers every answer up to its own line (every Send before v19). 0: none yet. |
+| `head` | body | integer | no | For `send`: the ledger line its answers were read through, when a chat carried them; only the answers up to it count as sent, and a later one stays for the next Send. Left out, the Send covers every answer up to its own line (as a Send no chat carried). 0: none yet. |
 | `skin` | body | `"default"` or `"command-lens"` | no | The board's skin, for `skin`. |
 | `lines` | body | list of integer | no | For `ask`: the `seq` of each note of the person's it carried (a `comment`, a `context` with words, or a note on several cards or on a container), on the act's board, none sent or asked before. |
 | `context` | body | `"node"` or `"board"` or `"session"` | no | For `ask`: what the agent was given with the notes: `node`, `board` or `session`. |
@@ -1257,11 +1257,11 @@ Media type `application/json`.
 
 | Field | Type | Always there | Description |
 |---|---|---|---|
-| `v` | `2` or `3` or `4` or `5` or `6` or `7` or `8` or `9` or `10` or `11` or `12` or `13` or `14` or `15` or `16` or `17` or `18` or `19` or `20` | yes | The ledger format version of the line: 2 to 20. |
+| `v` | `20` | yes | The ledger format of the line: 20. A ledger in an older format is migrated before it is read (`npm run ledger:migrate`); one in a newer format opens read-only. |
 | `seq` | integer | yes | The line's position in the ledger. |
 | `at` | string | yes | When the server wrote the line. |
 | `by` | `"person"` or `"agent"` | yes | Who wrote the line: `person` or `agent`. |
-| `agent` | string | no | The agent that wrote the line: an agent id from v3, any name on v2. |
+| `agent` | string | no | The agent that wrote the line: an agent id. |
 | `person` | string | no | The person's name, written only once a board has more than one person. |
 | `action` | `"ack"` or `"drop"` or `"comment"` or `"context"` or `"later"` or `"reopen"` or `"pin"` or `"unpin"` or `"mode"` or `"grant"` or `"deny"` or `"revoke"` or `"size"` or `"send"` or `"note-edit"` or `"note-remove"` or `"move"` or `"reject"` or `"bookmark"` or `"unbookmark"` or `"notes-hide"` or `"notes-show"` or `"widths"` or `"archive"` or `"restore"` or `"lock"` or `"unlock"` or `"app-allow"` or `"app-revoke"` or `"skin"` or `"ask"` or `"direction"` | yes | Which action to take, from the action registry. `bookmark`, `unbookmark`, `notes-hide`, `notes-show`, `archive`, `restore`, `lock` and `unlock` are the person's own marks, whose lines no agent ever reads (`notes-hide` puts away the notes on one card, `notes-show` brings them back); a locked board shows as `locked` on `get_board` and `list_boards`. `app-allow` lets an app's tools run at one version of its code, and `app-revoke` stops them; each is on the app, not on a board. `skin` sets the board's skin; `ask` records the person's notes sent at once, apart from Send (Ask now); `direction` sets which way a flow runs. |
 | `n` | integer | no | The card the action is about: its number on the board in a request or an answer, its ledger number on a stored line. |
@@ -1272,7 +1272,7 @@ Media type `application/json`.
 | `y` | number | no | Where to place the node down, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container. |
 | `board` | string | no | The board the action is about, for `mode`, `widths`, `revoke`, `send`, `archive`, `restore`, `lock` and `unlock`, and for a note on or a place for a whole container (with `region`). |
 | `region` | string | no | The container the action is about, for `mode`, `widths` and `revoke` (a `revoke` without it removes access to the whole board); for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`. |
-| `mode` | `"grid"` or `"flow"` or `"lanes"` or `"radial"` or `"column"` or `"row"` or `"list"` | no | The layout mode to set, for `mode`: `grid`, `flow`, `lanes`, `radial`, `column` or `row` (`list` on lines from ledger v11 and older only, read as `column`). |
+| `mode` | `"grid"` or `"flow"` or `"lanes"` or `"radial"` or `"column"` or `"row"` or `"list"` | no | The layout mode to set, for `mode`: `grid`, `flow`, `lanes`, `radial`, `column` or `row`. |
 | `widths` | `"match"` or `"own"` | no | The card widths to set, for `widths`: `match` or `own`. |
 | `request` | integer | no | The `seq` of the grant request being answered, for `grant` and `deny`. |
 | `holder` | string | no | The agent whose access is removed, for `revoke`: to the container, or with no `region` to the board. |
@@ -1282,7 +1282,7 @@ Media type `application/json`.
 | `nodes` | list of integer | no | A group of cards, two or more, all on one board, in place of `n` (and `ver`): the items a note is on, for `comment` and `context`, or the cards a `move` puts in one container. Board numbers in a request or an answer, ledger numbers on a stored line. |
 | `app` | string | no | The app, for `app-allow` and `app-revoke`: its folder's name in `.visionboard/apps/`. |
 | `hash` | string | no | The version of the app's code to allow, for `app-allow`: its hash, as list_apps gives it. |
-| `head` | integer | no | For `send`: the ledger line its answers were read through, when a chat carried them; only the answers up to it count as sent, and a later one stays for the next Send. Left out, the Send covers every answer up to its own line (every Send before v19). 0: none yet. |
+| `head` | integer | no | For `send`: the ledger line its answers were read through, when a chat carried them; only the answers up to it count as sent, and a later one stays for the next Send. Left out, the Send covers every answer up to its own line (as a Send no chat carried). 0: none yet. |
 | `skin` | `"default"` or `"command-lens"` | no | The board's skin, for `skin`. |
 | `lines` | list of integer | no | For `ask`: the `seq` of each note of the person's it carried (a `comment`, a `context` with words, or a note on several cards or on a container), on the act's board, none sent or asked before. |
 | `context` | `"node"` or `"board"` or `"session"` | no | For `ask`: what the agent was given with the notes: `node`, `board` or `session`. |
@@ -1293,7 +1293,7 @@ Example:
 
 ```json
 {
-  "v": 3,
+  "v": 20,
   "seq": 50,
   "at": "2026-10-05T09:12:00Z",
   "by": "person",
@@ -1361,11 +1361,11 @@ Media type `application/json`.
 
 | Field | Type | Always there | Description |
 |---|---|---|---|
-| `v` | `2` or `3` or `4` or `5` or `6` or `7` or `8` or `9` or `10` or `11` or `12` or `13` or `14` or `15` or `16` or `17` or `18` or `19` or `20` | yes | The ledger format version of the line: 2 to 20. |
+| `v` | `20` | yes | The ledger format of the line: 20. A ledger in an older format is migrated before it is read (`npm run ledger:migrate`); one in a newer format opens read-only. |
 | `seq` | integer | yes | The line's position in the ledger. |
 | `at` | string | yes | When the server wrote the line. |
-| `by` | `"agent"` or `"person"` | yes | Who wrote the line: `agent`, or from v16 `person` (retire_cards). |
-| `agent` | string | no | The agent that wrote the line: an agent id from v3, any name on v2. |
+| `by` | `"agent"` or `"person"` | yes | Who wrote the line: `agent`, or `person` (retire_cards). |
+| `agent` | string | no | The agent that wrote the line: an agent id. |
 | `person` | string | no | The person's name, written only once a board has more than one person. |
 | `region` | string | no | In place of `n`: the container to retire, with every card in it now. Its id is never used again on this board. |
 | `board` | string | yes | The board the line belongs to; the server takes it from the path. |
@@ -1377,7 +1377,7 @@ Example:
 
 ```json
 {
-  "v": 16,
+  "v": 20,
   "seq": 61,
   "at": "2026-10-12T09:00:00Z",
   "by": "person",
@@ -1420,7 +1420,7 @@ Record that the person has seen a version of a node (`n` and `ver`), so its "upd
 | `ver` | body | integer | no | The version of that node the person has seen. |
 | `board` | body | string | no | The board the person has looked at, with `head`, in place of `n` and `ver`. |
 | `head` | body | integer | no | The board's last line the person has seen: its `seq` in `list_boards` when the page showed it. |
-| `region` | body | string | no | With `board` and `head`: the container the person looked at, up to that line (from v20). |
+| `region` | body | string | no | With `board` and `head`: the container the person looked at, up to that line. |
 
 Example request (A node version):
 
@@ -1448,24 +1448,24 @@ Media type `application/json`.
 
 | Field | Type | Always there | Description |
 |---|---|---|---|
-| `v` | `2` or `3` or `4` or `5` or `6` or `7` or `8` or `9` or `10` or `11` or `12` or `13` or `14` or `15` or `16` or `17` or `18` or `19` or `20` | yes | The ledger format version of the line: 2 to 20. |
+| `v` | `20` | yes | The ledger format of the line: 20. A ledger in an older format is migrated before it is read (`npm run ledger:migrate`); one in a newer format opens read-only. |
 | `seq` | integer | yes | The line's position in the ledger. |
 | `at` | string | yes | When the server wrote the line. |
 | `by` | `"person"` | yes | Who wrote the line; always `person` for this event. |
-| `agent` | string | no | The agent that wrote the line: an agent id from v3, any name on v2. |
+| `agent` | string | no | The agent that wrote the line: an agent id. |
 | `person` | string | no | The person's name, written only once a board has more than one person. |
 | `n` | integer | no | The number of the node the person has seen. |
 | `ver` | integer | no | The version of that node the person has seen. |
 | `board` | string | no | The board the person has looked at, with `head`, in place of `n` and `ver`. |
 | `head` | integer | no | The board's last line the person has seen: its `seq` in `list_boards` when the page showed it. |
-| `region` | string | no | With `board` and `head`: the container the person looked at, up to that line (from v20). |
+| `region` | string | no | With `board` and `head`: the container the person looked at, up to that line. |
 | `type` | `"seen"` | yes |  |
 
 Example:
 
 ```json
 {
-  "v": 3,
+  "v": 20,
   "seq": 53,
   "at": "2026-10-05T09:12:00Z",
   "by": "person",
@@ -2738,9 +2738,9 @@ Example:
 
 ## `list_icons`
 
-`GET /api/icons` · who: an agent (Bearer secret from `join`) or the person (the board page cookie) · MCP tool `list_icons`, `vb` command `vb list-icons`
+`GET /api/icons` · who: anyone (no credentials) · MCP tool `list_icons`, `vb` command `vb list-icons`
 
-List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's. Needs your secret.
+List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's.
 
 ### Inputs
 
@@ -2758,7 +2758,7 @@ Media type `application/json`.
 | Field | Type | Always there | Description |
 |---|---|---|---|
 | `builtIn` | list of string | yes | The built-in icons, by name. |
-| `library` | list of object | yes | The project's library icons this ledger knows, by name: reuse one before you add one. |
+| `library` | list of object | yes | The project's library icons, by name, each checked as it is read: every file in the folder that passes, including one this ledger has no `icon` line for yet (its first use writes one); reuse one before you add one. |
 | `problems` | list of object | no | What is wrong with a library icon: its file is missing, fails the check, or no longer matches its hash (a node naming it draws a plain tile). Left out when there is none. |
 
 Example:

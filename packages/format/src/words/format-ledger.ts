@@ -101,8 +101,6 @@ export const aNamesOneCardWith = (f: string, a: string): string => `${f}: a ${a}
 export const boardRequired = (a: string): string => `${a}: board required`;
 export const namesItsBoardAndNothing = (f: string, value: string, a: string): string => `${f}: ${value} ${a} names its board, and nothing else`;
 export const cardsAtLeast1Card = 'cards: at least 1 card, or a region';
-export const regionMode = (LIST_RENAMED: string): string => `region.mode: ${LIST_RENAMED}`;
-export const mode = (LIST_RENAMED: string): string => `mode: ${LIST_RENAMED}`;
 export const seenANodeNAnd = 'seen: a node (n and ver) or a board (board and head, with region for one container), not both';
 export const headRequiredTheBoardS = 'head: required, the board\'s last line the person has seen';
 export const uTCTimestampLike202610 = (f: string): string => `${f}: UTC timestamp, like 2026-10-05T09:00:00Z`;
@@ -110,7 +108,9 @@ export const typeOneOf = (join: string): string => `type: one of ${join}`;
 export const writtenByAnAgent = (t: string): string => `${t}: written by an agent`;
 export const writtenByAPerson = (t: string): string => `${t}: written by a person`;
 export const agentRequiredAJoinIs = 'agent: required; a join is stamped with the new agent id';
-export const nodeItem = (ITEM_REMOVED: string): string => `node.item: ${ITEM_REMOVED}`;
+/** A line in an older ledger format (D-103): the reader knows one format, so the ledger is migrated first. */
+export const olderFormat = (v: number | undefined, current: number): string =>
+  `v: ${v === undefined ? 'this line names no ledger format' : `this line is in ledger format ${v}`}, older than this Vision Board reads (${current}); migrate the ledger first: npm run ledger:migrate -- <folder>`;
 
 // ---- ledger.ts
 export const itemIsGoneTheKind = '`item` is gone: the kind decides. ';

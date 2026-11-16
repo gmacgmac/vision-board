@@ -29,7 +29,8 @@ export interface LedgerIndex {
   proposals: Map<number, { id: number; ver: number }>;
   /** Agent ids that have joined (D-027). */
   agents: Set<string>;
-  /** Board or container (`accessKey`) -> the agent whose v3 line created it. v2 lines made none. */
+  /** Board or container (`accessKey`) -> the agent whose line created it. A line with no agent id (a format-2 line,
+   * migrated) makes none. */
   creators: Map<string, string>;
   /** Board or container (`accessKey`) -> the agents that hold it now (api.md 81-82). A container:
    * its creator and every grant, minus revocations. A board: its creator, every agent granted the
@@ -90,8 +91,8 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
     case 'region':
       if (!ix.boards.has(e.board)) p.push(formatLedgerWords.boardUnknown(e.board));
       else if (ix.retiredRegions.has(containerKey(e.board, e.region.id))) p.push(formatLedgerWords.regionIdContainerWasRetired(e.region.id));
-      // The built-in Later is every board's own (api.md 67); older lines keep their meaning.
-      if (e.v >= 6 && e.region.id === LATER_REGION && !ix.boards.get(e.board)?.has(LATER_REGION))
+      // The built-in Later is every board's own (api.md 67).
+      if (e.region.id === LATER_REGION && !ix.boards.get(e.board)?.has(LATER_REGION))
         p.push(formatLedgerWords.regionIdIsTheBoard(LATER_REGION));
       break;
     case 'node': nodeContext(ix, e, p, name); break;
@@ -217,9 +218,9 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
   switch (e.type) {
     case 'board':
       if (!ix.boards.has(e.board)) ix.boards.set(e.board, new Set());
-      if (e.v !== 2 && e.agent !== undefined) create(ix, e.board, e.agent);
+      if (e.agent !== undefined) create(ix, e.board, e.agent);
       break;
-    case 'region': indexRegion(ix, e.board, e.region.id, e.v !== 2 ? e.agent : undefined); break;
+    case 'region': indexRegion(ix, e.board, e.region.id, e.agent); break;
     case 'node': {
       const known = ix.nodes.get(e.id);
       if (known) { known.ver = e.ver; break; }
@@ -252,13 +253,13 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
 /** `agent` holds the board or container at `key`. */
 const hold = (ix: LedgerIndex, key: string, agent: string) => ix.holders.set(key, (ix.holders.get(key) ?? new Set()).add(agent));
 
-/** `agent`'s v3 line created the board or container at `key`: it is its creator and a holder. */
+/** `agent`'s line created the board or container at `key`: it is its creator and a holder. */
 function create(ix: LedgerIndex, key: string, agent: string): void {
   ix.creators.set(key, agent);
   hold(ix, key, agent);
 }
 
-/** A region id seen for the first time is a new container; a v3 writer creates it, and so holds
+/** A region id seen for the first time is a new container; an agent id that writes it creates it, and so holds
  * its board too (D-034). */
 function indexRegion(ix: LedgerIndex, board: string, region: string, agent: string | undefined): void {
   const regions = ix.boards.get(board);

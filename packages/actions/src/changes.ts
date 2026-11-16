@@ -10,8 +10,7 @@ export type Change = 'added' | 'changed' | 'removed';
 /** One field's change; `text`: a body's added text, or the title as it now reads. */
 export interface FieldChange { field: ChangeField; change: Change; text?: string }
 
-/** A field's value as compared: absent when the version has none (an empty tag list). An old line's
- * `item` mark is not compared: the kind decides (api.md 118). */
+/** A field's value as compared: absent when the version has none (an empty tag list). */
 const VALUE: Record<ChangeField, (b: NodeBody) => string | undefined> = {
   title: (b) => b.title,
   body: (b) => b.body || undefined,

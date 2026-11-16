@@ -18,7 +18,7 @@
         "y": {"type": "number", "description": "Where to place the node down, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container."},
         "board": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id", "description": "The board the action is about, for `mode`, `widths`, `revoke`, `send`, `archive`, `restore`, `lock` and `unlock`, and for a note on or a place for a whole container (with `region`)."},
         "region": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id", "description": "The container the action is about, for `mode`, `widths` and `revoke` (a `revoke` without it removes access to the whole board); for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`."},
-        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/lineMode", "description": "The layout mode to set, for `mode`: `grid`, `flow`, `lanes`, `radial`, `column` or `row` (`list` on lines from ledger v11 and older only, read as `column`)."},
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/lineMode", "description": "The layout mode to set, for `mode`: `grid`, `flow`, `lanes`, `radial`, `column` or `row`."},
         "widths": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/widths", "description": "The card widths to set, for `widths`: `match` or `own`.", "$comment": "Was: api.md 132"},
         "request": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/seq", "description": "The `seq` of the grant request being answered, for `grant` and `deny`."},
         "holder": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/agentId", "description": "The agent whose access is removed, for `revoke`: to the container, or with no `region` to the board."},
@@ -28,7 +28,7 @@
         "nodes": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/nodeNumbers", "description": "A group of cards, two or more, all on one board, in place of `n` (and `ver`): the items a note is on, for `comment` and `context`, or the cards a `move` puts in one container. Board numbers in a request or an answer, ledger numbers on a stored line."},
         "app": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id", "description": "The app, for `app-allow` and `app-revoke`: its folder's name in `.visionboard/apps/`.", "$comment": "Was: api.md 150"},
         "hash": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/appHash", "description": "The version of the app's code to allow, for `app-allow`: its hash, as list_apps gives it.", "$comment": "Was: api.md 150"},
-        "head": {"type": "integer", "minimum": 0, "description": "For `send`: the ledger line its answers were read through, when a chat carried them; only the answers up to it count as sent, and a later one stays for the next Send. Left out, the Send covers every answer up to its own line (every Send before v19). 0: none yet.", "$comment": "Was: api.md 169, point 377"},
+        "head": {"type": "integer", "minimum": 0, "description": "For `send`: the ledger line its answers were read through, when a chat carried them; only the answers up to it count as sent, and a later one stays for the next Send. Left out, the Send covers every answer up to its own line (as a Send no chat carried). 0: none yet.", "$comment": "Was: api.md 169, point 377"},
         "skin": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/skin", "description": "The board's skin, for `skin`.", "$comment": "Was: api.md 183"},
         "lines": {"type": "array", "minItems": 1, "maxItems": 500, "uniqueItems": true, "items": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/seq"}, "description": "For `ask`: the `seq` of each note of the person's it carried (a `comment`, a `context` with words, or a note on several cards or on a container), on the act's board, none sent or asked before.", "$comment": "Was: api.md 188"},
         "context": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/askContext", "description": "For `ask`: what the agent was given with the notes: `node`, `board` or `session`.", "$comment": "Was: api.md 188"},
@@ -62,16 +62,16 @@
       "unevaluatedProperties": false
     },
     "noList": {
-      "description": "From ledger v12 a `mode` act never names `list`: it was renamed `column`.",
-      "$comment": "Kept apart from `core` so a stored line from v11 or older, which may name `list`, still reads. Was: api.md 129",
+      "description": "A `mode` act never names `list`: it was renamed `column`.",
+      "$comment": "Kept apart from `core`, whose mode names `list` (`lineMode`), so a line or item naming it gets these words alone. Was: api.md 129",
       "type": "object",
       "properties": {"mode": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/notList"}}
     },
     "lineRules": {
-      "description": "A stored line from v12 on names no `list` mode.",
+      "description": "A stored line names no `list` mode.",
       "$comment": "Kept apart from `rules`, which the sent form and check_responses share. Was: api.md 129",
-      "type": "object",
-      "if": {"type": "object", "required": ["v"], "properties": {"v": {"not": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}}}},
+      "$comment": "Always applies; through `if`/`then` so the generators read `mode` from `core`, not from this piece.",
+      "if": {"type": "object"},
       "then": {"$ref": "https://vision-board.invalid/schema/ledger/20/events/act.schema.json#/$defs/noList"}
     },
     "rules": {

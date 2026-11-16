@@ -5,25 +5,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { boardView, eventProblems, readLedger } from '#format';
+import { boardView, eventProblems, readLedger, LEDGER_FORMAT } from '#format';
 import {
   boardState, nodeDetail, pendingItems, replyText, responsesAfter, validateAct,
 } from '../src/index.ts';
 import { A, B, scene } from './ledger-v3.ts';
 
 const AT = '2026-10-05T10:00:00Z';
-const base = { v: 5, seq: 9, at: AT, by: 'person', type: 'act' };
+const base = { v: LEDGER_FORMAT, seq: 9, at: AT, by: 'person', type: 'act' };
 
 /** The shared scene with v5 lines from here on; items 1 (region r) and 2 (region q) on board b. */
 function withGroup(text = 'Same price question on both') {
   const l = scene();
-  l.v = 5;
   const note = l.act({ action: 'comment', nodes: [1, 2], text });
   return { l, note };
 }
 
 const next = (l: ReturnType<typeof scene>, f: Partial<ActEvent>): ActEvent =>
-  ({ v: 5, seq: l.seq + 1, at: AT, by: 'person', type: 'act', action: 'ack', ...f } as ActEvent);
+  ({ v: LEDGER_FORMAT, seq: l.seq + 1, at: AT, by: 'person', type: 'act', action: 'ack', ...f } as ActEvent);
 const notesOn = (l: ReturnType<typeof scene>, n: number) => boardState(l.state(), 'b').items.get(String(n))?.notes ?? [];
 
 test('shape: comment or context with nodes in place of n and ver; two or more distinct numbers', () => {
@@ -44,7 +43,6 @@ test('shape: comment or context with nodes in place of n and ver; two or more di
 
 test('context: every named node exists; the ledger refuses an unknown one', () => {
   const l = scene();
-  l.v = 5;
   l.act({ action: 'comment', nodes: [1, 99], text: 'x' });
   assert.ok(readLedger(l.lines).problems.some((p) => p.includes('unknown node 99')));
 });
@@ -78,7 +76,6 @@ test('one note under one seq, on every card it names; each card reads commented'
 
 test('a card with its own note not yet sent may also be in a group note; a second own note is still refused', () => {
   const l = scene();
-  l.v = 5;
   const own = l.act({ action: 'comment', n: 1, ver: 1, text: 'Mine' });
   assert.deepEqual(validateAct(next(l, { action: 'comment', nodes: [1, 2], text: 'Ours' }), l.state(), 'b'), []);
   const group = l.act({ action: 'comment', nodes: [1, 2], text: 'Ours' });
@@ -144,7 +141,6 @@ test('check_responses: the agent sees the note once, with all its numbers', () =
 
 test('the numbered reply names the group once, with its numbers', () => {
   const l = scene();
-  l.v = 5;
   l.act({ action: 'ack', n: 3, ver: 1 });
   l.act({ action: 'comment', nodes: [1, 2], text: 'Same question' });
   const s = l.state();

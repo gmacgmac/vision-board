@@ -5,14 +5,14 @@ import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
 import { validateAct } from '../src/index.ts';
 import { A, B, scene } from './ledger-v3.ts';
+import { LEDGER_FORMAT } from '#format';
 
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 10, seq: 999, at: '2026-10-08T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: 1, ver: 1, ...f });
+  ({ v: LEDGER_FORMAT, seq: 999, at: '2026-10-08T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: 1, ver: 1, ...f });
 
 /** The scene at v10 with a drop proposed on item 1 and an ack proposed on item 2. */
 function proposed() {
   const l = scene();
-  l.v = 10;
   const drop = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'drop', reason: 'The client declined.' });
   const ack = l.agent(B, { type: 'propose', n: 2, ver: 1, action: 'ack', reason: 'Settled in chat.' });
   return { l, drop, ack };
@@ -64,7 +64,6 @@ test('fold: a reject is not a decision on the item', () => {
 
 test('seen: any act naming a card sees its latest version, never lowered; Send and container acts do not', () => {
   const l = scene();
-  l.v = 10;
   l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
   l.node(B, 2, 2, { region: 'q', body: 'Changed.' });
   l.act({ action: 'send', board: 'b' });

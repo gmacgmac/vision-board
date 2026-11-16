@@ -6,18 +6,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { boardView, eventProblems, LATER_REGION, readLedger } from '#format';
+import { boardView, eventProblems, LATER_REGION, readLedger, LEDGER_FORMAT } from '#format';
 import { boardState, containerDetail, replyText, responsesAfter, validateAct } from '../src/index.ts';
 import { A, B, Ledger } from './ledger-v3.ts';
 
 const AT = '2026-10-05T10:00:00Z';
-const base = { v: 7, seq: 9, at: AT, by: 'person', type: 'act' };
+const base = { v: LEDGER_FORMAT, seq: 9, at: AT, by: 'person', type: 'act' };
 const on = { board: 'b', region: 'r' };
 
 /** Board `b`: A holds `r` (item 1), B holds `q` (item 2). Board `b2`: A, `x`, item 3. */
 function containers(): Ledger {
   const l = new Ledger();
-  l.v = 7;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.agent(B, { type: 'join', label: 'Review chat' });
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });
@@ -32,7 +31,7 @@ function containers(): Ledger {
 }
 
 const next = (l: Ledger, f: Partial<ActEvent>): ActEvent =>
-  ({ v: 7, seq: l.seq + 1, at: AT, by: 'person', type: 'act', action: 'comment', ...f } as ActEvent);
+  ({ v: LEDGER_FORMAT, seq: l.seq + 1, at: AT, by: 'person', type: 'act', action: 'comment', ...f } as ActEvent);
 
 test('shape: a container note and a container place name board and region in place of n, ver and nodes', () => {
   for (const f of [

@@ -22,7 +22,7 @@
       "items": {
         "$ref": "https://vision-board.invalid/schema/api/list-icons-response.schema.json#/$defs/icon"
       },
-      "description": "The project's library icons this ledger knows, by name: reuse one before you add one."
+      "description": "The project's library icons, by name, each checked as it is read: every file in the folder that passes, including one this ledger has no `icon` line for yet (its first use writes one); reuse one before you add one."
     },
     "problems": {
       "type": "array",

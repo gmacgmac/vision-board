@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { PRIVATE_ACTIONS, boardView, eventProblems, isPrivateAct, readLedger } from '#format';
+import { PRIVATE_ACTIONS, boardView, eventProblems, isPrivateAct, readLedger, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   ACTIONS, boardList, boardState, conditionsOf, nodeDetail, notesHiddenOn, openItems, replyScope, replyText, responsesAfter, validateAct,
@@ -16,7 +16,6 @@ import { A, scene } from './ledger-v3.ts';
 /** The scene at v18, the person having looked at both boards. */
 function seen() {
   const l = scene();
-  l.v = 18;
   l.seenBoard('b', l.seq);
   l.seenBoard('b2', l.seq);
   return l;
@@ -85,7 +84,7 @@ test('no agent read changes when the person hides or shows a card\'s notes, and 
 });
 
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 18, seq: 999, at: '2026-10-19T10:00:00Z', by: 'person', type: 'act', action: 'notes-hide', id: 1, ...f });
+  ({ v: LEDGER_FORMAT, seq: 999, at: '2026-10-19T10:00:00Z', by: 'person', type: 'act', action: 'notes-hide', id: 1, ...f });
 
 test('validateAct: the person hides any card\'s notes; an agent never does; the ledger refuses a retired card', () => {
   const l = seen();
@@ -95,7 +94,7 @@ test('validateAct: the person hides any card\'s notes; an agent never does; the 
   assert.match(validateAct(act({ by: 'agent', agent: A }), s, 'b')[0]!, /only the person/);
   assert.match(validateAct(act({ id: 4 }), s, 'b')[0]!, /is on board "b2", not "b"/);
   l.agent(A, { type: 'retire', board: 'b', cards: [5] });
-  const line = (f: object) => JSON.stringify({ v: 18, seq: l.seq + 1, at: '2026-10-19T10:00:00Z', by: 'person', type: 'act', action: 'notes-hide', n: 5, ...f });
+  const line = (f: object) => JSON.stringify({ v: LEDGER_FORMAT, seq: l.seq + 1, at: '2026-10-19T10:00:00Z', by: 'person', type: 'act', action: 'notes-hide', n: 5, ...f });
   assert.match(readLedger([...l.lines, line({})]).problems.join(), /card 5 is retired/);
   assert.deepEqual(eventProblems(JSON.parse(line({ n: 1 }))), []);
   assert.match(eventProblems(JSON.parse(line({ n: 1, ver: 1 }))).join(), /names one card with n, and nothing else/);

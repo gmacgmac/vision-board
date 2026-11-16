@@ -38,15 +38,14 @@ export interface LineMaker {
 }
 
 /**
- * A line builder. `v` is the format the lines claim (LEDGER_FORMAT unless the test is about an older
- * one). `at` is the time of line `seq`: a function, or an hour (`2026-10-11T11`) whose minute is the
- * seq, so a test can name the time a line was written.
+ * A line builder, in the one format the reader knows (`LEDGER_FORMAT`, D-103). `at` is the time of line `seq`: a
+ * function, or an hour (`2026-10-11T11`) whose minute is the seq, so a test can name the time a line was written.
  */
-export function lineMaker({ v = LEDGER_FORMAT, at = '2026-10-01T10' }: { v?: number; at?: string | ((seq: number) => string) } = {}): LineMaker {
+export function lineMaker({ at = '2026-10-01T10' }: { at?: string | ((seq: number) => string) } = {}): LineMaker {
   let seq = 0;
   const time = typeof at === 'function' ? at : (n: number) => `${at}:${String(n).padStart(2, '0')}:00Z`;
   return {
-    line: (e) => JSON.stringify({ v, seq: ++seq, at: time(seq), ...e }),
+    line: (e) => JSON.stringify({ v: LEDGER_FORMAT, seq: ++seq, at: time(seq), ...e }),
     get seq() { return seq; },
     reset() { seq = 0; },
   };

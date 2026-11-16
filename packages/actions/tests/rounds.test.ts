@@ -12,7 +12,6 @@ import { A, B, Ledger } from './ledger-v3.ts';
 /** Board `b` at v10, drawn by A in one run: region `r`, items 1 and 2. */
 function drawn(): Ledger {
   const l = new Ledger();
-  l.v = 10;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });
   l.region(A, 'r');
@@ -91,7 +90,6 @@ test('with no board seen, no card is new, even after a Send and more drawing', (
  * first drawing: region `r`, items 1 and 2 (VERIFY_01 bug 7). */
 function openedEmpty(): Ledger {
   const l = new Ledger();
-  l.v = 10;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.seenBoard('b', l.personBoard('b', 'Board'));
   send(l);
@@ -112,7 +110,6 @@ test('a board opened while empty: the agent\'s first drawing is never new, even 
 
 test('an agent\'s empty board opened, then its cards: the first drawing with a card is not new; a region alone does not end it', () => {
   const l = new Ledger();
-  l.v = 10;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });
   l.region(A, 'r');

@@ -11,7 +11,6 @@ const on = { board: 'b', region: 'r' };
 /** Board `b`: A drew and holds `r` (item 1), B holds `q` (item 2). */
 function board(): Ledger {
   const l = new Ledger();
-  l.v = 7;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.agent(B, { type: 'join', label: 'Review chat' });
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });

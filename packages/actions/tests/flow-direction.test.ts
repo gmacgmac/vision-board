@@ -5,13 +5,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { directionOf } from '#format';
+import { directionOf, LEDGER_FORMAT } from '#format';
 import { conditionsOf, validateAct } from '../src/index.ts';
 import { A, Ledger } from './ledger-v3.ts';
 
 function drawn() {
   const l = new Ledger();
-  l.v = 20;
   l.agent(A, { type: 'join', label: 'Chat' });
   l.agent(A, { type: 'board', board: 'p', title: 'Plan' });
   l.agent(A, { type: 'region', board: 'p', region: { id: 'build', title: 'Build', mode: 'flow', direction: 'down' } });
@@ -45,7 +44,7 @@ test('a direction is no answer: it lights no Send', () => {
 
 test('validateAct: the person\'s, on a container of the board it was sent to, or the whole board', () => {
   const s = drawn().state();
-  const act = (f: Partial<ActEvent>) => ({ v: 20, seq: s.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'direction', board: 'p', direction: 'down', ...f }) as ActEvent;
+  const act = (f: Partial<ActEvent>) => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: '2026-11-16T10:00:00Z', by: 'person', type: 'act', action: 'direction', board: 'p', direction: 'down', ...f }) as ActEvent;
   assert.deepEqual([validateAct(act({}), s, 'p'), validateAct(act({ region: 'ship' }), s, 'p')], [[], []]);
   assert.match(validateAct(act({ by: 'agent', agent: A }), s, 'p').join(), /only the person/);
   assert.match(validateAct(act({ region: 'nope' }), s, 'p').join(), /region: unknown "nope"/);

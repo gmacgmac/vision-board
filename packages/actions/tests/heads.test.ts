@@ -62,7 +62,6 @@ test('boardList: every board with its title and its own last line, in the order 
 // The person's board seen in the fold (api.md 87): its own map, never a board head.
 test('a board seen keeps the highest head and moves no board head; the node form is unchanged', () => {
   const l = scene();
-  l.v = 8;
   const head = l.state().heads.get('b')!;
   l.seenBoard('b', head);
   l.seenBoard('b', 2);

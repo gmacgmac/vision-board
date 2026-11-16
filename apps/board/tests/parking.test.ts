@@ -12,11 +12,11 @@ import { lineMaker } from '#format/testing';
 const A = 'a-aaaa1111';
 /** The time `line` gives the line with this `seq`. */
 const AT = (n: number) => `2026-10-08T13:${String(n).padStart(2, '0')}:00Z`;
-const maker = lineMaker({ v: 10, at: '2026-10-08T13' });
+const maker = lineMaker({ at: '2026-10-08T13' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
-const item = (n: number) => agent({ type: 'node', board: 'b', n, ver: 1, node: { region: 'r', kind: 'question', title: `Card ${n}`, item: true } });
+const item = (n: number) => agent({ type: 'node', board: 'b', n, ver: 1, node: { region: 'r', kind: 'question', title: `Card ${n}` } });
 const card = (n: number): ViewNode => ({ id: String(n), n, region: 'r', kind: 'question', title: `Card ${n}` });
 const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendation: 'R' };
 
