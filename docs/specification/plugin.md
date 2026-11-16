@@ -224,7 +224,7 @@ createEngine({ dir, name?, warn?, flags?, readOnly? }): PluginEngine   // apps/b
 ```
 
 `dir` is the board's data folder, one per bot or project, and the only place it reads or writes: the ledger, the agents'
-hashes and `images/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
+hashes, `images/` and `icons/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
 `warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself, each at its
 default (`packages/format/src/flags.ts` `FLAGS`) when left out:
 
@@ -257,6 +257,8 @@ through `notify`, `error`, and writes nothing, on the same path as standalone's 
 an answer, a key, a note, a flag; seen marks stay in the view's memory). Naming your bot (`POST agents`, § The bot) is
 a write too: do it while open. Left out, the engine is never read-only and no answer carries `readOnly`. Proven by
 `read-only.spec.ts` "readOnly: an engine made read-only", "readOnly: asked on every call", "readOnly: the host flips it".
+
+**The icon library** (api.md 185, 186). A node may name an icon from the project's library, `x-` then what it shows; the drawings are files in `dir/icons/`, one `<name>.svg` each, and the ledger's `icon` lines say which drawing a name means. `list_icons` and `add_icon` are standalone's for now (`x-hosts`), so your bot gets neither tool; a node naming a library icon still draws when its file is in `dir/icons/`, because its first use writes the `icon` line. Every file is checked again each time it is read: one put there by hand, by git or by a sync is used only if it is exactly the form the board writes, and one that fails, or no longer matches the ledger's hash for its name, draws a plain tile and is never served. `createEngine` takes no folder for it; the standalone server's `EngineOptions.icons` points its engines at the project's `.visionboard/icons/`, shared by every ledger (§ Standalone's own). Proven by `apps/board/tests/icon-library.test.ts`.
 
 | Member | Promise | Proven by |
 |---|---|---|
@@ -463,6 +465,22 @@ wear different colours and modes. Proven by `host-styling.spec.ts` "scope: on th
 **Live.** Change a property, or your mode, while the board is mounted, and it follows at once, with no remount and no call.
 Proven by `host-styling.spec.ts` "live:".
 
+**Skins** (D-100). A board has a skin, which the board sets on its root as `data-vb-skin` from the board's own record; a
+skin is `--vb-*` values only (`packages/tokens/src/skins.css`), never a rule of its own. Every colour a property above feeds
+keeps your property in front in every skin, and so do the faces below, so what you set wins over a skin's look (D-094).
+The skin, the node's tones and their contrast are measured in the view's sheet as you load it, light and dark, in Chromium
+and WebKit (the same spec's sweep, per skin). Proven by `token-contrast.spec.ts` "a skin's values reach the board's root",
+`apps/board/tests/plugin-theme.test.ts` "a host's colours and faces win over a skin".
+
+**Fonts** (D-102). The board's own type is four faces under the SIL Open Font License: Figtree and Bricolage Grotesque
+(the default skin's text and titles), Space Grotesk and JetBrains Mono (Command Lens's titles and labels). The folder
+does not bring them yet: your check of a plugin's stylesheet refuses `@font-face` and any `url()` but `data:`, so the
+view's sheet declares no face and loads no file (`vite.plugin.config.ts` `hostTakesNoFontFaces`), and each of the
+node's type tokens (`--vb-font-text`, `--vb-font-display`, `--vb-font-label`) falls back to your `--host-font` or
+`--host-font-mono`, else the system's stacks. Give `--host-font` and the board draws in your face in every skin, as
+it does today. How a host lets a plugin bring its own faces is open point 15. Proven by
+`apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope", "the view bundle is one file".
+
 **Contrast** (D-009). The board's own pairs meet APCA tiers, measured with APCA-W3 0.0.98G-4g, light and dark. Your colours
 are your promise: in each mode you give, measured the same way, your pairs meet these. A property you leave out counts as the
 board's value, so your ink on the board's surface is your pair too.
@@ -577,7 +595,7 @@ The standalone page and server are a host, but these are theirs alone. A host of
 |---|---|
 | `MountedBoard.board`, `BoardControls` (`apps/board/src/board/mount.ts`) | `#board`'s `mount` gives it for `App.svelte`'s page door (`rebuild`, `idle`) and `tests/pages/` |
 | `BoardHost.page`, `BoardPage`, `BoardPageParts` (`host.ts`) | Its address, the board last looked at, its folder, theme and Chat button in the header, and help naming this repo's commands. Left out, the board opens its first board, the header reflows, and its words say only what any person can act on (`engine-hooks.spec.ts` "the folder: nothing") |
-| `EngineOptions.ledger`, `EngineOptions.onSend`, `Engine.ledger`, `Engine.agents`, `Engine.dir` (`apps/board/server/engine/engine.ts`) | Its server opens the ledger under its own lock and runs chat sessions and the app host beside the engine |
+| `EngineOptions.ledger`, `EngineOptions.icons`, `EngineOptions.onSend`, `Engine.ledger`, `Engine.agents`, `Engine.dir` (`apps/board/server/engine/engine.ts`) | Its server opens the ledger under its own lock and runs chat sessions and the app host beside the engine |
 
 ## Not covered
 
@@ -634,6 +652,11 @@ Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
 14. **A lock of the host's own.** Standalone takes the ledger's lock on Edit, so two computers never write one ledger; the
     engine takes none, and § The engine now states the rule it migrates on: one engine opens a `dir` at a time. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
     the lock in the seam. With `followOtherWriters` off, such a second writer is not even heard until the engine's next call.
+15. **The board's faces under a host** (D-102; § Theme and host styling, Fonts). The host's stylesheet check refuses
+    `@font-face` and any `url()` but `data:`, so the folder brings no face. Either the check lets a plugin's sheet name a
+    `woff2` inside its own folder (a host change, then the folder carries `fonts/`), the faces travel as `data:` in a
+    second sheet the manifest names (about 240 KB, loaded with the view whether a skin uses them or not), or a host gives
+    `--host-font` and the board never needs them. Open: the maintainer's ruling.
 
 ## What nclite needs
 

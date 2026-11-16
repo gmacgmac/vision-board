@@ -1,9 +1,9 @@
 ---
 category: project-tooling
-last_updated: 2026-10-05
+last_updated: 2026-11-16
 status: active
-scope: Every direct third-party package, with its exact version, who uses it and why; install scripts, licences and weight
-keywords: [dependencies, register, supply chain, npm, licences, install scripts, versions]
+scope: Every direct third-party package, with its exact version, who uses it and why; install scripts, licences and weight; every vendored asset (the board's fonts)
+keywords: [dependencies, register, supply chain, npm, licences, install scripts, versions, fonts, vendored]
 ---
 
 # Dependency register
@@ -68,6 +68,35 @@ under each package that needs them).
 | `axe-core` | 0 (3 MB) | none | MPL-2.0 | hand-written accessibility assertions: would miss the rules axe already encodes |
 | `ajv` | 4 (`fast-deep-equal` 3.1.3 MIT, `fast-uri` 3.1.8 BSD-3-Clause, `json-schema-traverse` 1.0.0 MIT, `require-from-string` 2.0.2 MIT) | none | MIT | our own JSON Schema validator: a second, untested reading of the standard (D-026) |
 
+## Vendored assets (D-102)
+
+Files copied into the repo from a third party: no package, no install step, no script. Each came over HTTPS from the
+family's own repository at the commit named, font and licence files only, and opens as a valid WOFF2 font (its header,
+Brotli stream, tables, family and weights: `packages/tokens/tests/fonts.test.ts`, which also holds every SHA-256 below).
+They live in `packages/tokens/fonts/` beside their licences; `packages/tokens/src/fonts.css` names them, and the browser
+fetches one only when text is drawn in it (`font-display: swap`). The standalone page serves them from itself; the plugin
+does not carry them yet (`docs/specification/plugin.md` § Theme and host styling, Fonts). Why: the two skins' type
+(D-100, D-102; planner's call 4), with no font loaded from the network.
+
+| File | Family, version | Weights | Source (HTTPS, `raw.githubusercontent.com/<repo>/<commit>/<path>`) | Bytes | SHA-256 |
+|---|---|---|---|---|---|
+| `figtree-variable.woff2` | Figtree 2.001 | 300-900 (variable) | `erikdkennedy/figtree` `032dfa7fe219ef3a02890d6d3add84eacc9aebfe` `fonts/webfonts/Figtree[wght].woff2` | 27676 | `6b96ce6d4783658f09e2b92d468da8e542d57aa6e4bc461ab2e7ae71565fdc64` |
+| `figtree-OFL.txt` | its licence | | same commit, `OFL.txt` | 4388 | `140d37233e7f3ce7313798befa9600893bcceaf41a55fa0fa5ad52f7f657a268` |
+| `bricolage-grotesque-semibold.woff2` | Bricolage Grotesque 1.001 | 600 | `ateliertriay/bricolage` `84745e5b96261ae5f8c6c856e262fe78d1d6efdd` `fonts/webfonts/BricolageGrotesque-SemiBold.woff2` | 47184 | `cab8ca1737e585e6405380385affc86cd53f22699c4a9065d81b49951de8ee30` |
+| `bricolage-grotesque-OFL.txt` | its licence | | same commit, `OFL.txt` | 4403 | `4b5a7d8f37f5602621c8a8d7358a6a2e71317e6c231c661e15aef0275d3e07ba` |
+| `space-grotesk-variable.woff2` | Space Grotesk 2.000 | 300-700 (variable) | `floriankarsten/space-grotesk` `03507d024a01282884232081fc6011c09ff4e849` `fonts/woff2/SpaceGrotesk[wght].woff2` | 49256 | `8e085aa438094f11487a836652edd5c054fa6a96f63fc7c282105ee3a4b08c07` |
+| `space-grotesk-OFL.txt` | its licence | | same commit, `OFL.txt` | 4495 | `564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72` |
+| `jetbrains-mono-variable.woff2` | JetBrains Mono 2.305 | 100-800 (variable) | `JetBrains/JetBrainsMono` `19371302b95d218af43299bce79ddbddd0bc364d` `fonts/webfonts/JetBrainsMono[wght].woff2` | 113672 | `31ec365b93e4bad6f202ce23352a56d01ca4462b2afc782ed2cf6fa42ca9ac0e` |
+| `jetbrains-mono-OFL.txt` | its licence | | same commit, `OFL.txt` | 4399 | `a76abf002c49097d146e86740a3105a5d00450b1592e820a1109a8c5680cd697` |
+
+- **Licence**: all four are under the SIL Open Font License 1.1, with no Reserved Font Name; each file is
+  unmodified and ships with its licence, as the licence asks. The OFL allows bundling with any software.
+- **Whole files, not Latin subsets**: cutting a subset needs a font tool (fonttools), which is an install the download
+  rules did not allow; the families' own web files are used whole. A subset would shrink JetBrains Mono most (its
+  Cyrillic and Greek). Weight at use: the default skin's two faces 74.9 KB, Command Lens's 162.9 KB, none at start.
+- **Updating**: replace the file from the same repository, record the new commit, size and SHA-256 here; the test
+  fails until the two agree.
+
 ## Install scripts
 
 - No installed package declares `preinstall`, `install` or `postinstall` (every installed
@@ -78,6 +107,7 @@ under each package that needs them).
 
 ## Licences
 
+- OFL-1.1: the four vendored font families (§ Vendored assets).
 - MPL-2.0: `lightningcss` and its `darwin-arm64` binary (Vite's CSS tool, build time only). We do
   not modify their files.
 - What ships to the browser is the built page: our code plus the Svelte runtime (MIT).

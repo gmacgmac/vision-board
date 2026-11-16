@@ -2,11 +2,14 @@
 
 Design tokens: the only source of colour, spacing, type and motion (rule 3). One `light-dark()`
 value per colour, item-state and kind tokens, reduced motion. Contrast follows the three APCA
-tiers (D-009); the automated gate is still to come (tracker N1). Protected: change only with the
+tiers (D-009); the node overhaul's pairs and tones are held by `tests/plugin/token-contrast.spec.ts`, the rest still by hand (tracker N1). Protected: change only with the
 maintainer's yes.
 
 - **Depends on**: nothing.
 - **Used by**: `apps/board` (the page's stylesheet list, `src/styles/page.ts`, imports `#tokens/styles.css`), and `packages/ui` through it.
-- **Public API**: the `--vb-*` custom properties in `src/tokens.css`, reached as `#tokens/styles.css` (D-060); no `<link>` in the HTML pages.
+- **Public API**: the `--vb-*` custom properties in `src/tokens.css`, reached as `#tokens/styles.css` (D-060); no `<link>` in the HTML pages. `tokens.css` imports `src/skins.css` and `src/fonts.css`, so that one entry carries them.
+- **Skins** (D-100): a skin is a block of token values on the board's root, `.vb-board[data-vb-skin='<name>']`, in `src/skins.css`, one per name in `#format` `SKINS` but `default` (tokens.css as it stands). A block sets only tokens declared here, and a colour a host may give keeps its `--vb-host-*` in front, so a host's look wins (D-094). Held by `tests/skins.test.ts` and `apps/board/tests/plugin-theme.test.ts`.
+- **Tones** (decision 17, R26): a node's tone is a hue, `--vb-tone-h` (an OKLCH angle; a palette name is `--vb-tone-hue-<name>`), on a `vb-node[data-vb-tone]`. The body, tile, line, icon and edge tints are `oklch()` built from it with a lightness and chroma per theme (`--vb-tone-<part>-l-light`, `-c-dark` and so on) times `--vb-tone-strength` (slate's is lower). Each chroma stays inside sRGB at its lightness for every hue. `tests/plugin/token-contrast.spec.ts` sweeps all 360 hues and the names, light and dark, in each skin, in Chromium and WebKit.
+- **Faces** (D-102): Figtree, Bricolage Grotesque, Space Grotesk and JetBrains Mono in `fonts/`, each beside its OFL licence, declared in `src/fonts.css` as `vb-<family>` with `font-display: swap`; fetched only when text uses one. The type tokens `--vb-font-text`, `--vb-font-display`, `--vb-font-label` name them and fall back to `--vb-font` and `--vb-font-mono`; a host's `--host-font` comes first. Files, sources and SHA-256: `docs/specification/dependencies.md` § Vendored assets, held by `tests/fonts.test.ts`. The plugin carries no face yet (plugin.md open point 15).
 - **Ink tiers**: `--vb-ink-subtle` is muted text, so it is the reading tier (Lc 60) on every surface it is text on, in both themes; dark is `#b8b8c0` (maintainer point 415), Lc 63.0 on a card and 60.1 on the deepest surface, still about 8 Lc under `--vb-ink`.
 - **Signals**: one colour per meaning. New is `--vb-state-fresh` (teal); updated is `--vb-state-updated` (a bright amber, D-088), kept apart from the action amber (`--vb-kind-action`) and the changed family's (`--vb-state-context`): by lightness and saturation in dark, by hue and chroma in light (a tangerine amber, ΔE76 20 or more from both and from the flag's and risk's oranges, in both themes). Its figures are in its comment and held by `tests/pages/update-signals.spec.ts`.
