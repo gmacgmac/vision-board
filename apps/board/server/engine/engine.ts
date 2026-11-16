@@ -3,7 +3,8 @@
 // environment. Its host gives it the board's data folder (`dir`: the standalone server passes
 // `<project>/.visionboard`, nclite the bot's `plugins/board/`), and passes the caller with every call
 // (the standalone server turns its secrets and cookie into one; nclite takes the bot from its run
-// ticket). The ledger and the agents' hashes live in `dir`; the engine never looks for a folder. With `readOnly`
+// ticket). The ledger and the agents' hashes live in `dir`; the engine never looks for a folder. The icon library is
+// `dir/icons` unless the host names the project's (`icons`). With `readOnly`
 // (D-085, the standalone host's read-only opening), every operation that writes answers `read-only` before anything
 // is read or written, and the reads say `readOnly: true`. A read that names another ledger of the folder (`ledger`,
 // D-084 8) reads the one its host gives (`otherLedger`, opened read-only) as an unmarked read: no caller, so no `owed`
@@ -18,7 +19,7 @@
 // whatever `readOnly` says, and its writes are refused in words that say why (ledger.ts `readOnlyWords`).
 import path from 'node:path';
 import type { FlagOverrides, LedgerEvent, OperationId } from '#format';
-import { IMAGES_DIR, LEDGER_FILE, LIMITS, OPERATIONS, ROUTE_PREFIX, clip, flagOn } from '#format';
+import { ICONS_DIR, IMAGES_DIR, LEDGER_FILE, LIMITS, OPERATIONS, ROUTE_PREFIX, clip, flagOn } from '#format';
 import type { AnswersRef, AnswersText, BoardRef, CardRef, ChipRefusal, ChipText, NoteRef, SelectionRef } from '#actions';
 import { eventBoard, resolveChip } from '#actions';
 import type { Agents } from '../agents.ts';
@@ -82,6 +83,10 @@ export interface EngineOptions {
    *  (nothing is ever appended there) and throws a problem for a name it doesn't have; undefined when the name is the
    *  open ledger's. Default none: the host keeps one ledger, and a read that names one is refused. */
   otherLedger?: ((name: string) => Ledger | undefined) | undefined;
+  /** The project's icon library (api.md 185): the folder `list_icons` reads and `add_icon` writes, shared by every ledger
+   *  of the project. Default `dir/icons`, so under a host the engine still reads and writes only its `dir`; the standalone
+   *  server passes the project's `.visionboard/icons/` (`projectFiles(project).icons`). */
+  icons?: string | undefined;
 }
 
 export interface Engine {
@@ -175,7 +180,7 @@ const toReply = (err: unknown): EngineReply => {
   return { status: p.status, body: p.body, headers: { ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8' } };
 };
 
-export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {}, readOnly, otherLedger }: EngineOptions): Engine {
+export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {}, readOnly, otherLedger, icons = path.join(dir, ICONS_DIR) }: EngineOptions): Engine {
   if (!given && !(readOnly?.() ?? false)) migrateOnOpen(dir, warn);
   const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn, { startAgainWhenGone: true });
   if (readOnly) ledger.gate(readOnly);
@@ -200,7 +205,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
       const read = input.body;
       const r = await OPS[id]!({
         params, caller: other ? undefined : caller, one: !other && one, writer, signal: input.signal, ledger: on, agents: getAgents, name,
-        ledgerName: other?.name ?? ledgerName, onSend, flags, readOnly: other !== undefined || closed(), images: path.join(dir, IMAGES_DIR),
+        ledgerName: other?.name ?? ledgerName, onSend, flags, readOnly: other !== undefined || closed(), images: path.join(dir, IMAGES_DIR), icons,
         body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
       return other && r.status < 400 ? { ...r, body: { ...(r.body as object), ledger: other.name, readOnly: true } } : r;

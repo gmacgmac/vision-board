@@ -135,20 +135,74 @@ You run in your own git worktree beside T_02 and BE_03 (PLAN.md § House Rules; 
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-16 (Run 1)
+
+### Run 1
 
 ### Changes Made
-- 
+- **The shared check** (`packages/format/src/icon-file.ts`, pure, exported from `index.ts`): `ICON_BOX` (24),
+  `ICON_LIMITS` (8 paths, 2,000 characters a path, a title of 80, numbers within ±1,000, a file of 16,600 characters),
+  `iconPathProblem` (ASCII grammar only, a move first, every number readable and bounded; arity is the browser's),
+  `iconTitleProblem` (no control character, no invisible or direction-changing mark), `iconFileText` (the one fixed form,
+  one line), `iconFileProblem` / `iconPathsOf` (the whole file matched by one pattern, then each `d`; a refusal names
+  what it found). Words: `packages/format/src/words/format-icons.ts`. The file's regexes are built on first use, so the
+  page carries nothing for them (page weight measured equal to HEAD, 200.7 KB).
+- **The server** (`apps/board/server/icons.ts`, words `apps/board/server/words/icons.ts`): `reduceSvg` (string logic, no
+  parser: whole tags or refusal; only `svg`, `title`, `path`; presentation attributes dropped; the box, the namespace, a
+  repeated attribute, entities, comments, CDATA, DOCTYPE, PIs, text outside a title refused with what they were; a BOM,
+  CRLF, an XML declaration and line breaks inside a `d` are cleaned, never refused: the file written is the server's own
+  form); `readIcon` (opened with `O_NOFOLLOW | O_NONBLOCK`, plain file only, size-capped, strict UTF-8, checked on every
+  read, sha-256 of the bytes); `readLibrary` (folder names matching the library pattern plus every name the ledger holds;
+  a failing file, a missing file and a hash that is not the ledger's latest are `problems`, never served); `addIcon`
+  (title, reduce, fixed form, check again, key replay, given-once against the ledger and the file, `checkWritable`, the
+  file linked into place so it never replaces one, then the `icon` line with no board); `firstUse`; `acceptIcon` (the
+  person's line, with the hash the server computes; the page's control is a tracker row).
+- **Engine**: `EngineOptions.icons` (default `join(dir, ICONS_DIR)`), `OpCtx.icons`; `reads.ts` `listIcons` (paths only
+  with `paths=true`); `writes.ts` `addIcon` wrapper; `write_board` passes the folder. `write-board.ts` `libraryLine`: a
+  node's first use appends the `icon` line (by the caller, no key) after every check and before the node line; a missing
+  or failing file refuses the node at `/items/i/node/icon`. `project.ts` passes `projectFiles(getDir()).icons`.
+- **Path rules**: `access-rules.ts` row `**/.visionboard/icons/**` read allow, write refuse, words `iconLibrary` (names
+  `add_icon`). It also becomes a Claude Code deny rule (`Edit(.../**/.visionboard/icons/**)`): a second line.
+- **Tests**: `packages/format/tests/icon-file.test.ts` (purity, round trip, the path grammar, 39 hostile files, titles);
+  `apps/board/tests/icon-library.test.ts` (add, replay, key retry, clash, reused key, read-only, 38 hostile svgs on add,
+  cleaning, hostile files by hand never served nor drawn, first use once and before the node, hash change and the
+  person's accept, two ledgers sharing files with their own lines, the default and a given folder, standalone over HTTP
+  with ledger folders against the spec); `policy.test.ts` (rows), `claude-args.test.ts` (the deny line).
 
 ### Issues & Resolutions
-- 
+- **`list_icons` credentials: it should take none** (`auth: none`, like `list_boards`). The access rules read
+  `.visionboard/icons/**` freely: the library is committed project content, not a secret, so a credential guards nothing
+  the folder doesn't already give, and the answer is not scoped to an agent (api.md 21, 41: reads take no credentials;
+  `list_apps` is the exception because it is the app host's, with allow state per agent). Requiring a secret only makes
+  an agent that has not joined unable to reuse before it adds. Not changed here: `openapi.json` is BE_03's (REQUEST).
+  The handler ignores the caller, so it works either way.
+- **Failing checks, none from code in this task's files**: `api-v20.test.ts` "list_icons (a stub)" tests the stub this
+  task replaces (REQUEST); `scripts/words.test.mjs` needs the two new words files in `words.md` (REQUEST);
+  `plugin-build.test.ts` engine budget: 245,167 gzip against 240,000 (HEAD 236,306; this task adds ~8.9 KB gzip, the
+  engine bundle is built with `minify: false`, so every source comment ships) — needs a ruling (REQUEST);
+  `api-ledgers.test.ts` "the folder open now, still in the old layout, moves" failed at HEAD too in a worktree with no
+  `apps/board/dist` (no `set-cookie` on `/`) and passes once `npm run build` has run; `npm run verify`: `modules.md` (`npm run map`) and the page weight (200.7 KB,
+  unchanged from HEAD, PERF_01's).
+- An `icon` line written on first use stays if the node line after it is then refused by the ledger's own checks: it
+  records the file's hash, names no board and is what the next use would write. Every write-board check runs before it.
+- The `x-` regexes first built at module load kept 0.1 KB in the page through tree-shaking; now built on first use.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- **The engine bundle ships its comments** (`vite.plugin.config.ts` `engineBuild`, `minify: false`): dropping comments
+  there would give back far more room than any feature can save, without squeezing source.
+- **`list_icons` problems carry text from a hostile file** (an element or attribute name, quoted, clipped to 40
+  characters) and titles are free text: FE_01/FE_02 must render `problems[].detail` and `title` as text, never markup.
+- **No count cap on the library**: every `list_icons` reads every file (each at most ~50 KB). A tracker row if libraries grow.
+- **`list-icons-response` `library` description says "this ledger knows"**: it lists every checked file in the folder,
+  including one this ledger has no line for yet (taken on first use), as reuse across ledgers needs.
+- **A symlinked `.visionboard/icons` folder** would send `add_icon`'s writes where it points; the chat agent cannot make
+  one (the row refuses a write to the folder itself), and only `x-…svg` files in the fixed form are ever written.
+- `api-ledgers.test.ts` fails in a fresh worktree until `npm run build` has run (pre-existing; a test that needs the page could build or skip).
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None. Cleaning a BOM, CRLF, an XML declaration and line breaks in a `d` on add (rather than refusing them) is within
+  step 3's "reduce the SVG to paths": the hostile corpus is refused on read, where the file must be the fixed form.
 
 ---
 

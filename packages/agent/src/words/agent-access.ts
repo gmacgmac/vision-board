@@ -15,6 +15,7 @@ export const boardPicturesAndApps = 'Pictures and apps for the board are written
 export const ledgerReadOnly = 'The board\'s ledger is open read-only: its pictures and apps are not changed until the person makes it editable.';
 export const theirAttachments = 'The files the person attached are the agent\'s to read and never to change. To work on one, copy it out.';
 export const gitFolder = 'Git is the person\'s: the agent does not read or change .git. Ask the person for what you need from it.';
+export const iconLibrary = 'The project\'s icon library is read freely and added to only through add_icon, which checks each drawing. Never write a file there yourself.';
 export const appState = 'What apps save on the board is the person\'s and the app\'s: not open to the agent.';
 
 // ---- approvals.ts

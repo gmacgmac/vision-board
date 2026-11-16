@@ -4,7 +4,9 @@
 // `base`, then the board, a proposal's card kind, the grant and a retire's owed cards, then the
 // ledger module's own checks as it appends. One failure never stops the rest, except items naming a
 // failed item's key, directly or through another failed item. Results name cards by board number. A node item's
-// `insert` is checked whole before its node line is appended, then written as three more lines (write-insert.ts).
+// `insert` is checked whole before its node line is appended, then written as three more lines (write-insert.ts). A
+// node's first use of a library icon this ledger has no `icon` line for writes that line first, from the file as it is
+// now (icons.ts `firstUse`); a file that is missing or fails the check refuses the node.
 import type { LedgerEvent } from '#format';
 import { LIMITS, codePoints, flagOn, isRecord, latest } from '#format';
 import type { LedgerState, RetireTarget, WriteItem } from '#actions';
@@ -19,12 +21,14 @@ import { ItemFailed, fail, under } from './write-problem.ts';
 import type { Between } from './write-insert.ts';
 import { checkInsert, insertLines, insertOf, labelOf } from './write-insert.ts';
 import { replay } from './write-replay.ts';
+import { firstUse } from './icons.ts';
 import type { WriteResult } from './write-result.ts';
 import { written } from './write-result.ts';
 import type { Batch } from './write-refs.ts';
 import { refsOf, resolve, retireLine, storedFor } from './write-refs.ts';
 import * as writesWords from './words/writes.ts';
 import * as schemaWords from './words/schema.ts';
+import * as iconsWords from './words/icons.ts';
 
 export type { ItemProblem } from './write-problem.ts';
 export type { WriteResult } from './write-result.ts';
@@ -190,6 +194,24 @@ function refuse(b: Batch, i: number, raw: unknown, errors: readonly PointerError
   fail('invalid', writesWords.thisItemDoesNotFit, { errors: under(i, errors), example });
 }
 
+/** A batch that may name library icons: `icons`, the library's folder (`EngineOptions.icons`); none, and a library
+ * icon with no `icon` line is the ledger's to refuse. */
+type IconBatch = Batch & { icons?: string | undefined };
+
+/** The `icon` line a node's first use of a library icon needs, checked last so a refused item writes nothing (api.md
+ * 185; ledger review O4): the file's hash as it is now, by the caller, before the node line, as `RetireEvent.cards`
+ * is filled before its line. A file that is missing or fails the check refuses the node with its reason. */
+function libraryLine(b: IconBatch, i: number, e: Rec): Rec | undefined {
+  if (e.type !== 'node' || b.icons === undefined) return undefined;
+  const icon = (e.node as Rec).icon;
+  const use = firstUse(b.ledger, b.icons, icon);
+  if (use === undefined) return undefined;
+  if ('problem' in use) {
+    fail('invalid', iconsWords.nodeIconRefused(String(icon), use.problem), { errors: [{ pointer: `/items/${i}/node/icon`, detail: use.problem }] });
+  }
+  return { type: 'icon', ...use };
+}
+
 /** A node item with `insert`: its node line, then the unlink and two links (write-insert.ts), all checked already. */
 function appendInsert(b: Batch, i: number, key: string | undefined, item: Rec, e: Rec, at: Between): WriteResult {
   const label = labelOf(b.ledger.state(), at);
@@ -199,7 +221,7 @@ function appendInsert(b: Batch, i: number, key: string | undefined, item: Rec, e
   return written(b.ledger.state(), i, key, stored, false, at);
 }
 
-function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined, grants: boolean): WriteResult {
+function writeOne(b: IconBatch, i: number, raw: unknown, key: string | undefined, grants: boolean): WriteResult {
   checkProposeWord(i, raw);
   const errors = itemProblems(b, raw);
   if (errors.length) refuse(b, i, raw, errors);
@@ -217,16 +239,19 @@ function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined, gr
   if (grants) checkGrant(b, s, i, e);
   if (grants && at) checkGrant(b, s, i, { type: 'unlink', from: at.after, to: at.before }); // the old link and after→card are in `after`'s container
   checkOwed(b, s, i, item, e);
+  const icon = libraryLine(b, i, e);
+  if (icon) append(b, i, item, icon);
   return at ? appendInsert(b, i, key, item, e, at) : written(b.ledger.state(), i, key, append(b, i, item, e));
 }
 
 /** Write `items` for `agent` on `board`, in order, one result each (api.md 34). `keyHelp`: a key conflict says what the
  * key holds (write-replay.ts); `insert`: a node item may carry `insert` (the `insertBetween` flag, default on); `grants`:
  * each item is held to the permissions table (`checkGrant`), false only for the folder's one agent (`singleAgent`,
- * plugin.md § The bot), which no other agent shares a board with. Every other check, the lock's among them, stays. */
+ * plugin.md § The bot), which no other agent shares a board with. Every other check, the lock's among them, stays. `icons`:
+ * the project's icon library, for a node's first use of a library icon (`libraryLine`). */
 export function writeItems(ledger: Ledger, agent: string, board: string, items: readonly unknown[], keyHelp = false,
-  insert = flagOn('insertBetween', {}), grants = true): WriteResult[] {
-  const b: Batch = { ledger, agent, board, failed: new Set(), keyHelp, insert };
+  insert = flagOn('insertBetween', {}), grants = true, icons?: string): WriteResult[] {
+  const b: IconBatch = { ledger, agent, board, failed: new Set(), keyHelp, insert, icons };
   return items.map((raw, i) => {
     const key = keyOf(raw);
     try {
