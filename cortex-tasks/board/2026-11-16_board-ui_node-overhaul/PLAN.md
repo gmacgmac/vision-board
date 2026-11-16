@@ -240,8 +240,12 @@ wave 1 and records any change here.
   those modes open. Shape comes from the ledger review; T_01 and FE_03 are amended before they run.
 - **Call 4 extended: fonts ship with the plugin**, and `plugin.md` tells a host what the plugin brings (T_02 step 5a).
 - **Call 5 changed: agents may add their own icons** to a board's icon set (cleaned single-colour drawings, stored
-  once per board, used by name). Agent-chosen colours: see the open point in the orchestrator's reply. Contract shape
-  from the ledger review.
+  in the project's `.visionboard/icons/`, used by name), so the set grows over time and is reused. The agent's spec
+  is a few bullets in the skill (T_03): how to make one, where it goes, name it for reuse, reuse before adding. An
+  agent adds one through the action layer (cleaned and checked), never by writing the file. Storage and naming
+  details come from the ledger review.
+- **Agent colours (point 242)**: a node's tone is a palette name or any hue the agent picks; the board derives the
+  tints from the hue so contrast passes in light and dark (T_01 contract, T_02 tokens).
 - **Call 7 changed: flow direction has a default per view**, set by whoever writes the view, and the person can
   change it on the board. Where it is stored comes from the ledger review; BE_01 and FE_07 are amended before they run.
 - **Calls 8 and old code: no legacy.** T_04 makes the new node the only node and deletes the old footer, the flags
