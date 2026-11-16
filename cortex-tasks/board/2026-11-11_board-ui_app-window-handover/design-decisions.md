@@ -54,6 +54,10 @@ that shows it on the design canvas "Vision Board node directions", page "Node an
 - **DD-17 Agent rewriting** is drawn as changes appearing in the node, underlined and struck, with an
   "Agent writing" mark (12). It needs streamed board updates, which the board does not have yet
   (tracker M51).
+- **DD-18 A board's skin** is set in the ledger when the board is made, by whoever makes it, and the
+  person can change it on the board.
+- **DD-19 Seen.** On a board that isn't read-only, clicking a node marks it seen (clears New and
+  updated), and clicking anywhere inside a container marks the container seen.
 - **DD-15 App cards** lose Later; the app window's drawer pushes its neighbours aside (handover § 5).
   A node's conversation floats instead (DD-05).
 
@@ -74,3 +78,5 @@ Headline guidance, not hard rules. The skill change needs `npm run eval:bot` bef
   dot. A contract change.
 - **DO-03 States not yet drawn:** saved for later, moved, locked, a write that failed.
 - **DO-04 Thread Drawers skin:** parked.
+- **DO-05 Seen on a read-only board.** A locked or read-only board can't record what the person has
+  looked at, which makes it hard to keep track; left for later.
