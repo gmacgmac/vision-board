@@ -5,12 +5,12 @@
 // Shift+F10 list a node's actions. Menus are one at a time, keep one size and stay attached while the board zooms or
 // pans. On a board of its own, light and dark. The container seen, the icon library, the skin and the moments are in
 // node-edges-seen.spec.ts.
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { bid, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card, open, write } from './agent-board.ts';
 import { drawEdges, mark, menuOf } from './edge-board.ts';
 import type { Page } from '@playwright/test';
-import { head, idle, linesAfter, stageBox } from './board-page.ts';
+import { head, idle, linesAfter, menuButton, stageBox } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const FLAGS = '?vbwork&flags=nodeEdges';
@@ -124,9 +124,43 @@ test('the change badge and H open the history box; Esc closes it and gives focus
   await page.keyboard.press('h');
   await expect(box).toHaveAttribute('data-open', '');
   await page.keyboard.press('Escape');
+  // H is the history of the one selected node too, with the focus off it, and never Hide answered; that is Shift+H (FIX_01).
+  await card(page, q).locator('.vb-node-title').click();
+  await expect(card(page, q)).toHaveAttribute('data-selected', '');
+  await page.locator('.vb-stage').focus();
+  await page.keyboard.press('h');
+  await expect(box).toHaveAttribute('data-open', '');
+  await page.keyboard.press('Escape');
+  await expect(page.locator(bid('hide'))).toBeHidden(); // the "⋯" row, closed
+  await page.keyboard.press('Shift+H');
+  await menuButton(page).click();
+  await expect(page.locator(bid('hide'))).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator(bid('hide')).locator('kbd')).toHaveText('Shift+H');
+  await page.keyboard.press('Shift+H'); // in the menu too
+  await expect(page.locator(bid('hide'))).toBeHidden();
   // The notes mark: the conversation (today's thread, until FE_03).
   await mark(page, q, 'notes').click();
   await expect(page.locator('vb-note-bubble')).toBeVisible();
+  // Esc gives the focus back to the mark that opened the box or the menu (FIX_01), by pointer or by keys; C on the node, to the node.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('vb-note-bubble')).toBeHidden();
+  await expect(mark(page, q, 'notes')).toBeFocused();
+  for (const name of ['notes', 'answer', 'badge']) {
+    await mark(page, q, name).focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Escape');
+    await expect(mark(page, q, name)).toBeFocused();
+  }
+  await mark(page, q, 'number').focus();
+  await page.keyboard.press('Shift+F10');
+  await expect(menuOf(page, `Item ${q}`)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(mark(page, q, 'number')).toBeFocused();
+  await card(page, q).focus();
+  await page.keyboard.press('c');
+  await expect(page.locator('vb-note-bubble')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(card(page, q)).toBeFocused();
 });
 
 test('right-click lists a node\'s actions at the pointer, never on the background; Shift+F10 on the node does too', async ({ page, request }) => {

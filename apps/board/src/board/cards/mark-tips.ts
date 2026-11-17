@@ -5,6 +5,7 @@
 // a lock with "Board is locked" (or "This ledger is read-only") beside it for a moment, then it goes back; a write that
 // failed rings the mark in red with "!" and its words show by themselves for a few seconds, then come back on a hover
 // until the next press. It moves nothing and holds no focus; Esc or a press anywhere hides it. Browser only.
+import { smallMark } from '../canvas/index.ts';
 import type { MarkSide } from './mark-place.ts';
 import { moveTo, placeMark, stageBoxOf } from './mark-place.ts';
 
@@ -82,7 +83,7 @@ export function createMarkTips(stage: HTMLElement): MarkTips {
 
   const over = (e: PointerEvent) => {
     const mark = (e.target as Element).closest?.<HTMLElement>(MARK);
-    if (!mark || mark === at || e.pointerType === 'touch') return;
+    if (!mark || mark === at || e.pointerType === 'touch' || smallMark(mark)) return;
     clearTimeout(wait);
     wait = window.setTimeout(() => show(mark, wordsOf(mark)), TIP_HOVER_MS);
   };

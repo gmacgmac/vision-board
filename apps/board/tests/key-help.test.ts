@@ -104,3 +104,9 @@ test('Selection lists Bookmark all, Save for later and Width with the edges on, 
   assert.ok(!rows(false).some((id) => ['command:bookmark-all', 'command:save-for-later', 'command:width'].includes(id)));
   assert.ok(!rows(true, false).includes('command:bookmark-all'));
 });
+
+test('Hide answered is H, and Shift+H with the nodes\' edges, where H is a node\'s history (FIX_01)', () => {
+  const hide = (edges: boolean) => keyGroups({ edges }).find((g) => g.group === 'Board')!.rows.find((r) => r.label === 'Hide answered')!.keys;
+  assert.deepEqual(hide(false), ['H']);
+  assert.deepEqual(hide(true), ['Shift+H']);
+});

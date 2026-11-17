@@ -118,7 +118,7 @@ vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark + .vb-mark { border-le
 vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:first-child { border-bottom-left-radius: calc(var(--vb-node-radius) - 1.5px); }
 vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:last-child { border-bottom-right-radius: calc(var(--vb-node-radius) - 1.5px); }
 vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:focus-visible { outline-offset: var(--vb-focus-offset-inset); }
-vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:hover { --vb-mark-bg: var(--vb-surface-sunken); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:hover:not(.vb-stage[data-marks='small'] *) { --vb-mark-bg: var(--vb-surface-sunken); }
 vb-node[data-answer-at='switch'] .vb-mark-switch .vb-icon { width: 15px; height: 15px; stroke-width: 2.2; }
 vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark-lock { display: none; }
 vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-mark='tick'][aria-pressed='true'] { --vb-mark-bg: var(--vb-answer-tick); --vb-mark-ink: var(--vb-answer-mark); }

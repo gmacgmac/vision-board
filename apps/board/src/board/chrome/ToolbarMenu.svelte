@@ -1,6 +1,6 @@
 <!-- The toolbar's "⋯" menu (toolbarMenu flag, toolbar icons and menu ruling 2): the page's Theme, with the skins flag
      (`onskin` given) a row per skin with the board's ticked (D-100 2; off with Archive board…'s reasons), Hide answered (the board-wide
-     flow direction is FlowMenu.svelte, in the header),
+     flow direction is FlowMenu.svelte, in the header at full; from half, `ondirection` given, its rows are here, FIX_01),
      the page's Centre cards (`BoardPageParts`; a host has neither) and Reply, each a row with its icon and its key, with the
      archiveBoard flag (`onarchive` given) Archive board…, which asks, then archives the open board (N39
      ruling 5; off, aria-disabled, while no board is open or a past version shows), with the lockBoard flag (`onlock` given)
@@ -22,13 +22,16 @@
   import ButtonIcon from './ButtonIcon.svelte';
   import PagePart from './PagePart.svelte';
   import { toolbarPopup } from './toolbar-popup.svelte.ts';
+  import { hideKey } from '../input/index.ts';
   import { READ_ONLY_PERSON } from '#actions';
-  import type { Skin } from '#format';
-  import { SKINS } from '#format';
+  import type { ActDirection, Skin } from '#format';
+  import { ACT_DIRECTIONS, SKINS } from '#format';
 
-  const { state: view, parts, id: idIn } = useChrome();
+  const { state: view, parts, id: idIn, flag } = useChrome();
+  /** Hide answered's key: Shift+H with the nodes' edges, where H is a node's history (FIX_01); else H. */
+  const edges = flag('nodeEdges');
 
-  let { onhide, onarchive, onlock, onskin, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
+  let { onhide, onarchive, onlock, onskin, ondirection, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
     onhide: () => void;
     /** Archive board… (archiveBoard flag); left out, no such row. */
     onarchive?: (() => void) | undefined;
@@ -36,6 +39,9 @@
     onlock?: (() => void) | undefined;
     /** The board's skin (skins flag, D-100 2): a row per skin, the board's ticked; left out, no such rows. */
     onskin?: ((skin: Skin) => void) | undefined;
+    /** Which way the board's flows run (flowDirection flag), when the header has no room for Flows (header-tier.ts): a row
+     *  per direction, the board's ticked; left out, no such rows. */
+    ondirection?: ((direction: ActDirection) => void) | undefined;
     /** Draw the row for a locked board (the gallery); left out, the open board's own state. */
     locked?: boolean | undefined;
     open?: boolean;
@@ -81,9 +87,9 @@
     e.target.showPicker?.();
     return true;
   }
-  /** H in the menu chooses Hide answered, before the menu's own keys. */
+  /** H (Shift+H with the nodes' edges) in the menu chooses Hide answered, before the menu's own keys. */
   function hide(e: KeyboardEvent): boolean {
-    if (e.key.toLowerCase() !== 'h' || e.metaKey || e.ctrlKey || e.altKey) return false;
+    if (e.key.toLowerCase() !== 'h' || e.metaKey || e.ctrlKey || e.altKey || (edges && !e.shiftKey)) return false;
     e.stopPropagation();
     e.preventDefault();
     choose(onhide);
@@ -110,10 +116,21 @@
         {/each}
       </div>
     {/if}
+    {#if ondirection && view.direction}
+      <div role="group" aria-label={toolbarWords.directionGroup}>
+        {#each ACT_DIRECTIONS as direction (direction)}
+          <button type="button" class="vb-menu-item" role="menuitemradio" tabindex="-1" id={idOf(`direction-${direction}`)} aria-checked={view.direction === direction}
+            aria-disabled={archiveOff || readOnly} title={readOnly ? READ_ONLY_PERSON : toolbarWords.directionTip(direction)}
+            onclick={() => { if (!archiveOff && !readOnly) choose(() => { if (view.direction !== direction) ondirection(direction); }); }}>
+            <ButtonIcon name={direction} /><span class="vb-menu-label">{toolbarWords.directionName(direction)}</span><span class="vb-menu-check" aria-hidden="true">✓</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
     <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={idOf('hide')}
-      aria-checked={view.hide} aria-keyshortcuts="h" onclick={() => choose(onhide)}>
+      aria-checked={view.hide} aria-keyshortcuts={edges ? 'Shift+H' : 'h'} onclick={() => choose(onhide)}>
       <ButtonIcon name="hide" /><span class="vb-menu-label">{commonWords.hideAnswered}</span>
-      <span class="vb-menu-check" aria-hidden="true">✓</span><kbd aria-hidden="true">H</kbd>
+      <span class="vb-menu-check" aria-hidden="true">✓</span><kbd aria-hidden="true">{hideKey(edges)}</kbd>
     </button>
     {#if parts.alignRow}<PagePart draw={parts.alignRow} args={{ choose }} />{/if}
     <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={idOf('reply-toggle')}

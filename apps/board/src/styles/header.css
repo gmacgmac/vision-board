@@ -10,6 +10,16 @@
 .vb-counts, .vb-toolbar-end {
   [data-tier]:not([data-tier='full']) & { gap: var(--vb-space-1); }
 }
+/* Flows (flowDirection flag, FlowMenu.svelte) at full: one width whatever it reads ("Flows: Across" is the longest), kept
+   at the bar's end outside the box the bar measures itself on. The bar's content box is that room narrower, so every
+   vb-bar query here and the tiers (header-tier.ts FLOWS_W, held equal by header-tier.test.ts) hold as measured without
+   it (FIX_01); from half Flows is rows of "⋯". */
+.vb-toolbar[data-tier='full'] {
+  --vb-flows-w: 120px;
+  &:has(> .vb-toolbar-end .vb-flow-menu) { padding-inline-end: calc(var(--vb-space-3) + var(--vb-flows-w) + var(--vb-space-2)); }
+  & > .vb-toolbar-end:has(.vb-flow-menu) { margin-inline-end: calc(-1 * (var(--vb-flows-w) + var(--vb-space-2))); }
+  & .vb-flow-menu > .vb-menu-btn { width: var(--vb-flows-w); }
+}
 
 /* The path: folder / board ▾ / version ▾. The folder gives up room first, then the board's name, cut with "…";
    a part is plain words on the bar, darkening under the pointer; the select lies unseen over it (.vb-menu-face). */

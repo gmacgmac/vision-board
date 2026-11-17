@@ -11,12 +11,17 @@ import { EMPTY_BASE } from './ports.ts';
 import { OLD_HEADER, folderDialog, menu, menuButton } from './board-page.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { expectBarPasses, expectWhole } from './header-fit.ts';
+import { FLOWS_W, FULL_MIN } from '../../apps/board/src/board/chrome/header-tier.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 const LONG = 'Quarterly hiring plan for the platform and data teams across every region, with budgets and open questions';
 const BOARD = 'header-board';
 const QUIET = 'quiet-board';
 const FORMS = [[1600, 'full'], [1470, 'full'], [1300, 'full'], [1299, 'half'], [1000, 'half'], [735, 'half'], [620, 'half'], [619, 'third'], [490, 'third'], [400, 'third']] as const;
+/** With Flows in the bar (flowDirection flag) the full form starts FLOWS_W later; from half Flows is rows of "⋯" (FIX_01). */
+const FULL_FLOWS = FULL_MIN + FLOWS_W;
+const FLOW_FORMS = [[1600, 'full'], [1470, 'full'], [FULL_FLOWS, 'full'], [FULL_FLOWS - 1, 'half'], [1000, 'half'], [620, 'half'], [619, 'third'], [400, 'third']] as const;
+const FLOWS = `${OLD_HEADER},flowDirection`;
 
 let agent = '';
 async function writeAs(request: APIRequestContext, board: string, items: object[]) {
@@ -72,16 +77,17 @@ async function crowd(page: Page, request: APIRequestContext) {
 }
 const uncrowd = (page: Page) => act(page, { action: 'unlock' });
 
-for (const [width, form] of FORMS) {
-  test(`${width}px is the ${form} form and a long name leaves every control whole, quiet or crowded`, async ({ page, request }) => {
-    await open(page, request, width);
+for (const [flows, forms, first] of [[false, FORMS, FULL_MIN], [true, FLOW_FORMS, FULL_FLOWS]] as const) for (const [width, form] of forms) {
+  test(`${width}px is the ${form} form and a long name leaves every control whole, quiet or crowded${flows ? ', with Flows' : ''}`, async ({ page, request }) => {
+    await open(page, request, width, BOARD, flows ? FLOWS : OLD_HEADER);
+    if (flows) await expect(page.locator(bid('flow-menu'))).toHaveCount(form === 'full' ? 1 : 0);
     await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', form);
     await expectWhole(page, 'quiet');
     await crowd(page, request);
     await expect(page.locator(bid('locked'))).toBeVisible();
     await expectWhole(page, 'crowded');
     // At full's first width the path can still give 70px, for Send's longest word and Chat's marks (floors: folder 36, board 100).
-    if (width === 1300) {
+    if (width === first) {
       const [folder, name] = [(await page.locator(bid('folder-chip')).boundingBox())!, (await page.locator('.vb-path-board').boundingBox())!];
       expect(folder.width + name.width).toBeGreaterThanOrEqual(206);
     }
@@ -89,6 +95,7 @@ for (const [width, form] of FORMS) {
     if (width === 1470) expect(await page.locator(`${bid('folder-chip')} .vb-folder-chip-name`).evaluate((e) => e.getBoundingClientRect().width)).toBeGreaterThan(30);
     // The open "⋯" stays inside the window, and scrolls inside itself when it is the taller.
     await menuButton(page).click();
+    if (flows) await expect(page.getByRole('menuitemradio', { name: 'Flows: Auto' })).toHaveCount(form === 'full' ? 0 : 1);
     const box = (await page.locator(`${bid('toolbar-menu')} ~ .vb-menu-surface[data-fields], ${bid('toolbar-menu')} ~ .vb-menu-surface > .vb-menu-list`).first().boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);

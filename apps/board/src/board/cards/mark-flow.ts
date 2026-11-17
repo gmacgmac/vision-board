@@ -14,6 +14,7 @@
 // (mark-acts.ts), out of the page's start weight. Browser only.
 import type { ActionId, ViewNode } from '#format';
 import type { NodeState } from '#ui';
+import { smallMark } from '../canvas/index.ts';
 import { DRAG_THRESHOLD } from '../input/index.ts';
 import type { MarkActs } from './mark-acts.ts';
 
@@ -43,6 +44,8 @@ export interface MarkFlow {
   press(id: string, mark: string, el: HTMLElement): void;
   /** A key on node `id` (focus on `target`): the menu key or Shift+F10 (`menu`), or H (`history`). True when it acted. */
   key(id: string, target: HTMLElement, key: 'menu' | 'history'): boolean;
+  /** A or X on node `id`: Tick or Cross as its mark gives it, a lock on the mark when the board can't take it (FIX_01). */
+  answer(id: string, action: 'ack' | 'drop'): void;
   /** The view moved or the board was drawn again: what is open follows its anchor. */
   place(): void;
   /** Close what is open; true when something was. */
@@ -72,12 +75,13 @@ export function createMarkFlow(d: MarkFlowDeps): MarkFlow {
     const card = t.closest?.<HTMLElement>('vb-node[data-edges]');
     if (!card || e.button !== 0) return;
     const id = card.dataset.id!;
-    const num = t.closest<HTMLElement>('[data-mark="number"]');
+    const small = smallMark(t);
+    const num = small ? null : t.closest<HTMLElement>('[data-mark="number"]');
     from = { x: e.clientX, y: e.clientY };
     // The number held: its menu, and the click that follows bookmarks nothing.
     if (num) timer = window.setTimeout(() => { held = true; num.focus({ preventScroll: true }); withActs((a) => a.numberMenu(id)); }, HOLD_MS);
     // A touch resting on the node (not on a control): its actions.
-    else if (e.pointerType === 'touch' && !t.closest('button, a, input, textarea')) {
+    else if (e.pointerType === 'touch' && (small || !t.closest('button, a, input, textarea'))) {
       const [x, y] = [e.clientX, e.clientY];
       timer = window.setTimeout(() => { held = true; withActs((a) => a.actions(id, x, y)); }, LONG_PRESS_MS);
     }
@@ -118,6 +122,7 @@ export function createMarkFlow(d: MarkFlowDeps): MarkFlow {
       }
       return true;
     },
+    answer: (id, action) => withActs((a) => a.answer(id, action)),
     place: () => acts?.place(),
     close: () => acts?.close() ?? false,
     destroy() {

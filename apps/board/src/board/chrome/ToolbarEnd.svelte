@@ -9,7 +9,8 @@
      paused, its title the reason, on a locked board and while the ledger is read-only (D-085). The gallery
      passes `placement` 'gallery' (no board ids) and `menuOpen`. With `tier` (adaptiveHeader flag,
      header-tier.ts) the group follows the header's form: at full − 47% + then Fit; at half the zoom as a
-     small menu (ZoomMenu); at a third no zoom and no Agents, which are rows of "⋯" (`fields`). -->
+     small menu (ZoomMenu); at a third no zoom and no Agents, which are rows of "⋯" (`fields`). Flows (FlowMenu) shows
+     at full; from half its rows are in "⋯" (header-tier.ts). -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import * as commonWords from '../words/common.ts';
@@ -24,7 +25,7 @@
   import ToolbarMenu from './ToolbarMenu.svelte';
   import FlowMenu from './FlowMenu.svelte';
   import { inBar, type HeaderTier } from './header-tier.ts';
-  import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../input/index.ts';
+  import { commandTitle, HEADER_COMMANDS, hideKey, zoomTitle } from '../input/index.ts';
   import type { CommandId } from '../input/index.ts';
   import type { AccessHolder } from '#actions';
   import type { ActDirection, Skin } from '#format';
@@ -77,7 +78,7 @@
   /** At full the level sits between − and +, Fit after them; as it was, the level is beside Fit. */
   const order = $derived(tier ? (['zoom-out', 'zoom-in', 'fit'] as const) : HEADER_COMMANDS);
   const levelAfter = $derived(tier ? 'zoom-out' : 'fit');
-  const here = (c: 'zoom' | 'agents') => !tier || inBar(tier, c);
+  const here = (c: 'zoom' | 'agents' | 'flows') => !tier || inBar(tier, c);
 </script>
 
 <div class="vb-toolbar-end">
@@ -96,7 +97,7 @@
     <ZoomLevel {percent} level={false} />
   {/if}
   {#if !menu}
-    <button type="button" class="vb-btn vb-btn-iconic" id={idOf('hide')} aria-pressed={shown.hide} title={toolbarWords.hideAnsweredItemsH}
+    <button type="button" class="vb-btn vb-btn-iconic" id={idOf('hide')} aria-pressed={shown.hide} title={toolbarWords.hideAnsweredItemsH(hideKey(flag('nodeEdges')))}
       onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">{commonWords.hideAnswered}</span></button>
     {#if parts.theme}<PagePart draw={parts.theme} />{/if}
     <button type="button" class="vb-btn vb-btn-primary vb-btn-iconic" id={idOf('reply-toggle')} title={toolbarWords.reply} aria-expanded={shown.replyOpen}
@@ -110,6 +111,6 @@
       paused={!board ? undefined : shown.locked ? LOCKED_PERSON : shown.readOnly ? READ_ONLY_PERSON : undefined} />
   {/if}
   {#if parts.chat}<PagePart draw={parts.chat} />{/if}
-  {#if ondirection && shown.direction}<FlowMenu {ondirection} {placement} />{/if}
-  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {onskin} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
+  {#if ondirection && shown.direction && here('flows')}<FlowMenu {ondirection} {placement} />{/if}
+  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {onskin} ondirection={here('flows') ? undefined : ondirection} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
 </div>

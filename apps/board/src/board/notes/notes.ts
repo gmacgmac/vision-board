@@ -109,7 +109,8 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (drawers.isWindow(id)) return drawers.show(id); // an app window's conversation is its drawer (FE_08)
     if (d.box) {
       if (open?.id === id && open.mode === 'conversation' && !open.region) return bubble.focusText();
-      return openWith({ id, anchor: [id], mode: 'conversation', kind: 'comment' });
+      // From the notes mark, Esc gives the focus back to it (FIX_01); from C on the node, to the node.
+      return openWith({ id, anchor: [id], mode: 'conversation', kind: 'comment', at: '[data-mark="notes"]' });
     }
     const note = unsentNote(d.state(), id);
     // A second press on the open bubble keeps what was typed; it only sets the kind.

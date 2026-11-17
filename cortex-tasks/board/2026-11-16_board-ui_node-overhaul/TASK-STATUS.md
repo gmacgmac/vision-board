@@ -55,9 +55,9 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 13 | BE_01 | 10 | strong | no | Graph-layout engineer — a layout is a pure function; a line that weaves round cards is a bug in the layout, not in the router. | [Flow branching and direction](./BE_01_flow-branching-and-direction.md) | Completed | Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker. |
 | 14 | FE_07 | 11 | standard | no | — | [One layout control](./FE_07_one-layout-control.md) | Completed | One button + the existing popover behind `layoutControl`; a flow's Across/Down/Auto write the container's `direction` act (`places.ts` `setDirection`); gallery "One layout control" compares the six layouts. Board-wide direction still in "⋯" (header move requested) |
 | 15 | FE_08 | 12 | strong | no | Front-end engineer for sandboxed embeds — the app owns everything under its title bar, and the sandbox is never loosened. | [The app window](./FE_08_app-window.md) | Completed | Window, drawer (the node conversation box, neighbours move aside, panel never reloads) and stage (whole window in the top layer, focus held, Esc) behind appWindow and nodeEdges; Open needs appStage. Panel notes join the queued note (were a 422). A stuck panel freezes the page in WebKit and non-isolated Chromium (apps.md). For T_04: drop `later` from `NODE_TYPES.app.actions`. |
-| 16 | T_03 | 13 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The agent skill](./T_03_agent-skill.md) | Blocked | Skill v3.34 (one flow per container, icons, tone, skin, direction, bookmark, Ask now), 44,614 bytes after moving old history to NOTES; plugin skill unchanged; scenarios 44 `linked-pipeline`, 45 `architecture-icons` (standalone); dry 88/88 and 33/33. Live run: CLI sign-in expired, $0, no model ran: needs a login and a rerun (and `--standalone` for 45). |
+| 16 | T_03 | 13 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The agent skill](./T_03_agent-skill.md) | Completed | Run 2: live Haiku 79/88, $1.53, linked-pipeline 7/7; all 9 failures are 3 runs whose model request hung right after start (no output until the 180 s kill), not this set's code or words. Rerun those 3, and `--standalone` for 45. Skill v3.34, plugin skill unchanged. |
 | 17 | VERIFY_01 | 14 | strong | no | Operations lead who plans live events on boards like this all day — expects every mark to do what it shows, at any zoom, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Completed | Run 1: unit, check, gen, verify, plugin (116) green; pages 1,045 passed, 67 failed (59 sub-pixel, 1 flaky, 7 real ERR_ABORTED in bookmark-retire/person-remove). Must fix before T_04: that harness abort, axe target-size of edge marks far out, header tiers measured without Flows, app Later by L and the bar. 12 should-fix; report in the task. |
-| 17b | FIX_01 | 14 | strong | no | Senior front-end engineer — a finding is closed when its test proves it, not when the code looks right. | [Fix what VERIFY_01 found](./FIX_01_verify-findings.md) | Pending | Added by the orchestrator; VB_TEST_PORT 7450 |
+| 17b | FIX_01 | 14 | strong | no | Senior front-end engineer — a finding is closed when its test proves it, not when the code looks right. | [Fix what VERIFY_01 found](./FIX_01_verify-findings.md) | Completed | Run 1: 1-3 and 5, 7-14, 16 fixed, each with its test; marks far out take no pointer press below 86% (axe target-size excused there only), crowd at 20%; Flows full from 1428px, in "⋯" from half; H history, Shift+H Hide answered; an Esc closes the newest layer. Full pages: 1,070 passed, 59 failed (the known sub-pixel gallery shots only). Item 24's axe miss is the "?" button over it, not size. Plugin budgets 202,200 / 27,600. |
 | 18 | T_04 | 15 | strong | no | Staff engineer who owns deprecations — a removal is done only when nothing, not code, tests, words nor docs, still points at the old thing. | [Switch over and remove the old](./T_04_defaults-on.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -84,13 +84,13 @@ on the result. Waves 1 and 3 run tasks in their own git worktrees, merged after 
 | `packages/format/src/flags.ts` (`nodeEdges`, `skins`, `layoutControl`, `flowDirection`, `appWindow`) | T_01 | every later task |
 | `packages/actions/src/` (`bookmarksOn`, the fold of a board's skin, asked lines and directions; no container seen, point 308) | T_01 | FE_02, FE_03, FE_06, BE_01, FE_07 |
 | `design/mockups/node-states/` (the agreed place of every undrawn state) | DESIGN_01 | FE_01, FE_04, FE_08 |
-| `packages/tokens/src/tokens.css` (edge-mark, answer and skin tokens; tone tints from `--vb-tone-h`; `[data-vb-skin]` values), `packages/tokens/fonts/` | Completed | Tokens, skins.css, four OFL fonts vendored (whole files, pinned commits, SHA-256 held by fonts.test.ts); 360-hue tone sweep passes in Chromium and WebKit. Step 5a deviation: nclite refuses @font-face, so the plugin brings no font yet (option C now, A later; maintainer ruling). Plugin board.css 21,951 of 22,000. tokens.css diff in task notes. |
-| `packages/format/src/icon-file.ts` (`ICON_BOX`, `ICON_LIMITS`, `iconPathProblem`, `iconFileProblem`, `iconPathsOf`), `apps/board/server/icons.ts`, `EngineOptions.icons` | Completed | Shared check `icon-file.ts`, handlers `icons.ts` (add once per name, every read checked, first use writes the line), `EngineOptions.icons`, access row; `list_icons` takes no credential. |
+| `packages/tokens/src/tokens.css` (edge-mark, answer and skin tokens; tone tints from `--vb-tone-h`; `[data-vb-skin]` values), `packages/tokens/fonts/` | T_02 | FE_01, FE_03, FE_04, FE_08 |
+| `packages/format/src/icon-file.ts` (`ICON_BOX`, `ICON_LIMITS`, `iconPathProblem`, `iconFileProblem`, `iconPathsOf`), `apps/board/server/icons.ts`, `EngineOptions.icons` | BE_04 | FE_01, FE_02, T_03, VERIFY_01 |
 | `packages/ui/src/icons/` (`ICONS`, `icon(name, cls, library?)`) | FE_01 | FE_02, FE_04, FE_06, FE_07, FE_08 |
 | `packages/ui/src/skins.ts` (`SKIN_DEFS`: per skin, where the answer and each mark sit) | FE_01 | FE_02, FE_04, FE_08 |
 | `packages/ui/src/menu/` (the fixed-size menu used by the number menu, the answer picker and right-click) | FE_01 | FE_02, FE_06, FE_07 |
 | `packages/ui/src/note-bubble/` (the conversation box with its reply field, Ask now and `askContext`) | FE_03 | FE_06, FE_08 |
-| The board-wide direction control (`apps/board/src/board/chrome/`) and the layout's reading of `directionOf` | Completed | Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker. |
+| The board-wide direction control (`apps/board/src/board/chrome/`) and the layout's reading of `directionOf` | BE_01 | FE_07 |
 
 ---
 
@@ -100,9 +100,9 @@ on the result. Waves 1 and 3 run tasks in their own git worktrees, merged after 
 |------|-------|-------|
 | 1 | BE_02 | `packages/format/src/migrate/`, `packages/format/src/index.ts`, `packages/format/src/data-folder.ts`, `packages/format/src/ledger-read.ts`, `packages/format/src/words/format-ledger.ts`, `packages/format/fixtures/legacy/`, new files in `packages/format/tests/` and `apps/board/tests/`, `packages/actions/tests/legacy-folds.test.ts`, `apps/board/server/` (`ledger-migrate.ts`, `ledger.ts`, `project.ts`, `editing.ts`, `engine/engine.ts`, `words/bin.ts`, `words/server-folders.ts`), `apps/board/bin/ledger-migrate.ts`, `package.json` (the script only), the page's read-only reason if it must change, `docs/specification/api.md`, `docs/specification/plugin.md` |
 | 1 | DESIGN_01 | `design/mockups/node-states/`, `design/README.md` |
-| 3 | Completed | Tokens, skins.css, four OFL fonts vendored (whole files, pinned commits, SHA-256 held by fonts.test.ts); 360-hue tone sweep passes in Chromium and WebKit. Step 5a deviation: nclite refuses @font-face, so the plugin brings no font yet (option C now, A later; maintainer ruling). Plugin board.css 21,951 of 22,000. tokens.css diff in task notes. |
-| 3 | Completed | One format: version branches and LEDGER_FORMATS gone; an older line is refused with migrate words; fixtures and perfLedger equal the frozen files migrated. Gate: write-board.ts `item`, checkSame compares against the in-memory upgrade. |
-| 3 | Completed | Shared check `icon-file.ts`, handlers `icons.ts` (add once per name, every read checked, first use writes the line), `EngineOptions.icons`, access row; `list_icons` takes no credential. |
+| 3 | T_02 | `packages/tokens/`, `apps/board/plugin/theme.css`, `apps/board/server/static.ts`, `apps/board/server/app.ts`, `apps/board/vite*.config.ts`, `apps/board/tests/plugin-theme.test.ts`, `tests/plugin/` except `contract/nclite/shared/`, `docs/specification/dependencies.md`, `docs/specification/plugin.md` |
+| 3 | BE_03 | `packages/format/src/` except `migrate/`, `index.ts`, `icon-file.ts`, `words/format-icons.ts`; `packages/format/schema/`; `packages/format/fixtures/` except `legacy/`; existing files in `packages/format/tests/`, `packages/actions/tests/` and `apps/board/tests/` (not `plugin-theme.test.ts`) that hold a ledger line; `packages/actions/src/` (version tests only); `tests/plugin/contract/nclite/shared/`; the generated files; `docs/specification/api.md`, `docs/specification/api-reference.md` |
+| 3 | BE_04 | `packages/format/src/icon-file.ts`, `packages/format/src/index.ts`, `packages/format/src/words/format-icons.ts`, `packages/format/tests/icon-file.test.ts`, `apps/board/server/` (`icons.ts`, `engine/`, `write-board.ts`, `write-insert.ts`, `project.ts`, `words/icons.ts`), `packages/agent/src/access-rules.ts` and its words and tests, new files in `apps/board/tests/`; its `plugin.md` paragraph goes to the orchestrator as a request and is applied after the wave |
 | — | orchestrator | `docs/decisions.md`, `docs/principles.md`, `.kiro/steering/vision-board-proj.md`, `AGENTS.md`, `CLAUDE.md`, `package-lock.json`, `docs/specification/modules.md`, `cortex-tasks/tracker.md` |
 
 Later waves hold one task each; a task's *Files to modify* is its ownership.
@@ -161,16 +161,16 @@ the pages are drafts for the words files. Kickoff changes (node-scoped Ask now, 
 drawn.
 
 ### T_02: Tokens, skin layer and fonts
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1 (from the task list; the full notes are in the task file; FIX_01 moved them here from the tables). Tokens, skins.css, four OFL fonts vendored (whole files, pinned commits, SHA-256 held by fonts.test.ts); 360-hue tone sweep passes in Chromium and WebKit. Step 5a deviation: nclite refuses @font-face, so the plugin brings no font yet (option C now, A later; maintainer ruling). Plugin board.css 21,951 of 22,000. tokens.css diff in task notes.
 
 ### BE_03: One format in the reader
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1 (from the task list; the full notes are in the task file; FIX_01 moved them here from the tables). One format: version branches and LEDGER_FORMATS gone; an older line is refused with migrate words; fixtures and perfLedger equal the frozen files migrated. Gate: write-board.ts `item`, checkSame compares against the in-memory upgrade.
 
 ### BE_04: The icon library
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1 (from the task list; the full notes are in the task file; FIX_01 moved them here from the tables). Shared check `icon-file.ts`, handlers `icons.ts` (add once per name, every read checked, first use writes the line), `EngineOptions.icons`, access row; `list_icons` takes no credential.
 
 ### FE_01: The node's edges and the icon set
 _Status:_ Completed  
@@ -201,8 +201,8 @@ box. The server hands the board's chat session an `ask` (`chat-sessions.ts` `hea
 FE_05: the conversation box is on the stage (one size), the history and proposal boxes in the node (scaled).
 
 ### FE_04: The Command Lens skin
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1 (from the task list; the full notes are in the task file; FIX_01 moved them here from the tables). Command Lens is the skins row plus node-plate.css, no skin name in node code; switch only on nodes that ask; plate is the drag handle; menus and selection bar on `--vb-glass-*`; tone (point 366) in both skins. Plate marks keep the node scale (no minimum; maintainer to confirm). Follow-ups to the gate: proposal chip press, box headers and tips on plate/glass tokens.
 
 ### FE_05: Zoom groups
 _Status:_ Completed  
@@ -217,20 +217,26 @@ _Status:_ Completed
 _Notes:_ Run 1. Behind `layoutControl` (+ `flowDirection` for the direction row). Rail is default, so Right opens the popover from the button. Requests: `npm run map`; move the board-wide Flows rows from `ToolbarMenu.svelte` into the header; restore nothing (no baselines rewritten).
 
 ### BE_01: Flow branching and direction
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1 (from the task list; the full notes are in the task file; FIX_01 moved them here from the tables). Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker.
 
 ### FE_08: The app window
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1 (from the task list; the full notes are in the task file; FIX_01 moved them here from the tables). Window, drawer (the node conversation box, neighbours move aside, panel never reloads) and stage (whole window in the top layer, focus held, Esc) behind appWindow and nodeEdges; Open needs appStage. Panel notes join the queued note (were a 422). A stuck panel freezes the page in WebKit and non-isolated Chromium (apps.md). For T_04: drop `later` from `NODE_TYPES.app.actions`.
 
 ### T_03: The agent skill
-_Status:_ Blocked (live eval only)  
+_Status:_ Completed (run 2)  
 _Notes:_ Run 1. New text sits only in sections `skill-edits.ts` replaces, so the plugin skill is byte for byte the same (8,174/8,192) and a host's bot (no `list_icons`/`add_icon`) reads none of it. Checks `linkedInOneFlow`, `fewCrossLinks` exported from `scenarios/linked-pipeline.ts`. The approved live run stopped at the CLI's expired sign-in ($0); rerun after `/login`, plus `--standalone` for scenario 45. Requests: the plugin's `node.icon` input description names tools that bot lacks.
+
+Run 2: in the live run (79/88, $1.53), `refusals`, `answered-note` and `insert-step` were killed at 180 s after the CLI wrote nothing more 2 to 3 s into the run (one before any tool call, two after an answered `list_boards`). A model request hung, not this set; nothing was fixed. They passed on Sonnet before the set and had never run on Haiku. Suggested: a stall watchdog in `tests/evals/bot/model.ts`.
 
 ### VERIFY_01: Final verification
 _Status:_ Completed  
 _Notes:_ Run 1. Findings ranked in the task's notes (blocking 1-4, should fix 5-16, fine, critique, gaps, the maintainer's tour). Probes and shots in `temp/verify01/`. Migration, Ask now (page, `check_responses`, no agent), tone 366, flows, point 308, icons, fonts, focus and lock all behave. Docs audit was a spot check only.
+
+### FIX_01: Fix what VERIFY_01 found
+_Status:_ Completed  
+_Notes:_ Run 1. For T_04: `smallMarksExcused` (tests/pages/helpers.ts) is the one excuse for axe target-size on a zoomed-out board; `data-marks="small"` and `data-marks-crowded` on the stage (`viewport.ts` `marksPressable`, `CROWD_GROW`); `headerTier(width, flows)` with `FLOWS_W`; a dismissable layer with `escape` now stacks (newest first). Findings 4 and 15 are yours. Renewed only node-edges-{dark,light} (the "⋯" row's Shift+H). Requests: `npm run map`; the "?" key-help button covering cards; a hover tip left open when a zoom moves its anchor from under a still pointer; a crowded full bar without Flows overlaps 5px at about 1540px (pre-existing); the live `npm run eval:bot` (plugin words changed).
 
 ### T_04: Switch over and remove the old
 _Status:_ Pending  

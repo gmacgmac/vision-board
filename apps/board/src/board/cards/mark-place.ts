@@ -54,23 +54,30 @@ export const BOX_GAP = 12;
 const ARROW_CORNER = 16;
 
 /** Where a box beside a node goes, and where its arrow meets the box's edge (`arrow`: down the left edge on the right,
- *  along the top edge below), in stage pixels. */
-export interface BoxPlace { side: 'right' | 'below'; x: number; y: number; arrow: number }
+ *  along the top edge below, along the bottom edge above), in stage pixels. */
+export interface BoxPlace { side: 'right' | 'below' | 'above'; x: number; y: number; arrow: number }
 
 /**
  * One place for every box that opens beside a node, the conversation, the proposal and the history box (the
  * maintainer's ruling, FE_03 run 2): its top level with the node's top, to the node's right when the stage has room,
  * else below the node with their left edges aligned; never over the node. Its arrow points at `mark`, what opened it
- * (the node itself when none). Below, it is kept inside the stage across only, so it never slides over the node. Pure.
+ * (the node itself when none). It stays on the stage (FIX_01, VERIFY_01 finding 7): on the right, a box that would run
+ * past the stage's bottom (or top) moves up (or down) just enough, top aligned whenever it fits; below, one that would
+ * run past the bottom opens above the node instead, and only when neither fits is it kept inside the stage. Pure.
  */
 export function placeBeside(node: StageBox, size: { w: number; h: number }, stage: { w: number; h: number }, mark: StageBox = node): BoxPlace {
   const right = node.x + node.w + BOX_GAP;
+  const inside = (y: number) => clamp(y, STAGE_EDGE, stage.h - size.h - STAGE_EDGE);
   if (right + size.w <= stage.w - STAGE_EDGE) {
-    const y = Math.round(node.y);
+    const y = inside(node.y);
     return { side: 'right', x: Math.round(right), y, arrow: clamp(mark.y + mark.h / 2 - y, ARROW_CORNER, size.h - ARROW_CORNER) };
   }
   const x = clamp(node.x, STAGE_EDGE, stage.w - size.w - STAGE_EDGE);
-  return { side: 'below', x, y: Math.round(node.y + node.h + BOX_GAP), arrow: clamp(mark.x + mark.w / 2 - x, ARROW_CORNER, size.w - ARROW_CORNER) };
+  const arrow = clamp(mark.x + mark.w / 2 - x, ARROW_CORNER, size.w - ARROW_CORNER);
+  const below = node.y + node.h + BOX_GAP;
+  const above = node.y - BOX_GAP - size.h;
+  if (below + size.h > stage.h - STAGE_EDGE && above >= STAGE_EDGE) return { side: 'above', x, y: Math.round(above), arrow };
+  return { side: 'below', x, y: below + size.h > stage.h - STAGE_EDGE ? inside(below) : Math.round(below), arrow };
 }
 
 /** A node's box for `placeBeside`, on the stage: its top and left as its border's, its right and bottom reaching past

@@ -9,7 +9,7 @@ import { startFolderServer } from './folder-server.ts';
 import { bid, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { joinAgent, open, write } from './agent-board.ts';
-import { card, head, idle, linesAfter, scale, zoomToFull } from './board-page.ts';
+import { card, head, idle, linesAfter, menuButton, scale, zoomToFull } from './board-page.ts';
 
 let boards = 0;
 const THEMES: Theme[] = ['dark', 'light'];
@@ -46,16 +46,26 @@ test('off, no Flows menu; on, Across, Down and Auto with Auto ticked; a choice w
   await expect(flowButton(page)).toHaveCount(0);
   await open(page, d, '?vbwork&flags=flowDirection');
   expect(runsDown(await places(page, d.n)), 'the agent drew it down').toBe(true);
+  await expect(flowButton(page)).toHaveText('Flows: Auto'); // its words at full, as its neighbours' (FIX_01)
   await flowButton(page).click();
-  await expect(rows(page)).toHaveText([/Flows across/, /Flows down/, /Flows: Auto/]);
+  await expect(rows(page)).toHaveText([/Flows: Across/, /Flows: Down/, /Flows: Auto/]);
   await expect(rows(page).nth(2)).toHaveAttribute('aria-checked', 'true');
   const before = await head(page);
   await rows(page).first().click();
   await expect.poll(async () => runsDown(await places(page, d.n))).toBe(false);
   const lines = (await linesAfter(page, before)).filter((e) => e.action === 'direction');
   expect(lines.map((e) => [e.board, e.region, e.direction])).toEqual([[d.board, undefined, 'across']]);
+  await expect(flowButton(page)).toHaveText('Flows: Across');
+  // Choosing the ticked row closes the menu and writes nothing (FIX_01).
   await flowButton(page).click();
   await expect(rows(page).first()).toHaveAttribute('aria-checked', 'true');
+  const ticked = await head(page);
+  await rows(page).first().click();
+  await expect(rows(page)).toHaveCount(0);
+  await expect(flowButton(page)).toHaveAttribute('aria-expanded', 'false');
+  await idle(page);
+  expect(await head(page)).toBe(ticked);
+  await flowButton(page).click();
   await rows(page).nth(2).click();
   await expect.poll(async () => runsDown(await places(page, d.n)), 'Auto gives back the agent\'s').toBe(true);
   // Another page reading the same ledger draws the same.
@@ -63,6 +73,22 @@ test('off, no Flows menu; on, Across, Down and Auto with Auto ticked; a choice w
   await open(other, d, '?vbwork&flags=flowDirection', 7);
   expect(await places(other, d.n)).toEqual(await places(page, d.n));
   await other.close();
+});
+
+test('from the header\'s half form Flows is rows of "⋯": the board\'s ticked, a choice one direction act (FIX_01)', async ({ page, request }) => {
+  const d = await drawLine(request, 'flow', 'down');
+  await page.setViewportSize({ width: 1000, height: 900 });
+  await open(page, d, '?vbwork&flags=flowDirection');
+  await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', 'half');
+  await expect(flowButton(page)).toHaveCount(0);
+  await menuButton(page).click();
+  const inMore = page.getByRole('group', { name: 'Flows' }).getByRole('menuitemradio');
+  await expect(inMore).toHaveText([/Flows: Across/, /Flows: Down/, /Flows: Auto/]);
+  await expect(inMore.nth(2)).toHaveAttribute('aria-checked', 'true');
+  const before = await head(page);
+  await inMore.nth(0).click();
+  await expect.poll(async () => runsDown(await places(page, d.n))).toBe(false);
+  expect((await linesAfter(page, before)).filter((e) => e.action === 'direction').map((e) => [e.region, e.direction])).toEqual([[undefined, 'across']]);
 });
 
 test('with flowBranches a row whose links branch draws the main line on one row and the branch on its own; off, one line', async ({ page, request }) => {

@@ -113,6 +113,18 @@ test('on a board: the plate\'s Proposal chip opens the proposal box and a second
   const talk = page.locator('vb-note-bubble.vb-node-box');
   await expect(talk.locator('.vb-node-box-head')).toHaveCSS('background-color', 'rgb(14, 17, 21)');
   await expect(talk.locator('.vb-node-box-head')).toHaveCSS('color', 'rgb(238, 241, 244)');
+  // The skin's corners, and a box a key opened rings with its own border in the skin's ring colour, no ring around it (FIX_01).
+  await expect(talk).toHaveCSS('border-top-left-radius', '6px');
+  await page.keyboard.press('Escape');
+  await write(request, d, [{ type: 'node', n: d.n[0]!, node: { region: 'p', kind: 'question', title: 'Book the second truck today?' } }]);
+  await expect(mark(page, d.n[0]!, 'badge')).toBeVisible(); // the new version is drawn
+  await card(page, d.n[0]!).focus();
+  await page.keyboard.press('h');
+  const history = card(page, d.n[0]!).locator('.vb-card-pop.vb-node-box[data-pop="history"]');
+  await expect(history).toBeFocused();
+  await expect(history).toHaveCSS('outline-style', 'none');
+  await expect(history).toHaveCSS('border-top-color', PLATE_RING);
+  await expect(history).toHaveCSS('border-top-left-radius', '6px');
 });
 
 for (const skinFlag of ['default', 'command-lens']) {

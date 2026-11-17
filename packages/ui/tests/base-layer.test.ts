@@ -99,3 +99,16 @@ test('an Esc given a board: only when focus is in that board or nowhere; a host\
   const alone = { closest: () => null, ownerDocument: { body, documentElement: {} } } as unknown as Element;
   assert.equal(escapeIsOurs(alone, hosts), true, 'with no board round it, the page is its own');
 });
+
+test('two layers open: an Esc closes the newest only, the next one the one under it (FIX_01)', () => {
+  const doc = new EventTarget();
+  const got: string[] = [];
+  const stopTip = dismissable({ doc, within: () => true, escape: true, dismiss: (r) => got.push(`tip ${r}`) });
+  const stopMenu = dismissable({ doc, within: () => true, escape: true, dismiss: (r) => got.push(`menu ${r}`) });
+  doc.dispatchEvent(ev('keydown', { key: 'Escape' }));
+  assert.deepEqual(got, ['menu escape']);
+  stopMenu();
+  doc.dispatchEvent(ev('keydown', { key: 'Escape' }));
+  assert.deepEqual(got, ['menu escape', 'tip escape']);
+  stopTip();
+});

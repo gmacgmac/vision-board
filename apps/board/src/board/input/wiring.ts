@@ -11,7 +11,7 @@ import type { KeyHandlers } from './keys.ts';
 import { bindKeys } from './keys.ts';
 import type { PointerHandlers } from './pointer.ts';
 import { bindPointer } from './pointer.ts';
-import { bindPointerFocus } from '../canvas/index.ts';
+import { bindPointerFocus, smallMark } from '../canvas/index.ts';
 import { bindSizeControl, isSizePick } from '../cards/index.ts';
 import type { Viewport } from '../canvas/index.ts';
 
@@ -86,6 +86,9 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
   { pageWide = false, wheelChaining = false }: { pageWide?: boolean; wheelChaining?: boolean } = {}): () => void {
   stage.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
+    // A mark too small to press at this zoom: the pointer's click picked its node (pointer.ts); Enter or Space (no clicks
+    // counted, `detail` 0) still presses it.
+    if (e.detail > 0 && smallMark(t)) return;
     const markBtn = h.mark ? t.closest<HTMLElement>('vb-node[data-edges] [data-mark]') : null;
     if (markBtn) return h.mark!(cardOf(markBtn), markBtn.dataset.mark!, markBtn);
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');

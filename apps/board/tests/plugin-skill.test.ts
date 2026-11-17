@@ -98,6 +98,14 @@ test('the plugin bot\'s tool descriptions are the tool table\'s (the MCP server 
     assert.doesNotMatch(t.description, /your secret|\bjoin\b|list_apps|read_attachment|Authorization/i, `${t.name}'s words`);
     assert.doesNotMatch(JSON.stringify(t.inputSchema), /your secret|list_apps|read_attachment/i, `${t.name}'s input`);
   }
+  // No word it reads names a tool it lacks (FIX_01, VERIFY_01 finding 13: `node.icon` named list_icons and add_icon).
+  const lacks = (toolRows() as { name: string }[]).map((r) => r.name).filter((n) => !given.has(n));
+  assert.ok(lacks.includes('list_icons') && lacks.includes('add_icon'));
+  for (const t of listed) for (const name of lacks) {
+    const says = new RegExp(`\\b${name}\\b`);
+    assert.doesNotMatch(JSON.stringify(t.inputSchema), says, `${t.name}'s input names ${name}`);
+    if (name !== 'join') assert.doesNotMatch(t.description, says, `${t.name}'s words name ${name}`);
+  }
   assert.ok(Object.keys(OPERATIONS).length > listed.length);
 });
 

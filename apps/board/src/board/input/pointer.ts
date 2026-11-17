@@ -16,6 +16,7 @@
 // in keys.ts (project rule 5).
 import type { Box, Point } from '#layout';
 import type { Viewport } from '../canvas/index.ts';
+import { smallMark } from '../canvas/index.ts';
 import { createWheelLatch, scrollerIn } from './wheel-latch.ts';
 
 export interface PointerHandlers {
@@ -128,7 +129,8 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       if (!frame.grip) document.getSelection()?.removeAllRanges();
       return capture(e);
     }
-    if (e.button !== 0 || t.closest(INTERACTIVE)) return;
+    // A node's mark too small to press at this zoom is the node's body (viewport.ts `smallMark`).
+    if (e.button !== 0 || (t.closest(INTERACTIVE) && !smallMark(t))) return;
     const card = t.closest<HTMLElement>('vb-node');
     const add = e.shiftKey || e.metaKey || e.ctrlKey;
     if (card) {

@@ -87,9 +87,10 @@ export function showMarkMenu(stage: HTMLElement, spec: MarkMenuSpec): MarkMenu {
     spec.act(row.dataset.menuAct!);
   };
   // A press that travels (a pan, a lasso) leaves it open; a click outside closes it, with focus where it was pressed.
+  // Esc is a layer's too, so the newest one open closes first (a tip under it waits; FIX_01): focus back where it was.
   const stop = dismissable({
-    within: (t) => holder.contains(t) || !!spec.opener?.contains(t), clickWithin: DRAG_THRESHOLD,
-    dismiss: () => close(false),
+    within: (t) => holder.contains(t) || !!spec.opener?.contains(t), clickWithin: DRAG_THRESHOLD, escape: stage,
+    dismiss: (reason) => close(reason === 'escape'),
   });
   function close(focusBack = true): void {
     if (!open) return;

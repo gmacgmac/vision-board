@@ -148,7 +148,17 @@ vb-node[data-window] .vb-app-name-tip { top: calc(100% + var(--vb-space-1)); bot
 vb-node[data-window] .vb-app-name-tip::before { top: auto; bottom: 100%; }
 vb-node[data-window] .vb-win-bar > .vb-app-name.vb-win-name { min-width: 4.5em; }
 vb-node[data-window] .vb-node-plate.vb-win-bar > .vb-win-reason {
-  flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap;
+  display: inline-flex; flex: 0 1 auto; align-items: center; gap: 5px; min-width: 0; overflow: hidden;
+  font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap;
+}
+vb-node[data-window] .vb-win-bar > .vb-win-reason[hidden] { display: none; }
+vb-node[data-window] .vb-win-reason .vb-win-btn-icon { flex: none; }
+vb-node[data-window] .vb-win-reason-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* The app's name keeps the bar (FIX_01): on a window under 480px the state is its lock alone, its words in its tip and
+   for a screen reader. */
+vb-node[data-window] .vb-win-bar { container: vb-win-bar / inline-size; }
+@container vb-win-bar (max-width: 479px) {
+  vb-node[data-window] .vb-win-reason-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 vb-node[data-window] .vb-win-bar > :is(.vb-app-status, .vb-win-btn) { flex: none; }
 vb-node[data-window] .vb-app-status { flex: none; }

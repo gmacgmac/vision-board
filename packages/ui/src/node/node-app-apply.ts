@@ -135,7 +135,10 @@ export function bindAppNameTip(card: HTMLElement): HoverTip {
 export function applyWindow(card: HTMLElement, v: AppCardView, m: NodeMarks): void {
   const reason = card.querySelector<HTMLElement>('.vb-win-reason')!;
   reason.hidden = v.control !== 'allow';
-  reason.textContent = v.control === 'allow' ? v.reason ?? '' : '';
+  // Its words, and the same in its tip: on a narrow window it is a lock alone and the name keeps the room (FIX_01).
+  const why = v.control === 'allow' ? v.reason ?? '' : '';
+  reason.querySelector('.vb-win-reason-text')!.textContent = why;
+  reason.dataset.tip = why;
   card.toggleAttribute('data-drawer-open', v.drawer);
   const arrow = card.querySelector<HTMLElement>('[data-drawer]')!;
   arrow.setAttribute('aria-expanded', String(v.drawer));

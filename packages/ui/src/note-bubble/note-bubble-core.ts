@@ -12,7 +12,7 @@ import * as uiCommonWords from '../words/ui-common.ts';
 export type StageBox = Box;
 export type StageSize = Size;
 
-export type BubbleSide = 'right' | 'left' | 'below';
+export type BubbleSide = 'right' | 'left' | 'below' | 'above';
 
 /** Where the bubble goes, in stage pixels, and where its arrow meets the bubble's edge: `arrow`
  * is the distance down the side edge (right, left) or along the top edge (below). */

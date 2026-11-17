@@ -2,7 +2,8 @@
 // where, and that nothing a person can act on is ever out of reach.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FULL_MIN, HALF_MIN, HEADER_CONTROLS, headerTier, inBar, inMenu } from '../src/board/chrome/header-tier.ts';
+import { readFileSync } from 'node:fs';
+import { FLOWS_W, FULL_MIN, HALF_MIN, HEADER_CONTROLS, headerTier, inBar, inMenu } from '../src/board/chrome/header-tier.ts';
 import type { HeaderControl, HeaderTier } from '../src/board/chrome/header-tier.ts';
 
 const TIERS: HeaderTier[] = ['full', 'half', 'third'];
@@ -28,8 +29,28 @@ test('full: nothing moves, everything is in the bar', () => {
   assert.deepEqual(bar('full'), HEADER_CONTROLS);
 });
 
-test('half: Edit, version and containers move into "⋯", the app icon goes', () => {
-  assert.deepEqual(moved('half'), ['version', 'edit', 'containers']);
+test('with Flows (flowDirection flag) the full form starts FLOWS_W later; half and a third start where they did', () => {
+  assert.equal(headerTier(FULL_MIN + FLOWS_W, true), 'full');
+  assert.equal(headerTier(FULL_MIN + FLOWS_W - 1, true), 'half');
+  assert.equal(headerTier(1470, true), 'full', 'the design\'s full width keeps its form');
+  assert.equal(headerTier(HALF_MIN, true), 'half');
+  assert.equal(headerTier(HALF_MIN - 1, true), 'third');
+});
+
+test('FLOWS_W is the room header.css keeps for Flows: its width and the gap before it', () => {
+  const css = readFileSync(new URL('../src/styles/header.css', import.meta.url), 'utf8');
+  const tokens = readFileSync(new URL(import.meta.resolve('#tokens/styles.css')), 'utf8');
+  const px = (src: string, name: string) => Number(new RegExp(`${name}:\\s*(\\d+)px`).exec(src)![1]);
+  assert.equal(FLOWS_W, px(css, '--vb-flows-w') + px(tokens, '--vb-space-2'));
+});
+
+test('Flows is a button at full and rows of "⋯" at half and a third (FIX_01)', () => {
+  assert.ok(inBar('full', 'flows'));
+  for (const tier of ['half', 'third'] as const) assert.ok(inMenu(tier, 'flows'), tier);
+});
+
+test('half: Edit, version, containers and Flows move into "⋯", the app icon goes', () => {
+  assert.deepEqual(moved('half'), ['version', 'edit', 'containers', 'flows']);
   assert.equal(inBar('half', 'app-icon'), false);
   for (const c of ['folder', 'ledger', 'board', 'open', 'new', 'zoom', 'agents', 'send', 'chat', 'more', 'locked', 'editing', 'boards-updated', 'replied', 'bookmarked'] as const) {
     assert.ok(inBar('half', c), c);

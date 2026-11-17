@@ -132,6 +132,14 @@ test('a locked board: the disc looks as at rest; a press turns it into a lock wi
   await expect(page.locator('.vb-mark-tip')).toHaveText('Board is locked');
   await expect(menuOf(page, `Answer item ${q}`)).toHaveCount(0);
   await expect(disc).not.toHaveAttribute('data-locked', '', { timeout: 4000 });
+  // The popover only: no toast (FIX_01), and X on the node says it on the disc the same way.
+  await expect(page.locator('#toast')).toBeHidden();
+  await card(page, q).focus();
+  await page.keyboard.press('x');
+  await expect(disc).toHaveAttribute('data-locked', '');
+  await expect(page.locator('.vb-mark-tip')).toHaveText('Board is locked');
+  await expect(page.locator('#toast')).toBeHidden();
+  await expect(disc).not.toHaveAttribute('data-locked', '', { timeout: 4000 });
   // The bookmark still works on a locked board.
   await mark(page, q, 'number').click();
   await expect(mark(page, q, 'number')).toHaveAttribute('aria-pressed', 'true');

@@ -12,7 +12,7 @@
 // chat-side.ts (the board's side of its host's chat); controller/ holds the pieces split out of it.
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
-import type { ActDirection, FlagName, LedgerEvent, Skin, View, ViewNode } from '#format';
+import type { ActDirection, ActionId, FlagName, LedgerEvent, Skin, View, ViewNode } from '#format';
 import { directionOf } from '#format';
 import { ROW_GAP } from '#layout';
 import type { CardConditions } from '#ui';
@@ -274,7 +274,11 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     ...(on('containerZoom') && { container: { zoom: (id: string) => zoomToContainer(finding, id), mark: (id: string) => focusContainer(finding, id) } }) });
   /** The table as the stage calls it: what acts does nothing on a past version or a locked board, saying why. */
   const guarded = versions.guard(lock.guard(handlers));
-  const unbind = bindStage(stage, vp, guarded, () => { if (drawing.layout) vp.resized(); },
+  // A and X with the nodes' edges answer as the disc does (FIX_01): on a locked board, a past version or a read-only
+  // ledger the lock on the mark, never a toast; else through the guards as ever.
+  const marks = edges.marks;
+  const keyed = marks ? { ...guarded, act: (id: string, a: ActionId) => (a === 'ack' || a === 'drop' ? marks.answer(id, a) : guarded.act(id, a)) } : guarded;
+  const unbind = bindStage(stage, vp, keyed, () => { if (drawing.layout) vp.resized(); },
     { pageWide: !!host.page, wheelChaining: on('wheelChaining') });
 
   // ---- boards --------------------------------------------------------------------------------

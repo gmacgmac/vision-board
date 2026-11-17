@@ -3,21 +3,25 @@
    look, styled here once, in the mock-ups' proportions (design/mockups/node-states: a 300px node, a 300 to 340px box).
    Compact: about 1.2 times the node's width, the node's body text size, a small head (the title and an ×) over a
    hairline, then the body. The page places it (board/cards/mark-place.ts `placeBeside`): its top level with the
-   node's, to its right, else below; the arrow, on the side that faces the node, points at the mark that opened it
+   node's, to its right, else below (above, near the stage's bottom), kept on the stage; the arrow, on the side that faces the node, points at the mark that opened it
    (`--vb-arrow`, `data-side`). Last in #ui/styles.css, so it wins over each pattern's own box. Tokens only. */
 vb-note-bubble.vb-node-box, vb-node .vb-card-pop.vb-node-box {
-  --vb-box-line: var(--vb-line-strong);
+  /* Its corners are never rounder than the skin's node (Command Lens's square ones; FIX_01): 10px by default. */
+  --vb-box-line: var(--vb-line-strong); --vb-box-radius: min(var(--vb-radius-md), var(--vb-node-radius));
   width: calc(var(--vb-card-w) * 1.2); max-width: none; max-height: none; overflow: visible; padding: 0; gap: 0; bottom: auto; right: auto;
-  border: 1px solid var(--vb-box-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-raised);
+  border: 1px solid var(--vb-box-line); border-radius: var(--vb-box-radius); background: var(--vb-surface-raised);
   box-shadow: var(--vb-shadow-lift); color: var(--vb-ink-strong);
   font: var(--vb-weight-regular) var(--vb-text-md) / 1.45 var(--vb-font); --vb-md-text: var(--vb-text-md);
 }
 vb-node .vb-card-pop.vb-node-box[data-open] { display: grid; }
+/* Focused as a whole (a key opened it), the box says so with its own border in the skin's ring colour, not a second ring
+   around it (FIX_01, VERIFY_01 finding 9); what inside it takes focus rings as ever. */
+vb-note-bubble.vb-node-box:focus-visible, vb-node .vb-card-pop.vb-node-box:focus-visible { outline: none; --vb-box-line: var(--vb-focus-edge); }
 .vb-node-box .vb-node-box-head {
   display: flex; align-items: center; gap: var(--vb-space-2); min-height: 32px; padding: 0 var(--vb-space-1) 0 var(--vb-space-3);
   border-bottom: 1px solid var(--vb-plate-line); font-weight: var(--vb-weight-medium);
   /* The head sits on the plate (--vb-plate-*): a skin's dark bar, the default's quiet sunken one. */
-  border-radius: calc(var(--vb-radius-md) - 1px) calc(var(--vb-radius-md) - 1px) 0 0; background: var(--vb-plate); color: var(--vb-plate-ink);
+  border-radius: calc(var(--vb-box-radius) - 1px) calc(var(--vb-box-radius) - 1px) 0 0; background: var(--vb-plate); color: var(--vb-plate-ink);
   --vb-ink-strong: var(--vb-plate-ink); --vb-ink-subtle: var(--vb-plate-muted); --vb-surface-sunken: var(--vb-glass-hover); --vb-surface-card: var(--vb-plate);
 }
 .vb-node-box .vb-node-box-title { flex: 1; min-width: 0; }
@@ -37,6 +41,10 @@ vb-node .vb-card-pop.vb-node-box[data-open] { display: grid; }
 }
 .vb-node-box[data-side='below']::before {
   inset: -6px auto auto calc(var(--vb-arrow, 16px) - 5px); border-left: 1px solid var(--vb-box-line); border-top: 1px solid var(--vb-box-line);
+}
+/* Above the node: near the stage's bottom a box that would open below opens over the node's top instead (FIX_01). */
+.vb-node-box[data-side='above']::before {
+  inset: auto auto -6px calc(var(--vb-arrow, 16px) - 5px); border-right: 1px solid var(--vb-box-line); border-bottom: 1px solid var(--vb-box-line);
 }
 
 /* The history box's parts: the stepper under the head, then one line per entry where it fits. */

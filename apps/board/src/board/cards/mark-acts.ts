@@ -22,6 +22,8 @@ export interface MarkActs {
   /** The node's actions, at client point `x`, `y` on it. */
   actions(id: string, x: number, y: number): void;
   history(id: string): void;
+  /** Tick or Cross by its key: as from the disc, with its moments; on a locked board the lock on the mark, no toast. */
+  answer(id: string, action: 'ack' | 'drop'): void;
   /** A menu is open on node `id` now (the browser's own menu event after the menu key, or after a long press, opens
    *  no second one). */
   showing(id: string): boolean;
@@ -149,6 +151,7 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
 
   return {
     press, actions,
+    answer: (id, action) => void answer(id, action),
     numberMenu: (id) => showMenu(id, 'number', null, 'below', anchorOf(id, 'number')),
     history: (id) => toggleBox(id, 'history', markOf(id, 'badge')),
     showing: (id) => !!open?.menu && open.id === id,

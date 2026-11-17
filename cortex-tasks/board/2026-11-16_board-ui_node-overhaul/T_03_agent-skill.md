@@ -151,6 +151,51 @@ _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier 
 ### Deviations from Plan
 - None in what was built. Step 6 is blocked by the CLI's sign-in, not by the skill.
 
+### Run 2
+
+**Status**: Completed (diagnosis; no code or words changed)  
+**Completed**: 2026-11-17 22:40  
+
+The orchestrator ran the approved live eval after the sign-in (`--model haiku --port 7310`): 79 of 88 checks in 15 runs,
+$1.53, report `tests/evals/bot/out/2026-11-17T21-52-08-156Z/report.md`. Every failed check is in the three killed runs
+(`refusals` 2, `answered-note` 3, `insert-step` 4). `linked-pipeline` passed all of its checks.
+
+### Changes Made
+- None. Notes only (this block, the TASK-STATUS row, a LOG line).
+
+### Issues & Resolutions
+- **What the transcripts show** (`stream.jsonl` in each run folder): the CLI stopped writing 2 to 3 seconds after it
+  started and wrote nothing more until the kill at 180 s. The files last changed at 21:52:48, 21:55:55 and 22:00:04;
+  the runs started at 21:52:46, 21:55:53 and 22:00:01. `stderr.txt` is empty in all three.
+  - `refusals`: `init`, one `thinking_tokens` event, then nothing. No tool call, no text.
+  - `answered-note` and `insert-step`: `init`, thinking, one `list_boards` answered straight away (`team-offsite` and
+    `release-steps`, each `held`), then nothing.
+  - The 12 passing runs took 6 to 18 s, with the same event types. The `rate_limit_event` lines say `allowed`.
+- **Cause**: the bot's next request to the model hung with no output. [INFERENCE: an API or CLI streaming stall; the
+  stream cannot say which.] It was not Haiku looping: there are no repeated calls and at most one tool call, answered
+  at once. It was not this set's code or words:
+  - `refusals` hung on its first request, before any tool ran.
+  - That request differs from the 12 passing runs only by the person's words: the same skill, server instructions and
+    tool list.
+  - The other two hung after a well-formed `list_boards` answer, a tool this set did not change.
+  So format 20, the bookmark rename, an `ask` waking `check_responses`, the tool descriptions and the plugin bot's
+  `node.icon` input text are all ruled out.
+- **Harness**: it worked as designed. The door answered, and the 180 s kill ended each run. A killed run is not counted
+  as a crash (`model.ts` `runTurns`: `crashed: !killed && ...`), so a stall is not retried and shows as failed checks.
+- **Before this set**: none of the three had run on Haiku. The only older Haiku report (`probe-haiku`, 2026-11-03) ran
+  `two-turns` alone. On Sonnet, `refusals` and `answered-note` passed every time, in 7 to 14 s (the main checkout's
+  `tests/evals/bot/out/`: `2026-11-03-baseline`, `skill-00` to `skill-04`, `final-overnight`, `tools02-answered`).
+  `insert-step` passed on Sonnet under v3.30 (NOTES.md § Skill v3.30).
+- The CLI is now 2.1.301; every earlier report ran 2.1.295. [INFERENCE: a possible factor, not shown.]
+
+### Caught Beyond the Brief
+- A stall watchdog in the harness would end a stalled run in seconds instead of 180 s, and stop it costing $0.50 of the
+  spend cap: kill the run after about 60 s with no stream line, and count it as a crash (retried once). That is a change
+  to `tests/evals/bot/model.ts` and its test, not made here.
+
+### Deviations from Plan
+- None.
+
 ---
 
 ## On Completion

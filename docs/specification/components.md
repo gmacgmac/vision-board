@@ -544,7 +544,12 @@ record is `api.md` 58-61.
 10. **The box beside a node** (FE_03 run 2, the maintainer's rulings). The conversation, proposal and history boxes
    share one place and one look. `board/cards/mark-place.ts` `placeBeside` places each: its top level with the node's
    top, to its right when the stage has room, else below it with their left edges aligned, never over the node or the
-   marks that hang off it (`nodeReach`); its arrow points at the mark that opened it. The look is
+   marks that hang off it (`nodeReach`); its arrow points at the mark that opened it. It stays on the stage (FIX_01): on
+   the right it moves up just enough when it would run past the stage's bottom (top aligned whenever it fits); below, it
+   opens above the node instead (`data-side="above"`), and only with room for neither is it kept inside the stage
+   (`apps/board/tests/mark-place.test.ts`; `tests/pages/node-boxes.spec.ts`, "a node near the window's bottom"). Its
+   corners are never rounder than the skin's node, and focused as a whole (a key opened it) its own border takes the
+   skin's ring colour, no second ring (`tests/pages/command-lens.spec.ts`). The look is
    `packages/ui/src/node/node-box.css` (`.vb-node-box`, `.vb-node-box-head` with its title and ×, `.vb-node-box-body`):
    compact, about 1.2 times the node's width, the node's body text size, in the mock-ups' proportions
    (`design/mockups/node-states/`). The history box with the edges is "History of 28" and its ×, the stepper, then one
@@ -935,7 +940,9 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    **The header by its own width** (`adaptiveHeader` flag, on by default, needs `versionView` and `toolbarMenu`;
    maintainer's approved mock-up, 2026-10-31). The bar takes one of three forms by its own width, not the window's
    (`board/chrome/Toolbar.svelte`, a `ResizeObserver`; the window's width only as the first guess, so a page opens in its form),
-   so it holds in a host's pane. `board/chrome/header-tier.ts` is the one table: `headerTier` (full from `FULL_MIN` 1300px, half
+   so it holds in a host's pane. `board/chrome/header-tier.ts` is the one table: `headerTier` (full from `FULL_MIN` 1300px, or
+   `FULL_MIN + FLOWS_W` 1428px with Flows, the `flowDirection` flag's button, whose room `styles/header.css` keeps out of the box
+   the bar measures itself on, so every breakpoint holds as measured without it; from half Flows is rows of "⋯"; half
    from `HALF_MIN` 620px, else a third), `inBar`, `inMenu`. One copy of each control, in the bar or as a row of "⋯".
    Full: the app icon, the path "folder / board ▾ / version ▾" (`<nav>`), Containers, "N open" and "N new", − 47% + and Fit,
    Agents, Send to agent, Chat, "⋯". Half: the folder's icon, the board's name cut with "…", the counts, the zoom as a small
@@ -956,7 +963,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    path after the folder at full ("folder / ledger ▾ / board ▾ / version ▾") and at half (its icon and its name), and a row of
    "⋯" under the folder's at a third (`header-tier.ts` `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the page's folder and
    ledger"). `FULL_MIN` and `HALF_MIN` hold with it: `tests/pages/ledgers.spec.ts` ("long folder, ledger and board names")
-   fits every form from 1470px to 400px with a 40-character ledger, a long folder and board name, a bookmarked card and Locked.
+   fits every form from 1470px to 400px with a 40-character ledger, a long folder and board name, a bookmarked card and Locked;
+   `tests/pages/header-tiers.spec.ts` runs its forms with Flows too (FIX_01).
    With the `readOnlyStart` flag the ledger's state is two more controls of the table (§ 6, Read-only and Edit): `editing`,
    the state chip after the path, in the bar at every tier like Locked (decision 16; at a third its icon, the word for
    screen readers), and `edit`, Edit or Stop editing, a button at full and a row of "⋯" from half (`header-tier.ts`
@@ -1821,7 +1829,8 @@ the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it hol
    node), the answer picker (Tick and Cross side by side, `data-menu-look="picker"`) and the right-click list (the six
    actions with their keys; no Tick or Cross on a node that only tells, no Save for later on an app). Markup only, drawn
    hidden, rows acting by `data-menu-act`; the page opens them (FE_02, `mark-menus.ts`: the shared menu's keys, `menuKeydown`, and a press outside through `dismissable` with `clickWithin`, so a pan leaves one open).
-7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a hit area of at least 24px; the disc, the icon
+7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a 28px hit area (3px of transparent edge; the disc is
+   28px), `viewport.ts` `MARK_HIT`; the disc, the icon
    tile and the notes mark on one vertical line, 34px in from the right edge; selection is the node's own border,
    thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); the node's colour (`--vb-node-color`) is
    the kind's, or its tone's line (point 366, FE_04): it colours the grip or kind tab, the top line, the hover and
@@ -1850,8 +1859,11 @@ the board is idle or on the first press). Behind `nodeEdges`; the skin behind `s
    room), a second click closes it, so a double click never answers; Left and Right move along it. Tick and Cross are
    the item acts (`item-acts.ts`: its 400 ms guard; a lit answer pressed again clears it). A disc whose node has a
    proposal opens the proposal box. Nothing opens on hover.
-4. **History and notes**: the badge, or H on a node, opens the history box (its stepper opens with it,
-   `update-flow.ts`); the notes mark, or C, the conversation. A box with no room on the node's right opens on its left.
+4. **History and notes**: the badge, or H on a node (the focused one, else the one selected; FIX_01: Hide answered is
+   Shift+H with the edges, `input/keys.ts`, `key-help.ts` `hideKey`), opens the history box (its stepper opens with it,
+   `update-flow.ts`); the notes mark, or C, the conversation. Esc gives the focus back to the mark that opened a menu or a
+   box (the node, after C); an Esc closes the newest layer open only (`base/layer.ts` `dismissable`). A and X answer
+   as the disc does: on a locked board, a past version or a read-only ledger the lock on the mark for a moment, no toast. A box with no room on the node's right opens on its left.
 5. **The actions**: right-click on a node, a long press on touch (`LONG_PRESS_MS`), the menu key or Shift+F10 open the
    right-click list at the pointer (from the keyboard, near the node's top left); never on the board's background.
 6. **One at a time**: one menu or box is open; each menu sits on the stage at one size and is placed again from its
@@ -1894,6 +1906,18 @@ on the stage in stage pixels.
 equal. Kept true by that test and, in a browser, `tests/pages/zoom-groups.spec.ts` (at 20%, 40%, 100% and 250%: mark
 sizes, the shared vertical line, a menu's size, the conversation's scale, the history and proposal box's size while zooming).
 
+Two thresholds follow (FIX_01, VERIFY_01 findings 2 and 5). Below the zoom where a mark's 28px hit area (`MARK_HIT`)
+draws under 24px on screen (`marksPressable`, about 86%) the stage carries `data-marks="small"`: a pointer press on a
+mark is its node's (it selects the node; `smallMark`, read by `input/pointer.ts`, `input/wiring.ts`, `mark-flow.ts`,
+`mark-tips.ts`), no tip shows on hover, and the keyboard reaches and presses every mark as ever. Page specs excuse axe's
+`target-size` there only (`tests/pages/helpers.ts` `smallMarksExcused`); at 100% every mark's hit area is at least 24px in
+both skins and nothing is excused (`tests/pages/small-marks.spec.ts`). Past a growth of `CROWD_GROW` (1.8, under about
+37%) the stage also carries `data-marks-crowded`: with the marks on the edges a node keeps its number, its answer and
+a counted notes mark; the kind tab, the grip, the bottom edge's badges and an empty notes mark give way, the number and
+the disc grow down into the node from its top border (so the first row never reaches the container's title line), and
+the notes mark takes the bottom-left corner (`zoom-groups.spec.ts`, "far out (20%)"). A node under about 110px tall (a
+title alone) is too short at 20% for its number and a counted notes mark both.
+
 
 ## Flow branching and direction (PLAN decisions 19 and 25, D-100 5; node overhaul BE_01)
 
@@ -1920,8 +1944,10 @@ stays a pure function: both arrive as inputs (`LayoutOptions.branching`, `Layout
    shown state (`canvas/draw.ts` `DrawDeps.direction`); `show_layout` reads the same fold with the engine's flags
    (`server/engine/reads.ts` `showLayout`), so its answer stays true for the picture. The layout cache keys a container
    on its direction and on `branching` (`canvas/layout-cache.ts`).
-5. **The board's choice** (`chrome/FlowMenu.svelte`, in the header's end group, `ToolbarEnd.svelte`): its Flows menu, Flows across, Flows down and
-   Flows: Auto (`menuitemradio`, the person's board-wide choice ticked, Auto when they made none), write the `direction`
+5. **The board's choice** (`chrome/FlowMenu.svelte`, in the header's end group, `ToolbarEnd.svelte`): a button with its words
+   at full ("Flows: Auto"; its icon alone on a narrow bar), its Flows menu, Flows: Across, Flows: Down and
+   Flows: Auto (`menuitemradio`; choosing the ticked one closes the menu and writes nothing; from the header's half form
+   the same rows are in "⋯", `ToolbarMenu.svelte`; the person's board-wide choice ticked, Auto when they made none), write the `direction`
    act with no `region` through the one sender (`controller.ts` `setDirection`; `io/acts.ts` names its board); Auto
    clears the choice, giving back each container's own. Paused, with the reason, on a read-only ledger or a past
    version. A container's own choice is FE_07's layout control. Words: `words/toolbar.ts` `directionName`,
@@ -2008,7 +2034,8 @@ Behind `appWindow` with `nodeEdges` (both off by default until T_04); Open behin
 1. **One title bar** (`packages/ui/src/node/node-window.ts` `windowMarkup`, `node-template.ts` `isWindow`): in visual and
    tab order the number (`numberMark`, the Bookmark toggle, as on any node), the app's icon and name (`vb-app-name`, cut
    with "…", whole in its tip), the change badge (`badgeMark`, opening history; H and right-click too), why Allow shows
-   (`vb-win-reason`), Allow or "Allowed ▾" (today's `appStatus`, its menu opening under the bar), the drawer arrow
+   (`vb-win-reason`: a lock and its words; on a window under 480px the lock alone, its words in its tip and for a screen
+   reader, so the name keeps the room; `tests/pages/app-window.spec.ts`, "a 360px window"), Allow or "Allowed ▾" (today's `appStatus`, its menu opening under the bar), the drawer arrow
    (`data-drawer`) and Open (`data-app-act="stage"`, a toggle). Under the bar everything is the app's: today's slot
    (`appSlot`) and its state views, every `APP_CARD_STATES` state. No footer, no kind tab, no disc, no notes under the
    app, no coloured border: the window's border is the strong line, selected the ink. The node keeps `data-edges`, so

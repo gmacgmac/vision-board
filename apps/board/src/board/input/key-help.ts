@@ -33,9 +33,12 @@ const GROUP_OF: Record<CommandId, Exclude<KeyGroup, 'Items'>> = {
 const OTHER: Record<KeyGroup, readonly [label: string, keys: string[]][]> = {
   Items: [[keyHelpWords.nextPreviousCard, ['J', 'K']], [keyHelpWords.moveTheCard, ['Alt+arrows']], [keyHelpWords.resetTheCardSPlace, ['R']]],
   Selection: [[keyHelpWords.selectTheCard, [keyHelpWords.space]], [keyHelpWords.selectMore, ['Shift+click']], [keyHelpWords.lasso, ['Shift+drag']]],
-  Board: [[commonWords.hideAnswered, ['H']], ['Move a container', ['Alt+arrows']], [keyHelpWords.pan, [keyHelpWords.dragTheBackground]], [keyHelpWords.panFromAnywhere, ['Cmd+drag', 'Ctrl+drag']]],
+  Board: [[commonWords.hideAnswered, [hideKey(false)]], ['Move a container', ['Alt+arrows']], [keyHelpWords.pan, [keyHelpWords.dragTheBackground]], [keyHelpWords.panFromAnywhere, ['Cmd+drag', 'Ctrl+drag']]],
   View: [[commonWords.zoom, ['Ctrl+scroll']], [keyHelpWords.thisList, ['?']]],
 };
+
+/** Hide answered's key: H, or Shift+H with the nodes' edges, where H is a node's history (nodeEdges flag, FIX_01). */
+export function hideKey(edges: boolean): string { return edges ? 'Shift+H' : 'H'; }
 
 /** The chat sidebar's key (chatPanel flag, ChatSidebar.svelte): in Board, with the flag on. */
 const CHAT_ROW: readonly [label: string, keys: string[]] = [keyHelpWords.openOrCloseTheChat, ['T']];
@@ -60,7 +63,7 @@ export function keyGroups({ chat = false, bookmark = false, edges = false, remov
   return KEY_GROUPS.map((group) => ({
     group,
     rows: [...(group === 'Items' ? items : commands(group)),
-      ...OTHER[group].map(([label, keys], i) => ({ id: `other:${group}.${i}`, label, keys })),
+      ...OTHER[group].map(([label, keys], i) => ({ id: `other:${group}.${i}`, label, keys: label === commonWords.hideAnswered ? [hideKey(edges)] : keys })),
       ...(bookmark && group === 'Items' ? [{ id: 'other:bookmark', label: BOOKMARK_ROW[0], keys: BOOKMARK_ROW[1] }] : []),
       ...(edges && group === 'Items' ? EDGE_ROWS.map(([label, keys], i) => ({ id: `other:edges.${i}`, label, keys })) : []),
       ...(app && group === 'Items' ? [{ id: 'other:app', label: APP_ROW[0], keys: APP_ROW[1] }] : []),

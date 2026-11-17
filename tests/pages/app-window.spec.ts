@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
-import { startAppServer } from './app-server.ts';
+import { CALCULATOR, startAppServer } from './app-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
@@ -70,6 +70,25 @@ for (const [skin, theme] of [[undefined, 'light'], [undefined, 'dark'], ['comman
     await expect(arrow(page)).toHaveAttribute('aria-expanded', 'false');
     await expect(bar.locator('[data-app-act="stage"]')).toHaveAccessibleName('Open Live event mission control');
     for (const gone of ['.vb-node-foot', '.vb-node-kind', '[data-mark="notes"]', '[data-mark="answer"]', '.vb-mark-switch']) await expect(win(page).locator(gone)).toHaveCount(0);
+    await expectNoAxeViolations(page);
+  });
+}
+
+for (const theme of THEMES) {
+  test(`a 360px window not yet allowed: the app's name whole, the state a lock with its words in its tip (FIX_01, ${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    const board = `window-${(boards += 1)}`;
+    const r = await s.write(board, [{ type: 'board', title: 'Tools' }, { type: 'region', region: { id: 't', title: 'Tools', mode: 'row' } },
+      { type: 'node', node: { region: 't', ...CALCULATOR } }]);
+    await page.goto(`${s.base}/?flags=${FLAGS}#${board}`);
+    const bar = page.locator(`vb-node[data-id="${r[2]!.n}"] .vb-win-bar`);
+    const reason = bar.locator('.vb-win-reason');
+    await expect(reason).toBeVisible();
+    await expect(reason).toHaveAttribute('data-tip', 'Not allowed yet');
+    await expect(reason).toContainText('Not allowed yet'); // for a screen reader
+    expect((await reason.boundingBox())!.width).toBeLessThan(20); // the lock alone
+    expect(await bar.locator('.vb-app-name-text').evaluate((e) => e.scrollWidth <= e.clientWidth), 'the name is whole').toBe(true);
+    await expect(bar.getByRole('button', { name: /Allow/ })).toBeVisible();
     await expectNoAxeViolations(page);
   });
 }

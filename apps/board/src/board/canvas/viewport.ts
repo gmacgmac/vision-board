@@ -21,6 +21,21 @@ export function markGrow(k: number): number {
   return need <= 1 ? 1 : Math.round(GROW_STEP ** Math.ceil(Math.log(need) / Math.log(GROW_STEP) - 1e-9) * 1000) / 1000;
 }
 
+/** A mark's hit area: a 22px mark with 3px of transparent edge each side (node-edges.css), and the 28px disc. Below the
+ *  zoom where it draws under `TARGET_MIN` px on screen (WCAG 2.5.8; about 86%), the marks take no pointer press: a press
+ *  there is the node's, as on its body, and the keyboard reaches them as ever (FIX_01 ruling). The stage then carries
+ *  data-marks="small" (`smallMark`). */
+export const MARK_HIT = 28;
+export const TARGET_MIN = 24;
+export const marksPressable = (k: number): boolean => MARK_HIT * k * markGrow(k) >= TARGET_MIN - 1e-9;
+/** Far out the grown marks no longer fit side by side on a node's edge (FIX_01, VERIFY_01 finding 5): past a growth of
+ *  CROWD_GROW (under about 37%) the stage carries data-marks-crowded, and a node keeps the marks that tell its state from
+ *  a distance, its number, its answer and its notes; the kind tab, the grip and the change badge give way (node-edges.css). */
+export const CROWD_GROW = 1.8;
+
+/** Whether `t` is in a node's mark while the marks take no pointer press (the stage's data-marks="small"). */
+export const smallMark = (t: Element): boolean => t.closest('[data-marks="small"] vb-node[data-edges] [data-mark]') !== null;
+
 /** The conversation box scales with the board (D-101) down to this zoom, where its text would be too small to read:
  *  below it the box keeps this scale. 13px text at 0.75 draws at about 10px. */
 export const BOX_MIN_K = 0.75;
@@ -119,6 +134,10 @@ export class Viewport {
     // and they hide (tracker N13). With the flag off they stay visible at every zoom: never "far".
     if (this.hideFar && isFar(this.k)) this.stage.dataset.zoom = 'far';
     else delete this.stage.dataset.zoom;
+    if (this.markOn && !marksPressable(this.k)) this.stage.dataset.marks = 'small';
+    else delete this.stage.dataset.marks;
+    if (this.markOn && grow > CROWD_GROW) this.stage.dataset.marksCrowded = '';
+    else delete this.stage.dataset.marksCrowded;
     this.onApply?.();
   }
 

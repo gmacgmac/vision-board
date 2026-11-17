@@ -69,12 +69,38 @@ test('below the node when the right has no room; no group pin with the edges on'
   await expect(page.locator('.vb-group-pin')).toHaveCount(0);
   await expect(mark(page, q, 'notes')).toHaveAttribute('data-group', '');
   const right = (await box(card(page, f)));
-  await mark(page, f, 'notes').click();
+  // Fitted to 820px the marks are too small to press with the pointer (FIX_01, small-marks.spec.ts): the keyboard opens it.
+  await mark(page, f, 'notes').focus();
+  await page.keyboard.press('Enter');
   const talk = page.locator('vb-note-bubble.vb-node-box');
   await expect(talk).toBeVisible();
   const b = await box(talk);
   if (right.x + right.width + 12 + b.width > 812) await expect(talk).toHaveAttribute('data-side', 'below');
   await besideTheNode(page, f, talk);
+});
+
+test('a node near the window\'s bottom: its box moves up to stay on screen, the field and both buttons in view (FIX_01)', async ({ page, request }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const d = await drawEdges(request);
+  await open(page, d, FLAGS);
+  const q = d.n[0]!;
+  await act(page, d, { action: 'comment', n: q, ver: 1, text: 'Is the second truck free on Thursday?' });
+  const stage = await box(page.locator('.vb-stage'));
+  // Pan the board (the wheel pans) until the node's top is 140px above the stage's bottom.
+  await page.mouse.move(stage.x + stage.width / 2, stage.y + stage.height / 2);
+  await expect.poll(async () => {
+    const c = await box(card(page, q));
+    const off = c.y - (stage.y + stage.height - 140);
+    if (Math.abs(off) > 2) await page.mouse.wheel(0, off);
+    return Math.abs(off) <= 2;
+  }).toBe(true);
+  await mark(page, q, 'notes').click();
+  const talk = page.locator('vb-note-bubble.vb-node-box');
+  await expect(talk).toBeVisible();
+  const b = await box(talk);
+  expect(b.y + b.height, 'inside the stage').toBeLessThanOrEqual(stage.y + stage.height);
+  for (const part of [talk.locator('textarea'), talk.getByRole('button', { name: 'Ask now' }), talk.getByRole('button', { name: 'Add note' })]) await expect(part).toBeInViewport({ ratio: 0.99 });
+  if (await talk.getAttribute('data-side') === 'right') expect(b.y, 'moved up from the node\'s top').toBeLessThan((await box(card(page, q))).y);
 });
 
 for (const theme of ['dark', 'light'] as Theme[]) {

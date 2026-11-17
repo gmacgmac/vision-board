@@ -42,7 +42,7 @@ export function windowMarkup(n: ViewNode, p: WindowParts): string {
   const drawer = button('vb-win-drawer', ` data-drawer aria-expanded="false" aria-controls="${esc(p.ids.drawer)}" aria-keyshortcuts="${MARK_KEYS.comment}"`,
     nodeAppWords.drawerTip(MARK_KEYS.comment), `${icon('drawer', 'vb-win-btn-icon')}<span class="vb-mark-text"></span>`);
   const open = p.open ? button('vb-win-open', ' data-app-act="stage" aria-pressed="false"', nodeAppWords.openTip, icon('expand', 'vb-win-btn-icon')) : '';
-  const bar = `<div class="vb-node-plate vb-win-bar">${numberMark(n)}${name(n)}${badgeMark(p.ids.history)}<span class="vb-win-reason" hidden></span>`
+  const bar = `<div class="vb-node-plate vb-win-bar">${numberMark(n)}${name(n)}${badgeMark(p.ids.history)}<span class="vb-win-reason" hidden>${icon('lock', 'vb-win-btn-icon')}<span class="vb-win-reason-text"></span></span>`
     + `${p.status}${drawer}${open}</div>`;
   const pane = `<div class="vb-win-drawer-pane" id="${esc(p.ids.drawer)}" role="region" aria-label="${esc(nodeAppWords.conversationOn(n.n, n.title))}" hidden></div>`;
   return `${bar}<div class="vb-node-content vb-win-body">${p.body}</div>${pane}${historyBox(n, p.ids.history, p.steps + p.stepNav)}`;

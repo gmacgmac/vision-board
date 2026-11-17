@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test as base } from '@playwright/test';
-import type { Frame, Page } from '@playwright/test';
+import type { Frame, Page, Request } from '@playwright/test';
 import { MAIN_BASE } from './ports.ts';
 import type { WorkerBoards } from './servers.ts';
 import { workerBoards } from './servers.ts';
@@ -37,9 +37,11 @@ const SKIPPED_RULES = ['color-contrast'];
 
 /**
  * The page under test fails its test on: a console error or warning, an uncaught page error, a
- * request that failed, or a response of 400 or above. One case is not a failure: the browser
+ * request that failed, or a response of 400 or above. Two cases are not failures: the browser
  * aborts the board's server-sent-events stream when the page reloads or closes, which is how
- * that stream ends. A test that causes a refusal on purpose (an app's panel blocked by its CSP, a
+ * that stream ends; and a frame that has gone by the test's end (the gallery's app panel, when the
+ * test moves on before it loaded) had its loading aborted with it. An abort in the page's own frame,
+ * or in a frame still there, still fails. A test that causes a refusal on purpose (an app's panel blocked by its CSP, a
  * tool call before Allow) names each problem it expects with `test.use({ expected: { problems: [...] } })`
  * (an object: Playwright reads an array there as a fixture's value and options); every other
  * problem still fails it.
@@ -63,19 +65,29 @@ export const test = base.extend<{ expected: { problems: RegExp[] }; fresh: void 
       if (msg.type() === 'error' || msg.type() === 'warning') problems.push(`console ${msg.type()}: ${msg.text()}`);
     });
     page.on('pageerror', (err) => problems.push(`page error: ${err.message}`));
+    const aborted: { frame: Frame; problem: string }[] = [];
     page.on('requestfailed', (req) => {
       const text = req.failure()?.errorText ?? 'failed';
       if (req.resourceType() === 'eventsource' && text === 'net::ERR_ABORTED') return;
-      problems.push(`request failed: ${req.method()} ${req.url()} (${text})`);
+      const problem = `request failed: ${req.method()} ${req.url()} (${text})`;
+      const frame = text === 'net::ERR_ABORTED' ? frameOf(req) : undefined;
+      if (frame && frame !== page.mainFrame()) aborted.push({ frame, problem });
+      else problems.push(problem);
     });
     page.on('response', (res) => {
       if (res.status() >= 400) problems.push(`response ${res.status()}: ${res.request().method()} ${res.url()}`);
     });
     await use(page);
+    problems.push(...aborted.filter((a) => !a.frame.isDetached()).map((a) => a.problem));
     const unexpected = problems.filter((p) => !expected.problems.some((e) => e.test(p)));
     expect(unexpected, unexpected.join('\n')).toEqual([]);
   },
 });
+
+/** The frame a request was made in; none for a service worker's. */
+function frameOf(req: Request): Frame | undefined {
+  try { return req.frame(); } catch { return undefined; }
+}
 
 export type Theme = 'light' | 'dark';
 
@@ -115,6 +127,16 @@ const describe = (found: AxeFinding[]) =>
 export async function expectNoAxeViolations(page: Page | Frame, known: string[] = []): Promise<void> {
   const found = (await axeFindings(page)).filter((v) => !known.includes(v.id));
   expect(found, describe(found)).toEqual([]);
+}
+
+/**
+ * The axe rules excused on a board right now: `target-size` only while the stage says its nodes' marks are too small
+ * to press (data-marks="small", below the zoom where a mark's 28px hit area draws under 24px: viewport.ts
+ * `marksPressable`). There a press on a mark is its node's and the keyboard reaches the mark as ever (FIX_01 ruling), so
+ * the marks are not pointer targets. At any other zoom nothing is excused.
+ */
+export async function smallMarksExcused(page: Page): Promise<string[]> {
+  return (await page.locator('[data-marks="small"]').count()) > 0 ? ['target-size'] : [];
 }
 
 /** Open the selection bar from its pill (selectionPill flag, stage5-follow-ups FE_02), so its

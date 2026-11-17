@@ -60,8 +60,15 @@ vb-node[data-edges] .vb-mark {
   background: var(--vb-mark-bg); color: var(--vb-mark-ink);
   font: 700 11.5px/1 var(--vb-font-label); white-space: nowrap; cursor: pointer;
 }
-/* The hit area: a transparent edge around a 22px mark makes it 26px. */
+/* The hit area: a transparent edge around a 22px mark makes it 28px, as the disc is (viewport.ts MARK_HIT). Zoomed out
+   where that draws under 24px, the stage carries data-marks="small" and a press on a mark is its node's (FIX_01): no
+   pointer, no hover look. */
 vb-node[data-edges] .vb-mark:not(.vb-mark-answer)::before { content: ''; position: absolute; inset: -3px; }
+.vb-stage[data-marks='small'] vb-node[data-edges] .vb-mark { cursor: inherit; }
+/* Further out still the grown marks would cover each other (the stage's data-marks-crowded, viewport.ts CROWD_GROW): a node
+   keeps its number, its answer and its notes, what it says from a distance; the kind tab, the grip, the bottom edge's
+   badges and a notes mark with nothing to count give way, keeping their place (FIX_01). H and C still open them. */
+.vb-stage[data-marks-crowded] vb-node[data-edges][data-marks-at='edges'] :is(.vb-node-kind, .vb-node-grip, .vb-node-edge > .vb-mark:not(.vb-mark-notes), .vb-mark-notes[data-notes-mark='none']) { visibility: hidden; }
 vb-node[data-edges] .vb-mark[hidden] { display: none; }
 vb-node[data-edges] .vb-mark[data-paused][aria-disabled='true'],
 vb-node[data-edges] .vb-mark[data-paused][aria-disabled='true']:is(:hover, :active) { color: var(--vb-mark-ink); background: var(--vb-mark-bg); cursor: pointer; }
@@ -193,3 +200,11 @@ vb-node[data-edges] .vb-node-kind, vb-node[data-edges] .vb-node-grip { transform
 vb-node[data-edges] :is(.vb-node-kind, .vb-node-grip) { translate: -50% 0; }
 /* A plate keeps its marks in flow, at the node's scale. */
 vb-node[data-edges][data-marks-at='plate'] :is(.vb-mark, .vb-node-kind, .vb-node-grip) { scale: none; translate: none; }
+/* Crowded (above, FIX_01), the number and the disc grow down into the node from its top border, not up past it, so the
+   first row's never reach the container's title line; a notes mark with a count takes the corner the badge left, bottom
+   left, so it never meets the disc. */
+.vb-stage[data-marks-crowded] vb-node[data-edges][data-marks-at='edges'] {
+  & .vb-node-num, &[data-bookmarked] .vb-node-num { transform-origin: 0 0; }
+  & .vb-mark-answer { transform-origin: 50% 0; }
+  & .vb-mark-notes { left: 0; right: auto; translate: none; transform-origin: 0 50%; }
+}

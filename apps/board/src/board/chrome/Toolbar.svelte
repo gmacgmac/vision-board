@@ -123,7 +123,7 @@
   const adaptive = flag('adaptiveHeader') && toolbarMenu && flag('versionView');
   let width = $state(window.innerWidth);
   let bar: HTMLElement;
-  const tier = $derived(form ?? headerTier(width));
+  const tier = $derived(form ?? headerTier(width, !!ondirection && !!facts.direction));
   $effect(() => {
     if (!adaptive || form) return;
     // On the next frame: a new tier changes the bar's own size, and changed inside the observer's callback that is a
@@ -140,9 +140,10 @@
   const holders = $derived(givenHolders !== undefined ? givenHolders : facts.agentAccess && facts.version !== null && !facts.past ? facts.boardHolders : null);
   /** What "⋯" also holds at this form, for its tooltip. */
   const ALSO: readonly (readonly [HeaderControl, string])[] = [['folder', toolbarWords.folder], ['ledger', chromeCommonWords.ledger], ['version', toolbarWords.version],
-    ['containers', toolbarWords.containers], ['open', toolbarWords.openCards], ['new', toolbarWords.newCards], ['zoom', commonWords.zoom], ['agents', chromeBoardsWords.agents]];
+    ['containers', toolbarWords.containers], ['open', toolbarWords.openCards], ['new', toolbarWords.newCards], ['zoom', commonWords.zoom], ['agents', chromeBoardsWords.agents],
+    ['flows', toolbarWords.directionGroup]];
   /** A page part's row is there only when the page gives it; the ledger's comes and goes with the server's answer. */
-  const given: Partial<Record<HeaderControl, boolean>> = $derived({ folder: !!parts.folderRow, ledger: !!parts.ledgerField });
+  const given: Partial<Record<HeaderControl, boolean>> = $derived({ folder: !!parts.folderRow, ledger: !!parts.ledgerField, flows: !!ondirection && !!facts.direction });
   const also = $derived(adaptive ? ALSO.filter(([c]) => inMenu(tier, c) && given[c] !== false).map(([, name]) => name) : []);
 </script>
 
