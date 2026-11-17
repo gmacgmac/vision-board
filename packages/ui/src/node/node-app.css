@@ -87,8 +87,8 @@ vb-node {
 }
 /* Selected keeps the selection's border (node.css). */
 vb-node {
-  [data-app-title] &[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app) { border-color: color-mix(in srgb, var(--vb-kind) 60%, var(--vb-line)); }
-  [data-app-title] &[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app):hover { border-color: color-mix(in srgb, var(--vb-kind) 85%, var(--vb-line)); }
+  [data-app-title] &[data-kind='app']:not([data-selected], [data-window]):has(> .vb-node-content > .vb-app) { border-color: color-mix(in srgb, var(--vb-kind) 60%, var(--vb-line)); }
+  [data-app-title] &[data-kind='app']:not([data-selected], [data-window]):has(> .vb-node-content > .vb-app):hover { border-color: color-mix(in srgb, var(--vb-kind) 85%, var(--vb-line)); }
   [data-app-title] &:has(> .vb-node-content > .vb-app) > .vb-node-foot {
     border-top-color: color-mix(in srgb, var(--vb-kind) 60%, var(--vb-line));
     border-radius: 0 0 calc(var(--vb-radius-lg) - 1px) calc(var(--vb-radius-lg) - 1px);
@@ -107,3 +107,103 @@ vb-node .vb-app-name-text {
 vb-node .vb-app-name-tip { bottom: calc(100% + var(--vb-space-1)); left: var(--vb-space-2); right: var(--vb-space-2); width: auto; max-width: none; text-align: center; }
 vb-node .vb-app-name-tip::before { bottom: auto; top: 100%; }
 vb-node[data-name-tip-open] .vb-app-name-tip { display: block; }
+
+/* An app node as a window (D-099 5; appWindow flag, data-window; node-window.ts; the look of
+   design/mockups/node-states/default-app-* and command-lens-app-*): one thin title bar and nothing else of the
+   board's, no coloured border, no footer; everything under the bar is the app's. The bar is a plate, so a plate skin
+   draws it as its own (node-plate.css: the number's square, a light plate since an app only tells); in the edges'
+   skin it is a 36px bar. Open, the drawer docks the node's conversation on the right at the window's height and the
+   node is wider by it (data-drawer-open), so the layout makes room. Placed by the skin's row, never a skin's name. */
+vb-node[data-window][data-edges] {
+  --vb-drawer-w: 300px;
+  --vb-node-color: var(--vb-ink-subtle); --vb-edge: var(--vb-line-strong); --vb-tint: var(--vb-surface);
+  --vb-select-edge: var(--vb-ink-strong);
+  display: grid; grid-template-columns: var(--vb-app-w); grid-template-rows: auto auto;
+}
+/* As wide as its columns (the panel, and the drawer while open) plus its border; over the app card's own width (node.css). */
+vb-node[data-window][data-kind='app'][data-edges] { width: max-content; }
+vb-node[data-window][data-edges][data-selected] { --vb-tint: var(--vb-surface); }
+vb-node[data-window][data-drawer-open] { grid-template-columns: var(--vb-app-w) var(--vb-drawer-w); }
+vb-node[data-window] .vb-win-bar {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: var(--vb-space-1); min-width: 0; height: 36px;
+  padding: 0 5px 0 7px; border-bottom: 1px solid var(--vb-line); cursor: grab;
+}
+vb-node[data-window].dragging .vb-win-bar { cursor: grabbing; }
+/* The bar's marks sit in flow, at the node's scale (as a plate's). */
+vb-node[data-window] .vb-win-bar .vb-mark { position: relative; inset: auto; flex: none; scale: none; translate: none; }
+vb-node[data-window][data-marks-at='edges'] .vb-win-bar .vb-node-num { height: 24px; }
+/* Bookmarked, the number fills and its notch is cut inside the bar (a window has no top border for a tail). */
+vb-node[data-window][data-marks-at='edges'][data-bookmarked] .vb-win-bar .vb-node-num {
+  top: auto; height: 24px; padding: 0 7px 4px; border-radius: 6px; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 5px), 0 100%);
+}
+vb-node[data-window] .vb-win-bar > .vb-app-name.vb-win-name {
+  display: inline-flex; flex: 1 1 auto; align-items: center; gap: 6px; min-width: 0; padding-inline: var(--vb-space-1);
+  font: 650 var(--vb-text-md) var(--vb-font-display); color: var(--vb-ink-strong);
+}
+vb-node[data-window] .vb-win-name .vb-app-name-text { text-align: left; }
+vb-node[data-window] .vb-win-icon {
+  flex: none; width: 15px; height: 15px; fill: none; stroke: var(--vb-ink-subtle); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+vb-node[data-window] .vb-app-name-tip { top: calc(100% + var(--vb-space-1)); bottom: auto; }
+vb-node[data-window] .vb-app-name-tip::before { top: auto; bottom: 100%; }
+vb-node[data-window] .vb-win-bar > .vb-app-name.vb-win-name { min-width: 4.5em; }
+vb-node[data-window] .vb-node-plate.vb-win-bar > .vb-win-reason {
+  flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap;
+}
+vb-node[data-window] .vb-win-bar > :is(.vb-app-status, .vb-win-btn) { flex: none; }
+vb-node[data-window] .vb-app-status { flex: none; }
+vb-node[data-window] .vb-app-status .vb-pop-btn { height: 28px; }
+vb-node[data-window] .vb-app-menu { top: calc(100% + var(--vb-space-1)); bottom: auto; left: auto; right: 0; }
+/* The drawer arrow and Open: quiet buttons; the arrow counts the notes (the notes mark's colours) and fills while an
+   agent's reply is unread. */
+vb-node[data-window] .vb-win-btn {
+  display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 5px; min-width: 28px; height: 28px; padding: 0 7px;
+  border: 1px solid transparent; border-radius: var(--vb-mark-radius); background: none; color: var(--vb-ink);
+  font: 700 var(--vb-text-sm)/1 var(--vb-font-label); cursor: pointer;
+}
+vb-node[data-window] .vb-win-btn[hidden] { display: none; }
+vb-node[data-window] .vb-win-btn:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+vb-node[data-window] .vb-win-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-node[data-window] .vb-win-btn[data-pointer-focus]:focus-visible { outline: none; }
+vb-node[data-window] .vb-win-btn-icon { width: 15px; height: 15px; }
+vb-node[data-window] .vb-win-drawer { border-color: var(--vb-line-strong); color: var(--vb-notes-count); }
+vb-node[data-window] .vb-win-drawer[data-notes-mark='none'] { color: var(--vb-notes-quiet); }
+vb-node[data-window] .vb-win-drawer[data-notes-mark='unread'] { border-color: var(--vb-notes-unread); background: var(--vb-notes-unread); color: var(--vb-notes-unread-ink); }
+vb-node[data-window] :is(.vb-win-drawer[aria-expanded='true']:not([data-notes-mark='unread']), .vb-win-open[aria-pressed='true']) { background: var(--vb-surface-sunken); }
+
+/* Under the bar, the app's: the panel edge to edge, its bottom corners following the window's. */
+vb-node[data-window] .vb-node-content.vb-win-body { grid-column: 1; min-width: 0; padding: 0; }
+vb-node[data-window] .vb-app { margin: 0; }
+vb-node[data-window] .vb-app > :is(vb-app-frame, .vb-app-state) { box-shadow: none; border-radius: 0 0 calc(var(--vb-node-radius) - 1px) calc(var(--vb-node-radius) - 1px); }
+vb-node[data-window][data-drawer-open] .vb-app > :is(vb-app-frame, .vb-app-state) { border-radius: 0 0 0 calc(var(--vb-node-radius) - 1px); }
+vb-node[data-window] .vb-app > vb-app-frame[data-focus-in]:not([data-pointer-focus]) { box-shadow: inset 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+
+/* The drawer: the node's conversation box (FE_03), docked at the window's height, its thread scrolling, the field at
+   the foot. It scales with the board as the node does; it has no arrow, head or shadow of its own (the bar names it). */
+vb-node[data-window] .vb-win-drawer-pane {
+  grid-column: 2; grid-row: 2; display: grid; min-height: 0; overflow: hidden; border-left: 1px solid var(--vb-line);
+  border-radius: 0 0 calc(var(--vb-node-radius) - 1px) 0; background: var(--vb-surface-card);
+}
+vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble.vb-node-box {
+  position: relative; left: auto; top: auto; z-index: auto; display: flex; flex-direction: column; width: auto; min-height: 0;
+  border: 0; border-radius: 0 0 calc(var(--vb-node-radius) - 1px) 0; background: transparent; box-shadow: none; scale: none;
+}
+vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble.vb-node-box::before { content: none; }
+vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble .vb-node-box-head { display: none; }
+vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble .vb-node-box-body {
+  display: flex; flex: 1 1 auto; flex-direction: column; justify-content: flex-end; min-height: 0;
+}
+vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble .vb-nb-thread { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
+
+/* Open (appStage): the window leaves the board and fills the page in the top layer (a popover; no ancestor's pan or
+   zoom reaches it), its bar and drawer with it; the same frame, never reloaded. The board's place for it stays. */
+vb-node[data-window][data-stage] {
+  position: fixed; inset: var(--vb-space-3); width: auto !important; height: auto; margin: 0; padding: 0; overflow: hidden;
+  transform: none !important; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  color: var(--vb-ink); box-shadow: 0 0 0 1px var(--vb-line-contrast), var(--vb-shadow-lift);
+  /* Solid on the page, though a card on the board may be see-through for the connectors (wireLayers). */
+  --vb-surface: var(--vb-surface-card); --vb-tint: var(--vb-surface-card);
+}
+vb-node[data-window][data-stage][data-drawer-open] { grid-template-columns: minmax(0, 1fr) var(--vb-drawer-w); }
+vb-node[data-window][data-stage]::backdrop { background: var(--vb-scrim); }
+vb-node[data-window][data-stage] :is(.vb-win-body, .vb-app, .vb-app > vb-app-frame) { width: auto; height: 100%; min-height: 0; }

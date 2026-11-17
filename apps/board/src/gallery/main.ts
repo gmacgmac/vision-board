@@ -62,6 +62,7 @@ import { edgesSection } from './edges-section.ts';
 import { flowSection } from './flow-section.ts';
 import { layoutControlSection } from './layout-control-section.ts';
 import { commandLensSection } from './command-lens-section.ts';
+import { appWindowSection } from './app-window-section.ts';
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
@@ -184,6 +185,7 @@ function build(): void {
   if (flagOn('nodeEdges', flags) && flagOn('skins', flags)) main.append(commandLensSection(fx)); // after the edges, so no section moves
   if (flagOn('flowBranches', flags) || flagOn('flowDirection', flags)) main.append(flowSection(fx)); // BE_01; last of all, so no section moves
   if (flagOn('layoutControl', flags)) main.append(layoutControlSection(fx, flagOn('flowDirection', flags))); // FE_07; last of all, so no section moves
+  if (flagOn('nodeEdges', flags) && flagOn('appWindow', flags)) main.append(appWindowSection(fx, flagOn('skins', flags))); // FE_08; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

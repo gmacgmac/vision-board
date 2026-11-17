@@ -57,16 +57,24 @@ function handle(n: ViewNode, def: SkinDef, icons?: IconLibrary): string {
 }
 
 /** The top edge: the number (items), the kind tab or the grip, and the disc on a node that asks. */
+/** The number, the Bookmark toggle (DD-04): on every item, and in an app window's bar (node-window.ts). */
+export const numberMark = (n: ViewNode): string =>
+  mark('number', 'vb-node-num', ` aria-pressed="false" aria-keyshortcuts="${MARK_KEYS.bookmark}"`, nodeWords.bookmarkTip(MARK_KEYS.bookmark), String(n.n));
+
+/** The change badge (DD-06), which opens history: on the bottom edge, at a plate's right end, or in an app window's bar. */
+export const badgeMark = (history: string): string =>
+  mark('badge', 'vb-mark-badge', ` aria-haspopup="dialog" aria-expanded="false" aria-controls="${esc(history)}" hidden`,
+    nodeWords.historyTip(MARK_KEYS.history), `${icon('history', 'vb-mark-icon')}<span class="vb-mark-text"></span>`);
+
 function topMarks(n: ViewNode, def: SkinDef, asks: boolean, icons?: IconLibrary): string {
-  const num = isItem(n) ? mark('number', 'vb-node-num', ` aria-pressed="false" aria-keyshortcuts="${MARK_KEYS.bookmark}"`, nodeWords.bookmarkTip(MARK_KEYS.bookmark), String(n.n)) : '';
+  const num = isItem(n) ? numberMark(n) : '';
   return num + handle(n, def, icons) + (def.answer === 'disc' && asks ? disc() : '');
 }
 
 /** What changed, then Awaiting, a switch's proposal chip, and the conversation: on the bottom edge, or at the plate's
  *  right end. Hidden until they apply (`update()`), so a node's size never changes for one. */
 function trailMarks(def: SkinDef, asks: boolean, parts: EdgeParts): string {
-  const badge = mark('badge', 'vb-mark-badge', ` aria-haspopup="dialog" aria-expanded="false" aria-controls="${esc(parts.ids.history)}" hidden`,
-    nodeWords.historyTip(MARK_KEYS.history), `${icon('history', 'vb-mark-icon')}<span class="vb-mark-text"></span>`);
+  const badge = badgeMark(parts.ids.history);
   const awaiting = `<span class="vb-mark vb-mark-awaiting" title="${nodeWords.awaitingTip}" hidden>${nodeWords.awaiting}</span>`;
   const proposal = def.answer === 'switch' && asks
     ? mark('proposal', 'vb-mark-proposal', ` aria-haspopup="dialog" aria-expanded="false" aria-controls="${esc(parts.ids.proposal)}" hidden`, nodeWords.proposalTip, nodeWords.proposal)

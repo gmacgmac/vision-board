@@ -66,10 +66,16 @@ export interface AppCardsDeps {
   redraw(): void;
   /** The appStage flag (spike): Open on an app card, a panel's picks as notes, replies told to it. */
   staging?: boolean;
+  /** Write a panel's note on card `id` as the box's Add note does, joined to its note not yet sent (notes.ts `write`);
+   *  left out, a new note (refused while the card holds one not yet sent). */
+  writeNote?(id: string, text: string): Promise<string | null>;
   /** The version of card `id` the person sees, for a note's act. */
   ver?(id: string): number | undefined;
   /** The agent's replies on card `id`, oldest first. */
   replies?(id: string): readonly { seq: number; text: string }[];
+  /** Whether app card `id`'s window has its drawer open (appWindow flag; the note flow keeps it, notes/app-drawer.ts):
+   *  the card's conditions carry it, so the window is measured wide with it. */
+  drawer?(id: string): boolean;
   /** The board's calls (io.ts). */
   io: Pick<Io, 'listApps' | 'callAppTool' | 'panelState' | 'savePanelState'>;
 }
@@ -164,14 +170,14 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   async function note(card: VbNodeElement, text: string): Promise<void> {
     const id = card.dataset.id ?? '';
     const ver = d.ver?.(id);
-    const problem = await d.act({ action: 'comment', n: Number(id), ...(ver !== undefined && { ver }), text } as ActFields);
+    const problem = d.writeNote ? await d.writeNote(id, text) : await d.act({ action: 'comment', n: Number(id), ...(ver !== undefined && { ver }), text } as ActFields);
     if (problem !== null) throw { problem: 'app-failed', detail: problem };
   }
 
   /** The app as list_apps last gave it (none until it answered); a past version keeps its size. */
   const input = (n: ViewNode): AppCardInput => {
     const info = states.info(n.app?.id ?? '');
-    const known = info ? { info } : {};
+    const known = { ...(info && { info }), ...(d.drawer?.(n.id) && { drawer: true }) };
     return d.past() ? { ...known, past: true } : known;
   };
 
@@ -198,6 +204,8 @@ export function createAppCards(d: AppCardsDeps): AppCards {
       focusCame,
       onEscape: () => card.focus({ preventScroll: true }),
       onLoad: () => { toldTo.delete(frame); void states.refresh(); },
+      // A window's Open is pressed while the window fills the page (appWindow, FE_08).
+      onStage: (on) => card.querySelector('.vb-win-open')?.setAttribute('aria-pressed', String(on)),
       ...(d.staging && { note: (text: string) => note(card, text), onReady: () => tellReplies(card.dataset.id ?? '', frame) }),
     });
   }
@@ -256,8 +264,10 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     if (what === 'stage') {
       const frame = card.querySelector<VbAppFrameElement>('vb-app-frame');
       if (!framesReady()) return;
+      if (frame?.staged) return frame.unstage(); // Open again, while on stage, is Back
       frame?.load();
-      frame?.stage();
+      // An app window goes on stage whole, its bar and drawer with it (appWindow, FE_08); a card's frame goes alone.
+      frame?.stage(card.hasAttribute('data-window') ? card : undefined);
       return;
     }
     if (what === 'retry') {

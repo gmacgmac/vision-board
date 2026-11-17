@@ -7,7 +7,7 @@
 import type { IconName } from '#format';
 
 /** The icons the node's marks and menus draw (D-099): not names an agent may give a node. */
-export const MARK_ICONS = ['bookmark', 'clock', 'history', 'notes', 'notes-group', 'tick', 'cross', 'grip', 'more', 'put-back'] as const;
+export const MARK_ICONS = ['bookmark', 'clock', 'history', 'notes', 'notes-group', 'tick', 'cross', 'grip', 'more', 'put-back', 'drawer', 'expand'] as const;
 export type MarkIcon = (typeof MARK_ICONS)[number];
 
 /** A circle as a path: two arcs from its left point. */
@@ -83,4 +83,7 @@ export const ICONS: Readonly<Record<IconName | MarkIcon, readonly string[]>> = {
   grip: ['M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01'],
   more: ['M6 12h.01M12 12h.01M18 12h.01'],
   'put-back': ['M9 14l-5-5 5-5', 'M4 9h10.5a5.5 5.5 0 0 1 0 11H11'],
+  // An app window's controls (FE_08): the drawer for its conversation (a pane on the right), and Open (to the full page).
+  drawer: [box(3, 5, 18, 14), 'M15 5v14'],
+  expand: ['M14 4h6v6', 'M10 20H4v-6', 'M20 4l-7 7', 'M4 20l7-7'],
 };

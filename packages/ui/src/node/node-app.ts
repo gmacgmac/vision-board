@@ -22,7 +22,11 @@ const FRAME_STATES: ReadonlySet<AppCardState> = new Set(['needs-approval', 'chan
 
 /** What the page knows of an app card, passed in like the conditions: its app from list_apps
  * (absent until list_apps has answered) and whether a past version of the board is showing. */
-export interface AppCardInput { info?: AppInfo; past?: boolean }
+export interface AppCardInput {
+  info?: AppInfo; past?: boolean;
+  /** The window's drawer is open (appWindow flag, FE_08): the node is wider by it, so the page measures it so. */
+  drawer?: boolean;
+}
 
 /** The footer's app status (card-polish FE_01): Allow while the app's tools wait for the person,
  * "Allowed ▾" (a menu holding Stop app) once they allowed this version, else nothing. */
@@ -47,7 +51,9 @@ export interface AppCardView {
   retry?: string;
   /** The controls' names, each with the app's name: Allow (with its reason), "Allowed ▾", the
    * Stop app item in its menu, and the try-again button. */
-  names: { allow: string; allowed: string; stop: string; retry?: string };
+  names: { allow: string; allowed: string; stop: string; open: string; retry?: string };
+  /** The window's drawer is open (appWindow flag): the conversation docked on its right. */
+  drawer: boolean;
   /** What the card's name adds after its title (node-core.ts `nodeLabel`). */
   words: string;
 }
@@ -97,9 +103,9 @@ export function appView(n: ViewNode, input: AppCardInput = {}): AppCardView {
     ...(c.reason && { reason: c.reason }), ...(c.head && { head: c.head(id, name) }), ...(c.text && { text: c.text }),
     ...(problems.length > 0 && { problems }), ...(c.retry && { retry: c.retry }),
     names: {
-      allow: c.reason ? `${allow}. ${c.reason}` : allow, allowed: nodeAppWords.appAllowed(name), stop: `${ACTIONS['app-revoke'].label}: ${name}`,
+      allow: c.reason ? `${allow}. ${c.reason}` : allow, allowed: nodeAppWords.appAllowed(name), stop: `${ACTIONS['app-revoke'].label}: ${name}`, open: nodeAppWords.openApp(name),
       ...(c.retry && { retry: `${c.retry}: ${name}` }),
     },
-    words: c.words,
+    words: c.words, drawer: input.drawer === true,
   };
 }

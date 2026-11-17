@@ -110,7 +110,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const drawing = createDrawing({
     els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), bookmark: bookmarking, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), layoutTooltip: on('layoutTooltip'), layoutControl: on('layoutControl'), fresh: () => edges.fresh(attention.freshIn()),
-    facts, appCards: apping, ...(edges.first && { edges: edges.first }), placed: () => apps.place(),
+    facts, appCards: apping, ...(edges.first && { edges: edges.first }), appWindow: edgesOn && on('appWindow'), appStage: on('appStage'), placed: () => apps.place(), // FE_08
     branching: on('flowBranches'), ...(on('flowDirection') && { direction: (r: string) => directionOf((versions.state ?? live.state)!, S.id, r) }), // BE_01
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
@@ -180,7 +180,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     refusal: (board, line) => (versions.state ? READ_ONLY : live.readOnly ? READ_ONLY_PERSON : lock.refuse(board, line)) });
   const { attempt, record } = sender;
   const apps = createAppCards({ on: apping, fit: on('appFit'), stage, vp, board: () => S.id, selection, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: ask, toast, fail, redraw: () => redraw(), io,
-    staging: on('appStage'), ver: (id) => S.data?.versions[id], replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; } }); // app-cards.ts
+    staging: on('appStage'), drawer: (id) => notes.drawer(id), writeNote: (id, text) => notes.write(id, text), ver: (id) => S.data?.versions[id], replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; } }); // app-cards.ts
   const removal = removing ? createRemoveFlow({ stage, state: () => live.state, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id,
     retire: async (fields) => (await notes.leaveIf({ card: (id) => !!fields.cards?.includes(Number(id)) || (!!fields.region && nodeOf(id)?.region === fields.region), region: (r) => r === fields.region })) ? sender.retire(fields) : '',
     confirm: ask, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24); a note being written on what goes asks too (point 309)
@@ -199,7 +199,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     stage, world, selection, groups: on('groupNoteOnce'), vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
     region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id), regionReplies: () => parking.containers(),
     replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; }, ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
-    markdown, discard: () => ask(...DISCARD_ASK), paused: lock.paused, unsaved: (on) => status.set({ unsaved: on }), // a host's leave guard (M11)
+    markdown, discard: () => ask(...DISCARD_ASK), paused: lock.paused, board: () => S.id, unsaved: (on) => status.set({ unsaved: on }), // a host's leave guard (M11)
     // The conversation box and Ask now (nodeEdges, FE_03, controller/ask-now.ts).
     ...(edgesOn && { box: createAskNow({ state: () => live.state, board: () => S.id, oneAgent: () => live.oneAgent, context: () => askContextOf(b.store), attempt, seen: (m) => sender.seen(m),
       node: (id) => { const n = nodeOf(id)?.n; const ver = S.data?.versions[id]; return n === undefined || ver === undefined ? undefined : { n, ver }; },

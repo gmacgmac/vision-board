@@ -105,6 +105,10 @@ export interface DrawDeps {
   fresh?(): ReadonlyMap<string, FreshCount>;
   /** The appCards flag: off, an app card draws as a plain card saying so (ruling 13). */
   appCards?: boolean;
+  /** The appWindow flag, with `edges`: an app card is a window, its drawer widening it (D-099 5, FE_08). */
+  appWindow?: boolean;
+  /** The appStage flag: an app window's bar has Open. */
+  appStage?: boolean;
   /** Cards were placed or the view moved: app cards load or remove their frames (app-cards.ts). */
   placed?(): void;
 }
@@ -140,6 +144,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
   const cardOpts: NodeTemplateOptions = {
     sizeControl: d.sizing, bookmark: d.bookmark === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown, ...(d.edges && { edges: d.edges }),
+    ...(d.appWindow && { appWindow: true, appStage: d.appStage === true }),
   };
   const cards = createCardSet(els.cards, cardOpts);
   const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, layoutTooltip: d.layoutTooltip, layoutControl: d.layoutControl, direction: d.direction, idPrefix: d.ids, markdown: d.markdown });

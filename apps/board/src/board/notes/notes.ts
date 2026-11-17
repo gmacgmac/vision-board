@@ -23,13 +23,14 @@ import { bindOutside } from './note-outside.ts';
 import { anchorBox } from './note-anchor.ts';
 import type { Open } from './note-views.ts';
 import { cardView, containerView } from './note-views.ts';
-import { unsentGroupNote, unsentNote, unsentRegionNote } from './note-find.ts';
+import { noteWrite, unsentGroupNote, unsentNote, unsentRegionNote } from './note-find.ts';
 import { createGroupPins, groupPinOf } from './group-pins.ts';
 import { boxScale } from '../canvas/index.ts';
 import { nodeReach, placeBeside, stageBoxOf } from '../cards/index.ts';
 import type * as NoteBox from './note-box.ts';
 import * as notesWords from '../words/notes.ts';
 import type { NoteDeps, NoteFlow } from './note-flow-types.ts';
+import { createDrawers } from './app-drawer.ts';
 
 export function createNoteFlow(d: NoteDeps): NoteFlow {
   const bubble = document.createElement('vb-note-bubble') as VbNoteBubbleElement;
@@ -105,6 +106,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   }
 
   function press(id: string, kind: NoteKind) {
+    if (drawers.isWindow(id)) return drawers.show(id); // an app window's conversation is its drawer (FE_08)
     if (d.box) {
       if (open?.id === id && open.mode === 'conversation' && !open.region) return bubble.focusText();
       return openWith({ id, anchor: [id], mode: 'conversation', kind: 'comment' });
@@ -143,6 +145,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
 
   /** The card's conversation at the note or reply `part` (`at` selects it on the card). */
   function talk(id: string, part: number, at?: string) {
+    if (drawers.isWindow(id)) return drawers.show(id, part);
     if (d.box) {
       // In the box, on the tab the note is on (a note on several nodes has its own).
       const nodes = d.state().items.get(id)?.notes.find((x) => x.seq === part || d.replies(id).some((r) => r.seq === part && r.to === x.seq))?.nodes;
@@ -199,6 +202,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
 
   function place() {
     pins?.draw();
+    drawers.place();
     if (!open) return;
     // A removed note takes its bubble with it, changed words or not: there is nothing to save to.
     if (noteGone(open)) return close(false);
@@ -289,6 +293,9 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   }
 
   bubble.addEventListener('vb-note', (e) => void onChoice(e));
+  /** App windows' drawers (appWindow, FE_08): their own boxes, docked in their windows; Edit opens today's edit bubble. */
+  const drawers = createDrawers({ ...d, load: async () => { const [m] = await Promise.all([import('./note-box.ts'), loadConversation()]); return (box = m); },
+    edit: (id, seq) => { const note = d.state().items.get(id)?.notes.find((x) => x.seq === seq && !x.locked); if (note) openWith({ id, anchor: [id], mode: 'edit', kind: note.kind, note }); } });
   // Esc or Cancel with changed words: the bubble stays open and asks; OK closes it.
   bindDiscard(bubble, d.discard, () => close(), () => open);
   // A click outside the read-only bubble closes it (ruling 7); one being written keeps it (decision 9).
@@ -297,7 +304,9 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
 
   return {
     press, group, show: (id, seq, fromNote) => show(id, seq, fromNote), reply, container, showContainer, place,
-    destroy: () => { unbindOutside(); bubble.remove(); pins?.destroy(); },
+    destroy: () => { unbindOutside(); bubble.remove(); pins?.destroy(); drawers.destroy(); },
+    drawer: (id) => drawers.isOpen(id),
+    write: (id, text) => d.attempt(noteWrite(d.state(), id, text, d.ver(id))),
     close: () => {
       if (!bubble.dirty) return close();
       const o = open;

@@ -21,3 +21,11 @@ export const appsDonTRunIn = 'Apps don\'t run in past versions.';
 export const notRunningInAPast = ', not running in a past version';
 export const appAllowed = (name: string): string => `App allowed: ${name}`;
 export const loading = ', loading';
+
+// ---- node-window.ts (the app window, appWindow flag, FE_08)
+export const openApp = (name: string): string => `Open ${name}`;
+export const openTip = 'Open: the app fills the page';
+export const drawerTip = (key: string): string => `Conversation (${key})`;
+export const showConversation = (notes: string): string => `${notes}. Show conversation`;
+export const hideConversation = (notes: string): string => `${notes}. Hide conversation`;
+export const conversationOn = (n: number | undefined, name: string): string => `Conversation on ${n ?? name}`;
