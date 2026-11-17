@@ -20,6 +20,9 @@ import { fullTime, noteTime } from './node-time.ts';
 import { HISTORY, historyBox, historyButton } from './node-history.ts';
 import * as nodeWords from '../words/node.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
+import type { SkinDef } from '../skins.ts';
+import type { IconLibrary } from '../icons/icon.ts';
+import { edgesMarkup } from './node-edges.ts';
 
 // One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
 export { esc } from '../markdown/inline.ts';
@@ -224,6 +227,11 @@ export interface NodeTemplateOptions {
   idPrefix?: string;
   /** How this card's Markdown renders: the flags and the image route its board was given. */
   markdown?: MarkdownOptions;
+  /** Draw the node with its marks on its edges, where this skin's row puts them (the nodeEdges flag, D-099; skins.ts
+   *  `SKIN_DEFS`): no footer. Unset, the markup is today's, byte for byte. An app card keeps today's (FE_08). */
+  edges?: SkinDef;
+  /** The project's icon library the page holds (`list_icons` with `paths`), for a node naming an `x-` icon. */
+  icons?: IconLibrary;
 }
 
 const SIZE_PICKS: readonly NodeSize[] = ['s', 'm', 'l'];
@@ -283,6 +291,10 @@ export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): strin
   const note = '<div class="vb-node-notes" hidden></div>';
   // An item's step section (FE_02), right under the text a change touched.
   const steps = isItem(n) ? `<div class="vb-node-steps" id="${esc(stepsId(n, opts.idPrefix))}" role="region" aria-live="polite" hidden></div>` : '';
+  if (opts.edges && n.kind !== 'app') {
+    const ids = { history: popoverId(HISTORY, n, opts.idPrefix), proposal: popoverId('proposal', n, opts.idPrefix) };
+    return edgesMarkup(n, opts.edges, { body, tags, steps, stepNav: STEP_NAV, ids, ...(opts.icons && { icons: opts.icons }) });
+  }
   return `${tabs(n)}${opts.sizeControl && n.kind !== 'app' ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
     + `${body}${tags}${steps}${note}</div>${footer(n, opts)}${bottomTabs(n, opts.idPrefix)}`;
 }

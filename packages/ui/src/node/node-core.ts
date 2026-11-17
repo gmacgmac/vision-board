@@ -8,6 +8,8 @@ import { litReplies, notesView } from './node-notes.ts';
 import type { CardUpdates, UpdatesView } from './node-updates.ts';
 import { type AppCardInput, type AppCardView, appView } from './node-app.ts';
 import { updatesView, updateWords } from './node-updates.ts';
+import type { NodeMarks } from './node-marks.ts';
+import { nodeMarks } from './node-marks.ts';
 import { ACTIONS, statusOf } from '#actions';
 import * as uiCommonWords from '../words/ui-common.ts';
 import * as nodeWords from '../words/node.ts';
@@ -99,6 +101,8 @@ export interface CardConditions {
   groupNotesApart?: boolean;
   /** The oneChangeTab flag (point 444): unseen updates and a proposal share one tab and one box. */
   oneTab?: boolean;
+  /** The node's latest version (nodeEdges): the change badge settles to a quiet "vN" once seen, from v2. */
+  ver?: number;
   /** An app card's app from list_apps (`{}` until it answers; none with the appCards flag off), and whether a past version shows (node-app.ts). */
   app?: AppCardInput;
 }
@@ -217,6 +221,8 @@ export interface NodeState {
   /** The ledger is read-only (`BoardState.readOnly`, D-085 3): the flag is paused too, since read-only writes no flag. */
   readOnly?: true;
   app?: AppCardView; // an app card's state view (node-app.ts `appView`); it takes no size control
+  /** What the marks on the node's edges show (nodeEdges flag, D-099; node-marks.ts): drawn only with `opts.edges`. */
+  marks: NodeMarks;
 }
 
 /** `tier` comes from the page (`sizeTier` in packages/layout, which this layer may not import), and
@@ -233,9 +239,15 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const oneTab = c.oneTab === true && !!own && !!updates;
   const proposal = oneTab ? changeTab(n, own, updates) : own;
   const fresh = isItem(n) && c.new === true;
-  const notes = notesView(n, s.items.get(n.id)?.notes ?? [], litReplies(c.replies, c.new === true || (!!updates && !updates.done)), s.notesHidden?.get(n.id), c.groupNotesApart);
   const flagged = isItem(n) && s.bookmarks.has(n.id);
   const app = n.kind === 'app' && c.app ? appView(n, c.app) : undefined;
+  const replies = litReplies(c.replies, c.new === true || (!!updates && !updates.done));
+  const notes = notesView(n, s.items.get(n.id)?.notes ?? [], replies, s.notesHidden?.get(n.id), c.groupNotesApart);
+  const open = c.proposals?.filter((p) => !p.stale).sort((a, b) => b.seq - a.seq)[0]?.action;
+  const marks = nodeMarks(n, {
+    status, notes: s.items.get(n.id)?.notes ?? [], ...(replies && { replies }), bookmarked: flagged, fresh, ...(updates && { updates }),
+    ...(c.ver !== undefined && { ver: c.ver }), ...((open === 'ack' || open === 'drop') && { proposed: open }), awaiting,
+  });
   return {
     status,
     pinned: s.pins.has(n.id),
@@ -247,7 +259,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
     ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(oneTab && { oneTab: true as const }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
     ...(flagged && { flagged: true as const }), ...((s.locked || s.readOnly) && { paused: true as const }),
     ...(s.readOnly && { readOnly: true as const }), ...(app && { app }),
-    pressed,
+    pressed, marks,
     ...(tier && n.kind !== 'app' ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
   };
 }

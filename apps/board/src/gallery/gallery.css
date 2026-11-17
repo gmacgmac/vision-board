@@ -176,3 +176,7 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-alongside { flex: 1; }
 .g-alongside .vb-toolbar-end { margin-left: 0; }
 .g-alongside-toast { padding: var(--vb-space-2) 0; }
+/* The node's edges (nodeEdges flag, FE_01): room for the marks on each card's edges, and a menu drawn open beside its card. */
+[data-feature='nodeEdges'] .g-cards { gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
+.g-edge-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
+.g-edge-menu .vb-menu-list { position: static; }

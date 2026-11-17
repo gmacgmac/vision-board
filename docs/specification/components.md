@@ -1744,3 +1744,56 @@ the gallery shows its section only with the flag on).
    and dark) and `card-image-states.spec.ts` (missing, a fake png, over 8 MB, out of the folder, the
    internet, no alt text; the flag off; far zoom and off screen; a file that goes while opening; the
    gallery, light and dark).
+
+## The node's edges (D-099, D-100; node overhaul FE_01)
+
+Behind the `nodeEdges` flag (off by default until T_04). The page passes `render(n, { edges, icons })`: `edges` is
+the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it holds. The look is
+`design/mockups/node-skins/default-skin-*.html` and the states `design/mockups/node-states/`, as PLAN.md's
+"Design review of DESIGN_01" rules them.
+
+1. **The skin registry** (`packages/ui/src/skins.ts` `SKIN_DEFS`): one row per `SKINS` name saying where the answer
+   sits (`disc` or `switch`) and where the marks sit (`edges` or `plate`). The template reads a row, never a skin's
+   name (`node-edges.ts` `edgesMarkup`); the element sets `data-answer-at` and `data-marks-at` from it, and CSS places
+   by those. Every row offers the same actions: the menus never read the skin.
+2. **The marks** (`node-marks.ts` `nodeMarks`, carried as `NodeState.marks`; pure): the number is the Bookmark toggle
+   (aria-pressed; its name stays put, as the flag button's did); the answer is none on a node that only tells, else
+   waiting, ticked or crossed, with an open proposal's mark (`proposed`, the dashed ring; an out-of-date one is no
+   ring); the change badge is New, "N updates" or, once seen, a quiet "vN" from v2 (`CardConditions.ver`, the
+   node's latest version); the notes mark counts every note and reply, is filled while a reply is unseen and shows two
+   bubbles for a note on several nodes; Awaiting is a quiet tab. Keys come from the action registry (`MARK_KEYS`);
+   History's H is `HISTORY_KEY`, since history is no act.
+3. **The template** (`node-edges.ts`): no footer, no notes block, no bottom tabs. In visual order, so reading and Tab
+   order follow it: the number, the kind tab (or, for a node with an icon, a grip and the kind's word over the title),
+   the disc on a node that asks, the body (a written handover is a section of it), the badge, Awaiting and the notes
+   mark on the bottom edge. Items also get the history box, holding the step section and stepper on top (planner's call
+   9), which the badge controls, and the proposal box. An app card keeps today's card (FE_08). With `edges` unset the
+   markup is today's, byte for byte.
+4. **The element** (`vb-node.ts`, `node-edges-apply.ts` `applyMarks`, `applyTone`): applies the marks in place; sets the
+   tone as `data-vb-tone` (the name or `hue`) and `--vb-tone-h` through CSSOM from `toneView`'s checked value, never a
+   style attribute. It binds no popover on the marks: the page opens the history and proposal boxes and the menus
+   (FE_02), so nothing opens on hover. A locked board pauses the disc (aria-disabled) and read-only the number too,
+   but a paused mark keeps its look at rest (point 328); the page sets `data-saving`, `data-failed` and `data-locked`
+   on a pressed mark for a moment.
+5. **The icon set** (`packages/ui/src/icons/`): `ICONS`, every `ICON_NAMES` name and every mark's icon as path `d`
+   strings on `ICON_BOX` (the compiler fails on a name with no drawing; each passes `iconPathProblem`), and
+   `icon(name, cls, library?)`: a library name (`x-…`) draws from the page's `IconLibrary` (`iconLibrary` of a
+   `list_icons` reply with `paths`), each path checked again and drawn as a `path` the code builds with the set's one
+   stroke (`icons.css`); a missing name or a failing path draws nothing, so the tile is the plain tile.
+6. **The menus** (`node-menus.ts` on `packages/ui/src/menu/menu-template.ts` `menuMarkup`, the base's menu look at one
+   size, `menu-fixed.css`): the number's (Bookmark or Remove bookmark, Save for later or Bring back, Put back on a moved
+   node), the answer picker (Tick and Cross side by side, `data-menu-look="picker"`) and the right-click list (the six
+   actions with their keys; no Tick or Cross on a node that only tells, no Save for later on an app). Markup only, drawn
+   hidden, rows acting by `data-menu-act`; the page opens them with `openMenu` (FE_02).
+7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a hit area of at least 24px; the disc, the icon
+   tile and the notes mark on one vertical line, 34px in from the right edge; selection is the node's own border,
+   thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); a tone tints the body's top, the top line,
+   the selected border and the tile, while the kind keeps its tab, word and disc; the ring is `--vb-focus-edge` and
+   shows after Tab only.
+8. **Kept true by**: `packages/ui/tests/icon-set.test.ts` (every name drawn, every drawing passes the check, a library
+   icon from its paths, missing, failing and too many draw nothing), `node-marks.test.ts` (every answer, badge and notes
+   state; the tone; `nodeState.marks`), `node-edges.test.ts` (off is today's card; the order of the marks; the tile;
+   no tone in the markup; the three menus; every skin offers the same actions), `node-paused.test.ts` (the marks
+   pause). In a browser, `tests/pages/node-edges.spec.ts` (the element builds the template's markup; the tone through
+   CSSOM; Tab order, names and hit area; the ring after Tab only, in each theme; axe; screenshots light and dark) and
+   the gallery's "The node's edges" section (`apps/board/src/gallery/edges-section.ts`, `?flags=nodeEdges`).

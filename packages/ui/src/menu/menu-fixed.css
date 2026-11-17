@@ -1,0 +1,13 @@
+/* The fixed-size menu (menu-template.ts; D-101): the base's menu look (base/menu.css, surface.css) at one size at any
+   zoom, its icon and key on each row and a line between groups. The answer picker (data-menu-look='picker') lays
+   Tick and Cross side by side, icons only, each keeping its colour. Tokens only. */
+.vb-menu-fixed { font-family: var(--vb-font-text); }
+.vb-menu-fixed .vb-menu-icon { width: 17px; height: 17px; color: var(--vb-ink-subtle); }
+.vb-menu-fixed .vb-menu-item[data-tone='tick'] .vb-menu-icon { color: var(--vb-state-ack); }
+.vb-menu-fixed .vb-menu-item[data-tone='cross'] .vb-menu-icon { color: var(--vb-state-drop); }
+.vb-menu-fixed .vb-menu-item kbd { margin-left: auto; }
+.vb-menu-fixed .vb-menu-sep { height: 1px; margin: 3px 6px; background: var(--vb-line-strong); }
+.vb-menu-fixed[data-menu-look='picker'] { display: flex; gap: var(--vb-space-1); min-width: 0; padding: var(--vb-space-1); border-radius: var(--vb-radius-pill); }
+.vb-menu-fixed[data-menu-look='picker'][hidden] { display: none; }
+.vb-menu-fixed[data-menu-look='picker'] .vb-menu-item { justify-content: center; width: 44px; min-height: 38px; padding: 0; border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); }
+.vb-menu-fixed[data-menu-look='picker'] .vb-menu-icon { width: 19px; height: 19px; stroke-width: 2.4; }

@@ -9,12 +9,15 @@
 @import './base/chip.css';
 @import './base/menu.css';
 @import './base/dialog.css';
+@import './icons/icons.css';
+@import './menu/menu-fixed.css';
 @import './node/node.css';
 @import './node/node-popover.css';
 @import './node/node-steps.css';
 @import './node/node-parking.css';
 @import './node/node-notes.css';
 @import './node/node-app.css';
+@import './node/node-edges.css';
 @import './app-frame/app-frame.css';
 @import './markdown/markdown.css';
 @import './image-view/image-view.css';

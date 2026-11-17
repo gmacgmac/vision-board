@@ -17,11 +17,13 @@ import { AWAITING, isItem } from './node-core.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
 import { explainPaused, pauseControls } from '../paused/paused.ts';
 import { READ_ONLY_PERSON } from '#actions';
+import { applyMarks, applyTone } from './node-edges-apply.ts';
 
-/** The controls a locked board pauses on a card (N40 ruling 4): everything that changes it but the flag. */
-const PAUSED = 'button[data-act], .vb-size-trig, .vb-size-opt, .vb-note-pin, button[data-answer]';
-/** The flag, which a lock lets be but a read-only ledger pauses with the rest (D-085 3). */
-const FLAG = 'button[data-flag]';
+/** The controls a locked board pauses on a card (N40 ruling 4): everything that changes it but the flag. With the
+ *  edges (nodeEdges), the answer: the disc or the switch's halves, which look as they would at rest (point 328). */
+const PAUSED = 'button[data-act], .vb-size-trig, .vb-size-opt, .vb-note-pin, button[data-answer], [data-mark="answer"], [data-mark="tick"], [data-mark="cross"]';
+/** The flag, which a lock lets be but a read-only ledger pauses with the rest (D-085 3); with the edges, the number. */
+const FLAG = 'button[data-flag], [data-mark="number"]';
 /** An app card's Allow and Stop app, which a read-only ledger pauses too (FE_01); "Allowed ▾" only opens the menu. */
 const APP = 'button[data-app-act="app-allow"], button[data-app-act="app-revoke"]';
 /** An out-of-date proposal's Accept is aria-disabled for its own reason, locked or not. */
@@ -65,6 +67,8 @@ export function defineVbNode(): void {
     private appSrc: string | undefined;
     /** How `render` was told this card's Markdown renders; `update` draws by it too. */
     private markdown: NodeTemplateOptions['markdown'];
+    /** Drawn with its marks on its edges (`opts.edges`, nodeEdges): no footer, no notes block, no bottom tabs. */
+    private edges = false;
 
     render(n: ViewNode, opts: NodeTemplateOptions = {}): void {
       this.markdown = opts.markdown;
@@ -76,6 +80,13 @@ export function defineVbNode(): void {
       if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
       else delete this.dataset.idPrefix;
       this.toggleAttribute('data-emphasis', Boolean(n.emphasis));
+      this.edges = opts.edges !== undefined && n.kind !== 'app';
+      this.toggleAttribute('data-edges', this.edges);
+      // Where the skin's row puts the answer and the marks (skins.ts): CSS places by these, never by a skin's name.
+      if (this.edges) Object.assign(this.dataset, { answerAt: opts.edges!.answer, marksAt: opts.edges!.marks });
+      else for (const k of ['answerAt', 'marksAt']) delete this.dataset[k];
+      this.toggleAttribute('data-icon', this.edges && n.icon !== undefined);
+      applyTone(this, this.edges ? n.tone : undefined);
       this.setAttribute('role', 'listitem');
       this.tabIndex = 0;
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
@@ -90,10 +101,11 @@ export function defineVbNode(): void {
       this.proposalPop?.close();
       this.handoverPop?.close();
       this.historyPop?.close();
-      if (opts.history) this.historyPop ??= bindCardPopover(this, HISTORY, HISTORY_TAB);
+      // With the edges the page opens the history and proposal boxes from their marks (FE_02): nothing opens on hover.
+      if (opts.history && !this.edges) this.historyPop ??= bindCardPopover(this, HISTORY, HISTORY_TAB);
       if (app) this.nameTip ??= bindAppNameTip(this);
       this.nameTip?.close();
-      if (isItem(n)) {
+      if (isItem(n) && !this.edges) {
         this.proposalPop ??= bindCardPopover(this, 'proposal');
         this.handoverPop ??= bindCardPopover(this, 'handover');
         this.statusTip ??= bindHoverTip(this, {
@@ -118,6 +130,7 @@ export function defineVbNode(): void {
       const tip = this.querySelector('.vb-status-tip');
       if (tip) tip.textContent = st.awaiting ? AWAITING.tip : '';
       if (!st.awaiting) this.statusTip?.close();
+      if (this.edges) applyMarks(this, st.marks);
       this.updateNotes(st);
       this.updateSize(st);
       this.updateProposal(st);
@@ -134,6 +147,7 @@ export function defineVbNode(): void {
 
     /** The HANDOVER tab and its box (FE_03): rebuilt only when the handover changed, closed when none is left. */
     private updateHandover(st: NodeState): void {
+      if (this.edges) return this.updateHandoverSection(st);
       const tab = this.querySelector<HTMLButtonElement>('[data-tab="handover"]');
       if (!tab) return;
       const v = st.handover;
@@ -150,17 +164,34 @@ export function defineVbNode(): void {
       else this.handoverPop?.close();
     }
 
+    /** The handover with the edges (DESIGN_01 ruling): once written it is a section of the node's body, under a
+     *  "Handover" heading; while owed, the quiet Awaiting tab says so (node-edges-apply.ts). */
+    private updateHandoverSection(st: NodeState): void {
+      const section = this.piece('handover');
+      if (!section) return;
+      const v = st.handover;
+      section.hidden = v === undefined;
+      const src = v ? JSON.stringify(v) : '';
+      if (this.handoverSrc === src) return;
+      this.handoverSrc = src;
+      // Markup from handoverMarkup, which escapes every text run and renders the Markdown safely.
+      section.innerHTML = v ? `<h4 class="vb-node-handover-head">${v.tab}</h4>${handoverMarkup(v, this.markdown)}` : '';
+    }
+
     /** The "N updates" tab, the step section and the stepper in the footer (FE_02): the section is
      *  rebuilt only when its step changed; data-stepping swaps the footer for the stepper. */
     private updateSteps(st: NodeState): void {
       const tab = this.querySelector<HTMLButtonElement>('[data-tab="updates"]');
-      if (!tab) return;
+      // With the edges the steps live in the history box (planner's call 9) and the badge stands for the tab.
+      if (!tab && !(this.edges && this.piece('steps'))) return;
       const v = st.updates;
-      this.placeSteps(st.oneTab === true);
-      tab.hidden = !v?.tab || st.oneTab === true;
-      tab.textContent = v?.tab ?? '';
-      tab.setAttribute('aria-expanded', String((v?.open ?? false) && !st.oneTab));
-      if (v) tab.setAttribute('aria-label', v.label);
+      if (tab) {
+        this.placeSteps(st.oneTab === true);
+        tab.hidden = !v?.tab || st.oneTab === true;
+        tab.textContent = v?.tab ?? '';
+        tab.setAttribute('aria-expanded', String((v?.open ?? false) && !st.oneTab));
+        if (v) tab.setAttribute('aria-label', v.label);
+      }
       // In the proposal box the stepper is the box's, so the footer stays as it is.
       this.toggleAttribute('data-stepping', v?.step !== undefined && !st.oneTab);
       const section = this.piece('steps')!;
@@ -194,14 +225,17 @@ export function defineVbNode(): void {
     /** The PROPOSAL tab and its box (FE_01): rebuilt only when the proposals changed, closed when none is left. */
     private updateProposal(st: NodeState): void {
       const tab = this.querySelector<HTMLButtonElement>('[data-tab="proposal"]');
-      if (!tab) return;
+      const box = this.querySelector<HTMLElement>('[data-pop="proposal"]');
+      // With the edges the disc stands for the tab (its dashed ring, node-edges-apply.ts); the box is filled the same.
+      if (!box || (!tab && !this.edges)) return;
       const v = st.proposal;
-      tab.hidden = v === undefined;
-      tab.textContent = v?.tab ?? '';
-      tab.toggleAttribute('data-stale', v?.stale ?? false);
-      tab.toggleAttribute('data-updated', v?.updated ?? false);
-      if (v) tab.setAttribute('aria-label', v.label);
-      const box = this.querySelector<HTMLElement>('[data-pop="proposal"]')!;
+      if (tab) {
+        tab.hidden = v === undefined;
+        tab.textContent = v?.tab ?? '';
+        tab.toggleAttribute('data-stale', v?.stale ?? false);
+        tab.toggleAttribute('data-updated', v?.updated ?? false);
+        if (v) tab.setAttribute('aria-label', v.label);
+      }
       if (v) box.setAttribute('aria-label', v.box);
       const src = v ? JSON.stringify(v.entries) : '';
       if (this.proposalSrc === src) return;
@@ -214,7 +248,9 @@ export function defineVbNode(): void {
 
     /** The note pin and the "Your note" block (2e_FE_01 ruling 7), put away or not (card-polish FE_02). */
     private updateNotes(st: NodeState): void {
-      const block = this.piece('notes')!;
+      // With the edges the notes live in the conversation box (DD-05, FE_03); the notes mark counts them.
+      const block = this.piece('notes');
+      if (!block) return;
       const pin = this.querySelector<HTMLButtonElement>('.vb-note-pin');
       const v = st.notes;
       block.hidden = v === undefined;

@@ -34,10 +34,11 @@ export const historyButton = (n: ViewNode, box: string): string =>
   + ` aria-label="${esc(historyLabel(n))}" title="${nodeWords.history2}">${svgIcon(INFO_ICON, 20, 'vb-act-icon')}</button>`;
 
 /** The box, empty but for its heading; `historyMarkup` fills `.vb-history-body` when it shows. It
- * scrolls when long, so it is a tab stop (WCAG 2.1.1), as the handover box is. */
-export const historyBox = (n: ViewNode, id: string): string =>
+ * scrolls when long, so it is a tab stop (WCAG 2.1.1), as the handover box is. `top`: markup between the heading and
+ * the list, the node's step section and stepper with its edges on (planner's call 9: one box holds both). */
+export const historyBox = (n: ViewNode, id: string, top = ''): string =>
   `<div class="vb-tip vb-card-pop" data-pop="${HISTORY}" id="${esc(id)}" role="dialog" tabindex="0" aria-label="${esc(historyHead(n))}">`
-  + `<h4 class="vb-prop-head vb-history-head">${esc(historyHead(n))}</h4><div class="vb-history-body"></div></div>`;
+  + `<h4 class="vb-prop-head vb-history-head">${esc(historyHead(n))}</h4>${top}<div class="vb-history-body"></div></div>`;
 
 /** One row: a button when it names a note on the card or is an agent's reply, else text. */
 export function historyRowMarkup(r: HistoryRow, now: Date): string {

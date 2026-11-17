@@ -351,3 +351,35 @@
 {"v":20,"seq":351,"at":"2026-10-25T09:01:00Z","by":"person","type":"act","action":"comment","nodes":[149,151],"text":"Settle these two together: they decide the invoice."}
 {"v":20,"seq":352,"at":"2026-10-25T09:02:00Z","by":"agent","agent":"a-pricing1","type":"reply","n":151,"text":"Agreed. I will answer them as one change.","to":351}
 {"v":20,"seq":353,"at":"2026-10-25T09:03:00Z","by":"person","type":"act","action":"comment","nodes":[149,150],"text":"Same owner for both?"}
+{"v":20,"seq":354,"at":"2026-11-01T09:00:00Z","by":"agent","agent":"a-pricing1","type":"board","board":"edges","title":"Node edges"}
+{"v":20,"seq":355,"at":"2026-11-01T09:01:00Z","by":"agent","agent":"a-pricing1","type":"region","board":"edges","region":{"id":"edges","title":"Uplink plan","mode":"grid","columns":3}}
+{"v":20,"seq":356,"at":"2026-11-01T09:02:00Z","by":"agent","agent":"a-pricing1","type":"icon","name":"x-uplink","hash":"1111111111111111111111111111111111111111111111111111111111111111"}
+{"v":20,"seq":357,"at":"2026-11-01T09:03:00Z","by":"agent","agent":"a-pricing1","type":"icon","name":"x-bad-path","hash":"2222222222222222222222222222222222222222222222222222222222222222"}
+{"v":20,"seq":358,"at":"2026-11-01T09:04:00Z","by":"agent","agent":"a-pricing1","type":"icon","name":"x-missing","hash":"3333333333333333333333333333333333333333333333333333333333333333"}
+{"v":20,"seq":359,"at":"2026-11-01T09:05:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":152,"ver":1,"node":{"region":"edges","kind":"action","title":"Go-ahead to install","body":"Each package vetted, pinned exactly and listed; 7-day rule applies."}}
+{"v":20,"seq":360,"at":"2026-11-01T09:06:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":153,"ver":1,"node":{"region":"edges","kind":"action","title":"Install window agreed","body":"Tuesday 22:00 to 23:00, after the late news."}}
+{"v":20,"seq":361,"at":"2026-11-01T09:07:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":154,"ver":1,"node":{"region":"edges","kind":"decision","title":"Keep the backup encoder warm","body":"It costs a rack slot and saves a cold start."}}
+{"v":20,"seq":362,"at":"2026-11-01T09:08:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":155,"ver":1,"node":{"region":"edges","kind":"topic","title":"Order of work","body":"1. Base search (this board)\n2. Scorecard and model bake-off","tags":["Planning"]}}
+{"v":20,"seq":363,"at":"2026-11-01T09:09:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":156,"ver":1,"node":{"region":"edges","kind":"topic","title":"Cup final","body":"Uplynk live event","icon":"signal","tone":"teal"}}
+{"v":20,"seq":364,"at":"2026-11-01T09:10:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":156,"ver":2,"node":{"region":"edges","kind":"topic","title":"Cup final","body":"Uplynk live event\n\n- Captions from the venue","icon":"signal","tone":"teal","tags":["Captions"]}}
+{"v":20,"seq":365,"at":"2026-11-01T09:11:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":156,"ver":3,"node":{"region":"edges","kind":"topic","title":"Cup final","body":"Uplynk live event\n\n- Captions from the venue; start 20:00","icon":"signal","tone":"teal","tags":["Captions"]}}
+{"v":20,"seq":366,"at":"2026-11-01T09:12:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":157,"ver":1,"node":{"region":"edges","kind":"decision","title":"Switch to the satellite backup at 2% loss","body":"Auto, about 2 s","icon":"x-uplink","tone":300}}
+{"v":20,"seq":367,"at":"2026-11-01T09:13:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":158,"ver":1,"node":{"region":"edges","kind":"risk","title":"Rain fade on the satellite link","body":"Showers forecast from 20:45","icon":"x-bad-path","tone":"orange"}}
+{"v":20,"seq":368,"at":"2026-11-01T09:14:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":160,"ver":1,"node":{"region":"edges","kind":"finding","title":"Captions arrive from the venue","body":"Start 20:00","icon":"captions","tone":200}}
+{"v":20,"seq":369,"at":"2026-11-01T09:15:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":161,"ver":1,"node":{"region":"edges","kind":"question","title":"Book the second uplink truck?","body":"The vendor holds it until Friday."}}
+{"v":20,"seq":370,"at":"2026-11-01T09:16:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":162,"ver":1,"node":{"region":"edges","kind":"question","title":"Which encoder profile for the feeds?","icon":"x-missing","tone":"violet"}}
+{"v":20,"seq":371,"at":"2026-11-01T09:17:00Z","by":"agent","agent":"a-pricing1","type":"propose","n":161,"ver":1,"action":"ack","reason":"the vendor confirmed the hold","source":"Vendor email"}
+{"v":20,"seq":372,"at":"2026-11-01T09:18:00Z","by":"person","type":"act","action":"ack","n":153,"ver":1}
+{"v":20,"seq":373,"at":"2026-11-01T09:19:00Z","by":"person","type":"act","action":"drop","n":154,"ver":1}
+{"v":20,"seq":374,"at":"2026-11-01T09:20:00Z","by":"person","type":"act","action":"bookmark","n":155}
+{"v":20,"seq":375,"at":"2026-11-01T09:21:00Z","by":"person","type":"act","action":"bookmark","n":157}
+{"v":20,"seq":376,"at":"2026-11-01T09:22:00Z","by":"person","type":"act","action":"comment","n":155,"ver":1,"text":"Start with the board search."}
+{"v":20,"seq":377,"at":"2026-11-01T09:23:00Z","by":"person","type":"act","action":"comment","nodes":[155,156],"text":"These two share an owner."}
+{"v":20,"seq":378,"at":"2026-11-01T09:24:00Z","by":"person","type":"act","action":"later","n":160,"ver":1}
+{"v":20,"seq":379,"at":"2026-11-01T09:25:00Z","by":"person","type":"act","action":"pin","n":152,"x":40,"y":24}
+{"v":20,"seq":380,"at":"2026-11-01T09:26:00Z","by":"person","type":"seen","board":"edges","head":379}
+{"v":20,"seq":381,"at":"2026-11-01T09:27:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":155,"ver":2,"node":{"region":"edges","kind":"topic","title":"Order of work","body":"1. Base search (this board)\n2. Scorecard and model bake-off\n3. Ad-break candidates","tags":["Planning"]}}
+{"v":20,"seq":382,"at":"2026-11-01T09:28:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":163,"ver":1,"node":{"region":"edges","kind":"question","title":"Same encoder profile for both feeds?"}}
+{"v":20,"seq":383,"at":"2026-11-01T09:29:00Z","by":"person","type":"act","action":"comment","n":163,"ver":1,"text":"Is the second feed the same bitrate?"}
+{"v":20,"seq":384,"at":"2026-11-01T09:30:00Z","by":"agent","agent":"a-pricing1","type":"reply","n":163,"text":"Yes, both run at 8 Mbps.","to":383}
+{"v":20,"seq":385,"at":"2026-11-01T09:31:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":164,"ver":1,"node":{"region":"edges","kind":"finding","title":"A spare fibre runs to the truck","icon":"fibre","tone":"blue"}}

@@ -12,7 +12,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { boardView, readLedger, upgradeLines } from '#format';
+import { boardView, LEDGER_FORMAT, readLedger, upgradeLines } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import { perfLedger } from '#format/testing';
 import { boardState, foldLedger } from '../src/index.ts';
@@ -67,7 +67,12 @@ test('the mixed ledger is shaped like a real one: formats 7 to 19, four boards, 
 test('today\'s fixtures and the performance ledger are the frozen files migrated, byte for byte', () => {
   const migrated = (name: string) => upgradeLines(fs.readFileSync(`${LEGACY}${name}.ledger.jsonl`, 'utf8').split('\n')).lines.join('\n');
   for (const name of NAMES.filter((x) => x !== 'mixed' && x !== 'perf')) {
-    assert.equal(fs.readFileSync(`${FIXTURES_DIR}${name}.ledger.jsonl`, 'utf8'), migrated(name), name);
+    const today = fs.readFileSync(`${FIXTURES_DIR}${name}.ledger.jsonl`, 'utf8');
+    // The gallery's fixture grows after the freeze with lines in today's format only (node overhaul FE_01: the edges
+    // board); the frozen part must still be the frozen file migrated, byte for byte.
+    const frozenPart = name === 'gallery' ? today.slice(0, migrated(name).length) : today;
+    assert.equal(frozenPart, migrated(name), name);
+    if (name === 'gallery') for (const l of today.slice(frozenPart.length).split('\n').filter(Boolean)) assert.equal(JSON.parse(l).v, LEDGER_FORMAT, l);
   }
   assert.equal(`${perfLedger().join('\n')}\n`, migrated('perf'));
 });

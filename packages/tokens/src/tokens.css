@@ -180,6 +180,10 @@
   --vb-accent-soft: var(--vb-host-accent-soft, var(--vb-board-accent-soft));
   --vb-accent-line: var(--vb-host-accent-line, light-dark(#f7b6dc, #5e2449));
   --vb-focus: var(--vb-host-focus, var(--vb-accent));
+  /* The ring on a node that draws its edges and on each of its marks (D-099; nodeEdges; point 338): a calm slate, not
+     the accent, shown only after Tab. Decoration tier (Lc 30): 47.3 / 46.5 dark on the canvas / card, 73.8 / 79.8
+     light. Command Lens's is its skin's value (FE_04). */
+  --vb-focus-edge: light-dark(#5a6478, #8b9bb8);
   --vb-agent: light-dark(#5f7a0e, #c3dc5c);
 
   /* Item states (project rule 3: node states are tokens) */

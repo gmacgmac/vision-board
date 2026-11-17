@@ -9,6 +9,13 @@ export * from './node/node-time.ts';
 export { POPOVER_CLOSE, POPOVER_HIDE, POPOVER_OPEN, POPOVER_SHOW } from './node/node-popover.ts';
 export type { PopoverShowDetail } from './node/node-popover.ts';
 export * from './node/node-history.ts';
+// The node's edges (nodeEdges, D-099): its marks, menus, the icon set, the skin registry and the fixed-size menu.
+export * from './node/node-marks.ts';
+export * from './node/node-menus.ts';
+export * from './icons/icon-set.ts';
+export * from './icons/icon.ts';
+export * from './skins.ts';
+export * from './menu/menu-template.ts';
 export type { VbNodeElement } from './node/vb-node.ts';
 export * from './region/region-core.ts';
 export * from './region/region-fresh.ts';

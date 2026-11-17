@@ -46,7 +46,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 5 | BE_03 | 3 | strong | yes | Staff engineer for data formats — one format, one reader; a version branch kept just in case is a second format nobody tests. | [One format in the reader](./BE_03_one-format-reader.md) | Completed | One format: version branches and LEDGER_FORMATS gone; an older line is refused with migrate words; fixtures and perfLedger equal the frozen files migrated. Gate: write-board.ts `item`, checkSame compares against the in-memory upgrade. |
 | 6 | BE_04 | 3 | strong | yes | Application security engineer — an agent-supplied drawing is hostile until cleaned: only what the path grammar allows reaches a page, on add and on every read. | [The icon library](./BE_04_icon-library.md) | Completed | Shared check `icon-file.ts`, handlers `icons.ts` (add once per name, every read checked, first use writes the line), `EngineOptions.icons`, access row; `list_icons` takes no credential. |
 | 6b | PERF_01 | 3 | strong | yes | Web performance engineer — start weight is what makes a tool feel slow; it is cut by loading later, never by moving the line. | [Room in the start weight](./PERF_01_start-weight.md) | Completed | Run 2: 187.5 KB at start (2 files) from one start chunk, vb-app-frame and vb-image-view on first use, no upgrade chain in the page or view; engine-hooks fixed. Plugin CSS room not found (ruling: temporary budget until T_04 deletes the old footer CSS). |
-| 7 | FE_01 | 4 | strong | no | Principal front-end engineer for design systems — a pattern owns every state, updates in place and is reachable by keyboard and screen reader. | [The node's edges and the icon set](./FE_01_node-edges-and-icon-set.md) | Pending | |
+| 7 | FE_01 | 4 | strong | no | Principal front-end engineer for design systems — a pattern owns every state, updates in place and is reachable by keyboard and screen reader. | [The node's edges and the icon set](./FE_01_node-edges-and-icon-set.md) | Completed | Edges behind nodeEdges (byte-for-byte off), icon set + library check, SKIN_DEFS, nodeMarks, menus; plugin CSS 23,753 (budget 24,000, temporary); page 193.9 KB; tokens.css `--vb-focus-edge` |
 | 8 | FE_02 | 5 | strong | no | Interaction engineer — a control never does two things depending on timing, and no click is lost or doubled. | [The board wires the edges](./FE_02_board-wires-the-edges.md) | Pending | |
 | 9 | FE_03 | 6 | strong | no | Interaction engineer for messaging — words a person typed are never lost, and Enter never does the unexpected thing. | [One conversation box](./FE_03_one-conversation-box.md) | Pending | |
 | 10 | FE_04 | 7 | strong | no | Design-systems engineer — a second skin proves the first was a system; if the node needs an `if (skin)`, the registry is wrong. | [The Command Lens skin](./FE_04_command-lens-skin.md) | Pending | |
@@ -172,8 +172,15 @@ _Status:_ Pending
 _Notes:_ 
 
 ### FE_01: The node's edges and the icon set
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1. For FE_02: render with `{ edges: SKIN_DEFS[skin], icons: iconLibrary(list_icons paths) }`, pass
+`CardConditions.ver`; marks are `[data-mark=number|answer|badge|notes]` (switch: `tick`, `cross`); open the history
+box (badge, `aria-controls`), the proposal box and the menus (`numberMenu`, `answerPicker`, `contextMenu`, rows by
+`data-menu-act`) yourself: no popover is bound on marks; set `data-saving|data-failed|data-locked` on a pressed mark;
+add `.vb-node-grip` to `HANDLE`; show `data-tip` after a 2 s hover; the picker needs Left/Right; put `data-vb-edges` on
+the board root (fuchsia). For FE_04: the command-lens row draws a `.vb-node-plate` and a `.vb-mark-switch`, laid out in
+flow only. App cards keep the old card (FE_08). `legacy-folds.test.ts` now allows format-20 lines after the frozen
+gallery part. `npm run map` needed.
 
 ### FE_02: The board wires the edges
 _Status:_ Pending  

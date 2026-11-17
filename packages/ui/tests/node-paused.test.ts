@@ -27,7 +27,7 @@ test('the elements pause every control that changes the board, and never the fla
   const source = (rel: string) => fs.readFileSync(new URL(rel, import.meta.url), 'utf8');
   const list = (file: string) => /const PAUSED = '([^']+)'/.exec(source(file))![1]!;
   const cardList = list('../src/node/vb-node.ts');
-  for (const sel of ['button[data-act]', '.vb-size-trig', '.vb-size-opt', '.vb-note-pin', 'button[data-answer]']) assert.ok(cardList.includes(sel), sel);
+  for (const sel of ['button[data-act]', '.vb-size-trig', '.vb-size-opt', '.vb-note-pin', 'button[data-answer]', '[data-mark="answer"]', '[data-mark="tick"]', '[data-mark="cross"]']) assert.ok(cardList.includes(sel), sel);
   assert.doesNotMatch(cardList, /data-flag|vb-flag/);
   // The flag button is a `data-flag`, never a `data-act`, so the card list can't catch it.
   const html = nodeTemplate(node({}), { flag: true });
@@ -51,7 +51,8 @@ test('a read-only ledger pauses a card and its container as a lock does, and the
   assert.ok(!('readOnly' in nodeState(node({}), board(false))));
   assert.equal(regionState(region, view, readOnly(), new Set(['3'])).paused, true);
   const source = fs.readFileSync(new URL('../src/node/vb-node.ts', import.meta.url), 'utf8');
-  assert.match(source, /const FLAG = 'button\[data-flag\]'/);
+  // With the node's edges (nodeEdges) the number is the bookmark, so it pauses with the flag (FE_01).
+  assert.match(source, /const FLAG = 'button\[data-flag\], \[data-mark="number"\]'/);
   assert.match(source, /pauseControls\(this, FLAG, st\.readOnly === true\)/);
 });
 
