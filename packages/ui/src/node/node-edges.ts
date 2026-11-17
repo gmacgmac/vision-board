@@ -76,7 +76,7 @@ export function edgesMarkup(n: ViewNode, def: SkinDef, parts: EdgeParts): string
   const content = `<div class="vb-node-content">${heading(n, parts.icons)}${parts.body}${parts.tags}${handover}</div>`;
   const marks = def.marks === 'plate' ? `<div class="vb-node-plate">${top}</div>` : top;
   if (!item) return marks + content;
-  const proposal = `<div class="vb-tip vb-card-pop" data-pop="proposal" id="${esc(parts.ids.proposal)}" role="dialog" tabindex="-1"></div>`;
+  const proposal = `<div class="vb-tip vb-card-pop vb-node-box" data-pop="proposal" id="${esc(parts.ids.proposal)}" role="dialog" tabindex="-1"></div>`;
   const history = historyBox(n, parts.ids.history, parts.steps + parts.stepNav);
   return marks + content + (def.answer === 'switch' ? answerSwitch() : '') + bottomMarks(parts) + proposal + history;
 }

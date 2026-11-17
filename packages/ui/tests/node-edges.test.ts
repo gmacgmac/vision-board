@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import type { ViewNode } from '#format';
 import { SKINS } from '#format';
 import type { BoardState } from '#actions';
-import { answerPicker, contextMenu, nodeState, nodeTemplate, numberMenu, SKIN_DEFS } from '../src/index.ts';
+import { answerPicker, contextMenu, historyMarkup, nodeState, nodeTemplate, numberMenu, SKIN_DEFS } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode> = {}): ViewNode => ({ id: '28', region: 'r', kind: 'question', title: 'Order <of> work', n: 28, ...f });
 const board = (f: Partial<BoardState> = {}): BoardState =>
@@ -37,7 +37,8 @@ test('each mark is a real button; the number is a toggle, the badge controls the
   const html = nodeTemplate(node(), { edges, idPrefix: 'p-' });
   assert.match(html, /<button type="button" class="vb-mark vb-node-num" data-mark="number" data-tip="Bookmark · B" aria-pressed="false" aria-keyshortcuts="B">28<\/button>/);
   assert.match(html, /data-mark="badge"[^>]*aria-controls="p-vb-pop-history-28" hidden>/);
-  assert.match(html, /id="p-vb-pop-history-28"[^>]*><h4[^>]*>Card 28 history<\/h4><div class="vb-node-steps" id="p-vb-steps-28"[^]*class="vb-node-stepnav" hidden>[^]*<div class="vb-history-body">/);
+  // The box beside a node (FE_03 run 2): "History of 28" and its ×, the stepper, then the list.
+  assert.match(html, /class="vb-tip vb-card-pop vb-node-box" data-pop="history" id="p-vb-pop-history-28"[^>]*aria-label="History of 28"><div class="vb-node-box-head"><span class="vb-node-box-title">History of 28<\/span><button[^>]*data-box-close aria-label="Close history">[^]*<div class="vb-node-steps" id="p-vb-steps-28"[^]*class="vb-node-stepnav" hidden>[^]*<div class="vb-history-body vb-node-box-body">/);
   assert.match(html, /data-pop="proposal" id="p-vb-pop-proposal-28"/);
   assert.ok(html.includes('<h3 class="vb-node-title">Order &#60;of&#62; work</h3>'), 'the title escaped');
 });
@@ -90,4 +91,16 @@ test('every skin offers the same actions: the menus never read the skin, and eac
     assert.ok(/data-mark="answer"|data-mark="tick"[^]*data-mark="cross"/.test(html), name);
     for (const m of ['number', 'badge', 'notes']) assert.ok(html.includes(`data-mark="${m}"`), `${name}: ${m}`);
   }
+});
+
+test('the history box beside a node: each row its version (↩ for a proposal withdrawn), its words, then who and when', () => {
+  const now = new Date('2026-11-17T12:00:00Z');
+  const rows = [
+    { seq: 9, at: '2026-11-17T11:00:00Z', who: 'agent' as const, agent: 'Edges chat', kind: 'proposal-withdrawn' as const, words: 'Proposal withdrawn: the node changed' },
+    { seq: 9, at: '2026-11-17T11:00:00Z', who: 'agent' as const, agent: 'Edges chat', kind: 'drawn' as const, words: 'Agent drew v2', ver: 2 },
+  ];
+  const html = historyMarkup(rows, now, true);
+  assert.match(html, /<b class="vb-history-ver" aria-hidden="true">↩<\/b><span class="vb-history-words">Proposal withdrawn: the node changed<\/span><span class="vb-history-meta"><span class="vb-history-agent">Edges chat · <\/span><time/);
+  assert.match(html, /<b class="vb-history-ver" aria-hidden="true">v2<\/b><span class="vb-history-words">Agent drew v2<\/span>/);
+  assert.doesNotMatch(historyMarkup(rows, now), /vb-history-ver/, 'the old box is as it was');
 });

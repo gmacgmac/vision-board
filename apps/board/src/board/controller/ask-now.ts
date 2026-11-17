@@ -1,7 +1,7 @@
 // Ask now's side of the board (nodeEdges flag, D-099 3, FE_03), split out of controller.ts: why no message can go
 // (a past version, a read-only ledger, a locked board, the chat's agent mid-turn), whether an agent is there to hear
-// it, the `ask` itself with the page's context setting (`askContextOf`, call 1), and a node's replies marked read when
-// its box shows them (a card `seen` at the version already seen, which moves only when the person last looked).
+// it, the `ask` itself with the page's context setting (`askContextOf`, call 1), the notes it sent, and a node's replies
+// marked read when its box shows them (a card `seen` at the version already seen, which moves only when the person last looked).
 import type { AskContext } from '#format';
 import type { LedgerState } from '#actions';
 import { seenDue, seenVer } from '#actions';
@@ -30,6 +30,7 @@ export function createAskNow(d: AskNowDeps): BoxDeps {
     blocked: () => d.paused() ?? (d.working() ? notesWords.theAgentIsWorking : null),
     listening: () => d.oneAgent() || (d.state()?.agents.size ?? 0) > 0,
     ask: (seq) => d.attempt({ action: 'ask', board: d.board(), lines: [seq], context: d.context() }),
+    asked: () => new Set(d.state()?.asked.get(d.board())?.keys() ?? []),
     looked(id) {
       const s = d.state();
       const at = d.node(id);

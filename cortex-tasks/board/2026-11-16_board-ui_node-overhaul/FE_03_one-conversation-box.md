@@ -170,6 +170,93 @@ _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier 
   `packages/ui/src/index.ts`, `apps/board/src/board/notes/index.ts`, `apps/board/src/board/boards/index.ts`, the new
   gallery file and tests.
 
+### Run 2
+
+**Status**: Completed  
+**Completed**: 2026-11-17 19:10
+
+Budgets ruled at point 351 (page 210 KB, plugin view JS 200,000, CSS 26,000 gzip; 678cc19). Scope added by the
+coordinator: Ask now reaches the board's chat panel; then three musts from the maintainer's look: top alignment, the
+history box, compact boxes.
+
+#### Changes Made
+- **Ask now reaches the chat panel's agent** with no seam change. Today's record stays: the page writes the `ask`. The
+  standalone server's chat sessions hear the person's `ask` line (`chat-sessions.ts` `hearAsk`, on `ledger.onAppend`)
+  and hand the session in use on that board the asked notes with the board, as their own message ("Asked now.";
+  prompt head `server-chat.ts` `askedNowFromTheBoard`). They never carry the board's other answers, record no Send, and
+  leave `told` alone, so those answers still go with the next Send. While a turn runs they ride with the next
+  message. Found and fixed on the way: a Send's round still carried an asked note when its card was in the round for
+  another answer (`pending.ts` `replyScope` now carries `asked`; `reply.ts` `fresh` leaves those notes out).
+- **"Asked now" in the thread**: `conversation(notes, replies, asked?)` (`node-notes.ts`, word `askedNow`), fed by
+  `BoxDeps.asked` (`controller/ask-now.ts`, from `LedgerState.asked`).
+- **One place for every box beside a node**: `mark-place.ts` `placeBeside` (top level with the node, right when there
+  is room, else below with left edges aligned, never over the node; the arrow on the mark that opened it) and
+  `nodeReach` (the node's box out to its hanging marks). It is used by the conversation box (`notes.ts` `place`), the
+  history and proposal boxes (`mark-boxes.ts` `place`, written in the node's own pixels, followed on every pan, zoom
+  and draw through `MarkBox.place`) and the gallery. `mark-boxes.ts` `flip` and its CSS are gone. Pressing the notes
+  mark closes an open mark box.
+- **One look, compact**: `packages/ui/src/node/node-box.css` (`.vb-node-box`, `-head`, `-title`, `-x`, `-body`; last
+  in `#ui/styles.css`). It is styled once for the conversation box (the element adds the class in `conversation`
+  mode; its template draws the shared head and body) and for the history and proposal boxes with edges: about 1.2
+  times the node's width, the node's body text size, a 32px head over a hairline, and the mock-ups' proportions. The
+  two variants the maintainer saw are now this one style.
+- **The history box as designed** (with `nodeEdges`): `node-history.ts` `historyBox` draws "History of N" with an ×
+  (`data-box-close`), then the stepper, then `historyMarkup(rows, now, box)`: one row per entry with its version (↩ for
+  a withdrawn proposal), its words, then who and when. "Proposal withdrawn: the node changed" is a new history kind,
+  `proposal-withdrawn` (`card-times.ts` `withdrawn`, `card-history.ts` `cardHistory`, which agree; `HistoryRow.ver`).
+  The old box is unchanged with the flag off.
+- **The stray "1" circle** on the node's right edge was the group pin (`notes/group-pins.ts`, groupNoteOnce). It no
+  longer draws with `nodeEdges` on: the notes mark already counts a note on several nodes, and the box gives it a tab.
+- Words: `server-chat.ts`, `node.ts` (`historyOfN`, `closeHistory`), `node-notes.ts`, `actions-history.ts`
+  (`proposalWithdrawn`). Docs: `api.md` 188, `components.md` § Notes beside cards items 9 and 10, both `pattern.json`
+  files.
+- Tests:
+  - `apps/board/tests/api-chat-ask.test.ts`: no session runs nothing; the asked note goes alone with the board and no
+    Send; the next Send carries the tick and not the note.
+  - `tests/pages/chat-ask.spec.ts`: Ask now from the box reaches the panel's fake agent, reads "Asked now" in the
+    panel and in the thread, and records one `ask`.
+  - `apps/board/tests/mark-place.test.ts` (`placeBeside`).
+  - `packages/actions/tests/card-history.test.ts` (withdrawn rows in both readers).
+  - `packages/ui/tests/node-edges.test.ts` (the new history box, its rows).
+  - `tests/pages/node-boxes.spec.ts`: three boxes top aligned or below; one look; the history box's head, rows and ×;
+    no group pin; screenshots `temp/fe03/run2-{conversation,history,proposal}-{dark,light}.png`.
+
+#### Verification
+- Checks:
+  - `npm test`: 2600 of 2600, timing 14 of 14.
+  - `npm run check`: 0 errors.
+  - `npm run verify`: passes.
+  - `npm run gen -- --check`: current. The contract is unchanged.
+  - `npm run test:plugin`: 116 passed.
+- Page specs: 128 related specs pass with the flag off and on (notes, conversation, popover-thread, gallery,
+  node-edges, proposals, card-history, chat-alongside, parking, group-note, and the three new files).
+- Weights: page 199.88 KB of 210. Plugin `view/board.js` 193,679 of 200,000 and `view/board.css` 24,511 of 26,000
+  gzip.
+- Baselines renewed:
+  - `conversation-box.spec.ts` box dark and light: the new look.
+  - `proposals-review` review-list and `chat-alongside` alongside, dark and light: a sub-pixel shift of their gallery
+    sections. The text antialiasing differs everywhere and the content is the same. It was already there after run 1,
+    whose specs did not include these two.
+
+#### Caught Beyond the Brief
+- The order is the reverse of D-075 for the chat. The `ask` is recorded first and the panel's agent is told on that
+  line. If the session can't be loaded, the ask still stands and the agent reads it through `check_responses`. The
+  failure is only logged on the server.
+- The conversation box sits on the stage and keeps one size, while the history and proposal boxes sit in the node and
+  scale. At a zoom other than 100% their sizes differ until FE_05 makes the box scale with the board.
+- nclite: no seam change was needed for the standalone server. A host can do the same from the `ask` lines it already
+  receives as change events, using the engine's `resolve('note')`. That is nclite's code, not built here.
+- `notes.ts` is 304 lines (warns over 300).
+
+#### Deviations from Plan
+- None. Files beyond the list:
+  - The chat server: `chat-sessions.ts`, `chat-prompt.ts` and their words.
+  - The actions reply round and history: `pending.ts`, `reply.ts`, `card-history.ts`, `card-times.ts`.
+  - The marks' boxes: `mark-place.ts`, `mark-boxes.ts`, `mark-acts.ts`, `history-flow.ts`, `node-edges.css` (dead flip
+    rules removed).
+  - In the ui package: `node-history.ts`, `node-notes.ts`, `node-edges.ts`, and the new `node-box.css`.
+  - All were within the coordinator's added scope.
+
 ---
 
 ## On Completion

@@ -1,14 +1,15 @@
 // Gallery entry for the conversation box (nodeEdges flag, FE_03): every state of `conversation` mode beside a real card,
-// from the fixture's notes, parking and groups boards, through the board's own `boxView` (notes/note-box.ts) and placed
-// with `placeBubble` as the board places it. Empty (the field only), a note waiting for Send, asking, sent and waiting
-// for the agent, a reply arrived, failed (the words stay in the field), Ask now disabled with its reason, and the tabs
-// of a node in notes on several nodes. The box's template loads on first use, as on the board.
+// from the fixture's notes, parking and groups boards, through the board's own `boxView` (notes/note-box.ts), placed
+// with `placeBeside` as the board places every box beside a node. Empty (the field only), a note waiting for Send,
+// asking, sent and waiting for the agent, a reply arrived, failed (the words stay in the field), Ask now disabled with
+// its reason, and the tabs of a node in notes on several nodes. The box's template loads on first use, as on the board.
 import type { BoardState } from '#actions';
 import { boardState } from '#actions';
 import type { View } from '#format';
 import { boardView } from '#format';
 import type { BubblePhase, CardConditions, VbNoteBubbleElement } from '#ui';
-import { loadConversation, placeBubble } from '#ui';
+import { loadConversation } from '#ui';
+import { placeBeside } from '../board/cards/index.ts';
 import { createParking } from '../board/cards/index.ts';
 import type { BoxDeps } from '../board/notes/index.ts';
 import { loadNoteBox } from '../board/notes/index.ts';
@@ -56,7 +57,7 @@ function sample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<ReturnType
   const n = b.view.nodes.find((x) => x.title === s.title)!;
   const deps = { node: (id: string) => b.view.nodes.find((x) => x.id === id), state: () => b.state, region: () => undefined,
     replies: (id: string) => b.cards.get(Number(b.view.nodes.find((x) => x.id === id)?.n))?.replies ?? [], regionReplies: () => [] };
-  const box: BoxDeps = { blocked: () => s.blocked ?? null, listening: () => true, ask: async () => null, looked() {} };
+  const box: BoxDeps = { blocked: () => s.blocked ?? null, listening: () => true, ask: async () => null, looked() {}, asked: () => new Set() };
   const shown = boxView(deps, box, { id: n.id, anchor: [n.id], mode: 'conversation', kind: 'comment', ...(s.group && { group: s.group }), ...(s.draft && { draft: s.draft }) })!;
   const stage = el('div', 'g-bubble-stage vb-ground');
   stage.style.setProperty('width', '760px');
@@ -73,7 +74,7 @@ function sample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<ReturnType
   requestAnimationFrame(() => {
     bubble.reveal();
     const at = { x: 24, y: 24, w: c.offsetWidth, h: c.offsetHeight };
-    const p = placeBubble(at, { w: bubble.offsetWidth, h: bubble.offsetHeight }, { w: 760, h: 2000 });
+    const p = placeBeside(at, { w: bubble.offsetWidth, h: bubble.offsetHeight }, { w: 760, h: 2000 });
     bubble.place(p);
     stage.style.setProperty('height', `${Math.ceil(Math.max(at.y + at.h, p.y + bubble.offsetHeight) + 24)}px`);
   });

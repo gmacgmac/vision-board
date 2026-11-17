@@ -25,6 +25,7 @@ import type { Open } from './note-views.ts';
 import { cardView, containerView } from './note-views.ts';
 import { unsentGroupNote, unsentNote, unsentRegionNote } from './note-find.ts';
 import { createGroupPins, groupPinOf } from './group-pins.ts';
+import { nodeReach, placeBeside, stageBoxOf } from '../cards/index.ts';
 import type * as NoteBox from './note-box.ts';
 import * as notesWords from '../words/notes.ts';
 import type { NoteDeps, NoteFlow } from './note-flow-types.ts';
@@ -40,8 +41,8 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   /** The box's code, once loaded (out of the start weight); what it showed last (redrawn only when that changed). */
   let box: typeof NoteBox | null = null;
   let boxShown = '';
-  // The groupNoteOnce flag: a note on a group of cards is drawn once, as the group's pin.
-  const pins = d.groups ? createGroupPins({ ...d, open: (cards, anchor, seq) => { d.selection.select(cards, 'only'); show(anchor, seq); } }) : undefined;
+  // The groupNoteOnce flag: a note on a group of cards is drawn once, as the group's pin; with nodeEdges, on the notes mark.
+  const pins = d.groups && !d.box ? createGroupPins({ ...d, open: (cards, anchor, seq) => { d.selection.select(cards, 'only'); show(anchor, seq); } }) : undefined;
 
   function mark(o: Open, on: boolean) {
     if (o.region) return d.frame(o.region)?.setNoteOpen(on);
@@ -199,9 +200,13 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     // A removed note takes its bubble with it, changed words or not: there is nothing to save to.
     if (noteGone(open)) return close(false);
     if (open.mode === 'conversation') refreshBox(open);
-    const at = anchorBox(d, open);
+    const at = anchorBox(d, open.mode === 'conversation' ? { ...open, at: undefined } : open);
     if (!at) return close(false);
     const size = { w: bubble.offsetWidth, h: bubble.offsetHeight };
+    // The box beside a node, as every such box: top aligned, right or below, its arrow on the notes mark.
+    const card = open.mode === 'conversation' ? d.card(open.id) : undefined;
+    const mark = card?.querySelector('[data-mark="notes"]');
+    if (card) return bubble.place(placeBeside(nodeReach(card, d.stage), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, mark ? stageBoxOf(mark, d.stage) : at));
     // Clear of the neighbouring cards' footer buttons where it can be (bubble-clear.ts).
     const avoid = footersNear(d.layout(), d.card, d.vp, at, size, open.anchor);
     bubble.place(placeBubble(at, size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, avoid));

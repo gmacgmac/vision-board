@@ -60,7 +60,7 @@ test('Ask now disabled: its tooltip is the reason, and the button stays focusabl
 test('conversationTemplate: head, thread oldest first with the queued note marked, waiting, the field and two buttons', () => {
   const v = bubbleView({ mode: 'conversation', kind: 'comment', number: 34, title: 'Hardware', entries: NOTES, waiting: true });
   const html = conversationTemplate(v, 34);
-  assert.match(html, /vb-nb-num[^>]*>34<\/span><span class="vb-nb-title">Hardware/);
+  assert.match(html, /vb-nb-num[^>]*>34<\/span><span class="vb-node-box-title">Hardware/);
   assert.ok(html.indexOf('Is 96 GB enough?') < html.indexOf('Yes.') && html.indexOf('Yes.') < html.indexOf('Book it then.'));
   assert.match(html, /class="vb-nb-note vb-nb-queued" data-seq="12"/);
   assert.match(html, /not sent yet · goes with Send/);

@@ -31,7 +31,7 @@ function setup({ queued = false, blocked = null as string | null, listening = tr
       if (f.action === 'comment') notes.push({ seq: 9, kind: 'comment', text: String(f.text), at: '' } as ItemNote);
       return null;
     },
-    box: { blocked: () => blocked, listening: () => listening, ask: async (seq) => { asks.push(seq); return null; }, looked() {} },
+    box: { blocked: () => blocked, listening: () => listening, ask: async (seq) => { asks.push(seq); return null; }, looked() {}, asked: () => new Set() },
     bubble: { setPhase(p: string, m = '') { box.phase = p; box.message = m; }, focusText() { box.focused += 1; } } as unknown as VbNoteBubbleElement,
     still: () => true, again: () => { box.shown += 1; },
   };

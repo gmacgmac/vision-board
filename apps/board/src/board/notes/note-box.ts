@@ -24,6 +24,8 @@ export interface BoxDeps {
   ask(seq: number): Promise<string | null>;
   /** The box shows node `id`'s replies: the person has read them (the notes mark goes back to its count). */
   looked(id: string): void;
+  /** The notes on the board Ask now sent (asked.ts `askedBy`): they read "· Asked now". */
+  asked(): ReadonlySet<number>;
 }
 
 /** A group of nodes, by its sorted numbers: a note on several nodes is one tab. */
@@ -60,7 +62,7 @@ export function boxView(d: ViewDeps, box: BoxDeps, o: Open): Shown | null {
   const waiting = last?.sent === true && !replies.some((r) => r.seq > last.seq);
   const v = bubbleView({
     mode: 'conversation', kind: 'comment', number: n.n, text: o.draft, title: n.title, tabs: tabsOf(all, n.n, key),
-    blocked: box.blocked(), waiting, entries: conversation(notes, replies), ...(o.group && { numbers: o.group.map(Number) }),
+    blocked: box.blocked(), waiting, entries: conversation(notes, replies, box.asked()), ...(o.group && { numbers: o.group.map(Number) }),
   });
   return { v, on: { kind: n.kind, number: n.n } };
 }

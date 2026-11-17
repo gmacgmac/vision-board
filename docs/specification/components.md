@@ -538,8 +538,20 @@ record is `api.md` 58-61.
    an empty box closes on a click outside. Showing a node's replies writes a card `seen` at the version already seen,
    so the notes mark goes back to its count. Edit on a queued note opens today's edit mode and comes back to the box.
    A container's note and a note on several selected nodes keep the bubbles above. The box scales with the board in
-   FE_05. Proven by `packages/ui/tests/conversation-box.test.ts`, `apps/board/tests/ask-now.test.ts` and
-   `tests/pages/conversation-box.spec.ts`.
+   FE_05. With the flag no group pin draws: a note on several nodes is counted on their notes marks, and is a tab.
+   Proven by `packages/ui/tests/conversation-box.test.ts`, `apps/board/tests/ask-now.test.ts` and
+   `tests/pages/conversation-box.spec.ts`; the panel's agent hearing Ask now by `tests/pages/chat-ask.spec.ts`.
+10. **The box beside a node** (FE_03 run 2, the maintainer's rulings). The conversation, proposal and history boxes
+   share one place and one look. `board/cards/mark-place.ts` `placeBeside` places each: its top level with the node's
+   top, to its right when the stage has room, else below it with their left edges aligned, never over the node or the
+   marks that hang off it (`nodeReach`); its arrow points at the mark that opened it. The look is
+   `packages/ui/src/node/node-box.css` (`.vb-node-box`, `.vb-node-box-head` with its title and ×, `.vb-node-box-body`):
+   compact, about 1.2 times the node's width, the node's body text size, in the mock-ups' proportions
+   (`design/mockups/node-states/`). The history box with the edges is "History of 28" and its ×, the stepper, then one
+   row per entry: its version (↩ for "Proposal withdrawn: the node changed", `card-times.ts` `withdrawn`), its words,
+   who and when (`node-history.ts` `historyBox`, `historyMarkup` with `box`). Proven by `apps/board/tests/mark-place.test.ts`,
+   `packages/ui/tests/node-edges.test.ts`, `packages/actions/tests/card-history.test.ts` and
+   `tests/pages/node-boxes.spec.ts`.
 
 ## A card's history (card-polish FE_03)
 

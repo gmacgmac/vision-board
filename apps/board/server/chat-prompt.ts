@@ -25,7 +25,7 @@ import * as serverChatWords from './words/server-chat.ts';
 export interface Chip { kind: 'note' | 'card'; ref: number; label: string }
 /** The person's message: words (none when it is only what is attached, api.md 131), notes, cards, and
  * files, each already checked (`attachedFile`), so a path a page made up never gets this far. */
-export interface ChatMessage { text?: string; notes?: number[]; cards?: number[]; files?: AttachedFile[]; beside?: Record<string, Beside> }
+export interface ChatMessage { text?: string; notes?: number[]; cards?: number[]; files?: AttachedFile[]; beside?: Record<string, Beside>; ask?: true }
 /** One message as built: the agent's prompt, and the `message_in`'s words and chips. */
 export interface BuiltMessage { prompt: string; text: string; chips: Chip[] }
 
@@ -92,9 +92,10 @@ export function promptFor(s: LedgerState, resolve: ResolveChip, board: string | 
   });
   if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesNotesOr, { errors });
   const words = wordsOf(msg);
-  const attached = lines.length ? `${NOTES_HEAD}\n${lines.join('\n')}` : '';
+  // Ask now (api.md 188) says so: these notes come at once, apart from the board's Send.
+  const attached = lines.length ? `${msg.ask ? serverChatWords.askedNowFromTheBoard : NOTES_HEAD}\n${lines.join('\n')}` : '';
   const prompt = [words, filesBlock(msg), boardBlocks(cards, round, attached), serverChatWords.board(board)].filter(Boolean).join('\n\n');
-  const only = msg.files?.length && !chips.length ? ONLY_FILES : ONLY_ATTACHED;
+  const only = msg.ask ? serverChatWords.askedNow : msg.files?.length && !chips.length ? ONLY_FILES : ONLY_ATTACHED;
   return { prompt, text: [words, round?.text].filter(Boolean).join('\n\n') || only, chips };
 }
 

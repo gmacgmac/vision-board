@@ -32,6 +32,9 @@ export const historyOf = (cardName: string): string => `History of ${cardName}`;
 export const cardHistory = (n: number | undefined): string => `Card ${n} history`;
 export const history = (title: string): string => `${title}: history`;
 export const history2 = 'History';
+/** The history box beside a node (nodeEdges, FE_03 run 2): its head and its ×. */
+export const historyOfN = (n: number | string | undefined): string => `History of ${n}`;
+export const closeHistory = 'Close history';
 
 // ---- node-template.ts
 export const movedByYou = 'Moved by you';

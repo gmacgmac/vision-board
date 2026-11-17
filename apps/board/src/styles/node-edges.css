@@ -9,6 +9,3 @@
   &:not([hidden]) { display: block; }
 }
 .vb-world[data-locked] vb-node .vb-node-grip { cursor: inherit; }
-/* A node's box (history, a proposal) with no room on the node's right opens on its left (mark-boxes.ts `flip`). */
-vb-node .vb-card-pop[data-flip] { left: auto; right: calc(100% + var(--vb-space-3)); }
-vb-node .vb-card-pop[data-flip]::before { left: 100%; right: auto; }

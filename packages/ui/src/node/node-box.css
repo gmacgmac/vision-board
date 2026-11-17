@@ -1,0 +1,70 @@
+/* The box beside a node (FE_03 run 2, the maintainer's rulings): the conversation box (<vb-note-bubble> in
+   `conversation` mode), the proposal box and the history box (the node's `.vb-card-pop` with its edges) share one
+   look, styled here once, in the mock-ups' proportions (design/mockups/node-states: a 300px node, a 300 to 340px box).
+   Compact: about 1.2 times the node's width, the node's body text size, a small head (the title and an ×) over a
+   hairline, then the body. The page places it (board/cards/mark-place.ts `placeBeside`): its top level with the
+   node's, to its right, else below; the arrow, on the side that faces the node, points at the mark that opened it
+   (`--vb-arrow`, `data-side`). Last in #ui/styles.css, so it wins over each pattern's own box. Tokens only. */
+vb-note-bubble.vb-node-box, vb-node .vb-card-pop.vb-node-box {
+  --vb-box-line: var(--vb-line-strong);
+  width: calc(var(--vb-card-w) * 1.2); max-width: none; max-height: none; overflow: visible; padding: 0; gap: 0; bottom: auto; right: auto;
+  border: 1px solid var(--vb-box-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-raised);
+  box-shadow: var(--vb-shadow-lift); color: var(--vb-ink-strong);
+  font: var(--vb-weight-regular) var(--vb-text-md) / 1.45 var(--vb-font); --vb-md-text: var(--vb-text-md);
+}
+vb-node .vb-card-pop.vb-node-box[data-open] { display: grid; }
+.vb-node-box .vb-node-box-head {
+  display: flex; align-items: center; gap: var(--vb-space-2); min-height: 32px; padding: 0 var(--vb-space-1) 0 var(--vb-space-3);
+  border-bottom: 1px solid var(--vb-line); font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong);
+}
+.vb-node-box .vb-node-box-title { flex: 1; min-width: 0; }
+.vb-node-box .vb-node-box-x {
+  display: inline-grid; place-items: center; flex: none; width: var(--vb-space-5); height: var(--vb-space-5); padding: 0;
+  border: 0; border-radius: var(--vb-radius-sm); background: transparent; color: var(--vb-ink-subtle); cursor: pointer;
+}
+.vb-node-box .vb-node-box-x:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+.vb-node-box .vb-node-box-x-icon { width: var(--vb-space-4); height: var(--vb-space-4); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.vb-node-box .vb-node-box-body { display: grid; gap: var(--vb-space-2); padding: var(--vb-space-2) var(--vb-space-3) var(--vb-space-3); }
+/* The arrow: a square turned 45deg on the edge that faces the node. */
+.vb-node-box::before {
+  content: ''; position: absolute; width: 10px; height: 10px; rotate: 45deg; background: var(--vb-surface-raised); pointer-events: none;
+}
+.vb-node-box[data-side='right']::before {
+  inset: calc(var(--vb-arrow, 16px) - 5px) auto auto -6px; border-left: 1px solid var(--vb-box-line); border-bottom: 1px solid var(--vb-box-line);
+}
+.vb-node-box[data-side='below']::before {
+  inset: -6px auto auto calc(var(--vb-arrow, 16px) - 5px); border-left: 1px solid var(--vb-box-line); border-top: 1px solid var(--vb-box-line);
+}
+
+/* The history box's parts: the stepper under the head, then one line per entry where it fits. */
+vb-node .vb-node-box .vb-node-box-step:has(> .vb-node-steps:not([hidden])) {
+  display: grid; gap: var(--vb-space-2); padding: var(--vb-space-2) var(--vb-space-3); border-bottom: 1px solid var(--vb-line);
+}
+vb-node .vb-node-box .vb-node-steps:not([hidden]) { gap: var(--vb-space-1); padding: 0; border: 0; background: none; }
+vb-node .vb-node-box .vb-step-line { font-size: var(--vb-text-md); }
+vb-node .vb-node-box .vb-pop-btn { height: 26px; font-size: var(--vb-text-md); }
+vb-node .vb-node-box .vb-history-body { max-height: 220px; overflow: auto; padding: var(--vb-space-1); }
+vb-node .vb-node-box .vb-history-list { margin: 0; }
+vb-node .vb-node-box .vb-history-row {
+  display: grid; grid-template-columns: 26px 1fr; align-items: baseline; gap: 0 var(--vb-space-2); width: 100%;
+  padding: var(--vb-space-1) var(--vb-space-2); border-radius: var(--vb-radius-sm); font-size: var(--vb-text-md);
+}
+vb-node .vb-node-box li:first-child > .vb-history-row { background: var(--vb-surface-sunken); }
+vb-node .vb-node-box .vb-history-ver { grid-row: span 2; font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font-mono); color: var(--vb-ink); }
+vb-node .vb-node-box .vb-history-words { color: var(--vb-ink-strong); }
+vb-node .vb-node-box .vb-history-meta { grid-column: 2; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
+vb-node .vb-node-box :is(.vb-history-time, .vb-history-agent) { color: inherit; }
+/* A proposal in the box: its sections take the body's room. */
+vb-node .vb-card-pop.vb-node-box > .vb-prop { padding: var(--vb-space-2) var(--vb-space-3); font-size: var(--vb-text-md); }
+vb-node .vb-node-box .vb-prop-head { font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); letter-spacing: 0; text-transform: none; color: var(--vb-ink-strong); }
+
+/* The conversation box in it: its number chip, a compact field, the thread's room. */
+vb-note-bubble.vb-node-box {
+  .vb-nb-num { min-width: 26px; height: 20px; font-size: var(--vb-text-sm); }
+  .vb-nb-thread { max-height: 240px; }
+  .vb-nb-note, .vb-nb-reply { padding: var(--vb-space-1) var(--vb-space-2); }
+  .vb-nb-who { font-size: var(--vb-text-xs); }
+  .vb-nb-text, .vb-nb-btn { font-size: var(--vb-text-md); }
+  .vb-nb-btn { height: 28px; }
+  .vb-nb-tabs { padding: 0 var(--vb-space-2); border-bottom: 1px solid var(--vb-line); }
+}

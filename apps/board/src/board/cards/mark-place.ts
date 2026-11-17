@@ -48,3 +48,39 @@ export function moveTo(el: HTMLElement, at: { x: number; y: number }): void {
   el.style.left = `${at.x}px`;
   el.style.top = `${at.y}px`;
 }
+
+/** The room between a node and a box beside it, and how near a corner its arrow may come. */
+export const BOX_GAP = 12;
+const ARROW_CORNER = 16;
+
+/** Where a box beside a node goes, and where its arrow meets the box's edge (`arrow`: down the left edge on the right,
+ *  along the top edge below), in stage pixels. */
+export interface BoxPlace { side: 'right' | 'below'; x: number; y: number; arrow: number }
+
+/**
+ * One place for every box that opens beside a node, the conversation, the proposal and the history box (the
+ * maintainer's ruling, FE_03 run 2): its top level with the node's top, to the node's right when the stage has room,
+ * else below the node with their left edges aligned; never over the node. Its arrow points at `mark`, what opened it
+ * (the node itself when none). Below, it is kept inside the stage across only, so it never slides over the node. Pure.
+ */
+export function placeBeside(node: StageBox, size: { w: number; h: number }, stage: { w: number; h: number }, mark: StageBox = node): BoxPlace {
+  const right = node.x + node.w + BOX_GAP;
+  if (right + size.w <= stage.w - STAGE_EDGE) {
+    const y = Math.round(node.y);
+    return { side: 'right', x: Math.round(right), y, arrow: clamp(mark.y + mark.h / 2 - y, ARROW_CORNER, size.h - ARROW_CORNER) };
+  }
+  const x = clamp(node.x, STAGE_EDGE, stage.w - size.w - STAGE_EDGE);
+  return { side: 'below', x, y: Math.round(node.y + node.h + BOX_GAP), arrow: clamp(mark.x + mark.w / 2 - x, ARROW_CORNER, size.w - ARROW_CORNER) };
+}
+
+/** A node's box for `placeBeside`, on the stage: its top and left as its border's, its right and bottom reaching past
+ *  the marks that hang off those edges (the disc, the badge, the notes mark), so a box beside it never covers one. */
+export function nodeReach(card: Element, stage: HTMLElement): StageBox {
+  const b = stageBoxOf(card, stage);
+  let [r, d] = [b.x + b.w, b.y + b.h];
+  for (const m of card.querySelectorAll('[data-mark]')) {
+    const at = stageBoxOf(m, stage);
+    if (at.w) [r, d] = [Math.max(r, at.x + at.w), Math.max(d, at.y + at.h)];
+  }
+  return { x: b.x, y: b.y, w: r - b.x, h: d - b.y };
+}

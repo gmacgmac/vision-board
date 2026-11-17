@@ -79,6 +79,8 @@ export function defineVbNoteBubble(): void {
       this.setAttribute('role', 'dialog');
       this.setAttribute('aria-label', v.heading);
       this.dataset.mode = v.mode;
+      // The conversation box is a box beside a node (node-box.css), styled as the history and proposal boxes are.
+      this.classList.toggle('vb-node-box', v.mode === 'conversation');
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
       if (card.line) this.style.setProperty('--vb-kind', card.line);
       else if (card.kind) this.style.setProperty('--vb-kind', `var(--vb-kind-${card.kind})`);

@@ -64,7 +64,7 @@ export function replyScope(s: LedgerState, board: string, since: number, agent?:
     for (const id of scopeOf(s, e).cards) cards.add(numberOf(s, id));
     if (isContainerAct(e)) regions.add(e.region!);
   }
-  return { since, cards, regions };
+  return { since, cards, regions, asked: new Set(s.asked.get(board)?.keys() ?? []) };
 }
 
 /** The ✓, ✗, Later and clear acts the agent reads after `after` (D-045 ruling 9): per card only its

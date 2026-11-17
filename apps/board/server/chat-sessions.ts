@@ -8,7 +8,9 @@
 // and the board's Send hands them on their own (`send`, panel-send ruling 1), recorded once they went (point 383): one builder,
 // chat-prompt.ts `promptFor`. The answers and the cards are read as any host reads a chip, through the
 // engine's `resolve` (`ChatOptions.resolve`, D-074 rule 6). A message waits while a turn runs (ruling 5; words alone too, point
-// 328), joined with any already waiting. Each session's approvals are decided by the access rules of
+// 328), joined with any already waiting. Ask now (an `ask` the person's page records, api.md 188) is handed to the
+// session in use on its board as its own message, the asked notes and the board with no answers and no Send (`hearAsk`);
+// while a turn runs they ride with the next message. The `ask` stays the record an agent's `check_responses` wakes on. Each session's approvals are decided by the access rules of
 // the board's folder (D-066), with the folder's kept yeses (`chat-permissions.ts`); `approvalHold` and
 // `strictAccess` (the `agentAccessRules` flag off) come from the server's flags.
 import fs from 'node:fs';
@@ -112,10 +114,11 @@ const notFound = (id: string) =>
 
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 const notHandedOver = (err: unknown): undefined => { console.error(`chat: the Send's answers were not handed over: ${reason(err)}`); };
+const notAsked = (err: unknown): undefined => { console.error(`chat: an ask was not handed over: ${reason(err)}`); };
 
 /** A message waiting for a turn to end: the person's words and chips, the Send it covers from, and the
  * board's Send it records when it goes, given the line its answers were read through (none: recorded already). */
-interface Held { msg: ChatMessage; before: number; record?: ((head: number | undefined) => unknown) | undefined }
+interface Held { msg: ChatMessage; before: number; record?: ((head: number | undefined) => unknown) | undefined; ask?: true }
 
 const union = (a: number[] = [], b: number[] = []) => [...new Set([...a, ...b])];
 
@@ -222,7 +225,8 @@ export function openChats(o: ChatOptions): Chats {
       waiting.delete(id);
       // Read-only, as locked: the words go alone, with no round and no Send (D-085 3).
       const closed = ledger.readOnly();
-      const round = closed ? undefined : unsaid(live, board, held.before);
+      // Ask now carries its notes alone: the board's other answers wait for Send, and they stay untold (api.md 188).
+      const round = closed || held.ask ? undefined : unsaid(live, board, held.before);
       const s = ledger.state();
       const { msg, said } = checked(cwd, held.msg);
       const built = promptFor(s, resolve, board, msg, round);
@@ -232,7 +236,7 @@ export function openChats(o: ChatOptions): Chats {
       // On a locked board the words and chips go alone: no round (unsaid), and no Send to record. The round was
       // read just now, through `s.seq`, and the Send is recorded in the same step, so it says so (`head`); a record
       // refused hands over nothing.
-      if (!isLocked(s, board) && !closed) {
+      if (!isLocked(s, board) && !closed && !held.ask) {
         held.record?.(sendHead ? s.seq : undefined);
         told.set(id, s.seq);
       }
@@ -258,8 +262,18 @@ export function openChats(o: ChatOptions): Chats {
     }, QUEUED_WORDS);
   }
 
-  /** A session on no board moves to the first board its own agent creates (panel-send ruling 2). */
+  /** Ask now: the board's session gets the asked notes and the board, never the other answers (or with the next message). */
+  async function hearAsk(board: string, notes: number[]): Promise<void> {
+    const stored = current(board);
+    const session = stored && !starts.has(key(board)) ? await live(stored.session) : undefined;
+    const [held, was]: [Held, Held | undefined] = [{ msg: { notes, ask: true }, before: Infinity, ask: true }, session?.busy ? waiting.get(stored!.session) : undefined];
+    if (session) deliver(session, board, was ? joined(was, held) : held);
+  }
+
+  /** A session on no board moves to the first board its own agent creates (panel-send ruling 2); an `ask` reaches the
+   *  board's session (`hearAsk`). */
   const offAppend = ledger.onAppend((e) => {
+    if (e.type === 'act' && e.action === 'ask' && e.by === 'person' && e.board !== undefined) return void hearAsk(e.board, e.lines!).catch(notAsked);
     if (e.type !== 'board' || e.by !== 'agent' || !index) return;
     const waiting = entries().find((x) => x.board === undefined && x.agentId === e.agent);
     if (waiting && creatorOf(ledger.state(), e.board) === e.agent) store().attach(waiting.session, e.board);

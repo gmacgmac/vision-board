@@ -7,7 +7,8 @@ import type { MarkdownOptions } from '../markdown/render.ts';
 import { esc } from '../markdown/inline.ts';
 import { MAX_TEXT } from '#format';
 import type { BoxView, BubbleView } from './note-bubble-core.ts';
-import { button, closeX, conversationList } from './note-bubble-template.ts';
+import { ACTION_ICON, svgIcon } from '../node/node-icons.ts';
+import { button, conversationList } from './note-bubble-template.ts';
 import * as noteBubbleWords from '../words/note-bubble.ts';
 
 const tabs = (b: BoxView): string => (b.tabs.length < 2 ? ''
@@ -28,9 +29,11 @@ const ask = (b: BoxView): string =>
 export function conversationTemplate(v: BubbleView, number?: number, md?: MarkdownOptions): string {
   const b = v.box!;
   const chip = number === undefined ? '' : `<span class="vb-nb-num" aria-hidden="true">${number}</span>`;
-  const head = `<div class="vb-nb-head">${chip}<span class="vb-nb-title">${esc(b.title)}</span>${closeX(v.cancel)}</div>`;
+  // The box beside a node's head (node-box.css), as the history box's: the number, the title, the ×.
+  const x = `<button type="button" class="vb-node-box-x" data-note-do="cancel" aria-label="${esc(v.cancel)}">${svgIcon(ACTION_ICON.drop!, 20, 'vb-node-box-x-icon')}</button>`;
+  const head = `<div class="vb-node-box-head">${chip}<span class="vb-node-box-title">${esc(b.title)}</span>${x}</div>`;
   const field = `<textarea class="vb-nb-text" aria-label="${esc(v.placeholder)}" rows="1" maxlength="${MAX_TEXT}" placeholder="${esc(v.placeholder)}">${esc(v.text)}</textarea>`;
   const add = button('save', v.primary!, true).replace('<button ', `<button title="${esc(b.addTip)}" `);
-  return `${head}${tabs(b)}${thread(v, b, md)}${field}<p class="vb-nb-error" role="alert" hidden></p>`
-    + `<div class="vb-nb-row vb-nb-pair">${ask(b)}${add}</div>`;
+  return `${head}${tabs(b)}<div class="vb-node-box-body">${thread(v, b, md)}${field}<p class="vb-nb-error" role="alert" hidden></p>`
+    + `<div class="vb-nb-row vb-nb-pair">${ask(b)}${add}</div></div>`;
 }

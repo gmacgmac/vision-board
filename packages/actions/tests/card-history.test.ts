@@ -110,12 +110,20 @@ test('every kind the model names is drawn by some line, and the app\'s allow and
   l.act({ action: 'app-allow', app: 'converter', hash: 'a'.repeat(64) });
   l.act({ action: 'app-revoke', app: 'calculator' });
   l.act({ action: 'note-remove', n: 5, note: l.act({ action: 'comment', n: 5, ver: 1, text: NOTE }) });
+  // A proposal on v1 that v2 makes out of date: withdrawn, above the version that withdrew it (DESIGN_01 review).
+  l.agent(A, { type: 'propose', n: 3, ver: 1, action: 'ack', reason: REASON });
+  l.agent(A, { type: 'node', board: 'b', n: 3, ver: 2, node: { region: 'r', kind: 'question', title: 'Node 3, again' } });
+  const three = cardHistory(events(l), 3);
+  assert.deepEqual(said(three.slice(0, 2)), [['proposal-withdrawn', 'Proposal withdrawn: the node changed'], ['drawn', 'Agent drew v2']]);
+  const s = foldLedger(events(l));
+  assert.deepEqual(cardTimeRows(s, 3), cardHistory(events(l), 3, s.agents).filter((r) => TIME_KINDS.has(r.kind)));
+  assert.deepEqual(cardTimeRows(s, 3).slice(0, 2).map((r) => [r.kind, r.ver]), [['proposal-withdrawn', undefined], ['drawn', 2]]);
   const app = cardHistory(events(l), 5);
   assert.deepEqual(said(app), [
     ['note-removed', 'You removed a note'], ['note-sent', 'You sent a note'],
     ['app-stopped', 'You stopped the app'], ['app-allowed', 'You allowed the app'], ['drawn', 'Agent drew v1'],
   ]);
-  const seen = new Set([...cardHistory(events(l), 1), ...app].map((r) => r.kind));
+  const seen = new Set([...cardHistory(events(l), 1), ...app, ...three].map((r) => r.kind));
   assert.deepEqual(HISTORY_KINDS.filter((k) => !seen.has(k)), []);
   assert.equal(cardHistory(events(l), 1).some((r) => r.kind.startsWith('app-')), false, 'not on a card without the app');
 });
@@ -206,7 +214,7 @@ test('card times: the box\'s kinds only, newest first, as cardHistory says them,
   for (const id of [1, 2, 5]) assert.deepEqual(cardTimeRows(s, id), boxRows(lines, id), `card ${id}`);
   assert.deepEqual(cardTimeRows(s, 1).map((r) => r.kind), ['reopened', 'cross', 'check', 'drawn', 'replied', 'note-sent', 'note-sent', 'drawn']);
   assert.deepEqual(said(cardTimeRows(s, 5)), [['app-stopped', 'You stopped the app'], ['app-allowed', 'You allowed the app'], ['drawn', 'Agent drew v1']]);
-  assert.deepEqual([...TIME_KINDS].sort(), ['app-allowed', 'app-stopped', 'check', 'cross', 'drawn', 'note-sent', 'reopened', 'replied']);
+  assert.deepEqual([...TIME_KINDS].sort(), ['app-allowed', 'app-stopped', 'check', 'cross', 'drawn', 'note-sent', 'proposal-withdrawn', 'reopened', 'replied']);
 });
 
 test('card times keep no words and no private mark, and a removed note numbers as the card does', () => {

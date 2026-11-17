@@ -200,7 +200,7 @@ for (const theme of ['dark', 'light'] as Theme[]) {
         expect(lc(ink, back), `${sel} in ${theme}`).toBeGreaterThanOrEqual(min);
       }
     };
-    await check({ '.vb-nb-note-text': 60, '.vb-nb-reply-text': 60, '.vb-nb-title': 60, '.vb-nb-who em': 45, '.vb-nb-ask': 45 });
+    await check({ '.vb-nb-note-text': 60, '.vb-nb-reply-text': 60, '.vb-node-box-title': 60, '.vb-nb-who em': 45, '.vb-nb-ask': 45 });
     await box(page).getByRole('button', { name: 'Ask now' }).click(); // the note goes: "Waiting for the agent" shows
     await expect(box(page).locator('.vb-nb-wait')).toBeVisible();
     await check({ '.vb-nb-wait': 45 });

@@ -133,7 +133,8 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
     }
     if (mark === 'tick' || mark === 'cross') return void answer(id, mark === 'tick' ? 'ack' : 'drop');
     if (mark === 'badge') return toggleBox(id, 'history', el);
-    if (mark === 'notes') void d.act(id, 'comment');
+    // The conversation is a box beside the node too: one box at a time.
+    if (mark === 'notes') { close(); void d.act(id, 'comment'); }
   }
 
   /** A history row that took the person to a note asks its box to close (history-flow.ts, `POPOVER_CLOSE`). */
@@ -154,6 +155,7 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
     place() {
       if (open?.box && !open.box.el.isConnected) close();
       open?.menu?.place();
+      open?.box?.place();
       tips.place();
     },
     destroy() {

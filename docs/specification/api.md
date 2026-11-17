@@ -2040,7 +2040,11 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     (`note-lock.ts` `sentAfter`), and the one-unsent-note rule (59) counts it as sent, so the node takes a new one.
     `check_responses` reports the note as it reports a sent one, and the `ask` line with its `context`; an `ask` ends a
     `check_responses` wait as a Send does, for the agents its notes concern (`reads.ts` `wakes`). The agent
-    answers as before: a `reply` naming the note's `seq`, or a new version of the node (`ask-now.test.ts`).
+    answers as before: a `reply` naming the note's `seq`, or a new version of the node (`ask-now.test.ts`). The
+    standalone server also hands the board's chat session in use the asked notes at once, with the board, as their own
+    message ("Asked now."): never the board's other answers, and no Send, so those still go with the next Send; while
+    its turn runs they ride with the next message (`chat-sessions.ts` `hearAsk`, `api-chat-ask.test.ts`). A Send's
+    round never carries an asked note again (`pending.ts` `replyScope` `asked`).
 189. **A flow's direction** (D-100 5). A region may carry `direction`, `across` or `down` (`DIRECTIONS`), set by the
     agent with any redraw, on any region; the layout reads it for `flow` (BE_01). The person's `direction` act
     `{ board, region?, direction }`, `direction` one of `across`, `down` or `auto`; no `region` means the whole board,

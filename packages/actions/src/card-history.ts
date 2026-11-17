@@ -20,7 +20,7 @@ import * as actionsHistoryWords from './words/actions-history.ts';
 export const HISTORY_KINDS = [
   'drawn', 'note-sent', 'note-edited', 'note-removed', 'context', 'replied', 'check', 'cross', 'reopened',
   'later', 'parked', 'size', 'moved', 'pinned', 'reset', 'proposed', 'proposal-answered', 'app-allowed',
-  'app-stopped', 'removed',
+  'app-stopped', 'removed', 'proposal-withdrawn',
 ] as const;
 export type HistoryKind = (typeof HISTORY_KINDS)[number];
 
@@ -30,6 +30,8 @@ export type HistoryKind = (typeof HISTORY_KINDS)[number];
 export interface HistoryRow {
   seq: number; at: string; who: 'person' | 'agent'; agent?: string; kind: HistoryKind; words: string;
   note?: number; reply?: number;
+  /** The version a `drawn` row drew (the history box shows it, nodeEdges). */
+  ver?: number;
 }
 
 /** What a row says, as data, before its words: its kind, the `seq` of the note it names (its own, the
@@ -70,6 +72,7 @@ const SAY: Record<HistoryKind, (d: Said, n?: number) => string> = {
   'app-allowed': () => actionsHistoryWords.allowedTheApp,
   'app-stopped': () => actionsHistoryWords.stoppedTheApp,
   removed: () => actionsHistoryWords.removedIt,
+  'proposal-withdrawn': () => actionsHistoryWords.proposalWithdrawn,
 };
 
 /** The cards a line is about, by identity: its own card, every card of a group note, the cards of the
@@ -142,8 +145,9 @@ export function historyRow(line: RowLine, d: Said, numbers: ReadonlyMap<number, 
   const agent = line.by === 'agent' && line.agent !== undefined ? labels?.get(line.agent) ?? line.agent : undefined;
   return {
     seq: line.seq, at: line.at, who: line.by, ...(agent !== undefined && { agent }), kind: d.kind,
-    words: `${line.by === 'person' ? actionsHistoryWords.you : actionsHistoryWords.agent} ${SAY[d.kind](d, n)}`,
-    ...(n !== undefined && { note: d.note }), ...(d.kind === 'replied' && { reply: line.seq }),
+    // A proposal withdrawn is nobody's act: the node changed under it (the design review of DESIGN_01).
+    words: d.kind === 'proposal-withdrawn' ? SAY[d.kind](d) : `${line.by === 'person' ? actionsHistoryWords.you : actionsHistoryWords.agent} ${SAY[d.kind](d, n)}`,
+    ...(n !== undefined && { note: d.note }), ...(d.kind === 'replied' && { reply: line.seq }), ...(d.ver !== undefined && { ver: d.ver }),
   };
 }
 
@@ -155,11 +159,21 @@ export function cardHistory(events: readonly LedgerEvent[], id: number, labels?:
   let app: string | undefined;
   const look: Lookup = { ask: (seq) => asks.get(seq), appCards: (a) => (a === app ? [id] : []) };
   const drafts: { e: LedgerEvent; d: Said }[] = [];
+  /** The card's open proposals (`seq` -> the version each was made on) and the version drawn last. */
+  const open = new Map<number, number>();
+  let ver = 0;
   for (const e of events) {
     // An allow or stop shows from the first line that draws the card with its app.
     if (e.type === 'node' && e.id === id) app = e.node.app?.id;
     if (!cardsAbout(e, look).includes(id)) continue;
     const d = saidOf(e, look);
+    // A version over an open proposal made on the one before withdraws it (card-times.ts `withdrawn`), above the version.
+    if (e.type === 'node') {
+      if ([...open.values()].some((v) => v < e.ver && v >= ver)) drafts.push({ e, d: { kind: 'proposal-withdrawn' } });
+      ver = e.ver;
+    } else if (e.type === 'propose') open.set(e.seq, e.ver);
+    else if (e.type === 'act' && (e.action === 'ack' || e.action === 'drop')) open.clear();
+    else if (e.type === 'act' && e.action === 'reject') open.delete(e.proposal!);
     if (d) drafts.push({ e, d });
     // The card's asks, as edited and removed, number its notes once every line is read.
     if (e.type === 'act' && (e.action === 'comment' || e.action === 'context')) asks.set(e.seq, askOf(e, () => 0));
