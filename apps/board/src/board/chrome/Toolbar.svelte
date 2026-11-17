@@ -59,13 +59,13 @@
   import { rowText } from '../find/index.ts';
   import type { CommandId } from '../input/index.ts';
   import type { AccessHolder } from '#actions';
-  import type { Skin } from '#format';
+  import type { ActDirection, Skin } from '#format';
   import * as chromeBoardsWords from '../words/chrome-boards.ts';
 
   const chrome = useChrome();
   const { parts, flag } = chrome;
 
-  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onbookmarked, onarchive, onlock, onskin, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
+  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onbookmarked, onarchive, onlock, onskin, ondirection, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
     onboard: (id: string) => unknown;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
@@ -86,6 +86,8 @@
     onlock: () => void;
     /** The board's skin in the "⋯" menu (skins flag, D-100 2); left out, no Skin rows. */
     onskin?: ((skin: Skin) => void) | undefined;
+    /** Which way the board's flows run, in the "⋯" menu (flowDirection flag, D-100 5); left out, no Flows rows. */
+    ondirection?: ((direction: ActDirection) => void) | undefined;
     placement?: 'board' | 'gallery';
     /** The form to draw (the gallery's); left out, the bar's own width says. */
     form?: HeaderTier;
@@ -218,7 +220,7 @@
       {/if}
     {/if}
   </div>
-  <ToolbarEnd {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} {onskin} menu={toolbarMenu}
+  <ToolbarEnd {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} {onskin} {ondirection} menu={toolbarMenu}
     {holders} {placement} {zoom} {menuOpen} {zoomOpen} {look} {send} tier={adaptive ? tier : undefined} {also} folderAbove={adaptive && inMenu(tier, 'folder') && !!parts.folderField}
     ledgerAbove={adaptive && inMenu(tier, 'ledger') && !!parts.ledgerField}
     fields={adaptive && tier !== 'full' ? fields : undefined} />

@@ -1,4 +1,4 @@
-import type { Box, Link, Mode, Point, Region, Size, ViewNode, Widths } from '#format';
+import type { Box, Direction, Link, Mode, Point, Region, Size, ViewNode, Widths } from '#format';
 
 // The box types are format's (geometry.ts); a layout's callers reach them here.
 export type { Box, Point, Size };
@@ -20,6 +20,11 @@ export interface ModeInput {
   widths?: Widths | undefined;
   /** The gap between a card and the card under it (column, grid rows, flow, a lane's stacks); absent: GAP. */
   rowGap?: number | undefined;
+  /** Which way a `flow` runs (`directionOf`, flowDirection flag): `down` lays its layers top to bottom; absent, `across`. */
+  direction?: Direction | undefined;
+  /** The flowBranches flag (BE_01): a flow keeps each branch of a fork on its own row (branches.ts), and a `row` or
+   *  `column` whose links are more than a chain in card order is laid out as a flow across or down. Absent, off. */
+  branching?: boolean | undefined;
 }
 
 export interface Lane { name: string; y: number; h: number }
@@ -33,6 +38,8 @@ export interface ModeOutput {
   pos: Map<string, Box>;
   lanes?: Lane[];
   cells?: Map<string, Cell>;
+  /** The cards were laid out as a flow running down: their links leave and enter by the top and bottom first. */
+  down?: boolean;
 }
 
 export type ModeFn = (input: ModeInput) => ModeOutput;
@@ -56,8 +63,13 @@ export interface LayoutOptions {
   widths?: Map<string, Widths>;
   /** The viewer's alignment (ruling 4); default `start` (top, or left for vertical layouts). */
   align?: Align;
-  /** The gap between a card and the card under it; absent: GAP. The board passes ROW_GAP with updateSignals. */
+  /** The gap between a card and the card under it; absent: GAP. The board passes ROW_GAP with updateSignals, and
+   *  EDGE_ROW_GAP when its nodes draw their marks on their edges (nodeEdges). */
   rowGap?: number;
+  /** Which way each `flow` container runs (region id -> `directionOf`, flowDirection flag); left out, `across`. */
+  directions?: Map<string, Direction>;
+  /** The flowBranches flag (ModeInput.branching); absent, off. */
+  branching?: boolean;
   /** Nodes not drawn (e.g. decided items when hidden). */
   hidden?: Set<string>;
   /** Width after which regions wrap to a new row. */
@@ -125,6 +137,8 @@ export interface BoardLayout {
   /** Node id -> its container, for the cards whose links route around cards (every mode but
    *  radial). Pass it to `routeLinks` to route moved boxes the same way (a drag). */
   groups: Map<string, string>;
+  /** The containers laid out as a flow running down (ModeOutput.down): pass it to `routeLinks` with `groups`. */
+  downward: Set<string>;
 }
 
 export const GAP = 24;
@@ -133,6 +147,11 @@ export const GAP = 24;
  *  tabs (11px above it) by 3 to 4px.
  *  Cards side by side stay GAP apart. */
 export const ROW_GAP = 30;
+/** The gap under a node that draws its marks on its edges (nodeEdges, D-099): the bottom marks hang 11px below it
+ *  (--vb-mark-h 22px, centred on the border) and the next node's answer disc 14px above (--vb-answer-size 28px), a
+ *  proposal's ring 5px more; this leaves about 10px clear between them. Side by side stays GAP: no mark overhangs a
+ *  node's sides. */
+export const EDGE_ROW_GAP = 40;
 export const COL_GAP = 72;
 export const REGION_PAD = 28;
 /** The top line of a region's frame: how far below the frame's top edge the content starts. The

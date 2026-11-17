@@ -12,7 +12,8 @@
 // chat-side.ts (the board's side of its host's chat); controller/ holds the pieces split out of it.
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
-import type { FlagName, LedgerEvent, Skin, View, ViewNode } from '#format';
+import type { ActDirection, FlagName, LedgerEvent, Skin, View, ViewNode } from '#format';
+import { directionOf } from '#format';
 import { ROW_GAP } from '#layout';
 import type { CardConditions } from '#ui';
 import { MARK_MOMENT_WORDS, nodeState } from '#ui';
@@ -110,6 +111,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), bookmark: bookmarking, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), layoutTooltip: on('layoutTooltip'), fresh: () => edges.fresh(attention.freshIn()),
     facts, appCards: apping, ...(edges.first && { edges: edges.first }), placed: () => apps.place(),
+    branching: on('flowBranches'), ...(on('flowDirection') && { direction: (r: string) => directionOf((versions.state ?? live.state)!, S.id, r) }), // BE_01
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
   selection.onChange((c) => { drawing.restate(c.changed); status.set({ selection: c.text }); flow.dismissArea(); flow.place(); });
@@ -143,6 +145,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     S.fresh = S.drew = false;
     const d = boardData(s, S.id);
     edges.skin(skinOf(s, S.id)); // the board's skin, before its nodes draw (skins flag)
+    if (on('flowDirection')) status.set({ direction: live.state?.directions.get(S.id)?.board ?? 'auto' }); // the "⋯" menu's Flows rows (BE_01)
     if (!bookmarking) d.state.bookmarks.clear(); // the person's bookmarks show only with the flag on
     if (live.readOnly && !versions.state) d.state.readOnly = true; // the reads' word, for the elements (D-085)
     S.retired = retiring ? retiredCounts(s, S.id, versionView) : new Map();
@@ -337,6 +340,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
     nextBookmarked: () => bookmarks.next(),
     setSkin: (skin: Skin) => void attempt({ action: 'skin', skin }),
+    setDirection: (direction: ActDirection) => void attempt({ action: 'direction', direction }),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),
     destroy: () => { S.stopped = true; cancelAnimationFrame(S.frame); finishAll([unchat, boards.stop, attention.destroy, unbind, edges.destroy, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle]); },
   };

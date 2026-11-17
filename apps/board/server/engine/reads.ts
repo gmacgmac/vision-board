@@ -7,7 +7,7 @@
 // the host's (the standalone server's streams.ts, from `watch`). What a read tells its caller about itself (`owed`,
 // `answered`, `held`; the `botToolRules` flag) is caller-marks.ts.
 import type { LedgerEvent } from '#format';
-import { boardView, containerKey, flagOn, ICON_NAMES, toLine, widthsOf } from '#format';
+import { boardView, containerKey, directionOf, flagOn, ICON_NAMES, toLine, widthsOf } from '#format';
 import type { LedgerState } from '#actions';
 import {
   boardData, boardJson, boardList, boardState, containerDetail, eventBoard, linkedDetails, nodeDetail, openContainers, openItems,
@@ -71,10 +71,10 @@ const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
 
 /** How the board arranges one container (api.md 133), structure only: the cards in it now (the
  * person's moves count, retired cards are out) in card order, the links between them, the mode the
- * board shows and the card widths in effect, worked out by the layout package as the page lays them
+ * board shows, the card widths in effect and, with flowDirection, the direction a flow runs (api.md 189), worked out by the layout package as the page lays them
  * out. Board numbers out: a View node's id is its number. A retired container, like an unknown one
  * or the built-in Later, is `not-found`: nothing is arranged in it. */
-const showLayout: Op = ({ params, ledger }) => {
+const showLayout: Op = ({ params, ledger, flags }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const region = String(params.region);
@@ -89,7 +89,9 @@ const showLayout: Op = ({ params, ledger }) => {
   const view = placedView(drawn, st);
   const mode = st.modes.get(region) ?? r.mode;
   const widths = widthsOf(mode, r.widths, st.widths.get(region));
-  const out = structureOf(r, view.nodes.filter((n) => n.region === region), view.links, mode, widths);
+  // As the page lays it out: the direction a flow runs (flowDirection) and branches on their own rows (flowBranches).
+  const drawnAs = { branching: flagOn('flowBranches', flags), ...(flagOn('flowDirection', flags) && { direction: directionOf(s, board, region) }) };
+  const out = structureOf(r, view.nodes.filter((n) => n.region === region), view.links, mode, widths, drawnAs);
   return reply(200, {
     head: s.seq, board, region, mode, widths, ...(out.lanes && { lanes: out.lanes }), columns: out.columns,
     cards: out.cards.map(({ id, ...cell }) => ({ n: Number(id), ...cell })), links: out.links, crossing: out.crossing, empty: out.empty,

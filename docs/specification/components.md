@@ -1860,3 +1860,47 @@ the board is idle or on the first press). Behind `nodeEdges`; the skin behind `s
     time; size and place while zooming and panning; axe, dark and light) and `node-edges-seen.spec.ts` (the root, the
     container seen and N47, the icon library, the grip, the skin, a locked board, a failed write).
 
+
+## Flow branching and direction (PLAN decisions 19 and 25, D-100 5; node overhaul BE_01)
+
+Two flags, off by default until T_04: `flowBranches` and `flowDirection` (`packages/format/src/flags.ts`). The layout
+stays a pure function: both arrive as inputs (`LayoutOptions.branching`, `LayoutOptions.directions`), never a page read.
+
+1. **Branches on rows** (`flowBranches`, `packages/layout/src/modes/branches.ts` `branchRows`): a flow is drawn as
+   chains, each on one row from its first card to its last. The main line follows each card's first link in card order;
+   a branch takes the nearest row to the card it forks from (below first, then above) that is free over its whole run;
+   a branch that rejoins keeps its row up to the column before the card it rejoins, so it comes back with one link; a
+   run that skips columns keeps its row empty there, so its long link runs straight. Cards not linked to each other are
+   separate bands of rows. `flow.ts` keeps the rows unless their links, routed as the board routes them, cross more than
+   the stacked flow's (up to `ROUTE_WEIGH`, 30 links; above it, straight strokes), so branching never adds a crossing.
+2. **A linked row or column** (`modes/grid.ts` `row`, `column`, `plainChain`): with `flowBranches`, a `row` whose links
+   are more than a chain in card order (a link between two cards that are not neighbours in card order) is laid out as
+   a flow across, a `column` as a flow down. No links, or a plain chain, draws exactly as before.
+3. **Down** (`flowDirection`, `flow.ts` `down`): a flow across on cards turned a quarter, turned back; layers top to
+   bottom `COL_GAP` apart, cards in a layer side by side `GAP` apart; under `match`, every card the widest card's width;
+   cells read as drawn. `ModeOutput.down` marks it, `BoardLayout.downward` names those containers, and the router
+   (`routeLinks(links, boxes, groups, downward)`) leaves and enters such cards by the bottom and top first
+   (`ports.ts` `sidesFor`), with ports kept off the middle fifth of the side, where the kind tab sits (`offCentre`). A
+   drag reroutes with the layout's `downward` too (`input/wiring.ts`, `selection/container-drag.ts`).
+4. **Which way** (`directionOf`, api.md 189): the page passes each container's direction from `directionOf` on the
+   shown state (`canvas/draw.ts` `DrawDeps.direction`); `show_layout` reads the same fold with the engine's flags
+   (`server/engine/reads.ts` `showLayout`), so its answer stays true for the picture. The layout cache keys a container
+   on its direction and on `branching` (`canvas/layout-cache.ts`).
+5. **The board's choice** (`chrome/ToolbarMenu.svelte`): the "⋯" menu's Flows rows, Flows across, Flows down and
+   Flows: Auto (`menuitemradio`, the person's board-wide choice ticked, Auto when they made none), write the `direction`
+   act with no `region` through the one sender (`controller.ts` `setDirection`; `io/acts.ts` names its board); Auto
+   clears the choice, giving back each container's own. Paused, with the reason, on a read-only ledger or a past
+   version. A container's own choice is FE_07's layout control. Words: `words/toolbar.ts` `directionName`,
+   `directionTip`.
+6. **Room for edge marks** (`nodeEdges`, `packages/layout/src/types.ts` `EDGE_ROW_GAP` = 40): while nodes draw their
+   marks on their edges (a skin whose marks are `edges`), the gap under a node is at least 40px, so its bottom marks
+   (11px below) and the next node's number, kind tab and disc (14px above) stay clear; side by side stays `GAP`.
+   Off, the gap is as before.
+7. **Kept true by**: `packages/layout/tests/flow-branches.test.ts` (the maintainer's example before and after, in row,
+   column and flow, both directions; flags off unchanged; down is across turned; `structureOf` agrees; seeded boards
+   with no overlap, no line under a card off the fallback, deterministic; never more crossings; the edge gap),
+   `layout.timing.ts` (1,000 cards and 1,200 links with branches, across and down, under 100 ms),
+   `apps/board/tests/flow-direction-layout.test.ts` (the precedence as the layout sees it, another page draws the same,
+   the cache), `api-layout-direction.test.ts` (`show_layout` both ways); in a browser, `tests/pages/flow-direction.spec.ts`
+   (the Flows rows, the act, the redraw, read-only, branching rows, the edge gap, the gallery's section, axe dark and
+   light).

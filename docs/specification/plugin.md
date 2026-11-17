@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-17 (§ The engine: `flowDirection` and `flowBranches` reach `show_layout`, node-overhaul BE_01); 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -235,6 +235,8 @@ default (`packages/format/src/flags.ts` `FLAGS`) when left out:
 | `insertBetween` | on | A `node` item of `write_board` may carry `insert` |
 | `singleAgent` | off | One agent per folder: no sign-up, no grants, no scoping (§ The bot) |
 | `followOtherWriters` | on | `watch` and a held read hear another program's writes to `dir` (`watch`, below) |
+| `flowDirection` | off | `show_layout` answers a `flow` laid out the way it runs (`directionOf`: across or down; the view's half draws it) |
+| `flowBranches` | off | `show_layout` answers a flow's branches on their own rows, and a branching `row` or `column` as a flow, as the view draws them |
 
 Flag names are plain strings in `plugin.d.ts` (`{ [name: string]: boolean }`), so a new flag is never a change to the seam, and a name the engine does not know is ignored (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone"; `apps/board/tests/engine-switches.test.ts` "every flag the engine reads is in the spec").
 
