@@ -402,6 +402,12 @@ this list differ, **this list wins**. Anything not named here is accepted as the
   skin; Command Lens may keep white, toned down.
 - **Hover**: no halo on marks. A tooltip shows only after a deliberate hover of about two seconds; keyboard focus
   shows it at once.
+- **Tone (point 366)**: when a node has a tone, everything coloured by the node follows it: the drag grip (tab), the
+  top line, the hover and selected borders and the icon tile. The kind word ("FINDING") says the kind. FE_04 applies
+  it to both skins; D-100 point 3's "the kind keeps its own mark" now means the kind word, not the grip's colour.
+- **Boxes beside a node (points 362, 363, 366)**: one placement and one style for the conversation, proposal and
+  history boxes: top aligned with the node, right if there is room else below, compact (about the node's width),
+  the history box as designed (FE_03 run 2).
 - **History box with the stepper**: as drawn.
 - **Waiting for a reply**: no three dots on the notes mark; the filled mark when the reply arrives is enough.
 - **Failed send in the conversation box**: same softened red as above.
