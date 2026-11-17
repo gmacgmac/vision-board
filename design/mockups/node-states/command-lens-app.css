@@ -13,9 +13,9 @@
 .wbtn.allow{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
 .wbtn.busy{cursor:progress;opacity:.8}
 .wbtn.busy::before{content:"";width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%}
-.wbtn.err{border:2px solid var(--cross);background:none;color:var(--cross)}
+.wbtn.err{border:2px solid var(--err);background:none;color:var(--err)}
 .m.win.sel{border-color:var(--ink2)}
-.m.win.kf{outline:2px solid var(--ink);outline-offset:5px}
+.m.win.kf{outline:2px solid var(--ring);outline-offset:5px}
 .wa{display:grid;grid-template-columns:1fr 1fr;gap:8px;height:190px;padding:10px}
 .wa div{display:grid;align-content:space-between;padding:8px 10px;border:1px solid var(--line2);border-radius:4px;background:var(--surface2);font:600 11px var(--mono);color:var(--ink2)}
 .wa div b{font:600 18px var(--disp);color:var(--ink)}

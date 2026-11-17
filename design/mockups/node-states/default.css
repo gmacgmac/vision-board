@@ -142,107 +142,103 @@ ol.bd{padding-left:20px}
 .wire{flex:none;position:relative;width:90px;height:3px;background:var(--line3)}
 .wire::after{content:"";position:absolute;right:-1px;top:-6px;border:7.5px solid transparent;border-left:11px solid var(--line3);border-right:0}
 
-/* ======== Node states (DESIGN_01) ======== */
-.oc{margin:0 0 30px;font:600 10.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
-.oc.rec::before{content:"Recommended · ";color:var(--ink)}
-.tipspace{margin-top:64px}
-.oc small{display:block;margin-top:5px;font:400 12px/1.45 var(--sys);letter-spacing:0;text-transform:none}
-.st{position:relative}
+/* ======== Node states (DESIGN_01, run 2: the maintainer's rulings) ======== */
+/* --err: the softened error red (a tokens.css change, T_02); --ring: the calmer keyboard ring */
+.v9{--err:#dc8f88;--ring:#8b9bb8}
+.v9.light{--err:#b2554f;--ring:#5a6478}
+.g1{display:grid;grid-template-columns:250px 1fr;column-gap:44px;row-gap:72px;align-items:start}
+.cells{display:flex;flex-wrap:wrap;align-items:flex-start;gap:44px 40px}
+.cell{position:relative;width:316px}
+.cell.w{width:auto}
+.cc{margin:0 0 30px;font:600 10.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.cc small{display:block;margin-top:5px;font:400 12px/1.45 var(--sys);letter-spacing:0;text-transform:none}
+.scene{position:relative}
+.scene>.n{position:absolute;left:0;top:0}
+.beside{position:absolute;left:318px;top:-14px;z-index:6}
 .kbd-l{font:600 11px var(--mono);color:var(--mut)}
-/* the bottom edge between the change badge and the notes mark (planner's call 6) */
+/* the bottom edge: change badge, then Awaiting (quiet grey, not a control), then the notes mark */
 .btm{position:absolute;bottom:-11px;left:14px;z-index:2;display:flex;gap:6px}
 .btm .badge{position:static}
-.tab{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border:1.5px solid var(--line3);border-radius:7px;background:var(--surface);color:var(--ink2);font:650 11.5px/1 var(--sys);white-space:nowrap;cursor:pointer}
+.tab{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border:1px solid var(--line3);border-radius:7px;background:var(--surface);color:var(--mut);font:600 11.5px/1 var(--sys);white-space:nowrap}
 .tab .ic{width:12px;height:12px;stroke-width:2.2}
-.tab.prop{border-color:var(--ink2);color:var(--ink)}
-.tab.stale{border-color:var(--upd);color:var(--upd)}
-.tab.await{border-style:dashed;color:var(--mut);cursor:default}
-.tab.hand{border-color:var(--ink2);color:var(--ink)}
-/* a proposal on the disc: a dashed ring with the proposed mark, hollow */
+/* an arrived handover is part of the node: a section in its body, Markdown as the agent writes it */
+.hsec{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2);font-size:12.5px;color:var(--ink2)}
+.hsec h4{margin:0 0 4px;font:700 10.5px/1.4 var(--sys);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.hsec p{margin:0 0 4px}
+.hsec ul{margin:0;padding-left:16px}
+/* a proposal: a dashed ring with the proposed mark; its box beside the disc, in the conversation box's style */
 .ans.prop{background:var(--surface);border:2px dashed var(--ok);color:var(--ok)}
 .ans.prop.x{border-color:var(--bad);color:var(--bad)}
-.ans.prop.stale{border-color:var(--upd);color:var(--upd)}
 .ans.prop::after{content:none}
-/* a box off an edge mark: proposal, handover, history (fixed size at any zoom) */
-.box{position:absolute;z-index:6;width:300px;border:1px solid var(--line3);border-radius:12px;background:var(--deep);box-shadow:var(--shl)}
-.box .bx{display:grid;gap:4px;padding:10px 12px}
-.box .bx+.bx{border-top:1px solid var(--line2)}
-.box h4{margin:0;font:700 10px/1.4 var(--sys);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
-.box p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink2)}
-.box .who{font:600 12.5px var(--sys);color:var(--ink)}
-.box .why{display:flex;gap:6px;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--upd) 12%,transparent);color:var(--ink);font-size:12px}
-.box .why .ic{width:14px;height:14px;color:var(--upd)}
-.box .bts{margin-top:6px}
-.bt[aria-disabled=true]{opacity:.45;cursor:not-allowed}
-.box .src{margin:0;padding-left:16px;font-size:12px;color:var(--ink2)}
-/* a locked or read-only board: marks stay in place and in the tab order, quiet, and say why on a press */
-.banner{display:inline-flex;align-items:center;gap:8px;margin:0 0 30px;height:30px;padding:0 12px;border:1px solid var(--line3);border-radius:8px;background:var(--surface);color:var(--ink);font:600 12.5px var(--sys)}
-.banner .ic{width:15px;height:15px;color:var(--mut)}
-.paused .num,.paused .ans,.paused .nc,.paused .badge,.paused .tab,.paused .bt{cursor:not-allowed}
-.ans.lock{background:color-mix(in srgb,var(--k) 30%,var(--sunk));color:var(--ink)}
-.ans.lock::after{content:none}
-.ans.lock .ic{width:13px;height:13px;stroke-width:2.2}
-.num.off{color:var(--mut);border-style:dashed}
-/* a write on its way, and one that failed: the mark shows it until the next press */
+.cv .pv{display:grid;gap:4px}
+.cv .pv b{font:600 13px var(--sys);color:var(--ink)}
+.cv .pv .bts{margin-top:6px}
+/* a write on its way, and one that failed: "!" stays until the next press; its tip shows, then comes back on hover */
 .ans.busy{background:var(--surface);border:2px solid var(--line3);border-top-color:var(--ink)}
 .ans.busy::after{content:none}
-.ans.err,.nc.err,.num.err{border:2px solid var(--bad);background:var(--surface);color:var(--bad)}
+.ans.err,.nc.err,.num.err{border:2px solid var(--err);background:var(--surface);color:var(--err)}
 .ans.err::after{content:none}
 .num.err{line-height:18px}
 .err-g{font:800 13px/1 var(--sys)}
-/* a tooltip: one line, the key in it; fixed size at any zoom */
+/* a tooltip or a small popover: fixed size at any zoom */
 .tip{position:absolute;z-index:8;display:inline-flex;align-items:center;gap:8px;padding:6px 9px;border:1px solid var(--line3);border-radius:8px;background:var(--deep);box-shadow:var(--shl);color:var(--ink);font:500 12px/1.3 var(--sys);white-space:nowrap}
 .tip kbd{font:600 10.5px var(--mono);color:var(--mut)}
-.tip.bad{border-color:var(--bad)}
-.tip.bad b{color:var(--bad)}
-/* keyboard focus: the node's ring sits outside its border, so it never reads as selection; a mark's ring hugs it */
-.n.kf{outline:2px solid var(--ink);outline-offset:5px}
-.f{outline:2px solid var(--ink);outline-offset:2px}
-/* hover: a halo, never a change of meaning */
-.ans.hov{box-shadow:0 0 0 2px var(--ground),0 0 0 5px color-mix(in srgb,var(--k) 40%,transparent)}
-.badge.hov{background:color-mix(in srgb,var(--upd) 16%,var(--surface))}
-.badge.new.hov{background:color-mix(in srgb,var(--new) 16%,var(--surface))}
-.nc.hov{border-color:var(--acc)}
-.kind.hov{background:color-mix(in srgb,var(--k) 26%,var(--surface));cursor:grab}
-.grip.hov{background:radial-gradient(var(--k) 1.3px,transparent 1.5px) 7px 3px/6px 4px,color-mix(in srgb,var(--k) 22%,var(--surface))}
-/* moved by you: a quiet marker on the top border, not a control */
-.moved{position:absolute;top:-9px;right:60px;z-index:2;display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border:1px solid var(--line3);border-radius:6px;background:var(--surface);color:var(--mut);font:600 10.5px/1 var(--sys)}
-.moved.tell{right:20px}
-/* dragging: lifted, the handle grabbed; open boxes close when a drag starts */
+.tip .ic{width:14px;height:14px;color:var(--mut)}
+.tip.bad{border-color:var(--err)}
+.tip.bad b{color:var(--err)}
+.tipspace{margin-top:62px}
+/* a locked or read-only board: normal at rest; a pressed mark turns into a lock for a moment */
+.banner{display:inline-flex;align-items:center;gap:8px;margin:0 0 30px;height:30px;padding:0 12px;border:1px solid var(--line3);border-radius:8px;background:var(--surface);color:var(--ink);font:600 12.5px var(--sys)}
+.banner .ic{width:15px;height:15px;color:var(--mut)}
+.ans.lk,.num.lk{background:var(--surface);border:2px solid var(--line3);color:var(--ink)}
+.ans.lk::after{content:none}
+.ans.lk .ic,.num.lk .ic{width:13px;height:13px;stroke-width:2.2}
+.num.lk{display:inline-grid;place-items:center;line-height:18px}
+/* keyboard focus: shown only after Tab (never after a click or a modifier key), in the calmer ring */
+.n.kf{outline:2px solid var(--ring);outline-offset:5px}
+.f{outline:2px solid var(--ring);outline-offset:2px}
+/* menus: the number's menu and right-click, drawn in the page's flow */
+.flow{position:relative;inset:auto;margin-top:26px}
+.pop.flow{width:240px}
+.pop .sub-l{margin-left:auto;font:500 11.5px var(--sys);color:var(--mut)}
+.pop .moved{border-top:1px solid var(--line3);border-radius:0 0 8px 8px;margin-top:3px}
+.n .pop.numpop{width:250px}
+/* dragging, emphasis, tags tinted with the node's colour, the note kind */
 .n.drag{transform:translate(6px,-6px) scale(1.02);box-shadow:0 22px 56px rgb(0 0 0 / .55);cursor:grabbing}
 .v9.light .n.drag{box-shadow:0 22px 56px rgb(24 24 27 / .28)}
-.n.ghost{border:1.5px dashed var(--line3);background:none;box-shadow:none;height:120px}
 .kind.grab{background:color-mix(in srgb,var(--k) 30%,var(--surface));cursor:grabbing}
-/* emphasis: one tier wider and a full top line in the kind's colour */
 .n.emph{width:380px}
 .n.emph::after{content:"";position:absolute;left:12px;right:12px;top:-1.5px;height:3px;border-radius:2px;background:var(--k)}
-.n.emph .kind,.n.emph .num,.n.emph .ans,.n.emph .grip{z-index:3}
-.n.ar.emph::before{content:none}
-/* the note kind: dashed, no fill */
+.n.emph .kind,.n.emph .num,.n.emph .ans{z-index:3}
+.n .chip{background:color-mix(in srgb,var(--k) 18%,var(--surface));color:color-mix(in srgb,var(--k) 72%,var(--ink))}
 .n.note{border-style:dashed;background:transparent;box-shadow:none}
-/* a container frame (Later, a drop target) as the board draws it today */
+/* a container frame (Later, a drop target) */
 .frame{position:relative;padding:58px 24px 40px;border:1px solid var(--line2);border-radius:16px;background:color-mix(in srgb,var(--surface) 35%,transparent)}
 .frame-h{position:absolute;top:14px;left:16px;right:16px;display:flex;align-items:center;gap:8px;font:650 13px var(--sys);color:var(--ink)}
 .frame-h .ic{width:15px;height:15px;color:var(--mut)}
 .frame-h i{margin-left:auto;font:500 12px var(--sys);font-style:normal;color:var(--mut)}
 .frame.drop{border:1.5px dashed var(--ink2);background:color-mix(in srgb,var(--ink) 4%,transparent)}
 .frame .n+.n{margin-top:34px}
-/* the notes mark: queued for Send, and asked now and waiting */
+/* the conversation box: tabs (this node, then each group note), queued, waiting and failed rows */
+.cvtabs{display:flex;gap:2px;padding:4px 8px 0;border-bottom:1px solid var(--line2)}
+.cvtab{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:0;border-bottom:2px solid transparent;background:none;color:var(--mut);font:600 12px var(--sys)}
+.cvtab[aria-selected=true]{border-bottom-color:var(--acc);color:var(--ink)}
+.cvtab .ic{width:14px;height:13px}
 .nc.unsent{border:1.5px dashed var(--acc)}
-.nc .dots{display:inline-flex;gap:2px}
-.nc .dots i,.msg .dots i{width:3px;height:3px;border-radius:50%;background:currentColor}
 .nc.grp .ic{width:15px}
-/* the conversation box's rows: unsent, waiting, failed */
 .msg.unsent{border-style:dashed;border-left:3px dashed var(--acc)}
 .msg i em{font-style:normal;font-weight:600;color:var(--ink2);letter-spacing:.04em;text-transform:none}
 .msg.wait{display:flex;align-items:center;gap:8px;border-left:3px solid var(--line3);color:var(--mut);font-size:12.5px}
 .msg .dots{display:inline-flex;gap:3px}
-.msg.fail{border-color:var(--bad);border-left:3px solid var(--bad)}
-.msg .retry{display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--bad);font:600 12px var(--sys)}
+.msg .dots i{width:3px;height:3px;border-radius:50%;background:currentColor}
+.msg.fail{border-color:var(--err);border-left:3px solid var(--err)}
+.msg .retry{display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--err);font:600 12px var(--sys)}
 .msg .retry button{margin-left:auto;height:26px;padding:0 9px;border:1px solid var(--line3);border-radius:7px;background:var(--deep);color:var(--ink);font:600 12px var(--sys)}
+.cv.flow{position:relative;margin-top:26px}
+.cv.flow::before{display:none}
 .cvh .grpn{display:inline-flex;gap:4px}
-.msgs .day{justify-self:center;font:600 10.5px var(--mono);color:var(--mut)}
-/* history: the stepper on top, the versions below (planner's call 9) */
+/* history: the stepper on top, the versions below */
+.box{position:absolute;z-index:6;width:300px;border:1px solid var(--line3);border-radius:12px;background:var(--deep);box-shadow:var(--shl)}
 .step{display:grid;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line2)}
 .step .sh{display:flex;align-items:center;gap:8px;font:600 12.5px var(--sys)}
 .step .sh i{margin-left:auto;font:500 11.5px var(--sys);font-style:normal;color:var(--mut)}
@@ -253,25 +249,14 @@ ol.bd{padding-left:20px}
 .step .nav{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .step.done{place-items:center;padding:16px 12px;color:var(--mut);font-size:12.5px}
 .step.done .ic{color:var(--ok)}
-/* an agent's own icon in the tile: the same box, stroke and colour as a set icon */
-.icon-spec{display:grid;grid-template-columns:repeat(3,auto);gap:10px 26px;align-items:center;justify-content:start;font-size:12px;color:var(--ink2)}
-.icon-spec .tile{border:1px dashed var(--line3)}
-.grid24{background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:4px 4px}
-.raw{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--surface)}
-/* boxes and menus drawn in the page's flow, under the node they open from */
-.flow{position:relative;inset:auto;margin-top:26px}
-.pop button[aria-disabled=true]{color:var(--mut);cursor:not-allowed}
-.pop button[aria-disabled=true] kbd{opacity:.6}
-.pop .reason{display:flex;align-items:center;gap:8px;padding:6px 10px 8px;border-bottom:1px solid var(--line3);margin-bottom:3px;color:var(--ink2);font:500 12px/1.35 var(--sys)}
-.pop .reason .ic{width:14px;height:14px}
-.pop.flow{width:220px}
-.cv.flow{position:relative;margin-top:26px}
-.cv.flow::before{display:none}
-.n.ring{outline:1.5px dashed var(--acc);outline-offset:5px}
-.gpin{position:absolute;bottom:-11px;right:76px;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border:1px solid var(--acc);border-radius:999px;background:var(--surface);color:var(--acc);font:700 11.5px/1 var(--mono)}
-.gpin .ic{width:14px;height:13px;stroke-width:2.1}
-.pop button[aria-disabled=true] .ic{color:var(--mut)}
+.bt[aria-disabled=true]{opacity:.45;cursor:not-allowed}
+.hv.wd span{color:var(--ink)}
+/* an icon from the project's library: drawn exactly as a built-in one */
 .pair{display:flex;align-items:center;gap:14px;margin-top:8px}
 .pair .arrow{color:var(--mut);font:600 16px var(--sys)}
+.raw{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:var(--surface)}
+.grid24{background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:4px 4px}
 .spec{margin:14px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink2)}
 .spec code{font:600 11.5px var(--mono);color:var(--ink)}
+.cc{min-height:56px}
+.cell.w .cc{contain:inline-size}

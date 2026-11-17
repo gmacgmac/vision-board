@@ -124,6 +124,57 @@ _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier 
 - None. Pages link shared stylesheets in the same folder (still standalone, no network) rather than repeating
   ~250 lines of CSS in 16 files; the light pages are the dark pages with the `light` class, as in `node-skins/`.
 
+### Run 2
+
+**Status**: Completed  
+**Completed**: 2026-11-17
+
+#### Changes Made
+- Redrew all 16 pages in `design/mockups/node-states/` to the maintainer's review (PLAN.md § "Design review of
+  DESIGN_01", point 328). Each state now has one design, the decided one, with a one-line caption saying what it is and
+  how it behaves. The alternative columns and the rulings' dropped rows (the moved-by-you mark, the amber out-of-date
+  state) are gone, so the pages are shorter. Every file is under 300 lines; the largest is `default.css` at 262.
+- Drew the rulings:
+  - Proposal: the box opens beside the disc in the conversation-box style. Command Lens: the plate chip plus the
+    outlined half, with the same box beside the node.
+  - Withdrawn proposal: the disc goes back to waiting, and history gets "Proposal withdrawn: the node changed".
+  - Handover: Awaiting is a quiet grey tab or chip; an arrived handover is a "Handover" section in the body.
+  - Failed write: the tip shows by itself, then the mark keeps "!" and the tip comes back on hover, in the softened
+    red.
+  - Locked and read-only: normal at rest; the pressed moment turns the disc, half or number into a lock with its
+    popover.
+  - Moved by you: "Moved by you · Put back" (R) in the number's menu and in right-click.
+  - Tags: tinted with the node's colour.
+  - Group notes: the conversation box has tabs.
+  - Focus: a calmer ring, shown after Tab only.
+  - Hover: no halos; a tooltip after about 2 s, or at once on keyboard focus.
+  - Waiting for a reply: no dots on the notes mark.
+- `README.md` was rewritten: the rulings as drawn, the error-red table, the state map and notes for the builders,
+  with no open choices left. `design/README.md`: the row now says the pages follow the rulings.
+
+#### Softened error red (a tokens.css change: T_02 shows it to the maintainer)
+- Dark: `#f07474` becomes `#dc8f88`. APCA Lc is −51.3 on the surface `#1a1a1c`, −48.4 on the box `#2c2c30` (today's
+  red gives −43.9 there, under the 45 tier), −51.2 / −52.2 on Command Lens's surface and plate, and −51.7 on the light
+  theme's dark plate `#16171a`.
+- Light: `#cc3b3b` becomes `#b2554f`. Lc is 73.3 on white, 67.4 on `#f5f5f6`, 57.5 on `#e4e4e7` and 66.7 on `#f5f4f0`.
+- Every value passes Lc 45, the tier for short coloured labels. Cross's own red (`--bad`) is unchanged; the new red is
+  for errors only.
+- Ring colours (no tier stated by the rulings): default `#8b9bb8` / `#5a6478` (Lc −47 / 74); Command Lens `#b9bfc8` /
+  `#4a4e57` (Lc −67 / 80).
+
+#### Checks
+- Every page was rendered in Chromium (Playwright from `node_modules`), dark and light, and looked at. Fresh
+  screenshots are in `temp/node-states-shots/`.
+- Found and fixed while looking: unclosed cells, captions that widened cells, the Command Lens proposal box landing
+  under the node, missing row spacing, and a number menu covering its caption.
+- No console errors and no network requests on any page. `npm run verify` is ok.
+
+#### Caught Beyond the Brief
+- Two calls the rulings leave open, drawn and named in the README:
+  - Keys and right-click on a locked board answer like a press (the lock and popover show by the mark).
+  - The conversation box shows a tab row only when the node is in a group note.
+- Today's error red already fails Lc 45 on the dark tip box (−43.9), so the softening also fixes a contrast failure.
+
 ---
 
 ## On Completion

@@ -81,102 +81,94 @@ h1{margin:0 0 6px;font:700 30px/1.15 var(--disp);letter-spacing:-.01em}
 .cl.light .m.asks .kd .dot{background:color-mix(in srgb,var(--k) 55%,#fff)}
 .cl.light .m.asks .kd .ic{color:color-mix(in srgb,var(--k) 55%,#fff)}
 
-/* ======== Node states (DESIGN_01) ======== */
-.cl{min-height:0}
-.row{margin-bottom:64px}
-.cap.rec::before{content:"Recommended · ";color:var(--ink)}
+/* ======== Node states (DESIGN_01, run 2: the maintainer's rulings) ======== */
+/* --err: the softened error red (a tokens.css change, T_02); --ring: white toned down */
+.cl{min-height:0;--err:#dc8f88;--ring:#b9bfc8}
+.cl.light{--err:#b2554f;--ring:#4a4e57}
 .sec{margin:0 0 22px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sec b{display:block;font:600 17px/1.3 var(--disp)}
 .sec span{display:block;max-width:1000px;margin-top:4px;color:var(--mut);font-size:12.5px}
-.st{position:relative}
-.tipspace{margin-top:60px}
-.ic use{pointer-events:none}
-/* the plate's chips: a proposal, awaiting, handover, moved */
-.hb.prop,.hb.hand{border:1px solid var(--line);color:var(--ink)}
-.m.asks .hb.prop,.m.asks .hb.hand{border-color:#5b6573;color:#eef1f4}
-.hb.await{border:1px dashed var(--line);color:var(--mut);cursor:default}
-.m.asks .hb.await{border-color:#5b6573;color:#8b95a3}
-.mv{color:var(--mut);font-size:11px}
-.m.asks .mv{color:#8b95a3}
-/* the switch: a proposed half, a write on its way, one that failed, a locked or read-only board */
+.cells{display:flex;flex-wrap:wrap;align-items:flex-start;gap:44px 48px;margin-bottom:64px}
+.cell{position:relative;width:400px}
+.cell.w{width:auto}
+.cell.w .cap{contain:inline-size}
+.cap{min-height:44px}
+.tipspace{margin-top:58px}
+.scene{position:relative}
+.box.beside{position:absolute;left:418px;top:0;z-index:6;margin:0}
+.scene>.m{width:400px}
+.beside::before{content:"";position:absolute;left:-7px;top:14px;width:12px;height:12px;transform:rotate(45deg);background:var(--plate);border-left:1px solid var(--pl);border-bottom:1px solid var(--pl)}
+/* plate chips: a proposal; Awaiting, quiet grey and not a control */
+.hb.prop{border:1px solid var(--line);color:var(--ink)}
+.m.asks .hb.prop{border-color:#5b6573;color:#eef1f4}
+.hb.await{border:1px solid var(--line);color:var(--mut);cursor:default}
+.m.asks .hb.await{border-color:#3d4550;color:#8b95a3}
+.hsec{margin-top:12px;padding-top:10px;border-top:1px solid var(--line2);font-size:12.5px;color:var(--ink2)}
+.hsec h4{margin:0 0 4px;font:600 10.5px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.hsec p{margin:0 0 4px}
+.hsec ul{margin:0;padding-left:16px}
+/* the switch: the proposed half; a write on its way; one that failed; a press on a locked board */
 .sw .pr-t{outline:2px dashed var(--tick);outline-offset:-5px;color:var(--ink)}
-.sw .pr-x{outline:2px dashed var(--cross);outline-offset:-5px;color:var(--ink)}
-.sw .pr-s{outline:2px dashed var(--upd);outline-offset:-5px;color:var(--ink)}
 .sw small{font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
 .sw .busy{cursor:progress;color:var(--mut)}
 .sw .busy::before{content:"";width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%}
-.sw .err{outline:2px solid var(--cross);outline-offset:-2px;color:var(--cross)}
-.sw [aria-disabled=true]{color:var(--mut);cursor:not-allowed}
-.sw [aria-disabled=true]:hover{background:none}
-.sw .on-t[aria-disabled=true],.sw .on-x[aria-disabled=true]{color:#fff}
-.no.err{outline:2px solid var(--cross);outline-offset:-3px;color:var(--cross)}
-.no.off{grid-auto-flow:column;gap:3px;color:var(--mut);cursor:not-allowed}
-.no.off .ic{width:11px;height:11px}
+.sw .err{outline:2px solid var(--err);outline-offset:-2px;color:var(--err)}
+.sw .lk{background:var(--surface2);color:var(--ink)}
+.no.err{outline:2px solid var(--err);outline-offset:-3px;color:var(--err)}
+.no.lk .ic{width:15px;height:15px}
+.ch.err{border:2px solid var(--err);color:var(--err)}
 .err-g{font:800 13px/1 Inter,system-ui,sans-serif}
-.paused .no,.paused .ch,.paused .hb{cursor:not-allowed}
 .banner{display:inline-flex;align-items:center;gap:8px;height:30px;margin:0 0 26px;padding:0 12px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase}
 .banner .ic{width:14px;height:14px;color:var(--mut)}
-/* keyboard focus and hover */
-.m.kf{outline:2px solid var(--ink);outline-offset:5px}
-.f{outline:2px solid var(--ink);outline-offset:2px}
-.m.asks .f.no,.m.asks .pl .f{outline-color:#eef1f4}
-.no.hov{background:color-mix(in srgb,var(--ink) 10%,transparent)}
-.m.asks .no.hov{background:#1c222b}
-.hb.hov{background:color-mix(in srgb,var(--upd) 14%,transparent)}
-.ch.hov{border-color:var(--acc)}
-.pl.hov{background:color-mix(in srgb,var(--k) 10%,var(--surface2))}
-.m.asks .pl.hov{background:#151a21}
-.sw .hov{background:var(--surface2)}
+/* keyboard focus: after Tab only, in white toned down (light on the dark plate) */
+.m.kf{outline:2px solid var(--ring);outline-offset:5px}
+.f{outline:2px solid var(--ring);outline-offset:2px}
+.m.asks .pl .f,.boxh .f{outline-color:#b9bfc8}
 /* tips, menus and boxes: the dark plate in both themes, one size at any zoom */
 .tip{position:absolute;z-index:8;display:inline-flex;align-items:center;gap:8px;padding:6px 9px;border:1px solid var(--pl);border-radius:4px;background:var(--plate);box-shadow:0 12px 30px rgb(10 15 25 / .35);color:#eef1f4;font:500 12px/1.3 Inter,system-ui,sans-serif;white-space:nowrap}
 .tip kbd{font:600 10.5px var(--mono);color:#8b95a3}
-.tip.bad{border-color:#f07474}
-.tip.bad b{color:#f79a9a}
-.menu.flow{position:relative;inset:auto;margin-top:22px;width:220px}
+.tip .ic{width:14px;height:14px;color:#8b95a3}
+.tip.bad{border-color:#dc8f88}
+.tip.bad b{color:#dc8f88}
+.menu.flow{position:relative;inset:auto;margin-top:22px;width:250px}
 .menu .sep{height:1px;margin:3px 6px;background:var(--pl)}
 .menu .y .ic{color:#4cc47f} .menu .x .ic{color:#f07474}
-.menu button[aria-disabled=true]{color:#8b95a3;cursor:not-allowed}
-.menu button[aria-disabled=true] .ic{color:#5b6573}
-.menu .reason{display:flex;align-items:center;gap:8px;padding:6px 10px 8px;margin-bottom:3px;border-bottom:1px solid var(--pl);color:#c5ccd6;font:500 12px Inter,system-ui,sans-serif}
-.menu .reason .ic{width:14px;height:14px}
 .box{position:relative;z-index:6;width:340px;margin-top:22px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface);box-shadow:var(--sh)}
 .boxh{display:flex;align-items:center;gap:8px;height:38px;padding:0 4px 0 0;border-bottom:1px solid var(--pl);border-radius:4.5px 4.5px 0 0;background:var(--plate);color:#eef1f4}
 .boxh .no{min-width:40px;border-right-color:var(--pl);font-size:13px}
 .boxh .t{flex:1;min-width:0;font:600 13px var(--disp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .boxh .x{display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:4px;background:none;color:#8b95a3}
-.bx{display:grid;gap:4px;padding:10px 12px}
-.bx+.bx{border-top:1px solid var(--line2)}
-.bx h4{margin:0;font:600 10.5px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
-.bx p{margin:0;font-size:12.5px;color:var(--ink2)}
-.bx .who{font:600 13px var(--disp)}
-.bx .when{font:500 11px var(--mono);color:var(--mut)}
-.why{display:flex;gap:6px;padding:6px 8px;border-radius:4px;background:color-mix(in srgb,var(--upd) 12%,transparent);font-size:12px}
-.why .ic{width:14px;height:14px;color:var(--upd)}
+.grpn{display:flex;align-self:stretch}
 .bts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
 .bt{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;border:1px solid var(--line);border-radius:4px;background:var(--surface2);color:var(--ink);font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer}
 .bt.pri{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
 .bt[aria-disabled=true]{opacity:.45;cursor:not-allowed}
 .bt .ic{width:14px;height:14px}
-/* the conversation box */
+/* the conversation box: tabs (this node, then each group note), queued, waiting and failed rows */
+.cvtabs{display:flex;gap:2px;padding:4px 8px 0;border-bottom:1px solid var(--line2)}
+.cvtab{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:0;border-bottom:2px solid transparent;background:none;color:var(--mut);font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.cvtab[aria-selected=true]{border-bottom-color:var(--acc);color:var(--ink)}
+.cvtab .ic{width:14px;height:13px}
 .msgs{display:grid;gap:6px;padding:10px}
 .msg{padding:8px 10px;border:1px solid var(--line2);border-left:3px solid var(--line);border-radius:4px;background:var(--surface2);font-size:13px;color:var(--ink2)}
 .msg i{display:block;margin-bottom:2px;font:600 10px/1.4 var(--mono);font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
 .msg i em{font-style:normal;color:var(--ink2);letter-spacing:.04em;text-transform:none}
 .msg.me{border-left-color:var(--acc)} .msg.ag{border-left-color:var(--agent)}
+.msg.pv b{display:block;font:600 14px var(--disp);color:var(--ink)}
 .msg.unsent{border-style:dashed;border-left:3px dashed var(--acc)}
 .msg.wait{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:12.5px}
-.msg.fail{border-color:var(--cross);border-left-color:var(--cross)}
-.retry{display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--cross);font:600 12px Inter,system-ui,sans-serif}
+.msg.fail{border-color:var(--err);border-left-color:var(--err)}
+.retry{display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--err);font:600 12px Inter,system-ui,sans-serif}
 .retry button{margin-left:auto;height:26px;padding:0 9px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);font:600 12px Inter,system-ui,sans-serif}
 .dots{display:inline-flex;gap:2px}
 .dots i{width:3px;height:3px;border-radius:50%;background:currentColor}
+.when{font:500 11px var(--mono);color:var(--mut)}
 .cmp{display:grid;gap:8px;padding:8px 10px 10px;border-top:1px solid var(--line2)}
-.cmp label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.cmp .bts{margin-top:0}
 .cmp textarea{display:block;width:100%;min-height:34px;padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:13px/1.5 Inter,system-ui,sans-serif;resize:none}
 .cmp textarea::placeholder{color:var(--mut)}
 .ch.unsent{border:1.5px dashed var(--acc);color:var(--acc)}
 .m.asks .ch.unsent{border-color:#ff85cf;color:#ff85cf}
-.ch.err{border:2px solid var(--cross);color:var(--cross)}
 /* history: the stepper on top, the versions below */
 .step{display:grid;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line2)}
 .step .sh{display:flex;align-items:center;gap:8px;font:600 12.5px var(--mono)}
@@ -184,36 +176,35 @@ h1{margin:0 0 6px;font:700 30px/1.15 var(--disp);letter-spacing:-.01em}
 .chg{display:flex;gap:4px}
 .chg span{height:20px;padding:0 7px;border-radius:3px;background:var(--surface2);color:var(--ink2);font:600 11px/20px var(--mono)}
 .step p{margin:0;font-size:12.5px;color:var(--ink2)}
-.step ins,.vs ins{text-decoration:underline;text-decoration-color:var(--tick);text-underline-offset:2px;color:var(--ink)}
+.step ins{text-decoration:underline;text-decoration-color:var(--tick);text-underline-offset:2px;color:var(--ink)}
 .step.done{place-items:center;padding:16px;color:var(--mut);font-size:12.5px}
 .step.done .ic{color:var(--tick)}
 .vs{display:grid;grid-template-columns:36px 1fr;gap:2px 8px;padding:7px 12px;font-size:12.5px;color:var(--ink2)}
 .vs.cur{background:var(--surface2)}
 .vs b{grid-row:span 2;font:700 11.5px/1.5 var(--mono);color:var(--ink)}
 .vs i{font:500 11px var(--mono);font-style:normal;color:var(--mut)}
-/* a container frame (Later, a drop target) */
+.vs.wd span{color:var(--ink)}
+/* a container frame, dragging, emphasis, tags in the node's colour, the note kind */
 .frame{position:relative;padding:56px 20px 28px;border:1.5px solid var(--line);border-radius:6px;background:color-mix(in srgb,var(--surface) 40%,transparent)}
 .frame-h{position:absolute;top:14px;left:16px;right:16px;display:flex;align-items:center;gap:8px;font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase}
 .frame-h .ic{width:14px;height:14px;color:var(--mut)}
 .frame-h i{margin-left:auto;font-style:normal;color:var(--mut);letter-spacing:.04em;text-transform:none}
 .frame.drop{border:1.5px dashed var(--ink2);background:color-mix(in srgb,var(--ink) 4%,transparent)}
 .frame .m+.m{margin-top:26px}
-.frame .menu{left:0;bottom:calc(100% + 8px)}
-/* dragging, emphasis, the note kind, a note on several nodes */
+.m .menu{left:0;bottom:calc(100% + 8px)}
 .m.drag{transform:translate(6px,-6px) scale(1.02);box-shadow:0 22px 56px rgb(0 0 0 / .5)}
 .cl.light .m.drag{box-shadow:0 22px 56px rgb(25 22 15 / .22)}
 .m.drag .pl{cursor:grabbing}
 .m.emph{width:520px}
 .m.emph .pl{box-shadow:inset 0 3px 0 var(--k)}
+.m .chip{background:color-mix(in srgb,var(--k) 16%,var(--surface));color:color-mix(in srgb,var(--k) 72%,var(--ink))}
 .m.note{border-style:dashed;background:transparent;box-shadow:none}
 .m.note .pl{background:transparent}
-.m.ring{outline:1.5px dashed var(--acc);outline-offset:4px}
-.ch.gp{border-color:var(--acc);color:var(--acc)}
-.grpn{display:flex;align-self:stretch}
-/* an agent's own icon: drawn exactly as a set icon */
+/* an icon from the project's library: drawn exactly as a built-in one */
 .pair{display:flex;align-items:center;gap:14px;margin-top:8px}
 .pair .arrow{color:var(--mut);font:600 16px Inter,system-ui,sans-serif}
 .raw{display:grid;place-items:center;width:40px;height:40px;border-radius:4px;background:var(--surface)}
 .grid24{background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:4px 4px}
 .spec{margin:14px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink2)}
 .spec code{font:600 11.5px var(--mono);color:var(--ink)}
+.row{margin-bottom:64px}
