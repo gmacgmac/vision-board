@@ -31,7 +31,7 @@ import { createLive } from './live.ts';
 import { bindStage } from './input/index.ts';
 import { createAccessFlow } from './access/index.ts';
 import { createNoteFlow, createNoteHide, createRegionNotes, DISCARD_ASK } from './notes/index.ts';
-import { createContainerDrag, createMoves, createSelection, createSelectionFlow } from './selection/index.ts';
+import { createBarActs, createContainerDrag, createMoves, createSelection, createSelectionFlow } from './selection/index.ts';
 import { createSender, READ_ONLY } from './sender.ts';
 import { createGoTo, focusContainer, GO_PAUSE, zoomToContainer } from './find/index.ts';
 import { showCounts } from './toolbar-counts.ts';
@@ -227,7 +227,10 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), focusLeads: on('focusLeads'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
-    ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }) });
+    ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }),
+    // With the node's edges the bar adds Bookmark all, Save for later and Width (bar-acts.ts), and steps aside for a node's open menu or box (FE_06).
+    ...(edgesOn && { edges: { ...createBarActs({ stage, view: () => S.data!.view, state: () => S.data!.state, run: (steps) => sender.run(steps), moves, toast }), bookmark: bookmarking },
+      covered: () => !!stage.querySelector('.vb-mark-menu, .vb-card-pop[data-open]') }) });
   // With no board shown ("No boards yet") a pan or zoom moves only the empty stage: nothing is placed or kept.
   vp.onApply = () => { status.set({ zoom: zoomPercent(vp.k) }); if (!S.data) return; notes.place(); flow.place(); edges.place(); drawing.viewMoved(); boards.moved(); };
   status.set({ zoom: zoomPercent(vp.k) });

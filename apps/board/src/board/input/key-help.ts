@@ -7,7 +7,7 @@
 // pointer gestures; the bookmark's, the chat's and an app's key join them behind their flags.
 import { ACTIONS } from '#actions';
 import type { CommandId } from './commands.ts';
-import { COMMAND_IDS, COMMANDS, keyText } from './commands.ts';
+import { COMMAND_IDS, COMMANDS, EDGE_COMMANDS, keyText } from './commands.ts';
 import * as commonWords from '../words/common.ts';
 import * as keyHelpWords from '../words/key-help.ts';
 
@@ -24,6 +24,7 @@ export interface KeyRow {
 
 const GROUP_OF: Record<CommandId, Exclude<KeyGroup, 'Items'>> = {
   comment: keyHelpWords.selection, move: keyHelpWords.selection, 'reset-places': keyHelpWords.selection, remove: keyHelpWords.selection,
+  'bookmark-all': keyHelpWords.selection, 'save-for-later': keyHelpWords.selection, width: keyHelpWords.selection,
   'container-note': commonWords.board, 'go-to-card': commonWords.board,
   'zoom-out': keyHelpWords.view, fit: keyHelpWords.view, 'zoom-in': keyHelpWords.view, 'zoom-selection': keyHelpWords.view, 'zoom-area': keyHelpWords.view,
 };
@@ -53,7 +54,7 @@ const APP_ROW: readonly [label: string, keys: string[]] = [keyHelpWords.leaveAnA
 export function keyGroups({ chat = false, bookmark = false, edges = false, remove = true, go = true, app = false }: { chat?: boolean; bookmark?: boolean; edges?: boolean; remove?: boolean; go?: boolean; app?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
   const items: KeyRow[] = Object.values(ACTIONS).filter((a) => a.key && a.onItem)
     .map((a) => ({ id: `action:${a.id}`, label: a.label, keys: [a.key!.toUpperCase()] }));
-  const off = [...(remove ? [] : ['remove']), ...(go ? [] : ['go-to-card'])];
+  const off = [...(remove ? [] : ['remove']), ...(go ? [] : ['go-to-card']), ...(edges ? [] : EDGE_COMMANDS), ...(edges && !bookmark ? ['bookmark-all'] : [])];
   const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length && !off.includes(id))
     .map((id) => ({ id: `command:${id}`, label: COMMANDS[id].listed ?? COMMANDS[id].means ?? COMMANDS[id].label, keys: [...(COMMANDS[id].shown ?? COMMANDS[id].keys.map(keyText))] }));
   return KEY_GROUPS.map((group) => ({

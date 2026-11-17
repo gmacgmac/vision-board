@@ -186,6 +186,8 @@ export const PLACEHOLDER: Record<NoteKind, string> = { comment: noteBubbleWords.
 /** "Note on 42", "Note on 3 cards: 12, 14, 15" for a group, or "Note on container Review" for a
  * whole container; each mode words it its own way. The conversation is the card's or container's. */
 function headingOf(b: BubbleInput): string {
+  // The conversation on a selection: several cards, no one number.
+  if (b.mode === 'conversation' && b.number === undefined && b.numbers) return noteBubbleWords.conversationOn(noteBubbleWords.cardsList(b.numbers.length, b.numbers.join(', ')));
   if (b.mode === 'thread' || b.mode === 'conversation') return noteBubbleWords.conversationOn(b.container === undefined ? b.number : noteBubbleWords.container(b.container));
   const past = b.answered ? 'answered' : 'sent';
   if (b.container !== undefined) {
@@ -209,7 +211,7 @@ function threadOf(mode: BubbleMode, replies: number): string {
 
 /** The conversation box's view (FE_03): the field writes; the thread lists every note and reply. */
 function boxView(b: BubbleInput, heading: string): BubbleView {
-  const about = b.numbers ? noteBubbleWords.both(b.numbers) : b.number;
+  const about = b.numbers ? (b.number === undefined && b.numbers.length > 2 ? noteBubbleWords.nCards(b.numbers.length) : noteBubbleWords.both(b.numbers)) : b.number;
   const blocked = b.blocked ?? undefined;
   return {
     mode: b.mode, heading, placeholder: noteBubbleWords.replyOrAskAbout(about), hint: '', primary: noteBubbleWords.addNote,

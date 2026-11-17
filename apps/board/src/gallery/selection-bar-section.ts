@@ -22,6 +22,8 @@ interface Sample {
   stage: { w: number; h: number };
   /** The compact bar (selectionPill): its pill open or closed. */
   pill?: { open: boolean };
+  /** The node's edges (nodeEdges): the three added commands; `all`: every selected node is bookmarked. */
+  edges?: { all: boolean };
   /** Buttons drawn hovered (data-look), by command id. */
   hover?: string[];
 }
@@ -32,6 +34,13 @@ const SAMPLES: Sample[] = [
     area: false, none: true, stage: { w: 680, h: 220 } },
   { caption: 'A lasso that touched no card: only Zoom to this area', titles: ['Topic: a heading for a group of cards'],
     area: true, stage: { w: 400, h: 180 } },
+];
+
+const EDGE_SAMPLES: Sample[] = [
+  { caption: 'With the node\'s edges: Bookmark all, Save for later and Width join the bar before Zoom', titles: ['Topic: a heading for a group of cards', 'Note: the agent remarks, nothing to answer'],
+    area: false, none: true, stage: { w: 780, h: 220 }, edges: { all: false } },
+  { caption: 'Every selected node bookmarked: Bookmark all reads Remove bookmarks', titles: ['Topic: a heading for a group of cards', 'Note: the agent remarks, nothing to answer'],
+    area: false, none: true, stage: { w: 780, h: 220 }, edges: { all: true } },
 ];
 
 const TWO = ['Topic: a heading for a group of cards', 'Note: the agent remarks, nothing to answer'];
@@ -62,7 +71,7 @@ function sample(s: Sample, fx: Fixture, remove: boolean): HTMLElement {
   });
   const bar = document.createElement('vb-selection-bar') as VbSelectionBarElement;
   const view = s.area ? barView(0, barButtons(AREA_COMMANDS), s.pill)
-    : barView(cards.length, selectionButtons(cards.length, remove, false, s.none ? ['reset-places'] : []), s.pill);
+    : barView(cards.length, selectionButtons(cards.length, remove, false, s.none ? ['reset-places'] : [], s.edges && { bookmark: true, allBookmarked: s.edges.all }), s.pill);
   bar.show(view);
   for (const id of s.hover ?? []) bar.querySelector(`[data-command="${id}"]`)?.setAttribute('data-look', 'hover');
   stage.append(list, bar);
@@ -84,9 +93,9 @@ function sample(s: Sample, fx: Fixture, remove: boolean): HTMLElement {
 }
 
 /** `pill`: the selectionPill flag, `remove` the personRemove flag (Remove cards on the bar), read
- * by the gallery's entry point. */
-export function selectionBarSamples(body: HTMLElement, fx: Fixture, pill = false, remove = false): void {
+ * by the gallery's entry point; `edges`: the nodeEdges flag (the bar's three added commands). */
+export function selectionBarSamples(body: HTMLElement, fx: Fixture, pill = false, remove = false, edges = false): void {
   const row = el('div', 'g-bubbles');
-  row.append(...(pill ? PILL_SAMPLES : SAMPLES).map((s) => sample(s, fx, remove)));
+  row.append(...[...(pill ? PILL_SAMPLES : SAMPLES), ...(edges ? EDGE_SAMPLES : [])].map((s) => sample(s, fx, remove)));
   body.append(group('Every state', 'Centred above the selection, below it when there is no room; the lasso it follows is .vb-lasso. One command table drives the bar, the header buttons and the keys.', row));
 }

@@ -71,7 +71,8 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
       const inside = f.seen && !target?.closest('vb-node') ? target?.closest<HTMLElement>('vb-region')?.dataset.region : undefined;
       if (inside !== undefined) f.seen!(inside);
     },
-    ...(f.container && { zoomRegion: f.container.zoom }),
+    // Z fits the selection when there is one, even with focus on a container's title line (FE_06); the container only when nothing is selected.
+    ...(f.container && { zoomRegion: (region: string) => selection.selected().length === 0 && f.container!.zoom(region) }),
     ...(f.marks && { mark: f.marks.press, nodeKey: f.marks.key }),
     // Esc closes a node's open menu or box first (nodeEdges), then an open bubble, then the open selection bar (FE_02), then leaves a past version, else
     // clears the selection (ruling 1). True when there was something to do: a host's own Esc is the host's otherwise.

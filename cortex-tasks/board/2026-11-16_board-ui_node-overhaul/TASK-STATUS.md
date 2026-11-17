@@ -51,7 +51,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 9 | FE_03 | 6 | strong | no | Interaction engineer for messaging — words a person typed are never lost, and Enter never does the unexpected thing. | [One conversation box](./FE_03_one-conversation-box.md) | Completed | Run 2: Ask now reaches the chat panel's agent (server hears the `ask`, notes alone, no Send); one box beside a node (`placeBeside`, node-box.css) for conversation, proposal and history; history box as designed with withdrawn rows; no group pin with edges. Page 199.88/210 KB; plugin JS 193,679/200,000, CSS 24,511/26,000. |
 | 10 | FE_04 | 7 | strong | no | Design-systems engineer — a second skin proves the first was a system; if the node needs an `if (skin)`, the registry is wrong. | [The Command Lens skin](./FE_04_command-lens-skin.md) | Pending | |
 | 11 | FE_05 | 8 | standard | no | — | [Zoom groups](./FE_05_zoom-groups.md) | Completed | Marks grow in place under 14px (`--vb-mark-grow`, steps of 1.2); history and proposal boxes keep one size; the conversation box scales to 0.75; zoom table in components.md; 2 conversation-box baselines renewed |
-| 12 | FE_06 | 9 | standard | no | — | [The selection bar and Z](./FE_06_selection-bar-and-z.md) | Pending | |
+| 12 | FE_06 | 9 | standard | no | — | [The selection bar and Z](./FE_06_selection-bar-and-z.md) | Completed | Z failed only with a container's title line focused and a selection (selection now wins); bar gains Bookmark all, Save for later, Width behind nodeEdges; selection Comment = the conversation box with Ask now; bar steps aside for a node's menu or box |
 | 13 | BE_01 | 10 | strong | no | Graph-layout engineer — a layout is a pure function; a line that weaves round cards is a bug in the layout, not in the router. | [Flow branching and direction](./BE_01_flow-branching-and-direction.md) | Completed | Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker. |
 | 14 | FE_07 | 11 | standard | no | — | [One layout control](./FE_07_one-layout-control.md) | Pending | |
 | 15 | FE_08 | 12 | strong | no | Front-end engineer for sandboxed embeds — the app owns everything under its title bar, and the sandbox is never loosened. | [The app window](./FE_08_app-window.md) | Pending | |
@@ -208,8 +208,8 @@ _Status:_ Completed
 _Notes:_ `viewport.ts` (`markGrow`, `boxScale`, `markOn`), `mark-boxes.ts` (counter-scale), `notes.ts` `place`, `node-edges.css`/`node-box.css`. For FE_06: the selection bar was already one size (`pillGap`); no change. For FE_04: plate marks are not scaled. Requests: `npm run map`; FE_04 decides a plate minimum.
 
 ### FE_06: The selection bar and Z
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ For FE_07/FE_08: the bar's extras are `EDGE_COMMANDS` rows (`commands.ts`), acts in `selection/bar-acts.ts` (`run` one step, one act per node); `SelectionFlowDeps.covered` hides the bar for a node's open menu/box; a selection's conversation box is `notes.group` with several `anchor`s. Requests: `npm run map`; restore 18 unrelated gallery baselines my `--update-snapshots` rewrote.
 
 ### FE_07: One layout control
 _Status:_ Pending  

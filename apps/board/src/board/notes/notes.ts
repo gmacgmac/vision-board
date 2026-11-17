@@ -14,7 +14,7 @@
 // (note-box.ts); a container's note and a note on several selected nodes keep today's bubbles.
 import type { NoteKind } from '#format';
 import type { VbNoteBubbleElement } from '#ui';
-import { loadConversation, placeBubble, readOnlyMode, saveIntent } from '#ui';
+import { boxAround, loadConversation, placeBubble, readOnlyMode, saveIntent } from '#ui';
 import type { NoteEventDetail } from '#ui';
 import type { ActFields } from '../io.ts';
 import { bindDiscard, createLeave, mayLeave } from './note-discard.ts';
@@ -119,6 +119,8 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   }
 
   function group(ids: readonly string[]) {
+    // With nodeEdges a note on the selection is the conversation box too (FE_06): beside the selection, Ask now by Add note.
+    if (d.box) return openWith({ id: ids[0]!, anchor: ids, mode: 'conversation', kind: 'comment', group: ids });
     const note = unsentGroupNote(d.state(), ids);
     const base = { id: ids[0]!, anchor: ids, group: ids };
     openWith(note ? { ...base, mode: 'edit', kind: note.kind, note } : { ...base, mode: 'new', kind: 'comment' });
@@ -205,13 +207,15 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (!at) return close(false);
     // The box beside a node, as every such box: top aligned, right or below, its arrow on the notes mark. It is the one
     // box that scales with the board (D-101), to a floor where its text is still readable (`boxScale`).
-    const card = open.mode === 'conversation' ? d.card(open.id) : undefined;
+    const cards = open.mode === 'conversation' ? open.anchor.flatMap((id) => d.card(id) ?? []) : [];
+    const card = cards[0];
     const s = card ? boxScale(d.vp.k) : 1;
     bubble.style.setProperty('--vb-box-scale', String(s));
     const size = { w: bubble.offsetWidth * s, h: bubble.offsetHeight * s };
-    const mark = card?.querySelector('[data-mark="notes"]');
+    // One node: beside it, its arrow on the notes mark. A selection: beside all of them, the arrow at their middle.
+    const mark = cards.length === 1 ? card?.querySelector('[data-mark="notes"]') : null;
     if (card) {
-      const p = placeBeside(nodeReach(card, d.stage), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, mark ? stageBoxOf(mark, d.stage) : at);
+      const p = placeBeside(boxAround(cards.map((c) => nodeReach(c, d.stage)))!, size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, mark ? stageBoxOf(mark, d.stage) : at);
       return bubble.place({ ...p, arrow: p.arrow / s });
     }
     // Clear of the neighbouring cards' footer buttons where it can be (bubble-clear.ts).

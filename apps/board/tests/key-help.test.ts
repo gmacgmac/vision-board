@@ -7,7 +7,8 @@ import { ACTIONS } from '#actions';
 import { COMMAND_IDS, COMMANDS } from '../src/board/input/commands.ts';
 import { KEY_GROUPS, keyGroups } from '../src/board/input/key-help.ts';
 
-const rows = () => keyGroups().flatMap((g) => g.rows);
+// With the node's edges on, so the bar's three edge commands are listed too (they are not with the flag off).
+const rows = () => keyGroups({ edges: true, bookmark: true }).flatMap((g) => g.rows);
 
 test('every command with a key is listed once, with its label and every one of its keys', () => {
   for (const id of COMMAND_IDS) {
@@ -94,4 +95,12 @@ test('Board lists Go to a card by its number as 0–9; without the goToCard flag
   const go = (on: boolean) => keyGroups({ go: on }).flatMap((g) => g.rows.map((r) => [g.group, r] as const)).filter(([, r]) => r.id === 'command:go-to-card');
   assert.deepEqual(go(true).map(([g, r]) => [g, r.label, r.keys]), [['Board', 'Go to a card by its number', ['0–9']]]);
   assert.deepEqual(go(false), []);
+});
+
+// The bar's edge commands (nodeEdges flag, FE_06): listed under Selection with their keys, only with the flag on.
+test('Selection lists Bookmark all, Save for later and Width with the edges on, and not otherwise', () => {
+  const rows = (edges: boolean, bookmark = true) => keyGroups({ edges, bookmark }).find((g) => g.group === 'Selection')!.rows.map((r) => r.id);
+  assert.ok(['command:bookmark-all', 'command:save-for-later', 'command:width'].every((id) => rows(true).includes(id)));
+  assert.ok(!rows(false).some((id) => ['command:bookmark-all', 'command:save-for-later', 'command:width'].includes(id)));
+  assert.ok(!rows(true, false).includes('command:bookmark-all'));
 });

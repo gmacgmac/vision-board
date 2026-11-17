@@ -71,7 +71,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'note-bubble': noteBubbleSamples,
   region: regionSamples,
   // The compact bar and its pill behind their flag (stage5-follow-ups FE_02); off, today's bar.
-  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags())),
+  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags()), flagOn('nodeEdges', pageFlags())),
 };
 
 const patterns = PATTERNS.filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));

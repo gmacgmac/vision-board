@@ -1935,3 +1935,31 @@ stays a pure function: both arrive as inputs (`LayoutOptions.branching`, `Layout
    the cache), `api-layout-direction.test.ts` (`show_layout` both ways); in a browser, `tests/pages/flow-direction.spec.ts`
    (the Flows rows, the act, the redraw, read-only, branching rows, the edge gap, the gallery's section, axe dark and
    light).
+
+## The selection bar with the node's edges, and Z (node overhaul FE_06)
+
+The rulings are `cortex-tasks/board/2026-11-16_board-ui_node-overhaul/PLAN.md` decision 9 (D-099) and D-101.
+
+1. **Z fits the selection.** With focus on a container's title line, Z used to zoom to that container even when nodes
+   were selected (`keys.ts` sends it to `zoomRegion` first). `stage-handlers.ts` `zoomRegion` now answers only with
+   nothing selected, so the selection wins and the key falls through to `zoom-selection` (`selection-flow.ts`
+   `zoomTo`); with no selection the title line's container is zoomed as before. Pinned by
+   `tests/pages/zoom-selection.spec.ts` (Shift-click, Cmd-click, Ctrl-click and a lasso, each with focus on a node, on a
+   mark, in the bar and on a container's title line, and across containers) and `tests/pages/container-zoom.spec.ts`.
+2. **Three more commands** with `nodeEdges`, rows of the one table (`commands.ts` `EDGE_COMMANDS`, `selectionButtons`'
+   `edges` argument; words in `words/commands.ts`; key help lists them): **Bookmark all** (Shift+B; reads "Remove
+   bookmarks" when every numbered selected node has one), **Save for later** (Shift+L) and **Width** (Shift+W, a list: S, M,
+   L, Auto). They sit before Zoom. Each writes one act per selected node through the one sender, drawn once
+   (`selection/bar-acts.ts` `createBarActs`: `bookmark`/`unbookmark`; `Moves.saveLater`, the Move to list's Later plan,
+   `move` then `later`; `size` by `sizeAct`). Nodes with no number take none; an app card takes no width; nodes that cannot be saved
+   for later are skipped, and none being able says so. A locked board disables Save for later and Width, not Bookmark all
+   (the bookmark is the person's private mark). Width's list is the Move to list (`move-menu.ts`) with other rows.
+   "Match widths" stays a container tool.
+3. **Comment on the selection** (`notes.ts` `group`): with `nodeEdges` it opens FE_03's conversation box
+   (`note-box.ts` `boxView`, mode `conversation`, `group` set, several `anchor`s), titled "N cards", with Ask now beside
+   Add note by the same `askNow` path; the box is placed by `placeBeside` over the union of the nodes' reach (`nodeReach`), its
+   arrow at their middle. Add note leaves one note on the group for the board's Send.
+4. **Place.** `placeBar` as before (centred above the bounding box at one size, below when there is no room, inside the
+   stage, clear of a container's title line). With `nodeEdges` the bar also steps aside, hidden, while a menu or box of a node
+   (`.vb-mark-menu`, an open `.vb-card-pop`) or the conversation box is open (`selection-flow.ts` `covered`), and comes back
+   when it closes. Tests: `tests/pages/selection-bar-edges.spec.ts`, `apps/board/tests/commands.test.ts`, `key-help.test.ts`.

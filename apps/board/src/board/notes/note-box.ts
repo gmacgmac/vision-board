@@ -60,11 +60,13 @@ export function boxView(d: ViewDeps, box: BoxDeps, o: Open): Shown | null {
   const { key, notes, replies } = tabOf(d, o, all);
   const last = notes.at(-1);
   const waiting = last?.sent === true && !replies.some((r) => r.seq > last.seq);
+  // A selection (several anchors): no number, no tabs, titled by how many it is on.
+  const sel = o.anchor.length > 1;
   const v = bubbleView({
-    mode: 'conversation', kind: 'comment', number: n.n, text: o.draft, title: n.title, tabs: tabsOf(all, n.n, key),
+    mode: 'conversation', kind: 'comment', text: o.draft, ...(sel ? { title: notesWords.cards(o.anchor.length), tabs: [] } : { number: n.n, title: n.title, tabs: tabsOf(all, n.n, key) }),
     blocked: box.blocked(), waiting, entries: conversation(notes, replies, box.asked()), ...(o.group && { numbers: o.group.map(Number) }),
   });
-  return { v, on: { kind: n.kind, number: n.n } };
+  return { v, on: sel ? {} : { kind: n.kind, number: n.n } };
 }
 
 /** The tab's note not yet sent: the one Add note joins and Ask now sends. */

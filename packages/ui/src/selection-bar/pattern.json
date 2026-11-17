@@ -2,7 +2,7 @@
   "name": "selection-bar",
   "title": "Selection bar and lasso",
   "tag": "vb-selection-bar",
-  "description": "A glass toolbar over the person's selection: how many cards are selected, then Comment, Move to, Reset places, Remove and Zoom. Centred above the selection, below it when there is no room, drawn above the cards and moving nothing; it follows pan and zoom. A lasso that touches no card gets the area bar, which only offers Zoom to this area. The dashed lasso box (.vb-lasso) is styled here too (Architect .selbar and .lasso; 3_FE_02 rulings 1-2). With the selectionPill flag the bar is compact (24px buttons) and over a selection starts as a pill, \"3 selected\" and a chevron, that opens it (stage5-follow-ups FE_02).",
+  "description": "A glass toolbar over the person's selection: how many cards are selected, then Comment, Move to, Reset places, Remove and Zoom (with the nodeEdges flag, Bookmark all, Save for later and Width before Zoom: the page passes them in the same buttons list, so the pattern is unchanged). Centred above the selection, below it when there is no room, drawn above the cards and moving nothing; it follows pan and zoom. A lasso that touches no card gets the area bar, which only offers Zoom to this area. The dashed lasso box (.vb-lasso) is styled here too (Architect .selbar and .lasso; 3_FE_02 rulings 1-2). With the selectionPill flag the bar is compact (24px buttons) and over a selection starts as a pill, \"3 selected\" and a chevron, that opens it (stage5-follow-ups FE_02).",
   "files": {
     "core": "selection-bar-core.ts (placeBar, pillGap, barView, boxBetween, touches, boxAround; no DOM)",
     "template": "selection-bar-template.ts (selectionBarTemplate: the only place the markup is built)",
@@ -14,7 +14,7 @@
   "parts": {
     "vb-sb-count": "'3 selected'; absent on the area bar and with the pill",
     "vb-sb-pill": "with the pill (selectionPill): a button, '3 selected' and a chevron (vb-sb-chevron), aria-expanded; first in the bar, the buttons after it show only while it is open",
-    "vb-sb-btn": "one button per command the page passes (data-command), title and aria-label from its `title` when it has one; vb-sb-primary for Comment; disabled when the command has nothing to act on (Reset places with no moved card selected)"
+    "vb-sb-btn": "one button per command the page passes (data-command), title and aria-label from its `title` when it has one; vb-sb-primary for Comment; Bookmark all turns to Remove bookmarks when every selected node has one; disabled when the command has nothing to act on (Reset places with no moved card selected)"
   },
   "attributes": {
     "role": "toolbar (set by show)",
@@ -22,7 +22,7 @@
     "data-side": "above | below: where it sits by the selection (set by place)",
     "data-pill": "the compact bar, from BarView.pill (set by show)",
     "data-open": "the pill is open: its buttons show (set by show from BarView.open)",
-    "hidden": "set by the page whenever the selection is empty or a note bubble is open"
+    "hidden": "set by the page whenever the selection is empty, or a note bubble, the conversation box or a node's own menu or box is open (the bar steps aside so it never covers them)"
   },
   "methods": {
     "show(v: BarView)": "draws it from selectionBarTemplate; redraws only when what it says changed",

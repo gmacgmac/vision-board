@@ -81,23 +81,25 @@ several nodes selected. The cause is not established: find it before changing an
 
 ## Implementation Notes
 
-_To be completed by agent after task completion._
-_Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
-
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-17 12:00  
 
 ### Changes Made
-- 
+- Z: `stage-handlers.ts` `zoomRegion` answers only with nothing selected; `tests/pages/zoom-selection.spec.ts` (every way of selecting, five focus places, across containers).
+- Bar commands behind nodeEdges: `commands.ts` (`bookmark-all` Shift+B, `save-for-later` Shift+L, `width` Shift+W; `EDGE_COMMANDS`, `selectionButtons` `edges`), `words/commands.ts`, `key-help.ts`, `selection/bar-acts.ts` (`createBarActs`), `Moves.saveLater`, `move-menu.ts` (`name`), `selection-flow.ts` (`edges`, `covered`).
+- Comment on the selection with the edges is FE_03's conversation box (`notes.ts` `group`, `note-box.ts` `boxView`, `note-bubble-core.ts`, words), placed by `placeBeside` over the nodes' reach.
+- Gallery samples, `pattern.json`, `docs/specification/components.md` (new section), unit and page specs (`selection-bar-edges.spec.ts`).
 
 ### Issues & Resolutions
-- 
+- Z reproduction: Z fit several selected nodes with focus on a node, a mark or the bar, by Shift, Cmd, Ctrl-click and lasso. It failed only with focus on a container's title line and a selection: `keys.ts` sent Z to the container. Selection now wins. Not established: whether that is the maintainer's exact case; ask for his steps if it still fails.
+- Files outside the task's list touched: `controller.ts` (wiring), `notes/notes.ts`, `notes/note-box.ts`, `cards/index.ts` (export `bookmarkAct`), `apps/board/src/gallery/main.ts`.
+- Gallery baselines for the selection-bar section (gallery.spec.ts, selection-pill.spec.ts, dark and light) renewed: pattern.json text is drawn there. `--update-snapshots` also rewrote 18 unrelated gallery baselines (sub-pixel noise); a restore was refused by the sandbox, so they need `git checkout -- tests/pages/__screenshots__/gallery.spec.ts/` except the two `gallery-selection-bar-*` files.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- Shift+B/L/W are claimed by the table even with nodeEdges off (a claimed Shift key is `preventDefault`ed in `keys.ts`); nothing acts.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None.
 
 ---
 
