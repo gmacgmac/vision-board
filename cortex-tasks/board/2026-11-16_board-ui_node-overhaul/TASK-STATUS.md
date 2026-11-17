@@ -56,7 +56,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 14 | FE_07 | 11 | standard | no | — | [One layout control](./FE_07_one-layout-control.md) | Completed | One button + the existing popover behind `layoutControl`; a flow's Across/Down/Auto write the container's `direction` act (`places.ts` `setDirection`); gallery "One layout control" compares the six layouts. Board-wide direction still in "⋯" (header move requested) |
 | 15 | FE_08 | 12 | strong | no | Front-end engineer for sandboxed embeds — the app owns everything under its title bar, and the sandbox is never loosened. | [The app window](./FE_08_app-window.md) | Completed | Window, drawer (the node conversation box, neighbours move aside, panel never reloads) and stage (whole window in the top layer, focus held, Esc) behind appWindow and nodeEdges; Open needs appStage. Panel notes join the queued note (were a 422). A stuck panel freezes the page in WebKit and non-isolated Chromium (apps.md). For T_04: drop `later` from `NODE_TYPES.app.actions`. |
 | 16 | T_03 | 13 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The agent skill](./T_03_agent-skill.md) | Blocked | Skill v3.34 (one flow per container, icons, tone, skin, direction, bookmark, Ask now), 44,614 bytes after moving old history to NOTES; plugin skill unchanged; scenarios 44 `linked-pipeline`, 45 `architecture-icons` (standalone); dry 88/88 and 33/33. Live run: CLI sign-in expired, $0, no model ran: needs a login and a rerun (and `--standalone` for 45). |
-| 17 | VERIFY_01 | 14 | strong | no | Operations lead who plans live events on boards like this all day — expects every mark to do what it shows, at any zoom, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
+| 17 | VERIFY_01 | 14 | strong | no | Operations lead who plans live events on boards like this all day — expects every mark to do what it shows, at any zoom, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Completed | Run 1: unit, check, gen, verify, plugin (116) green; pages 1,045 passed, 67 failed (59 sub-pixel, 1 flaky, 7 real ERR_ABORTED in bookmark-retire/person-remove). Must fix before T_04: that harness abort, axe target-size of edge marks far out, header tiers measured without Flows, app Later by L and the bar. 12 should-fix; report in the task. |
 | 18 | T_04 | 15 | strong | no | Staff engineer who owns deprecations — a removal is done only when nothing, not code, tests, words nor docs, still points at the old thing. | [Switch over and remove the old](./T_04_defaults-on.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -228,8 +228,8 @@ _Status:_ Blocked (live eval only)
 _Notes:_ Run 1. New text sits only in sections `skill-edits.ts` replaces, so the plugin skill is byte for byte the same (8,174/8,192) and a host's bot (no `list_icons`/`add_icon`) reads none of it. Checks `linkedInOneFlow`, `fewCrossLinks` exported from `scenarios/linked-pipeline.ts`. The approved live run stopped at the CLI's expired sign-in ($0); rerun after `/login`, plus `--standalone` for scenario 45. Requests: the plugin's `node.icon` input description names tools that bot lacks.
 
 ### VERIFY_01: Final verification
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1. Findings ranked in the task's notes (blocking 1-4, should fix 5-16, fine, critique, gaps, the maintainer's tour). Probes and shots in `temp/verify01/`. Migration, Ask now (page, `check_responses`, no agent), tone 366, flows, point 308, icons, fonts, focus and lock all behave. Docs audit was a spot check only.
 
 ### T_04: Switch over and remove the old
 _Status:_ Pending  
