@@ -28,7 +28,7 @@ test('the conversation box scales with the board down to its floor', () => {
 });
 
 test('marks take a pointer press only where their 28px hit area draws at 24px or more (FIX_01): from 6/7 up', () => {
-  const css = readFileSync(new URL('../../../packages/ui/src/node/node-edges.css', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('node/node-edges.css', import.meta.resolve('#ui/styles.css')), 'utf8');
   assert.equal(MARK_HIT, MARK_H + 2 * Number(/\.vb-mark:not\(\.vb-mark-answer\)::before \{[^}]*inset: -(\d+)px/.exec(css)![1]), 'the transparent edge round a mark');
   assert.equal(marksPressable(1), true);
   assert.equal(marksPressable(TARGET_MIN / MARK_HIT), true);
