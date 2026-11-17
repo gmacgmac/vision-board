@@ -382,7 +382,7 @@ this list differ, **this list wins**. Anything not named here is accepted as the
   failure tip shows for a few seconds after it happens, then the mark keeps its "!" and the tip comes back on hover.
   The error red is softened: a calmer red that still passes its contrast tier (a `tokens.css` change shown to the
   maintainer).
-- **Locked or read-only**: an answered node keeps showing its tick or cross; only the unanswered disc shows the lock.
+- **Locked or read-only** (point 328): no lock is shown at rest; every disc looks as it would on an open board (an answered node keeps its tick or cross). Pressing a disc or a write mark turns it into a lock for a few moments with a small popover "Board is locked" (or "This ledger is read-only"), then it goes back.
 - **Moved by you**: no mark on the node. "Moved by you · Put back" is an item in the number's menu and the right-click
   menu.
 - **Tags**: tinted with the node's own colour (its tone, else its kind), stronger than today's faint grey. No colour
