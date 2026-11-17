@@ -1,8 +1,8 @@
 // The fixed-size menu's markup (D-101; the shared base's menu look, base/menu.css, made one builder): a role=menu list of
 // menuitem rows, each its icon (the icon set), its words and its key, with separators between groups. It keeps one size
 // at any zoom (FE_05 places it on the stage, outside the scaled board). `look: 'picker'` lays the rows side by side,
-// icons only (the answer picker beside the disc); their words stay their names. The page opens it with the base's
-// `openMenu` and acts on `data-menu-act` (FE_02). Pure: markup only, every text run escaped.
+// icons only (the answer picker beside the disc); their words stay their names. The page opens it with `menuKeydown` and
+// `dismissable` (`clickWithin`, so a pan leaves it open) and acts on `data-menu-act` (FE_02). Pure: markup only, every text run escaped.
 import { esc } from '../markdown/inline.ts';
 import { icon } from '../icons/icon.ts';
 

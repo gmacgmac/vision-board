@@ -15,10 +15,10 @@ export const headerTier = (width: number): HeaderTier => (width >= FULL_MIN ? 'f
 /** Everything the header holds that moves or goes. The board picker, Send, Chat, "⋯", Locked and the ledger's state
  *  (`editing`: Read-only or Editing, readOnlyStart flag, decision 16) stay. */
 export type HeaderControl = 'app-icon' | 'folder' | 'ledger' | 'board' | 'version' | 'locked' | 'editing' | 'edit' | 'containers' | 'open' | 'new'
-  | 'boards-updated' | 'replied' | 'flagged' | 'zoom' | 'agents' | 'send' | 'chat' | 'more';
+  | 'boards-updated' | 'replied' | 'bookmarked' | 'zoom' | 'agents' | 'send' | 'chat' | 'more';
 
 export const HEADER_CONTROLS: readonly HeaderControl[] = ['app-icon', 'folder', 'ledger', 'board', 'version', 'editing', 'edit', 'locked', 'containers', 'open', 'new',
-  'boards-updated', 'replied', 'flagged', 'zoom', 'agents', 'send', 'chat', 'more'];
+  'boards-updated', 'replied', 'bookmarked', 'zoom', 'agents', 'send', 'chat', 'more'];
 
 /** What moves into "⋯" at each tier: a row there does what the control does in the bar. The page's folder and
  *  ledger (once its server names one) sit in the path at full and half, and are rows of "⋯" at a third, the ledger's under the folder's.
@@ -27,7 +27,7 @@ export const HEADER_CONTROLS: readonly HeaderControl[] = ['app-icon', 'folder', 
 const IN_MENU: Record<HeaderTier, readonly HeaderControl[]> = {
   full: [],
   half: ['edit', 'version', 'containers'],
-  third: ['folder', 'ledger', 'edit', 'version', 'containers', 'open', 'new', 'flagged', 'zoom', 'agents', 'boards-updated'],
+  third: ['folder', 'ledger', 'edit', 'version', 'containers', 'open', 'new', 'bookmarked', 'zoom', 'agents', 'boards-updated'],
 };
 
 /** What no longer shows at a tier: decoration, or a count that says nothing a person can act on there. */

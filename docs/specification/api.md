@@ -1604,8 +1604,11 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     change (the agent's latest version or reply on it, the card's times) is after the person's latest
     card `seen` or act naming any card now in the container (`LedgerState.looked`). So selecting one
     new or updated card in it, or acting on any of its cards, ends it for the whole container until
-    the agent changes one of its cards again; nothing is stored, a Send ends nothing, and a click on
-    the frame's empty space changes nothing. `clearedBy` is `select` and `act`. `freshCards(state,
+    the agent changes one of its cards again; nothing is stored and a Send ends nothing. A click inside
+    the container, on its background or its frame, clears the pill on the person's screen only (nodeEdges; point 308,
+    D-099 4): the page keeps, per board and container, the `seq` of the newest change it cleared, shows the pill again
+    when a later change arrives, and a reload shows it again; nothing is written, and a read-only board is left as it
+    is (`apps/board/src/board/cards/container-seen.ts`, `tests/pages/node-edges-seen.spec.ts`). `clearedBy` is `select` and `act`. `freshCards(state,
     board)` (conditions.ts) is the one list behind it, the toolbar's "N new" chip and each container's
     "3 new · 1 updated" pill: every card either row holds for that shows its tab, in board order, with
     its container and whether it is updated; a card both rows hold for is new only. Agents are never

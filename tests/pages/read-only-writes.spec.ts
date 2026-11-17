@@ -60,7 +60,7 @@ test('read-only, every press that would write says why and writes nothing; Edit,
   await expect(toast(page)).toHaveText(REASON);
   await page.keyboard.press('c');
   await expect(page.locator('vb-note-bubble')).toBeHidden(); // no note can be written
-  await card(page, 1).locator('button[data-flag]').click({ force: true });
+  await card(page, 1).locator('button[data-bookmark]').click({ force: true });
   await expect(toast(page)).toHaveText(REASON);
   await idle(page);
   expect(await head(page), 'nothing written').toBe(before);

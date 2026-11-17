@@ -1,7 +1,7 @@
 // A card's notes put away and shown again on the page (card-polish FE_02, api.md 156): the toggle at
 // the right of the thread's "N notes" line, Hide while it shows and Show while it is put away
 // (`data-notes`, node-template.ts `notesHead`). Each press is one act, `notes-hide` or `notes-show`,
-// naming the card by its board number and no version, the flag's pattern (flag-flow.ts): the person's private mark,
+// naming the card by its board number and no version, the bookmark's pattern (bookmark-flow.ts): the person's private mark,
 // kept out of every agent read, which a locked board still takes (lock.ts `passesLock`) and a past
 // version refuses (sender.ts). The sender draws the card from the line that comes back; its size
 // changes, so it is measured and only its container lays out again (cards.ts, layout-cache.ts).

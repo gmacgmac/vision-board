@@ -31,7 +31,7 @@ test('full: nothing moves, everything is in the bar', () => {
 test('half: Edit, version and containers move into "⋯", the app icon goes', () => {
   assert.deepEqual(moved('half'), ['version', 'edit', 'containers']);
   assert.equal(inBar('half', 'app-icon'), false);
-  for (const c of ['folder', 'ledger', 'board', 'open', 'new', 'zoom', 'agents', 'send', 'chat', 'more', 'locked', 'editing', 'boards-updated', 'replied', 'flagged'] as const) {
+  for (const c of ['folder', 'ledger', 'board', 'open', 'new', 'zoom', 'agents', 'send', 'chat', 'more', 'locked', 'editing', 'boards-updated', 'replied', 'bookmarked'] as const) {
     assert.ok(inBar('half', c), c);
   }
 });

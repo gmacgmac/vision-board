@@ -1,5 +1,5 @@
 // A locked board's cards and frames (N40 ruling 4): the state says `paused` while `BoardState.locked`
-// is set and is left out otherwise, for a card and for its container; the flag is never among what
+// is set and is left out otherwise, for a card and for its container; the bookmark is never among what
 // the elements pause (paused.ts lists), so it stays usable; everything else that changes the board is.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,37 +23,37 @@ test('a card and its container are paused while the board is locked, and only th
   assert.ok(!('paused' in regionState(region, view, board(false), new Set(['3']))));
 });
 
-test('the elements pause every control that changes the board, and never the flag', () => {
+test('the elements pause every control that changes the board, and never the bookmark', () => {
   const source = (rel: string) => fs.readFileSync(new URL(rel, import.meta.url), 'utf8');
   const list = (file: string) => /const PAUSED = '([^']+)'/.exec(source(file))![1]!;
   const cardList = list('../src/node/vb-node.ts');
   for (const sel of ['button[data-act]', '.vb-size-trig', '.vb-size-opt', '.vb-note-pin', 'button[data-answer]', '[data-mark="answer"]', '[data-mark="tick"]', '[data-mark="cross"]']) assert.ok(cardList.includes(sel), sel);
-  assert.doesNotMatch(cardList, /data-flag|vb-flag/);
-  // The flag button is a `data-flag`, never a `data-act`, so the card list can't catch it.
-  const html = nodeTemplate(node({}), { flag: true });
-  assert.match(html, /<button type="button" class="vb-act vb-flag" data-flag /);
-  assert.doesNotMatch(html, /data-flag[^>]*data-act|data-act="flag"/);
+  assert.doesNotMatch(cardList, /data-bookmark|vb-bookmark/);
+  // The bookmark button is a `data-bookmark`, never a `data-act`, so the card list can't catch it.
+  const html = nodeTemplate(node({}), { bookmark: true });
+  assert.match(html, /<button type="button" class="vb-act vb-bookmark" data-bookmark /);
+  assert.doesNotMatch(html, /data-bookmark[^>]*data-act|data-act="bookmark"/);
   const frameList = list('../src/region/vb-region.ts');
   for (const sel of ['button[data-mode]', 'button.vb-mtile', '.vb-widths', '.vb-region-grip', '.vb-region-comment', 'data-note-act="edit"', 'data-note-act="remove"', 'data-revoke'])
     assert.ok(frameList.includes(sel), sel);
   assert.doesNotMatch(frameList, /vb-cog|data-note-act="show"/, 'the cog and Show in container stay');
 });
 
-// A ledger open read-only (D-085 3; READONLY_UI_01): the same controls pause as on a locked board, and the flag too,
-// since read-only writes no flag; only `BoardState.readOnly` says so (the page sets it from its reads).
+// A ledger open read-only (D-085 3; READONLY_UI_01): the same controls pause as on a locked board, and the bookmark too,
+// since read-only writes no bookmark; only `BoardState.readOnly` says so (the page sets it from its reads).
 const readOnly = (): BoardState => ({ ...board(false), readOnly: true as const });
 
-test('a read-only ledger pauses a card and its container as a lock does, and the card\'s flag besides', () => {
+test('a read-only ledger pauses a card and its container as a lock does, and the card\'s bookmark besides', () => {
   const st = nodeState(node({}), readOnly());
   assert.equal(st.paused, true);
   assert.equal(st.readOnly, true);
-  assert.ok(!('readOnly' in nodeState(node({}), board(true))), 'a lock leaves the flag');
+  assert.ok(!('readOnly' in nodeState(node({}), board(true))), 'a lock leaves the bookmark');
   assert.ok(!('readOnly' in nodeState(node({}), board(false))));
   assert.equal(regionState(region, view, readOnly(), new Set(['3'])).paused, true);
   const source = fs.readFileSync(new URL('../src/node/vb-node.ts', import.meta.url), 'utf8');
-  // With the node's edges (nodeEdges) the number is the bookmark, so it pauses with the flag (FE_01).
-  assert.match(source, /const FLAG = 'button\[data-flag\], \[data-mark="number"\]'/);
-  assert.match(source, /pauseControls\(this, FLAG, st\.readOnly === true\)/);
+  // With the node's edges (nodeEdges) the number is the bookmark, so it pauses with the bookmark (FE_01).
+  assert.match(source, /const BOOKMARK = 'button\[data-bookmark\], \[data-mark="number"\]'/);
+  assert.match(source, /pauseControls\(this, BOOKMARK, st\.readOnly === true\)/);
 });
 
 // The reason as the paused controls' tooltip (FE_01): their own tip kept, then given back.
@@ -73,5 +73,5 @@ test('explainPaused sets the reason as the title, keeps the control\'s own, and 
   assert.equal(a.getAttribute('title'), 'Check · a');
   assert.equal(none.getAttribute('title'), null);
   const source = fs.readFileSync(new URL('../src/node/vb-node.ts', import.meta.url), 'utf8');
-  assert.match(source, /explainPaused\(this, `\$\{PAUSED\}, \$\{FLAG\}, \$\{APP\}`/);
+  assert.match(source, /explainPaused\(this, `\$\{PAUSED\}, \$\{BOOKMARK\}, \$\{APP\}`/);
 });

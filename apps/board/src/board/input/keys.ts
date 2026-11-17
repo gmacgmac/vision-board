@@ -11,10 +11,13 @@ import type { CommandId } from './commands.ts';
 import { commandForKey, regionCommandForKey } from './commands.ts';
 
 export interface KeyHandlers {
-  act(id: string, action: ActionId): void;
-  /** Shift+F on a focused card: its flag on or off (cardFlag flag, flag-flow.ts); absent with the
-   *  flag off, when Shift+F stays Fit like F. */
-  flag?(id: string): void;
+  /** A node's act; with the node's edges the result says whether it was written (item-acts.ts). */
+  act(id: string, action: ActionId): Promise<boolean | undefined> | void;
+  /** A key on a node drawn with its edges (nodeEdges flag, mark-flow.ts): the menu key or Shift+F10 (`menu`), or H
+   *  (`history`); true when it acted. Absent with the flag off, when H is Hide answered everywhere. */
+  nodeKey?(id: string, target: HTMLElement, key: 'menu' | 'history'): boolean;
+  /** B on a focused card: its bookmark on or off (cardBookmark flag, bookmark-flow.ts); absent with the flag off. */
+  bookmark?(id: string): void;
   nudge(id: string, dx: number, dy: number): void;
   /** Alt+arrows with focus on a container's grip (3_FE_04 ruling 8): the cards' step. */
   nudgeRegion(region: string, dx: number, dy: number): void;
@@ -56,19 +59,19 @@ function nudged(h: KeyHandlers, e: KeyboardEvent, id: string | null, region: str
   return true;
 }
 
-/** Moving between cards and the card-level keys: Space, J and K, the arrows, Shift+F. True when one applied. */
+/** Moving between cards and the card-level keys: Space, J and K, the arrows, B. True when one applied. */
 function onCard(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | null, target: HTMLElement): boolean {
   const go = (f: () => void) => { e.preventDefault(); f(); return true; };
   // Only on the card itself: Space on one of its buttons presses the button.
   if (key === ' ' && id && target.localName === 'vb-node') return go(() => h.toggle(id));
   if (key === 'j' || (id && (e.key === 'ArrowDown' || e.key === 'ArrowRight'))) return go(() => h.step(id, 1));
   if (key === 'k' || (id && (e.key === 'ArrowUp' || e.key === 'ArrowLeft'))) return go(() => h.step(id, -1));
-  // Shift+F on a card is its flag (field report batch 2 assumption A): F alone is Fit.
-  return !!(id && h.flag && e.shiftKey && key === 'f') && go(() => h.flag!(id));
+  // B on a card is its bookmark (D-099 1, planner's call 3; Shift+F before it, retired).
+  return !!(id && h.bookmark && !e.shiftKey && key === 'b') && go(() => h.bookmark!(id));
 }
 
 /** The commands and card actions a key stands for. True when one applied. */
-function onCommand(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | null): boolean {
+function onCommand(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | null, target: HTMLElement): boolean {
   // A Shift combination a command claims (Shift+M, 3_FE_03 ruling 8) is that command's alone: it
   // never falls through to the plain key's action.
   const shifted = e.shiftKey ? commandForKey(`shift+${key}`) : undefined;
@@ -78,6 +81,8 @@ function onCommand(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | n
   if (id && BY_KEY.has(key)) { e.preventDefault(); h.act(id, BY_KEY.get(key)!); return true; }
   // R with no selection (a selection's R is Reset places, commands.ts): the focused card's reset.
   if (id && key === 'r') { e.preventDefault(); h.unpin(id); return true; }
+  // H on a node with its edges is its history (planner's call 3); elsewhere, Hide answered.
+  if (key === 'h' && id && !e.shiftKey && h.nodeKey?.(id, target, 'history')) { e.preventDefault(); return true; }
   if (key === 'h') { e.preventDefault(); h.toggleHide(); return true; }
   return false;
 }
@@ -94,6 +99,8 @@ function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement, pageWide = 
   if (e.key === 'Escape') { if (h.escape()) e.preventDefault(); return; }
   if (e.metaKey || e.ctrlKey) return;
   const id = target.closest<HTMLElement>('vb-node')?.dataset.id ?? null;
+  // The menu key or Shift+F10 on a node: its actions, or on its number the number's menu (nodeEdges flag, D-099 1).
+  if (id && (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) && h.nodeKey?.(id, target, 'menu')) return e.preventDefault();
   /** The container whose title line (or one of its controls) has focus, outside every card. */
   const region = id ? undefined : target.closest('.vb-region-head')?.closest<HTMLElement>('vb-region')?.dataset.region;
   if (nudged(h, e, id, region, target) || e.altKey) return;
@@ -104,7 +111,7 @@ function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement, pageWide = 
     return h.regionCommand(onRegion, region!);
   }
   if (region !== undefined && !e.shiftKey && commandForKey(key) === 'zoom-selection' && h.zoomRegion?.(region)) return e.preventDefault();
-  if (!onCard(h, e, key, id, target)) onCommand(h, e, key, id);
+  if (!onCard(h, e, key, id, target)) onCommand(h, e, key, id, target);
 }
 
 /** Listens on the root, or with `pageWide` on the document; returns the function that stops listening.

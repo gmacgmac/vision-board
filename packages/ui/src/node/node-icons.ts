@@ -26,11 +26,12 @@ export const ACTION_ICON: Partial<Record<ActionId, string>> = {
   later: '<path d="M6 4h8v12l-4-3-4 3z"/>',
 };
 
-/** The flag button's icon, 20 x 20 like the action icons (cardFlag flag): a pole and its cloth. The
- * cloth (`vb-flag-cloth`) fills in while the card is flagged (node.css). */
-export const FLAG_ICON = '<path d="M5.5 17.5v-14"/><path class="vb-flag-cloth" d="M5.5 4h9.5l-2.5 3.75L15 11.5H5.5z"/>';
+/** The bookmark button's icon in the old footer, 20 x 20 like the action icons (cardBookmark flag): a pole and its
+ * cloth, the glyph the flag had (D-099 2: it keeps its place and glyph until T_04). The cloth (`vb-bookmark-cloth`)
+ * fills in while the card is bookmarked (node.css). */
+export const BOOKMARK_ICON = '<path d="M5.5 17.5v-14"/><path class="vb-bookmark-cloth" d="M5.5 4h9.5l-2.5 3.75L15 11.5H5.5z"/>';
 
-/** The history button's icon, 20 x 20 like the flag (card-polish FE_03): ⓘ, a circle and an i. */
+/** The history button's icon, 20 x 20 like the bookmark (card-polish FE_03): ⓘ, a circle and an i. */
 export const INFO_ICON = '<circle cx="10" cy="10" r="7.5"/><path d="M10 9v5M10 6.25v.01"/>';
 
 /** The size control's glyph, 24 x 24: a width between two bars (mockup 07, i-size). */

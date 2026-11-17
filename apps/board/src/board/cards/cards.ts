@@ -39,6 +39,9 @@ export interface CardSet {
   /** Write each card's place, and its width where the layout's differs from its own (`sizes`);
    *  true when any card moved, changed width, or was shown or hidden. */
   place(layout: BoardLayout, sizes: ReadonlyMap<string, Size>): boolean;
+  /** Draw again, on the next sync, the cards `which` names (all by default): how they draw changed (a skin, the icon
+   *  library; nodeEdges, FE_02), though the agent drew no new version. */
+  refresh(which?: (n: ViewNode) => boolean): void;
   /** Remove every card (another board, or a rebuild). */
   clear(): void;
 }
@@ -196,6 +199,12 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
         moved = true;
       }
       return moved;
+    },
+    refresh(which = () => true) {
+      for (const n of last?.view.nodes ?? []) {
+        const k = kept.get(n.id);
+        if (k && which(n)) kept.set(n.id, { ver: Number.NaN, state: k.state });
+      }
     },
     clear() {
       host.replaceChildren();

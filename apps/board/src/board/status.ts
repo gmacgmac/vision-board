@@ -6,6 +6,7 @@ import type { AccessHolder, ArchivedBoard, BoardListItem, BoardMark, BoardRun, F
 import type { AccessRequestRow } from './access/index.ts';
 import type { ContainerRow } from './find/index.ts';
 import type { GoBox } from './find/index.ts';
+import type { Skin } from '#format';
 import type { ChatWork } from './host.ts';
 import * as boardWords from './words/board.ts';
 
@@ -42,8 +43,8 @@ export interface BoardStatus {
   /** The new and updated cards, in board order (`freshCards`): the "N new" chip and its list (freshCards flag). */
   freshCards: FreshCard[];
   answered: number;
-  /** How many cards on the open board the person flagged (cardFlag flag): the toolbar's chip. */
-  flagged: number;
+  /** How many cards on the open board the person bookmarked (cardBookmark flag): the toolbar's chip. */
+  bookmarked: number;
   /** The board's zoom as a whole percentage (viewport.ts `zoomPercent`). */
   zoom: number;
   /** The board's Reply text (the reply panel). */
@@ -71,6 +72,8 @@ export interface BoardStatus {
   locked: boolean;
   /** The ledger is open read-only (D-085, the reads' `readOnly`): nothing changes until they switch to Editing. */
   readOnly: boolean;
+  /** The open board's skin (skins flag, D-100 2): the "⋯" menu's Skin rows; null with the flag off. */
+  skin: Skin | null;
   /** The Go to card box (goToCard flag, go-to-card.ts), open while set. */
   go: GoBox | null;
   /** How many times the board was drawn. */
@@ -91,9 +94,9 @@ export interface BoardStatus {
 export const initialStatus = (): BoardStatus => ({
   boards: [], archived: [], boardId: '', noBoards: false, boardMarks: {}, title: boardWords.visionBoard, version: null,
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
-  counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, flagged: 0,
+  counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, bookmarked: 0,
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
-  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, go: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
+  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, skin: null, go: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
 });
 
 export interface Status {

@@ -5,7 +5,7 @@
 // versions.ts and lock-flow.ts `guard`). Browser only.
 import type { AccessFlow } from '../access/index.ts';
 import type { Drawing, createFocus, createPlaces } from '../canvas/index.ts';
-import type { ProposalFlow, createFlagFlow, createItemActs, createRemoveFlow, createUpdateFlow } from '../cards/index.ts';
+import type { MarkFlow, ProposalFlow, createBookmarkFlow, createItemActs, createRemoveFlow, createUpdateFlow } from '../cards/index.ts';
 import type { StageHandlers } from '../input/index.ts';
 import type { NoteFlow } from '../notes/index.ts';
 import type { Moves, Selection, createContainerDrag, createSelectionFlow } from '../selection/index.ts';
@@ -15,10 +15,10 @@ import type { Status } from '../status.ts';
 
 type Returns<F extends (...args: never[]) => unknown> = ReturnType<F>;
 
-/** The flows the table routes to. A flag that is off leaves its flow out (`flags`, `access`, `removal`). */
+/** The flows the table routes to. A flag that is off leaves its flow out (`bookmarks`, `access`, `removal`). */
 export interface HandlerFlows {
   act: Returns<typeof createItemActs>;
-  flags: Returns<typeof createFlagFlow> | null;
+  bookmarks: Returns<typeof createBookmarkFlow> | null;
   access: AccessFlow | null;
   removal: Returns<typeof createRemoveFlow> | undefined;
   proposals: ProposalFlow;
@@ -38,12 +38,16 @@ export interface HandlerFlows {
   status: Status;
   /** Z on a container (containerZoom flag): a click inside one or on its title line marks it, Z zooms to it. */
   container?: { zoom(region: string): boolean; mark(region: string): void };
+  /** The marks on a node's edge (nodeEdges flag, mark-flow.ts): their presses and keys; Esc closes what they opened. */
+  marks?: MarkFlow;
+  /** A click inside container `region` (its background or frame; nodeEdges flag): its pill cleared on this screen. */
+  seen?(region: string): void;
 }
 
 export function stageHandlers(f: HandlerFlows): StageHandlers {
-  const { act, flags, access, removal, proposals, updates, notes, places, frames, moves, flow, versions, selection, drawing, focus, view } = f;
+  const { act, bookmarks, access, removal, proposals, updates, notes, places, frames, moves, flow, versions, selection, drawing, focus, view } = f;
   return {
-    act: (id, a) => void act(id, a), ...(flags && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq, until) => void f.showVersion(seq, until),
+    act: (id, a) => act(id, a), ...(bookmarks && { bookmark: (id: string) => void bookmarks.toggle(id) }), showVersion: (seq, until) => void f.showVersion(seq, until),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
     showNote: (id, seq, fromNote) => notes.show(id, seq, fromNote), showReply: (id, seq) => notes.reply(id, seq), setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode), setWidths: (region, widths) => void places.setWidths(region, widths),
@@ -64,11 +68,15 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
       selection.clear(); flow.dismissArea();
       const region = f.container && !target?.closest('vb-node') ? target?.closest<HTMLElement>('vb-region')?.dataset.region : undefined;
       if (region !== undefined) f.container!.mark(region);
+      const inside = f.seen && !target?.closest('vb-node') ? target?.closest<HTMLElement>('vb-region')?.dataset.region : undefined;
+      if (inside !== undefined) f.seen!(inside);
     },
     ...(f.container && { zoomRegion: f.container.zoom }),
-    // Esc closes an open bubble first, then the open selection bar (FE_02), then leaves a past version, else
+    ...(f.marks && { mark: f.marks.press, nodeKey: f.marks.key }),
+    // Esc closes a node's open menu or box first (nodeEdges), then an open bubble, then the open selection bar (FE_02), then leaves a past version, else
     // clears the selection (ruling 1). True when there was something to do: a host's own Esc is the host's otherwise.
     escape: () => {
+      if (f.marks?.close()) return true;
       if (notes.open) { notes.close(); return true; }
       if (flow.collapse()) return true;
       if (versions.state) { void versions.show(null); return true; }

@@ -15,8 +15,8 @@ export type BoardFields = OperationInput<'put_board'>['body'];
 export type RetireFields = OperationInput<'retire_cards'>['body'];
 
 /** Acts the schema asks to name their board (api.md 16, 135, 138): it is always the board they are sent
- * to. Every board mark does (archive, restore, lock, unlock). */
-const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke', ...BOARD_MARKS]);
+ * to. Every board mark does (archive, restore, lock, unlock), and so does the board's skin (api.md 183). */
+const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke', 'skin', ...BOARD_MARKS]);
 /** A note or a place on a whole container names `board` + `region` in place of `n` (api.md 71). */
 const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'note-edit', 'note-remove', 'pin', 'unpin']);
 export const namesBoard = (f: ActFields) =>

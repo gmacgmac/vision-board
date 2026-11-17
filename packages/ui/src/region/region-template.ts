@@ -79,9 +79,10 @@ const noteBlock = (id: string, title: string, prefix?: string): string => {
 
 /** The agent's replies under the note block's text (FE_03 ruling 3): "Agent reply · label" over
  * the words as Markdown, each cut at three lines like the note until the block's "Show all". Each
- * is a tab stop: a click, Enter or Space opens the exchange (popovers-larger-thread ruling 2). */
+ * is a tab stop: a click, Enter or Space opens the exchange (popovers-larger-thread ruling 2). A reply the person has
+ * not looked at carries `data-unseen` (the bright edge; nodeEdges flag, N47: until a click inside its container). */
 export const nblockRepliesMarkup = (replies: readonly ReplyEntry[], md?: MarkdownOptions): string => replies.map((r) =>
-  `<div class="vb-nblock-reply" data-reply="${r.seq}" tabindex="0"><span class="vb-nblock-who">${esc(r.who)}</span>`
+  `<div class="vb-nblock-reply" data-reply="${r.seq}"${r.unseen ? ' data-unseen' : ''} tabindex="0"><span class="vb-nblock-who">${esc(r.who)}</span>`
   + `<div class="vb-nblock-reply-text">${renderMarkdown(r.text, md)}</div></div>`).join('');
 
 /** One layout icon: a radio in the row's radiogroup, out of the tab order until `update` makes the

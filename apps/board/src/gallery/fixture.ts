@@ -41,8 +41,8 @@ export const UPDATES_BOARD = 'updates';
  *  awaiting its handover, one with it written, one with a reply under its note, one with a reply that
  *  names no note. */
 export const PARKING_BOARD = 'parking';
-/** The board the flag and retired samples use (field report batch 2, cardFlag and retiredMarker flags):
- *  a container of three cards, two flagged by the person (one redrawn since), and a container two
+/** The board the flag and retired samples use (field report batch 2, cardBookmark and retiredMarker flags):
+ *  a container of three cards, two bookmarked by the person (one redrawn since), and a container two
  *  cards were retired from, one at a time, after the person had answered on the board. */
 export const MARKS_BOARD = 'marks';
 /** The board the layout samples use (field report batch 3, FE_01): a flow whose links' labels fit

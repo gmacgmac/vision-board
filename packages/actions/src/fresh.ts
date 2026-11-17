@@ -3,7 +3,8 @@
 // container it is in now and the line of its newest change; and the containers they make fresh: one
 // holding such a card whose newest change is after the person's latest engagement with any card in it
 // (`LedgerState.looked`: their latest card seen or act naming it). Nothing is stored: engaging with
-// one card of a container ends it for the whole container, and a click on the frame changes nothing.
+// one card of a container ends it for the whole container, and a click on the frame stores nothing
+// (the page clears the pill on screen only: conditions.ts `container.fresh` endsWhen, api.md 158).
 // conditions.ts gives these their rows (`freshCards`, `container.fresh`). Pure.
 import { latest, nodesOf } from '#format';
 import type { LedgerNode } from '#format';

@@ -127,8 +127,9 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     const card = d.card(String(n));
     const inside = card?.contains(document.activeElement);
     d.redraw();
-    // Focus on a tab, or in an open box, stays (the proposal tab or box that held the steps, oneChangeTab).
-    if (!inside || document.activeElement?.closest('.vb-node-btab:not([hidden]), .vb-card-pop[data-open]')) return;
+    // Focus on a tab, on a mark (nodeEdges: the badge its box gave focus back to), or in an open box, stays (the
+    // proposal tab or box that held the steps, oneChangeTab).
+    if (!inside || document.activeElement?.closest('.vb-node-btab:not([hidden]), [data-mark]:not([hidden]), .vb-card-pop[data-open]')) return;
     const tab = pieceOf(n, '[data-tab="updates"]');
     (tab && !tab.hidden ? tab : card)?.focus({ preventScroll: true });
   }
@@ -165,10 +166,12 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     e.preventDefault();
     fold(n);
   };
-  /** A card whose steps sit in its proposal box (oneChangeTab): `e` is that box's own event. */
+  /** A card whose steps sit in its proposal box (oneChangeTab), or in its history box (nodeEdges, planner's call 9: the
+   *  badge opens one box holding the stepper and the history): `e` is that box's own event. */
   const boxed = (e: Event, name: string) => {
     const card = (e.target as Element).closest<HTMLElement>('vb-node');
-    return name === 'proposal' && card?.querySelector('.vb-card-pop[data-pop="proposal"] > .vb-node-steps') ? Number(card.dataset.id) : undefined;
+    const held = (name === 'proposal' || name === 'history') && card?.querySelector(`.vb-card-pop[data-pop="${name}"] .vb-node-steps`);
+    return held ? Number(card!.dataset.id) : undefined;
   };
   const onOpen = (e: Event) => {
     const box = (e as CustomEvent<HTMLElement>).detail;

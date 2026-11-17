@@ -1,6 +1,6 @@
 // Node pattern, the element's half of the edge marks (nodeEdges flag, D-099): apply the marks state (node-marks.ts) to
 // the markup node-edges.ts built, in place, so focus on a mark survives an update. Each mark's name says its state; the
-// number's stays put and aria-pressed says whether it is bookmarked (as the flag button did). The tone is set through
+// number's stays put and aria-pressed says whether it is bookmarked (as the old bookmark button does). The tone is set through
 // CSSOM, never a style attribute (the page's CSP refuses inline styles), from the checked value only. Browser only.
 import type { NodeMarks } from './node-marks.ts';
 import { toneView } from './node-marks.ts';

@@ -100,8 +100,8 @@ export const FLAGS = {
     // On by default (maintainer, 2026-10-10, every-node PLAN rulings 1-4, FE_01); ?flags=-everyNode turns it off.
     default: true,
   },
-  cardFlag: {
-    // On by default (maintainer, 2026-10-11, field report batch 2 ruling 3, assumption A); ?flags=-cardFlag turns it off.
+  cardBookmark: {
+    // On by default (maintainer, 2026-10-11, field report batch 2 ruling 3, assumption A); ?flags=-cardBookmark turns it off.
     default: true,
   },
   retiredMarker: {
@@ -408,7 +408,7 @@ export const FLAG_DESCRIPTIONS = {
   openFolder: 'The "⋯" menu ends with Open folder…, a picker of the folders under the home folder (recent first, a folder with a Vision Board marked) that opens one, or creates its Vision Board, in place of the open folder (api.md 109-113); every open page then reloads onto it. The page title names the open folder and the last board is kept per folder. Off, the page never asks which folder is open.',
   currentFolder: 'The folder the board has open is always on show (needs openFolder): a chip with its name at the far left of the toolbar, its full path in the tooltip, a click opening the folder dialog; a "Current:" line under Open folder… in the "⋯" menu; and a "Current folder" line with the full path and a Copy button at the top of the folder dialog, apart from its lists. Off, the name is only in the page title and the Open folder… tooltip.',
   everyNode: 'Every card shows its number and the buttons its kind offers: a question, decision or action ✓, ✗, Comment, More context and Later (✓ and ✗ read "Yes" and "No" on a question, ✓ "Done" on an action); every other kind Comment, More context and Later. Comment on a selection takes any cards. Off, only cards that need an answer show a number and buttons (api.md 118-120).',
-  cardFlag: 'Every card with a number has a small flag button beside Later (Shift+F on a focused card): the person\'s private mark, kept in the ledger and never sent to an agent (api.md 128). A flagged card shows it on the button, keeps it through a redraw, and a "N flagged" chip in the toolbar steps through the flagged cards. Off while a past version shows. Off, no button, no key and no chip; flags stay in the ledger.',
+  cardBookmark: 'Every card with a number has a small bookmark button beside Later (B on a focused card): the person\'s private mark, kept in the ledger and never sent to an agent (api.md 128; called the flag before ledger format 20, D-099 2). A bookmarked card shows it on the button, keeps it through a redraw, and a "N bookmarked" chip in the toolbar steps through the bookmarked cards. Off while a past version shows. Off, no button, no key and no chip; bookmarks stay in the ledger.',
   retiredMarker: 'A container the agent retired cards from, one at a time, shows a small "N cards retired" marker in its title line; it opens the board version where they last appeared (read-only, with the versionView flag). Retired cards and containers are gone from the board either way. Off, no marker.',
   linkLabels: 'A link\'s label sits on its line near the source end, on a background so the line does not show through, wherever the layout found it room (`Route.labelAt.fits`); where it did not, a small marker sits on the line, and hovering or focusing the marker floats the label above everything (WCAG 1.4.13: hoverable, persistent, Esc dismisses). Off, every label is drawn at the middle of its line as before.',
   alignSetting: 'The "⋯" menu has Centre cards, a per-viewer setting kept in this browser (vb.align) and never sent to an agent: off (the default), a row of cards lines up by their tops and a column by their left edges; on, both are centred. Off, the menu has no such row and cards line up by their tops and left edges.',

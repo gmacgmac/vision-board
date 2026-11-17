@@ -2,7 +2,7 @@
 // Toolbar at its three forms with the page's folder, ledger and state chip, read-only and editing ("⋯" open at a third,
 // holding Edit); the chip alone at rest, hovered, focused, pressed, opening for editing, editing, and held by another
 // computer with its menu open; Edit and Stop editing as a button and as a row of "⋯", loading too; the refusal's toast;
-// and what read-only pauses: the cards (the flag too), the container, Send, the "⋯" menu's Lock and Archive rows. Shown
+// and what read-only pauses: the cards (the bookmark too), the container, Send, the "⋯" menu's Lock and Archive rows. Shown
 // only with the flag on (on by default; ?flags=-readOnlyStart hides it), so the gallery is as it was without it. Names and times are examples.
 // With the readOnlyToggle flag (PLAN decision 11) the chip is one toggle with no menu and no Edit button: its samples
 // (`toggleGroups`) take the place of the chip's, the button's and the row's.
@@ -47,7 +47,7 @@ function bar(fx: Fixture, form: HeaderTier, editing: Editing, menuOpen = false):
     target: frame,
     props: {
       onboard: none, onversion: () => Promise.resolve(), ongo: none, onopen: none, oncommand: none, onhide: none,
-      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onflagged: none, onarchive: none, onlock: none,
+      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onbookmarked: none, onarchive: none, onlock: none,
       placement: 'gallery', form, facts: facts(!!editing.readOnly), holders: fx.boardAgents, ...(menuOpen && { menuOpen: true }),
     },
   });
@@ -145,7 +145,7 @@ export function editingSection(fx: Fixture): HTMLElement {
     ...(toggle ? toggleGroups(fx) : menuGroups(fx)),
     group('"⋯" on a read-only ledger', 'Lock board and Archive board are off, their tooltip the reason.', menu()),
     group('A read-only ledger\'s container', 'Paused as on a locked board: in place, quiet, aria-disabled; a press says why.', frame!),
-    group('A read-only ledger\'s cards', 'The review buttons, the size control, the note pin and the flag too (read-only writes no flag) are paused.', cards!),
+    group('A read-only ledger\'s cards', 'The review buttons, the size control, the note pin and the bookmark too (read-only writes no bookmark) are paused.', cards!),
     group('Send to agent', 'Paused, with the reason as its title.', send()));
   return box;
 }

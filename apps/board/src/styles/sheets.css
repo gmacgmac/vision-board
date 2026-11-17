@@ -11,4 +11,5 @@
 @import '#ui/styles.css';
 @import './archived-dialog.css';
 @import './lock.css';
+@import './node-edges.css';
 @import './header.css';

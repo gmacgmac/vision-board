@@ -67,7 +67,7 @@ export const containers = 'Containers';
 export const folder = 'Folder';
 export const openCards = 'Open cards';
 export const newCards = 'New cards';
-export const flagged = 'Flagged';
+export const bookmarked = 'Bookmarked';
 export const openWord = 'open';
 export const freshCount = (fresh: number): string => `${fresh} new`;
 export const goToNewCard = 'Go to a new or updated card';
@@ -83,3 +83,8 @@ export const moreAlso = (also: readonly string[]): string => (also.length ? `${a
 
 // ---- LockedChip.svelte
 export const thisBoardIsLocked =(LOCKED_PERSON: string | number): string => `This board is locked. ${LOCKED_PERSON}.`;
+
+// ---- The "⋯" menu's Skin rows (skins flag, D-100 2: ToolbarMenu.svelte): one per skin, the board's own ticked.
+export const skinGroup = 'Skin';
+export const skinName = (skin: string): string => (skin === 'command-lens' ? 'Command Lens skin' : 'Default skin');
+export const skinTip = 'How this board\'s nodes look, for everyone who opens it';

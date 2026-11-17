@@ -264,7 +264,7 @@ const LONG_LEDGER = 'customer-research-interviews-and-surveys'; // 40, the longe
 const LONG_BOARD = 'Quarterly hiring plan for the platform and data teams across every region, with budgets and open questions';
 const FORMS = [[1470, 'full'], [1400, 'full'], [1300, 'full'], [1299, 'half'], [900, 'half'], [620, 'half'], [619, 'third'], [490, 'third'], [400, 'third']] as const;
 
-/** A long-named folder, ledger and board, a card flagged and the board locked: the most the path holds. */
+/** A long-named folder, ledger and board, a card bookmarked and the board locked: the most the path holds. */
 async function longNames(page: Page, request: APIRequestContext) {
   const folder = path.join(srv.home, 'projects', 'atlas-customer-research-programme-2027');
   fs.mkdirSync(folder, { recursive: true });

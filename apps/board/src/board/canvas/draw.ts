@@ -12,7 +12,7 @@
 import type { NodeSize, ViewNode } from '#format';
 import type { Align, BoardLayout, Size } from '#layout';
 import { widthsOf } from '#format';
-import type { CardConditions, CardReply, MarkdownOptions, VbNodeElement, VbRegionElement } from '#ui';
+import type { CardConditions, CardReply, IconLibrary, MarkdownOptions, NodeTemplateOptions, SkinDef, VbNodeElement, VbRegionElement } from '#ui';
 import { holdersOf } from '../access/index.ts';
 import { createCardImages } from '../cards/index.ts';
 import { createCardSet } from '../cards/index.ts';
@@ -84,10 +84,12 @@ export interface DrawDeps {
   facts(n: ViewNode): CardConditions;
   /** The agent's replies to show under container notes (parking.ts, FE_03). */
   replies(): readonly CardReply[];
-  /** The cardFlag flag: every card with a number has the flag button (flag-flow.ts). */
-  flag?: boolean;
+  /** The cardBookmark flag: every card with a number has the bookmark button (bookmark-flow.ts). */
+  bookmark?: boolean;
   /** The cardHistory flag: every card with a footer has the ⓘ and its history box (history-flow.ts). */
   history?: boolean;
+  /** The nodeEdges flag: each node draws its marks on its edges, where the board's skin puts them (D-099, D-100). */
+  edges?: SkinDef;
   /** Each container's "N cards retired" marker (retiredMarker flag, packages/actions retired.ts). */
   retired?(): ReadonlyMap<string, RetiredCount>;
   /** Each fresh container's pill counts (freshCards flag, attention.ts `freshIn`). */
@@ -115,6 +117,9 @@ export interface Drawing {
   wiresFor(layout: BoardLayout, focus: string | null): void;
   /** Hide the connectors as for a relayout (a container was dropped; its draw is on its way). */
   settle(): void;
+  /** How nodes draw changed (the board's skin, the icon library; nodeEdges): the nodes `which` names (all by
+   *  default) draw again on the next draw. */
+  restyle(o: { edges?: SkinDef | undefined; icons?: IconLibrary }, which?: (n: ViewNode) => boolean): void;
   /** Take away what the drawing put beside the stage (the image view). */
   destroy(): void;
 }
@@ -124,7 +129,10 @@ const SETTLE_MS = 380;
 
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
-  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown });
+  const cardOpts: NodeTemplateOptions = {
+    sizeControl: d.sizing, bookmark: d.bookmark === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown, ...(d.edges && { edges: d.edges }),
+  };
+  const cards = createCardSet(els.cards, cardOpts);
   const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, layoutTooltip: d.layoutTooltip, idPrefix: d.ids, markdown: d.markdown });
   const use = d.rail && d.railHover ? bindRegionUse(els.stage, () => regions.els, (id) => d.data().view.nodes.find((n) => n.id === id)?.region) : undefined;
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids);
@@ -220,6 +228,11 @@ export function createDrawing(d: DrawDeps): Drawing {
     viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); images.place(); d.placed?.(); },
     wiresFor: (l, focus) => wires.draw(l, focus),
     settle: settleWires,
+    restyle(o, which) {
+      if ('edges' in o) { if (o.edges) cardOpts.edges = o.edges; else delete cardOpts.edges; }
+      if (o.icons) cardOpts.icons = o.icons;
+      cards.refresh(which);
+    },
     destroy: () => { clearTimeout(settle); images.destroy(); use?.stop(); },
   };
 }

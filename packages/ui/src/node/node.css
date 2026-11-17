@@ -239,11 +239,11 @@ vb-node .vb-act:active { transform: translateY(1px); }
 vb-node .vb-act[data-act='ack'][aria-pressed='true'] { color: var(--vb-state-ack); border-color: var(--vb-state-ack); }
 vb-node .vb-act[data-act='drop'][aria-pressed='true'] { color: var(--vb-state-drop); border-color: var(--vb-state-drop); }
 vb-node .vb-act[data-act='later'][aria-pressed='true'] { color: var(--vb-state-later); border-color: var(--vb-state-later); }
-/* The flag (cardFlag flag): the person's private mark, its cloth filled while the card is flagged.
-   Its colour is --vb-state-flag, its own, not a kind's (a decoration, Lc 30 tier: APCA Lc 74.5
+/* The bookmark (cardBookmark flag): the person's private mark, its cloth filled while the card is bookmarked.
+   Its colour is --vb-bookmark, its own, not a kind's (a decoration, Lc 30 tier: APCA Lc 74.5
    light, -56.6 dark on the card). */
-vb-node .vb-flag[aria-pressed='true'] { color: var(--vb-state-flag); border-color: currentColor; }
-vb-node .vb-flag[aria-pressed='true'] .vb-flag-cloth { fill: currentColor; }
+vb-node .vb-bookmark[aria-pressed='true'] { color: var(--vb-bookmark); border-color: currentColor; }
+vb-node .vb-bookmark[aria-pressed='true'] .vb-bookmark-cloth { fill: currentColor; }
 
 /* Zoomed out (N8): the stage carries data-zoom="far" below FAR_K (viewport.ts, 0.55 since review
    polish round 2 ruling 2, the maintainer's pick after trying it; it was 0.75), where the buttons

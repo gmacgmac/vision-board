@@ -4,7 +4,7 @@
 // feature folders beside this one wire them to the canvas, each reached through its index.ts:
 //   boards/ (boot, picker, kept view, versions, a locked board, New/Rename/Archive/Restore)
 //   canvas/ (the draw, viewport, focus, places: pins, modes, widths, sizes)  links/ (connectors, labels)
-//   cards/ (cards, images, attention, item acts, flag, proposals, updates, parking, remove, history)
+//   cards/ (cards, images, attention, item acts, bookmark, proposals, updates, parking, remove, history)
 //   notes/ (note bubbles, container notes, group pins)  selection/ (selection, lasso, bar, moves, drags)
 //   input/ (commands, keys, pointer, the stage's wiring)  find/ (container finder, Go to card)
 //   access/ (agent access)  apps/ (app cards: list_apps state, frames, Allow and Stop app)
@@ -12,9 +12,11 @@
 // chat-side.ts (the board's side of its host's chat); controller/ holds the pieces split out of it.
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
-import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
+import type { FlagName, LedgerEvent, Skin, View, ViewNode } from '#format';
 import { ROW_GAP } from '#layout';
-import { acksRead, answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, READ_ONLY_PERSON, retiredCounts, sendHead } from '#actions';
+import type { CardConditions } from '#ui';
+import { MARK_MOMENT_WORDS, nodeState } from '#ui';
+import { acksRead, answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, READ_ONLY_PERSON, retiredCounts, sendHead, skinOf } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, chatStatusOf, flagOf, markdownOf } from './host.ts';
@@ -22,7 +24,7 @@ import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
 import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
-import { createAttention, createFlagFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
+import { createAttention, createBookmarkFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
 import { type BoardElements, createDrawing, createFocus, createPlaces, Viewport, zoomPercent } from './canvas/index.ts';
 import { createLive } from './live.ts';
 import { bindStage } from './input/index.ts';
@@ -36,6 +38,7 @@ import { createAppCards } from './apps/index.ts';
 import type { Board, BoardDeps } from './controller/board-types.ts';
 import { createBoardState } from './controller/board-state.ts';
 import { stageHandlers } from './controller/stage-handlers.ts';
+import { createNodeEdges } from './controller/node-edges.ts';
 import * as boardWords from './words/board.ts';
 
 export type { BoardElements } from './canvas/index.ts';
@@ -58,8 +61,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   // Behind flags (rule 12): card size tiers and their control (nodeSize, D-030); grant requests, holders and Send (agentAccess, D-027);
   // connectors behind frames and cards (wireLayers, D-032); the agent's proposals (proposals, FE_01); changed cards and seen (cardUpdates,
   // FE_02); NEW (newCards); link labels, the viewer's alignment and the widths switch (linkLabels, alignSetting, widthsControl, batch 3).
-  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl, removing, going, apping] = [on('nodeSize'), on('agentAccess'),
-    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
+  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, bookmarking, retiring, labels, aligning, widthsControl, removing, going, apping] = [on('nodeSize'), on('agentAccess'),
+    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardBookmark'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
   const versionView = on('versionView');
   const oneTab = on('oneChangeTab'); // one tab for updates and a proposal (point 444)
   status.set({ agentAccess: access, versionView });
@@ -70,12 +73,23 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const ask = (heading: string, body: string, confirm: string, list?: ConfirmList) => host.confirm({ heading, body, confirm, ...(list && { list }) });
 
   const S = createBoardState();
+  const edgesOn = on('nodeEdges');
 
   const view = (): View => S.data!.view;
   const nodeOf = (id: string): ViewNode | undefined => view().nodes.find((n) => n.id === id);
   /** A node act names the node by number and the version the person was looking at. */
   const target = (id: string) => ({ n: Number(id), ver: S.data!.versions[id] });
 
+  /** The node's edges and the board's skin (nodeEdges, skins; FE_02, controller/node-edges.ts). */
+  const edges = createNodeEdges({
+    on: edgesOn, skins: on('skins'), stage, prefix: b.ids ?? '', status, io, drawing: () => drawing, node: nodeOf, card: (id) => drawing.cards.get(id),
+    state: (id) => { const n = nodeOf(id); return n && S.data ? nodeState(n, S.data.state, undefined, selection.has(id), facts(n)) : undefined; },
+    paused: (what) => (versions.state ? READ_ONLY : live.readOnly ? MARK_MOMENT_WORDS.ledgerIsReadOnly : what === 'answer' && lock.paused() ? MARK_MOMENT_WORDS.boardIsLocked : null),
+    act: (id, a) => guarded.act(id, a), bookmark: (id) => guarded.bookmark?.(id), unpin: (id) => guarded.unpin(id),
+    ledger: () => live.state, board: () => S.id, readOnly: () => readOnly(), freshIn: () => attention.freshIn(), replies: () => parking.containers(), redraw: () => redraw(),
+  });
+  /** What the conditions table says about card `n` (FE_01): its proposals, updates, parking, app; its version for the badge (nodeEdges). */
+  const facts = (n: ViewNode): CardConditions => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n), ...(oneTab && { oneTab }), ...(edgesOn && { ver: S.data?.versions[n.id] }) });
   const hiddenSet = (): Set<string> => (status.now.hide && S.data ? answeredIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
 
   const live = createLive({ readLedger: io.readLedger, events: (l) => host.events(l) }, onLines);
@@ -93,8 +107,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const selection = createSelection();
   const drawing = createDrawing({
     els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
-    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), layoutTooltip: on('layoutTooltip'), fresh: () => attention.freshIn(),
-    facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n), ...(oneTab && { oneTab }) }), appCards: apping, placed: () => apps.place(),
+    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), bookmark: bookmarking, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), layoutTooltip: on('layoutTooltip'), fresh: () => edges.fresh(attention.freshIn()),
+    facts, appCards: apping, ...(edges.first && { edges: edges.first }), placed: () => apps.place(),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
   selection.onChange((c) => { drawing.restate(c.changed); status.set({ selection: c.text }); flow.dismissArea(); flow.place(); });
@@ -112,7 +126,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     S.drew ||= attention.batch(lines, full);
     // A past version stays as it is; only the dropdown's "now" moves (versions.ts).
     if (!S.frame && !versions.state) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
-    boards.listed(); versions.listed(); lock.apply(); apps.lines(lines, full, live.state); history.refresh();
+    boards.listed(); versions.listed(); lock.apply(); apps.lines(lines, full, live.state); history.refresh(); edges.lines(lines, full);
     if (status.now.readOnly !== live.readOnly) status.set({ readOnly: live.readOnly });
   }
 
@@ -127,7 +141,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     const drew = S.drew && !full;
     S.fresh = S.drew = false;
     const d = boardData(s, S.id);
-    if (!flagging) d.state.bookmarks.clear(); // the person's bookmarks show only with the flag on
+    edges.skin(skinOf(s, S.id)); // the board's skin, before its nodes draw (skins flag)
+    if (!bookmarking) d.state.bookmarks.clear(); // the person's bookmarks show only with the flag on
     if (live.readOnly && !versions.state) d.state.readOnly = true; // the reads' word, for the elements (D-085)
     S.retired = retiring ? retiredCounts(s, S.id, versionView) : new Map();
     S.drawn = d.view;
@@ -146,12 +161,13 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     renderCounts();
     notes.place();
     flow.place();
+    edges.place();
     go.refresh(); // a search showing marks the cards as drawn now (SEARCH_02)
     status.set({ drawn: status.now.drawn + 1 }); // a host's chat refreshes what it attaches
     if (drew) toast(boardWords.theAgentDrewV(status.now.version));
   }
 
-  const renderCounts = () => showCounts(status, S.data!, view(), drawing.layout, { finder, access }, flags.ids().length);
+  const renderCounts = () => showCounts(status, S.data!, view(), drawing.layout, { finder, access }, bookmarks.ids().length);
 
   // ---- actions -------------------------------------------------------------------------------
   /** Every act goes through here: the server validates it, its problems show in the error toast,
@@ -205,12 +221,12 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
     ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }) });
   // With no board shown ("No boards yet") a pan or zoom moves only the empty stage: nothing is placed or kept.
-  vp.onApply = () => { status.set({ zoom: zoomPercent(vp.k) }); if (!S.data) return; notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
+  vp.onApply = () => { status.set({ zoom: zoomPercent(vp.k) }); if (!S.data) return; notes.place(); flow.place(); edges.place(); drawing.viewMoved(); boards.moved(); };
   status.set({ zoom: zoomPercent(vp.k) });
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record, status, confirm: (a) => host.confirm(a), notify: (t) => toast(t) });
-  /** The person's flag: the button, Shift+F and the toolbar's chip (flag-flow.ts). */
-  const flags = createFlagFlow({ on: flagging, view: () => S.data?.view ?? null, state: () => S.data?.state ?? null, record, focused: () => focus.id,
+  /** The person's bookmark: the button, B, the number with the edges and the toolbar's chip (bookmark-flow.ts). */
+  const bookmarks = createBookmarkFlow({ on: bookmarking, view: () => S.data?.view ?? null, state: () => S.data?.state ?? null, record, focused: () => focus.id,
     drawn: (id) => !!drawing.layout?.nodes.has(id), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t) });
   /** Hide and show a card's notes, and the note highlight the history box calls (note-hide.ts, card-polish FE_02). */
   const noteHide = createNoteHide({ stage, vp, state: () => S.data?.state ?? null, card: (id) => drawing.cards.get(id), layout: () => drawing.layout, record });
@@ -241,10 +257,13 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
   /** What the container finder and Z on a container zoom with (find/finder.ts). */
   const finding = { vp, layout: () => drawing.layout, frames: () => drawing.frames };
-  const handlers = stageHandlers({ act, flags: flagging ? flags : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,
+  const handlers = stageHandlers({ act, bookmarks: bookmarking ? bookmarks : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,
     versions, selection, drawing, focus, view, showVersion, toggleHide, status,
+    ...(edges.marks && { marks: edges.marks, seen: (region: string) => edges.seen(region) }),
     ...(on('containerZoom') && { container: { zoom: (id: string) => zoomToContainer(finding, id), mark: (id: string) => focusContainer(finding, id) } }) });
-  const unbind = bindStage(stage, vp, versions.guard(lock.guard(handlers)), () => { if (drawing.layout) vp.resized(); },
+  /** The table as the stage calls it: what acts does nothing on a past version or a locked board, saying why. */
+  const guarded = versions.guard(lock.guard(handlers));
+  const unbind = bindStage(stage, vp, guarded, () => { if (drawing.layout) vp.resized(); },
     { pageWide: !!host.page, wheelChaining: on('wheelChaining') });
 
   // ---- boards --------------------------------------------------------------------------------
@@ -311,8 +330,9 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
       return id === S.id ? attempt(fields) : sender.actOn(id, fields);
     },
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
-    nextFlagged: () => flags.next(),
+    nextBookmarked: () => bookmarks.next(),
+    setSkin: (skin: Skin) => void attempt({ action: 'skin', skin }),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),
-    destroy: () => { S.stopped = true; cancelAnimationFrame(S.frame); finishAll([unchat, boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle]); },
+    destroy: () => { S.stopped = true; cancelAnimationFrame(S.frame); finishAll([unchat, boards.stop, attention.destroy, unbind, edges.destroy, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle]); },
   };
 }

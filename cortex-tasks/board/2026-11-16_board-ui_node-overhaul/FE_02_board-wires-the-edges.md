@@ -108,20 +108,109 @@ Overlays live on the stage, outside the scaled world, placed in stage pixels (`C
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-17 15:20  
+
+### Run 1
 
 ### Changes Made
-- 
+- **Bookmark, renamed** (step 2): `cardFlag` is `cardBookmark` (`flags.ts`, its description); `flag-flow.ts` is
+  `cards/bookmark-flow.ts` (`createBookmarkFlow`, `bookmarkAct`, `bookmarkedIds`, `nextBookmarked`, `bookmarkedWords`);
+  `FlaggedChip.svelte` is `BookmarkedChip.svelte` ("N bookmarked"; the "⋯" row reads "Bookmarked"); the gallery's
+  `flag-section.ts` is `bookmark-section.ts`; `FLAG_KEY` is `BOOKMARK_KEY` = `B` (Shift+F retired; `keys.ts` `onCard`);
+  `NodeState.flagged` is `bookmarked`; `.vb-flag`/`data-flag`/`data-flagged` are `.vb-bookmark`/`data-bookmark`/
+  `data-bookmarked`; words (`words/node.ts` `bookmarkedInName`, the old `flagItem`/`flag` gone for FE_01's
+  `bookmarkItem`/`bookmarkTip`; `words/cards.ts`, `toolbar.ts`, `key-help.ts`); status `bookmarked`, header control
+  `bookmarked`; tests renamed (`bookmark-flow.test.ts`, `node-bookmark.test.ts`, `tests/pages/bookmark-retire.spec.ts`
+  with its screenshots). The old footer's button keeps its place and its glyph (the flag drawing, `BOOKMARK_ICON`). The
+  first test is `bookmark-flow.test.ts` "a format-19 ledger's flags, migrated on open (the 19-to-20 step), are its
+  bookmarks". `tokens.css` diff (the alias only):
+  ```diff
+  @@ -200,7 +200,6 @@
+     --vb-state-context: light-dark(#b97c0c, #e6af45);
+     --vb-state-later: light-dark(#7257c6, #a48ef2);
+  -  --vb-state-flag: var(--vb-bookmark); /* the old name, until the flag's last use goes (FE_02) */
+  ```
+- **Flags to the page** (step 1, `controller/node-edges.ts` `createNodeEdges`): `data-vb-edges` on the board root with
+  `nodeEdges`, `data-vb-skin` with `skins` (`skinOf`), both taken off on unmount; nodes drawn with
+  `edges: SKIN_DEFS[skin]` (`draw.ts` `restyle`, `cards.ts` `refresh`: a new skin or library draws the nodes again),
+  `CardConditions.ver` passed, the library passed as `icons`.
+- **The marks** (steps 3 to 7; `cards/mark-flow.ts` hears presses, holds and keys; `mark-acts.ts`, `mark-menus.ts`,
+  `mark-boxes.ts`, `mark-tips.ts` load after the first draw or on the first press; `mark-place.ts` places in stage
+  pixels): number click = Bookmark at once, held `HOLD_MS` 400 = number menu and no toggle, Shift+F10/ContextMenu on it
+  = number menu; disc click = picker to its right (flips left), second click closes, Left/Right in the picker, Tick and
+  Cross through `item-acts.ts` (now returns true/false/undefined); a disc with a proposal opens the proposal box; badge
+  or H = history box (its stepper opens with it, `update-flow.ts` `boxed`; a box with no room flips left,
+  `data-flip`); notes mark = the conversation (`comment`, today's bubble); right-click, a 500 ms touch, Shift+F10 or the
+  menu key on a node = the actions at the pointer, never on the background. One menu or box at a time; menus on the
+  stage at one size, placed again on every `vp.onApply` and redraw; a drag outside (a pan) leaves one open
+  (`dismissable` `clickWithin`), a click outside, Esc or Tab closes it, focus returns. Tips: `data-tip` after 2 s
+  hover, at once on keyboard focus. Moments: `data-locked` + "Board is locked" / "This ledger is read-only" (or the
+  past version's words) on a press the board can't take; `data-saving` past 150 ms; `data-failed` + "Tick not saved…"
+  shown 4 s then on hover, cleared by the next press (`MARK_MOMENT_WORDS`, exported from `node-marks.ts`).
+- **Seen** (step 8, `cards/container-seen.ts`): a click inside a container (background or frame, not read-only) clears
+  its pill on screen until a later change (`FreshCount.seq`, added in `page-conditions.ts`); nothing written; a reload
+  shows it again. **It also quiets that container's replies on screen: closes tracker N47** (a reply to a container
+  note carries `data-unseen` while newer than the person's last look in the container and the page's clear;
+  `region-template.ts` `nblockRepliesMarkup`). `container.fresh` `endsWhen` and api.md 158 updated.
+- **Library icons** (step 8a, `cards/icon-library.ts`, `io.ts` `listIcons`): `list_icons` with `paths` on a ledger
+  open and on an `icon` line; nodes with library icons draw again. **Grip** (step 9): `pointer.ts` `HANDLE` adds
+  `.vb-node-grip`. **Skin control** (step 10): the "⋯" menu's `menuitemradio` rows, one per `SKINS`, the board's ticked
+  (`ToolbarMenu.svelte` `onskin`, `Board.setSkin`, status `skin`), writing the `skin` act (`NAMES_BOARD` + `skin`);
+  paused with `READ_ONLY_PERSON` on a read-only ledger, and on a past version.
+- **Key help** (`input/key-help.ts`): B for the bookmark; with `nodeEdges` H (history) and Shift+F10 (actions).
+- **Styles** (`styles/node-edges.css`: menu holder, tip, grip on a locked board, box flip; `header.css`: the
+  "N bookmarked" chip is bare up to 1700px).
+- **Gallery** (`edges-section.ts`): Tips (hover/focus tip, lock moment, failure) and the board's Skin rows.
+- **Docs**: components.md § "The node's edges" › "On the board (node overhaul FE_02)", the bookmark wording; api.md 158;
+  `packages/ui/src/region/pattern.json` (data-unseen), node `pattern.json` (bookmarked state); `apps/board/README.md`.
+- **Tests**: unit `mark-place.test.ts`, `container-seen.test.ts`, `item-acts.test.ts` (+1), `key-help.test.ts`,
+  `bookmark-flow.test.ts`, `node-bookmark.test.ts`; pages `node-edges-board.spec.ts` (8) and `node-edges-seen.spec.ts`
+  (10), helper `tests/pages/edge-board.ts`.
 
 ### Issues & Resolutions
-- 
+- The tip did not show when the pointer was already resting on a mark as the lazy part loaded: `mark-tips.ts` starts
+  the wait for a mark under the pointer (`:hover`) when it loads.
+- Folding the stepper took focus off the badge after Esc: `update-flow.ts` `fold` keeps focus on a `[data-mark]`.
+- header-tiers 1600px crowded overflowed by 15px with "bookmarked" (longer than "flagged"): the chip is bare (glyph
+  and count, word for screen readers) up to 1700px (`header.css`).
+- Page weight: first cut 198.35 KB; splitting the actions into the lazy `mark-acts` chunk (2.9 KB gz) gives
+  **196.77 KB** at start (FE_01 193.86; budget 200). The menus' markup builders stay in the start chunk because the page
+  reaches them through `#ui`'s barrel (about 1 KB; only the ui package can lazy-load its own files).
+- Plugin bundles (npm test): `view/board.css` 23,856 / 24,000 gzip; `view/board.js` **189,819 / 190,000** gzip (181
+  bytes left: the next task that adds page code will hit it).
+- Changed baselines (renamed words and the gallery's shifted sections; flags off): `bookmark-retire.spec.ts/bookmark-*`
+  (new; `flag-retire.spec.ts/flag-*` removed, `retired-*` moved), `app-gallery app-cards-*`, `chat-attach-gallery
+  chat-attach-*`, `fresh-cards fresh-section-*`, `gallery gallery-base-*`, `gallery-cardHistory-*`, `header-tiers
+  header-*`, `key-bubble key-bubble-gallery-*`, `key-bubble-open-*`, `lock-board lock-*`, `node-edges node-edges-*`
+  (FE_01's section gained Tips and Skin), `read-only read-only-*`, `read-only-toggle read-only-toggle-*`,
+  `update-signals update-signals-replies-*`, each dark and light. The gallery-page ones differ by a sub-pixel shift of
+  everything below the renamed sections (checked against a `git archive HEAD` build: they pass there).
+- Known flaky, not mine: `bookmark-retire.spec.ts` (was flag-retire) and `read-only-controls` fail some tests on
+  "request failed: GET …/app-panels/calculator (net::ERR_ABORTED)".
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- A hover pause on the number was not built (a hold opens its menu); the maintainer can ask for it.
+- After Tick from the picker, the item act moves focus to the node (its old footer rule), not back to the disc.
+- A, X on a locked board keep today's toast; only a press on the disc shows the lock moment (DESIGN_01's unstated call
+  "keys answer like a press" is not built).
+- A failed write shows the sender's error toast as well as the ring on the mark: two reports of one failure.
+- The history and proposal boxes live inside the node, so they scale with zoom; D-101 lists history as one size at any
+  zoom (FE_05).
+- On the old footer, the Later button wears the bookmark-shaped glyph and Bookmark wears the flag: confusing until
+  T_04 removes the footer.
+- The marks' lazy part loads about 200 ms after every board is made, used or not (2.9 KB).
+- A right-click on a node whose picker is open does not swap to the actions (one guard covers the browser's own menu
+  event after a long press or the menu key).
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- Menus are opened with the base's keys (`menuKeydown`) and `dismissable` with `clickWithin`, not `openMenu`, so a pan
+  leaves a menu open (step 7); components.md says so.
+- Files touched outside the list: `packages/ui/src/node/node-marks.ts` (`MARK_MOMENT_WORDS`, the words the page shows),
+  `packages/ui/src/region/region-template.ts` and `region/pattern.json` (N47's `data-unseen`),
+  `packages/actions/src/answers/page-conditions.ts` (`FreshCount.seq`, allowed by the brief), `apps/board/src/board/io.ts`
+  (`listIcons`), `apps/board/README.md`, `tests/plugin/host-styling.spec.ts` (the removed alias in its token list),
+  rename-only edits in other `packages/ui/src/node/` files and `apps/board/src/shell/EditButton.svelte`.
 
 ---
 

@@ -6,8 +6,11 @@
 // (a write on its way, one that failed, a press on a locked board), the selected look, and the three menus open.
 import type { ViewNode } from '#format';
 import type { CardConditions, IconLibrary, NodeState, VbNodeElement } from '#ui';
-import { answerPicker, contextMenu, nodeState, numberMenu, SKIN_DEFS } from '#ui';
+import { answerPicker, contextMenu, MARK_MOMENT_WORDS, nodeState, numberMenu, SKIN_DEFS } from '#ui';
+import { mount } from 'svelte';
 import { pageMarkdown } from '../flags.ts';
+import { ToolbarMenu } from '../board/chrome/index.ts';
+import { chromeSample } from './chrome-sample.ts';
 import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
@@ -48,6 +51,28 @@ function withMenu(fx: Fixture, title: string, menu: (n: ViewNode, st: NodeState,
   return pair;
 }
 
+/** A mark with the board's tip under it, as the page shows it after a deliberate hover or on keyboard focus, or a
+ *  moment's words beside it (mark-tips.ts). The tip's words are the mark's own, or the moment's. */
+function withTip(fx: Fixture, title: string, m: string, words?: string, attr?: string): HTMLElement {
+  const { node } = edgeCard(fx, byTitle(fx, title));
+  const mark = node.querySelector<HTMLElement>(`[data-mark="${m}"]`)!;
+  if (attr) mark.toggleAttribute(attr, true);
+  const tip = el('div', 'vb-tip vb-mark-tip', words ?? mark.dataset.tip);
+  tip.setAttribute('role', 'tooltip');
+  const pair = el('div', 'g-edge-pair');
+  const box = el('div', 'g-edge-menu');
+  box.append(tip);
+  pair.append(cardList(`${title}, with a tip`, node), box);
+  return pair;
+}
+
+/** The "⋯" menu with the board's Skin rows (skins flag), the default ticked. */
+function skinRows(): HTMLElement {
+  const host = el('div', 'g-edge-menu');
+  mount(ToolbarMenu, { target: host, context: chromeSample({}, { skin: 'default', version: 3 }), props: { onhide: () => undefined, onskin: () => undefined, open: true, placement: 'gallery' } });
+  return host;
+}
+
 export function edgesSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
   box.dataset.feature = 'nodeEdges';
@@ -70,6 +95,10 @@ export function edgesSection(fx: Fixture): HTMLElement {
     group('Menus', 'One size at any zoom: the number\'s menu (Bookmark, Save for later; Put back on a moved node), the answer picker beside the disc, and the right-click list with every action and its key (no Tick or Cross on a node that only tells).',
       withMenu(fx, 'Go-ahead to install', numberMenu),
       withMenu(fx, 'Go-ahead to install', (n, _st, p) => answerPicker(n, p)),
-      withMenu(fx, 'Order of work', contextMenu)));
+      withMenu(fx, 'Order of work', contextMenu)),
+    group('Tips', 'After a deliberate hover of about two seconds, or at once when Tab brings focus to a mark, its tip shows above it; never after a click. A press the board can\'t take turns the mark into a lock for a moment with the reason beside it; a write that failed keeps its words until the next press.',
+      withTip(fx, 'Go-ahead to install', 'answer'), withTip(fx, 'Keep the backup encoder warm', 'answer', MARK_MOMENT_WORDS.boardIsLocked, 'data-locked'),
+      withTip(fx, 'Install window agreed', 'answer', MARK_MOMENT_WORDS.tickNotSaved, 'data-failed')),
+    group('The board\'s skin', 'With the skins flag the "⋯" menu lists each skin, the board\'s ticked; a choice is the person\'s skin act, for everyone who opens the board.', skinRows()));
   return box;
 }

@@ -16,6 +16,9 @@ import { bindSizeControl, isSizePick } from '../cards/index.ts';
 import type { Viewport } from '../canvas/index.ts';
 
 export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'> {
+  /** A press on a mark on a node's edge (nodeEdges flag, mark-flow.ts): the number, the disc, the badge, the notes mark,
+   *  a switch's half. It says itself why a press the board can't take did nothing. */
+  mark?(id: string, mark: string, el: HTMLElement): void;
   /** The pin: open its note, with the agent's replies to it. A note in the card's block
    *  (`fromNote`): the card's conversation, at that note (review polish ruling 6). */
   showNote(id: string, seq: number, fromNote?: boolean): void;
@@ -81,10 +84,12 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
   { pageWide = false, wheelChaining = false }: { pageWide?: boolean; wheelChaining?: boolean } = {}): () => void {
   stage.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
+    const markBtn = h.mark ? t.closest<HTMLElement>('vb-node[data-edges] [data-mark]') : null;
+    if (markBtn) return h.mark!(cardOf(markBtn), markBtn.dataset.mark!, markBtn);
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
     if (actBtn) return h.act(cardOf(actBtn), actBtn.dataset.act as ActionId);
-    const flagBtn = t.closest<HTMLButtonElement>('button[data-flag]');
-    if (flagBtn) return h.flag?.(cardOf(flagBtn));
+    const bookmarkBtn = t.closest<HTMLButtonElement>('button[data-bookmark]');
+    if (bookmarkBtn) return h.bookmark?.(cardOf(bookmarkBtn));
     const retired = t.closest<HTMLButtonElement>('button.vb-region-retired');
     const until = retired?.dataset.until;
     if (retired) return retired.dataset.version ? h.showVersion(Number(retired.dataset.version), until ? Number(until) : undefined) : undefined;

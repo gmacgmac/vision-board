@@ -51,7 +51,7 @@ import { headerSection } from './header-section.ts';
 import { editingSection } from './editing-section.ts';
 import { readOnlyControlsSection } from './read-only-controls-section.ts';
 import { ledgerSection } from './ledger-section.ts';
-import { flagSection } from './flag-section.ts';
+import { bookmarkSection } from './bookmark-section.ts';
 import { archiveSection } from './archive-section.ts';
 import { lockSection } from './lock-section.ts';
 import { removeSection } from './remove-section.ts';
@@ -145,7 +145,7 @@ function build(): void {
   if (flagOn('chatPanel', flags)) main.append(chatSection(fx));
   if (flagOn('toolbarMenu', flags)) main.append(toolbarSection(fx));
   if (flagOn('openFolder', flags)) main.append(folderSection());
-  if (flagOn('cardFlag', flags)) main.append(flagSection(fx));
+  if (flagOn('cardBookmark', flags)) main.append(bookmarkSection(fx));
   if (flagOn('retiredMarker', flags)) main.append(retiredSection(fx));
   if (flagOn('linkLabels', flags)) main.append(linkLabelSection(fx));
   if (flagOn('alignSetting', flags)) main.append(alignSection(fx));

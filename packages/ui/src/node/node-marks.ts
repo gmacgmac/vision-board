@@ -104,3 +104,10 @@ export function nodeMarks(n: ViewNode, m: MarksInput): NodeMarks {
     ...notesOf(n, m), ...badgeOf(n, m), awaiting: m.awaiting,
   };
 }
+
+/** What the page says beside a pressed mark (FE_02, mark-tips.ts): a write that did not save, a press on a locked board
+ *  or a read-only ledger. The words live here, in the node's words file; the page shows them. */
+export const MARK_MOMENT_WORDS = {
+  tickNotSaved: nodeWords.tickNotSaved, crossNotSaved: nodeWords.crossNotSaved,
+  boardIsLocked: nodeWords.boardIsLocked, ledgerIsReadOnly: nodeWords.ledgerIsReadOnly,
+} as const;

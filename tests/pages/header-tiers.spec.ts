@@ -52,17 +52,17 @@ const act = async (page: Page, body: object) => {
   expect(r.status(), await r.text()).toBe(201);
 };
 
-/** Everything that comes and goes on the bar at once: locked, flagged, replied, a new card, a board updated. */
-let flagged = false;
+/** Everything that comes and goes on the bar at once: locked, bookmarked, replied, a new card, a board updated. */
+let marked = false;
 async function crowd(page: Page, request: APIRequestContext) {
   await act(page, { action: 'unlock' }).catch(() => undefined); // a test that failed may have left it locked
   await writeAs(request, BOARD, [node('Who pays, and from which budget?', cards[1]), node(`A card added ${Date.now()}`)]);
   await writeAs(request, QUIET, [node(`Another card ${Date.now()}`)]);
-  if (!flagged) { // once: a press flags or unflags, and a card holds one note not yet sent
+  if (!marked) { // once: a press bookmarks or unbookmarks, and a card holds one note not yet sent
     await act(page, { action: 'comment', n: cards[0], ver: 1, text: 'Which team?' });
     await act(page, { action: 'bookmark', n: cards[2] });
   }
-  flagged = true;
+  marked = true;
   await act(page, { action: 'lock' });
   await page.reload();
   await expect(page.locator('vb-node').first()).toBeVisible();
@@ -217,7 +217,7 @@ test('a third: the bar is the name, a compact count, Send, Chat and "⋯"; every
   await expect(menuButton(page)).toHaveAttribute('title', /Folder, Version, Containers, Open cards, New cards, Zoom, Agents, Theme/);
   // The rows, in the design's order, then the menu's own.
   await expect(fields.locator('> *').first()).toContainText('Folder');
-  for (const word of ['Version', 'Containers', 'Open cards', 'New cards', 'Flagged', 'Zoom', 'Agents', 'Board updated']) await expect(fields).toContainText(word);
+  for (const word of ['Version', 'Containers', 'Open cards', 'New cards', 'Bookmarked', 'Zoom', 'Agents', 'Board updated']) await expect(fields).toContainText(word);
   await expect(menu(page).getByRole('menuitem', { name: 'Unlock board' })).toBeVisible();
   await expect(page.locator('#open-folder')).toHaveCount(0); // the Folder row stands for it
   // Keys: Up and Down walk every field and row, wrapping.
@@ -246,9 +246,9 @@ test('a third: the bar is the name, a compact count, Send, Chat and "⋯"; every
   await expect(page.locator(`${bid('fresh-cards')} option`).nth(1)).toBeAttached();
   await page.locator(bid('fresh-cards')).selectOption({ index: 1 });
   await expect(fields).toBeHidden();
-  // Flagged: the next flagged card.
+  // Bookmarked: the next bookmarked card.
   await reopen();
-  await page.locator(bid('flagged')).click();
+  await page.locator(bid('bookmarked')).click();
   await expect(page.locator(`vb-node[data-id="${cards[2]}"]`)).toBeFocused();
   await uncrowd(page);
 });

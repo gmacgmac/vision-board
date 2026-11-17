@@ -26,11 +26,12 @@
   import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../input/index.ts';
   import type { CommandId } from '../input/index.ts';
   import type { AccessHolder } from '#actions';
+  import type { Skin } from '#format';
   import { LOCKED_PERSON, READ_ONLY_PERSON } from '#actions';
 
   const { state: shown, parts, flag, id: idIn, ids } = useChrome();
 
-  let { oncommand, onhide, onsend, onrevoke, onarchive, onlock, holders, menu, zoom, placement = 'board', menuOpen = false, tier, fields, also, folderAbove = false, ledgerAbove = false, zoomOpen = false, look, send }: {
+  let { oncommand, onhide, onsend, onrevoke, onarchive, onlock, onskin, holders, menu, zoom, placement = 'board', menuOpen = false, tier, fields, also, folderAbove = false, ledgerAbove = false, zoomOpen = false, look, send }: {
     oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
@@ -39,6 +40,8 @@
     onarchive?: (() => void) | undefined;
     /** Lock board or Unlock board in the "⋯" menu (lockBoard flag); left out, no such row. */
     onlock?: (() => void) | undefined;
+    /** The board's skin in the "⋯" menu (skins flag); left out, no Skin rows. */
+    onskin?: ((skin: Skin) => void) | undefined;
     /** The board's holders, when Agents and Send to agent show; null hides both. */
     holders: AccessHolder[] | null;
     /** The toolbarMenu flag. */
@@ -104,5 +107,5 @@
       paused={!board ? undefined : shown.locked ? LOCKED_PERSON : shown.readOnly ? READ_ONLY_PERSON : undefined} />
   {/if}
   {#if parts.chat}<PagePart draw={parts.chat} />{/if}
-  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
+  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {onskin} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
 </div>

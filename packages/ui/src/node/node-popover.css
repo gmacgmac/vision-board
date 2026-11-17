@@ -103,7 +103,7 @@ vb-node .vb-pop-primary[aria-disabled='true']:hover { background: var(--vb-accen
 
 /* The history box (card-polish FE_03, node-history.ts): when things happened to the card, newest first,
    a time and one line each. A row naming a note or a reply is a button in the link colour (the Lc 45
-   tier); the rest are text. The ⓘ that opens it sits at the footer's far right, 24px like the flag. */
+   tier); the rest are text. The ⓘ that opens it sits at the footer's far right, 24px like the bookmark. */
 vb-node .vb-history { flex: none; }
 /* Opened from the ⓘ at the card's bottom, so it sits level with the card's bottom and grows upward
    (maintainer, 2026-10-19). */

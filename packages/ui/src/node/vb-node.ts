@@ -19,11 +19,11 @@ import { explainPaused, pauseControls } from '../paused/paused.ts';
 import { READ_ONLY_PERSON } from '#actions';
 import { applyMarks, applyTone } from './node-edges-apply.ts';
 
-/** The controls a locked board pauses on a card (N40 ruling 4): everything that changes it but the flag. With the
+/** The controls a locked board pauses on a card (N40 ruling 4): everything that changes it but the bookmark. With the
  *  edges (nodeEdges), the answer: the disc or the switch's halves, which look as they would at rest (point 328). */
 const PAUSED = 'button[data-act], .vb-size-trig, .vb-size-opt, .vb-note-pin, button[data-answer], [data-mark="answer"], [data-mark="tick"], [data-mark="cross"]';
-/** The flag, which a lock lets be but a read-only ledger pauses with the rest (D-085 3); with the edges, the number. */
-const FLAG = 'button[data-flag], [data-mark="number"]';
+/** The bookmark, which a lock lets be but a read-only ledger pauses with the rest (D-085 3); with the edges, the number. */
+const BOOKMARK = 'button[data-bookmark], [data-mark="number"]';
 /** An app card's Allow and Stop app, which a read-only ledger pauses too (FE_01); "Allowed ▾" only opens the menu. */
 const APP = 'button[data-app-act="app-allow"], button[data-app-act="app-revoke"]';
 /** An out-of-date proposal's Accept is aria-disabled for its own reason, locked or not. */
@@ -121,8 +121,8 @@ export function defineVbNode(): void {
       this.toggleAttribute('data-selected', st.selected);
       for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-act]'))
         b.setAttribute('aria-pressed', String(st.pressed[b.dataset.act as ActionId] ?? false));
-      this.toggleAttribute('data-flagged', st.flagged === true);
-      this.querySelector('button[data-flag]')?.setAttribute('aria-pressed', String(st.flagged === true));
+      this.toggleAttribute('data-bookmarked', st.bookmarked === true);
+      this.querySelector('button[data-bookmark]')?.setAttribute('aria-pressed', String(st.bookmarked === true));
       // A non-item has no footer, so no status word.
       const status = this.piece('status');
       if (status) status.textContent = st.statusWord;
@@ -140,9 +140,9 @@ export function defineVbNode(): void {
       const fresh = this.querySelector<HTMLElement>('[data-tab="new"]');
       if (fresh) fresh.hidden = st.fresh !== true;
       pauseControls(this, PAUSED, st.paused === true, staleAccept);
-      pauseControls(this, FLAG, st.readOnly === true);
+      pauseControls(this, BOOKMARK, st.readOnly === true);
       pauseControls(this, APP, st.readOnly === true);
-      explainPaused(this, `${PAUSED}, ${FLAG}, ${APP}`, st.readOnly === true ? READ_ONLY_PERSON : undefined);
+      explainPaused(this, `${PAUSED}, ${BOOKMARK}, ${APP}`, st.readOnly === true ? READ_ONLY_PERSON : undefined);
     }
 
     /** The HANDOVER tab and its box (FE_03): rebuilt only when the handover changed, closed when none is left. */

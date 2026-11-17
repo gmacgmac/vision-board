@@ -296,16 +296,16 @@ for (const theme of THEMES) {
   // One screenshot per section, not one of the whole page: a change re-saves only the section
   // it touches, so the screenshots' history stays small (maintainer, 2026-10-28). With the agentAccess,
   // wireLayers, versionView, keyBubble, proposals, cardUpdates, handover, cardReplies, selectionPill,
-  // chatPanel, toolbarMenu, openFolder, cardFlag, retiredMarker, linkLabels, alignSetting, widthsControl,
+  // chatPanel, toolbarMenu, openFolder, cardBookmark, retiredMarker, linkLabels, alignSetting, widthsControl,
   // archiveBoard, lockBoard, personRemove, goToCard, appCards and cardImages flags off (on by default),
   // so their sections are not here (components.md § Feature flags); send-access.spec.ts, wires.spec.ts,
   // versions.spec.ts, key-bubble.spec.ts, proposals.spec.ts, card-updates.spec.ts, parking-replies.spec.ts,
-  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, flag-retire.spec.ts, layout-controls.spec.ts,
+  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, bookmark-retire.spec.ts, layout-controls.spec.ts,
   // picker-archive.spec.ts, lock-board.spec.ts, person-remove.spec.ts, go-to-card.spec.ts, app-gallery.spec.ts
   // and card-image-states.spec.ts have those sections' own screenshots; markdown has its own above.
   test(`screenshot of each section (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardFlag,-retiredMarker,-linkLabels,-alignSetting,-widthsControl,-archiveBoard,-lockBoard,-personRemove,-goToCard,-appCards,-cardImages');
+    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardBookmark,-retiredMarker,-linkLabels,-alignSetting,-widthsControl,-archiveBoard,-lockBoard,-personRemove,-goToCard,-appCards,-cardImages');
     // Every top-level section the page shows (the full page as it was), named by its pattern, its
     // feature, or its heading's id (App icon has neither); markdown has its own screenshot above.
     await expect(page.locator('section[data-pattern]').first()).toBeVisible();

@@ -121,13 +121,13 @@ test('nodeTemplate: an app card\'s status is the footer\'s left-side slot, after
   // Another kind, or the flag off: no status.
   assert.doesNotMatch(nodeTemplate(card({ kind: 'finding' })), /vb-app-status/);
   // An app card with no number (the everyNode flag off) still has its footer, for Allow, and no quick actions.
-  const plain = nodeTemplate(card({ n: undefined }), { flag: true });
+  const plain = nodeTemplate(card({ n: undefined }), { bookmark: true });
   assert.match(plain, /<footer class="vb-node-foot">.*vb-app-status/);
-  assert.doesNotMatch(plain, /data-act=|data-flag/);
+  assert.doesNotMatch(plain, /data-act=|data-bookmark/);
 });
 
 test('nodeTemplate: an app card\'s name sits in the footer between its status and the quick actions, with its tip hidden from assistive tech; escaped; no other kind has one (card-polish FE_04)', () => {
-  const html = nodeTemplate(card({ title: 'Price <b>calculator</b>' }), { flag: true, history: true });
+  const html = nodeTemplate(card({ title: 'Price <b>calculator</b>' }), { bookmark: true, history: true });
   const foot = html.slice(html.indexOf('<footer'), html.indexOf('</footer>'));
   assert.ok(foot.indexOf('vb-app-status') < foot.indexOf('vb-app-name') && foot.indexOf('vb-app-name') < foot.indexOf('vb-node-actions'), 'status, name, then the quick actions');
   assert.match(foot, /<span class="vb-app-name"><span class="vb-app-name-text">Price &#60;b&#62;calculator&#60;\/b&#62;<\/span><span class="vb-tip vb-app-name-tip" aria-hidden="true">Price &#60;b&#62;calculator&#60;\/b&#62;<\/span><\/span>/);

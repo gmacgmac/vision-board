@@ -76,7 +76,7 @@ test('read-only: Allow all, Allow, Refuse, remove, Allow app and the card toolti
   await expectPaused(app.locator('[data-app-act="app-allow"]'));
   const ask = cardOf(page, cards[0]!);
   for (const act of ['ack', 'drop']) await expect(ask.locator(`button[data-act="${act}"]`)).toHaveAttribute('title', new RegExp(`^${REASON}`));
-  await expect(ask.locator('button[data-flag]')).toHaveAttribute('title', new RegExp(`^${REASON}`));
+  await expect(ask.locator('button[data-bookmark]')).toHaveAttribute('title', new RegExp(`^${REASON}`));
   // A press changes nothing.
   const before = await head(page);
   await strip.locator('.vb-access-allow-all').click({ force: true });

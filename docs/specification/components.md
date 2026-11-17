@@ -528,7 +528,7 @@ Behind the `cardHistory` flag (on by default).
 - **Property**: the box lists first drawn and each update (vN), each note sent, each agent reply,
   ✓, ✗ and reopened, and the card's app allowed or stopped (`TIME_KINDS`), newest first, a time
   (`noteTime`, the whole date as its `title`) and one line in the history model's words, the agent's
-  label on its rows. No note or reply text and no private mark (flag, hidden notes) reaches it. A row
+  label on its rows. No note or reply text and no private mark (bookmark, hidden notes) reaches it. A row
   naming a note still on the card, or an agent's reply, is a button that closes the box and rings
   that note (`note-hide.ts` `highlight`); the rest are text. Up and Down move between those rows.
   A line for the card that lands while the box is open adds its row at the top, focus left alone.
@@ -905,12 +905,12 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    Agents, Send to agent, Chat, "⋯". Half: the folder's icon, the board's name cut with "…", the counts, the zoom as a small
    menu (`board/chrome/ZoomMenu.svelte`: − and + leave it open, Fit closes it), Agents, Send and Chat as icons; Version and
    Containers are rows of "⋯". A third: the board's name, Locked as its padlock, one compact count (a dot while there are
-   new cards), Send, Chat, "⋯"; the folder, version, containers, the open and new lists, Flagged, the zoom row, Agents and
+   new cards), Send, Chat, "⋯"; the folder, version, containers, the open and new lists, Bookmarked, the zoom row, Agents and
    the boards-updated line are in "⋯" (Replied goes). The board's name in the path is the title: the `h1` stays,
    visually hidden, as the page's heading, and the closed picker and version show one fact each
    (`board/chrome/BoardPicker.svelte`, `board/chrome/VersionPicker.svelte`: native selects unseen over a face, `.vb-menu-face`).
    What moved is `board/chrome/HeaderFields.svelte`: the same controls as rows (`MenuSelect`, `OpenChip`, `FolderChip`,
-   `FlaggedChip`, `BoardAgents`), beside the `role="menu"` and not in it, since a select is not a menu item; the menu's
+   `BookmarkedChip`, `BoardAgents`), beside the `role="menu"` and not in it, since a select is not a menu item; the menu's
    keys walk both (`#ui` `openMenu` `items`), and Enter on a select opens its list. The chips that come and go are bare
    up to 1500px; under 900px a half bar holding any of them bares "N open", "N new" and Locked too
    (`styles/header.css`). Tests: `apps/board/tests/header-tier.test.ts`; `tests/pages/header-tiers.spec.ts` (nothing cut
@@ -920,12 +920,12 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    path after the folder at full ("folder / ledger ▾ / board ▾ / version ▾") and at half (its icon and its name), and a row of
    "⋯" under the folder's at a third (`header-tier.ts` `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the page's folder and
    ledger"). `FULL_MIN` and `HALF_MIN` hold with it: `tests/pages/ledgers.spec.ts` ("long folder, ledger and board names")
-   fits every form from 1470px to 400px with a 40-character ledger, a long folder and board name, a flagged card and Locked.
+   fits every form from 1470px to 400px with a 40-character ledger, a long folder and board name, a bookmarked card and Locked.
    With the `readOnlyStart` flag the ledger's state is two more controls of the table (§ 6, Read-only and Edit): `editing`,
    the state chip after the path, in the bar at every tier like Locked (decision 16; at a third its icon, the word for
    screen readers), and `edit`, Edit or Stop editing, a button at full and a row of "⋯" from half (`header-tier.ts`
    `IN_MENU`; `apps/board/tests/header-tier.test.ts`, "the ledger's state"). `FULL_MIN` and `HALF_MIN` hold with them:
-   `tests/pages/read-only.spec.ts` ("long folder, ledger and board names, Locked and flagged, read-only") fits every form
+   `tests/pages/read-only.spec.ts` ("long folder, ledger and board names, Locked and bookmarked, read-only") fits every form
    from 1470px to 400px, the folder giving up its room for the state at full and the button giving way on a crowded bar.
 
    **Write controls on a read-only ledger** (N44, D-085; task `cortex-tasks/board/2026-11-03_board-ui_read-only-follow-ups/FE_01_read-only-controls.md`).
@@ -1104,7 +1104,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    the card is selected (D-054). The tests are `tests/pages/update-signals.spec.ts` (the card's edge bright then muted
    on select, the note keeping its own edge; the bubble the same; APCA as words Lc 45 and edges Lc 30 on the card,
    sunken and deep, light and dark; in dark brighter than `--vb-kind-action` and `--vb-state-context`; in both themes
-   ΔE76 20 or more from those two and from `--vb-state-flag` and `--vb-kind-risk`; the tab hovered still amber; the NEW
+   ΔE76 20 or more from those two and from `--vb-bookmark` and `--vb-kind-risk`; the tab hovered still amber; the NEW
    tab and the "N new" chip teal; a container's reply muted; the flag off; the gallery) and
    `tests/pages/fresh-cards.spec.ts` (the amber tab, the two-colour pill, the teal border with only
    updated cards), with `packages/ui/tests/{node-core,node-template,region-fresh}.test.ts` and
@@ -1308,8 +1308,8 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    drag's later moves stay quiet); the note bubble doesn't open (`notes.ts` `paused`); and the sender
    asks `refuse` before every line, with the action layer's `passesLock`, so a path the page doesn't
    guard is refused there, and the server refuses it again (423 `locked`).
-5. **The flag stays usable** (ruling 4): the person's private mark changes nothing an agent reads,
-   so its button and Shift+F work on a locked board (`passesLock`).
+5. **The bookmark stays usable** (ruling 4; the flag before D-099 2): the person's private mark changes nothing an agent reads,
+   so its button and B work on a locked board (`passesLock`).
 6. **The chat**: messages still go; the composer's chip carries no answers on a locked board
    (`#actions` `answersChip`), as the server sends none (api.md 140).
 6a. **A read-only ledger** (D-085, `readOnlyStart`; api.md 173) pauses the same way, with its own reason, "Read-only:
@@ -1322,7 +1322,7 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    `tests/pages/read-only-writes.spec.ts`, `tests/pages/read-only.spec.ts`.
 7. Tests: `tests/pages/lock-board.spec.ts` (the menu row by mouse and keyboard, "Locked", every
    paused control aria-disabled, a press on a button, a key, a note, a layout and the selection bar
-   saying why and writing nothing but seen lines, the flag by click and Shift+F, a lock from another
+   saying why and writing nothing but seen lines, the bookmark by click and B, a lock from another
    tab, the flag off, axe light and dark, the gallery section's screenshots);
    `packages/ui/tests/node-paused.test.ts`, `apps/board/tests/board-edit.test.ts` and
    `chat-bridge.test.ts` for the pure parts. The gallery's lock section (`gallery/lock-section.ts`)
@@ -1784,7 +1784,7 @@ the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it hol
    size, `menu-fixed.css`): the number's (Bookmark or Remove bookmark, Save for later or Bring back, Put back on a moved
    node), the answer picker (Tick and Cross side by side, `data-menu-look="picker"`) and the right-click list (the six
    actions with their keys; no Tick or Cross on a node that only tells, no Save for later on an app). Markup only, drawn
-   hidden, rows acting by `data-menu-act`; the page opens them with `openMenu` (FE_02).
+   hidden, rows acting by `data-menu-act`; the page opens them (FE_02, `mark-menus.ts`: the shared menu's keys, `menuKeydown`, and a press outside through `dismissable` with `clickWithin`, so a pan leaves one open).
 7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a hit area of at least 24px; the disc, the icon
    tile and the notes mark on one vertical line, 34px in from the right edge; selection is the node's own border,
    thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); a tone tints the body's top, the top line,
@@ -1797,3 +1797,44 @@ the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it hol
    pause). In a browser, `tests/pages/node-edges.spec.ts` (the element builds the template's markup; the tone through
    CSSOM; Tab order, names and hit area; the ring after Tab only, in each theme; axe; screenshots light and dark) and
    the gallery's "The node's edges" section (`apps/board/src/gallery/edges-section.ts`, `?flags=nodeEdges`).
+
+### On the board (node overhaul FE_02)
+
+The page wires the marks (`apps/board/src/board/controller/node-edges.ts` `createNodeEdges`; `cards/mark-flow.ts`, which
+hears the presses; `cards/mark-acts.ts`, `mark-menus.ts`, `mark-boxes.ts`, `mark-tips.ts`, `mark-place.ts`, loaded once
+the board is idle or on the first press). Behind `nodeEdges`; the skin behind `skins`.
+
+1. **The root**: `data-vb-edges` on the board's root with `nodeEdges` (Decision's fuchsia, `tokens.css`), and
+   `data-vb-skin` with `skins`, from the board's skin (`skinOf`). A new skin draws every node again in its row.
+2. **The number**: a click toggles Bookmark at once (`bookmark` or `unbookmark`); held 400 ms (`HOLD_MS`; a long press
+   on touch) it opens the number's menu instead and bookmarks nothing; the menu key or Shift+F10 on it opens the menu.
+   B on a node bookmarks it (Shift+F, the flag's key, is retired).
+3. **The disc**: a click opens the answer picker to its right (`placeMark` `right`, flipped left when the stage has no
+   room), a second click closes it, so a double click never answers; Left and Right move along it. Tick and Cross are
+   the item acts (`item-acts.ts`: its 400 ms guard; a lit answer pressed again clears it). A disc whose node has a
+   proposal opens the proposal box. Nothing opens on hover.
+4. **History and notes**: the badge, or H on a node, opens the history box (its stepper opens with it,
+   `update-flow.ts`); the notes mark, or C, the conversation. A box with no room on the node's right opens on its left.
+5. **The actions**: right-click on a node, a long press on touch (`LONG_PRESS_MS`), the menu key or Shift+F10 open the
+   right-click list at the pointer (from the keyboard, near the node's top left); never on the board's background.
+6. **One at a time**: one menu or box is open; each menu sits on the stage at one size and is placed again from its
+   anchor whenever the view moves, so it stays attached while the person zooms or pans; a drag outside it (a pan) leaves
+   it open, a click outside, Esc or Tab closes it, and focus goes back to what opened it.
+7. **Tips and moments** (`mark-tips.ts`): a mark's `data-tip` shows above it after a hover of two seconds
+   (`TIP_HOVER_MS`), at once on keyboard focus, never after a click. A press the board can't take (locked, read-only, a
+   past version) sets `data-locked` for a moment with the reason beside the mark (`MARK_MOMENT_WORDS`); a write on its
+   way past 150 ms sets `data-saving`; a write that failed sets `data-failed`, its words shown for a few seconds, then on
+   a hover, until the next press.
+8. **A container seen** (point 308, `cards/container-seen.ts`): a click inside a container on a board that isn't
+   read-only clears its pill on this screen only, until its next change (api.md 158), and quiets the agent's replies
+   under its note (`data-unseen` on `.vb-nblock-reply`, tracker N47). Nothing is written.
+9. **The icon library** (`cards/icon-library.ts`): `list_icons` with `paths` when a ledger opens and when an `icon` line
+   arrives; the nodes naming a library icon draw again. A node with an icon is dragged by its grip (`pointer.ts` `HANDLE`).
+10. **The skin** (skins flag): the "⋯" menu lists each skin (`menuitemradio`, the board's ticked) and writes the `skin`
+    act; paused, with the reason, on a read-only ledger or a past version.
+11. **Kept true by**: `apps/board/tests/mark-place.test.ts`, `container-seen.test.ts`, `item-acts.test.ts` (a press
+    says what it came to), `key-help.test.ts` (B, H, Shift+F10), `bookmark-flow.test.ts` (a format-19 ledger's flags
+    migrate to bookmarks); in a browser, `tests/pages/node-edges-board.spec.ts` (each mark, key, menu and box; one at a
+    time; size and place while zooming and panning; axe, dark and light) and `node-edges-seen.spec.ts` (the root, the
+    container seen and N47, the icon library, the grip, the skin, a locked board, a failed write).
+

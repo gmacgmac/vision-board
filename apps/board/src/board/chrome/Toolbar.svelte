@@ -13,8 +13,8 @@
      The end group (ToolbarEnd): zoom, then Send to agent and the board's Agents list with the agentAccess
      flag, the page's Chat button (`BoardPageParts.chat`), and with the toolbarMenu flag the "⋯" menu
      (ToolbarMenu) holding Theme, Hide answered and Reply.
-     With the cardFlag flag the counts end in "N flagged" (board/cards/flag-flow.ts) while any card is flagged
-     and no past version shows: a button that focuses the next flagged card, wrapping.
+     With the cardBookmark flag the counts end in "N bookmarked" (board/cards/bookmark-flow.ts) while any card is bookmarked
+     and no past version shows: a button that focuses the next bookmarked card, wrapping.
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
      BOARD_ACTIONS): each opens BoardDialog; both are off while a past version shows. With the archiveBoard
      flag it ends with "Archived (N)…" while any board is archived (N39 ruling 6), opening the Archived
@@ -46,7 +46,7 @@
   import AppIcon from './AppIcon.svelte';
   import BoardPicker, { optionText as label } from './BoardPicker.svelte';
   import ButtonIcon from './ButtonIcon.svelte';
-  import FlaggedChip from './FlaggedChip.svelte';
+  import BookmarkedChip from './BookmarkedChip.svelte';
   import PagePart from './PagePart.svelte';
   import HeaderFields from './HeaderFields.svelte';
   import LockedChip from './LockedChip.svelte';
@@ -59,12 +59,13 @@
   import { rowText } from '../find/index.ts';
   import type { CommandId } from '../input/index.ts';
   import type { AccessHolder } from '#actions';
+  import type { Skin } from '#format';
   import * as chromeBoardsWords from '../words/chrome-boards.ts';
 
   const chrome = useChrome();
   const { parts, flag } = chrome;
 
-  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onflagged, onarchive, onlock, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
+  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onbookmarked, onarchive, onlock, onskin, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
     onboard: (id: string) => unknown;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
@@ -77,12 +78,14 @@
     onsend: () => Promise<string | null>;
     /** Remove an agent's access to the open board (BoardAgents). */
     onrevoke: (agent: string) => Promise<void>;
-    /** The "N flagged" chip: the next flagged card (cardFlag flag). */
-    onflagged: () => void;
+    /** The "N bookmarked" chip: the next bookmarked card (cardBookmark flag). */
+    onbookmarked: () => void;
     /** Archive board… in the "⋯" menu: ask, then archive the open board (archiveBoard flag). */
     onarchive: () => void;
     /** Lock board or Unlock board in the "⋯" menu (lockBoard flag): the open board. */
     onlock: () => void;
+    /** The board's skin in the "⋯" menu (skins flag, D-100 2); left out, no Skin rows. */
+    onskin?: ((skin: Skin) => void) | undefined;
     placement?: 'board' | 'gallery';
     /** The form to draw (the gallery's); left out, the bar's own width says. */
     form?: HeaderTier;
@@ -146,7 +149,7 @@
 {#snippet versionFace()}v{facts.past?.seq ?? facts.version}{@render chevron()}{/snippet}
 {#snippet containersFace()}{toolbarWords.containers}{@render chevron()}{/snippet}
 {#snippet fields(choose: (run: () => void) => void)}
-  <HeaderFields {tier} {facts} {choose} {idOf} {holders} percent={zoom ?? facts.zoom} {onversion} {ongo} {onopen} {onflagged} {oncommand} {onrevoke} />
+  <HeaderFields {tier} {facts} {choose} {idOf} {holders} percent={zoom ?? facts.zoom} {onversion} {ongo} {onopen} {onbookmarked} {oncommand} {onrevoke} />
 {/snippet}
 
 <header class="vb-toolbar" bind:this={bar} data-tier={adaptive ? tier : undefined} data-narrow={(adaptive ? tier !== 'full' : narrow.current) || undefined} data-menu={toolbarMenu || undefined}>
@@ -209,13 +212,13 @@
         {#if facts.counts.withAgent}<span class="vb-chip" data-tone="agent" title={toolbarWords.repliedItems}><ButtonIcon name="agents" /><b>{facts.counts.withAgent}</b> <span class="vb-chip-word">{toolbarWords.replied}</span></span>{/if}
         <span class="vb-chip" data-tone="answered" hidden={!answeredLater} title={toolbarWords.answeredItems}><b>{facts.counts.answered}</b> <span class="vb-chip-word">{toolbarWords.answered}</span></span>
         <span class="vb-chip" data-tone="later" hidden={!answeredLater} title={toolbarWords.laterItems}><b>{facts.counts.later}</b> <span class="vb-chip-word">{toolbarWords.later}</span></span>
-        {#if facts.flagged && !facts.past}
-          <FlaggedChip id={idOf('flagged')} count={facts.flagged} onclick={onflagged} />
+        {#if facts.bookmarked && !facts.past}
+          <BookmarkedChip id={idOf('bookmarked')} count={facts.bookmarked} onclick={onbookmarked} />
         {/if}
       {/if}
     {/if}
   </div>
-  <ToolbarEnd {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} menu={toolbarMenu}
+  <ToolbarEnd {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} {onskin} menu={toolbarMenu}
     {holders} {placement} {zoom} {menuOpen} {zoomOpen} {look} {send} tier={adaptive ? tier : undefined} {also} folderAbove={adaptive && inMenu(tier, 'folder') && !!parts.folderField}
     ledgerAbove={adaptive && inMenu(tier, 'ledger') && !!parts.ledgerField}
     fields={adaptive && tier !== 'full' ? fields : undefined} />

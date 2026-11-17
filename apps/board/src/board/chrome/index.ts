@@ -34,7 +34,7 @@ export { default as AppIcon } from './AppIcon.svelte';
 export { default as ArchivedList } from './ArchivedList.svelte';
 export { default as BoardAgents } from './BoardAgents.svelte';
 export { default as ButtonIcon } from './ButtonIcon.svelte';
-export { default as FlaggedChip } from './FlaggedChip.svelte';
+export { default as BookmarkedChip } from './BookmarkedChip.svelte';
 export { default as GoToCard } from './GoToCard.svelte';
 export { default as KeyHelp } from './KeyHelp.svelte';
 export { default as Lazy } from './Lazy.svelte';

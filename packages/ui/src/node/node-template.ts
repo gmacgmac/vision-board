@@ -11,8 +11,8 @@ import type { UpdatesView } from './node-updates.ts';
 import type { AppCardView } from './node-app.ts';
 import { APPS_OFF, appView } from './node-app.ts';
 import { panelSize } from '../app-frame/app-frame-core.ts';
-import { buttonLabel, FLAG_KEY, flagLabel, isItem, isNoteEntry, offers, SIZE_LETTER } from './node-core.ts';
-import { ACTION_ICON, FLAG_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
+import { buttonLabel, BOOKMARK_KEY, bookmarkLabel, isItem, isNoteEntry, offers, SIZE_LETTER } from './node-core.ts';
+import { ACTION_ICON, BOOKMARK_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
 import type { MarkdownOptions } from '../markdown/render.ts';
 import { renderMarkdown } from '../markdown/render.ts';
@@ -88,20 +88,20 @@ function replyMarkup(r: ReplyEntry, now: Date, md?: MarkdownOptions): string {
     + `${timeMarkup(r.at, now)}<div class="vb-node-note-text">${text}</div><div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>`;
 }
 
-/** The flag button beside Later (cardFlag flag, field report batch 2 assumption A): the person's
- * private mark, no review action, so `data-flag`, not `data-act`; `update()` sets aria-pressed. */
-const flagButton = (n: ViewNode): string =>
-  `<button type="button" class="vb-act vb-flag" data-flag aria-pressed="false" aria-label="${esc(flagLabel(n))}"`
-  + ` title="${nodeWords.flag(FLAG_KEY)}">${svgIcon(FLAG_ICON, 20, 'vb-act-icon')}</button>`;
+/** The bookmark button beside Later (cardBookmark flag, D-099 2): the person's private mark, no review action, so
+ * `data-bookmark`, not `data-act`; `update()` sets aria-pressed. */
+const bookmarkButton = (n: ViewNode): string =>
+  `<button type="button" class="vb-act vb-bookmark" data-bookmark aria-pressed="false" aria-label="${esc(bookmarkLabel(n))}"`
+  + ` title="${nodeWords.bookmarkTip(BOOKMARK_KEY)}">${svgIcon(BOOKMARK_ICON, 20, 'vb-act-icon')}</button>`;
 
 /** Kind icon, divider, state word (with the tip "Awaiting context" over it while the handover is
- * owed, FE_03), then an app card's status (`appStatus`) and its name (`appName`), then the quick actions and the flag, and at
+ * owed, FE_03), then an app card's status (`appStatus`) and its name (`appName`), then the quick actions and the bookmark, and at
  * the far right the ⓘ that opens the card's history (card-polish FE_03, the cardHistory flag), whose
  * box follows the footer. Items only, and app cards (whose Allow lives here): a non-item has no state. */
 function footer(n: ViewNode, opts: NodeTemplateOptions): string {
   const app = isAppSlot(n, opts);
   if (!isItem(n) && !app) return '';
-  const buttons = offers(n).map((a) => button(a, n)).join('') + (opts.flag && isItem(n) ? flagButton(n) : '');
+  const buttons = offers(n).map((a) => button(a, n)).join('') + (opts.bookmark && isItem(n) ? bookmarkButton(n) : '');
   const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="${nodeWords.respond}">${buttons}</div>` : '';
   return '<footer class="vb-node-foot"><span class="vb-node-state" aria-hidden="true">'
     + `${svgIcon(KIND_ICON[n.kind], 24, 'vb-node-kico')}<span class="vb-node-sep"></span>`
@@ -218,8 +218,8 @@ export interface NodeTemplateOptions {
   sizeControl?: boolean;
   /** false: the appCards flag is off, so an app card is a plain card saying so (ruling 13). */
   appCards?: boolean;
-  /** Draw the flag button beside Later; the page passes it when the cardFlag flag is on. */
-  flag?: boolean;
+  /** Draw the bookmark button beside Later; the page passes it when the cardBookmark flag is on. */
+  bookmark?: boolean;
   /** Draw the ⓘ and the history box on every card with a footer; the page passes it when the cardHistory flag is on. */
   history?: boolean;
   /** Put before every id the card sets (its popovers, step section, app menu), so two boards on one page

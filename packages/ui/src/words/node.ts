@@ -5,7 +5,6 @@
 export const replied = 'Replied';
 export const savedForLater = 'Saved for later';
 export const item = (n: number | undefined): string => `Item ${n}, `;
-export const flagItem = (n: number | undefined, FLAG_KEY: string): string => `Flag item ${n} (${FLAG_KEY})`;
 export const item2 = (label: string, n: number | undefined, key: string): string => `${label} item ${n}${key}`;
 export const theAgent = 'The agent';
 export const proposedOutOfDate = (who: string): string => `${who} proposed · out of date`;
@@ -37,7 +36,6 @@ export const history2 = 'History';
 // ---- node-template.ts
 export const movedByYou = 'Moved by you';
 export const show = 'Show';
-export const flag = (FLAG_KEY: string): string => `Flag · ${FLAG_KEY}`;
 export const respond = 'Respond';
 export const allow = 'Allow';
 export const allowed = 'Allowed';
@@ -64,7 +62,7 @@ export const cardSizeChangeSize = (letter: string | number, picked: boolean): st
 export const acceptVerb = (verb: string, stale: boolean): string => `Accept: ${verb}${stale ? ' (out of date)' : ''}`;
 export const selected = ', selected';
 export const freshInName = ', new';
-export const flaggedInName = ', flagged';
+export const bookmarkedInName = ', bookmarked';
 
 // ---- The proposals tab, box and name. Plural and branch logic lives here, not in the card.
 /** The tab's accessible name: "Proposal on item 3", "2 proposals on item 3, out of date". */

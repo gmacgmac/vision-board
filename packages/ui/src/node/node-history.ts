@@ -28,7 +28,7 @@ const cardName = (n: ViewNode): string => (isItem(n) ? nodeWords.card(n.n) : nod
 export const historyLabel = (n: ViewNode): string => nodeWords.historyOf(cardName(n));
 export const historyHead = (n: ViewNode): string => (isItem(n) ? nodeWords.cardHistory(n.n) : nodeWords.history(n.title));
 
-/** The ⓘ: 24px like the flag, a button that opens the box (a dialog) beside the card. */
+/** The ⓘ: 24px like the bookmark, a button that opens the box (a dialog) beside the card. */
 export const historyButton = (n: ViewNode, box: string): string =>
   `<button type="button" class="vb-act vb-history" aria-haspopup="dialog" aria-expanded="false" aria-controls="${esc(box)}"`
   + ` aria-label="${esc(historyLabel(n))}" title="${nodeWords.history2}">${svgIcon(INFO_ICON, 20, 'vb-act-icon')}</button>`;

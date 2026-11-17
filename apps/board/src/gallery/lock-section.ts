@@ -2,7 +2,7 @@
 // Lock board and, on a locked board, Unlock board; the toolbar's "Locked" beside the board's name;
 // then a locked board's cards and container, drawn by the real <vb-node> and <vb-region> from the
 // fixture's marks board with `BoardState.locked` set, as the board draws them: every control that
-// changes the board paused in place (aria-disabled, the quiet look), the flag still usable; and Send
+// changes the board paused in place (aria-disabled, the quiet look), the bookmark still usable; and Send
 // to agent paused with the reason as its title. Shown only with the flag on, so ?flags=-lockBoard
 // draws the gallery as it was.
 import { mount } from 'svelte';
@@ -45,7 +45,7 @@ export function pausedBoard(fx: Fixture, state: BoardState, label = 'A locked bo
   frame.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id))));
   const cards = view.nodes.filter((n) => n.region === 'flagged').map((n) => {
     const node = document.createElement('vb-node') as VbNodeElement;
-    node.render(n, { ...ownIds(), flag: true, sizeControl: true });
+    node.render(n, { ...ownIds(), bookmark: true, sizeControl: true });
     node.update(nodeState(n, state, 'm'));
     return node;
   });
@@ -72,7 +72,7 @@ export function lockSection(fx: Fixture): HTMLElement {
   meta.append(el('code', undefined, 'lock · unlock · LockedChip · paused'), ' · feature flag lockBoard, on by default · off with ?flags=-lockBoard');
   const [frame, cards] = pausedBoard(fx, { ...fx.marks.state, locked: true });
   box.append(heading,
-    el('p', 'g-desc', `The person makes a board read-only for everyone, agents included, until they unlock it. Every control that would change it is paused in place, saying "${LOCKED_PERSON}"; the flag, the person's private mark, still works.`),
+    el('p', 'g-desc', `The person makes a board read-only for everyone, agents included, until they unlock it. Every control that would change it is paused in place, saying "${LOCKED_PERSON}"; the bookmark, the person's private mark, still works.`),
     meta,
     group('Lock board', 'In the "⋯" menu; it acts on the open board, with no confirm (nothing is lost either way). Off while no board is open or a past version shows.', menu(false)),
     group('Unlock board', 'The same row on a locked board.', menu(true)),

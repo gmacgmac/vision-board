@@ -20,10 +20,10 @@ test('every skin has a row, and the template reads only the row', () => {
 });
 
 test('off, the node is today\'s: a footer and no mark; on, no footer, no notes block, no bottom tabs', () => {
-  const off = nodeTemplate(node(), { flag: true, history: true });
+  const off = nodeTemplate(node(), { bookmark: true, history: true });
   assert.ok(off.includes('vb-node-foot') && !off.includes('data-mark'));
-  const on = nodeTemplate(node(), { flag: true, history: true, edges });
-  for (const gone of ['vb-node-foot', 'vb-node-notes', 'vb-node-btabs', 'data-act=', 'data-flag', 'vb-note-pin']) assert.ok(!on.includes(gone), gone);
+  const on = nodeTemplate(node(), { bookmark: true, history: true, edges });
+  for (const gone of ['vb-node-foot', 'vb-node-notes', 'vb-node-btabs', 'data-act=', 'data-bookmark', 'vb-note-pin']) assert.ok(!on.includes(gone), gone);
 });
 
 test('the marks sit in visual order, so reading and tab order follow it: number, kind, disc, body, badge, Awaiting, notes', () => {

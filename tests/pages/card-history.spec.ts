@@ -2,7 +2,7 @@
 // footer opens a box beside the card, by click or keyboard, listing when things happened to it,
 // newest first, from the state the page already holds (no ledger read): first drawn and each update,
 // notes sent, agent replies, ✓, ✗ and reopened, the app allowed or stopped. No note or reply text, no
-// flag. A note or reply row closes the box and rings that note on the card; a line that lands while it
+// bookmark. A note or reply row closes the box and rings that note on the card; a line that lands while it
 // is open adds its row at the top; Esc gives focus back to the ⓘ; the footer never wraps on an S card
 // or the smallest app card; axe light and dark. Each test draws its own board through the API.
 import type { Locator, Page } from '@playwright/test';
@@ -23,7 +23,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/?setup');
 });
 
-/** Card 1 drawn, a note sent on it, flagged, ✓, and the agent's reply to the note. */
+/** Card 1 drawn, a note sent on it, bookmarked, ✓, and the agent's reply to the note. */
 async function story(page: Page, request: Parameters<typeof draw>[0]): Promise<{ d: Drawn; n: number; note: number }> {
   const d = await draw(request, 2, 'history');
   const [n] = d.n as [number];
@@ -53,7 +53,7 @@ async function farRight(l: Locator): Promise<void> {
   expect(foot.x + foot.width - (i.x + i.width)).toBeLessThan(12);
 }
 
-test('a click on the ⓘ opens the box: newest first, a time and one line each, no note text and no flag; Esc gives focus back', async ({ page, request }) => {
+test('a click on the ⓘ opens the box: newest first, a time and one line each, no note text and no bookmark; Esc gives focus back', async ({ page, request }) => {
   const { n } = await story(page, request);
   await expect(info(page, n)).toHaveAccessibleName(`History of card ${n}`);
   await expect(info(page, n)).toHaveAttribute('aria-expanded', 'false');
@@ -71,7 +71,7 @@ test('a click on the ⓘ opens the box: newest first, a time and one line each, 
   await expect(words(page, n).first().locator('time')).toHaveText(/^Today /);
   await expect(b).not.toContainText(NOTE);
   await expect(b).not.toContainText(REPLY);
-  await expect(b).not.toContainText(/flag/i);
+  await expect(b).not.toContainText(/flag|bookmark/i);
   // Only the rows that name a note or a reply are buttons.
   await expect(b.getByRole('button')).toHaveCount(2);
   await page.keyboard.press('Escape');

@@ -40,7 +40,7 @@ const NAMES = Object.keys(OWN);
 /** Colours the board keeps whatever a host sets (the spec's "The board's own"). */
 const BOARDS_OWN = ['--vb-kind-question', '--vb-kind-finding', '--vb-kind-decision', '--vb-kind-risk', '--vb-kind-action',
   '--vb-kind-topic', '--vb-kind-app', '--vb-state-ack', '--vb-state-drop', '--vb-state-comment', '--vb-state-comment-soft',
-  '--vb-state-later', '--vb-state-flag', '--vb-state-fresh', '--vb-state-updated', '--vb-scrim', '--vb-dot', '--vb-wire', '--vb-lane-band'];
+  '--vb-state-later', '--vb-bookmark', '--vb-state-fresh', '--vb-state-updated', '--vb-scrim', '--vb-dot', '--vb-wire', '--vb-lane-band'];
 
 /** What each CSS expression resolves to on a probe inside `root` (a shadow as a `box-shadow`, else as a `color`). */
 const resolve = (page: Page, root: string, exprs: Record<string, string>): Promise<Record<string, string>> =>

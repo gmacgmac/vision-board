@@ -52,9 +52,10 @@
   onhide={() => board()?.toggleHide()}
   onsend={send}
   onrevoke={(agent) => board()?.access.revoke(undefined, agent) ?? Promise.resolve()}
-  onflagged={() => board()?.nextFlagged()}
+  onbookmarked={() => board()?.nextBookmarked()}
   onarchive={() => void board()?.boardEdit.archive()}
   onlock={() => void board()?.boardEdit.lock()}
+  onskin={flag('skins') ? (skin) => board()?.setSkin(skin) : undefined}
 />
 {#if shown.past}
   <VersionBanner run={shown.past} {root} onback={() => void board()?.showVersion(null)} />

@@ -4,12 +4,12 @@
 // the status's `locked` (the toolbar's "Locked", Send paused, the "⋯" menu's Unlock board); the elements
 // pause their own controls from `BoardState.locked` (packages/ui paused.ts). Nothing that changes
 // the board goes while it is locked, and the person is told why ("Locked: unlock to change it"):
-// the stage's handlers that act do nothing but say so (`guard`; the flag, the person's private mark,
+// the stage's handlers that act do nothing but say so (`guard`; the bookmark, the person's private mark,
 // is not among them and stays usable), the note bubble doesn't open, and sender.ts asks `refuse`
 // before every line it sends, so a path this file doesn't know is refused there too (the one funnel,
 // with the same `passesLock` the server asks). Selection, zoom, pan and the finder stay. A ledger open read-only
 // (D-085, `readOnly`) pauses the same controls with its own reason (`READ_ONLY_PERSON`); it is not
-// a lock (no "Locked", no `data-locked`), and its refusals are the sender's (controller.ts), the flag's too.
+// a lock (no "Locked", no `data-locked`), and its refusals are the sender's (controller.ts), the bookmark's too.
 import type { LedgerState } from '#actions';
 import { boardLocked, LOCKED_PERSON, passesLock, READ_ONLY_PERSON } from '#actions';
 import type { Outgoing } from '../sender.ts';
@@ -42,8 +42,8 @@ export interface LockFlow {
 }
 
 /** The handlers that change the board: the past view's (versions.ts) and the widths switch, but the
- * flag. Of these, the moves a drag makes after its start stay quiet: its start said why. */
-const PAUSED = [...ACTING.filter((name) => name !== 'flag'), 'setWidths'] as const satisfies readonly (keyof StageHandlers)[];
+ * bookmark. Of these, the moves a drag makes after its start stay quiet: its start said why. */
+const PAUSED = [...ACTING.filter((name) => name !== 'bookmark'), 'setWidths'] as const satisfies readonly (keyof StageHandlers)[];
 const QUIET: ReadonlySet<keyof StageHandlers> = new Set(['frameMove', 'frameEnd', 'dragOver', 'drop']);
 
 export function createLockFlow(d: LockDeps): LockFlow {

@@ -84,3 +84,18 @@ test('without the flag (no focusLeft), focus always returns to the card, as befo
   await h.act('12', 'drop');
   assert.deepEqual(h.focused, ['12']);
 });
+
+// FE_02 (nodeEdges): the disc's picker reads what a press came to, so its mark can say a write failed.
+test('a press says what it came to: written, failed, or nothing sent (a repeat, a note, a card it does not take)', async () => {
+  const h = harness();
+  assert.equal(await h.act('12', 'ack'), true);
+  assert.equal(await h.act('12', 'ack'), undefined, 'a second press within 400 ms sends nothing');
+  assert.equal(await h.act('12', 'comment'), undefined);
+  assert.equal(await h.act('99', 'ack'), undefined);
+  const failing = createItemActs({
+    node: () => card, state: () => ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), bookmarks: new Set() }),
+    notes: { press: () => undefined }, moves: { status: async () => false }, record: async () => false,
+    target: () => ({ n: 12, ver: 1 }), hiding: () => false, hidden: () => new Set(), neighbour: () => null, focusCard: () => undefined, toast: () => undefined,
+  });
+  assert.equal(await failing('12', 'drop'), false);
+});

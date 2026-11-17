@@ -47,12 +47,12 @@ export function nodeLabel(n: ViewNode, status: ItemStatus, selected = false, ext
   return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}${extra}${selected ? nodeWords.selected : ''}`;
 }
 
-/** The flag's key (cardFlag flag, field report batch 2 ruling 3): F alone is Fit (commands.ts). */
-export const FLAG_KEY = 'Shift+F';
+/** The bookmark's key (D-099 1, planner's call 3): B, as the action registry has it; Shift+F retired. */
+export const BOOKMARK_KEY = 'B';
 
-/** The flag button's name: it stays put, and aria-pressed says whether the card is flagged. The
- * flag is the person's private mark, never sent to an agent (api.md 128). */
-export const flagLabel = (n: ViewNode): string => nodeWords.flagItem(n.n, FLAG_KEY);
+/** The bookmark button's name: it stays put, and aria-pressed says whether the card is bookmarked. A
+ * bookmark is the person's private mark, never sent to an agent (api.md 128). */
+export const bookmarkLabel = (n: ViewNode): string => nodeWords.bookmarkItem(n.n, BOOKMARK_KEY);
 
 export function buttonLabel(action: ActionId, n: ViewNode): string {
   const def = ACTIONS[action];
@@ -212,13 +212,13 @@ export interface NodeState {
   awaiting?: true;
   /** The HANDOVER tab and its box (FE_03); absent until the agent writes it. */
   handover?: HandoverView;
-  /** The person flagged the card (`BoardState.flags`, field report batch 2 ruling 3): the flag
-   *  button shows pressed and the name says ", flagged". */
-  flagged?: true;
+  /** The person bookmarked the card (`BoardState.bookmarks`, D-099 2): the bookmark button shows pressed and the
+   *  name says ", bookmarked". */
+  bookmarked?: true;
   /** The board is locked (`BoardState.locked`, N40 ruling 4), or its ledger read-only (`BoardState.readOnly`, D-085):
-   *  the review buttons, the size control, the note pin and a proposal's answers are paused (paused.ts); the flag is not. */
+   *  the review buttons, the size control, the note pin and a proposal's answers are paused (paused.ts); the bookmark is not. */
   paused?: true;
-  /** The ledger is read-only (`BoardState.readOnly`, D-085 3): the flag is paused too, since read-only writes no flag. */
+  /** The ledger is read-only (`BoardState.readOnly`, D-085 3): the bookmark is paused too, since read-only writes no bookmark. */
   readOnly?: true;
   app?: AppCardView; // an app card's state view (node-app.ts `appView`); it takes no size control
   /** What the marks on the node's edges show (nodeEdges flag, D-099; node-marks.ts): drawn only with `opts.edges`. */
@@ -239,13 +239,13 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const oneTab = c.oneTab === true && !!own && !!updates;
   const proposal = oneTab ? changeTab(n, own, updates) : own;
   const fresh = isItem(n) && c.new === true;
-  const flagged = isItem(n) && s.bookmarks.has(n.id);
+  const bookmarked = isItem(n) && s.bookmarks.has(n.id);
   const app = n.kind === 'app' && c.app ? appView(n, c.app) : undefined;
   const replies = litReplies(c.replies, c.new === true || (!!updates && !updates.done));
   const notes = notesView(n, s.items.get(n.id)?.notes ?? [], replies, s.notesHidden?.get(n.id), c.groupNotesApart);
   const open = c.proposals?.filter((p) => !p.stale).sort((a, b) => b.seq - a.seq)[0]?.action;
   const marks = nodeMarks(n, {
-    status, notes: s.items.get(n.id)?.notes ?? [], ...(replies && { replies }), bookmarked: flagged, fresh, ...(updates && { updates }),
+    status, notes: s.items.get(n.id)?.notes ?? [], ...(replies && { replies }), bookmarked, fresh, ...(updates && { updates }),
     ...(c.ver !== undefined && { ver: c.ver }), ...((open === 'ack' || open === 'drop') && { proposed: open }), awaiting,
   });
   return {
@@ -253,11 +253,11 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
     pinned: s.pins.has(n.id),
     selected,
     label: nodeLabel(n, status, selected,
-      `${awaiting ? nodeWords.awaitingContext2 : ''}${handover ? nodeWords.handoverReady : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${app?.words ?? ''}${fresh ? nodeWords.freshInName : ''}${flagged ? nodeWords.flaggedInName : ''}`),
+      `${awaiting ? nodeWords.awaitingContext2 : ''}${handover ? nodeWords.handoverReady : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${app?.words ?? ''}${fresh ? nodeWords.freshInName : ''}${bookmarked ? nodeWords.bookmarkedInName : ''}`),
     statusWord: awaiting ? AWAITING.word : asksAnswer(n) ? STATUS_LABEL[status] : '',
     ...(awaiting && { awaiting: true as const }),
     ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(oneTab && { oneTab: true as const }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
-    ...(flagged && { flagged: true as const }), ...((s.locked || s.readOnly) && { paused: true as const }),
+    ...(bookmarked && { bookmarked: true as const }), ...((s.locked || s.readOnly) && { paused: true as const }),
     ...(s.readOnly && { readOnly: true as const }), ...(app && { app }),
     pressed, marks,
     ...(tier && n.kind !== 'app' ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),

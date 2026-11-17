@@ -1,4 +1,5 @@
-<!-- The toolbar's "⋯" menu (toolbarMenu flag, toolbar icons and menu ruling 2): the page's Theme, Hide answered,
+<!-- The toolbar's "⋯" menu (toolbarMenu flag, toolbar icons and menu ruling 2): the page's Theme, with the skins flag
+     (`onskin` given) a row per skin with the board's ticked (D-100 2; off with Archive board…'s reasons), Hide answered,
      the page's Centre cards (`BoardPageParts`; a host has neither) and Reply, each a row with its icon and its key, with the
      archiveBoard flag (`onarchive` given) Archive board…, which asks, then archives the open board (N39
      ruling 5; off, aria-disabled, while no board is open or a past version shows), with the lockBoard flag (`onlock` given)
@@ -21,15 +22,19 @@
   import PagePart from './PagePart.svelte';
   import { toolbarPopup } from './toolbar-popup.svelte.ts';
   import { READ_ONLY_PERSON } from '#actions';
+  import type { Skin } from '#format';
+  import { SKINS } from '#format';
 
   const { state: view, parts, id: idIn } = useChrome();
 
-  let { onhide, onarchive, onlock, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
+  let { onhide, onarchive, onlock, onskin, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
     onhide: () => void;
     /** Archive board… (archiveBoard flag); left out, no such row. */
     onarchive?: (() => void) | undefined;
     /** Lock board or Unlock board (lockBoard flag), whichever the open board needs; left out, no such row. */
     onlock?: (() => void) | undefined;
+    /** The board's skin (skins flag, D-100 2): a row per skin, the board's ticked; left out, no such rows. */
+    onskin?: ((skin: Skin) => void) | undefined;
     /** Draw the row for a locked board (the gallery); left out, the open board's own state. */
     locked?: boolean | undefined;
     open?: boolean;
@@ -93,6 +98,17 @@
   {#if fields}<div class="vb-menu-fields" role="group" aria-label={toolbarWords.moreControls}>{@render fields(choose)}</div>{/if}
   <div class="vb-menu-list" id={idIn(`vb-menu-${uid}`)} role="menu" aria-label={toolbarWords.more} tabindex="-1" hidden={!shown}>
     {#if parts.theme}<PagePart draw={parts.theme} args={{ choose }} />{/if}
+    {#if onskin && view.skin}
+      <div role="group" aria-label={toolbarWords.skinGroup}>
+        {#each SKINS as skin (skin)}
+          <button type="button" class="vb-menu-item" role="menuitemradio" tabindex="-1" id={idOf(`skin-${skin}`)} aria-checked={view.skin === skin}
+            aria-disabled={archiveOff || readOnly} title={readOnly ? READ_ONLY_PERSON : toolbarWords.skinTip}
+            onclick={() => { if (!archiveOff && !readOnly && view.skin !== skin) choose(() => onskin(skin)); }}>
+            <ButtonIcon name="theme" /><span class="vb-menu-label">{toolbarWords.skinName(skin)}</span><span class="vb-menu-check" aria-hidden="true">✓</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
     <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={idOf('hide')}
       aria-checked={view.hide} aria-keyshortcuts="h" onclick={() => choose(onhide)}>
       <ButtonIcon name="hide" /><span class="vb-menu-label">{commonWords.hideAnswered}</span>

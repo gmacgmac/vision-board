@@ -48,7 +48,7 @@ export function historySection(fx: Fixture): HTMLElement {
   box.append(heading,
     el('p', 'g-desc', 'When things happened to a card: first drawn and each update, each note sent, each agent reply, ✓, ✗ and reopened, and its app allowed or stopped. Times only: no note or reply text, and never the person\'s flag or hidden notes.'),
     meta,
-    group('The ⓘ', 'At the far right of every card\'s footer, 24px like the flag. Hover or keyboard focus shows the box; a click or Enter opens it and moves focus into it; Esc or a press outside closes it and focus goes back to the ⓘ.', cardList('A card with its ⓘ', card(named(AT_REST), fx))),
+    group('The ⓘ', 'At the far right of every card\'s footer, 24px like the bookmark. Hover or keyboard focus shows the box; a click or Enter opens it and moves focus into it; Esc or a press outside closes it and focus goes back to the ⓘ.', cardList('A card with its ⓘ', card(named(AT_REST), fx))),
     group('The box', 'Newest first, a time and one line each, the agent\'s name on its rows. A row naming a note or a reply is a link: it closes the box and rings that note on the card. Then the empty state.', open));
   return box;
 }

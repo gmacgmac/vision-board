@@ -1,5 +1,5 @@
-// Field report batch 2 on the board page: the person's flag (cardFlag flag, ruling 3, assumption A),
-// the "N cards retired" marker (retiredMarker flag, ruling 1), the column and row modes (ruling 4) and
+// Field report batch 2 on the board page: the person's bookmark (cardBookmark flag, ruling 3, assumption A; D-099 2:
+// the flag before ledger format 20, its key B), the "N cards retired" marker (retiredMarker flag, ruling 1), the column and row modes (ruling 4) and
 // board numbers on a page with more than one board (D-041 proposed). Every board here is drawn after
 // the roadmap's 17 cards, so its card 1 is never the ledger's 1: a slip between a board number and
 // an identity shows. Agents write through the API with a Bearer secret; the person's setup acts go
@@ -40,58 +40,60 @@ async function draw(request: APIRequestContext, cards = 3): Promise<Drawn> {
   return d;
 }
 
-const flagOf = (page: Page, n: number) => card(page, n).locator('button[data-flag]');
-const chip = (page: Page) => page.locator(bid('flagged'));
+const bookmarkOf = (page: Page, n: number) => card(page, n).locator('button[data-bookmark]');
+const chip = (page: Page) => page.locator(bid('bookmarked'));
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
 test.beforeEach(async ({ page }) => { await page.goto('/gallery.html'); });
 
 const focusedId = (page: Page) => page.evaluate(() => document.activeElement?.closest('vb-node')?.getAttribute('data-id') ?? null);
 
-// ---- the flag ---------------------------------------------------------------------------------
+// ---- the bookmark --------------------------------------------------------------------------------
 
-test('the flag: a button beside Later on every card, Shift+F, stored by identity, kept through a redraw and a reload', async ({ page, request }) => {
+test('the bookmark: a button beside Later on every card, B, stored by identity, kept through a redraw and a reload', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d, '?vbwork', 4);
   for (const n of [1, 2, 3, 4]) {
     const buttons = card(page, n).locator('.vb-node-actions button');
-    await expect(buttons.last()).toHaveAttribute('data-flag', '');
+    await expect(buttons.last()).toHaveAttribute('data-bookmark', '');
     await expect(buttons.nth(-2)).toHaveAttribute('data-act', 'later');
-    await expect(flagOf(page, n)).toHaveAttribute('aria-pressed', 'false');
+    await expect(bookmarkOf(page, n)).toHaveAttribute('aria-pressed', 'false');
   }
   await expect(chip(page)).toHaveCount(0);
   const before = await head(page);
-  await flagOf(page, 2).click();
-  await expect(flagOf(page, 2)).toHaveAttribute('aria-pressed', 'true');
-  await expect(card(page, 2)).toHaveAttribute('aria-label', /, flagged$/);
-  await expect(chip(page)).toHaveText(/1\s*flagged/);
-  // Shift+F on a focused card; F alone is still Fit and flags nothing.
+  await bookmarkOf(page, 2).click();
+  await expect(bookmarkOf(page, 2)).toHaveAttribute('aria-pressed', 'true');
+  await expect(card(page, 2)).toHaveAttribute('aria-label', /, bookmarked$/);
+  await expect(chip(page)).toHaveText(/1\s*bookmarked/);
+  // B on a focused card; F is still Fit and Shift+F, the old key, bookmarks nothing.
   await card(page, 4).focus();
   await page.keyboard.press('f');
-  await expect(flagOf(page, 4)).toHaveAttribute('aria-pressed', 'false');
   await card(page, 4).focus();
   await page.keyboard.press('Shift+F');
-  await expect(flagOf(page, 4)).toHaveAttribute('aria-pressed', 'true');
-  await expect(chip(page)).toHaveText(/2\s*flagged/);
+  await expect(bookmarkOf(page, 4)).toHaveAttribute('aria-pressed', 'false');
+  await card(page, 4).focus();
+  await page.keyboard.press('b');
+  await expect(bookmarkOf(page, 4)).toHaveAttribute('aria-pressed', 'true');
+  await expect(chip(page)).toHaveText(/2\s*bookmarked/);
   await idle(page);
   // The page sent board numbers 2 and 4; the ledger holds the identities, which are not those.
-  const flags = (await linesAfter(page, before)).filter((e) => e.action === 'bookmark');
-  expect(flags.map((e) => [e.board ?? null, 'ver' in e])).toEqual([[null, false], [null, false]]);
-  expect(flags.map((e) => e.n)).not.toEqual([2, 4]);
-  // The agent redraws card 2: its flag stays. A reload keeps both.
+  const marks = (await linesAfter(page, before)).filter((e) => e.action === 'bookmark');
+  expect(marks.map((e) => [e.board ?? null, 'ver' in e])).toEqual([[null, false], [null, false]]);
+  expect(marks.map((e) => e.n)).not.toEqual([2, 4]);
+  // The agent redraws card 2: its bookmark stays. A reload keeps both.
   await write(request, d, [{ type: 'node', n: 2, node: { region: 'p', kind: 'question', title: 'Question 2, again?' } }]);
   await expect(card(page, 2).locator('.vb-node-title')).toHaveText('Question 2, again?');
-  await expect(flagOf(page, 2)).toHaveAttribute('aria-pressed', 'true');
+  await expect(bookmarkOf(page, 2)).toHaveAttribute('aria-pressed', 'true');
   await page.reload();
   await expect(page.locator('vb-node')).toHaveCount(4);
-  await expect(flagOf(page, 2)).toHaveAttribute('aria-pressed', 'true');
-  await expect(flagOf(page, 4)).toHaveAttribute('aria-pressed', 'true');
-  // A second press takes the flag off.
-  await flagOf(page, 4).click();
-  await expect(flagOf(page, 4)).toHaveAttribute('aria-pressed', 'false');
-  await expect(chip(page)).toHaveText(/1\s*flagged/);
+  await expect(bookmarkOf(page, 2)).toHaveAttribute('aria-pressed', 'true');
+  await expect(bookmarkOf(page, 4)).toHaveAttribute('aria-pressed', 'true');
+  // A second press takes the bookmark off.
+  await bookmarkOf(page, 4).click();
+  await expect(bookmarkOf(page, 4)).toHaveAttribute('aria-pressed', 'false');
+  await expect(chip(page)).toHaveText(/1\s*bookmarked/);
 });
 
-test('the chip steps through the flagged cards in number order from the focused one, wrapping', async ({ page, request }) => {
+test('the chip steps through the bookmarked cards in number order from the focused one, wrapping', async ({ page, request }) => {
   const d = await draw(request);
   for (const n of [3, 1]) await act(page, d, { action: 'bookmark', n });
   await open(page, d, '?vbwork', 4);
@@ -107,38 +109,38 @@ test('the chip steps through the flagged cards in number order from the focused 
   expect(await focusedId(page)).toBe('3');
 });
 
-test('a flag is nothing new to send, and an agent never reads it', async ({ page, request }) => {
+test('a bookmark is nothing new to send, and an agent never reads it', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'send', board: d.board });
   const after = await head(page);
   await open(page, d, '?vbwork', 4);
-  await flagOf(page, 1).click();
-  await expect(flagOf(page, 1)).toHaveAttribute('aria-pressed', 'true');
+  await bookmarkOf(page, 1).click();
+  await expect(bookmarkOf(page, 1)).toHaveAttribute('aria-pressed', 'true');
   await idle(page);
   await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
   const r = await request.get(`/api/boards/${d.board}/responses?after=${after}`, { headers: { Authorization: `Bearer ${d.agent.secret}` } });
   expect(r.status(), await r.text()).toBe(200);
   expect((await r.json() as { responses: unknown[] }).responses).toEqual([]);
   const node = await (await request.get(`/api/boards/${d.board}/nodes/1`, { headers: { Authorization: `Bearer ${d.agent.secret}` } })).json();
-  expect(JSON.stringify(node)).not.toMatch(/flag/);
+  expect(JSON.stringify(node)).not.toMatch(/flag|bookmark/);
 });
 
-test('with the cardFlag flag off: no button, Shift+F is Fit, no chip', async ({ page, request }) => {
+test('with the cardBookmark flag off: no button, B does nothing, no chip', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'bookmark', n: 1 });
-  await open(page, d, '?vbwork&flags=-cardFlag', 4);
-  await expect(page.locator('button[data-flag]')).toHaveCount(0);
+  await open(page, d, '?vbwork&flags=-cardBookmark', 4);
+  await expect(page.locator('button[data-bookmark]')).toHaveCount(0);
   await expect(chip(page)).toHaveCount(0);
-  await expect(card(page, 1)).not.toHaveAttribute('aria-label', /flagged/);
+  await expect(card(page, 1)).not.toHaveAttribute('aria-label', /bookmarked/);
   const before = await head(page);
   await card(page, 2).focus();
-  await page.keyboard.press('Shift+F');
+  await page.keyboard.press('b');
   await idle(page);
   expect((await linesAfter(page, before)).filter((e) => e.action === 'bookmark')).toEqual([]);
 });
 
 for (const theme of THEMES) {
-  test(`axe passes with flagged cards and the chip (${theme})`, async ({ page, request }) => {
+  test(`axe passes with bookmarked cards and the chip (${theme})`, async ({ page, request }) => {
     await setTheme(page, theme);
     const d = await draw(request);
     await act(page, d, { action: 'bookmark', n: 2 });
@@ -248,15 +250,15 @@ test('on a second board the page names every card by its own number: buttons, se
 
 const section = (page: Page, feature: string): Locator => page.locator(`section[data-feature="${feature}"]`);
 
-test('gallery: the flag section shows a card at rest, flagged, and flagged before a redraw, then the chip', async ({ page }) => {
+test('gallery: the bookmark section shows a card at rest, bookmarked, and bookmarked before a redraw, then the chip', async ({ page }) => {
   await page.goto('/gallery.html');
-  const s = section(page, 'cardFlag');
-  await expect(s.getByRole('heading', { level: 2, name: 'The flag' })).toBeVisible();
-  await expect(s.locator('button[data-flag]')).toHaveCount(3);
-  expect(await s.locator('button[data-flag]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-pressed')))).toEqual(['false', 'true', 'true']);
+  const s = section(page, 'cardBookmark');
+  await expect(s.getByRole('heading', { level: 2, name: 'The bookmark' })).toBeVisible();
+  await expect(s.locator('button[data-bookmark]')).toHaveCount(3);
+  expect(await s.locator('button[data-bookmark]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-pressed')))).toEqual(['false', 'true', 'true']);
   await expect(s.locator('vb-node').nth(2).locator('.vb-node-body')).toContainText('the flag stays');
-  await expect(s.getByRole('button', { name: /^2 flagged$/ })).toBeVisible();
-  await expect(page.goto('/gallery.html?flags=-cardFlag').then(() => section(page, 'cardFlag').count())).resolves.toBe(0);
+  await expect(s.getByRole('button', { name: /^2 bookmarked$/ })).toBeVisible();
+  await expect(page.goto('/gallery.html?flags=-cardBookmark').then(() => section(page, 'cardBookmark').count())).resolves.toBe(0);
 });
 
 test('gallery: the retired section shows a container with "2 retired"', async ({ page }) => {
@@ -271,12 +273,12 @@ test('gallery: the retired section shows a container with "2 retired"', async ({
 });
 
 for (const theme of THEMES) {
-  test(`gallery: axe passes and the flag and retired sections match their screenshots (${theme})`, async ({ page }) => {
+  test(`gallery: axe passes and the bookmark and retired sections match their screenshots (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await page.goto('/gallery.html');
-    await expect(section(page, 'cardFlag')).toBeVisible();
+    await expect(section(page, 'cardBookmark')).toBeVisible();
     await expectNoAxeViolations(page);
-    await expect(section(page, 'cardFlag')).toHaveScreenshot(`flag-${theme}.png`);
+    await expect(section(page, 'cardBookmark')).toHaveScreenshot(`bookmark-${theme}.png`);
     await expect(section(page, 'retiredMarker')).toHaveScreenshot(`retired-${theme}.png`);
   });
 }

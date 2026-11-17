@@ -68,6 +68,9 @@ export function createIo(api: Transport, asPerson: PersonCall = (run) => run()) 
     markCardSeen: (board: string, n: number, ver: number) => person(() => client.call('mark_seen', { board, body: { n, ver } })),
     /** Every app in the open folder and every app a card names, each in its state now (`list_apps`). */
     listApps: () => person(() => client.call('list_apps')),
+    /** The icons a node may name, with the library's path data (`list_icons` with `paths`, planner's call 11): the page
+     *  draws a library icon only from these, each checked again as it draws (packages/ui icon.ts). No credential. */
+    listIcons: () => asApiError(() => client.call('list_icons', { paths: true })),
     /** Run tool `tool` of app `app` for its panel (`call_app_tool`). */
     callAppTool: (app: string, tool: string, args: Record<string, unknown>) =>
       forPanel(() => client.call('call_app_tool', { app, body: { tool, arguments: args } })),

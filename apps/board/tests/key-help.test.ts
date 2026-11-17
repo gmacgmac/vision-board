@@ -55,11 +55,12 @@ test('Items: Check and Cross by name, no meaning; no More context and no M', () 
   assert.equal(items.some((r) => r.id === 'action:context' || r.keys.includes('M')), false);
 });
 
-// Field report batch 2, assumption A: Shift+F flags the focused card (F alone stays Fit).
-test('with the cardFlag flag, Items lists Shift+F for the flag; without it, nothing; F stays Fit', () => {
-  const flag = (on: boolean) => keyGroups({ flag: on }).find((g) => g.group === 'Items')!.rows.filter((r) => r.id === 'other:flag');
-  assert.deepEqual(flag(true).map((r) => r.keys), [['Shift+F']]);
-  assert.deepEqual(flag(false), []);
+// D-099 1 (planner's call 3): B bookmarks the focused card; Shift+F, the flag's key before it, is retired (F stays Fit).
+test('with the cardBookmark flag, Items lists B for the bookmark; without it, nothing; F stays Fit', () => {
+  const bookmark = (on: boolean) => keyGroups({ bookmark: on }).find((g) => g.group === 'Items')!.rows.filter((r) => r.id === 'other:bookmark');
+  assert.deepEqual(bookmark(true).map((r) => r.keys), [['B']]);
+  assert.deepEqual(bookmark(false), []);
+  assert.equal(keyGroups({ bookmark: true }).some((g) => g.rows.some((r) => r.keys.includes('Shift+F'))), false);
   assert.deepEqual(rows().find((r) => r.id === 'command:fit')!.keys, ['F']);
 });
 
