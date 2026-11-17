@@ -1823,9 +1823,10 @@ the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it hol
    hidden, rows acting by `data-menu-act`; the page opens them (FE_02, `mark-menus.ts`: the shared menu's keys, `menuKeydown`, and a press outside through `dismissable` with `clickWithin`, so a pan leaves one open).
 7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a hit area of at least 24px; the disc, the icon
    tile and the notes mark on one vertical line, 34px in from the right edge; selection is the node's own border,
-   thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); a tone tints the body's top, the top line,
-   the selected border and the tile, while the kind keeps its tab, word and disc; the ring is `--vb-focus-edge` and
-   shows after Tab only.
+   thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); the node's colour (`--vb-node-color`) is
+   the kind's, or its tone's line (point 366, FE_04): it colours the grip or kind tab, the top line, the hover and
+   selected borders, the tags and the tile, while the kind's word over the title and the disc keep the kind's; the
+   ring is `--vb-focus-edge` and shows after Tab only.
 8. **Kept true by**: `packages/ui/tests/icon-set.test.ts` (every name drawn, every drawing passes the check, a library
    icon from its paths, missing, failing and too many draw nothing), `node-marks.test.ts` (every answer, badge and notes
    state; the tone; `nodeState.marks`), `node-edges.test.ts` (off is today's card; the order of the marks; the tile;
@@ -1965,3 +1966,35 @@ The rulings are `cortex-tasks/board/2026-11-16_board-ui_node-overhaul/PLAN.md` d
    stage, clear of a container's title line). With `nodeEdges` the bar also steps aside, hidden, while a menu or box of a node
    (`.vb-mark-menu`, an open `.vb-card-pop`) or the conversation box is open (`selection-flow.ts` `covered`), and comes back
    when it closes. Tests: `tests/pages/selection-bar-edges.spec.ts`, `apps/board/tests/commands.test.ts`, `key-help.test.ts`.
+### The Command Lens skin (node overhaul FE_04)
+
+The second row of `SKIN_DEFS`, `command-lens` (`answer: 'switch'`, `marks: 'plate'`), and its token values
+(`packages/tokens/src/skins.css`). Behind `skins` with `nodeEdges`. The look is
+`design/mockups/node-skins/command-lens-skin-*.html` and `design/mockups/node-states/command-lens-*`.
+
+1. **By the row, never the name** (`node-edges.ts` `edgesMarkup`): with `marks: 'plate'` the number, the kind (its word
+   with a dot, or the node's icon in place of the dot), the badge, Awaiting, a proposal chip and the notes mark sit in
+   `.vb-node-plate` along the top, which is the drag handle (`pointer.ts` `HANDLE`; its buttons keep their press), and
+   there is no grip and no kind word over the title. With `answer: 'switch'` a node that asks gets `.vb-mark-switch`
+   after the body: two halves, `data-mark="tick"` and `"cross"`, each a toggle named "Tick item N (A)" whose name stays
+   put (aria-pressed says it is lit); pressing the lit half clears the answer (`item-acts.ts`). A proposal outlines
+   its half (`data-proposed`) and shows the chip, `data-mark="proposal"`, named "Proposal on item N, the agent proposes
+   tick", which controls the proposal box (`node-edges-apply.ts` `applyMarks`; `NodeMarks.proposalLabel`).
+2. **Styles** (`node-plate.css`, keyed by `data-marks-at` and `data-answer-at`, tokens only): a node that asks has the
+   dark plate (`--vb-plate`) and a switch, one that only tells a light plate and none; on the dark plate a mark keeps
+   its hue lifted to `--vb-plate-mark-l` (at most `--vb-plate-mark-c` chroma), so the kind's dot, the badges and the
+   notes count read in either theme, and its ring is `--vb-plate-focus`. The number is a square at the plate's left;
+   bookmarked it fills and hangs a notched tail below the plate. Only the lit half recolours an answered node. The
+   moments: a spinner in a saving half, a red ring and "!" on a failed one (or on the number), a lock in a half pressed
+   on a locked board. Selected: the border in the node's colour. A tone takes the plate's rule and a light plate's
+   ground. The plate's marks stay at the node's scale (FE_05's minimum mark size applies to the edge marks).
+3. **The glass** (`--vb-glass`, `-hover`, `-ink`, `-muted`, `-line`, `-tick`, `-cross`): the node's menus
+   (`menu-fixed.css`) and the selection bar (`selection-bar.css`) read the base's surface and ink tokens from them;
+   the default is today's raised surface, Command Lens's the plate's dark glass in both themes.
+4. **Kept true by**: `packages/ui/tests/node-skins.test.ts` (for every kind, with an icon, a tone or no number, every
+   row offers the same actions; the plate's order; the switch only on a node that asks; no node file names a skin),
+   `packages/tokens/tests/skins.test.ts`, `tests/plugin/token-contrast.spec.ts` (the lifted marks, the rings and the
+   glass at their tiers, light and dark, both skins); in a browser, `tests/pages/command-lens.spec.ts` (the element
+   builds the template's markup; the same actions as the default skin, node by node; the proposal; Tab order, names
+   and the skin's rings; axe; screenshots light and dark) and the gallery's "The Command Lens skin" section
+   (`apps/board/src/gallery/command-lens-section.ts`, `?flags=nodeEdges,skins`).

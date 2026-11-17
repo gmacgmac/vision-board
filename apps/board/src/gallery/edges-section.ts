@@ -5,7 +5,7 @@
 // failing path and one missing: the plain tile), tones by name and by hue; then the moments the page sets on a mark
 // (a write on its way, one that failed, a press on a locked board), the selected look, and the three menus open.
 import type { ViewNode } from '#format';
-import type { CardConditions, IconLibrary, NodeState, VbNodeElement } from '#ui';
+import type { CardConditions, IconLibrary, NodeState, SkinDef, VbNodeElement } from '#ui';
 import { answerPicker, contextMenu, MARK_MOMENT_WORDS, nodeState, numberMenu, SKIN_DEFS } from '#ui';
 import { mount } from 'svelte';
 import { pageMarkdown } from '../flags.ts';
@@ -21,16 +21,17 @@ const LIBRARY: IconLibrary = new Map([
   ['x-bad-path', ['M4 4L20 20 url(x)']],
 ]);
 
-function edgeCard(fx: Fixture, n: ViewNode, selected = false): { node: VbNodeElement; st: NodeState } {
+/** A card of the edges board drawn in skin row `def` (the default's, unless a skin's section asks for its own). */
+export function edgeCard(fx: Fixture, n: ViewNode, selected = false, def: SkinDef = SKIN_DEFS.default): { node: VbNodeElement; st: NodeState } {
   const { state, cards } = fx.edges;
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n, { ...ownIds(), markdown: pageMarkdown(), edges: SKIN_DEFS.default, icons: LIBRARY });
+  node.render(n, { ...ownIds(), markdown: pageMarkdown(), edges: def, icons: LIBRARY });
   const st = nodeState(n, state, undefined, selected, cards.get(n.n!) ?? ({} as CardConditions));
   node.update(st);
   return { node, st };
 }
 
-const byTitle = (fx: Fixture, title: string): ViewNode => fx.edges.view.nodes.find((n) => n.title === title)!;
+export const byTitle = (fx: Fixture, title: string): ViewNode => fx.edges.view.nodes.find((n) => n.title === title)!;
 
 /** A card with a moment the page sets on its disc: a write on its way, one that failed, or a press on a locked board. */
 function moment(fx: Fixture, title: string, attr: string): HTMLElement {
@@ -40,9 +41,9 @@ function moment(fx: Fixture, title: string, attr: string): HTMLElement {
 }
 
 /** A card with one of its menus drawn open beside it, as the page opens it. */
-function withMenu(fx: Fixture, title: string, menu: (n: ViewNode, st: NodeState, prefix: string) => string): HTMLElement {
+export function withMenu(fx: Fixture, title: string, menu: (n: ViewNode, st: NodeState, prefix: string) => string, def?: SkinDef): HTMLElement {
   const n = byTitle(fx, title);
-  const { node, st } = edgeCard(fx, n);
+  const { node, st } = edgeCard(fx, n, false, def);
   const box = el('div', 'g-edge-menu');
   box.innerHTML = menu(n, st, ownIds().idPrefix); // markup from node-menus.ts, which escapes every text run
   box.querySelector<HTMLElement>('[role="menu"]')!.hidden = false;

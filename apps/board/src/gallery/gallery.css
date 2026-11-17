@@ -185,3 +185,11 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-lc-compare { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
 .g-lc-compare > .g-group { flex: 0 1 auto; }
 .g-section[data-feature='layoutControl'] .g-lc-open .g-mini { overflow: visible; margin: 0 0 240px 380px; }
+/* The Command Lens skin (FE_04): a board root carrying the skin, so its tokens reach the cards, on the skin's canvas. The
+   root is a size container on the board (board.css); here it takes its content's height. */
+.g-skin.vb-board.vb-board {
+  container-type: inline-size; padding: var(--vb-space-4); border-radius: var(--vb-radius-lg);
+  background: var(--vb-surface-canvas) var(--vb-canvas-image); background-size: var(--vb-canvas-size) var(--vb-canvas-size);
+}
+[data-feature='skins'] .g-cards { gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
+.g-skin-bar vb-selection-bar { position: static; }

@@ -18,6 +18,7 @@
 @import './node/node-notes.css';
 @import './node/node-app.css';
 @import './node/node-edges.css';
+@import './node/node-plate.css';
 @import './app-frame/app-frame.css';
 @import './markdown/markdown.css';
 @import './image-view/image-view.css';

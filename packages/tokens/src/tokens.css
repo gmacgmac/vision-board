@@ -98,6 +98,12 @@
   --vb-node-tint-selected: 16%;
   --vb-tile-tint: 12%;
   --vb-select-w: 2px;
+  /* How much of the node's colour its border takes at rest (a skin may draw a plain line: 0%). */
+  --vb-node-edge-tint: 42%;
+  /* A mark on a dark plate (FE_04): the kind's dot, the badges and the notes count keep their hue at no less than this
+     OKLCH lightness and no more than this chroma, so they read on the plate in either theme (no lift: 0). */
+  --vb-plate-mark-l: 0;
+  --vb-plate-mark-c: 0.4;
   /* The canvas's pattern: the dot grid; a skin may draw lines instead. */
   --vb-canvas-image: radial-gradient(var(--vb-dot) 1.2px, transparent 1.3px);
   --vb-canvas-size: 22px;
@@ -182,7 +188,7 @@
   --vb-focus: var(--vb-host-focus, var(--vb-accent));
   /* The ring on a node that draws its edges and on each of its marks (D-099; nodeEdges; point 338): a calm slate, not
      the accent, shown only after Tab. Decoration tier (Lc 30): 47.3 / 46.5 dark on the canvas / card, 73.8 / 79.8
-     light. Command Lens's is its skin's value (FE_04). */
+     light. Command Lens's is its skin's value (skins.css). */
   --vb-focus-edge: light-dark(#5a6478, #8b9bb8);
   --vb-agent: light-dark(#5f7a0e, #c3dc5c);
 
@@ -259,12 +265,23 @@
   --vb-badge-new: var(--vb-state-fresh);
   --vb-badge-updated: var(--vb-state-updated);
   --vb-badge-settled: var(--vb-ink-subtle);
-  /* Command Lens's plate (D-100): its default is a quiet one. Command Lens's is dark in both themes,
-     so a mark on it needs its dark value (FE_04). */
+  /* Command Lens's plate (D-100): its default is a quiet one. Command Lens's is dark in both themes on a node
+     that asks, so a mark on it is lifted (--vb-plate-mark-l, -c) and its ring is --vb-plate-focus. */
   --vb-plate: var(--vb-surface-sunken);
   --vb-plate-ink: var(--vb-ink-strong);
   --vb-plate-muted: var(--vb-ink-subtle);
   --vb-plate-line: var(--vb-line);
+  /* The ring on a mark on the plate (a dark plate keeps a light ring in both themes). */
+  --vb-plate-focus: var(--vb-focus-edge);
+  /* What floats over the board (FE_04): the node's menus and the selection bar. Their default is today's raised
+     surface; a skin may draw them as dark glass in both themes, with Tick and Cross in colours that read on it. */
+  --vb-glass: var(--vb-surface-raised);
+  --vb-glass-hover: var(--vb-surface-sunken);
+  --vb-glass-ink: var(--vb-ink-strong);
+  --vb-glass-muted: var(--vb-ink-subtle);
+  --vb-glass-line: var(--vb-line-strong);
+  --vb-glass-tick: var(--vb-state-ack);
+  --vb-glass-cross: var(--vb-state-drop);
   /* Lines of a canvas drawn as a grid (decoration; not a tier). */
   --vb-grid: var(--vb-dot);
 

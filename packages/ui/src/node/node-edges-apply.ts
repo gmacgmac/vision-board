@@ -37,8 +37,16 @@ export function applyMarks(el: HTMLElement, m: NodeMarks): void {
     if (m.proposed) disc.dataset.proposed = m.proposed;
     else delete disc.dataset.proposed;
   }
-  for (const half of el.querySelectorAll<HTMLElement>('[data-mark="tick"], [data-mark="cross"]'))
-    half.setAttribute('aria-pressed', String(m.answer === (half.dataset.mark === 'tick' ? 'ticked' : 'crossed')));
+  for (const half of el.querySelectorAll<HTMLElement>('[data-mark="tick"], [data-mark="cross"]')) {
+    const tick = half.dataset.mark === 'tick';
+    half.setAttribute('aria-pressed', String(m.answer === (tick ? 'ticked' : 'crossed')));
+    half.toggleAttribute('data-proposed', m.proposed === (tick ? 'ack' : 'drop'));
+  }
+  const chip = el.querySelector<HTMLElement>('[data-mark="proposal"]');
+  if (chip) {
+    chip.hidden = !m.proposed;
+    if (m.proposed) chip.setAttribute('aria-label', m.proposalLabel);
+  }
   const badge = el.querySelector<HTMLElement>('[data-mark="badge"]');
   if (badge) {
     badge.hidden = m.badge === 'none';

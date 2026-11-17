@@ -38,8 +38,11 @@ export interface NodeMarks {
   numberLabel: string;
   answer: AnswerMark;
   answerLabel: string;
-  /** An open proposal's answer (DESIGN_01): the disc's dashed ring and the mark proposed. */
+  /** An open proposal's answer (DESIGN_01): the disc's dashed ring and the mark proposed, or the plate's chip and the
+   *  switch's half outlined. */
   proposed?: 'ack' | 'drop';
+  /** The plate's proposal chip's name, empty with no proposal. */
+  proposalLabel: string;
   notes: NotesMark;
   /** What the notes mark shows: empty with none, the count, "99+" past it. */
   notesText: string;
@@ -100,7 +103,7 @@ export function nodeMarks(n: ViewNode, m: MarksInput): NodeMarks {
   return {
     bookmarked: m.bookmarked, numberLabel: nodeWords.bookmarkItem(n.n, MARK_KEYS.bookmark),
     answer, answerLabel: answer === 'none' ? '' : nodeWords.answerItem(n.n, ANSWER_WORD[answer], MARK_KEYS.tick, MARK_KEYS.cross) + offer,
-    ...(proposed && { proposed }),
+    ...(proposed && { proposed }), proposalLabel: proposed ? nodeWords.proposalItem(n.n, offer) : '',
     ...notesOf(n, m), ...badgeOf(n, m), awaiting: m.awaiting,
   };
 }

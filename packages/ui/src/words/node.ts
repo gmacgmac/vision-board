@@ -97,6 +97,12 @@ export const answerItem = (n: number | undefined, state: string, tick: string, c
 /** What a proposal on the disc adds to its name. */
 export const proposedTick = ', the agent proposes tick';
 export const proposedCross = ', the agent proposes cross';
+/** A half of the Tick | Cross switch (a skin whose answer is the switch): a toggle whose name stays put; aria-pressed
+ *  says whether it is lit, and pressing the lit half clears it. "Tick item 35 (A)". */
+export const halfItem = (word: string, n: number | undefined, key: string): string => `${word} item ${n} (${key})`;
+/** The plate's chip for an open proposal (a switch skin; its word is `proposal`): it opens the proposal box. */
+export const proposalItem = (n: number | undefined, offer: string): string => `Proposal on item ${n}${offer}`;
+export const proposalTip = 'Proposal · open it';
 export const badgeNew = 'New';
 export const badgeSettled = (ver: number): string => `v${ver}`;
 /** The change badge: "2 updates, history of item 4 (H)". */
@@ -112,6 +118,7 @@ export const awaitingTip = 'The handover is still owed';
 export const bookmarkTip = (key: string): string => `Bookmark · ${key}`;
 export const answerTip = (tick: string, cross: string): string => `Tick · ${tick}  Cross · ${cross}`;
 export const historyTip = (key: string): string => `History · ${key}`;
+export const halfTip = (word: string, key: string): string => `${word} · ${key}`;
 export const notesTip = (key: string): string => `Notes · ${key}`;
 /** A write the person made that did not save, beside the mark it was on. */
 export const tickNotSaved = 'Tick not saved. Press to try again.';
