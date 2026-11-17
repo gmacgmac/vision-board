@@ -47,9 +47,10 @@ most of them, once.
        kept alive. Old ledger lines are handled by the ledger migration (BE_02, D-103), never by a second reader.
        A search for each removed symbol and flag name finds nothing outside `docs/decisions.md` and `cortex/`.
 2. [ ] Make Decision's colour the token's value; remove the scoped rule. Put the `tokens.css` diff in your notes.
-   - [ ] Restore the plugin stylesheet budget to 22,000 gzip (`apps/board/tests/plugin-build.test.ts` `BUDGET`
-         `view/board.css`, raised to 24,000 by FE_01 while the old footer's CSS shipped beside the new node's;
-         PLAN.md § House Rules), once the old CSS is gone.
+   - [ ] Restore the temporary size budgets (PLAN.md § House Rules, point 351) once the old code is gone: the page
+         to 200 KB (`scripts/verify-weight.mjs` `PAGE`, `performance.md`), the plugin's `view/board.js` to 190,000
+         and `view/board.css` to 22,000 gzip (`apps/board/tests/plugin-build.test.ts` `BUDGET`). If one can't be
+         met, stop and report the figure.
 3. [ ] `NODE_TYPES.app` no longer lists Save for later; an old ledger with a saved app card still opens.
 4. [ ] Renew the page and plugin screenshots once (`--update-snapshots`), then look at a sample of at least 40
        across specs, light and dark, before accepting them; list any that look wrong and fix the cause, not the

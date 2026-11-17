@@ -254,9 +254,10 @@ them on and renews the screenshots.
   and the page specs for what changed. The full page suite runs once, in VERIFY_01, and again in T_04
   (`VB_TEST_WORKERS=3`, `nice -n 15`). Every run has a time limit: 10 minutes for unit tests, 25 for the full page
   suite.
-- **Plugin stylesheet budget** (`apps/board/tests/plugin-build.test.ts`, `view/board.css`): raised from 22,000 to
-  24,000 gzip by FE_01 (its edge CSS took it to 23,684), temporary until T_04 deletes the old footer CSS; T_04 restores
-  22,000 (maintainer's ruling for this set).
+- **Temporary size budgets** (maintainer, point 351, until T_04 deletes the old node's code): the page's start
+  budget 200 → 210 KB gzip (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
+  190,000 → 200,000 and `view/board.css` 22,000 → 26,000 gzip (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
+  Each task still loads on demand what opens on an action. T_04 restores 200 KB, 190,000 and 22,000.
 - **Done** for a UI task means every state, accessibility and contrast pass (APCA tiers, light and dark), unit
   tests, page specs, a gallery entry, `pattern.json` updated, and a look in a browser in light and dark.
 - **Words**: every new sentence in its area's words file (`docs/specification/words.md`), never in code.
