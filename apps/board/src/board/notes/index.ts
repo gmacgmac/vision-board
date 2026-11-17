@@ -6,3 +6,6 @@ export type { NotePart } from './note-hide.ts';
 export { createNoteFlow } from './notes.ts';
 export type { NoteFlow } from './note-flow-types.ts';
 export { createRegionNotes } from './region-notes.ts';
+/** The conversation box's code (FE_03), loaded on first use: out of the page's start weight. */
+export const loadNoteBox = () => import('./note-box.ts');
+export type { BoxDeps } from './note-box.ts';

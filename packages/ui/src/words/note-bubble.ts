@@ -30,3 +30,15 @@ export const saving = 'Saving…';
 
 // ---- note-bubble-core.ts
 export const conversationOn = (container: string | number | undefined): string => `Conversation on ${container}`;
+
+// ---- the conversation box (note-bubble-core.ts, conversation-template.ts; FE_03)
+export const replyOrAskAbout = (about: string | number | undefined): string => `Reply or ask about ${about}`;
+export const both = (numbers: readonly number[]): string => numbers.join(' and ');
+export const askNow = 'Ask now';
+export const askNowTip = 'Ask now (Cmd or Ctrl Enter): this message goes to the agent at once';
+export const addNoteTip = 'Add note (Enter): it waits for the board\'s Send';
+export const waitingForTheAgent = 'Waiting for the agent';
+export const notSentYet = 'not sent yet · goes with Send';
+export const asking = 'Asking…';
+export const conversations = 'Conversations';
+export const closeConversation = 'Close conversation';

@@ -2,6 +2,7 @@
 export { archiveAsk, createBoardEdit, dayOf } from './board-edit.ts';
 export type { BoardEdit } from './board-edit.ts';
 export { createBoards } from './boards.ts';
+export { askContextOf } from './kept-view.ts';
 export { createLockFlow } from './lock-flow.ts';
 export { LAST_BOARD_KEY } from './start-board.ts';
 export { createVersions } from './versions.ts';

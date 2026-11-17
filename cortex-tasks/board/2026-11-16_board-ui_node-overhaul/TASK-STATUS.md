@@ -48,7 +48,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 6b | PERF_01 | 3 | strong | yes | Web performance engineer — start weight is what makes a tool feel slow; it is cut by loading later, never by moving the line. | [Room in the start weight](./PERF_01_start-weight.md) | Completed | Run 2: 187.5 KB at start (2 files) from one start chunk, vb-app-frame and vb-image-view on first use, no upgrade chain in the page or view; engine-hooks fixed. Plugin CSS room not found (ruling: temporary budget until T_04 deletes the old footer CSS). |
 | 7 | FE_01 | 4 | strong | no | Principal front-end engineer for design systems — a pattern owns every state, updates in place and is reachable by keyboard and screen reader. | [The node's edges and the icon set](./FE_01_node-edges-and-icon-set.md) | Completed | Edges behind nodeEdges (byte-for-byte off), icon set + library check, SKIN_DEFS, nodeMarks, menus; plugin CSS 23,753 (budget 24,000, temporary); page 193.9 KB; tokens.css `--vb-focus-edge` |
 | 8 | FE_02 | 5 | strong | no | Interaction engineer — a control never does two things depending on timing, and no click is lost or doubled. | [The board wires the edges](./FE_02_board-wires-the-edges.md) | Completed | Marks, menus, boxes, tips and keys wired behind nodeEdges; flag renamed Bookmark (key B); a container's pill cleared on screen (N47 closed); library icons; skin rows. Page 196.77 KB; plugin view.js 189,819/190,000 gz. Baselines renewed (listed in the task). |
-| 9 | FE_03 | 6 | strong | no | Interaction engineer for messaging — words a person typed are never lost, and Enter never does the unexpected thing. | [One conversation box](./FE_03_one-conversation-box.md) | Pending | |
+| 9 | FE_03 | 6 | strong | no | Interaction engineer for messaging — words a person typed are never lost, and Enter never does the unexpected thing. | [One conversation box](./FE_03_one-conversation-box.md) | Blocked | Box, Ask now (`ask` with seq and `board`), tabs, `askContext` behind nodeEdges; all checks green but plugin view.js 192,725/190,000 gz (ruling needed), `npm run map`. Page 198.40 KB; plugin CSS 23,994/24,000. |
 | 10 | FE_04 | 7 | strong | no | Design-systems engineer — a second skin proves the first was a system; if the node needs an `if (skin)`, the registry is wrong. | [The Command Lens skin](./FE_04_command-lens-skin.md) | Pending | |
 | 11 | FE_05 | 8 | standard | no | — | [Zoom groups](./FE_05_zoom-groups.md) | Pending | |
 | 12 | FE_06 | 9 | standard | no | — | [The selection bar and Z](./FE_06_selection-bar-and-z.md) | Pending | |
@@ -187,8 +187,12 @@ _Status:_ Completed
 _Notes:_ Run 1. For FE_03: the notes mark and C call `act(id, 'comment')` (`cards/mark-acts.ts` `press`, `run`), today's bubble; swap there. For FE_04: the switch halves (`data-mark=tick|cross`) already answer on a press (`mark-acts.ts` `answer`), with the same moments. For FE_05: menus and tips sit on the stage, placed by `mark-place.ts` from their anchor on every `vp.onApply` (`edges.place()`); the history and proposal boxes are still inside the node and scale. For FE_06: one menu or box at a time is `mark-acts.ts` `open`. `FreshCount.seq` added (`page-conditions.ts`). Requests: `npm run map`; `menu-template.ts` comment says the page uses `openMenu`; `fresh.ts` comment says a click on the frame changes nothing.
 
 ### FE_03: One conversation box
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Blocked (plugin JS budget ruling)  
+_Notes:_ Run 1. For FE_06 and FE_08: the box is `<vb-note-bubble>` mode `conversation` (`loadConversation` before the
+first show); its page code is `notes/note-box.ts` (`boxView`, `addNote`, `askNow`, loaded by `loadNoteBox`), and Ask now's
+board side `controller/ask-now.ts` (`BoxDeps`: blocked, listening, ask, looked). A selection's Ask now needs a group
+target: `Open.group` already drives the group tab's writes. Tabs are per group of nodes. Requests: the plugin view.js
+raise (192,725 gz) and `npm run map`. Not done: waking an idle chat-panel agent on an `ask` (tracker row).
 
 ### FE_04: The Command Lens skin
 _Status:_ Pending  

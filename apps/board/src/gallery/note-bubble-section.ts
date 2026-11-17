@@ -6,11 +6,14 @@
 // exactly as the board places it, so right, left and below come from the stage's size, never from
 // a hand-set side; the conversation from `partAnchor`, its arrow on the part pressed.
 import type { ViewNode } from '#format';
+import { flagOn } from '#format';
+import { pageFlags } from '../flags.ts';
 import type { BoardState } from '#actions';
 import type { BubbleInput, BubblePhase, NotesEntry, StageBox, VbNodeElement, VbNoteBubbleElement } from '#ui';
 import { bubbleView, conversation, isNoteEntry, nodeState, partAnchor, placeBubble } from '#ui';
 import { el, group, ownIds } from './dom.ts';
 import { containerBubbleSample } from './container-bubble.ts';
+import { conversationBoxSamples } from './conversation-box-samples.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
 
@@ -124,4 +127,6 @@ export function noteBubbleSamples(body: HTMLElement, fx: Fixture): void {
   const row = el('div', 'g-bubbles');
   row.append(...SAMPLES.map((s) => sample(s, fx)), containerBubbleSample(fx, 'edit'), containerBubbleSample(fx, 'thread'));
   body.append(group('Every state', 'New, editing, saving, error and a sent note, placed on the right, on the left and below the way the board places them, the conversation (every note and reply on the card, oldest first) beside the part pressed and scrolled to it, and a note and the conversation on a whole container beside its title line. Read-only, an × in the corner closes it. The border and arrow wear the card\'s colour (the container\'s line colour), faint at rest and full while you type. Every size is a shared popover token (--vb-pop-*).', row));
+  // The conversation box behind its flag (nodeEdges, FE_03), so the gallery without it (and its screenshot) is unchanged.
+  if (flagOn('nodeEdges', pageFlags())) body.append(conversationBoxSamples(fx));
 }

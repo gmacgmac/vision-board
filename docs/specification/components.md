@@ -518,6 +518,28 @@ record is `api.md` 58-61.
    `node-template.test.ts`, `node-time.test.ts`, `tests/pages/notes.spec.ts` (Hide and Show) and
    `note-polish.spec.ts` (note time); `highlight` by `tests/pages/card-history.spec.ts` (a note row
    and a reply row of the history box).
+9. **The conversation box** (nodeEdges flag, D-099 3, node-overhaul FE_03; the design review of DESIGN_01). With the
+   flag a node's notes open one box, to read and to write: C, the notes mark, right-click's Comment, a note and a reply
+   all reach `notes.ts` `press` or `talk`, which open the bubble in `conversation` mode, its field focused. Its markup is
+   `conversation-template.ts` (loaded on first use, `loadConversation`, with the box's page code
+   `notes/note-box.ts`, `loadNoteBox`): a compact head (the number chip, the node's title, ×); tabs only when the node
+   is in a note on several nodes (this node first, then one per group, "With 28", `boxView`); the thread oldest first,
+   a note not yet sent dashed and saying "not sent yet · goes with Send", and "Waiting for the agent" while the
+   latest note went and no reply came after it; a field of one line that grows to three, then scrolls; Ask now and
+   Add note sharing the width, their keys in their tooltips. **Add note** (Enter) writes the note for the board's Send
+   and keeps the box open; a node holds one note not yet sent (api.md 59), so later words join it as a `note-edit`.
+   **Ask now** (Cmd or Ctrl Enter, `fieldKey`; Enter alone never asks) writes the words to that note the same way,
+   then one `ask` naming it with the page's `askContext` (`kept-view.ts` `askContextOf`, default `board`), apart from
+   Send (api.md 188); the board's other answers keep waiting. While no message can go (a past version, a read-only
+   ledger, a locked board, the chat's agent mid-turn: `controller/ask-now.ts`) Ask now is `aria-disabled`, its title
+   the reason, and a press says it in the box; with no agent listening (none joined the ledger, and the engine is not
+   `singleAgent`) the words wait as a note for Send and the board says so. Words typed survive a redraw (`show(...,
+   true)` keeps the field, caret, focus and phase), a failed write (the box says why) and Esc (the discard question);
+   an empty box closes on a click outside. Showing a node's replies writes a card `seen` at the version already seen,
+   so the notes mark goes back to its count. Edit on a queued note opens today's edit mode and comes back to the box.
+   A container's note and a note on several selected nodes keep the bubbles above. The box scales with the board in
+   FE_05. Proven by `packages/ui/tests/conversation-box.test.ts`, `apps/board/tests/ask-now.test.ts` and
+   `tests/pages/conversation-box.spec.ts`.
 
 ## A card's history (card-polish FE_03)
 

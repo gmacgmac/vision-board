@@ -17,11 +17,11 @@ import { MAX_TEXT } from '#format';
 import * as noteBubbleWords from '../words/note-bubble.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
 
-const button = (act: string, label: string, primary = false): string =>
+export const button = (act: string, label: string, primary = false): string =>
   `<button type="button" class="vb-nb-btn${primary ? ' vb-nb-primary' : ''}" data-note-do="${act}">${esc(label)}</button>`;
 
 /** The × in the head's top corner (ruling 7): the cross glyph the card's Cross wears, named "Close". */
-const closeX = (label: string): string =>
+export const closeX = (label: string): string =>
   `<button type="button" class="vb-nb-x" data-note-do="cancel" aria-label="${esc(label)}">${svgIcon(ACTION_ICON.drop!, 20, 'vb-nb-x-icon')}</button>`;
 
 /** "Enter add · Esc cancel", with the keys drawn as keys. */
@@ -37,18 +37,20 @@ const replyItem = (r: ReplyEntry, md: MarkdownOptions | undefined, at = '', cls 
 const seqAt = (seq: number): string => ` data-seq="${seq}" tabindex="-1"`;
 
 /** One of the person's notes in the conversation: who and its words; Edit while it can still be
- *  edited (not sent or answered, decision 8), which turns the window into the edit mode for it. */
-function noteItem(e: NoteEntry, md?: MarkdownOptions): string {
+ *  edited (not sent or answered, decision 8), which turns the window into the edit mode for it. In the conversation
+ *  box (`queued`: its words) such a note is also marked as waiting for the board's Send: dashed, and said. */
+function noteItem(e: NoteEntry, md?: MarkdownOptions, queued?: string): string {
   const edit = e.sent ? ''
     : `<button type="button" class="vb-nb-btn vb-nb-edit" data-note-do="edit" data-edit="${e.seq}" aria-label="${noteBubbleWords.editNote(e.index)}">${uiCommonWords.edit}</button>`;
-  return `<li class="vb-nb-note"${seqAt(e.seq)}><div class="vb-nb-note-top"><span class="vb-nb-who">${esc(e.who)}</span>${edit}</div>`
-    + `<div class="vb-nb-note-text">${renderMarkdown(e.text, md)}</div></li>`;
+  const waits = queued && !e.sent;
+  return `<li class="vb-nb-note${waits ? ' vb-nb-queued' : ''}"${seqAt(e.seq)}><div class="vb-nb-note-top"><span class="vb-nb-who">${esc(e.who)}`
+    + `${waits ? ` · <em>${esc(queued)}</em>` : ''}</span>${edit}</div><div class="vb-nb-note-text">${renderMarkdown(e.text, md)}</div></li>`;
 }
 
 /** The conversation as one list, in the order given: a note, its replies, an orphan reply. */
-const conversationList = (entries: readonly NotesEntry[], md?: MarkdownOptions): string =>
+export const conversationList = (entries: readonly NotesEntry[], md?: MarkdownOptions, queued?: string): string =>
   `<ol class="vb-nb-convo">${entries.map((e) => isNoteEntry(e)
-    ? noteItem(e, md) + (e.replies ?? []).map((r) => replyItem(r, md, seqAt(r.seq))).join('')
+    ? noteItem(e, md, queued) + (e.replies ?? []).map((r) => replyItem(r, md, seqAt(r.seq))).join('')
     : replyItem(e, md, seqAt(e.seq), ' vb-nb-orphan')).join('')}</ol>`;
 
 /** The read-only part, which scrolls as one: the sent note (`read`), then the replies, oldest first;

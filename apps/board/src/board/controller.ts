@@ -22,7 +22,7 @@ import type { ConfirmList } from './host.ts';
 import { alignOf, chatStatusOf, flagOf, markdownOf } from './host.ts';
 import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
-import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
+import { askContextOf, createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
 import { createAttention, createBookmarkFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
 import { type BoardElements, createDrawing, createFocus, createPlaces, Viewport, zoomPercent } from './canvas/index.ts';
@@ -39,6 +39,7 @@ import type { Board, BoardDeps } from './controller/board-types.ts';
 import { createBoardState } from './controller/board-state.ts';
 import { stageHandlers } from './controller/stage-handlers.ts';
 import { createNodeEdges } from './controller/node-edges.ts';
+import { createAskNow } from './controller/ask-now.ts';
 import * as boardWords from './words/board.ts';
 
 export type { BoardElements } from './canvas/index.ts';
@@ -196,6 +197,10 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id), regionReplies: () => parking.containers(),
     replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; }, ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
     markdown, discard: () => ask(...DISCARD_ASK), paused: lock.paused, unsaved: (on) => status.set({ unsaved: on }), // a host's leave guard (M11)
+    // The conversation box and Ask now (nodeEdges, FE_03, controller/ask-now.ts).
+    ...(edgesOn && { box: createAskNow({ state: () => live.state, board: () => S.id, oneAgent: () => live.oneAgent, context: () => askContextOf(b.store), attempt, seen: (m) => sender.seen(m),
+      node: (id) => { const n = nodeOf(id)?.n; const ver = S.data?.versions[id]; return n === undefined || ver === undefined ? undefined : { n, ver }; },
+      paused: () => (versions.state ? READ_ONLY : live.readOnly ? MARK_MOMENT_WORDS.ledgerIsReadOnly : lock.paused()), working: () => chatStatus.now !== 'idle' }) }),
   });
   /** A container's note preview and block: Edit, Remove, Show in container (region-notes.ts). */
   const regionNotes = createRegionNotes({

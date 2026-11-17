@@ -17,6 +17,9 @@ import { bubbleView, conversation, regionColour, replyEntry } from '#ui';
 export interface Open {
   id: string; anchor: readonly string[]; mode: BubbleMode; kind: NoteKind; note?: ItemNote; group?: readonly string[];
   region?: string; back?: HTMLElement; part?: number; at?: string;
+  /** The conversation box: the words its field holds when it opens (a draft carried to another tab); `then`: the box an
+   *  Edit opened from, which comes back once the edit is saved or cancelled. */
+  draft?: string; then?: Open;
 }
 
 export interface ViewDeps {

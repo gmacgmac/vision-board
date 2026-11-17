@@ -7,7 +7,7 @@
 // fails is tried again on the next call.
 import { defineVbNode } from './node/vb-node.ts';
 import { defineVbRegion } from './region/vb-region.ts';
-import { defineVbNoteBubble } from './note-bubble/vb-note-bubble.ts';
+import { defineVbNoteBubble, useConversation } from './note-bubble/vb-note-bubble.ts';
 import { defineVbSelectionBar } from './selection-bar/vb-selection-bar.ts';
 
 export function defineBoardElements(): void {
@@ -25,5 +25,7 @@ function later(load: () => Promise<() => void>): () => Promise<void> {
 
 /** Define <vb-app-frame>, the first time a board shows an app card's panel. */
 export const defineAppFrame = later(() => import('./app-frame/vb-app-frame.ts').then((m) => m.defineVbAppFrame));
+/** Load the conversation box's template (FE_03), the first time a node's conversation opens with nodeEdges on. */
+export const loadConversation = later(() => import('./note-bubble/conversation-template.ts').then((m) => () => useConversation(m.conversationTemplate)));
 /** Define <vb-image-view>, the first time a person opens a picture. */
 export const defineImageView = later(() => import('./image-view/vb-image-view.ts').then((m) => m.defineVbImageView));

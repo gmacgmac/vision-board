@@ -2,6 +2,8 @@
 // board in the host's store (`view.<board>`, BoardHost.store) a moment after the view stops moving, and at
 // once when the page goes or another board opens, and restored when that board opens again. A store that
 // lost it, or holds something else: the board fits, as before.
+import type { AskContext } from '#format';
+import { ASK_CONTEXTS } from '#format';
 import type { BoardStore } from '../host.ts';
 import type { Viewport, ViewSnapshot } from '../canvas/index.ts';
 
@@ -61,4 +63,12 @@ export function createKeptView(vp: Viewport, board: () => string, on: boolean, s
       removeEventListener('pagehide', flush);
     },
   };
+}
+
+/** Ask now's context (PLAN call 1, D-099 3): what the agent is given with the note, a page setting kept as the board's
+ *  others are (`ask-context` in the host's store), recorded on every `ask`. Default `board`, the only one built: it has
+ *  no control on screen until a second is. */
+export function askContextOf(store: BoardStore): AskContext {
+  const kept = store.get('ask-context');
+  return ASK_CONTEXTS.find((c) => c === kept) ?? 'board';
 }

@@ -139,7 +139,7 @@ vb-note-bubble kbd {
   color: var(--vb-ink); font: var(--vb-text-md) var(--vb-font-mono);
 }
 vb-note-bubble .vb-nb-btn {
-  display: inline-flex; align-items: center; height: var(--vb-space-6); padding: 0 var(--vb-pop-pad); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; height: var(--vb-space-6); padding: 0 var(--vb-pop-pad); cursor: pointer;
   border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
   color: var(--vb-ink-strong); font: inherit; font-size: var(--vb-pop-text); font-weight: var(--vb-weight-medium);
 }
@@ -150,3 +150,21 @@ vb-note-bubble .vb-nb-btn[data-note-do='remove'] { margin-right: auto; color: va
 vb-note-bubble .vb-nb-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
 vb-note-bubble .vb-nb-primary:hover { background: var(--vb-accent-fill-hover); }
 vb-note-bubble[data-phase='saving'] { cursor: progress; }
+
+/* The conversation box (nodeEdges, FE_03; design/mockups/node-states/default-input-*): the head is the node's
+   number and title (a long one wraps); tabs only when the node is in a note on several nodes; a note waiting for
+   Send is dashed and says so; the field is one line that grows to three (5.6em: three lines of 1.45 and the
+   padding), then scrolls; Ask now and Add note share the width. */
+vb-note-bubble[data-mode='conversation'] {
+  .vb-nb-tab {
+    padding: var(--vb-space-1) var(--vb-space-3); border: 0; border-bottom: 2px solid transparent;
+    background: none; color: var(--vb-ink-subtle); font: inherit;
+  }
+  .vb-nb-tab[aria-selected='true'] { border-bottom-color: var(--vb-accent); color: var(--vb-ink-strong); }
+  .vb-nb-queued { border: 1px dashed var(--vb-accent); }
+  .vb-nb-who em { font-style: normal; text-transform: none; }
+  .vb-nb-wait { margin: 0; color: var(--vb-ink-subtle); }
+  .vb-nb-text { min-height: 0; max-height: 5.6em; resize: none; }
+  .vb-nb-pair { display: grid; grid-template-columns: 1fr 1fr; }
+  .vb-nb-ask[aria-disabled='true'] { opacity: 0.5; }
+}

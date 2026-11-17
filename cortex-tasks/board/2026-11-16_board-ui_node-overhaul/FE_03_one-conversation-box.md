@@ -109,20 +109,66 @@ place of the `send` act, so the agent reads it through `check_responses` (T_01's
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Blocked (the plugin's `view/board.js` budget: a ruling, below); everything else done
+**Completed**: 2026-11-17 16:40
 
 ### Changes Made
-- 
+- `packages/ui/src/note-bubble/`: mode `conversation` (core `bubbleView` → `BoxView`, `BubbleTab`, `fieldKey`: Enter is
+  Add note, Cmd or Ctrl Enter is Ask now and only in the box, Shift Enter a new line); `conversation-template.ts` (head
+  with number, title and ×; tabs only in a group note; the thread with the queued note dashed and "not sent yet · goes
+  with Send"; "Waiting for the agent"; a one-line field that grows to three; Ask now and Add note sharing the width,
+  keys in their titles, Ask now `aria-disabled` with the reason as its title), loaded on first use
+  (`elements.ts` `loadConversation`, `useConversation`); element: `show(..., keep)` keeps the field's words, caret,
+  focus, phase and the thread's place through a redraw; `setPhase(..., by)` ("Asking…"); choices `ask` and `tab`;
+  `note-bubble.css` box rules; `pattern.json`; words in `words/note-bubble.ts`.
+- `apps/board/src/board/notes/note-box.ts` (loaded on first use, `loadNoteBox`): `boxView` (tabs per group of nodes,
+  the tab's notes and replies, waiting), `addNote` (comment, or a `note-edit` joining the node's queued note, api.md
+  59), `askNow` (blocked → says why, writes nothing; no agent listening → the words wait as a note and the toast says
+  so; else write, then one `ask` with `lines: [seq]`). `notes.ts`: with `box` (nodeEdges) `press`, `talk`, `show` open
+  the box; a redraw refreshes it only when what it says changed; Edit on a queued note comes back to the box; an
+  empty box closes on a click outside.
+- `apps/board/src/board/controller/ask-now.ts` (`createAskNow`: blocked = past version, read-only ledger, locked
+  board, the chat's agent mid-turn; listening = an agent joined the ledger or `singleAgent`; the `ask` with
+  `askContextOf`; `looked`: a card `seen` at the version already seen so only the replies are read);
+  `controller.ts` passes it to the note flow with `nodeEdges` on. `boards/kept-view.ts` `askContextOf` (store key
+  `ask-context`, default `board`; no control on screen).
+- Words: `apps/board/src/board/words/notes.ts` (`noAgentIsListening`, `notAsked`, `thisNode`, `withNodes`,
+  `theAgentIsWorking`). Gallery: `conversation-box-samples.ts` (8 states, through the board's own `boxView`; shown
+  with `?flags=nodeEdges`). Docs: `components.md` § Notes beside cards item 9.
+- Tests: `packages/ui/tests/conversation-box.test.ts` (6), `apps/board/tests/ask-now.test.ts` (6),
+  `tests/pages/conversation-box.spec.ts` (8: one way in; Add note never asks; Ask now writes one `ask` with the seq
+  and `context: "board"`, the tick stays unsent and the asked note is not carried; words survive a redraw, a failed
+  write and Esc; unread back to count; tabs; dark and light screenshots, keyboard alone, axe, APCA).
 
 ### Issues & Resolutions
-- 
+- Weights: page 198.40 KB at start (203,164 B; was 196.77): the box's template and its page code are their own
+  chunks. Plugin `view/board.css` 23,994 / 24,000 gzip (trimmed to fit). Plugin `view/board.js` **192,725 / 190,000
+  gzip**, over by 2,725: the plugin is one file, so `import()` saves nothing there. Not raised: the maintainer's ruling.
+  `plugin-build.test.ts` "the bundles stay inside their budgets" is the one failing unit test.
+- `npm run verify`: only `modules.md` out of date (new imports): `npm run map` requested.
+- The gallery's note-bubble section shows `pattern.json`'s states, so its two baselines were renewed for the new
+  `conversation` state (`gallery-note-bubble-{dark,light}`); nothing else in the gallery moves. With the flag off,
+  `notes`, `conversation`, `popover-thread` and the other note specs pass with no new baseline.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- An `ask` reaches agents through `check_responses` only. The chat panel's agent, idle between turns, is not woken
+  by it (the server records an `ask` without `onSend`), and `BoardChat.send` sends the staged chips (the board's
+  answers), so Ask now cannot go that way. A host path for one node's message (`BoardChat.ask`) is a tracker row.
+- "No agent listening" is read as: no agent joined the ledger, and the engine is not `singleAgent`. The page cannot
+  tell whether an agent is waiting in `check_responses` now.
+- Ask now's disabled title follows a redraw; a change of the chat's working state alone does not redraw it. A press
+  says the current reason anyway.
+- An asked note reads "· Sent" in the thread: the mock-up's "asked now" needs `askedBy` on `ItemNote` (a small
+  contract read).
+- My calls: a tab per group of nodes (several notes on one group share a tab); "This node"'s Ask now carries the
+  node's own queued note, a group's tab carries that group's; words added to a queued note are appended, never
+  replace it.
+- The box's scale with the board is FE_05's (its step 3).
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None in behaviour. Files touched beyond the list, all front doors or new files: `packages/ui/src/elements.ts`,
+  `packages/ui/src/index.ts`, `apps/board/src/board/notes/index.ts`, `apps/board/src/board/boards/index.ts`, the new
+  gallery file and tests.
 
 ---
 
