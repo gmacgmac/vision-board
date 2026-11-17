@@ -10,8 +10,8 @@ import type { NodeTemplateOptions } from './node-template.ts';
 import { bindNoteTip } from './node-note-tip.ts';
 import { bindCardPopover } from './node-popover.ts';
 import { HISTORY, HISTORY_TAB } from './node-history.ts';
-import { applyApp, applyPanelSize, bindAppNameTip, renderKeepingPanel } from './node-app-apply.ts';
-import { handoverMarkup, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup } from './node-template.ts';
+import { applyApp, applyPanelSize, applyWindow, bindAppNameTip, keepingDrawer, renderKeepingPanel } from './node-app-apply.ts';
+import { handoverMarkup, isWindow, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup } from './node-template.ts';
 import { panelSize } from '../app-frame/app-frame-core.ts';
 import { AWAITING, isItem } from './node-core.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
@@ -80,8 +80,11 @@ export function defineVbNode(): void {
       if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
       else delete this.dataset.idPrefix;
       this.toggleAttribute('data-emphasis', Boolean(n.emphasis));
-      this.edges = opts.edges !== undefined && n.kind !== 'app';
+      // An app card drawn as a window (appWindow, node-window.ts) has the edges' number, badge and history too.
+      const win = isWindow(n, opts);
+      this.edges = opts.edges !== undefined && (n.kind !== 'app' || win);
       this.toggleAttribute('data-edges', this.edges);
+      this.toggleAttribute('data-window', win);
       // Where the skin's row puts the answer and the marks (skins.ts): CSS places by these, never by a skin's name.
       if (this.edges) Object.assign(this.dataset, { answerAt: opts.edges!.answer, marksAt: opts.edges!.marks });
       else for (const k of ['answerAt', 'marksAt']) delete this.dataset[k];
@@ -95,7 +98,8 @@ export function defineVbNode(): void {
       const app = n.kind === 'app' && opts.appCards !== false;
       applyPanelSize(this, app ? panelSize(n.app ?? { id: '' }) : undefined);
       // In place of innerHTML: a loaded app panel stays loaded through a new version (D-050).
-      renderKeepingPanel(this, nodeTemplate(n, opts));
+      // ...and an open drawer keeps its conversation, the words typed in it and its focus (FE_08).
+      keepingDrawer(this, () => renderKeepingPanel(this, nodeTemplate(n, opts)));
       this.proposalSrc = this.stepSrc = this.handoverSrc = this.appSrc = undefined;
       // Bound once: each listens on the card itself and finds its tab and box afresh on every event.
       this.proposalPop?.close();
@@ -137,6 +141,7 @@ export function defineVbNode(): void {
       this.updateHandover(st);
       this.updateSteps(st);
       if (st.app && this.querySelector('.vb-app')) this.appSrc = applyApp(this, st.app, this.appSrc);
+      if (st.app && this.hasAttribute('data-window')) applyWindow(this, st.app, st.marks);
       const fresh = this.querySelector<HTMLElement>('[data-tab="new"]');
       if (fresh) fresh.hidden = st.fresh !== true;
       pauseControls(this, PAUSED, st.paused === true, staleAccept);

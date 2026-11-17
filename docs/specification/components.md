@@ -1998,3 +1998,47 @@ The second row of `SKIN_DEFS`, `command-lens` (`answer: 'switch'`, `marks: 'plat
    builds the template's markup; the same actions as the default skin, node by node; the proposal; Tab order, names
    and the skin's rings; axe; screenshots light and dark) and the gallery's "The Command Lens skin" section
    (`apps/board/src/gallery/command-lens-section.ts`, `?flags=nodeEdges,skins`).
+
+## The app window (D-099 5; node overhaul FE_08)
+
+Behind `appWindow` with `nodeEdges` (both off by default until T_04); Open behind `appStage`. The page passes
+`render(n, { edges, appWindow: true, appStage })` (`canvas/draw.ts`, `controller.ts`). The look is
+`design/mockups/node-states/default-app-*.html` and `command-lens-app-*.html`; what an app is stays [apps.md](./apps.md).
+
+1. **One title bar** (`packages/ui/src/node/node-window.ts` `windowMarkup`, `node-template.ts` `isWindow`): in visual and
+   tab order the number (`numberMark`, the Bookmark toggle, as on any node), the app's icon and name (`vb-app-name`, cut
+   with "…", whole in its tip), the change badge (`badgeMark`, opening history; H and right-click too), why Allow shows
+   (`vb-win-reason`), Allow or "Allowed ▾" (today's `appStatus`, its menu opening under the bar), the drawer arrow
+   (`data-drawer`) and Open (`data-app-act="stage"`, a toggle). Under the bar everything is the app's: today's slot
+   (`appSlot`) and its state views, every `APP_CARD_STATES` state. No footer, no kind tab, no disc, no notes under the
+   app, no coloured border: the window's border is the strong line, selected the ink. The node keeps `data-edges`, so
+   the marks, menus, keys and right-click work as on any node (`cards/mark-flow.ts`); its menus have no Save for later
+   (`node-menus.ts` `later`; T_04 changes the node type's own list, so L still works until then).
+2. **By the row, never the name**: the bar is a plate (`vb-node-plate vb-win-bar`), so with `marks: 'plate'` it is
+   Command Lens's light plate (an app only tells) and in every skin it is the drag handle (`pointer.ts` `HANDLE`). Its
+   look is `node-app.css` (§ "An app node as a window"), keyed by `data-window` and `data-marks-at`, tokens only.
+3. **The state applied in place** (`node-app-apply.ts` `applyWindow`): the reason, the arrow's name (the notes mark's
+   name, then "Show conversation" or "Hide conversation"), its count and `data-notes-mark` (filled while a reply is
+   unread), the pane shown, Open shown while the panel shows. `AppCardView.drawer` (from the card's conditions) sets
+   `data-drawer-open`: the node is wider by `--vb-drawer-w` (300px), so the board measures it so and the layout moves
+   its neighbours aside; closed, they come back. A new version of the node keeps what its drawer holds
+   (`keepingDrawer`) and its loaded panel (`renderKeepingPanel`).
+4. **The drawer** (`apps/board/src/board/notes/app-drawer.ts` `createDrawers`): the node's conversation box (FE_03's
+   `<vb-note-bubble>` in conversation mode and `note-box.ts`: its tabs, Add note and Ask now), one per open drawer,
+   docked in the window's pane at its height, with no head, arrow or shadow of its own. The arrow shows and hides it;
+   C, a note or a reply on the node show it (`notes.ts` `press`, `talk`). Open or closed is kept per board and node for
+   the page's session; `app-cards.ts` reads it into the card's conditions (`drawer`). Hiding a drawer with words typed
+   asks first. Moving the box never touches the frame, so the panel never reloads.
+5. **On stage** (Open, `appStage`; `app-frame-stage.ts` `holdStage`, `vb-app-frame.ts` `stage(host)`): the whole window,
+   bar and drawer, goes into the top layer as a manual popover and fills the page; the frame never leaves its place
+   in the page, so the panel never reloads, and a change of its size is told to the panel. Focus is held inside (a focus
+   that lands outside comes back, at the start, or the end after Shift+Tab) until Open again or Esc, then goes to the
+   node. Open is pressed (`aria-pressed`) meanwhile. Without `appWindow` the frame alone goes, as the spike did.
+6. **Kept true by**: `packages/ui/tests/node-window.test.ts` (off is today's card byte for byte; the bar in order; no
+   footer, kind tab, notes or disc; Open only with appStage; the plate; no Save for later; the drawer's state);
+   `packages/ui/tests/app-frame-note.test.ts` (the panel's note and the reply); in a browser,
+   `tests/pages/app-window.spec.ts` (both skins, light and dark, axe; the drawer moving the neighbour and back, the
+   panel never reloaded, the drawer kept through a redraw; Add note, the agent's reply and the panel's raised note in
+   one thread; the stage holding focus, Esc, focus back on the node; no Save for later) and
+   `tests/pages/app-window-stuck.spec.ts`; the gallery's "The app window" section
+   (`apps/board/src/gallery/app-window-section.ts`, `?flags=nodeEdges,skins,appWindow`).

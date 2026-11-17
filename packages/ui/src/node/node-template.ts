@@ -23,6 +23,7 @@ import * as uiCommonWords from '../words/ui-common.ts';
 import type { SkinDef } from '../skins.ts';
 import type { IconLibrary } from '../icons/icon.ts';
 import { edgesMarkup } from './node-edges.ts';
+import { drawerId, windowMarkup } from './node-window.ts';
 
 // One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
 export { esc } from '../markdown/inline.ts';
@@ -112,6 +113,8 @@ function footer(n: ViewNode, opts: NodeTemplateOptions): string {
 
 /** An app card draws its slot, and so its status in the footer: the appCards flag is not off. */
 const isAppSlot = (n: ViewNode, opts: NodeTemplateOptions): boolean => n.kind === 'app' && opts.appCards !== false;
+/** An app card is drawn as a window (node-window.ts): its slot, with the edges and the appWindow flag. */
+export const isWindow = (n: ViewNode, opts: NodeTemplateOptions): boolean => isAppSlot(n, opts) && !!opts.edges && opts.appWindow === true;
 
 /** The id of app card `n`'s menu, which "Allowed ▾" controls (`prefix`: the mount's, NodeTemplateOptions.idPrefix). */
 export const appMenuId = (n: ViewNode, prefix = ''): string => `${prefix}vb-app-menu-${n.id}`;
@@ -228,8 +231,12 @@ export interface NodeTemplateOptions {
   /** How this card's Markdown renders: the flags and the image route its board was given. */
   markdown?: MarkdownOptions;
   /** Draw the node with its marks on its edges, where this skin's row puts them (the nodeEdges flag, D-099; skins.ts
-   *  `SKIN_DEFS`): no footer. Unset, the markup is today's, byte for byte. An app card keeps today's (FE_08). */
+   *  `SKIN_DEFS`): no footer. Unset, the markup is today's, byte for byte. An app card keeps today's, unless `appWindow`. */
   edges?: SkinDef;
+  /** With `edges`, an app card is a window (the appWindow flag, D-099 5; node-window.ts): a title bar, the app, a drawer. */
+  appWindow?: boolean;
+  /** The window's bar has Open (the appStage flag): the window fills the page. */
+  appStage?: boolean;
   /** The project's icon library the page holds (`list_icons` with `paths`), for a node naming an `x-` icon. */
   icons?: IconLibrary;
 }
@@ -291,10 +298,9 @@ export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): strin
   const note = '<div class="vb-node-notes" hidden></div>';
   // An item's step section (FE_02), right under the text a change touched.
   const steps = isItem(n) ? `<div class="vb-node-steps" id="${esc(stepsId(n, opts.idPrefix))}" role="region" aria-live="polite" hidden></div>` : '';
-  if (opts.edges && n.kind !== 'app') {
-    const ids = { history: popoverId(HISTORY, n, opts.idPrefix), proposal: popoverId('proposal', n, opts.idPrefix) };
-    return edgesMarkup(n, opts.edges, { body, tags, steps, stepNav: STEP_NAV, ids, ...(opts.icons && { icons: opts.icons }) });
-  }
+  const ids = { history: popoverId(HISTORY, n, opts.idPrefix), proposal: popoverId('proposal', n, opts.idPrefix), drawer: drawerId(n, opts.idPrefix) };
+  if (isWindow(n, opts)) return windowMarkup(n, { body, status: appStatus(n, opts.idPrefix), steps, stepNav: STEP_NAV, ids, open: opts.appStage === true });
+  if (opts.edges && n.kind !== 'app') return edgesMarkup(n, opts.edges, { body, tags, steps, stepNav: STEP_NAV, ids, ...(opts.icons && { icons: opts.icons }) });
   return `${tabs(n)}${opts.sizeControl && n.kind !== 'app' ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
     + `${body}${tags}${steps}${note}</div>${footer(n, opts)}${bottomTabs(n, opts.idPrefix)}`;
 }

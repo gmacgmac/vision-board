@@ -11,7 +11,7 @@ import type { BubbleTab, VbNoteBubbleElement } from '#ui';
 import { bubbleView, conversation } from '#ui';
 import type { ActFields } from '../io.ts';
 import type { Open, Shown, ViewDeps } from './note-views.ts';
-import { unsentGroupNote, unsentNote } from './note-find.ts';
+import { noteWrite, unsentGroupNote, unsentNote } from './note-find.ts';
 import * as notesWords from '../words/notes.ts';
 
 /** What the box needs beyond the notes: Ask now's way to the agent and what stops it (controller/ask-now.ts). */
@@ -72,12 +72,9 @@ export function boxView(d: ViewDeps, box: BoxDeps, o: Open): Shown | null {
 /** The tab's note not yet sent: the one Add note joins and Ask now sends. */
 const queuedOf = (d: ViewDeps, o: Open): ItemNote | undefined => (o.group ? unsentGroupNote(d.state(), o.group) : unsentNote(d.state(), o.id));
 
-/** The act that writes `words`: joined to the tab's note not yet sent (one per node, api.md 59), else a new note. */
-function writeOf(d: ViewDeps & { ver(id: string): number | undefined }, o: Open, words: string): ActFields {
-  const queued = queuedOf(d, o);
-  if (queued) return { action: 'note-edit', n: Number(o.id), note: queued.seq, text: `${queued.text}\n\n${words}` };
-  return o.group ? { action: 'comment', nodes: o.group.map(Number), text: words } : { action: 'comment', n: Number(o.id), ver: d.ver(o.id), text: words };
-}
+/** The act that writes `words` for `o` (note-find.ts `noteWrite`). */
+const writeOf = (d: ViewDeps & { ver(id: string): number | undefined }, o: Open, words: string): ActFields =>
+  noteWrite(d.state(), o.id, words, d.ver(o.id), o.group);
 
 export interface BoxChoiceDeps extends ViewDeps {
   ver(id: string): number | undefined;

@@ -15,6 +15,8 @@ import { APP_ID, APP_PANEL_PATH, flagOn } from '#format';
 import type { AppBridge, AppLook, HostNotification } from './app-frame-core.ts';
 import { APP_FRAME_RESIZE_EVENT, createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
 import { KIND_ICON, svgIcon } from '../node/node-icons.ts';
+import type { StageHold } from './app-frame-stage.ts';
+import { holdStage } from './app-frame-stage.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
 import * as appFrameWords from '../words/app-frame.ts';
 
@@ -46,6 +48,8 @@ export interface AppFrameWiring {
   note?(text: string): Promise<void>;
   /** The panel said it is ready: the page may tell it things now (`tell`). */
   onReady?(): void;
+  /** The panel went on stage (true) or came back (false) (appStage). */
+  onStage?(on: boolean): void;
   /** Esc in the panel; left out, focus goes back to the card the frame is in. */
   onEscape?(): void;
   /** The frame loaded: the panel, or the route's refusal once the app went (the page reads the
@@ -70,8 +74,10 @@ export interface VbAppFrameElement extends HTMLElement {
   /** Send a ready panel one of the board's notifications; false when nothing was sent. */
   tell(method: HostNotification, params: Record<string, unknown>): boolean;
   /** The loaded panel leaves its card and fills the page, in the top layer (appStage): the same
-   * frame, never reloaded. Nothing while unloaded or already on stage. */
-  stage(): void;
+   * frame, never reloaded. `host`: the app window that holds the frame goes instead, its bar and
+   * drawer with it (appWindow, FE_08); left out, the frame alone under its own bar. Focus is held
+   * inside until Back or Esc (app-frame-stage.ts). Nothing while unloaded or already on stage. */
+  stage(host?: HTMLElement): void;
   /** Back into its card; focus goes to the card. */
   unstage(): void;
   readonly loaded: boolean;
@@ -149,46 +155,37 @@ export function defineVbAppFrame(): void {
 
     get frozen(): boolean { return this.hasAttribute('data-frozen'); }
 
-    get staged(): boolean { return this.hasAttribute('data-stage'); }
+    get staged(): boolean { return this.held !== undefined; }
 
-    /** Esc anywhere in the page while on stage: back to the card (a panel sends its own Esc). */
-    private readonly onStageKey = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape') return;
-      e.preventDefault();
-      e.stopPropagation();
-      this.unstage();
-    };
-    private readonly onStageResize = (): void => this.bridge?.contextChanged();
+    /** The stage this panel is on (app-frame-stage.ts), while it is. */
+    private held: StageHold | undefined;
 
     tell(method: HostNotification, params: Record<string, unknown>): boolean { return this.bridge?.post(method, params) ?? false; }
 
-    stage(): void {
+    stage(host: HTMLElement = this): void {
       if (!this.frame || this.staged) return;
       this.thaw();
-      // The card keeps the room the panel leaves (CSSOM: the page's CSP refuses style attributes).
-      const slot = this.parentElement;
-      const box = this.getBoundingClientRect();
-      const k = this.offsetWidth ? box.width / this.offsetWidth : 1;
-      slot?.style.setProperty('min-height', `${Math.round(box.height / (k || 1))}px`);
-      this.bar();
-      this.setAttribute('popover', 'manual');
-      this.toggleAttribute('data-stage', true);
-      this.showPopover();
-      document.addEventListener('keydown', this.onStageKey, true);
-      window.addEventListener('resize', this.onStageResize);
+      if (host === this) {
+        // The card keeps the room the panel leaves (CSSOM: the page's CSP refuses style attributes).
+        const box = this.getBoundingClientRect();
+        const k = this.offsetWidth ? box.width / this.offsetWidth : 1;
+        this.parentElement?.style.setProperty('min-height', `${Math.round(box.height / (k || 1))}px`);
+        this.bar();
+      }
+      this.held = holdStage(host, this, () => this.unstage(), () => this.bridge?.contextChanged());
       this.bridge?.contextChanged();
+      this.wiring?.onStage?.(true);
       this.frame.focus({ preventScroll: true });
     }
 
     unstage(): void {
-      if (!this.staged) return;
-      document.removeEventListener('keydown', this.onStageKey, true);
-      window.removeEventListener('resize', this.onStageResize);
-      try { this.hidePopover(); } catch { /* not shown */ }
-      this.removeAttribute('popover');
-      this.removeAttribute('data-stage');
-      this.parentElement?.style.removeProperty('min-height');
+      const held = this.held;
+      if (!held) return;
+      this.held = undefined;
+      held.release();
+      if (held.host === this) this.parentElement?.style.removeProperty('min-height');
       this.bridge?.contextChanged();
+      this.wiring?.onStage?.(false);
       this.toCard();
     }
 
