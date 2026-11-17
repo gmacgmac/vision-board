@@ -25,6 +25,7 @@ import type { Open } from './note-views.ts';
 import { cardView, containerView } from './note-views.ts';
 import { unsentGroupNote, unsentNote, unsentRegionNote } from './note-find.ts';
 import { createGroupPins, groupPinOf } from './group-pins.ts';
+import { boxScale } from '../canvas/index.ts';
 import { nodeReach, placeBeside, stageBoxOf } from '../cards/index.ts';
 import type * as NoteBox from './note-box.ts';
 import * as notesWords from '../words/notes.ts';
@@ -202,11 +203,17 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (open.mode === 'conversation') refreshBox(open);
     const at = anchorBox(d, open.mode === 'conversation' ? { ...open, at: undefined } : open);
     if (!at) return close(false);
-    const size = { w: bubble.offsetWidth, h: bubble.offsetHeight };
-    // The box beside a node, as every such box: top aligned, right or below, its arrow on the notes mark.
+    // The box beside a node, as every such box: top aligned, right or below, its arrow on the notes mark. It is the one
+    // box that scales with the board (D-101), to a floor where its text is still readable (`boxScale`).
     const card = open.mode === 'conversation' ? d.card(open.id) : undefined;
+    const s = card ? boxScale(d.vp.k) : 1;
+    bubble.style.setProperty('--vb-box-scale', String(s));
+    const size = { w: bubble.offsetWidth * s, h: bubble.offsetHeight * s };
     const mark = card?.querySelector('[data-mark="notes"]');
-    if (card) return bubble.place(placeBeside(nodeReach(card, d.stage), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, mark ? stageBoxOf(mark, d.stage) : at));
+    if (card) {
+      const p = placeBeside(nodeReach(card, d.stage), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, mark ? stageBoxOf(mark, d.stage) : at);
+      return bubble.place({ ...p, arrow: p.arrow / s });
+    }
     // Clear of the neighbouring cards' footer buttons where it can be (bubble-clear.ts).
     const avoid = footersNear(d.layout(), d.card, d.vp, at, size, open.anchor);
     bubble.place(placeBubble(at, size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, avoid));

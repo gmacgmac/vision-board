@@ -27,6 +27,11 @@ cards updates and measures 50 cards and lays out their 2 containers, and 1 chang
 container updates 1 card, lays out 1 container and redraws 2 connectors, with no full fetch in
 either; the server starts on a 100,000-event ledger in about 330 ms, so it keeps no checkpoint yet
 (approach 7 waits until it is needed).
+Zoom and the edge marks (node overhaul FE_05, 2026-11-17, nodeEdges on, the 1,000-card board, wheel steps): a step that
+changes no mark growth costs the same as with the flag off (4 to 8 ms); the edge marks' growth is written on the cards
+layer only when its step (1.2) changes, and a step that does restyles the cards in about 35 to 51 ms, about one wheel step
+in four below 64% (key presses: 38 to 57 ms, the first of a run over 50 ms), none above it; no card is updated, measured or laid out
+in either (flag off: 4 to 8 ms a step). A zoom step is still under the budget at its median.
 A budget changes only with a reason in the PLAN of the task that changes it.
 
 **What the page leaves out of its start weight.** A budget is met by moving weight, never by moving

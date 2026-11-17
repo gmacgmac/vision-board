@@ -173,3 +173,17 @@ vb-node[data-marks-at='plate'] .vb-node-plate { display: flex; align-items: cent
 vb-node[data-marks-at='plate'] .vb-node-plate > * { position: relative; inset: auto; transform: none; }
 vb-node[data-answer-at='switch'] .vb-mark-switch { display: flex; gap: var(--vb-space-1); padding: 0 var(--vb-space-3) var(--vb-space-4); }
 vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark { position: relative; flex: 1; }
+
+/* Zoom (D-101, FE_05): the node scales with the board, so a mark would shrink with it; below the zoom where a 22px mark
+   draws under --vb-mark-min (14px) it grows in place instead. The page writes --vb-mark-grow on the cards layer (the
+   viewport, 1 above that zoom, so a zoom step there restyles nothing). `scale` composes with the marks' own translate,
+   so each grows about its own centre on the border: the disc, the kind tab and the notes mark stay on their vertical line;
+   the number and the change badge grow from their left edge and stay on their corner. A plate skin keeps its marks in
+   flow, at the node's scale (FE_04). */
+vb-node[data-edges] :is(.vb-mark, .vb-node-kind, .vb-node-grip) { scale: var(--vb-mark-grow, 1); transform-origin: 50% 50%; }
+vb-node[data-edges] :is(.vb-node-num, .vb-node-edge > .vb-mark:not(.vb-mark-notes)) { transform-origin: 0 50%; }
+vb-node[data-edges][data-bookmarked] .vb-node-num { transform-origin: 0 20px; }
+/* The two centred on the node's top by left: 50% move by `translate`, which comes before `scale`, so they stay centred. */
+vb-node[data-edges] :is(.vb-node-kind, .vb-node-grip) { transform: none; translate: -50% 0; }
+/* A plate keeps its marks in flow, at the node's scale. */
+vb-node[data-edges][data-marks-at='plate'] :is(.vb-mark, .vb-node-kind, .vb-node-grip) { scale: none; translate: none; }

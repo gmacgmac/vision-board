@@ -68,3 +68,8 @@ vb-note-bubble.vb-node-box {
   .vb-nb-btn { height: 28px; }
   .vb-nb-tabs { padding: 0 var(--vb-space-2); border-bottom: 1px solid var(--vb-line); }
 }
+
+/* Zoom (D-101, FE_05): the page writes --vb-box-scale and places the box by what it draws (mark-place.ts). The
+   conversation box scales with the board, to a floor where its text stays readable (`boxScale`); the history and the
+   proposal box, inside the node, are counter-scaled by 1/zoom so they keep one size and stay open while zooming. */
+vb-note-bubble.vb-node-box, vb-node .vb-card-pop.vb-node-box { scale: var(--vb-box-scale, 1); transform-origin: 0 0; }

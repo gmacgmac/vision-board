@@ -1872,6 +1872,25 @@ the board is idle or on the first press). Behind `nodeEdges`; the skin behind `s
     time; size and place while zooming and panning; axe, dark and light) and `node-edges-seen.spec.ts` (the root, the
     container seen and N47, the icon library, the grip, the skin, a locked board, a failed write).
 
+### Zoom groups (D-101; node overhaul FE_05)
+
+Every part of the board follows one of three rules for zoom. With `nodeEdges` on; parts already right are listed as
+they are. One mechanism: the viewport writes a value, CSS (or the placement in `mark-place.ts`) reads it; overlays sit
+on the stage in stage pixels.
+
+| Group | Part | What holds it |
+|---|---|---|
+| Scales with the board | nodes, links, container frames | the world's one transform (`viewport.ts` `apply`) |
+| | the conversation box | on the stage; `boxScale(k)` = `max(k, BOX_MIN_K)` (0.75: its 13px text draws about 10px) written as `--vb-box-scale`, read by `node-box.css`; placed by `placeBeside` from the size it draws (`notes.ts` `place`), so it stays attached while zooming and panning |
+| Keeps one size | menus, the answer picker, the number menu, the right-click list, tips | on the stage, placed again from their anchor on every `vp.onApply` (`mark-menus.ts`, `mark-tips.ts`); open while zooming |
+| | the history and the proposal box | in the node, counter-scaled by 1/k (`mark-boxes.ts` `place` writes `--vb-box-scale`; `node-box.css` scales it about its top left), placed by `placeBeside`, top aligned with the node; open while zooming |
+| | a container's title line and rail, the selection bar, the toolbar | `--vb-zoom` on the regions layer (`region.css`); the bar is a stage overlay (`selection-bar-core.ts` `pillGap`); the toolbar is the page's |
+| Scales, never under a minimum | a node's edge marks | `--vb-mark-grow` on the cards layer (`viewport.ts` `markGrow`: 1 down to `MARK_MIN / MARK_H`, then stepped by 1.2 so a mark is 14 to 17px on screen; written only when the step changes); `node-edges.css` reads it as `scale`, about each mark's own centre on the border: the disc, the kind tab and the notes mark stay on their vertical line, the number and the change badge grow from their left edge and stay on their corner. A plate skin's marks (in flow) are not scaled. Marks stay visible below `FAR_K`; the body's controls follow the far rules (above) |
+
+`MARK_MIN` and `MARK_H` are `--vb-mark-min` and `--vb-mark-h` in tokens.css; `apps/board/tests/zoom-groups.test.ts` holds them
+equal. Kept true by that test and, in a browser, `tests/pages/zoom-groups.spec.ts` (at 20%, 40%, 100% and 250%: mark
+sizes, the shared vertical line, a menu's size, the conversation's scale, the history and proposal box's size while zooming).
+
 
 ## Flow branching and direction (PLAN decisions 19 and 25, D-100 5; node overhaul BE_01)
 

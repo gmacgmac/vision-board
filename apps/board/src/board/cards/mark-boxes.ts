@@ -6,7 +6,7 @@
 // The history box is filled as it shows, by the same event the old ⓘ fired (`POPOVER_SHOW`, history-flow.ts). One
 // box or menu is open at a time: the caller closes the other first. Both are placed as every box beside a node is
 // (mark-place.ts `placeBeside`): top aligned with the node, right or below, the arrow on the mark; the box sits in the
-// node, so its place is written in the node's own pixels and holds at any zoom. Its × (`data-box-close`) closes it.
+// node, so its place is written in the node's own pixels, counter-scaled so it keeps one size at any zoom (D-101). Its × (`data-box-close`) closes it.
 // Browser only.
 import type { PopoverShowDetail } from '#ui';
 import { dismissable, POPOVER_HIDE, POPOVER_OPEN, POPOVER_SHOW } from '#ui';
@@ -26,18 +26,22 @@ export interface MarkBox {
   place(): void;
 }
 
-/** The box beside its node (`placeBeside`), measured on the stage and written in the node's pixels (`k`: its zoom). */
+/** The box beside its node (`placeBeside`), measured on the stage and written in the node's pixels (`k`: its zoom). It
+ *  keeps one size at any zoom (D-101): scaled by 1/k about its top left (node-box.css reads `--vb-box-scale`), so it
+ *  measures what it draws, and its arrow, in stage pixels. */
 function place(card: HTMLElement, box: HTMLElement, opener: HTMLElement | null): void {
   const stage = card.closest<HTMLElement>('.vb-stage');
   if (!stage || !card.offsetWidth) return;
   const c = stageBoxOf(card, stage);
   const k = c.w / card.offsetWidth;
-  const at = placeBeside(nodeReach(card, stage), { w: box.offsetWidth * k, h: box.offsetHeight * k }, { w: stage.clientWidth, h: stage.clientHeight },
+  const at = placeBeside(nodeReach(card, stage), { w: box.offsetWidth, h: box.offsetHeight }, { w: stage.clientWidth, h: stage.clientHeight },
     opener && !opener.hidden ? stageBoxOf(opener, stage) : c);
   box.dataset.side = at.side;
-  box.style.left = `${(at.x - c.x) / k}px`;
-  box.style.top = `${(at.y - c.y) / k}px`;
-  box.style.setProperty('--vb-arrow', `${at.arrow / k}px`);
+  // left and top are from the node's padding edge: inside its border.
+  box.style.left = `${(at.x - c.x) / k - card.clientLeft}px`;
+  box.style.top = `${(at.y - c.y) / k - card.clientTop}px`;
+  box.style.setProperty('--vb-box-scale', String(1 / k));
+  box.style.setProperty('--vb-arrow', `${at.arrow}px`);
 }
 
 /** `back`: where focus goes on Esc (the opener, or the node when H opened it with no badge shown). */

@@ -79,23 +79,27 @@ zoom" and its 40% view show the target. Reuse the one mechanism (`--vb-zoom` and
 
 ## Implementation Notes
 
-_To be completed by agent after task completion._
-_Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
-
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-17 19:00  
 
 ### Changes Made
-- 
+- `components.md` "Zoom groups" table (the rule, every part, its mechanism); `performance.md` numbers; node `pattern.json` (`--vb-mark-grow`, `--vb-box-scale`).
+- Edge marks: `viewport.ts` `markGrow` (steps of 1.2, never under `MARK_MIN`; tokens held equal by `zoom-groups.test.ts`) writes `--vb-mark-grow` on the cards layer only when its step changes (`controller.ts` passes the layer with `nodeEdges`); `node-edges.css` reads it as `scale` about each mark's centre (number and badge: left edge; kind tab and grip move by `translate` so they stay centred); a plate skin's marks are left alone.
+- History and proposal boxes: counter-scaled by 1/k (`mark-boxes.ts` `place`, `node-box.css`), so they keep one size and follow the node. Fixed an old 1-node-pixel offset (placed from the border, positioned from the padding edge: `clientLeft`/`clientTop`).
+- Conversation box: scales with the board to `BOX_MIN_K` 0.75 (`boxScale`, `notes.ts` `place`), still placed by `placeBeside`, top aligned.
+- Tests: `tests/pages/zoom-groups.spec.ts` (20/40/100/250%: mark minimum, shared line, number corner, menu size and attachment, conversation scale and floor, history and proposal box size; screenshots 40/100/200 dark and light in `temp/fe05/`), `apps/board/tests/zoom-groups.test.ts`.
+- Cost (1,000-card board, nodeEdges on, wheel steps): steps that do not change the growth step 4 to 8 ms, same as flags off; a step that does restyles cards, 35 to 51 ms (about one in four below 64%, none above); no card updated or laid out. Continuous growth cost 40 to 57 ms on every step, hence the stepping. Script in `temp/fe05/measure.spec.ts.txt`.
 
 ### Issues & Resolutions
-- 
+- `conversation-box.spec.ts` "the box in dark/light" screenshots changed (the box now scales with the board's opening zoom): two baselines renewed.
+- Marks in the bottom edge row do not push a neighbour: a badge grown at 20% can overlap "Awaiting" (transform does not move layout). Left as is.
+- `controller.ts` (one argument to `new Viewport`) and `canvas/index.ts` are outside the listed files; needed for the wiring.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- Command Lens marks in a plate are not scaled; FE_04 decides whether the plate needs a minimum.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None. No new flag: everything is under `nodeEdges`.
 
 ---
 

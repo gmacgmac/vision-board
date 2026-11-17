@@ -50,7 +50,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 8 | FE_02 | 5 | strong | no | Interaction engineer — a control never does two things depending on timing, and no click is lost or doubled. | [The board wires the edges](./FE_02_board-wires-the-edges.md) | Completed | Marks, menus, boxes, tips and keys wired behind nodeEdges; flag renamed Bookmark (key B); a container's pill cleared on screen (N47 closed); library icons; skin rows. Page 196.77 KB; plugin view.js 189,819/190,000 gz. Baselines renewed (listed in the task). |
 | 9 | FE_03 | 6 | strong | no | Interaction engineer for messaging — words a person typed are never lost, and Enter never does the unexpected thing. | [One conversation box](./FE_03_one-conversation-box.md) | Completed | Run 2: Ask now reaches the chat panel's agent (server hears the `ask`, notes alone, no Send); one box beside a node (`placeBeside`, node-box.css) for conversation, proposal and history; history box as designed with withdrawn rows; no group pin with edges. Page 199.88/210 KB; plugin JS 193,679/200,000, CSS 24,511/26,000. |
 | 10 | FE_04 | 7 | strong | no | Design-systems engineer — a second skin proves the first was a system; if the node needs an `if (skin)`, the registry is wrong. | [The Command Lens skin](./FE_04_command-lens-skin.md) | Pending | |
-| 11 | FE_05 | 8 | standard | no | — | [Zoom groups](./FE_05_zoom-groups.md) | Pending | |
+| 11 | FE_05 | 8 | standard | no | — | [Zoom groups](./FE_05_zoom-groups.md) | Completed | Marks grow in place under 14px (`--vb-mark-grow`, steps of 1.2); history and proposal boxes keep one size; the conversation box scales to 0.75; zoom table in components.md; 2 conversation-box baselines renewed |
 | 12 | FE_06 | 9 | standard | no | — | [The selection bar and Z](./FE_06_selection-bar-and-z.md) | Pending | |
 | 13 | BE_01 | 10 | strong | no | Graph-layout engineer — a layout is a pure function; a line that weaves round cards is a bug in the layout, not in the router. | [Flow branching and direction](./BE_01_flow-branching-and-direction.md) | Completed | Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker. |
 | 14 | FE_07 | 11 | standard | no | — | [One layout control](./FE_07_one-layout-control.md) | Pending | |
@@ -204,8 +204,8 @@ _Status:_ Pending
 _Notes:_ 
 
 ### FE_05: Zoom groups
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `viewport.ts` (`markGrow`, `boxScale`, `markOn`), `mark-boxes.ts` (counter-scale), `notes.ts` `place`, `node-edges.css`/`node-box.css`. For FE_06: the selection bar was already one size (`pillGap`); no change. For FE_04: plate marks are not scaled. Requests: `npm run map`; FE_04 decides a plate minimum.
 
 ### FE_06: The selection bar and Z
 _Status:_ Pending  
