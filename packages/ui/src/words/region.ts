@@ -1,6 +1,8 @@
 // Words: region. A container: modes, widths, notes, retired and fresh counts, settings and its answered count.
 // Keys: vision-board.region.<name>. Plain code: no imports but other words files and types.
 
+import * as nodeWords from './node.ts';
+
 // ---- region-core.ts
 export const grid = 'Grid';
 export const flow = 'Flow';
@@ -67,3 +69,13 @@ export const cardWidths = (w: string | number): string => `Card widths: ${w}`;
 
 // ---- region-fresh.ts
 export const and = ' and ';
+
+// ---- The one layout control (layoutControl flag, node-overhaul FE_07: region-template.ts, region-core.ts)
+/** The control's name: what it is and what is chosen, "Layout: Flow" or, on a flow, "Layout: Flow, down". */
+export const layoutChosen = (layout: string, direction?: string): string => (direction ? `Layout: ${layout}, ${direction}` : `Layout: ${layout}`);
+export const layoutMenuFor = (esc: string): string => `Layout for ${esc}`;
+export const directionAcross = 'Across';
+export const directionDown = 'Down';
+export const directionGroup = 'Direction';
+export const directionName = (d: string): string => (d === 'across' ? directionAcross : d === 'down' ? directionDown : nodeWords.auto);
+export const directionHint = (d: string): string => (d === 'across' ? 'Left to right' : d === 'down' ? 'Top to bottom' : 'The way the agent drew it');

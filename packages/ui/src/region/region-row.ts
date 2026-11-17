@@ -22,6 +22,12 @@ export type RegionOpen = 'modes' | 'menu';
 const RADIO = 'button[role="radio"]';
 const TILE = 'button.vb-mtile';
 const COMMENT = 'button.vb-region-comment';
+/** The one layout control (layoutControl flag): its button, and what its popover holds (the tiles and a flow's directions). */
+const LAYOUT = 'button.vb-layout-btn';
+const DIR = 'button.vb-dir';
+const CHOICE = `${TILE}, ${DIR}`;
+/** How long a pointer rests on the layout button before the popover opens (never at once). */
+const REST_MS = 400;
 const WIDTHS = 'button.vb-widths';
 const COG = 'button.vb-cog';
 const ITEM = '[role="menuitem"]';
@@ -40,7 +46,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   const radios = () => [...host.querySelectorAll<HTMLButtonElement>(RADIO)];
   /** The row's stops in order: the six layouts, Match card widths (widthsControl flag), Comment
    * (3_FE_04), then the cog. */
-  const stops = () => [...host.querySelectorAll<HTMLButtonElement>(`${RADIO}, ${WIDTHS}, ${COMMENT}, ${COG}`)];
+  const stops = () => [...host.querySelectorAll<HTMLButtonElement>(`${RADIO}, ${LAYOUT}, ${WIDTHS}, ${COMMENT}, ${COG}`)];
   const tools = () => q<HTMLElement>('.vb-region-tools');
   const inTools = (n: EventTarget | null) => n instanceof Node && !!tools()?.contains(n);
   const inRow = (n: EventTarget | null) => n instanceof Node && !!q('.vb-mode-row')?.contains(n);
@@ -55,7 +61,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   function sync() {
     if (inRow(document.activeElement)) return;
     // A fixed frame (Later) has no layouts: the cog is the row's one stop.
-    const to = radios().find((b) => b.getAttribute('aria-checked') === 'true') ?? radios()[0] ?? q<HTMLElement>(COG);
+    const to = radios().find((b) => b.getAttribute('aria-checked') === 'true') ?? q<HTMLElement>(LAYOUT) ?? radios()[0] ?? q<HTMLElement>(COG);
     if (to) rove(to);
   }
 
@@ -84,8 +90,17 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   /** The settings menu's press outside, heard only while it is open: it closes, focus back on the cog. */
   let stopOutside: (() => void) | null = null;
 
-  function closeModes() {
+  /** The layout button's rest timer, and whether the pointer (not a press) opened the popover. */
+  let rest = 0;
+  let byRest = false;
+  const layoutBtn = () => q<HTMLElement>(LAYOUT);
+
+  function closeModes(focusButton = false) {
+    clearTimeout(rest);
+    byRest = false;
     if (host.dataset.open === 'modes') delete host.dataset.open;
+    layoutBtn()?.setAttribute('aria-expanded', 'false');
+    if (focusButton) layoutBtn()?.focus({ preventScroll: true });
     highlight(null);
   }
 
@@ -102,7 +117,32 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     if (tooltip()) return;
     if (host.dataset.open === 'menu') return;
     host.dataset.open = 'modes';
+    layoutBtn()?.setAttribute('aria-expanded', 'true');
     highlight(mode);
+  }
+
+  /** Open the layout control's popover; with `focus` (the keyboard) the chosen layout's tile takes focus. */
+  function openChoices(focus: boolean) {
+    openModes((host.dataset.mode ?? 'grid') as Mode);
+    if (focus) (q<HTMLElement>(`${TILE}[data-current]`) ?? q<HTMLElement>(TILE))?.focus({ preventScroll: true });
+  }
+
+  /** Arrows between the popover's choices (the tiles, then a flow's directions); Esc closes, focus back on the button.
+   *  In the rail Left does too, as the settings menu's. */
+  function onChoiceKey(e: KeyboardEvent) {
+    const list = [...host.querySelectorAll<HTMLElement>(CHOICE)].filter((b) => !b.closest('[hidden]'));
+    const i = list.indexOf(e.target as HTMLElement);
+    if (e.key === 'Escape' || (e.key === 'ArrowLeft' && host.hasAttribute('data-rail'))) {
+      e.preventDefault();
+      e.stopPropagation();
+      return closeModes(true);
+    }
+    const to = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? (i + 1) % list.length
+      : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? (i - 1 + list.length) % list.length
+        : e.key === 'Home' ? 0 : e.key === 'End' ? list.length - 1 : null;
+    if (to === null) return;
+    e.preventDefault();
+    list[to]!.focus({ preventScroll: true });
   }
 
   function openMenu(focus = true) {
@@ -119,11 +159,11 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   function onRowKey(e: KeyboardEvent, from: HTMLElement) {
     const list = stops();
     const i = list.indexOf(from as HTMLButtonElement);
-    const opener = from.matches(COG) ? (host.hasAttribute('data-rail') ? 'ArrowRight' : 'ArrowDown') : null;
+    const opener = from.matches(`${COG}, ${LAYOUT}`) ? (host.hasAttribute('data-rail') ? 'ArrowRight' : 'ArrowDown') : null;
     let to: number | null = null;
     if (e.key === opener) {
       e.preventDefault();
-      return openMenu();
+      return from.matches(LAYOUT) ? openChoices(true) : openMenu();
     }
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') to = (i + 1) % list.length;
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') to = (i - 1 + list.length) % list.length;
@@ -151,6 +191,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   host.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
     if (t.closest('.vb-region-menu')) return onMenuKey(e);
+    if (t.closest(CHOICE) && host.hasAttribute('data-layout-control')) return onChoiceKey(e);
     if (t.closest('.vb-mode-row')) onRowKey(e, t.closest<HTMLElement>('button')!);
   });
 
@@ -161,11 +202,15 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     const tile = t.closest<HTMLElement>(TILE);
     if (tile) highlight(tile.dataset.tile as Mode);
     else if (radio) openModes(radio.dataset.mode as Mode);
-    else if (t.closest(COG) || t.closest(COMMENT) || t.closest(WIDTHS)) closeModes();
+    else if (t.closest(LAYOUT)) {
+      // The pointer resting on the one button opens its popover after a moment, never at once.
+      if (host.dataset.open !== 'modes' && !rest) rest = window.setTimeout(() => { rest = 0; if (host.dataset.open === 'menu') return; openChoices(false); byRest = true; }, REST_MS);
+    } else if (t.closest(COG) || t.closest(COMMENT) || t.closest(WIDTHS)) closeModes();
   });
 
   // Leaving the row and the popover closes it, unless the keyboard is using the row.
   host.addEventListener('mouseout', (e) => {
+    if (rest && (e.target as HTMLElement).closest(LAYOUT) && !(e.relatedTarget instanceof Node && layoutBtn()?.contains(e.relatedTarget))) { clearTimeout(rest); rest = 0; }
     if (host.dataset.open !== 'modes' || inTools(e.relatedTarget)) return;
     if (!q('.vb-mode-row :focus-visible')) closeModes();
   });
@@ -176,7 +221,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     unshut();
     rove(t);
     if (t.matches(RADIO)) openModes(t.dataset.mode as Mode);
-    else closeModes();
+    else if (!t.matches(LAYOUT)) closeModes();
   });
 
   host.addEventListener('focusout', (e) => {
@@ -189,15 +234,24 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   // A tile never takes focus from the icon the keyboard is on (and a hidden tile would lose it).
   host.addEventListener('mousedown', (e) => {
-    if ((e.target as HTMLElement).closest(TILE)) e.preventDefault();
+    if ((e.target as HTMLElement).closest(CHOICE)) e.preventDefault();
   });
 
   host.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const tile = t.closest<HTMLElement>(TILE);
+    const choice = t.closest<HTMLElement>(CHOICE);
+    if (t.closest(LAYOUT)) {
+      // The one layout button: a press opens the popover (a keyboard press moves into it); open, it closes, unless the pointer's rest opened it.
+      closeMenu(false);
+      if (host.dataset.open === 'modes' && !byRest) return closeModes();
+      byRest = false;
+      return host.dataset.open === 'modes' ? undefined : openChoices(!(e as MouseEvent).detail);
+    }
     // Enter on a tile (a hidden tile would drop the focus): back to that layout's icon, then close.
-    if (tile && document.activeElement === tile) radios().find((b) => b.dataset.mode === tile.dataset.tile)?.focus({ preventScroll: true });
-    if (t.closest(RADIO) || tile || t.closest(COMMENT) || t.closest(WIDTHS)) {
+    if (tile && document.activeElement === tile) (radios().find((b) => b.dataset.mode === tile.dataset.tile) ?? layoutBtn())?.focus({ preventScroll: true });
+    else if (choice && layoutBtn() && document.activeElement === choice) layoutBtn()!.focus({ preventScroll: true });
+    if (t.closest(RADIO) || choice || t.closest(COMMENT) || t.closest(WIDTHS)) {
       // A pick (icon or tile), Match card widths or Comment (its click bubbles on to the page, which sends the act
       // or opens the note bubble).
       closeMenu(false);

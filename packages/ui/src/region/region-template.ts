@@ -6,7 +6,7 @@
 // State is applied in place by the element (`VbRegion.update`), so this runs once per view version;
 // the holders slot is filled by `holdersTemplate` whenever the holders change.
 import type { Mode, Region } from '#format';
-import { MODES, flagOn } from '#format';
+import { ACT_DIRECTIONS as DIRECTIONS, MODES, flagOn } from '#format';
 import { esc } from '../node/node-template.ts';
 import type { MarkdownOptions } from '../markdown/render.ts';
 import { renderMarkdown } from '../markdown/render.ts';
@@ -103,14 +103,30 @@ const widthsSwitch = (id: string): string =>
   + ` data-region="${esc(id)}">${svgIcon(WIDTHS_ICON.match, 24, 'vb-mode-icon vb-widths-match')}`
   + `${svgIcon(WIDTHS_ICON.own, 24, 'vb-mode-icon vb-widths-own')}</button>`;
 
+/** The one layout button (layoutControl flag): the active layout's icon, a menu button for the popover below it. `update` sets
+ * its icon, its name ("Layout: Flow, down") and `aria-expanded` follows the popover; `data-layout` marks it for the element. */
+const layoutButton = (id: string, mode: Mode, prefix?: string): string =>
+  `<button type="button" class="vb-mseg vb-layout-btn" tabindex="-1" aria-label="${regionWords.layoutChosen(MODE_LABEL[mode])}" aria-haspopup="menu"`
+  + ` aria-expanded="false" aria-controls="${regionIds(id, prefix).modes}" data-layout="${esc(id)}">${svgIcon(MODE_ICON[mode], 24, 'vb-mode-icon vb-layout-icon')}</button>`;
+
+/** A flow's direction in the popover (flowDirection flag): Across, Down and Auto, one choice marked by `update`; a press sends the
+ * `direction` act for this container (`data-dir`, the page's click wiring). Shown while the layout is a flow. */
+const directionRow = (id: string): string =>
+  `<div class="vb-dir-row" role="group" aria-label="${regionWords.directionGroup}">${DIRECTIONS.map((d) =>
+    `<button type="button" class="vb-dir" role="menuitemradio" aria-checked="false" tabindex="-1" data-dir="${d}" data-region="${esc(id)}">`
+    + `<span class="vb-dir-name">${regionWords.directionName(d)}</span><small>${regionWords.directionHint(d)}</small></button>`).join('')}</div>`;
+
 /** The popover (mockup 05 .mode-pop): one tile per layout with its one-liner, then the foot. A tile
  * is a button out of the tab order (the row's icons carry the keyboard); a click sets the layout
  * through the page's click wiring, as the icon does (`data-tile` is its mode, `data-region` the frame).
  * The line under the tiles shows the highlighted layout's one-liner in the compact layout only. */
-const modePopover = (r: Pick<Region, 'id' | 'mode'>, prefix?: string): string => {
-  const tiles = MODES.map((m) => `<button type="button" class="vb-mtile" tabindex="-1" data-tile="${m}" data-region="${esc(r.id)}">`
+const modePopover = (r: Pick<Region, 'id' | 'mode' | 'title'>, prefix?: string, control?: { direction: boolean }): string => {
+  const radio = control ? ' role="menuitemradio" aria-checked="false"' : '';
+  const tiles = MODES.map((m) => `<button type="button" class="vb-mtile"${radio} tabindex="-1" data-tile="${m}" data-region="${esc(r.id)}">`
     + `${svgIcon(MODE_ICON[m], 24, 'vb-mtile-icon')}<span class="vb-mtile-name">${MODE_LABEL[m]}</span><small>${MODE_HINT[m]}</small></button>`).join('');
-  return `<div class="vb-mode-pop" id="${regionIds(r.id, prefix).modes}" role="tooltip"><div class="vb-mode-tiles">${tiles}</div>`
+  const attrs = control ? `role="menu" aria-label="${regionWords.layoutMenuFor(esc(r.title))}"` : 'role="tooltip"';
+  return `<div class="vb-mode-pop" id="${regionIds(r.id, prefix).modes}" ${attrs}><div class="vb-mode-tiles">${tiles}</div>`
+    + (control?.direction ? directionRow(r.id) : '')
     + '<p class="vb-mode-line"></p>'
     + `<div class="vb-mode-foot"><span>${agentChoiceText(r.mode)}</span>`
     + '<span><kbd>←</kbd> <kbd>→</kbd> ' + regionWords.move + ' <kbd>' + regionWords.enter + '</kbd> ' + regionWords.apply + ' <kbd>' + regionWords.esc + '</kbd> ' + regionWords.close + '</span></div></div>';
@@ -142,8 +158,9 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, prefix?:
  * the label alone. A fixed frame's rail holds only the cog. `railHover`: with `rail`, the frame carries
  * data-rail-hover and its rail icons show only while it is in use (railOnHover flag; region-rail.css). `idPrefix`: put before every id the frame
  * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. `layoutTooltip`: each
- * layout icon carries a tooltip and the layout popover is not drawn (layoutTooltip flag, the flag's value when not given). */
-export interface RegionFrameOptions { layoutTooltip?: boolean; fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
+ * layout icon carries a tooltip and the layout popover is not drawn (layoutTooltip flag, the flag's value when not given). `layoutControl`: one
+ * layout button in place of the six icons, the popover its menu (layoutControl flag; no tips); `direction` adds a flow's Across, Down and Auto to it (flowDirection flag). */
+export interface RegionFrameOptions { layoutTooltip?: boolean; fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; layoutControl?: boolean; direction?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = regionWords.everythingHereIsAnswered;
@@ -176,13 +193,14 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
   const ids = regionIds(r.id, opts.idPrefix);
   const title = esc(r.title);
   const notes = !opts.fixed;
-  const tip = opts.layoutTooltip ?? flagOn('layoutTooltip');
-  const modes = opts.fixed ? '' : MODES.map((m) => modeButton(m, r.id, tip ? layoutTipId(r.id, m, opts.idPrefix) : undefined)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
-  const row = `<div class="vb-mode-row"${opts.fixed ? '' : ` role="radiogroup" aria-label="Layout for ${title}"`}>`
+  const control = opts.layoutControl === true && !opts.fixed;
+  const tip = !control && (opts.layoutTooltip ?? flagOn('layoutTooltip'));
+  const modes = opts.fixed ? '' : control ? layoutButton(r.id, r.mode, opts.idPrefix) + '<span class="vb-mode-div" aria-hidden="true"></span>' : MODES.map((m) => modeButton(m, r.id, tip ? layoutTipId(r.id, m, opts.idPrefix) : undefined)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
+  const row = `<div class="vb-mode-row"${opts.fixed || control ? '' : ` role="radiogroup" aria-label="Layout for ${title}"`}>`
     + modes + (opts.widths && !opts.fixed ? widthsSwitch(r.id) : '') + (notes ? commentButton(r.id, title) : '')
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="${regionWords.settingsFor(title)}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
-  const tools = `<div class="vb-region-tools">${row}${opts.fixed || tip ? '' : modePopover(r, opts.idPrefix)}${notes ? notePreview(r.id, title, opts.idPrefix) : ''}`
+  const tools = `<div class="vb-region-tools">${row}${opts.fixed || tip ? '' : modePopover(r, opts.idPrefix, control ? { direction: opts.direction === true } : undefined)}${notes ? notePreview(r.id, title, opts.idPrefix) : ''}`
     + `${settingsMenu(r, opts.remove === true && !opts.fixed, opts.idPrefix)}</div>`;
   return `<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">${handle(title, ids.heading)}`
     + `${FRESH}${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`

@@ -38,6 +38,8 @@ export interface MiniOptions {
   branching?: boolean;
   /** The nodeEdges flag: nodes draw their marks on their edges (the default skin), with room for them under each. */
   edges?: boolean;
+  /** The layoutControl flag: the frame's one layout button; with `direction` its popover offers a flow's direction too. */
+  layoutControl?: boolean;
   /** Called once drawn, for a sample that shows a hover or focus look. */
   then?: (host: HTMLElement, drawing: Drawing) => void;
 }
@@ -83,7 +85,7 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
     // A prefix of its own, as a mount takes one (mount-ids.ts): this drawing's arrowheads are on the page once. The page never
     // unmounts a sample, so the prefix is never released.
     els: { stage, world, regions, cards, wires, wiresTop, marks }, vp, sizing: true, access: false, layers: true, ids: ownIds().idPrefix,
-    labels: o.labels === true, widthsControl: o.widths === true, align: () => o.align ?? 'start',
+    labels: o.labels === true, widthsControl: o.widths === true, layoutControl: o.layoutControl === true, align: () => o.align ?? 'start',
     // The gap under a card as the board takes it: wider while the bottom tabs hang (updateSignals).
     rowGap: flagOn('updateSignals', pageFlags()) ? ROW_GAP : undefined,
     data: () => ({ head: 0, view, state: board.state, versions: {}, access: { requests: [], holders: {} } }),

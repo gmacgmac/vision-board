@@ -64,6 +64,8 @@ export interface DrawDeps {
   railHover?: boolean;
   /** The layoutTooltip flag: each layout icon shows a tooltip, and no layout popover opens. */
   layoutTooltip?: boolean;
+  /** The layoutControl flag: each frame's one layout button, its popover offering a flow's direction when `direction` is given (flowDirection flag). */
+  layoutControl?: boolean;
   /** The mount's id prefix (mount-ids.ts): before every id the cards, frames and connectors set. */
   ids?: string;
   /** How the cards' and frames' Markdown renders (the board's flags and image route). */
@@ -140,7 +142,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     sizeControl: d.sizing, bookmark: d.bookmark === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown, ...(d.edges && { edges: d.edges }),
   };
   const cards = createCardSet(els.cards, cardOpts);
-  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, layoutTooltip: d.layoutTooltip, idPrefix: d.ids, markdown: d.markdown });
+  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, layoutTooltip: d.layoutTooltip, layoutControl: d.layoutControl, direction: d.direction, idPrefix: d.ids, markdown: d.markdown });
   const use = d.rail && d.railHover ? bindRegionUse(els.stage, () => regions.els, (id) => d.data().view.nodes.find((n) => n.id === id)?.region) : undefined;
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids);
   const cache = createLayoutCache();

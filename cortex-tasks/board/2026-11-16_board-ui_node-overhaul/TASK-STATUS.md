@@ -53,7 +53,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 11 | FE_05 | 8 | standard | no | — | [Zoom groups](./FE_05_zoom-groups.md) | Completed | Marks grow in place under 14px (`--vb-mark-grow`, steps of 1.2); history and proposal boxes keep one size; the conversation box scales to 0.75; zoom table in components.md; 2 conversation-box baselines renewed |
 | 12 | FE_06 | 9 | standard | no | — | [The selection bar and Z](./FE_06_selection-bar-and-z.md) | Completed | Z failed only with a container's title line focused and a selection (selection now wins); bar gains Bookmark all, Save for later, Width behind nodeEdges; selection Comment = the conversation box with Ask now; bar steps aside for a node's menu or box |
 | 13 | BE_01 | 10 | strong | no | Graph-layout engineer — a layout is a pure function; a line that weaves round cards is a bug in the layout, not in the router. | [Flow branching and direction](./BE_01_flow-branching-and-direction.md) | Completed | Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker. |
-| 14 | FE_07 | 11 | standard | no | — | [One layout control](./FE_07_one-layout-control.md) | Pending | |
+| 14 | FE_07 | 11 | standard | no | — | [One layout control](./FE_07_one-layout-control.md) | Completed | One button + the existing popover behind `layoutControl`; a flow's Across/Down/Auto write the container's `direction` act (`places.ts` `setDirection`); gallery "One layout control" compares the six layouts. Board-wide direction still in "⋯" (header move requested) |
 | 15 | FE_08 | 12 | strong | no | Front-end engineer for sandboxed embeds — the app owns everything under its title bar, and the sandbox is never loosened. | [The app window](./FE_08_app-window.md) | Pending | |
 | 16 | T_03 | 13 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The agent skill](./T_03_agent-skill.md) | Pending | |
 | 17 | VERIFY_01 | 14 | strong | no | Operations lead who plans live events on boards like this all day — expects every mark to do what it shows, at any zoom, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
@@ -212,8 +212,8 @@ _Status:_ Completed
 _Notes:_ For FE_07/FE_08: the bar's extras are `EDGE_COMMANDS` rows (`commands.ts`), acts in `selection/bar-acts.ts` (`run` one step, one act per node); `SelectionFlowDeps.covered` hides the bar for a node's open menu/box; a selection's conversation box is `notes.group` with several `anchor`s. Requests: `npm run map`; restore 18 unrelated gallery baselines my `--update-snapshots` rewrote.
 
 ### FE_07: One layout control
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1. Behind `layoutControl` (+ `flowDirection` for the direction row). Rail is default, so Right opens the popover from the button. Requests: `npm run map`; move the board-wide Flows rows from `ToolbarMenu.svelte` into the header; restore nothing (no baselines rewritten).
 
 ### BE_01: Flow branching and direction
 _Status:_ Pending  

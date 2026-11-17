@@ -737,6 +737,8 @@ icon (`region-template.ts` `modeButton`), shown by the shared hover tip (`region
 `data-tip-open` on the icon), beside the icon and never over it, hoverable, and dismissed by Esc (that Esc does nothing
 else; the next one collapses a short rail). The hint is the icon's accessible description (`aria-describedby`, whether
 or not the tip shows), and no layout popover is drawn (`layout-tooltip.spec.ts`). The popover below is the flag-off form.
+**One layout control (layoutControl flag, FE_07; off by default).** A container shows one button, `vb-layout-btn` (`region-template.ts` `layoutButton`), the active layout's icon named "Layout: Flow" ("Layout: Flow, down" with flowDirection), in place of the six icons; the existing popover is its menu (`modePopover`, role=menu, tiles `menuitemradio`). A press, or a pointer resting on it for 400 ms (`REST_MS`, `region-row.ts`), opens it; arrows move between the tiles, Esc returns focus to the button. On a flow the popover also holds Across, Down and Auto (`directionRow`, `button[data-dir]`): a press is the container's `direction` act (`places.ts` `setDirection`, `wiring.ts`), Auto clearing the person's choice so the agent's shows. Tests: `layout-control.spec.ts`, `region-template.test.ts`. Gallery: "One layout control".
+
 A tile of the layout popover (`region-template.ts` `modePopover`,
 `button.vb-mtile`, out of the tab order) applies its layout on a click or Enter: the page's click wiring
 (`wiring.ts`) sends the rail icon's `setMode` for it, so there is one action; the popover closes, a past

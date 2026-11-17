@@ -109,7 +109,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const selection = createSelection();
   const drawing = createDrawing({
     els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
-    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), bookmark: bookmarking, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), layoutTooltip: on('layoutTooltip'), fresh: () => edges.fresh(attention.freshIn()),
+    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), bookmark: bookmarking, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), layoutTooltip: on('layoutTooltip'), layoutControl: on('layoutControl'), fresh: () => edges.fresh(attention.freshIn()),
     facts, appCards: apping, ...(edges.first && { edges: edges.first }), placed: () => apps.place(),
     branching: on('flowBranches'), ...(on('flowDirection') && { direction: (r: string) => directionOf((versions.state ?? live.state)!, S.id, r) }), // BE_01
   });

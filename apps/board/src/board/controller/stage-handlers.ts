@@ -50,7 +50,7 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
     act: (id, a) => act(id, a), ...(bookmarks && { bookmark: (id: string) => void bookmarks.toggle(id) }), showVersion: (seq, until) => void f.showVersion(seq, until),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
     showNote: (id, seq, fromNote) => notes.show(id, seq, fromNote), showReply: (id, seq) => notes.reply(id, seq), setSize: places.setSize,
-    setMode: (region, mode) => void places.setMode(region, mode), setWidths: (region, widths) => void places.setWidths(region, widths),
+    setMode: (region, mode) => void places.setMode(region, mode), setDirection: (region, direction) => void places.setDirection(region, direction), setWidths: (region, widths) => void places.setWidths(region, widths),
     resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
     regionComment: (region) => notes.container(region),
     ...(access && { revoke: (region: string, holder: string) => void access.revoke(region, holder) }), ...(removal && { removeRegion: removal.container }),

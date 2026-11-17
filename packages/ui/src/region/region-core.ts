@@ -1,7 +1,7 @@
 // Region pattern, layer 1 (core): what a region's frame shows for the person's current state.
 // No DOM, so every rule here is unit-tested under plain Node; the element only applies the
 // result. Geometry (position, size) is the page's job and is not here.
-import type { Mode, Region, View, Widths } from '#format';
+import type { Direction, Mode, Region, View, Widths } from '#format';
 import { widthsOf } from '#format';
 import type { BoardState, ItemNote } from '#actions';
 import { isDecided, statusOf } from '#actions';
@@ -181,6 +181,11 @@ export interface RegionState {
    *  the grip, Comment, the note's Edit and Remove, Reset places, Put container back and Remove
    *  access are paused (paused.ts); the cog still opens its menu. Left out while it is not. */
   paused?: true;
+  /** The ledger is read-only (D-085): the layout control's choices say why they are off (READ_ONLY_PERSON). Left out while it is not. */
+  readOnly?: true;
+  /** Which way this container runs if it is a flow (flowDirection flag, `directionOf`): the layout control marks it and names it. The
+   *  page adds it (render.ts); left out without the flag. */
+  direction?: Direction;
 }
 
 /** The retired marker (field report batch 2 ruling 1): how many, its words ("3 retired"; the number
@@ -244,5 +249,6 @@ export function regionState(
     showEmpty: !nodes.some((n) => placed.has(n.id)),
     ...(holders !== undefined && holders.length > 0 && { holders: regionHolders(holders) }),
     ...((s.locked || s.readOnly) && { paused: true as const }),
+    ...(s.readOnly && { readOnly: true as const }),
   };
 }

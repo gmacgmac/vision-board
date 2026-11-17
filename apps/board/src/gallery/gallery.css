@@ -180,3 +180,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 [data-feature='nodeEdges'] .g-cards { gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
 .g-edge-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
 .g-edge-menu .vb-menu-list, .g-edge-menu .vb-mark-tip { position: static; }
+
+/* The layout-control entry's comparison (layoutControl flag, FE_07): the six layouts side by side. */
+.g-lc-compare { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
+.g-lc-compare > .g-group { flex: 0 1 auto; }
+.g-section[data-feature='layoutControl'] .g-lc-open .g-mini { overflow: visible; margin: 0 0 240px 380px; }

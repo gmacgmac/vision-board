@@ -2,7 +2,7 @@
 // lines): a card dropped from its kind tab or nudged by Alt+arrows becomes a pin, R and Reset
 // places take pins away, and the layout mode, the card widths and the size tier are the person's picks. Every write
 // goes through the controller's `record`, so through the action layer and the I/O module (rule 8).
-import type { ActSize, Mode, View, Widths } from '#format';
+import type { ActDirection, ActSize, Mode, View, Widths } from '#format';
 import type { BoardState } from '#actions';
 import type { Box, BoardLayout } from '#layout';
 import type { ActFields } from '../io.ts';
@@ -30,6 +30,8 @@ export interface Places {
   unpin(id: string): Promise<void>;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): Promise<void>;
+  /** A container's flow direction (layoutControl): the person's `direction` act for it; `auto` clears it. */
+  setDirection(region: string, direction: ActDirection): Promise<void>;
   /** Match card widths in a container's mode row (field report batch 3 ruling 5): the person's act. */
   setWidths(region: string, widths: Widths): Promise<void>;
   resetRegion(region: string): Promise<void>;
@@ -59,6 +61,9 @@ export function createPlaces(d: PlaceDeps): Places {
       if (!(await d.record({ action: 'mode', region, mode }))) return;
       const r = regionBox(region);
       if (r) d.vp.reveal(r.box);
+    },
+    async setDirection(region, direction) {
+      await d.record({ action: 'direction', region, direction });
     },
     async setWidths(region, widths) {
       await d.record({ action: 'widths', region, widths });

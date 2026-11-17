@@ -2,7 +2,7 @@
 // (select, move by the kind tab, pan, lasso), the keyboard, the size control and how a card got
 // focus (pointer-focus.ts). Each control calls one handler; what the handler does lives in the
 // controller. Split out of controller.ts (N12_FE_01).
-import type { ActionId, ActSize, Mode, Widths } from '#format';
+import type { ActDirection, ActionId, ActSize, Mode, Widths } from '#format';
 import type { Box, Point } from '#layout';
 import { routeLinks } from '#layout';
 import type { View } from '#format';
@@ -26,6 +26,8 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   showReply(id: string, seq: number): void;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): void;
+  /** A flow's direction in a container's layout control (layoutControl and flowDirection flags): the container's `direction` act; `auto` gives back the agent's. */
+  setDirection?(region: string, direction: ActDirection): void;
   /** Match card widths in a container's mode row (widthsControl flag): the widths a press sets. */
   setWidths(region: string, widths: Widths): void;
   resetRegion(region: string): void;
@@ -108,6 +110,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     // A layout icon (data-mode) or a tile of the layout popover (data-tile): the one action.
     const modeBtn = t.closest<HTMLButtonElement>('button[data-mode], button[data-tile]');
     if (modeBtn) return h.setMode(modeBtn.dataset.region!, (modeBtn.dataset.mode ?? modeBtn.dataset.tile) as Mode);
+    const dirBtn = t.closest<HTMLButtonElement>('button[data-dir]');
+    if (dirBtn) return h.setDirection?.(dirBtn.dataset.region!, dirBtn.dataset.dir as ActDirection);
     const widthsBtn = t.closest<HTMLButtonElement>('button.vb-widths[data-widths]');
     if (widthsBtn) return h.setWidths(widthsBtn.dataset.region!, widthsBtn.dataset.widths as Widths);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');

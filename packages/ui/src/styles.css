@@ -23,6 +23,7 @@
 @import './image-view/image-view.css';
 @import './region/region.css';
 @import './region/region-modes.css';
+@import './region/region-layout-control.css';
 @import './region/region-narrow.css';
 @import './region/region-note.css';
 @import './region/region-rail.css';

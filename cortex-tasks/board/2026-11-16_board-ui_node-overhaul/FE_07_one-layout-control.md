@@ -88,20 +88,24 @@ trying them.
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-17 14:00  
 
 ### Changes Made
-- 
+- `region-template.ts` `layoutButton`, `directionRow`, `modePopover` (role=menu, `menuitemradio` tiles with the control); options `layoutControl`, `direction`. `region-row.ts` `bindModeRow`: the button is a roving stop, press/rest (`REST_MS` 400) opens, `onChoiceKey` arrows/Esc. `vb-region.ts` `applyLayoutControl`; `region-core.ts` `RegionState.direction`/`readOnly`; words in `words/region.ts`; `region-layout-control.css`.
+- Page: `render.ts`/`draw.ts` pass `layoutControl` and `direction`; `wiring.ts` `button[data-dir]`; `places.ts` `setDirection` (the `direction` act with `region`), `stage-handlers.ts`, `versions.ts` `ACTING`; `controller.ts` passes the flag.
+- Gallery `layout-control-section.ts` ("One layout control": closed, open, direction, and "Compare the layouts": eight linked cards in the six modes, side by side at 60%).
+- Tests: `region-template.test.ts` (2), `tests/pages/layout-control.spec.ts` (11, light and dark).
 
 ### Issues & Resolutions
-- 
+- The board runs the rail by default: Right (not Down) opens from the button; the spec reads `data-rail`.
+- The "⋯" menu's board-wide Flows rows are NOT moved to the header (chrome files are not in this task's list): REQUEST.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- `container-rail-states.spec.ts` gallery rail shots (`rail-light/dark.png`) differ by sub-pixel anti-aliasing with the flag off (the markup off is unchanged); not renewed.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- Edited `places.ts`, `stage-handlers.ts`, `versions.ts` and `controller.ts` (not listed) for the one-line wiring of the container's `direction` act; no other way to reach the sender.
 
 ---
 

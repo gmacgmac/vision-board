@@ -18,12 +18,17 @@ import { bindLayoutTips } from './region-layout-tip.ts';
 import { fillFreshPill } from './region-fresh.ts';
 import { holdersTemplate, regionIds, regionIdsOf, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
-import { pauseControls } from '../paused/paused.ts';
+import { explainPaused, pauseControls } from '../paused/paused.ts';
+import { READ_ONLY_PERSON } from '#actions';
+import { svgIcon } from '../node/node-icons.ts';
+import { MODE_ICON } from './region-icons.ts';
+import { MODE_LABEL } from './region-core.ts';
+import * as regionWords from '../words/region.ts';
 
 /** The controls a locked board pauses on a frame (N40 ruling 4), but Reset places and Put container
  * back, whose aria-disabled `update` sets itself. The cog still opens its menu; Remove container
  * (N24 ruling 4) pauses with the rest. */
-const PAUSED = 'button[data-mode], button.vb-mtile, .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region]';
+const PAUSED = 'button[data-mode], button.vb-mtile, .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region], button[data-dir]';
 
 export const VB_REGION_TAG = 'vb-region';
 
@@ -84,6 +89,7 @@ export function defineVbRegion(): void {
       this.innerHTML = regionTemplate(r, opts);
       const tip = this.querySelector('.vb-mode-tip') !== null;
       this.toggleAttribute('data-layout-tooltip', tip);
+      this.toggleAttribute('data-layout-control', this.querySelector('.vb-layout-btn') !== null);
       this.layoutTips = tip ? bindLayoutTips(this) : null;
       this.note.bind();
       this.setNoteOpen(this.hasAttribute('data-note-open'));
@@ -96,6 +102,7 @@ export function defineVbRegion(): void {
         b.setAttribute('aria-checked', String(b.dataset.mode === st.mode));
       for (const t of this.querySelectorAll<HTMLElement>('.vb-mtile')) t.toggleAttribute('data-current', t.dataset.tile === st.mode);
       this.applyWidths(st);
+      this.applyLayoutControl(st);
       this.row.sync();
       this.applyCount(st);
       const paused = st.paused === true;
@@ -117,6 +124,7 @@ export function defineVbRegion(): void {
         this.piece('.vb-region-holders').innerHTML = holdersTemplate(st.holders ?? []);
       }
       pauseControls(this, PAUSED, paused);
+      if (this.hasAttribute('data-layout-control')) explainPaused(this, '.vb-mtile, .vb-dir', st.readOnly === true ? READ_ONLY_PERSON : undefined);
     }
 
     showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void {
@@ -146,6 +154,25 @@ export function defineVbRegion(): void {
 
     titleLine(): HTMLElement {
       return this.piece('.vb-region-head');
+    }
+
+    /** The one layout control (layoutControl flag): the active layout's icon and name on the button, the chosen tile, and, on a flow,
+     *  the direction row with the container's direction marked. A frame drawn with the six icons has none of it. */
+    private applyLayoutControl(st: RegionState): void {
+      const b = this.querySelector<HTMLButtonElement>('.vb-layout-btn');
+      if (!b) return;
+      const flow = st.mode === 'flow';
+      const dir = flow ? st.direction : undefined;
+      b.setAttribute('aria-label', regionWords.layoutChosen(MODE_LABEL[st.mode], dir));
+      if (b.dataset.shown !== st.mode) {
+        b.dataset.shown = st.mode;
+        b.querySelector('svg')!.outerHTML = svgIcon(MODE_ICON[st.mode], 24, 'vb-mode-icon vb-layout-icon');
+      }
+      for (const t of this.querySelectorAll<HTMLElement>('.vb-mtile')) t.setAttribute('aria-checked', String(t.dataset.tile === st.mode));
+      const row = this.querySelector<HTMLElement>('.vb-dir-row');
+      if (!row) return;
+      row.hidden = !flow;
+      for (const d of row.querySelectorAll<HTMLElement>('.vb-dir')) d.setAttribute('aria-checked', String(d.dataset.dir === dir));
     }
 
     /** The Match card widths switch (widthsControl flag): on for `match`; a press sends the other. */
