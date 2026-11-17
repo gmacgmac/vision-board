@@ -9,8 +9,9 @@
 // and draws from scratch. Images in cards (card-images.ts) load once their card is near, are asked
 // after again when a card is selected, and a card whose image changed its height, or whose app panel
 // told a new one (appFit), is measured and laid out again alone (`resized`).
-import type { NodeSize, ViewNode } from '#format';
+import type { Direction, NodeSize, ViewNode } from '#format';
 import type { Align, BoardLayout, Size } from '#layout';
+import { EDGE_ROW_GAP } from '#layout';
 import { widthsOf } from '#format';
 import type { CardConditions, CardReply, IconLibrary, MarkdownOptions, NodeTemplateOptions, SkinDef, VbNodeElement, VbRegionElement } from '#ui';
 import { holdersOf } from '../access/index.ts';
@@ -69,8 +70,14 @@ export interface DrawDeps {
   markdown?: MarkdownOptions;
   /** The viewer's alignment (ruling 4; `start` without the alignSetting flag). */
   align?(): Align;
-  /** The gap between a card and the card under it (`ROW_GAP` with updateSignals); absent: the layout's GAP. */
+  /** The gap between a card and the card under it (`ROW_GAP` with updateSignals); absent: the layout's GAP. While
+   *  the nodes draw their marks on their edges (`edges`, a skin whose marks are `edges`) it is at least EDGE_ROW_GAP. */
   rowGap?: number;
+  /** Which way container `region` runs if it is a flow (flowDirection flag: `directionOf` on the shown state);
+   *  absent, every flow runs across. */
+  direction?(region: string): Direction;
+  /** The flowBranches flag: a flow's branches on their own rows, a linked row or column laid out as a flow. */
+  branching?: boolean;
   data(): BoardData;
   hidden(): Set<string>;
   focus(): string | null;
@@ -192,8 +199,10 @@ export function createDrawing(d: DrawDeps): Drawing {
   /** The containers, packed, the frames and cards placed, the connectors routed, from `sizes`. */
   function lay(data: BoardData, fresh: boolean) {
     const { pins, modes, regionPins, widths } = data.state;
+    const rowGap = cardOpts.edges?.marks === 'edges' ? Math.max(d.rowGap ?? 0, EDGE_ROW_GAP) : d.rowGap;
     const inputs = {
-      pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start', rowGap: d.rowGap,
+      pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start', rowGap, branching: d.branching === true,
+      ...(d.direction && { directions: new Map(data.view.regions.map((r) => [r.id, d.direction!(r.id)])) }),
       // The widths in force per container: the person's, the agent's, the shown mode's (as the server's show_layout).
       widths: new Map(data.view.regions.map((r) => [r.id, widthsOf(modes.get(r.id) ?? r.mode, r.widths, widths.get(r.id))])),
     } as const;

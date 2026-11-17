@@ -28,7 +28,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 
 /** What the board's controls call (chrome/), and the standalone page's test door (`rebuild`, `idle`,
  *  work.ts). No chat goes through it: that is `BoardView` and `BoardChat`. */
-export type BoardControls = Pick<Board, 'switchTo' | 'showVersion' | 'goToContainer' | 'command' | 'toggleHide' | 'access' | 'proposals' | 'boardEdit' | 'nextBookmarked' | 'setSkin' | 'go' | 'rebuild' | 'idle'>;
+export type BoardControls = Pick<Board, 'switchTo' | 'showVersion' | 'goToContainer' | 'command' | 'toggleHide' | 'access' | 'proposals' | 'boardEdit' | 'nextBookmarked' | 'setSkin' | 'setDirection' | 'go' | 'rebuild' | 'idle'>;
 
 /** What `mount` gives back: the view, and what a host draws around the board. */
 export interface MountedBoard extends BoardView {

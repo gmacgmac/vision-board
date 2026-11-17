@@ -205,6 +205,10 @@ export const FLAGS = {
     // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, PLAN decision 25); ?flags=flowDirection tries it.
     default: false,
   },
+  flowBranches: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, PLAN decision 19, BE_01); ?flags=flowBranches tries it.
+    default: false,
+  },
   appWindow: {
     // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, D-099 5); ?flags=appWindow tries it.
     default: false,
@@ -434,6 +438,7 @@ export const FLAG_DESCRIPTIONS = {
   skins: 'A board has a skin (D-100): `default` or `command-lens`, set on its `board` line by whoever made it and changed by the person (the `skin` act); the board draws its nodes in it. Off, every board draws in the default look and the skin is not offered.',
   layoutControl: 'Each container shows one layout control with the other layouts behind it (PLAN decision 20), and the control offers a flow\'s direction. Off, a container draws one button per layout.',
   flowDirection: 'A `flow` container runs across or down: the agent\'s `direction` on the container, else the person\'s choice for the container or the whole board (the `direction` act; Auto gives back the agent\'s). Off, every flow runs across.',
+  flowBranches: 'A linked flow branches into rows instead of sending its links round the cards (PLAN decision 19): in a `flow` each branch of a fork keeps its own row from its first card to its last, the main line following each card\'s first link in card order, and a branch that rejoins comes back with one link; a `row` or `column` whose links are more than a chain in card order is laid out as a flow, across or down. A row or column with no links, or a plain chain, draws as before. Off, a flow stacks a fork\'s branches by their links\' average and a row or column lays its cards in card order whatever their links.',
   appWindow: 'An app card is a window (D-099 5): a thin title bar with Open, the bookmark and a drawer arrow; the drawer pushes its neighbours aside and holds the card\'s conversation; no Save for later. Off, an app card is as before.',
   goAfterPause: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/find/go-to-card.ts). Off, only Enter goes.',
   findKeepsMarks: 'Finding a card never changes it: going to a card from Go to card, search, the open, new and updated lists or the Review list selects and shows it without marking it seen, so its NEW and updated marks stay; the person\'s own click on the card, and every act, still clear them. Off, a found card is marked seen as a selected one is.',

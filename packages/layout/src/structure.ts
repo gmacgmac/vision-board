@@ -2,7 +2,7 @@
 // container, as structure only. It runs the same mode and the same router the picture uses, on
 // cards of one size (the server has no measured sizes, and pins are the person's, not the
 // arrangement), so its columns, rows and crossings agree with what is drawn. Pure.
-import type { Link, Mode, Region, ViewNode, Widths } from '#format';
+import type { Direction, Link, Mode, Region, ViewNode, Widths } from '#format';
 import type { CardCell, LayoutStructure, Size } from './types.ts';
 import { MODE_FNS } from './board.ts';
 import { laneNames } from './modes/lanes/lanes.ts';
@@ -13,20 +13,22 @@ import { routeLines } from './route/route.ts';
 export const STRUCTURE_CARD: Size = { w: 280, h: 120 };
 
 /** `nodes`: the container's cards in card order; `links`: any links, those joining two of these
- *  cards are used; `mode`: the mode shown (the person's, else the region's). */
+ *  cards are used; `mode`: the mode shown (the person's, else the region's); `drawn`: the direction a `flow`
+ *  runs (`directionOf`, flowDirection flag) and the flowBranches flag, as the page lays it out. */
 export function structureOf(
   region: Region, nodes: ViewNode[], links: Link[], mode: Mode = region.mode, widths?: Widths,
+  drawn: { direction?: Direction | undefined; branching?: boolean | undefined } = {},
 ): LayoutStructure {
   const ids = new Set(nodes.map((n) => n.id));
   const inner = links.filter((l) => l.from !== l.to && ids.has(l.from) && ids.has(l.to));
   const lanes = mode === 'lanes' ? laneNames(region, nodes) : undefined;
   if (!nodes.length) return { ...(lanes && { lanes }), columns: 0, cards: [], links: 0, crossing: 0, empty: 0 };
   const sizes = new Map(nodes.map((n) => [n.id, STRUCTURE_CARD]));
-  const out = MODE_FNS[mode]({ region: { ...region, mode }, nodes, links: inner, sizes, align: 'start', widths });
+  const out = MODE_FNS[mode]({ region: { ...region, mode }, nodes, links: inner, sizes, align: 'start', widths, ...drawn });
   const cards: CardCell[] = nodes.map((n) => ({ id: n.id, ...out.cells!.get(n.id)! }));
   const columns = Math.max(...cards.map((c) => c.column));
   const groups = mode === 'radial' ? undefined : new Map(nodes.map((n) => [n.id, region.id]));
-  const crossing = crossingLines(routeLines(inner, out.pos, groups).map((r) => r.pts));
+  const crossing = crossingLines(routeLines(inner, out.pos, groups, out.down ? new Set([region.id]) : undefined).map((r) => r.pts));
   return { ...(lanes && { lanes }), columns, cards, links: inner.length, crossing, empty: emptyOf(mode, cards, columns, lanes) };
 }
 

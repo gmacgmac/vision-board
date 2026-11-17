@@ -6,7 +6,7 @@ import type { AccessHolder, ArchivedBoard, BoardListItem, BoardMark, BoardRun, F
 import type { AccessRequestRow } from './access/index.ts';
 import type { ContainerRow } from './find/index.ts';
 import type { GoBox } from './find/index.ts';
-import type { Skin } from '#format';
+import type { ActDirection, Skin } from '#format';
 import type { ChatWork } from './host.ts';
 import * as boardWords from './words/board.ts';
 
@@ -74,6 +74,9 @@ export interface BoardStatus {
   readOnly: boolean;
   /** The open board's skin (skins flag, D-100 2): the "⋯" menu's Skin rows; null with the flag off. */
   skin: Skin | null;
+  /** The person's choice of which way the open board's flows run (flowDirection flag, BE_01): `across`, `down`, or
+   *  `auto` with none (each container's own); the "⋯" menu's Flows rows. null with the flag off. */
+  direction: ActDirection | null;
   /** The Go to card box (goToCard flag, go-to-card.ts), open while set. */
   go: GoBox | null;
   /** How many times the board was drawn. */
@@ -96,7 +99,7 @@ export const initialStatus = (): BoardStatus => ({
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, bookmarked: 0,
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
-  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, skin: null, go: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
+  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, skin: null, direction: null, go: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
 });
 
 export interface Status {

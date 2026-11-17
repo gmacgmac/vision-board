@@ -88,3 +88,11 @@ export const thisBoardIsLocked =(LOCKED_PERSON: string | number): string => `Thi
 export const skinGroup = 'Skin';
 export const skinName = (skin: string): string => (skin === 'command-lens' ? 'Command Lens skin' : 'Default skin');
 export const skinTip = 'How this board\'s nodes look, for everyone who opens it';
+
+// ---- The "⋯" menu's Flows rows (flowDirection flag, D-100 5, BE_01: ToolbarMenu.svelte): Across, Down and Auto for the
+// whole board, the person's choice ticked; a container's own choice (its layout control) still wins.
+export const directionGroup = 'Flows';
+export const directionName = (d: string): string => (d === 'across' ? 'Flows across' : d === 'down' ? 'Flows down' : 'Flows: Auto');
+export const directionTip = (d: string): string => (d === 'auto'
+  ? 'Each flow runs the way it was drawn, unless you chose for its container'
+  : `Every flow on this board runs ${d === 'down' ? 'top to bottom' : 'left to right'}, unless you chose for its container`);

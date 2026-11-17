@@ -3,7 +3,7 @@
 // across regions). Pure and deterministic. `layoutRegion` and `packRegions` are the two halves, so
 // a page can keep a region's result until its inputs change (N12, performance.md approach 2);
 // `layoutBoard` is exactly the two composed.
-import type { Link, Mode, Region, View, ViewNode, Widths } from '#format';
+import type { Direction, Link, Mode, Region, View, ViewNode, Widths } from '#format';
 import { widthsOf } from '#format';
 import type { Align, Box, BoardLayout, ModeFn, ModeOutput, Point, RegionBox, RegionPiece, Size } from './types.ts';
 import { LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
@@ -32,6 +32,10 @@ export interface RegionOptions {
   align?: Align | undefined;
   /** The gap between a card and the card under it (LayoutOptions.rowGap); absent: GAP. */
   rowGap?: number | undefined;
+  /** Which way the region runs if it is a `flow` (LayoutOptions.directions); absent: `across`. */
+  direction?: Direction | undefined;
+  /** The flowBranches flag (ModeInput.branching). */
+  branching?: boolean | undefined;
 }
 
 /** One region: `nodes` are its visible nodes in view order, `links` the links between them. Pins
@@ -44,7 +48,10 @@ export function layoutRegion(
   const mode = opts.mode ?? region.mode;
   const widths = opts.widths ?? widthsOf(mode, region.widths);
   const out: ModeOutput = nodes.length
-    ? MODE_FNS[mode]({ region: { ...region, mode }, nodes, links, sizes, align: opts.align ?? 'start', widths, rowGap: opts.rowGap })
+    ? MODE_FNS[mode]({
+      region: { ...region, mode }, nodes, links, sizes, align: opts.align ?? 'start', widths, rowGap: opts.rowGap,
+      direction: opts.direction, branching: opts.branching,
+    })
     : { pos: new Map() };
   const pinned = applyPins(out.pos, opts.pins);
   const laneBoxes: Box[] = (out.lanes ?? []).map((l) => ({ x: 0, y: l.y, w: LANE_GUTTER, h: l.h }));
@@ -79,8 +86,10 @@ export function packRegions(
   const nodes = new Map<string, Box>();
   // Links inside a container route around its cards, except in radial (out of scope, PLAN.md).
   const groups = new Map<string, string>();
+  const downward = new Set<string>();
   for (const p of pieces) {
     if (p.mode !== 'radial') for (const id of p.out.pos.keys()) groups.set(id, p.region.id);
+    if (p.out.down) downward.add(p.region.id);
     const box = frames.get(p.region.id)!;
     const origin = { x: box.x + REGION_PAD - p.b.x, y: box.y + REGION_HEAD + p.head - p.b.y };
     regions.push({
@@ -89,8 +98,8 @@ export function packRegions(
     });
     for (const [id, at] of p.out.pos) nodes.set(id, { ...at, x: at.x + origin.x, y: at.y + origin.y });
   }
-  const routes = routeLinks(links, nodes, groups);
-  return { regions, nodes, routes, bounds: boundsOf(regions.map((r) => r.box)), groups };
+  const routes = routeLinks(links, nodes, groups, downward);
+  return { regions, nodes, routes, bounds: boundsOf(regions.map((r) => r.box)), groups, downward };
 }
 
 export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOptions = {}): BoardLayout {
@@ -103,6 +112,7 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     return layoutRegion(region, nodes, links, sizes, {
       mode: opts.modes?.get(region.id), pins: opts.pins, headInset: opts.headInsets?.get(region.id),
       widths: opts.widths?.get(region.id), align: opts.align, rowGap: opts.rowGap,
+      direction: opts.directions?.get(region.id), branching: opts.branching,
     });
   });
   return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth, pins: opts.regionPins });

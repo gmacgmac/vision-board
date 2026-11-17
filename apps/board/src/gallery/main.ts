@@ -59,6 +59,7 @@ import { retiredSection } from './retired-section.ts';
 import { alignSection, linkLabelSection, widthsSection } from './layout-section.ts';
 import { drawMiniBoards } from './mini-board.ts';
 import { edgesSection } from './edges-section.ts';
+import { flowSection } from './flow-section.ts';
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
@@ -178,6 +179,7 @@ function build(): void {
   if (flagOn('bigTitles', flags) && flagOn('markdownMore', flags)) main.append(bigTitlesSection(fx)); // last of all, so no section moves
   if (flagOn('oneChangeTab', flags) && flagOn('proposals', flags) && flagOn('cardUpdates', flags)) main.append(oneTabSection(fx)); // last of all, so no section moves
   if (flagOn('nodeEdges', flags)) main.append(edgesSection(fx)); // last of all, so no section moves
+  if (flagOn('flowBranches', flags) || flagOn('flowDirection', flags)) main.append(flowSection(fx)); // BE_01; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

@@ -98,20 +98,69 @@ container with links. Layout is a pure function; keep it one.
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-17 18:40  
 
 ### Changes Made
-- 
+- **Reproduction** (step 1; `packages/layout/tests/flow-branches.test.ts` "the reproduction, flags off"): the example in
+  `row` and `column` lays the seven cards in one line in card order; 2>5 and 7>4 skip cards, so the router sends them
+  round the line (six-point routes over and under it). That is the maintainer's picture. In `flow` the fork splits
+  above and below the trunk (3 above 2, 5 below), so 1, 2 and 4 sit between the branches and every link bends. The
+  cause is as the brief guessed: row and column ignore links; flow's barycentre places a fork around its parent.
+- **Branches on rows** (flag `flowBranches`, `packages/format/src/flags.ts`): `packages/layout/src/modes/branches.ts`
+  (`branchRows`, `plainChain`): chains, the main line following each card's first link in card order; a branch takes
+  the nearest row (below, then above) free over its whole run; a rejoining branch keeps its row to the column before
+  the card it rejoins; unlinked groups are separate bands. `modes/flow.ts` keeps the rows unless their links, routed as
+  the board routes them, cross more than the stacked flow's (straight strokes above `ROUTE_WEIGH` = 30 links).
+- **Row and column** (`modes/grid.ts`): with `flowBranches`, links that are more than a chain in card order lay a `row`
+  out as a flow across and a `column` as a flow down; no links or a plain chain is byte-for-byte as before (test).
+- **Down** (flag `flowDirection`): `flow.ts` `down` turns the cards a quarter, runs across, turns back; cells read as
+  drawn; `ModeOutput.down` -> `BoardLayout.downward`; `route/ports.ts` `sidesFor(a, b, down)` leaves by the bottom and
+  top first and `offCentre` keeps top/bottom ports off the kind tab; `routeLines`/`routeLinks` take `downward`.
+- **Inputs** (`types.ts`, `board.ts`): `ModeInput.direction/branching`, `RegionOptions.direction/branching`,
+  `LayoutOptions.directions/branching`; `structureOf(..., drawn)`. The page: `canvas/draw.ts` (`DrawDeps.direction`,
+  `branching`), `canvas/layout-cache.ts` (both in a container's key); `show_layout`: `server/engine/reads.ts`
+  `showLayout` reads `directionOf` and both flags.
+- **The board's choice** (step 5): the "⋯" menu's Flows rows (`chrome/ToolbarMenu.svelte`, `menuitemradio` Across,
+  Down, Auto; disabled with `READ_ONLY_PERSON` on a read-only ledger or a past version), `controller.ts` `setDirection`
+  (one `direction` act, no `region`, through `attempt`), `status.ts` `direction`, `io/acts.ts` names its board; words in
+  `words/toolbar.ts`; icons `across`, `down`, `auto` in `ButtonIcon.svelte`.
+- **Room for edge marks** (orchestrator's addition): `types.ts` `EDGE_ROW_GAP` = 40 (bottom marks 11px below, disc 14px
+  above, ring 5px, about 10px clear); `draw.ts` uses it as the least row gap while the skin's marks are `edges`. Flag
+  off, unchanged. No mark overhangs a node's sides (number 14px in, disc and notes 20px in), so side gaps stay `GAP`.
+- **Gallery** `apps/board/src/gallery/flow-section.ts` (before, rows, down, edge gap, Flows rows), shown only with either
+  flag; `mini-board.ts` takes `direction`, `branching`, `edges`.
+- **Docs**: `components.md` § Flow branching and direction; `api.md` 133; `plugin.md` § The engine (two flag rows,
+  required by `engine-switches.test.ts`).
+- **Tests**: `flow-branches.test.ts` (10), `layout.timing.ts` (branches across and down, about 50 ms of 100),
+  `apps/board/tests/flow-direction-layout.test.ts` (precedence as drawn, another page, the cache),
+  `api-layout-direction.test.ts` (`show_layout` both ways, flags off as before), `tests/pages/flow-direction.spec.ts`
+  (8: rows, act, redraw, Auto, another page, read-only, branching row, edge gap, gallery, axe dark and light).
 
 ### Issues & Resolutions
-- 
+- First rows version doubled crossings on seeded merge-heavy flows (459 v 182 over 300 boards). Bands per linked group,
+  nearest-row search and the routed weigh bring it to 143 v 182; rows never cross more (test). Weighing by routing all
+  containers took the 1,200-link timing to 98 ms; above 30 links the weigh uses straight strokes (50 ms).
+- In a down flow the arrowheads were hidden under the kind tab at top centre: `ports.ts` `offCentre`.
+- Pre-existing at HEAD (checked on an export of HEAD, not caused here): `layout-controls.spec.ts` gallery screenshots
+  (linkLabels, alignSetting, widthsControl) and `node-edges.spec.ts` "matches its screenshot" fail by a sub-pixel text
+  shift, dark and light.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- Port spreading puts a small jog in a straight main line where its card has a second link on the same side (2>3,
+  3>4 in the example): the trunk port is moved off the centre for the branch. A trunk-first port rule would make it
+  dead straight; router work, not done here.
+- `show_layout` takes every card at 280 by 120, so where the routed weigh is close the page (real sizes) and the answer
+  may pick different arrangements; an existing limit of `structureOf`, now with one more decision in it.
+- A source card that joins a flow late (no predecessors) is pulled next to its first successor by `layersOf`, then gets
+  its own row; on dense graphs the stacked flow sometimes wins the weigh, so a container can switch between rows and
+  stacked as links are added. Deterministic, but worth a look in use.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None in behaviour. Files outside the list, each minimal: `controller.ts` (3 lines), `controller/board-types.ts`,
+  `mount.ts`, `status.ts`, `input/wiring.ts` and `selection/container-drag.ts` (pass `downward` to a drag's reroute),
+  `server/engine/reads.ts`, `gallery/main.ts`, `gallery/mini-board.ts`, `docs/specification/plugin.md`, `api.md`.
+  `npm run map` needed (orchestrator's file; only the `EDGE_ROW_GAP` export changes).
 
 ---
 

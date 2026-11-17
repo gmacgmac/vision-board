@@ -118,5 +118,9 @@ export function place(
   return top;
 }
 
+/** The cards in card order: by board number where both have one, else as given (api.md 129). */
+export const inCardOrder = <T extends { n?: number | undefined }>(nodes: readonly T[]): T[] =>
+  [...nodes].sort((a, b) => (a.n !== undefined && b.n !== undefined ? a.n - b.n : 0));
+
 export const mean = (xs: number[]): number | undefined =>
   xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined;

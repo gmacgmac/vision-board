@@ -38,13 +38,18 @@ type Placed = Map<string, Done>;
 export interface Routed { link: Link; pts: Point[] }
 
 /** `groups`: node id -> container, for the cards whose links route around cards (BoardLayout's
- *  `groups`). Without it every link is a plain elbow. */
-export function routeLines(links: Link[], boxes: Map<string, Box>, groups?: ReadonlyMap<string, string>): Routed[] {
+ *  `groups`). Without it every link is a plain elbow. `downward`: the containers whose flow runs down
+ *  (BoardLayout's `downward`); a link inside one leaves by the bottom or top first. */
+export function routeLines(
+  links: Link[], boxes: Map<string, Box>, groups?: ReadonlyMap<string, string>, downward?: ReadonlySet<string>,
+): Routed[] {
   const plans: Plan[] = [];
   for (const link of links) {
     const a = boxes.get(link.from);
     const b = boxes.get(link.to);
-    if (a && b && link.from !== link.to) plans.push({ link, a, b, ...sidesFor(a, b) });
+    const group = groups?.get(link.from);
+    const down = group !== undefined && group === groups!.get(link.to) && !!downward?.has(group);
+    if (a && b && link.from !== link.to) plans.push({ link, a, b, ...sidesFor(a, b, down), down });
   }
   assignPorts(plans);
   const spaces = groups ? spacesOf(boxes, groups) : null;
@@ -57,10 +62,12 @@ export function routeLines(links: Link[], boxes: Map<string, Box>, groups?: Read
   return plans.map((plan, i) => ({ link: plan.link, pts: simplify(lines[i]!.pts) }));
 }
 
-export function routeLinks(links: Link[], boxes: Map<string, Box>, groups?: ReadonlyMap<string, string>): Route[] {
+export function routeLinks(
+  links: Link[], boxes: Map<string, Box>, groups?: ReadonlyMap<string, string>, downward?: ReadonlySet<string>,
+): Route[] {
   const cards = [...boxes.values()];
   const taken: Box[] = [];
-  return routeLines(links, boxes, groups).map(({ link, pts }) => {
+  return routeLines(links, boxes, groups, downward).map(({ link, pts }) => {
     const mid = along(pts, lengthOf(pts) / 2);
     const route: Route = { from: link.from, to: link.to, label: link.label, d: roundedPath(pts), mid: { x: round(mid.x), y: round(mid.y) } };
     if (link.label) {
