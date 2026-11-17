@@ -366,6 +366,38 @@ wave 1 and records any change here.
 - **Speed**: the maintainer needs the board in nclite soon. Where later waves touch no common files, the
   orchestrator may run them together.
 
+### Design review of DESIGN_01 (maintainer, 2026-11-17)
+
+The maintainer reviewed `design/mockups/node-states/` (default skin, and Command Lens's input page). Where a page and
+this list differ, **this list wins**. Anything not named here is accepted as the page's left column.
+
+- **Proposal waiting**: left (dashed ring on the disc). The proposal box opens beside the disc, to its right, in the
+  same style as the node's conversation box.
+- **Proposal out of date**: no amber state. The disc goes back to waiting, and the history box gets an entry
+  "Proposal withdrawn: the node changed".
+- **Handover and Awaiting**: left (a tab on the bottom edge where New and updates sit), drawn plain and quiet grey,
+  never bright. Once the handover arrives it is part of the node: a "Handover" section in the node's body, in
+  Markdown the agent writes as it likes (the skill guides it, T_03); the tab goes.
+- **A write on its way / a write that failed** (the person's own click being saved, not agent streaming): keep. The
+  failure tip shows for a few seconds after it happens, then the mark keeps its "!" and the tip comes back on hover.
+  The error red is softened: a calmer red that still passes its contrast tier (a `tokens.css` change shown to the
+  maintainer).
+- **Locked or read-only**: an answered node keeps showing its tick or cross; only the unanswered disc shows the lock.
+- **Moved by you**: no mark on the node. "Moved by you · Put back" is an item in the number's menu and the right-click
+  menu.
+- **Tags**: tinted with the node's own colour (its tone, else its kind), stronger than today's faint grey. No colour
+  per tag.
+- **A note on several nodes**: left (counted on each member's notes mark). The node's conversation box gets tabs:
+  the first is this node, then one per group note it belongs to.
+- **Keyboard focus**: order as drawn. Rings show only after the person presses Tab, never after a click or a modifier
+  key (`:focus-visible` from the keyboard only, both skins). The ring is calmer than bright white in the default
+  skin; Command Lens may keep white, toned down.
+- **Hover**: no halo on marks. A tooltip shows only after a deliberate hover of about two seconds; keyboard focus
+  shows it at once.
+- **History box with the stepper**: as drawn.
+- **Waiting for a reply**: no three dots on the notes mark; the filled mark when the reply arrives is enough.
+- **Failed send in the conversation box**: same softened red as above.
+
 ## Decision entries to append
 
 Drafts for `docs/decisions.md`, in its format. The orchestrator shows them to the maintainer at kickoff and appends
