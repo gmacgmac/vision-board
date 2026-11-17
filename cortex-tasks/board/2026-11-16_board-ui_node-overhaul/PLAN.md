@@ -397,6 +397,10 @@ this list differ, **this list wins**. Anything not named here is accepted as the
 - **History box with the stepper**: as drawn.
 - **Waiting for a reply**: no three dots on the notes mark; the filled mark when the reply arrives is enough.
 - **Failed send in the conversation box**: same softened red as above.
+- **Error red (point 338)**: not softened after all. Errors keep today's red (`#f07474` dark, `#cc3b3b` light); no
+  red token changes. Where today's dark red misses Lc 45 (on the tip box), fix the tip's background, not the red.
+  The focus ring colours are approved: default `#8b9bb8` dark / `#5a6478` light, Command Lens `#b9bfc8` / `#4a4e57`.
+  The mock-ups' softened red (`#dc8f88` / `#b2554f`) is not used.
 
 ## Decision entries to append
 
@@ -407,7 +411,7 @@ an agent)` becomes `bookmark (the person's private mark, never sent to an agent)
 
 ```
 ## D-099 A node's actions live on its edges, and the flag becomes Bookmark
-- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 211-246) · **From**: the node design, 2026-11-11 to 11-16 (design/mockups/node-skins)
+- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 211-337) · **From**: the node design, 2026-11-11 to 11-16 (design/mockups/node-skins)
 - **Decision**:
   1. A node offers six actions: Tick, Cross, Comment, Bookmark, Save for later, History (keys A, X, C, B, L, H). Right-click or a long press lists them. Each mark on the node's edge is the control for what it shows: the number (Bookmark; held, Save for later too), the answer (Tick, Cross), the change badge (History), the notes mark (the conversation). The footer row goes.
   2. The person's private mark is called Bookmark, in words, code and docs. Ledgers written before format 20 are migrated (D-103): `flag` and `unflag` become `bookmark` and `unbookmark`. The bookmark glyph means Bookmark; Save for later takes the clock.
@@ -418,13 +422,13 @@ an agent)` becomes `bookmark (the person's private mark, never sent to an agent)
 - **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md
 
 ## D-100 A board has a skin; a skin changes the look, never the function
-- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 211-246) · **From**: the node design, artboards 10 and 12
+- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 211-337) · **From**: the node design, artboards 10 and 12
 - **Decision**:
   1. A skin sets how nodes look and where their controls sit. The actions, their keys and what they do are the same in every skin. Two skins: `default` and `command-lens`.
   2. A board's skin is stored with the board, set by whoever makes it, and the person can change it on the board.
   3. A node may carry an icon and a tone. The icon is named from the built-in set or from the project's icon library (`.visionboard/icons/`), which agents add to through the action layer and reuse across boards. The tone is a palette name or a hue; the board derives the tints so contrast passes in light and dark. The kind keeps its own mark, and Tick and Cross keep their colours.
   4. Decision's colour moves off the accent pink, so pink means notes and buttons only.
-  5. A container's flow runs across or down: whoever draws it sets it, the person can change it, and both are stored with the board.
+  5. Flows run across or down. A setting in the board's header sets the default; whoever draws a container may set its own, the person can change either, and both are stored with the board.
 - **Why**: one board serves planning, architecture and operations; the look should fit the work without forking how the board behaves.
 - **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md
 
