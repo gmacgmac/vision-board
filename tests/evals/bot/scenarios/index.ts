@@ -2,10 +2,12 @@
 // `--standalone`). Add one here to run it; a check is never loosened to pass.
 import type { Scenario } from '../types.ts';
 import { answeredNote } from './answered-note.ts';
+import { architectureIcons } from './architecture-icons.ts';
 import { draw } from './draw.ts';
 import { insertStep } from './insert-step.ts';
 import { joinLedger } from './join-ledger.ts';
 import { ledgerPicture } from './ledger-picture.ts';
+import { linkedPipeline } from './linked-pipeline.ts';
 import { newCardNumber } from './new-card-number.ts';
 import { otherLedger } from './other-ledger.ts';
 import { ownBoard } from './own-board.ts';
@@ -21,9 +23,9 @@ import { whereCardsStand } from './where-cards-stand.ts';
 
 export const SCENARIOS: readonly Scenario[] = [
   draw, sendRound, picture, refusals, wait, answeredNote, ownBoard, twoTurns, readOnly,
-  whereCardsStand, newCardNumber, insertStep, summaryCard, personBoard,
+  whereCardsStand, newCardNumber, insertStep, summaryCard, personBoard, linkedPipeline,
 ];
-export const STANDALONE: readonly Scenario[] = [ledgerPicture, otherLedger, joinLedger];
+export const STANDALONE: readonly Scenario[] = [ledgerPicture, otherLedger, joinLedger, architectureIcons];
 
 export const scenarioById = (id: string): Scenario => {
   const all = [...SCENARIOS, ...STANDALONE];

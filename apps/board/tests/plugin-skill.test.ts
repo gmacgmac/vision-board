@@ -149,3 +149,18 @@ test('the plugin skill fits the host\'s budget: at most SKILL_BYTES (the contrac
   const bytes = Buffer.byteLength(plugin, 'utf8');
   assert.ok(bytes <= SKILL_BYTES, `skill.md is ${bytes} bytes, over the host's ${SKILL_BYTES}: cut skill-edits.ts or SKILL.md`);
 });
+
+test('v3.34 (node-overhaul T_03): the standalone skill teaches one flow per container, icons by list_icons then add_icon, tone, skin and direction; a host\'s bot, which has no icon tools, reads none of it', () => {
+  assert.match(source, /^status: v3\.34 /m);
+  for (const kept of [
+    '**A flow lives in one container.**', 'Link between containers rarely: one link, card to card',
+    'Call\n  `list_icons` first and reuse one that fits', 'Never write a file into `.visionboard/icons/`',
+    '`x-`,\n  a singular noun, a qualifier after it if needed (`x-encoder`, `x-encoder-audio`)',
+    'the kind\'s colour is the default, so leave it off when the kind already\n  says it', 'never one tone on every card',
+    'Neither replaces the kind', '`skin`: `command-lens` for\n  an operational board', 'A `flow` runs `across` (the default) or `down`',
+    '**A bookmark** is the person\'s private mark', 'An asked note is\n     about its card only',
+  ]) assert.ok(source.includes(kept), kept);
+  assert.ok(!/\bflag\b/i.test(source.split('\n---\n')[1]!), 'the private mark is a bookmark everywhere past the history');
+  assert.ok(!/ICON_NAMES|`(signal|camera|encoder|cdn)`/.test(source), 'the built-in names are list_icons\', never copied into the skill');
+  assert.ok(!plugin.includes('list_icons') && !plugin.includes('add_icon'), 'standalone tools (x-hosts): the plugin skill names neither');
+});

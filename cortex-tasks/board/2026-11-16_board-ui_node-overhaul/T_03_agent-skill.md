@@ -102,20 +102,54 @@ The agent never sees bookmarks. The live eval costs money; the maintainer gave h
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Blocked (the live eval only; everything else done)  
+**Completed**: 2026-11-17 21:10  
 
 ### Changes Made
-- 
+- `skills/vision-board/SKILL.md` v3.34: § Layout opens with "A flow lives in one container" (DL-01 to DL-03: links
+  between containers rare, card to card; the board places and routes); the table sends any linked cards to `flow`; a
+  `flow` runs `across` or `down` (`direction`), the person's `direction` wins. § Starting a board: `skin`
+  (`command-lens` for operational boards with many answers, else left out). § Kinds gains "### Icons and tone" (R28,
+  point 246): `list_icons` first, reuse, `add_icon` only when none fits, the `x-` name rule, drawn as the set is, never a
+  file into `.visionboard/icons/`, a refused name means reuse or a more specific name; the kind's colour by default, a
+  tone to set a flow's parts apart and group related cards, a palette name normally, a hue when the content has its own
+  colour; neither replaces the kind. The flag is "A bookmark". Message block 4 and "Other acts" name Ask now (`ask`).
+  § Saved for later: the handover's parts show in the card as Markdown, any form that reads best. "flag plan" example
+  reworded. No built-in icon name copied in.
+- Cut before adding: the `status` history v3.1 to v3.27 moved word for word to `NOTES.md`; the skill is 44,614 bytes
+  (was 46,953).
+- `skills/vision-board/NOTES.md`: the moved history and a v3.34 section. `skills/vision-board/scenarios.md`: 44 and 45.
+- `tests/evals/bot/scenarios/linked-pipeline.ts` (plugin; checks `linked-in-one-flow`, `few-cross-links`, exported for
+  reuse), `architecture-icons.ts` (standalone; `lists-icons-first`, `built-ins-reused`, `library-reused`, `added-names`,
+  `no-visionboard-write`, `tones-group`, `kinds-by-meaning`, `skin-fits`, plus the two above), `index.ts`.
+- `apps/board/tests/plugin-skill.test.ts`: the v3.34 test (the standalone wording, no "flag", no copied icon names, the
+  plugin skill names neither icon tool).
+- Plugin skill unchanged, byte for byte (8,174 of 8,192): `skill-edits.ts`, `skill.ts`, schema and MCP words untouched.
 
 ### Issues & Resolutions
-- 
+- Live eval (`npm run eval:bot -- --model haiku --port 7310`, run once): no model ran. Every run ended in about a second
+  with the CLI's "Failed to authenticate: OAuth session expired and could not be refreshed"; $0.0000 spent; 16 runs (the
+  default cap) used by crash retries, so it stopped at `two-turns`/`read-only` with 43 of 82 checks "passed" (the ones a
+  silent bot passes). Report: `tests/evals/bot/out/2026-11-17T20-04-24-571Z/report.md` (git-ignored). Not retried: it
+  needs a sign-in (`claude` then `/login`) by the maintainer, then the same command again.
+- Dry: `npm run eval:bot -- --dry` 88/88 checks in 15 runs; `--dry --standalone` 33/33 in 4 runs; each new bad script
+  fails exactly the checks it breaks.
+- Checks: `npm run verify` ok (45 warnings, none in these files), `npm run check` 0 errors, `npm test` 2,631 + 14 pass,
+  `npm run gen -- --check` current.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- The approved command runs the plugin's bot, whose skill is built from this one by replacing every section, so it reads
+  none of the new text; and `list_icons`/`add_icon` are standalone-only, so scenario 45 needs `--standalone`. Proving the
+  skill live takes `npm run eval:bot -- --standalone --model haiku --port 7310` too (4 runs, under $2 at the per-run cap).
+- The plugin bot's `write_board` schema says for `node.icon` "Call list_icons first; reuse before you add one with
+  add_icon", tools that bot does not have (an input description, which plugin-skill.test.ts does not check).
+- The eval's default run cap (16) is one more than the plugin scenarios (15): one crash retry stops the run early.
+- Validation "no sentence tells the agent to write a file into `.visionboard/`": the icon text holds it; § Images and §
+  Apps still send pictures and apps to `.visionboard/<ledger>/images|apps/`, by design (D-048), untouched.
+- App card words (Allow, Check again, Restart) are left to FE_08 and T_04.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- None in what was built. Step 6 is blocked by the CLI's sign-in, not by the skill.
 
 ---
 
