@@ -7,7 +7,7 @@ import type { ViewNode } from '#format';
 import { nodeTemplate, SKIN_DEFS } from '#ui';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { card, open as openBoard } from './agent-board.ts';
+import { card, open as openBoard, write } from './agent-board.ts';
 import { drawEdges, mark } from './edge-board.ts';
 import { frame, head, idle, linesAfter, menu, menuButton } from './board-page.ts';
 
@@ -94,6 +94,46 @@ test('on a board: switching to the skin redraws in place and keeps the selection
   await idle(page);
   expect((await linesAfter(page, moved)).some((e) => e.action === 'move' || e.action === 'pin')).toBe(true);
 });
+
+test('on a board: the plate\'s Proposal chip opens the proposal box and a second press closes it; the conversation box\'s head is the plate\'s', async ({ page, request }) => {
+  await setTheme(page, 'dark');
+  const d = await drawEdges(request);
+  await openBoard(page, d, '?vbwork&flags=nodeEdges,skins');
+  await menuButton(page).click();
+  await menu(page).getByRole('menuitemradio', { name: /Command Lens/ }).click();
+  await expect(card(page, d.n[0]!)).toHaveAttribute('data-marks-at', 'plate');
+  await write(request, d, [{ type: 'propose', n: d.n[0]!, ver: 1, action: 'check', reason: 'Seen on two runs', source: 'Ops log' }]);
+  const chip = mark(page, d.n[0]!, 'proposal');
+  const box = card(page, d.n[0]!).locator('.vb-card-pop.vb-node-box[data-pop="proposal"]');
+  await chip.click();
+  await expect(box).toHaveAttribute('data-open', '');
+  await chip.click();
+  await expect(box).not.toHaveAttribute('data-open', '');
+  await mark(page, d.n[0]!, 'notes').click();
+  const talk = page.locator('vb-note-bubble.vb-node-box');
+  await expect(talk.locator('.vb-node-box-head')).toHaveCSS('background-color', 'rgb(14, 17, 21)');
+  await expect(talk.locator('.vb-node-box-head')).toHaveCSS('color', 'rgb(238, 241, 244)');
+});
+
+for (const skinFlag of ['default', 'command-lens']) {
+  for (const theme of THEMES) {
+    test(`on a board: a box and a mark's tip open, looked at (${skinFlag}, ${theme})`, async ({ page, request }) => {
+      await setTheme(page, theme);
+      await page.setViewportSize({ width: 1400, height: 900 });
+      const d = await drawEdges(request);
+      await openBoard(page, d, '?vbwork&flags=nodeEdges,skins');
+      if (skinFlag === 'command-lens') {
+        await menuButton(page).click();
+        await menu(page).getByRole('menuitemradio', { name: /Command Lens/ }).click();
+      }
+      await mark(page, d.n[0]!, 'notes').click();
+      await expect(page.locator('vb-note-bubble.vb-node-box')).toBeVisible();
+      await mark(page, d.n[2]!, 'number').hover();
+      await expect(page.locator('.vb-mark-tip:not([hidden])')).toBeVisible({ timeout: 6000 });
+      await page.screenshot({ path: `temp/gate8/${skinFlag}-${theme}.png` });
+    });
+  }
+}
 
 for (const theme of THEMES) {
   test(`Tab reaches the plate's marks then the switch, named; the skin's rings after Tab only (${theme})`, async ({ page }) => {

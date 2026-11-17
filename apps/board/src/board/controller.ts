@@ -145,7 +145,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     S.fresh = S.drew = false;
     const d = boardData(s, S.id);
     edges.skin(skinOf(s, S.id)); // the board's skin, before its nodes draw (skins flag)
-    if (on('flowDirection')) status.set({ direction: live.state?.directions.get(S.id)?.board ?? 'auto' }); // the "⋯" menu's Flows rows (BE_01)
+    if (on('flowDirection')) status.set({ direction: live.state?.directions.get(S.id)?.board ?? 'auto' }); // the header's Flows menu (BE_01)
     if (!bookmarking) d.state.bookmarks.clear(); // the person's bookmarks show only with the flag on
     if (live.readOnly && !versions.state) d.state.readOnly = true; // the reads' word, for the elements (D-085)
     S.retired = retiring ? retiredCounts(s, S.id, versionView) : new Map();

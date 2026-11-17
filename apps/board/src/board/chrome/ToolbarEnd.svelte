@@ -22,6 +22,7 @@
   import ZoomLevel from './ZoomLevel.svelte';
   import ZoomMenu from './ZoomMenu.svelte';
   import ToolbarMenu from './ToolbarMenu.svelte';
+  import FlowMenu from './FlowMenu.svelte';
   import { inBar, type HeaderTier } from './header-tier.ts';
   import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../input/index.ts';
   import type { CommandId } from '../input/index.ts';
@@ -42,7 +43,7 @@
     onlock?: (() => void) | undefined;
     /** The board's skin in the "⋯" menu (skins flag); left out, no Skin rows. */
     onskin?: ((skin: Skin) => void) | undefined;
-    /** Which way the board's flows run, in the "⋯" menu (flowDirection flag, D-100 5); left out, no Flows rows. */
+    /** Which way the board's flows run, a menu in the header (flowDirection flag, D-100 5; FlowMenu.svelte); left out, none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
     /** The board's holders, when Agents and Send to agent show; null hides both. */
     holders: AccessHolder[] | null;
@@ -109,5 +110,6 @@
       paused={!board ? undefined : shown.locked ? LOCKED_PERSON : shown.readOnly ? READ_ONLY_PERSON : undefined} />
   {/if}
   {#if parts.chat}<PagePart draw={parts.chat} />{/if}
-  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {onskin} {ondirection} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
+  {#if ondirection && shown.direction}<FlowMenu {ondirection} {placement} />{/if}
+  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {onskin} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
 </div>

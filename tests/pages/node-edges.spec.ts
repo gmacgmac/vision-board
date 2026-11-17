@@ -53,6 +53,18 @@ test('a tone reaches the node as data-vb-tone and --vb-tone-h through CSSOM, nev
   expect(tones).toContainEqual(['hue', '300']);
 });
 
+test('the built CSS keeps the kind tab centred on the node\'s top at any mark growth (translate, not a merged transform)', async ({ page }) => {
+  await open(page);
+  const card = section(page).locator('vb-node', { hasText: 'Same encoder profile for both feeds?' }).first();
+  const tab = card.locator('.vb-node-kind, .vb-node-grip').first();
+  for (const grow of ['1', '2.5']) {
+    await card.evaluate((n, g) => n.parentElement!.style.setProperty('--vb-mark-grow', g), grow);
+    const [c, t] = [(await card.boundingBox())!, (await tab.boundingBox())!];
+    expect(Math.abs(t.x + t.width / 2 - (c.x + c.width / 2)), `centred at growth ${grow}`).toBeLessThanOrEqual(1);
+  }
+  expect(await tab.evaluate((e) => getComputedStyle(e).transform)).toBe('none');
+});
+
 test('every mark is reachable by Tab in the order drawn, named by its state, with a hit area past its edge', async ({ page }) => {
   await open(page);
   const card = section(page).locator('vb-node', { hasText: 'Same encoder profile for both feeds?' }).first();

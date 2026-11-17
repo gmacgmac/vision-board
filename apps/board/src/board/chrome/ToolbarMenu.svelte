@@ -1,7 +1,6 @@
 <!-- The toolbar's "⋯" menu (toolbarMenu flag, toolbar icons and menu ruling 2): the page's Theme, with the skins flag
-     (`onskin` given) a row per skin with the board's ticked (D-100 2; off with Archive board…'s reasons), with the
-     flowDirection flag (`ondirection` given) Flows across, Flows down and Flows: Auto with the person's board-wide choice
-     ticked (D-100 5, BE_01; off with the same reasons), Hide answered,
+     (`onskin` given) a row per skin with the board's ticked (D-100 2; off with Archive board…'s reasons), Hide answered (the board-wide
+     flow direction is FlowMenu.svelte, in the header),
      the page's Centre cards (`BoardPageParts`; a host has neither) and Reply, each a row with its icon and its key, with the
      archiveBoard flag (`onarchive` given) Archive board…, which asks, then archives the open board (N39
      ruling 5; off, aria-disabled, while no board is open or a past version shows), with the lockBoard flag (`onlock` given)
@@ -24,12 +23,12 @@
   import PagePart from './PagePart.svelte';
   import { toolbarPopup } from './toolbar-popup.svelte.ts';
   import { READ_ONLY_PERSON } from '#actions';
-  import type { ActDirection, Skin } from '#format';
-  import { ACT_DIRECTIONS, SKINS } from '#format';
+  import type { Skin } from '#format';
+  import { SKINS } from '#format';
 
   const { state: view, parts, id: idIn } = useChrome();
 
-  let { onhide, onarchive, onlock, onskin, ondirection, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
+  let { onhide, onarchive, onlock, onskin, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
     onhide: () => void;
     /** Archive board… (archiveBoard flag); left out, no such row. */
     onarchive?: (() => void) | undefined;
@@ -37,9 +36,6 @@
     onlock?: (() => void) | undefined;
     /** The board's skin (skins flag, D-100 2): a row per skin, the board's ticked; left out, no such rows. */
     onskin?: ((skin: Skin) => void) | undefined;
-    /** Which way the board's flows run (flowDirection flag, D-100 5): Across, Down and Auto, the person's choice ticked;
-     *  left out, no such rows. */
-    ondirection?: ((direction: ActDirection) => void) | undefined;
     /** Draw the row for a locked board (the gallery); left out, the open board's own state. */
     locked?: boolean | undefined;
     open?: boolean;
@@ -110,17 +106,6 @@
             aria-disabled={archiveOff || readOnly} title={readOnly ? READ_ONLY_PERSON : toolbarWords.skinTip}
             onclick={() => { if (!archiveOff && !readOnly && view.skin !== skin) choose(() => onskin(skin)); }}>
             <ButtonIcon name="theme" /><span class="vb-menu-label">{toolbarWords.skinName(skin)}</span><span class="vb-menu-check" aria-hidden="true">✓</span>
-          </button>
-        {/each}
-      </div>
-    {/if}
-    {#if ondirection && view.direction}
-      <div role="group" aria-label={toolbarWords.directionGroup}>
-        {#each ACT_DIRECTIONS as direction (direction)}
-          <button type="button" class="vb-menu-item" role="menuitemradio" tabindex="-1" id={idOf(`direction-${direction}`)} aria-checked={view.direction === direction}
-            aria-disabled={archiveOff || readOnly} title={readOnly ? READ_ONLY_PERSON : toolbarWords.directionTip(direction)}
-            onclick={() => { if (!archiveOff && !readOnly && view.direction !== direction) choose(() => ondirection(direction)); }}>
-            <ButtonIcon name={direction} /><span class="vb-menu-label">{toolbarWords.directionName(direction)}</span><span class="vb-menu-check" aria-hidden="true">✓</span>
           </button>
         {/each}
       </div>

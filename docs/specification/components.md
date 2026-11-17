@@ -1920,12 +1920,12 @@ stays a pure function: both arrive as inputs (`LayoutOptions.branching`, `Layout
    shown state (`canvas/draw.ts` `DrawDeps.direction`); `show_layout` reads the same fold with the engine's flags
    (`server/engine/reads.ts` `showLayout`), so its answer stays true for the picture. The layout cache keys a container
    on its direction and on `branching` (`canvas/layout-cache.ts`).
-5. **The board's choice** (`chrome/ToolbarMenu.svelte`): the "⋯" menu's Flows rows, Flows across, Flows down and
+5. **The board's choice** (`chrome/FlowMenu.svelte`, in the header's end group, `ToolbarEnd.svelte`): its Flows menu, Flows across, Flows down and
    Flows: Auto (`menuitemradio`, the person's board-wide choice ticked, Auto when they made none), write the `direction`
    act with no `region` through the one sender (`controller.ts` `setDirection`; `io/acts.ts` names its board); Auto
    clears the choice, giving back each container's own. Paused, with the reason, on a read-only ledger or a past
    version. A container's own choice is FE_07's layout control. Words: `words/toolbar.ts` `directionName`,
-   `directionTip`.
+   `directionTip`, `directionTitle`.
 6. **Room for edge marks** (`nodeEdges`, `packages/layout/src/types.ts` `EDGE_ROW_GAP` = 40): while nodes draw their
    marks on their edges (a skin whose marks are `edges`), the gap under a node is at least 40px, so its bottom marks
    (11px below) and the next node's number, kind tab and disc (14px above) stay clear; side by side stays `GAP`.
@@ -1936,7 +1936,7 @@ stays a pure function: both arrive as inputs (`LayoutOptions.branching`, `Layout
    `layout.timing.ts` (1,000 cards and 1,200 links with branches, across and down, under 100 ms),
    `apps/board/tests/flow-direction-layout.test.ts` (the precedence as the layout sees it, another page draws the same,
    the cache), `api-layout-direction.test.ts` (`show_layout` both ways); in a browser, `tests/pages/flow-direction.spec.ts`
-   (the Flows rows, the act, the redraw, read-only, branching rows, the edge gap, the gallery's section, axe dark and
+   (the header's Flows menu, the act, the redraw, read-only, branching rows, the edge gap, the gallery's section, axe dark and
    light).
 
 ## The selection bar with the node's edges, and Z (node overhaul FE_06)

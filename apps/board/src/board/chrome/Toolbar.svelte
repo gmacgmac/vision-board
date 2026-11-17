@@ -86,7 +86,7 @@
     onlock: () => void;
     /** The board's skin in the "⋯" menu (skins flag, D-100 2); left out, no Skin rows. */
     onskin?: ((skin: Skin) => void) | undefined;
-    /** Which way the board's flows run, in the "⋯" menu (flowDirection flag, D-100 5); left out, no Flows rows. */
+    /** Which way the board's flows run, a menu in the header (flowDirection flag, D-100 5; FlowMenu.svelte); left out, none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
     placement?: 'board' | 'gallery';
     /** The form to draw (the gallery's); left out, the bar's own width says. */

@@ -1,15 +1,15 @@
 // Flow branching and direction on the page (BE_01; flowDirection and flowBranches flags, D-100 5, PLAN decisions 19
-// and 25). The "⋯" menu's Flows rows set the person's board-wide direction with one `direction` act naming no
+// and 25). The header's Flows menu sets the person's board-wide direction with one `direction` act naming no
 // container (Auto clears it) and the board redraws in place; a flow the agent drew down draws down until the person's
 // Across, and Auto gives it back; a row whose links branch draws as rows with flowBranches; with nodeEdges the gap
-// under a node leaves room for its marks. Off, no Flows rows and nothing moves. Axe in light and dark.
+// under a node leaves room for its marks. Off, no Flows menu and nothing moves. Axe in light and dark.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { READ_ONLY_PERSON as REASON } from '#actions';
 import { startFolderServer } from './folder-server.ts';
 import { bid, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { joinAgent, open, write } from './agent-board.ts';
-import { card, head, idle, linesAfter, menu, menuButton, scale, zoomToFull } from './board-page.ts';
+import { card, head, idle, linesAfter, scale, zoomToFull } from './board-page.ts';
 
 let boards = 0;
 const THEMES: Theme[] = ['dark', 'light'];
@@ -37,16 +37,16 @@ async function places(page: Page, n: number[]): Promise<{ x: number; y: number }
   return at.map((b) => ({ x: Math.round((b.x - at[0]!.x) / k), y: Math.round((b.y - at[0]!.y) / k) }));
 }
 const runsDown = (p: { x: number; y: number }[]) => p[1]!.y > p[0]!.y && p[1]!.x === p[0]!.x;
-const rows = (page: Page) => menu(page).getByRole('menuitemradio');
+const flowButton = (page: Page) => page.locator(bid('flow-menu'));
+const rows = (page: Page) => page.getByRole('menu', { name: 'Flows' }).getByRole('menuitemradio');
 
-test('off, no Flows rows; on, Across, Down and Auto with Auto ticked; a choice writes one direction act for the board and redraws in place', async ({ page, request }) => {
+test('off, no Flows menu; on, Across, Down and Auto with Auto ticked; a choice writes one direction act for the board and redraws in place', async ({ page, request }) => {
   const d = await drawLine(request, 'flow', 'down');
   await open(page, d, '?vbwork');
-  await menuButton(page).click();
-  await expect(rows(page)).toHaveCount(0);
+  await expect(flowButton(page)).toHaveCount(0);
   await open(page, d, '?vbwork&flags=flowDirection');
   expect(runsDown(await places(page, d.n)), 'the agent drew it down').toBe(true);
-  await menuButton(page).click();
+  await flowButton(page).click();
   await expect(rows(page)).toHaveText([/Flows across/, /Flows down/, /Flows: Auto/]);
   await expect(rows(page).nth(2)).toHaveAttribute('aria-checked', 'true');
   const before = await head(page);
@@ -54,7 +54,7 @@ test('off, no Flows rows; on, Across, Down and Auto with Auto ticked; a choice w
   await expect.poll(async () => runsDown(await places(page, d.n))).toBe(false);
   const lines = (await linesAfter(page, before)).filter((e) => e.action === 'direction');
   expect(lines.map((e) => [e.board, e.region, e.direction])).toEqual([[d.board, undefined, 'across']]);
-  await menuButton(page).click();
+  await flowButton(page).click();
   await expect(rows(page).first()).toHaveAttribute('aria-checked', 'true');
   await rows(page).nth(2).click();
   await expect.poll(async () => runsDown(await places(page, d.n)), 'Auto gives back the agent\'s').toBe(true);
@@ -90,25 +90,25 @@ test('with nodeEdges the gap under a node clears its marks (40px); off, as befor
 });
 
 for (const theme of THEMES) {
-  test(`the Flows rows pass axe (${theme})`, async ({ page, request }) => {
+  test(`the Flows menu passes axe (${theme})`, async ({ page, request }) => {
     const d = await drawLine(request, 'flow');
     await setTheme(page, theme);
     await open(page, d, '?vbwork&flags=flowDirection');
     await zoomToFull(page); // the cards' own controls at their full size, as the board's other axe checks
-    await menuButton(page).click();
+    await flowButton(page).click();
     await expect(rows(page)).toHaveCount(3);
     await expectNoAxeViolations(page);
     await page.screenshot({ path: `temp/be01/flows-menu-${theme}.png` });
   });
 }
 
-test('on a read-only ledger the Flows rows are off, saying why, and a press writes nothing', async ({ page }) => {
+test('on a read-only ledger the Flows items are off, saying why, and a press writes nothing', async ({ page }) => {
   const srv = await startFolderServer({ ledgers: true, readOnly: true });
   try {
     await page.goto(`${srv.base}/?vbwork&flags=readOnlyStart,ledgerFolders,-readOnlyToggle,flowDirection`);
     await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
     await idle(page);
-    await menuButton(page).click();
+    await flowButton(page).click();
     for (const d of ['across', 'down', 'auto']) {
       await expect(page.locator(bid(`direction-${d}`))).toHaveAttribute('aria-disabled', 'true');
       await expect(page.locator(bid(`direction-${d}`))).toHaveAttribute('title', REASON);
@@ -137,7 +137,7 @@ for (const theme of THEMES) {
     await open(page, d, '?vbwork&flags=flowBranches,flowDirection');
     await expect(page.locator('svg.vb-wires').first()).not.toHaveClass(/settling/);
     await page.screenshot({ path: `temp/be01/board-across-${theme}.png` });
-    await menuButton(page).click();
+    await flowButton(page).click();
     await rows(page).nth(1).click();
     await expect.poll(async () => runsDown(await places(page, d.n))).toBe(true);
     await page.keyboard.press('f');

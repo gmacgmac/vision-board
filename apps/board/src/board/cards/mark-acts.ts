@@ -133,6 +133,7 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
     }
     if (mark === 'tick' || mark === 'cross') return void answer(id, mark === 'tick' ? 'ack' : 'drop');
     if (mark === 'badge') return toggleBox(id, 'history', el);
+    if (mark === 'proposal') return toggleBox(id, 'proposal', el);
     // The conversation is a box beside the node too: one box at a time.
     if (mark === 'notes') { close(); void d.act(id, 'comment'); }
   }

@@ -11,3 +11,7 @@
   overflow-wrap: anywhere; text-align: left; text-transform: none; letter-spacing: normal;
 }
 .vb-tip::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--vb-space-1); }
+/* A tip over a node's mark floats on the glass (--vb-glass-*, as menu-fixed.css): the raised surface by default, a skin's dark glass. */
+.vb-mark-tip {
+  border-color: var(--vb-glass-line); background: var(--vb-glass); color: var(--vb-glass-ink);
+}
