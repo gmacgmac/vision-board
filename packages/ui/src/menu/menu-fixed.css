@@ -1,7 +1,14 @@
 /* The fixed-size menu (menu-template.ts; D-101): the base's menu look (base/menu.css, surface.css) at one size at any
    zoom, its icon and key on each row and a line between groups. The answer picker (data-menu-look='picker') lays
-   Tick and Cross side by side, icons only, each keeping its colour. Tokens only. */
-.vb-menu-fixed { font-family: var(--vb-font-text); }
+   Tick and Cross side by side, icons only, each keeping its colour. It floats on the glass (--vb-glass-*, FE_04): the
+   raised surface by default, a skin's dark glass in both themes, so the base's rules read the glass's values here.
+   Tokens only. */
+.vb-menu-fixed {
+  --vb-surface-raised: var(--vb-glass); --vb-surface-card: var(--vb-glass); --vb-surface-sunken: var(--vb-glass-hover);
+  --vb-ink-strong: var(--vb-glass-ink); --vb-ink-subtle: var(--vb-glass-muted); --vb-line-strong: var(--vb-glass-line);
+  --vb-state-ack: var(--vb-glass-tick); --vb-state-drop: var(--vb-glass-cross);
+  font-family: var(--vb-font-text);
+}
 .vb-menu-fixed .vb-menu-icon { width: 17px; height: 17px; color: var(--vb-ink-subtle); }
 .vb-menu-fixed .vb-menu-item[data-tone='tick'] .vb-menu-icon { color: var(--vb-state-ack); }
 .vb-menu-fixed .vb-menu-item[data-tone='cross'] .vb-menu-icon { color: var(--vb-state-drop); }

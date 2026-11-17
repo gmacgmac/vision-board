@@ -13,6 +13,9 @@ const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'ap
 const INKS = ['var(--vb-ink-strong)', 'var(--vb-ink)', 'var(--vb-ink-subtle)'];
 const GROUNDS = ['var(--vb-surface-canvas)', 'var(--vb-surface-card)', 'var(--vb-surface-sunken)', 'var(--vb-surface-deep)'];
 
+/** A colour as a dark plate draws a mark in it (node-plate.css): its hue at no less than the plate's lightness. */
+const lift = (c: string) => `oklch(from ${c} max(l, var(--vb-plate-mark-l)) min(c, var(--vb-plate-mark-c)) h)`;
+
 /** [text, ground, tier]: the new marks on what they sit on. A kind's word and its tile, the answer, the bookmark, the
  *  notes mark, the change badge, the plate. Muted text is the reading tier wherever it is text (README § Ink tiers). */
 const PAIRS: [string, string, number][] = [
@@ -27,6 +30,14 @@ const PAIRS: [string, string, number][] = [
   ['var(--vb-badge-new)', 'var(--vb-surface-card)', 45], ['var(--vb-badge-updated)', 'var(--vb-surface-card)', 45],
   ['var(--vb-badge-settled)', 'var(--vb-surface-card)', 60],
   ['var(--vb-plate-ink)', 'var(--vb-plate)', 60], ['var(--vb-plate-muted)', 'var(--vb-plate)', 60],
+  // FE_04: a mark on the plate, lifted (node-plate.css): the kind's dot, the badges, the notes count; the plate's ring and
+  // the edges' ring; the glass under the menus and the selection bar, with Tick and Cross on it; a failed half's word.
+  ...KINDS.map((k) => [lift(k), 'var(--vb-plate)', 30] as [string, string, number]),
+  ...['--vb-badge-new', '--vb-badge-updated', '--vb-notes-count'].map((c) => [lift(`var(${c})`), 'var(--vb-plate)', 45] as [string, string, number]),
+  ['var(--vb-plate-focus)', 'var(--vb-plate)', 30], ['var(--vb-focus-edge)', 'var(--vb-surface-card)', 30], ['var(--vb-focus-edge)', 'var(--vb-surface-canvas)', 30],
+  ['var(--vb-glass-ink)', 'var(--vb-glass)', 60], ['var(--vb-glass-ink)', 'var(--vb-glass-hover)', 60], ['var(--vb-glass-muted)', 'var(--vb-glass)', 60],
+  ['var(--vb-glass-tick)', 'var(--vb-glass)', 45], ['var(--vb-glass-cross)', 'var(--vb-glass)', 45],
+  ['var(--vb-state-drop)', 'var(--vb-surface-card)', 45],
 ];
 
 /** Put in the page once: `vbPx(el, css)`, the pixel a colour expression draws as on a probe in `el`; `vbLc(text, ground)`,

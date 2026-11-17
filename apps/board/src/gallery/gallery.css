@@ -180,3 +180,11 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 [data-feature='nodeEdges'] .g-cards { gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
 .g-edge-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
 .g-edge-menu .vb-menu-list, .g-edge-menu .vb-mark-tip { position: static; }
+/* The Command Lens skin (FE_04): a board root carrying the skin, so its tokens reach the cards, on the skin's canvas. The
+   root is a size container on the board (board.css); here it takes its content's height. */
+.g-skin.vb-board.vb-board {
+  container-type: inline-size; padding: var(--vb-space-4); border-radius: var(--vb-radius-lg);
+  background: var(--vb-surface-canvas) var(--vb-canvas-image); background-size: var(--vb-canvas-size) var(--vb-canvas-size);
+}
+[data-feature='skins'] .g-cards { gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
+.g-skin-bar vb-selection-bar { position: static; }

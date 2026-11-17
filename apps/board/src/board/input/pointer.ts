@@ -53,8 +53,9 @@ const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-no
 /** Where the middle button keeps its own meaning (a link opens in a new tab; a field pastes). */
 const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
 /** Where a card is moved from (ruling 4): the kind tab with its grip dots, or, on a node with an icon, the grip in the
- *  middle of its top line (nodeEdges, decision 12). */
-const HANDLE = '.vb-node-kind, .vb-node-grip';
+ *  middle of its top line (nodeEdges, decision 12), or the plate along the top where a skin's row puts one (FE_04; its
+ *  buttons keep their own press, INTERACTIVE). */
+const HANDLE = '.vb-node-kind, .vb-node-grip, .vb-node-plate';
 /** The container's keyboard handle (3_FE_04 ruling 5), the start of its label; a drag on it, or on the
  *  rest of the label but its own buttons and its tip (FE_02), moves the container. */
 const GRIP = '.vb-region-grip';

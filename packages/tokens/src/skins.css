@@ -27,6 +27,24 @@
   --vb-plate-ink: #eef1f4;
   --vb-plate-muted: #aab5c3;
   --vb-plate-line: #2b323c;
+  /* FE_04: marks on the dark plate keep their hue at a lightness that reads on it in both themes (the mockups'
+     light page mixed each with white); its ring and the skin's other rings, white toned down (point 338); menus and
+     the selection bar on the plate's dark glass; a flat body and a plain border, the kind's colour only on the
+     selected border, the plate's dot and the tile. */
+  --vb-plate-mark-l: 0.8;
+  --vb-plate-mark-c: 0.16;
+  --vb-plate-focus: #b9bfc8;
+  --vb-focus-edge: light-dark(#4a4e57, #b9bfc8);
+  --vb-glass: var(--vb-plate);
+  --vb-glass-hover: #1c222b;
+  --vb-glass-ink: var(--vb-plate-ink);
+  --vb-glass-muted: var(--vb-plate-muted);
+  --vb-glass-line: var(--vb-plate-line);
+  --vb-glass-tick: #4cc47f;
+  --vb-glass-cross: #f07474;
+  --vb-node-edge-tint: 0%;
+  --vb-node-tint: 0%;
+  --vb-node-tint-selected: 0%;
   --vb-grid: light-dark(#e3e0d7, #1b1d22);
   --vb-canvas-image: linear-gradient(var(--vb-grid) 1px, transparent 1px), linear-gradient(90deg, var(--vb-grid) 1px, transparent 1px);
   --vb-node-radius: 6px;

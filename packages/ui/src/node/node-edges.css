@@ -5,8 +5,12 @@
    --vb-mark-ink and --vb-mark-bg, so a paused mark (a locked board) keeps them: nothing changes at rest (point 328).
    Selection is the node's own border, brighter and thicker, never an outer ring. Tokens only. */
 vb-node[data-edges] {
-  --vb-edge: color-mix(in srgb, var(--vb-kind) 42%, var(--vb-line-strong));
-  --vb-select-edge: var(--vb-kind);
+  /* The node's own colour: the kind's, or its tone's line (point 366); the grip or kind tab, the top line, the hover and
+     selected borders follow it. The kind's word, its disc and a plate's dot keep the kind's. */
+  --vb-node-color: var(--vb-kind);
+  --vb-node-tab: color-mix(in srgb, var(--vb-kind) 14%, var(--vb-surface-card)); --vb-node-tab-ink: var(--vb-kind);
+  --vb-edge: color-mix(in srgb, var(--vb-node-color) var(--vb-node-edge-tint), var(--vb-line-strong));
+  --vb-select-edge: var(--vb-node-color);
   --vb-tint: color-mix(in srgb, var(--vb-kind) var(--vb-node-tint), var(--vb-surface));
   --vb-tag: var(--vb-kind);
   --vb-focus: var(--vb-focus-edge);
@@ -20,18 +24,19 @@ vb-node[data-edges] {
 vb-node[data-edges][data-icon]::before {
   left: 60px; right: 60px; height: 2px; background: color-mix(in srgb, var(--vb-select-edge) 80%, transparent);
 }
-vb-node[data-edges]:hover { border-color: color-mix(in srgb, var(--vb-kind) 70%, var(--vb-line-strong)); }
+vb-node[data-edges]:hover { border-color: color-mix(in srgb, var(--vb-node-color) 70%, var(--vb-line-strong)); }
 vb-node[data-edges][data-selected] {
   --vb-tint: color-mix(in srgb, var(--vb-kind) var(--vb-node-tint-selected), var(--vb-surface));
   border-color: var(--vb-select-edge);
   box-shadow: inset 0 0 0 calc(var(--vb-select-w) - 1px) var(--vb-select-edge), var(--vb-shadow-lift);
 }
 vb-node[data-edges][data-selected][data-icon]::before { content: none; }
-/* A tone (decision 17; T_02's tints from --vb-tone-h): the body's top, the top line, the selected border and the
-   icon tile. The kind keeps its own tab, word and disc; Tick and Cross keep theirs. */
+/* A tone (decision 17, point 366; T_02's tints from --vb-tone-h): everything coloured by the node follows it: the body's
+   top, the grip or kind tab, the top line, the hover and selected borders, the tags and the icon tile. The kind's word
+   says the kind; its disc and Tick and Cross keep their colours. */
 vb-node[data-edges][data-vb-tone] {
-  --vb-edge: var(--vb-tone-edge); --vb-select-edge: var(--vb-tone-line); --vb-tag: var(--vb-tone-line);
-  --vb-tint: var(--vb-tone-body);
+  --vb-node-color: var(--vb-tone-line); --vb-node-tab: var(--vb-tone-tile); --vb-node-tab-ink: var(--vb-tone-ink);
+  --vb-edge: var(--vb-tone-edge); --vb-tag: var(--vb-tone-line); --vb-tint: var(--vb-tone-body);
 }
 vb-node[data-edges][data-vb-tone][data-selected] { --vb-tint: color-mix(in srgb, var(--vb-tone-line) 14%, var(--vb-tone-body)); }
 
@@ -79,11 +84,14 @@ vb-node[data-edges][data-bookmarked] .vb-node-num {
 }
 vb-node[data-edges][data-bookmarked] .vb-node-num:focus-visible { clip-path: none; }
 /* Top centre: the kind tab, the drag handle; a node with an icon has a grip there instead (decision 12). */
-vb-node[data-edges] .vb-node-kind { top: calc(var(--vb-mark-h) / -2); height: var(--vb-mark-h); box-shadow: none; background: color-mix(in srgb, var(--vb-kind) 14%, var(--vb-surface-card)); }
+vb-node[data-edges] .vb-node-kind {
+  top: calc(var(--vb-mark-h) / -2); height: var(--vb-mark-h); box-shadow: none;
+  border-color: color-mix(in srgb, var(--vb-node-color) 55%, transparent); background: var(--vb-node-tab); color: var(--vb-node-tab-ink);
+}
 vb-node[data-edges] .vb-node-grip {
   position: absolute; top: -7px; left: 50%; z-index: 1; width: 40px; height: 14px; transform: translateX(-50%);
-  border: 1px solid color-mix(in srgb, var(--vb-kind) 60%, var(--vb-line-strong)); border-radius: 7px;
-  background: radial-gradient(var(--vb-kind) 1.3px, transparent 1.5px) 7px 3px / 6px 4px, var(--vb-surface-card); cursor: grab;
+  border: 1px solid color-mix(in srgb, var(--vb-node-color) 60%, var(--vb-line-strong)); border-radius: 7px;
+  background: radial-gradient(var(--vb-node-color) 1.3px, transparent 1.5px) 7px 3px / 6px 4px, var(--vb-surface-card); cursor: grab;
 }
 vb-node[data-edges].dragging .vb-node-grip { cursor: grabbing; }
 
@@ -167,9 +175,4 @@ vb-node[data-edges] .vb-node-tile-icon { width: var(--vb-tile-icon); height: var
 vb-node[data-edges] .vb-card-pop[data-pop='history'] .vb-node-steps { margin: 0; }
 vb-node[data-edges] .vb-card-pop[data-pop='history'] .vb-node-stepnav:not([hidden]) { display: flex; gap: var(--vb-space-2); align-items: center; }
 
-/* A skin row's other places (skins.ts): the marks in a plate along the top and the answer as a Tick | Cross switch
-   along the bottom. Laid out in flow here so the row works; their look is the skin's (FE_04). */
-vb-node[data-marks-at='plate'] .vb-node-plate { display: flex; align-items: center; gap: var(--vb-space-2); padding: var(--vb-space-2) var(--vb-space-3); }
-vb-node[data-marks-at='plate'] .vb-node-plate > * { position: relative; inset: auto; transform: none; }
-vb-node[data-answer-at='switch'] .vb-mark-switch { display: flex; gap: var(--vb-space-1); padding: 0 var(--vb-space-3) var(--vb-space-4); }
-vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark { position: relative; flex: 1; }
+/* A skin row's other places (skins.ts), the marks in a plate and the answer as a switch: node-plate.css. */
