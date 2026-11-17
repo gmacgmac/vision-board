@@ -52,7 +52,7 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 10 | FE_04 | 7 | strong | no | Design-systems engineer — a second skin proves the first was a system; if the node needs an `if (skin)`, the registry is wrong. | [The Command Lens skin](./FE_04_command-lens-skin.md) | Pending | |
 | 11 | FE_05 | 8 | standard | no | — | [Zoom groups](./FE_05_zoom-groups.md) | Pending | |
 | 12 | FE_06 | 9 | standard | no | — | [The selection bar and Z](./FE_06_selection-bar-and-z.md) | Pending | |
-| 13 | BE_01 | 10 | strong | no | Graph-layout engineer — a layout is a pure function; a line that weaves round cards is a bug in the layout, not in the router. | [Flow branching and direction](./BE_01_flow-branching-and-direction.md) | Pending | |
+| 13 | BE_01 | 10 | strong | no | Graph-layout engineer — a layout is a pure function; a line that weaves round cards is a bug in the layout, not in the router. | [Flow branching and direction](./BE_01_flow-branching-and-direction.md) | Completed | Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker. |
 | 14 | FE_07 | 11 | standard | no | — | [One layout control](./FE_07_one-layout-control.md) | Pending | |
 | 15 | FE_08 | 12 | strong | no | Front-end engineer for sandboxed embeds — the app owns everything under its title bar, and the sandbox is never loosened. | [The app window](./FE_08_app-window.md) | Pending | |
 | 16 | T_03 | 13 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The agent skill](./T_03_agent-skill.md) | Pending | |
@@ -89,7 +89,7 @@ on the result. Waves 1 and 3 run tasks in their own git worktrees, merged after 
 | `packages/ui/src/skins.ts` (`SKIN_DEFS`: per skin, where the answer and each mark sit) | FE_01 | FE_02, FE_04, FE_08 |
 | `packages/ui/src/menu/` (the fixed-size menu used by the number menu, the answer picker and right-click) | FE_01 | FE_02, FE_06, FE_07 |
 | `packages/ui/src/note-bubble/` (the conversation box with its reply field, Ask now and `askContext`) | FE_03 | FE_06, FE_08 |
-| The board-wide direction control (`apps/board/src/board/chrome/`) and the layout's reading of `directionOf` | BE_01 | FE_07 |
+| The board-wide direction control (`apps/board/src/board/chrome/`) and the layout's reading of `directionOf` | Completed | Run early beside FE_03. Branches on rows behind `flowBranches` (rows never cross more than stacked); a branching row or column laid out as a flow; flow down behind `flowDirection`; board-wide direction in "⋯" (FE_07 moves it to the header control); `show_layout` both ways; `EDGE_ROW_GAP` 40 with nodeEdges. For FE_07: a container choice redraws through `DrawDeps.direction`, write the act with `region`. Router jog on a straight main line left for the tracker. |
 
 ---
 
