@@ -34,7 +34,7 @@
           "required": ["host", "since"],
           "properties": {
             "host": {"type": "string", "minLength": 1, "maxLength": 255, "description": "The computer whose board server holds the lock, as it names itself."},
-            "since": {"$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/timestamp", "description": "When that server took the lock."}
+            "since": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/timestamp", "description": "When that server took the lock."}
           },
           "unevaluatedProperties": false
         }

@@ -3,12 +3,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { ACTION_IDS } from '#format';
+import { ACTION_IDS, LEDGER_FORMAT } from '#format';
 import { validateAct } from '../src/index.ts';
 import { A, B, C, scene } from './ledger-v3.ts';
 
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 3, seq: 999, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act', action: 'send', board: 'b', ...f });
+  ({ v: LEDGER_FORMAT, seq: 999, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act', action: 'send', board: 'b', ...f });
 const has = (problems: string[], words: string) => problems.some((p) => p.includes(words));
 
 test('an agent may never write an act, of any kind', () => {

@@ -5,10 +5,12 @@
 // `VbNode.render`, a new version's markup that keeps a loaded panel where it is (app-state-kept FE_01).
 import type { AppSize } from '#format';
 import type { AppCardView } from './node-app.ts';
+import type { NodeMarks } from './node-marks.ts';
 import type { HoverTip } from '../tip/hover-tip.ts';
 import type { VbAppFrameElement } from '../app-frame/vb-app-frame.ts';
 import { appStateMarkup } from './node-template.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
+import * as nodeAppWords from '../words/node-app.ts';
 
 /** The panel's size as --vb-app-w and --vb-app-h on the card (CSSOM: the CSP refuses style attributes);
  * none on other kinds. */
@@ -121,8 +123,45 @@ export function bindAppNameTip(card: HTMLElement): HoverTip {
   const text = () => card.querySelector<HTMLElement>('.vb-app-name-text');
   const cut = () => { const t = text(); return t !== null && t.scrollWidth > t.clientWidth; };
   return bindHoverTip(card, {
-    anchor: '.vb-app-name', tip: '.vb-app-name-tip', group: '.vb-node-foot', attr: 'data-name-tip-open',
+    anchor: '.vb-app-name', tip: '.vb-app-name-tip', group: '.vb-node-foot, .vb-win-bar', attr: 'data-name-tip-open',
     needed: () => cut() && card.querySelector('.vb-app-menu:not([hidden])') === null
-      && card.querySelector('.vb-app-name:hover, .vb-node-foot :focus-visible') !== null,
+      && card.querySelector('.vb-app-name:hover, .vb-node-foot :focus-visible, .vb-win-bar :focus-visible') !== null,
   });
+}
+
+/** An app window's bar and drawer (appWindow flag, node-window.ts): why Allow shows, the drawer arrow (open or not, the
+ *  notes count, filled while an agent's reply is unread, from the marks) and its pane, and Open while the panel shows.
+ *  `data-drawer-open` widens the node by the drawer (node-app.css), so the page measures it open. */
+export function applyWindow(card: HTMLElement, v: AppCardView, m: NodeMarks): void {
+  const reason = card.querySelector<HTMLElement>('.vb-win-reason')!;
+  reason.hidden = v.control !== 'allow';
+  // Its words, and the same in its tip: on a narrow window it is a lock alone and the name keeps the room (FIX_01).
+  const why = v.control === 'allow' ? v.reason ?? '' : '';
+  reason.querySelector('.vb-win-reason-text')!.textContent = why;
+  reason.dataset.tip = why;
+  card.toggleAttribute('data-drawer-open', v.drawer);
+  const arrow = card.querySelector<HTMLElement>('[data-drawer]')!;
+  arrow.setAttribute('aria-expanded', String(v.drawer));
+  arrow.setAttribute('aria-label', (v.drawer ? nodeAppWords.hideConversation : nodeAppWords.showConversation)(m.notesLabel));
+  arrow.dataset.notesMark = m.notes;
+  const count = arrow.querySelector('.vb-mark-text')!;
+  if (count.textContent !== m.notesText) count.textContent = m.notesText;
+  card.querySelector<HTMLElement>('.vb-win-drawer-pane')!.hidden = !v.drawer;
+  const open = card.querySelector<HTMLElement>('.vb-win-open');
+  if (open) {
+    open.hidden = !v.frame;
+    open.setAttribute('aria-label', v.names.open);
+  }
+}
+
+/** Draw the card again (`render`) keeping what its open drawer holds (the conversation box the page docked there, the
+ *  words typed in it and focus in it): taken out first and put back in the new drawer, never drawn afresh. */
+export function keepingDrawer(card: HTMLElement, render: () => void): void {
+  const box = card.querySelector<HTMLElement>('.vb-win-drawer-pane > *');
+  const at = box?.contains(document.activeElement) ? document.activeElement as HTMLElement : null;
+  box?.remove();
+  render();
+  if (!box) return;
+  card.querySelector('.vb-win-drawer-pane')?.append(box);
+  at?.focus({ preventScroll: true });
 }

@@ -7,7 +7,7 @@
 // the host's (the standalone server's streams.ts, from `watch`). What a read tells its caller about itself (`owed`,
 // `answered`, `held`; the `botToolRules` flag) is caller-marks.ts.
 import type { LedgerEvent } from '#format';
-import { boardView, containerKey, flagOn, toLine, widthsOf } from '#format';
+import { boardView, containerKey, directionOf, flagOn, ICON_NAMES, toLine, widthsOf } from '#format';
 import type { LedgerState } from '#actions';
 import {
   boardData, boardJson, boardList, boardState, containerDetail, eventBoard, linkedDetails, nodeDetail, openContainers, openItems,
@@ -16,6 +16,7 @@ import {
 import { structureOf } from '#layout';
 import { cardOn } from '../edge.ts';
 import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
+import { readLibrary } from '../icons.ts';
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
@@ -70,10 +71,10 @@ const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
 
 /** How the board arranges one container (api.md 133), structure only: the cards in it now (the
  * person's moves count, retired cards are out) in card order, the links between them, the mode the
- * board shows and the card widths in effect, worked out by the layout package as the page lays them
+ * board shows, the card widths in effect and, with flowDirection, the direction a flow runs (api.md 189), worked out by the layout package as the page lays them
  * out. Board numbers out: a View node's id is its number. A retired container, like an unknown one
  * or the built-in Later, is `not-found`: nothing is arranged in it. */
-const showLayout: Op = ({ params, ledger }) => {
+const showLayout: Op = ({ params, ledger, flags }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const region = String(params.region);
@@ -88,7 +89,9 @@ const showLayout: Op = ({ params, ledger }) => {
   const view = placedView(drawn, st);
   const mode = st.modes.get(region) ?? r.mode;
   const widths = widthsOf(mode, r.widths, st.widths.get(region));
-  const out = structureOf(r, view.nodes.filter((n) => n.region === region), view.links, mode, widths);
+  // As the page lays it out: the direction a flow runs (flowDirection) and branches on their own rows (flowBranches).
+  const drawnAs = { branching: flagOn('flowBranches', flags), ...(flagOn('flowDirection', flags) && { direction: directionOf(s, board, region) }) };
+  const out = structureOf(r, view.nodes.filter((n) => n.region === region), view.links, mode, widths, drawnAs);
   return reply(200, {
     head: s.seq, board, region, mode, widths, ...(out.lanes && { lanes: out.lanes }), columns: out.columns,
     cards: out.cards.map(({ id, ...cell }) => ({ n: Number(id), ...cell })), links: out.links, crossing: out.crossing, empty: out.empty,
@@ -102,10 +105,10 @@ const listOpen: Op = (ctx) => {
   return reply(200, { head: s.seq, items: openItems(s, board, scopeOf(ctx)), ...(containers.length > 0 && { containers }) });
 };
 
-/** A person act that ends a `check_responses` wait on `board`: Send, or an answer to a grant
- * request on it (api.md Operations); for a scoped caller, only one that concerns it. */
+/** A person act that ends a `check_responses` wait on `board`: Send, Ask now (an `ask`, api.md 188), or an answer to
+ * a grant request on it (api.md Operations); for a scoped caller, only one that concerns it. */
 const wakes = (s: LedgerState, board: string, e: LedgerEvent, agent: string | undefined): boolean =>
-  e.type === 'act' && (e.action === 'send' || e.action === 'grant' || e.action === 'deny') && eventBoard(s, e) === board &&
+  e.type === 'act' && (e.action === 'send' || e.action === 'ask' || e.action === 'grant' || e.action === 'deny') && eventBoard(s, e) === board &&
   (agent === undefined || responsesAfter(s, board, e.seq - 1, agent).some((x) => x.seq === e.seq));
 
 /** Hold until `stop` says so, `seconds` pass, or the host's signal ends it (the caller went away, the
@@ -159,7 +162,17 @@ const readLedger: Op = ({ params, ledger, readOnly, flags }) => {
   return reply(200, { events: list, head: s.seq, ...(more && { more }), ...readOnlyMark({ readOnly }), ...(flagOn('singleAgent', flags) && { oneAgent: true }) });
 };
 
+/** The icons a node may name (api.md 186): the built-in set and the project's library, each library file checked as it
+ * is read (icons.ts `readLibrary`); one that fails, or no longer matches this ledger's hash for it, is under `problems`
+ * and its paths are never served. `paths=true` (the page's read, PLAN call 11) adds each icon's checked `d` strings; an
+ * agent's call carries none unless it asks. */
+const listIcons: Op = ({ params, ledger, icons }) => {
+  const { icons: found, problems } = readLibrary(icons, ledger.state().index.icons);
+  const library = found.map(({ name, title, paths }) => ({ name, title, ...(params.paths === true && { paths }) }));
+  return reply(200, { builtIn: [...ICON_NAMES], library, ...(problems.length > 0 && { problems }) });
+};
+
 export const READS = {
   list_boards: listBoards, get_board: getBoard, show_node: showNode, show_container: showContainer, show_layout: showLayout,
-  list_open: listOpen, check_responses: checkResponses, read_ledger: readLedger,
+  list_open: listOpen, check_responses: checkResponses, read_ledger: readLedger, list_icons: listIcons,
 } satisfies Record<string, Op>;

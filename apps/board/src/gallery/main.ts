@@ -5,7 +5,7 @@ import '../styles/page.ts';
 import '../styles/chat.ts';
 import './gallery.css';
 import { flagOn } from '#format';
-import { defineBoardElements, PATTERNS } from '#ui';
+import { defineAppFrame, defineBoardElements, defineImageView, PATTERNS } from '#ui';
 import type { PatternInfo } from '#ui';
 import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
@@ -51,13 +51,18 @@ import { headerSection } from './header-section.ts';
 import { editingSection } from './editing-section.ts';
 import { readOnlyControlsSection } from './read-only-controls-section.ts';
 import { ledgerSection } from './ledger-section.ts';
-import { flagSection } from './flag-section.ts';
+import { bookmarkSection } from './bookmark-section.ts';
 import { archiveSection } from './archive-section.ts';
 import { lockSection } from './lock-section.ts';
 import { removeSection } from './remove-section.ts';
 import { retiredSection } from './retired-section.ts';
 import { alignSection, linkLabelSection, widthsSection } from './layout-section.ts';
 import { drawMiniBoards } from './mini-board.ts';
+import { edgesSection } from './edges-section.ts';
+import { flowSection } from './flow-section.ts';
+import { layoutControlSection } from './layout-control-section.ts';
+import { commandLensSection } from './command-lens-section.ts';
+import { appWindowSection } from './app-window-section.ts';
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
@@ -69,7 +74,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'note-bubble': noteBubbleSamples,
   region: regionSamples,
   // The compact bar and its pill behind their flag (stage5-follow-ups FE_02); off, today's bar.
-  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags())),
+  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags()), flagOn('nodeEdges', pageFlags())),
 };
 
 const patterns = PATTERNS.filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));
@@ -144,7 +149,7 @@ function build(): void {
   if (flagOn('chatPanel', flags)) main.append(chatSection(fx));
   if (flagOn('toolbarMenu', flags)) main.append(toolbarSection(fx));
   if (flagOn('openFolder', flags)) main.append(folderSection());
-  if (flagOn('cardFlag', flags)) main.append(flagSection(fx));
+  if (flagOn('cardBookmark', flags)) main.append(bookmarkSection(fx));
   if (flagOn('retiredMarker', flags)) main.append(retiredSection(fx));
   if (flagOn('linkLabels', flags)) main.append(linkLabelSection(fx));
   if (flagOn('alignSetting', flags)) main.append(alignSection(fx));
@@ -176,10 +181,16 @@ function build(): void {
   if (flagOn('updateSignals', flags)) main.append(updateSignalsSection(fx)); // last of all, so no section moves
   if (flagOn('bigTitles', flags) && flagOn('markdownMore', flags)) main.append(bigTitlesSection(fx)); // last of all, so no section moves
   if (flagOn('oneChangeTab', flags) && flagOn('proposals', flags) && flagOn('cardUpdates', flags)) main.append(oneTabSection(fx)); // last of all, so no section moves
+  if (flagOn('nodeEdges', flags)) main.append(edgesSection(fx)); // last of all, so no section moves
+  if (flagOn('nodeEdges', flags) && flagOn('skins', flags)) main.append(commandLensSection(fx)); // after the edges, so no section moves
+  if (flagOn('flowBranches', flags) || flagOn('flowDirection', flags)) main.append(flowSection(fx)); // BE_01; last of all, so no section moves
+  if (flagOn('layoutControl', flags)) main.append(layoutControlSection(fx, flagOn('flowDirection', flags))); // FE_07; last of all, so no section moves
+  if (flagOn('nodeEdges', flags) && flagOn('appWindow', flags)) main.append(appWindowSection(fx, flagOn('skins', flags))); // FE_08; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }
 
 defineBoardElements();
 defineChatElements();
-build();
+// The two elements the board defines on first use (`#ui` elements.ts), defined before any section draws one.
+void Promise.all([defineAppFrame(), defineImageView()]).then(build);

@@ -4,6 +4,7 @@
 // them (`fromLine`): a card is its `id`.
 import type { ActEvent, LedgerEvent } from './ledger.ts';
 import { actCard, CONTAINER_PLACES, isContainerAct, LATER_REGION } from './ledger.ts';
+import { isLibraryIcon } from './view.ts';
 import { retireContext } from './retire-rules.ts';
 import { accessKey, accessName, containerKey, openRequestOf, revokeProblem } from './access-rules.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
@@ -28,7 +29,8 @@ export interface LedgerIndex {
   proposals: Map<number, { id: number; ver: number }>;
   /** Agent ids that have joined (D-027). */
   agents: Set<string>;
-  /** Board or container (`accessKey`) -> the agent whose v3 line created it. v2 lines made none. */
+  /** Board or container (`accessKey`) -> the agent whose line created it. A line with no agent id (a format-2 line,
+   * migrated) makes none. */
   creators: Map<string, string>;
   /** Board or container (`accessKey`) -> the agents that hold it now (api.md 81-82). A container:
    * its creator and every grant, minus revocations. A board: its creator, every agent granted the
@@ -37,6 +39,8 @@ export interface LedgerIndex {
   holders: Map<string, Set<string>>;
   /** `grant-request` seq -> the request, and the seq of the act that answered it. */
   requests: Map<number, GrantRequest>;
+  /** A library icon's name -> the hash of the drawing its latest `icon` line names (api.md 185). */
+  icons: Map<string, string>;
 }
 
 /** A grant request: for `region` on `board`, or with no `region` for the whole board. */
@@ -47,7 +51,7 @@ export interface GrantRequest {
 
 export const emptyIndex = (): LedgerIndex => ({
   seq: 0, maxId: 0, boards: new Map(), nodes: new Map(), cards: new Map(), retired: new Map(), retiredRegions: new Set(), proposals: new Map(),
-  agents: new Set(), creators: new Map(), holders: new Map(), requests: new Map(),
+  agents: new Set(), creators: new Map(), holders: new Map(), requests: new Map(), icons: new Map(),
 });
 
 /** The board number of card `id` (api.md 125), or undefined for an unknown card. */
@@ -87,8 +91,8 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
     case 'region':
       if (!ix.boards.has(e.board)) p.push(formatLedgerWords.boardUnknown(e.board));
       else if (ix.retiredRegions.has(containerKey(e.board, e.region.id))) p.push(formatLedgerWords.regionIdContainerWasRetired(e.region.id));
-      // The built-in Later is every board's own (api.md 67); older lines keep their meaning.
-      if (e.v >= 6 && e.region.id === LATER_REGION && !ix.boards.get(e.board)?.has(LATER_REGION))
+      // The built-in Later is every board's own (api.md 67).
+      if (e.region.id === LATER_REGION && !ix.boards.get(e.board)?.has(LATER_REGION))
         p.push(formatLedgerWords.regionIdIsTheBoard(LATER_REGION));
       break;
     case 'node': nodeContext(ix, e, p, name); break;
@@ -106,6 +110,13 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
       else if (!ix.boards.has(e.board)) p.push(formatLedgerWords.boardUnknown(e.board));
       else if (e.head > ix.seq) p.push(formatLedgerWords.headTheLedgerIsAt(ix.seq));
       break;
+    // A name is given once (api.md 185): an agent's line for a held name with another drawing is refused; only the
+    // person accepts a changed drawing. The same drawing again is a replay.
+    case 'icon': {
+      const held = ix.icons.get(e.name);
+      if (e.by === 'agent' && held !== undefined && held !== e.hash) p.push(formatLedgerWords.iconNameIsTaken(e.name));
+      break;
+    }
     case 'propose': verAtMost(e.id, e.ver); break;
     case 'reply': case 'park': node(e.id); break;
     case 'join':
@@ -124,6 +135,8 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
 
 /** A card line: its board and container, a number not used before, and the next version. */
 function nodeContext(ix: LedgerIndex, e: Extract<LedgerEvent, { type: 'node' }>, p: string[], name: CardName): void {
+  // A library icon is named only once an `icon` line says which drawing it is (api.md 185).
+  if (e.node.icon !== undefined && isLibraryIcon(e.node.icon) && !ix.icons.has(e.node.icon)) p.push(formatLedgerWords.nodeIconNotInLibrary(e.node.icon));
   const regions = ix.boards.get(e.board);
   if (!regions) p.push(formatLedgerWords.boardUnknown(e.board));
   else if (ix.retiredRegions.has(containerKey(e.board, e.node.region))) p.push(formatLedgerWords.nodeRegionContainerWasRetired(e.node.region));
@@ -170,9 +183,19 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
     }
     // Send, and the person's marks on a whole board (api.md 135, 138), name a board that exists; a Send's
     // answers were read up to a line the ledger already holds (api.md 169).
-    case 'send': case 'archive': case 'restore': case 'lock': case 'unlock':
+    case 'send': case 'archive': case 'restore': case 'lock': case 'unlock': case 'skin':
       if (!ix.boards.has(e.board!)) p.push(formatLedgerWords.boardUnknown(e.board));
       else if (e.head !== undefined && e.head > ix.seq) p.push(formatLedgerWords.headTheLedgerIsAt(ix.seq));
+      break;
+    // An ask carries notes written before it (api.md 188); which ones it may carry is the action layer's to judge.
+    case 'ask':
+      if (!ix.boards.has(e.board!)) p.push(formatLedgerWords.boardUnknown(e.board));
+      else if (e.lines!.some((seq) => seq > ix.seq)) p.push(formatLedgerWords.linesTheLedgerIsAt(ix.seq));
+      break;
+    // A flow's direction, on one container or the whole board (api.md 189).
+    case 'direction':
+      if (!ix.boards.has(e.board!)) p.push(formatLedgerWords.boardUnknown(e.board));
+      else if (e.region !== undefined) region();
       break;
     case 'grant': case 'deny': {
       const r = ix.requests.get(e.request!);
@@ -194,9 +217,9 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
   switch (e.type) {
     case 'board':
       if (!ix.boards.has(e.board)) ix.boards.set(e.board, new Set());
-      if (e.v !== 2 && e.agent !== undefined) create(ix, e.board, e.agent);
+      if (e.agent !== undefined) create(ix, e.board, e.agent);
       break;
-    case 'region': indexRegion(ix, e.board, e.region.id, e.v !== 2 ? e.agent : undefined); break;
+    case 'region': indexRegion(ix, e.board, e.region.id, e.agent); break;
     case 'node': {
       const known = ix.nodes.get(e.id);
       if (known) { known.ver = e.ver; break; }
@@ -216,6 +239,7 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
       break;
     case 'propose': ix.proposals.set(e.seq, { id: e.id, ver: e.ver }); break;
     case 'join': if (e.agent !== undefined) ix.agents.add(e.agent); break;
+    case 'icon': ix.icons.set(e.name, e.hash); break;
     case 'grant-request':
       ix.requests.set(e.seq, {
         board: e.board, ...(e.region !== undefined && { region: e.region }), ...(e.agent !== undefined && { agent: e.agent }),
@@ -228,13 +252,13 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
 /** `agent` holds the board or container at `key`. */
 const hold = (ix: LedgerIndex, key: string, agent: string) => ix.holders.set(key, (ix.holders.get(key) ?? new Set()).add(agent));
 
-/** `agent`'s v3 line created the board or container at `key`: it is its creator and a holder. */
+/** `agent`'s line created the board or container at `key`: it is its creator and a holder. */
 function create(ix: LedgerIndex, key: string, agent: string): void {
   ix.creators.set(key, agent);
   hold(ix, key, agent);
 }
 
-/** A region id seen for the first time is a new container; a v3 writer creates it, and so holds
+/** A region id seen for the first time is a new container; an agent id that writes it creates it, and so holds
  * its board too (D-034). */
 function indexRegion(ix: LedgerIndex, board: string, region: string, agent: string | undefined): void {
   const regions = ix.boards.get(board);

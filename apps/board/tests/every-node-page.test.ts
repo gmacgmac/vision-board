@@ -6,11 +6,12 @@ import assert from 'node:assert/strict';
 import type { LedgerEvent } from '#format';
 import { answeredIds, applyEvent, boardData, foldLedger, pageConditions } from '#actions';
 import { numberedView } from '../src/board/board-data.ts';
+import { LEDGER_FORMAT } from '#format';
 
 const at = '2026-10-10T09:00:00Z';
 const agent = { by: 'agent', agent: 'a-pricing1' } as const;
 let seq = 0;
-const line = (f: object): LedgerEvent => ({ v: 11, seq: (seq += 1), at, ...f }) as LedgerEvent;
+const line = (f: object): LedgerEvent => ({ v: LEDGER_FORMAT, seq: (seq += 1), at, ...f }) as LedgerEvent;
 const card = (n: number, kind: string) => line({ ...agent, type: 'node', board: 'b', id: n, ver: 1, node: { region: 'r', kind, title: `Card ${n}` } });
 const act = (n: number, action: string, text?: string) => line({ by: 'person', type: 'act', action, id: n, ver: 1, ...(text && { text }) });
 

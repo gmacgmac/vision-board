@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-17 (§ The engine: `flowDirection` and `flowBranches` reach `show_layout`, node-overhaul BE_01); 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -224,7 +224,7 @@ createEngine({ dir, name?, warn?, flags?, readOnly? }): PluginEngine   // apps/b
 ```
 
 `dir` is the board's data folder, one per bot or project, and the only place it reads or writes: the ledger, the agents'
-hashes and `images/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
+hashes, `images/` and `icons/`. `name()` is the folder as the person reads it (`list_boards` answers it as `project`; default `dir`).
 `warn(message)` takes the ledger's warnings (default stderr). `flags` holds the flags the engine reads itself, each at its
 default (`packages/format/src/flags.ts` `FLAGS`) when left out:
 
@@ -235,8 +235,20 @@ default (`packages/format/src/flags.ts` `FLAGS`) when left out:
 | `insertBetween` | on | A `node` item of `write_board` may carry `insert` |
 | `singleAgent` | off | One agent per folder: no sign-up, no grants, no scoping (§ The bot) |
 | `followOtherWriters` | on | `watch` and a held read hear another program's writes to `dir` (`watch`, below) |
+| `flowDirection` | off | `show_layout` answers a `flow` laid out the way it runs (`directionOf`: across or down; the view's half draws it) |
+| `flowBranches` | off | `show_layout` answers a flow's branches on their own rows, and a branching `row` or `column` as a flow, as the view draws them |
 
 Flag names are plain strings in `plugin.d.ts` (`{ [name: string]: boolean }`), so a new flag is never a change to the seam, and a name the engine does not know is ignored (`apps/board/tests/plugin-types.test.ts` "a new flag leaves the types alone"; `apps/board/tests/engine-switches.test.ts` "every flag the engine reads is in the spec").
+
+**One engine per `dir`, and the ledger's format** (D-103). Open a `dir` with one engine at a time, and never let a second
+program write its ledger while the engine is open: the engine takes no lock (open point 14). When `createEngine` opens a
+`dir` it may write (`readOnly` left out, or answering false), it first migrates an older ledger there to the current
+format, line for line, with a copy of the file as it was in `dir`'s `backups/` (`apps/board/server/ledger-migrate.ts`;
+`api.md` § Migration). A `dir` opened read-only is never migrated: its ledger is upgraded in memory as it is read, and
+nothing is written. A ledger written by a newer Vision Board is read-only whatever `readOnly` says: every read says
+`readOnly: true` and every write answers `read-only` in words saying a newer Vision Board wrote it, until the plugin is
+updated. Proven by `apps/board/tests/ledger-migrate-open.test.ts` "a host's engine migrates a dir it may write",
+"a host's engine on a newer build's ledger".
 
 **Read-only** (D-085 7). `readOnly()` is asked on every call, so you flip it in place: no new engine, no reload. While it
 answers true, every write, your person's through `route` and your bot's through `tools.call`, answers the problem
@@ -247,6 +259,8 @@ through `notify`, `error`, and writes nothing, on the same path as standalone's 
 an answer, a key, a note, a flag; seen marks stay in the view's memory). Naming your bot (`POST agents`, § The bot) is
 a write too: do it while open. Left out, the engine is never read-only and no answer carries `readOnly`. Proven by
 `read-only.spec.ts` "readOnly: an engine made read-only", "readOnly: asked on every call", "readOnly: the host flips it".
+
+**The icon library** (api.md 185, 186). A node may name an icon from the project's library, `x-` then what it shows; the drawings are files in `dir/icons/`, one `<name>.svg` each, and the ledger's `icon` lines say which drawing a name means. `list_icons` and `add_icon` are standalone's for now (`x-hosts`), so your bot gets neither tool; a node naming a library icon still draws when its file is in `dir/icons/`, because its first use writes the `icon` line. Every file is checked again each time it is read: one put there by hand, by git or by a sync is used only if it is exactly the form the board writes, and one that fails, or no longer matches the ledger's hash for its name, draws a plain tile and is never served. `createEngine` takes no folder for it; the standalone server's `EngineOptions.icons` points its engines at the project's `.visionboard/icons/`, shared by every ledger (§ Standalone's own). Proven by `apps/board/tests/icon-library.test.ts`.
 
 | Member | Promise | Proven by |
 |---|---|---|
@@ -344,7 +358,8 @@ name them for the bot with the id in front (`vision-board_write_board`); the ski
 
 A bot under a host gets `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`, `list_open`, `check_responses`,
 `request_grant` and `write_board`, as `x-hosts` in `packages/format/schema/openapi.json` says. It does not get `join` (you name it),
-`list_apps` (the app host's) or `read_attachment` (the standalone chat's). No tool answers ✓ or ✗, or approves: those are the
+`list_apps` (the app host's), `read_attachment` (the standalone chat's), or `list_icons` and `add_icon` (the project's icon
+library, api.md 186, the standalone server's until the engine takes its `icons` folder). No tool answers ✓ or ✗, or approves: those are the
 person's, through `route`, and refused to a bot. Proven by `tools.spec.ts` "tools.list", "tools.call: every listed tool",
 "tools.call: an input", `engine-hooks.spec.ts` "route:".
 
@@ -451,6 +466,22 @@ wear different colours and modes. Proven by `host-styling.spec.ts` "scope: on th
 
 **Live.** Change a property, or your mode, while the board is mounted, and it follows at once, with no remount and no call.
 Proven by `host-styling.spec.ts` "live:".
+
+**Skins** (D-100). A board has a skin, which the board sets on its root as `data-vb-skin` from the board's own record; a
+skin is `--vb-*` values only (`packages/tokens/src/skins.css`), never a rule of its own. Every colour a property above feeds
+keeps your property in front in every skin, and so do the faces below, so what you set wins over a skin's look (D-094).
+The skin, the node's tones and their contrast are measured in the view's sheet as you load it, light and dark, in Chromium
+and WebKit (the same spec's sweep, per skin). Proven by `token-contrast.spec.ts` "a skin's values reach the board's root",
+`apps/board/tests/plugin-theme.test.ts` "a host's colours and faces win over a skin".
+
+**Fonts** (D-102). The board's own type is four faces under the SIL Open Font License: Figtree and Bricolage Grotesque
+(the default skin's text and titles), Space Grotesk and JetBrains Mono (Command Lens's titles and labels). The folder
+does not bring them yet: your check of a plugin's stylesheet refuses `@font-face` and any `url()` but `data:`, so the
+view's sheet declares no face and loads no file (`vite.plugin.config.ts` `hostTakesNoFontFaces`), and each of the
+node's type tokens (`--vb-font-text`, `--vb-font-display`, `--vb-font-label`) falls back to your `--host-font` or
+`--host-font-mono`, else the system's stacks. Give `--host-font` and the board draws in your face in every skin, as
+it does today. How a host lets a plugin bring its own faces is open point 15. Proven by
+`apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope", "the view bundle is one file".
 
 **Contrast** (D-009). The board's own pairs meet APCA tiers, measured with APCA-W3 0.0.98G-4g, light and dark. Your colours
 are your promise: in each mode you give, measured the same way, your pairs meet these. A property you leave out counts as the
@@ -566,7 +597,7 @@ The standalone page and server are a host, but these are theirs alone. A host of
 |---|---|
 | `MountedBoard.board`, `BoardControls` (`apps/board/src/board/mount.ts`) | `#board`'s `mount` gives it for `App.svelte`'s page door (`rebuild`, `idle`) and `tests/pages/` |
 | `BoardHost.page`, `BoardPage`, `BoardPageParts` (`host.ts`) | Its address, the board last looked at, its folder, theme and Chat button in the header, and help naming this repo's commands. Left out, the board opens its first board, the header reflows, and its words say only what any person can act on (`engine-hooks.spec.ts` "the folder: nothing") |
-| `EngineOptions.ledger`, `EngineOptions.onSend`, `Engine.ledger`, `Engine.agents`, `Engine.dir` (`apps/board/server/engine/engine.ts`) | Its server opens the ledger under its own lock and runs chat sessions and the app host beside the engine |
+| `EngineOptions.ledger`, `EngineOptions.icons`, `EngineOptions.onSend`, `Engine.ledger`, `Engine.agents`, `Engine.dir` (`apps/board/server/engine/engine.ts`) | Its server opens the ledger under its own lock and runs chat sessions and the app host beside the engine |
 
 ## Not covered
 
@@ -621,8 +652,13 @@ Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
 13. **A bot's own file writes.** `readOnly` stops every write through the engine. A bot that writes pictures straight into
     `images/` (open point 1) is stopped only by the host's own file rules while the board is read-only.
 14. **A lock of the host's own.** Standalone takes the ledger's lock on Edit, so two computers never write one ledger; the
-    engine takes none. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
+    engine takes none, and § The engine now states the rule it migrates on: one engine opens a `dir` at a time. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
     the lock in the seam. With `followOtherWriters` off, such a second writer is not even heard until the engine's next call.
+15. **The board's faces under a host** (D-102; § Theme and host styling, Fonts). The host's stylesheet check refuses
+    `@font-face` and any `url()` but `data:`, so the folder brings no face. Either the check lets a plugin's sheet name a
+    `woff2` inside its own folder (a host change, then the folder carries `fonts/`), the faces travel as `data:` in a
+    second sheet the manifest names (about 240 KB, loaded with the view whether a skin uses them or not), or a host gives
+    `--host-font` and the board never needs them. Open: the maintainer's ruling.
 
 ## What nclite needs
 

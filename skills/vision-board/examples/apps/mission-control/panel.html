@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Live event mission control</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: var(--color-background-primary, Canvas);
+    --panel: var(--color-background-secondary, color-mix(in srgb, CanvasText 5%, Canvas));
+    --ink: var(--color-text-primary, CanvasText);
+    --soft: var(--color-text-secondary, color-mix(in srgb, CanvasText 70%, Canvas));
+    --line: var(--color-border-secondary, color-mix(in srgb, CanvasText 15%, Canvas));
+    --radius: var(--border-radius-md, 10px);
+    /* The app's own palette: one accent, and three status colours that are its subject. */
+    --accent: light-dark(#0b6b5c, #5fd4bd);
+    --ok: light-dark(#18794e, #4cc38a);
+    --warn: light-dark(#8a5a00, #f0b429);
+    --bad: light-dark(#b42318, #ff7a6b);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 13px/1.4 var(--font-sans, system-ui, sans-serif); overflow: hidden; }
+  main { height: 100%; padding: 14px 14px 12px; display: grid; gap: 12px; grid-template-rows: auto 1fr; grid-template-columns: 1fr; }
+  body.wide main { grid-template-columns: 1fr 320px; padding: 18px; gap: 16px; }
+  header { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; }
+  h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: 0.01em; }
+  .live { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--bad); }
+  .live::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 5px; }
+  .sum { margin-left: auto; color: var(--soft); font-variant-numeric: tabular-nums; }
+  .sum b { color: var(--ink); font-weight: 600; }
+  .feeds { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); align-content: start; overflow: auto; padding: 2px; }
+  body.wide .feeds { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+  .feed { text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 9px 10px 8px; cursor: pointer; display: grid; gap: 4px; border-left: 3px solid var(--state); }
+  .feed:hover { background: color-mix(in srgb, var(--ink) 6%, var(--panel)); }
+  .feed[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .feed:focus-visible, button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .feed[data-state="ok"] { --state: var(--ok); } .feed[data-state="warn"] { --state: var(--warn); } .feed[data-state="bad"] { --state: var(--bad); }
+  .name { font-weight: 600; display: flex; justify-content: space-between; gap: 6px; }
+  .name span:last-child { color: var(--state); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .src { color: var(--soft); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  svg.spark { width: 100%; height: 26px; display: block; }
+  body.wide svg.spark { height: 44px; }
+  .spark path { fill: none; stroke: var(--state); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+  .nums { display: flex; gap: 10px; color: var(--soft); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .nums b { color: var(--ink); font-weight: 600; }
+  aside { display: none; min-height: 0; flex-direction: column; gap: 12px; }
+  body.wide aside { display: flex; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; min-height: 0; }
+  h2 { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--soft); }
+  #log { flex: 1; overflow: auto; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+  li { display: grid; grid-template-columns: auto 1fr; gap: 8px; font-size: 12px; }
+  li time { color: var(--soft); font-variant-numeric: tabular-nums; }
+  .raise { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  button.go { font: inherit; font-weight: 600; color: var(--bg); background: var(--accent); border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button.go:hover { filter: brightness(1.1); }
+  button.go[disabled] { opacity: 0.5; cursor: default; }
+  #said { color: var(--soft); font-size: 12px; }
+  .bar { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
+  body.wide .bar { display: none; }
+  .bar #pick { flex: 1; min-width: 0; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  main:has(.bar:not([hidden])) { grid-template-rows: auto 1fr auto; }
+  .from li { grid-template-columns: 1fr; padding: 6px 8px; border-left: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 4px; }
+</style>
+<main>
+  <header><h1>Cup final · live</h1><span class="live">ON AIR</span><span class="sum" id="sum"></span></header>
+  <div class="feeds" id="feeds" role="group" aria-label="Feeds"></div>
+  <aside>
+    <section><h2>Selected feed</h2><div id="detail">Pick a feed.</div>
+      <div class="raise"><button class="go" id="raise" disabled>Raise on the board</button><span id="said" aria-live="polite"></span></div></section>
+    <section id="board" hidden class="from"><h2>From the board</h2><ul id="replies"></ul></section>
+    <section id="log"><h2>Events</h2><ul id="events"></ul></section>
+  </aside>
+  <div class="bar"><span id="pick">Pick a feed, then raise it on the board.</span><button class="go" id="raise2" disabled>Raise</button></div>
+</main>
+<script>
+  // ---- the board: JSON-RPC 2.0 over postMessage (MCP Apps' shape) --------------------------------
+  let nextId = 1;
+  const waiting = new Map();
+  const send = (method, params, wantsAnswer = true) => new Promise((resolve, reject) => {
+    const message = { jsonrpc: '2.0', method, params };
+    if (wantsAnswer) { message.id = nextId++; waiting.set(message.id, { resolve, reject }); } else resolve();
+    parent.postMessage(message, '*');
+  });
+  function look(ctx) {
+    if (!ctx) return;
+    for (const [k, v] of Object.entries(ctx.styles?.variables ?? {})) document.documentElement.style.setProperty(k, v);
+    if (ctx.theme) document.documentElement.style.colorScheme = ctx.theme;
+  }
+  addEventListener('message', (e) => {
+    if (e.source !== parent) return;
+    const m = e.data ?? {};
+    if (m.id !== undefined && waiting.has(m.id)) {
+      const w = waiting.get(m.id); waiting.delete(m.id);
+      return m.error ? w.reject(m.error) : w.resolve(m.result);
+    }
+    if (m.method === 'ui/notifications/host-context-changed') look(m.params);
+    if (m.method === 'vision-board/notifications/reply') heard(m.params);
+  });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') send('ui/notifications/escape', {}, false); });
+
+  // ---- the feeds: simulated here, so the app needs no keys and no network -------------------------
+  const FEEDS = [
+    ['CAM-1', 'Stadium wide', 8.0], ['CAM-2', 'Touchline left', 8.0], ['CAM-3', 'Touchline right', 8.0], ['CAM-4', 'Goal cam north', 6.0],
+    ['CAM-5', 'Goal cam south', 6.0], ['SAT-1', 'Satellite backup', 12.0], ['COM-1', 'Commentary', 0.3], ['GFX-1', 'Graphics return', 4.0],
+  ].map(([id, name, target]) => ({ id, name, target, rate: target, loss: 0, lag: 40 + Math.random() * 30, trouble: 0, history: Array(40).fill(target) }));
+  const events = [];
+  let selected = null;
+  const stateOf = (f) => (f.rate < f.target * 0.25 || f.loss > 5 ? 'bad' : f.rate < f.target * 0.8 || f.loss > 1 ? 'warn' : 'ok');
+  const WORD = { ok: 'OK', warn: 'Degraded', bad: 'Down' };
+  const clock = () => new Date().toTimeString().slice(0, 8);
+
+  function tick() {
+    for (const f of FEEDS) {
+      const before = stateOf(f);
+      if (f.trouble > 0) f.trouble -= 1;
+      else if (Math.random() < 0.012) f.trouble = 8 + Math.floor(Math.random() * 14);
+      const hit = f.trouble > 0 ? (f.trouble > 12 ? 0.1 : 0.6) : 1;
+      f.rate = Math.max(0, f.target * hit * (0.96 + Math.random() * 0.08));
+      f.loss = f.trouble > 0 ? 1.5 + Math.random() * (f.trouble > 12 ? 9 : 3) : Math.random() * 0.2;
+      f.lag = 40 + Math.random() * 25 + (f.trouble > 0 ? 180 : 0);
+      f.history.push(f.rate); f.history.shift();
+      const now = stateOf(f);
+      if (now !== before) events.unshift({ at: clock(), text: `${f.id} ${now === 'ok' ? 'recovered' : now === 'warn' ? 'degraded' : 'went down'}` });
+    }
+    events.length = Math.min(events.length, 30);
+    draw();
+  }
+
+  // ---- drawing -----------------------------------------------------------------------------------
+  const $ = (id) => document.getElementById(id);
+  const spark = (f) => {
+    const max = f.target * 1.1 || 1;
+    return 'M' + f.history.map((v, i) => `${(i / (f.history.length - 1) * 100).toFixed(1)} ${(30 - (v / max) * 28).toFixed(1)}`).join(' L');
+  };
+  const line = (f) => `${f.id} (${f.name}): ${WORD[stateOf(f)].toLowerCase()}, ${f.rate.toFixed(1)} of ${f.target} Mbps, ${f.loss.toFixed(1)}% packet loss, ${Math.round(f.lag)} ms, at ${clock()}`;
+
+  function build() {
+    $('feeds').innerHTML = FEEDS.map((f) => `<button class="feed" data-id="${f.id}" aria-pressed="false">
+      <span class="name"><span>${f.id}</span><span class="word"></span></span><span class="src">${f.name}</span>
+      <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"><path/></svg>
+      <span class="nums"><span><b class="rate"></b> Mbps</span><span><b class="loss"></b>% loss</span><span><b class="lag"></b> ms</span></span></button>`).join('');
+    $('feeds').addEventListener('click', (e) => { const b = e.target.closest('.feed'); if (b) pick(b.dataset.id); });
+  }
+  function draw() {
+    let down = 0, soft = 0;
+    for (const f of FEEDS) {
+      const el = $('feeds').querySelector(`[data-id="${f.id}"]`), s = stateOf(f);
+      if (s === 'bad') down += 1; else if (s === 'warn') soft += 1;
+      el.dataset.state = s;
+      el.setAttribute('aria-pressed', String(f.id === selected));
+      el.querySelector('.word').textContent = WORD[s];
+      el.querySelector('path').setAttribute('d', spark(f));
+      el.querySelector('.rate').textContent = f.rate.toFixed(1);
+      el.querySelector('.loss').textContent = f.loss.toFixed(1);
+      el.querySelector('.lag').textContent = Math.round(f.lag);
+    }
+    $('sum').innerHTML = `<b>${FEEDS.length - down - soft}</b> ok · <b>${soft}</b> degraded · <b>${down}</b> down`;
+    $('events').innerHTML = events.length ? events.map((e) => `<li><time>${e.at}</time><span>${e.text}</span></li>`).join('') : '<li><span>Nothing yet.</span></li>';
+    const f = FEEDS.find((x) => x.id === selected);
+    $('detail').textContent = f ? line(f) : 'Pick a feed.';
+    $('pick').textContent = f ? line(f) : 'Pick a feed, then raise it on the board.';
+    $('raise').disabled = $('raise2').disabled = !f;
+  }
+  function pick(id) {
+    selected = selected === id ? null : id;
+    $('said').textContent = '';
+    draw();
+    send('vision-board/save-state', { state: { selected } }).catch(() => {});
+  }
+
+  // ---- out to the board, and back ----------------------------------------------------------------
+  async function raise() {
+    const f = FEEDS.find((x) => x.id === selected);
+    if (!f) return;
+    try {
+      await send('vision-board/note', { text: `From mission control. ${line(f)}. What should we do?` });
+      $('said').textContent = 'Added as your note on this card.';
+    } catch (err) {
+      $('said').textContent = err?.code === -32601 ? 'This board can\'t take notes from an app yet.' : (err?.message ?? 'The board refused.');
+    }
+    $('pick').textContent = $('said').textContent;
+  }
+  $('raise').addEventListener('click', raise);
+  $('raise2').addEventListener('click', raise);
+  const told = new Set();
+  function heard(p) {
+    if (!p || told.has(p.seq) || typeof p.text !== 'string') return;
+    told.add(p.seq);
+    $('board').hidden = false;
+    const li = document.createElement('li');
+    li.textContent = p.text;
+    $('replies').prepend(li);
+    events.unshift({ at: clock(), text: 'The board replied' });
+  }
+
+  new ResizeObserver(() => document.body.classList.toggle('wide', innerWidth >= 860)).observe(document.documentElement);
+  build(); draw(); setInterval(tick, 1000);
+  send('ui/initialize', { protocolVersion: '2026-01-26', appCapabilities: {} }).then((r) => {
+    look(r?.hostContext);
+    const saved = r?.hostContext?.['vision-board/state'];
+    if (saved && typeof saved.selected === 'string' && FEEDS.some((f) => f.id === saved.selected)) selected = saved.selected;
+    draw();
+    return send('ui/notifications/initialized', {}, false);
+  }).catch(() => {});
+</script>
+</html>

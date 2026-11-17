@@ -64,8 +64,9 @@ export const litReplies = (replies: readonly CardReply[] | undefined, cardUnseen
 /** A list of notes and the agent's replies as one conversation, oldest first, top to bottom
  * (review-polish ruling 8 and decision 8): each note then its replies by `seq`, a reply naming none
  * of the notes (an orphan) by its `seq` among them. The card's block and pin read it through
- * `notesView`; the conversation window reads it for a card or a whole container (ruling 6). */
-export function conversation(notes: readonly ItemNote[], replies: readonly CardReply[]): NotesEntry[] {
+ * `notesView`; the conversation window reads it for a card or a whole container (ruling 6). `asked`: the notes Ask now
+ * sent (the conversation box, FE_03), which read "· Asked now" in place of "· Sent". */
+export function conversation(notes: readonly ItemNote[], replies: readonly CardReply[], asked?: ReadonlySet<number>): NotesEntry[] {
   const mine = new Set(notes.map((x) => x.seq));
   const byTime = [...replies].sort((a, b) => a.seq - b.seq);
   const orphans = byTime.filter((r) => r.to === undefined || !mine.has(r.to)).map((r): OrphanEntry => ({ ...replyEntry(r), orphan: true }));
@@ -75,7 +76,7 @@ export function conversation(notes: readonly ItemNote[], replies: readonly CardR
     for (; o < orphans.length && orphans[o]!.seq < x.seq; o += 1) entries.push(orphans[o]!);
     const answers = byTime.filter((r) => r.to === x.seq).map(replyEntry);
     // History once sent or answered (`locked`, popovers-larger-thread ruling 5): grey and read-only.
-    const past = x.sent ? ' · Sent' : x.locked ? ' · Answered' : '';
+    const past = asked?.has(x.seq) ? nodeNotesWords.askedNow : x.sent ? ' · Sent' : x.locked ? ' · Answered' : '';
     entries.push({
       seq: x.seq, index: i + 1, sent: x.locked === true || x.sent === true, text: x.text, at: x.at,
       who: `${KIND_WORD[x.kind]} ${i + 1}${x.nodes ? nodeNotesWords.cards(x.nodes.length) : ''}${past}`,

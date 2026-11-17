@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-17 (show_layout works a flow out the way it runs and with its branches on rows, node-overhaul BE_01: 133); 2026-11-16 (a container's seen is the page's alone, never stored, point 308: 187 rewritten, `mark_seen` takes a card or a board only; D-054 stands); 2026-11-16 (one ledger format, node-overhaul BE_03, D-103 3: the reader, the schema and the fold know format 20 only; an older line is refused with words to migrate it; points 6, 11, 66, 90, 118, 129, 141, 178 and every "Only adds" say so); 2026-11-16 (ledger v20, node-overhaul T_01: Bookmark, a board's skin, a node's icon and tone, the icon library and its two operations, a seen container, Ask now, a flow's direction: 182-189; point 11 says format 20); 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -47,7 +47,8 @@ packages/format/schema/openapi.json               every operation, input, output
 
 ## Schemas
 
-5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/4/<file>`.
+5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/<LEDGER_FORMAT>/<file>`
+   (today `.../ledger/20/<file>`).
    `.invalid` is reserved (RFC 2606), so it is plainly a name and is never fetched. Every `$ref`
    uses the target's `$id`. API body schemas live under `.../schema/api/<file>` and version with
    `openapi.json` `info.version`, not with the ledger.
@@ -57,10 +58,10 @@ packages/format/schema/openapi.json               every operation, input, output
    `unevaluatedProperties: false`. `$defs/stored` is a ledger line: `allOf: [stamp, stampAgent,
    core, rules?, storedOnly]`, closed the same way. `storedOnly` holds the server-resolved
    integer `n`, `ver`, `from`, `to`, `board` (taken from the path, never sent), `key`, and `by`
-   as a `const` (who may write the event). Any `if`/`then` sits in its own piece (`stampAgent`
-   for the v2/v3 agent rule, `rules` for per-action rules), because ajv stops counting a
-   piece's fields as known when its `if`/`then` fails, which would turn one bad field into a
-   list of "unknown field" errors. No field is listed twice, and a sent body can never set a
+   as a `const` (who may write the event). A rule that can fail on a value sits in its own piece
+   (`stampAgent` for the agent id, `rules` for per-action rules), because ajv stops counting a
+   piece's fields as known when the piece fails, which would turn one bad field into a list of
+   "unknown field" errors. No field is listed twice, and a sent body can never set a
    stamped field (`v`, `seq`, `at`, `by`, `agent`, `person`).
 7. **What gets closed.** Every terminal object schema (the outer `sent` and `stored` wrappers,
    and leaf objects such as `node`, `region`, `bundle`) has `type: "object"` and
@@ -83,10 +84,15 @@ packages/format/schema/openapi.json               every operation, input, output
     - limits: node and board title 200, region title 80, node body 8000, text and reason 4000,
       summary 2000, link label 80, agent label 80, tags 12 of 40, lanes 12 of 40, columns 1-12,
       sources 20 of 500, propose source 500, park bundle fields 4000, key 64, person 80
-11. **Versions.** `LEDGER_FORMAT` is 4 (v3 below, v4 in 58). Every change to a ledger schema
-    bumps it and the `$id` path. Readers accept every `v` they know (2, 3 and 4); each format only
-    adds, so older lines stay valid. On a v2 line `agent` is any non-blank name (the fixtures say
-    `kiro`); from v3 it is an agent id (`if`/`then` on `v`).
+11. **Versions: one format.** `LEDGER_FORMAT` is 20 (`packages/format/src/ledger.ts`; each format's additions are in
+    the "Ledger vN" sections below). Every change to a ledger schema bumps it and the `$id` path. The reader, the
+    schema and the fold know this one format (D-103 3): `common.schema.json` `stamp.v` is `const` 20, and
+    `eventProblems` refuses a line with no `v` or an older one with one problem, words that say to migrate the ledger
+    (`npm run ledger:migrate`, 181; `format-ledger.ts` `olderFormat`), its other fields unchecked. Older ledgers are
+    migrated when they are opened for writing (§ Migration, 176-181), and read through the same chain in memory when
+    they are not; a ledger written in a newer format opens read-only (180). The stamped `agent` is an agent id; an
+    agent's line with none was drawn in format 2 and makes no creator (177). Held by `schema-v20.test.ts` ("a line one
+    format below the current one") and `legacy-folds.test.ts`.
 12. **Where ajv runs.** `Ajv2020`, strict mode on, `discriminator: true`, only in tests and in the
     server's I/O layer (`apps/board/server`). Never from a front door the page imports, so it never
     reaches the page bundle (rule 15).
@@ -242,7 +248,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 | operationId | Method and path | Who | Does |
 |---|---|---|---|
-| `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq, locked? }], head }`; `seq` is that board's own last line; `locked` on a locked board (139); `ledger` reads another ledger of the folder (113b) |
+| `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq, locked?, skin? }], head }`; `seq` is that board's own last line; `locked` on a locked board (139); `skin` when not `default` (183); `ledger` reads another ledger of the folder (113b) |
 | `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty); `locked` on a locked board (139); `ledger` reads another ledger (113b) |
 | `show_node` | `GET /api/boards/{board}/nodes/{n}` | anyone | Every version of node `n`, its notes, replies, proposals, park bundle, links, container and size; `linked=true` adds linked nodes; `ledger` reads another ledger (113b) |
 | `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note |
@@ -254,7 +260,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `request_grant` | `POST /api/grants` | agent | Ask the person for write access to a board, or to one container on it (85) |
 | `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `append`, `retire` (126); per-item results |
 | `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8); a `send` also hands the board's chat session the answers (121) |
-| `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87) |
+| `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87); never a container (187) |
 | `put_board` | `PUT /api/boards/{board}` | person | `{ title, summary? }`: create the board when the id is new, rename it when it exists (90) |
 | `retire_cards` | `POST /api/boards/{board}/retire` | person | `{ cards }` or `{ region }`: the person removes cards, or a container and its cards, with the same `retire` line an agent writes (141) |
 | `watch_board` | `GET /api/boards/{board}/events` | page | Server-sent events: `change` with data `{ seq }` per append |
@@ -281,6 +287,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `call_app_tool` | `POST /api/apps/{app}/calls` | person | `{ tool, arguments? }`: run one of an app's tools for its panel; MCP's tool result (153) |
 | `get_panel_state` | `GET /api/boards/{board}/nodes/{n}/panel-state` | person | `{ state? }`: the value app card `n`'s panel last saved, left out when none (157) |
 | `put_panel_state` | `PUT /api/boards/{board}/nodes/{n}/panel-state` | person | `{ state }`: keep the panel's value for app card `n`, in place of the one before; `{ bytes }` (157) |
+| `list_icons` | `GET /api/icons` | anyone | `{ builtIn, library, problems? }`: the icons a node may name, built-in and the project's library; `paths=true` adds each library icon's checked path data (the page's); an agent's secret or the person's cookie (186) |
+| `add_icon` | `POST /api/icons` | agent | `{ name, title, svg, key? }`: add a drawing to the project's icon library, reduced to path data and checked; `{ name, hash }`, `replayed` when the name already has that drawing (186) |
 
 41. Reads take no credentials. With a Bearer secret, `list_open`, `check_responses` and `pending`
     cover only the containers the caller holds, so one agent is never told to answer another's
@@ -377,7 +385,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v4 additions: notes beside cards (2e_FE_01)
 
 58. `LEDGER_FORMAT` becomes 4 and every ledger `$id` moves to `.../schema/ledger/4/`; `openapi.json`
-    `info.version` becomes 1.1.0. Only adds: v2 and v3 lines stay valid.
+    `info.version` becomes 1.1.0. Only adds; an older ledger is migrated (176).
 59. **A note** is the person's `comment`, or a `context` with `text`. It is named for ever by that
     act's `seq`. A card holds at most one note not yet sent: a second `comment` or `context` with
     text on it is refused (`invalid`, pointer `/n`) until a `send` on its board comes after the
@@ -404,7 +412,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v5 additions: a note on a group of cards (3_FE_02)
 
 62. `LEDGER_FORMAT` becomes 5 and every ledger `$id` moves to `.../schema/ledger/5/`; `openapi.json`
-    `info.version` becomes 1.2.0. Only adds: v2 through v4 lines stay valid.
+    `info.version` becomes 1.2.0. Only adds; an older ledger is migrated (176).
 63. **A note on a group** is a `comment` or `context` act that carries `nodes` (two or more
     distinct item numbers, each once, on one board) in place of `n` and `ver`: the lasso's
     selection bar offers Comment on two or more selected cards (3_FE_02 ruling 3). It is one note,
@@ -429,15 +437,15 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v6 additions: moving cards between containers (3_FE_03)
 
 66. `LEDGER_FORMAT` becomes 6 and every ledger `$id` moves to `.../schema/ledger/6/`; `openapi.json`
-    `info.version` becomes 1.3.0. Only adds: v2 through v5 lines stay valid. **`move`** is a new
+    `info.version` becomes 1.3.0. Only adds; an older ledger is migrated (176). **`move`** is a new
     person-only act: `move { n, region }` puts one card in a container, `move { nodes, region }`
     puts a group (two or more, as in 63) in one, in a single act. `ver` is optional on `n` and not
     allowed with `nodes`. Agents cannot move (rule 8); they redraw.
 67. **Where it may go.** `region` is a container on the cards' board, or `later`, the board's
     built-in **Later**: every board has one, last, laid out as a grid, which the page works out
-    from the fold. No agent draws it and it is never stored as a region: from v6 a `region` line
-    with id `later` is refused (`invalid`); a board whose older lines drew one keeps it, and that
-    frame is its Later. Later takes only items that can be saved for later (the server refuses any
+    from the fold. No agent draws it and it is never stored as a region: a `region` line
+    with id `later` is refused (`invalid`); a ledger whose agent drew one before format 6 stops its
+    migration (177). Later takes only items that can be saved for later (the server refuses any
     other card, pointer `/region`). Every card a move names is on the board the act was sent to.
 68. **The person's move wins.** A card's container is the person's latest `move`, else the region
     of its latest version, so an agent's newer version naming its old region does not pull it
@@ -462,7 +470,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v7 additions: a note on, and a place for, a whole container (3_FE_04)
 
 71. `LEDGER_FORMAT` becomes 7 and every ledger `$id` moves to `.../schema/ledger/7/`; `openapi.json`
-    `info.version` becomes 1.4.0. Only adds: v2 through v6 lines stay valid. **A container act**
+    `info.version` becomes 1.4.0. Only adds; an older ledger is migrated (176). **A container act**
     is a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin` that names `board` +
     `region` in place of `n`; it carries no `n`, `ver` or `nodes`. These actions named no `region`
     before v7, so a `region` on one of them is what makes it a container act. All are person-only
@@ -526,7 +534,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v8 additions: board access, then container access (BE_03, D-034)
 
 81. `LEDGER_FORMAT` becomes 8 and every ledger `$id` moves to `.../schema/ledger/8/`; `openapi.json`
-    `info.version` becomes 1.6.0. Only adds: v2 through v7 lines stay valid. **Holders** (replaces
+    `info.version` becomes 1.6.0. Only adds; an older ledger is migrated (176). **Holders** (replaces
     23) are folded from the ledger, never stored anywhere else (`LedgerIndex.creators` and
     `holders`, keyed by `accessKey`: the board's id, or `containerKey` for a container). A
     container's holders are the agent whose line created the region plus every agent the person
@@ -617,13 +625,13 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v9 additions: the person's board (navigation BE_01, D-034)
 
 90. `LEDGER_FORMAT` becomes 9 and every ledger `$id` moves to `.../schema/ledger/9/`; `openapi.json`
-    `info.version` becomes 1.8.0. Only adds: v2 through v8 lines stay valid. **The person writes a
+    `info.version` becomes 1.8.0. Only adds; an older ledger is migrated (176). **The person writes a
     `board` line** through `put_board`, `PUT /api/boards/{board}` (`x-agent: false`, the person
     cookie, 20), body `{ title, summary? }` (`api/board-request.schema.json`, the board event's
     `core`, closed). A new id creates the board (201); an existing one is renamed (200): its title
     and summary are replaced, `summary` left out clears it, and its containers, cards and holders
-    stay. Both answer the stored line. The stored `board` schema takes `by: person` from v9 only
-    (`$defs/rules`; the hand twin is `PERSON_TOO`). The ledger's context check (replacing 83's
+    stay. Both answer the stored line. The stored `board` schema takes `by: person` (its `by` enum;
+    the hand twin is `PERSON_TOO`). The ledger's context check (replacing 83's
     "from anyone") refuses a second `board` line from any agent and allows the person's.
 91. **Who may write on it** (D-034). A board the person made has no agent creator and no holders,
     so the permissions table (83) asks every agent for the board (`needs-grant`, `board` only) and
@@ -639,7 +647,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v10 additions: proposals, seen and append (proposals-seen-parking BE_01)
 
 93. `LEDGER_FORMAT` becomes 10 and every ledger `$id` moves to `.../schema/ledger/10/`;
-    `openapi.json` `info.version` becomes 1.9.0. Only adds: v2 through v9 lines stay valid. **The
+    `openapi.json` `info.version` becomes 1.9.0. Only adds; an older ledger is migrated (176). **The
     person rejects a proposal** with a new person act, `reject { n, proposal }` (`proposal` is the
     propose line's `seq`; no status, no reply word: it is not a decision on the item). Accepting
     stays the proposal's own action (`ack` or `drop`) carrying `proposal`. The act rules
@@ -1008,12 +1016,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 118. **The kind decides.** `LEDGER_FORMAT` becomes 11 and every ledger `$id` moves to
     `.../schema/ledger/11/`; `openapi.json` `info.version` becomes 1.13.0. The first format that
-    takes something away (11): a node names no `item`. A v11 stored line, or a sent node item,
+    takes something away (11): a node names no `item`. A stored line, or a sent node item,
     naming `item` (true or false) is refused with one problem at `/node/item` saying what replaced
-    it (`ITEM_REMOVED`; the node schema's `noItem`, which a test keeps equal to it). Lines from v2
-    to v10 that carry `item` stay valid (the node schema's `rules`, `if` on `v`), and every reader
-    ignores it: `boardView`, `show_node`'s versions, the card's change chips (`versionChanges`),
-    and an `append`, which carries no `item` onto the new line. `NODE_TYPES[kind].answer` is true
+    it (`ITEM_REMOVED`; the node schema's `noItem`, which a test keeps equal to it). A line from v10
+    or older that carried `item` loses it when migrated (177), so no reader sees one. `NODE_TYPES[kind].answer` is true
     for `question`, `decision` and `action`: they offer `ANSWER_ACTIONS` (ack, drop, comment,
     context, later); every other kind offers `NOTE_ACTIONS` (comment, context, later) and never
     blocks. The act rules (`validateAct`) check an act on a card against its kind's list only: a
@@ -1165,9 +1171,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     drawn head or agent head (`list_boards`' `seq` included). Only the person's page reads it, from
     `read_ledger` (130), and folds it with the action layer.
 129. **Modes.** `MODES` is `grid`, `flow`, `lanes`, `radial`, `column`, `row`. `list` is renamed
-    `column` (cards top to bottom in card order); a line from v11 or older naming `list` stays
-    valid and reads as `column` (`fromLine`, `RENAMED_MODES`); a v12 line or a sent item naming it
-    is refused with one problem saying so (`LIST_RENAMED`; the common schema's `notList`, a test
+    `column` (cards top to bottom in card order); a line from v11 or older naming `list` names
+    `column` once migrated (177); a line or a sent item naming it is refused with one problem saying so (`LIST_RENAMED`; the common schema's `notList`, a test
     keeps them equal), on a region and on a `mode` act alike. `row` lays a container's cards left to
     right in card order with no links needed (`packages/layout`, BE_02); `flow` keeps its name and
     means "follow the links". A sent container may leave `mode` out: a new one is a `row` (the
@@ -1223,8 +1228,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v13: card widths, `show_layout` (field-report batch 3 BE_01)
 
 132. **Card widths** (ruling 5). `LEDGER_FORMAT` becomes 13 and every ledger `$id` moves to
-    `.../schema/ledger/13/`; `openapi.json` `info.version` becomes 1.18.0. Only adds: v2 to v12
-    lines stay valid. A container's cards are `match` (every card in a column as wide as that
+    `.../schema/ledger/13/`; `openapi.json` `info.version` becomes 1.18.0. Only adds; an older ledger is migrated (176). A container's cards are `match` (every card in a column as wide as that
     column's widest card) or `own` (each card its own width): common `widths`, `WIDTHS`. The agent
     may set `widths` on a region item (the region schema, `Region.widths`, the View's region); the
     person sets it from the container's toolbar with the act `widths { board, region, widths }`,
@@ -1251,7 +1255,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     with the layout package from the same cards, links and mode the page draws
     (`packages/layout` `structureOf`, `LayoutStructure`, `CardCell`: node ids there, board numbers in
     the answer), taking every card at one size (280 by 120), so `crossing` is the arrangement's,
-    routed as the page routes it, not one viewer's measured picture.
+    routed as the page routes it, not one viewer's measured picture. With the engine's `flowDirection` flag a `flow` is
+    worked out the way it runs (`directionOf`, 189), and with `flowBranches` its branches on their own rows and a
+    branching `row` or `column` as a flow, as the page draws them (BE_01; `api-layout-direction.test.ts`).
     Not in `write_board`'s answer. The same refusals as `show_container`: an unknown board or
     container, or `later`, is `not-found`; a retired container is `not-found` too (nothing is
     arranged). The skill calls it once after the first draw of a `flow` or `lanes` container,
@@ -1264,8 +1270,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v14: archive a board (N39, 2026-10-12)
 
 135. **Archive and restore** (rulings 1-2). `LEDGER_FORMAT` becomes 14 and every ledger `$id` moves
-    to `.../schema/ledger/14/`; `openapi.json` `info.version` becomes 1.19.0. Only adds: v2 to v13
-    lines stay valid. Two person acts on a whole board, `archive { board }` and `restore { board }`,
+    to `.../schema/ledger/14/`; `openapi.json` `info.version` becomes 1.19.0. Only adds; an older ledger is migrated (176). Two person acts on a whole board, `archive { board }` and `restore { board }`,
     through `act` (no new operation: it is the person's route already, refuses every agent with
     `forbidden`, and records the line like `mode`); each names its `board` and nothing else (no `n`,
     `ver`, `region` or `nodes`; schema and `eventProblems` alike), the board must exist (context),
@@ -1303,8 +1308,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v15: lock a board (N40, 2026-10-12)
 
 138. **Lock and unlock** (rulings 1-2, 5). `LEDGER_FORMAT` becomes 15 and every ledger `$id` moves to
-    `.../schema/ledger/15/`; `openapi.json` `info.version` becomes 1.20.0. Only adds: v2 to v14 lines
-    stay valid. Two person acts on a whole board, `lock { board }` and `unlock { board }`, through
+    `.../schema/ledger/15/`; `openapi.json` `info.version` becomes 1.20.0. Only adds; an older ledger is migrated (176). Two person acts on a whole board, `lock { board }` and `unlock { board }`, through
     `act`, like `archive` and `restore` (135): each names its `board` and nothing else, the board must
     exist, `lock` one not locked and `unlock` one that is (`validateAct`, packages/actions `lock.ts`
     `lockRules`). Registry: `lock` "Lock board", `unlock` "Unlock board", neither asks first, neither
@@ -1340,9 +1344,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## Ledger v16: the person removes cards and containers (N24, 2026-10-12)
 
 141. **The person's retire** (rulings 1-2). `LEDGER_FORMAT` becomes 16 and every ledger `$id` moves
-    to `.../schema/ledger/16/`; `openapi.json` `info.version` becomes 1.21.0. Only adds: v2 to v15
-    lines stay valid. The person writes **the same `retire` line** an agent's item writes (126), not a
-    new act: the stored `retire` schema takes `by: person` from v16 only (`$defs/rules`; the hand twin
+    to `.../schema/ledger/16/`; `openapi.json` `info.version` becomes 1.21.0. Only adds; an older ledger is migrated (176). The person writes **the same `retire` line** an agent's item writes (126), not a
+    new act: the stored `retire` schema takes `by: person` (its `by` enum; the hand twin
     is `PERSON_TOO`, as for the person's `board` line, 90); the server writes no `agent` and no `key` on it. Why not an
     act: ruling 2 wants one path, and the `retire` line already carries everything every reader needs
     (`cards`, `region`), so the fold, the reads, the ledger's context rules, `show_node`'s and
@@ -1479,7 +1482,7 @@ limits and states) is [apps.md](./apps.md); this section is what the ledger and 
 
 150. **The app card and the person's allow** (rulings 3, 7, 11, 13). `LEDGER_FORMAT` becomes 17 and
     every ledger `$id` moves to `.../schema/ledger/17/`; `openapi.json` `info.version` becomes 1.27.0.
-    Only adds: v2 to v16 lines stay valid. A new kind, `app` (`KINDS`; `NODE_TYPES.app` tells: a note
+    Only adds; an older ledger is migrated (176). A new kind, `app` (`KINDS`; `NODE_TYPES.app` tells: a note
     and Later, a number, no status word), whose node carries `app: { id, w?, h? }` (`NodeBody.app`,
     `ViewNode.app`; common.schema.json `appRef`, its sizes `appWidth` and `appHeight` from
     `APP_SIZE`). An app card must name `app` and takes no `size` word; no other kind may name `app`
@@ -1554,8 +1557,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
 ## Ledger v18: hidden notes on a card (card-polish BE_01)
 
 156. **The person puts a card's notes away.** `LEDGER_FORMAT` becomes 18 and every ledger `$id` moves
-    to `.../schema/ledger/18/`; `openapi.json` `info.version` becomes 1.28.0. Only adds: v2 to v17
-    lines stay valid (schema.test.ts "v17 lines still read"). Two person acts, built line for line
+    to `.../schema/ledger/18/`; `openapi.json` `info.version` becomes 1.28.0. Only adds; an older ledger is migrated (176). Two person acts, built line for line
     like the flag (128): `notes-hide { n }` and `notes-show { n }`, one card, any kind, no `ver` (the
     mark stays through a redraw), no group, no container (act.schema.json `rules`; `eventProblems`,
     `CARD_MARKS`; schema-cases.ts `BROKEN`). The latest of a card's two decides, and a card has them
@@ -1604,8 +1606,11 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     change (the agent's latest version or reply on it, the card's times) is after the person's latest
     card `seen` or act naming any card now in the container (`LedgerState.looked`). So selecting one
     new or updated card in it, or acting on any of its cards, ends it for the whole container until
-    the agent changes one of its cards again; nothing is stored, a Send ends nothing, and a click on
-    the frame's empty space changes nothing. `clearedBy` is `select` and `act`. `freshCards(state,
+    the agent changes one of its cards again; nothing is stored and a Send ends nothing. A click inside
+    the container, on its background or its frame, clears the pill on the person's screen only (nodeEdges; point 308,
+    D-099 4): the page keeps, per board and container, the `seq` of the newest change it cleared, shows the pill again
+    when a later change arrives, and a reload shows it again; nothing is written, and a read-only board is left as it
+    is (`apps/board/src/board/cards/container-seen.ts`, `tests/pages/node-edges-seen.spec.ts`). `clearedBy` is `select` and `act`. `freshCards(state,
     board)` (conditions.ts) is the one list behind it, the toolbar's "N new" chip and each container's
     "3 new · 1 updated" pill: every card either row holds for that shows its tab, in board order, with
     its container and whether it is updated; a card both rows hold for is new only. Agents are never
@@ -1741,8 +1746,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
 ## Ledger v19: a Send counts only what went (point 377, 2026-11-02)
 
 169. **A Send says how far its answers were read.** `LEDGER_FORMAT` becomes 19 and every ledger `$id` moves to
-    `.../schema/ledger/19/`; `openapi.json` `info.version` becomes 1.37.0. Only adds: v2 to v18 lines stay valid
-    (`schema-v19.test.ts` "old ledgers read unchanged"). A `send` act may carry `head`, an integer from 0: the ledger line its
+    `.../schema/ledger/19/`; `openapi.json` `info.version` becomes 1.37.0. Only adds; an older ledger is migrated (176). A `send` act may carry `head`, an integer from 0: the ledger line its
     answers were read through (`resolve('answers')` answers it, `#actions` `AnswersText.head`). Only the answers up to it
     count as sent; a later one is the next Send's. Left out, the Send covers every answer up to its own line, as every
     Send before v19 did and as a Send no chat carried still does. `head` on any other action is refused, as is one past
@@ -1936,3 +1940,116 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     - **`followOtherWriters`** (engine flag, on): off, the engine never polls the ledger file (`ledger.ts` `follow`);
       another program's lines are read in at its next operation, as 160 says of every operation.
     - Held by the tests plugin.md names for each.
+
+## Migration (node-overhaul BE_02, D-103)
+
+176. **The rule.** When the ledger format changes, a migration brings older ledgers to the current format, line for
+    line. It never adds, removes or reorders a line, and never changes `seq`, `at`, `by`, `type`, a card's identity
+    (`n`) or a board id: lines point at each other by `seq`, and an agent holds a `head` (43). It is the one rewrite an
+    append-only ledger allows (D-017). Held by `packages/format/tests/migrate.test.ts` (over every frozen ledger) and
+    `packages/actions/tests/legacy-folds.test.ts`.
+177. **The chain.** `packages/format/src/migrate/` is the one module that knows the old formats: `UPGRADE_STEPS`, one
+    `UpgradeStep` per format (`from`, `to`, `up`: one parsed line in, one line out, or an `UpgradeStop` with its words).
+    No `v`: read as format 2 only when, so read, it upgrades to a well-formed line, else it stops. 2: the free-text
+    `agent` is dropped (no creator, as before; a `join` keeps an agent id and stops on any other name). 5: a container an
+    agent named `later` stops. 10: `node.item` goes. 11: mode `list` becomes `column`, on a container and in a `mode`
+    act. Every other format is restamped. `upgradeLine` returns a current line untouched; `upgradeLines` keeps a
+    current, blank, not-JSON or badly shaped line byte for byte, replaces `v` in place on the rest, and names the
+    stops and the newer lines. A test fails when a format below `LEDGER_FORMAT` has no step.
+178. **When it runs.** On open for writing, straight after the lock is taken (`apps/board/server/project.ts`; the first
+    ledger, opened by the server under its lock, is migrated and read again); on Edit of a ledger opened read-only,
+    after Edit takes the lock; under a host, when the engine opens a `dir` it may write (`createEngine`, no lock:
+    plugin.md § The engine). Never on a read-only open, never while another server holds the lock. A ledger opened
+    read-only, another ledger a read names, and lines another writer appends pass through `upgradeLines` in memory
+    (`ledger.ts` `readHeld`, `refresh`), so `read_ledger` and the page get current lines and nothing is written
+    (D-085). A line the chain stops on stops the whole migration: nothing is written, the server log says which line
+    and why, and the ledger is read through the chain in memory, the lines it stops on refused as older-format lines
+    (11).
+179. **How it writes** (`apps/board/server/ledger-migrate.ts` `migrateHeld`). The file is read once; every line current:
+    nothing is written and no backup made, so a second run is a no-op. The result is checked before anything is
+    replaced: as many lines, the same `seq`, `at`, `by`, `type`, `n` and `board` on every line, and no reader problem the
+    old file, upgraded in memory as the read-only open does, did not have. Then the new text goes to `ledger.jsonl.migrating` (flushed), the old bytes to
+    `backups/ledger.f<lowest>-<highest>.<head seq>.<UTC time>.jsonl` (flushed; `backups/` is git-ignored and moves with
+    the ledger, `data-folder.ts` `BACKUPS_DIR`), and the new file is renamed over the ledger and the folder flushed. A
+    file that changed meanwhile is not replaced. A crash before the rename leaves the original whole and a stale
+    `.migrating` file the next run deletes. Anyone following the file sees a new inode and reads it again (`reset`,
+    D-085 6). Held by `apps/board/tests/ledger-migrate.test.ts` and `ledger-migrate-open.test.ts`.
+180. **A newer format** (D-103 4). A line whose `v` is above `LEDGER_FORMAT` is its own kind to the reader
+    (`ReadLedger.newer`, not a problem; `validateLedger` still names it). Such a line, at open or appended later, makes
+    the ledger read-only (`Ledger.newer`, `readOnly`): the reads say `readOnly: true`, every write answers `read-only`
+    in words that say a newer Vision Board wrote it (`server-folders.ts` `newerLedgerPerson`, `newerLedgerAgent`), its
+    lock is let go, and Edit is refused (`conflict`) in the person's words, which the page shows as Edit's refusal.
+181. **The command.** `npm run ledger:migrate -- <folder> [--check | --undo]`: a project folder means each of its
+    ledgers, a ledger's folder that one. It migrates under each ledger's lock; `--check` says what would change (lines
+    by format) and exits 1 when anything would, writing nothing; `--undo` puts the newest backup back only while the
+    ledger's head `seq` is the one the backup was taken at, else refuses and says why (`apps/board/bin/ledger-migrate.ts`).
+
+## Ledger v20: the node overhaul's records (node-overhaul T_01, D-099, D-100, D-103)
+
+182. **Format 20, and the flag is Bookmark.** `LEDGER_FORMAT` becomes 20 and every ledger `$id` moves to
+    `.../schema/ledger/20/`; `openapi.json` `info.version` becomes 1.42.0. The person's private mark on one card is
+    `bookmark` and `unbookmark` (`CARD_MARKS`, key B, `ACTIONS`), as private as the flag was (128): no agent read, no
+    head, no seen, no answer. `flag` and `unflag` are no action of format 20, in the reader, the fold or the API's edge:
+    a line naming one is refused (`schema-v20.test.ts` "flag in a v20 line"). The chain's step 19 renames them, and
+    nothing else, so an older ledger migrates to the same boards with its flags as bookmarks (177; `migrate.test.ts`
+    "step 19", `schema-v20.test.ts` "a format-19 ledger with flag lines"). The fold is `bookmarks.ts` (`bookmarksOn`,
+    `LedgerState.bookmarks`, `BoardState.bookmarks`).
+183. **A board's skin** (D-100 1, 2). `SKINS`: `default` and `command-lens`. The `board` line may carry `skin`, set by
+    whoever makes the board (an agent's second `board` line is refused, so an agent sets it once; the person's
+    `put_board` may name one); the person's `skin` act `{ board, skin }` changes it. The latest line naming a skin wins,
+    kept in its own map (`skins.ts` `foldSkin`, `skinOf`), so a rename, a `board` line with none, keeps it
+    (`skin.test.ts`). Absent, `default`, and every read leaves it out then: `get_board` `state.skin` and
+    `list_boards`' `skin` say any other. Not private and not an answer: it lights no Send, and it concerns the agents
+    that hold the board. A skin changes how a node looks, never what it does.
+184. **A node's icon and tone** (D-100 3). `icon`: a built-in name (`ICON_NAMES`, about fifty generic nouns the page
+    draws, FE_01) or a library name, `x-` then what it shows (`LIBRARY_ICON_PATTERN`, `isLibraryIcon`); no built-in
+    starts `x-`, so a built-in added later never clashes with a project's icon (`node-look.test.ts`). `tone`: one of
+    `TONES` (`teal`, `blue`, `violet`, `magenta`, `amber`, `orange`, `green`, `slate`) or a hue, a whole OKLCH hue
+    angle from 0 to 359: 360, a fraction and a number written as text are refused, so each colour has one spelling;
+    the tints are the board's (T_02). Both optional, on any kind, in the View too. An unknown value is a problem that
+    names the field (`view-shape.ts`, the twin of `common.schema.json` `iconName` and `tone`).
+185. **The project's icon library** (D-100 3). Drawings live in `.visionboard/icons/` (`data-folder.ts` `ICONS_DIR`,
+    `ProjectFiles.icons`), shared by every ledger of the project; `icons` is a data-folder name, so no ledger is
+    called that. The ledger records which drawing a name means: `{ "type": "icon", "name": "x-encoder", "hash":
+    "<sha-256 hex>" }`, written by an agent (`add_icon`, or the server when a node first names a library icon) or by
+    the person, from format 20, accepting a changed drawing. It names no board and moves no board's head. The index
+    keeps each name's latest hash (`LedgerIndex.icons`). In context (`contextProblems`): a node naming a library icon
+    needs an `icon` line for it earlier in the ledger; an agent's line for a name the index holds with another hash is
+    refused (a name is given once; the same hash again is a replay); the person's is taken.
+186. **`list_icons` and `add_icon`.** `list_icons` (`GET /api/icons`, no credentials):
+    `{ builtIn, library, problems? }`, the built-in names and the library's names with titles; `paths=true` adds each
+    library icon's checked path data, for the page. `add_icon` (`POST /api/icons`, an agent): `{ name, title, svg,
+    key? }`, the drawing reduced to path data and checked, `{ name, hash }`, `replayed` when the name already has that
+    drawing. Standalone only for now (`x-hosts`). `add_icon` reduces the svg to paths (only `svg`, `title` and `path`;
+    presentation attributes dropped; anything else refused with what it was), writes `<name>.svg` in the fixed form only
+    where no file has that name, then the `icon` line; the same drawing again answers 200 `replayed`, another drawing
+    409 `conflict`, and `key` gives a retry the first answer. `list_icons` checks every file as it reads it: one that
+    fails, is missing or no longer matches the ledger's hash is under `problems` and its paths are never served. A
+    node's first use of a library icon this ledger has no line for writes that line before the node line
+    (`apps/board/server/icons.ts`; `icon-library.test.ts`).
+187. **A container's seen is never stored** (D-099 4, point 308; D-054 stands). A `seen` names a card's version or a
+    board up to a line (87), never a container: a `seen` line or a `mark_seen` body carrying `region` is refused as an
+    unknown field, as any other (`schema-v20.test.ts` "a seen naming a container", `api-v20.test.ts` "mark_seen refuses
+    a container"). A click inside a container clears its new-and-updated pill on the person's screen only, page-local
+    state as zoom is, until the container's next change (FE_02); `container.fresh` (158) is unchanged.
+188. **Ask now** (D-099 3, PLAN call 1). The person's `ask` act: `{ board, lines, context }`. `lines`: the `seq` of each
+    note of the person's it carried (a `comment`, a `context` with words, a note on several cards or on a container),
+    on that board, none removed, sent or asked before, each a line the ledger holds. `context`: what the agent was
+    given with it, one of `ASK_CONTEXTS` (`node`, `board`, `session`), so how much context the agent gets can change
+    with no format change. Written once the message went, as a Send is (D-075). It is not a Send: `lastSend` and
+    `sentHead` stay and the board's other answers wait. The fold keeps each board's asked lines (`asked.ts`): an asked
+    note is not unsent and no Send carries it again (`unsent.ts`, `pending.ts` `replyScope`), it locks as a sent one
+    (`note-lock.ts` `sentAfter`), and the one-unsent-note rule (59) counts it as sent, so the node takes a new one.
+    `check_responses` reports the note as it reports a sent one, and the `ask` line with its `context`; an `ask` ends a
+    `check_responses` wait as a Send does, for the agents its notes concern (`reads.ts` `wakes`). The agent
+    answers as before: a `reply` naming the note's `seq`, or a new version of the node (`ask-now.test.ts`). The
+    standalone server also hands the board's chat session in use the asked notes at once, with the board, as their own
+    message ("Asked now."): never the board's other answers, and no Send, so those still go with the next Send; while
+    its turn runs they ride with the next message (`chat-sessions.ts` `hearAsk`, `api-chat-ask.test.ts`). A Send's
+    round never carries an asked note again (`pending.ts` `replyScope` `asked`).
+189. **A flow's direction** (D-100 5). A region may carry `direction`, `across` or `down` (`DIRECTIONS`), set by the
+    agent with any redraw, on any region; the layout reads it for `flow` (BE_01). The person's `direction` act
+    `{ board, region?, direction }`, `direction` one of `across`, `down` or `auto`; no `region` means the whole board,
+    and `auto` clears their choice at that level. `view.ts` `directionOf(state, board, region)`, beside `widthsOf`: the
+    person's choice for the container, else theirs for the board, else the container's own, else `across`
+    (`LedgerState.directions`, `directions.ts`). No answer, no Send (`flow-direction.test.ts`).

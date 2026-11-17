@@ -219,3 +219,24 @@ test('layoutTooltip: a fixed frame has no layout icons, so no tip; the ids follo
   assert.match(template(region, { layoutTooltip: false }), /class="vb-mode-pop"/);
   assert.match(template(region), /vb-mode-tip/, 'on by default');
 });
+
+// ---- The one layout control (layoutControl flag, FE_07)
+test('layoutControl: one layout button, no radiogroup and no layout icons; the popover is its menu of radio tiles', () => {
+  const html = regionTemplate(region, { layoutControl: true });
+  assert.equal((html.match(/class="vb-mseg vb-layout-btn"/g) ?? []).length, 1, 'exactly one layout button');
+  assert.equal((html.match(/role="radio"/g) ?? []).length, 0, 'no per-layout icons');
+  assert.ok(!html.includes('radiogroup'));
+  assert.match(html, /aria-label="Layout: Flow" aria-haspopup="menu" aria-expanded="false" aria-controls="region-review-modes"/);
+  assert.match(html, /<div class="vb-mode-pop" id="region-review-modes" role="menu" aria-label="Layout for Review">/);
+  assert.equal((html.match(/role="menuitemradio" aria-checked="false" tabindex="-1" data-tile=/g) ?? []).length, MODES.length);
+  assert.ok(!html.includes('vb-dir-row'), 'no direction without the flowDirection choices');
+  assert.ok(!html.includes('vb-mode-tip'), 'the tips are the six icons\' own');
+});
+
+test('layoutControl with direction: Across, Down and Auto as radio choices that name their container; a fixed frame has no control', () => {
+  const html = regionTemplate(region, { layoutControl: true, direction: true });
+  const dirs = [...html.matchAll(/class="vb-dir" role="menuitemradio" aria-checked="false" tabindex="-1" data-dir="(\w+)" data-region="review"/g)];
+  assert.deepEqual(dirs.map((d) => d[1]), ['across', 'down', 'auto']);
+  assert.ok(!regionTemplate(region, { layoutControl: true, fixed: true }).includes('vb-layout-btn'));
+  assert.ok(!regionTemplate(region).includes('vb-layout-btn'), 'off: the six icons as before');
+});

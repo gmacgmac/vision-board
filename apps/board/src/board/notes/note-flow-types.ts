@@ -8,6 +8,7 @@ import type { Selection } from '../selection/index.ts';
 import type { AskDiscard } from './note-discard.ts';
 import type { AnchorDeps } from './note-anchor.ts';
 import type { ViewDeps } from './note-views.ts';
+import type { BoxDeps } from './note-box.ts';
 
 /** `frame`: a container on the board (3_FE_04): the bubble sits beside its title line (note-anchor.ts). */
 export interface NoteDeps extends ViewDeps, AnchorDeps {
@@ -34,6 +35,10 @@ export interface NoteDeps extends ViewDeps, AnchorDeps {
   world: HTMLElement;
   /** A press on a group pin selects the group's cards. */
   selection: Pick<Selection, 'select'>;
+  /** The conversation box (nodeEdges flag, FE_03): with it, a node's notes open one box to read and write, with Ask now. */
+  box?: BoxDeps;
+  /** The board shown: an app window's drawer is remembered open per board and node (app-drawer.ts). */
+  board?(): string;
 }
 
 /** What an act takes away: a card by id, a container by id. */
@@ -72,5 +77,10 @@ export interface NoteFlow {
    *  Archive; point 309): when that takes the open bubble's card (every card of a group's) or its
    *  container, and its words are unsaved, `leave()`; else true at once. True: go ahead. */
   leaveIf(gone: NoteGone): Promise<boolean>;
+  /** Whether app node `id`'s window has its drawer open (appWindow flag, app-drawer.ts). */
+  drawer(id: string): boolean;
+  /** Write `text` on node `id` as the person's note, joined to its note not yet sent (an app panel's note, app-cards.ts);
+   *  null when recorded, else the problem's words. */
+  write(id: string, text: string): Promise<string | null>;
   destroy(): void;
 }

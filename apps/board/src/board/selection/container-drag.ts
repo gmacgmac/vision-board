@@ -102,7 +102,7 @@ export function createContainerDrag(d: ContainerDragDeps): ContainerDrag {
         nodes.set(c.id, { ...c.box0, x: c.box0.x + last.x, y: c.box0.y + last.y });
       }
       // Routed as the settled board routes them: round the cards of each container (groups).
-      d.drawDrag({ ...carry.layout, nodes, routes: routeLinks(d.view().links, nodes, carry.layout.groups) });
+      d.drawDrag({ ...carry.layout, nodes, routes: routeLinks(d.view().links, nodes, carry.layout.groups, carry.layout.downward) });
     },
     async end(delta) {
       const c = carry;

@@ -12,10 +12,13 @@
 // so the page measures the card again. Browser only: the class is created inside defineVbAppFrame().
 import type { AppSize, AppStateValue, AppToolResult } from '#format';
 import { APP_ID, APP_PANEL_PATH, flagOn } from '#format';
-import type { AppBridge, AppLook } from './app-frame-core.ts';
+import type { AppBridge, AppLook, HostNotification } from './app-frame-core.ts';
 import { APP_FRAME_RESIZE_EVENT, createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
 import { KIND_ICON, svgIcon } from '../node/node-icons.ts';
+import type { StageHold } from './app-frame-stage.ts';
+import { holdStage } from './app-frame-stage.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
+import * as appFrameWords from '../words/app-frame.ts';
 
 export const VB_APP_FRAME_TAG = 'vb-app-frame';
 
@@ -40,6 +43,13 @@ export interface AppFrameWiring {
   /** The appFit flag: the height the panel tells (size-changed) is the frame's; left out, the flag's
    * default. Off, the frame is the size the agent drew. */
   fit?: boolean;
+  /** A pick in the panel becomes the person's note on its card (`vision-board/note`, appStage);
+   * left out, the request is refused. */
+  note?(text: string): Promise<void>;
+  /** The panel said it is ready: the page may tell it things now (`tell`). */
+  onReady?(): void;
+  /** The panel went on stage (true) or came back (false) (appStage). */
+  onStage?(on: boolean): void;
   /** Esc in the panel; left out, focus goes back to the card the frame is in. */
   onEscape?(): void;
   /** The frame loaded: the panel, or the route's refusal once the app went (the page reads the
@@ -61,8 +71,18 @@ export interface VbAppFrameElement extends HTMLElement {
   thaw(): void;
   /** The board's theme changed: a ready panel gets `host-context-changed` with what changed. */
   lookChanged(): void;
+  /** Send a ready panel one of the board's notifications; false when nothing was sent. */
+  tell(method: HostNotification, params: Record<string, unknown>): boolean;
+  /** The loaded panel leaves its card and fills the page, in the top layer (appStage): the same
+   * frame, never reloaded. `host`: the app window that holds the frame goes instead, its bar and
+   * drawer with it (appWindow, FE_08); left out, the frame alone under its own bar. Focus is held
+   * inside until Back or Esc (app-frame-stage.ts). Nothing while unloaded or already on stage. */
+  stage(host?: HTMLElement): void;
+  /** Back into its card; focus goes to the card. */
+  unstage(): void;
   readonly loaded: boolean;
   readonly frozen: boolean;
+  readonly staged: boolean;
 }
 
 /** The CSS property that resolves each kind of board token: fonts, text sizes, radii, colours. */
@@ -135,6 +155,57 @@ export function defineVbAppFrame(): void {
 
     get frozen(): boolean { return this.hasAttribute('data-frozen'); }
 
+    get staged(): boolean { return this.held !== undefined; }
+
+    /** The stage this panel is on (app-frame-stage.ts), while it is. */
+    private held: StageHold | undefined;
+
+    tell(method: HostNotification, params: Record<string, unknown>): boolean { return this.bridge?.post(method, params) ?? false; }
+
+    stage(host: HTMLElement = this): void {
+      if (!this.frame || this.staged) return;
+      this.thaw();
+      if (host === this) {
+        // The card keeps the room the panel leaves (CSSOM: the page's CSP refuses style attributes).
+        const box = this.getBoundingClientRect();
+        const k = this.offsetWidth ? box.width / this.offsetWidth : 1;
+        this.parentElement?.style.setProperty('min-height', `${Math.round(box.height / (k || 1))}px`);
+        this.bar();
+      }
+      this.held = holdStage(host, this, () => this.unstage(), () => this.bridge?.contextChanged());
+      this.bridge?.contextChanged();
+      this.wiring?.onStage?.(true);
+      this.frame.focus({ preventScroll: true });
+    }
+
+    unstage(): void {
+      const held = this.held;
+      if (!held) return;
+      this.held = undefined;
+      held.release();
+      if (held.host === this) this.parentElement?.style.removeProperty('min-height');
+      this.bridge?.contextChanged();
+      this.wiring?.onStage?.(false);
+      this.toCard();
+    }
+
+    /** The stage's bar: the app's name and Back to card. Made once, shown only on stage (CSS). */
+    private bar(): void {
+      if (this.querySelector('.vb-af-bar')) return;
+      const bar = document.createElement('div');
+      bar.className = 'vb-af-bar';
+      bar.innerHTML = `<span class="vb-af-bar-title"></span><button type="button" class="vb-pop-btn vb-af-back">${appFrameWords.backToCard}</button>`;
+      bar.querySelector('.vb-af-bar-title')!.textContent = this.label;
+      bar.querySelector('button')!.addEventListener('click', () => this.unstage());
+      this.prepend(bar);
+    }
+
+    /** The panel's size as it is told: the agent's, or on stage the room the frame has. */
+    private get told(): AppSize {
+      if (!this.staged || !this.frame) return this.size;
+      return { id: this.dataset.app ?? '', w: Math.round(this.frame.clientWidth), h: Math.round(this.frame.clientHeight) } as AppSize;
+    }
+
     private get label(): string { return this.dataset.label ?? ''; }
 
     private get size(): AppSize {
@@ -186,9 +257,10 @@ export function defineVbAppFrame(): void {
         callTool: (name, args) => (this.wiring ? this.wiring.callTool(name, args) : Promise.reject({ problem: 'not-found' })),
         saveState: (state) => (this.wiring?.saveState ? this.wiring.saveState(state) : Promise.reject({ problem: 'not-found' })),
         loadState: () => this.wiring?.loadState?.() ?? Promise.resolve(undefined),
-        hostContext: () => hostContext(this.wiring?.look?.() ?? readLook(this), this.size),
-        onEscape: () => (this.wiring?.onEscape ? this.wiring.onEscape() : this.toCard()),
-        onState: (s) => { if (s === 'ready') this.show(); },
+        hostContext: () => hostContext(this.wiring?.look?.() ?? readLook(this), this.told),
+        note: (text) => (this.wiring?.note ? this.wiring.note(text) : Promise.reject({ problem: 'not-found' })),
+        onEscape: () => (this.staged ? this.unstage() : this.wiring?.onEscape ? this.wiring.onEscape() : this.toCard()),
+        onState: (s) => { if (s === 'ready') { this.show(); this.wiring?.onReady?.(); } },
         ...((this.wiring?.fit ?? flagOn('appFit')) && { fitHeight: (h: number) => this.fitTo(h) }),
       });
       // Listen before the frame exists, so its first message is heard.
@@ -207,7 +279,7 @@ export function defineVbAppFrame(): void {
     }
 
     freeze(): void {
-      if (!this.frame || this.frozen) return;
+      if (!this.frame || this.frozen || this.staged) return;
       // Focus in the panel would be lost to an inert frame: it goes back to the card.
       if (document.activeElement === this.frame) this.toCard();
       this.toggleAttribute('data-frozen', true);
@@ -220,6 +292,7 @@ export function defineVbAppFrame(): void {
     }
 
     unload(): void {
+      this.unstage();
       this.thaw();
       window.removeEventListener('message', this.onMessage);
       window.removeEventListener('blur', this.onFocusMove);

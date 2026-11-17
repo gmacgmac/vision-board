@@ -4,17 +4,17 @@
 // (apps/board/tests/proposals.test.ts).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '#format';
+import { readLedger, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { acceptAllPlan, answerable, applyEvent, foldLedger, pageConditions, proposalRows } from '../src/index.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-const maker = lineMaker({ v: 10, at: '2026-10-08T13' });
+const maker = lineMaker({ at: '2026-10-08T13' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const node = (n: number, ver: number, kind = 'question') =>
-  agent({ type: 'node', board: 'b', n, ver, node: { region: 'r', kind, title: `Card ${n}`, item: true } });
+  agent({ type: 'node', board: 'b', n, ver, node: { region: 'r', kind, title: `Card ${n}` } });
 const propose = (n: number, action: string, reason: string, source?: string) =>
   agent({ type: 'propose', n, ver: 1, action, reason, ...(source && { source }) });
 
@@ -65,14 +65,14 @@ test('Accept all: the newest on each card not out of date, in card order; the re
 test('a decision on the card ends its proposals: no row is left for it', () => {
   maker.reset();
   const s = ledger();
-  applyEvent(s, { v: 10, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'person', type: 'act', action: 'ack', id: 3, ver: 1 });
+  applyEvent(s, { v: LEDGER_FORMAT, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'person', type: 'act', action: 'ack', id: 3, ver: 1 });
   assert.deepEqual(pageConditions(s, 'b').proposals.map((p) => p.n).sort(), [1, 2]);
 });
 
 test('a retire ends the proposals on its cards: no row is left for them', () => {
   maker.reset();
   const s = ledger();
-  applyEvent(s, { v: 10, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'agent', agent: A, type: 'retire', board: 'b', cards: [3, 2] });
+  applyEvent(s, { v: LEDGER_FORMAT, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'agent', agent: A, type: 'retire', board: 'b', cards: [3, 2] });
   assert.deepEqual(pageConditions(s, 'b').proposals.map((p) => p.n), [1]);
 });
 

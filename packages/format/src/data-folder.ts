@@ -23,6 +23,8 @@ export const IMAGES_DIR = 'images';
 export const APPS_DIR = 'apps';
 /** Each app card's saved panel state, one file per card (D-050). */
 export const APP_STATE_DIR = 'app-state';
+/** Copies of a ledger as it was before a migration rewrote it (D-103 2; `ledger:migrate --undo` puts one back). */
+export const BACKUPS_DIR = 'backups';
 /** The data folder's own git rules: the files above that must never be committed. */
 export const GITIGNORE_FILE = '.gitignore';
 /** The standalone chat's sessions index (repo-wide, PLAN decision 6). */
@@ -31,17 +33,20 @@ export const CHAT_SESSIONS_FILE = 'chat-sessions.json';
 export const PERMISSIONS_FILE = 'permissions.json';
 /** Files the person attached to a chat message (repo-wide, D-068). */
 export const ATTACHMENTS_DIR = 'attachments';
+/** The project's icon library: one checked drawing per name, shared by every ledger of the project (repo-wide, D-100 3,
+ * api.md 185). Committed with the project, never written by hand by an agent: only through `add_icon`. */
+export const ICONS_DIR = 'icons';
 /** The person's recent folders, in their home folder's data folder (api.md 110). */
 export const RECENT_FILE = 'recent.json';
 
 /** Every name inside a data folder, so a rule (verify, a ledger's name) can refuse to clash with one. */
 export const DATA_FOLDER_NAMES = [
-  LEDGER_FILE, AGENTS_FILE, LOCK_FILE, IMAGES_DIR, APPS_DIR, APP_STATE_DIR, GITIGNORE_FILE,
-  CHAT_SESSIONS_FILE, PERMISSIONS_FILE, ATTACHMENTS_DIR, RECENT_FILE,
+  LEDGER_FILE, AGENTS_FILE, LOCK_FILE, IMAGES_DIR, APPS_DIR, APP_STATE_DIR, BACKUPS_DIR, GITIGNORE_FILE,
+  CHAT_SESSIONS_FILE, PERMISSIONS_FILE, ATTACHMENTS_DIR, ICONS_DIR, RECENT_FILE,
 ] as const;
 
 /** The names that belong to one ledger's folder (what the move into `main/` carries, D-084 6). */
-export const PER_LEDGER_NAMES = [LEDGER_FILE, AGENTS_FILE, LOCK_FILE, IMAGES_DIR, APPS_DIR, APP_STATE_DIR, GITIGNORE_FILE] as const;
+export const PER_LEDGER_NAMES = [LEDGER_FILE, AGENTS_FILE, LOCK_FILE, IMAGES_DIR, APPS_DIR, APP_STATE_DIR, BACKUPS_DIR, GITIGNORE_FILE] as const;
 
 /** The first ledger of a project, and where an old-layout folder's ledger moves (D-084 1, 6). */
 export const MAIN_LEDGER = 'main';
@@ -75,6 +80,8 @@ export interface LedgerFiles {
   readonly images: string;
   readonly apps: string;
   readonly appState: string;
+  /** The migration's copies of the ledger as it was (D-103 2). */
+  readonly backups: string;
   readonly gitignore: string;
 }
 
@@ -87,6 +94,8 @@ export interface ProjectFiles {
   readonly chatSessions: string;
   readonly permissions: string;
   readonly attachments: string;
+  /** The project's icon library (api.md 185). */
+  readonly icons: string;
 }
 
 /** The person's own files, in their home folder. */
@@ -115,6 +124,7 @@ export function ledgerFiles(ledgerDir: string): LedgerFiles {
     images: join(ledgerDir, IMAGES_DIR),
     apps: join(ledgerDir, APPS_DIR),
     appState: join(ledgerDir, APP_STATE_DIR),
+    backups: join(ledgerDir, BACKUPS_DIR),
     gitignore: join(ledgerDir, GITIGNORE_FILE),
   };
 }
@@ -129,6 +139,7 @@ export function projectFiles(projectDir: string): ProjectFiles {
     chatSessions: join(root, CHAT_SESSIONS_FILE),
     permissions: join(root, PERMISSIONS_FILE),
     attachments: join(root, ATTACHMENTS_DIR),
+    icons: join(root, ICONS_DIR),
   };
 }
 

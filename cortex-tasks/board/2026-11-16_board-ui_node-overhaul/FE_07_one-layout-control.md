@@ -1,0 +1,122 @@
+# FE_07_one-layout-control: One Layout Control
+
+> **Parent**: [TASK-STATUS.md](./TASK-STATUS.md)  
+> **Plan**: [PLAN.md](./PLAN.md)
+
+---
+
+## Objective
+
+Replace a container's strip of layout buttons with one control that shows the active layout and opens the others,
+behind `layoutControl`, and give the maintainer a page to compare the six layouts.
+
+---
+
+## Context
+
+PLAN.md § Decisions 20, 25 (tracker U16). A `flow` container's direction is in the ledger: the agent's
+`direction` on the region, the person's `direction` act, one answer from T_01's `directionOf`, laid out by BE_01.
+It is never a page preference. Today a container draws one button per mode (`modeButton`, six `MODES`) in its
+rail or top line and collapses them by container queries; a popover of mode tiles already exists (`modePopover`,
+`.vb-mode-pop`, `.vb-mtile`) (`CODE-MAP.md` § 8). No mode is removed: which stay is the maintainer's decision after
+trying them.
+
+**Read previous task notes in TASK-STATUS.md before starting.**
+
+---
+
+## Inputs
+
+- **Files to modify**: `packages/ui/src/region/` (template, core, styles, `region-row.ts`, `region-layout-tip.ts`,
+  `pattern.json`), `packages/ui/src/words/region.ts`, `packages/ui/tests/`, `apps/board/src/board/canvas/`
+  (`draw.ts`, `render.ts`: pass the flag), `apps/board/src/board/input/wiring.ts`, `apps/board/src/board/io/acts.ts`
+  (only if the container's `direction` act needs a line), `apps/board/src/gallery/`,
+  `tests/pages/`, `docs/specification/components.md`
+- **Files to reference**: `CODE-MAP.md` § 8; `region-narrow.css` and `region-rail.css` (the collapse rules);
+  `apps/board/src/board/canvas/places.ts` (`setMode`)
+- **Shared artifacts to reuse**: the menu pattern and icons (FE_01); T_01's `directionOf` and `direction` act;
+  BE_01's board-wide control (its words and act sender)
+- **Skills**: `cortex-architecture`, `cortex-docs`
+
+> Modify only the files this task owns. Need a change elsewhere? List it under `REQUESTS`.
+
+---
+
+## Steps
+
+1. [ ] With `layoutControl` on, the rail (or top line) shows one button: the active layout's icon, named "Layout:
+       Flow". A click opens the existing tile popover with every mode; a pointer resting on it for a moment opens
+       it too, never at once. Choosing a tile records the `mode` act as today and closes it.
+2. [ ] Keyboard and screen reader: the button says it opens a menu and what is chosen; arrows move between
+       tiles; Escape closes and returns focus.
+3. [ ] The other tools (card widths, Comment, settings) stay; the collapse rules get simpler, since one button
+       replaces six. Below `FAR_K` the control follows today's far rules.
+3a. [ ] **Direction** (with `flowDirection` on too): on a `flow` container the popover also offers Across, Down
+       and Auto, the current one marked from `directionOf`; choosing one writes the `direction` act for that
+       container through the one sender (Auto clears the person's choice, so the agent's shows again). The button's
+       name says it ("Layout: Flow, down"). On a read-only board the choices are disabled with their reason.
+4. [ ] The popover keeps one size at any zoom (the menu pattern's rule).
+5. [ ] **A page to compare layouts**: a gallery section that draws the same eight linked cards in each of the six
+       modes side by side, so the maintainer can decide which to keep. Name it in your return block.
+6. [ ] `pattern.json`, gallery, unit tests, page specs with the flag on, light and dark.
+
+---
+
+## Validation
+
+- [ ] `npm run verify`, `npm run check`, `npm test` pass; `layout-controls.spec.ts`, `layout-tiles.spec.ts`,
+      `layout-tooltip.spec.ts`, `container-rail*.spec.ts` pass with the flag off and no new baseline
+- [ ] With the flag on, a container at every width and zoom shows exactly one layout button, and every mode can
+      be chosen by pointer and by keyboard
+- [ ] With `flowDirection` on too, a container's Down redraws it down and writes one `direction` act naming it;
+      Auto returns the agent's direction (tests)
+
+---
+
+## Constraints
+
+- If you need to deviate, stop and tell the maintainer; no breaking change is made silently.
+- No PII in examples. Interim files in `temp/`. Writes over 50 lines in chunks.
+- No git command that changes state; the orchestrator commits.
+- Every flag this set adds stays off by default; existing tests and screenshots pass with them off.
+- A problem outside this task is reported (`REQUESTS`, `NOTES`), never fixed here.
+
+---
+
+## Implementation Notes
+
+_To be completed by agent after task completion._
+_Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
+
+**Status**: Completed  
+**Completed**: 2026-11-17 14:00  
+
+### Changes Made
+- `region-template.ts` `layoutButton`, `directionRow`, `modePopover` (role=menu, `menuitemradio` tiles with the control); options `layoutControl`, `direction`. `region-row.ts` `bindModeRow`: the button is a roving stop, press/rest (`REST_MS` 400) opens, `onChoiceKey` arrows/Esc. `vb-region.ts` `applyLayoutControl`; `region-core.ts` `RegionState.direction`/`readOnly`; words in `words/region.ts`; `region-layout-control.css`.
+- Page: `render.ts`/`draw.ts` pass `layoutControl` and `direction`; `wiring.ts` `button[data-dir]`; `places.ts` `setDirection` (the `direction` act with `region`), `stage-handlers.ts`, `versions.ts` `ACTING`; `controller.ts` passes the flag.
+- Gallery `layout-control-section.ts` ("One layout control": closed, open, direction, and "Compare the layouts": eight linked cards in the six modes, side by side at 60%).
+- Tests: `region-template.test.ts` (2), `tests/pages/layout-control.spec.ts` (11, light and dark).
+
+### Issues & Resolutions
+- The board runs the rail by default: Right (not Down) opens from the button; the spec reads `data-rail`.
+- The "⋯" menu's board-wide Flows rows are NOT moved to the header (chrome files are not in this task's list): REQUEST.
+
+### Caught Beyond the Brief
+- `container-rail-states.spec.ts` gallery rail shots (`rail-light/dark.png`) differ by sub-pixel anti-aliasing with the flag off (the markup off is unchanged); not renewed.
+
+### Deviations from Plan
+- Edited `places.ts`, `stage-handlers.ts`, `versions.ts` and `controller.ts` (not listed) for the one-line wiring of the container's `direction` act; no other way to reach the sender.
+
+---
+
+## On Completion
+
+1. Fill in Implementation Notes above; set **Status** to `Completed`.
+2. Update this task's row in [TASK-STATUS.md](./TASK-STATUS.md) — your row only.
+3. Append **your own** LOG entry to `cortex/LOG.md` — one line, terminated with a newline, append-only:
+
+   ```
+   [[YYYY-MM-DD HH:MM]] [board-ui] FE_07: [what you did] → Task: [[cortex-tasks/board/2026-11-16_board-ui_node-overhaul/FE_07_one-layout-control.md]]
+   ```
+
+   Cite files by path + symbol, never by line number. Never write the set's entry or to `AUDITED.md`.

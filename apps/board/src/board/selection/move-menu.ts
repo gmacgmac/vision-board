@@ -8,7 +8,8 @@ import type { OpenMenu, StageBox } from '#ui';
 import { openMenu } from '#ui';
 import * as cardsWords from '../words/cards.ts';
 
-export interface MoveTarget { id: string; title: string; disabled?: boolean }
+/** One row: `title` is what it says, `name` what a screen reader says when that is longer (the width menu's letters). */
+export interface MoveTarget { id: string; title: string; name?: string; disabled?: boolean }
 
 export interface MoveMenuDeps {
   stage: HTMLElement;
@@ -18,8 +19,9 @@ export interface MoveMenuDeps {
 
 export interface MoveMenu {
   readonly open: boolean;
-  /** Show the list for `count` cards under `anchor` (stage pixels) and focus its first item. */
-  show(count: number, targets: readonly MoveTarget[], anchor: StageBox): void;
+  /** Show the list for `count` cards under `anchor` (stage pixels) and focus its first item; `name` is the list's
+   *  accessible name (the Move to list's by default: the width menu is the same list with other rows). */
+  show(count: number, targets: readonly MoveTarget[], anchor: StageBox, name?: string): void;
   close(): void;
   destroy(): void;
 }
@@ -39,9 +41,9 @@ export function createMoveMenu(d: MoveMenuDeps): MoveMenu {
     shown?.close(focusBack);
   }
 
-  function show(count: number, targets: readonly MoveTarget[], anchor: StageBox) {
+  function show(count: number, targets: readonly MoveTarget[], anchor: StageBox, name = cardsWords.moveCardTo(count)) {
     close(false);
-    el.setAttribute('aria-label', cardsWords.moveCardTo(count));
+    el.setAttribute('aria-label', name);
     for (const t of targets) {
       const b = document.createElement('button');
       b.type = 'button';
@@ -50,6 +52,7 @@ export function createMoveMenu(d: MoveMenuDeps): MoveMenu {
       b.tabIndex = -1;
       b.dataset.region = t.id;
       b.textContent = t.title;
+      if (t.name) b.setAttribute('aria-label', t.name);
       if (t.disabled) b.setAttribute('aria-disabled', 'true');
       el.append(b);
     }

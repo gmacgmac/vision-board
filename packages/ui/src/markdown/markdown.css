@@ -118,3 +118,14 @@ vb-node {
   font-size: var(--vb-text-sm); line-height: 1.45; color: var(--vb-ink); overflow-wrap: anywhere;
 }
 .vb-md-noimg code { font-family: var(--vb-font-mono); font-size: 0.95em; color: var(--vb-ink-strong); }
+
+/* Detail behind a disclosure triangle (cardDetails, spike): `+++ Label` to `+++`. Closed, only the
+   label shows, so a card scans as its title and a few lines; open, the detail sits under it. */
+.vb-md-details { margin-block: var(--vb-space-2) 0; border-top: 1px solid var(--vb-line); padding-top: var(--vb-space-2); }
+.vb-md-summary {
+  cursor: pointer; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--vb-ink);
+  border-radius: var(--vb-radius-sm);
+}
+.vb-md-summary:hover { color: var(--vb-ink-strong); }
+.vb-md-details[open] > .vb-md-summary { color: var(--vb-ink-strong); }
+.vb-md-detail { margin-top: var(--vb-space-2); }

@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { boardView, eventProblems } from '#format';
+import { boardView, eventProblems, LEDGER_FORMAT } from '#format';
 import {
   boardState, nodeDetail, openItems, pendingItems, replyText, responsesAfter, validateAct,
 } from '../src/index.ts';
@@ -14,19 +14,18 @@ import { A, scene } from './ledger-v3.ts';
 /** The shared scene, with v4 lines from here on, and a comment on item 1. */
 function withNote(text = 'Why per seat?') {
   const l = scene();
-  l.v = 4;
   const note = l.act({ action: 'comment', n: 1, ver: 1, text });
   return { l, note };
 }
 
 /** A candidate person act, as the server would stamp it, for `validateAct`. */
 const next = (l: ReturnType<typeof scene>, f: Partial<ActEvent>): ActEvent =>
-  ({ v: 4, seq: l.seq + 1, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act', action: 'ack', ...f } as ActEvent);
+  ({ v: LEDGER_FORMAT, seq: l.seq + 1, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act', action: 'ack', ...f } as ActEvent);
 
 const notesOn = (l: ReturnType<typeof scene>, n = 1) => boardState(l.state(), 'b').items.get(String(n))?.notes ?? [];
 
 test('shape: note-edit needs n, note and text; note-remove needs n and note; kind is comment or context', () => {
-  const base = { v: 4, seq: 9, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act' };
+  const base = { v: LEDGER_FORMAT, seq: 9, at: '2026-10-05T10:00:00Z', by: 'person', type: 'act' };
   assert.deepEqual(eventProblems({ ...base, action: 'note-edit', n: 1, note: 5, text: 'New' }), []);
   assert.deepEqual(eventProblems({ ...base, action: 'note-edit', n: 1, note: 5, text: 'New', kind: 'context' }), []);
   assert.deepEqual(eventProblems({ ...base, action: 'note-remove', n: 1, note: 5 }), []);

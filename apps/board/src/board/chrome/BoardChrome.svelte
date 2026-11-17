@@ -6,6 +6,13 @@
      list (archiveBoard flag). Notes open in a bubble beside their card (board/notes/notes.ts). Notices and
      confirmations are the host's (`notify`, `confirm`). The stage is the board's own element, which the
      framework-free board draws in. -->
+<script lang="ts" module>
+  import { lazyPart } from '../lazy.ts';
+
+  // Dialogs a person opens, loaded the first time (lazy.ts; performance.md): not in the page's start weight.
+  const boardDialog = lazyPart(() => import('./BoardDialog.svelte').then((m) => m.default));
+  const archivedDialog = lazyPart(() => import('./ArchivedDialog.svelte').then((m) => m.default));
+</script>
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
   import * as chromeBoardWords from '../words/chrome-board.ts';
@@ -13,13 +20,12 @@
   import type { BoardControls } from '../mount.ts';
   import Toolbar from './Toolbar.svelte';
   import ReplyPanel from './ReplyPanel.svelte';
-  import BoardDialog from './BoardDialog.svelte';
   import AccessRequests from './AccessRequests.svelte';
   import ProposalsBar from './ProposalsBar.svelte';
   import VersionBanner from './VersionBanner.svelte';
   import KeyHelp from './KeyHelp.svelte';
   import GoToCard from './GoToCard.svelte';
-  import ArchivedDialog from './ArchivedDialog.svelte';
+  import Lazy from './Lazy.svelte';
 
   let { chrome, board, send }: {
     chrome: Chrome;
@@ -33,6 +39,8 @@
   // svelte-ignore state_referenced_locally
   const { state: shown, flag, id, root, ids, pageWide } = chrome;
   const notReady = () => Promise.resolve(chromeBoardWords.theBoardIsNotReady);
+  /** A part that did not load: what wanted it is put back, so the next try loads again, and the person is told. */
+  const failed = (back: () => void) => () => { back(); chrome.notify(chromeBoardWords.partDidNotLoad, 'error'); };
 </script>
 
 <Toolbar
@@ -44,9 +52,11 @@
   onhide={() => board()?.toggleHide()}
   onsend={send}
   onrevoke={(agent) => board()?.access.revoke(undefined, agent) ?? Promise.resolve()}
-  onflagged={() => board()?.nextFlagged()}
+  onbookmarked={() => board()?.nextBookmarked()}
   onarchive={() => void board()?.boardEdit.archive()}
   onlock={() => void board()?.boardEdit.lock()}
+  onskin={flag('skins') ? (skin) => board()?.setSkin(skin) : undefined}
+  ondirection={flag('flowDirection') ? (direction) => board()?.setDirection(direction) : undefined}
 />
 {#if shown.past}
   <VersionBanner run={shown.past} {root} onback={() => void board()?.showVersion(null)} />
@@ -72,5 +82,9 @@
     onclose={() => board()?.go.close()} onpast={() => void board()?.go.openPast()} onstep={(dir) => board()?.go.step(dir)} />
 {/if}
 
-<BoardDialog onsave={(action, fields) => board()?.boardEdit.save(action, fields) ?? notReady()} />
-{#if flag('archiveBoard')}<ArchivedDialog onrestore={(b) => board()?.boardEdit.restore(b) ?? notReady()} />{/if}
+<Lazy part={boardDialog} when={!!shown.boardDialog} onfail={failed(() => { shown.boardDialog = null; })}
+  onsave={(action, fields) => board()?.boardEdit.save(action, fields) ?? notReady()} />
+{#if flag('archiveBoard')}
+  <Lazy part={archivedDialog} when={shown.archivedDialog} onfail={failed(() => { shown.archivedDialog = false; })}
+    onrestore={(b) => board()?.boardEdit.restore(b) ?? notReady()} />
+{/if}

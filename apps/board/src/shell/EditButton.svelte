@@ -2,7 +2,7 @@
      after the state chip on a full header, where there is room (styles/editing.css; under about 1500px its pencil
      alone, its word kept for screen readers and its tooltip, as the end group's buttons), or with `choose` a row of
      "⋯" at half and a third (header-tier.ts `edit`; among the fields moved from the bar, HeaderFields.svelte, so a
-     plain button as FlaggedChip's row is), which closes the menu first. The chip's own menu has it too
+     plain button as BookmarkedChip's row is), which closes the menu first. The chip's own menu has it too
      (EditChip.svelte). Pressed, it shows loading (a spinner, "Opening for editing…" or "Stopping…", aria-busy and
      aria-disabled, focus kept) until the server answers. Its icon is what it turns the ledger to: a pencil for Edit, the
      read-only eye for Stop editing: then the chip says Editing, or Read-only again; a refused

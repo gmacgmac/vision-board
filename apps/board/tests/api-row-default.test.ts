@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { compileSchema, schemaProblems, LEDGER_SCHEMA_BASE } from '../server/schema.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { LEDGER_FORMAT } from '#format';
 
 let h: Harness;
 let A: Joined;
@@ -38,7 +39,7 @@ test('the schema: a sent container may omit its mode, a stored line may not, and
   const sent = `${LEDGER_SCHEMA_BASE}events/region.schema.json#/$defs/sent`;
   const stored = `${LEDGER_SCHEMA_BASE}events/region.schema.json#/$defs/stored`;
   assert.deepEqual(schemaProblems(sent, { type: 'region', region: { id: 'a', title: 'A' } }), []);
-  const line = { v: 19, seq: 1, at: '2026-11-06T10:00:00.000Z', type: 'region', by: 'agent', agent: 'a-abcd1234', board: 'b', region: { id: 'a', title: 'A' } };
+  const line = { v: LEDGER_FORMAT, seq: 1, at: '2026-11-06T10:00:00.000Z', type: 'region', by: 'agent', agent: 'a-abcd1234', board: 'b', region: { id: 'a', title: 'A' } };
   assert.ok(schemaProblems(stored, line).length > 0);
   assert.deepEqual(schemaProblems(stored, { ...line, region: { id: 'a', title: 'A', mode: 'row' } }), []);
   const region = compileSchema(`${LEDGER_SCHEMA_BASE}events/region.schema.json#/$defs/region`).schema as any;

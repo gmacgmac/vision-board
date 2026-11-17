@@ -22,6 +22,8 @@ export const resetItsPlace = 'reset its place';
 export const proposed = (mark: string | undefined): string => `proposed ${mark}`;
 export const acceptedTheProposal = (mark: string): string => `accepted the proposal (${mark})`;
 export const turnedDownTheProposal = 'turned down the proposal';
+/** A history row with no "You" or "Agent" before it (the design review of DESIGN_01). */
+export const proposalWithdrawn = 'Proposal withdrawn: the node changed';
 export const allowedTheApp = 'allowed the app';
 export const stoppedTheApp = 'stopped the app';
 export const removedIt = 'removed it';

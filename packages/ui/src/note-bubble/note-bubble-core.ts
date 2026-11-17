@@ -12,7 +12,7 @@ import * as uiCommonWords from '../words/ui-common.ts';
 export type StageBox = Box;
 export type StageSize = Size;
 
-export type BubbleSide = 'right' | 'left' | 'below';
+export type BubbleSide = 'right' | 'left' | 'below' | 'above';
 
 /** Where the bubble goes, in stage pixels, and where its arrow meets the bubble's edge: `arrow`
  * is the distance down the side edge (right, left) or along the top edge (below). */
@@ -99,8 +99,10 @@ export function partAnchor(card: StageBox, at: StageBox): StageBox {
 /** `new`: no note yet (C or M on a card without one). `edit`: the card's note, not yet history.
  * `sent`: a note that is history (sent, or answered by the agent: ruling 5), only shown, with its
  * replies (the pin on it). `thread`: the conversation, every note and reply on the card or the
- * container, oldest first (review polish ruling 6: a click, Enter or Space on a note or a reply). */
-export type BubbleMode = 'new' | 'edit' | 'sent' | 'thread';
+ * container, oldest first (review polish ruling 6: a click, Enter or Space on a note or a reply).
+ * `conversation`: the conversation box (nodeEdges, D-099 3, FE_03): one node's thread with a reply field, Add note
+ * and Ask now; its template loads on first use (`loadConversation`). */
+export type BubbleMode = 'new' | 'edit' | 'sent' | 'thread' | 'conversation';
 
 /** Whether a bubble only shows: a sent note and the conversation are never typed in. They close with
  *  an × in the top corner, Esc or a click outside, and have no bottom row (review polish ruling 7). */
@@ -127,6 +129,31 @@ export interface BubbleInput {
   /** In `sent` mode: the note is history because the agent answered it, not because of a Send
    *  (popovers-larger-thread ruling 5), so its head says "answered". */
   answered?: boolean;
+  /** In `conversation` mode: the node's title, the tabs (none unless the node is in a note on several nodes), why Ask
+   *  now can't go now (`blocked`), and whether the latest note waits for the agent's answer. `text` is the words the
+   *  field holds (a draft carried to another tab). */
+  title?: string;
+  tabs?: readonly BubbleTab[];
+  blocked?: string | null;
+  waiting?: boolean;
+}
+
+/** A tab of the conversation box (the design review of DESIGN_01): this node first, then one per note on several nodes
+ *  it is in. `key` is what the `tab` choice names; `on` the tab shown. */
+export interface BubbleTab { key: string; label: string; on?: boolean }
+
+/** What only the conversation box says (`BubbleView.box`). Ask now's tooltip carries its keys; `blocked` is why it is
+ *  disabled, which its tooltip says instead. */
+export interface BoxView {
+  title: string;
+  tabs: readonly BubbleTab[];
+  ask: string;
+  askTip: string;
+  addTip: string;
+  blocked?: string;
+  waiting?: string;
+  /** "not sent yet · goes with Send", on a note that waits for the board's Send. */
+  queued: string;
 }
 
 /** Everything the bubble says; the element applies it. */
@@ -147,8 +174,10 @@ export interface BubbleView {
   replies: readonly ReplyEntry[];
   /** The name of the read-only part (the sent note and the replies, or the conversation), which scrolls as one. */
   thread: string;
-  /** In `thread` mode, the conversation, oldest first; empty otherwise. */
+  /** In `thread` and `conversation` mode, the conversation, oldest first; empty otherwise. */
   entries: readonly NotesEntry[];
+  /** In `conversation` mode only. */
+  box?: BoxView;
 }
 
 /** An old More context is a note like any other (D-045), so it reads the same. */
@@ -157,7 +186,9 @@ export const PLACEHOLDER: Record<NoteKind, string> = { comment: noteBubbleWords.
 /** "Note on 42", "Note on 3 cards: 12, 14, 15" for a group, or "Note on container Review" for a
  * whole container; each mode words it its own way. The conversation is the card's or container's. */
 function headingOf(b: BubbleInput): string {
-  if (b.mode === 'thread') return noteBubbleWords.conversationOn(b.container === undefined ? b.number : noteBubbleWords.container(b.container));
+  // The conversation on a selection: several cards, no one number.
+  if (b.mode === 'conversation' && b.number === undefined && b.numbers) return noteBubbleWords.conversationOn(noteBubbleWords.cardsList(b.numbers.length, b.numbers.join(', ')));
+  if (b.mode === 'thread' || b.mode === 'conversation') return noteBubbleWords.conversationOn(b.container === undefined ? b.number : noteBubbleWords.container(b.container));
   const past = b.answered ? 'answered' : 'sent';
   if (b.container !== undefined) {
     const on = noteBubbleWords.onContainer(b.container);
@@ -173,13 +204,30 @@ function headingOf(b: BubbleInput): string {
 
 /** What the read-only part is called: the conversation, the sent note, its replies, or both. */
 function threadOf(mode: BubbleMode, replies: number): string {
-  if (mode === 'thread') return noteBubbleWords.notesAndReplies;
+  if (mode === 'thread' || mode === 'conversation') return noteBubbleWords.notesAndReplies;
   if (mode !== 'sent') return noteBubbleWords.replies;
   return replies ? noteBubbleWords.noteAndReplies : noteBubbleWords.note4;
 }
 
+/** The conversation box's view (FE_03): the field writes; the thread lists every note and reply. */
+function boxView(b: BubbleInput, heading: string): BubbleView {
+  const about = b.numbers ? (b.number === undefined && b.numbers.length > 2 ? noteBubbleWords.nCards(b.numbers.length) : noteBubbleWords.both(b.numbers)) : b.number;
+  const blocked = b.blocked ?? undefined;
+  return {
+    mode: b.mode, heading, placeholder: noteBubbleWords.replyOrAskAbout(about), hint: '', primary: noteBubbleWords.addNote,
+    cancel: noteBubbleWords.closeConversation, remove: false, text: b.text ?? '', replies: [], thread: noteBubbleWords.notesAndReplies,
+    entries: b.entries ?? [],
+    box: {
+      title: b.title ?? '', tabs: b.tabs ?? [], ask: noteBubbleWords.askNow, askTip: blocked ?? noteBubbleWords.askNowTip,
+      addTip: noteBubbleWords.addNoteTip, queued: noteBubbleWords.notSentYet,
+      ...(blocked && { blocked }), ...(b.waiting && { waiting: noteBubbleWords.waitingForTheAgent }),
+    },
+  };
+}
+
 export function bubbleView(b: BubbleInput): BubbleView {
   const heading = headingOf(b);
+  if (b.mode === 'conversation') return boxView(b, heading);
   const shown = readOnlyMode(b.mode);
   const replies = b.replies ?? [];
   return {
@@ -212,6 +260,14 @@ export function isDirty(opened: string, now: string): boolean {
  * "Discard your changes?" first). A sent note or the conversation is never typed in, so it always closes. */
 export function cancelIntent(mode: BubbleMode, dirty: boolean): 'close' | 'ask' {
   return !readOnlyMode(mode) && dirty ? 'ask' : 'close';
+}
+
+/** What a key in the field does: `save` (Enter: Add note, or Save), `ask` (Cmd or Ctrl Enter, in the conversation
+ *  box only: Ask now), else null (Shift Enter is a new line; a key while an IME composes is its own). Enter alone never
+ *  sends to the agent. */
+export function fieldKey(e: Pick<KeyboardEvent, 'key' | 'shiftKey' | 'metaKey' | 'ctrlKey' | 'isComposing'>, mode: BubbleMode): 'save' | 'ask' | null {
+  if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return null;
+  return mode === 'conversation' && (e.metaKey || e.ctrlKey) ? 'ask' : 'save';
 }
 
 /** `vb-note-discard` (bubbles): Esc or Cancel with changed text. The bubble stays open; the page

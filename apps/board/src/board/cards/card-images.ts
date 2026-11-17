@@ -13,7 +13,8 @@
 //   flag), through the same path: the one re-measure for a card that changed height by itself.
 import { IMAGE_ROUTE, imageNotReal, imageTypeByName } from '#format';
 import type { VbImageViewElement } from '#ui';
-import { APP_FRAME_RESIZE_EVENT, IMAGE_BUTTON, imageButton, showProblem } from '#ui';
+import { APP_FRAME_RESIZE_EVENT, defineImageView, IMAGE_BUTTON, imageButton, showProblem } from '#ui';
+import { partDidNotLoad } from '../words/chrome-board.ts';
 import { imageVersion } from '../io.ts';
 
 export interface CardImagesDeps {
@@ -29,6 +30,8 @@ export interface CardImagesDeps {
   /** Cards whose height changed by itself (an image, an app panel's height): measure them again, and
    * nothing else (rule 15). */
   grown(ids: string[]): void;
+  /** Tell the person something went wrong (the zoomed view's code did not load). */
+  say?(text: string): void;
 }
 
 export interface CardImages {
@@ -148,6 +151,9 @@ export function createCardImages(d: CardImagesDeps): CardImages {
       });
       if (!ok || !img.isConnected) return;
     }
+    // The zoomed view's element is defined the first time a picture opens (`#ui` `defineImageView`).
+    if (!(await defineImageView().then(() => true, () => false))) return d.say?.(partDidNotLoad);
+    if (!img.isConnected) return;
     view ??= d.viewIn().appendChild(document.createElement('vb-image-view') as VbImageViewElement);
     view.open(img);
     const s = shown.get(path);
@@ -169,6 +175,8 @@ export function createCardImages(d: CardImagesDeps): CardImages {
   }, true);
   // An app card's panel told a new height, or its frame went: its card measured again, as for a picture.
   d.host.addEventListener(APP_FRAME_RESIZE_EVENT, (e) => grew(e.target as Element));
+  // Detail opened or closed behind its triangle (cardDetails, spike): its card measured again too.
+  d.host.addEventListener('toggle', (e) => { if ((e.target as Element).matches?.('details.vb-md-details')) grew(e.target as Element); }, true);
   // One that would not draw: the route says why, or its bytes were not a picture after all.
   d.host.addEventListener('error', (e) => {
     const img = e.target as HTMLImageElement;

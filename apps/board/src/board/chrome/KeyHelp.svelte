@@ -21,7 +21,7 @@
   const go = flag('goToCard');
   /** The search row, after Go to a card by its number (cardSearch flag). */
   const SEARCH_ROW = { id: 'other:search', label: chromeGoToCardWords.findACardByItsWords, keys: ['/'] };
-  const groups = keyGroups({ chat: !!parts.chat, flag: flag('cardFlag'), remove: flag('personRemove'), go, app: flag('appCards') })
+  const groups = keyGroups({ chat: !!parts.chat, bookmark: flag('cardBookmark'), edges: flag('nodeEdges'), remove: flag('personRemove'), go, app: flag('appCards') })
     .map((g) => (go && flag('cardSearch') ? { ...g, rows: g.rows.flatMap((r) => (r.id === 'command:go-to-card' ? [r, SEARCH_ROW] : [r])) } : g));
   let host: HTMLElement;
   let button: HTMLButtonElement;

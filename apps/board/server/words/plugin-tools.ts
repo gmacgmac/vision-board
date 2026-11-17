@@ -9,6 +9,8 @@ export interface DescriptionEdit { tool: string; from: string; to: string; until
 /** The same for a tool's input, whose words the format's schemas hold: `from` must occur in it. */
 export const inputEdits: readonly DescriptionEdit[] = [
   { tool: 'write_board', from: "The app's folder name in the open ledger's `apps/`", to: "The app's id" },
+  // A host's bot has no list_icons or add_icon (FIX_01, VERIFY_01 finding 13).
+  { tool: 'write_board', from: 'Call list_icons first; reuse before you add one with add_icon.', to: 'Use a built-in name, or an `x-` name only when the person gives you one.' },
 ];
 
 export const descriptionEdits: readonly DescriptionEdit[] = [

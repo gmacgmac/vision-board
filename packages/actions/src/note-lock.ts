@@ -1,5 +1,6 @@
 // When a note is history (popovers-larger-thread ruling 5): the person may edit or remove a note
-// only before whichever comes first, a Send on its board after it, or the agent answering it (a
+// only before whichever comes first, a Send on its board after it or an `ask` that carried it (api.md 188), or the
+// agent answering it (a
 // `reply` naming it in `to`, or a newer version of one of its cards, such as an `append`: what
 // answers an ask, api.md 36). This is the one derived state: the server's check (act.ts
 // `changeProblems`) and every read (`sentNotes`, which the page's `notes.ts` reads as `locked`) ask
@@ -7,9 +8,12 @@
 import type { LedgerReply, LedgerState } from './fold.ts';
 import type { Ask, ItemNote } from './notes.ts';
 import { askVer, cardsOf } from './notes.ts';
+import { askedBy } from './asked.ts';
 
-/** Whether a Send on `board` carried the act `seq` (fold.ts `sentHead`: its answers were read past it): its note is history. */
-export const sentAfter = (s: LedgerState, board: string, seq: number): boolean => (s.sentHead.get(board) ?? 0) >= seq;
+/** Whether a Send on `board` carried the act `seq` (fold.ts `sentHead`: its answers were read past it), or an `ask`
+ * carried it at once (asked.ts): its note is history, as a sent one. */
+export const sentAfter = (s: LedgerState, board: string, seq: number): boolean =>
+  (s.sentHead.get(board) ?? 0) >= seq || askedBy(s, board, seq) !== undefined;
 
 /** Whether a `reply` names the ask `seq` in `to`: one on any card it is on (a note on a group,
  * api.md 64), or, for a note on a whole container, which is on no card, one on any node, since a

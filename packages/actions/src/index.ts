@@ -8,7 +8,10 @@ export { cardName, eventOut, linkOut, noteOut, numberOf, proposalOut } from './n
 export type { ProposalView } from './numbers.ts';
 export { owedNotice, retireCards, retireProblem } from './retire.ts';
 export type { RetireTarget } from './retire.ts';
-export { flagsOn } from './card-flags.ts';
+export { bookmarksOn } from './bookmarks.ts';
+export { skinOf } from './skins.ts';
+export { askedBy } from './asked.ts';
+export type { Asked } from './asked.ts';
 export { notesHiddenOn } from './card-notes-hidden.ts';
 export { archivedBoards, archivedProblem, boardVisibility, UNAVAILABLE, visibleToAgents } from './archive.ts';
 export type { ArchivedBoard, BoardDates, BoardVisibility } from './archive.ts';

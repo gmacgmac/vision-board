@@ -1,0 +1,35 @@
+/* The board's own type faces (D-102; L5): four families under the SIL Open Font License, vendored in ../fonts with
+   each licence and recorded in docs/specification/dependencies.md § Vendored assets. The browser fetches a face only
+   when text is drawn in it, so a face no skin uses costs nothing; `swap` draws the fallback stack first, never blank
+   text. The family names carry the board's prefix, so a host page's own "Figtree" never meets these. The stacks that
+   name them, and fall back to the system's, are the type tokens (tokens.css § Type, skins.css).
+   The standalone page only: a host's stylesheet check refuses @font-face and any url() but data: (plugin.md § Theme
+   and host styling, Fonts), so the plugin's build leaves these out (vite.plugin.config.ts `hostTakesNoFontFaces`). */
+@font-face {
+  font-family: 'vb-figtree';
+  src: url('../fonts/figtree-variable.woff2') format('woff2');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'vb-bricolage-grotesque';
+  src: url('../fonts/bricolage-grotesque-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'vb-space-grotesk';
+  src: url('../fonts/space-grotesk-variable.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'vb-jetbrains-mono';
+  src: url('../fonts/jetbrains-mono-variable.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}

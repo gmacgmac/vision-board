@@ -1,0 +1,1358 @@
+{
+ "problems": [],
+ "head": 251,
+ "boards": {
+  "roadmap": {
+   "view": {
+    "format": 1,
+    "session": "roadmap",
+    "version": 251,
+    "title": "Where Vision Board goes from here",
+    "summary": "The roadmap from chat, drawn as a board. Numbers run across every region.",
+    "regions": [
+     {
+      "id": "review",
+      "title": "Review",
+      "mode": "grid",
+      "columns": 3
+     },
+     {
+      "id": "prove",
+      "title": "Prove the idea before code",
+      "mode": "flow"
+     },
+     {
+      "id": "decide",
+      "title": "Formats and decisions",
+      "mode": "radial",
+      "center": "7"
+     },
+     {
+      "id": "build",
+      "title": "Build in thin slices",
+      "mode": "lanes",
+      "lanes": [
+       "Foundation",
+       "Board",
+       "Agent"
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "review",
+      "kind": "question",
+      "title": "Review the rules and principles",
+      "body": "Two options, one afternoon to decide.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "review",
+      "kind": "decision",
+      "title": "Accept or change D-001 to D-008",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "review",
+      "kind": "action",
+      "title": "Cortex setup",
+      "body": "Categories and the registry.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "prove",
+      "kind": "action",
+      "title": "Paper prototype",
+      "body": "Hand-write a view and transcript for a real review.",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "prove",
+      "kind": "finding",
+      "title": "Use this roadmap as test case 1",
+      "body": "It is the numbered, cross-category output the board replaces.",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "prove",
+      "kind": "question",
+      "title": "Define item kinds and their buttons",
+      "body": "Cold caches add four minutes.",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "decide",
+      "kind": "topic",
+      "title": "Decide the stack",
+      "body": "JSON Lines or a database.",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "decide",
+      "kind": "action",
+      "title": "Format spec v0",
+      "body": "JSON Schema and a validator.",
+      "n": 8
+     },
+     {
+      "id": "9",
+      "region": "decide",
+      "kind": "decision",
+      "title": "Framework",
+      "body": "### Options\n\n- **SvelteKit**, to match Studio\n- **Plain Vite**",
+      "n": 9
+     },
+     {
+      "id": "10",
+      "region": "decide",
+      "kind": "decision",
+      "title": "Layout engine",
+      "body": "One script, run once.",
+      "n": 10
+     },
+     {
+      "id": "11",
+      "region": "decide",
+      "kind": "risk",
+      "title": "Reuse from sibling projects",
+      "body": "Dropped by the maintainer.",
+      "n": 11
+     },
+     {
+      "id": "12",
+      "region": "build",
+      "kind": "action",
+      "title": "Scaffold",
+      "body": "One script, run once.",
+      "lane": "Foundation",
+      "n": 12
+     },
+     {
+      "id": "13",
+      "region": "build",
+      "kind": "action",
+      "title": "Walking skeleton",
+      "body": "JSON Lines or a database.",
+      "lane": "Board",
+      "emphasis": true,
+      "n": 13
+     },
+     {
+      "id": "14",
+      "region": "build",
+      "kind": "action",
+      "title": "Agent skill v0",
+      "body": "Two options, one afternoon to decide.",
+      "lane": "Agent",
+      "n": 14
+     },
+     {
+      "id": "15",
+      "region": "build",
+      "kind": "action",
+      "title": "More modes",
+      "body": "Cold caches add four minutes.",
+      "lane": "Board",
+      "n": 15
+     },
+     {
+      "id": "16",
+      "region": "build",
+      "kind": "action",
+      "title": "Versions, Confirm these, Approve",
+      "lane": "Board",
+      "n": 16
+     }
+    ],
+    "links": [
+     {
+      "from": "4",
+      "to": "5"
+     },
+     {
+      "from": "5",
+      "to": "6"
+     },
+     {
+      "from": "7",
+      "to": "8"
+     },
+     {
+      "from": "7",
+      "to": "9"
+     },
+     {
+      "from": "7",
+      "to": "10"
+     },
+     {
+      "from": "7",
+      "to": "11"
+     },
+     {
+      "from": "6",
+      "to": "8"
+     },
+     {
+      "from": "9",
+      "to": "12"
+     },
+     {
+      "from": "12",
+      "to": "13"
+     },
+     {
+      "from": "13",
+      "to": "14"
+     },
+     {
+      "from": "13",
+      "to": "15"
+     },
+     {
+      "from": "15",
+      "to": "16"
+     },
+     {
+      "from": "10",
+      "to": "15",
+      "label": "informs"
+     }
+    ]
+   },
+   "state": {
+    "items": {
+     "1": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 38,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-10T20:40:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "2": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "3": {
+      "status": "later",
+      "notes": []
+     },
+     "6": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 48,
+        "kind": "context",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-12T01:00:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "7": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 70,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-14T15:20:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "8": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 72,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-14T21:00:00Z",
+        "nodes": [
+         8,
+         9
+        ],
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "9": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 72,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-14T21:00:00Z",
+        "nodes": [
+         8,
+         9
+        ],
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "12": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 192,
+        "kind": "comment",
+        "text": "First thought.",
+        "at": "2026-10-29T01:00:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "13": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 217,
+        "kind": "comment",
+        "text": "And how many of them churned in the first month?",
+        "at": "2026-10-31T23:50:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "14": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 226,
+        "kind": "comment",
+        "text": "What drives the onboarding confusion? Is it the plan picker?",
+        "at": "2026-11-02T01:20:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "15": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 244,
+        "kind": "comment",
+        "text": "Should the trial skip the card step?",
+        "at": "2026-11-04T04:20:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     }
+    },
+    "pins": {
+     "4": {
+      "x": 40,
+      "y": 24
+     }
+    },
+    "modes": {},
+    "widths": {},
+    "sizes": {
+     "5": "l"
+    },
+    "moves": {},
+    "regionPins": {
+     "build": {
+      "x": 900,
+      "y": 40
+     }
+    },
+    "regionNotes": {
+     "review": [
+      {
+       "seq": 42,
+       "kind": "comment",
+       "text": "Looks right, but check the edge case.",
+       "at": "2026-10-11T08:00:00Z",
+       "region": "review",
+       "sent": true,
+       "locked": true
+      }
+     ]
+    },
+    "flags": []
+   }
+  },
+  "login-review": {
+   "view": {
+    "format": 1,
+    "session": "login-review",
+    "version": 251,
+    "title": "Login page review, round two",
+    "regions": [
+     {
+      "id": "findings",
+      "title": "Findings",
+      "mode": "grid",
+      "columns": 2
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "findings",
+      "kind": "question",
+      "title": "Keep the remember-me box?",
+      "body": "JSON Lines or a database.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "findings",
+      "kind": "topic",
+      "title": "Sign-in flow",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "findings",
+      "kind": "decision",
+      "title": "Drop the legacy SSO button",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "findings",
+      "kind": "risk",
+      "title": "Rate limiting is per IP only",
+      "n": 4
+     }
+    ],
+    "links": [
+     {
+      "from": "2",
+      "to": "1"
+     }
+    ]
+   },
+   "state": {
+    "items": {
+     "1": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 57,
+        "kind": "comment",
+        "text": "Who asked for it?",
+        "at": "2026-10-13T02:30:00Z",
+        "locked": true
+       },
+       {
+        "seq": 198,
+        "kind": "comment",
+        "text": "First thought.",
+        "at": "2026-10-29T18:00:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "2": {
+      "status": "later",
+      "notes": []
+     },
+     "3": {
+      "status": "dropped",
+      "notes": []
+     },
+     "4": {
+      "status": "later",
+      "notes": []
+     }
+    },
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  },
+  "login-layout": {
+   "view": {
+    "format": 1,
+    "session": "login-layout",
+    "version": 251,
+    "title": "Add passwordless login: what it touches",
+    "summary": "A sample code review: the agent researched a feature request and came back with touch points, questions and risks.",
+    "regions": [
+     {
+      "id": "touch",
+      "title": "Touch points",
+      "mode": "flow"
+     },
+     {
+      "id": "questions",
+      "title": "Questions for you",
+      "mode": "column"
+     },
+     {
+      "id": "risks",
+      "title": "Risks",
+      "mode": "grid",
+      "columns": 2
+     },
+     {
+      "id": "plan",
+      "title": "Proposed plan",
+      "mode": "lanes",
+      "lanes": [
+       "Backend",
+       "Frontend",
+       "Ops"
+      ]
+     },
+     {
+      "id": "later-on",
+      "title": "Later on",
+      "mode": "column"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Login form",
+      "body": "Swap the password field for an email-only step.",
+      "tags": [
+       "web/login"
+      ],
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Auth API",
+      "body": "New endpoint to send and verify a one-time link.",
+      "tags": [
+       "api/auth"
+      ],
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Mailer",
+      "body": "Needs a new template and rate limits.",
+      "tags": [
+       "services/mail"
+      ],
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Session store",
+      "body": "No contract term past June.",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "questions",
+      "kind": "question",
+      "title": "Keep passwords as a fallback?",
+      "body": "JSON Lines or a database.",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "questions",
+      "kind": "question",
+      "title": "How long should a link live?",
+      "body": "Nothing to decide; ask if it matters.",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "questions",
+      "kind": "question",
+      "title": "Is SSO in scope?",
+      "body": "Cold caches add four minutes.",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "risks",
+      "kind": "risk",
+      "title": "Email delivery delays",
+      "body": "One script, run once.",
+      "n": 8
+     },
+     {
+      "id": "9",
+      "region": "risks",
+      "kind": "risk",
+      "title": "Link phishing",
+      "body": "One script, run once.",
+      "n": 9
+     },
+     {
+      "id": "10",
+      "region": "risks",
+      "kind": "risk",
+      "title": "Shared inboxes",
+      "body": "JSON Lines or a database.",
+      "n": 10
+     },
+     {
+      "id": "11",
+      "region": "plan",
+      "kind": "action",
+      "title": "Token table and migration",
+      "lane": "Backend",
+      "n": 11
+     },
+     {
+      "id": "12",
+      "region": "plan",
+      "kind": "action",
+      "title": "Send and verify endpoints",
+      "lane": "Backend",
+      "n": 12
+     },
+     {
+      "id": "13",
+      "region": "plan",
+      "kind": "action",
+      "title": "Email-only login screen",
+      "lane": "Frontend",
+      "n": 13
+     },
+     {
+      "id": "14",
+      "region": "plan",
+      "kind": "action",
+      "title": "\"Check your inbox\" state",
+      "lane": "Frontend",
+      "n": 14
+     },
+     {
+      "id": "15",
+      "region": "plan",
+      "kind": "decision",
+      "title": "Rate limits per address",
+      "body": "5 links an hour?",
+      "lane": "Ops",
+      "n": 15
+     }
+    ],
+    "links": [
+     {
+      "from": "1",
+      "to": "2"
+     },
+     {
+      "from": "2",
+      "to": "3"
+     },
+     {
+      "from": "2",
+      "to": "4"
+     },
+     {
+      "from": "11",
+      "to": "12"
+     },
+     {
+      "from": "12",
+      "to": "13"
+     },
+     {
+      "from": "13",
+      "to": "14"
+     },
+     {
+      "from": "12",
+      "to": "15"
+     },
+     {
+      "from": "5",
+      "to": "1",
+      "label": "shapes"
+     },
+     {
+      "from": "8",
+      "to": "3"
+     },
+     {
+      "from": "6",
+      "to": "11"
+     }
+    ]
+   },
+   "state": {
+    "items": {
+     "2": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "4": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 116,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-20T01:40:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "5": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 186,
+        "kind": "comment",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-28T08:00:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "6": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 189,
+        "kind": "comment",
+        "text": "Ship it after the review.",
+        "at": "2026-10-28T16:30:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "7": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 214,
+        "kind": "comment",
+        "text": "Which teams are under 10 seats?",
+        "at": "2026-10-31T15:20:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "8": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 223,
+        "kind": "comment",
+        "text": "Draft the email before we decide.",
+        "at": "2026-11-01T16:50:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "9": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 238,
+        "kind": "comment",
+        "text": "Say more about where these risks come from.",
+        "at": "2026-11-03T11:20:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "10": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 247,
+        "kind": "comment",
+        "text": "Before we settle the order of this group, check three things with the team: whether annual plans really sell better once the discount is gone, whether the trial numbers hold for teams as well as for single seats, and whether finance can live with the lower first-month revenue. If any of the three is a no, move the pricing question to the top and park the rest until the next review.",
+        "at": "2026-11-04T12:50:00Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     }
+    },
+    "pins": {},
+    "modes": {
+     "risks": "column",
+     "touch": "grid",
+     "questions": "row"
+    },
+    "widths": {
+     "risks": "own"
+    },
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  },
+  "gallery": {
+   "view": {
+    "format": 1,
+    "session": "gallery",
+    "version": 251,
+    "title": "Pattern gallery",
+    "summary": "Every pattern in every state, drawn from this fixture ledger (project rule 11).",
+    "regions": [
+     {
+      "id": "kinds",
+      "title": "Every kind in every status",
+      "mode": "grid",
+      "columns": 5
+     },
+     {
+      "id": "other",
+      "title": "Other node states",
+      "mode": "grid",
+      "columns": 4
+     },
+     {
+      "id": "frame-grid",
+      "title": "Grid mode",
+      "mode": "grid",
+      "columns": 2
+     },
+     {
+      "id": "frame-flow",
+      "title": "Flow mode",
+      "mode": "flow"
+     },
+     {
+      "id": "frame-lanes",
+      "title": "Lanes mode",
+      "mode": "lanes",
+      "lanes": [
+       "Now",
+       "Next"
+      ]
+     },
+     {
+      "id": "frame-radial",
+      "title": "Radial mode",
+      "mode": "radial"
+     },
+     {
+      "id": "frame-list",
+      "title": "List mode",
+      "mode": "column"
+     },
+     {
+      "id": "frame-pinned",
+      "title": "Reset places showing",
+      "mode": "grid"
+     },
+     {
+      "id": "frame-empty",
+      "title": "Empty message showing",
+      "mode": "grid"
+     },
+     {
+      "id": "frame-bare",
+      "title": "Nothing to decide, so no count",
+      "mode": "grid"
+     },
+     {
+      "id": "markdown",
+      "title": "Markdown text",
+      "mode": "grid",
+      "columns": 3
+     },
+     {
+      "id": "sizes",
+      "title": "Card sizes",
+      "mode": "grid",
+      "columns": 4
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "kinds",
+      "kind": "finding",
+      "title": "The build is slow on CI",
+      "body": "Two options, one afternoon to decide.",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "The cards around it are about the release.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "kinds",
+      "kind": "risk",
+      "title": "The vendor may change pricing",
+      "body": "Two options, one afternoon to decide.",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "The cards around it are about the release.",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "One script, run once.",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "kinds",
+      "kind": "topic",
+      "title": "Topic: the release plan",
+      "body": "Two options, one afternoon to decide.",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "No contract term past June.",
+      "n": 8
+     },
+     {
+      "id": "9",
+      "region": "kinds",
+      "kind": "note",
+      "title": "Note: the numbers come from the beta",
+      "body": "Cold caches add four minutes.",
+      "n": 9
+     },
+     {
+      "id": "10",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "JSON Lines or a database.",
+      "n": 10
+     },
+     {
+      "id": "11",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "No contract term past June.",
+      "n": 11
+     },
+     {
+      "id": "12",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "Two options, one afternoon to decide.",
+      "n": 12
+     },
+     {
+      "id": "13",
+      "region": "kinds",
+      "kind": "topic",
+      "title": "Topic: the release plan",
+      "body": "The cards around it are about the release.",
+      "n": 13
+     },
+     {
+      "id": "14",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 14
+     },
+     {
+      "id": "15",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 15
+     },
+     {
+      "id": "16",
+      "region": "kinds",
+      "kind": "finding",
+      "title": "The build is slow on CI",
+      "body": "Cold caches add four minutes.",
+      "n": 16
+     },
+     {
+      "id": "17",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "JSON Lines or a database.",
+      "n": 17
+     },
+     {
+      "id": "18",
+      "region": "kinds",
+      "kind": "risk",
+      "title": "The vendor may change pricing",
+      "body": "No contract term past June.",
+      "n": 18
+     },
+     {
+      "id": "19",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 19
+     },
+     {
+      "id": "20",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 20
+     },
+     {
+      "id": "21",
+      "region": "kinds",
+      "kind": "app",
+      "title": "App: a price calculator",
+      "body": "Work out a price in the panel.",
+      "app": {
+       "id": "calculator",
+       "w": 280,
+       "h": 160
+      },
+      "n": 21
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {
+     "2": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 180,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-27T15:00:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "3": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 183,
+        "kind": "comment",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-27T23:30:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "4": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 195,
+        "kind": "comment",
+        "text": "Second thought, which replaces the first on the card.",
+        "at": "2026-10-29T09:30:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "5": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 201,
+        "kind": "comment",
+        "text": "Second thought.",
+        "at": "2026-10-30T02:30:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "6": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 208,
+        "kind": "comment",
+        "text": "Please explain the trade-off between the two options, the cost of changing our mind later, and who else is affected, in plain terms with one example for each.",
+        "at": "2026-10-30T22:20:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "7": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 147,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-23T17:30:00Z",
+        "sent": true,
+        "locked": true
+       },
+       {
+        "seq": 211,
+        "kind": "comment",
+        "text": "Looks right, but **check the date** and the `deploy.md` steps.",
+        "at": "2026-10-31T06:50:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "8": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 220,
+        "kind": "comment",
+        "text": "Check with finance before we commit to a floor number.",
+        "at": "2026-11-01T08:20:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "9": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 151,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-24T04:50:00Z",
+        "sent": true,
+        "locked": true
+       },
+       {
+        "seq": 229,
+        "kind": "comment",
+        "text": "Explain the **1.4x** in plain terms.",
+        "at": "2026-11-02T09:50:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "10": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 232,
+        "kind": "comment",
+        "text": "Should this wait for the next release?",
+        "at": "2026-11-02T18:20:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "11": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 235,
+        "kind": "comment",
+        "text": "Is this group in the right order?",
+        "at": "2026-11-03T02:50:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "12": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 241,
+        "kind": "comment",
+        "text": "Can we decide this before the launch call?",
+        "at": "2026-11-03T19:50:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "13": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 159,
+        "kind": "context",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-25T03:30:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "14": {
+      "status": "dropped",
+      "notes": []
+     },
+     "15": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 163,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-25T14:50:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "16": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 165,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-25T20:30:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "17": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 167,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-26T02:10:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "18": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 169,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-26T07:50:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "19": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 171,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-26T13:30:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "20": {
+      "status": "acknowledged",
+      "notes": []
+     }
+    },
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  }
+ }
+}

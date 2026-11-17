@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { ActEvent, LedgerEvent } from '#format';
-import { boardView, readLedger, validateView } from '#format';
+import { boardView, readLedger, validateView, LEDGER_FORMAT } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import { boardState, foldLedger, replyText, validateAct } from '../src/index.ts';
 
@@ -39,8 +39,8 @@ test('fold: every agent update is a version; the latest is the last', () => {
 test('fold: the parked bundle, the reply and the accepted proposal', () => {
   assert.equal(state.parks.get(4)!.recommendation, 'Add a per-account limit next sprint.');
   assert.deepEqual(state.replies.get(1)!.map((r) => r.to), [8]);
-  const prop = state.proposals.get(13)!;
-  assert.deepEqual([prop.id, prop.action, prop.decidedBy, prop.agent], [3, 'drop', 15, 'kiro']);
+  const prop = state.proposals.get(13)!; // the roadmap was drawn in format 2: migrated, its lines name no agent (review V3)
+  assert.deepEqual([prop.id, prop.action, prop.decidedBy, prop.agent], [3, 'drop', 15, undefined]);
 });
 
 test('boardView is a valid view keyed by String(n); every node carries n (api.md 118)', () => {
@@ -64,9 +64,9 @@ test('boardState is keyed like boardView', () => {
 test('ids do not change when a card is redrawn or one is retired (rule 10)', () => {
   const all = titles(read.events);
   const at = '2026-10-02T10:00:00Z';
-  const redraw: LedgerEvent = { v: 12, seq: 16, at, by: 'agent', agent: 'kiro', type: 'node', board: BOARD, id: 3, ver: 2, node: { region: 'findings', kind: 'decision', title: 'Redrawn' } };
+  const redraw: LedgerEvent = { v: LEDGER_FORMAT, seq: 16, at, by: 'agent', type: 'node', board: BOARD, id: 3, ver: 2, node: { region: 'findings', kind: 'decision', title: 'Redrawn' } };
   assert.deepEqual(titles([...read.events, redraw]), { ...all, 3: 'Redrawn' });
-  const retire: LedgerEvent = { v: 12, seq: 16, at, by: 'agent', agent: 'kiro', type: 'retire', board: BOARD, cards: [2] };
+  const retire: LedgerEvent = { v: LEDGER_FORMAT, seq: 16, at, by: 'agent', type: 'retire', board: BOARD, cards: [2] };
   const { '2': _gone, ...others } = all;
   assert.deepEqual(titles([...read.events, retire]), others);
 });
@@ -79,7 +79,7 @@ test('replyText reads boardView + boardState', () => {
 });
 
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 2, seq: 16, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: 1, ver: 2, ...f });
+  ({ v: LEDGER_FORMAT, seq: 16, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: 1, ver: 2, ...f });
 
 test('validateAct follows the registry', () => {
   assert.deepEqual(validateAct(act({}), state), []);

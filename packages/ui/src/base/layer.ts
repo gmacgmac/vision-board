@@ -34,6 +34,10 @@ export function escapeIsOurs(at: Element, target: Node): boolean {
   return !board || board.contains(target) || target === at.ownerDocument.body || target === at.ownerDocument.documentElement;
 }
 
+/** The open layers that close on Esc, oldest first, each with whether an Esc is its to hear: an Esc closes the newest
+ *  one that hears it, and only that one (a menu opened over a tip closes first; FIX_01). */
+const escapes: { hears(e: Event): boolean }[] = [];
+
 /** Start listening for what dismisses a layer; returns the stop (call it when the layer closes). */
 export function dismissable(o: DismissOptions): () => void {
   const doc = o.doc ?? document;
@@ -51,19 +55,22 @@ export function dismissable(o: DismissOptions): () => void {
     down = null;
     if (at && isClick(at, { x: p.clientX, y: p.clientY }, o.clickWithin!)) o.dismiss('outside');
   };
+  const me = { hears: (e: Event) => typeof o.escape !== 'object' || escapeIsOurs(o.escape, e.target as Node) };
   const onKey = (e: Event) => {
-    if ((e as KeyboardEvent).key !== 'Escape') return;
-    if (typeof o.escape === 'object' && !escapeIsOurs(o.escape, e.target as Node)) return;
+    if ((e as KeyboardEvent).key !== 'Escape' || !me.hears(e)) return;
+    if (escapes.findLast((l) => l.hears(e)) !== me) return;
     e.preventDefault();
     e.stopPropagation();
     o.dismiss('escape');
   };
   doc.addEventListener('pointerdown', onDown, CAPTURE);
   if (o.clickWithin !== undefined) doc.addEventListener('pointerup', onUp, CAPTURE);
-  if (o.escape) doc.addEventListener('keydown', onKey, CAPTURE);
+  if (o.escape) { doc.addEventListener('keydown', onKey, CAPTURE); escapes.push(me); }
   return () => {
     doc.removeEventListener('pointerdown', onDown, CAPTURE);
     doc.removeEventListener('pointerup', onUp, CAPTURE);
     doc.removeEventListener('keydown', onKey, CAPTURE);
+    const i = escapes.indexOf(me);
+    if (i >= 0) escapes.splice(i, 1);
   };
 }

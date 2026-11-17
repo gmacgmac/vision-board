@@ -39,6 +39,10 @@
 /* The buttons never shrink or wrap: on a narrow window the title gives up its room (ellipsis). */
 .vb-toolbar-end { margin-left: auto; display: flex; gap: var(--vb-space-2); flex-shrink: 0; }
 .vb-toolbar-end .vb-btn { white-space: nowrap; }
+/* Flows (FlowMenu.svelte): its words, "Flows: Auto", as its neighbours have theirs; a narrow bar shows its icon only
+   (`.vb-btn-iconic`, below, which comes later and so wins there). */
+.vb-flow-menu > .vb-btn.vb-menu-btn { width: auto; padding: 0 var(--vb-space-3); }
+.vb-flow-menu > .vb-btn.vb-menu-btn:not([data-narrow] *) .vb-btn-icon { display: none; }
 /* The zoom group (3_FE_02 ruling 5): three buttons with no gap between, like a segmented control. */
 .vb-btn-icon { display: none; width: 18px; height: 18px; flex-shrink: 0; }
 /* A narrow toolbar (a window of 1500px or less, with the adaptiveHeader flag a bar at half or a third of its width
@@ -99,8 +103,8 @@
    dropdowns keep their text whole. The end group makes room by showing icons (below). */
 .vb-toolbar > [id$='-board'] { min-width: 220px; }
 .vb-select-menu { width: 8.5em; flex-shrink: 0; }
-/* "N flagged" (cardFlag flag) is a chip that is a button (#ui base/chip.css `.vb-chip-btn`); its flag
-   is decoration in --vb-state-flag (APCA Lc 65.1 light, -55.5 dark on the chip; 58.7, -53.6 hovered). */
+/* "N bookmarked" (cardBookmark flag) is a chip that is a button (#ui base/chip.css `.vb-chip-btn`); its glyph
+   is decoration in --vb-bookmark (APCA Lc 65.1 light, -55.5 dark on the chip; 58.7, -53.6 hovered). */
 /* The "N open" chip's face (MenuSelect.svelte): hovered over any tone. */
 .vb-chip.vb-menu-face:hover, .vb-chip.vb-menu-face[data-look='hover'] { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
 .vb-menu-face:active, .vb-menu-face[data-look='pressed'] { transform: translateY(1px); }
@@ -113,7 +117,7 @@
 .vb-menu-face {
   &:has(.vb-menu-over:focus-visible:not([data-pointer-focus])) { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
 }
-.vb-chip[data-tone='flag'] .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-state-flag); }
+.vb-chip[data-tone='bookmark'] .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-bookmark); }
 
 /* Stage and world */
 /* The dot-grid canvas: the stage, and the gallery's frames so they sit on the same ground. */

@@ -4,7 +4,7 @@
 // 1,000 cards) with them in it. A timing test: it runs alone (`npm run test:timing`).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '#format';
+import { readLedger, LEDGER_FORMAT } from '#format';
 import { cardHistory } from '../src/index.ts';
 import { perfLedger } from '#format/testing';
 
@@ -18,7 +18,7 @@ const LINES = 1000;
 function ledger(): string[] {
   const lines = perfLedger();
   let seq = lines.length;
-  const add = (e: object) => lines.push(JSON.stringify({ v: 18, seq: ++seq, at: new Date(Date.UTC(2026, 9, 19, 9, 0, seq)).toISOString(), ...e }));
+  const add = (e: object) => lines.push(JSON.stringify({ v: LEDGER_FORMAT, seq: ++seq, at: new Date(Date.UTC(2026, 9, 19, 9, 0, seq)).toISOString(), ...e }));
   add({ type: 'join', by: 'agent', agent: AGENT, label: 'Timing chat' });
   let ver = 1;
   let note = 0;
@@ -30,7 +30,7 @@ function ledger(): string[] {
       case 2: add({ type: 'reply', by: 'agent', agent: AGENT, n: CARD, to: note, text: `Invented reply ${i}` }); break;
       case 3: add({ type: 'node', by: 'agent', agent: AGENT, board: 'big', n: CARD, ver: ++ver, node: { region: 'r10', kind: 'question', title: `Card ${i}` } }); break;
       case 4: person({ action: i % 16 === 4 ? 'ack' : 'drop', n: CARD, ver }); break;
-      case 5: person({ action: i % 16 === 5 ? 'flag' : 'unflag', n: CARD }); break;
+      case 5: person({ action: i % 16 === 5 ? 'bookmark' : 'unbookmark', n: CARD }); break;
       case 6: add({ type: 'seen', by: 'person', n: CARD, ver }); break;
       default: person({ action: 'reopen', n: CARD, ver });
     }

@@ -7,11 +7,10 @@ import type { ConditionContext, ConditionKind, LedgerState } from '../src/index.
 import { CONDITION_KINDS, CONDITIONS, conditionsOf, openContainers, openItems, pendingItems, responsesAfter } from '../src/index.ts';
 import { A, B, C, scene } from './ledger-v3.ts';
 
-const v8 = () => { const l = scene(); l.v = 8; return l; };
 const kinds = (s: LedgerState, ctx: ConditionContext, ...ks: ConditionKind[]) => conditionsOf(s, ctx).filter((c) => ks.includes(c.kind));
 
 test('an agent is never told the person\'s rows; the person is told every agent\'s', () => {
-  const l = v8();
+  const l = scene();
   l.request(C, 'r');
   l.act({ action: 'comment', n: 1, ver: 1, text: 'For A.' });
   const person = new Set(CONDITION_KINDS.filter((k) => CONDITIONS[k].audience === 'person'));
@@ -20,10 +19,10 @@ test('an agent is never told the person\'s rows; the person is told every agent\
 });
 
 test('a board revoke (D-034) ends what the agent is told it owes there, and the container acts it hears about', () => {
-  const l = v8();
+  const l = scene();
   const card = l.act({ action: 'comment', n: 2, ver: 1, text: 'For B.' });
   const note = l.act({ action: 'comment', board: 'b', region: 'q', text: 'On all of q.' });
-  const mode = l.act({ action: 'mode', board: 'b', region: 'q', mode: 'list' });
+  const mode = l.act({ action: 'mode', board: 'b', region: 'q', mode: 'column' });
   const owed = () => kinds(l.state(), { board: 'b', agent: B }, 'item.owed', 'container.owed').map((c) => c.seq);
   const heard = () => responsesAfter(l.state(), 'b', 0, B).map((e) => e.seq);
   assert.deepEqual(owed(), [card, note]);

@@ -48,7 +48,7 @@ export function createHistoryFlow(d: HistoryDeps): HistoryFlow {
   function fill(id: string, box: HTMLElement) {
     const rows = rowsOf(id);
     // Markup from historyMarkup, which escapes every text run.
-    box.querySelector('.vb-history-body')!.innerHTML = historyMarkup(rows, new Date());
+    box.querySelector('.vb-history-body')!.innerHTML = historyMarkup(rows, new Date(), box.classList.contains('vb-node-box'));
     shown = { id, box, top: rows[0]?.seq ?? 0 };
   }
 
@@ -84,7 +84,7 @@ export function createHistoryFlow(d: HistoryDeps): HistoryFlow {
       if (fresh.length === 0) return;
       const list = shown.box.querySelector('.vb-history-list');
       if (!list) return fill(shown.id, shown.box);
-      list.insertAdjacentHTML('afterbegin', fresh.map((r) => historyRowMarkup(r, new Date())).join(''));
+      list.insertAdjacentHTML('afterbegin', fresh.map((r) => historyRowMarkup(r, new Date(), shown!.box.classList.contains('vb-node-box'))).join(''));
       shown.top = fresh[0]!.seq;
     },
   };

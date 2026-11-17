@@ -1,0 +1,3 @@
+/* The icon set's one stroke (icon-set.ts, D-100 3): lines only, in the colour of what holds them, 1.7 on the 24 box,
+   round caps and joins; a library drawing takes the same (decision 24). Tokens only. */
+.vb-icon { flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

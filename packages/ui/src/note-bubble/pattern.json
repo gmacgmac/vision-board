@@ -4,23 +4,28 @@
   "tag": "vb-note-bubble",
   "description": "A non-modal bubble beside one card where the person writes, edits or removes the card's note, reads a sent one with the agent's replies to it (the pin), or reads the card's whole conversation: every note and reply on it, oldest first (review polish ruling 6). It points at its card, or the note or reply pressed, with an arrow in the card's colour, draws above the board and moves nothing (README picks 5, 11-12; mockup 05 section 1). Read-only it has an × in its top corner and no bottom row (ruling 7). Its sizes are the shared popover tokens (--vb-pop-*: one 15px text size for the text typed, the heads, the hint and the buttons, 360px wide; popovers-larger-thread rulings 1 and 4 and the maintainer's changes, chats 698 and 701).",
   "files": {
-    "core": "note-bubble-core.ts (placeBubble, titleAnchor, partAnchor, bubbleView, readOnlyMode, saveIntent, isDirty, cancelIntent, NOTE_DISCARD_EVENT, NoteDiscardDetail; no DOM)",
+    "core": "note-bubble-core.ts (placeBubble, titleAnchor, partAnchor, bubbleView, readOnlyMode, saveIntent, isDirty, cancelIntent, fieldKey, BubbleTab, BoxView, NOTE_DISCARD_EVENT, NoteDiscardDetail; no DOM)",
     "template": "note-bubble-template.ts (noteBubbleTemplate: the only place the markup is built)",
     "element": "vb-note-bubble.ts (defineVbNoteBubble, VbNoteBubbleElement; light DOM)",
-    "styles": "note-bubble.css (scoped by the tag; tokens only: the --vb-pop-* popover tokens for its sizes)"
+    "styles": "note-bubble.css (scoped by the tag; tokens only: the --vb-pop-* popover tokens for its sizes)",
+    "conversation": "conversation-template.ts (conversationTemplate: the conversation box's markup, loaded on first use through elements.ts loadConversation and registered with useConversation)"
   },
-  "states": ["new", "edit", "sent", "thread", "saving", "error", "right", "left", "below", "focus", "container", "dirty", "growing"],
+  "states": ["new", "edit", "sent", "thread", "saving", "error", "right", "left", "below", "focus", "container", "dirty", "growing", "conversation"],
   "parts": {
-    "vb-nb-head": "the card's number chip (vb-nb-num), the head line (vb-nb-title): 'Note on 42', 'Edit note on 42', 'Note 2 on 42, sent' or 'Conversation on 42'; on a whole container no chip and 'Note on container Review' or 'Conversation on container Review' (3_FE_04 ruling 3); read-only, the × (vb-nb-x) in its top corner: a 24px button named Close (review polish ruling 7)",
+    "vb-nb-head": "the card's number chip (vb-nb-num), the head line (vb-nb-title): 'Note on 42', 'Edit note on 42', 'Note 2 on 42, sent' or 'Conversation on 42'; on a whole container no chip and 'Note on container Review' or 'Conversation on container Review' (3_FE_04 ruling 3); read-only, the × (vb-nb-x) in its top corner: a 24px button named Close (review polish ruling 7); the conversation box (mode conversation, nodeEdges, FE_03, D-099 3) draws the shared head instead (vb-node-box-head, node-box.css): the number chip, the node's title (vb-node-box-title) and the × (vb-node-box-x), which closes it; its states are drawn by its parts: tabs, a queued note, waiting, asking (setPhase saving by 'ask') and Ask now disabled (aria-disabled)",
     "vb-nb-text": "the textarea, 'Note text', up to MAX_TEXT characters; it grows with its words from three lines to --vb-pop-max-h (never shorter than it is, so a manual resize stays), then scrolls; a sent note shows vb-nb-read (Markdown) instead",
     "vb-nb-thread": "the read-only part, which scrolls as one past --vb-pop-max-h (read-only, plus the bottom row's room) and is a tab stop (role group, labelled 'Notes and replies', 'Note', 'Note and replies' or 'Replies'): in thread mode the conversation (ol.vb-nb-convo: each note, li.vb-nb-note with who (vb-nb-who) and Edit (vb-nb-edit, data-edit = its seq) while it can still be edited over its words (vb-nb-note-text, Markdown), then its replies, li.vb-nb-reply; a reply naming no note, li.vb-nb-reply.vb-nb-orphan, in its place by time; every entry carries data-seq and tabindex -1 so the page scrolls to and focuses it); in sent mode the sent note (vb-nb-read, Markdown), then the agent's replies to it, oldest first (ol.vb-nb-replies > li.vb-nb-reply: who over the words, vb-nb-reply-text, Markdown); after the textarea when a note not yet sent has replies",
     "vb-nb-error": "role=alert, under the text: why the last save did not go through",
-    "vb-nb-row": "Remove (edit only), the key hint (vb-nb-hint), Cancel, and Add note or Save (vb-nb-primary); none when read-only (the × closes it)"
+    "vb-nb-row": "Remove (edit only), the key hint (vb-nb-hint), Cancel, and Add note or Save (vb-nb-primary); none when read-only (the × closes it)",
+    "vb-nb-tabs": "conversation only, and only when the node is in a note on several nodes: role tablist 'Conversations', one vb-nb-tab (role tab, aria-selected, data-tab: '' for this node, else the group's sorted numbers) per conversation: 'This node', then 'With 28'",
+    "vb-nb-queued": "conversation: a note of the person's not yet sent, dashed in the accent, its who line saying 'not sent yet · goes with Send' (em)",
+    "vb-nb-wait": "conversation: 'Waiting for the agent' (role status) under the thread while its latest note went (Send or Ask now) and no reply came after it",
+    "vb-nb-pair": "conversation: the bottom row, Ask now (vb-nb-ask, its keys or why it is disabled in its title, aria-disabled while no message can go, still focusable) and Add note (vb-nb-primary, its key in its title), sharing the width"
   },
   "attributes": {
     "role": "dialog (set by show); not modal: the board stays usable",
     "aria-label": "the head line (set by show)",
-    "data-mode": "new | edit | sent | thread (set by show); thread: the conversation, read-only, the × only",
+    "data-mode": "new | edit | sent | thread | conversation (set by show); thread: the conversation, read-only, the × only; conversation: the conversation box (nodeEdges), with its field; in conversation mode it also wears .vb-node-box, the box beside a node's look (node/node-box.css), shared with the history and proposal boxes",
     "data-side": "right | left | below: where it opened beside the card (set by place)",
     "data-phase": "idle | saving | error (set by setPhase); aria-busy while saving",
     "--vb-kind": "the card's kind colour, for the border and the arrow (set by show through the CSSOM); on a whole container, the container's line colour (show's `line`)",
@@ -28,18 +33,18 @@
     "--vb-arrow": "where the arrow meets the bubble's edge (set by place)"
   },
   "methods": {
-    "show(v: BubbleView, card: { kind, number, line? })": "draws it from noteBubbleTemplate; `line` (a container's regionColour) in place of kind and number for a note on a whole container",
+    "show(v: BubbleView, card: { kind, number, line? })": "draws it from noteBubbleTemplate (the conversation box from conversationTemplate); `line` (a container's regionColour) in place of kind and number for a note on a whole container; `keep` (fourth argument) draws it again keeping the words typed, the caret, the focus, the phase and the thread's place (a reply arrived, a redraw)",
     "place(p: Placement)": "left, top, data-side and --vb-arrow from placeBubble, in its offset parent's pixels",
-    "setPhase(phase, message?)": "saving disables the buttons and reads 'Saving…'; error shows the message and keeps the text",
+    "setPhase(phase, message?)": "saving disables the buttons and reads 'Saving…' (or 'Asking…' on Ask now, `by`); error shows the message and keeps the text",
     "focusText()": "focus into the text with the caret at the end; in the conversation, the entry reveal chose; on a sent note, the ×",
     "dirty (getter)": "whether the words typed differ from those show() drew (isDirty: line endings and surrounding whitespace do not count); always false when read-only. The page reads it before opening another bubble over this one (3_FE_04 step 4G ruling 4)",
     "reveal(seq?)": "in the conversation: scroll to the entry with that ledger seq, or to the bottom (the latest) when it is the last or not given; focusText then focuses it"
   },
   "events": [
-    "vb-note (bubbles): detail { choice: 'save' | 'cancel' | 'remove' | 'edit', text, note? }; Enter in the text is save, Esc anywhere is cancel, the × is cancel, Edit in the conversation is edit with the note's seq. A cancel is sent only while the text is unchanged",
+    "vb-note (bubbles): detail { choice: 'save' | 'cancel' | 'remove' | 'edit' | 'ask' | 'tab', text, note?, tab? }; Enter in the text is save, Esc anywhere is cancel, the × is cancel, Edit in the conversation is edit with the note's seq. In the conversation box Cmd or Ctrl Enter (fieldKey) and Ask now are ask, sent even while it is disabled so the page says why, and a tab is tab with its key. A cancel is sent only while the text is unchanged",
     "vb-note-discard (bubbles): detail { text }; Esc or Cancel with changed text (cancelIntent 'ask'), in place of the cancel. The bubble stays open: the page asks \"Discard your changes?\" through its confirm dialog, then closes it (OK) or puts focus back with focusText (Cancel)"
   ],
   "whenToUse": "Writing, changing or reading the person's note on one card, and reading the card's conversation with the agent.",
   "whenNotToUse": "Questions that block the whole page (use the confirm dialog), or anything not about one card.",
-  "accessibility": "role=dialog, labelled by its head line, not modal. Focus moves into the text when it opens (in the conversation, to the note or reply it opened at; on a sent note, the ×) and back to the card when it closes, or to the note or reply it opened from. The read-only part is a labelled group and a tab stop, so the keyboard can scroll it. Enter saves, Shift+Enter adds a line, Esc cancels (with changed text, the page asks first); read-only, the × (24px, named Close), Esc or a click outside closes it. Every button is a real button with a visible label or a name, and a focus ring."
+  "accessibility": "role=dialog, labelled by its head line, not modal. Focus moves into the text when it opens (in the conversation, to the note or reply it opened at; on a sent note, the ×) and back to the card when it closes, or to the note or reply it opened from. The read-only part is a labelled group and a tab stop, so the keyboard can scroll it. Enter saves, Shift+Enter adds a line, Esc cancels (with changed text, the page asks first); read-only, the × (24px, named Close), Esc or a click outside closes it. Every button is a real button with a visible label or a name, and a focus ring. The conversation box: its field is focused when it opens and is named 'Reply or ask about N'; Enter adds a note and never sends to the agent, only Cmd or Ctrl Enter (Ask now) does; the buttons' tooltips carry their keys, and a disabled Ask now stays focusable with its reason as its title; the tabs are a tablist; an empty box closes on a click outside, one with words asks first."
 }

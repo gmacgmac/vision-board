@@ -24,12 +24,12 @@ import { createSelection } from '../src/board/selection/selection.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-const maker = lineMaker({ v: 10, at: '2026-10-09T09' });
+const maker = lineMaker({ at: '2026-10-09T09' });
 const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const item = (board: string, n: number, title = `Card ${n}`) =>
-  agent({ type: 'node', board, n, ver: 1, node: { region: 'r', kind: 'question', title, item: true } });
+  agent({ type: 'node', board, n, ver: 1, node: { region: 'r', kind: 'question', title } });
 
 /** Board b: cards 1-3. Notes: 8 on card 1 (sent by the Send at 9), 10 on card 2, 11 on cards 2 and 3,
  *  12 More context with no words on 3, 13 on the container. Board c: its card 1 (the ledger's 4: a

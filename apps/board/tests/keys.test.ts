@@ -109,3 +109,26 @@ test('a command key is told the card the focus is on, else null', () => {
   unbind();
   assert.deepEqual(seen, ['2', 'null']);
 });
+
+// FIX_01 (VERIFY_01 finding 8): with the nodes' edges H is one thing, a node's history; Hide answered is Shift+H.
+test('with the nodes\' edges H opens the focused node\'s history, else the one selected\'s, never Hide answered; Shift+H hides', () => {
+  const mine = root();
+  const run = (key: string, shiftKey: boolean, focused: string | null, selected: string | null) => {
+    const acted: string[] = [];
+    const card: Fake = { localName: 'vb-node', dataset: { id: focused ?? '' }, closest: (sel) => (sel === '.vb-board' ? mine : sel === 'vb-node' && focused ? card : null) };
+    const h = {
+      toggleHide: () => acted.push('hide'), escape: () => false, command: () => false,
+      nodeKey: (id: string, _t: HTMLElement, k: string) => { acted.push(`${k} ${id}`); return true; },
+      onlySelected: () => selected,
+    } as unknown as KeyHandlers;
+    const unbind = bindKeys(h, mine as unknown as HTMLElement);
+    listener!({ target: focused ? card : target(mine), key, defaultPrevented: false, metaKey: false, ctrlKey: false, altKey: false, shiftKey, preventDefault() {} } as unknown as KeyboardEvent);
+    unbind();
+    return acted;
+  };
+  assert.deepEqual(run('h', false, '7', null), ['history 7']);
+  assert.deepEqual(run('h', false, null, '9'), ['history 9'], 'the one selected');
+  assert.deepEqual(run('h', false, null, null), [], 'nothing focused or selected: nothing, not Hide answered');
+  assert.deepEqual(run('H', true, '7', null), ['hide']);
+  assert.deepEqual(run('H', true, null, null), ['hide']);
+});

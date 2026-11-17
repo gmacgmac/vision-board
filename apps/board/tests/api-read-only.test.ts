@@ -132,7 +132,7 @@ test('read-only, every person write of the ledger\'s folder answers 409 `read-on
     const refused = await h.fails(id, input, 409, 'read-only');
     assert.equal(id.includes('chat') ? /read-only.*Switch to Editing/.test(refused.detail) : refused.detail === READ_ONLY_PERSON, true, `${id}: ${refused.detail}`);
   }
-  for (const action of ['flag', 'send', 'ack', 'lock']) {
+  for (const action of ['bookmark', 'send', 'ack', 'lock']) {
     const body = { type: 'act', action, ...(action === 'send' || action === 'lock' ? { board: PLANS } : { n: 1, ver: 1 }) };
     await h.fails('act', { board: PLANS, body }, 409, 'read-only');
   }
@@ -187,19 +187,19 @@ test('editing, a locked board still answers `locked` to an agent, and the person
   await act({ action: 'lock', board: PLANS });
   const refused = await h.fails('write_board', { board: PLANS, body: { items: [{ type: 'node', node: { region: WALK_REGION, kind: 'question', title: 'More?' } }] } }, 423, 'locked', A.client);
   assert.equal(refused.detail, LOCKED);
-  await act({ action: 'flag', n: 1 });
+  await act({ action: 'bookmark', n: 1 });
   await act({ action: 'unlock', board: PLANS });
 });
 
 test('a lock taken over by another computer (after a sleep) stops this server before its next line', async () => {
   anotherComputer();
   try {
-    await h.fails('act', { board: PLANS, body: { type: 'act', action: 'unflag', n: 1 } }, 409, 'read-only');
+    await h.fails('act', { board: PLANS, body: { type: 'act', action: 'unbookmark', n: 1 } }, 409, 'read-only');
     assert.equal((await h.ok('get_project')).editing.host, 'another-computer');
   } finally { fs.rmSync(ledgerFiles(folder()).lock, { force: true }); }
   await h.ok('stop_editing');
   await h.ok('edit_ledger');
-  await h.ok('act', { board: PLANS, body: { type: 'act', action: 'unflag', n: 1 } });
+  await h.ok('act', { board: PLANS, body: { type: 'act', action: 'unbookmark', n: 1 } });
 });
 
 test('a chat running when the person stops editing still takes a message: the words go alone, with no Send', async () => {

@@ -188,7 +188,7 @@ export const CONDITIONS: Rows = {
   'container.fresh': {
     about: 'container', audience: 'person', shows: ['container'], clearedBy: ['select', 'act'],
     trueWhen: 'A container holds a card `item.new` or `item.unseen` holds for (as its tab shows it: fresh.ts `freshOf`) whose newest change, the agent\'s latest version or reply on it, is after the person\'s latest card seen or act on any card in the container (`looked`): its teal border and its "3 new · 1 updated" pill (new-and-updated Design 3). Nothing is stored.',
-    endsWhen: 'The person selecting a new or updated card in it (its `seen`) or any act of theirs naming a card in it, until the agent changes one of its cards again. A click on the frame ends nothing.',
+    endsWhen: 'The person selecting a new or updated card in it (its `seen`) or any act of theirs naming a card in it, until the agent changes one of its cards again. Nothing is stored for the container: with nodeEdges, a click inside it (its background or frame) on a board that isn\'t read-only clears the pill on the person\'s screen only, until its next change (point 308, D-099 4; the page keeps the `seq`), and a reload shows it again.',
     derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => [...freshContainers(s, board, freshCards(s, board))]
       .map(([container, seq]) => ({ kind: 'container.fresh' as const, board, container, seq }))),
   },

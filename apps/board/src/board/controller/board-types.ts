@@ -1,5 +1,6 @@
 // What the board gives its host, and what it is made with (controller.ts `createBoard`). Split out
 // of controller.ts (ARCH_06): the board's whole public surface reads in one place.
+import type { ActDirection, Skin } from '#format';
 import type { LedgerState, Ref } from '#actions';
 import type { AccessFlow } from '../access/index.ts';
 import type { ProposalFlow } from '../cards/index.ts';
@@ -29,8 +30,13 @@ export interface Board {
   send(id: string, acks: readonly Ref[] | null): Promise<string | null>;
   /** New board, Rename board, Archive board, Restore, Lock board and Unlock board (board-edit.ts). */
   boardEdit: BoardEdit;
-  /** The toolbar's "N flagged" chip: the next flagged card (cardFlag flag, flag-flow.ts). */
-  nextFlagged(): void;
+  /** The toolbar's "N bookmarked" chip: the next bookmarked card (cardBookmark flag, bookmark-flow.ts). */
+  nextBookmarked(): void;
+  /** The "⋯" menu's Skin rows (skins flag, D-100 2): the open board's skin, the person's `skin` act. */
+  setSkin(skin: Skin): void;
+  /** The "⋯" menu's Flows rows (flowDirection flag, D-100 5): the person's `direction` act for the whole board; `auto`
+   *  clears their choice, giving back each container's own (BE_01). */
+  setDirection(direction: ActDirection): void;
   go: GoTo; // the Go to card box's typing, Enter, Esc and offer (goToCard flag, go-to-card.ts)
   /** The open board's id; '' before one opens. */
   id(): string;

@@ -172,12 +172,14 @@ and keeps its name.
 | `ui/notifications/size-changed` | notification | Params: `{ height }`, the content's height in px; sets the panel's height (§ Panel size). A `width` is ignored. |
 | `ui/notifications/escape` | notification | The board's own: the person pressed Esc in the panel; focus goes back to the card. |
 | `vision-board/save-state` | request | The board's own. Params: `{ state }`. Answers `{}` (§ Saving the panel's state). |
+| `vision-board/note` | request | The board's own (spike, the `appStage` flag). Params: `{ text }`, at most 2000 characters: a pick in the panel becomes the person's note on its card, through the action layer. Answers `{}`. |
 
 ### Board to panel
 
 | Method | What it carries |
 |---|---|
 | `ui/notifications/host-context-changed` | The parts of the host context that changed: `theme` and `styles` when the board's theme changes. |
+| `vision-board/notifications/reply` | The board's own (spike, the `appStage` flag): one agent reply on the panel's card, `{ seq, text }`; a panel is told every reply on its card once after it starts, oldest first. |
 
 ### Host context
 
@@ -370,6 +372,27 @@ or the card is off screen, and with no frame when a past version of the board is
 card saying "App cards are off", and the panel route and `call_app_tool` answer `not-found`. The
 server's own switch is `VB_FLAGS=-appCards` (`apps/board/server.ts`); the page's flags are its own.
 
+## The app window and the stage
+
+With the `appWindow` and `nodeEdges` flags an app card is a window: one title bar (the number, the app's name, Allow or
+"Allowed ▾", a drawer arrow and, with `appStage`, Open) and the panel under it; the card's notes and the agent's
+replies live in a drawer on its right, the same conversation as any node's (components.md § The app window). A panel's
+note (`vision-board/note`) joins the card's note not yet sent, as the drawer's Add note does, and shows in that
+thread; each reply shows there and is told to the panel (`vision-board/notifications/reply`). Open puts the window,
+drawer and all, on the whole page, and Esc brings it back; the frame is never moved in the page, so the panel never
+reloads. The frame stays `sandbox="allow-scripts"` with an opaque origin, its CSP is unchanged, and tools still need
+the person's Allow.
+
+### A stuck panel
+
+A panel's code runs in the frame's process. Where the browser gives a sandboxed frame a process of its own (site
+isolation: Chromium with `--site-per-process`, `tests/pages/app-window-stuck.spec.ts`), a panel stuck in a loop
+leaves the board working: the drawer opens and the board zooms. Where the frame shares the page's thread (WebKit, so
+Safari and a macOS webview; Chromium without site isolation, as Playwright's runs by default), the loop freezes the
+whole page, the board's own controls included, and nothing in the page can stop it, since no board code runs while
+it spins: a reload is the person's only way out. What would fix it is the browser's, not the board's: a host that
+runs panels out of process (site isolation in Chromium; in WebKit, none today).
+
 ## Drawing an app card
 
 1. Write the folder, then call `list_apps` (MCP tool `list_apps`, `vb list-apps`). Fix any
@@ -466,7 +489,9 @@ Esc back to the card, theme changes and the approval state.
   (`tests/pages/app-server.ts`): an agent draws the calculator, Allow, `12*3=` worked out by its
   `evaluate` tool and listed by `history`, Tab into the panel and out, Esc back to the card, a code
   change asking again, Stop app, and app cards off on the server and the page
-  (`tests/pages/app-cards.spec.ts`); every card state at one size, the frame made only on screen
+  (`tests/pages/app-cards.spec.ts`); the app window, its drawer and the stage, and a stuck panel
+  (`app-window.spec.ts`, `app-window-stuck.spec.ts`); the panel's note and reply with fake windows
+  (`packages/ui/tests/app-frame-note.test.ts`); every card state at one size, the frame made only on screen
   and at or above FAR_K and frozen off screen and below it, and a past version at the manifest's
   size (`app-states.spec.ts`); a loaded panel keeping what it holds in memory, loaded once, through
   a far zoom, a pan two screens away, a new version of its card, a relayout, a selection and a new

@@ -132,6 +132,25 @@ export const COMMANDS: readonly CommandInfo[] = [
     ],
   },
   {
+    name: "list-icons", operationId: "list_icons", takesBody: false,
+    summary: "List the icons a node may name",
+    description: "List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's.",
+    inputs: [
+      {"name":"paths","in":"query","type":"boolean","required":false,"description":"True also returns each library icon's checked path data (the page's read)."},
+    ],
+  },
+  {
+    name: "add-icon", operationId: "add_icon", takesBody: true,
+    summary: "Add an icon to the project's library",
+    description: "Add a drawing to the project's icon library, for any board of this folder to name in a node's `icon`. Call list_icons first and reuse one that fits. Name it for what it shows: `x-`, a singular noun, then a qualifier if needed (`x-encoder-audio`); no board names, numbers or colours. Draw it as the built-in set is drawn: the same box, paths only, one colour, no text; it is reduced to path data and checked. A name is given once: the same drawing again returns `replayed: true`, another is refused (reuse that icon, or pick a more specific name). Never write into `.visionboard/icons/` yourself. Returns `name` and `hash`. Needs your secret.",
+    inputs: [
+      {"name":"name","in":"body","type":"string","required":true,"description":"`x-`, then what it shows: a singular noun, then a qualifier if needed (`x-encoder`, `x-encoder-audio`). No board names, numbers or colours."},
+      {"name":"title","in":"body","type":"string","required":true,"description":"A few words saying what it shows."},
+      {"name":"svg","in":"body","type":"string","required":true,"description":"The drawing, as SVG: paths only, in the built-in set's box; text, pictures, styles and scripts are refused."},
+      {"name":"key","in":"body","type":"string","required":false,"description":"Retry key, per agent across the project."},
+    ],
+  },
+  {
     name: "list-apps", operationId: "list_apps", takesBody: false,
     summary: "List the apps in this folder",
     description: "List the apps in this folder, to draw one on a card or see what to fix. Apps live in the open ledger's `apps/<id>/` (`.visionboard/apps/`, or `.visionboard/<ledger>/apps/` with ledger folders; the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.",

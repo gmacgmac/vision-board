@@ -56,14 +56,14 @@ test('ledgerFiles: every file of one ledger folder', () => {
   const d = `${P}/.visionboard`;
   assert.deepEqual(ledgerFiles(d), {
     ledger: `${d}/ledger.jsonl`, agents: `${d}/agents.json`, lock: `${d}/lock`, images: `${d}/images`,
-    apps: `${d}/apps`, appState: `${d}/app-state`, gitignore: `${d}/.gitignore`,
+    apps: `${d}/apps`, appState: `${d}/app-state`, backups: `${d}/backups`, gitignore: `${d}/.gitignore`,
   });
 });
 
 test('projectFiles: the repo-wide files, absolute or relative to the project', () => {
   assert.deepEqual(projectFiles(P), {
     root: `${P}/.visionboard`, gitignore: `${P}/.visionboard/.gitignore`, chatSessions: `${P}/.visionboard/chat-sessions.json`,
-    permissions: `${P}/.visionboard/permissions.json`, attachments: `${P}/.visionboard/attachments`,
+    permissions: `${P}/.visionboard/permissions.json`, attachments: `${P}/.visionboard/attachments`, icons: `${P}/.visionboard/icons`,
   });
   assert.equal(projectFiles('').attachments, '.visionboard/attachments', 'what an agent is told');
 });

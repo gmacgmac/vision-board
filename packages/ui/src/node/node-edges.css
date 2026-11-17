@@ -1,0 +1,210 @@
+/* The node with its marks on its edges (D-099; nodeEdges flag, data-edges; the look of
+   design/mockups/node-skins/default-skin-*.html and node-states/). Placed by the skin's row (data-answer-at,
+   data-marks-at), never by a skin's name. Each mark is 22px tall (--vb-mark-h) with a hit area of at least 24px; the
+   disc, the icon tile and the notes mark share one vertical line, 34px in from the right edge. A mark's colours are
+   --vb-mark-ink and --vb-mark-bg, so a paused mark (a locked board) keeps them: nothing changes at rest (point 328).
+   Selection is the node's own border, brighter and thicker, never an outer ring. Tokens only. */
+vb-node[data-edges] {
+  /* The node's own colour: the kind's, or its tone's line (point 366); the grip or kind tab, the top line, the hover and
+     selected borders follow it. The kind's word, its disc and a plate's dot keep the kind's. */
+  --vb-node-color: var(--vb-kind);
+  --vb-node-tab: color-mix(in srgb, var(--vb-kind) 14%, var(--vb-surface-card)); --vb-node-tab-ink: var(--vb-kind);
+  --vb-edge: color-mix(in srgb, var(--vb-node-color) var(--vb-node-edge-tint), var(--vb-line-strong));
+  --vb-select-edge: var(--vb-node-color);
+  --vb-tint: color-mix(in srgb, var(--vb-kind) var(--vb-node-tint), var(--vb-surface));
+  --vb-tag: var(--vb-kind);
+  --vb-focus: var(--vb-focus-edge);
+  border-color: var(--vb-edge); border-radius: var(--vb-node-radius);
+  background: linear-gradient(170deg, var(--vb-tint) 0%, var(--vb-surface) 55%);
+  font-family: var(--vb-font-text);
+}
+vb-node[data-edges] {
+  &:not([data-icon])::before { content: none; }
+}
+vb-node[data-edges][data-icon]::before {
+  left: 60px; right: 60px; height: 2px; background: color-mix(in srgb, var(--vb-select-edge) 80%, transparent);
+}
+vb-node[data-edges]:hover { border-color: color-mix(in srgb, var(--vb-node-color) 70%, var(--vb-line-strong)); }
+vb-node[data-edges][data-selected] {
+  --vb-tint: color-mix(in srgb, var(--vb-kind) var(--vb-node-tint-selected), var(--vb-surface));
+  border-color: var(--vb-select-edge);
+  box-shadow: inset 0 0 0 calc(var(--vb-select-w) - 1px) var(--vb-select-edge), var(--vb-shadow-lift);
+}
+vb-node[data-edges][data-selected][data-icon]::before { content: none; }
+/* A tone (decision 17, point 366; T_02's tints from --vb-tone-h): everything coloured by the node follows it: the body's
+   top, the grip or kind tab, the top line, the hover and selected borders, the tags and the icon tile. The kind's word
+   says the kind; its disc and Tick and Cross keep their colours. */
+vb-node[data-edges][data-vb-tone] {
+  --vb-node-color: var(--vb-tone-line); --vb-node-tab: var(--vb-tone-tile); --vb-node-tab-ink: var(--vb-tone-ink);
+  --vb-edge: var(--vb-tone-edge); --vb-tag: var(--vb-tone-line); --vb-tint: var(--vb-tone-body);
+}
+vb-node[data-edges][data-vb-tone][data-selected] { --vb-tint: color-mix(in srgb, var(--vb-tone-line) 14%, var(--vb-tone-body)); }
+
+vb-node[data-edges] .vb-node-content { padding: calc(var(--vb-space-5) - 2px) var(--vb-space-4) calc(var(--vb-space-4) + 2px); }
+vb-node[data-edges] .vb-node-title { font-family: var(--vb-font-display); font-weight: 600; }
+vb-node[data-edges] .vb-node-tags li {
+  background: color-mix(in srgb, var(--vb-tag) 16%, var(--vb-surface-card)); color: var(--vb-ink-strong); font-weight: 600;
+}
+/* A handover, once written, is part of the node (DESIGN_01 ruling). */
+vb-node[data-edges] .vb-node-handover { display: grid; gap: var(--vb-space-2); padding-top: var(--vb-space-2); border-top: 1px solid var(--vb-line); }
+vb-node[data-edges] .vb-node-handover-head {
+  margin: 0; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.08em; text-transform: uppercase; color: var(--vb-ink-subtle);
+}
+
+/* Every mark: a button on the border, its colours in two custom properties. */
+vb-node[data-edges] .vb-mark {
+  --vb-mark-ink: var(--vb-ink-strong); --vb-mark-bg: var(--vb-surface-card);
+  position: absolute; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  box-sizing: border-box; height: var(--vb-mark-h); margin: 0; padding: 0 var(--vb-space-2);
+  border: 1px solid var(--vb-edge); border-radius: var(--vb-mark-radius);
+  background: var(--vb-mark-bg); color: var(--vb-mark-ink);
+  font: 700 11.5px/1 var(--vb-font-label); white-space: nowrap; cursor: pointer;
+}
+/* The hit area: a transparent edge around a 22px mark makes it 28px, as the disc is (viewport.ts MARK_HIT). Zoomed out
+   where that draws under 24px, the stage carries data-marks="small" and a press on a mark is its node's (FIX_01): no
+   pointer, no hover look. */
+vb-node[data-edges] .vb-mark:not(.vb-mark-answer)::before { content: ''; position: absolute; inset: -3px; }
+.vb-stage[data-marks='small'] vb-node[data-edges] .vb-mark { cursor: inherit; }
+/* Further out still the grown marks would cover each other (the stage's data-marks-crowded, viewport.ts CROWD_GROW): a node
+   keeps its number, its answer and its notes, what it says from a distance; the kind tab, the grip, the bottom edge's
+   badges and a notes mark with nothing to count give way, keeping their place (FIX_01). H and C still open them. */
+.vb-stage[data-marks-crowded] vb-node[data-edges][data-marks-at='edges'] :is(.vb-node-kind, .vb-node-grip, .vb-node-edge > .vb-mark:not(.vb-mark-notes), .vb-mark-notes[data-notes-mark='none']) { visibility: hidden; }
+vb-node[data-edges] .vb-mark[hidden] { display: none; }
+vb-node[data-edges] .vb-mark[data-paused][aria-disabled='true'],
+vb-node[data-edges] .vb-mark[data-paused][aria-disabled='true']:is(:hover, :active) { color: var(--vb-mark-ink); background: var(--vb-mark-bg); cursor: pointer; }
+/* The ring shows only after Tab (point 338): a press focuses a mark without it (a11y.css's pointer-focus rule). */
+vb-node[data-edges] .vb-mark:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+vb-node[data-edges] .vb-mark[data-pointer-focus]:focus-visible { outline: none; }
+vb-node[data-edges] .vb-mark .vb-icon { width: 13px; height: 13px; stroke-width: 2.1; }
+
+/* Top left: the number, the Bookmark toggle (DD-04). Bookmarked it fills with the bookmark colour and grows a
+   notched tail. */
+vb-node[data-edges] .vb-node-num {
+  top: calc(var(--vb-mark-h) / -2); left: 14px; min-width: 26px; padding: 0 7px;
+  border-color: var(--vb-line-contrast); --vb-mark-bg: var(--vb-surface-sunken); box-shadow: none;
+  font: 600 var(--vb-text-sm)/1 var(--vb-font-label); font-variant-numeric: tabular-nums;
+}
+vb-node[data-edges][data-bookmarked] .vb-node-num {
+  --vb-mark-ink: var(--vb-bookmark-ink); --vb-mark-bg: var(--vb-bookmark);
+  top: -20px; height: 31px; padding-bottom: 9px; border: 0; border-radius: 6px 6px 0 0; font-weight: 700;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 7px), 0 100%);
+}
+vb-node[data-edges][data-bookmarked] .vb-node-num:focus-visible { clip-path: none; }
+/* Top centre: the kind tab, the drag handle; a node with an icon has a grip there instead (decision 12). */
+vb-node[data-edges] .vb-node-kind {
+  top: calc(var(--vb-mark-h) / -2); height: var(--vb-mark-h); box-shadow: none;
+  border-color: color-mix(in srgb, var(--vb-node-color) 55%, transparent); background: var(--vb-node-tab); color: var(--vb-node-tab-ink);
+}
+vb-node[data-edges] .vb-node-grip {
+  position: absolute; top: -7px; left: 50%; z-index: 1; width: 40px; height: 14px; transform: translateX(-50%);
+  border: 1px solid color-mix(in srgb, var(--vb-node-color) 60%, var(--vb-line-strong)); border-radius: 7px;
+  background: radial-gradient(var(--vb-node-color) 1.3px, transparent 1.5px) 7px 3px / 6px 4px, var(--vb-surface-card); cursor: grab;
+}
+vb-node[data-edges].dragging .vb-node-grip { cursor: grabbing; }
+
+/* Top right: the answer disc (DD-07, DD-08), in the kind's colour with a dot of the ground while waiting; filled
+   green with a tick or red with a cross once answered. A ticked or crossed node is not otherwise recoloured. */
+vb-node[data-edges] .vb-mark-answer {
+  --vb-mark-bg: var(--vb-kind); --vb-mark-ink: var(--vb-answer-mark);
+  top: calc(var(--vb-answer-size) / -2); right: 20px; width: var(--vb-answer-size); height: var(--vb-answer-size); padding: 0;
+  border: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--vb-gap);
+}
+vb-node[data-edges] .vb-mark-answer::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--vb-answer-wait); }
+vb-node[data-edges] .vb-mark-answer .vb-icon { display: none; width: 15px; height: 15px; stroke-width: 2.6; }
+vb-node[data-edges] .vb-mark-answer[data-answer='ticked'] { --vb-mark-bg: var(--vb-answer-tick); }
+vb-node[data-edges] .vb-mark-answer[data-answer='crossed'] { --vb-mark-bg: var(--vb-answer-cross); }
+vb-node[data-edges] .vb-mark-answer:is([data-answer='ticked'], [data-answer='crossed'], [data-proposed], [data-locked])::after { content: none; }
+vb-node[data-edges] .vb-mark-answer:is([data-answer='ticked'], [data-proposed='ack']):not([data-locked]) .vb-mark-tick,
+vb-node[data-edges] .vb-mark-answer:is([data-answer='crossed'], [data-proposed='drop']):not([data-locked]) .vb-mark-cross { display: block; }
+/* A proposal waiting (DESIGN_01): a dashed ring with the proposed mark; colour is never the only signal. */
+vb-node[data-edges] .vb-mark-answer[data-proposed]::before {
+  content: ''; position: absolute; inset: -5px; border: 1.5px dashed var(--vb-kind); border-radius: 50%;
+}
+/* A write on its way (the person's own press, past about 150ms; the page sets data-saving): one bright arc. */
+vb-node[data-edges] .vb-mark-answer[data-saving]::before {
+  content: ''; position: absolute; inset: -5px; border: 2px solid var(--vb-line-strong); border-top-color: var(--vb-ink-strong);
+  border-radius: 50%; animation: vb-mark-spin 0.9s linear infinite;
+}
+@keyframes vb-mark-spin { to { rotate: 1turn; } }
+@media (prefers-reduced-motion: reduce) { vb-node[data-edges] .vb-mark-answer[data-saving]::before { animation: none; border-style: dotted; } }
+/* A write that failed (data-failed): the answer from before stays, ringed in the error red, with "!" (point 338:
+   today's red; the words beside it sit on the card surface, where it keeps Lc 45). */
+vb-node[data-edges] .vb-mark[data-failed] { box-shadow: 0 0 0 2px var(--vb-gap), 0 0 0 4px var(--vb-state-drop); }
+vb-node[data-edges] .vb-mark[data-failed]::before {
+  content: '!'; position: absolute; inset: auto -7px -5px auto; display: grid; place-items: center; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--vb-state-drop); color: var(--vb-ink-on-fill); font: 800 10px/1 var(--vb-font-text);
+}
+/* A press on a locked board or a read-only ledger (point 328, data-locked for a moment): a lock in place of the mark. */
+vb-node[data-edges] .vb-mark-answer[data-locked] { --vb-mark-bg: var(--vb-surface-sunken); --vb-mark-ink: var(--vb-ink-strong); }
+vb-node[data-edges] .vb-mark-answer[data-locked] .vb-mark-lock { display: block; }
+
+/* The bottom edge: what changed (left), then Awaiting, and the conversation (right, under the disc). */
+vb-node[data-edges] .vb-node-edge {
+  position: absolute; left: 14px; right: 14px; bottom: calc(var(--vb-mark-h) / -2); height: var(--vb-mark-h);
+  display: flex; gap: 6px; pointer-events: none;
+}
+vb-node[data-edges] .vb-node-edge > * { position: relative; pointer-events: auto; }
+/* The change badge (DD-06): New, "N updates", then a quiet "vN" once seen. It opens history. */
+vb-node[data-edges] .vb-mark-badge { --vb-mark-ink: var(--vb-badge-updated); border: 1.5px solid currentColor; }
+vb-node[data-edges] .vb-mark-badge[data-badge='new'] { --vb-mark-ink: var(--vb-badge-new); }
+vb-node[data-edges] .vb-mark-badge[data-badge='settled'] { --vb-mark-ink: var(--vb-badge-settled); border: 1px solid var(--vb-edge); font-weight: 600; }
+vb-node[data-edges] .vb-mark-badge:not([data-badge='settled']) .vb-icon { display: none; }
+/* Awaiting (the handover owed): quiet grey, never bright, not a control. */
+vb-node[data-edges] .vb-mark-awaiting { --vb-mark-ink: var(--vb-ink-subtle); border-color: var(--vb-line-strong); font-weight: 600; cursor: default; }
+/* The notes mark (DD-05): on every node, quiet when empty, a count, filled while an agent's reply is unread; a note
+   on several nodes shows two bubbles. */
+vb-node[data-edges] .vb-mark-notes {
+  --vb-mark-ink: var(--vb-notes-count);
+  position: absolute; right: 20px; min-width: 32px; translate: 50% 0; border-radius: var(--vb-radius-pill);
+}
+vb-node[data-edges] .vb-mark-notes[data-notes-mark='none'] { --vb-mark-ink: var(--vb-notes-quiet); padding: 0 7px; }
+vb-node[data-edges] .vb-mark-notes[data-notes-mark='unread'] { --vb-mark-ink: var(--vb-notes-unread-ink); --vb-mark-bg: var(--vb-notes-unread); border-color: var(--vb-notes-unread); }
+vb-node[data-edges] .vb-mark-notes:not([data-group]) .vb-mark-group, vb-node[data-edges] .vb-mark-notes[data-group] .vb-mark-one { display: none; }
+
+/* A node with an icon (decision 12): its kind as a small word over the title (grey on a node that only tells) and
+   the icon in a 40px tile at the right of the body, on the disc's vertical line. */
+vb-node[data-edges] .vb-node-head { display: flex; align-items: flex-start; gap: var(--vb-space-3); }
+vb-node[data-edges] .vb-node-heading { flex: 1; min-width: 0; display: grid; gap: 3px; }
+vb-node[data-edges] .vb-node-kick {
+  margin: 0; font: 700 10.5px/1.5 var(--vb-font-text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--vb-kind);
+}
+vb-node[data-edges] {
+  &:not(:has([data-mark='answer'], [data-mark='tick'])) .vb-node-kick { color: var(--vb-ink-subtle); }
+}
+vb-node[data-edges] .vb-node-tile {
+  display: grid; place-items: center; flex: none; width: var(--vb-tile-size); height: var(--vb-tile-size); margin-right: -6px;
+  border-radius: var(--vb-tile-radius); background: color-mix(in srgb, var(--vb-kind) var(--vb-tile-tint), var(--vb-surface-card)); color: var(--vb-kind);
+}
+vb-node[data-edges][data-vb-tone] .vb-node-tile { background: var(--vb-tone-tile); color: var(--vb-tone-ink); }
+vb-node[data-edges] .vb-node-tile-icon { width: var(--vb-tile-icon); height: var(--vb-tile-icon); }
+
+/* The history box with its edges holds the stepper on top (planner's call 9) and opens from the badge, under it. */
+vb-node[data-edges] .vb-card-pop[data-pop='history'] .vb-node-steps { margin: 0; }
+vb-node[data-edges] .vb-card-pop[data-pop='history'] .vb-node-stepnav:not([hidden]) { display: flex; gap: var(--vb-space-2); align-items: center; }
+
+/* A skin row's other places (skins.ts), the marks in a plate and the answer as a switch: node-plate.css. */
+
+/* Zoom (D-101, FE_05): the node scales with the board, so a mark would shrink with it; below the zoom where a 22px mark
+   draws under --vb-mark-min (14px) it grows in place instead. The page writes --vb-mark-grow on the cards layer (the
+   viewport, 1 above that zoom, so a zoom step there restyles nothing). `scale` composes with the marks' own translate,
+   so each grows about its own centre on the border: the disc, the kind tab and the notes mark stay on their vertical line;
+   the number and the change badge grow from their left edge and stay on their corner. A plate skin keeps its marks in
+   flow, at the node's scale (FE_04). */
+vb-node[data-edges] :is(.vb-mark, .vb-node-kind, .vb-node-grip) { scale: var(--vb-mark-grow, 1); transform-origin: 50% 50%; }
+vb-node[data-edges] :is(.vb-node-num, .vb-node-edge > .vb-mark:not(.vb-mark-notes)) { transform-origin: 0 50%; }
+vb-node[data-edges][data-bookmarked] .vb-node-num { transform-origin: 0 20px; }
+/* The two centred on the node's top by left: 50% move by `translate`, which comes before `scale`, so they stay centred.
+   Two rules, as the page build merges `transform: none` and `translate` in one rule into `transform: translate(-50%)`,
+   which comes after `scale` (off centre when zoomed out) and that a plate's `translate: none` cannot clear. */
+vb-node[data-edges] .vb-node-kind, vb-node[data-edges] .vb-node-grip { transform: none; }
+vb-node[data-edges] :is(.vb-node-kind, .vb-node-grip) { translate: -50% 0; }
+/* A plate keeps its marks in flow, at the node's scale. */
+vb-node[data-edges][data-marks-at='plate'] :is(.vb-mark, .vb-node-kind, .vb-node-grip) { scale: none; translate: none; }
+/* Crowded (above, FIX_01), the number and the disc grow down into the node from its top border, not up past it, so the
+   first row's never reach the container's title line; a notes mark with a count takes the corner the badge left, bottom
+   left, so it never meets the disc. */
+.vb-stage[data-marks-crowded] vb-node[data-edges][data-marks-at='edges'] {
+  & .vb-node-num, &[data-bookmarked] .vb-node-num { transform-origin: 0 0; }
+  & .vb-mark-answer { transform-origin: 50% 0; }
+  & .vb-mark-notes { left: 0; right: auto; translate: none; transform-origin: 0 50%; }
+}

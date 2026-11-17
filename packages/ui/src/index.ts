@@ -9,6 +9,13 @@ export * from './node/node-time.ts';
 export { POPOVER_CLOSE, POPOVER_HIDE, POPOVER_OPEN, POPOVER_SHOW } from './node/node-popover.ts';
 export type { PopoverShowDetail } from './node/node-popover.ts';
 export * from './node/node-history.ts';
+// The node's edges (nodeEdges, D-099): its marks, menus, the icon set, the skin registry and the fixed-size menu.
+export * from './node/node-marks.ts';
+export * from './node/node-menus.ts';
+export * from './icons/icon-set.ts';
+export * from './icons/icon.ts';
+export * from './skins.ts';
+export * from './menu/menu-template.ts';
 export type { VbNodeElement } from './node/vb-node.ts';
 export * from './region/region-core.ts';
 export * from './region/region-fresh.ts';
@@ -21,7 +28,6 @@ export type { NoteChoice, NoteEventDetail, VbNoteBubbleElement } from './note-bu
 export * from './app-frame/app-frame-core.ts';
 export * from './app-frame/app-frame-state.ts';
 export type { AppFrameWiring, VbAppFrameElement } from './app-frame/vb-app-frame.ts';
-export { readLook } from './app-frame/vb-app-frame.ts';
 export * from './node/node-app.ts';
 export * from './image-view/image-view-core.ts';
 export { imageButton, IMAGE_BUTTON, showProblem } from './image-view/card-image.ts';
@@ -35,7 +41,7 @@ export type { MarkdownOptions } from './markdown/render.ts';
 export { bindHoverTip } from './tip/hover-tip.ts';
 export type { HoverTip, HoverTipOptions } from './tip/hover-tip.ts';
 export { pauseControls } from './paused/paused.ts';
-export { defineBoardElements } from './elements.ts';
+export { defineAppFrame, defineBoardElements, defineImageView, loadConversation } from './elements.ts';
 export { PATTERNS } from './patterns.ts';
 export type { PatternInfo } from './patterns.ts';
 // The shared base (UI_01): menu, dismissable layer and modal dialog, for every screen and plugin.

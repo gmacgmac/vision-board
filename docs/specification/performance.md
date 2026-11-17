@@ -16,7 +16,7 @@
 | App panels kept loaded | a zoom step under 50 ms with panels loaded and frozen; no more than `LIVE_PANELS` loaded while no more are on screen (D-050) | 12 app cards, each zoomed to in turn | `tests/pages/app-alive.spec.ts`, `apps/board/tests/app-live-cap.test.ts` |
 | Same picture | the page after each change equals a page opened afresh | seeded random changes (acts, agent drawing) | `tests/pages/same-picture.spec.ts`, `apps/board/tests/layout-cache.test.ts` |
 | Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown.timing.ts` |
-| Board page weight | under 200 KB gzip (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `shell/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
+| Board page weight | under 200 KB gzip (210 KB temporarily, until the Node Overhaul's T_04 deletes the old node's code; maintainer, point 351) (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `shell/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
 | Server start | under 1 s | a 100,000-event ledger | `apps/board/tests/server-start.timing.ts` |
 
 Today (2026-10-05, tracker N12, on the page-test machine: macOS, Chromium): layout of 1,000 cards takes about 3 ms (6 ms with 3 pins on a card in each of the 20
@@ -27,6 +27,11 @@ cards updates and measures 50 cards and lays out their 2 containers, and 1 chang
 container updates 1 card, lays out 1 container and redraws 2 connectors, with no full fetch in
 either; the server starts on a 100,000-event ledger in about 330 ms, so it keeps no checkpoint yet
 (approach 7 waits until it is needed).
+Zoom and the edge marks (node overhaul FE_05, 2026-11-17, nodeEdges on, the 1,000-card board, wheel steps): a step that
+changes no mark growth costs the same as with the flag off (4 to 8 ms); the edge marks' growth is written on the cards
+layer only when its step (1.2) changes, and a step that does restyles the cards in about 35 to 51 ms, about one wheel step
+in four below 64% (key presses: 38 to 57 ms, the first of a run over 50 ms), none above it; no card is updated, measured or laid out
+in either (flag off: 4 to 8 ms a step). A zoom step is still under the budget at its median.
 A budget changes only with a reason in the PLAN of the task that changes it.
 
 **What the page leaves out of its start weight.** A budget is met by moving weight, never by moving
@@ -36,6 +41,37 @@ such text: `packages/format/src/flags.ts` keeps it in `FLAG_DESCRIPTIONS`, apart
 defaults, all the page reads), and `packages/format/tests/flags.test.ts` fails if `FLAGS` carries
 anything but `default` or a page file names `FLAG_DESCRIPTIONS`. On 2026-11-03 (T_03) that took the
 page from 200.6 KB to 192.3 KB gzip.
+
+**Parts a person opens load later** (PERF_01, 2026-11-16). A dialog the person opens is reached only by
+`import()`: `lazyPart` (`apps/board/src/board/lazy.ts`) loads it once, and `chrome/Lazy.svelte` draws it the first
+time its state wants it (the click that opened it has already set that state, so nothing is lost), kept from then
+on. Once the board has first drawn, `loadPartsWhenIdle` loads every part while the browser is idle, so a first open
+seldom waits; a load that fails is put back and said (`partDidNotLoad`), and the next open tries again. The plugin's
+view is one file (`codeSplitting: false`), so there each part is already inside. Moved so far: the folder picker
+(`FolderDialog`, `FolderPicker`), the New ledger dialog (`LedgerDialog`, `LedgerForm`), New board / Rename board
+(`BoardDialog`) and the Archived list (`ArchivedDialog`, `ArchivedList`). `apps/board/tests/lazy-parts.test.ts`
+fails if a file the page imports statically from `main.ts` reaches one of them.
+Two elements are defined the same way, on first use (`#ui` `elements.ts` `defineAppFrame`, `defineImageView`, not
+in `defineBoardElements`): `<vb-app-frame>` when the board first places an app card (`apps/app-cards.ts` places nothing
+until it is defined), `<vb-image-view>` when a person first opens a picture (`cards/card-images.ts`). Their sheets stay
+in the board's stylesheet, so an app card has its size before its element is defined. The gallery defines both before
+it draws.
+
+**One start chunk.** The bundler puts every module a lazy part shares with the page in a chunk of its own, and each
+extra file costs gzip (each is compressed alone) and an import list. So the page is built on its own
+(`apps/board/vite.config.ts`: environment `client`, index.html only, `codeSplitting.groups` `$initial`: everything it
+runs at start is one chunk) and the gallery and the PDF frame in a second build (`pages`) into the same `dist/`; neither
+empties it on a rebuild (`apps/board/bin/build-output.ts` `ownOutput`). `pageAssets` counts any asset name.
+
+**What the page never runs.** The upgrade chain (`#format` `migrate/`) runs only in the server, which upgrades every
+line before a page sees it (D-103); nothing in it runs when its module loads (`restamp` has no side effects, the step
+map is made on the first upgrade), so the page and the plugin's view leave it out, and with it its words.
+
+Measured (`npm run build`, gzip per file, JS + CSS at start): 200.7 KB in 3 files before (T_01); 201.1 KB after the
+skins' tokens (T_02); 193.1 KB with one start chunk and the four dialogs; 190.4 KB with the two elements; 187.5 KB
+in 2 files without the upgrade chain (2026-11-16, PERF_01 run 2).
+Not done: a part that is always on screen (the toolbar's menus, the key help, the strips that announce what an
+agent asked) or that keys type into while it opens (Go to card).
 
 ## Approach
 

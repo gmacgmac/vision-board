@@ -13,6 +13,7 @@ import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
 import { memoryStore } from './host.ts';
 import { createIo } from './io.ts';
+import { loadPartsWhenIdle } from './lazy.ts';
 import type { Board, BoardElements } from './controller.ts';
 import { createBoard } from './controller.ts';
 import { takeIdPrefix } from './mount-ids.ts';
@@ -27,7 +28,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 
 /** What the board's controls call (chrome/), and the standalone page's test door (`rebuild`, `idle`,
  *  work.ts). No chat goes through it: that is `BoardView` and `BoardChat`. */
-export type BoardControls = Pick<Board, 'switchTo' | 'showVersion' | 'goToContainer' | 'command' | 'toggleHide' | 'access' | 'proposals' | 'boardEdit' | 'nextFlagged' | 'go' | 'rebuild' | 'idle'>;
+export type BoardControls = Pick<Board, 'switchTo' | 'showVersion' | 'goToContainer' | 'command' | 'toggleHide' | 'access' | 'proposals' | 'boardEdit' | 'nextBookmarked' | 'setSkin' | 'setDirection' | 'go' | 'rebuild' | 'idle'>;
 
 /** What `mount` gives back: the view, and what a host draws around the board. */
 export interface MountedBoard extends BoardView {
@@ -140,6 +141,8 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     told = key;
     host.pageChanged?.();
   }
+  // The parts a person opens (lazy.ts) load once the board has first drawn, while the browser is idle.
+  const unwarm = status.on((patch) => { if (patch.drawn) { unwarm(); loadPartsWhenIdle(); } });
   // Every status change (a board opened, closed, archived, renamed, a batch) is looked at once its batch is done.
   let looking = false;
   const unlook = status.on(() => {
@@ -175,7 +178,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     },
     unmount() {
       gone = true;
-      finishAll([stop, unlook, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
+      finishAll([stop, unlook, unwarm, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
         chrome.unmount, () => root.replaceChildren(), () => root.classList.remove(...added)]);
     },
   };

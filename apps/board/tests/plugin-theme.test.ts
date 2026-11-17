@@ -73,3 +73,25 @@ test('the spec\'s host table names each property the sheet reads, the tokens it 
   assert.equal(passes.get('--vb-host-color-scheme'), '--host-color-scheme');
   assert.equal([...scheme.matchAll(/color-scheme: var\(--vb-host-color-scheme, /g)].length, 3);
 });
+
+/** skins.css: each skin's block, as `[token, value]`. */
+const skinSheet = uncomment(read('../../../packages/tokens/src/skins.css'));
+const skinDecls = [...skinSheet.matchAll(/\[data-vb-skin='([a-z-]+)'\]\s*\{([^}]*)\}/g)]
+  .map((m) => ({ skin: m[1]!, decls: [...m[2]!.matchAll(/(--vb-[a-z-]+):\s*([^;]+);/g)].map((d) => [d[1]!, d[2]!.trim()] as const) }));
+
+test('a host\'s colours and faces win over a skin: each value a skin gives keeps the --vb-host-* the token fronts (D-094)', () => {
+  assert.ok(skinDecls.length > 0, 'skins.css has a block');
+  const frontOf = new Map(fronts.map((f) => [f.token, f.via]));
+  assert.equal(frontOf.get('--vb-font-text'), '--vb-host-font');
+  assert.equal(frontOf.get('--vb-font-label'), '--vb-host-font-mono');
+  // theme.css hands the host's two faces to the tokens, as it does every colour.
+  assert.equal(passes.get('--vb-host-font'), '--host-font');
+  assert.equal(passes.get('--vb-host-font-mono'), '--host-font-mono');
+  for (const { skin, decls } of skinDecls) {
+    for (const [token, value] of decls) {
+      const via = frontOf.get(token);
+      if (via) assert.match(value, new RegExp(`^var\\(${via}, `), `${skin}: ${token} keeps ${via} in front`);
+      else assert.ok(!/--vb-host-/.test(value), `${skin}: ${token} reads no host property the tokens do not`);
+    }
+  }
+});

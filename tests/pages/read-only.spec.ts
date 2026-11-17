@@ -64,9 +64,9 @@ test('opens read-only: the chip says so, and every control that would write is p
   const order = await page.locator('.vb-toolbar').evaluate((bar) => [bar.querySelector('.vb-path'), bar.querySelector('.vb-chip-editing'), bar.querySelector('.vb-edit-btn')]
     .map((e) => e!.getBoundingClientRect().left));
   expect(order).toEqual([...order].sort((a, b) => a - b));
-  // On the cards: the answers, the size, the note pin and the flag; on the frame: its tools.
+  // On the cards: the answers, the size, the note pin and the bookmark; on the frame: its tools.
   const node = page.locator('vb-node').first();
-  for (const sel of ['button[data-act]', 'button[data-flag]', '.vb-note-pin']) {
+  for (const sel of ['button[data-act]', 'button[data-bookmark]', '.vb-note-pin']) {
     for (const el of await node.locator(sel).all()) await expect(el, sel).toHaveAttribute('aria-disabled', 'true');
   }
   await expect(page.locator('vb-region .vb-region-comment').first()).toHaveAttribute('aria-disabled', 'true');
@@ -88,7 +88,7 @@ test('opens read-only: the chip says so, and every control that would write is p
   await page.keyboard.press('Escape');
   // A press says why and writes nothing.
   const before = await head(page);
-  await node.locator('button[data-flag]').click({ force: true });
+  await node.locator('button[data-bookmark]').click({ force: true });
   await expect(toast(page)).toHaveText(REASON);
   expect(await head(page)).toBe(before);
 });
@@ -182,7 +182,7 @@ test('the state is in the bar at 1400, 900 and 600 px; Edit is a button at full 
 
 const LONG_LEDGER = 'customer-research-interviews-2027-q1-q2';
 const LONG_BOARD = 'Interview notes, round one: what the participants said about onboarding, pricing and the support they want';
-/** Long folder, ledger and board names, a flagged card and a locked board, then read-only again. */
+/** Long folder, ledger and board names, a bookmarked card and a locked board, then read-only again. */
 async function longNames(page: Page, request: APIRequestContext) {
   const folder = path.join(srv.home, 'projects', 'atlas-customer-research-programme-2027');
   fs.mkdirSync(folder, { recursive: true });
@@ -194,14 +194,14 @@ async function longNames(page: Page, request: APIRequestContext) {
     { type: 'node', node: { region: 'roles', kind: 'question', title: 'Which role first?' } }] } });
   expect(wrote.status(), await wrote.text()).toBe(200);
   const n = (await wrote.json() as { results: { n?: number }[] }).results[2]!.n!;
-  for (const action of [{ action: 'flag', n }, { action: 'lock' }]) {
+  for (const action of [{ action: 'bookmark', n }, { action: 'lock' }]) {
     const r = await page.request.post(`${srv.base}/api/boards/long-board/act`, { data: { type: 'act', board: 'long-board', ...action } });
     expect(r.status(), await r.text()).toBe(201);
   }
   await editing(page, false);
 }
 
-test('long folder, ledger and board names, Locked and flagged, read-only: every form fits', async ({ page, request }) => {
+test('long folder, ledger and board names, Locked and bookmarked, read-only: every form fits', async ({ page, request }) => {
   await open(page);
   await longNames(page, request);
   const widths: string[] = [];
@@ -313,7 +313,7 @@ test('gallery: the section is there only with the flag, last, with the three for
   await expect(page.locator('main > section:not([data-feature="readOnlyControls"]):not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="oneChangeTab"])').last()).toHaveAttribute('data-feature', 'readOnlyStart');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"] .vb-chip-editing`).first()).toBeVisible();
   await expect(section(page).locator(`${bid('editing')}, ${bid('edit')}`)).toHaveCount(0);
-  await expect(section(page).locator('vb-node button[data-flag]').first()).toHaveAttribute('aria-disabled', 'true');
+  await expect(section(page).locator('vb-node button[data-bookmark]').first()).toHaveAttribute('aria-disabled', 'true');
 });
 
 for (const theme of THEMES) {

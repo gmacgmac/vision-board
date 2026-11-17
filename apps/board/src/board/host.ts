@@ -203,7 +203,7 @@ export const flagOf = (host: Pick<BoardHost, 'settings'>, f: FlagName): boolean 
 
 /** How the board's Markdown renders under this host, for every surface that draws it. */
 export const markdownOf = (host: Pick<BoardHost, 'settings' | 'imageRoute'>): MarkdownOptions =>
-  ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute, more: flagOf(host, 'markdownMore') });
+  ({ images: flagOf(host, 'cardImages'), svg: flagOf(host, 'svgImages'), imageRoute: host.imageRoute, more: flagOf(host, 'markdownMore'), details: flagOf(host, 'cardDetails') });
 
 /** The host's chat status as the board reads it: while the engine takes every agent as its folder's one agent
  *  (`oneAgent`, from the engine's reads: its `singleAgent` flag, set once, on the engine), `agent` is ignored, so the

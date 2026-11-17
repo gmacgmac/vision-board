@@ -2,7 +2,7 @@
 // (select, move by the kind tab, pan, lasso), the keyboard, the size control and how a card got
 // focus (pointer-focus.ts). Each control calls one handler; what the handler does lives in the
 // controller. Split out of controller.ts (N12_FE_01).
-import type { ActionId, ActSize, Mode, Widths } from '#format';
+import type { ActDirection, ActionId, ActSize, Mode, Widths } from '#format';
 import type { Box, Point } from '#layout';
 import { routeLinks } from '#layout';
 import type { View } from '#format';
@@ -11,11 +11,14 @@ import type { KeyHandlers } from './keys.ts';
 import { bindKeys } from './keys.ts';
 import type { PointerHandlers } from './pointer.ts';
 import { bindPointer } from './pointer.ts';
-import { bindPointerFocus } from '../canvas/index.ts';
+import { bindPointerFocus, smallMark } from '../canvas/index.ts';
 import { bindSizeControl, isSizePick } from '../cards/index.ts';
 import type { Viewport } from '../canvas/index.ts';
 
 export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'> {
+  /** A press on a mark on a node's edge (nodeEdges flag, mark-flow.ts): the number, the disc, the badge, the notes mark,
+   *  a switch's half. It says itself why a press the board can't take did nothing. */
+  mark?(id: string, mark: string, el: HTMLElement): void;
   /** The pin: open its note, with the agent's replies to it. A note in the card's block
    *  (`fromNote`): the card's conversation, at that note (review polish ruling 6). */
   showNote(id: string, seq: number, fromNote?: boolean): void;
@@ -23,6 +26,8 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   showReply(id: string, seq: number): void;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): void;
+  /** A flow's direction in a container's layout control (layoutControl and flowDirection flags): the container's `direction` act; `auto` gives back the agent's. */
+  setDirection?(region: string, direction: ActDirection): void;
   /** Match card widths in a container's mode row (widthsControl flag): the widths a press sets. */
   setWidths(region: string, widths: Widths): void;
   resetRegion(region: string): void;
@@ -81,10 +86,15 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
   { pageWide = false, wheelChaining = false }: { pageWide?: boolean; wheelChaining?: boolean } = {}): () => void {
   stage.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
+    // A mark too small to press at this zoom: the pointer's click picked its node (pointer.ts); Enter or Space (no clicks
+    // counted, `detail` 0) still presses it.
+    if (e.detail > 0 && smallMark(t)) return;
+    const markBtn = h.mark ? t.closest<HTMLElement>('vb-node[data-edges] [data-mark]') : null;
+    if (markBtn) return h.mark!(cardOf(markBtn), markBtn.dataset.mark!, markBtn);
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
     if (actBtn) return h.act(cardOf(actBtn), actBtn.dataset.act as ActionId);
-    const flagBtn = t.closest<HTMLButtonElement>('button[data-flag]');
-    if (flagBtn) return h.flag?.(cardOf(flagBtn));
+    const bookmarkBtn = t.closest<HTMLButtonElement>('button[data-bookmark]');
+    if (bookmarkBtn) return h.bookmark?.(cardOf(bookmarkBtn));
     const retired = t.closest<HTMLButtonElement>('button.vb-region-retired');
     const until = retired?.dataset.until;
     if (retired) return retired.dataset.version ? h.showVersion(Number(retired.dataset.version), until ? Number(until) : undefined) : undefined;
@@ -103,6 +113,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     // A layout icon (data-mode) or a tile of the layout popover (data-tile): the one action.
     const modeBtn = t.closest<HTMLButtonElement>('button[data-mode], button[data-tile]');
     if (modeBtn) return h.setMode(modeBtn.dataset.region!, (modeBtn.dataset.mode ?? modeBtn.dataset.tile) as Mode);
+    const dirBtn = t.closest<HTMLButtonElement>('button[data-dir]');
+    if (dirBtn) return h.setDirection?.(dirBtn.dataset.region!, dirBtn.dataset.dir as ActDirection);
     const widthsBtn = t.closest<HTMLButtonElement>('button.vb-widths[data-widths]');
     if (widthsBtn) return h.setWidths(widthsBtn.dataset.region!, widthsBtn.dataset.widths as Widths);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');
@@ -127,7 +139,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
       const nodes = new Map(layout.nodes);
       for (const [id, box] of boxes) nodes.set(id, box);
       // Routed as the settled board routes them: round the cards of each container (groups).
-      h.drawDrag({ ...layout, nodes, routes: routeLinks(h.view().links, nodes, layout.groups) }, boxes.keys().next().value!);
+      h.drawDrag({ ...layout, nodes, routes: routeLinks(h.view().links, nodes, layout.groups, layout.downward) }, boxes.keys().next().value!);
       h.dragOver(at);
     },
     dragEnd: (boxes, at) => h.drop(boxes, at),

@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.41.0",
+    "version": "1.42.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -209,7 +209,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 9,
+                  "v": 20,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -229,7 +229,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 9,
+                  "v": 20,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -726,7 +726,7 @@
                 "example": {
                   "responses": [
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 50,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -737,7 +737,7 @@
                       "text": "Rule 6 needs an example."
                     },
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 51,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -808,7 +808,7 @@
                 "example": {
                   "events": [
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 1,
                       "at": "2026-10-05T08:00:00Z",
                       "by": "agent",
@@ -819,7 +819,7 @@
                       "key": "pricing-board"
                     },
                     {
-                      "v": 3,
+                      "v": 20,
                       "seq": 2,
                       "at": "2026-10-05T08:00:01Z",
                       "by": "agent",
@@ -851,7 +851,7 @@
                     "summary": "Two lines",
                     "dataValue": [
                       {
-                        "v": 3,
+                        "v": 20,
                         "seq": 1,
                         "at": "2026-10-05T08:00:00Z",
                         "by": "agent",
@@ -862,7 +862,7 @@
                         "key": "pricing-board"
                       },
                       {
-                        "v": 3,
+                        "v": 20,
                         "seq": 2,
                         "at": "2026-10-05T08:00:01Z",
                         "by": "agent",
@@ -879,7 +879,7 @@
                         "key": "pricing-q"
                       }
                     ],
-                    "serializedValue": "{\"v\":3,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":3,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
+                    "serializedValue": "{\"v\":20,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":20,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
                   }
                 }
               }
@@ -1308,7 +1308,7 @@
                   "$ref": "#/components/schemas/act"
                 },
                 "example": {
-                  "v": 3,
+                  "v": 20,
                   "seq": 50,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -1406,7 +1406,7 @@
                   "$ref": "#/components/schemas/retire"
                 },
                 "example": {
-                  "v": 16,
+                  "v": 20,
                   "seq": 61,
                   "at": "2026-10-12T09:00:00Z",
                   "by": "person",
@@ -1504,7 +1504,7 @@
                   "$ref": "#/components/schemas/seen"
                 },
                 "example": {
-                  "v": 3,
+                  "v": 20,
                   "seq": 53,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -2917,6 +2917,165 @@
         }
       }
     },
+    "/api/icons": {
+      "get": {
+        "operationId": "list_icons",
+        "x-agent": true,
+        "x-hosts": [
+          "standalone"
+        ],
+        "summary": "List the icons a node may name",
+        "description": "List the icons a node may name in `icon`: the built-in set and the project's library. Returns `builtIn`, the built-in names, and `library`, the icons agents added for every board of this folder, each with its `name` and `title`: reuse one before you add one with add_icon. `problems` names a library icon whose file is missing or changed; a node naming it draws a plain tile. `paths=true` is the page's.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/iconPaths"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The icons.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/listIconsResponse"
+                },
+                "example": {
+                  "builtIn": [
+                    "signal",
+                    "camera",
+                    "encoder"
+                  ],
+                  "library": [
+                    {
+                      "name": "x-encoder-audio",
+                      "title": "An audio encoder"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "add_icon",
+        "x-agent": true,
+        "x-hosts": [
+          "standalone"
+        ],
+        "summary": "Add an icon to the project's library",
+        "description": "Add a drawing to the project's icon library, for any board of this folder to name in a node's `icon`. Call list_icons first and reuse one that fits. Name it for what it shows: `x-`, a singular noun, then a qualifier if needed (`x-encoder-audio`); no board names, numbers or colours. Draw it as the built-in set is drawn: the same box, paths only, one colour, no text; it is reduced to path data and checked. A name is given once: the same drawing again returns `replayed: true`, another is refused (reuse that icon, or pick a more specific name). Never write into `.visionboard/icons/` yourself. Returns `name` and `hash`. Needs your secret.",
+        "security": [
+          {
+            "agentSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/addIconRequest"
+              },
+              "example": {
+                "name": "x-encoder-audio",
+                "title": "An audio encoder",
+                "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path d=\"M4 6h16v12H4z\"/></svg>",
+                "key": "icon-encoder-audio"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "This name already had this drawing; nothing new was written.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/addIconResponse"
+                },
+                "example": {
+                  "name": "x-encoder-audio",
+                  "hash": "878a06c1b5f0a3fddc93a1f5936f8488c16da13b3e4c96cc5eacd371db82c08d",
+                  "replayed": true
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The icon was added.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/addIconResponse"
+                },
+                "example": {
+                  "name": "x-encoder-audio",
+                  "hash": "878a06c1b5f0a3fddc93a1f5936f8488c16da13b3e4c96cc5eacd371db82c08d"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/agentConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/projectHeader"
+          }
+        ]
+      }
+    },
     "/api/apps": {
       "get": {
         "operationId": "list_apps",
@@ -3384,43 +3543,46 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-editing.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/grant-request.schema.json#/$defs/stored"
       },
       "retire": {
-        "$ref": "https://vision-board.invalid/schema/ledger/19/events/retire.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/retire.schema.json#/$defs/stored"
+      },
+      "icon": {
+        "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -3463,6 +3625,9 @@
           },
           {
             "$ref": "#/components/schemas/retire"
+          },
+          {
+            "$ref": "#/components/schemas/icon"
           }
         ],
         "discriminator": {
@@ -3508,6 +3673,15 @@
       "openProjectRequest": {
         "$ref": "https://vision-board.invalid/schema/api/open-project-request.schema.json"
       },
+      "listIconsResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/list-icons-response.schema.json"
+      },
+      "addIconRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/add-icon-request.schema.json"
+      },
+      "addIconResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/add-icon-response.schema.json"
+      },
       "listAppsResponse": {
         "$ref": "https://vision-board.invalid/schema/api/list-apps-response.schema.json"
       },
@@ -3549,13 +3723,22 @@
       }
     },
     "parameters": {
+      "iconPaths": {
+        "name": "paths",
+        "in": "query",
+        "description": "True also returns each library icon's checked path data (the page's read).",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/iconPaths"
+        }
+      },
       "boardPath": {
         "name": "board",
         "in": "path",
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -3573,7 +3756,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -3582,7 +3765,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id"
         }
       },
       "after": {
@@ -3685,7 +3868,7 @@
         "description": "The app's id: its folder's name in the open ledger's `apps/`.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/19/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/id"
         }
       }
     },

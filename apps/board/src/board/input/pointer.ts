@@ -16,6 +16,7 @@
 // in keys.ts (project rule 5).
 import type { Box, Point } from '#layout';
 import type { Viewport } from '../canvas/index.ts';
+import { smallMark } from '../canvas/index.ts';
 import { createWheelLatch, scrollerIn } from './wheel-latch.ts';
 
 export interface PointerHandlers {
@@ -52,8 +53,10 @@ export interface PointerHandlers {
 const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-note-bubble, .vb-node-note, .vb-node-reply, .vb-region-note-block, vb-selection-bar, .vb-card-pop';
 /** Where the middle button keeps its own meaning (a link opens in a new tab; a field pastes). */
 const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
-/** The one place a card is moved from (ruling 4): the kind tab with its grip dots. */
-const HANDLE = '.vb-node-kind';
+/** Where a card is moved from (ruling 4): the kind tab with its grip dots, or, on a node with an icon, the grip in the
+ *  middle of its top line (nodeEdges, decision 12), or the plate along the top where a skin's row puts one (FE_04; its
+ *  buttons keep their own press, INTERACTIVE). */
+const HANDLE = '.vb-node-kind, .vb-node-grip, .vb-node-plate';
 /** The container's keyboard handle (3_FE_04 ruling 5), the start of its label; a drag on it, or on the
  *  rest of the label but its own buttons and its tip (FE_02), moves the container. */
 const GRIP = '.vb-region-grip';
@@ -126,7 +129,8 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       if (!frame.grip) document.getSelection()?.removeAllRanges();
       return capture(e);
     }
-    if (e.button !== 0 || t.closest(INTERACTIVE)) return;
+    // A node's mark too small to press at this zoom is the node's body (viewport.ts `smallMark`).
+    if (e.button !== 0 || (t.closest(INTERACTIVE) && !smallMark(t))) return;
     const card = t.closest<HTMLElement>('vb-node');
     const add = e.shiftKey || e.metaKey || e.ctrlKey;
     if (card) {

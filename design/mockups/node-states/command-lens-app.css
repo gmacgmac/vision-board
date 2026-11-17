@@ -1,0 +1,39 @@
+/* The app node as a window in Command Lens: the plate is the title bar (light: an app only tells); no switch,
+   no coloured border; everything under the plate is the app's. Needs command-lens.css first. */
+.win{position:relative;width:400px}
+.no.bm.in{border-radius:4.5px 0 0 0;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 6px),0 100%)}
+.no.bm.in::after{content:none}
+.win .kd{text-transform:none;letter-spacing:.02em;font:600 13px var(--disp)}
+.win .kd .ic{color:var(--mut)}
+.wrs{flex:none;font:500 11px var(--mono);color:var(--mut);white-space:nowrap}
+.win .kd{flex:0 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.win .kd .ic{flex:none}
+.wbtn{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:30px;height:28px;padding:0 8px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--ink2);font:600 12px Inter,system-ui,sans-serif;cursor:pointer}
+.wbtn .ic{width:15px;height:15px}
+.wbtn.allow{border-color:var(--acc);background:var(--acc);color:var(--acc-ink)}
+.wbtn.busy{cursor:progress;opacity:.8}
+.wbtn.busy::before{content:"";width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%}
+.wbtn.err{border:2px solid var(--err);background:none;color:var(--err)}
+.m.win.sel{border-color:var(--ink2)}
+.m.win.kf{outline:2px solid var(--ring);outline-offset:5px}
+.wa{display:grid;grid-template-columns:1fr 1fr;gap:8px;height:190px;padding:10px}
+.wa div{display:grid;align-content:space-between;padding:8px 10px;border:1px solid var(--line2);border-radius:4px;background:var(--surface2);font:600 11px var(--mono);color:var(--ink2)}
+.wa div b{font:600 18px var(--disp);color:var(--ink)}
+.wa svg{width:100%;height:28px;fill:none;stroke:var(--mut);stroke-width:1.5}
+.wa.skel div{border-color:transparent;background:linear-gradient(90deg,var(--surface2),var(--line2),var(--surface2))}
+.wsv{display:grid;justify-items:center;align-content:center;gap:6px;height:190px;padding:12px 24px;text-align:center}
+.wsv>.ic{width:26px;height:26px;color:var(--mut)}
+.wsv .ic.w{color:var(--upd)}
+.wsv b{font:600 14px var(--disp)}
+.wsv p{margin:0;font-size:12.5px;color:var(--ink2)}
+.wsv .bt{width:auto;margin-top:6px;padding:0 12px}
+.probs{width:100%;margin:4px 0 0;padding:6px 8px;border:1px solid var(--line2);border-radius:4px;background:var(--bg);font:500 11px/1.5 var(--mono);color:var(--ink2);text-align:left;list-style:none}
+.win.open{display:grid;grid-template-columns:400px 300px;width:703px}
+.win.open .pl{grid-column:1 / -1}
+.dr{display:grid;grid-template-rows:1fr auto;border-left:1px solid var(--line2)}
+.dr .msgs{align-content:start}
+.wrow{display:flex;align-items:flex-start;gap:40px;padding-top:28px}
+.aside{position:relative}
+.aside::before{content:"moved aside by the drawer →";position:absolute;top:-24px;left:0;font:600 11px var(--mono);color:var(--mut);white-space:nowrap}
+.menu.wmenu{left:auto;right:70px;top:46px;bottom:auto}
+.nm{min-width:0;overflow:hidden;text-overflow:ellipsis}

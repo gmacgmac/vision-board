@@ -1,0 +1,140 @@
+/* The plate and the switch: where a skin's row (skins.ts) puts the marks with `marks: 'plate'` and the answer with
+   `answer: 'switch'` (data-marks-at, data-answer-at; FE_04, the look of design/mockups/node-skins/command-lens-skin-*.html
+   and node-states/command-lens-*). Placed by the row, never by a skin's name; every colour, radius and face is a
+   token the skin sets (tokens' skins.css). The plate along the top is the handle and holds the number, the kind, the
+   change badge, Awaiting, a proposal chip and the notes mark; a node that asks has a dark plate and the switch, a node
+   that only tells a light plate and none. On the dark plate a mark keeps its hue, lifted to read on it in both themes
+   (--vb-plate-mark-l, -c). The switch's halves are one press each; a lit half is the only thing an answer recolours. */
+vb-node[data-edges][data-marks-at='plate'] { border-width: 1.5px; }
+vb-node[data-edges][data-marks-at='plate']::before { content: none; }
+vb-node[data-marks-at='plate'][data-selected] {
+  box-shadow: inset 0 0 0 calc(var(--vb-select-w) - 1.5px) var(--vb-select-edge), var(--vb-shadow-lift);
+}
+
+/* The plate's own colours: --vb-p-* (ground, ink, muted, its rule, a chip's line; the kind's dot, the badges', the
+   notes count). Light on a node that only tells; dark on one that asks. */
+vb-node[data-marks-at='plate'] .vb-node-plate {
+  --vb-p-bg: var(--vb-surface-sunken); --vb-p-ink: var(--vb-ink-strong); --vb-p-muted: var(--vb-ink-subtle);
+  --vb-p-line: var(--vb-line); --vb-p-edge: var(--vb-line-strong);
+  --vb-p-kind: var(--vb-kind); --vb-p-new: var(--vb-badge-new); --vb-p-updated: var(--vb-badge-updated); --vb-p-notes: var(--vb-notes-count);
+  display: flex; align-items: center; gap: var(--vb-space-2); height: 40px; padding: 0 6px 0 0;
+  border-bottom: 1px solid var(--vb-p-line); border-radius: calc(var(--vb-node-radius) - 1.5px) calc(var(--vb-node-radius) - 1.5px) 0 0;
+  background: var(--vb-p-bg); color: var(--vb-p-ink); cursor: grab;
+}
+vb-node[data-marks-at='plate'] {
+  &:has(> .vb-mark-switch, [data-mark='answer']) .vb-node-plate {
+    --vb-p-bg: var(--vb-plate); --vb-p-ink: var(--vb-plate-ink); --vb-p-muted: var(--vb-plate-muted);
+    --vb-p-line: var(--vb-plate-line); --vb-p-edge: var(--vb-plate-line);
+    --vb-p-kind: oklch(from var(--vb-kind) max(l, var(--vb-plate-mark-l)) min(c, var(--vb-plate-mark-c)) h);
+    --vb-p-new: oklch(from var(--vb-badge-new) max(l, var(--vb-plate-mark-l)) min(c, var(--vb-plate-mark-c)) h);
+    --vb-p-updated: oklch(from var(--vb-badge-updated) max(l, var(--vb-plate-mark-l)) min(c, var(--vb-plate-mark-c)) h);
+    --vb-p-notes: oklch(from var(--vb-notes-count) max(l, var(--vb-plate-mark-l)) min(c, var(--vb-plate-mark-c)) h);
+    --vb-focus: var(--vb-plate-focus);
+  }
+}
+/* A tone (point 366): the plate's rule takes the tone's line; a light plate takes its body tint. Its dot keeps the kind's. */
+vb-node[data-marks-at='plate'][data-vb-tone] .vb-node-plate { border-bottom-color: var(--vb-tone-line); }
+vb-node[data-marks-at='plate'][data-vb-tone] {
+  &:not(:has(> .vb-mark-switch, [data-mark='answer'])) .vb-node-plate { --vb-p-bg: var(--vb-tone-body); }
+}
+vb-node[data-marks-at='plate'][data-emphasis] .vb-node-plate { box-shadow: inset 0 3px 0 var(--vb-node-color); }
+vb-node.dragging .vb-node-plate { cursor: grabbing; }
+vb-node[data-marks-at='plate'] .vb-node-plate > * { position: relative; inset: auto; transform: none; box-shadow: none; }
+vb-node[data-marks-at='plate'] .vb-node-plate .vb-mark { --vb-mark-bg: transparent; --vb-mark-ink: var(--vb-p-ink); }
+
+/* The number, the bookmark: a square at the plate's left; bookmarked it fills and a notched tail hangs below the plate. */
+vb-node[data-marks-at='plate'] .vb-node-num {
+  align-self: stretch; height: auto; min-width: 44px; padding: 0 10px; border: 0; border-right: 1px solid var(--vb-p-line);
+  border-radius: calc(var(--vb-node-radius) - 1.5px) 0 0 0; font: 700 15px/1 var(--vb-font-label); font-variant-numeric: tabular-nums;
+}
+vb-node[data-marks-at='plate'][data-bookmarked] .vb-node-num {
+  --vb-mark-ink: var(--vb-bookmark-ink); --vb-mark-bg: var(--vb-bookmark);
+  top: auto; height: auto; padding: 0 10px; border: 0; border-radius: calc(var(--vb-node-radius) - 1.5px) 0 0 0; clip-path: none;
+}
+vb-node[data-marks-at='plate'][data-bookmarked] .vb-node-num::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 8px; background: var(--vb-bookmark);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 0, 0 100%);
+}
+/* The kind: its word in the label face with the kind's dot, or the node's icon in place of the dot. */
+vb-node[data-marks-at='plate'] .vb-node-kind {
+  display: inline-flex; flex: 0 1 auto; align-items: center; gap: 7px; min-width: 0; height: auto; margin-right: auto; padding: 0;
+  border: 0; border-radius: 0; background: none; color: var(--vb-p-ink); cursor: inherit;
+  font: 600 10.5px/1 var(--vb-font-label); letter-spacing: 0.14em; text-transform: uppercase;
+}
+vb-node[data-marks-at='plate'] .vb-node-kind:first-child { margin-left: var(--vb-space-3); }
+vb-node[data-marks-at='plate'] .vb-node-kind-word { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* On a narrow node the kind's word gives way (an ellipsis); the marks keep their size. */
+vb-node[data-marks-at='plate'] .vb-node-plate > :not(.vb-node-kind) { flex: none; }
+vb-node[data-marks-at='plate'] .vb-node-kind::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--vb-p-kind); opacity: 1;
+}
+vb-node[data-marks-at='plate'] .vb-node-kind:has(.vb-icon)::before { content: none; }
+vb-node[data-marks-at='plate'] .vb-node-kind .vb-node-kind-icon { width: 14px; height: 14px; color: var(--vb-p-kind); }
+
+/* At the plate's right end: what changed (it opens history), Awaiting, a proposal, and the conversation. */
+vb-node[data-marks-at='plate'] .vb-node-plate :is(.vb-mark-badge, .vb-mark-awaiting, .vb-mark-proposal) {
+  height: 24px; padding: 0 var(--vb-space-2); border-radius: 3px; font: 700 10.5px/1 var(--vb-font-label); letter-spacing: 0.06em; text-transform: uppercase;
+}
+vb-node[data-marks-at='plate'] .vb-node-plate .vb-mark-badge { --vb-mark-ink: var(--vb-p-updated); border: 1.5px solid currentColor; }
+vb-node[data-marks-at='plate'] .vb-mark-badge[data-badge='new'] { --vb-mark-ink: var(--vb-p-new); border: 1.5px solid currentColor; }
+vb-node[data-marks-at='plate'] .vb-mark-badge[data-badge='settled'] {
+  --vb-mark-ink: var(--vb-p-muted); border: 1px solid var(--vb-p-edge); font-weight: 600; text-transform: none;
+}
+vb-node[data-marks-at='plate'] .vb-mark-badge .vb-icon { width: 12px; height: 12px; stroke-width: 2.2; }
+vb-node[data-marks-at='plate'] .vb-node-plate .vb-mark-awaiting { --vb-mark-ink: var(--vb-p-muted); border: 1px solid var(--vb-p-edge); font-weight: 600; }
+vb-node[data-marks-at='plate'] .vb-node-plate .vb-mark-proposal { border: 1px solid color-mix(in srgb, var(--vb-p-muted) 60%, var(--vb-p-bg)); }
+vb-node[data-marks-at='plate'] .vb-node-plate .vb-mark-notes {
+  --vb-mark-ink: var(--vb-p-notes);
+  translate: 0 0; /* its own declaration: the build folds `translate` beside `transform` into the transform */
+  min-width: 36px; height: 28px; padding: 0 var(--vb-space-2); border: 1px solid var(--vb-p-edge); border-radius: var(--vb-mark-radius);
+  font: 700 12px/1 var(--vb-font-label);
+}
+vb-node[data-marks-at='plate'] .vb-mark-notes[data-notes-mark='none'] { --vb-mark-ink: var(--vb-p-muted); padding: 0 var(--vb-space-2); }
+vb-node[data-marks-at='plate'] .vb-mark-notes[data-notes-mark='unread'] {
+  --vb-mark-ink: var(--vb-notes-unread-ink); --vb-mark-bg: var(--vb-notes-unread); border-color: var(--vb-notes-unread);
+}
+vb-node[data-marks-at='plate'] .vb-mark-notes .vb-icon { width: 15px; height: 15px; stroke-width: 1.9; }
+/* A write that failed on a plate mark (the number): ringed inside in the error red, "!" in its corner. */
+vb-node[data-marks-at='plate'] .vb-node-plate .vb-mark[data-failed] { box-shadow: inset 0 0 0 2px var(--vb-state-drop); }
+vb-node[data-marks-at='plate'] .vb-node-plate .vb-mark[data-failed]::before { inset: 2px 2px auto auto; }
+
+/* The body under the plate: no edge marks to clear; the tile and the tags squared, the tags in the label face. */
+vb-node[data-marks-at='plate'] .vb-node-content { padding: calc(var(--vb-space-3) + 2px) var(--vb-space-4) var(--vb-space-4); }
+vb-node[data-marks-at='plate'] .vb-node-tile { margin-right: 0; border: 1px solid var(--vb-line); }
+vb-node[data-marks-at='plate'] .vb-node-tags li { border-radius: 3px; font-family: var(--vb-font-label); }
+
+/* The switch along the bottom: Tick | Cross, one press each; the lit half fills green or red, and pressing it again
+   clears the answer (item-acts.ts). A proposal outlines the proposed half, dashed; a write on its way turns its icon
+   into a spinner; one that failed rings it in the error red with "!"; a press on a locked board shows a lock. */
+vb-node[data-answer-at='switch'] .vb-mark-switch {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0; border-top: 1px solid var(--vb-line-strong);
+}
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark {
+  --vb-mark-bg: transparent; --vb-mark-ink: var(--vb-ink);
+  position: relative; inset: auto; height: 44px; padding: 0; gap: var(--vb-space-2); border: 0; border-radius: 0;
+  font: 600 var(--vb-text-md)/1 var(--vb-font-text);
+}
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark + .vb-mark { border-left: 1px solid var(--vb-line-strong); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:first-child { border-bottom-left-radius: calc(var(--vb-node-radius) - 1.5px); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:last-child { border-bottom-right-radius: calc(var(--vb-node-radius) - 1.5px); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:focus-visible { outline-offset: var(--vb-focus-offset-inset); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:hover:not(.vb-stage[data-marks='small'] *) { --vb-mark-bg: var(--vb-surface-sunken); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-icon { width: 15px; height: 15px; stroke-width: 2.2; }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark-lock { display: none; }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-mark='tick'][aria-pressed='true'] { --vb-mark-bg: var(--vb-answer-tick); --vb-mark-ink: var(--vb-answer-mark); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-mark='cross'][aria-pressed='true'] { --vb-mark-bg: var(--vb-answer-cross); --vb-mark-ink: var(--vb-answer-mark); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-proposed] { --vb-mark-ink: var(--vb-ink-strong); outline: 2px dashed var(--vb-answer-tick); outline-offset: -5px; }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-mark='cross'][data-proposed] { outline-color: var(--vb-answer-cross); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-saving] { --vb-mark-ink: var(--vb-ink-subtle); cursor: progress; }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark:is([data-saving], [data-locked]) :is(.vb-mark-tick, .vb-mark-cross) { display: none; }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-saving]::after {
+  content: ''; order: -1; width: 11px; height: 11px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: vb-mark-spin 0.9s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-saving]::after { animation: none; border-style: dotted; }
+}
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-failed] { --vb-mark-ink: var(--vb-state-drop); box-shadow: inset 0 0 0 2px var(--vb-state-drop); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-failed]::before { inset: 6px 6px auto auto; }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-locked] { --vb-mark-bg: var(--vb-surface-sunken); --vb-mark-ink: var(--vb-ink-strong); }
+vb-node[data-answer-at='switch'] .vb-mark-switch .vb-mark[data-locked] .vb-mark-lock { display: block; }

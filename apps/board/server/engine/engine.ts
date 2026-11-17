@@ -3,7 +3,8 @@
 // environment. Its host gives it the board's data folder (`dir`: the standalone server passes
 // `<project>/.visionboard`, nclite the bot's `plugins/board/`), and passes the caller with every call
 // (the standalone server turns its secrets and cookie into one; nclite takes the bot from its run
-// ticket). The ledger and the agents' hashes live in `dir`; the engine never looks for a folder. With `readOnly`
+// ticket). The ledger and the agents' hashes live in `dir`; the engine never looks for a folder. The icon library is
+// `dir/icons` unless the host names the project's (`icons`). With `readOnly`
 // (D-085, the standalone host's read-only opening), every operation that writes answers `read-only` before anything
 // is read or written, and the reads say `readOnly: true`. A read that names another ledger of the folder (`ledger`,
 // D-084 8) reads the one its host gives (`otherLedger`, opened read-only) as an unmarked read: no caller, so no `owed`
@@ -12,19 +13,22 @@
 // (plugin.md § The engine): `singleAgent`, every agent caller the folder's one agent (`callerOf`); `followOtherWriters`
 // off, `watch` never looks at the file for another writer. A ledger the engine opens itself (no host's `ledger`) starts
 // again when its file or `dir` is deleted, and is read again from the start when the file is replaced, at the next call:
-// a host's engine never waits for a restart (nclite, 2026-11-08).
+// a host's engine never waits for a restart (nclite, 2026-11-08). Before it opens a ledger itself on a `dir` it may write
+// (`readOnly()` false), the engine migrates it to the current format (D-103; ledger-migrate.ts), with no lock: a host
+// opens one `dir` with one engine at a time (plugin.md § The engine). A ledger written by a newer build is read-only,
+// whatever `readOnly` says, and its writes are refused in words that say why (ledger.ts `readOnlyWords`).
 import path from 'node:path';
 import type { FlagOverrides, LedgerEvent, OperationId } from '#format';
-import { IMAGES_DIR, LEDGER_FILE, LIMITS, OPERATIONS, ROUTE_PREFIX, clip, flagOn } from '#format';
+import { ICONS_DIR, IMAGES_DIR, LEDGER_FILE, LIMITS, OPERATIONS, ROUTE_PREFIX, clip, flagOn } from '#format';
 import type { AnswersRef, AnswersText, BoardRef, CardRef, ChipRefusal, ChipText, NoteRef, SelectionRef } from '#actions';
 import { eventBoard, resolveChip } from '#actions';
 import type { Agents } from '../agents.ts';
 import { openAgents } from '../agents.ts';
 import { imageReply } from '../images.ts';
 import type { Caller, Ledger } from '../ledger.ts';
-import { openLedger } from '../ledger.ts';
+import { openLedger, readOnlyWords } from '../ledger.ts';
+import { migrateOnOpen } from '../ledger-migrate.ts';
 import { ProblemError, problem, serverError } from '../problem.ts';
-import { READ_ONLY, READ_ONLY_PERSON } from '#actions';
 import type { EngineReply, Op, SendHook } from './operations.ts';
 import { checkCaller, matchRoute, readParams, withDefaults } from './operations.ts';
 import { READS } from './reads.ts';
@@ -79,6 +83,10 @@ export interface EngineOptions {
    *  (nothing is ever appended there) and throws a problem for a name it doesn't have; undefined when the name is the
    *  open ledger's. Default none: the host keeps one ledger, and a read that names one is refused. */
   otherLedger?: ((name: string) => Ledger | undefined) | undefined;
+  /** The project's icon library (api.md 185): the folder `list_icons` reads and `add_icon` writes, shared by every ledger
+   *  of the project. Default `dir/icons`, so under a host the engine still reads and writes only its `dir`; the standalone
+   *  server passes the project's `.visionboard/icons/` (`projectFiles(project).icons`). */
+  icons?: string | undefined;
 }
 
 export interface Engine {
@@ -172,10 +180,12 @@ const toReply = (err: unknown): EngineReply => {
   return { status: p.status, body: p.body, headers: { ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8' } };
 };
 
-export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {}, readOnly, otherLedger }: EngineOptions): Engine {
+export function createEngine({ dir, ledger: given, name = () => dir, ledgerName, onSend = (_, record) => record(), warn, flags = {}, readOnly, otherLedger, icons = path.join(dir, ICONS_DIR) }: EngineOptions): Engine {
+  if (!given && !(readOnly?.() ?? false)) migrateOnOpen(dir, warn);
   const ledger = given ?? openLedger(path.join(dir, LEDGER_FILE), warn, { startAgainWhenGone: true });
   if (readOnly) ledger.gate(readOnly);
-  const closed = readOnly ?? (() => false);
+  /** Read-only now: the host says so, or the ledger is a newer build's. */
+  const closed = () => ledger.readOnly();
   let agents: Agents | undefined;
   const getAgents = () => (agents ??= openAgents(dir, closed));
 
@@ -187,7 +197,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
       const { caller, one, writer } = callerOf(input.caller, single, ledger, () => joinedAgent(ledger, getAgents, name, dir));
       checkCaller(id, caller);
       // Read-only: a write is refused before its body is read (D-085 3, 4); `join` too, so no agents file is written.
-      if (OPERATIONS[id].method !== 'GET' && closed()) throw problem('read-only', caller?.by === 'person' ? READ_ONLY_PERSON : READ_ONLY);
+      if (OPERATIONS[id].method !== 'GET' && closed()) throw problem('read-only', readOnlyWords(ledger.newer(), caller?.by === 'person' ? 'person' : 'agent'));
       const params = withDefaults(id, { ...input.params });
       const other = namedLedger(params, ledgerName, otherLedger);
       const on = other?.ledger ?? ledger;
@@ -195,7 +205,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, ledgerName,
       const read = input.body;
       const r = await OPS[id]!({
         params, caller: other ? undefined : caller, one: !other && one, writer, signal: input.signal, ledger: on, agents: getAgents, name,
-        ledgerName: other?.name ?? ledgerName, onSend, flags, readOnly: other !== undefined || closed(), images: path.join(dir, IMAGES_DIR),
+        ledgerName: other?.name ?? ledgerName, onSend, flags, readOnly: other !== undefined || closed(), images: path.join(dir, IMAGES_DIR), icons,
         body: typeof read === 'function' ? (limit) => readBody(read as (limit?: number) => Promise<unknown>, limit) : async () => read,
       });
       return other && r.status < 400 ? { ...r, body: { ...(r.body as object), ledger: other.name, readOnly: true } } : r;

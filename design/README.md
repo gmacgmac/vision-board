@@ -10,6 +10,7 @@ in `docs/decisions.md`.
 | Folder | What it holds |
 |---|---|
 | `node-skins/` | The two chosen node skins, each as a page you can open in a browser and as a full-page picture, dark and light: `default-skin-*` (the default look with Architecture content) and `command-lens-skin-*`. These are the reference for building. |
+| `node-states/` | Where every state the skins pages never drew sits on the new node (proposal, handover, Later, moved, locked, a failed write, focus, hover, history's stepper, the conversation, an agent's icon, the app window), in both skins, dark and light, as the maintainer ruled them (2026-11-17). Its `README.md` lists the rulings and where every state of today's node went. Standalone, no network. |
 | `node-directions/` | The whole design canvas as files: `canvas.json` (where each artboard sits, on two pages) and one `.dc.html` per artboard, from the first explorations (1 to 8) to the node anatomy (9 to 12). |
 
 The canvas itself is the design artifact "Vision Board node directions" on claude.ai, private to the

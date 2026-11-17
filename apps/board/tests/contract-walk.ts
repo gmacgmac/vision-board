@@ -39,8 +39,10 @@ const bodies = (board: string): Partial<Record<OperationId, unknown>> => ({
   join: { label: 'Walk chat' },
 });
 
-/** Agent operations a board has no say in, with why: each names a file, not a board. `read_attachment` needs a file attached first, and locked or archived boards change nothing for it (api-read-attachment.test.ts). */
-const NOT_ON_A_BOARD: ReadonlySet<string> = new Set(['read_attachment']);
+/** Agent operations a board has no say in, with why: each names a file, not a board. `read_attachment` needs a file attached first, and locked or archived boards change nothing for it (api-read-attachment.test.ts).
+ * `list_icons` and `add_icon` are on the project's icon library, which is on no board (api.md 185, 186); a read-only
+ * ledger refusing `add_icon` is the library's own test (node-overhaul BE_04). */
+const NOT_ON_A_BOARD: ReadonlySet<string> = new Set(['read_attachment', 'list_icons', 'add_icon']);
 
 /** Every agent operation, in openapi.json's order, with its input for `board`. */
 export function agentOps(board: string): AgentOp[] {

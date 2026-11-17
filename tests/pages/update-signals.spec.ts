@@ -110,7 +110,7 @@ for (const theme of THEMES) {
       for (const other of ['--vb-kind-action', '--vb-state-context']) expect(words.card - lc(await on(other), cardBg), `brighter than ${other}`).toBeGreaterThanOrEqual(8);
     }
     // In both themes it reads apart from the other ambers and oranges (in light by hue and chroma: FIX_01).
-    for (const other of ['--vb-kind-action', '--vb-state-context', '--vb-state-flag', '--vb-kind-risk']) {
+    for (const other of ['--vb-kind-action', '--vb-state-context', '--vb-bookmark', '--vb-kind-risk']) {
       const d = deltaE(amber, await on(other));
       console.log(`ΔE76 ${theme}: updated vs ${other} ${d.toFixed(1)}`);
       expect(d, `apart from ${other}`).toBeGreaterThanOrEqual(20);

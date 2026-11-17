@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node states: answers, handover and the board's rules, default skin (light)</title>
+<link rel="stylesheet" href="default.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="notes2" viewBox="0 0 24 24"><path d="M3 4h12v8H8l-3 3v-3H3zM18 8h3v8h-2v3l-3-3h-5v-1"/></symbol>
+<symbol id="bm" viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.5L7 20z"/></symbol>
+<symbol id="later" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+<symbol id="doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v5M12 17.5v.5"/></symbol>
+<symbol id="back" viewBox="0 0 24 24"><path d="M9 14l-5-5 5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+<symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="open" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
+<symbol id="retry" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="drawer" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M14 5v14"/></symbol>
+<symbol id="move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+<symbol id="cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><circle cx="12" cy="10" r="1.5"/><path d="M12 12v8M8.5 13.5a5 5 0 1 1 7 0"/></symbol>
+<symbol id="fork" viewBox="0 0 24 24"><path d="M12 21v-8M12 13c0-4-5-4-5-9M12 13c0-4 5-4 5-9"/></symbol>
+<symbol id="encoder" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M10 9v6M13 11v2M17 10.5h1M17 13.5h1"/></symbol>
+<symbol id="app" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</defs></svg>
+<div class="v9 light">
+<h1 class="pg">Node states: answers, handover and the board's rules</h1>
+<p class="lede">The states the chosen pages never drew, as the maintainer ruled them (2026-11-17). One design per state; boxes and menus keep one size at any zoom.</p>
+<div class="g1">
+
+<div class="rl">A proposal waiting<small>Only the person's click answers.</small></div>
+<div class="cells"><div class="cell w"><p class="cc">Dashed ring on the disc, its box beside it<small>The disc shows the proposed mark, hollow; a click opens the proposal to the disc's right, in the conversation box's style. Accept is the tick or cross it proposes.</small></p>
+<div class="scene" style="width:660px;height:236px"><div class="n" style="--k: var(--k-action);top:14px"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans prop f" aria-label="The agent proposes Tick. Open the proposal" aria-haspopup="dialog" aria-expanded="true"><svg class="ic"><use href="#tick"/></svg></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc" aria-label="1 note. Open conversation"><svg class="ic"><use href="#note"/></svg>1</button></div>
+<div class="cv beside" style="top:-8px" role="dialog" aria-label="Proposal on item 35"><div class="cvh"><span class="num">35</span><span class="cvt">Proposal</span><button class="xb" aria-label="Close proposal"><svg class="ic"><use href="#close"/></svg></button></div><div class="msgs"><div class="msg ag pv"><i>The agent proposes</i><b>Tick</b>Every package is vetted and pinned; nothing is left to check.<span class="kbd-l">After your note · today 10:42</span></div></div><div class="cmp"><div class="bts"><button class="bt">Reject</button><button class="bt pri">Accept: tick</button></div></div></div></div></div></div>
+
+<div class="rl">A proposal withdrawn<small>The node changed after the agent proposed.</small></div>
+<div class="cells"><div class="cell w"><p class="cc">The disc goes back to waiting; history says why<small>No amber state. History gets "Proposal withdrawn: the node changed", with the change that caused it.</small></p>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer. Open tick or cross"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Three packages vetted, pinned exactly and listed.</p></div><div class="btm"><button class="badge f" aria-expanded="true">1 update</button></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div>
+<div class="box" style="position:relative;margin-top:26px" role="dialog" aria-label="Card 35 history"><div class="hh"><span>History of 35</span><button class="xb" aria-label="Close history"><svg class="ic"><use href="#close"/></svg></button></div><div class="hl-list"><div class="hv cur wd"><b><svg class="ic" style="width:14px;height:14px"><use href="#back"/></svg></b><span>Proposal withdrawn: the node changed</span><i>Today 11:05</i></div><div class="hv"><b>v4</b><span>Three packages, not two</span><i>Agent · today 11:05</i></div><div class="hv"><b></b><span>The agent proposed Tick</span><i>Today 10:42</i></div><div class="hv"><b>v3</b><span>First drawn</span><i>Agent · yesterday 15:20</i></div></div></div></div></div>
+
+<div class="rl">Handover and Awaiting<small>A node saved for later, in the Later container.</small></div>
+<div class="cells"><div class="cell"><p class="cc">Awaiting: a quiet grey tab<small>On the bottom edge, after the change badge; not a control. Its tip: "Awaiting context".</small></p>
+<div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><p class="bd">Base search first, then the scorecard.</p></div><div class="btm"><span class="tab" title="Awaiting context"><svg class="ic"><use href="#later"/></svg>Awaiting</span></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div></div>
+<div class="cell"><p class="cc">Arrived: a section in the body<small>The tab goes. The handover is part of the node, a "Handover" section in Markdown the agent writes as it likes.</small></p>
+<div class="n" style="--k: var(--k-topic)"><button class="num" aria-label="28. Bookmark">28</button><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><p class="bd">Base search first, then the scorecard.</p><div class="hsec"><h4>Handover</h4><p><b>Where it stands.</b> Base search is done; the scorecard waits for two models.</p><ul><li>Pick it up with the bake-off.</li><li>Sources: this board, cards 4 and 9.</li></ul></div></div><button class="nc" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div></div></div>
+
+<div class="rl">A write on its way, and one that failed<small>The person's own click being saved. A second press within 400 ms is ignored.</small></div>
+<div class="cells"><div class="cell"><p class="cc">On its way<small>The disc empties to a ring with one bright arc (aria-busy), shown only past about 150 ms.</small></p>
+<div class="n tipspace" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans busy" aria-busy="true" aria-label="Saving your tick"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div></div>
+<div class="cell"><p class="cc">Failed: the tip shows by itself<small>For a few seconds after it happens; the answer before the press stays. An outline and "!", never a fill.</small></p>
+<div class="n tipspace" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans err" aria-label="Tick not saved. Press to try again"><span class="err-g">!</span></button><span class="tip bad" style="right:-12px;top:-50px" role="status"><b>Tick not saved.</b> Press to try again.</span><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div></div>
+<div class="cell"><p class="cc">Then: "!" stays, the tip on hover<small>Until the next press, which tries again. The same on any mark: here the number.</small></p>
+<div class="n tipspace" style="--k: var(--k-topic)"><button class="num err" aria-label="28. Bookmark not saved. Press to try again">28 !</button><span class="tip bad" style="left:-4px;top:-50px"><b>Bookmark not saved.</b> Press to try again.</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><p class="bd">Base search first, then the scorecard.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div></div></div>
+
+<div class="rl">A locked board, a read-only ledger<small>Point 328. The board's banner says it; the nodes look as on an open board.</small></div>
+<div class="cells"><div class="cell"><p class="cc">At rest: nothing changes<small>Every disc as on an open board; an answered node keeps its tick or cross.</small></p>
+<span class="banner"><svg class="ic"><use href="#lock"/></svg>Locked</span>
+<div class="n" style="--k: var(--k-action)"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div>
+<div class="n" style="--k: var(--k-decision);margin-top:40px"><button class="num bm" aria-label="10, bookmarked">10</button><span class="kind">Decision</span><button class="ans ok" aria-label="Ticked"><svg class="ic"><use href="#tick"/></svg></button><div class="nb"><h3 class="ttl">Switch to the satellite backup at 2% loss</h3></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div></div>
+<div class="cell"><p class="cc">Pressed: a lock for a moment<small>The pressed disc turns into a lock with "Board is locked" beside it, then goes back. Keys and right-click answer the same way.</small></p>
+<div class="n" style="--k: var(--k-action);margin-top:60px"><button class="num" aria-label="35. Bookmark">35</button><span class="kind">Action</span><button class="ans lk" aria-label="Waiting for your answer. Board is locked"><svg class="ic"><use href="#lock"/></svg></button><span class="tip" style="right:-16px;top:-50px" role="status"><svg class="ic"><use href="#lock"/></svg>Board is locked</span><div class="nb"><h3 class="ttl">Go-ahead to install</h3><p class="bd">Each package vetted, pinned exactly and listed; 7-day rule applies.</p></div><button class="nc" aria-label="2 notes"><svg class="ic"><use href="#note"/></svg>2</button></div></div>
+<div class="cell"><p class="cc">Read-only: any write mark<small>Read-only also stops Bookmark (a lock never does): the pressed number turns into a lock.</small></p>
+<div class="n" style="--k: var(--k-topic);margin-top:60px"><button class="num lk" aria-label="28. Bookmark. This ledger is read-only"><svg class="ic"><use href="#lock"/></svg></button><span class="tip" style="left:-4px;top:-50px" role="status"><svg class="ic"><use href="#eye"/></svg>This ledger is read-only</span><span class="kind">Topic</span><div class="nb"><h3 class="ttl">Order of work</h3><p class="bd">Base search first, then the scorecard.</p></div><button class="nc none" aria-label="No notes. Open conversation"><svg class="ic"><use href="#note"/></svg></button></div></div></div>
+</div>
+</div>
+</body>
+</html>

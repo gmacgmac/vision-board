@@ -9,25 +9,32 @@ export type HeaderTier = 'full' | 'half' | 'third';
 export const FULL_MIN = 1300;
 /** The bar's width from which the half form holds, with every chip that comes and goes (measured the same way, 80px). */
 export const HALF_MIN = 620;
+/** What Flows takes at full (flowDirection flag): its one width, room for "Flows: Across", and the gap before it
+ *  (styles/header.css --vb-flows-w + --vb-space-2; FIX_01). The bar keeps that room out of the box it measures itself on,
+ *  so the full form with Flows is the full form without it, FLOWS_W wider. From half Flows is rows of "⋯". */
+export const FLOWS_W = 128;
 
-export const headerTier = (width: number): HeaderTier => (width >= FULL_MIN ? 'full' : width >= HALF_MIN ? 'half' : 'third');
+/** The form for a bar `width` wide; `flows`: the bar holds Flows. */
+export const headerTier = (width: number, flows = false): HeaderTier =>
+  (width >= FULL_MIN + (flows ? FLOWS_W : 0) ? 'full' : width >= HALF_MIN ? 'half' : 'third');
 
 /** Everything the header holds that moves or goes. The board picker, Send, Chat, "⋯", Locked and the ledger's state
  *  (`editing`: Read-only or Editing, readOnlyStart flag, decision 16) stay. */
 export type HeaderControl = 'app-icon' | 'folder' | 'ledger' | 'board' | 'version' | 'locked' | 'editing' | 'edit' | 'containers' | 'open' | 'new'
-  | 'boards-updated' | 'replied' | 'flagged' | 'zoom' | 'agents' | 'send' | 'chat' | 'more';
+  | 'boards-updated' | 'replied' | 'bookmarked' | 'zoom' | 'agents' | 'send' | 'chat' | 'flows' | 'more';
 
 export const HEADER_CONTROLS: readonly HeaderControl[] = ['app-icon', 'folder', 'ledger', 'board', 'version', 'editing', 'edit', 'locked', 'containers', 'open', 'new',
-  'boards-updated', 'replied', 'flagged', 'zoom', 'agents', 'send', 'chat', 'more'];
+  'boards-updated', 'replied', 'bookmarked', 'zoom', 'agents', 'send', 'chat', 'flows', 'more'];
 
 /** What moves into "⋯" at each tier: a row there does what the control does in the bar. The page's folder and
  *  ledger (once its server names one) sit in the path at full and half, and are rows of "⋯" at a third, the ledger's under the folder's.
  *  Edit or Stop editing (readOnlyStart flag) is a button at full and a row of "⋯" under them from half; the state chip's
- *  own menu holds it at every width. */
+ *  own menu holds it at every width. Flows (flowDirection flag) is a button with its words at full and rows of "⋯" from
+ *  half (FIX_01). */
 const IN_MENU: Record<HeaderTier, readonly HeaderControl[]> = {
   full: [],
-  half: ['edit', 'version', 'containers'],
-  third: ['folder', 'ledger', 'edit', 'version', 'containers', 'open', 'new', 'flagged', 'zoom', 'agents', 'boards-updated'],
+  half: ['edit', 'version', 'containers', 'flows'],
+  third: ['folder', 'ledger', 'edit', 'version', 'containers', 'open', 'new', 'bookmarked', 'zoom', 'agents', 'boards-updated', 'flows'],
 };
 
 /** What no longer shows at a tier: decoration, or a count that says nothing a person can act on there. */

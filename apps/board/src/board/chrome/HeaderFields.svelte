@@ -12,7 +12,7 @@
   import * as chromeCommonWords from '../words/chrome-common.ts';
   import ButtonIcon from './ButtonIcon.svelte';
   import BoardAgents from './BoardAgents.svelte';
-  import FlaggedChip from './FlaggedChip.svelte';
+  import BookmarkedChip from './BookmarkedChip.svelte';
   import PagePart from './PagePart.svelte';
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
@@ -30,7 +30,7 @@
   /** The ledger's state is one toggle in the bar (readOnlyToggle): no Edit row here. */
   const editToggle = flag('readOnlyToggle');
 
-  let { tier, facts, choose, idOf, percent, holders, onversion, ongo, onopen, onflagged, oncommand, onrevoke }: {
+  let { tier, facts, choose, idOf, percent, holders, onversion, ongo, onopen, onbookmarked, oncommand, onrevoke }: {
     tier: HeaderTier;
     facts: ChromeState;
     /** Close the menu, then do this. */
@@ -42,7 +42,7 @@
     onversion: (seq: number | null) => Promise<void>;
     ongo: (container: string) => void;
     onopen: (n: number) => void;
-    onflagged: () => void;
+    onbookmarked: () => void;
     oncommand: (id: CommandId) => void;
     onrevoke: (agent: string) => Promise<void>;
   } = $props();
@@ -84,8 +84,8 @@
       label={toolbarWords.goToNewCard} title={toolbarWords.newAndUpdatedCardsChoose} />
   {/if}
 {/if}
-{#if inMenu(tier, 'flagged') && facts.version !== null && facts.flagged && !facts.past}
-  <FlaggedChip id={idOf('flagged')} count={facts.flagged} row={toolbarWords.flagged} onclick={() => choose(onflagged)} />
+{#if inMenu(tier, 'bookmarked') && facts.version !== null && facts.bookmarked && !facts.past}
+  <BookmarkedChip id={idOf('bookmarked')} count={facts.bookmarked} row={toolbarWords.bookmarked} onclick={() => choose(onbookmarked)} />
 {/if}
 {#if inMenu(tier, 'zoom')}
   <div class="vb-menu-zoom" role="group" aria-label={commonWords.zoom}>

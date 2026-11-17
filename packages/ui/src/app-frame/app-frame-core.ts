@@ -7,7 +7,7 @@
 import type { AppSize, AppStateValue, AppToolResult, PanelMethod } from '#format';
 import {
   APP_HOST_NAME, APP_LIMITS, APP_PROTOCOL_VERSION, APP_STATE_KEY, APP_STYLE_VARIABLES, APP_TOOL_NAME,
-  HOST_NOTIFICATIONS, LEDGER_FORMAT, PANEL_ERRORS, PANEL_METHODS, PANEL_SAVE_STATE,
+  HOST_NOTIFICATIONS, LEDGER_FORMAT, PANEL_ERRORS, PANEL_METHODS, PANEL_NOTE, PANEL_NOTE_CHARS, PANEL_SAVE_STATE,
 } from '#format';
 import { checkSave, SAVE_WORDS } from './app-frame-state.ts';
 import { panelHeight } from './app-frame-size.ts';
@@ -138,6 +138,9 @@ export interface AppBridgeOptions {
   /** The value the card's panel last saved, for the `ui/initialize` answer (undefined: none). The
    * answer waits for it; a rejection starts the panel without. Left out, the answer is at once. */
   loadState?(): Promise<AppStateValue | undefined>;
+  /** The person picked something in the panel (`vision-board/note`, appStage): keep `text` as their
+   * note on the card; rejects with an `AppCallError`. Left out, the request is refused `not-found`. */
+  note?(text: string): Promise<void>;
   /** The person pressed Esc in the panel (`ui/notifications/escape`): focus goes back to the card. */
   onEscape?(): void;
   /** The panel told its content's height (`size-changed`; `panelHeight`), when it differs from the
@@ -237,6 +240,16 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
       .then(() => { if (live()) reply(id, {}); }, (e: unknown) => { if (live()) fail(id, PANEL_ERRORS.failed, SAVE_WORDS, refusal(e)); });
   }
 
+  /** `vision-board/note`: the panel's words become the person's note on its card. */
+  function note(id: JsonRpcId, params: Record<string, unknown>): void {
+    const text = typeof params.text === 'string' ? params.text.trim() : '';
+    if (!text || text.length > PANEL_NOTE_CHARS) return fail(id, PANEL_ERRORS.invalidParams, appFrameWords.noteNeedsText(PANEL_NOTE, PANEL_NOTE_CHARS));
+    const live = liveFrom(epoch);
+    Promise.resolve()
+      .then(() => (o.note ? o.note(text) : Promise.reject({ problem: 'not-found' })))
+      .then(() => { if (live()) reply(id, {}); }, (e: unknown) => { if (live()) fail(id, PANEL_ERRORS.failed, appFrameWords.theBoardDidnTKeepTheNote, refusal(e)); });
+  }
+
   function callTool(id: JsonRpcId, params: Record<string, unknown>): void {
     const { name, arguments: args = {} } = params;
     if (typeof name !== 'string' || !APP_TOOL_NAME.test(name)) return fail(id, PANEL_ERRORS.invalidParams, appFrameWords.toolsCallNeedsTheName);
@@ -262,6 +275,7 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
     if (method === 'ui/initialize') initialize(id, params);
     else if (method === 'ping') reply(id, {});
     else if (method === PANEL_SAVE_STATE) saveState(id, params);
+    else if (method === PANEL_NOTE) note(id, params);
     else callTool(id, params);
   }
 

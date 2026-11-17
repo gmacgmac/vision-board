@@ -1,0 +1,240 @@
+{
+ "problems": [],
+ "head": 32,
+ "boards": {
+  "login-layout": {
+   "view": {
+    "format": 1,
+    "session": "login-layout",
+    "version": 32,
+    "title": "Add passwordless login: what it touches",
+    "summary": "A sample code review: the agent researched a feature request and came back with touch points, questions and risks.",
+    "regions": [
+     {
+      "id": "touch",
+      "title": "Touch points",
+      "mode": "flow"
+     },
+     {
+      "id": "questions",
+      "title": "Questions for you",
+      "mode": "column"
+     },
+     {
+      "id": "risks",
+      "title": "Risks",
+      "mode": "grid",
+      "columns": 2
+     },
+     {
+      "id": "plan",
+      "title": "Proposed plan",
+      "mode": "lanes",
+      "lanes": [
+       "Backend",
+       "Frontend",
+       "Ops"
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Login form",
+      "body": "Swap the password field for an email-only step.",
+      "tags": [
+       "web/login"
+      ],
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Auth API",
+      "body": "New endpoint to send and verify a one-time link.",
+      "tags": [
+       "api/auth"
+      ],
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Mailer",
+      "body": "Needs a new template and rate limits.",
+      "tags": [
+       "services/mail"
+      ],
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "touch",
+      "kind": "finding",
+      "title": "Session store",
+      "body": "Unchanged, but link tokens need their own table.",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "questions",
+      "kind": "question",
+      "title": "Keep passwords as a fallback?",
+      "body": "Removing them is simpler; keeping them avoids lock-outs.",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "questions",
+      "kind": "question",
+      "title": "How long should a link live?",
+      "body": "15 minutes is common.",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "questions",
+      "kind": "question",
+      "title": "Is SSO in scope?",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "risks",
+      "kind": "risk",
+      "title": "Email delivery delays",
+      "body": "Links arrive late and expire.",
+      "n": 8
+     },
+     {
+      "id": "9",
+      "region": "risks",
+      "kind": "risk",
+      "title": "Link phishing",
+      "body": "Users trained to click login links.",
+      "n": 9
+     },
+     {
+      "id": "10",
+      "region": "risks",
+      "kind": "risk",
+      "title": "Shared inboxes",
+      "body": "Anyone with the inbox can sign in.",
+      "n": 10
+     },
+     {
+      "id": "11",
+      "region": "plan",
+      "kind": "action",
+      "title": "Token table and migration",
+      "lane": "Backend",
+      "n": 11
+     },
+     {
+      "id": "12",
+      "region": "plan",
+      "kind": "action",
+      "title": "Send and verify endpoints",
+      "lane": "Backend",
+      "n": 12
+     },
+     {
+      "id": "13",
+      "region": "plan",
+      "kind": "action",
+      "title": "Email-only login screen",
+      "lane": "Frontend",
+      "n": 13
+     },
+     {
+      "id": "14",
+      "region": "plan",
+      "kind": "action",
+      "title": "\"Check your inbox\" state",
+      "lane": "Frontend",
+      "n": 14
+     },
+     {
+      "id": "15",
+      "region": "plan",
+      "kind": "decision",
+      "title": "Rate limits per address",
+      "body": "5 links an hour?",
+      "lane": "Ops",
+      "n": 15
+     },
+     {
+      "id": "16",
+      "region": "plan",
+      "kind": "action",
+      "title": "Delivery-failure alerts",
+      "lane": "Ops",
+      "n": 16
+     }
+    ],
+    "links": [
+     {
+      "from": "1",
+      "to": "2"
+     },
+     {
+      "from": "2",
+      "to": "3"
+     },
+     {
+      "from": "2",
+      "to": "4"
+     },
+     {
+      "from": "11",
+      "to": "12"
+     },
+     {
+      "from": "12",
+      "to": "13"
+     },
+     {
+      "from": "13",
+      "to": "14"
+     },
+     {
+      "from": "12",
+      "to": "15"
+     },
+     {
+      "from": "15",
+      "to": "16"
+     },
+     {
+      "from": "5",
+      "to": "1",
+      "label": "shapes"
+     },
+     {
+      "from": "8",
+      "to": "3"
+     },
+     {
+      "from": "6",
+      "to": "11"
+     }
+    ]
+   },
+   "state": {
+    "items": {},
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  }
+ }
+}

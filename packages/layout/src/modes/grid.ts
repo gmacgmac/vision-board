@@ -1,5 +1,8 @@
 import type { Box, Cell, ModeFn } from '../types.ts';
 import { GAP } from '../types.ts';
+import { inCardOrder } from '../layers.ts';
+import { plainChain } from './branches.ts';
+import { flow } from './flow.ts';
 
 /** Cards in rows. Column widths from the widest card, row heights from the tallest. Under `match`
  *  a card takes its column's width (ruling 5); `center` centres a card in its cell both ways. */
@@ -27,13 +30,12 @@ export const grid: ModeFn = ({ region, nodes, sizes, align, widths, rowGap = GAP
   return { pos, cells };
 };
 
-/** The cards in card order: by board number where both have one, else as given (api.md 129). */
-const inCardOrder = <T extends { n?: number | undefined }>(nodes: readonly T[]): T[] =>
-  [...nodes].sort((a, b) => (a.n !== undefined && b.n !== undefined ? a.n - b.n : 0));
-
 /** One column, top to bottom in card order, `rowGap` (GAP) apart so the next card's tabs clear the one
- * above (api.md 129: `column`, the old `list`). Left-aligned, or centred; `match`: one width for all. */
-export const column: ModeFn = ({ nodes, sizes, align, widths, rowGap = GAP }) => {
+ * above (api.md 129: `column`, the old `list`). Left-aligned, or centred; `match`: one width for all.
+ * With `branching`, a column whose links are more than a chain in card order is a flow running down. */
+export const column: ModeFn = (input) => {
+  const { nodes, links, sizes, align, widths, rowGap = GAP } = input;
+  if (input.branching && !plainChain(nodes, links)) return flow({ ...input, direction: 'down' });
   const pos = new Map<string, Box>();
   const cells = new Map<string, Cell>();
   const widest = Math.max(0, ...nodes.map((n) => sizes.get(n.id)!.w));
@@ -50,8 +52,11 @@ export const column: ModeFn = ({ nodes, sizes, align, widths, rowGap = GAP }) =>
 };
 
 /** One row, left to right in card order, GAP apart, tops aligned (or centred); no links needed
- * (api.md 129). Each card is its own column, so `match` changes nothing. */
-export const row: ModeFn = ({ nodes, sizes, align }) => {
+ * (api.md 129). Each card is its own column, so `match` changes nothing. With `branching`, a row whose
+ * links are more than a chain in card order is a flow running across, so a fork continues as parallel rows. */
+export const row: ModeFn = (input) => {
+  const { nodes, links, sizes, align } = input;
+  if (input.branching && !plainChain(nodes, links)) return flow({ ...input, direction: 'across' });
   const pos = new Map<string, Box>();
   const cells = new Map<string, Cell>();
   const tallest = Math.max(0, ...nodes.map((n) => sizes.get(n.id)!.h));

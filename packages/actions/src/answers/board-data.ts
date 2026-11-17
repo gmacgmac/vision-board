@@ -42,6 +42,7 @@ export function boardJson(d: BoardData) {
       ...(st.widths.size > 0 && { widths: Object.fromEntries(st.widths) }),
       ...(st.sizes.size > 0 && { sizes: Object.fromEntries(st.sizes) }),
       ...(st.moves.size > 0 && { moves: Object.fromEntries(st.moves) }),
+      ...(st.skin !== undefined && { skin: st.skin }),
       ...containerJson(st),
     },
     versions: d.versions,

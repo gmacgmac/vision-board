@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent, LedgerEvent } from '#format';
-import { readLedger } from '#format';
+import { readLedger, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   applyEvent, archivedBoards, archivedProblem, boardList, boardVisibility, conditionsOf, emptyState, foldLedger, linkedDetails,
@@ -16,12 +16,11 @@ import { A, Ledger, scene } from './ledger-v3.ts';
 
 const AT = '2026-10-12T09:00:00Z';
 /** A person act as the server would stamp it next, for `validateAct`. */
-const asAct = (s: LedgerState, e: object): ActEvent => ({ v: 14, seq: s.seq + 1, at: AT, by: 'person', type: 'act', ...e }) as ActEvent;
+const asAct = (s: LedgerState, e: object): ActEvent => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, by: 'person', type: 'act', ...e }) as ActEvent;
 
 /** The scene (boards `b` and `b2`), then the person archives `b2`. */
 function archived(): { l: Ledger; at: number } {
   const l = scene();
-  l.v = 14;
   const at = l.act({ action: 'archive', board: 'b2' });
   return { l, at };
 }
@@ -42,7 +41,6 @@ test('boardVisibility: visible, archived or unknown; the one check behind visibl
 test('archive and restore move no head and no date, see no card, and no agent reads them', () => {
   const l = scene();
   const before = l.state();
-  l.v = 14;
   l.act({ action: 'archive', board: 'b2' });
   l.act({ action: 'restore', board: 'b2' });
   const s = l.state();
@@ -74,7 +72,6 @@ test('boardList leaves an archived board out; archivedBoards lists it, the lates
 test('restore brings it all back: the list, the heads, the conditions, as before the archive', () => {
   const l = scene();
   const before = l.state();
-  l.v = 14;
   l.act({ action: 'archive', board: 'b2' });
   l.act({ action: 'restore', board: 'b2' });
   const s = l.state();
@@ -114,7 +111,7 @@ test('on an archived board every other act is refused until it is restored', () 
   const s = l.state();
   const acts = [
     { action: 'ack', id: 4, ver: 1 }, { action: 'comment', id: 4, ver: 1, text: 'Why?' }, { action: 'send', board: 'b2' },
-    { action: 'mode', board: 'b2', region: 'x', mode: 'flow' }, { action: 'flag', id: 4 },
+    { action: 'mode', board: 'b2', region: 'x', mode: 'flow' }, { action: 'bookmark', id: 4 },
   ];
   for (const a of acts) assert.deepEqual(validateAct(asAct(s, a), s, 'b2'), ['board: "b2" is archived; restore it from the board picker first'], a.action);
   l.act({ action: 'restore', board: 'b2' });
@@ -124,7 +121,7 @@ test('on an archived board every other act is refused until it is restored', () 
 
 test('archivedProblem: an agent line on an archived board is refused in words that say nothing of it', () => {
   const s = archived().l.state();
-  const line = (e: object) => ({ v: 14, seq: s.seq + 1, at: AT, ...e }) as LedgerEvent;
+  const line = (e: object) => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, ...e }) as LedgerEvent;
   const agent = { by: 'agent', agent: A };
   const lines = [
     line({ ...agent, type: 'board', board: 'b2', title: 'Mine now' }),
@@ -143,7 +140,7 @@ test('archivedProblem: an agent line on an archived board is refused in words th
 
 test('archivedProblem: the person may not rename it, but a seen still goes (a page leaving the board sends one)', () => {
   const s = archived().l.state();
-  const person = (e: object) => ({ v: 14, seq: s.seq + 1, at: AT, by: 'person', ...e }) as LedgerEvent;
+  const person = (e: object) => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, by: 'person', ...e }) as LedgerEvent;
   assert.equal(archivedProblem(s, person({ type: 'board', board: 'b2', title: 'Renamed' })), 'board: "b2" is archived; restore it from the board picker first');
   assert.equal(archivedProblem(s, person({ type: 'seen', board: 'b2', head: s.seq })), undefined);
   assert.equal(archivedProblem(s, person({ type: 'seen', id: 4, ver: 1 })), undefined);
@@ -154,7 +151,6 @@ test('linkedDetails leaves out a card on an archived board (an old line linking 
   const l = scene();
   l.agent(A, { type: 'link', from: 1, to: 4 });
   assert.deepEqual(linkedDetails(l.state(), 1).map((d) => d.board), ['b2']);
-  l.v = 14;
   l.act({ action: 'archive', board: 'b2' });
   assert.deepEqual(linkedDetails(l.state(), 1), []);
 });

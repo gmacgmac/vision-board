@@ -21,7 +21,7 @@ export const laterItems = 'Later items';
 export const later = 'later';
 
 // ---- ToolbarEnd.svelte
-export const hideAnsweredItemsH = 'Hide answered items · H';
+export const hideAnsweredItemsH = (key: string): string => `Hide answered items · ${key}`;
 export const theme = (theme: string | number): string => `Theme: ${theme}`;
 export const reply = 'Reply';
 /** "Reply", or "Reply (3)" with answers to send. */
@@ -67,7 +67,7 @@ export const containers = 'Containers';
 export const folder = 'Folder';
 export const openCards = 'Open cards';
 export const newCards = 'New cards';
-export const flagged = 'Flagged';
+export const bookmarked = 'Bookmarked';
 export const openWord = 'open';
 export const freshCount = (fresh: number): string => `${fresh} new`;
 export const goToNewCard = 'Go to a new or updated card';
@@ -83,3 +83,17 @@ export const moreAlso = (also: readonly string[]): string => (also.length ? `${a
 
 // ---- LockedChip.svelte
 export const thisBoardIsLocked =(LOCKED_PERSON: string | number): string => `This board is locked. ${LOCKED_PERSON}.`;
+
+// ---- The "⋯" menu's Skin rows (skins flag, D-100 2: ToolbarMenu.svelte): one per skin, the board's own ticked.
+export const skinGroup = 'Skin';
+export const skinName = (skin: string): string => (skin === 'command-lens' ? 'Command Lens skin' : 'Default skin');
+export const skinTip = 'How this board\'s nodes look, for everyone who opens it';
+
+// ---- The header's flow menu (flowDirection flag, D-100 5, BE_01: FlowMenu.svelte): Across, Down and Auto for the
+// whole board, the person's choice ticked; a container's own choice (its layout control) still wins.
+export const directionGroup = 'Flows';
+export const directionTitle = (d: string): string => `${directionName(d)}. Change which way this board's flows run`;
+export const directionName = (d: string): string => `Flows: ${d === 'across' ? 'Across' : d === 'down' ? 'Down' : 'Auto'}`;
+export const directionTip = (d: string): string => (d === 'auto'
+  ? 'Each flow runs the way it was drawn, unless you chose for its container'
+  : `Every flow on this board runs ${d === 'down' ? 'top to bottom' : 'left to right'}, unless you chose for its container`);

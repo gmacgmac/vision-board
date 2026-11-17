@@ -10,7 +10,6 @@ import { A, scene } from './ledger-v3.ts';
 
 function board() {
   const l = scene();
-  l.v = 8;
   l.node(A, 5, 1, { region: 'r', kind: 'decision', title: 'Pick a plan' });
   l.node(A, 6, 1, { region: 'r', kind: 'finding' });
   return l;

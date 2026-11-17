@@ -1,8 +1,8 @@
 // Lock a board (N40 rulings 1-6, lockBoard flag, on by default; api.md 138-140). "⋯" › Lock board
 // makes the open board read-only for everyone: "Locked" shows beside its name, the menu offers Unlock
 // board, and every control that would change the board is paused in place (aria-disabled, the quiet
-// look), saying "Locked: unlock to change it" when pressed, while nothing is written; the flag, the
-// person's private mark, still works, by click and by Shift+F. A lock from another tab shows at once.
+// look), saying "Locked: unlock to change it" when pressed, while nothing is written; the bookmark, the
+// person's private mark, still works, by click and by B. A lock from another tab shows at once.
 // All by keyboard as well, axe in both themes. It runs on the worker's empty project (EMPTY_BASE),
 // fresh for this file (servers.ts), on a board of its own, and leaves it unlocked between tests.
 import type { APIRequestContext, Page } from '@playwright/test';
@@ -84,7 +84,7 @@ test('"⋯" › Lock board pauses the board in place, says so beside its name, a
   const paused = page.locator(PAUSED);
   expect(await paused.count()).toBeGreaterThan(10);
   for (const el of await paused.all()) await expect(el).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.locator('vb-node button[data-flag]').first()).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('vb-node button[data-bookmark]').first()).not.toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator(bid('send'))).toHaveAttribute('title', REASON);
   for (const theme of THEMES) {
@@ -142,20 +142,20 @@ test('locked, a press on a paused control says why and writes nothing: a button,
   expect(await head(page)).toBeGreaterThan(before);
 });
 
-test('locked, the flag still works: by its button and by Shift+F (it changes nothing an agent reads)', async ({ page, request }) => {
+test('locked, the bookmark still works: by its button and by B (it changes nothing an agent reads)', async ({ page, request }) => {
   await setUp(request);
   await open(page);
   await mark(page, 'lock');
   await idle(page);
-  const flag = card(page, 2).locator('button[data-flag]');
-  await flag.click();
+  const bookmark = card(page, 2).locator('button[data-bookmark]');
+  await bookmark.click();
   await idle(page);
-  await expect(flag).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator(bid('flagged'))).toBeVisible();
+  await expect(bookmark).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator(bid('bookmarked'))).toBeVisible();
   await card(page, 2).focus();
-  await page.keyboard.press('Shift+F');
+  await page.keyboard.press('b');
   await idle(page);
-  await expect(flag).toHaveAttribute('aria-pressed', 'false');
+  await expect(bookmark).toHaveAttribute('aria-pressed', 'false');
   await expect(toast(page)).not.toHaveText(REASON);
 });
 
@@ -214,7 +214,7 @@ test('gallery: the lock section shows by default, and not with -lockBoard', asyn
   await expect(section(page).getByRole('menuitem', { name: 'Unlock board' })).toBeVisible();
   await expect(section(page).locator('.vb-chip-locked')).toHaveText('Locked');
   await expect(section(page).locator('vb-node button[data-act]').first()).toHaveAttribute('aria-disabled', 'true');
-  await expect(section(page).locator('vb-node button[data-flag]').first()).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(section(page).locator('vb-node button[data-bookmark]').first()).not.toHaveAttribute('aria-disabled', 'true');
   await expect(section(page).locator(`${bid('lock-board')}, ${bid('locked')}`)).toHaveCount(0);
 });
 

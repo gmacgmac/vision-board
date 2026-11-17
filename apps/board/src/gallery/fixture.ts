@@ -4,7 +4,7 @@ import type { View } from '#format';
 import { boardView, readLedger } from '#format';
 import type { AccessHolder, BoardAccess, BoardRun, BoardState, ProposalRow, RetiredCount } from '#actions';
 import type { LedgerState } from '#actions';
-import { boardAccess, boardState, boardVersions, foldLedger, pageConditions, proposalRows, retiredCounts, unseenCount, unseenSteps } from '#actions';
+import { boardAccess, boardState, boardVersions, foldLedger, numberOf, pageConditions, proposalRows, retiredCounts, unseenCount, unseenSteps } from '#actions';
 import type { CardConditions, CardReply, CardUpdates } from '#ui';
 import { versionTime } from '#ui';
 import { createParking } from '../board/cards/index.ts';
@@ -41,14 +41,17 @@ export const UPDATES_BOARD = 'updates';
  *  awaiting its handover, one with it written, one with a reply under its note, one with a reply that
  *  names no note. */
 export const PARKING_BOARD = 'parking';
-/** The board the flag and retired samples use (field report batch 2, cardFlag and retiredMarker flags):
- *  a container of three cards, two flagged by the person (one redrawn since), and a container two
+/** The board the flag and retired samples use (field report batch 2, cardBookmark and retiredMarker flags):
+ *  a container of three cards, two bookmarked by the person (one redrawn since), and a container two
  *  cards were retired from, one at a time, after the person had answered on the board. */
 export const MARKS_BOARD = 'marks';
 /** The board the layout samples use (field report batch 3, FE_01): a flow whose links' labels fit
  *  or do not, a row of cards of three heights, and two columns of S, M and L cards, one under the
  *  column's default (match) and one the person set to own widths. */
 export const LAYOUT_BOARD = 'layout';
+/** The board the node's edges samples use (nodeEdges flag, FE_01): every mark in every state, icons built in and from
+ *  the library (one drawn, one with a failing path, one missing), tones by name and by hue. */
+export const EDGES_BOARD = 'edges';
 
 export interface Fixture {
   view: View;
@@ -81,6 +84,8 @@ export interface Fixture {
   /** The main board's cards the agent's answer to a note cleared (D-045, answer-model ruling 7), by
    *  board number: their "1 update" tab and the reply under the note, as the page reads them. */
   cleared: Map<number, CardConditions>;
+  /** The node's edges board, with each card's conditions as the page reads them (FE_02 wires the same). */
+  edges: { view: View; state: BoardState; cards: Map<number, CardConditions> };
 }
 
 /** Each card of `board` with the agent's replies on it, as parking.ts gives them to the page. */
@@ -96,6 +101,24 @@ function clearedCards(ledger: LedgerState, board: string): Map<number, CardCondi
   const state = boardState(ledger, board);
   return new Map(boardView(ledger, board).nodes.flatMap((n) => (n.n === undefined || !state.items.get(n.id)?.unseenAnswer ? []
     : [[n.n, { updates: { count: unseenCount(ledger, board, n.n) }, replies: replies.get(n.n)?.replies ?? [] }] as const])));
+}
+
+/** Each card of the edges board with what the page passes in: its replies, New, unseen updates, Awaiting, open
+ *  proposals and its latest version (the settled badge). */
+function edgeCards(ledger: LedgerState, board: string): Map<number, CardConditions> {
+  const replies = repliesOn(ledger, board);
+  const pc = pageConditions(ledger, board);
+  const rows = proposalRows(ledger, pc.proposals, versionTime);
+  return new Map(boardView(ledger, board).nodes.flatMap((v) => {
+    const n = v.n!;
+    const proposals = rows.filter((r) => r.n === n).map(({ n: _, ...p }) => p);
+    const card = [...ledger.nodes.values()].find((c) => c.board === board && numberOf(ledger, c.id) === n);
+    const ver = card?.versions.at(-1)?.ver;
+    return [[n, {
+      replies: replies.get(n)?.replies ?? [], new: pc.fresh.has(n), awaiting: pc.awaiting.has(n), proposals,
+      ...(pc.unseen.has(n) && { updates: { count: unseenCount(ledger, board, n) } }), ...(ver !== undefined && { ver }),
+    }] as const];
+  }));
 }
 
 /** A board of container samples; `owed` as the board page reads it (packages/actions `pageConditions`). */
@@ -136,6 +159,7 @@ export function loadFixture(): Fixture {
     ledger,
     layout: { view: boardView(ledger, LAYOUT_BOARD), state: boardState(ledger, LAYOUT_BOARD) },
     cleared: clearedCards(ledger, BOARD),
+    edges: { view: boardView(ledger, EDGES_BOARD), state: boardState(ledger, EDGES_BOARD), cards: edgeCards(ledger, EDGES_BOARD) },
     parking: {
       view: parkingView, state: boardState(ledger, PARKING_BOARD), containerReplies: parking.containers(),
       cards: new Map(parkingView.nodes.flatMap((n) => (n.n === undefined ? [] : [[n.n, parking.card(n)] as const]))),

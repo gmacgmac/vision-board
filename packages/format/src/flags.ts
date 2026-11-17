@@ -100,8 +100,8 @@ export const FLAGS = {
     // On by default (maintainer, 2026-10-10, every-node PLAN rulings 1-4, FE_01); ?flags=-everyNode turns it off.
     default: true,
   },
-  cardFlag: {
-    // On by default (maintainer, 2026-10-11, field report batch 2 ruling 3, assumption A); ?flags=-cardFlag turns it off.
+  cardBookmark: {
+    // On by default (maintainer, 2026-10-11, field report batch 2 ruling 3, assumption A); ?flags=-cardBookmark turns it off.
     default: true,
   },
   retiredMarker: {
@@ -179,6 +179,39 @@ export const FLAGS = {
   appFit: {
     // On by default (maintainer, 2026-10-27, point 312: app cards fit their content; app-panel-fits-content task); ?flags=-appFit turns it off.
     default: true,
+  },
+  cardDetails: {
+    // Spike (maintainer's go, 2026-11-10, point 24: stage apps spike); on by default on the spike branch; ?flags=-cardDetails turns it off.
+    default: true,
+  },
+  appStage: {
+    // Spike (maintainer's go, 2026-11-10, point 24: stage apps spike); off by default from node-overhaul T_01 (its Open button
+    // in the app card's footer failed 13 page tests); ?flags=appStage tries it.
+    default: false,
+  },
+  nodeEdges: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, D-099); ?flags=nodeEdges tries it.
+    default: false,
+  },
+  skins: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, D-100); ?flags=skins tries it.
+    default: false,
+  },
+  layoutControl: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, PLAN decision 20); ?flags=layoutControl tries it.
+    default: false,
+  },
+  flowDirection: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, PLAN decision 25); ?flags=flowDirection tries it.
+    default: false,
+  },
+  flowBranches: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, PLAN decision 19, BE_01); ?flags=flowBranches tries it.
+    default: false,
+  },
+  appWindow: {
+    // Off by default until node-overhaul T_04 (maintainer, 2026-11-16, D-099 5); ?flags=appWindow tries it.
+    default: false,
   },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
@@ -379,7 +412,7 @@ export const FLAG_DESCRIPTIONS = {
   openFolder: 'The "⋯" menu ends with Open folder…, a picker of the folders under the home folder (recent first, a folder with a Vision Board marked) that opens one, or creates its Vision Board, in place of the open folder (api.md 109-113); every open page then reloads onto it. The page title names the open folder and the last board is kept per folder. Off, the page never asks which folder is open.',
   currentFolder: 'The folder the board has open is always on show (needs openFolder): a chip with its name at the far left of the toolbar, its full path in the tooltip, a click opening the folder dialog; a "Current:" line under Open folder… in the "⋯" menu; and a "Current folder" line with the full path and a Copy button at the top of the folder dialog, apart from its lists. Off, the name is only in the page title and the Open folder… tooltip.',
   everyNode: 'Every card shows its number and the buttons its kind offers: a question, decision or action ✓, ✗, Comment, More context and Later (✓ and ✗ read "Yes" and "No" on a question, ✓ "Done" on an action); every other kind Comment, More context and Later. Comment on a selection takes any cards. Off, only cards that need an answer show a number and buttons (api.md 118-120).',
-  cardFlag: 'Every card with a number has a small flag button beside Later (Shift+F on a focused card): the person\'s private mark, kept in the ledger and never sent to an agent (api.md 128). A flagged card shows it on the button, keeps it through a redraw, and a "N flagged" chip in the toolbar steps through the flagged cards. Off while a past version shows. Off, no button, no key and no chip; flags stay in the ledger.',
+  cardBookmark: 'Every card with a number has a small bookmark button beside Later (B on a focused card): the person\'s private mark, kept in the ledger and never sent to an agent (api.md 128; called the flag before ledger format 20, D-099 2). A bookmarked card shows it on the button, keeps it through a redraw, and a "N bookmarked" chip in the toolbar steps through the bookmarked cards. Off while a past version shows. Off, no button, no key and no chip; bookmarks stay in the ledger.',
   retiredMarker: 'A container the agent retired cards from, one at a time, shows a small "N cards retired" marker in its title line; it opens the board version where they last appeared (read-only, with the versionView flag). Retired cards and containers are gone from the board either way. Off, no marker.',
   linkLabels: 'A link\'s label sits on its line near the source end, on a background so the line does not show through, wherever the layout found it room (`Route.labelAt.fits`); where it did not, a small marker sits on the line, and hovering or focusing the marker floats the label above everything (WCAG 1.4.13: hoverable, persistent, Esc dismisses). Off, every label is drawn at the middle of its line as before.',
   alignSetting: 'The "⋯" menu has Centre cards, a per-viewer setting kept in this browser (vb.align) and never sent to an agent: off (the default), a row of cards lines up by their tops and a column by their left edges; on, both are centred. Off, the menu has no such row and cards line up by their tops and left edges.',
@@ -398,7 +431,15 @@ export const FLAG_DESCRIPTIONS = {
   toolRail: 'A container\'s tools (the layout icons, Match card widths, Comment and the settings cog) sit in a slim vertical rail on the frame\'s left edge, dimmed until hovered or focused, so the top line holds only the title, centred, with the whole line for it; a short frame\'s rail collapses and expands over the cards on hover or focus, and its popovers open to the right of it. Off, the tools sit on the top line after the title as before.',
   freshCards: 'New and updated cards are found at board scale: the "N updates" tab is outlined in pink at rest; a container holding a card that is new or updated since the person last engaged with any card in it (`container.fresh`, api.md 158) has a teal border and a "3 new · 1 updated" pill on its title line, until they select or act on one of its cards; and the toolbar\'s "N new" chip lists those cards as "number · title" (updated ones end "· updated") in board order, choosing one going to it as Go to card does. None of it shows in a past version. Off, the tab is grey until hovered and no container, pill or chip shows.',
   groupNoteOnce: 'A note on a selection of cards (one note with `nodes`, api.md 62) is drawn once: one pin per group, on the right edge of the group\'s lowest-numbered card just under that card\'s own note pin (or its next card, when an earlier group\'s pin is already there), in its own layer above the cards. Hovering or focusing it, and its bubble being open, ring each card of the group with a dashed line (never a box); pressing it selects the group\'s cards and opens the note, to edit or remove it, with the agent\'s replies to it shown once there. The cards\' own pins, "Your note" blocks and conversations leave the group\'s notes and replies out. Off, the note and its replies show on every card of the group.',
+  cardDetails: 'Spike. A card\'s body may hide detail behind a disclosure triangle: a line `+++ Label` opens it and a line `+++` closes it; the lines between show only when the person opens the triangle, and the card is measured again. Off, the lines stay text.',
+  appStage: 'Spike. An app card has Open: its panel leaves the card and fills the board (the top layer; the same sandboxed frame, never reloaded), and Esc or Back to card returns it. The panel may send `vision-board/note` (a pick in the app becomes the person\'s note on its card) and gets `vision-board/notifications/reply` (each agent reply on its card), and its policy lets it play media from the manifest\'s `resourceDomains`. Off, an app card is as before.',
   appFit: 'An app card fits its panel\'s content: a panel that tells its height (MCP Apps\' `ui/notifications/size-changed`, `{ height }`) gets a frame that height, rounded and held to 120 to 1080 px (APP_LIMITS.toldHeight; never stored, so above the agent\'s 800), as wide as the agent drew it; the card is measured again and the cards under it move, with nothing written to the ledger. The agent\'s `h` is the height until the panel tells one, and again once its frame is removed; a frozen panel keeps its last. A panel that tells nothing keeps the agent\'s size. Off, size-changed is ignored and the panel is the size the agent drew (docs/specification/apps.md § Panel size).',
+  nodeEdges: 'A node carries its actions on its edges (D-099): the number is the bookmark (a click toggles it, held it also offers Save for later), the answer disc opens Tick and Cross, the change badge opens history, the notes mark opens the conversation box; right-click or a long press lists the six actions with their keys (A, X, C, B, L, H). An optional icon and tone draw as the node names them. Off, the node keeps its footer row.',
+  skins: 'A board has a skin (D-100): `default` or `command-lens`, set on its `board` line by whoever made it and changed by the person (the `skin` act); the board draws its nodes in it. Off, every board draws in the default look and the skin is not offered.',
+  layoutControl: 'Each container shows one layout control with the other layouts behind it (PLAN decision 20), and the control offers a flow\'s direction. Off, a container draws one button per layout.',
+  flowDirection: 'A `flow` container runs across or down: the agent\'s `direction` on the container, else the person\'s choice for the container or the whole board (the `direction` act; Auto gives back the agent\'s). Off, every flow runs across.',
+  flowBranches: 'A linked flow branches into rows instead of sending its links round the cards (PLAN decision 19): in a `flow` each branch of a fork keeps its own row from its first card to its last, the main line following each card\'s first link in card order, and a branch that rejoins comes back with one link; a `row` or `column` whose links are more than a chain in card order is laid out as a flow, across or down. A row or column with no links, or a plain chain, draws as before. Off, a flow stacks a fork\'s branches by their links\' average and a row or column lays its cards in card order whatever their links.',
+  appWindow: 'An app card is a window (D-099 5): a thin title bar with Open, the bookmark and a drawer arrow; the drawer pushes its neighbours aside and holds the card\'s conversation; no Save for later. Off, an app card is as before.',
   goAfterPause: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/find/go-to-card.ts). Off, only Enter goes.',
   findKeepsMarks: 'Finding a card never changes it: going to a card from Go to card, search, the open, new and updated lists or the Review list selects and shows it without marking it seen, so its NEW and updated marks stay; the person\'s own click on the card, and every act, still clear them. Off, a found card is marked seen as a selected one is.',
   accessByBot: 'The access requests strip groups the requests by bot (the agent id the server stamps on each), named by its label, with each container\'s row and, for a bot with more than one request, one Allow all; the heading counts bots (two bots with one label are numbered). Off, one row per request under a count of requests.',

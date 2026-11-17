@@ -3,31 +3,40 @@
 // says, `place()` on every pan, zoom and relayout, and listens for `vb-note` events; the element
 // never writes anything itself (rule 8). Keys: Enter saves, Shift+Enter is a new line, Esc
 // cancels. The conversation (review polish ruling 6) opens at an entry: `reveal` scrolls to it and
-// `focusText` focuses it. Browser only: the class is created inside defineVbNoteBubble().
+// `focusText` focuses it. The conversation box (`conversation` mode, nodeEdges, FE_03) draws from its own template,
+// loaded on first use (`useConversation`); in it Cmd or Ctrl Enter is Ask now, and `show(..., true)` draws it again
+// keeping the words typed, the caret, the focus and what the box says of the last write.
+// Browser only: the class is created inside defineVbNoteBubble().
 import type { Kind } from '#format';
 import type { MarkdownOptions } from '../markdown/render.ts';
 import type { BubbleMode, BubblePhase, BubbleView, NoteDiscardDetail, Placement } from './note-bubble-core.ts';
-import { cancelIntent, isDirty, NOTE_DISCARD_EVENT, readOnlyMode } from './note-bubble-core.ts';
+import { cancelIntent, fieldKey, isDirty, NOTE_DISCARD_EVENT, readOnlyMode } from './note-bubble-core.ts';
 import { noteBubbleTemplate } from './note-bubble-template.ts';
 import * as noteBubbleWords from '../words/note-bubble.ts';
 
 export const VB_NOTE_BUBBLE_TAG = 'vb-note-bubble';
 
+/** The conversation box's template, once loaded (elements.ts `loadConversation`). */
+let conversation: typeof noteBubbleTemplate | null = null;
+export const useConversation = (template: typeof noteBubbleTemplate): void => { conversation = template; };
+
 /** What the person asked for: the `vb-note` event's detail. `edit`: Edit on a note in the
- *  conversation, its `seq` in `note` (decision 8: the page opens that note to edit). */
-export type NoteChoice = 'save' | 'cancel' | 'remove' | 'edit';
-export interface NoteEventDetail { choice: NoteChoice; text: string; note?: number }
+ *  conversation, its `seq` in `note` (decision 8: the page opens that note to edit). In the conversation box, `ask`:
+ *  Ask now (sent even while it is disabled, so the page says why), and `tab`: a tab, its key in `tab`. */
+export type NoteChoice = 'save' | 'cancel' | 'remove' | 'edit' | 'ask' | 'tab';
+export interface NoteEventDetail { choice: NoteChoice; text: string; note?: number; tab?: string }
 
 export interface VbNoteBubbleElement extends HTMLElement {
   /** Draw the bubble for one card (its kind's colour and number), a group of cards (no `kind`,
    *  so the neutral edge; no number chip) or a whole container (`line`: the container's frame
    *  colour from `regionColour`, which its edge wears; sets `data-on="container"`), with the view
-   *  from `bubbleView`. */
-  show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }, md?: MarkdownOptions): void;
+   *  from `bubbleView`. `keep`: the same box drawn again (a reply arrived, a redraw): the words typed, the caret, the
+   *  focus, the phase and the thread's place stay. */
+  show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }, md?: MarkdownOptions, keep?: boolean): void;
   /** Put it beside its card (from `placeBubble`), in the coordinates of its offset parent. */
   place(p: Placement): void;
-  /** `saving` disables the buttons; `error` shows `message` under the text and keeps it. */
-  setPhase(phase: BubblePhase, message?: string): void;
+  /** `saving` disables the buttons (the one pressed, `by`, says so); `error` shows `message` under the text and keeps it. */
+  setPhase(phase: BubblePhase, message?: string, by?: 'save' | 'ask'): void;
   /** The words typed so far. */
   readonly text: string;
   /** Whether the words typed differ from those it was shown with (`isDirty`); false for a sent
@@ -54,7 +63,7 @@ export function defineVbNoteBubble(): void {
       super();
       this.addEventListener('click', (e) => {
         const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-note-do]');
-        if (b && !b.disabled) this.choose(b.dataset.noteDo as NoteChoice, b.dataset.edit ? Number(b.dataset.edit) : undefined);
+        if (b && !b.disabled) this.choose(b.dataset.noteDo as NoteChoice, b.dataset.edit ? Number(b.dataset.edit) : undefined, b.dataset.tab);
       });
       this.addEventListener('keydown', (e) => this.onKey(e));
       this.addEventListener('input', () => this.grow());
@@ -65,22 +74,49 @@ export function defineVbNoteBubble(): void {
       this.grow();
     }
 
-    show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }, md?: MarkdownOptions): void {
+    show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }, md?: MarkdownOptions, keep = false): void {
+      const was = keep ? this.held() : null;
       this.setAttribute('role', 'dialog');
       this.setAttribute('aria-label', v.heading);
       this.dataset.mode = v.mode;
+      // The conversation box is a box beside a node (node-box.css), styled as the history and proposal boxes are.
+      this.classList.toggle('vb-node-box', v.mode === 'conversation');
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
       if (card.line) this.style.setProperty('--vb-kind', card.line);
       else if (card.kind) this.style.setProperty('--vb-kind', `var(--vb-kind-${card.kind})`);
       else this.style.removeProperty('--vb-kind');
       if (card.line) this.dataset.on = 'container';
       else delete this.dataset.on;
-      this.innerHTML = noteBubbleTemplate(v, card.number, md);
-      this.opened = v.text;
+      this.innerHTML = (v.mode === 'conversation' && conversation ? conversation : noteBubbleTemplate)(v, card.number, md);
+      // The box's field starts empty: any words in it, a draft carried to another tab too, are unsaved.
+      this.opened = v.mode === 'conversation' ? '' : v.text;
       this.at = null;
       this.setPhase('idle');
       this.hidden = false;
+      if (was) was();
       this.grow();
+    }
+
+    /** What `show(..., true)` keeps, as a function that puts it back on the new markup. */
+    private held(): (() => void) | null {
+      const ta = this.querySelector('textarea');
+      if (!ta || this.hidden) return null;
+      const { value, selectionStart, selectionEnd } = ta;
+      const focused = document.activeElement === ta;
+      const [phase, message] = [this.dataset.phase as BubblePhase, this.querySelector('.vb-nb-error')?.textContent ?? ''];
+      const list = this.querySelector<HTMLElement>('.vb-nb-thread');
+      const bottom = !list || list.scrollTop + list.clientHeight >= list.scrollHeight - 4;
+      const top = list?.scrollTop ?? 0;
+      return () => {
+        const now = this.querySelector('textarea')!;
+        now.value = value;
+        if (focused) now.focus({ preventScroll: true });
+        now.setSelectionRange(selectionStart, selectionEnd);
+        this.setPhase(phase, message);
+        // A reply that arrives shows when the person was at the latest; else the thread stays where they read.
+        const l = this.querySelector<HTMLElement>('.vb-nb-thread');
+        if (l) l.scrollTop = bottom ? l.scrollHeight : top;
+      };
     }
 
     place(p: Placement): void {
@@ -90,14 +126,14 @@ export function defineVbNoteBubble(): void {
       this.style.setProperty('--vb-arrow', `${Math.round(p.arrow)}px`);
     }
 
-    setPhase(phase: BubblePhase, message = ''): void {
+    setPhase(phase: BubblePhase, message = '', by: 'save' | 'ask' = 'save'): void {
       this.dataset.phase = phase;
       this.toggleAttribute('aria-busy', phase === 'saving');
       for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-note-do]')) b.disabled = phase === 'saving';
-      const save = this.querySelector<HTMLButtonElement>('button[data-note-do="save"]');
-      if (save) {
-        save.dataset.label ??= save.textContent ?? '';
-        save.textContent = phase === 'saving' ? noteBubbleWords.saving : save.dataset.label;
+      for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-note-do="save"], button[data-note-do="ask"]')) {
+        b.dataset.label ??= b.textContent ?? '';
+        const busy = phase === 'saving' && b.dataset.noteDo === by;
+        b.textContent = busy ? (by === 'ask' ? noteBubbleWords.asking : noteBubbleWords.saving) : b.dataset.label;
       }
       const error = this.querySelector<HTMLElement>('.vb-nb-error');
       if (error) {
@@ -136,10 +172,12 @@ export function defineVbNoteBubble(): void {
      *  manual resize stays; note-bubble.css gives the minimum and the maximum, past which it scrolls. */
     private grow(): void {
       const ta = this.querySelector('textarea');
+      // The box's field is one line that grows to three, then scrolls (note-bubble.css), and shrinks back as words go.
+      if (ta && this.dataset.mode === 'conversation') ta.style.height = '';
       if (ta && ta.scrollHeight > ta.clientHeight) ta.style.height = `${ta.scrollHeight + ta.offsetHeight - ta.clientHeight}px`;
     }
 
-    private choose(choice: NoteChoice, note?: number): void {
+    private choose(choice: NoteChoice, note?: number, tab?: string): void {
       // Esc or Cancel with changed words asks the page first (step 4G ruling 4); unchanged, it
       // closes as before.
       if (choice === 'cancel' && cancelIntent(this.dataset.mode as BubbleMode, this.dirty) === 'ask') {
@@ -147,7 +185,7 @@ export function defineVbNoteBubble(): void {
         this.dispatchEvent(new CustomEvent<NoteDiscardDetail>(NOTE_DISCARD_EVENT, { bubbles: true, detail: ask }));
         return;
       }
-      const detail: NoteEventDetail = { choice, text: this.text, ...(note !== undefined && { note }) };
+      const detail: NoteEventDetail = { choice, text: this.text, ...(note !== undefined && { note }), ...(tab !== undefined && { tab }) };
       this.dispatchEvent(new CustomEvent<NoteEventDetail>('vb-note', { bubbles: true, detail }));
     }
 
@@ -157,10 +195,10 @@ export function defineVbNoteBubble(): void {
         if (this.dataset.phase !== 'saving') this.choose('cancel');
         return;
       }
-      const inText = (e.target as HTMLElement).localName === 'textarea';
-      if (inText && e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      const key = (e.target as HTMLElement).localName === 'textarea' ? fieldKey(e, this.dataset.mode as BubbleMode) : null;
+      if (key) {
         e.preventDefault();
-        if (this.dataset.phase !== 'saving') this.choose('save');
+        if (this.dataset.phase !== 'saving') this.choose(key);
       }
     }
   }

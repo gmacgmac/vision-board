@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { ActEvent } from '#format';
-import { boardView, eventProblems, KINDS, NODE_TYPES, readLedger, toLine } from '#format';
+import { boardView, eventProblems, KINDS, NODE_TYPES, readLedger, toLine, LEDGER_FORMAT } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import { boardState, counts, foldLedger, ITEM_ACTIONS, statusOf, validateAct, MAX_TEXT } from '../src/index.ts';
 
@@ -16,7 +16,7 @@ type ActLine = Partial<Omit<ActEvent, 'id'>> & { n?: number };
 /** The fixture ledger plus `extra` person acts (seq and at stamped in order), checked, then folded. */
 function load(extra: ActLine[] = []) {
   const more = extra.map((f, i) => JSON.stringify(
-    { v: 2, seq: lines.length + i + 1, at: `2026-10-02T10:00:0${i}Z`, by: 'person', type: 'act', ...f }));
+    { v: LEDGER_FORMAT, seq: lines.length + i + 1, at: `2026-10-02T10:00:0${i}Z`, by: 'person', type: 'act', ...f }));
   const read = readLedger([...lines, ...more]);
   assert.deepEqual(read.problems, []);
   return foldLedger(read.events);
@@ -28,7 +28,7 @@ const view = boardView(state, BOARD);
 const item = view.nodes.find((x) => NODE_TYPES[x.kind].answer)!.n!;
 const plain = view.nodes.find((x) => !NODE_TYPES[x.kind].answer && x.kind !== 'finding')!.n!;
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 2, seq: lines.length + 1, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: item, ver: 1, ...f });
+  ({ v: LEDGER_FORMAT, seq: lines.length + 1, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: item, ver: 1, ...f });
 
 test('a valid person ack passes', () => assert.deepEqual(validateAct(act({}), state), []));
 
@@ -88,11 +88,11 @@ test('counts split answered, later and open, over the cards that need an answer'
 
 // Node types decide which review actions a card offers (D-015, components.md); the kind decides
 // (api.md 118): four on a question, decision or action, two on any other kind (D-045).
-/** The fixture plus a topic and a note that an old line marked `item`, which every reader ignores. */
+/** The fixture plus a topic and a note given numbers: their kind decides, so they offer two actions. */
 function withNumberedPlain() {
   const nodes = (['topic', 'note'] as const).map((kind, i) => JSON.stringify({
-    v: 2, seq: lines.length + 1 + i, at: `2026-10-02T09:30:0${i}Z`, by: 'agent', agent: 'kiro', type: 'node',
-    board: BOARD, n: 100 + i, ver: 1, node: { region: 'review', kind, title: `Numbered ${kind}`, item: true },
+    v: LEDGER_FORMAT, seq: lines.length + 1 + i, at: `2026-10-02T09:30:0${i}Z`, by: 'agent', type: 'node',
+    board: BOARD, n: 100 + i, ver: 1, node: { region: 'review', kind, title: `Numbered ${kind}` },
   }));
   const read = readLedger([...lines, ...nodes]);
   assert.deepEqual(read.problems, []);

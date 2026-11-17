@@ -1,0 +1,11 @@
+/* The node's edges on the board (nodeEdges flag, FE_02; board/cards/mark-*.ts): a node's menus and the tips over its
+   marks sit on the stage, outside the scaled board, at the place mark-place.ts gives them, so they keep one size at
+   any zoom (D-101). The menu is the pattern's (#ui menu-fixed.css) in a holder the page places; the tip is the shared
+   tip box (#ui tip.css), shown while not hidden, and lets the pointer through. Tokens only. */
+.vb-mark-menu { position: absolute; z-index: var(--vb-z-menu); }
+.vb-mark-menu > .vb-menu-list { position: static; }
+.vb-mark-tip { z-index: var(--vb-z-menu); pointer-events: none; }
+.vb-mark-tip {
+  &:not([hidden]) { display: block; }
+}
+.vb-world[data-locked] vb-node .vb-node-grip { cursor: inherit; }

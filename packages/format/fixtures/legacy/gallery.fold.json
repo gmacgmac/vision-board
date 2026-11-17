@@ -1,0 +1,2273 @@
+{
+ "problems": [],
+ "head": 353,
+ "boards": {
+  "gallery": {
+   "view": {
+    "format": 1,
+    "session": "gallery",
+    "version": 353,
+    "title": "Pattern gallery",
+    "summary": "Every pattern in every state, drawn from this fixture ledger (project rule 11).",
+    "regions": [
+     {
+      "id": "kinds",
+      "title": "Every kind in every status",
+      "mode": "grid",
+      "columns": 5
+     },
+     {
+      "id": "other",
+      "title": "Other node states",
+      "mode": "grid",
+      "columns": 4
+     },
+     {
+      "id": "frame-grid",
+      "title": "Grid mode",
+      "mode": "grid",
+      "columns": 2
+     },
+     {
+      "id": "frame-flow",
+      "title": "Flow mode",
+      "mode": "flow"
+     },
+     {
+      "id": "frame-lanes",
+      "title": "Lanes mode",
+      "mode": "lanes",
+      "lanes": [
+       "Now",
+       "Next"
+      ]
+     },
+     {
+      "id": "frame-radial",
+      "title": "Radial mode",
+      "mode": "radial"
+     },
+     {
+      "id": "frame-list",
+      "title": "Column mode",
+      "mode": "column"
+     },
+     {
+      "id": "frame-pinned",
+      "title": "Reset places showing",
+      "mode": "grid"
+     },
+     {
+      "id": "frame-empty",
+      "title": "Empty message showing",
+      "mode": "grid"
+     },
+     {
+      "id": "frame-bare",
+      "title": "Nothing to decide, so no count",
+      "mode": "grid"
+     },
+     {
+      "id": "markdown",
+      "title": "Markdown text",
+      "mode": "grid",
+      "columns": 3
+     },
+     {
+      "id": "sizes",
+      "title": "Card sizes",
+      "mode": "grid",
+      "columns": 4
+     },
+     {
+      "id": "held",
+      "title": "Pricing thread",
+      "mode": "grid"
+     },
+     {
+      "id": "held-hover",
+      "title": "Pricing thread (hover)",
+      "mode": "grid"
+     },
+     {
+      "id": "title-wide",
+      "title": "Annual plan pricing, packaging, discount rules and regional overrides for review",
+      "mode": "grid"
+     },
+     {
+      "id": "title-narrow",
+      "title": "Annual plan pricing, packaging, discount rules and regional overrides for review",
+      "mode": "grid"
+     },
+     {
+      "id": "title-short",
+      "title": "Short title",
+      "mode": "grid"
+     },
+     {
+      "id": "frame-row",
+      "title": "Row mode",
+      "mode": "row"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "kinds",
+      "kind": "finding",
+      "title": "The build is slow on CI",
+      "body": "Cold caches add four minutes.",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "JSON Lines or a database.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "kinds",
+      "kind": "risk",
+      "title": "The vendor may change pricing",
+      "body": "No contract term past June.",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "kinds",
+      "kind": "topic",
+      "title": "Topic: the release plan",
+      "body": "The cards around it are about the release.",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "JSON Lines or a database.",
+      "n": 8
+     },
+     {
+      "id": "9",
+      "region": "kinds",
+      "kind": "note",
+      "title": "Note: the numbers come from the beta",
+      "body": "Nothing to decide; ask if it matters.",
+      "n": 9
+     },
+     {
+      "id": "10",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 10
+     },
+     {
+      "id": "11",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 11
+     },
+     {
+      "id": "12",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "JSON Lines or a database.",
+      "n": 12
+     },
+     {
+      "id": "13",
+      "region": "kinds",
+      "kind": "topic",
+      "title": "Topic: the release plan",
+      "body": "The cards around it are about the release.",
+      "n": 13
+     },
+     {
+      "id": "14",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 14
+     },
+     {
+      "id": "15",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 15
+     },
+     {
+      "id": "16",
+      "region": "kinds",
+      "kind": "finding",
+      "title": "The build is slow on CI",
+      "body": "Cold caches add four minutes.",
+      "n": 16
+     },
+     {
+      "id": "17",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "JSON Lines or a database.",
+      "n": 17
+     },
+     {
+      "id": "18",
+      "region": "kinds",
+      "kind": "risk",
+      "title": "The vendor may change pricing",
+      "body": "No contract term past June.",
+      "n": 18
+     },
+     {
+      "id": "19",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 19
+     },
+     {
+      "id": "20",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 20
+     },
+     {
+      "id": "21",
+      "region": "kinds",
+      "kind": "finding",
+      "title": "The build is slow on CI",
+      "body": "Cold caches add four minutes.",
+      "n": 21
+     },
+     {
+      "id": "22",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "JSON Lines or a database.",
+      "n": 22
+     },
+     {
+      "id": "23",
+      "region": "kinds",
+      "kind": "risk",
+      "title": "The vendor may change pricing",
+      "body": "No contract term past June.",
+      "n": 23
+     },
+     {
+      "id": "24",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 24
+     },
+     {
+      "id": "25",
+      "region": "kinds",
+      "kind": "question",
+      "title": "Which option do we take?",
+      "body": "Two options, one afternoon to decide.",
+      "n": 25
+     },
+     {
+      "id": "26",
+      "region": "kinds",
+      "kind": "finding",
+      "title": "The build is slow on CI",
+      "body": "Cold caches add four minutes.",
+      "n": 26
+     },
+     {
+      "id": "27",
+      "region": "kinds",
+      "kind": "decision",
+      "title": "Choose the storage format",
+      "body": "JSON Lines or a database.",
+      "n": 27
+     },
+     {
+      "id": "28",
+      "region": "kinds",
+      "kind": "risk",
+      "title": "The vendor may change pricing",
+      "body": "No contract term past June.",
+      "n": 28
+     },
+     {
+      "id": "29",
+      "region": "kinds",
+      "kind": "action",
+      "title": "Write the migration",
+      "body": "One script, run once.",
+      "n": 29
+     },
+     {
+      "id": "30",
+      "region": "other",
+      "kind": "decision",
+      "title": "Pinned: moved by the person",
+      "body": "A diamond marks a card the person placed.",
+      "n": 30
+     },
+     {
+      "id": "31",
+      "region": "other",
+      "kind": "finding",
+      "title": "Emphasis: a wider card with a coloured top edge",
+      "body": "The agent marks what matters most.",
+      "emphasis": true,
+      "n": 31
+     },
+     {
+      "id": "32",
+      "region": "other",
+      "kind": "risk",
+      "title": "Tags: small labels under the text",
+      "body": "Up to a handful fit on a card.",
+      "tags": [
+       "security",
+       "blocked",
+       "q4"
+      ],
+      "n": 32
+     },
+     {
+      "id": "33",
+      "region": "other",
+      "kind": "question",
+      "title": "One note",
+      "body": "The last note shows on the card.",
+      "n": 33
+     },
+     {
+      "id": "34",
+      "region": "other",
+      "kind": "question",
+      "title": "An edited note",
+      "body": "The card shows the note's latest words.",
+      "n": 34
+     },
+     {
+      "id": "35",
+      "region": "other",
+      "kind": "question",
+      "title": "A long note that asks for more context",
+      "body": "A long last note is cut after three lines.",
+      "n": 35
+     },
+     {
+      "id": "36",
+      "region": "other",
+      "kind": "topic",
+      "title": "Topic: a heading for a group of cards",
+      "n": 36
+     },
+     {
+      "id": "37",
+      "region": "other",
+      "kind": "note",
+      "title": "Note: the agent remarks, nothing to answer",
+      "n": 37
+     },
+     {
+      "id": "38",
+      "region": "other",
+      "kind": "action",
+      "title": "Long text: a title that is long enough to wrap onto a second and even a third line of the card",
+      "body": "The body wraps too, so a long sentence shows how the card grows with its text instead of cutting it off.",
+      "n": 38
+     },
+     {
+      "id": "39",
+      "region": "other",
+      "kind": "action",
+      "title": "Being dragged",
+      "body": "The lifted look while the person drags.",
+      "n": 39
+     },
+     {
+      "id": "40",
+      "region": "frame-grid",
+      "kind": "question",
+      "title": "grid item 1",
+      "n": 40
+     },
+     {
+      "id": "41",
+      "region": "frame-grid",
+      "kind": "action",
+      "title": "grid item 2",
+      "n": 41
+     },
+     {
+      "id": "42",
+      "region": "frame-flow",
+      "kind": "question",
+      "title": "flow item 1",
+      "n": 42
+     },
+     {
+      "id": "43",
+      "region": "frame-flow",
+      "kind": "action",
+      "title": "flow item 2",
+      "n": 43
+     },
+     {
+      "id": "44",
+      "region": "frame-lanes",
+      "lane": "Now",
+      "kind": "question",
+      "title": "lanes item 1",
+      "n": 44
+     },
+     {
+      "id": "45",
+      "region": "frame-lanes",
+      "lane": "Next",
+      "kind": "action",
+      "title": "lanes item 2",
+      "n": 45
+     },
+     {
+      "id": "46",
+      "region": "frame-radial",
+      "kind": "question",
+      "title": "radial item 1",
+      "n": 46
+     },
+     {
+      "id": "47",
+      "region": "frame-radial",
+      "kind": "action",
+      "title": "radial item 2",
+      "n": 47
+     },
+     {
+      "id": "48",
+      "region": "frame-list",
+      "kind": "question",
+      "title": "column item 1",
+      "n": 48
+     },
+     {
+      "id": "49",
+      "region": "frame-list",
+      "kind": "action",
+      "title": "column item 2",
+      "n": 49
+     },
+     {
+      "id": "50",
+      "region": "frame-pinned",
+      "kind": "question",
+      "title": "pinned item 1",
+      "n": 50
+     },
+     {
+      "id": "51",
+      "region": "frame-pinned",
+      "kind": "action",
+      "title": "pinned item 2",
+      "n": 51
+     },
+     {
+      "id": "52",
+      "region": "frame-empty",
+      "kind": "question",
+      "title": "empty item 1",
+      "n": 52
+     },
+     {
+      "id": "53",
+      "region": "frame-empty",
+      "kind": "action",
+      "title": "empty item 2",
+      "n": 53
+     },
+     {
+      "id": "54",
+      "region": "frame-bare",
+      "kind": "topic",
+      "title": "A region with only a heading",
+      "n": 54
+     },
+     {
+      "id": "55",
+      "region": "markdown",
+      "kind": "finding",
+      "title": "Paragraphs and inline marks",
+      "body": "**Bold**, *italic*, ~~struck~~ and `inline code` in one sentence.\n\nA second paragraph, with a hard  \nline break.",
+      "n": 55
+     },
+     {
+      "id": "56",
+      "region": "markdown",
+      "kind": "question",
+      "title": "A label and a bulleted list",
+      "body": "### Options\n\n- **Grandfather** for 12 months\n- **Migrate** at renewal\n  - with a one-off credit\n- Migrate now",
+      "n": 56
+     },
+     {
+      "id": "57",
+      "region": "markdown",
+      "kind": "action",
+      "title": "A numbered list",
+      "body": "1. Draft the plan\n2. Review it with **the maintainer**\n3. Ship it",
+      "n": 57
+     },
+     {
+      "id": "58",
+      "region": "markdown",
+      "kind": "risk",
+      "title": "A quote",
+      "body": "The vendor wrote:\n\n> Pricing may change at renewal, with *30 days* of notice.",
+      "n": 58
+     },
+     {
+      "id": "59",
+      "region": "markdown",
+      "kind": "finding",
+      "title": "A long code block",
+      "body": "```\nline 1  read, fold, draw\nline 2  read, fold, draw\nline 3  read, fold, draw\nline 4  read, fold, draw\nline 5  read, fold, draw\nline 6  read, fold, draw\nline 7  read, fold, draw\nline 8  read, fold, draw\nline 9  read, fold, draw\nline 10  read, fold, draw\nline 11  read, fold, draw\nline 12  read, fold, draw\nline 13  read, fold, draw\nline 14  read, fold, draw\nline 15  read, fold, draw\nline 16  read, fold, draw\nline 17  read, fold, draw\nline 18  read, fold, draw\nline 19  read, fold, draw\nline 20  read, fold, draw\nline 21  read, fold, draw\nline 22  read, fold, draw\nline 23  read, fold, draw\nline 24  read, fold, draw\nline 25  read, fold, draw\nline 26  read, fold, draw\nline 27  read, fold, draw\nline 28  read, fold, draw\nline 29  read, fold, draw\nline 30  read, fold, draw\n```",
+      "n": 59
+     },
+     {
+      "id": "60",
+      "region": "markdown",
+      "kind": "decision",
+      "title": "Links",
+      "body": "Read the [CommonMark spec](https://spec.commonmark.org/0.31.2/) or write to <team@example.com>. A [relative link](/docs) and a [script link](javascript:alert(1)) stay text.",
+      "n": 60
+     },
+     {
+      "id": "61",
+      "region": "markdown",
+      "kind": "action",
+      "title": "Plain text outside the subset",
+      "body": "| a | b | c | d | e |\n|---|---|---|---|---|\n\nRaw <b>not bold</b> stays text, and so does ![an image](https://example.com/a.png).",
+      "n": 61
+     },
+     {
+      "id": "62",
+      "region": "markdown",
+      "kind": "decision",
+      "title": "Everything at once",
+      "body": "### Summary\n\nWe **ship** on *Friday*, not ~~Thursday~~.\n\n- One `flag` to flip\n- Two checks\n  1. the page tests\n\n> Asked in review: is the [rollout plan](https://example.com/plan) final?\n\n```\nnpm test\n```",
+      "n": 62
+     },
+     {
+      "id": "63",
+      "region": "markdown",
+      "kind": "question",
+      "title": "A Markdown note",
+      "body": "The saved note under this card is Markdown too.",
+      "n": 63
+     },
+     {
+      "id": "64",
+      "region": "sizes",
+      "kind": "question",
+      "title": "Do we grandfather existing annual plans?",
+      "body": "Moving annual customers to usage pricing at renewal risks Q4 churn. Do we keep their price for a year?",
+      "n": 64
+     },
+     {
+      "id": "65",
+      "region": "sizes",
+      "kind": "finding",
+      "title": "The usage tier carries 3x the support load",
+      "body": "Six weeks of beta tickets show the usage tier generating three times the support volume of annual plans, and almost none of it is about the bill itself.\n\n- Mostly onboarding confusion, not billing disputes\n- Drops to 1.4x after a customer's second month\n- Concentrated in teams under 10 seats",
+      "tags": [
+       "Support",
+       "Zendesk export"
+      ],
+      "n": 65
+     },
+     {
+      "id": "66",
+      "region": "sizes",
+      "kind": "decision",
+      "title": "Grandfather annual plans for 12 months, then migrate at renewal",
+      "body": "Existing annual customers keep their current price until their first renewal after 1 March, then move to usage pricing with a one-off credit worth two months of their old plan. This keeps the Q4 churn risk low and gives support a year to fix the onboarding confusion behind most usage-tier tickets.\n\n#### What this means\n\n- Two price books run side by side until the last grandfathered plan renews\n- Finance signs off the credit amount before the migration email goes out\n- Sales stops quoting the lifetime-deal tier from today\n\n```\n{ \"plan\": \"annual-2025\", \"override\": \"grandfathered\" }\n```",
+      "n": 66
+     },
+     {
+      "id": "67",
+      "region": "sizes",
+      "kind": "action",
+      "title": "Agent suggestion: M",
+      "body": "The agent asked for a wider card; this body alone would be S.",
+      "size": "m",
+      "n": 67
+     },
+     {
+      "id": "68",
+      "region": "sizes",
+      "kind": "risk",
+      "title": "Emphasis: one tier up",
+      "body": "A short body is S; emphasis draws it one tier wider.",
+      "emphasis": true,
+      "n": 68
+     },
+     {
+      "id": "69",
+      "region": "sizes",
+      "kind": "question",
+      "title": "Who signs off the credit amount?",
+      "body": "Finance owns the number; the pricing lead owns the email.",
+      "n": 69
+     },
+     {
+      "id": "70",
+      "region": "sizes",
+      "kind": "question",
+      "title": "Is the credit two months or three?",
+      "body": "Auto would make this card M, because its body runs past a hundred and forty characters. You kept it small with the size control, so it shows your pick.",
+      "n": 70
+     },
+     {
+      "id": "71",
+      "region": "sizes",
+      "kind": "question",
+      "title": "Who sends the migration email?",
+      "body": "Support or the account owner?",
+      "n": 71
+     },
+     {
+      "id": "72",
+      "region": "sizes",
+      "kind": "question",
+      "title": "Does the credit show on the invoice?",
+      "body": "Tab reaches the glyph, then the four choices.",
+      "n": 72
+     },
+     {
+      "id": "73",
+      "region": "held",
+      "kind": "question",
+      "title": "Which annual plans keep the old price?",
+      "n": 73
+     },
+     {
+      "id": "74",
+      "region": "held-hover",
+      "kind": "question",
+      "title": "Do we email existing customers first?",
+      "n": 74
+     },
+     {
+      "id": "75",
+      "region": "other",
+      "kind": "risk",
+      "title": "Selected",
+      "body": "Picked by the person: 1.5px in the card's own colour, with a soft glow. Selecting decides nothing.",
+      "n": 75
+     },
+     {
+      "id": "76",
+      "region": "kinds",
+      "kind": "topic",
+      "title": "Topic: the release plan",
+      "body": "The cards around it are about the release.",
+      "n": 76
+     },
+     {
+      "id": "77",
+      "region": "kinds",
+      "kind": "topic",
+      "title": "Topic: the release plan",
+      "body": "The cards around it are about the release.",
+      "n": 77
+     },
+     {
+      "id": "78",
+      "region": "kinds",
+      "kind": "note",
+      "title": "Note: the numbers come from the beta",
+      "body": "Nothing to decide; ask if it matters.",
+      "n": 78
+     },
+     {
+      "id": "79",
+      "region": "kinds",
+      "kind": "note",
+      "title": "Note: the numbers come from the beta",
+      "body": "Nothing to decide; ask if it matters.",
+      "n": 79
+     },
+     {
+      "id": "80",
+      "region": "kinds",
+      "kind": "note",
+      "title": "Note: the numbers come from the beta",
+      "body": "Nothing to decide; ask if it matters.",
+      "n": 80
+     },
+     {
+      "id": "81",
+      "region": "frame-row",
+      "kind": "question",
+      "title": "row item 1",
+      "n": 81
+     },
+     {
+      "id": "82",
+      "region": "frame-row",
+      "kind": "action",
+      "title": "row item 2",
+      "n": 82
+     },
+     {
+      "id": "83",
+      "region": "kinds",
+      "kind": "app",
+      "title": "App: a price calculator",
+      "body": "Work out a price in the panel.",
+      "app": {
+       "id": "calculator",
+       "w": 280,
+       "h": 160
+      },
+      "n": 83
+     },
+     {
+      "id": "84",
+      "region": "kinds",
+      "kind": "app",
+      "title": "App: a price calculator",
+      "body": "Work out a price in the panel.",
+      "app": {
+       "id": "calculator",
+       "w": 280,
+       "h": 160
+      },
+      "n": 84
+     },
+     {
+      "id": "85",
+      "region": "kinds",
+      "kind": "app",
+      "title": "App: a price calculator",
+      "body": "Work out a price in the panel.",
+      "app": {
+       "id": "calculator",
+       "w": 280,
+       "h": 160
+      },
+      "n": 85
+     },
+     {
+      "id": "86",
+      "region": "kinds",
+      "kind": "app",
+      "title": "App: a price calculator",
+      "body": "Work out a price in the panel.",
+      "app": {
+       "id": "calculator",
+       "w": 280,
+       "h": 160
+      },
+      "n": 86
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {
+     "6": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "7": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 20,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-04T09:00:20Z"
+       }
+      ]
+     },
+     "8": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "9": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 24,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-04T09:00:24Z"
+       }
+      ]
+     },
+     "10": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "11": {
+      "status": "dropped",
+      "notes": []
+     },
+     "12": {
+      "status": "dropped",
+      "notes": []
+     },
+     "13": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 32,
+        "kind": "context",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-04T09:00:32Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "14": {
+      "status": "dropped",
+      "notes": []
+     },
+     "15": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 36,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-04T09:00:36Z"
+       }
+      ]
+     },
+     "16": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 38,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-04T09:00:38Z"
+       }
+      ]
+     },
+     "17": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 40,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-04T09:00:40Z"
+       }
+      ]
+     },
+     "18": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 42,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-04T09:00:42Z"
+       }
+      ]
+     },
+     "19": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 44,
+        "kind": "comment",
+        "text": "Looks right, but check the edge case.",
+        "at": "2026-10-04T09:00:44Z"
+       }
+      ]
+     },
+     "20": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 297,
+        "kind": "comment",
+        "text": "Does this still hold for the annual plan?",
+        "at": "2026-10-11T10:01:01Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "21": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 48,
+        "kind": "context",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-04T09:00:48Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "22": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 299,
+        "kind": "comment",
+        "text": "Does this still hold for the annual plan?",
+        "at": "2026-10-11T10:01:03Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "23": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 52,
+        "kind": "context",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-04T09:00:52Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "24": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 301,
+        "kind": "comment",
+        "text": "Does this still hold for the annual plan?",
+        "at": "2026-10-11T10:01:05Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "25": {
+      "status": "later",
+      "notes": []
+     },
+     "26": {
+      "status": "later",
+      "notes": []
+     },
+     "27": {
+      "status": "later",
+      "notes": []
+     },
+     "28": {
+      "status": "later",
+      "notes": []
+     },
+     "29": {
+      "status": "later",
+      "notes": []
+     },
+     "33": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 70,
+        "kind": "comment",
+        "text": "Ship it after the review.",
+        "at": "2026-10-04T09:01:10Z"
+       }
+      ]
+     },
+     "34": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 72,
+        "kind": "comment",
+        "text": "Second thought, which replaces the first on the card.",
+        "at": "2026-10-04T09:01:12Z"
+       }
+      ]
+     },
+     "35": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 75,
+        "kind": "context",
+        "text": "Please explain the trade-off between the two options, the cost of changing our mind later, and who else is affected, in plain terms with one example for each.",
+        "at": "2026-10-04T09:01:15Z"
+       }
+      ]
+     },
+     "40": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "42": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "44": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "46": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "48": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "52": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "53": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "63": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 115,
+        "kind": "comment",
+        "text": "Looks right, but **check the date** and the `deploy.md` steps.",
+        "at": "2026-10-04T09:01:55Z"
+       }
+      ]
+     },
+     "77": {
+      "status": "later",
+      "notes": []
+     },
+     "79": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 249,
+        "kind": "context",
+        "text": "Explain this in plain terms.",
+        "at": "2026-10-10T09:00:06Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "80": {
+      "status": "later",
+      "notes": []
+     },
+     "81": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "84": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 328,
+        "kind": "comment",
+        "text": "Can it show the yearly price too?",
+        "at": "2026-10-17T09:00:08Z"
+       }
+      ]
+     },
+     "85": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 330,
+        "kind": "comment",
+        "text": "Does it round to whole numbers?",
+        "at": "2026-10-17T09:00:10Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "86": {
+      "status": "later",
+      "notes": []
+     }
+    },
+    "pins": {
+     "30": {
+      "x": 40,
+      "y": 24
+     },
+     "50": {
+      "x": 16,
+      "y": 16
+     },
+     "71": {
+      "x": 40,
+      "y": 24
+     }
+    },
+    "modes": {},
+    "widths": {},
+    "sizes": {
+     "70": "s"
+    },
+    "moves": {
+     "2": "later",
+     "3": "later"
+    },
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  },
+  "notes": {
+   "view": {
+    "format": 1,
+    "session": "notes",
+    "version": 353,
+    "title": "Notes beside cards",
+    "regions": [
+     {
+      "id": "notes",
+      "title": "Notes",
+      "mode": "grid",
+      "columns": 4
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "notes",
+      "kind": "question",
+      "title": "A note not yet sent",
+      "body": "Its pin and its block are pink. Click either, or press C, to change it.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "notes",
+      "kind": "finding",
+      "title": "An old More context, read as a note",
+      "body": "Written with the More context button, which is gone: it reads as a note like any other.",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "notes",
+      "kind": "risk",
+      "title": "Two sent notes and one not yet sent",
+      "body": "The oldest note is first, like a chat; the pin opens the latest. Sent notes are grey and say Sent.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "notes",
+      "kind": "action",
+      "title": "A sent note",
+      "body": "A sent note is history: its bubble only shows it.",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "notes",
+      "kind": "question",
+      "title": "A note longer than its preview",
+      "body": "Its preview is cut at the maximum height and scrolls.",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "notes",
+      "kind": "question",
+      "title": "Notes put away",
+      "body": "Hide puts the thread away; Show, in the same place, brings it back.",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "notes",
+      "kind": "decision",
+      "title": "A reply since you put them away",
+      "body": "The head counts what the agent said after you hid the notes, so no reply is missed.",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "notes",
+      "kind": "finding",
+      "title": "Note times",
+      "body": "Hover or focus a note or a reply: its time shows at its top right.",
+      "n": 8
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {
+     "1": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 154,
+        "kind": "comment",
+        "text": "What drives the onboarding confusion? Is it the plan picker?",
+        "at": "2026-10-05T09:01:13Z"
+       }
+      ]
+     },
+     "2": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 155,
+        "kind": "context",
+        "text": "Explain the **1.4x** in plain terms.",
+        "at": "2026-10-05T09:01:14Z"
+       }
+      ]
+     },
+     "3": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 148,
+        "kind": "comment",
+        "text": "Which teams are under 10 seats?",
+        "at": "2026-10-05T09:01:07Z",
+        "sent": true,
+        "locked": true
+       },
+       {
+        "seq": 150,
+        "kind": "comment",
+        "text": "And how many of them churned in the first month?",
+        "at": "2026-10-05T09:01:09Z",
+        "sent": true,
+        "locked": true
+       },
+       {
+        "seq": 153,
+        "kind": "comment",
+        "text": "Draft the email before we decide.",
+        "at": "2026-10-05T09:01:12Z"
+       }
+      ]
+     },
+     "4": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 151,
+        "kind": "comment",
+        "text": "Check with finance before we commit to a floor number.",
+        "at": "2026-10-05T09:01:10Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "5": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 197,
+        "kind": "comment",
+        "text": "Before we settle this, check each of these with the team:\n\n1. Whether annual plans really sell better once the discount is gone.\n2. Whether the trial numbers hold for teams as well as single seats.\n3. Whether finance can live with a floor price on the smallest plan.\n4. Who owns the regional overrides, and how often they change.\n5. What the support team hears most in the first week after signup.\n6. Which of the three onboarding steps people skip most often.\n7. Whether the plan picker needs a recommended option at all.\n8. What happens to existing customers when the packaging changes.\n9. How the new names read next to the old ones in the invoices.\n10. Whether the price page needs a comparison table or only a list.\n11. What we tell sales about the transition period and its end date.\n12. Who signs off on the final wording before it goes live.",
+        "at": "2026-10-07T09:00:05Z"
+       }
+      ]
+     },
+     "6": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 335,
+        "kind": "comment",
+        "text": "Is the trial 14 days?",
+        "at": "2026-10-17T09:01:02Z",
+        "locked": true
+       },
+       {
+        "seq": 337,
+        "kind": "comment",
+        "text": "Does it need a card?",
+        "at": "2026-10-17T09:01:04Z"
+       }
+      ]
+     },
+     "7": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 340,
+        "kind": "comment",
+        "text": "Can we start on Monday?",
+        "at": "2026-10-17T09:01:07Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "8": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 344,
+        "kind": "comment",
+        "text": "Which plan do most teams pick?",
+        "at": "2026-10-17T09:01:11Z",
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     }
+    },
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": [],
+    "notesHidden": {
+     "6": 338,
+     "7": 341
+    }
+   }
+  },
+  "containers": {
+   "view": {
+    "format": 1,
+    "session": "containers",
+    "version": 353,
+    "title": "Container notes and moves",
+    "regions": [
+     {
+      "id": "c-rest",
+      "title": "At rest",
+      "mode": "grid"
+     },
+     {
+      "id": "c-hover",
+      "title": "Hover",
+      "mode": "grid"
+     },
+     {
+      "id": "c-focus",
+      "title": "Focus",
+      "mode": "grid"
+     },
+     {
+      "id": "c-pressed",
+      "title": "Pressed",
+      "mode": "grid"
+     },
+     {
+      "id": "c-open",
+      "title": "Note open",
+      "mode": "grid"
+     },
+     {
+      "id": "c-sent",
+      "title": "Note sent",
+      "mode": "grid"
+     },
+     {
+      "id": "c-moved",
+      "title": "Moved",
+      "mode": "grid"
+     },
+     {
+      "id": "c-dragging",
+      "title": "Dragging",
+      "mode": "grid"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "c-rest",
+      "kind": "question",
+      "title": "Which plan do we ship first?",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "c-hover",
+      "kind": "question",
+      "title": "Is the annual price right?",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "c-focus",
+      "kind": "risk",
+      "title": "Churn after the trial",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "c-pressed",
+      "kind": "finding",
+      "title": "Teams pay yearly",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "c-open",
+      "kind": "decision",
+      "title": "Keep the free tier",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "c-sent",
+      "kind": "action",
+      "title": "Draft the price page",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "c-moved",
+      "kind": "question",
+      "title": "Who owns the rollout?",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "c-dragging",
+      "kind": "risk",
+      "title": "Late legal review",
+      "n": 8
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {},
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {
+     "c-moved": {
+      "x": 40,
+      "y": 24
+     }
+    },
+    "regionNotes": {
+     "c-sent": [
+      {
+       "seq": 175,
+       "kind": "comment",
+       "text": "Should this wait for the next release?",
+       "at": "2026-10-05T09:02:17Z",
+       "region": "c-sent",
+       "sent": true,
+       "locked": true
+      }
+     ],
+     "c-hover": [
+      {
+       "seq": 177,
+       "kind": "comment",
+       "text": "Is this group in the right order?",
+       "at": "2026-10-05T09:02:19Z",
+       "region": "c-hover"
+      }
+     ],
+     "c-focus": [
+      {
+       "seq": 178,
+       "kind": "context",
+       "text": "Say more about where these risks come from.",
+       "at": "2026-10-05T09:02:20Z",
+       "region": "c-focus"
+      }
+     ],
+     "c-open": [
+      {
+       "seq": 179,
+       "kind": "comment",
+       "text": "Can we decide this before the launch call?",
+       "at": "2026-10-05T09:02:21Z",
+       "region": "c-open"
+      }
+     ]
+    },
+    "flags": []
+   }
+  },
+  "container-notes": {
+   "view": {
+    "format": 1,
+    "session": "container-notes",
+    "version": 353,
+    "title": "Container note states",
+    "regions": [
+     {
+      "id": "n-answered",
+      "title": "Answered",
+      "mode": "grid"
+     },
+     {
+      "id": "n-long",
+      "title": "Long note",
+      "mode": "grid"
+     },
+     {
+      "id": "n-narrow",
+      "title": "Narrow",
+      "mode": "grid"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "n-answered",
+      "kind": "question",
+      "title": "Does the trial need a card?",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "n-long",
+      "kind": "finding",
+      "title": "Annual plans sell better",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "n-narrow",
+      "kind": "risk",
+      "title": "Price page slips",
+      "n": 3
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {},
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {
+     "n-answered": [
+      {
+       "seq": 184,
+       "kind": "comment",
+       "text": "Should the trial skip the card step?",
+       "at": "2026-10-05T09:03:03Z",
+       "region": "n-answered",
+       "sent": true,
+       "locked": true
+      }
+     ],
+     "n-long": [
+      {
+       "seq": 191,
+       "kind": "comment",
+       "text": "Before we settle the order of this group, check three things with the team: whether annual plans really sell better once the discount is gone, whether the trial numbers hold for teams as well as for single seats, and whether finance can live with the lower first-month revenue. If any of the three is a no, move the pricing question to the top and park the rest until the next review.",
+       "at": "2026-10-05T09:03:10Z",
+       "region": "n-long"
+      }
+     ],
+     "n-narrow": [
+      {
+       "seq": 192,
+       "kind": "comment",
+       "text": "Too much in one group?",
+       "at": "2026-10-05T09:03:11Z",
+       "region": "n-narrow"
+      }
+     ]
+    },
+    "flags": []
+   }
+  },
+  "proposals": {
+   "view": {
+    "format": 1,
+    "session": "proposals",
+    "version": 353,
+    "title": "Agent proposals",
+    "regions": [
+     {
+      "id": "props",
+      "title": "Pricing thread",
+      "mode": "grid",
+      "columns": 4
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "props",
+      "kind": "question",
+      "title": "Will the client take the prepay discount?",
+      "body": "Offered on the last call as the price of a two-year renewal.",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "props",
+      "kind": "action",
+      "title": "Draft the migration email for grandfathered users",
+      "body": "Goes out 60 days before renewal. The credit amount is now in.",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "props",
+      "kind": "decision",
+      "title": "Set the annual discount at 20%",
+      "body": "At 20% off, the annual plan beats monthly from 35 seats.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "props",
+      "kind": "question",
+      "title": "Do we offer quarterly billing?",
+      "body": "Three renewals this month asked for it.",
+      "n": 4
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {},
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  },
+  "updates": {
+   "view": {
+    "format": 1,
+    "session": "updates",
+    "version": 353,
+    "title": "Changed cards",
+    "regions": [
+     {
+      "id": "ups",
+      "title": "Pricing thread",
+      "mode": "grid",
+      "columns": 3
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "ups",
+      "kind": "question",
+      "title": "Does the enterprise floor undercut self-serve at 35+ seats?",
+      "body": "Under usage pricing a 35-seat team pays more than on the enterprise floor; a seat-based floor from 50 seats fixes it.",
+      "tags": [
+       "pricing"
+      ],
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "ups",
+      "kind": "question",
+      "title": "Does the enterprise floor undercut self-serve at 35+ seats?",
+      "body": "Under usage pricing a 35-seat team pays more than on the enterprise floor; a seat-based floor from 50 seats fixes it.",
+      "tags": [
+       "pricing"
+      ],
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "ups",
+      "kind": "finding",
+      "title": "Quarterly billing comes up in every renewal",
+      "body": "Three renewals this month asked for it.\n\nTwo more asked this week.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "ups",
+      "kind": "question",
+      "title": "Does the annual plan change the floor?",
+      "body": "The agent added this after you opened the board.",
+      "n": 4
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {},
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  },
+  "parking": {
+   "view": {
+    "format": 1,
+    "session": "parking",
+    "version": 353,
+    "title": "Parking and replies",
+    "regions": [
+     {
+      "id": "park",
+      "title": "Pricing thread",
+      "mode": "grid",
+      "columns": 3
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "park",
+      "kind": "question",
+      "title": "Does the trial need a card?",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "park",
+      "kind": "finding",
+      "title": "Annual plans sell better",
+      "body": "Four of the last six renewals chose annual billing.",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "park",
+      "kind": "question",
+      "title": "Should quarterly billing stay?",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "park",
+      "kind": "risk",
+      "title": "The floor price may confuse buyers",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "park",
+      "kind": "decision",
+      "title": "Who signs off the price change?",
+      "n": 5
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {
+     "1": {
+      "status": "later",
+      "notes": []
+     },
+     "2": {
+      "status": "later",
+      "notes": []
+     },
+     "3": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 237,
+        "kind": "comment",
+        "text": "Do any customers still pay quarterly?",
+        "at": "2026-10-08T15:39:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     },
+     "4": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 238,
+        "kind": "comment",
+        "text": "Is this about the enterprise floor or the self-serve one?",
+        "at": "2026-10-08T15:40:00Z",
+        "sent": true,
+        "locked": true
+       }
+      ]
+     },
+     "5": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 318,
+        "kind": "comment",
+        "text": "Can finance sign this off this week?",
+        "at": "2026-10-11T10:02:18Z",
+        "sent": true,
+        "locked": true
+       },
+       {
+        "seq": 322,
+        "kind": "comment",
+        "text": "Who tells the sales team?",
+        "at": "2026-10-11T10:02:22Z",
+        "sent": true,
+        "locked": true
+       },
+       {
+        "seq": 325,
+        "kind": "comment",
+        "text": "Add the date to the sheet, please.",
+        "at": "2026-10-11T10:02:25Z"
+       }
+      ]
+     }
+    },
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  },
+  "marks": {
+   "view": {
+    "format": 1,
+    "session": "marks",
+    "version": 353,
+    "title": "Flags and retired cards",
+    "regions": [
+     {
+      "id": "flagged",
+      "title": "Flagged by you",
+      "mode": "row"
+     },
+     {
+      "id": "retired-here",
+      "title": "Two cards retired here",
+      "mode": "grid",
+      "columns": 2
+     },
+     {
+      "id": "retired-narrow",
+      "title": "Annual plan pricing, packaging, discount rules and regional overrides for review",
+      "mode": "column"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "flagged",
+      "kind": "question",
+      "title": "Ship the annual plan in May?",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "flagged",
+      "kind": "finding",
+      "title": "Churn is flat since the price change",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "flagged",
+      "kind": "decision",
+      "title": "Keep the free tier",
+      "body": "Redrawn after the flag: the flag stays.",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "retired-here",
+      "kind": "question",
+      "title": "Which plan names do we keep?",
+      "n": 4
+     },
+     {
+      "id": "6",
+      "region": "retired-here",
+      "kind": "action",
+      "title": "Draft the rename email",
+      "n": 6
+     },
+     {
+      "id": "8",
+      "region": "retired-narrow",
+      "kind": "question",
+      "title": "Keep the annual discount at 20%?",
+      "n": 8
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {
+     "4": {
+      "status": "acknowledged",
+      "notes": []
+     },
+     "8": {
+      "status": "acknowledged",
+      "notes": []
+     }
+    },
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": [
+     "2",
+     "3"
+    ]
+   }
+  },
+  "layout": {
+   "view": {
+    "format": 1,
+    "session": "layout",
+    "version": 353,
+    "title": "Layout samples",
+    "regions": [
+     {
+      "id": "labels",
+      "title": "Link labels",
+      "mode": "flow"
+     },
+     {
+      "id": "align",
+      "title": "A row of cards",
+      "mode": "row"
+     },
+     {
+      "id": "widths-match",
+      "title": "Match card widths",
+      "mode": "column"
+     },
+     {
+      "id": "widths-own",
+      "title": "Own card widths",
+      "mode": "column"
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "labels",
+      "kind": "action",
+      "title": "Collect the feedback",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "labels",
+      "kind": "action",
+      "title": "Sort it by theme",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "labels",
+      "kind": "question",
+      "title": "Ask the team about the outliers",
+      "n": 3
+     },
+     {
+      "id": "4",
+      "region": "labels",
+      "kind": "action",
+      "title": "Write the summary",
+      "n": 4
+     },
+     {
+      "id": "5",
+      "region": "align",
+      "kind": "finding",
+      "title": "Signups doubled",
+      "n": 5
+     },
+     {
+      "id": "6",
+      "region": "align",
+      "kind": "risk",
+      "title": "The trial ends in June",
+      "body": "Nobody has asked finance whether the discount carries over, and the renewal letters go out in May.",
+      "n": 6
+     },
+     {
+      "id": "7",
+      "region": "align",
+      "kind": "note",
+      "title": "Numbers are from the beta",
+      "body": "Ask if it matters.",
+      "n": 7
+     },
+     {
+      "id": "8",
+      "region": "widths-match",
+      "kind": "action",
+      "title": "Name the release",
+      "size": "s",
+      "n": 8
+     },
+     {
+      "id": "9",
+      "region": "widths-match",
+      "kind": "question",
+      "title": "Which date do we announce?",
+      "body": "The press list wants two weeks of notice; the store review takes one.",
+      "size": "m",
+      "n": 9
+     },
+     {
+      "id": "10",
+      "region": "widths-match",
+      "kind": "decision",
+      "title": "Keep the free tier",
+      "body": "Free users bring most of the paid signups, but the support load grows with every release and the forum is unanswered on weekends.",
+      "size": "l",
+      "n": 10
+     },
+     {
+      "id": "11",
+      "region": "widths-own",
+      "kind": "action",
+      "title": "Name the release",
+      "size": "s",
+      "n": 11
+     },
+     {
+      "id": "12",
+      "region": "widths-own",
+      "kind": "question",
+      "title": "Which date do we announce?",
+      "body": "The press list wants two weeks of notice; the store review takes one.",
+      "size": "m",
+      "n": 12
+     },
+     {
+      "id": "13",
+      "region": "widths-own",
+      "kind": "decision",
+      "title": "Keep the free tier",
+      "body": "Free users bring most of the paid signups, but the support load grows with every release and the forum is unanswered on weekends.",
+      "size": "l",
+      "n": 13
+     }
+    ],
+    "links": [
+     {
+      "from": "1",
+      "to": "2",
+      "label": "once every note has been read"
+     },
+     {
+      "from": "1",
+      "to": "3",
+      "label": "when a note fits no theme"
+     },
+     {
+      "from": "2",
+      "to": "4",
+      "label": "next"
+     }
+    ]
+   },
+   "state": {
+    "items": {},
+    "pins": {},
+    "modes": {},
+    "widths": {
+     "widths-own": "own"
+    },
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  },
+  "groups": {
+   "view": {
+    "format": 1,
+    "session": "groups",
+    "version": 353,
+    "title": "Notes on groups of cards",
+    "regions": [
+     {
+      "id": "groups",
+      "title": "Pricing questions",
+      "mode": "grid",
+      "columns": 3
+     }
+    ],
+    "nodes": [
+     {
+      "id": "1",
+      "region": "groups",
+      "kind": "question",
+      "title": "Which plan is the default?",
+      "n": 1
+     },
+     {
+      "id": "2",
+      "region": "groups",
+      "kind": "question",
+      "title": "Do annual plans get a discount?",
+      "n": 2
+     },
+     {
+      "id": "3",
+      "region": "groups",
+      "kind": "risk",
+      "title": "Seat counts change mid-year",
+      "n": 3
+     }
+    ],
+    "links": []
+   },
+   "state": {
+    "items": {
+     "1": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 351,
+        "kind": "comment",
+        "text": "Settle these two together: they decide the invoice.",
+        "at": "2026-10-25T09:01:00Z",
+        "nodes": [
+         1,
+         3
+        ],
+        "locked": true
+       },
+       {
+        "seq": 353,
+        "kind": "comment",
+        "text": "Same owner for both?",
+        "at": "2026-10-25T09:03:00Z",
+        "nodes": [
+         1,
+         2
+        ]
+       }
+      ]
+     },
+     "2": {
+      "status": "commented",
+      "notes": [
+       {
+        "seq": 353,
+        "kind": "comment",
+        "text": "Same owner for both?",
+        "at": "2026-10-25T09:03:00Z",
+        "nodes": [
+         1,
+         2
+        ]
+       }
+      ]
+     },
+     "3": {
+      "status": "open",
+      "notes": [
+       {
+        "seq": 351,
+        "kind": "comment",
+        "text": "Settle these two together: they decide the invoice.",
+        "at": "2026-10-25T09:01:00Z",
+        "nodes": [
+         1,
+         3
+        ],
+        "locked": true
+       }
+      ],
+      "unseenAnswer": true
+     }
+    },
+    "pins": {},
+    "modes": {},
+    "widths": {},
+    "sizes": {},
+    "moves": {},
+    "regionPins": {},
+    "regionNotes": {},
+    "flags": []
+   }
+  }
+ }
+}

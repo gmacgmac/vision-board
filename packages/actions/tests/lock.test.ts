@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent, ActionId, EventType, LedgerEvent } from '#format';
-import { ACTION_IDS, EVENT_TYPES, LATER_REGION } from '#format';
+import { ACTION_IDS, EVENT_TYPES, LATER_REGION, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   boardList, boardLocked, boardState, LOCKED, LOCKED_PERSON, lockedProblem, passesLock, responsesAfter, UNAVAILABLE, validateAct,
@@ -16,13 +16,12 @@ import {
 import { A, B, Ledger, scene } from './ledger-v3.ts';
 
 const AT = '2026-10-12T09:00:00Z';
-const asAct = (s: LedgerState, e: object): ActEvent => ({ v: 15, seq: s.seq + 1, at: AT, by: 'person', type: 'act', ...e }) as ActEvent;
+const asAct = (s: LedgerState, e: object): ActEvent => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, by: 'person', type: 'act', ...e }) as ActEvent;
 
 /** The scene (boards `b` and `b2`), with a note, a proposal and a grant request on `b2`'s card 4,
  * then the person locks `b2`. */
 function locked(): { l: Ledger; at: number; note: number; proposal: number; request: number } {
   const l = scene();
-  l.v = 15;
   const note = l.act({ action: 'comment', n: 4, ver: 1, text: 'Why this one?' });
   const proposal = l.agent(A, { type: 'propose', n: 4, ver: 1, action: 'ack', reason: 'Done already.' });
   const request = l.request(B, 'x', 'b2');
@@ -40,9 +39,11 @@ function everyAct(f: { note: number; proposal: number; request: number }): Recor
     grant: { request: f.request }, deny: { request: f.request }, revoke: { holder: A, board: 'b2' },
     size: { id: 4, size: 'l' }, send: { board: 'b2' }, 'note-edit': { id: 4, note: f.note, text: 'Why not?' },
     'note-remove': { id: 4, note: f.note }, move: { id: 4, region: LATER_REGION }, reject: { id: 4, proposal: f.proposal },
-    flag: { id: 4 }, unflag: { id: 4 }, 'notes-hide': { id: 4 }, 'notes-show': { id: 4 }, widths: { board: 'b2', region: 'x', widths: 'match' },
+    bookmark: { id: 4 }, unbookmark: { id: 4 }, 'notes-hide': { id: 4 }, 'notes-show': { id: 4 }, widths: { board: 'b2', region: 'x', widths: 'match' },
     archive: { board: 'b2' }, restore: { board: 'b2' }, lock: { board: 'b2' }, unlock: { board: 'b2' },
     'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
+    skin: { board: 'b2', skin: 'command-lens' }, ask: { board: 'b2', lines: [f.note], context: 'board' },
+    direction: { board: 'b2', region: 'x', direction: 'down' },
   };
 }
 
@@ -64,7 +65,6 @@ test('boardLocked: a locked board, an archived one (archive implies lock), never
 test('lock and unlock move no head and no date, see no card, and no agent reads them', () => {
   const l = scene();
   const before = l.state();
-  l.v = 15;
   l.act({ action: 'lock', board: 'b2' });
   l.act({ action: 'unlock', board: 'b2' });
   const s = l.state();
@@ -102,7 +102,7 @@ test('on a locked board every act in the registry is refused but the person\'s o
     } else assert.deepEqual(problems, [LOCKED_PERSON], action);
   }
   // An app's allow and stop are on no board, so no board's lock holds them (api.md 150).
-  assert.deepEqual(passing.sort(), ['app-allow', 'app-revoke', 'archive', 'flag', 'lock', 'notes-hide', 'notes-show', 'restore', 'unflag', 'unlock']);
+  assert.deepEqual(passing.sort(), ['app-allow', 'app-revoke', 'archive', 'bookmark', 'lock', 'notes-hide', 'notes-show', 'restore', 'unbookmark', 'unlock']);
   f.l.act({ action: 'unlock', board: 'b2' });
   const open = f.l.state();
   for (const action of ['ack', 'note-edit', 'mode', 'send', 'grant', 'move'] as const)
@@ -112,8 +112,9 @@ test('on a locked board every act in the registry is refused but the person\'s o
 test('on a locked board every agent line is refused in plain words; the person\'s seen goes; other boards are untouched', () => {
   const { l, proposal } = locked();
   const s = l.state();
-  const agent = (e: object) => ({ v: 15, seq: s.seq + 1, at: AT, by: 'agent', agent: A, ...e }) as LedgerEvent;
-  const lines: Record<Exclude<EventType, 'act' | 'seen' | 'join'>, LedgerEvent> = {
+  const agent = (e: object) => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, by: 'agent', agent: A, ...e }) as LedgerEvent;
+  const person = (e: object) => ({ v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, by: 'person', ...e }) as LedgerEvent;
+  const lines: Record<Exclude<EventType, 'act' | 'seen' | 'join' | 'icon'>, LedgerEvent> = {
     board: agent({ type: 'board', board: 'b2', title: 'Mine now' }),
     region: agent({ type: 'region', board: 'b2', region: { id: 'y', title: 'Y', mode: 'grid' } }),
     node: agent({ type: 'node', board: 'b2', id: 4, ver: 2, node: { region: 'x', kind: 'note', title: 'T' } }),
@@ -126,13 +127,13 @@ test('on a locked board every agent line is refused in plain words; the person\'
     'grant-request': agent({ type: 'grant-request', board: 'b2', reason: 'Let me in.' }),
   };
   for (const t of EVENT_TYPES) {
-    if (t === 'act' || t === 'seen' || t === 'join') continue;
+    if (t === 'act' || t === 'seen' || t === 'join' || t === 'icon') continue;
     assert.equal(lockedProblem(s, lines[t]), LOCKED, t);
     assert.deepEqual(writeProblem(s, lines[t]), { code: 'locked', detail: LOCKED }, t);
   }
   assert.equal(lockedProblem(s, agent({ type: 'join', label: 'New chat' })), undefined, 'a join names no board');
+  assert.equal(lockedProblem(s, agent({ type: 'icon', name: 'x-encoder', hash: 'a'.repeat(64) })), undefined, 'a library icon is on no board');
   assert.equal(lockedProblem(s, agent({ type: 'node', board: 'b', id: 99, ver: 1, node: { region: 'r', kind: 'note', title: 'T' } })), undefined);
-  const person = (e: object) => ({ v: 15, seq: s.seq + 1, at: AT, by: 'person', ...e }) as LedgerEvent;
   assert.equal(lockedProblem(s, person({ type: 'seen', board: 'b2', head: s.seq })), undefined);
   assert.equal(lockedProblem(s, person({ type: 'seen', id: 4, ver: 1 })), undefined);
   assert.equal(lockedProblem(s, person({ type: 'board', board: 'b2', title: 'Renamed' })), LOCKED_PERSON);
@@ -143,13 +144,12 @@ test('writeProblem asks archived first: an agent is told an archived board\'s id
   const { l } = locked();
   l.act({ action: 'archive', board: 'b2' });
   const s = l.state();
-  const line = { v: 15, seq: s.seq + 1, at: AT, by: 'agent', agent: A, type: 'reply', id: 4, text: 'Done.' } as LedgerEvent;
+  const line = { v: LEDGER_FORMAT, seq: s.seq + 1, at: AT, by: 'agent', agent: A, type: 'reply', id: 4, text: 'Done.' } as LedgerEvent;
   assert.deepEqual(writeProblem(s, line), { code: 'archived', detail: UNAVAILABLE });
 });
 
 test('archive implies lock, and a restore returns the lock the board had (ruling 5)', () => {
   const l = scene();
-  l.v = 15;
   l.act({ action: 'archive', board: 'b' });
   assert.equal(boardLocked(l.state(), 'b'), true, 'an archived board is locked');
   l.act({ action: 'restore', board: 'b' });

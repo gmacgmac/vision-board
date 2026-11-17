@@ -23,3 +23,13 @@ export const ledgersUndone = (folder: string, oldLedger: string): string => `Don
 // ---- reply.ts
 export const replyUsage = 'Usage: node apps/board/bin/reply.ts <board> [--ledger <name>] [--json]   (VB_PROJECT = project folder, default the repo root; the ledger: --ledger, else the one the board had open there last, else main)';
 export const noBoardInLedger = (board: string, ledgerFile: string): string => `No board "${board}" in ${ledgerFile}.`;
+
+// ---- ledger-migrate.ts (D-103)
+export const ledgerMigrateUsage = 'Usage: npm run ledger:migrate -- <folder> [--check | --undo]   (a project folder: each of its ledgers; or one ledger\'s folder. --check says what would change and writes nothing; --undo puts the newest backup back)';
+export const noLedgerHere = (folder: string): string => `There is no ledger in ${folder}: name a project folder or a ledger's folder.`;
+export const ledgerCurrent = (file: string): string => `${file}: already in the current format; nothing to do.`;
+export const ledgerWouldChange = (file: string, changed: number, byFormat: string): string => `${file}: ${changed} line(s) would be upgraded (by format: ${byFormat}). Nothing was written.`;
+export const ledgerMigrated = (file: string, changed: number, byFormat: string, backup: string): string => `${file}: ${changed} line(s) upgraded (by format: ${byFormat}). The ledger as it was is in ${backup}; npm run ledger:migrate -- <folder> --undo puts it back.`;
+export const ledgerNewer = (file: string, lines: string): string => `${file}: line(s) ${lines} were written by a newer Vision Board. Nothing was written; update the board to migrate it.`;
+export const ledgerStopped = (file: string, stops: string): string => `${file}: can't be migrated, and nothing was written: ${stops}`;
+export const ledgerUndone = (file: string, backup: string): string => `${file}: put back from ${backup}. Opening it for editing migrates it again; use an older Vision Board to keep it as it is.`;

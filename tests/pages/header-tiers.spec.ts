@@ -11,12 +11,17 @@ import { EMPTY_BASE } from './ports.ts';
 import { OLD_HEADER, folderDialog, menu, menuButton } from './board-page.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { expectBarPasses, expectWhole } from './header-fit.ts';
+import { FLOWS_W, FULL_MIN } from '../../apps/board/src/board/chrome/header-tier.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 const LONG = 'Quarterly hiring plan for the platform and data teams across every region, with budgets and open questions';
 const BOARD = 'header-board';
 const QUIET = 'quiet-board';
 const FORMS = [[1600, 'full'], [1470, 'full'], [1300, 'full'], [1299, 'half'], [1000, 'half'], [735, 'half'], [620, 'half'], [619, 'third'], [490, 'third'], [400, 'third']] as const;
+/** With Flows in the bar (flowDirection flag) the full form starts FLOWS_W later; from half Flows is rows of "⋯" (FIX_01). */
+const FULL_FLOWS = FULL_MIN + FLOWS_W;
+const FLOW_FORMS = [[1600, 'full'], [1470, 'full'], [FULL_FLOWS, 'full'], [FULL_FLOWS - 1, 'half'], [1000, 'half'], [620, 'half'], [619, 'third'], [400, 'third']] as const;
+const FLOWS = `${OLD_HEADER},flowDirection`;
 
 let agent = '';
 async function writeAs(request: APIRequestContext, board: string, items: object[]) {
@@ -52,17 +57,17 @@ const act = async (page: Page, body: object) => {
   expect(r.status(), await r.text()).toBe(201);
 };
 
-/** Everything that comes and goes on the bar at once: locked, flagged, replied, a new card, a board updated. */
-let flagged = false;
+/** Everything that comes and goes on the bar at once: locked, bookmarked, replied, a new card, a board updated. */
+let marked = false;
 async function crowd(page: Page, request: APIRequestContext) {
   await act(page, { action: 'unlock' }).catch(() => undefined); // a test that failed may have left it locked
   await writeAs(request, BOARD, [node('Who pays, and from which budget?', cards[1]), node(`A card added ${Date.now()}`)]);
   await writeAs(request, QUIET, [node(`Another card ${Date.now()}`)]);
-  if (!flagged) { // once: a press flags or unflags, and a card holds one note not yet sent
+  if (!marked) { // once: a press bookmarks or unbookmarks, and a card holds one note not yet sent
     await act(page, { action: 'comment', n: cards[0], ver: 1, text: 'Which team?' });
-    await act(page, { action: 'flag', n: cards[2] });
+    await act(page, { action: 'bookmark', n: cards[2] });
   }
-  flagged = true;
+  marked = true;
   await act(page, { action: 'lock' });
   await page.reload();
   await expect(page.locator('vb-node').first()).toBeVisible();
@@ -72,16 +77,17 @@ async function crowd(page: Page, request: APIRequestContext) {
 }
 const uncrowd = (page: Page) => act(page, { action: 'unlock' });
 
-for (const [width, form] of FORMS) {
-  test(`${width}px is the ${form} form and a long name leaves every control whole, quiet or crowded`, async ({ page, request }) => {
-    await open(page, request, width);
+for (const [flows, forms, first] of [[false, FORMS, FULL_MIN], [true, FLOW_FORMS, FULL_FLOWS]] as const) for (const [width, form] of forms) {
+  test(`${width}px is the ${form} form and a long name leaves every control whole, quiet or crowded${flows ? ', with Flows' : ''}`, async ({ page, request }) => {
+    await open(page, request, width, BOARD, flows ? FLOWS : OLD_HEADER);
+    if (flows) await expect(page.locator(bid('flow-menu'))).toHaveCount(form === 'full' ? 1 : 0);
     await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', form);
     await expectWhole(page, 'quiet');
     await crowd(page, request);
     await expect(page.locator(bid('locked'))).toBeVisible();
     await expectWhole(page, 'crowded');
     // At full's first width the path can still give 70px, for Send's longest word and Chat's marks (floors: folder 36, board 100).
-    if (width === 1300) {
+    if (width === first) {
       const [folder, name] = [(await page.locator(bid('folder-chip')).boundingBox())!, (await page.locator('.vb-path-board').boundingBox())!];
       expect(folder.width + name.width).toBeGreaterThanOrEqual(206);
     }
@@ -89,6 +95,7 @@ for (const [width, form] of FORMS) {
     if (width === 1470) expect(await page.locator(`${bid('folder-chip')} .vb-folder-chip-name`).evaluate((e) => e.getBoundingClientRect().width)).toBeGreaterThan(30);
     // The open "⋯" stays inside the window, and scrolls inside itself when it is the taller.
     await menuButton(page).click();
+    if (flows) await expect(page.getByRole('menuitemradio', { name: 'Flows: Auto' })).toHaveCount(form === 'full' ? 0 : 1);
     const box = (await page.locator(`${bid('toolbar-menu')} ~ .vb-menu-surface[data-fields], ${bid('toolbar-menu')} ~ .vb-menu-surface > .vb-menu-list`).first().boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
@@ -217,7 +224,7 @@ test('a third: the bar is the name, a compact count, Send, Chat and "⋯"; every
   await expect(menuButton(page)).toHaveAttribute('title', /Folder, Version, Containers, Open cards, New cards, Zoom, Agents, Theme/);
   // The rows, in the design's order, then the menu's own.
   await expect(fields.locator('> *').first()).toContainText('Folder');
-  for (const word of ['Version', 'Containers', 'Open cards', 'New cards', 'Flagged', 'Zoom', 'Agents', 'Board updated']) await expect(fields).toContainText(word);
+  for (const word of ['Version', 'Containers', 'Open cards', 'New cards', 'Bookmarked', 'Zoom', 'Agents', 'Board updated']) await expect(fields).toContainText(word);
   await expect(menu(page).getByRole('menuitem', { name: 'Unlock board' })).toBeVisible();
   await expect(page.locator('#open-folder')).toHaveCount(0); // the Folder row stands for it
   // Keys: Up and Down walk every field and row, wrapping.
@@ -246,9 +253,9 @@ test('a third: the bar is the name, a compact count, Send, Chat and "⋯"; every
   await expect(page.locator(`${bid('fresh-cards')} option`).nth(1)).toBeAttached();
   await page.locator(bid('fresh-cards')).selectOption({ index: 1 });
   await expect(fields).toBeHidden();
-  // Flagged: the next flagged card.
+  // Bookmarked: the next bookmarked card.
   await reopen();
-  await page.locator(bid('flagged')).click();
+  await page.locator(bid('bookmarked')).click();
   await expect(page.locator(`vb-node[data-id="${cards[2]}"]`)).toBeFocused();
   await uncrowd(page);
 });

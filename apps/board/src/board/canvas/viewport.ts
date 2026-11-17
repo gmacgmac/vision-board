@@ -9,6 +9,38 @@ const MAX_K = 2.5;
  *  polish round 2 ruling 2, tracker N13 closed; it was 75%). */
 export const FAR_K = 0.55;
 
+/** A node's edge marks never draw under `MARK_MIN` px tall on screen (nodeEdges, D-101): below the zoom where a mark of
+ *  `MARK_H` px would, they grow in place by `markGrow(k)`. The two are tokens.css's `--vb-mark-min` and `--vb-mark-h`
+ *  (zoom-groups.test.ts holds them equal). The growth goes in steps of `GROW_STEP` (never under what is needed, so a
+ *  mark is 14 to 17px), because changing it restyles every card: a zoom between two steps writes nothing. */
+export const MARK_MIN = 14;
+export const MARK_H = 22;
+const GROW_STEP = 1.2;
+export function markGrow(k: number): number {
+  const need = MARK_MIN / (MARK_H * k);
+  return need <= 1 ? 1 : Math.round(GROW_STEP ** Math.ceil(Math.log(need) / Math.log(GROW_STEP) - 1e-9) * 1000) / 1000;
+}
+
+/** A mark's hit area: a 22px mark with 3px of transparent edge each side (node-edges.css), and the 28px disc. Below the
+ *  zoom where it draws under `TARGET_MIN` px on screen (WCAG 2.5.8; about 86%), the marks take no pointer press: a press
+ *  there is the node's, as on its body, and the keyboard reaches them as ever (FIX_01 ruling). The stage then carries
+ *  data-marks="small" (`smallMark`). */
+export const MARK_HIT = 28;
+export const TARGET_MIN = 24;
+export const marksPressable = (k: number): boolean => MARK_HIT * k * markGrow(k) >= TARGET_MIN - 1e-9;
+/** Far out the grown marks no longer fit side by side on a node's edge (FIX_01, VERIFY_01 finding 5): past a growth of
+ *  CROWD_GROW (under about 37%) the stage carries data-marks-crowded, and a node keeps the marks that tell its state from
+ *  a distance, its number, its answer and its notes; the kind tab, the grip and the change badge give way (node-edges.css). */
+export const CROWD_GROW = 1.8;
+
+/** Whether `t` is in a node's mark while the marks take no pointer press (the stage's data-marks="small"). */
+export const smallMark = (t: Element): boolean => t.closest('[data-marks="small"] vb-node[data-edges] [data-mark]') !== null;
+
+/** The conversation box scales with the board (D-101) down to this zoom, where its text would be too small to read:
+ *  below it the box keeps this scale. 13px text at 0.75 draws at about 10px. */
+export const BOX_MIN_K = 0.75;
+export const boxScale = (k: number): number => Math.max(k, BOX_MIN_K);
+
 /** A zoom as the whole percentage the toolbar shows (0.55 is 55). It rounds down, so the number is never
  *  higher than the zoom: "55%" means the board is at 0.55 or more, which is where the controls show. */
 export const zoomPercent = (k: number): number => Math.floor(k * 100 + 1e-6);
@@ -63,6 +95,8 @@ export class Viewport {
   world: HTMLElement;
   /** Where the zoom is written as `--vb-zoom` (the regions layer), for the frames inside it to counter-scale by. */
   zoomOn: HTMLElement;
+  /** Where the marks' growth is written as `--vb-mark-grow` (the cards layer; nodeEdges only), else null. */
+  markOn: HTMLElement | null;
   /** Whether the stage turns "far" below FAR_K: the hideControlsZoomedOut flag (on by default). */
   hideFar: boolean;
   /** Called after every change of pan or zoom, so overlays can follow their card. */
@@ -71,12 +105,15 @@ export class Viewport {
   private waiting: { b: Box; o?: FitOptions } | null = null;
   /** The zoom last written as `--vb-zoom`, so a pan writes nothing. */
   private zoomWritten = Number.NaN;
+  /** The growth last written as `--vb-mark-grow`: it is 1 from `MARK_MIN / MARK_H` up, so a zoom there restyles no card. */
+  private growWritten = 1;
 
-  constructor(stage: HTMLElement, world: HTMLElement, hideFar = false, zoomOn: HTMLElement = world) {
+  constructor(stage: HTMLElement, world: HTMLElement, hideFar = false, zoomOn: HTMLElement = world, markOn: HTMLElement | null = null) {
     this.stage = stage;
     this.world = world;
     this.zoomOn = zoomOn;
     this.hideFar = hideFar;
+    this.markOn = markOn;
   }
 
   apply(): void {
@@ -87,10 +124,20 @@ export class Viewport {
       this.zoomWritten = this.k;
       this.zoomOn.style.setProperty('--vb-zoom', String(this.k));
     }
+    // The edge marks keep a minimum on-screen size (D-101): one value, written only when it changes (never above it).
+    const grow = this.markOn ? markGrow(this.k) : 1;
+    if (this.markOn && grow !== this.growWritten) {
+      this.growWritten = grow;
+      this.markOn.style.setProperty('--vb-mark-grow', String(grow));
+    }
     // Below FAR_K the cards' buttons would draw under the 24px target size (N8), so the stage is "far"
     // and they hide (tracker N13). With the flag off they stay visible at every zoom: never "far".
     if (this.hideFar && isFar(this.k)) this.stage.dataset.zoom = 'far';
     else delete this.stage.dataset.zoom;
+    if (this.markOn && !marksPressable(this.k)) this.stage.dataset.marks = 'small';
+    else delete this.stage.dataset.marks;
+    if (this.markOn && grow > CROWD_GROW) this.stage.dataset.marksCrowded = '';
+    else delete this.stage.dataset.marksCrowded;
     this.onApply?.();
   }
 

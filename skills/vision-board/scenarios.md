@@ -899,3 +899,33 @@ writes: "Sum up the venue cards in one card."
 - Chat words: "Done.".
 - **Fails if** the summary has no `#` or `##` heading, no table, or a table of 5 or more columns (it stays text), or
   cards 1 to 3 stay on the board.
+
+## 44. A linked pipeline (panel; eval `linked-pipeline`)
+
+**Situation.** No board yet. The person writes: "Put our video publishing pipeline on a new board as a flow: upload,
+transcode, add captions, package, then publish to the CDN. Add the two risks we know of as their own cards: the captions
+vendor's turnaround, and the CDN cost."
+
+**A good run**
+- One `flow` container holds the five steps, linked in order; the two risks sit in a container of their own beside it.
+- At most one link between containers on the board (a risk linked to the step it threatens, or none); no coordinates,
+  no sizes: the board places and routes. Chat words: "Done.".
+- **Fails if** the steps are spread over several containers, links cross between containers more than once, or the
+  linked container is not a `flow` (or `lanes`).
+
+## 45. An architecture board with icons and tones (own chat; eval `--standalone` `architecture-icons`)
+
+**Situation.** The project's icon library already holds `x-watermark` (an earlier chat added it). The person writes:
+"Put the architecture of our live video service on a new board as a flow: the camera feed comes into ingest, then the
+encoder, then our watermarking service, then the packager, which writes to storage; the CDN serves it from storage to
+the player. Make it easy to see which parts are capture, processing and delivery."
+
+**A good run**
+- Calls `list_icons` before naming or adding any icon; gives each component a built-in icon where one fits (`camera`,
+  `ingest`, `encoder`, ...) and the watermarking card the library's `x-watermark`. Adds an icon only when none fits,
+  with `add_icon`, named `x-` and a noun (no number, colour or board name); never writes into `.visionboard/`.
+- The components stay in one `flow` container; capture, processing and delivery each take a tone (the same tone on the
+  cards of one part), and the kinds still say what each card is (no card that asks nothing drawn as a `decision`).
+  The board keeps the default skin. Chat words: "Done." and the board's title and id.
+- **Fails if** it adds before listing, adds a second watermark icon or a built-in again, writes a file into
+  `.visionboard/icons/`, tones every card alike or one card per tone, or picks a kind for its colour.

@@ -11,10 +11,6 @@ export const FORMAT_VERSION = 1;
 export const MODES = ['grid', 'flow', 'lanes', 'radial', 'column', 'row'] as const;
 export type Mode = (typeof MODES)[number];
 
-/** Mode names older ledger lines may carry, and what they read as now: ledger v12 renamed `list`
- * to `column` (api.md 129). A v12 line naming one is refused with `LIST_RENAMED` (ledger.ts). */
-export const RENAMED_MODES: Readonly<Record<string, Mode>> = { list: 'column' };
-
 /** How wide a container's cards are (api.md 132): `match`, every card in a column as wide as the
  * column's widest card, or `own`, each card its own width. */
 export const WIDTHS = ['match', 'own'] as const;
@@ -35,6 +31,60 @@ export const widthsOf = (mode: Mode, own?: Widths, chosen?: Widths): Widths => c
 export const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note', 'app'] as const;
 export type Kind = (typeof KINDS)[number];
 
+/** Which way a `flow` container runs (D-100 5, api.md 189): `across`, left to right, or `down`, top to bottom. */
+export const DIRECTIONS = ['across', 'down'] as const;
+export type Direction = (typeof DIRECTIONS)[number];
+
+/** The person's choices of a flow's direction on one board (api.md 189): theirs for the whole board, and per container. */
+export interface DirectionChoices { board?: Direction; regions: Map<string, Direction> }
+
+/** The direction a container's flow runs (api.md 189): the person's choice for the container, else theirs for the
+ * board, else the container's own (`Region.direction`, the agent's), else `across`. Read like `widthsOf`, from any state
+ * that holds the board's containers and the person's choices (packages/actions `LedgerState`). */
+export const directionOf = (
+  s: { boards: ReadonlyMap<string, { regions: readonly { id: string; direction?: Direction }[] }>; directions: ReadonlyMap<string, DirectionChoices> },
+  board: string, region: string,
+): Direction => {
+  const chosen = s.directions.get(board);
+  return chosen?.regions.get(region) ?? chosen?.board ?? s.boards.get(board)?.regions.find((r) => r.id === region)?.direction ?? 'across';
+};
+
+/** How a board looks (D-100 1, api.md 183): a skin sets how its nodes look and where their controls sit, never what
+ * they do. Set on the board's `board` line by whoever makes it, and by the person's `skin` act; absent, `default`. */
+export const SKINS = ['default', 'command-lens'] as const;
+export type Skin = (typeof SKINS)[number];
+export const DEFAULT_SKIN: Skin = 'default';
+
+/** The built-in icons a node may name (D-100 3, api.md 184): generic nouns for planning, architecture and media work,
+ * drawn once in this repo (packages/ui). None starts with `x-`, the project library's prefix, so a built-in added later
+ * never clashes with a project's icon. */
+export const ICON_NAMES = [
+  'signal', 'camera', 'encoder', 'ingest', 'cloud', 'transcode', 'packager', 'storage', 'database', 'server',
+  'network', 'cdn', 'player', 'apps', 'ad', 'lock', 'key', 'captions', 'audio', 'video',
+  'clip', 'schedule', 'channel', 'live', 'share', 'user', 'team', 'monitor', 'alert', 'chart',
+  'api', 'code', 'queue', 'function', 'gateway', 'shield', 'route', 'satellite', 'fibre', 'file',
+  'document', 'folder', 'mail', 'chat', 'search', 'settings', 'target', 'milestone', 'idea', 'globe',
+] as const;
+export type IconName = (typeof ICON_NAMES)[number];
+/** A name in the project's icon library (`.visionboard/icons/`, D-100 3): `x-`, then what it shows. */
+export const LIBRARY_ICON_PATTERN = /^x-[a-z0-9][a-z0-9-]{0,37}$/;
+/** Whether `name` names an icon of the project's library (never a built-in). */
+export const isLibraryIcon = (name: string): boolean => LIBRARY_ICON_PATTERN.test(name);
+/** Whether `name` may be a node's icon: a built-in, or a library name. */
+export const isIconName = (name: unknown): name is string =>
+  typeof name === 'string' && ((ICON_NAMES as readonly string[]).includes(name) || isLibraryIcon(name));
+
+/** A node's tone by name (D-100 3, api.md 184): each a fixed hue the tokens tint from. */
+export const TONES = ['teal', 'blue', 'violet', 'magenta', 'amber', 'orange', 'green', 'slate'] as const;
+export type ToneName = (typeof TONES)[number];
+/** The highest hue a tone may give: hues are whole OKLCH hue angles, 0 to 359, so each colour has one spelling. */
+export const TONE_HUE_MAX = 359;
+/** A node's tone: a name from `TONES`, or a hue, a whole OKLCH hue angle from 0 to `TONE_HUE_MAX`. */
+export type Tone = ToneName | number;
+/** Whether `v` is a tone: a name in `TONES`, or a whole number from 0 to 359 (never 360, a fraction or text). */
+export const isTone = (v: unknown): v is Tone =>
+  (typeof v === 'string' && (TONES as readonly string[]).includes(v)) || (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= TONE_HUE_MAX);
+
 export interface Region {
   id: string;
   title: string;
@@ -47,6 +97,8 @@ export interface Region {
   columns?: number;
   /** The agent's card widths (api.md 132); left out, the mode decides (`widthsOf`). */
   widths?: Widths;
+  /** Which way a `flow` runs (api.md 189); left out, `across`. The person's `direction` act wins (`directionOf`). */
+  direction?: Direction;
 }
 
 export interface ViewNode {
@@ -66,6 +118,10 @@ export interface ViewNode {
   size?: NodeSize;
   /** An app card's app and panel size (api.md 150); on no other kind. */
   app?: AppRef;
+  /** Its icon (api.md 184): a built-in name (`ICON_NAMES`) or one from the project's library (`isLibraryIcon`). */
+  icon?: string;
+  /** Its tone (api.md 184): a name from `TONES`, or a whole OKLCH hue angle from 0 to 359. */
+  tone?: Tone;
 }
 
 export interface Link {

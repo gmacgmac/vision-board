@@ -1,14 +1,16 @@
-// Words: cards. Cards: flag, move, select, finder and history.
+// Words: cards. Cards: bookmark, move, select, finder and history.
 // Keys: vision-board.cards.<name>. Plain code: no imports but other words files and types.
 
 // ---- finder.ts
 export const later = 'Later';
 export const item = (title: string, count: number): string => `${title} · ${count} item${count === 1 ? '' : 's'}`;
 
-// ---- flag-flow.ts
-export const flaggedGoToTheNext = (k: number): string => `${k} flagged · go to the next one`;
-export const flagRemoved = 'flag removed';
-export const theFlaggedCardsAreHidden = 'The flagged cards are hidden: turn off Hide answered to see them.';
+// ---- bookmark-flow.ts
+export const bookmarkedGoToTheNext = (k: number): string => `${k} bookmarked · go to the next one`;
+/** The chip's word after its count, and the toast after a card's number. */
+export const bookmarkedWord = 'bookmarked';
+export const bookmarkRemoved = 'bookmark removed';
+export const theBookmarkedCardsAreHidden = 'The bookmarked cards are hidden: turn off Hide answered to see them.';
 
 // ---- link-marks.ts
 export const linkFromTo = (from: string, to: string, label: string): string => `Link from ${from} to ${to}: ${label}`;

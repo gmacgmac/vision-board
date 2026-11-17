@@ -7,7 +7,7 @@ standalone page, one host of the board (its chat, folder picker, toast and confi
 host mounts: the framework-free canvas controller (layout, drawing, pointer, keys, I/O; D-005) and, in `chrome/`, its controls
 (the toolbar, strips, reply panel, search and help, Svelte compiled inside), in feature folders: `canvas/` (the draw, the viewport,
 focus, places), `links/` (connectors and their labels), `cards/` (the card set, images, attention, the review
-buttons, the flag, proposals, updates, parking, Remove, a card's history), `notes/` (note bubbles, container notes,
+buttons, the bookmark, proposals, updates, parking, Remove, a card's history), `notes/` (note bubbles, container notes,
 group pins), `selection/` (selection, lasso, bar, moves, container drags), `input/` (commands, keys, pointer, the
 stage's wiring), `find/` (the container finder, Go to card), `boards/` (boot, the picker, versions, a locked board,
 board edits), `access/` (agent access) and `apps/` (app cards), with `controller.ts` (and `controller/`), `mount.ts`,
@@ -37,7 +37,7 @@ updates, measures and lays out only what a change touched (`canvas/layout-cache.
 The page reads every line through `src/board/io.ts` `readLedger` (`fromLine`), so its state is by
 card identity, while everything it draws and sends names a card by its number on its board (api.md
 125): `src/board/card-numbers.ts` turns one into the other, and an act's answer back. The person's
-flag (`cards/flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retiredCounts`, retiredMarker
+bookmark (`cards/bookmark-flow.ts`, cardBookmark flag), the "N cards retired" markers (`retiredCounts`, retiredMarker
 flag), the person's Remove card and Remove container (`cards/remove-flow.ts`, whose words are
 `cardsWords` and `containerWords`, personRemove flag), the Go to card box (`find/go-to-card.ts` over `goTarget`,
 `src/board/chrome/GoToCard.svelte`, goToCard flag)

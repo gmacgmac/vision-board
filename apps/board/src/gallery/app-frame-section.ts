@@ -17,17 +17,17 @@ import invalidText from './gallery.apps.json?raw';
 /** What list_apps says of the calculator with problems, word for word (app-samples.test.ts gets the
  * same answers from the server): its app.json broken, and once allowed, a tools.mjs that imports a
  * file. One answer never has both: the files are checked before anything runs. */
-const INVALID = JSON.parse(invalidText) as Record<'files' | 'tools', AppInfo>;
+export const INVALID = JSON.parse(invalidText) as Record<'files' | 'tools', AppInfo>;
 
 /** What list_apps says of the example calculator, allowed at this version. */
-const CALCULATOR: AppInfo = {
+export const CALCULATOR: AppInfo = {
   id: 'calculator', state: 'ready', title: 'Calculator', version: '1.0.0', size: { w: 360, h: 440 },
   tools: ['evaluate', 'history'], hash: '3f1c9e0b7a2d4c6e8f0a1b3c5d7e9f1a2b4c6d8e0f1a3b5c7d9e1f2a4b6c8d0e', allowed: true,
 };
 
 /** Every state of ruling 10 that a list_apps answer (or a past version) gives, in the order a
  * person meets them. */
-const STATES: [string, AppCardInput][] = [
+export const STATES: [string, AppCardInput][] = [
   ['Loading', {}],
   ['Needs approval', { info: { ...CALCULATOR, allowed: false, state: 'needs-approval' } }],
   ['Code changed', { info: { ...CALCULATOR, allowed: false, state: 'needs-approval', changed: true } }],
@@ -41,7 +41,7 @@ const STATES: [string, AppCardInput][] = [
 ];
 
 /** The fixture's app card at a panel size an agent might pick for a small app. */
-function sampleCard(fx: Fixture): ViewNode {
+export function sampleCard(fx: Fixture): ViewNode {
   const n = fx.view.nodes.find((x) => x.kind === 'app')!;
   return { ...n, app: { id: n.app!.id, w: 300, h: 220 } };
 }

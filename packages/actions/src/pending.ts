@@ -12,6 +12,7 @@ import { cutOf } from './clears.ts';
 import { markOf } from './notes.ts';
 import { ACTIONS, isAnswer, MARK_ACTIONS } from './registry.ts';
 import type { ReplyScope } from './reply.ts';
+import { askedBy } from './asked.ts';
 
 /** One item the agent owes an answer on, by its board number `n`. `ask`: the person's latest
  * note (`comment`, or an old `context`) that nothing answers yet. `later`: the `seq` of the "later" that has no
@@ -53,16 +54,17 @@ export function responsesAfter(s: LedgerState, board: string, after: number, age
 /** The cards (by board number, as `replyText` reads them) and containers the person answered on `board` after `since`: an act on an item (✓,
  * ✗, a note, Later, Reopen, a note changed or removed, a proposal turned down) or a note on a whole
  * container, as `check_responses` reports them (with `agent`, only what concerns it). The round
- * Send hands the chat panel's agent (reply.ts `replyText`, panel-send ruling 1). */
+ * Send hands the chat panel's agent (reply.ts `replyText`, panel-send ruling 1). A note an `ask` carried went then
+ * (asked.ts, api.md 188): no Send carries it again. */
 export function replyScope(s: LedgerState, board: string, since: number, agent?: string): ReplyScope {
   const cards = new Set<number>();
   const regions = new Set<string>();
   for (const e of responsesAfter(s, board, since, agent)) {
-    if (!isAnswer(e.action)) continue;
+    if (!isAnswer(e.action) || askedBy(s, board, e.seq) !== undefined) continue;
     for (const id of scopeOf(s, e).cards) cards.add(numberOf(s, id));
     if (isContainerAct(e)) regions.add(e.region!);
   }
-  return { since, cards, regions };
+  return { since, cards, regions, asked: new Set(s.asked.get(board)?.keys() ?? []) };
 }
 
 /** The ✓, ✗, Later and clear acts the agent reads after `after` (D-045 ruling 9): per card only its

@@ -30,17 +30,17 @@ test('a flag: stored by board number, served to the page by identity, and no age
   const { q, qId } = h.seeded;
   const before = await agentSide();
   const head = h.ledger.state().seq;
-  const flag = await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'flag', n: q } });
-  assert.deepEqual([h.last().status, flag.action, flag.n, 'ver' in flag], [201, 'flag', q, false]);
+  const flag = await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'bookmark', n: q } });
+  assert.deepEqual([h.last().status, flag.action, flag.n, 'ver' in flag], [201, 'bookmark', q, false]);
   const lines = (await h.ok('read_ledger', { after: head })).events;
-  assert.deepEqual(lines.map((e: any) => [e.action, e.n]), [['flag', qId]], 'the page reads the file\'s line: the identity');
+  assert.deepEqual(lines.map((e: any) => [e.action, e.n]), [['bookmark', qId]], 'the page reads the file\'s line: the identity');
   assert.deepEqual(await agentSide(), before);
   assert.deepEqual((await h.ok('check_responses', { board: 'pricing', after: head })).responses, []);
-  await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'unflag', n: q } });
+  await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'unbookmark', n: q } });
   assert.deepEqual(await agentSide(), before);
   // Only the person flags; an agent's read of the page's ledger is refused.
   const agent = await h.join('Flag reader');
-  await h.fails('act', { board: 'pricing', body: { type: 'act', action: 'flag', n: q } }, 403, 'forbidden', agent.client);
+  await h.fails('act', { board: 'pricing', body: { type: 'act', action: 'bookmark', n: q } }, 403, 'forbidden', agent.client);
   await h.fails('read_ledger', {}, 403, 'forbidden', agent.client);
 });
 
@@ -72,7 +72,7 @@ test('a check_responses wait is not woken by a flag', async () => {
   const started = Date.now();
   const waiting = h.ok('check_responses', { board: 'pricing', after: head, wait: 1 });
   await new Promise((resolve) => setTimeout(resolve, 100));
-  await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'flag', n: h.seeded.d } });
+  await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'bookmark', n: h.seeded.d } });
   const r = await waiting;
   assert.ok(Date.now() - started >= 900, 'held until the wait ran out');
   assert.deepEqual(r.responses, []);

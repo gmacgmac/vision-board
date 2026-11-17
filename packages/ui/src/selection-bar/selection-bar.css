@@ -6,6 +6,9 @@
    cards and under the board's controls: the stage makes no stacking context, so it meets the header and the key help. */
 
 vb-selection-bar {
+  /* It floats on the glass (--vb-glass-*, FE_04): the raised surface by default, a skin's dark glass in both themes. */
+  --vb-surface-raised: var(--vb-glass); --vb-ink-strong: var(--vb-glass-ink); --vb-ink-subtle: var(--vb-glass-muted);
+  --vb-line-strong: var(--vb-glass-line);
   position: absolute; z-index: var(--vb-z-open); left: 0; top: 0;
   display: flex; align-items: center; gap: var(--vb-space-2); padding: 5px 5px 5px var(--vb-space-3);
   border: 1px solid color-mix(in srgb, var(--vb-line-strong) 80%, transparent); border-radius: 12px;

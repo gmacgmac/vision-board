@@ -4,15 +4,15 @@
 // once per view version. The look is board v3's card (D-024, mockup 01b): content first, number
 // and kind as tabs in gaps cut from the top border, kind icon, state word and buttons in a footer.
 import type { ActionId, NodeSize, ViewNode } from '#format';
-import { NODE_TYPES } from '#format';
+import { NODE_TYPES, flagOn } from '#format';
 import { ACTIONS } from '#actions';
 import type { HandoverView, NotesView, ProposalsView, ReplyEntry } from './node-core.ts';
 import type { UpdatesView } from './node-updates.ts';
 import type { AppCardView } from './node-app.ts';
 import { APPS_OFF, appView } from './node-app.ts';
 import { panelSize } from '../app-frame/app-frame-core.ts';
-import { buttonLabel, FLAG_KEY, flagLabel, isItem, isNoteEntry, offers, SIZE_LETTER } from './node-core.ts';
-import { ACTION_ICON, FLAG_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
+import { buttonLabel, BOOKMARK_KEY, bookmarkLabel, isItem, isNoteEntry, offers, SIZE_LETTER } from './node-core.ts';
+import { ACTION_ICON, BOOKMARK_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
 import type { MarkdownOptions } from '../markdown/render.ts';
 import { renderMarkdown } from '../markdown/render.ts';
@@ -20,6 +20,10 @@ import { fullTime, noteTime } from './node-time.ts';
 import { HISTORY, historyBox, historyButton } from './node-history.ts';
 import * as nodeWords from '../words/node.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
+import type { SkinDef } from '../skins.ts';
+import type { IconLibrary } from '../icons/icon.ts';
+import { edgesMarkup } from './node-edges.ts';
+import { drawerId, windowMarkup } from './node-window.ts';
 
 // One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
 export { esc } from '../markdown/inline.ts';
@@ -85,20 +89,20 @@ function replyMarkup(r: ReplyEntry, now: Date, md?: MarkdownOptions): string {
     + `${timeMarkup(r.at, now)}<div class="vb-node-note-text">${text}</div><div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>`;
 }
 
-/** The flag button beside Later (cardFlag flag, field report batch 2 assumption A): the person's
- * private mark, no review action, so `data-flag`, not `data-act`; `update()` sets aria-pressed. */
-const flagButton = (n: ViewNode): string =>
-  `<button type="button" class="vb-act vb-flag" data-flag aria-pressed="false" aria-label="${esc(flagLabel(n))}"`
-  + ` title="${nodeWords.flag(FLAG_KEY)}">${svgIcon(FLAG_ICON, 20, 'vb-act-icon')}</button>`;
+/** The bookmark button beside Later (cardBookmark flag, D-099 2): the person's private mark, no review action, so
+ * `data-bookmark`, not `data-act`; `update()` sets aria-pressed. */
+const bookmarkButton = (n: ViewNode): string =>
+  `<button type="button" class="vb-act vb-bookmark" data-bookmark aria-pressed="false" aria-label="${esc(bookmarkLabel(n))}"`
+  + ` title="${nodeWords.bookmarkTip(BOOKMARK_KEY)}">${svgIcon(BOOKMARK_ICON, 20, 'vb-act-icon')}</button>`;
 
 /** Kind icon, divider, state word (with the tip "Awaiting context" over it while the handover is
- * owed, FE_03), then an app card's status (`appStatus`) and its name (`appName`), then the quick actions and the flag, and at
+ * owed, FE_03), then an app card's status (`appStatus`) and its name (`appName`), then the quick actions and the bookmark, and at
  * the far right the ⓘ that opens the card's history (card-polish FE_03, the cardHistory flag), whose
  * box follows the footer. Items only, and app cards (whose Allow lives here): a non-item has no state. */
 function footer(n: ViewNode, opts: NodeTemplateOptions): string {
   const app = isAppSlot(n, opts);
   if (!isItem(n) && !app) return '';
-  const buttons = offers(n).map((a) => button(a, n)).join('') + (opts.flag && isItem(n) ? flagButton(n) : '');
+  const buttons = offers(n).map((a) => button(a, n)).join('') + (opts.bookmark && isItem(n) ? bookmarkButton(n) : '');
   const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="${nodeWords.respond}">${buttons}</div>` : '';
   return '<footer class="vb-node-foot"><span class="vb-node-state" aria-hidden="true">'
     + `${svgIcon(KIND_ICON[n.kind], 24, 'vb-node-kico')}<span class="vb-node-sep"></span>`
@@ -109,6 +113,8 @@ function footer(n: ViewNode, opts: NodeTemplateOptions): string {
 
 /** An app card draws its slot, and so its status in the footer: the appCards flag is not off. */
 const isAppSlot = (n: ViewNode, opts: NodeTemplateOptions): boolean => n.kind === 'app' && opts.appCards !== false;
+/** An app card is drawn as a window (node-window.ts): its slot, with the edges and the appWindow flag. */
+export const isWindow = (n: ViewNode, opts: NodeTemplateOptions): boolean => isAppSlot(n, opts) && !!opts.edges && opts.appWindow === true;
 
 /** The id of app card `n`'s menu, which "Allowed ▾" controls (`prefix`: the mount's, NodeTemplateOptions.idPrefix). */
 export const appMenuId = (n: ViewNode, prefix = ''): string => `${prefix}vb-app-menu-${n.id}`;
@@ -135,7 +141,8 @@ function appStatus(n: ViewNode, prefix?: string): string {
  * whole name in a hover tip (`bindAppNameTip`) for sighted readers only: it is the same text. */
 const appName = (n: ViewNode): string =>
   `<span class="vb-app-name"><span class="vb-app-name-text">${esc(n.title)}</span>`
-  + `<span class="vb-tip vb-app-name-tip" aria-hidden="true">${esc(n.title)}</span></span>`;
+  + `<span class="vb-tip vb-app-name-tip" aria-hidden="true">${esc(n.title)}</span></span>`
+  + (flagOn('appStage') ? `<button type="button" class="vb-pop-btn vb-app-open" data-app-act="stage">${uiCommonWords.open}</button>` : '');
 
 /** The stepper (FE_02 ruling 3), which takes the footer's place while a changed card is open:
  * "Update 2 of 3", Back and Next. Shown and counted by `update()`. */
@@ -214,8 +221,8 @@ export interface NodeTemplateOptions {
   sizeControl?: boolean;
   /** false: the appCards flag is off, so an app card is a plain card saying so (ruling 13). */
   appCards?: boolean;
-  /** Draw the flag button beside Later; the page passes it when the cardFlag flag is on. */
-  flag?: boolean;
+  /** Draw the bookmark button beside Later; the page passes it when the cardBookmark flag is on. */
+  bookmark?: boolean;
   /** Draw the ⓘ and the history box on every card with a footer; the page passes it when the cardHistory flag is on. */
   history?: boolean;
   /** Put before every id the card sets (its popovers, step section, app menu), so two boards on one page
@@ -223,6 +230,15 @@ export interface NodeTemplateOptions {
   idPrefix?: string;
   /** How this card's Markdown renders: the flags and the image route its board was given. */
   markdown?: MarkdownOptions;
+  /** Draw the node with its marks on its edges, where this skin's row puts them (the nodeEdges flag, D-099; skins.ts
+   *  `SKIN_DEFS`): no footer. Unset, the markup is today's, byte for byte. An app card keeps today's, unless `appWindow`. */
+  edges?: SkinDef;
+  /** With `edges`, an app card is a window (the appWindow flag, D-099 5; node-window.ts): a title bar, the app, a drawer. */
+  appWindow?: boolean;
+  /** The window's bar has Open (the appStage flag): the window fills the page. */
+  appStage?: boolean;
+  /** The project's icon library the page holds (`list_icons` with `paths`), for a node naming an `x-` icon. */
+  icons?: IconLibrary;
 }
 
 const SIZE_PICKS: readonly NodeSize[] = ['s', 'm', 'l'];
@@ -282,6 +298,9 @@ export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): strin
   const note = '<div class="vb-node-notes" hidden></div>';
   // An item's step section (FE_02), right under the text a change touched.
   const steps = isItem(n) ? `<div class="vb-node-steps" id="${esc(stepsId(n, opts.idPrefix))}" role="region" aria-live="polite" hidden></div>` : '';
+  const ids = { history: popoverId(HISTORY, n, opts.idPrefix), proposal: popoverId('proposal', n, opts.idPrefix), drawer: drawerId(n, opts.idPrefix) };
+  if (isWindow(n, opts)) return windowMarkup(n, { body, status: appStatus(n, opts.idPrefix), steps, stepNav: STEP_NAV, ids, open: opts.appStage === true });
+  if (opts.edges && n.kind !== 'app') return edgesMarkup(n, opts.edges, { body, tags, steps, stepNav: STEP_NAV, ids, ...(opts.icons && { icons: opts.icons }) });
   return `${tabs(n)}${opts.sizeControl && n.kind !== 'app' ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
     + `${body}${tags}${steps}${note}</div>${footer(n, opts)}${bottomTabs(n, opts.idPrefix)}`;
 }

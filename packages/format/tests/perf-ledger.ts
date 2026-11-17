@@ -6,8 +6,11 @@
 //   with the roadmap's kinds of links (a chain in flow and lanes, spokes from the centre in radial).
 // - `mixed`: a copy of the roadmap board, for the same-picture test, which changes it at random.
 // Deterministic: same file every run. Reached through `#format/testing` (support.ts); the page
-// suite writes it for each worker's performance board (tests/pages/servers.ts).
+// suite writes it for each worker's performance board (tests/pages/servers.ts). Current-format lines with no agent
+// id, as the roadmap's format-2 lines read once migrated (D-103, review V3): the same file as the frozen
+// `fixtures/legacy/perf.ledger.jsonl` migrated, byte for byte (legacy-folds.test.ts).
 import fs from 'node:fs';
+import { LEDGER_FORMAT } from '../src/ledger.ts';
 import { FIXTURES_DIR } from '../src/files.ts';
 
 type Line = Record<string, unknown> & { type: string };
@@ -21,8 +24,8 @@ export function perfLedger(): string[] {
   const nodes = src.filter((e) => e.type === 'node').map((e) => ({ n: e.n as number, node: e.node as Record<string, unknown> }));
   const out: Line[] = [];
   const add = (e: Line) => out.push({
-    v: 2, seq: out.length + 1, at: new Date(Date.UTC(2026, 9, 2, 9, 0, 0, out.length * 10)).toISOString().replace('.000', ''),
-    by: 'agent', agent: 'kiro', ...e,
+    v: LEDGER_FORMAT, seq: out.length + 1, at: new Date(Date.UTC(2026, 9, 2, 9, 0, 0, out.length * 10)).toISOString().replace('.000', ''),
+    by: 'agent', ...e,
   });
   add({ type: 'board', board: BIG.board, title: 'A thousand cards', summary: 'The roadmap\'s shapes, 1,000 cards, for the performance budgets.' });
   let n = 0;

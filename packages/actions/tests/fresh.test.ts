@@ -12,7 +12,6 @@ import { A, Ledger } from './ledger-v3.ts';
  * at version 1; then A adds item 4 in `r` and redraws item 3 at version 2. */
 function board(): Ledger {
   const l = new Ledger();
-  l.v = 10;
   l.agent(A, { type: 'join', label: 'Pricing chat' });
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });
   l.region(A, 'r');
@@ -41,7 +40,6 @@ test('freshCards: the new and the updated cards in board order, each with its co
 
 test('freshCards: only what the tabs show; a card at version 1 never seen carries no tab, so it is not listed', () => {
   const l = new Ledger();
-  l.v = 10;
   l.agent(A, { type: 'board', board: 'b', title: 'Board' });
   l.region(A, 'r');
   l.node(A, 1, 1, { region: 'r' });

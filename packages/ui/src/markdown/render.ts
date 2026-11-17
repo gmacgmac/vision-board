@@ -24,6 +24,9 @@ export interface MarkdownOptions {
   /** `#` large and `##` medium, tables of up to 4 columns and thematic breaks; false, every heading is the
    * small label and tables and breaks stay text. The markdownMore flag; default, its default. */
   more?: boolean;
+  /** `+++ Label` to a closing `+++` line: the lines between are detail behind a disclosure triangle,
+   * closed until the person opens it. The cardDetails flag; default, its default. */
+  details?: boolean;
 }
 
 /** Longer input is cut here with an ellipsis (2c_FE_01, Safety). */
@@ -72,6 +75,38 @@ function blockHtml(b: Block, ctx: Ctx): string {
   }
 }
 
+/** One run of the source: plain Markdown, or detail behind a disclosure with its label. */
+export type DetailPart = { text: string; label?: string };
+
+/** The start of a detail: `+++ Label`; its end: `+++` alone. */
+const DETAIL_OPEN = /^\+\+\+[ \t]+(\S.*)$/;
+const DETAIL_CLOSE = /^\+\+\+[ \t]*$/;
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
+
+/** The source cut at its details (cardDetails): `+++ Label` opens one and `+++` closes it; one left
+ * open runs to the end. Never inside fenced code, never nested. */
+export function splitDetails(src: string): DetailPart[] {
+  const parts: DetailPart[] = [];
+  let lines: string[] = [];
+  let label: string | undefined;
+  let fence: string | undefined;
+  const flush = (): void => {
+    if (lines.length || label !== undefined) parts.push({ text: lines.join('\n'), ...(label !== undefined && { label }) });
+    lines = [];
+  };
+  for (const line of src.split('\n')) {
+    const f = FENCE.exec(line)?.[1];
+    if (f && fence === undefined) fence = f[0];
+    else if (f && f[0] === fence) fence = undefined;
+    const open = fence === undefined && label === undefined ? DETAIL_OPEN.exec(line) : null;
+    if (open) { flush(); label = open[1]!.trim(); continue; }
+    if (fence === undefined && label !== undefined && DETAIL_CLOSE.test(line)) { flush(); label = undefined; continue; }
+    lines.push(line);
+  }
+  flush();
+  return parts;
+}
+
 /** The D-023 Markdown subset to HTML, safe to set as innerHTML: every text run is escaped. */
 export function renderMarkdown(src: string, opts: MarkdownOptions = {}): string {
   let text = src;
@@ -83,5 +118,9 @@ export function renderMarkdown(src: string, opts: MarkdownOptions = {}): string 
   const level = h !== undefined && Number.isInteger(h) && h >= 1 && h <= 6 ? h : 4;
   const image = (opts.images ?? flagOn('cardImages')) ? imageMarkup(opts.svg, opts.imageRoute) : undefined;
   const more = opts.more ?? flagOn('markdownMore');
-  return kids(parseBlocks(text, more), { level, lists: 0, tight: false, image, more });
+  const ctx: Ctx = { level, lists: 0, tight: false, image, more };
+  const html = (part: string): string => kids(parseBlocks(part, more), ctx);
+  if (!(opts.details ?? flagOn('cardDetails')) || !text.includes('+++')) return html(text);
+  return splitDetails(text).map((p) => (p.label === undefined ? html(p.text)
+    : `<details class="vb-md-details"><summary class="vb-md-summary">${renderInline(p.label, undefined)}</summary><div class="vb-md-detail">${html(p.text)}</div></details>`)).join('');
 }

@@ -1,12 +1,13 @@
 // One board as the page reads it beside `boardView` (packages/format): the person's responses,
-// pins, sizes, moves, modes, card widths, container places and notes, the person's flags and the lock, keyed like the
+// pins, sizes, moves, modes, card widths, container places and notes, the person's bookmarks, the board's skin and the lock, keyed like the
 // View, by node id = the card's board number as text (api.md 125); each card's status is `cardStatus`
 // (`commented` while it is with the agent, D-046); a card the agent's answer cleared
 // and the person has not looked at since carries `unseenAnswer` (clears.ts, D-045). Cards retired from the board
-// are left out (api.md 127). `get_board` sends all of it but the flags and hidden notes (api.md 128, 156). Pure.
-import type { Mode, NodeSize, View, Widths } from '#format';
-import { containerKey, NODE_TYPES, nodesOf } from '#format';
-import { flagsOn } from './card-flags.ts';
+// are left out (api.md 127). `get_board` sends all of it but the bookmarks and hidden notes (api.md 128, 156). Pure.
+import type { Mode, NodeSize, Skin, View, Widths } from '#format';
+import { containerKey, DEFAULT_SKIN, NODE_TYPES, nodesOf } from '#format';
+import { bookmarksOn } from './bookmarks.ts';
+import { skinOf } from './skins.ts';
 import { notesHiddenOn } from './card-notes-hidden.ts';
 import { boardLocked } from './lock.ts';
 import type { Place } from './containers.ts';
@@ -37,15 +38,17 @@ export interface BoardState {
   regionPins: Map<string, Place>;
   /** Region id -> the person's notes on that whole container, oldest first (api.md 73). */
   regionNotes: Map<string, ItemNote[]>;
-  /** The cards the person flagged, by node id, in card order: the page's only (api.md 128). */
-  flags: Set<string>;
+  /** The cards the person bookmarked, by node id, in card order: the page's only (api.md 128, 182). */
+  bookmarks: Set<string>;
+  /** The board's skin (api.md 183); left out while it is `default`. */
+  skin?: Skin;
   /** The cards whose notes the person put away, by node id, each with the `seq` of its `notes-hide` (the
    *  page counts the replies after it, card-polish FE_02): the page's only (api.md 156). Left out while none is. */
   notesHidden?: Map<string, number>;
   /** The board is locked (api.md 138): read-only for everyone, so the page pauses every control that
-   * changes it (the flag excepted). Left out while it is not; `get_board` says it at its top. */
+   * changes it (the bookmark excepted). Left out while it is not; `get_board` says it at its top. */
   locked?: true;
-  /** The ledger is open read-only (D-085): nothing on it changes until the person switches to Editing, the flag included.
+  /** The ledger is open read-only (D-085): nothing on it changes until the person switches to Editing, the bookmark included.
    *  Not in the ledger, so never folded: the page sets it from its reads' `readOnly`, as any host's board does. */
   readOnly?: true;
 }
@@ -55,7 +58,8 @@ export function boardState(s: LedgerState, board: string): BoardState {
   const here = <V>(m: Map<string, V> | undefined) => new Map([...(m ?? [])].filter(([r]) => !s.retiredRegions.has(containerKey(board, r))));
   const out: BoardState = {
     items: new Map(), pins: new Map(), modes: here(s.modes.get(board)), widths: here(s.widths.get(board)), sizes: new Map(), moves: new Map(),
-    ...containerState(s, board), flags: new Set(flagsOn(s, board).map((id) => String(numberOf(s, id)))),
+    ...containerState(s, board), bookmarks: new Set(bookmarksOn(s, board).map((id) => String(numberOf(s, id)))),
+    ...(skinOf(s, board) !== DEFAULT_SKIN && { skin: skinOf(s, board) }),
     ...(boardLocked(s, board) && { locked: true as const }),
   };
   const hidden = notesHiddenOn(s, board);

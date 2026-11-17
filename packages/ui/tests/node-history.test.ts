@@ -12,10 +12,10 @@ const NOW = new Date('2026-10-19T12:00:00Z');
 const row = (f: Partial<HistoryRow>): HistoryRow => ({ seq: 1, at: '2026-10-18T09:10:00Z', who: 'person', kind: 'check', words: 'You marked it ✓', ...f });
 
 test('with the history option, the ⓘ is the footer\'s last control, named for the card, and its box follows the footer', () => {
-  const html = nodeTemplate(node({ n: 4 }), { history: true, flag: true });
+  const html = nodeTemplate(node({ n: 4 }), { history: true, bookmark: true });
   const foot = html.slice(html.indexOf('<footer'), html.indexOf('</footer>'));
-  assert.match(foot, /data-flag[^]*class="vb-act vb-history" aria-haspopup="dialog" aria-expanded="false" aria-controls="vb-pop-history-4" aria-label="History of card 4"/);
-  assert.ok(foot.indexOf('vb-history') > foot.indexOf('vb-node-actions'), 'after the quick actions and the flag');
+  assert.match(foot, /data-bookmark[^]*class="vb-act vb-history" aria-haspopup="dialog" aria-expanded="false" aria-controls="vb-pop-history-4" aria-label="History of card 4"/);
+  assert.ok(foot.indexOf('vb-history') > foot.indexOf('vb-node-actions'), 'after the quick actions and the bookmark');
   assert.match(html, /<\/footer><div class="vb-tip vb-card-pop" data-pop="history" id="vb-pop-history-4" role="dialog" tabindex="0" aria-label="Card 4 history">/);
   assert.doesNotMatch(nodeTemplate(node({ n: 4 })), /vb-history/, 'none without the option');
   assert.doesNotMatch(nodeTemplate(node({ kind: 'topic' }), { history: true }), /vb-history/, 'none on a card with no footer');

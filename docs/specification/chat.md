@@ -59,7 +59,7 @@ apps/board/src      the sidebar, and the bridge between the chat and the board
    (`start_folder_chat`); its agent is told so and may create one, and the session moves to the
    first board its agent creates (api.md 122).
 7. **Versions.** A change to the chat schema moves its `$id` to the next number (`.../chat/2/...`),
-   as the ledger's does; new versions only add, so older events stay valid.
+   as the ledger's does; ledgers are migrated to the current format (D-103).
 
 ## The panel (packages/chat)
 
@@ -229,7 +229,7 @@ before anything remembered:
   `agents.json` and `app-state/**` closed, `ledger.jsonl` read but never written, `lock` and `.gitignore` the
   board's, `images/**` and `apps/**` written freely (`.git` and secrets inside them still closed). The repo-wide
   files sit at `.visionboard/` only: `chat-sessions.json` (closed in a ledger's folder too, should it land there),
-  `permissions.json` and `attachments/**`, whose looser answers a ledger's folder does not get. A ledger's
+  `permissions.json` and `attachments/**`, whose looser answers a ledger's folder does not get. The icon library, `.visionboard/icons/**` (api.md 185), is read freely and never written, in any board folder: an agent adds a drawing only through `add_icon`. A ledger's
   pictures and apps rows come after the attachments row, so on a tie `.visionboard/attachments/images/` stays the
   person's. A command's pattern is refused for what it could name: a name it spells out meets the row's pattern
   (`cat .visionboard/main/*`, `sub/.visionboard/main/agen*`; `refusedTail`). So a pattern that could reach a file

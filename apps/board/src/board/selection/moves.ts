@@ -50,6 +50,9 @@ export interface Moves {
   drop(boxes: ReadonlyMap<string, Box>, at: Point | null): Promise<void>;
   /** L, the card's Later button, Reopen: the status act, with the move that goes with it. */
   status(id: string, action: 'later' | 'reopen'): Promise<boolean>;
+  /** Save for later on several nodes (the bar, nodeEdges): into Later with their `later` acts, as the Move to list's Later
+   *  row does, but only the nodes that can be saved; the count saved, 0 when none can be (nothing is written). */
+  saveLater(ids: readonly string[]): Promise<number>;
   /** Move to (Shift+M, the bar): the list of containers for `ids`, under `anchor`. */
   openMenu(ids: readonly string[], anchor: StageBox): void;
   readonly menu: MoveMenu;
@@ -153,6 +156,11 @@ export function createMoves(d: MoveDeps): Moves {
       const back = home(id);
       const leaves = here === LATER_REGION && back !== undefined && back !== LATER_REGION;
       return d.run(leaves ? [[moveAct([id], back)], [act]] : [[act]]);
+    },
+    async saveLater(ids) {
+      const can = ids.filter((id) => laterTakes([id]));
+      if (!can.length) return 0;
+      return (await d.run(plan(can, LATER_REGION))) ? can.length : 0;
     },
     openMenu(ids, anchor) {
       menu.show(ids.length, targets(ids), anchor);

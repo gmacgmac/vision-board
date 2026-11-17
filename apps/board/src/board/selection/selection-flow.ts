@@ -14,7 +14,8 @@ import type { StageBox, VbSelectionBarElement } from '#ui';
 import type { CommandEventDetail, ToggleEventDetail } from '#ui';
 import { BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, touches } from '#ui';
 import type { CommandId } from '../input/index.ts';
-import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS, selectionButtons } from '../input/index.ts';
+import { AREA_COMMANDS, barButtons, COMMANDS, EDGE_COMMANDS, isCommand, SELECTION_COMMANDS, selectionButtons } from '../input/index.ts';
+import type { BarActs } from './bar-acts.ts';
 import type { NoteFlow } from '../notes/index.ts';
 import type { Selection } from './selection.ts';
 import { commentOnSelection } from './comment-key.ts';
@@ -23,7 +24,7 @@ import type { Viewport } from '../canvas/index.ts';
 import { APP_FIT, SELECTION_FIT } from '../canvas/index.ts';
 
 /** The selection's commands that change the board, which a locked board shows disabled. */
-const ACTING_COMMANDS: readonly CommandId[] = SELECTION_COMMANDS.filter((id) => COMMANDS[id].acts);
+const ACTING_COMMANDS: readonly CommandId[] = [...SELECTION_COMMANDS, ...EDGE_COMMANDS].filter((id) => COMMANDS[id].acts && id !== 'bookmark-all');
 
 export interface SelectionFlowDeps {
   stage: HTMLElement;
@@ -49,6 +50,12 @@ export interface SelectionFlowDeps {
   readOnly(): boolean;
   /** Why the board can't change now (a locked board, lock-flow.ts): the commands that act show, disabled. */
   paused?(): string | null;
+  /** With the node's edges (nodeEdges flag, FE_06): the bar's Bookmark all, Save for later and Width (bar-acts.ts), present
+   *  when they are offered; `bookmark` says whether the cardBookmark flag is on. Absent, today's bar. */
+  edges?: BarActs & { bookmark: boolean };
+  /** Whether a menu or box of a node, or the Move to list, is open now (the bar steps aside for the node's own, never
+   *  covering them, FE_06): called on every placing, and the flow places again when it changes. */
+  covered?(): boolean;
   /** The selectionPill flag: the compact bar, a pill over a selection until it is opened. */
   pill: boolean;
   /** The focusLeads flag: C writes on the focused card unless the focus is in a selection of two or more. */
@@ -96,6 +103,8 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   d.stage.append(lasso, bar);
   /** The world box a lasso drew round no card, while its area bar is up. */
   let area: Box | null = null;
+  /** A menu or box of a node was open at the last placing: the bar was hidden for it. */
+  let covering = false;
   const pill = d.pill ? createPill({ stage: d.stage, bar, selection: d.selection, changed: () => place() }) : null;
 
   const onStage = (p: Point): Point => {
@@ -128,11 +137,12 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   function place() {
     const sel = d.selection.selected();
     const world = area ?? worldBoxOf(d.layout(), sel);
-    if (d.notes.open || !world) return void (bar.hidden = true);
+    covering = d.covered?.() ?? false;
+    if (d.notes.open || !world || covering) return void (bar.hidden = true);
     const off = [...(sel.some(d.pinned) ? [] : ['reset-places' as const]), ...(d.paused?.() ? ACTING_COMMANDS : [])];
     const compact = pill ? { open: pill.open } : undefined;
     bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact)
-      : barView(sel.length, selectionButtons(sel.length, !!d.remove, d.readOnly(), off), compact));
+      : barView(sel.length, selectionButtons(sel.length, !!d.remove, d.readOnly(), off, d.edges && { bookmark: d.edges.bookmark, allBookmarked: d.edges.allBookmarked(sel) }), compact));
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
     // Over cards it clears their tabs at any zoom (pillGap); the area bar has no tabs under it.
     const gap = area ? BAR_GAP : pillGap(d.vp.k);
@@ -175,6 +185,13 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     return b !== undefined;
   }
 
+  /** One of the edges' commands: it applies only with the node's edges and a selection; true once started. */
+  function acted(run: () => Promise<void>, offered = true): boolean {
+    if (!d.edges || !offered || !d.selection.selected().length) return false;
+    void run();
+    return true;
+  }
+
   function command(id: CommandId, key?: string, focused?: string | null): boolean {
     const layout = d.layout();
     if (COMMANDS[id].acts && (d.readOnly() || d.paused?.())) return false;
@@ -199,6 +216,17 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
         return sel.length > 0;
       }
       case 'remove': return d.remove?.(d.selection.selected()) ?? false;
+      case 'bookmark-all': return acted(() => d.edges!.bookmarkAll(d.selection.selected()), d.edges?.bookmark);
+      case 'save-for-later': return acted(() => d.edges!.saveForLater(d.selection.selected()));
+      case 'width': {
+        const sel = d.selection.selected();
+        const world = worldBoxOf(layout, sel);
+        if (!d.edges || !world) return false;
+        const s = d.stage.getBoundingClientRect();
+        const b = bar.getBoundingClientRect();
+        d.edges.width(sel, bar.hidden ? toStage(world) : { x: b.left - s.left, y: b.top - s.top, w: b.width, h: b.height });
+        return true;
+      }
       case 'zoom-selection': return zoomTo(d.selection.selected());
       case 'zoom-area': {
         const a = area;
@@ -214,6 +242,10 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     }
   }
 
+  // A menu or box of a node opening or closing changes whether the bar steps aside; nothing else in the stage matters here.
+  const watch = d.covered && new MutationObserver(() => { if ((d.covered?.() ?? false) !== covering) place(); });
+  watch?.observe(d.stage, { childList: true, attributes: true, attributeFilter: ['data-open'], subtree: true });
+
   bar.addEventListener('vb-command', (e) => {
     const id = (e as CustomEvent<CommandEventDetail>).detail.command;
     if (isCommand(id)) command(id);
@@ -223,6 +255,6 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   return {
     lassoMove, lassoEnd, lassoCancel: () => { lasso.hidden = true; }, command, zoomTo, place, dismissArea,
     collapse: () => pill?.collapse() ?? false,
-    destroy() { pill?.destroy(); bar.remove(); lasso.remove(); },
+    destroy() { watch?.disconnect(); pill?.destroy(); bar.remove(); lasso.remove(); },
   };
 }

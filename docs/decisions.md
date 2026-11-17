@@ -1322,3 +1322,47 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   3. The seam stays 2: the chip's id is part of the seam's types and changed, but no host had taken seam 2 yet.
 - **Why**: nclite asked for an id that names the product and for the scope to come from the plugin rather than from a host-side entry, so the host keeps nothing for the board but its icon.
 - **Task**: cortex-tasks/board/2026-11-08_board-app_plugin-contract-review-fixes.md
+
+## D-099 A node's actions live on its edges, and the flag becomes Bookmark
+- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 211-337) · **From**: the node design, 2026-11-11 to 11-16 (design/mockups/node-skins)
+- **Decision**:
+  1. A node offers six actions: Tick, Cross, Comment, Bookmark, Save for later, History (keys A, X, C, B, L, H). Right-click or a long press lists them. Each mark on the node's edge is the control for what it shows: the number (Bookmark; held, Save for later too), the answer (Tick, Cross), the change badge (History), the notes mark (the conversation). The footer row goes.
+  2. The person's private mark is called Bookmark, in words, code and docs. Ledgers written before format 20 are migrated (D-103): `flag` and `unflag` become `bookmark` and `unbookmark`. The bookmark glyph means Bookmark; Save for later takes the clock.
+  3. Notes open one conversation box, to read and to write. Add note keeps the note for the board's Send; Ask now sends that message for its node at once, and the ledger records what context the agent was given with it. Selection is the node's own border. Width moves to the selection bar.
+  4. Clicking a node marks it seen. Clicking inside a container clears its new-and-updated pill on the person's screen; nothing more is stored (D-054 stands). A read-only board is unchanged.
+  5. An app node offers no Save for later: it is a window, with a title bar and a drawer for its conversation.
+- **Why**: the footer made every node busy and hid the sparse look; marks that are also controls keep a node calm and every action one click or one key away.
+- **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md
+
+## D-100 A board has a skin; a skin changes the look, never the function
+- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 211-337) · **From**: the node design, artboards 10 and 12
+- **Decision**:
+  1. A skin sets how nodes look and where their controls sit. The actions, their keys and what they do are the same in every skin. Two skins: `default` and `command-lens`.
+  2. A board's skin is stored with the board, set by whoever makes it, and the person can change it on the board.
+  3. A node may carry an icon and a tone. The icon is named from the built-in set or from the project's icon library (`.visionboard/icons/`), which agents add to through the action layer and reuse across boards. The tone is a palette name or a hue; the board derives the tints so contrast passes in light and dark. The kind keeps its own mark, and Tick and Cross keep their colours.
+  4. Decision's colour moves off the accent pink, so pink means notes and buttons only.
+  5. Flows run across or down. A setting in the board's header sets the default; whoever draws a container may set its own, the person can change either, and both are stored with the board.
+- **Why**: one board serves planning, architecture and operations; the look should fit the work without forking how the board behaves.
+- **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md
+
+## D-101 What scales with zoom
+- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 189, 212) · **From**: the node design, artboard 10
+- **Decision**: Nodes, links, container frames and the conversation box scale with the board. Menus, the answer picker, history, the right-click list, the selection bar and the toolbar keep one size at every zoom, and an open menu stays open while zooming. A node's edge marks scale but never below a minimum, growing in place. A container's title line and rail keep one size, as before.
+- **Why**: the person must be able to read state and act from a distance.
+- **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md
+
+## D-102 The board's fonts are self-hosted
+- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, point 200) · **From**: tracker L5
+- **Decision**: Figtree, Bricolage Grotesque, Space Grotesk and JetBrains Mono (SIL Open Font License) ship with the board as files and are recorded in `docs/specification/dependencies.md`. No font is loaded from the network. Under a host that gives a font, the host's font is used.
+- **Why**: the skins need their type, and the board makes no third-party network call.
+- **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md
+
+## D-103 Ledgers are migrated, never read in old formats
+- **Date**: 2026-11-16 · **Status**: Accepted (maintainer, points 219-246) · **From**: the ledger review (cortex-tasks/board/2026-11-16_board-format_research_ledger-review.md)
+- **Decision**:
+  1. When the ledger format changes, a migration upgrades older ledgers to the current format, line for line. It never adds, removes or reorders a line, and never changes `seq` or a card's identity. It is the one rewrite an append-only ledger allows (D-017).
+  2. It runs under the ledger's lock, after a backup, and replaces the file in one step; running it twice changes nothing. A ledger opened read-only is upgraded in memory only.
+  3. The reader, the schema and the fold know only the current format.
+  4. A ledger whose format is newer than the build opens read-only and says why.
+- **Why**: reading old formats where they lie spreads version branches through the reader with every change; a migration keeps the code on one format and makes the next change cheap.
+- **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md

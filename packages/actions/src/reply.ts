@@ -15,8 +15,9 @@ import { ACTIONS } from './registry.ts';
 import type { ItemStatus } from './registry.ts';
 import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
-/** The cards (by board number) and containers a round covers, and the cursor its notes come after. */
-export interface ReplyScope { since: number; cards: ReadonlySet<number>; regions: ReadonlySet<string> }
+/** The cards (by board number) and containers a round covers, and the cursor its notes come after; `asked`: the notes an
+ *  `ask` carried, which went then and are never in a round (api.md 188). */
+export interface ReplyScope { since: number; cards: ReadonlySet<number>; regions: ReadonlySet<string>; asked?: ReadonlySet<number> }
 
 const STATUS_ACTION: Partial<Record<ItemStatus, ActionId>> = { acknowledged: 'ack', dropped: 'drop', later: 'later' };
 
@@ -29,7 +30,7 @@ const statusWord = (status: ItemStatus): string | undefined => {
 /** With the agent (D-046): `commented`, and `context` on an old board (the footer reads both "Replied"). */
 const WITH_AGENT: ReadonlySet<ItemStatus> = new Set(['commented', 'context']);
 
-const fresh = (scope: ReplyScope | undefined) => (x: ItemNote) => !scope || x.seq > scope.since;
+const fresh = (scope: ReplyScope | undefined) => (x: ItemNote) => !scope || (x.seq > scope.since && !scope.asked?.has(x.seq));
 
 /** The reply in its three parts: the board's line, the answer lines, and the tail ("Still open: …",
  * then "Waiting for your reply: …", each only when it lists a card; else "Nothing left open."); and

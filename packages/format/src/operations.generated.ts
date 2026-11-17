@@ -162,6 +162,14 @@ export const OPERATIONS = {
     operationId: 'list_folders', method: 'GET', path: '/api/folders',
     pathParams: [], xAgent: false, auth: 'person',
   },
+  list_icons: {
+    operationId: 'list_icons', method: 'GET', path: '/api/icons',
+    pathParams: [], xAgent: true, auth: 'none',
+  },
+  add_icon: {
+    operationId: 'add_icon', method: 'POST', path: '/api/icons',
+    pathParams: [], xAgent: true, auth: 'agent',
+  },
   list_apps: {
     operationId: 'list_apps', method: 'GET', path: '/api/apps',
     pathParams: [], xAgent: true, auth: 'agent-or-person',
@@ -246,6 +254,7 @@ export const CARD_FIELDS: Readonly<Record<string, readonly CardField[]>> = {
   join: [],
   'grant-request': [],
   retire: [{ field: 'cards', list: true }, { field: 'n' }],
+  icon: [],
   append: [{ field: 'n' }],
 };
 

@@ -1,7 +1,7 @@
 // Each card's times (card-polish FE_03, maintainer point 20): while the ledger is folded, every card
 // keeps a short list of when the few things the history box shows happened to it: first drawn and each
-// version after (drawn vN), each note the person sent, each agent reply, ✓, ✗ and reopened, and its
-// app allowed or stopped. Times only, never words: no note, reply or reason text is kept, and the
+// version after (drawn vN), each note the person sent, each agent reply, ✓, ✗ and reopened, its
+// app allowed or stopped, and a proposal withdrawn by a newer version. Times only, never words: no note, reply or reason text is kept, and the
 // person's private marks never reach it (fold.ts folds them before this). Lines are matched to cards
 // and said by the history model (card-history.ts `cardsAbout`, `saidOf`, `historyRow`), so the box and
 // `cardHistory` never disagree. The page reads it from the state it already holds: no ledger read. Pure.
@@ -13,11 +13,11 @@ import type { LedgerState } from './fold.ts';
 
 /** The kinds a card's times keep: the history box's rows (maintainer, 2026-10-19, point 20). */
 export const TIME_KINDS: ReadonlySet<HistoryKind> = new Set<HistoryKind>([
-  'drawn', 'note-sent', 'replied', 'check', 'cross', 'reopened', 'app-allowed', 'app-stopped',
+  'drawn', 'note-sent', 'replied', 'check', 'cross', 'reopened', 'app-allowed', 'app-stopped', 'proposal-withdrawn',
 ]);
 
 /** The kinds an agent's line makes; the rest are the person's. */
-const AGENT_KINDS: ReadonlySet<HistoryKind> = new Set<HistoryKind>(['drawn', 'replied']);
+const AGENT_KINDS: ReadonlySet<HistoryKind> = new Set<HistoryKind>(['drawn', 'replied', 'proposal-withdrawn']);
 
 /** One thing that happened to a card, without words: the line's `seq` and time, what it was, the
  * version drawn, the `seq` of the note it sent or replied to, how many cards a group note is on, and
@@ -42,6 +42,15 @@ export function foldCardTimes(s: LedgerState, e: LedgerEvent): void {
     if (list) list.push(t);
     else s.times.set(id, [t]);
   }
+  if (e.type === 'node') withdrawn(s, e.id, e.ver, t);
+}
+
+/** A version drawn over an open proposal made on the one before withdraws it: a row after the version's (the design
+ *  review of DESIGN_01: "Proposal withdrawn: the node changed"), once, at the version that made it out of date. */
+function withdrawn(s: LedgerState, id: number, ver: number, drawn: CardTime): void {
+  const before = s.nodes.get(id)?.versions.at(-2)?.ver ?? 0;
+  const out = [...s.proposals.values()].some((p) => p.id === id && p.decidedBy === undefined && p.ver < ver && p.ver >= before);
+  if (out) s.times.get(id)!.push({ seq: drawn.seq, at: drawn.at, kind: 'proposal-withdrawn', ...(drawn.agent !== undefined && { agent: drawn.agent }) });
 }
 
 /** Card `id`'s times as history rows, newest first, in `cardHistory`'s words: notes numbered as the

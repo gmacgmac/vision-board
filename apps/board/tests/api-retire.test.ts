@@ -70,7 +70,7 @@ test('a retired card leaves get_board, list_open and the views; show_node still 
   ]);
   const fresh = await write(A, [card('r', 'Five', 'question')]);
   assert.equal(fresh.results[0].n, 5, 'assumption C: 2 is never given again');
-  const flag = await h.fails('act', { board: 'shelf', body: { type: 'act', action: 'flag', n: 2 } }, 422, 'invalid');
+  const flag = await h.fails('act', { board: 'shelf', body: { type: 'act', action: 'bookmark', n: 2 } }, 422, 'invalid');
   assert.match(flag.errors[0]!.detail, /card 2 is retired/);
 });
 

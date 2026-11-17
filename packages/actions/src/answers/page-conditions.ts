@@ -9,8 +9,9 @@ import type { ProposalFound } from './proposal-rows.ts';
 /** A board's mark in the picker: `board.new` or `board.changed`. */
 export type BoardMark = 'new' | 'changed';
 
-/** How many new and updated cards a fresh container holds: its pill (`regionFresh`). */
-export interface FreshCount { added: number; updated: number }
+/** How many new and updated cards a fresh container holds: its pill (`regionFresh`); `seq`, the line of its newest
+ *  change (`container.fresh`), which a page that clears the pill on its own screen keeps (point 308, FE_02). */
+export interface FreshCount { added: number; updated: number; seq: number }
 
 /** What needs the person's attention with `board` open, by the conditions table's rows: `marks`,
  * each other board's picker mark (`board.new`, `board.changed`); `owed`, the containers badged
@@ -59,7 +60,7 @@ export function pageConditions(s: LedgerState, board: string, sendTo?: string): 
     else if (c.kind === 'item.awaiting') out.awaiting.add(n(c));
     else if (c.kind === 'item.owed') out.owedCards.add(n(c));
     else if (c.kind === 'board.unsent') out.unsent = true;
-    else if (c.kind === 'container.fresh') out.freshIn.set(c.container!, { added: 0, updated: 0 });
+    else if (c.kind === 'container.fresh') out.freshIn.set(c.container!, { added: 0, updated: 0, seq: c.seq! });
     else if (c.kind === 'proposal.open' || c.kind === 'proposal.stale') out.proposals.push({ n: n(c), seq: c.seq!, stale: c.kind === 'proposal.stale' });
   }
   for (const x of out.fresh) out.unseen.delete(x);

@@ -2,14 +2,14 @@
 // history, one container, the open items, and the board list. Pure reads
 // of the folded ledger; the shapes are the response schemas in packages/format/schema/api/.
 // Optional fields are left out when they do not apply (api.md 32). The fold keys cards by identity;
-// every card here is named by its board number (numbers.ts, api.md 125). No read shows a flag.
+// every card here is named by its board number (numbers.ts, api.md 125). No read shows a bookmark.
 // A status and a proposal's action are named as agents read them, ✓ `checked` / `check`, ✗
 // `crossed` / `cross` and a card with the agent `with-agent` (registry.ts `statusOut`, `actionOut`,
 // api.md 147, 148); the page reads `boardState`, which keeps the stored names. Every status is
 // `cardStatus` (conditions.ts, D-046).
 
-import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '#format';
-import { containerKey, everyNodeOf, latest, NODE_TYPES, nodesOf } from '#format';
+import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle, Skin } from '#format';
+import { containerKey, DEFAULT_SKIN, everyNodeOf, latest, NODE_TYPES, nodesOf } from '#format';
 import type { BoardRun, ItemNote, LedgerReply, LedgerState } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { Place } from './containers.ts';
@@ -21,6 +21,7 @@ import { linkOut, noteOut, numberOf, proposalOut } from './numbers.ts';
 import { mayAnswer } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
 import { boardLocked } from './lock.ts';
+import { skinOf } from './skins.ts';
 import { placeOf } from './references.ts';
 import type { ItemState } from './notes.ts';
 import type { ReportedStatus } from './registry.ts';
@@ -85,8 +86,8 @@ export interface OpenItem {
   unseen?: true;
 }
 
-/** One version as `show_node` gives it; an old line's `item` mark is left out (api.md 118). */
-const versionView = ({ ver, at, agent, item: _item, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
+/** One version as `show_node` gives it. */
+const versionView = ({ ver, at, agent, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
   ({ ver, at, ...(agent !== undefined && { agent }), node });
 
 /** Where card `id` is, and where the agent has it when the person moved it (api.md 68). */
@@ -226,14 +227,17 @@ export function openContainers(s: LedgerState, board: string, agent?: string): O
 }
 
 /** One board in `list_boards`: its id, title and its own last line (fold.ts `heads`); `locked`
- * while the person has it locked (api.md 139), left out otherwise. */
-export interface BoardListItem { board: string; title: string; seq: number; locked?: true }
+ * while the person has it locked (api.md 139), left out otherwise; `skin` when it is not `default` (api.md 183). */
+export interface BoardListItem { board: string; title: string; seq: number; locked?: true; skin?: Skin }
 
 /** Every board agents see (an archived one is left out, api.md 136), in the order drawn, with its
  * title and its own last line (`list_boards`, and the page's picker), and whether it is locked. */
 export const boardList = (s: LedgerState): BoardListItem[] =>
   [...s.boards.values()].filter((b) => visibleToAgents(s, b.id))
-    .map((b) => ({ board: b.id, title: b.title, seq: s.heads.get(b.id)!, ...(boardLocked(s, b.id) && { locked: true as const }) }));
+    .map((b) => ({
+      board: b.id, title: b.title, seq: s.heads.get(b.id)!, ...(boardLocked(s, b.id) && { locked: true as const }),
+      ...(skinOf(s, b.id) !== DEFAULT_SKIN && { skin: skinOf(s, b.id) }),
+    }));
 
 /** A board's versions (navigation FE_01 ruling 2): `now`, its own last line (fold.ts `heads`, so
  * other boards and the person's board seen never move it), and the past ones, newest first: each

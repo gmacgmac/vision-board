@@ -12,3 +12,6 @@ export const hideNotesOnItem = (n: number | undefined): string => `Hide notes on
 export const showOnItem = (hidden: string, n: number | undefined): string => `Show ${hidden} on item ${n}`;
 export const items = (join: string): string => `items ${join}`;
 export const item = (n: number | undefined): string => `item ${n}`;
+
+// ---- node-notes.ts `conversation` (the conversation box, FE_03)
+export const askedNow = ' · Asked now';

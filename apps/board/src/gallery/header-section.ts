@@ -36,7 +36,7 @@ function sample(fx: Fixture, form: HeaderTier, o: SampleOptions = {}): HTMLEleme
     target: frame,
     props: {
       onboard: none, onversion: () => Promise.resolve(), ongo: none, onopen: none, oncommand: none, onhide: none,
-      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onflagged: none, onarchive: none, onlock: none,
+      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onbookmarked: none, onarchive: none, onlock: none,
       placement: 'gallery', form, facts: o.facts ?? facts(), holders: o.facts?.past ? null : fx.boardAgents,
       ...(o.menuOpen && { menuOpen: true }), ...(o.zoomOpen && { zoomOpen: true }), ...(o.look && { look: o.look }), ...(o.send && { send: o.send }),
     },
@@ -46,7 +46,7 @@ function sample(fx: Fixture, form: HeaderTier, o: SampleOptions = {}): HTMLEleme
 
 /** Every form's chips that come and go, and the long name: the most the bar ever holds. */
 const crowded = (more: Partial<Facts> = {}): Facts => facts({
-  title: LONG, locked: true, flagged: 2, boardMarks: { other: 'new' }, counts: { ...start.counts, open: 14, withAgent: 1 }, ...more,
+  title: LONG, locked: true, bookmarked: 2, boardMarks: { other: 'new' }, counts: { ...start.counts, open: 14, withAgent: 1 }, ...more,
 });
 
 export function headerSection(fx: Fixture): HTMLElement {
@@ -64,7 +64,7 @@ export function headerSection(fx: Fixture): HTMLElement {
     group('Half', `From ${HALF_MIN}px: the folder as its icon, the board's name, the counts, the zoom as a small menu, Agents, Send and Chat as icons. No app icon.`, sample(fx, 'half')),
     group('A third', `Under ${HALF_MIN}px: the board's name, one compact count (a dot says there are new ones), Send, Chat and "⋯".`, sample(fx, 'third')),
     group('"⋯" at half', 'Version and Containers join the menu\'s rows; their native lists open over them.', sample(fx, 'half', { menuOpen: true })),
-    group('"⋯" at a third', 'Everything else: folder, version, containers, the lists of open and new cards, the zoom row, Agents, and the board updated and flagged rows when there are any.', sample(fx, 'third', { menuOpen: true, facts: crowded() })),
+    group('"⋯" at a third', 'Everything else: folder, version, containers, the lists of open and new cards, the zoom row, Agents, and the board updated and bookmarked rows when there are any.', sample(fx, 'third', { menuOpen: true, facts: crowded() })),
     group('The zoom menu', 'Half width: − and + leave it open, Fit closes it.', sample(fx, 'half', { zoomOpen: true })),
     group('A long name, and every chip that comes and goes', 'The name is cut with "…", its whole text in the tooltip. Full and half bare the chips; a third keeps the padlock.', sample(fx, 'full', { facts: crowded() }), sample(fx, 'half', { facts: crowded() }), sample(fx, 'third', { facts: crowded() })),
     group('A past version', 'Read-only: no Agents and no Send; the path says which version shows.', sample(fx, 'full', { facts: facts({ past: { seq: 36, at: '2026-10-30T09:00:00.000Z' } as Facts['past'], versions: facts().versions }) })),

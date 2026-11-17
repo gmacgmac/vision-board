@@ -48,7 +48,7 @@ function chips(): HTMLElement {
   };
   return group('Chip', 'A count or a state, toned by what it says; a chip that is a button: idle, hover, focus, pressed.',
     row(chip('3 open'), chip('2 replied', 'agent'), chip('5 answered', 'answered'), chip('1 later', 'later'), chip('4 new', 'new')),
-    row(chipButton('2 flagged'), chipButton('Hover', 'hover'), chipButton('Focus', 'focus'), chipButton('Pressed', 'pressed')));
+    row(chipButton('2 bookmarked'), chipButton('Hover', 'hover'), chipButton('Focus', 'focus'), chipButton('Pressed', 'pressed')));
 }
 
 /** A menu drawn open in place: rows idle, hover, focus, pressed, a ticked checkbox row with its key, disabled. */
