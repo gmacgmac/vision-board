@@ -258,6 +258,10 @@ them on and renews the screenshots.
   budget 200 → 210 KB gzip (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
   190,000 → 200,000 and `view/board.css` 22,000 → 26,000 gzip (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
   Each task still loads on demand what opens on an action. T_04 restores 200 KB, 190,000 and 22,000.
+  **Budgets never block a task in this set** (maintainer, 2026-11-17): if the work needs more, the task raises the
+  temporary figure to what it measured, says so in its notes, and carries on. Size is optimised once, after the
+  features are done (T_04 and a final pass). What keeps size down meanwhile is reuse: one pattern per control, used
+  everywhere, per the design specifications.
 - **Done** for a UI task means every state, accessibility and contrast pass (APCA tiers, light and dark), unit
   tests, page specs, a gallery entry, `pattern.json` updated, and a look in a browser in light and dark.
 - **Words**: every new sentence in its area's words file (`docs/specification/words.md`), never in code.
