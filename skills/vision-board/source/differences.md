@@ -17,7 +17,7 @@ within 8 KiB (`SKILL_BYTES`). Nothing above the first block is built.
 name: vision-board
 label: Chats through the board
 description: The Vision Board, where each point you would number in a reply is its own card that the person answers (✓, ✗, a note, Later). Read this before you draw on it or answer what they sent, and when the person says "put it on the board", the conversation runs through the board or its chat panel, a reply would be a long numbered list, or a picture or an app you build should show in a card.
-status: v3.35 (2026-11-18, node overhaul T_05: one source, two builds; a small core every bot reads, and references read only when a request needs them (layouts, architecture, handover, apps); the icon library, colour and the two skins in the core); v1 to v3.34 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
+status: v3.36 (2026-11-18, timeline T_02: a node's `timeline` key in one core sentence, and references/timeline.md read before dating cards); v1 to v3.35 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
 ---
 
 <!-- slot front-matter: plugin -->

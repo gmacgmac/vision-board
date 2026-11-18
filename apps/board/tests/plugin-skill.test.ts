@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ICON_NAMES, IMAGE_LIMITS, OPERATIONS } from '#format';
+import { ICON_NAMES, IMAGE_LIMITS, OPERATIONS, isTimeline, timelinePrecision } from '#format';
 import { TOOLS } from '#mcp';
 import { makeTempDir } from '#format/testing';
 import { createEngine } from '../server/engine/index.ts';
@@ -15,6 +15,8 @@ import { toolRows } from '../server/format-files.ts';
 import { SKILL_BYTES } from '../../../tests/plugin/contract/nclite/shared/plugin-host.ts';
 import { SOURCE, buildSkill } from '../../../skills/vision-board/source/build.mjs';
 import { descriptionEdits, singleAgentEdits } from '../server/words/plugin-tools.ts';
+import { SPECS } from '../server/spec.ts';
+import { schemaProblems } from '../server/schema.ts';
 
 const SKILL_FILE = path.resolve(import.meta.dirname, '../../../skills/vision-board/SKILL.md');
 const built = { standalone: buildSkill('standalone'), plugin: buildSkill('plugin') };
@@ -191,8 +193,8 @@ test('v3.35 (node-overhaul T_05): each reference is named where it is needed (ru
   // Where to read each one, at the point of use (run 1, live: Haiku read handover and apps, which the core leaves to
   // them, but not layouts or architecture from an index alone).
   const reads = (t: string) => [...t.matchAll(/read `references\/([a-z-]+)\.md`|`references\/([a-z-]+)\.md` first/g)].map((m) => m[1] ?? m[2]);
-  assert.deepEqual(reads(source), ['layouts', 'architecture', 'apps', 'handover']);
-  assert.deepEqual(reads(plugin), ['layouts', 'architecture', 'handover'], 'apps are the standalone host\'s');
+  assert.deepEqual(reads(source), ['layouts', 'architecture', 'timeline', 'apps', 'handover']);
+  assert.deepEqual(reads(plugin), ['layouts', 'architecture', 'timeline', 'handover'], 'apps are the standalone host\'s');
   assert.ok(says(source, 'read one where this page says, before you write; never just in case'));
   for (const both of [
     '**Before you write linked cards** (a process: `flow`; work between owners: `lanes`; a card put between two linked cards) **or a `radial`, read `references/layouts.md`**',
@@ -206,4 +208,23 @@ test('v3.35 (node-overhaul T_05): each reference is named where it is needed (ru
   for (const [ref, says_] of [['layouts', '## Branches'], ['architecture', '## The skin'], ['handover', '**Handover** section']] as const) {
     assert.ok(built.plugin[`references/${ref}.md`]!.includes(says_), `${ref}: ${says_}`);
   }
+});
+
+test('v3.36 (timeline T_02, D-105): both cores carry the maintainer\'s sentence and when to read, and Answering\'s restated "Done." line is gone (its one home is The conversation); the timeline reference ships in both, its forms are the four stored ones and its worked call writes', () => {
+  const sentence = 'To put an event on a timeline, give its node a `timeline` key with its date; nodes with one share their container\'s timeline (read `references/timeline.md` first).';
+  assert.ok(!says(plugin, 'Answer on the board, and the chat is still') && says(plugin, '**When you changed the board, the chat says "Done."**'), 'one home for "Done."');
+  assert.ok(says(source, sentence) && says(plugin, sentence), 'the core sentence, word for word (decision 22), and when to read (orchestrator\'s ruling on the 8 KiB, option C)');
+  assert.equal(built.plugin['references/timeline.md'], built.standalone['references/timeline.md']);
+  const ref = built.plugin['references/timeline.md']!;
+  const forms = [...ref.matchAll(/^\| [^|]+ \| `([^`]+)` \|$/gm)].map((m) => m[1]!);
+  assert.deepEqual(forms.map((f) => isTimeline(f) && timelinePrecision(f)), ['year', 'month', 'day', 'minute'], `the table's forms: ${forms.join(', ')}`);
+  assert.ok(!/mode: ?"?timeline/.test(ref) && says(ref, 'There is no `timeline` mode'), 'no timeline mode is taught');
+  const block = /```json\n([\s\S]*?)```/.exec(ref);
+  assert.ok(block, 'a worked call');
+  const { board, items } = JSON.parse(block[1]!) as { board: string; items: { type: string; node?: { timeline?: string; body?: string } }[] };
+  assert.equal(typeof board, 'string');
+  assert.deepEqual(schemaProblems(SPECS.write_board.body!, { items }), [], 'it fits write_board');
+  const dated = items.filter((i) => i.node?.timeline !== undefined);
+  assert.ok(dated.length === 3 && dated.every((i) => isTimeline(i.node!.timeline)), 'three dated cards, each in a stored form');
+  assert.ok(dated.some((i) => /^### /m.test(i.node!.body ?? '')), 'one card holds entries as `###` headings');
 });

@@ -122,7 +122,7 @@ export interface BotHost {
 }
 
 /** A reference file beside the skill (`references/<name>.md`; skills/vision-board/source/references/). */
-export type Reference = 'layouts' | 'architecture' | 'handover' | 'apps';
+export type Reference = 'layouts' | 'architecture' | 'timeline' | 'handover' | 'apps';
 
 /** One message from the host: the person's words, and/or what the person did on the board, then their Send. */
 export interface Turn {
@@ -136,6 +136,8 @@ export interface Turn {
 export interface FakeBot {
   dir: string;
   message: string;
+  /** The board tools it was given (`join` only standalone), so one script plays both hosts. */
+  tools: string[];
   call(name: string, input: Record<string, unknown>): Promise<any>;
   write(file: string, text: string): void;
   /** Read the skill's reference `name` (`references/<name>.md`), as the model does with its Read tool. */

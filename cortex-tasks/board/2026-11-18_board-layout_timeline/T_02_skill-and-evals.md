@@ -116,20 +116,72 @@ plugin's; a build ships only the references its text names; the plugin's skill r
 
 _To be completed by agent after task completion._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Run 1 blocked at step 4 (the plugin skill 109 bytes over `SKILL_BYTES`); completed in Run 2 below  
+**Completed**: — (run 1 stopped 2026-11-18)  
 
 ### Changes Made
-- 
+- **Core** (`source/core.md` § Layout): one bullet, the maintainer's sentence word for word, then "Before you date
+  cards, read `references/timeline.md`." Nothing else about dates in the core.
+- **Reference** (`source/references/timeline.md`, 2,823 bytes, new): when (events with dates; a date in passing gets no
+  key); the four forms as a table, the precision you know, no invented day; a quarter or week by its first month or
+  day, named in the body; a time as said, no zone; a year said once holds; the refusal names the four forms; the date
+  is the header (title and body never start with it); any order; several events as `###` or bold leads (entries), never
+  `##` or plain bullets; kinds hold; one container per timeline, no `timeline` mode, undated cards below (beside when
+  down); a rewrite carries `timeline` again, `append` keeps it; `show_layout` lists the line. One worked call (a
+  different subject from every scenario, so a scenario can't copy its answers). Built into both builds by
+  `npm run build:skill` (standalone `SKILL.md` + `references/timeline.md` on disk) and `buildSkill('plugin')`.
+- **Scenarios** (`tests/evals/bot/scenarios/`), registered in `SCENARIOS` and `STANDALONE`:
+  - `timeline-plan`: launch plan "as a timeline", year said once; month, day, day+time, a week (one card, three events),
+    a year. Checks: `dates-as-said` (2027-09, 2027-10-22, 2027-11-03T09:45, 2027-11-15, 2028), `events-as-entries`,
+    `no-date-lead`, `one-timeline-container`, `no-timeline-mode`, `one-write`, keys, no coordinates, done-only; reads
+    timeline only.
+  - `timeline-unprompted`: an incident's five moments with times, out of order, no "timeline", "date" or "key".
+    Checks: each moment `2027-03-04THH:mm`, no date lead, one container, no timeline mode; reads timeline.
+  - `timeline-not-for-prose`: four findings in a row, one naming an audit deadline. Checks: `no-timeline-key`; reads
+    nothing.
+  - `timeline-checks.ts`: the checks above, judging a sent `timeline` by `#format` `normaliseTimeline` (what the server
+    stores); `entriesOf` follows call 9 (a `###` entry to the next heading, rule or lead; a bold lead to its blank
+    line); `secretArg` lets one fake script play both hosts (`FakeBot.tools`, new in `types.ts`/`fake-bot.ts`).
+    `Reference` gains `timeline`. Existing scenarios' `reads` unchanged, so none may read `timeline.md`.
+- **Tests**: `plugin-skill.test.ts` v3.35 reads list gains `timeline`; new v3.36 test: the sentence in both builds, the
+  reference identical in both, its table's forms are the four precisions (`isTimeline`, `timelinePrecision`), no
+  timeline mode taught, the worked call fits `write_board`'s body schema with three stored dates and `###` entries.
+
+### Verification (so far)
+- `build.test.mjs` pass; `plugin-skill.test.ts` 18 pass, **1 fail: "fits the host's budget": skill.md 8,301 of 8,192**.
+- Dry plugin 129/129 (18 runs); dry standalone 115/115 (14 runs); `--fake bad` fails exactly each timeline scenario's
+  `badFails` in both hosts; `bot-eval.test.ts` 7 pass; `tsc -p tsconfig.json` clean; `npm run verify` ok (one old
+  warning); `build:skill -- --check` current.
+- Live Haiku: **not run** (held at the stop; $0 spent).
 
 ### Issues & Resolutions
-- 
+- **Step 4 stop: the plugin skill is 8,301 bytes, 109 over `SKILL_BYTES` (8,192)**; before the sentence it was 8,117 (75
+  headroom); the bullet is 184 bytes. Not fixed: options for the maintainer, with bytes measured on the build:
+  - **A. Raise `SKILL_BYTES`** (`tests/plugin/contract/nclite/shared/plugin-host.ts`, the host contract) to at least
+    8,301 (8,448 leaves room). No word changes; needs nclite's yes.
+  - **B. No word changed, plus one clause reworded**: write each list item of `core.md` on one line (its 43 indented
+    continuation lines cost 2 bytes each in the plugin build: −86) and the reading clause as "… share their container's
+    timeline (read `references/timeline.md` first)." (−16): 8,199, **still 7 over**. Only works with one more small cut.
+  - **C. B's unwrapping plus one restated sentence cut**: Answering's "Answer on the board, and the chat is still
+    "Done."" (−53; the Conversation section already says "When you changed the board, the chat says "Done."") with the
+    unwrap: 8,162, 30 under. Cuts a rule's restatement, so it needs the maintainer's yes and a live re-run.
+  - Recommend A if nclite agrees; else C.
+- **Live plugin run vs the run cap**: `SCENARIOS` is now 18; the default cap is 16 runs and is never raised, so a plain
+  plugin run stops with two scenarios unrun. Proposal: the plugin live run with `--only timeline-plan,
+  timeline-unprompted,timeline-not-for-prose,linked-pipeline,insert-step` (the timeline three and the two that read
+  the Layout section the bullet joins); the standalone run (14 scenarios) runs whole.
 
 ### Caught Beyond the Brief
-- None
+- The task's reference wording and the obvious scenario values overlapped (the same "week of" day, "Beta opens"): a
+  scenario whose answers sit in the reference's examples proves copying, not the reflex. The scenarios use other dates,
+  products and events from the reference's examples and worked call.
+- The reference may never say "app card" (the plugin test forbids the phrase in any plugin file), so the app-card
+  refusal is left to the schema's words, which the plugin bot never needs.
+- The first `Write` of `timeline.md` was 55 lines in one call (rule 10); it succeeded; later writes were chunked.
 
 ### Deviations from Plan
-- None
+- Stopped at step 4 as the task says; steps 4 (test/plugin.md), 6 (live), 7 (version v3.36, NOTES.md, scenarios.md)
+  wait for the byte ruling, since every option except A changes the text the live runs would prove.
 
 ---
 
@@ -142,3 +194,50 @@ _To be completed by agent after task completion._
    [[YYYY-MM-DD HH:MM]] [board-agent] T_02: [what changed] → Task: [[cortex-tasks/board/2026-11-18_board-layout_timeline/T_02_skill-and-evals.md]]
    ```
 4. Return block: `TASK_ID`, `STATUS`, `FILES`, `VERIFICATION` (bytes, eval results, cost), `REQUESTS`, `NOTES`.
+
+### Run 2
+
+**Status**: Completed  
+**Completed**: 2026-11-18 23:20  
+
+**The orchestrator's ruling** (the maintainer gave it autonomy for this set): option C. Every `core.md` list item on
+one line (no word changed), the reading clause shortened to "(read `references/timeline.md` first)", and Answering's
+"Answer on the board, and the chat is still "Done."" dropped, since The conversation already says it (one home per
+fact). `SKILL_BYTES` stays 8,192. Live runs: plugin `--only` the timeline three, linked-pipeline, insert-step and the
+scenarios on Answering and "Done."; standalone in full; a failure on changed wording is reported, not patched with
+words.
+
+### Changes Made
+- `source/core.md`: option C as ruled. A word diff against HEAD shows only the added bullet and the dropped sentence.
+  Sizes: plugin `skill.md` **8,148 of 8,192**; standalone `SKILL.md` 19,079.
+- `plugin-skill.test.ts` v3.36: the sentence with "(read ... first)"; "Done." has one home (the dropped line is gone, The
+  conversation's bold rule stays).
+- Step 4: `docs/specification/plugin.md` § The folder lists `timeline.md`; "Proven by" cites the v3.36 test; `updated`.
+- Step 7: v3.35 → **v3.36** in `differences.md`'s standalone front matter (v3.35 stays in NOTES.md); `NOTES.md`
+  § Skill v3.36 (the change, the ruling, sizes, both live results); `scenarios.md` v3.36 and scenarios 53-55.
+
+### Verification
+- `build.test.mjs` + `plugin-skill.test.ts` 19 pass; `write-examples.test.ts` passes; `build:skill -- --check` current.
+- Dry: plugin 129/129 (18 runs), standalone 115/115 (14 runs); bad scripts fail exactly their `badFails`;
+  `bot-eval.test.ts` 7 pass.
+- **Live, Haiku 5.5, once each, default caps**:
+  - Plugin (11 runs, `--only` timeline-plan, timeline-unprompted, timeline-not-for-prose, linked-pipeline, insert-step,
+    where-cards-stand, send-round, answered-note, two-turns, new-card-number, draw): **85/86, $0.0302**. Timeline
+    11/11, 9/9, 6/6; every other at full but insert-step 6/7.
+  - Standalone (all 14): **113/115, $0.0749**, no stall. Timeline 11/11, 9/9, 6/6; misses: architecture-icons 14/15,
+    radial-ideas 6/7.
+  - **Total eval spend: $0.1051.** Reports: `tests/evals/bot/out/2026-11-18T22-46-38-007Z/`,
+    `2026-11-18T22-50-19-042Z/` (git-ignored); logs in `temp/`.
+- `npm run verify` ok (one old warning), `gen -- --check` current; `check` and `npm test`: see the TASK-STATUS notes.
+
+### Issues & Resolutions
+- **insert-step** (plugin) inserted the card correctly but did not read `references/layouts.md`. The layouts bullet's
+  words are unchanged (only put on one line). The same read was missed in node-overhaul T_05 run 1, read in run 3.
+  Reported, not chased.
+- **architecture-icons `done-only`** (standalone): "Done." with the board's title and id, then a recap sentence. The
+  words that govern it are unchanged. [INFERENCE] The dropped Answering line was one more place the core said
+  "Done.", so the cut may weaken the reflex. The ruling says report rather than add words back. One run can't tell
+  the cut from noise: a repeat of architecture-icons and two-turns would.
+- **radial-ideas `no-links`** (standalone): linked its ideas. That rule is in `layouts.md` (unchanged); T_05 run 1 saw
+  the same miss.
+- The plugin run's log went to the worktree root first; moved to `temp/` (rule 8).
