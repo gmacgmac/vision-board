@@ -1,4 +1,4 @@
-// The project's icon library on the page (nodeEdges flag; decision 24, planner's call 11): read with `list_icons` and
+// The project's icon library on the page (decision 24, planner's call 11): read with `list_icons` and
 // `paths` when a ledger opens and again when an `icon` line arrives, and passed to the node, which draws a library
 // icon only from these paths and checks each again as it draws (packages/ui icon.ts `icon`). A missing or failing
 // icon draws the plain tile; nothing on the board waits for the read, and a read that fails keeps what was there.
@@ -7,8 +7,6 @@ import type { IconLibrary } from '#ui';
 import { iconLibrary } from '#ui';
 
 export interface IconLibraryDeps {
-  /** The nodeEdges flag: off, nothing is read. */
-  on: boolean;
   load(): Promise<OperationOutput<'list_icons'>>;
   /** The library changed: the nodes that name a library icon draw again. */
   changed(library: IconLibrary): void;
@@ -32,7 +30,6 @@ export function createIconLibrary(d: IconLibraryDeps): IconLibraryFlow {
   return {
     get: () => library,
     async refresh() {
-      if (!d.on) return;
       const ask = ++asked;
       const read = await d.load().catch(() => null);
       if (!read || ask !== asked) return;

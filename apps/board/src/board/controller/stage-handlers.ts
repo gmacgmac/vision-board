@@ -38,10 +38,10 @@ export interface HandlerFlows {
   status: Status;
   /** Z on a container (containerZoom flag): a click inside one or on its title line marks it, Z zooms to it. */
   container?: { zoom(region: string): boolean; mark(region: string): void };
-  /** The marks on a node's edge (nodeEdges flag, mark-flow.ts): their presses and keys; Esc closes what they opened. */
-  marks?: MarkFlow;
-  /** A click inside container `region` (its background or frame; nodeEdges flag): its pill cleared on this screen. */
-  seen?(region: string): void;
+  /** The marks on a node's edge (mark-flow.ts): their presses and keys; Esc closes what they opened. */
+  marks: MarkFlow;
+  /** A click inside container `region` (its background or frame): its pill cleared on this screen. */
+  seen(region: string): void;
 }
 
 export function stageHandlers(f: HandlerFlows): StageHandlers {
@@ -49,7 +49,6 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
   return {
     act: (id, a) => act(id, a), ...(bookmarks && { bookmark: (id: string) => void bookmarks.toggle(id) }), showVersion: (seq, until) => void f.showVersion(seq, until),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
-    showNote: (id, seq, fromNote) => notes.show(id, seq, fromNote), showReply: (id, seq) => notes.reply(id, seq), setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode), setDirection: (region, direction) => void places.setDirection(region, direction), setWidths: (region, widths) => void places.setWidths(region, widths),
     resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
     regionComment: (region) => notes.container(region),
@@ -68,16 +67,16 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
       selection.clear(); flow.dismissArea();
       const region = f.container && !target?.closest('vb-node') ? target?.closest<HTMLElement>('vb-region')?.dataset.region : undefined;
       if (region !== undefined) f.container!.mark(region);
-      const inside = f.seen && !target?.closest('vb-node') ? target?.closest<HTMLElement>('vb-region')?.dataset.region : undefined;
-      if (inside !== undefined) f.seen!(inside);
+      const inside = !target?.closest('vb-node') ? target?.closest<HTMLElement>('vb-region')?.dataset.region : undefined;
+      if (inside !== undefined) f.seen(inside);
     },
     // Z fits the selection when there is one, even with focus on a container's title line (FE_06); the container only when nothing is selected.
     ...(f.container && { zoomRegion: (region: string) => selection.selected().length === 0 && f.container!.zoom(region) }),
-    ...(f.marks && { mark: f.marks.press, nodeKey: f.marks.key, onlySelected: () => { const s = selection.selected(); return s.length === 1 ? s[0]! : null; } }),
-    // Esc closes a node's open menu or box first (nodeEdges), then an open bubble, then the open selection bar (FE_02), then leaves a past version, else
+    mark: f.marks.press, nodeKey: f.marks.key, onlySelected: () => { const s = selection.selected(); return s.length === 1 ? s[0]! : null; },
+    // Esc closes a node's open menu or box first, then an open bubble, then the open selection bar (FE_02), then leaves a past version, else
     // clears the selection (ruling 1). True when there was something to do: a host's own Esc is the host's otherwise.
     escape: () => {
-      if (f.marks?.close()) return true;
+      if (f.marks.close()) return true;
       if (notes.open) { notes.close(); return true; }
       if (flow.collapse()) return true;
       if (versions.state) { void versions.show(null); return true; }

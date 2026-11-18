@@ -1,4 +1,4 @@
-// Ask now's side of the board (nodeEdges flag, D-099 3, FE_03), split out of controller.ts: why no message can go
+// Ask now's side of the board (D-099 3, FE_03), split out of controller.ts: why no message can go
 // (a past version, a read-only ledger, a locked board, the chat's agent mid-turn), whether an agent is there to hear
 // it, the `ask` itself with the page's context setting (`askContextOf`, call 1), the notes it sent, and a node's replies
 // marked read when its box shows them (a card `seen` at the version already seen, which moves only when the person last looked),

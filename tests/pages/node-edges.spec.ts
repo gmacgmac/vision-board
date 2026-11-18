@@ -1,7 +1,7 @@
-// The node with its marks on its edges (nodeEdges flag, D-099; FE_01), in the gallery with the flag on: the element
+// The node with its marks on its edges (D-099; FE_01), in the gallery: the element
 // builds the markup the template builds (the page and a server alike), every mark is reachable by Tab in the order
 // drawn and named, the ring shows only after Tab, axe finds nothing, and the section matches its screenshots, light
-// and dark. With the flag off the gallery shows no such section (gallery.spec.ts keeps its own screenshots).
+// and dark.
 import type { Locator, Page } from '@playwright/test';
 import type { ViewNode } from '#format';
 import { nodeTemplate, SKIN_DEFS } from '#ui';
@@ -9,19 +9,13 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const section = (page: Page): Locator => page.locator('section[data-feature="nodeEdges"]');
+const section = (page: Page): Locator => page.locator('section[data-feature="node-edges"]');
 const RING: Record<Theme, string> = { dark: 'rgb(139, 155, 184)', light: 'rgb(90, 100, 120)' };
 
-async function open(page: Page, flags = 'nodeEdges'): Promise<void> {
-  await page.goto(`/gallery.html?flags=${flags}`);
+async function open(page: Page): Promise<void> {
+  await page.goto('/gallery.html');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
 }
-
-test('off, the gallery has no edges section and no node draws a mark', async ({ page }) => {
-  await open(page, '-nodeEdges');
-  await expect(section(page)).toHaveCount(0);
-  await expect(page.locator('vb-node [data-mark]')).toHaveCount(0);
-});
 
 test('the element builds the markup the template builds, so a server and the page draw one node', async ({ page }) => {
   await open(page);

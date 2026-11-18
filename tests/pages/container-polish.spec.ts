@@ -231,9 +231,9 @@ test('popovers: in a narrow frame the note preview, the layout popover and the s
   expect(await onTop(f.getByRole('menuitem', { name: 'Reset places' }))).toBe(true);
   await page.keyboard.press('Escape');
 
-  // The layout popover opens on hover of an icon; the collapsed row first expands on hover.
+  // The layout popover opens on a press of the layout button; the collapsed row first expands on hover.
   await f.locator('.vb-mode-row').hover();
-  await f.getByRole('radio', { name: 'Flow' }).hover();
+  await f.locator('.vb-layout-btn').click();
   await expect(f.locator('.vb-mode-pop')).toBeVisible();
   expect(await topEdgeOnTop(f.locator('.vb-mode-pop'))).toBe(true);
   expect(await onTop(f.locator('.vb-mode-tiles'))).toBe(true);

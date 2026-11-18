@@ -5,7 +5,7 @@
 // only read here (the alignment is the viewer's own, in this browser); the widths acts go to the
 // performance server's mixed board, which same-picture.spec.ts changes at random anyway.
 import type { Page } from '@playwright/test';
-import { ROW_GAP } from '#layout';
+import { EDGE_ROW_GAP } from '#layout';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { PERF_BASE } from './ports.ts';
@@ -143,16 +143,17 @@ test('widths: each frame\'s switch shows the widths in force; a press or the key
   // "Prove the idea" as a column, card 4 at L: the column matches it, every card 464 wide.
   expect((await act(page, { action: 'size', n: 4, size: 'l' })).ok()).toBe(true);
   await reveal(page, 'prove');
-  await frame(page, 'prove').locator('button[data-mode="column"]').click();
+  await frame(page, 'prove').locator('.vb-layout-btn').click();
+  await frame(page, 'prove').locator('.vb-mtile[data-tile="column"]').click();
   await expect(widthsSwitch(page, 'prove')).toHaveAttribute('aria-checked', 'true');
   await expect.poll(async () => [(await boxOf(page, 4)).w, (await boxOf(page, 5)).w, (await boxOf(page, 6)).w]).toEqual([464, 464, 464]);
-  // A widened card is measured at its drawn width: the gaps down the column stay the layout's own (ROW_GAP
-  // with updateSignals, on by default: the hung bottom tabs, tab-lower task).
+  // A widened card is measured at its drawn width: the gaps down the column stay the layout's own (EDGE_ROW_GAP:
+  // the room the node's bottom edge marks hang into, D-099).
   const gaps = async () => {
     const [a, b, c] = [await boxOf(page, 4), await boxOf(page, 5), await boxOf(page, 6)];
     return [Math.round(b.y - (a.y + a.h)), Math.round(c.y - (b.y + b.h))];
   };
-  expect(await gaps()).toEqual([ROW_GAP, ROW_GAP]);
+  expect(await gaps()).toEqual([EDGE_ROW_GAP, EDGE_ROW_GAP]);
   // A press: own widths, so 5 and 6 go back to their own width.
   await reveal(page, 'prove');
   await widthsSwitch(page, 'prove').click();
@@ -160,10 +161,10 @@ test('widths: each frame\'s switch shows the widths in force; a press or the key
   expect((await widthsOn(page)).prove).toBe('own');
   await expect.poll(async () => (await boxOf(page, 5)).w).toBeLessThan(464);
   expect((await boxOf(page, 4)).w).toBe(464);
-  expect(await gaps()).toEqual([ROW_GAP, ROW_GAP]);
-  // The keyboard: Right from the last layout moves on to the switch, Space presses it.
-  await frame(page, 'prove').locator('button[data-mode="row"]').focus();
-  await page.keyboard.press('ArrowRight');
+  expect(await gaps()).toEqual([EDGE_ROW_GAP, EDGE_ROW_GAP]);
+  // The keyboard: the arrow from the layout button moves on to the switch (Down in the rail, Right on the top line), Space presses it.
+  await frame(page, 'prove').locator('.vb-layout-btn').focus();
+  await page.keyboard.press((await frame(page, 'prove').getAttribute('data-rail')) !== null ? 'ArrowDown' : 'ArrowRight');
   await expect(widthsSwitch(page, 'prove')).toBeFocused();
   await page.keyboard.press('Space');
   await expect(widthsSwitch(page, 'prove')).toHaveAttribute('aria-checked', 'true');
@@ -179,29 +180,6 @@ test('widths off (?flags=-widthsControl): no switch in any frame; the widths in 
   await expect.poll(async () => [(await boxOf(page, 5)).w, (await boxOf(page, 6)).w]).toEqual([464, 464]);
 });
 
-// ---- The note bubble clear of a neighbour's footer buttons (BE_02's hand-off) ----
-
-test('the note bubble beside card 4 leaves card 5\'s footer buttons clear', async ({ page }) => {
-  await openBoard(page);
-  await zoomToFull(page);
-  await card(page, 4).focus();
-  // Card 4 starts the board's left column: at the popover size (360px, popovers-larger-thread) its
-  // right is card 5's buttons, its left the board's edge and below it card 11's buttons, so no place
-  // is clear. The board pans right first (focus stays on card 4), which leaves its left clear.
-  const before = (await card(page, 4).boundingBox())!.x;
-  await page.mouse.move(800, 700);
-  await page.mouse.wheel(-440, 0);
-  await expect.poll(async () => (await card(page, 4).boundingBox())!.x).toBeGreaterThan(before + 400);
-  await page.keyboard.press('c');
-  const bubble = page.getByRole('dialog', { name: 'Note on 4' });
-  await expect(bubble).toBeVisible();
-  await expect(bubble).toHaveAttribute('data-side', 'left');
-  const [b, f] = [await bubble.boundingBox(), await card(page, 5).locator('.vb-node-foot').boundingBox()];
-  const meets = b!.x < f!.x + f!.width && f!.x < b!.x + b!.width && b!.y < f!.y + f!.height && f!.y < b!.y + b!.height;
-  expect(meets).toBe(false);
-  await page.keyboard.press('Escape');
-});
-
 // ---- Every new pair checked by axe, light and dark, and the gallery sections' screenshots ----
 
 for (const theme of THEMES) {
@@ -209,8 +187,8 @@ for (const theme of THEMES) {
     await setTheme(page, theme);
     await openBoard(page);
     await zoomToFull(page); // zoomed out to fit, every control is under the 24px target size (N13)
-    await frame(page, 'review').locator('button[data-mode="row"]').focus();
-    await page.keyboard.press('ArrowRight');
+    await frame(page, 'review').locator('.vb-layout-btn').focus();
+    await page.keyboard.press((await frame(page, 'review').getAttribute('data-rail')) !== null ? 'ArrowDown' : 'ArrowRight');
     await expect(widthsSwitch(page, 'review')).toBeFocused();
     await expectNoAxeViolations(page);
     await page.locator(bid('toolbar-menu')).click();

@@ -1,6 +1,6 @@
 // Gallery samples for the note bubble on a whole container (3_FE_04 ruling 3): a real <vb-region>
-// from the fixture, its note open in the bubble beside its title line (`edit`, the containers board),
-// or its conversation (`thread`, review polish ruling 6: the container notes board's answered note
+// from the fixture, a new note (`new`) or its note open (`edit`, the containers board) in the bubble beside its title
+// line, its answered note shown, never edited (`sent`), or its conversation (`thread`, review polish ruling 6: the container notes board's answered note
 // and the agent's reply, opened from the note block's note, the arrow on it). The bubble is placed
 // with `placeBubble(titleAnchor(...))`, as the board places it, and wears the frame's line colour
 // (show's `line`) in place of a card's kind and number.
@@ -26,19 +26,29 @@ function frameOf(view: View, state: BoardState, id: string, owed?: ReadonlySet<s
   return { region, frame };
 }
 
-/** `edit`: the containers board's open note, to edit. `thread`: the answered container note's
- *  conversation, its block shown, opened from the block's note. */
-function shown(fx: Fixture, which: 'edit' | 'thread'): Shown {
-  if (which === 'edit') {
+/** The bubble's modes on a container (the board opens no other on one). */
+export type ContainerBubble = 'new' | 'edit' | 'sent' | 'thread';
+
+/** `new`: a new note on the containers board's container, while you type. `edit`: its open note, to edit. `sent`: the
+ *  answered container note, read-only. `thread`: its conversation, its block shown, opened from the block's note. */
+function shown(fx: Fixture, which: ContainerBubble): Shown {
+  if (which === 'new' || which === 'edit') {
     const { view, state } = fx.containers;
     const { region, frame } = frameOf(view, state, 'c-open');
     const notes = state.regionNotes.get(region.id) ?? [];
     const note = notes.at(-1)!;
-    const v = bubbleView({ mode: 'edit', kind: note.kind, container: region.title, index: notes.length, text: note.text });
-    return { region, frame, v, caption: 'On a whole container: beside its title line, in the frame\'s line colour, no number chip' };
+    const v = which === 'new' ? bubbleView({ mode: 'new', kind: 'comment', container: region.title })
+      : bubbleView({ mode: 'edit', kind: note.kind, container: region.title, index: notes.length, text: note.text });
+    return { region, frame, v, caption: which === 'new' ? 'A new note on a whole container, from Comment on its title line' : 'On a whole container: beside its title line, in the frame\'s line colour, no number chip' };
   }
   const { view, state, owed } = fx.containerNotes;
   const { region, frame } = frameOf(view, state, 'n-answered', owed, fx.parking.containerReplies);
+  if (which === 'sent') {
+    const notes = state.regionNotes.get(region.id) ?? [];
+    const note = notes.at(-1)!;
+    const v = bubbleView({ mode: 'sent', kind: note.kind, container: region.title, index: notes.length, text: note.text });
+    return { region, frame, v, caption: 'A sent note: history, shown and never edited' };
+  }
   frame.noteShown = true;
   const notes = state.regionNotes.get(region.id) ?? [];
   const replies = fx.parking.containerReplies.filter((r) => notes.some((x) => x.seq === r.to));
@@ -46,7 +56,7 @@ function shown(fx: Fixture, which: 'edit' | 'thread'): Shown {
   return { region, frame, v, part: '.vb-nblock-text', caption: 'A container\'s conversation: its notes and the agent\'s replies, opened from the note in its block' };
 }
 
-export function containerBubbleSample(fx: Fixture, which: 'edit' | 'thread'): HTMLElement {
+export function containerBubbleSample(fx: Fixture, which: ContainerBubble): HTMLElement {
   const { region, frame: f, v, part, caption } = shown(fx, which);
   const stage = el('div', 'g-bubble-stage vb-ground');
   stage.style.setProperty('width', `${STAGE.w}px`);

@@ -280,7 +280,8 @@ test('the harness palettes: every pair of the host\'s table meets its tier, ligh
 test('flag off: a host\'s colours and mode reach nothing; the type\'s three still apply', async ({ page, host }) => {
   await open(page, host, { settings: { hostStyling: false } });
   await page.emulateMedia({ colorScheme: 'light' });
-  expect(await page.locator('.host-root').evaluate((e) => e.getAttributeNames().filter((n) => n.startsWith('data-vb-')))).toEqual([]);
+  // The board's skin (D-100) is the board's own, on its root with or without the host's colours.
+  expect(await page.locator('.host-root').evaluate((e) => e.getAttributeNames().filter((n) => n.startsWith('data-vb-') && n !== 'data-vb-skin'))).toEqual([]);
   const own = await resolve(page, '.host-root', OWN);
   const given = Object.fromEntries(Object.keys(FEEDS).map((p, i) => [p, shade(i)]));
   await setOn(page, '.host-root', { ...given, '--host-color-scheme': 'dark', '--host-font': 'Georgia' });

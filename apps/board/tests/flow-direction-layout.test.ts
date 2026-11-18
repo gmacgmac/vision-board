@@ -1,7 +1,7 @@
 // A flow's direction as the board lays it out (BE_01, D-100 5, api.md 189): the agent's `direction` on a container
 // draws; the person's Across for the board wins; Auto gives the agent's back; the person's choice for one container
 // wins over theirs for the board. The page reads `directionOf` on the folded ledger, so another page reading the same
-// ledger draws the same. The page's layout cache keys a container on its direction and on the flowBranches flag.
+// ledger draws the same. The page's layout cache keys a container on its direction.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { View } from '#format';
@@ -35,7 +35,7 @@ function draw(lines: string[]) {
   const view: View = boardView(state, 'p');
   const sizes = new Map<string, Size>(view.nodes.map((n) => [n.id, { w: 280, h: 120 }]));
   const directions = new Map(view.regions.map((r) => [r.id, directionOf(state, 'p', r.id)]));
-  return { view, sizes, directions, layout: layoutBoard(view, sizes, { directions, branching: true }) };
+  return { view, sizes, directions, layout: layoutBoard(view, sizes, { directions }) };
 }
 
 const runs = (l: ReturnType<typeof draw>) => (l.layout.downward.has('build') ? 'down' : 'across');
@@ -57,16 +57,15 @@ test('the same ledger read by another page draws the same picture', () => {
   assert.deepEqual(draw([...lines]).layout, draw(lines).layout);
 });
 
-test('the layout cache lays a container out again when its direction or the flowBranches flag changes, and equals layoutBoard', () => {
+test('the layout cache lays a container out again when its direction changes, and equals layoutBoard', () => {
   const { view, sizes, directions } = draw(ledger());
   const cache = createLayoutCache();
   const base = { pins: new Map(), modes: new Map(), hidden: new Set<string>() };
-  const first = cache.run(view, sizes, { ...base, directions, branching: true });
-  assert.deepEqual(first.layout, layoutBoard(view, sizes, { directions, branching: true }));
-  assert.deepEqual(cache.run(view, sizes, { ...base, directions, branching: true }).laidOut, [], 'nothing changed: nothing laid out');
+  const first = cache.run(view, sizes, { ...base, directions });
+  assert.deepEqual(first.layout, layoutBoard(view, sizes, { directions }));
+  assert.deepEqual(cache.run(view, sizes, { ...base, directions }).laidOut, [], 'nothing changed: nothing laid out');
   const across = new Map([['build', 'across' as const]]);
-  const turned = cache.run(view, sizes, { ...base, directions: across, branching: true });
+  const turned = cache.run(view, sizes, { ...base, directions: across });
   assert.deepEqual(turned.laidOut, ['build']);
-  assert.deepEqual(turned.layout, layoutBoard(view, sizes, { directions: across, branching: true }));
-  assert.deepEqual(cache.run(view, sizes, { ...base, directions: across }).laidOut, ['build'], 'the flag is in the key');
+  assert.deepEqual(turned.layout, layoutBoard(view, sizes, { directions: across }));
 });

@@ -9,12 +9,12 @@ export type HeaderTier = 'full' | 'half' | 'third';
 export const FULL_MIN = 1300;
 /** The bar's width from which the half form holds, with every chip that comes and goes (measured the same way, 80px). */
 export const HALF_MIN = 620;
-/** What Flows takes at full (flowDirection flag): its one width, room for "Flows: Across", and the gap before it
+/** What Flows takes at full (FlowMenu.svelte): its one width, room for "Flows: Across", and the gap before it
  *  (styles/header.css --vb-flows-w + --vb-space-2; FIX_01). The bar keeps that room out of the box it measures itself on,
  *  so the full form with Flows is the full form without it, FLOWS_W wider. From half Flows is rows of "⋯". */
 export const FLOWS_W = 128;
 
-/** The form for a bar `width` wide; `flows`: the bar holds Flows. */
+/** The form for a bar `width` wide; `flows`: the bar holds Flows (a board is open; the gallery's samples have none). */
 export const headerTier = (width: number, flows = false): HeaderTier =>
   (width >= FULL_MIN + (flows ? FLOWS_W : 0) ? 'full' : width >= HALF_MIN ? 'half' : 'third');
 
@@ -29,7 +29,7 @@ export const HEADER_CONTROLS: readonly HeaderControl[] = ['app-icon', 'folder', 
 /** What moves into "⋯" at each tier: a row there does what the control does in the bar. The page's folder and
  *  ledger (once its server names one) sit in the path at full and half, and are rows of "⋯" at a third, the ledger's under the folder's.
  *  Edit or Stop editing (readOnlyStart flag) is a button at full and a row of "⋯" under them from half; the state chip's
- *  own menu holds it at every width. Flows (flowDirection flag) is a button with its words at full and rows of "⋯" from
+ *  own menu holds it at every width. Flows is a button with its words at full and rows of "⋯" from
  *  half (FIX_01). */
 const IN_MENU: Record<HeaderTier, readonly HeaderControl[]> = {
   full: [],

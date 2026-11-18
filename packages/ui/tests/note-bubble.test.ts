@@ -210,7 +210,7 @@ test('bubbleView: a note the agent answered before a Send reads "answered", not 
 });
 
 // ---- The conversation (review polish rulings 6 and 7, decisions 8 and 9): a click, Enter or Space on
-// a note or a reply opens the card's whole conversation, every note and reply in `notesView` order,
+// a note or a reply opens the card's whole conversation, every note and reply in `conversation`'s order,
 // read-only, with an × in the top corner and no bottom row; the person's note still editable has Edit.
 
 const entries: NotesEntry[] = [

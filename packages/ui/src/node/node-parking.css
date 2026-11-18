@@ -1,17 +1,6 @@
-/* Parking and replies on a card (proposals-seen-parking FE_03, D-020; node-core.ts `handoverView`,
-   `notesView`). Tokens only. "Awaiting" is the footer's state word with a hover tip over it; the
-   HANDOVER tab is a bottom-edge tab (node-popover.css) whose box holds the agent's handover; an
-   agent's reply sits under the note it answers, in the note's shape and clamp but read-only. */
-
-/* The tip over "Awaiting": above the footer, not below it, where the card ends. */
-vb-node .vb-node-state { position: relative; }
-vb-node .vb-status-tip { bottom: calc(100% + var(--vb-space-1)); left: 0; }
-vb-node .vb-status-tip::before { bottom: auto; top: 100%; }
-vb-node[data-status-tip-open] { z-index: var(--vb-z-open); }
-vb-node[data-status-tip-open] .vb-status-tip { display: block; }
-
-/* The handover box: headed sections, then the sources. Longer than a proposal, so it is allowed more height. */
-vb-node .vb-card-pop[data-pop='handover'] { max-height: 440px; }
+/* The handover on a node (proposals-seen-parking FE_03, D-020; DESIGN_01: a section of the node's body once written;
+   node-core.ts `handoverView`): headed sections, then the sources. Tokens only. While it is owed the quiet Awaiting
+   tab says so (node-edges.css). */
 vb-node .vb-hand { display: grid; gap: var(--vb-space-1); }
 vb-node .vb-hand + .vb-hand { padding-top: var(--vb-space-3); border-top: 1px solid var(--vb-line); }
 vb-node .vb-hand-head {
@@ -21,29 +10,3 @@ vb-node .vb-hand-head {
 vb-node .vb-hand-text { display: grid; gap: var(--vb-space-2); min-width: 0; font-size: var(--vb-pop-text); line-height: 1.5; color: var(--vb-ink); }
 vb-node .vb-hand-sources { margin: 0; padding-left: var(--vb-space-4); font-size: var(--vb-pop-text); color: var(--vb-ink); }
 vb-node .vb-hand-text :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
-
-/* An agent's reply: under its note, set in from the left by a rule, neutral. It takes the note's
-   clamp (`.vb-node-note-text`) and full-text tip (`.vb-note-tip`); a click, Enter or Space opens the
-   exchange in the note bubble: the note it answers, then every reply (popovers-larger-thread ruling 2). */
-vb-node .vb-node-reply {
-  position: relative; --vb-reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2));
-  display: grid; gap: var(--vb-space-1); margin-left: var(--vb-space-3); padding: 10px var(--vb-space-3); cursor: pointer;
-  border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
-  background: var(--vb-surface-sunken); font-size: var(--vb-text-md); color: var(--vb-ink);
-}
-vb-node .vb-node-reply .vb-node-note-who { color: var(--vb-ink); }
-vb-node {
-  &:has(.vb-node-reply[data-tip-open]) { z-index: var(--vb-z-open); }
-}
-vb-node .vb-node-reply[data-tip-open] .vb-note-tip { display: block; }
-vb-node .vb-node-reply :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
-
-/* The agent's reply in amber (updateSignals flag, D-088): its left edge is --vb-state-updated while its
-   card is unseen (`data-unseen`, D-054), then a muted amber, halfway to the strong line, so a reply always
-   reads apart from the person's notes (pink while editable, grey once sent). APCA of the edge on the
-   reply's sunken fill: bright Lc 61.9 light, 73.1 dark; muted 42.3 and 33.4 (edges, 30). The note
-   bubble's replies take the same two (note-bubble.css). */
-vb-node {
-  [data-update-signals] & .vb-node-reply { border-left-color: color-mix(in srgb, var(--vb-state-updated) 50%, var(--vb-line-strong)); }
-  [data-update-signals] & .vb-node-reply[data-unseen] { border-left-color: var(--vb-state-updated); }
-}

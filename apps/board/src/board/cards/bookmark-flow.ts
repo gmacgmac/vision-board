@@ -1,6 +1,5 @@
 // The person's bookmark on the page (cardBookmark flag; D-099 2, api.md 128; called the flag before ledger format
-// 20): the bookmark button beside Later, B on a focused card and, with the node's edges (nodeEdges), a click on its
-// number set or clear it, and the toolbar's "N bookmarked" chip steps through the bookmarked cards, one card after
+// 20): a click on a node's number, B on a focused card, its number's menu and right-click set or clear it, and the toolbar's "N bookmarked" chip steps through the bookmarked cards, one card after
 // another in number order, from the focused one (or, since pressing the chip takes focus off the card, from the one it
 // went to last), wrapping. A bookmark is the person's private mark: one act, `bookmark` or `unbookmark`, naming the
 // card by its board number and no version, so it stays through a redraw; nothing here reaches an agent (the server

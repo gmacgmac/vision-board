@@ -1,4 +1,4 @@
-// A container seen on the person's screen (nodeEdges flag; D-099 4, point 308, decision 16): on a board that isn't
+// A container seen on the person's screen (D-099 4, point 308, decision 16): on a board that isn't
 // read-only, a click inside a container, on its background or its frame, clears its new-and-updated pill and teal
 // border, and quiets the agent's replies under its note (tracker N47), on this page only. It is page-local state, as
 // zoom is: the page keeps, per board and container, the newest change it cleared (`container.fresh`'s `seq`), so the

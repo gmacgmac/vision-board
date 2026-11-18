@@ -138,7 +138,7 @@ export interface AppBridgeOptions {
   /** The value the card's panel last saved, for the `ui/initialize` answer (undefined: none). The
    * answer waits for it; a rejection starts the panel without. Left out, the answer is at once. */
   loadState?(): Promise<AppStateValue | undefined>;
-  /** The person picked something in the panel (`vision-board/note`, appStage): keep `text` as their
+  /** The person picked something in the panel (`vision-board/note`): keep `text` as their
    * note on the card; rejects with an `AppCallError`. Left out, the request is refused `not-found`. */
   note?(text: string): Promise<void>;
   /** The person pressed Esc in the panel (`ui/notifications/escape`): focus goes back to the card. */

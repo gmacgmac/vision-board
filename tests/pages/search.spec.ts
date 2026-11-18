@@ -154,9 +154,9 @@ test('stepping and Enter keep NEW and updated (finding keeps marks); no card see
     { type: 'node', node: { region: 'p', kind: 'question', title: 'Annual review' } },
     { type: 'node', n: 2, node: { region: 'p', kind: 'question', title: 'Annual pricing', body: 'Changed.' } },
   ]);
-  const isNew = card(page, added!.n!).locator('.vb-node-btab[data-tab="new"]');
-  const updates = card(page, 2).locator('.vb-node-btab[data-tab="updates"]');
-  await expect(isNew).toHaveText('NEW');
+  const isNew = card(page, added!.n!).locator('[data-mark="badge"][data-badge="new"]');
+  const updates = card(page, 2).locator('[data-mark="badge"][data-badge="updates"]');
+  await expect(isNew).toHaveText('New');
   await expect(updates).toHaveText('1 update');
   const seen = async () => (await boardLines(page, d.board)).filter((e) => e.type === 'seen' && e.n !== undefined).length;
   const was = await seen();
@@ -167,7 +167,7 @@ test('stepping and Enter keep NEW and updated (finding keeps marks); no card see
   await page.keyboard.press('Enter');
   await expect(goBox(page)).toHaveCount(0);
   await idle(page);
-  await expect(isNew).toHaveText('NEW');
+  await expect(isNew).toHaveText('New');
   await expect(updates).toHaveText('1 update');
   expect(await seen()).toBe(was);
 });
@@ -224,10 +224,11 @@ test('reduced motion: stepping brings a card in with no animated pan', async ({ 
   await zoomedIn(page);
   await page.keyboard.press('/');
   await page.keyboard.type('pric ann');
-  await page.keyboard.press('ArrowDown');
   await page.waitForTimeout(500);
   const transform = () => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
+  // Card 13 is off screen until a step reaches it (which step it is depends on where the layout puts the matches).
   const before = await transform();
+  await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
   await expect(said(page)).toHaveText(/^3 of 3/);
   const at = await transform();

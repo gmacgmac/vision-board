@@ -93,7 +93,7 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   await expect(page.locator('vb-node')).toHaveCount(1);
   const old = page.locator('vb-node').first();
   await expect(old).toHaveAttribute('data-status', 'open'); // the ack came after this version
-  for (const control of ['.vb-act', '.vb-size', '.vb-region-grip', '.vb-region-tools', '.vb-note-pin']) {
+  for (const control of ['.vb-region-grip', '.vb-region-tools']) {
     await expect(page.locator(`.vb-world ${control}:visible`), control).toHaveCount(0);
   }
   await expect(page.locator(bid('send'))).toHaveCount(0);
@@ -122,7 +122,7 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   await expect(version(page)).toHaveValue('now');
   await expect(page.locator('.vb-world')).not.toHaveAttribute('data-readonly');
   await expect(page.locator('vb-node')).toHaveCount(3);
-  await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
+  await expect(page.locator('vb-node [data-mark="answer"]').first()).not.toHaveAttribute('aria-disabled', 'true');
 
   await version(page).selectOption(String(first));
   await expect(banner(page)).toBeVisible();
@@ -137,14 +137,9 @@ test('a past version shows the board as it was, read-only, and Back to now and E
 const answers = (page: Page) => page.locator('vb-node').evaluateAll((els) => els.map((e) => [e.querySelector('.vb-node-title')?.textContent, e.getAttribute('data-status')]));
 const count = (page: Page) => page.locator(`vb-region[data-region="${REGION}"] .vb-region-count`);
 const ALL = [['Question 1?', 'acknowledged'], ['Question 2?', 'dropped'], ['Question 3?', 'acknowledged'], ['Question 4?', 'dropped']];
-/** Each card's review buttons that show, by act: in a past view only a lit ✓ or ✗ (FIX_01). */
+/** Each card's answer as its disc shows it (D-099 7): a lit ✓ or ✗, by act, or nothing. */
 const marks = (page: Page) => page.locator('vb-node').evaluateAll((els) => els.map((e) =>
-  [...e.querySelectorAll<HTMLElement>('.vb-act')].filter((b) => b.checkVisibility({ visibilityProperty: true })).map((b) => b.dataset.act ?? 'flag')));
-/** Every mark that shows takes no pointer and no focus: a mark, not a button to press. */
-const markIsInert = (page: Page) => page.locator('.vb-world').evaluate((w) => {
-  const shown = [...w.querySelectorAll<HTMLElement>('.vb-act')].filter((b) => b.checkVisibility({ visibilityProperty: true }));
-  return shown.length > 0 && shown.every((b) => { b.focus(); return getComputedStyle(b).pointerEvents === 'none' && document.activeElement !== b; });
-});
+  [...e.querySelectorAll<HTMLElement>('[data-mark="answer"]')].flatMap((d) => (d.dataset.answer === 'ticked' ? ['ack'] : d.dataset.answer === 'crossed' ? ['drop'] : []))));
 
 test('the retired marker opens its version with the answers as they stood just before the retire, read-only; the dropdown\'s is as at it', async ({ page, request }) => {
   const a = await joinAgent(request, 'Retire chat');
@@ -178,10 +173,9 @@ test('the retired marker opens its version with the answers as they stood just b
     await expect(count(page)).toHaveAttribute('title', '4 of 4 answered');
     await expectNoAxeViolations(page);
   }
-  // Each card shows its mark (FIX_01): the ✓ or ✗ lit, a mark that takes no focus and no press.
+  // Each card shows its answer (FIX_01): the ✓ or ✗ lit on its disc; a press sends nothing.
   await expect.poll(() => marks(page)).toEqual(ALL.map(([, status]) => [status === 'acknowledged' ? 'ack' : 'drop']));
-  await expect.poll(() => markIsInert(page)).toBe(true);
-  const lit = page.locator('.vb-world .vb-act:visible').first();
+  const lit = page.locator('.vb-world [data-mark="answer"][data-answer="ticked"]').first();
   const box = (await lit.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   // Still read-only: a key sends nothing either.
@@ -200,7 +194,7 @@ test('the retired marker opens its version with the answers as they stood just b
   await expect.poll(() => marks(page)).toEqual([[], [], [], []]);
 });
 
-test('a past version from the dropdown shows each answered card\'s ✓ or ✗ lit, a mark that takes no press', async ({ page, request }) => {
+test('a past version from the dropdown shows each answered card\'s ✓ or ✗ lit on its disc, which takes no press', async ({ page, request }) => {
   const a = await joinAgent(request, 'Marks chat');
   await write(request, a, 'ver-marks', [
     { type: 'board', title: 'Past marks' },
@@ -225,17 +219,16 @@ test('a past version from the dropdown shows each answered card\'s ✓ or ✗ li
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await expect.poll(() => marks(page), theme).toEqual([['ack'], ['drop'], []]);
-    await expect.poll(() => markIsInert(page), theme).toBe(true);
     await expectNoAxeViolations(page);
   }
-  await page.locator('.vb-world .vb-act:visible').first().click({ force: true });
+  await page.locator('.vb-world [data-mark="answer"][data-answer="ticked"]').first().click({ force: true });
   await idle(page);
   expect(sent.map((r) => r.url())).toEqual([]);
   await expect(page.locator('vb-node').first()).toHaveAttribute('data-status', 'acknowledged');
-  // Back to now, the row is the person's buttons again: every one shows and can be pressed.
+  // Back to now, the discs are the person's again: none is paused.
   await banner(page).getByRole('button', { name: 'Back to now' }).click();
   await expect(page.locator('vb-node')).toHaveCount(4);
-  await expect.poll(async () => (await marks(page)).every((m) => m.length > 1)).toBe(true);
+  await expect(page.locator('vb-node [data-mark="answer"][aria-disabled="true"]')).toHaveCount(0);
 });
 
 // ---- The gallery's banner sample ----

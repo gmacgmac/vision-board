@@ -12,8 +12,8 @@ import { act, card, draw, open, write } from './agent-board.ts';
 import { boardLines } from './board-lines.ts';
 import { idle, selected, stageBox } from './board-page.ts';
 
-const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
-const updates = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="updates"]');
+const isNew = (page: Page, n: number) => card(page, n).locator('[data-mark="badge"][data-badge="new"]');
+const updates = (page: Page, n: number) => card(page, n).locator('[data-mark="badge"][data-badge="updates"]');
 const freshList = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
 const openList = (page: Page) => page.getByLabel('Go to an open card', { exact: true });
 const freshChip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="fresh"]:has(${bid('fresh-cards')})`);
@@ -38,7 +38,7 @@ async function fresh(page: Page, request: Parameters<typeof draw>[0], query = '?
     { type: 'node', n: d.n[2], node: { region: 'p', kind: 'question', title: 'Card 3', body: 'Changed.' } },
   ]);
   await expect(page.locator('vb-node')).toHaveCount(4);
-  await expect(isNew(page, added!.n!)).toHaveText('NEW');
+  await expect(isNew(page, added!.n!)).toHaveText('New');
   await expect(updates(page, d.n[2]!)).toHaveText('1 update');
   await expect(freshChip(page)).toContainText('2 new');
   return { d, added: added!.n!, updated: d.n[2]! };
@@ -47,7 +47,7 @@ async function fresh(page: Page, request: Parameters<typeof draw>[0], query = '?
 /** Everything a find must leave alone, for a board where cards `added` and `updated` are fresh. */
 async function untouched(page: Page, d: Drawn, added: number, updated: number, was: number): Promise<void> {
   await idle(page);
-  await expect(isNew(page, added)).toHaveText('NEW');
+  await expect(isNew(page, added)).toHaveText('New');
   await expect(updates(page, updated)).toHaveText('1 update');
   await expect(freshChip(page)).toContainText('2 new');
   expect(await cardSeen(page, d), 'no card seen line').toBe(was);

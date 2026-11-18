@@ -19,7 +19,8 @@ export const grip = (page: Page, region: string) => frame(page, region).locator(
 // Item numbers run across every board of the project: a card is found by the number its write
 // returned, never by its title.
 export const card = (page: Page, key: string) => page.locator(`vb-node[data-id="${fx.n[key]}"]`);
-export const text = (page: Page) => bubble(page).getByLabel('Note text');
+/** The note's text field: the conversation box's on a node, the note bubble's on a container. */
+export const text = (page: Page) => bubble(page).locator('textarea');
 export const comment = (page: Page, title: string) => page.getByRole('button', { name: `Comment on container ${title}` });
 export const preview = (page: Page, region: string) => frame(page, region).locator('.vb-note-pop');
 export const block = (page: Page, region: string) => frame(page, region).locator('.vb-region-note-block');

@@ -80,7 +80,7 @@
   --vb-focus-offset-inset: -2px; /* a row that fills its box */
   --vb-focus-offset-card: 3px;
 
-  /* The node's edges (D-099; nodeEdges): a mark on the border is 22px tall and never draws under
+  /* The node's edges (D-099): a mark on the border is 22px tall and never draws under
      --vb-mark-min on screen however far out the board zooms (D-101; FE_05; the zoom artboard's 40%);
      the answer disc and the icon tile. A skin may square the corners. */
   --vb-mark-h: 22px;
@@ -186,7 +186,7 @@
   --vb-accent-soft: var(--vb-host-accent-soft, var(--vb-board-accent-soft));
   --vb-accent-line: var(--vb-host-accent-line, light-dark(#f7b6dc, #5e2449));
   --vb-focus: var(--vb-host-focus, var(--vb-accent));
-  /* The ring on a node that draws its edges and on each of its marks (D-099; nodeEdges; point 338): a calm slate, not
+  /* The ring on a node and on each of its marks (D-099; point 338): a calm slate, not
      the accent, shown only after Tab. Decoration tier (Lc 30): 47.3 / 46.5 dark on the canvas / card, 73.8 / 79.8
      light. Command Lens's is its skin's value (skins.css). */
   --vb-focus-edge: light-dark(#5a6478, #8b9bb8);
@@ -234,7 +234,9 @@
   /* Node kinds (Architect families, D-024) */
   --vb-kind-question: light-dark(#3471d0, #72a6f2);
   --vb-kind-finding: light-dark(#1f8f7e, #4fc3b0);
-  --vb-kind-decision: var(--vb-board-accent);
+  /* Decision is off the notes pink, fuchsia (D-100 4; DD-14), so pink means notes and buttons only. Lc 79.9 / 52.7 on
+     the card. */
+  --vb-kind-decision: light-dark(#a21caf, #e879f9);
   --vb-kind-risk: light-dark(#e0552a, #f38860);
   --vb-kind-action: light-dark(#b57c09, #e8b04a); /* light nudged from #c98a0b */
   --vb-kind-topic: var(--vb-state-later);
@@ -243,7 +245,7 @@
      on its kind tab; 61.5 and 58.9 dark (the label tier is 45). */
   --vb-kind-app: light-dark(#0b7fa6, #4ec3e6);
 
-  /* The node's edges (D-099; nodeEdges). APCA, light / dark (tests/plugin/token-contrast.spec.ts):
+  /* The node's edges (D-099). APCA, light / dark (tests/plugin/token-contrast.spec.ts):
      The answer (DD-07, DD-08): a waiting disc is the kind's colour with a dot of the ground (Lc 50.8
      or more on every kind); answered, it fills green or red with a white mark (Lc 73.2, 74.7). The
      fills sit on the border, so each is a mark on the card and the canvas (decoration, 30): red is
@@ -302,11 +304,6 @@
   --vb-font-display: var(--vb-host-font, 'vb-bricolage-grotesque', 'vb-figtree', var(--vb-font));
   --vb-font-label: var(--vb-host-font-mono, var(--vb-font-mono));
 }
-
-/* Decision moves off the notes pink to fuchsia (D-100 4; DD-14), on a board drawing the new node
-   (data-vb-edges, set with nodeEdges) until T_04 makes it the token's own value. Lc 79.9 / 52.7
-   on the card. */
-.vb-board[data-vb-edges] { --vb-kind-decision: light-dark(#a21caf, #e879f9); }
 
 /* A toned node (decision 17): the node sets data-vb-tone to its tone's name, or `hue`, and
    --vb-tone-h to the checked number or, for a name, var(--vb-tone-hue-<name>), so a name and a hue

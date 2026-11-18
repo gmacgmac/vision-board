@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
 
 const reviewList = (page: Page) => bar(page).getByRole('combobox', { name: 'Review a card with a proposal' });
 const rowsOf = (list: Locator) => list.evaluate((e) => [...(e as HTMLSelectElement).options].map((o) => o.label));
-const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
+const isNew = (page: Page, n: number) => card(page, n).locator('[data-mark="badge"][data-badge="new"]');
 
 /** Whether any of card `n` shows on the stage. */
 async function shows(page: Page, n: number): Promise<boolean> {
@@ -41,7 +41,7 @@ async function farBoard(page: Page, request: APIRequestContext, query = '') {
   const [added] = await write(request, d, [{ type: 'node', node: { region: 'p', kind: 'question', title: 'Card 37', body: 'Added later.' } }]);
   const last = added!.n!;
   await expect(page.locator('vb-node')).toHaveCount(37);
-  await expect(isNew(page, last)).toHaveText('NEW');
+  await expect(isNew(page, last)).toHaveText('New');
   const first = d.n[0]!;
   const mid = d.n[17]!;
   await propose(request, d, mid, 'cross', 'not needed');
@@ -69,7 +69,7 @@ test('Review lists the cards with proposals in card order; choosing the off-scre
   expect(await shows(page, last), 'brought into view').toBe(true);
   expect(await scale(page), 'at a readable zoom: the controls show again').toBeGreaterThanOrEqual(0.55);
   expect(await selected(page)).toEqual([String(last)]);
-  await expect(isNew(page, last), 'looking is not reading: NEW stays').toHaveText('NEW');
+  await expect(isNew(page, last), 'looking is not reading: New stays').toHaveText('New');
   await expect(page.locator(bid('counts'))).toContainText('1 new');
   await idle(page);
   expect((await boardLines(page, d.board)).filter((e) => e.type === 'seen' && e.n !== undefined).length, 'no card seen line').toBe(was);

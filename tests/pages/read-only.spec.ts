@@ -1,6 +1,6 @@
 // Read-only and Edit in the header (readOnlyStart flag, D-085; READONLY_UI_01), on a folder server that opens every
 // ledger read-only (folder-server.ts `readOnly`, with ledger folders: `start` holds `main` and `ui`): the page opens
-// read-only and says so after the path at every width (1400, 900, 600); every control that would write is paused
+// read-only and says so after the path at every width (1440, 900, 600); every control that would write is paused
 // with the reason; Edit (the button at full, a row of "⋯" from half, the chip's menu always) takes the ledger and a
 // write works; Stop editing gives it back; another computer holding the ledger makes Edit say who, and the ledger
 // stays read-only; long names fit every form; axe and APCA in light and dark; the flag off shows nothing and writes
@@ -30,7 +30,7 @@ test.beforeAll(async () => { srv = await startFolderServer({ ledgers: true, read
 test.afterAll(async () => { await srv.close(); });
 
 /** The page at `width` with the flags on (or `flags` as given), drawn and settled. */
-async function open(page: Page, width = 1400, flags = FLAGS, base = srv.base) {
+async function open(page: Page, width = 1520, flags = FLAGS, base = srv.base) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto(`${base}/?vbwork${flags && `&flags=${flags}`}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
@@ -64,11 +64,9 @@ test('opens read-only: the chip says so, and every control that would write is p
   const order = await page.locator('.vb-toolbar').evaluate((bar) => [bar.querySelector('.vb-path'), bar.querySelector('.vb-chip-editing'), bar.querySelector('.vb-edit-btn')]
     .map((e) => e!.getBoundingClientRect().left));
   expect(order).toEqual([...order].sort((a, b) => a - b));
-  // On the cards: the answers, the size, the note pin and the bookmark; on the frame: its tools.
-  const node = page.locator('vb-node').first();
-  for (const sel of ['button[data-act]', 'button[data-bookmark]', '.vb-note-pin']) {
-    for (const el of await node.locator(sel).all()) await expect(el, sel).toHaveAttribute('aria-disabled', 'true');
-  }
+  // On the cards: the answer and the bookmark (the number); on the frame: its tools.
+  const node = page.locator('vb-node:has([data-mark="answer"])').first();
+  for (const sel of ['[data-mark="answer"]', '[data-mark="number"]']) await expect(node.locator(sel), sel).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator('vb-region .vb-region-comment').first()).toHaveAttribute('aria-disabled', 'true');
   // Send: paused, its title the reason.
   await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
@@ -86,10 +84,10 @@ test('opens read-only: the chip says so, and every control that would write is p
     await expect(page.locator(bid(id))).toHaveAttribute('title', REASON);
   }
   await page.keyboard.press('Escape');
-  // A press says why and writes nothing.
+  // A press says why on the mark for a moment (point 328) and writes nothing.
   const before = await head(page);
-  await node.locator('button[data-bookmark]').click({ force: true });
-  await expect(toast(page)).toHaveText(REASON);
+  await node.locator('[data-mark="number"]').click({ force: true });
+  await expect(page.locator('.vb-mark-tip')).toHaveText('This ledger is read-only');
   expect(await head(page)).toBe(before);
 });
 
@@ -101,19 +99,22 @@ test('Edit, and a write works; Stop editing, and it is read-only again', async (
   await expect(button(page)).toHaveAccessibleName('Stop editing');
   await expect(page.getByRole('status').filter({ hasText: 'You are editing this ledger.' })).toHaveCount(1);
   expect((await project(page)).editing?.here).toBe(true);
-  const ack = page.locator('vb-node').first().locator('button[data-act]').first();
-  await expect(ack).not.toHaveAttribute('aria-disabled', 'true');
+  const asker = page.locator('vb-node:has([data-mark="answer"])').first();
+  const disc = asker.locator('[data-mark="answer"]');
+  await expect(disc).not.toHaveAttribute('aria-disabled', 'true');
   const before = await head(page);
-  await ack.click();
+  await asker.focus();
+  await page.keyboard.press('a');
   await idle(page);
-  await expect(ack).toHaveAttribute('aria-pressed', 'true');
+  await expect(disc).toHaveAttribute('data-answer', 'ticked');
   expect(await head(page)).toBe(before + 1);
-  await ack.click(); // as it was
+  await page.waitForTimeout(450);
+  await page.keyboard.press('a'); // as it was (after the 400 ms guard)
   await idle(page);
   await button(page).click();
   await expect(chip(page)).toHaveAttribute('data-state', 'read-only');
   await expect(button(page)).toHaveAccessibleName('Edit');
-  await expect(ack).toHaveAttribute('aria-disabled', 'true');
+  await expect(disc).toHaveAttribute('aria-disabled', 'true');
   expect((await project(page)).readOnly).toBe(true);
 });
 
@@ -149,8 +150,8 @@ test.describe('another computer edits', () => {
   });
 });
 
-test('the state is in the bar at 1400, 900 and 600 px; Edit is a button at full and a row of "⋯" below', async ({ page }) => {
-  for (const [width, form] of [[1400, 'full'], [900, 'half'], [740, 'half'], [620, 'half'], [600, 'third']] as const) {
+test('the state is in the bar at 1520, 900 and 600 px; Edit is a button at full and a row of "⋯" below', async ({ page }) => {
+  for (const [width, form] of [[1520, 'full'], [900, 'half'], [740, 'half'], [620, 'half'], [600, 'third']] as const) {
     await open(page, width);
     await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', form);
     await expect(chip(page), `${width}px`).toBeVisible();
@@ -205,7 +206,7 @@ test('long folder, ledger and board names, Locked and bookmarked, read-only: eve
   await open(page);
   await longNames(page, request);
   const widths: string[] = [];
-  for (const [width, form] of [[1470, 'full'], [1400, 'full'], [1300, 'full'], [1299, 'half'], [900, 'half'], [620, 'half'], [600, 'third'], [400, 'third']] as const) {
+  for (const [width, form] of [[1560, 'full'], [1470, 'full'], [1428, 'full'], [1427, 'half'], [900, 'half'], [620, 'half'], [600, 'third'], [400, 'third']] as const) {
     await open(page, width);
     await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', form);
     await expect(chip(page)).toBeVisible();
@@ -222,9 +223,9 @@ test('long folder, ledger and board names, Locked and bookmarked, read-only: eve
 });
 
 for (const theme of THEMES) {
-  test(`axe at 1400, 900 and 600 px, the chip's menu and "⋯" open, read-only and editing (${theme})`, async ({ page }) => {
+  test(`axe at 1520, 900 and 600 px, the chip's menu and "⋯" open, read-only and editing (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    for (const width of [1400, 900, 600]) {
+    for (const width of [1520, 900, 600]) {
       await open(page, width);
       await expectBarPasses(page);
       await chip(page).click();
@@ -235,7 +236,7 @@ for (const theme of THEMES) {
       await page.keyboard.press('Escape');
     }
     await editing(page, true);
-    await open(page, 1400);
+    await open(page, 1520);
     await expect(chip(page)).toHaveAttribute('data-state', 'editing');
     await expectBarPasses(page);
     await reset(page);
@@ -243,7 +244,7 @@ for (const theme of THEMES) {
 
   test(`APCA (${theme}): the state's word Lc 60 and icon Lc 30, read-only, hovered and editing; its menu's line Lc 60`, async ({ page }) => {
     await setTheme(page, theme);
-    await open(page, 1400);
+    await open(page, 1520);
     const paint = (css: string) => resolved(page, css).then((c) => pixel(page, c));
     const colour = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).color).then((c) => pixel(page, c));
     const ground = () => chip(page).evaluate((e) => getComputedStyle(e).backgroundColor).then((c) => pixel(page, c));
@@ -255,7 +256,7 @@ for (const theme of THEMES) {
     found.push(['menu line', lc(await colour('.vb-editing-line'), await paint('var(--vb-surface-raised)')), 60]);
     await page.keyboard.press('Escape');
     await editing(page, true);
-    await open(page, 1400);
+    await open(page, 1520);
     await page.mouse.move(0, 500);
     found.push(['editing word', lc(await colour('.vb-chip-editing .vb-chip-word'), await ground()), 60], ['pencil', lc(await colour('.vb-chip-editing .vb-btn-icon'), await ground()), 30]);
     console.log(`APCA ${theme}: ${found.map(([w, v]) => `${w} ${v.toFixed(1)}`).join(', ')}`);
@@ -284,18 +285,18 @@ test('the chip\'s menu opens over the access-request bar: Edit can be seen and p
 
 test('the flag off on the page: the server says read-only, so the chip and Edit show; on a server without it, writes as today', async ({ page }) => {
   // The page's flag off, on this read-only server: the state shows all the same, with Edit (decision 16; FIX_01 F11).
-  await open(page, 1400, 'ledgerFolders,-readOnlyStart,-readOnlyToggle');
+  await open(page, 1520, 'ledgerFolders,-readOnlyStart,-readOnlyToggle');
   await expect(page.locator('.vb-chip-editing')).toBeVisible();
   await expect(page.locator('.vb-edit-btn')).toBeVisible();
   // The worker's own board (edit mode, the server's flag off), the page's flag on: nothing shows, and a press writes.
-  await open(page, 1400, FLAGS, MAIN_BASE);
+  await open(page, 1520, FLAGS, MAIN_BASE);
   await expect(page.locator('.vb-chip-editing, .vb-edit-btn')).toHaveCount(0);
   await expect(page.locator(bid('send'))).not.toHaveAttribute('title', REASON);
   const item = page.locator('vb-node[data-kind="decision"]').first();
-  await expect(item.locator('button[data-act]').first()).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(item.locator('[data-mark="answer"]')).not.toHaveAttribute('aria-disabled', 'true');
   const before = await head(page, MAIN_BASE);
   await item.focus();
-  await page.keyboard.press('x'); // ✗, by its key (the opening zoom hides the card's buttons)
+  await page.keyboard.press('x'); // ✗, by its key
   await idle(page);
   await expect.poll(() => head(page, MAIN_BASE)).toBe(before + 1);
   await page.keyboard.press('x'); // as it was
@@ -310,10 +311,10 @@ test('gallery: the section is there only with the flag, last, with the three for
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders,-readOnlyToggle');
-  await expect(page.locator('main > section:not([data-feature="readOnlyControls"]):not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="oneChangeTab"])').last()).toHaveAttribute('data-feature', 'readOnlyStart');
+  await expect(page.locator('main > section:not([data-feature="readOnlyControls"]):not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"])').last()).toHaveAttribute('data-feature', 'readOnlyStart');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"] .vb-chip-editing`).first()).toBeVisible();
   await expect(section(page).locator(`${bid('editing')}, ${bid('edit')}`)).toHaveCount(0);
-  await expect(section(page).locator('vb-node button[data-bookmark]').first()).toHaveAttribute('aria-disabled', 'true');
+  await expect(section(page).locator('vb-node [data-mark="number"]').first()).toHaveAttribute('aria-disabled', 'true');
 });
 
 for (const theme of THEMES) {

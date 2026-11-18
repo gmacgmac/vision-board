@@ -1,46 +1,30 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MODES } from '#format';
-import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, nblockRepliesMarkup, regionIds, regionTemplate as template } from '../src/index.ts';
-import type { RegionFrameOptions } from '../src/index.ts';
-
-// The popover's markup (layoutTooltip off) is what these tests read; the tooltip's own are at the end.
-const regionTemplate = (r: Parameters<typeof template>[0], o: RegionFrameOptions = {}) => template(r, { layoutTooltip: false, ...o });
+import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, nblockRepliesMarkup, regionIds, regionTemplate } from '../src/index.ts';
 
 const region = { id: 'review', title: 'Review', mode: 'flow' as const };
 
-test('regionTemplate escapes the title in the heading, the row label, the cog and the menu', () => {
+test('regionTemplate escapes the title in the heading, the layout menu, the cog and the menu', () => {
   const html = regionTemplate({ id: 'r', title: '<b>"x"</b> & co', mode: 'grid' });
   const t = '&#60;b&#62;&#34;x&#34;&#60;/b&#62; &#38; co';
   assert.ok(!html.includes('<b>'), 'no raw markup from data');
   assert.ok(html.includes(`<h2 id="region-r">${t}</h2>`));
-  assert.ok(html.includes(`role="radiogroup" aria-label="Layout for ${t}"`));
+  assert.ok(html.includes(`role="menu" aria-label="Layout for ${t}"`));
   assert.ok(html.includes(`aria-label="Settings for ${t}" aria-haspopup="menu"`));
   assert.ok(html.includes(`role="menu" aria-label="Settings for ${t}"`));
-});
-
-test('the mode row: one radio icon per mode, in order, unchecked and out of the tab order, tied to the region', () => {
-  const html = regionTemplate(region);
-  const radios = [...html.matchAll(/<button type="button" class="vb-mseg" role="radio" aria-checked="(\w+)" tabindex="(-?\d)" aria-label="(\w+)" data-mode="(\w+)" data-region="(\w+)"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button>/g)];
-  assert.deepEqual(radios.map((b) => b[4]), [...MODES]);
-  for (const [, checked, tabindex, label, mode, rid] of radios) {
-    assert.equal(checked, 'false', 'update() checks the one in force');
-    assert.equal(tabindex, '-1', 'update() makes the checked one the row\'s Tab stop');
-    assert.equal(label, MODE_LABEL[mode as (typeof MODES)[number]]);
-    assert.equal(rid, 'review');
-  }
 });
 
 test('the mode row ends in a divider, Comment and the cog, a menu button for the settings menu', () => {
   const html = regionTemplate(region);
   assert.match(html, /<span class="vb-mode-div" aria-hidden="true"><\/span><button type="button" class="vb-mseg vb-region-comment"[^>]*>.*?<\/button><button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for Review" aria-haspopup="menu" aria-expanded="false" aria-controls="region-review-menu"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button><\/div>/);
-  assert.equal((html.match(/data-mode=/g) ?? []).length, MODES.length, 'six layouts (column and row, no list); the cog is not a layout');
+  assert.equal((html.match(/data-tile=/g) ?? []).length, MODES.length, 'six layouts in the popover (column and row, no list); the cog is not a layout');
 });
 
-test('the popover is a tooltip with one tile per mode and its one-liner, then the agent\'s choice and the keys', () => {
+test('the popover is the layout button\'s menu: one tile per mode and its one-liner, then the agent\'s choice and the keys', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<div class="vb-mode-pop" id="region-review-modes" role="tooltip">/);
-  const tiles = [...html.matchAll(/<button type="button" class="vb-mtile" tabindex="-1" data-tile="(\w+)" data-region="review"><svg[^>]*>.*?<\/svg><span class="vb-mtile-name">(\w+)<\/span><small>([^<]+)<\/small><\/button>/g)];
+  assert.match(html, /<div class="vb-mode-pop" id="region-review-modes" role="menu" aria-label="Layout for Review">/);
+  const tiles = [...html.matchAll(/<button type="button" class="vb-mtile" role="menuitemradio" aria-checked="false" tabindex="-1" data-tile="(\w+)" data-region="review"><svg[^>]*>.*?<\/svg><span class="vb-mtile-name">(\w+)<\/span><small>([^<]+)<\/small><\/button>/g)];
   assert.deepEqual(tiles.map((t) => t[1]), [...MODES]);
   for (const [, mode, name, hint] of tiles) {
     assert.equal(name, MODE_LABEL[mode as (typeof MODES)[number]]);
@@ -173,13 +157,13 @@ test('a reply under the note block is a tab stop that opens the exchange, escape
 // the header, so the line holds only the label; the note block and the empty message follow it.
 test('with the rail option the tools group leaves the top line for a rail after the header, before the note block', () => {
   const html = regionTemplate(region, { rail: true, widths: true });
-  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">.*?<\/div><\/div><\/header><div class="vb-region-rail"><div class="vb-region-tools"><div class="vb-mode-row" role="radiogroup" aria-label="Layout for Review">/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">.*?<\/div><\/div><\/header><div class="vb-region-rail"><div class="vb-region-tools"><div class="vb-mode-row"><button type="button" class="vb-mseg vb-layout-btn"/);
   assert.match(html, /<\/div><\/div><\/div><section class="vb-region-note-block"/, 'the rail ends before the note block');
   const head = html.slice(0, html.indexOf('</header>'));
   assert.doesNotMatch(head, /vb-region-tools|vb-mode-row|vb-cog/, 'no tool on the top line');
-  // Same controls, same order: layouts, divider, widths, Comment, cog; then the popover, the preview and the menu.
-  const order = [...html.matchAll(/data-mode="(\w+)"|class="vb-mode-div"|vb-widths"|vb-region-comment"|vb-cog"|class="vb-mode-pop"|class="vb-note-pop"|class="vb-region-menu"/g)].map((m) => m[1] ?? m[0]);
-  assert.deepEqual(order, [...MODES, 'class="vb-mode-div"', 'vb-widths"', 'vb-region-comment"', 'vb-cog"', 'class="vb-mode-pop"', 'class="vb-note-pop"', 'class="vb-region-menu"']);
+  // Same controls, same order: the layout button, divider, widths, Comment, cog; then the popover, the preview and the menu.
+  const order = [...html.matchAll(/vb-layout-btn"|class="vb-mode-div"|vb-widths"|vb-region-comment"|vb-cog"|class="vb-mode-pop"|class="vb-note-pop"|class="vb-region-menu"/g)].map((m) => m[0]);
+  assert.deepEqual(order, ['vb-layout-btn"', 'class="vb-mode-div"', 'vb-widths"', 'vb-region-comment"', 'vb-cog"', 'class="vb-mode-pop"', 'class="vb-note-pop"', 'class="vb-region-menu"']);
 });
 
 test('the rail holds exactly the markup the top line held without it', () => {
@@ -196,47 +180,21 @@ test('a fixed frame with the rail: only the cog in its rail; no rail option, no 
   assert.doesNotMatch(regionTemplate(region), /vb-region-rail/);
 });
 
-// Layout tooltip (host-styling FE_02, layoutTooltip flag): each layout icon names itself and says what it does as its
-// accessible description; the big popover is not drawn.
-test('layoutTooltip: every layout icon carries a tip, name over hint, and the hint is its accessible description', () => {
-  const html = template(region, { layoutTooltip: true });
-  const icons = [...html.matchAll(/<button type="button" class="vb-mseg" role="radio" aria-checked="false" tabindex="-1" aria-label="(\w+)" aria-describedby="([^"]+)" data-mode="(\w+)" data-region="review"><svg[^>]*>.*?<\/svg><span class="vb-tip vb-mode-tip"><span class="vb-mode-tip-name">(\w+)<\/span><span class="vb-mode-tip-hint" id="([^"]+)">([^<]+)<\/span><\/span><\/button>/g)];
-  assert.deepEqual(icons.map((i) => i[3]), [...MODES]);
-  for (const [, label, describedby, mode, name, id, hint] of icons) {
-    const m = mode as (typeof MODES)[number];
-    assert.equal(label, MODE_LABEL[m]);
-    assert.equal(name, MODE_LABEL[m]);
-    assert.equal(hint, MODE_HINT[m]);
-    assert.equal(describedby, id, 'the hint is the description');
-    assert.equal(id, `region-review-tip-${m}`);
-  }
-  assert.doesNotMatch(html, /vb-mode-pop|vb-mtile|vb-mode-line/, 'no popover, no tiles');
-});
-
-test('layoutTooltip: a fixed frame has no layout icons, so no tip; the ids follow the mount prefix; off draws the popover', () => {
-  assert.doesNotMatch(template({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true, layoutTooltip: true }), /vb-mode-tip|vb-mode-pop/);
-  assert.match(template(region, { layoutTooltip: true, idPrefix: 'vb2-' }), /id="vb2-region-review-tip-row"/);
-  assert.match(template(region, { layoutTooltip: false }), /class="vb-mode-pop"/);
-  assert.match(template(region), /vb-mode-tip/, 'on by default');
-});
-
-// ---- The one layout control (layoutControl flag, FE_07)
-test('layoutControl: one layout button, no radiogroup and no layout icons; the popover is its menu of radio tiles', () => {
-  const html = regionTemplate(region, { layoutControl: true });
+// ---- The one layout control (PLAN decision 20, FE_07)
+test('one layout button, no radiogroup and no layout icons; the popover is its menu of radio tiles', () => {
+  const html = regionTemplate(region);
   assert.equal((html.match(/class="vb-mseg vb-layout-btn"/g) ?? []).length, 1, 'exactly one layout button');
   assert.equal((html.match(/role="radio"/g) ?? []).length, 0, 'no per-layout icons');
   assert.ok(!html.includes('radiogroup'));
   assert.match(html, /aria-label="Layout: Flow" aria-haspopup="menu" aria-expanded="false" aria-controls="region-review-modes"/);
   assert.match(html, /<div class="vb-mode-pop" id="region-review-modes" role="menu" aria-label="Layout for Review">/);
   assert.equal((html.match(/role="menuitemradio" aria-checked="false" tabindex="-1" data-tile=/g) ?? []).length, MODES.length);
-  assert.ok(!html.includes('vb-dir-row'), 'no direction without the flowDirection choices');
-  assert.ok(!html.includes('vb-mode-tip'), 'the tips are the six icons\' own');
+  assert.ok(!html.includes('vb-mode-tip'), 'no layout icons, so no tips');
 });
 
-test('layoutControl with direction: Across, Down and Auto as radio choices that name their container; a fixed frame has no control', () => {
-  const html = regionTemplate(region, { layoutControl: true, direction: true });
+test('a flow\'s direction: Across, Down and Auto as radio choices that name their container; a fixed frame has no control', () => {
+  const html = regionTemplate(region);
   const dirs = [...html.matchAll(/class="vb-dir" role="menuitemradio" aria-checked="false" tabindex="-1" data-dir="(\w+)" data-region="review"/g)];
   assert.deepEqual(dirs.map((d) => d[1]), ['across', 'down', 'auto']);
-  assert.ok(!regionTemplate(region, { layoutControl: true, fixed: true }).includes('vb-layout-btn'));
-  assert.ok(!regionTemplate(region).includes('vb-layout-btn'), 'off: the six icons as before');
+  assert.ok(!regionTemplate(region, { fixed: true }).includes('vb-layout-btn'));
 });

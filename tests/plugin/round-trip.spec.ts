@@ -2,7 +2,7 @@
 // agent that is only tool calls: the person selects and answers, Send goes as a message of resolved chips; the bot
 // reads and redraws through its tools; the change reaches the board by events and the chat as a line; the line zooms
 // the board by `reveal`, and the card's stepper links back to the line.
-import { drawn, drawPlans, drive, expect, openHost, test } from './harness.ts';
+import { answerNode, drawn, drawPlans, drive, expect, openHost, test } from './harness.ts';
 
 test('a board-to-chat round trip through the seam alone', async ({ page, host }) => {
   await drawPlans(host);
@@ -11,7 +11,7 @@ test('a board-to-chat round trip through the seam alone', async ({ page, host })
   await drive(page, 'status', { agent: (host.bot as { agent: string }).agent });
 
   // The person answers card 1 and selects card 2.
-  await page.locator('.host-root vb-node[data-id="1"] button[data-act="ack"]').click();
+  await answerNode(page.locator('.host-root vb-node[data-id="1"]'));
   await page.locator('.host-root vb-node[data-id="2"]').click();
   await expect.poll(async () => (await drive(page, 'record')).chips.map((c: { kind: string }) => c.kind).sort()).toEqual(['answers', 'selection']);
 
@@ -45,7 +45,7 @@ test('a board-to-chat round trip through the seam alone', async ({ page, host })
 
   // And the card links back to the line.
   const card = page.locator('.host-root vb-node[data-id="2"]');
-  await card.locator('[data-tab="updates"]').click();
+  await card.locator('[data-mark="badge"]').click(); // the change badge opens the history box with its stepper
   await card.getByRole('button', { name: 'Show in the chat' }).click();
   await expect.poll(async () => (await drive(page, 'record')).reveals, 'a plain ref').toEqual([{ board: 'plans', cards: 2 }]);
 });

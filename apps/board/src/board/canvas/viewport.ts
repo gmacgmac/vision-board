@@ -11,7 +11,7 @@ const MAX_K = ZOOM_RULES.range.numbers.max;
  *  polish round 2 ruling 2, tracker N13 closed; it was 75%). */
 export const FAR_K = ZOOM_RULES.farControls.numbers.below;
 
-/** A node's edge marks never draw under `MARK_MIN` px tall on screen (nodeEdges, D-101): below the zoom where a mark of
+/** A node's edge marks never draw under `MARK_MIN` px tall on screen (D-101): below the zoom where a mark of
  *  `MARK_H` px would, they grow in place by `markGrow(k)`. The two are tokens.css's `--vb-mark-min` and `--vb-mark-h`
  *  (zoom-groups.test.ts holds them equal). The growth goes in steps of `GROW_STEP` (never under what is needed, so a
  *  mark is 14 to 17px), because changing it restyles every card: a zoom between two steps writes nothing. */
@@ -98,7 +98,7 @@ export class Viewport {
   world: HTMLElement;
   /** Where the zoom is written as `--vb-zoom` (the regions layer), for the frames inside it to counter-scale by. */
   zoomOn: HTMLElement;
-  /** Where the marks' growth is written as `--vb-mark-grow` (the cards layer; nodeEdges only), else null. */
+  /** Where the marks' growth is written as `--vb-mark-grow` (the cards layer), else null. */
   markOn: HTMLElement | null;
   /** Whether the stage turns "far" below FAR_K: the hideControlsZoomedOut flag (on by default). */
   hideFar: boolean;

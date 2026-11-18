@@ -1,6 +1,6 @@
 // A locked board's cards and frames (N40 ruling 4): the state says `paused` while `BoardState.locked`
-// is set and is left out otherwise, for a card and for its container; the bookmark is never among what
-// the elements pause (paused.ts lists), so it stays usable; everything else that changes the board is.
+// is set and is left out otherwise, for a card and for its container; the bookmark (the number) is never among
+// what the elements pause on a lock (paused.ts lists), so it stays usable; everything else that changes the board is.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -27,14 +27,12 @@ test('the elements pause every control that changes the board, and never the boo
   const source = (rel: string) => fs.readFileSync(new URL(rel, import.meta.url), 'utf8');
   const list = (file: string) => /const PAUSED = '([^']+)'/.exec(source(file))![1]!;
   const cardList = list('../src/node/vb-node.ts');
-  for (const sel of ['button[data-act]', '.vb-size-trig', '.vb-size-opt', '.vb-note-pin', 'button[data-answer]', '[data-mark="answer"]', '[data-mark="tick"]', '[data-mark="cross"]']) assert.ok(cardList.includes(sel), sel);
-  assert.doesNotMatch(cardList, /data-bookmark|vb-bookmark/);
-  // The bookmark button is a `data-bookmark`, never a `data-act`, so the card list can't catch it.
-  const html = nodeTemplate(node({}), { bookmark: true });
-  assert.match(html, /<button type="button" class="vb-act vb-bookmark" data-bookmark /);
-  assert.doesNotMatch(html, /data-bookmark[^>]*data-act|data-act="bookmark"/);
+  for (const sel of ['button[data-answer]', '[data-mark="answer"]', '[data-mark="tick"]', '[data-mark="cross"]']) assert.ok(cardList.includes(sel), sel);
+  assert.doesNotMatch(cardList, /data-mark="number"/);
+  // The number is the bookmark (D-099 2): a mark of its own, so the card list can't catch it.
+  assert.match(nodeTemplate(node({})), /<button type="button" class="vb-mark vb-node-num" data-mark="number" /);
   const frameList = list('../src/region/vb-region.ts');
-  for (const sel of ['button[data-mode]', 'button.vb-mtile', '.vb-widths', '.vb-region-grip', '.vb-region-comment', 'data-note-act="edit"', 'data-note-act="remove"', 'data-revoke'])
+  for (const sel of ['button.vb-mtile', '.vb-widths', '.vb-region-grip', '.vb-region-comment', 'data-note-act="edit"', 'data-note-act="remove"', 'data-revoke'])
     assert.ok(frameList.includes(sel), sel);
   assert.doesNotMatch(frameList, /vb-cog|data-note-act="show"/, 'the cog and Show in container stay');
 });
@@ -51,8 +49,8 @@ test('a read-only ledger pauses a card and its container as a lock does, and the
   assert.ok(!('readOnly' in nodeState(node({}), board(false))));
   assert.equal(regionState(region, view, readOnly(), new Set(['3'])).paused, true);
   const source = fs.readFileSync(new URL('../src/node/vb-node.ts', import.meta.url), 'utf8');
-  // With the node's edges (nodeEdges) the number is the bookmark, so it pauses with the bookmark (FE_01).
-  assert.match(source, /const BOOKMARK = 'button\[data-bookmark\], \[data-mark="number"\]'/);
+  // The number is the bookmark, so it pauses with the bookmark (FE_01).
+  assert.match(source, /const BOOKMARK = '\[data-mark="number"\]'/);
   assert.match(source, /pauseControls\(this, BOOKMARK, st\.readOnly === true\)/);
 });
 

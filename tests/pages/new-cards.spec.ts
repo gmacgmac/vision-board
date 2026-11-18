@@ -1,7 +1,7 @@
 // NEW cards on the page (stage5-follow-ups FE_01, tracker U1), behind the newCards flag (rule 12, on
-// by default): a card the agent adds after the person first opened the board shows a NEW tab on its
-// bottom edge (a label, not a button) and its name ends ", new"; a fresh board shows none; selecting
-// the card sends its seen line (`clearedBy` names select) and takes the tab away; a Send and a new
+// by default): a card the agent adds after the person first opened the board shows New on its change
+// badge (D-099 6) and its name ends ", new"; a fresh board shows none; selecting
+// the card sends its seen line (`clearedBy` names select) and takes the badge away; a Send and a new
 // drawing end no NEW (new-and-updated Design 2): the older card stays NEW beside the newer; axe light
 // and dark; then the gallery's New card sample.
 //
@@ -62,14 +62,14 @@ async function open(page: Page, d: Drawn, query = ''): Promise<void> {
   await expect.poll(async () => (await events(page, 0, d.board)).some((e) => e.type === 'seen' && e.board === d.board)).toBe(true);
 }
 
-const tag = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
+const tag = (page: Page, n: number) => card(page, n).locator('[data-mark="badge"][data-badge="new"]');
 
 test.beforeEach(async ({ page }) => {
   // The page first, so page.request carries the person cookie.
   await page.goto('/?setup');
 });
 
-test('a fresh board shows no NEW; a card the agent adds later shows NEW live, as a label and in the name', async ({ page, request }) => {
+test('a fresh board shows no New; a card the agent adds later shows New live, on its change badge and in the name', async ({ page, request }) => {
   const d = await draw(request, 2);
   const [a, b] = d.n as [number, number];
   await open(page, d);
@@ -79,15 +79,15 @@ test('a fresh board shows no NEW; a card the agent adds later shows NEW live, as
   const c = await add(request, d, 'Card 3');
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(tag(page, c)).toBeVisible();
-  await expect(tag(page, c)).toHaveText('NEW');
+  await expect(tag(page, c)).toHaveText('New');
   await expect(card(page, c)).toHaveAttribute('aria-label', /Risk: Card \d+, new$/);
   await expect(tag(page, a)).toBeHidden();
-  // Not a button: it is not in the tab order and holds nothing to press.
-  expect(await tag(page, c).evaluate((e) => e.tagName)).toBe('SPAN');
-  await expect(card(page, c).locator('[data-tab="updates"]')).toBeHidden();
+  // The change badge says it, and opens the node's history (D-099 6).
+  await expect(tag(page, c)).toHaveAttribute('aria-haspopup', 'dialog');
+  await expect(card(page, c).locator('[data-mark="badge"][data-badge="updates"]')).toBeHidden();
 });
 
-test('selecting a NEW card sends its seen line and takes the tab away; a second click sends nothing', async ({ page, request }) => {
+test('selecting a New card sends its seen line and takes the badge away; a second click sends nothing', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d, '?vbwork');
   const c = await add(request, d, 'Card 2');
@@ -142,7 +142,7 @@ test('a past version shows no NEW tab', async ({ page, request }) => {
   await expect(page.locator('vb-node')).toHaveCount(3);
   await page.locator(bid('version')).selectOption({ index: 1 });
   await expect(page.locator('.vb-banner')).toBeVisible();
-  await expect(page.locator('.vb-node-btab[data-tab="new"]:visible')).toHaveCount(0);
+  await expect(page.locator('[data-mark="badge"][data-badge="new"]:visible')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('.vb-banner')).toBeHidden();
   await expect(tag(page, c)).toHaveCount(1);
@@ -165,8 +165,8 @@ test('gallery: the New card sample shows by default and not with -newCards', asy
   const section = page.locator('section[data-feature="card-updates"]');
   await page.goto('/gallery.html?flags=-newCards');
   await expect(section.locator('vb-node')).toHaveCount(3);
-  await expect(section.locator('[data-tab="new"]:visible')).toHaveCount(0);
+  await expect(section.locator('[data-badge="new"]:visible')).toHaveCount(0);
   await page.goto('/gallery.html');
   await expect(section.locator('vb-node')).toHaveCount(4);
-  await expect(section.locator('[data-tab="new"]:visible')).toHaveText('NEW');
+  await expect(section.locator('[data-badge="new"]:visible .vb-mark-text')).toHaveText('New');
 });

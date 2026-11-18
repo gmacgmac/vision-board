@@ -84,9 +84,9 @@
     onarchive: () => void;
     /** Lock board or Unlock board in the "⋯" menu (lockBoard flag): the open board. */
     onlock: () => void;
-    /** The board's skin in the "⋯" menu (skins flag, D-100 2); left out, no Skin rows. */
+    /** The board's skin in the "⋯" menu (D-100 2); left out, no Skin rows. */
     onskin?: ((skin: Skin) => void) | undefined;
-    /** Which way the board's flows run, a menu in the header (flowDirection flag, D-100 5; FlowMenu.svelte); left out, none. */
+    /** Which way the board's flows run, a menu in the header (D-100 5; FlowMenu.svelte); left out (the gallery's samples), none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
     placement?: 'board' | 'gallery';
     /** The form to draw (the gallery's); left out, the bar's own width says. */
@@ -123,7 +123,8 @@
   const adaptive = flag('adaptiveHeader') && toolbarMenu && flag('versionView');
   let width = $state(window.innerWidth);
   let bar: HTMLElement;
-  const tier = $derived(form ?? headerTier(width, !!ondirection && !!facts.direction));
+  // Flows' room counts from the start (a board's direction arrives with its first draw), so the form never jumps on load.
+  const tier = $derived(form ?? headerTier(width, !!ondirection));
   $effect(() => {
     if (!adaptive || form) return;
     // On the next frame: a new tier changes the bar's own size, and changed inside the observer's callback that is a

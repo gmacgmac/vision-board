@@ -71,10 +71,9 @@ async function open(page: Page, host: FakeHost) {
   await page.evaluate(HELPERS);
 }
 
-/** On the board's root: the skin, and the new node's attribute (Decision's new colour). */
+/** On the board's root: the skin. */
 const dress = (page: Page, skin: string) => page.locator('.host-root').evaluate((root, s) => {
   if (s === 'default') delete (root as HTMLElement).dataset.vbSkin; else (root as HTMLElement).dataset.vbSkin = s;
-  (root as HTMLElement).dataset.vbEdges = '';
 }, skin);
 
 /** In the page: what each pair measures, below its tier, as `text on ground: Lc`. */

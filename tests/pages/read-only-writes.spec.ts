@@ -52,28 +52,31 @@ test('read-only, every press that would write says why and writes nothing; Edit,
   await page.waitForTimeout(300); // the stream's `editing` reaches the page, which reads again
   await idle(page);
   const before = await head(page);
-  await card(page, 1).locator('button[data-act="ack"]').click({ force: true });
-  await expect(toast(page)).toHaveText(REASON);
-  await expect(card(page, 1).locator('button[data-act="ack"]')).toHaveAttribute('aria-pressed', 'false');
+  // The disc, X and the number say why on the mark for a moment (point 328).
+  const tip = page.locator('.vb-mark-tip');
+  await card(page, 1).locator('[data-mark="answer"]').click({ force: true });
+  await expect(tip).toHaveText('This ledger is read-only');
+  await expect(card(page, 1).locator('[data-mark="answer"]')).toHaveAttribute('data-answer', 'waiting');
   await card(page, 2).focus();
   await page.keyboard.press('x');
-  await expect(toast(page)).toHaveText(REASON);
+  await expect(card(page, 2).locator('[data-mark="answer"]')).toHaveAttribute('data-locked', '');
   await page.keyboard.press('c');
   await expect(page.locator('vb-note-bubble')).toBeHidden(); // no note can be written
-  await card(page, 1).locator('button[data-bookmark]').click({ force: true });
-  await expect(toast(page)).toHaveText(REASON);
+  await card(page, 1).locator('[data-mark="number"]').click({ force: true });
+  await expect(tip).toHaveText('This ledger is read-only');
   await idle(page);
   expect(await head(page), 'nothing written').toBe(before);
   await editing(page, true);
   await page.waitForTimeout(300);
   await idle(page);
-  await card(page, 1).locator('button[data-act="ack"]').click();
+  await card(page, 1).focus();
+  await page.keyboard.press('a');
   await idle(page);
-  await expect(card(page, 1).locator('button[data-act="ack"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(card(page, 1).locator('[data-mark="answer"]')).toHaveAttribute('data-answer', 'ticked');
   expect(await head(page)).toBe(before + 1);
 });
 
-test('read-only, a changed card selected and the board looked at write no seen line; the tab still goes, in the page', async ({ page, request }) => {
+test('read-only, a changed card selected and the board looked at write no seen line; the badge still settles, in the page', async ({ page, request }) => {
   await setUp(request);
   await open(page);
   await write(request, [{ type: 'node', n: 2, node: { region: 'ideas', kind: 'decision', title: 'Ship on Monday?' } }]);
@@ -83,7 +86,7 @@ test('read-only, a changed card selected and the board looked at write no seen l
   await page.waitForTimeout(300);
   await idle(page);
   const before = await head(page);
-  const tab = card(page, 2).locator('[data-tab="updates"]');
+  const tab = card(page, 2).locator('[data-mark="badge"][data-badge="updates"]');
   await expect(tab).toBeVisible();
   await card(page, 2).click();
   await idle(page);

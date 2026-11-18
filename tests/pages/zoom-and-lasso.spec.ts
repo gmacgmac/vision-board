@@ -101,7 +101,7 @@ test('a lasso that touches no card offers only "Zoom to this area", which zooms 
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(before.k);
 });
 
-test('the selection bar: N selected, Comment, Move to, Reset places, Remove, Zoom; centred above the selection; follows a pan', async ({ page }) => {
+test('the selection bar: N selected, Comment, Move to, Reset places, Remove, Bookmark all, Save for later, Width, Zoom; centred above the selection; follows a pan', async ({ page }) => {
   await openBoard(page);
   await expect(bar(page)).toBeHidden();
   await clickCard(page, 13);
@@ -111,7 +111,7 @@ test('the selection bar: N selected, Comment, Move to, Reset places, Remove, Zoo
   // The pill opens it (stage5-follow-ups FE_02); the pill stays its first item.
   expect(await barButtons(page)).toEqual(['2 selected']);
   await openSelectionBar(page);
-  expect(await barButtons(page)).toEqual(['2 selected', 'Comment', 'Move to', 'Reset places', 'Remove', 'Zoom']);
+  expect(await barButtons(page)).toEqual(['2 selected', 'Comment', 'Move to', 'Reset places', 'Remove', 'Bookmark all', 'Save for later', 'Width', 'Zoom']);
   const sel = await boxOf(page, [13, 14]);
   const b = (await bar(page).boundingBox())!;
   expect(b.y + b.height).toBeLessThanOrEqual(sel.y);
@@ -227,10 +227,10 @@ async function freeCards(page: Page, ids: number[], count: number): Promise<stri
 const head = async (page: Page) => (await (await page.request.get('/api/boards/roadmap')).json() as { head: number }).head;
 const responsesAfter = async (page: Page, after: number) =>
   (await (await page.request.get(`/api/boards/roadmap/responses?after=${after}`)).json() as { responses: Record<string, unknown>[] }).responses;
-const pinOf = (page: Page, n: string) => card(page, n).locator('.vb-note-pin');
+const notesCount = (page: Page, n: string) => card(page, n).locator('[data-mark="notes"] .vb-mark-text');
 
-// With the groupNoteOnce flag (on by default) the note is drawn once, as the group's pin; group-note.spec.ts holds the rest.
-test('Comment on a group: one note, saved once, drawn once as the group\'s pin, edited and removed from it', async ({ page }) => {
+// A note on several nodes is the selection's conversation box (FE_06), counted on each member's notes mark.
+test('Comment on a group: one note, saved once, counted on each card', async ({ page }) => {
   await openBoard(page);
   const ids = await freeCards(page, [12, 13, 14, 15, 16, 17], 3);
   const [a, b, c] = ids as [string, string, string];
@@ -241,36 +241,16 @@ test('Comment on a group: one note, saved once, drawn once as the group\'s pin, 
   await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Comment' }).click();
   await expect(bubble(page)).toBeVisible();
-  await expect(bubble(page)).toHaveAttribute('aria-label', `Note on 3 cards: ${a}, ${b}, ${c}`);
-  await expect(bubble(page).locator('textarea')).toBeFocused();
+  await expect(bubble(page)).toHaveAttribute('data-mode', 'conversation');
+  await expect(bubble(page).getByRole('textbox')).toBeFocused();
   await expect(bar(page)).toBeHidden();
-  await bubble(page).locator('textarea').fill('Same order for all three.');
+  await bubble(page).getByRole('textbox').fill('Same order for all three.');
   await page.keyboard.press('Enter');
-  await expect(bubble(page)).toBeHidden();
-  await expect(bar(page)).toBeVisible();
-  const group = page.locator(`.vb-group-pin[data-group="${ids.join(',')}"]`);
-  await expect(group).toHaveText('1');
-  for (const n of ids) {
-    await expect(pinOf(page, n)).toBeHidden();
-    await expect(card(page, n).locator('.vb-node-notes')).toBeHidden();
-  }
+  await expect(bubble(page).locator('.vb-nb-queued')).toContainText('Same order for all three.');
+  for (const n of ids) await expect(notesCount(page, n)).toHaveText('1');
   const acts = await responsesAfter(page, before);
   expect(acts.map((e) => [e.action, e.nodes, e.n])).toEqual([['comment', ids.map(Number), undefined]]);
-  // Edit from the group's pin. `dispatchEvent` rather than a coordinate click: the pin's hover-scale
-  // transition and the stage's own zoom transform leave a synthetic mouse click an unreliable hit
-  // test on this small target.
-  await group.dispatchEvent('click');
-  await expect(bubble(page)).toHaveAttribute('aria-label', `Edit note on 3 cards: ${a}, ${b}, ${c}`);
-  await bubble(page).locator('textarea').fill('Same order, please.');
-  await page.keyboard.press('Enter');
-  await expect(bubble(page)).toBeHidden();
-  await expect(group).toHaveAttribute('aria-label', `Note 1 on items ${a}, ${b}, ${c}. Edit it`);
-  // Remove it from the pin: gone, from the board and from every card.
-  await group.dispatchEvent('click');
-  await bubble(page).getByRole('button', { name: 'Remove' }).click();
-  await expect(bubble(page)).toBeHidden();
-  await expect(group).toHaveCount(0);
-  for (const n of ids) await expect(pinOf(page, n)).toBeHidden();
+  await page.keyboard.press('Escape');
 });
 
 test('Comment with one card selected is that card\'s own note', async ({ page }) => {
@@ -279,7 +259,7 @@ test('Comment with one card selected is that card\'s own note', async ({ page })
   await clickCard(page, a!);
   await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Comment' }).click();
-  await expect(bubble(page)).toHaveAttribute('aria-label', `Note on ${a}`);
+  await expect(bubble(page)).toHaveAttribute('aria-label', `Conversation on ${a}`);
   await page.keyboard.press('Escape');
   await expect(bubble(page)).toBeHidden();
 });
@@ -294,7 +274,7 @@ test('keys: N or C with two or more selected open the group note; Esc closes it,
   for (const key of ['n', 'c']) {
     await page.keyboard.press(key);
     await expect(bubble(page)).toBeVisible();
-    await expect(bubble(page)).toHaveAttribute('aria-label', 'Note on 2 cards: 1, 2');
+    await expect(bubble(page)).toHaveAttribute('data-mode', 'conversation');
     await page.keyboard.press('Escape');
     await expect(bubble(page)).toBeHidden();
     expect(await selectedIds(page)).toEqual(['1', '2']);

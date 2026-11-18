@@ -22,7 +22,7 @@ export const notRunningInAPast = ', not running in a past version';
 export const appAllowed = (name: string): string => `App allowed: ${name}`;
 export const loading = ', loading';
 
-// ---- node-window.ts (the app window, appWindow flag, FE_08)
+// ---- node-window.ts (the app window, FE_08)
 export const openApp = (name: string): string => `Open ${name}`;
 export const openTip = 'Open: the app fills the page';
 export const drawerTip = (key: string): string => `Conversation (${key})`;

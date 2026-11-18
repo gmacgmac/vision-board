@@ -3,7 +3,7 @@
 
 // ---- go-to-card.ts
 export const noCard = (n: number): string => `No card ${n}`;
-export const cardIsHiddenWithThe = (n: number): string => `Card ${n} is hidden with the answered cards (H shows them)`;
+export const cardIsHiddenWithThe = (n: number): string => `Card ${n} is hidden with the answered cards (Shift+H shows them)`;
 export const cardWasRemoved = (n: number): string => `Card ${n} was removed`;
 export const showVWhereItLast = (version: number): string => `Show v${version}, where it last appeared`;
 // Search (cardSearch flag): what the box says of the words typed.

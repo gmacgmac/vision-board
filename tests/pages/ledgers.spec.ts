@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { ledgerFiles, ledgerFolder } from '#format';
+import { FLOWS_W, FULL_MIN } from '../../apps/board/src/board/chrome/header-tier.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { menu, menuButton } from './board-page.ts';
 import type { FolderServer } from './folder-server.ts';
@@ -262,7 +263,9 @@ test('a server that names no ledger: none in the path or in "⋯", the path as i
 // ---- Long names, every form (FULL_MIN and HALF_MIN re-measured with a ledger, LEDGER_UI_01 step 4) ----
 const LONG_LEDGER = 'customer-research-interviews-and-surveys'; // 40, the longest name
 const LONG_BOARD = 'Quarterly hiring plan for the platform and data teams across every region, with budgets and open questions';
-const FORMS = [[1470, 'full'], [1400, 'full'], [1300, 'full'], [1299, 'half'], [900, 'half'], [620, 'half'], [619, 'third'], [490, 'third'], [400, 'third']] as const;
+/** Flows is in the bar, so the full form starts FLOWS_W after FULL_MIN (header-tiers.spec.ts). */
+const FULL_FLOWS = FULL_MIN + FLOWS_W;
+const FORMS = [[1600, 'full'], [1470, 'full'], [FULL_FLOWS, 'full'], [FULL_FLOWS - 1, 'half'], [900, 'half'], [620, 'half'], [619, 'third'], [490, 'third'], [400, 'third']] as const;
 
 /** A long-named folder, ledger and board, a card bookmarked and the board locked: the most the path holds. */
 async function longNames(page: Page, request: APIRequestContext) {
@@ -296,7 +299,7 @@ test('long folder, ledger and board names: every form fits, the ledger never und
     expect(ledger, `${width}px: the ledger's floor`).toBeGreaterThanOrEqual(44);
     expect(board, `${width}px: the board's floor`).toBeGreaterThanOrEqual(form === 'full' ? 100 : 80);
     // At full's first width the path can still give 70px, for Send's longest word and Chat's marks (header-tiers.spec.ts; floors: folder 36, board 100).
-    if (width === 1300) expect(folder! + board!).toBeGreaterThanOrEqual(206);
+    if (width === FULL_FLOWS) expect(folder! + board!).toBeGreaterThanOrEqual(206);
     widths.push(`${width}px folder ${Math.round(folder!)} ledger ${Math.round(ledger!)} board ${Math.round(board!)}`);
   }
   console.log(`Ledger chip widths: ${widths.join('; ')}`);
@@ -357,7 +360,7 @@ test('gallery: the section is there only with the flag, last, with the three for
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto('/gallery.html?flags=ledgerFolders,-readOnlyStart');
-  await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="oneChangeTab"])').last()).toHaveAttribute('data-feature', 'ledgerFolders');
+  await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"])').last()).toHaveAttribute('data-feature', 'ledgerFolders');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).locator('.vb-ledger-chip').first()).toContainText('customer-research-interviews');
   await expect(section(page).locator(`${bid('ledger-chip')}, #new-ledger, #ledger-dialog`)).toHaveCount(0);

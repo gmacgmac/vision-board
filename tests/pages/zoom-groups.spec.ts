@@ -1,4 +1,4 @@
-// The three zoom groups (nodeEdges flag, D-101; FE_05; components.md "Zoom groups"), at 20%, 40%, 100% and 250%:
+// The three zoom groups (D-101; FE_05; components.md "Zoom groups"), at 20%, 40%, 100% and 250%:
 // the edge marks never draw under --vb-mark-min and grow in place (the disc and the notes mark on one vertical line, the
 // number on its corner); a menu keeps one size; the conversation box scales with the board to a readable floor; the
 // history and proposal boxes keep one size and stay open and attached while the board zooms. Light and dark screenshots
@@ -11,7 +11,7 @@ import { drawEdges, mark, menuOf } from './edge-board.ts';
 import { zoomTo } from './rail-board.ts';
 import { BOX_MAX_K, BOX_MIN_K, FAR_GROW, MARK_FAR_K, MARK_MIN, boxScale, marksPressable } from '../../apps/board/src/board/canvas/viewport.ts';
 
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 const ZOOMS = [0.2, 0.4, 1, 2.5];
 const box = async (l: ReturnType<Page['locator']>) => (await l.boundingBox())!;
 /** Press a mark as a person can at zoom `k`: a click, or Enter past the far breakpoint, where a press selects the node (FIX_02). */

@@ -25,7 +25,7 @@
   import ToolbarMenu from './ToolbarMenu.svelte';
   import FlowMenu from './FlowMenu.svelte';
   import { inBar, type HeaderTier } from './header-tier.ts';
-  import { commandTitle, HEADER_COMMANDS, hideKey, zoomTitle } from '../input/index.ts';
+  import { commandTitle, HEADER_COMMANDS, HIDE_KEY, zoomTitle } from '../input/index.ts';
   import type { CommandId } from '../input/index.ts';
   import type { AccessHolder } from '#actions';
   import type { ActDirection, Skin } from '#format';
@@ -42,9 +42,9 @@
     onarchive?: (() => void) | undefined;
     /** Lock board or Unlock board in the "⋯" menu (lockBoard flag); left out, no such row. */
     onlock?: (() => void) | undefined;
-    /** The board's skin in the "⋯" menu (skins flag); left out, no Skin rows. */
+    /** The board's skin in the "⋯" menu (D-100 2); left out, no Skin rows. */
     onskin?: ((skin: Skin) => void) | undefined;
-    /** Which way the board's flows run, a menu in the header (flowDirection flag, D-100 5; FlowMenu.svelte); left out, none. */
+    /** Which way the board's flows run, a menu in the header (D-100 5; FlowMenu.svelte); left out (the gallery's samples), none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
     /** The board's holders, when Agents and Send to agent show; null hides both. */
     holders: AccessHolder[] | null;
@@ -97,7 +97,7 @@
     <ZoomLevel {percent} level={false} />
   {/if}
   {#if !menu}
-    <button type="button" class="vb-btn vb-btn-iconic" id={idOf('hide')} aria-pressed={shown.hide} title={toolbarWords.hideAnsweredItemsH(hideKey(flag('nodeEdges')))}
+    <button type="button" class="vb-btn vb-btn-iconic" id={idOf('hide')} aria-pressed={shown.hide} title={toolbarWords.hideAnsweredItemsH(HIDE_KEY)}
       onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">{commonWords.hideAnswered}</span></button>
     {#if parts.theme}<PagePart draw={parts.theme} />{/if}
     <button type="button" class="vb-btn vb-btn-primary vb-btn-iconic" id={idOf('reply-toggle')} title={toolbarWords.reply} aria-expanded={shown.replyOpen}

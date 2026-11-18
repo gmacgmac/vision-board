@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { ViewNode } from '#format';
 import type { BoardState, ItemNote, ItemStatus } from '#actions';
 import type { CardReply } from '../src/index.ts';
-import { buttonLabel, conversation, isNoteEntry, nodeLabel, nodeState, notesView, offers, STATUS_LABEL, STATUS_NAME } from '../src/index.ts';
+import { conversation, isNoteEntry, litReplies, nodeLabel, nodeState, offers, STATUS_NAME } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -26,13 +26,6 @@ test('a numbered finding offers comment and later', () =>
 test('a numbered question offers ✓, ✗, a note and Later', () =>
   assert.deepEqual(offers(node({ kind: 'question', n: 2 })), ['ack', 'drop', 'comment', 'later']));
 
-// D-045, answer-model ruling 1: ✓ and ✗ are tools named Check and Cross, never a meaning.
-test('a decision\'s ✓ and ✗ are named Check and Cross, with their keys', () => {
-  const d = node({ kind: 'decision', n: 12 });
-  assert.deepEqual(offers(d).map((a) => buttonLabel(a, d)),
-    ['Check item 12 (A)', 'Cross item 12 (X)', 'Comment item 12 (C)', 'Save for later item 12 (L)']);
-});
-
 test('an unnumbered topic offers nothing', () =>
   assert.deepEqual(offers(node({ kind: 'topic' })), []));
 
@@ -44,70 +37,58 @@ test('nodeLabel names the number, kind, title and, on a card that asks, its stat
   assert.equal(nodeLabel(node({ kind: 'topic', title: 'Stack' }), 'open'), 'Topic: Stack');
 });
 
-test('a card whose note the agent owes reads "Replied" in its footer and its name (D-046, replied-word ruling 1)', () => {
+test('a card whose note the agent owes reads "Replied" in its name (D-046, replied-word ruling 1)', () => {
   const st = nodeState(node({ kind: 'decision', n: 8, title: 'Ship' }), withItem('commented'));
-  assert.deepEqual([st.statusWord, st.label], ['Replied', 'Item 8, Decision: Ship, Replied']);
-  assert.equal(STATUS_LABEL.context, 'Replied', 'an old More context reads as a note');
+  assert.equal(st.label, 'Item 8, Decision: Ship, Replied');
+  assert.equal(STATUS_NAME.context, 'Replied', 'an old More context reads as a note');
 });
 
 // ---- nodeState: the rules update() applies ---------------------------------------------------
 
-const STATUSES = Object.keys(STATUS_LABEL) as ItemStatus[];
-const PRESSED_BY: Partial<Record<ItemStatus, string[]>> = {
-  acknowledged: ['ack'], dropped: ['drop'], later: ['later'],
-};
+const STATUSES = Object.keys(STATUS_NAME) as ItemStatus[];
+const ANSWER: Partial<Record<ItemStatus, string>> = { acknowledged: 'ticked', dropped: 'crossed' };
 
-test('nodeState: every status sets status, label, status word and pressed', () => {
+test('nodeState: every status sets status, label and the answer', () => {
   const q = node({ n: 7, title: 'Ship it?' });
   for (const status of STATUSES) {
     const st = nodeState(q, withItem(status));
     assert.equal(st.status, status);
     assert.equal(st.label, `Item 7, Question: Ship it?, ${STATUS_NAME[status]}`);
-    assert.equal(st.statusWord, STATUS_LABEL[status]);
-    const pressedNow = Object.entries(st.pressed).filter(([, v]) => v).map(([a]) => a);
-    assert.deepEqual(pressedNow, PRESSED_BY[status] ?? [], status);
+    assert.equal(st.marks.answer, ANSWER[status] ?? 'waiting', status);
   }
 });
 
-test('nodeState: an item with no response is open, unpressed and has no note', () => {
+test('nodeState: an item with no response is open, waiting and not moved', () => {
   const st = nodeState(node({ n: 1 }), board());
   assert.equal(st.status, 'open');
-  assert.equal(st.statusWord, 'Open');
-  assert.equal(st.notes, undefined);
+  assert.equal(st.marks.answer, 'waiting');
+  assert.equal(st.marks.notes, 'none');
   assert.equal(st.pinned, false);
-  assert.deepEqual(Object.keys(st.pressed), ['ack', 'drop', 'comment', 'later']);
-  assert.ok(Object.values(st.pressed).every((v) => v === false));
 });
 
-test('nodeState: pressed covers only the actions the type offers', () =>
-  assert.deepEqual(Object.keys(nodeState(node({ kind: 'finding', n: 2 }), board()).pressed),
-    ['comment', 'later']));
-
-// D-045, answer-model rulings 1 and 3: the lit mark is the state; no word follows it in the footer.
-test('nodeState: ✓ and ✗ light their button and show no status word; the name says checked or crossed', () => {
+// D-045, answer-model rulings 1 and 3: the lit answer is the state; the name says checked or crossed.
+test('nodeState: ✓ and ✗ light the answer; the name says checked or crossed', () => {
   const d = node({ kind: 'decision', n: 9, title: 'Keep the free tier' });
   const ticked = nodeState(d, withItem('acknowledged'));
-  assert.deepEqual([ticked.statusWord, ticked.label, ticked.pressed.ack, ticked.pressed.drop], ['', 'Item 9, Decision: Keep the free tier, checked', true, false]);
+  assert.deepEqual([ticked.marks.answer, ticked.label], ['ticked', 'Item 9, Decision: Keep the free tier, checked']);
   const crossed = nodeState(d, withItem('dropped'));
-  assert.deepEqual([crossed.statusWord, crossed.label, crossed.pressed.ack, crossed.pressed.drop], ['', 'Item 9, Decision: Keep the free tier, crossed', false, true]);
+  assert.deepEqual([crossed.marks.answer, crossed.label], ['crossed', 'Item 9, Decision: Keep the free tier, crossed']);
 });
 
-// D-045, answer-model ruling 4: a card that only informs shows no status and carries none in its name.
-test('nodeState: a finding, risk, topic or note has no status word and no status in its name, in every status', () => {
+// D-045, answer-model ruling 4: a card that only informs shows no answer and carries no status in its name.
+test('nodeState: a finding, risk, topic or note has no answer and no status in its name, in every status', () => {
   for (const kind of ['finding', 'risk', 'topic', 'note'] as const) {
     for (const status of ['open', 'commented', 'later'] as const) {
       const st = nodeState(node({ kind, n: 3, title: 'Cold caches' }), withItem(status));
-      assert.equal(st.statusWord, '', `${kind} ${status}`);
+      assert.equal(st.marks.answer, 'none', `${kind} ${status}`);
       assert.match(st.label, /^Item 3, [A-Za-z]+: Cold caches$/, `${kind} ${status}`);
     }
   }
-  assert.equal(nodeState(node({ kind: 'finding', n: 3 }), withItem('later')).pressed.later, true, 'Later still shows lit');
 });
 
-test('nodeState: a non-item has no status word, no pressed buttons and a plain label', () => {
+test('nodeState: a non-item has no answer and a plain label', () => {
   const st = nodeState(node({ kind: 'topic', title: 'Stack' }), board());
-  assert.equal(st.statusWord, '');
-  assert.deepEqual(st.pressed, {});
+  assert.equal(st.marks.answer, 'none');
   assert.equal(st.label, 'Topic: Stack');
 });
 
@@ -136,122 +117,51 @@ test('nodeLabel: selected comes last, after the status', () =>
   assert.equal(nodeLabel(node({ kind: 'question', n: 5, title: 'Use it?' }), 'later', true),
     'Item 5, Question: Use it?, Saved for later, selected'));
 
-// 2e_FE_01 ruling 7: a numbered pin for the latest note, and the "Your note" block; review-polish
-// ruling 8: oldest first, like a chat.
-test('nodeState: one note not yet sent: "Your note 1", "1 note" with Hide over it (card-polish FE_02), a pin that edits it', () => {
-  const one = note('Looks right');
-  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [one])).notes, {
-    count: '1 note', toggle: 'Hide notes on item 1',
-    entries: [{ seq: one.seq, index: 1, who: 'Your note 1', text: 'Looks right', sent: false, at: one.at }],
-    pin: { seq: one.seq, index: 1, sent: false, label: 'Note 1 on item 1. Edit it' },
-  });
-});
+// ---- conversation: a card's notes and replies as the conversation box lists them --------------------------------
 
-test('nodeState: three notes, two sent: the count, the oldest first, sent ones marked Sent, the pin on the latest', () => {
+test('conversation: notes oldest first, numbered in the order made, sent ones marked Sent, an old More context a note', () => {
   const notes = [note('one', 'comment', true), note('two', 'context', true), note('three')];
-  const v = nodeState(node({ n: 4 }), withItem('commented', notes)).notes!;
-  assert.equal(v.count, '3 notes');
-  assert.deepEqual(v.entries.map((x) => isNoteEntry(x) && [x.index, x.who, x.text, x.sent]), [
-    [1, 'Your note 1 · Sent', 'one', true], [2, 'Your note 2 · Sent', 'two', true], [3, 'Your note 3', 'three', false]], 'an old More context reads as a note');
-  assert.deepEqual(v.pin, { seq: notes[2]!.seq, index: 3, sent: false, label: 'Note 3 on item 4. Edit it' });
+  assert.deepEqual(conversation(notes, []).map((x) => isNoteEntry(x) && [x.index, x.who, x.text, x.sent]), [
+    [1, 'Your note 1 · Sent', 'one', true], [2, 'Your note 2 · Sent', 'two', true], [3, 'Your note 3', 'three', false]]);
 });
 
 // review-polish ruling 8 and decision 8: one conversation, oldest first, top to bottom: note 1, its
 // replies, note 2...; a reply naming no note of the card takes its place by time among the notes.
-test('notesView: each note then its replies oldest first; orphan replies by seq among the notes; a new note last', () => {
+test('conversation: each note then its replies oldest first; orphan replies by seq among the notes', () => {
   const [a, b] = [{ ...note('first', 'comment', true), seq: 20 }, { ...note('second'), seq: 30 }];
   const replies: CardReply[] = [
     { seq: 33, to: 20, text: 'later answer to first', at: '2026-10-08T00:00:00Z' }, { seq: 40, text: 'orphan, after both notes', at: '2026-10-08T00:00:00Z' },
     { seq: 31, to: 20, text: 'answer to first', at: '2026-10-08T00:00:00Z' }, { seq: 15, text: 'orphan, before first', at: '2026-10-08T00:00:00Z' },
     { seq: 25, to: 99, text: 'orphan, to a gone note, between the notes', at: '2026-10-08T00:00:00Z' }, { seq: 32, to: 30, text: 'answer to second', at: '2026-10-08T00:00:00Z' },
   ];
-  const v = notesView(node({ n: 2 }), [a, b], replies)!;
-  const flat = v.entries.flatMap((x) => isNoteEntry(x) ? [x.text, ...(x.replies ?? []).map((r) => r.text)] : [`(${x.text})`]);
+  const entries = conversation([a, b], replies);
+  const flat = entries.flatMap((x) => isNoteEntry(x) ? [x.text, ...(x.replies ?? []).map((r) => r.text)] : [`(${x.text})`]);
   assert.deepEqual(flat, [
     '(orphan, before first)', 'first', 'answer to first', 'later answer to first',
     '(orphan, to a gone note, between the notes)', 'second', 'answer to second', '(orphan, after both notes)',
   ]);
-  assert.deepEqual(v.entries.filter((x) => !isNoteEntry(x)), [
-    { seq: 15, who: 'Agent reply', text: 'orphan, before first', at: '2026-10-08T00:00:00Z', orphan: true },
-    { seq: 25, who: 'Agent reply', text: 'orphan, to a gone note, between the notes', at: '2026-10-08T00:00:00Z', orphan: true },
-    { seq: 40, who: 'Agent reply', text: 'orphan, after both notes', at: '2026-10-08T00:00:00Z', orphan: true },
-  ]);
-  assert.deepEqual([v.pin!.seq, v.pin!.index, v.count], [30, 2, '2 notes'], 'the pin is the latest note; the count is unchanged');
-  // A new note goes at the bottom, and the pin moves to it.
-  const w = notesView(node({ n: 2 }), [a, b, { ...note('third'), seq: 50 }], replies)!;
-  assert.equal(w.entries.at(-1)!.text, 'third');
-  assert.deepEqual([w.pin!.seq, w.pin!.index, w.count], [50, 3, '3 notes']);
-});
-
-// Review polish ruling 6: the conversation window lists the same entries; a container's notes have no
-// card, so the entries are their own function, which notesView reads.
-test('conversation: the entries notesView lists, for notes with no card (a container)', () => {
-  const [a, b] = [{ ...note('first', 'comment', true), seq: 20 }, { ...note('second'), seq: 30 }];
-  const replies: CardReply[] = [{ seq: 31, to: 20, text: 'answer', at: '2026-10-08T00:00:00Z' }, { seq: 25, text: 'orphan', at: '2026-10-08T00:00:00Z' }];
-  assert.deepEqual(conversation([a, b], replies), notesView(node({ n: 2 }), [a, b], replies)!.entries);
   assert.deepEqual(conversation([], []), []);
 });
 
-// card-polish FE_02: the person puts a card's thread away (notes-hide, `BoardState.notesHidden`: board
-// number -> the seq of the hide); its head alone draws, counting the replies since, so none is missed.
-test('notesView: put away, the head counts the notes and the replies after the hide; the toggle is named for the card', () => {
-  const [a, b] = [{ ...note('first'), seq: 20 }, { ...note('second'), seq: 30 }];
-  const replies: CardReply[] = [{ seq: 31, to: 20, text: 'before', at: '2026-10-08T00:00:00Z' }, { seq: 41, to: 30, text: 'after', at: '2026-10-08T00:00:00Z' },
-    { seq: 42, text: 'after too', at: '2026-10-08T00:00:00Z' }];
-  const shown = notesView(node({ n: 4 }), [a, b], replies)!;
-  assert.deepEqual([shown.count, shown.toggle, shown.hidden], ['2 notes', 'Hide notes on item 4', undefined]);
-  const put = notesView(node({ n: 4 }), [a, b], replies, 35)!;
-  assert.deepEqual([put.count, put.hidden, put.toggle], ['2 notes', '2 notes · 2 new replies', 'Show 2 notes · 2 new replies on item 4']);
-  assert.equal(notesView(node({ n: 4 }), [a, b], replies, 41)!.hidden, '2 notes · 1 new reply');
-  assert.equal(notesView(node({ n: 4 }), [a, b], replies, 50)!.hidden, '2 notes', 'no reply since: the count alone');
-  assert.deepEqual(put.entries, shown.entries, 'the entries stay, so showing it again draws them as they were');
-  // A card with only the agent's replies counts those.
-  assert.deepEqual([notesView(node({ n: 4 }), [], replies.slice(2))!.count, notesView(node({ n: 4 }), [], replies)!.count], ['1 reply', '3 replies']);
-});
-
-test('nodeState: the hidden thread comes from BoardState.notesHidden by board number, and from nowhere else', () => {
-  const notes = [{ ...note('one'), seq: 10 }];
-  const s = { ...withItem('commented', notes), notesHidden: new Map([['1', 12]]) };
-  const replies: CardReply[] = [{ seq: 13, to: 10, text: 'yes', at: '2026-10-08T00:00:00Z' }];
-  assert.equal(nodeState(node({ n: 1 }), s, undefined, false, { replies }).notes!.hidden, '1 note · 1 new reply');
-  assert.equal(nodeState(node({ n: 1 }), withItem('commented', notes), undefined, false, { replies }).notes!.hidden, undefined);
-});
-
-test('nodeState: when every note is sent, the pin shows the latest and only reads it', () => {
-  const v = nodeState(node({ n: 7 }), withItem('commented', [note('plain terms', 'context', true)])).notes!;
-  assert.deepEqual(v.pin, { seq: v.entries[0]!.seq, index: 1, sent: true, label: 'Note 1 on item 7, sent. Show it' });
-  assert.equal(v.entries[0]!.who, 'Your note 1 · Sent');
-});
-
-test('nodeState: a note on a group of cards says how many, and its pin names them', () => {
+test('conversation: a note on a group of cards says how many; one answered before a Send reads Answered; Ask now reads so', () => {
   const group: ItemNote = { ...note('Decide these together'), nodes: [1, 4, 9] };
-  const v = nodeState(node({ n: 4 }), withItem('commented', [group])).notes!;
-  assert.deepEqual(v.entries.map((x) => x.who), ['Your note 1 · 3 cards']);
-  assert.equal(v.pin!.label, 'Note 1 on items 1, 4, 9. Edit it');
+  const answered = { ...note('Why per seat?'), locked: true as const };
+  const asked = note('Now please');
+  const entries = conversation([group, answered, asked], [], new Set([asked.seq]));
+  assert.deepEqual(entries.map((x) => [x.who, isNoteEntry(x) && x.sent]), [
+    ['Your note 1 · 3 cards', false], ['Your note 2 · Answered', true], ['Your note 3 · Asked now', false]]);
 });
 
-// popovers-larger-thread ruling 5: a note the agent answered before any Send is history too.
-test('nodeState: a note answered before a Send is grey, marked Answered, and its pin shows it rather than editing it', () => {
-  const one = { ...note('Why per seat?'), locked: true as const };
-  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [one])).notes, {
-    count: '1 note', toggle: 'Hide notes on item 1',
-    entries: [{ seq: one.seq, index: 1, who: 'Your note 1 · Answered', text: 'Why per seat?', sent: true, at: one.at }],
-    pin: { seq: one.seq, index: 1, sent: true, label: 'Note 1 on item 1, answered. Show it' },
-  });
-});
-
-// updateSignals (D-088): a reply the person has not looked at keeps `unseen` only while its card is
-// unseen itself (NEW, or an "N updates" tab not yet stepped through), on the card and in its markup.
+// updateSignals (D-088): a reply the person has not looked at keeps `unseen` only while its card is unseen itself
+// (NEW, or unseen updates not yet stepped through); the notes mark fills while one is.
 test('nodeState: a reply is unseen only while its card is', () => {
   const a = note('Why?', 'comment', true);
   const replies: CardReply[] = [{ seq: 90, to: a.seq, text: 'Because.', at: '2026-10-04T00:00:00Z', unseen: true }];
   const s = withItem('open', [a]);
-  const unseenOf = (c: Parameters<typeof nodeState>[4]) => {
-    const e = nodeState(node({ n: 2 }), s, undefined, false, c).notes!.entries[0]!;
-    return isNoteEntry(e) ? e.replies![0]!.unseen : undefined;
-  };
-  assert.equal(unseenOf({ replies, updates: { count: 1 } }), true);
-  assert.equal(unseenOf({ replies, new: true }), true);
-  assert.equal(unseenOf({ replies }), undefined, 'the card seen: muted');
-  assert.equal(unseenOf({ replies, updates: { count: 1, steps: [], at: 0 } }), undefined, 'stepped past the last: up to date');
+  const mark = (c: Parameters<typeof nodeState>[4]) => nodeState(node({ n: 2 }), s, undefined, false, c).marks.notes;
+  assert.equal(mark({ replies, updates: { count: 1 } }), 'unread');
+  assert.equal(mark({ replies, new: true }), 'unread');
+  assert.equal(mark({ replies }), 'count', 'the card seen: muted');
+  assert.equal(mark({ replies, updates: { count: 1, steps: [], at: 0 } }), 'count', 'stepped past the last: up to date');
+  assert.equal(litReplies(replies, false)![0]!.unseen, undefined);
 });

@@ -84,12 +84,12 @@ export const moreAlso = (also: readonly string[]): string => (also.length ? `${a
 // ---- LockedChip.svelte
 export const thisBoardIsLocked =(LOCKED_PERSON: string | number): string => `This board is locked. ${LOCKED_PERSON}.`;
 
-// ---- The "⋯" menu's Skin rows (skins flag, D-100 2: ToolbarMenu.svelte): one per skin, the board's own ticked.
+// ---- The "⋯" menu's Skin rows (D-100 2: ToolbarMenu.svelte): one per skin, the board's own ticked.
 export const skinGroup = 'Skin';
 export const skinName = (skin: string): string => (skin === 'command-lens' ? 'Command Lens skin' : 'Default skin');
 export const skinTip = 'How this board\'s nodes look, for everyone who opens it';
 
-// ---- The header's flow menu (flowDirection flag, D-100 5, BE_01: FlowMenu.svelte): Across, Down and Auto for the
+// ---- The header's flow menu (D-100 5, BE_01: FlowMenu.svelte): Across, Down and Auto for the
 // whole board, the person's choice ticked; a container's own choice (its layout control) still wins.
 export const directionGroup = 'Flows';
 export const directionTitle = (d: string): string => `${directionName(d)}. Change which way this board's flows run`;

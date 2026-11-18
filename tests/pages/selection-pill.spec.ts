@@ -11,7 +11,7 @@ import { bar, scale as view } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const TITLES = ['First idea', 'Second idea', 'Third idea'];
-const BUTTONS = ['Comment', 'Move to', 'Reset places', 'Remove', 'Zoom'];
+const BUTTONS = ['Comment', 'Move to', 'Reset places', 'Remove', 'Bookmark all', 'Save for later', 'Width', 'Zoom'];
 let boards = 0;
 
 /** A board of its own: three cards in one container, drawn by a new agent. */
@@ -142,7 +142,7 @@ test('the selection\'s keys work with the pill closed: Z zooms to it, N opens th
   await expect.poll(() => view(page)).toBeGreaterThan(fit);
   await page.keyboard.press('n');
   await expect(page.locator('vb-note-bubble')).toBeVisible();
-  await expect(page.locator('vb-note-bubble')).toHaveAttribute('aria-label', /^Note on 2 cards: /);
+  await expect(page.locator('vb-note-bubble')).toHaveAttribute('data-mode', 'conversation');
   await expect(bar(page)).toBeHidden();
   await page.keyboard.press('Escape');
   await expect(page.locator('vb-note-bubble')).toBeHidden();

@@ -64,8 +64,6 @@ export interface AppCardsDeps {
   fail(err: unknown): void;
   /** list_apps said something new: draw the board again (only the app cards change). */
   redraw(): void;
-  /** The appStage flag (spike): Open on an app card, a panel's picks as notes, replies told to it. */
-  staging?: boolean;
   /** Write a panel's note on card `id` as the box's Add note does, joined to its note not yet sent (notes.ts `write`);
    *  left out, a new note (refused while the card holds one not yet sent). */
   writeNote?(id: string, text: string): Promise<string | null>;
@@ -73,7 +71,7 @@ export interface AppCardsDeps {
   ver?(id: string): number | undefined;
   /** The agent's replies on card `id`, oldest first. */
   replies?(id: string): readonly { seq: number; text: string }[];
-  /** Whether app card `id`'s window has its drawer open (appWindow flag; the note flow keeps it, notes/app-drawer.ts):
+  /** Whether app card `id`'s window has its drawer open (the note flow keeps it, notes/app-drawer.ts):
    *  the card's conditions carry it, so the window is measured wide with it. */
   drawer?(id: string): boolean;
   /** The board's calls (io.ts). */
@@ -150,12 +148,12 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   const saved = createPanelStates({ read: (k) => d.io.panelState(k.board, k.n), write: (k, state) => d.io.savePanelState(k.board, k.n, state) });
   /** The loaded frames, by node id, least recently on screen first (LIVE_PANELS). */
   const used = new Map<string, VbAppFrameElement>();
-  /** The replies each loaded panel was told (appStage); a panel that starts again is told them all. */
+  /** The replies each loaded panel was told; a panel that starts again is told them all. */
   const toldTo = new WeakMap<VbAppFrameElement, Set<number>>();
 
   /** Tell `frame`'s panel each agent reply on its card it has not heard (HOST_REPLY). */
   function tellReplies(id: string, frame: VbAppFrameElement): void {
-    if (!d.staging || !d.replies) return;
+    if (!d.replies) return;
     if (!frame.loaded) return void toldTo.delete(frame);
     const heard = toldTo.get(frame) ?? new Set<number>();
     toldTo.set(frame, heard);
@@ -203,12 +201,12 @@ export function createAppCards(d: AppCardsDeps): AppCards {
       loadState: () => saved.load(key()),
       focusCame,
       // An app window's panel is the board's to pan over until the person clicks into it (FIX_03 ruling 2).
-      clickIn: card.hasAttribute('data-window'),
+      clickIn: true,
       onEscape: () => returnFocus(card),
       onLoad: () => { toldTo.delete(frame); void states.refresh(); },
-      // A window's Open is pressed while the window fills the page (appWindow, FE_08).
+      // A window's Open is pressed while the window fills the page (FE_08).
       onStage: (on) => card.querySelector('.vb-win-open')?.setAttribute('aria-pressed', String(on)),
-      ...(d.staging && { note: (text: string) => note(card, text), onReady: () => tellReplies(card.dataset.id ?? '', frame) }),
+      note: (text: string) => note(card, text), onReady: () => tellReplies(card.dataset.id ?? '', frame),
     });
   }
 
@@ -268,8 +266,8 @@ export function createAppCards(d: AppCardsDeps): AppCards {
       if (!framesReady()) return;
       if (frame?.staged) return frame.unstage(); // Open again, while on stage, is Back
       frame?.load();
-      // An app window goes on stage whole, its bar and drawer with it (appWindow, FE_08); a card's frame goes alone.
-      frame?.stage(card.hasAttribute('data-window') ? card : undefined);
+      // An app window goes on stage whole, its bar and drawer with it (FE_08).
+      frame?.stage(card);
       return;
     }
     if (what === 'retry') {

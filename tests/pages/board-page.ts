@@ -13,6 +13,23 @@ export const ROADMAP_CARDS = 17;
 export const OLD_HEADER = '-ledgerFolders,-readOnlyStart';
 
 export const card = (page: Page, n: number | string) => page.locator(`vb-node[data-id="${n}"]`);
+/** Wake an app window's panel (FIX_03): idle, it is the board's to pan over; a first click into it makes it the
+ *  person's (`bindClickIn`), and that click goes no further. */
+export async function wake(card: Locator): Promise<void> {
+  const b = (await card.locator('vb-app-frame').boundingBox())!;
+  await card.page().mouse.click(b.x + 3, b.y + 30);
+  await expect(card.locator('vb-app-frame')).toHaveAttribute('data-active', '');
+}
+/** Node `n`'s answer by pointer (D-099 7): its disc, then Tick or Cross in the picker beside it. */
+export async function answerBy(page: Page, n: number | string, word: 'Tick' | 'Cross'): Promise<void> {
+  if (!(await card(page, n).evaluate((e) => e.contains(document.activeElement)))) await card(page, n).focus(); // focusing pans it into view
+  const disc = card(page, n).locator('[data-mark="answer"]');
+  // A disc at the stage's top edge sits under the toolbar: pan it down first.
+  const [d, s] = [(await disc.boundingBox())!, (await page.locator('.vb-stage').first().boundingBox())!];
+  if (d.y < s.y + 40) { await page.mouse.move(s.x + s.width / 2, s.y + s.height / 2); await page.mouse.wheel(0, d.y - (s.y + 80)); await expect.poll(async () => (await disc.boundingBox())!.y).toBeGreaterThan(s.y + 40); }
+  await disc.click();
+  await page.locator('.vb-mark-menu').getByRole('menu', { name: `Answer item ${n}` }).getByRole('menuitem', { name: new RegExp(`^${word} `) }).click();
+}
 export const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 
 /** Wait until the page has done all the work it has queued (`?vbwork` exposes it; a no-op without). */
@@ -38,9 +55,9 @@ export const toast = (page: Page) => page.locator('#toast');
 export const picker = (page: Page) => page.locator(bid('board'));
 export const menuButton = (page: Page) => page.locator(bid('toolbar-menu'));
 export const menu = (page: Page) => page.getByRole('menu', { name: 'More' });
-/** A card's replies, and its Updates tab. */
-export const replies = (page: Page, n: number) => card(page, n).locator('.vb-node-reply');
-export const tab = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="updates"]');
+/** A node's change badge while it says "N updates" (D-099 6; settled "vN" and New are other badges): it opens the
+ *  history box, which holds the stepper. */
+export const updatesBadge = (page: Page, n: number) => card(page, n).locator('[data-mark="badge"][data-badge="updates"]');
 /** An app card's control in its status line, and its panel's frame once ready. */
 export const control = (card: Locator) => card.locator('.vb-app-status > button:visible');
 export async function panelOf(card: Locator): Promise<Frame> {

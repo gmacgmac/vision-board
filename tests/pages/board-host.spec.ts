@@ -70,7 +70,7 @@ test('the board mounts in a fake host: it draws, Send goes through the chat with
   expect((await call(page, (h) => h.record('a'))).calls.some((c) => c.includes('/retire'))).toBe(false);
 
   // Keys belong to the board they are pressed in.
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect.poll(() => call(page, (h) => h.status('a').hide)).toBe(true);
   expect(await call(page, (h) => h.status('b').hide)).toBe(false);
 
@@ -136,7 +136,7 @@ test('keys stay inside the board: a host control hears its own keys, and a click
 
   // Focus on a host button: H reaches no board.
   await page.locator('#host-button').focus();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await page.keyboard.press('Escape');
   expect(await hidden('a')).toBe(false);
   expect(await hidden('b')).toBe(false);
@@ -163,10 +163,10 @@ test('keys stay inside the board: a host control hears its own keys, and a click
       await page.mouse.up();
       await page.keyboard.up(mods);
     }
-    await page.keyboard.press('h');
+    await page.keyboard.press('Shift+H');
     await expect.poll(() => hidden('a'), { message: gesture }).toBe(true);
     expect(await hidden('b'), 'the other board is deaf').toBe(false);
-    await page.keyboard.press('h');
+    await page.keyboard.press('Shift+H');
     await expect.poll(() => hidden('a')).toBe(false);
   }
 
@@ -179,7 +179,7 @@ test('keys stay inside the board: a host control hears its own keys, and a click
   await page.locator('#host-button').focus();
   const title = (await page.locator('#a .vb-region-head h2').first().boundingBox())!;
   await page.mouse.click(title.x + title.width / 2, title.y + title.height / 2);
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect.poll(() => hidden('a')).toBe(true);
   expect(await hidden('b')).toBe(false);
 });

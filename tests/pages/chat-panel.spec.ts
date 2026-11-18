@@ -130,7 +130,7 @@ test('a message: the selected card goes with it; the agent\'s words show; its ch
 test('a changed card links to the chat\'s write that changed it; the conversation is there again after a reload', async ({ page }) => {
   await open(page);
   await srv.write('scratch', [{ type: 'node', key: 'q1-v2', n: 1, node: { region: 'ideas', kind: 'question', title: 'Ship on Friday, or Monday?' } }]);
-  const updates = page.locator('vb-node[data-id="1"] [data-tab="updates"]');
+  const updates = page.locator('vb-node[data-id="1"] [data-mark="badge"][data-badge="updates"]');
   await expect(updates).toHaveText('1 update');
   // A new page on the board: the session in use, its conversation from the start.
   await toggle(page).click();

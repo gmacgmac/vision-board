@@ -1,7 +1,7 @@
-// The Command Lens skin (skins and nodeEdges flags, D-100; FE_04), in the gallery with both flags on: the element
+// The Command Lens skin (D-100; FE_04), in the gallery: the element
 // builds the markup the template builds for the skin's row; every node offers the same actions in both skins; Tab
 // reaches the plate's marks then the switch, named; the rings are the skin's (point 338), after Tab only; axe finds
-// nothing; the section matches its screenshots, light and dark. Without the skins flag there is no such section.
+// nothing; the section matches its screenshots, light and dark.
 import type { Locator, Page } from '@playwright/test';
 import type { ViewNode } from '#format';
 import { nodeTemplate, SKIN_DEFS } from '#ui';
@@ -13,20 +13,15 @@ import { frame, head, idle, linesAfter, menu, menuButton } from './board-page.ts
 
 const THEMES: Theme[] = ['dark', 'light'];
 const ROW = SKIN_DEFS['command-lens'];
-const skin = (page: Page): Locator => page.locator('section[data-feature="skins"]');
+const skin = (page: Page): Locator => page.locator('section[data-feature="command-lens"]');
 /** The rings: on the dark plate the light one in both themes; elsewhere the skin's own (point 338). */
 const PLATE_RING = 'rgb(185, 191, 200)';
 const RING: Record<Theme, string> = { dark: 'rgb(185, 191, 200)', light: 'rgb(74, 78, 87)' };
 
-async function open(page: Page, flags = 'nodeEdges,skins'): Promise<void> {
-  await page.goto(`/gallery.html?flags=${flags}`);
+async function open(page: Page): Promise<void> {
+  await page.goto('/gallery.html');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
 }
-
-test('without the skins flag the gallery has no Command Lens section', async ({ page }) => {
-  await open(page, 'nodeEdges');
-  await expect(skin(page)).toHaveCount(0);
-});
 
 test('the element builds the markup the template builds for the skin\'s row', async ({ page }) => {
   await open(page);
@@ -53,7 +48,7 @@ test('every node offers the same actions in both skins, by the marks drawn on it
     const map: Record<string, string[]> = { number: ['bookmark'], answer: ['tick', 'cross', 'proposal'], tick: ['tick'], cross: ['cross'], proposal: ['proposal'], badge: ['history'], notes: ['comment'] };
     return [...new Set([...e.querySelectorAll<HTMLElement>('[data-mark]')].flatMap((m) => map[m.dataset.mark!] ?? [`?${m.dataset.mark}`]))].sort().join(' ');
   }));
-  const [edges, lens] = [await acts('section[data-feature="nodeEdges"]'), await acts('section[data-feature="skins"]')];
+  const [edges, lens] = [await acts('section[data-feature="node-edges"]'), await acts('section[data-feature="command-lens"]')];
   expect(lens.length).toBeGreaterThan(5);
   expect(lens).toEqual(edges);
 });
@@ -69,7 +64,7 @@ test('a proposal: the chip in the plate, named, and the proposed half outlined',
 
 test('on a board: switching to the skin redraws in place and keeps the selection; the plate drags; a half answers, the lit half clears', async ({ page, request }) => {
   const d = await drawEdges(request);
-  await openBoard(page, d, '?vbwork&flags=nodeEdges,skins');
+  await openBoard(page, d, '?vbwork');
   const q = card(page, d.n[0]!);
   await q.locator('.vb-node-title').click();
   await expect(q).toHaveAttribute('data-selected', '');
@@ -100,7 +95,7 @@ test('on a board: switching to the skin redraws in place and keeps the selection
 for (const skinFlag of ['default', 'command-lens']) {
   test(`on a board: Tick soon after clearing ticks again, never clears twice (${skinFlag})`, async ({ page, request }) => {
     const d = await drawEdges(request);
-    await openBoard(page, d, '?vbwork&flags=nodeEdges,skins');
+    await openBoard(page, d, '?vbwork');
     if (skinFlag === 'command-lens') {
       await menuButton(page).click();
       await menu(page).getByRole('menuitemradio', { name: /Command Lens/ }).click();
@@ -131,7 +126,7 @@ for (const skinFlag of ['default', 'command-lens']) {
 test('on a board: the plate\'s Proposal chip opens the proposal box and a second press closes it; the conversation box\'s head is the plate\'s', async ({ page, request }) => {
   await setTheme(page, 'dark');
   const d = await drawEdges(request);
-  await openBoard(page, d, '?vbwork&flags=nodeEdges,skins');
+  await openBoard(page, d, '?vbwork');
   await menuButton(page).click();
   await menu(page).getByRole('menuitemradio', { name: /Command Lens/ }).click();
   await expect(card(page, d.n[0]!)).toHaveAttribute('data-marks-at', 'plate');
@@ -166,7 +161,7 @@ for (const skinFlag of ['default', 'command-lens']) {
       await setTheme(page, theme);
       await page.setViewportSize({ width: 1400, height: 900 });
       const d = await drawEdges(request);
-      await openBoard(page, d, '?vbwork&flags=nodeEdges,skins');
+      await openBoard(page, d, '?vbwork');
       if (skinFlag === 'command-lens') {
         await menuButton(page).click();
         await menu(page).getByRole('menuitemradio', { name: /Command Lens/ }).click();

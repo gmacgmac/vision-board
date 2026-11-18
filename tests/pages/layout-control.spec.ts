@@ -1,6 +1,6 @@
-// The one layout control (layoutControl flag, node-overhaul FE_07, PLAN decision 20): a container shows one button naming the
-// active layout, its popover offers every layout (pointer and keyboard) and, with flowDirection, a flow's Across, Down and Auto
-// (the container's `direction` act; Auto gives back the agent's). Off, the six icons as before. Light and dark.
+// The one layout control (node-overhaul FE_07, PLAN decision 20): a container shows one button naming the active layout, its
+// popover offers every layout (pointer and keyboard) and, on a flow, its Across, Down and Auto (the container's `direction`
+// act; Auto gives back the agent's). Light and dark.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { READ_ONLY_PERSON as REASON } from '#actions';
 import { startFolderServer } from './folder-server.ts';
@@ -11,7 +11,7 @@ import { card, head, idle, linesAfter, scale, zoomToFull } from './board-page.ts
 
 let boards = 0;
 const THEMES: Theme[] = ['dark', 'light'];
-const ON = '?vbwork&flags=layoutControl,flowDirection,flowBranches';
+const ON = '?vbwork';
 const LINKS = [[1, 2], [2, 3], [3, 4], [2, 5], [5, 6], [6, 7], [7, 4]];
 
 async function drawLine(request: APIRequestContext, mode: string, direction?: string) {
@@ -39,11 +39,8 @@ async function runsDown(page: Page, n: number[]): Promise<boolean> {
   return b!.y > a!.y && Math.abs(b!.x - a!.x) < 2;
 }
 
-test('off, six layout icons; on, exactly one button named for the layout, at every zoom', async ({ page, request }) => {
+test('exactly one button named for the layout, no layout icons, at every zoom', async ({ page, request }) => {
   const d = await drawLine(request, 'flow');
-  await open(page, d, '?vbwork');
-  await expect(frame(page).getByRole('radio')).toHaveCount(6);
-  await expect(button(page)).toHaveCount(0);
   await open(page, d, ON);
   await expect(frame(page).getByRole('radio')).toHaveCount(0);
   await expect(button(page)).toHaveCount(1);
@@ -125,7 +122,7 @@ test('a flow\'s Down writes one direction act naming its container and redraws i
   await expect(button(page)).toHaveAccessibleName('Layout: Flow, across');
 });
 
-test('Auto returns the agent\'s own direction; the direction row shows only on a flow and only with flowDirection', async ({ page, request }) => {
+test('Auto returns the agent\'s own direction; the direction row shows only on a flow', async ({ page, request }) => {
   const d = await drawLine(request, 'flow', 'down');
   await open(page, d, ON);
   expect(await runsDown(page, d.n)).toBe(true);
@@ -139,15 +136,12 @@ test('Auto returns the agent\'s own direction; the direction row shows only on a
   await tile(page, 'grid').click();
   await button(page).click();
   await expect(frame(page).locator('.vb-dir-row')).toBeHidden();
-  await open(page, d, '?vbwork&flags=layoutControl');
-  await button(page).click();
-  await expect(frame(page).locator('.vb-dir')).toHaveCount(0);
 });
 
 test('on a read-only ledger the choices say why they are off and a press writes nothing', async ({ page }) => {
   const srv = await startFolderServer({ ledgers: true, readOnly: true });
   try {
-    await page.goto(`${srv.base}/?vbwork&flags=readOnlyStart,ledgerFolders,-readOnlyToggle,layoutControl,flowDirection`);
+    await page.goto(`${srv.base}/?vbwork&flags=readOnlyStart,ledgerFolders,-readOnlyToggle`);
     await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
     await idle(page);
     const f = page.locator('vb-region').first();
@@ -167,22 +161,20 @@ for (const theme of THEMES) {
     const d = await drawLine(request, 'flow');
     await setTheme(page, theme);
     await open(page, d, ON);
-      await button(page).click();
+    await button(page).click();
     await expect(dir(page, 'across')).toBeVisible();
     await expectNoAxeViolations(page, ['target-size']); // the cards' own marks at this zoom are the board's, not this control's
     await page.screenshot({ path: `temp/fe07/board-${theme}.png` });
   });
 
-  test(`the gallery entry draws the control and the six layouts side by side (${theme}); off, no entry`, async ({ page }) => {
+  test(`the gallery entry draws the control and the six layouts side by side (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await page.goto('/gallery.html');
-    await expect(page.locator('[data-feature="layoutControl"]')).toHaveCount(0);
-    await page.goto('/gallery.html?flags=layoutControl,flowDirection,flowBranches');
-    const section = page.locator('[data-feature="layoutControl"]');
+    const section = page.locator('[data-feature="layout-control"]');
     await expect(section.locator('.g-mini')).toHaveCount(9);
-    await expect(section.locator('.vb-layout-btn')).toHaveCount(3);
+    await expect(section.locator('.vb-layout-btn')).toHaveCount(9);
     await section.scrollIntoViewIfNeeded();
-    await expectNoAxeViolations(page, ['target-size']); // the comparison draws the cards at 60%, where their own marks are small
+    await expectNoAxeViolations(page); // the comparison, drawn at 60%, is inert: a picture, not a board to use
     await section.screenshot({ path: `temp/fe07/gallery-${theme}.png` });
   });
 }

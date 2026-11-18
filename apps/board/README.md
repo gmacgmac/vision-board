@@ -6,11 +6,14 @@ serves the built page and reads and appends the project ledger
 standalone page, one host of the board (its chat, folder picker, toast and confirm dialog; D-012). `src/board/` is what any
 host mounts: the framework-free canvas controller (layout, drawing, pointer, keys, I/O; D-005) and, in `chrome/`, its controls
 (the toolbar, strips, reply panel, search and help, Svelte compiled inside), in feature folders: `canvas/` (the draw, the viewport,
-focus, places), `links/` (connectors and their labels), `cards/` (the card set, images, attention, the review
-buttons, the bookmark, proposals, updates, parking, Remove, a card's history), `notes/` (note bubbles, container notes,
-group pins), `selection/` (selection, lasso, bar, moves, container drags), `input/` (commands, keys, pointer, the
-stage's wiring), `find/` (the container finder, Go to card), `boards/` (boot, the picker, versions, a locked board,
-board edits), `access/` (agent access) and `apps/` (app cards), with `controller.ts` (and `controller/`), `mount.ts`,
+focus, places), `links/` (connectors and their labels), `cards/` (the card set, images, attention, the node's
+marks and what they open (`mark-flow.ts`, `mark-acts.ts`, `mark-menus.ts`, `mark-boxes.ts`, `mark-tips.ts`), the item
+actions (`item-acts.ts`), the bookmark, proposals, updates, parking, Remove, a card's history, the project's icon
+library), `notes/` (a node's conversation box with Ask now, `note-box.ts`; an app window's drawer, `app-drawer.ts`;
+the container's note bubble and blocks), `selection/` (selection, lasso, bar with Bookmark all, Save for later and
+Width, moves, container drags), `input/` (commands, keys, pointer, the stage's wiring), `find/` (the container finder, Go to card), `boards/` (boot, the picker, versions, a locked board,
+board edits), `access/` (agent access) and `apps/` (app windows), with `controller.ts` (and `controller/`: the board's
+skin and the node's edges, `node-edges.ts`; Ask now, `ask-now.ts`), `mount.ts`,
 `host.ts`, `status.ts`, `io.ts` (and `io/`), `live.ts` and `sender.ts` at its root. Each folder has one public
 file, `index.ts`, and code outside it imports only that (`npm run verify`, `checkFeatureFolders`); a unit test of a
 folder's inside may import the inside. Vite builds `src/` into `dist/`
@@ -37,7 +40,7 @@ updates, measures and lays out only what a change touched (`canvas/layout-cache.
 The page reads every line through `src/board/io.ts` `readLedger` (`fromLine`), so its state is by
 card identity, while everything it draws and sends names a card by its number on its board (api.md
 125): `src/board/card-numbers.ts` turns one into the other, and an act's answer back. The person's
-bookmark (`cards/bookmark-flow.ts`, cardBookmark flag), the "N cards retired" markers (`retiredCounts`, retiredMarker
+bookmark (`cards/bookmark-flow.ts`, cardBookmark flag: the number, B and the toolbar's chip), the "N cards retired" markers (`retiredCounts`, retiredMarker
 flag), the person's Remove card and Remove container (`cards/remove-flow.ts`, whose words are
 `cardsWords` and `containerWords`, personRemove flag), the Go to card box (`find/go-to-card.ts` over `goTarget`,
 `src/board/chrome/GoToCard.svelte`, goToCard flag)
@@ -46,8 +49,7 @@ and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field
 and a marker that floats the label on hover and focus where it did not (`links/link-marks.ts`, linkLabels
 flag); `cards/cards.ts` measures a card the layout widens (Match card widths, widthsControl flag: the
 switch in each frame's mode row) at the width it is drawn at; the viewer's alignment is the "⋯"
-menu's Centre cards (`src/shell/align.ts`, alignSetting flag); and `notes/bubble-clear.ts` keeps the note
-bubble clear of a neighbouring card's footer buttons. The gallery draws these through the board's
+menu's Centre cards (`src/shell/align.ts`, alignSetting flag). The gallery draws these through the board's
 own drawing (`src/gallery/mini-board.ts`).
 
 One server per ledger: `server.ts` takes `<VB_PROJECT>/.visionboard/lock` (`server/lock.ts`)
@@ -114,9 +116,11 @@ the panel at `GET /app-panels/<id>` with its own CSP (`panel.ts`), answers `list
 (`supervisor.ts`, `child.ts`, `runner.mjs`), started on the first call and stopped when idle, when
 its code changes or is stopped, and when the folder closes. `VB_FLAGS=-appCards` turns app cards
 off on the server; `createBoardServer({ appLimits })` lets a test shorten `APP_LIMITS`. Test apps:
-`tests/fixtures/apps/` (`probe` is the page tests' panel). On the page, `src/board/apps/app-cards.ts`
-wires each app card's frame (loaded once on screen, then kept and frozen when off screen or zoomed out, at most 8 live, D-050; its state saved per card; tool calls
-through `io.ts` `callAppTool`; Esc back to the card; theme changes), and Allow and Stop app through
+`tests/fixtures/apps/` (`probe` is the page tests' panel). On the page an app card is a window (D-099 5,
+components.md § The app window): `src/board/apps/app-cards.ts` wires each window's frame (loaded once on screen, then
+kept and frozen when off screen or zoomed out, at most 8 live, D-050; idle until a click into it, FIX_03; its state
+saved per card; tool calls through `io.ts` `callAppTool`; a pick in the panel as the person's note and the agent's
+replies told to it; Open, the window on stage; Esc back to the card; theme changes), and Allow and Stop app through
 the one sender; `src/board/apps/app-state.ts` holds the one copy of `list_apps`' answer;
 `src/board/words/app-cards.ts` says what the person reads around them (components.md § App card; `tests/words-app-cards.test.ts`). This
 repo's own board holds a copy of the example in `.visionboard/apps/calculator/` (in `.visionboard/main/apps/`

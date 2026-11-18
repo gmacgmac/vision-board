@@ -1,4 +1,4 @@
-// Note bubble pattern, the conversation box's markup (nodeEdges, D-099 3, FE_03; design/mockups/node-states/
+// Note bubble pattern, the conversation box's markup (D-099 3, FE_03; design/mockups/node-states/
 // default-input-*): a compact head (the node's number, its title, ×), tabs only when the node is in a note on several
 // nodes (this node, then each such note), the thread oldest first with a note waiting for Send marked and "Waiting for
 // the agent" under a note sent and not yet answered, then the reply field and two buttons sharing the width, Ask now

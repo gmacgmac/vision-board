@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACTION_IDS, ANSWER_ACTIONS, ITEM_REMOVED, KINDS, NODE_TYPES, NOTE_ACTIONS } from '../src/index.ts';
+import { ACTION_IDS, ANSWER_ACTIONS, ITEM_REMOVED, KINDS, NODE_TYPES, NOTE_ACTIONS, WINDOW_ACTIONS } from '../src/index.ts';
 
 test('every kind has a node type with a label', () => {
   assert.deepEqual(Object.keys(NODE_TYPES).sort(), [...KINDS].sort());
@@ -23,11 +23,12 @@ test('question, decision and action need an answer; every other kind does not', 
   assert.deepEqual(answer, ['question', 'decision', 'action']);
 });
 
-test('the two action lists: four on an answer card, two on any other; no More context (D-045)', () => {
+test('the action lists: four on an answer card, two on any other, a note alone on an app window; no More context (D-045, D-099 5)', () => {
   assert.deepEqual(ANSWER_ACTIONS, ['ack', 'drop', 'comment', 'later']);
   assert.deepEqual(NOTE_ACTIONS, ['comment', 'later']);
+  assert.deepEqual(WINDOW_ACTIONS, ['comment']);
   for (const kind of KINDS)
-    assert.equal(NODE_TYPES[kind].actions, NODE_TYPES[kind].answer ? ANSWER_ACTIONS : NOTE_ACTIONS, kind);
+    assert.equal(NODE_TYPES[kind].actions, kind === 'app' ? WINDOW_ACTIONS : NODE_TYPES[kind].answer ? ANSWER_ACTIONS : NOTE_ACTIONS, kind);
 });
 
 test('the message for a node naming item (refused from ledger v11) says the kind decides', () => {

@@ -84,13 +84,13 @@ export const APP_HOST_NAME = 'vision-board';
  * state). MCP Apps (2026-01-26 and its draft) has no state method. */
 export const PANEL_SAVE_STATE = `${APP_HOST_NAME}/save-state` as const;
 
-/** The board's own request (appStage, spike): the person picked something in the panel, and the
+/** The board's own request (FE_08): the person picked something in the panel, and the
  * panel asks for it to be the person's note on its card: params `{ text }`, at most `PANEL_NOTE_CHARS`.
  * The agent reads it as any note and answers on the card. */
 export const PANEL_NOTE = `${APP_HOST_NAME}/note` as const;
 export const PANEL_NOTE_CHARS = 2000;
 
-/** The board's own notification to a panel (appStage, spike): one agent reply on the panel's card,
+/** The board's own notification to a panel (FE_08): one agent reply on the panel's card,
  * `{ seq, text }`; every reply on the card is sent once to a panel after it starts, oldest first. */
 export const HOST_REPLY = `${APP_HOST_NAME}/notifications/reply` as const;
 

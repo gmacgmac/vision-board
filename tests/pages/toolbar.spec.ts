@@ -138,23 +138,23 @@ test('the "⋯" menu: Theme, Hide answered and Reply as rows with their keys; a 
   await expect(menu(page)).toBeVisible();
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'true');
   const rows = menu(page).locator('[role^="menuitem"]');
-  // The alignSetting flag (on by default) adds Centre cards after Hide answered (layout-controls.spec.ts
-  // tests it), the lockBoard flag Lock board (lock-board.spec.ts), the archiveBoard flag Archive board…
-  // (picker-archive.spec.ts) and the openFolder flag Open folder… last (open-folder.spec.ts).
-  await expect(rows).toHaveText([/Theme: system/, /Hide answered.*H/, /Centre cards/, /Reply/, /^Lock board$/, /Archive board…/, /Open folder…/]);
+  // A row per skin follows Theme (D-100 2, node-edges-seen.spec.ts); the alignSetting flag (on by default) adds Centre
+  // cards after Hide answered (layout-controls.spec.ts tests it), the lockBoard flag Lock board (lock-board.spec.ts), the
+  // archiveBoard flag Archive board… (picker-archive.spec.ts) and the openFolder flag Open folder… last (open-folder.spec.ts).
+  await expect(rows).toHaveText([/Theme: system/, /Default skin/, /Command Lens skin/, /Hide answered.*Shift\+H/, /Centre cards/, /Reply/, /^Lock board$/, /Archive board…/, /Open folder…/]);
   await expect(rows.first()).toBeFocused();
   // Hide answered: a checkbox row; choosing it closes the menu and gives focus back to "⋯".
   await expect(menu(page).getByRole('menuitemcheckbox', { name: /Hide answered/ })).toHaveAttribute('aria-checked', 'false');
   // By id from here: getByRole does not find a row while the menu is closed.
   const hide = page.locator(bid('hide'));
-  await expect(hide).toHaveAttribute('aria-keyshortcuts', 'h');
+  await expect(hide).toHaveAttribute('aria-keyshortcuts', 'Shift+H');
   await hide.click();
   await expect(menu(page)).toBeHidden();
   await expect(menuButton(page)).toBeFocused();
   await expect(hide).toHaveAttribute('aria-checked', 'true');
-  // The H key still works from the board, and the row follows it.
+  // Shift+H still works from the board, and the row follows it.
   await page.locator(bid('stage')).focus();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect(hide).toHaveAttribute('aria-checked', 'false');
   // Theme cycles system, light, dark as the button did.
   await menuButton(page).click();
@@ -196,7 +196,7 @@ test('the "⋯" menu by keyboard: Enter opens it, arrows move, H chooses Hide an
   // Esc closed the menu only: the theme and hide are as they were.
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
   await page.keyboard.press('Enter');
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect(menu(page)).toBeHidden();
   await expect(page.locator(bid('hide'))).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Enter');

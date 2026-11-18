@@ -44,7 +44,7 @@ const removeButton = (page: Page) => bar(page).locator('button[data-command="rem
 const removeRow = (f: Locator) => f.getByRole('menuitem', { name: 'Remove container' });
 
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
-test.beforeEach(async ({ page }) => { await page.goto('/gallery.html'); });
+test.beforeEach(async ({ page }) => { await page.goto('/?setup'); });
 
 test('Remove card on the selection bar: the confirm names the card; it leaves, the container says "1 retired"', async ({ page, request }) => {
   const d = await draw(request);

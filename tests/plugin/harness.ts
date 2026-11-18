@@ -4,7 +4,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test as base } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import type { FakeHost, HostOptions } from './fake-host/server.ts';
 import { startHost } from './fake-host/server.ts';
 
@@ -77,3 +77,9 @@ export async function drawPicture(host: FakeHost): Promise<void> {
 
 /** The board's first three cards are drawn. */
 export const drawn = (page: Page) => expect(page.locator('.host-root vb-node')).toHaveCount(3);
+
+/** Answer a node as the person does (D-099 1): its disc, then Tick or Cross in the picker beside it. */
+export async function answerNode(card: Locator, word: 'Tick' | 'Cross' = 'Tick'): Promise<void> {
+  await card.locator('[data-mark="answer"]').click();
+  await card.page().locator('.host-root .vb-mark-menu').getByRole('menuitem', { name: new RegExp(`^${word} `) }).click();
+}

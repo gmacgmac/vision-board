@@ -49,7 +49,7 @@ export const MARKS_BOARD = 'marks';
  *  or do not, a row of cards of three heights, and two columns of S, M and L cards, one under the
  *  column's default (match) and one the person set to own widths. */
 export const LAYOUT_BOARD = 'layout';
-/** The board the node's edges samples use (nodeEdges flag, FE_01): every mark in every state, icons built in and from
+/** The board the node's edges samples use (D-099, FE_01): every mark in every state, icons built in and from
  *  the library (one drawn, one with a failing path, one missing), tones by name and by hue. */
 export const EDGES_BOARD = 'edges';
 

@@ -1,9 +1,8 @@
-// A card's history box on the board (card-polish FE_03, maintainer point 20): the ⓘ at the far right
-// of a card's footer opens it (the card popover, node-popover.ts: hover or focus shows it, a click or
-// Enter opens it, Esc or a press outside closes it, focus goes back to the ⓘ). Its rows are built as
-// it shows (`POPOVER_SHOW`), from the per-card times the page's fold already keeps (packages/actions
+// A card's history box on the board (card-polish FE_03, maintainer point 20; D-099 1): the change badge, H or the
+// right-click list opens it beside the node (mark-boxes.ts; Esc or a press outside closes it, focus goes back to the
+// badge). Its rows are built as it shows (`POPOVER_SHOW`), from the per-card times the page's fold already keeps (packages/actions
 // card-times.ts `cardTimeRows`): no ledger read, so no loading or error state. A row naming a note or
-// an agent's reply closes the box and rings that note on the card (note-hide.ts `highlight`). A line
+// an agent's reply closes the box and opens the node's conversation at it (notes.ts `show`). A line
 // for the card that lands while the box is open adds its row at the top, focus left where it was.
 // Up and Down (Home, End) move between the rows that are buttons (`menuKeydown`, `#ui`). Browser only.
 import type { HistoryRow, LedgerState } from '#actions';
@@ -11,14 +10,14 @@ import { cardTimeRows } from '#actions';
 import type { PopoverShowDetail } from '#ui';
 import { HISTORY, historyMarkup, historyRowMarkup, menuKeydown, POPOVER_CLOSE, POPOVER_SHOW } from '#ui';
 import { idOf } from '../card-numbers.ts';
-import type { NotePart } from '../notes/index.ts';
 
 export interface HistoryDeps {
   stage: HTMLElement;
   /** The state the board is drawn from: a past version's while one shows. */
   state(): LedgerState | null;
   board(): string;
-  highlight(id: string, part: NotePart): Promise<boolean>;
+  /** Open node `id`'s conversation at the note or reply `part` (notes.ts `show`). */
+  show(id: string, part: number): void;
 }
 
 export interface HistoryFlow {
@@ -28,10 +27,11 @@ export interface HistoryFlow {
 
 const ROW_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
 
-/** The note or reply a row names, or undefined for a row that is text. */
-function partOf(row: HTMLElement): NotePart | undefined {
+/** The note or reply a row names (its seq), or undefined for a row that is text. */
+function partOf(row: HTMLElement): number | undefined {
   const { historyNote: note, historyReply: reply } = row.dataset;
-  return reply !== undefined ? { reply: Number(reply) } : note !== undefined ? { note: Number(note) } : undefined;
+  const seq = reply ?? note;
+  return seq === undefined ? undefined : Number(seq);
 }
 
 export function createHistoryFlow(d: HistoryDeps): HistoryFlow {
@@ -48,7 +48,7 @@ export function createHistoryFlow(d: HistoryDeps): HistoryFlow {
   function fill(id: string, box: HTMLElement) {
     const rows = rowsOf(id);
     // Markup from historyMarkup, which escapes every text run.
-    box.querySelector('.vb-history-body')!.innerHTML = historyMarkup(rows, new Date(), box.classList.contains('vb-node-box'));
+    box.querySelector('.vb-history-body')!.innerHTML = historyMarkup(rows, new Date());
     shown = { id, box, top: rows[0]?.seq ?? 0 };
   }
 
@@ -60,11 +60,12 @@ export function createHistoryFlow(d: HistoryDeps): HistoryFlow {
   d.stage.addEventListener('click', (e) => {
     const row = (e.target as Element).closest<HTMLElement>('vb-node .vb-card-pop button.vb-history-row');
     const part = row && partOf(row);
-    if (!row || !part) return;
+    if (!row || part === undefined || part === null) return;
     const card = row.closest<HTMLElement>('vb-node')!;
-    // Closed, the box gives focus back to the ⓘ; the highlight then moves it on to the note.
-    card.dispatchEvent(new CustomEvent(POPOVER_CLOSE, { detail: HISTORY }));
-    void d.highlight(card.dataset.id!, part);
+    // Closed (mark-acts.ts hears it on the stage, so it bubbles), the box gives focus back to the badge; the
+    // conversation then takes it, at the note.
+    card.dispatchEvent(new CustomEvent(POPOVER_CLOSE, { bubbles: true, detail: HISTORY }));
+    d.show(card.dataset.id!, part);
   });
 
   d.stage.addEventListener('keydown', (e) => {
@@ -84,7 +85,7 @@ export function createHistoryFlow(d: HistoryDeps): HistoryFlow {
       if (fresh.length === 0) return;
       const list = shown.box.querySelector('.vb-history-list');
       if (!list) return fill(shown.id, shown.box);
-      list.insertAdjacentHTML('afterbegin', fresh.map((r) => historyRowMarkup(r, new Date(), shown!.box.classList.contains('vb-node-box'))).join(''));
+      list.insertAdjacentHTML('afterbegin', fresh.map((r) => historyRowMarkup(r, new Date())).join(''));
       shown.top = fresh[0]!.seq;
     },
   };

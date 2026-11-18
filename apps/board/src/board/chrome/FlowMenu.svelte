@@ -1,4 +1,4 @@
-<!-- The board's flow direction, in the header (flowDirection flag, D-100 5, points 260 and 309): one button showing the
+<!-- The board's flow direction, in the header (D-100 5, points 260 and 309): one button showing the
      board's choice in its icon and words ("Flows: Auto"; a narrow bar shows the icon, board.css `.vb-btn-iconic`), a menu of Across, Down and Auto with it ticked, the person's board-wide `direction` act
      (controller.setDirection); choosing the ticked row closes it and writes nothing. From the header's half form its
      rows are in "⋯" (ToolbarMenu, header-tier.ts). A container's own choice is its layout control (packages/ui/src/region). Off, with

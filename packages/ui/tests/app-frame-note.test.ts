@@ -1,4 +1,4 @@
-// The app frame's protocol, the panel's note and the agent's reply (appStage, apps.md § The panel protocol; FE_08 keeps
+// The app frame's protocol, the panel's note and the agent's reply (apps.md § The panel protocol; FE_08 keeps
 // the spike's channel and shows both in the app window's drawer): `vision-board/note` `{ text }` becomes the person's
 // note, trimmed, at most PANEL_NOTE_CHARS, answered {} once the page keeps it; every other shape is refused and never
 // reaches the page. `vision-board/notifications/reply` goes only to a ready panel. Fake windows: app-frame-harness.ts.

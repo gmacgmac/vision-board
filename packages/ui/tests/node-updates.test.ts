@@ -1,5 +1,5 @@
-// A changed card (proposals-seen-parking FE_02): the "N updates" tab, the stepper's step with its
-// change chips and what the text gained, "You're up to date", the card's name, and the markup.
+// A changed card (proposals-seen-parking FE_02): the change badge's "N updates" (D-099), the stepper's step with its
+// change chips and what the text gained, "You're up to date", the card's name, and the markup in the history box.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '#format';
@@ -17,14 +17,15 @@ const steps: CardStep[] = [
 ];
 const withUpdates = (u: CardUpdates, selected = false) => nodeState(r, board(), undefined, selected, { updates: u });
 
-test('no updates: no tab, the name as before', () => {
+test('no updates: no badge words, the name as before', () => {
   assert.equal(nodeState(r, board()).updates, undefined);
   assert.equal(withUpdates({ count: 0 }).updates, undefined);
 });
 
-test('collapsed: the tab counts the unseen versions and the name says so', () => {
+test('collapsed: the badge counts the unseen versions and the name says so', () => {
   const st = withUpdates({ count: 3 });
-  assert.deepEqual(st.updates, { tab: '3 updates', label: '3 updates since you last looked. Show them', open: false, done: false });
+  assert.deepEqual(st.updates, { tab: '3 updates', open: false, done: false });
+  assert.deepEqual([st.marks.badge, st.marks.badgeText], ['updates', '3 updates']);
   assert.equal(st.label, 'Item 44, Risk: The floor undercuts self-serve, 3 unseen updates');
   assert.equal(withUpdates({ count: 1 }, true).label.endsWith(', 1 unseen update, selected'), true);
 });
@@ -32,7 +33,7 @@ test('collapsed: the tab counts the unseen versions and the name says so', () =>
 test('open: the step shown, its line, chips and what the text gained', () => {
   const v = withUpdates({ count: 3, steps, at: 0 });
   assert.deepEqual(v.updates, {
-    tab: '3 updates', label: '3 updates since you last looked. Hide them', open: true, done: false,
+    tab: '3 updates', open: true, done: false,
     step: {
       label: 'Update 1 of 3, v2', head: 'v2 · 30 Sep, 15:40 · Pricing chat', count: 'Update 1 of 3', first: true,
       chips: [{ change: 'added', text: '+ body' }], lines: ['The credit amount is in.'],
@@ -49,9 +50,9 @@ test('open: the step shown, its line, chips and what the text gained', () => {
   assert.deepEqual(withUpdates({ count: 3, steps, at: 2 }).updates!.step!.lines, ['Body rewritten']);
 });
 
-test('after the last step: up to date, the tab goes', () => {
+test('after the last step: up to date, the badge words go', () => {
   const v = withUpdates({ count: 0, steps, at: 3 });
-  assert.deepEqual(v.updates, { tab: '', label: 'Up to date', open: true, done: true });
+  assert.deepEqual(v.updates, { tab: '', open: true, done: true });
   assert.equal(v.label, 'Item 44, Risk: The floor undercuts self-serve');
 });
 
@@ -74,9 +75,9 @@ test('a non-item has no updates', () => {
   assert.equal(nodeState(topic, board(), undefined, false, { updates: { count: 2 } }).updates, undefined);
 });
 
-test('template: the hidden tab, the step section it controls and the stepper in the footer', () => {
+test('template: the step section and the stepper at the top of the history box, which the badge controls', () => {
   const html = nodeTemplate(r);
-  assert.match(html, /<button type="button" class="vb-node-btab" data-tab="updates" aria-expanded="false" aria-controls="vb-steps-44" hidden><\/button>/);
+  assert.match(html, /data-mark="badge"[^>]*aria-controls="vb-pop-history-44" hidden>/);
   assert.match(html, /<div class="vb-node-steps" id="vb-steps-44" role="region" aria-live="polite" hidden><\/div>/);
   assert.match(html, /<div class="vb-node-stepnav" hidden><span class="vb-node-stepcount"><\/span><button type="button" class="vb-pop-btn" data-step="back">Back<\/button><button type="button" class="vb-pop-btn vb-pop-primary" data-step="next">Next<\/button><\/div>/);
 });

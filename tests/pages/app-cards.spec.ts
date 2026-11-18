@@ -17,7 +17,7 @@ import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { card as cardOf, control, panelOf } from './board-page.ts';
+import { card as cardOf, control, panelOf, wake } from './board-page.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 /** The one refusal the end-to-end run makes on purpose: `=` before Allow (needs-approval, 403). */
@@ -79,10 +79,9 @@ for (const theme of THEMES) {
       await expect(iframe).toHaveAttribute('sandbox', 'allow-scripts');
       await expect(iframe).toHaveAttribute('title', 'Calculator');
       expect(await iframe.evaluate((f: HTMLIFrameElement) => [f.offsetWidth, f.offsetHeight])).toEqual([360, 440]);
-      // The card is as wide as its panel plus its border: no size word, no size control; the panel's
+      // The card is as wide as its panel plus its border: no size word; the panel's
       // edges meet the border's on both sides (within 1px).
       await expect(card).not.toHaveAttribute('data-size');
-      await expect(card.locator('.vb-size')).toHaveCount(0);
       expect(await card.evaluate((c: HTMLElement) => c.offsetWidth)).toBe(362);
       const [c, f] = await Promise.all([card.boundingBox(), card.locator('vb-app-frame').boundingBox()]);
       expect(Math.abs(f!.x - (c!.x + 1))).toBeLessThanOrEqual(1);
@@ -111,6 +110,8 @@ for (const theme of THEMES) {
       await expect(panel.locator('#result')).toHaveText('Answer: 36');
       expect(calls).toHaveLength(2);
       expect(JSON.parse(calls[1]!)).toEqual({ tool: 'evaluate', arguments: { expression: '12×3' } });
+      // An idle app window is the board's to pan over until a click into it (FIX_03): the first click wakes it.
+      await wake(card);
       await panel.getByRole('button', { name: 'History' }).click();
       await expect(panel.getByRole('button', { name: 'Use 36 from 12×3' })).toBeVisible();
       expect(JSON.parse(calls[2]!)).toEqual({ tool: 'history', arguments: {} });
@@ -122,7 +123,8 @@ for (const theme of THEMES) {
 
 /** The frame's box-shadow as drawn: the focus ring is `0 0 0 <focus width> <focus colour>`. */
 const ringOf = (frame: Locator) => frame.evaluate((e) => getComputedStyle(e).boxShadow);
-const RING = / 0px 0px 0px \d+px$/;
+/** In a window the ring is drawn inside the frame (node-app.css `inset`). */
+const RING = / 0px 0px 0px \d+px( inset)?$/;
 
 test('the panel\'s focus ring (card-polish FIX_01): a click inside the app draws none; Tab into it does, and again after a click', async ({ page }) => {
   const { board, n: [n] } = await s.draw([CALCULATOR]);
@@ -137,8 +139,8 @@ test('the panel\'s focus ring (card-polish FIX_01): a click inside the app draws
   await panel.locator('body').click({ position: { x: 3, y: 30 } });
   await expect(iframe).toBeFocused();
   expect(await ringOf(frame)).toBe(idle);
-  // Out to the card's controls, and Tab back in: keys moved focus, so the ring shows (WCAG 2.4.7).
-  await tabTo(page, card.locator('button[data-act="comment"]'), 40);
+  // Out to the node by Esc, and Tab back in: keys moved focus, so the ring shows (WCAG 2.4.7).
+  await page.keyboard.press('Escape');
   await expect(iframe).not.toBeFocused();
   await card.focus();
   await tabTo(page, iframe);
@@ -168,9 +170,10 @@ test('the keyboard: Tab goes from the card into the panel and on out of it; Esc 
   await page.keyboard.press('Escape');
   await expect(card).toBeFocused();
   await expect(card.locator('vb-app-frame')).not.toHaveAttribute('data-focus-in');
-  // Out the other side: past every key in the panel to the card's own buttons.
+  // Out again, back to the window's bar: the panel lets the keys go.
   await tabTo(page, iframe);
-  await tabTo(page, card.locator('button[data-act="comment"]'), 40);
+  await page.keyboard.press('Shift+Tab');
+  await expect(card.locator('.vb-win-bar :focus')).toHaveCount(1);
   expect(await panel.evaluate(() => document.hasFocus())).toBe(false);
 });
 
@@ -186,14 +189,17 @@ test.describe('a change to the app\'s code', () => {
     await allow(page, card);
     // The agent changes its tools: the next call is refused, and the card asks again.
     fs.appendFileSync(path.join(s.dir('calculator'), 'tools.mjs'), `\n// changed by the page test ${Date.now()}\n`);
+    // An idle app window is the board's to pan over until a click into it (FIX_03): the first click wakes it.
+    await wake(card);
     await panel.getByRole('button', { name: 'Equals' }).click();
     await expect(panel.locator('#result')).toHaveText('Problem: Press Allow on the card to calculate');
     await expect(control(card)).toHaveAttribute('title', 'Code changed');
     await expect(control(card)).toHaveAccessibleName('Allow app: Calculator. Code changed');
-    await expect(card).toHaveAttribute('aria-label', /, code changed, not allowed yet$/);
+    await expect(card).toHaveAttribute('aria-label', /, code changed, not allowed yet(, selected)?$/);
     await expect(card.getByRole('button', { name: 'App allowed: Calculator' })).toBeHidden();
     await expectNoAxeViolations(page);
     await allow(page, card, 'Allow Calculator again?');
+    await wake(card);
     for (const key of ['7', 'Times', '6', 'Equals']) await panel.getByRole('button', { name: key, exact: true }).click();
     await expect(panel.locator('#result')).toHaveText('Answer: 42');
   });

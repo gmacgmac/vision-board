@@ -1,7 +1,7 @@
 // Changed cards on the page (cardUpdates flag, FE_02 rulings 1-3, mockup 03 Part B option B): the
-// "N updates" tab on each card the conditions table finds unseen (`item.unseen`: past version 1, or
+// "N updates" change badge on each card the conditions table finds unseen (`item.unseen`: past version 1, or
 // cleared by the agent's reply to its note, D-045, which is one update of its own),
-// the stepper the tab opens in the card, and the card seen lines. Selecting a card (a click, Space, a
+// the stepper the badge's history box holds (planner's call 9), and the card seen lines. Selecting a card (a click, Space, a
 // lasso: the selection module) marks its latest version seen; each step shown marks its version
 // seen. Hover and tabbing past send nothing, and nothing is sent while a past version shows. Every
 // line goes out through the sender, in order. The stepper keeps the steps it opened with, so the
@@ -12,10 +12,9 @@
 // `clearedBy` names select (`seenOnSelect`), so a NEW card is marked seen when selected. A card
 // found, not clicked (Go to card, the finder lists), is selected by `find`: it marks nothing (ruling
 // 322, findKeepsMarks flag); the person's click on it, or an act, still does. While the ledger is open read-only
-// (`quiet`, D-085 3) nothing is sent: a version seen is kept in the page's memory, so its tab still goes away.
-// One tab (oneChangeTab flag, point 444): where the card's steps sit in its proposal box, under the proposals,
-// opening that box for good (a click or Enter, never a hover) opens the stepper with focus left on the
-// proposal, and the box closing, however it closes, folds it.
+// (`quiet`, D-085 3) nothing is sent: a version seen is kept in the page's memory, so its badge still settles.
+// Opening the history box opens the stepper in it with focus left where the box put it, and the box closing, however
+// it closes, folds it.
 import type { ViewNode } from '#format';
 import type { LedgerState, SeenMark } from '#actions';
 import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '#actions';
@@ -36,13 +35,13 @@ export interface UpdateDeps {
   board(): string;
   /** The conditions table's unseen items on the open board. */
   unseen(): ReadonlySet<number>;
-  /** The newCards flag: the NEW tab. */
+  /** The newCards flag: the badge's New. */
   newCards: boolean;
   /** The conditions table's new items on the open board (`item.new`). */
   fresh(): ReadonlySet<number>;
-  /** A past version shows: no tabs, nothing sent. */
+  /** A past version shows: no badge, nothing sent. */
   readOnly(): boolean;
-  /** The ledger is open read-only: the tabs show, and what the person sees is kept in memory, never sent. */
+  /** The ledger is open read-only: the badges show, and what the person sees is kept in memory, never sent. */
   quiet?(): boolean;
   card(id: string): HTMLElement | undefined;
   /** Send card seen lines in order (the sender). */
@@ -102,8 +101,8 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
 
   const pieceOf = (n: number, sel: string) => d.card(String(n))?.querySelector<HTMLElement>(sel);
 
-  /** Draw the stepper at its step, focus where the person goes on (unless `focus` is false: the proposal
-   *  box that opened it keeps it), and mark the step seen. */
+  /** Draw the stepper at its step, focus where the person goes on (unless `focus` is false: the history box that opened
+   *  it keeps it), and mark the step seen. */
   function show(n: number, o: Stepper, focus = true) {
     d.redraw();
     const step = o.steps[o.at];
@@ -112,10 +111,8 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
       if (focus && next && !next.closest('[hidden]')) next.focus({ preventScroll: true });
       return send([{ n, ver: step.ver }]);
     }
-    // Past the last: "You're up to date"; the stepper's buttons are gone, so focus goes to the card, or in
-    // the proposal box to its first answer, so the box stays open on what is left to do.
-    const answer = pieceOf(n, '.vb-card-pop[data-open] button[data-answer]:not([aria-disabled="true"])');
-    (answer ?? d.card(String(n)))?.focus({ preventScroll: true });
+    // Past the last: "You're up to date"; the stepper's buttons are gone, so focus goes to the card.
+    d.card(String(n))?.focus({ preventScroll: true });
     o.timer = window.setTimeout(() => fold(n), UP_TO_DATE_MS);
   }
 
@@ -127,16 +124,14 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     const card = d.card(String(n));
     const inside = card?.contains(document.activeElement);
     d.redraw();
-    // Focus on a tab, on a mark (nodeEdges: the badge its box gave focus back to), or in an open box, stays (the
-    // proposal tab or box that held the steps, oneChangeTab).
-    if (!inside || document.activeElement?.closest('.vb-node-btab:not([hidden]), [data-mark]:not([hidden]), .vb-card-pop[data-open]')) return;
-    const tab = pieceOf(n, '[data-tab="updates"]');
-    returnFocus(tab && !tab.hidden ? tab : card);
+    // Focus on a mark (the badge its box gave focus back to), or in an open box, stays.
+    if (!inside || document.activeElement?.closest('[data-mark]:not([hidden]), .vb-card-pop[data-open]')) return;
+    returnFocus(card);
   }
 
-  /** The tab: open the stepper on the first unseen version, or fold it. */
-  function toggle(n: number, focus = true) {
-    if (open.has(n)) return fold(n);
+  /** The history box opened: the stepper on the first unseen version. */
+  function start(n: number, focus = true) {
+    if (open.has(n)) return;
     const s = live();
     const steps = s ? unseenSteps(s, d.board(), n, versionTime) : [];
     if (!steps.length) return;
@@ -153,11 +148,9 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
   }
 
   const onClick = (e: MouseEvent) => {
-    const b = (e.target as Element).closest<HTMLElement>('vb-node [data-tab="updates"], vb-node [data-step]');
+    const b = (e.target as Element).closest<HTMLElement>('vb-node [data-step]');
     if (!b || b.getAttribute('aria-disabled') === 'true') return;
-    const n = Number(b.closest<HTMLElement>('vb-node')!.dataset.id);
-    if (b.dataset.tab) toggle(n);
-    else go(n, b.dataset.step === 'next' ? 1 : -1);
+    go(Number(b.closest<HTMLElement>('vb-node')!.dataset.id), b.dataset.step === 'next' ? 1 : -1);
   };
   // Esc in an open card folds its stepper; keys.ts then leaves the selection alone.
   const onKey = (e: KeyboardEvent) => {
@@ -166,19 +159,19 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     e.preventDefault();
     fold(n);
   };
-  /** A card whose steps sit in its proposal box (oneChangeTab), or in its history box (nodeEdges, planner's call 9: the
-   *  badge opens one box holding the stepper and the history): `e` is that box's own event. */
+  /** A card whose steps sit in its history box (planner's call 9: the badge opens one box holding the stepper and the
+   *  history): `e` is that box's own event. */
   const boxed = (e: Event, name: string) => {
     const card = (e.target as Element).closest<HTMLElement>('vb-node');
-    const held = (name === 'proposal' || name === 'history') && card?.querySelector(`.vb-card-pop[data-pop="${name}"] .vb-node-steps`);
+    const held = name === 'history' && card?.querySelector(`.vb-card-pop[data-pop="${name}"] .vb-node-steps`);
     return held ? Number(card!.dataset.id) : undefined;
   };
   const onOpen = (e: Event) => {
     const box = (e as CustomEvent<HTMLElement>).detail;
     const n = boxed(e, box.dataset.pop ?? '');
-    if (n !== undefined && !open.has(n)) toggle(n, false);
+    if (n !== undefined) start(n, false);
   };
-  // After the draw that closed it (a proposal answered closes its box from inside the card's update).
+  // After the draw that closed it.
   const onHide = (e: Event) => {
     const n = boxed(e, (e as CustomEvent<string>).detail);
     if (n !== undefined) queueMicrotask(() => fold(n));

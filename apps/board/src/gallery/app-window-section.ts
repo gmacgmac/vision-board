@@ -1,5 +1,5 @@
-// Gallery entry for the app window (appWindow with nodeEdges, D-099 5; FE_08), shown with
-// gallery.html?flags=nodeEdges,skins,appWindow: the fixture's app card drawn as a window by each skin's row (SKIN_DEFS)
+// Gallery entry for the app window (D-099 5; FE_08), shown with the appCards flag on: the fixture's app card drawn as a
+// window by each skin's row (SKIN_DEFS)
 // inside a board root that carries the skin, as on a board: every app state (APP_CARD_STATES, from list_apps answers in
 // their exact shape, the app-frame section's), the moments the page sets on Allow (on its way, refused) and the menu
 // open, bookmarked and selected, and the drawer open with the node's conversation in it (a note waiting for Send, the
@@ -19,7 +19,7 @@ function windowCard(fx: Fixture, def: SkinDef, suffix: string, app: AppCardInput
   const base = sampleCard(fx);
   const n: ViewNode = { ...base, id: `${base.id}-${suffix}` };
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n, { ...ownIds(), markdown: pageMarkdown(), edges: def, appWindow: true, appStage: true });
+  node.render(n, { ...ownIds(), markdown: pageMarkdown(), edges: def });
   const state = f.bookmarked ? { ...fx.state, bookmarks: new Set([n.id]) } : fx.state;
   node.update(nodeState(n, state, undefined, f.selected === true, { app }));
   return node;
@@ -56,7 +56,6 @@ function skinPart(fx: Fixture, skin: Skin): HTMLElement {
   const def = SKIN_DEFS[skin];
   const root = el('div', 'vb-board g-skin');
   root.dataset.vbSkin = skin;
-  root.toggleAttribute('data-vb-edges', true);
   root.append(
     group(`Every state (${skin})`, `In order: ${STATES.map(([label]) => label.toLowerCase()).join('; ')}. One title bar, the app under it; the bar keeps one size in every state.`,
       cardList(`App window states, ${skin}`, ...STATES.map(([, app], i) => windowCard(fx, def, `${skin}-${i}`, app)))),
@@ -67,16 +66,16 @@ function skinPart(fx: Fixture, skin: Skin): HTMLElement {
   return root;
 }
 
-export function appWindowSection(fx: Fixture, skins: boolean): HTMLElement {
+export function appWindowSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
-  box.dataset.feature = 'appWindow';
-  box.setAttribute('aria-labelledby', 'feature-appWindow');
+  box.dataset.feature = 'app-window';
+  box.setAttribute('aria-labelledby', 'feature-app-window');
   const heading = el('h2', 'g-title', 'The app window');
-  heading.id = 'feature-appWindow';
+  heading.id = 'feature-app-window';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, '<vb-node> render(n, { edges, appWindow: true }) · node-window.ts · notes/app-drawer.ts'), ' · feature flags appWindow and nodeEdges, off by default · on with ?flags=nodeEdges,skins,appWindow');
+  meta.append(el('code', undefined, '<vb-node> render(n, { edges }) · node-window.ts · notes/app-drawer.ts'), ' · with the appCards flag (D-099 5)');
   box.append(heading,
     el('p', 'g-desc', 'An app node is a window: a thin title bar with the number (Bookmark), the app\'s name, Allow or "Allowed ▾", the drawer with the notes count and Open; no footer, no Save for later. Everything under the bar is the app\'s.'),
-    meta, skinPart(fx, 'default'), ...(skins ? [skinPart(fx, 'command-lens')] : []));
+    meta, skinPart(fx, 'default'), skinPart(fx, 'command-lens'));
   return box;
 }

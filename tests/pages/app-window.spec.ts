@@ -1,5 +1,5 @@
-// The app window (D-099 5; appWindow flag, FE_08; design/mockups/node-states/default-app-* and command-lens-app-*), with
-// ?flags=nodeEdges,skins,appWindow,appStage: an app node is one title bar (number, name, Allow or "Allowed ▾", the
+// The app window (D-099 5, FE_08; design/mockups/node-states/default-app-* and command-lens-app-*): an app node is one
+// title bar (number, name, Allow or "Allowed ▾", the
 // drawer arrow, Open) and the app under it, no footer and no notes under the app; the drawer docks the node's
 // conversation on its right and pushes its neighbours aside, and never reloads the panel; Open puts the whole window on
 // the page, focus held inside until Back or Esc and given back to the node; the panel's note and the agent's reply show
@@ -15,7 +15,7 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const MISSION = fileURLToPath(new URL('../../skills/vision-board/examples/apps/mission-control', import.meta.url));
-const FLAGS = 'nodeEdges,skins,appWindow,appStage,-appFit';
+const FLAGS = '-appFit';
 const THEMES: Theme[] = ['light', 'dark'];
 
 let s: AppServer;
@@ -69,7 +69,7 @@ for (const [skin, theme] of [[undefined, 'light'], [undefined, 'dark'], ['comman
     await expect(arrow(page)).toHaveAccessibleName(`No notes on item ${n[0]} (C). Show conversation`);
     await expect(arrow(page)).toHaveAttribute('aria-expanded', 'false');
     await expect(bar.locator('[data-app-act="stage"]')).toHaveAccessibleName('Open Live event mission control');
-    for (const gone of ['.vb-node-foot', '.vb-node-kind', '[data-mark="notes"]', '[data-mark="answer"]', '.vb-mark-switch']) await expect(win(page).locator(gone)).toHaveCount(0);
+    for (const gone of ['.vb-node-kind', '[data-mark="notes"]', '[data-mark="answer"]', '.vb-mark-switch']) await expect(win(page).locator(gone)).toHaveCount(0);
     await expectNoAxeViolations(page);
   });
 }

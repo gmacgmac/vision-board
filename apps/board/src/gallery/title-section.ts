@@ -5,8 +5,8 @@
 // fixture ledger's `title-*` regions, updated with `regionState` as the board does. Then a container
 // drawn by the board's own drawing at 40%: its top line keeps its size while the cards shrink. Then the
 // title's three places (open list and container title FE_02), one container: centred at 100% (the
-// board's own drawing); slid left beside the tools on a line as short on screen as it is at about 70%
-// (its frame alone, since cards drawn at 70% have buttons under the 24px target); and at the start at
+// board's own drawing); slid left beside the tools on a line as short on screen as it is at about 60%
+// (its frame alone, since cards drawn at 60% have buttons under the 24px target); and at the start at
 // 25% (the drawing again), where the tools have left the line.
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
@@ -20,16 +20,16 @@ const OPEN = new Set(['title-wide', 'title-narrow']);
 /** The container the title placement samples show (the layout board's row of cards). */
 const PLACED = 'align';
 
-/** That container's frame alone, on a line as short on screen as the board draws it at about 70%: its
+/** That container's frame alone, on a line as short on screen as the board draws it at about 60%: its
  *  label slides left beside the tools. Its id takes the same suffix the mini boards give theirs. */
 function slidFrame(fx: Fixture): HTMLElement {
   const { view, state } = fx.layout;
   const region = view.regions.find((r) => r.id === PLACED)!;
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render({ ...region, id: `${PLACED}-title-70` }, ownIds());
+  f.render({ ...region, id: `${PLACED}-title-60` }, ownIds());
   f.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id))));
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
-  f.style.width = 'calc(var(--vb-card-w) * 2.6)';
+  f.style.width = 'calc(var(--vb-card-w) * 1.9)';
   const box = el('div', 'g-frames vb-ground');
   box.append(f);
   return box;

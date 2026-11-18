@@ -172,14 +172,14 @@ and keeps its name.
 | `ui/notifications/size-changed` | notification | Params: `{ height }`, the content's height in px; sets the panel's height (§ Panel size). A `width` is ignored. |
 | `ui/notifications/escape` | notification | The board's own: the person pressed Esc in the panel; focus goes back to the card. |
 | `vision-board/save-state` | request | The board's own. Params: `{ state }`. Answers `{}` (§ Saving the panel's state). |
-| `vision-board/note` | request | The board's own (spike, the `appStage` flag). Params: `{ text }`, at most 2000 characters: a pick in the panel becomes the person's note on its card, through the action layer. Answers `{}`. |
+| `vision-board/note` | request | The board's own (§ The app window and the stage). Params: `{ text }`, at most 2000 characters: a pick in the panel becomes the person's note on its card, through the action layer. Answers `{}`. |
 
 ### Board to panel
 
 | Method | What it carries |
 |---|---|
 | `ui/notifications/host-context-changed` | The parts of the host context that changed: `theme` and `styles` when the board's theme changes. |
-| `vision-board/notifications/reply` | The board's own (spike, the `appStage` flag): one agent reply on the panel's card, `{ seq, text }`; a panel is told every reply on its card once after it starts, oldest first. |
+| `vision-board/notifications/reply` | The board's own (§ The app window and the stage): one agent reply on the panel's card, `{ seq, text }`; a panel is told every reply on its card once after it starts, oldest first. |
 
 ### Host context
 
@@ -374,8 +374,8 @@ server's own switch is `VB_FLAGS=-appCards` (`apps/board/server.ts`); the page's
 
 ## The app window and the stage
 
-With the `appWindow` and `nodeEdges` flags an app card is a window: one title bar (the number, the app's name, Allow or
-"Allowed ▾", a drawer arrow and, with `appStage`, Open) and the panel under it; the card's notes and the agent's
+An app card is a window (D-099 5): one title bar (the number, the app's name, the change badge, Allow or "Allowed ▾", a
+drawer arrow and Open) and the panel under it (`packages/ui/src/node/node-window.ts` `windowMarkup`); the card's notes and the agent's
 replies live in a drawer on its right, the same conversation as any node's (components.md § The app window). A panel's
 note (`vision-board/note`) joins the card's note not yet sent, as the drawer's Add note does, and shows in that
 thread; each reply shows there and is told to the panel (`vision-board/notifications/reply`). Open puts the window,

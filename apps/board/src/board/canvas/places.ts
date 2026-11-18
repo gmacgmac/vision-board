@@ -30,7 +30,7 @@ export interface Places {
   unpin(id: string): Promise<void>;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): Promise<void>;
-  /** A container's flow direction (layoutControl): the person's `direction` act for it; `auto` clears it. */
+  /** A container's flow direction (its layout control): the person's `direction` act for it; `auto` clears it. */
   setDirection(region: string, direction: ActDirection): Promise<void>;
   /** Match card widths in a container's mode row (field report batch 3 ruling 5): the person's act. */
   setWidths(region: string, widths: Widths): Promise<void>;

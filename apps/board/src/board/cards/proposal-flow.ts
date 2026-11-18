@@ -1,5 +1,6 @@
 // The agent's proposals on the page (proposals flag, FE_01, D-018, api.md 93): the rows behind each
-// card's PROPOSAL tab and the bar above the board, from the conditions table's proposal rows
+// node's proposal (its disc's dashed ring, or a switch's proposal chip) and the bar above the board, from the
+// conditions table's proposal rows
 // (attention.ts), and the person's answers: Accept and Reject in a card's box, Review and Accept all
 // in the bar. Accepting is a decision (rule 8) and the Accept click is the person's confirmation;
 // Accept all first lists what it applies. Every act goes through the one sender, so a refusal shows
@@ -14,7 +15,7 @@ import type { Box } from '#layout';
 import type { LedgerState, ProposalFound, ProposalRow } from '#actions';
 import { acceptAllPlan, answerable, proposalRows } from '#actions';
 import type { CardConditions } from '#ui';
-import { returnFocus, versionTime } from '#ui';
+import { POPOVER_CLOSE, returnFocus, versionTime } from '#ui';
 import type { ActFields } from '../io.ts';
 import type { ProposalAnswer } from './proposals.ts';
 import { acceptAllWords, answerDone, proposalAct } from './proposals.ts';
@@ -70,7 +71,9 @@ export interface ProposalFlow {
 const READ_FIT = { fill: 0.5, cap: 1 };
 
 const NONE: CardConditions = {};
-const tabOf = (card: HTMLElement | undefined) => card?.querySelector<HTMLButtonElement>('[data-tab="proposal"]:not([hidden])') ?? null;
+/** The mark that opens a node's proposal box: a switch's proposal chip, or the disc carrying the proposal. */
+const openerOf = (card: HTMLElement | undefined) =>
+  card?.querySelector<HTMLButtonElement>('[data-mark="proposal"]:not([hidden]), [data-mark="answer"][data-proposed]') ?? null;
 
 export function createProposalFlow(d: ProposalDeps): ProposalFlow {
   let rows: ProposalRow[] = [];
@@ -107,9 +110,11 @@ export function createProposalFlow(d: ProposalDeps): ProposalFlow {
       busy = false;
       entry?.removeAttribute('aria-busy');
       if (!ok) return refresh(); // refused: work the rows out again, so nothing stays stuck
-      // Another proposal on the card: back to its tab; else the card itself.
+      // The answered box closes (mark-acts.ts hears it on the stage); another proposal on the card: back to the mark
+      // that opens it, else the card itself.
       const card = d.card(id);
-      returnFocus(tabOf(card) ?? card);
+      card?.dispatchEvent(new CustomEvent(POPOVER_CLOSE, { bubbles: true, detail: 'proposal' }));
+      returnFocus(openerOf(card) ?? card);
       keepFocus();
       d.toast(answerDone(row, answer));
     },
@@ -134,10 +139,10 @@ export function createProposalFlow(d: ProposalDeps): ProposalFlow {
           if (isFar(d.vp.k)) d.vp.zoomCentre(FAR_K / d.vp.k); // a card larger than the stage: at least where controls show
         }
       }
-      const tab = tabOf(d.card(String(row.n)));
-      if (!tab) return;
-      if (tab.getAttribute('aria-expanded') === 'true') tab.focus({ preventScroll: true });
-      else tab.click();
+      const mark = openerOf(d.card(String(row.n)));
+      if (!mark) return;
+      if (mark.getAttribute('aria-expanded') === 'true') mark.focus({ preventScroll: true });
+      else mark.click();
     },
   };
 }

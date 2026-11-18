@@ -1,40 +1,6 @@
-/* A changed card (proposals-seen-parking FE_02 ruling 3, mockup 03 Part B option B; node-core.ts
-   `updatesView`). The "N updates" tab sits in the bottom-edge slot (node-popover.css), small (field
-   report batch 1, ruling 3): lower case, medium weight, less padding, on the card's surface with no
-   fill. With the freshCards flag (new-and-updated Design 1) it is found at board scale: the accent's
-   pink outline and words at rest (the world's data-fresh-cards; APCA on the card: the words Lc 74.8
-   light, 49.8 dark, label tier 45; the outline 72.0 and 47.7, decoration tier 30); off, the muted ink
-   on a grey line as before (light 76.2, dark 48.8). Hovered or open, its edge takes the CHANGED
-   family's amber and its words the ink. It is still a button with a 24px target (its ::after),
-   and its 1px margins keep it centred on the bottom edge like the 20px tabs beside it.
-   Opened, the card grows by one section for the step shown, right under its text, and its footer
-   becomes the stepper (data-stepping). Tokens only. */
-
-vb-node .vb-node-btab:is([data-tab='updates'], [data-tab='proposal'][data-updated]) {
-  align-self: center; height: 18px; margin-block: 1px; padding: 0 var(--vb-space-1); border-color: var(--vb-line-strong); background: var(--vb-surface-card);
-  color: var(--vb-ink-subtle); font-weight: var(--vb-weight-medium); letter-spacing: 0; text-transform: none;
-}
-vb-node {
-  [data-fresh-cards] & .vb-node-btab[data-tab='updates'] { border-color: var(--vb-accent); color: var(--vb-accent-text); }
-}
-vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
-vb-node {
-  [data-fresh-cards] & .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
-}
-/* Updated in amber (updateSignals flag, D-088): at rest the outline and words take --vb-state-updated, the
-   brightest thing on the card until it is seen (APCA in the token's comment: words Lc 61.4 light, 74.2 dark).
-   Hovered or open it keeps that amber and gains its soft fill, a step up, never down to the duller changed
-   amber (FIX_01; words on the -soft Lc 52.3 light, 70.7 dark). With freshCards off the tab stays grey. */
-vb-node {
-  [data-fresh-cards][data-update-signals] & .vb-node-btab[data-tab='updates'] { border-color: var(--vb-state-updated); color: var(--vb-state-updated); }
-  [data-fresh-cards][data-update-signals] & .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { background: var(--vb-state-updated-soft); }
-}
-/* One tab for updates and a proposal (oneChangeTab, point 444): the proposal tab that stands for both takes the
-   updates tab's look (above) in the updated amber, whatever freshCards says, hovered or open on its soft fill, as
-   the amber tab's. Its steps sit in the proposal box, under the proposals, the stepper in the box too (vb-node.ts
-   placeSteps): the section keeps its look and the stepper its row, the box's buttons' size. */
-vb-node .vb-node-btab[data-tab='proposal'][data-updated] { border-color: var(--vb-state-updated); color: var(--vb-state-updated); }
-vb-node .vb-node-btab[data-tab='proposal'][data-updated]:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-updated); background: var(--vb-state-updated-soft); }
+/* A changed card's steps (proposals-seen-parking FE_02 ruling 3, mockup 03 Part B option B; node-core.ts
+   `updatesView`): in the history box the change badge opens (planner's call 9; node-box.css), the step shown, then
+   the stepper. Tokens only. */
 
 /* The step: version, when and who; the change chips; what the text gained. Opaque, so its text
    reads the same over a see-through card (wireLayers). */
@@ -70,9 +36,6 @@ vb-node .vb-node-steps:has(> .vb-step-done) { padding: 0; border-color: transpar
 }
 @keyframes vb-step-fade { to { opacity: 0; } }
 
-/* The stepper takes the footer's place: "Update 2 of 3", Back, Next. */
-vb-node[data-stepping] .vb-node-foot > :not(.vb-node-stepnav) { display: none; }
-vb-node .vb-node-stepnav:not([hidden]) { flex: 1; display: flex; align-items: center; gap: var(--vb-space-2); padding-right: var(--vb-space-1); }
+/* The stepper under the step: "Update 2 of 3", Back, Next. */
+vb-node .vb-node-stepnav:not([hidden]) { flex: 1; display: flex; align-items: center; gap: var(--vb-space-2); }
 vb-node .vb-node-stepcount { flex: 1; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-bold); color: var(--vb-state-context); }
-/* In the proposal box (oneChangeTab) the stepper's buttons end at the box's edge, under Accept. */
-vb-node .vb-card-pop .vb-node-stepnav:not([hidden]) { padding-right: 0; }

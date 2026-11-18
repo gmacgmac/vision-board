@@ -24,7 +24,6 @@ import { noteBubbleSamples } from './note-bubble-section.ts';
 import { regionSamples } from './region-section.ts';
 import { railSection } from './rail-section.ts';
 import { freshSection } from './fresh-section.ts';
-import { groupNotesSection } from './group-notes-section.ts';
 import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
 import { accessByBotSection, accessSection } from './access-section.ts';
@@ -38,7 +37,6 @@ import { parkingSection } from './parking-section.ts';
 import { proposalsSection, reviewListSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
 import { updateSignalsSection } from './update-signals-section.ts';
-import { oneTabSection } from './one-tab-section.ts';
 import { bigTitlesSection } from './big-titles-section.ts';
 import { chatSection } from './chat-section.ts';
 import { alongsideSection } from './alongside-section.ts';
@@ -74,7 +72,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'note-bubble': noteBubbleSamples,
   region: regionSamples,
   // The compact bar and its pill behind their flag (stage5-follow-ups FE_02); off, today's bar.
-  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags()), flagOn('nodeEdges', pageFlags())),
+  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags())),
 };
 
 const patterns = PATTERNS.filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));
@@ -133,9 +131,7 @@ function build(): void {
   // Behind its flag, so the gallery without it (and its screenshot) is unchanged.
   const flags = pageFlags();
   main.toggleAttribute('data-title-tip', flagOn('titleTip', flags)); // the title tip (FE_03), as the board's world
-  main.toggleAttribute('data-note-preview', flagOn('notePreview', flags)); // the card note preview (FE_04), as the board's world
-  main.toggleAttribute('data-app-title', flagOn('appTitle', flags)); // an app card's title over its panel (card-polish FE_01), as the board's world
-  main.toggleAttribute('data-fresh-cards', flagOn('freshCards', flags)); // the pink "N updates" tab (freshCards), as the board's world
+  main.toggleAttribute('data-fresh-cards', flagOn('freshCards', flags)); // fresh containers (freshCards), as the board's world
   main.toggleAttribute('data-update-signals', flagOn('updateSignals', flags)); // updated in amber, the agent's reply edge (updateSignals), as the board's world
   main.toggleAttribute('data-big-titles', flagOn('bigTitles', flags)); // a structured card's big title (bigTitles, point 437), as the board's world
   if (flagOn('nodeSize', flags)) main.append(sizeSection(fx));
@@ -144,7 +140,7 @@ function build(): void {
   if (flagOn('versionView', flags)) main.append(versionSection(fx));
   if (flagOn('keyBubble', flags)) main.append(keyHelpSection());
   if (flagOn('proposals', flags)) main.append(proposalsSection(fx));
-  if (flagOn('cardUpdates', flags)) main.append(updatesSection(fx, flagOn('newCards', flags), flagOn('freshCards', flags)));
+  if (flagOn('cardUpdates', flags)) main.append(updatesSection(fx, flagOn('newCards', flags)));
   if (flagOn('handover', flags) || flagOn('cardReplies', flags)) main.append(parkingSection(fx));
   if (flagOn('chatPanel', flags)) main.append(chatSection(fx));
   if (flagOn('toolbarMenu', flags)) main.append(toolbarSection(fx));
@@ -159,12 +155,11 @@ function build(): void {
   if (flagOn('personRemove', flags)) main.append(removeSection(fx));
   if (flagOn('goToCard', flags)) main.append(goToCardSection());
   if (flagOn('appCards', flags)) main.append(appSection(fx));
-  if (flagOn('cardHistory', flags)) main.append(historySection(fx));
+  main.append(historySection(fx));
   main.append(appIconSection());
   // Last, so the sections above keep their place (and their screenshots) with the flag on or off.
   if (flagOn('toolRail', flags)) main.append(railSection(fx, flagOn('railOnHover', flags)));
   if (flagOn('freshCards', flags)) main.append(freshSection(fx)); // after the rail, so the sections above keep their place
-  if (flagOn('groupNoteOnce', flags)) main.append(groupNotesSection(fx)); // last, so the sections above keep their place
   if (flagOn('openFolder', flags) && flagOn('currentFolder', flags)) main.append(currentFolderSection()); // last, so the sections above keep their place
   if (flagOn('appCards', flags)) main.append(appFitSection(fx)); // the appFit flag's entry, on or off; last, so the sections above keep their place
   main.append(...patterns.filter((p) => p.name === LAST).map((p) => section(p, fx))); // last of all, so the sections above keep their place
@@ -180,12 +175,11 @@ function build(): void {
   if (flagOn('readOnlyStart', flags) && flagOn('agentAccess', flags) && flagOn('appCards', flags)) main.append(readOnlyControlsSection(fx)); // last of all, so no section moves
   if (flagOn('updateSignals', flags)) main.append(updateSignalsSection(fx)); // last of all, so no section moves
   if (flagOn('bigTitles', flags) && flagOn('markdownMore', flags)) main.append(bigTitlesSection(fx)); // last of all, so no section moves
-  if (flagOn('oneChangeTab', flags) && flagOn('proposals', flags) && flagOn('cardUpdates', flags)) main.append(oneTabSection(fx)); // last of all, so no section moves
-  if (flagOn('nodeEdges', flags)) main.append(edgesSection(fx)); // last of all, so no section moves
-  if (flagOn('nodeEdges', flags) && flagOn('skins', flags)) main.append(commandLensSection(fx)); // after the edges, so no section moves
-  if (flagOn('flowBranches', flags) || flagOn('flowDirection', flags)) main.append(flowSection(fx)); // BE_01; last of all, so no section moves
-  if (flagOn('layoutControl', flags)) main.append(layoutControlSection(fx, flagOn('flowDirection', flags))); // FE_07; last of all, so no section moves
-  if (flagOn('nodeEdges', flags) && flagOn('appWindow', flags)) main.append(appWindowSection(fx, flagOn('skins', flags))); // FE_08; last of all, so no section moves
+  main.append(edgesSection(fx)); // last of all, so no section moves
+  main.append(commandLensSection(fx)); // after the edges, so no section moves
+  main.append(flowSection(fx)); // BE_01; last of all, so no section moves
+  main.append(layoutControlSection(fx)); // FE_07; last of all, so no section moves
+  if (flagOn('appCards', flags)) main.append(appWindowSection(fx)); // FE_08; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

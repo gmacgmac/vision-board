@@ -89,11 +89,11 @@ test('the label is centred at 100%, slides left before it would touch the tools,
   expect(at(1).cut).toBe(false);
   // Never on the tools, at any zoom where they show.
   expect(ks.filter((k) => at(k).toolsLeft !== null && at(k).labelRight > at(k).toolsLeft!).map((k) => [k, at(k)])).toEqual([]);
-  // Sliding: between the centre and the start at 70% (the frame too narrow on screen to centre the
-  // label beside the tools); zooming out only ever moves it towards the start.
-  expect(at(0.7).toolsLeft).not.toBeNull();
-  expect(at(0.7).labelMid).toBeLessThan(at(0.7).frameMid - 2);
-  expect(at(0.7).labelLeft).toBeGreaterThan(at(0.7).headLeft + 1);
+  // Sliding: between the centre and the start at 60% (the frame too narrow on screen to centre the
+  // label beside the one layout button and the tools); zooming out only ever moves it towards the start.
+  expect(at(0.6).toolsLeft).not.toBeNull();
+  expect(at(0.6).labelMid).toBeLessThan(at(0.6).frameMid - 2);
+  expect(at(0.6).labelLeft).toBeGreaterThan(at(0.6).headLeft + 1);
   for (const [a, b] of ks.slice(1).map((k, i) => [ks[i]!, k] as const))
     expect(at(b).labelLeft - at(b).headLeft, `${a} then ${b}`).toBeLessThanOrEqual(at(a).labelLeft - at(a).headLeft + 0.5);
   // Zoomed out (the tools gone) it starts the line; at the far end its title is cut ("…").
@@ -181,7 +181,7 @@ for (const theme of ['light', 'dark'] as Theme[]) {
 test('the gallery draws the three places with the board\'s own drawing: centred, slid left, at the start zoomed out', async ({ page }) => {
   await page.goto('/gallery.html');
   const at = (k: number) => place(page.locator(`section[data-pattern="region"] vb-region[data-region="align-title-${k}"]`));
-  const [full, mid, far] = [await at(100), await at(70), await at(25)];
+  const [full, mid, far] = [await at(100), await at(60), await at(25)];
   expect(Math.abs(full.labelMid - full.frameMid)).toBeLessThanOrEqual(2);
   expect(mid.toolsLeft).not.toBeNull();
   expect([mid.labelMid < mid.frameMid - 2, mid.labelLeft > mid.headLeft + 1, mid.labelRight <= mid.toolsLeft!]).toEqual([true, true, true]);
@@ -190,8 +190,8 @@ test('the gallery draws the three places with the board\'s own drawing: centred,
 
 // A narrow line shows the count and each holder whole or not at all (VERIFY_01 finding 1, FIX_48):
 // never a clipped sliver ("(" or "· W" beside the tools). Two frames of a board of their own, each held
-// by its creator and "Second" by a second agent too: "Second" (the frame VERIFY_01 shot at 70%, here
-// with three cards, so both holders show at 100%) and a one-card frame, the narrowest. At every step of a zoom-out from 100% to 20% each count and
+// by its creator and "Second pass on pricing" by a second agent too: that frame (VERIFY_01 shot one like it at 70%;
+// here with three cards, so both holders show at 100%, and a longer title since the one layout button left the line more room) and a one-card frame, the narrowest. At every step of a zoom-out from 100% to 20% each count and
 // holder is either whole (its box all inside the line's clips, nothing of it cut, clear of the tools)
 // or wholly out of sight (no box, or a box all outside the clips). Read with the pointer away.
 type Seen = { part: string; state: 'whole' | 'gone' | 'sliver'; box: number[]; shown: number[] };
@@ -227,14 +227,14 @@ const parts = (f: Locator) => f.evaluate((e): Seen[] => {
 for (const query of ['', '?flags=-toolRail']) test(`a narrow line shows the count and each holder whole or not at all, at every zoom from 100% to 20%${query ? ', the row on the top line' : ''}`, async ({ page, request }) => {
   const d = await draw(request, 0, 'slivers');
   await write(request, d, [
-    { type: 'region', region: { id: 'q', title: 'Second', mode: 'row' } },
+    { type: 'region', region: { id: 'q', title: 'Second pass on pricing', mode: 'row' } },
     { type: 'region', region: { id: 'o', title: 'Release checklist for the spring launch', mode: 'row' } },
     ...[5, 6, 7].map((i) => ({ type: 'node', node: { region: 'q', kind: 'decision', title: `Decision ${i}` } })),
     { type: 'node', node: { region: 'o', kind: 'question', title: 'Ship it?' } },
   ]);
   await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(4);
-  // A second holder on "Second": an agent asks for it and the person grants it.
+  // A second holder on "Second pass on pricing": an agent asks for it and the person grants it.
   const b = await (await request.post('/api/agents', { data: { label: 'Launch chat' } })).json() as { secret: string };
   const ask = await request.post('/api/grants', { headers: { Authorization: `Bearer ${b.secret}` }, data: { board: d.board, region: 'q', reason: 'Add items.' } });
   expect(ask.status(), await ask.text()).toBe(201);
@@ -270,7 +270,7 @@ for (const query of ['', '?flags=-toolRail']) test(`a narrow line shows the coun
   for (const s of ['o count whole', 'o count gone', 'q holder Pricing chat whole', 'q holder Pricing chat gone', 'q holder Launch chat whole', 'q holder Launch chat gone'])
     expect([...states], s).toContain(s);
   // Out of sight, but still read out: at zooms where the controls show and the one-card frame's count,
-  // then "Second"'s second holder, is out of sight, each stays in the accessible tree, as before. With
+  // then "Second pass on pricing"'s second holder, is out of sight, each stays in the accessible tree, as before. With
   // the rail the line is the label's alone, so neither goes out of sight while the controls show.
   if (!query) return;
   const goneAt = (part: string) => ks.find((x) => x >= 0.56 && sweep.includes(`${Math.round(x * 100)}% ${part} gone`));

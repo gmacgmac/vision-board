@@ -9,7 +9,8 @@ element `<vb-node>` draws every card on the board and `<vb-region>` every contai
 - **Depends on**: `packages/format`, `packages/actions`; its CSS uses the `packages/tokens` properties, which the host page loads.
 - **Used by**: `apps/board`.
 - **Public API** (`#ui`, `src/index.ts`, D-059): the node core (`nodeState`, `NodeState`, `nodeLabel`, `offers`,
-  `isPressed`, `STATUS_LABEL`), the node template (`nodeTemplate`, `esc`), the element type
+  `isPressed`, `STATUS_NAME`, the edge marks `nodeMarks`), the node template (`nodeTemplate`, `esc`), the skin rows
+  (`SKIN_DEFS`), the icon set (`icon`), the element type
   `VbNodeElement`, the Markdown renderer (`renderMarkdown`, `MarkdownOptions`, `MARKDOWN_MAX`;
   D-023, `src/markdown/`), and `defineBoardElements()`, which the page calls once at start-up, and `PATTERNS` (`src/patterns.ts`, each
   pattern's `pattern.json`, which the gallery reads; `tests/patterns.test.ts` fails for a folder missing

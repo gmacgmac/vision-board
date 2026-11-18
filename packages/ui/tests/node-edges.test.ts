@@ -1,6 +1,6 @@
-// The node with its marks on its edges (FE_01, D-099; nodeEdges): the template draws by the skin's row, never a skin's
-// name; no footer; marks in visual order, so the tab order follows what is drawn; the icon tile, built in or from the
-// library; the three menus; and every skin offers the same actions. Off (no `edges`), nothing of it is drawn.
+// The node with its marks on its edges (FE_01, D-099): the template draws by the skin's row, never a skin's name; no
+// footer; marks in visual order, so the tab order follows what is drawn; the icon tile, built in or from the library;
+// the three menus; and every skin offers the same actions. With no row given, the default skin's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '#format';
@@ -19,11 +19,10 @@ test('every skin has a row, and the template reads only the row', () => {
   assert.deepEqual(SKIN_DEFS.default, { answer: 'disc', marks: 'edges' });
 });
 
-test('off, the node is today\'s: a footer and no mark; on, no footer, no notes block, no bottom tabs', () => {
-  const off = nodeTemplate(node(), { bookmark: true, history: true });
-  assert.ok(off.includes('vb-node-foot') && !off.includes('data-mark'));
-  const on = nodeTemplate(node(), { bookmark: true, history: true, edges });
-  for (const gone of ['vb-node-foot', 'vb-node-notes', 'vb-node-btabs', 'data-act=', 'data-bookmark', 'vb-note-pin']) assert.ok(!on.includes(gone), gone);
+test('no footer, no notes block, no bottom tabs; with no row given, the default skin\'s', () => {
+  const on = nodeTemplate(node(), { edges });
+  for (const gone of ['vb-node-foot', 'vb-node-notes', 'vb-node-btab', 'data-act=', 'data-bookmark', 'vb-note-pin', 'vb-size']) assert.ok(!on.includes(gone), gone);
+  assert.equal(nodeTemplate(node()), on);
 });
 
 test('the marks sit in visual order, so reading and tab order follow it: number, kind, disc, body, badge, Awaiting, notes', () => {
@@ -57,8 +56,10 @@ test('a tone never reaches the markup: the element applies the checked value thr
   assert.ok(!/tone|style=/.test(nodeTemplate(node({ tone: 210 }), { edges })));
 });
 
-test('an app card keeps today\'s card under the flag (its window is FE_08)', () => {
-  assert.ok(nodeTemplate(node({ kind: 'app', app: { id: 'calc' } }), { edges }).includes('vb-node-foot'));
+test('an app card is a window (FE_08); with the appCards flag off, a plain node with its marks', () => {
+  assert.ok(nodeTemplate(node({ kind: 'app', app: { id: 'calc' } }), { edges }).includes('vb-win-bar'));
+  const off = nodeTemplate(node({ kind: 'app', app: { id: 'calc' } }), { edges, appCards: false });
+  assert.ok(!off.includes('vb-win-bar') && off.includes('data-mark="number"') && !off.includes('vb-node-foot'));
 });
 
 test('the number\'s menu: Bookmark (or Remove), Save for later (or Bring back), and Put back on a moved node', () => {
@@ -99,8 +100,7 @@ test('the history box beside a node: each row its version (↩ for a proposal wi
     { seq: 9, at: '2026-11-17T11:00:00Z', who: 'agent' as const, agent: 'Edges chat', kind: 'proposal-withdrawn' as const, words: 'Proposal withdrawn: the node changed' },
     { seq: 9, at: '2026-11-17T11:00:00Z', who: 'agent' as const, agent: 'Edges chat', kind: 'drawn' as const, words: 'Agent drew v2', ver: 2 },
   ];
-  const html = historyMarkup(rows, now, true);
+  const html = historyMarkup(rows, now);
   assert.match(html, /<b class="vb-history-ver" aria-hidden="true">↩<\/b><span class="vb-history-words">Proposal withdrawn: the node changed<\/span><span class="vb-history-meta"><span class="vb-history-agent">Edges chat · <\/span><time/);
   assert.match(html, /<b class="vb-history-ver" aria-hidden="true">v2<\/b><span class="vb-history-words">Agent drew v2<\/span>/);
-  assert.doesNotMatch(historyMarkup(rows, now), /vb-history-ver/, 'the old box is as it was');
 });

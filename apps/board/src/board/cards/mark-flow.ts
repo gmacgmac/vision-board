@@ -1,4 +1,4 @@
-// What a node's marks do on the board (nodeEdges flag, D-099 1, decisions 4 to 7; the design review of DESIGN_01).
+// What a node's marks do on the board (D-099 1, decisions 4 to 7; the design review of DESIGN_01).
 // Each mark is the control for what it shows, and a press never does two things depending on its timing:
 // - the number: a click toggles Bookmark at once; a press held about 400 ms (a long press on touch) opens the
 //   number's menu instead and toggles nothing; the menu key or Shift+F10 on it opens the menu too;
@@ -93,6 +93,9 @@ export function createMarkFlow(d: MarkFlowDeps): MarkFlow {
     const card = t.closest?.<HTMLElement>('vb-node[data-edges]');
     if (!card || t.closest('a, input, textarea, [contenteditable]')) return;
     e.preventDefault();
+    // A Ctrl+press on macOS comes as a right-click (main button, Ctrl held), but on the board Ctrl+click adds to the
+    // selection and Ctrl+drag pans from anywhere (pointer.ts): it keeps that meaning and opens no list.
+    if (e.ctrlKey && e.button === 0) return;
     const id = card.dataset.id!;
     if (held || acts?.showing(id)) return;
     const [x, y] = [e.clientX, e.clientY];

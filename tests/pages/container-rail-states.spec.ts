@@ -18,37 +18,37 @@ test('a short frame: the rail collapses, expands over the cards on hover or focu
   await board(page, request);
   await zoomTo(page, 1);
   const f = frame(page);
-  const all = ['Grid', 'Flow', 'Lanes', 'Radial', 'Column', 'Row', 'Match', 'Comment', 'Settings'];
+  const all = ['Layout:', 'Match', 'Comment', 'Settings'];
+  const collapsed = ['Layout:', 'Comment', 'Settings'];
   expect((await boxOf(f)).height, 'a one-card frame is short of the full rail').toBeLessThan(275);
-  expect(await drawn(f)).toEqual(['Grid', 'Comment', 'Settings']);
+  expect(await drawn(f)).toEqual(collapsed);
   const cards = await cardBoxes(page);
   await rail(page).hover();
   expect(await drawn(f)).toEqual(all);
   expect(await f.evaluate((e) => getComputedStyle(e).zIndex), 'drawn over the cards').toBe('4');
   expect(await cardBoxes(page), 'nothing moved').toEqual(cards);
   await page.mouse.move(2, 990);
-  expect(await drawn(f)).toEqual(['Grid', 'Comment', 'Settings']);
+  expect(await drawn(f)).toEqual(collapsed);
   // Keyboard: Tab from the grip reaches the rail next (Design 7), which expands; Esc collapses it,
   // keeping the focused button drawn; moving on expands it again; Tab out collapses it.
+  const layout = f.locator('.vb-layout-btn');
   await f.locator('.vb-region-grip').focus();
   await page.keyboard.press('Tab');
-  await expect(f.getByRole('radio', { name: 'Grid' })).toBeFocused();
+  await expect(layout).toBeFocused();
   expect(await drawn(f)).toEqual(all);
+  await page.keyboard.press('Escape');
+  await expect(layout).toBeFocused();
+  expect(await drawn(f)).toEqual(collapsed);
   await page.keyboard.press('ArrowDown');
-  await expect(f.getByRole('radio', { name: 'Flow' })).toBeFocused();
-  // The icon's tooltip is open (layoutTooltip flag): the first Esc dismisses it and nothing else; the next collapses the rail.
-  await expect(f.getByRole('radio', { name: 'Flow' }).locator('.vb-mode-tip')).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(f.getByRole('radio', { name: 'Flow' }).locator('.vb-mode-tip')).toBeHidden();
+  await expect(f.locator('.vb-widths')).toBeFocused();
   expect(await drawn(f)).toEqual(all);
   await page.keyboard.press('Escape');
-  await expect(f.getByRole('radio', { name: 'Flow' })).toBeFocused();
-  expect(await drawn(f)).toEqual(['Grid', 'Flow', 'Comment', 'Settings']);
+  expect(await drawn(f), 'the focused switch stays drawn').toEqual(all);
   await page.keyboard.press('ArrowDown');
   expect(await drawn(f)).toEqual(all);
   await page.keyboard.press('Shift+Tab');
   await expect(f.locator('.vb-region-grip')).toBeFocused();
-  expect(await drawn(f)).toEqual(['Grid', 'Comment', 'Settings']);
+  expect(await drawn(f)).toEqual(collapsed);
   // The narrowest form: only the cog (no badge shows), expanding the same way.
   await zoomTo(page, 0.56);
   expect(await drawn(f)).toEqual(['Settings']);
@@ -56,8 +56,8 @@ test('a short frame: the rail collapses, expands over the cards on hover or focu
   expect(await drawn(f)).toEqual(all);
 });
 
-test('popovers open to the right of the rail, top-aligned with what opened them, inside the window (the layout popover with layoutTooltip off)', async ({ page, request }) => {
-  const d = await board(page, request, '?flags=-layoutTooltip');
+test('popovers open to the right of the rail, top-aligned with what opened them, inside the window', async ({ page, request }) => {
+  const d = await board(page, request);
   await act(page, d, { action: 'comment', board: d.board, region: 'p', text: 'Is the order right?' });
   await zoomTo(page, 0.8);
   await centreOn(page);
@@ -71,8 +71,8 @@ test('popovers open to the right of the rail, top-aligned with what opened them,
     expect(p.x + p.width <= view.width && p.y + p.height <= view.height && p.y >= 0, `${what}: inside the window`).toBe(true);
   };
   await rail(page).hover();
-  await f.getByRole('radio', { name: 'Grid' }).hover();
-  await check(f.locator('.vb-mode-pop'), f.getByRole('radio', { name: 'Grid' }), 'layout popover');
+  await f.locator('.vb-layout-btn').click();
+  await check(f.locator('.vb-mode-pop'), f.locator('.vb-layout-btn'), 'layout popover');
   // The pointer crosses the gap into the popover and it stays (WCAG 1.4.13).
   await f.locator('.vb-mode-pop').hover();
   await expect(f.locator('.vb-mode-pop')).toBeVisible();
@@ -92,17 +92,18 @@ test('keys: Up and Down move through the rail and wrap; on the cog Right opens i
   await board(page, request);
   await zoomTo(page, 1);
   const f = frame(page);
-  const grid = f.getByRole('radio', { name: 'Grid' });
+  const layout = f.locator('.vb-layout-btn');
   const cog = f.locator('.vb-cog');
-  await grid.focus();
+  await layout.focus();
   await page.keyboard.press('ArrowDown');
-  await expect(f.getByRole('radio', { name: 'Flow' })).toBeFocused();
+  await expect(f.locator('.vb-widths')).toBeFocused();
   await page.keyboard.press('ArrowUp');
-  await expect(grid).toBeFocused();
+  await expect(layout).toBeFocused();
+  await expect(f).not.toHaveAttribute('data-open', 'modes');
   await page.keyboard.press('ArrowUp');
   await expect(cog).toBeFocused();
   await page.keyboard.press('ArrowDown');
-  await expect(grid, 'Down on the cog moves on (wrapping), the menu opens to the right').toBeFocused();
+  await expect(layout, 'Down on the cog moves on (wrapping), the menu opens to the right').toBeFocused();
   await expect(f).not.toHaveAttribute('data-open', 'menu');
   await page.keyboard.press('End');
   await page.keyboard.press('ArrowRight');

@@ -39,7 +39,8 @@ test('a card bubble with changed words asks before it closes: Cancel keeps them,
   await page.keyboard.press('Escape');
   await expect(bubble(page)).toBeHidden();
   await expect(discard(page)).toBeHidden();
-  expect(await head(page)).toBe(before);
+  // Nothing written but what opening a node's conversation box reads (its `seen`, FE_03).
+  expect((await linesAfter(page, before)).filter((e) => e.type !== 'seen')).toEqual([]);
 });
 
 test('a container bubble with changed words asks on Cancel and before another bubble opens over it', async ({ page }) => {
@@ -64,7 +65,8 @@ test('a container bubble with changed words asks on Cancel and before another bu
   await expect(text(page)).toHaveValue('');
   await page.keyboard.press('Escape');
   await expect(bubble(page)).toBeHidden();
-  expect(await head(page)).toBe(before);
+  // Nothing written but what opening a node's conversation box reads (its `seen`, FE_03).
+  expect((await linesAfter(page, before)).filter((e) => e.type !== 'seen')).toEqual([]);
 });
 
 /** Close the tab as a person does (`beforeunload` runs); the dialogs it raised, each dismissed (the tab stays). */
@@ -90,7 +92,8 @@ test('a tab close asks while a note holds changed words (leavePrompt flag); unch
   await page.keyboard.press('Escape');
   await discard(page).getByRole('button', { name: 'Discard' }).click();
   await expect(bubble(page)).toBeHidden();
-  expect(await head(page)).toBe(before);
+  // Nothing written but what opening a node's conversation box reads (its `seen`, FE_03).
+  expect((await linesAfter(page, before)).filter((e) => e.type !== 'seen')).toEqual([]);
   expect(await closeTab(page)).toEqual([]);
   expect(page.isClosed()).toBe(true);
 
@@ -132,7 +135,8 @@ test('choosing another board with changed words asks first: Cancel keeps this bo
   await page.locator(bid('board')).selectOption(fx.board);
   await expect(page.locator('vb-node')).toHaveCount(7);
   await expect(discard(page)).toBeHidden();
-  expect(await head(page)).toBe(before);
+  // Nothing written but what opening a node's conversation box reads (its `seen`, FE_03).
+  expect((await linesAfter(page, before)).filter((e) => e.type !== 'seen')).toEqual([]);
 });
 
 // The person's own act that would take the note's card away asks first (point 309): Hide answered,

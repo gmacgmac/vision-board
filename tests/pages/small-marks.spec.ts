@@ -1,4 +1,4 @@
-// A node's marks and their pointer targets (nodeEdges and skins flags; FIX_02, the maintainer's points 430 to 438,
+// A node's marks and their pointer targets (FIX_02, the maintainer's points 430 to 438,
 // replacing FIX_01's 86% rule). Every mark's hit area is 28px: at 100% each is at least 24px in both skins and axe excuses
 // nothing. Down to the far breakpoint (viewport.ts MARK_FAR_K, about 37%) every mark takes its press, with the hand
 // cursor (at 83% and at 45%). Below it the stage carries data-marks="small": a press on a mark selects its node only, no
@@ -11,7 +11,7 @@ import { card, joinAgent, open, write } from './agent-board.ts';
 import { mark, menuOf } from './edge-board.ts';
 import { zoomTo } from './rail-board.ts';
 
-const FLAGS = '?vbwork&flags=nodeEdges,skins';
+const FLAGS = '?vbwork';
 const SKINS = ['default', 'command-lens'] as const;
 const THEMES: Theme[] = ['dark', 'light'];
 /** Above the far breakpoint (the maintainer's 83% and 45%), and below it. */

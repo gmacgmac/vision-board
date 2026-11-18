@@ -55,8 +55,8 @@
   onbookmarked={() => board()?.nextBookmarked()}
   onarchive={() => void board()?.boardEdit.archive()}
   onlock={() => void board()?.boardEdit.lock()}
-  onskin={flag('skins') ? (skin) => board()?.setSkin(skin) : undefined}
-  ondirection={flag('flowDirection') ? (direction) => board()?.setDirection(direction) : undefined}
+  onskin={(skin) => board()?.setSkin(skin)}
+  ondirection={(direction) => board()?.setDirection(direction)}
 />
 {#if shown.past}
   <VersionBanner run={shown.past} {root} onback={() => void board()?.showVersion(null)} />

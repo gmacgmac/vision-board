@@ -101,9 +101,9 @@ vb-region[data-rail-hover] .vb-mode-row { transition: border-color var(--vb-moti
 }
 
 /* Short frames (Design 4), by the rail's room on screen, mirroring the top line's row. The full rail
-   is 247px (221px without Match card widths: 2px border, 4px padding, nine 26px stops, the divider's
-   7px), so it needs that plus its top and foot: 275px (249px). Below that it collapses to the checked
-   layout, Comment and the cog (84px, so 112px of room); below that to the cog, and Comment while its
+   was 247px with the six layout icons (221px without Match card widths: 2px border, 4px padding, nine 26px stops, the
+   divider's 7px), so it needs that plus its top and foot: 275px (249px; measured before the one layout button, PLAN
+   decision 20). Below that it collapses to the layout button, Comment and the cog (84px, so 112px of room); below that to the cog, and Comment while its
    badge shows (an unsent or a waiting note). The others stay in the rail at no height and still
    focusable. Hovering or focusing the rail expands it whole as an overlay drawn over the cards (the
    frame is raised, below), moving nothing. A collapsed rail is placed by its foot, so it expands
@@ -116,7 +116,7 @@ vb-region {
   &[data-rail]:has(.vb-widths) { --rail-widths: 1; }
 }
 @container vb-rail (max-height: 248.98px) or ((max-height: 274.98px) and style(--rail-widths: 1)) {
-  /* The foot of the collapsed rail: the checked layout, Comment and the cog (2px padding and a 1px
+  /* The foot of the collapsed rail: the layout button, Comment and the cog (2px padding and a 1px
      border each end, three 26px stops) under its top. */
   vb-region {
     &[data-rail]:not([data-fixed]) .vb-region-tools {
@@ -124,7 +124,7 @@ vb-region {
     }
   }
   vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut])
-    :is(.vb-mseg[role='radio']:not([aria-checked='true']), .vb-widths, .vb-mode-div):not(:focus) {
+    :is(.vb-widths, .vb-mode-div):not(:focus) {
     height: 0; padding-block: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
   }
   vb-region[data-rail] .vb-region-tools:is(:hover, :focus-within, [data-look]) > .vb-mode-row:not([data-shut]) {
@@ -139,7 +139,7 @@ vb-region {
       bottom: calc(100% - var(--vb-rail-top) - 6px - 2 * (var(--vb-rail-btn) + 2px));
     }
   }
-  vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-mseg[role='radio']:not(:focus) {
+  vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-layout-btn:not(:focus) {
     height: 0; padding-block: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
   }
   vb-region {

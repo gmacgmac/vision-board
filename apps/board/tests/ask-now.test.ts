@@ -1,4 +1,4 @@
-// Ask now in the conversation box (nodeEdges, FE_03; notes/note-box.ts, controller/ask-now.ts, kept-view.ts
+// Ask now in the conversation box (FE_03; notes/note-box.ts, controller/ask-now.ts, kept-view.ts
 // `askContextOf`): the words typed join the node's note not yet sent, or become it, then one `ask` names that note;
 // while no message can go the box says why and writes nothing; with no agent listening the words wait as a note for
 // Send and the board says so; a failed write keeps the words; Add note never asks. A fake bubble and fake writes stand in.

@@ -1,4 +1,4 @@
-// Where a node's menu, picker or tip goes on the stage (nodeEdges flag, D-101): in stage pixels, outside the scaled
+// Where a node's menu, picker or tip goes on the stage (D-101): in stage pixels, outside the scaled
 // board, so it keeps one size at any zoom; placed again from its anchor whenever the view moves, so it stays attached.
 // The answer picker opens to the right of the disc, never on it (DD-07), the number's menu under the number, the
 // right-click list at the pointer, a tip above its mark. Each flips to the other side when the stage has no room, and

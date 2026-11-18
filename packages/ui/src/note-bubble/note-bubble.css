@@ -151,7 +151,7 @@ vb-note-bubble .vb-nb-primary { border-color: var(--vb-accent-fill); background:
 vb-note-bubble .vb-nb-primary:hover { background: var(--vb-accent-fill-hover); }
 vb-note-bubble[data-phase='saving'] { cursor: progress; }
 
-/* The conversation box (nodeEdges, FE_03; design/mockups/node-states/default-input-*): the head is the node's
+/* The conversation box (FE_03; design/mockups/node-states/default-input-*): the head is the node's
    number and title (a long one wraps); tabs only when the node is in a note on several nodes; a note waiting for
    Send is dashed and says so; the field is one line that grows to three (5.6em: three lines of 1.45 and the
    padding), then scrolls; Ask now and Add note share the width. */

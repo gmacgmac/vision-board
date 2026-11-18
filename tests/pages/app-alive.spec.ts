@@ -13,8 +13,8 @@ import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
 import { LIVE_PANELS } from '../../apps/board/src/board/apps/app-cards.ts';
 import { APP_LIMITS, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
-import { expect, expectNoAxeViolations, test, bid } from './helpers.ts';
-import { card as cardOf, panelOf } from './board-page.ts';
+import { expect, expectNoAxeOnBoard, test, bid } from './helpers.ts';
+import { card as cardOf, panelOf, wake } from './board-page.ts';
 
 let s: AppServer;
 test.beforeAll(async () => { s = await startAppServer({ fixtures: ['panel-only'] }); });
@@ -63,6 +63,7 @@ test('a loaded panel keeps what it holds through a far zoom, a pan two screens a
   const frame = card.locator('vb-app-frame');
   const iframe = frame.locator('iframe');
   const panel = await panelOf(card);
+  await wake(card);
   for (const key of ['1', '2']) await panel.getByRole('button', { name: key, exact: true }).click();
   await panel.evaluate(() => { (window as { kept?: string }).kept = 'yes'; });
   expect(await held(panel)).toEqual(KEPT);
@@ -94,7 +95,7 @@ test('a loaded panel keeps what it holds through a far zoom, a pan two screens a
 
   // A new version of the card, then a relayout: the card before it retired, so it moves up.
   await s.write(board, [{ type: 'node', n, node: { region: 'tools', ...CALCULATOR, title: 'Calculator, again' } }]);
-  await expect(card.locator('.vb-node-title')).toHaveText('Calculator, again');
+  await expect(card).toHaveAttribute('aria-label', /Calculator, again/);
   await live('a new version');
   const before = await card.boundingBox();
   await s.write(board, [{ type: 'retire', n: first }]);
@@ -134,7 +135,7 @@ test('a frozen panel takes no click and no Tab: it is inert while zoomed far, an
     await page.keyboard.press('Tab');
     await expect(iframe).not.toBeFocused();
   }
-  await expectNoAxeViolations(page);
+  await expectNoAxeOnBoard(page);
   await card.focus();
   await zoomFar(page, false);
   await expect(frame).not.toHaveAttribute('inert');
@@ -204,6 +205,7 @@ test('a panel gets back what it saved after a page reload: the calculator still 
   const { board, n: [n] } = await s.draw([CALCULATOR]);
   await open(page, board, 1);
   const panel = await panelOf(cardOf(page, n!));
+  await wake(cardOf(page, n!));
   const saved = savedSum(page, n!, '12');
   for (const key of ['1', '2']) await panel.getByRole('button', { name: key, exact: true }).click();
   await saved;
@@ -220,7 +222,9 @@ test('the panel the cap unloaded starts again with what it saved, from the page\
   await open(page, board, n.length);
   await visit(page, first);
   const saved = savedSum(page, first, '7');
-  await (await panelOf(cardOf(page, first))).getByRole('button', { name: '7', exact: true }).click();
+  const firstPanel = await panelOf(cardOf(page, first));
+  await wake(cardOf(page, first));
+  await firstPanel.getByRole('button', { name: '7', exact: true }).click();
   await saved;
   await cardOf(page, first).focus(); // out of the panel, so the board takes the keys again
   for (const id of n.slice(1)) await visit(page, id);

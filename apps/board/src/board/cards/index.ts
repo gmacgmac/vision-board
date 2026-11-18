@@ -10,9 +10,9 @@ export { createProposalFlow } from './proposal-flow.ts';
 export type { ProposalFlow } from './proposal-flow.ts';
 export { acceptAllWords, barWords, proposes } from './proposals.ts';
 export { createRemoveFlow } from './remove-flow.ts';
-export { bindSizeControl, isSizePick, sizeAct, tierOf } from './size.ts';
+export { sizeAct, tierOf } from './size.ts';
 export { createUpdateFlow } from './update-flow.ts';
-// The node's edges (nodeEdges flag, FE_02): its marks' presses, menus, boxes and tips; a container seen on this
+// The node's edges (FE_02): its marks' presses, menus, boxes and tips; a container seen on this
 // screen; the project's icon library.
 export { createMarkFlow } from './mark-flow.ts';
 export { nodeReach, placeBeside, stageBoxOf } from './mark-place.ts';

@@ -8,7 +8,7 @@ import path from 'node:path';
 import type { Page } from '@playwright/test';
 import { loadEngine, manifest } from './fake-host/server.ts';
 import type { FakeHost } from './fake-host/server.ts';
-import { drawPlans, drawn, drive, expect, openHost, test } from './harness.ts';
+import { answerNode, drawn, drawPlans, drive, expect, openHost, test } from './harness.ts';
 
 const PERSON = { by: 'person' } as const;
 /** The person's words when a press can't write (`#actions` READ_ONLY_PERSON), as the host's notice shows them. */
@@ -78,7 +78,7 @@ test('readOnly: asked on every call, so a host flips it in place; a host that ne
   expect((await host.tool('get_board', { board: 'plans' })).structuredContent).not.toHaveProperty('readOnly');
 });
 
-const ackButton = (page: Page, i: number) => page.locator('.host-root vb-node').nth(i).locator('button[data-act="ack"]');
+const disc = (page: Page, i: number) => page.locator('.host-root vb-node').nth(i).locator('[data-mark="answer"]');
 const headOf = async (host: FakeHost) => ((await host.engine.route({ method: 'GET', path: 'boards' }, { caller: PERSON }))!.body as { head: number }).head;
 
 test.describe('the view', () => {
@@ -91,14 +91,16 @@ test.describe('the view', () => {
     host.setReadOnly(true);
     await expect.poll(() => drive(page, 'boardStatus').then((s: { readOnly: boolean }) => s.readOnly), 'the view read it').toBe(true);
     const before = await headOf(host);
-    await ackButton(page, 0).click({ force: true });
-    await expect.poll(() => drive(page, 'record').then((r: { notices: { text: string; tone?: string }[] }) => r.notices.at(-1))).toEqual({ text: expect.stringMatching(REASON), tone: 'error' });
-    await expect(ackButton(page, 0)).toHaveAttribute('aria-pressed', 'false');
+    // A press on the disc says why on the disc itself, a lock for a moment and its tip (the design review, point 328).
+    await disc(page, 0).click({ force: true });
+    await expect(disc(page, 0)).toHaveAttribute('data-locked', '');
+    await expect(page.locator('.host-root .vb-mark-tip')).toHaveText('This ledger is read-only');
+    await expect(disc(page, 0)).toHaveAttribute('data-answer', 'waiting');
     expect(await headOf(host), 'nothing written').toBe(before);
     host.setReadOnly(false);
     await expect.poll(() => drive(page, 'boardStatus').then((s: { readOnly: boolean }) => s.readOnly)).toBe(false);
-    await ackButton(page, 0).click();
-    await expect(ackButton(page, 0)).toHaveAttribute('aria-pressed', 'true');
+    await answerNode(page.locator('.host-root vb-node').first());
+    await expect(disc(page, 0)).toHaveAttribute('data-answer', 'ticked');
     await expect.poll(() => headOf(host)).toBe(before + 1);
   });
 });

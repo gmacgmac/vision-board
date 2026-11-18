@@ -1,4 +1,4 @@
-// Node pattern, the node's three menus (D-099; nodeEdges flag), as markup for the fixed-size menu (menu-template.ts):
+// Node pattern, the node's three menus (D-099), as markup for the fixed-size menu (menu-template.ts):
 // the number's menu (Bookmark, Save for later; held on the number), the answer picker (Tick, Cross; opened beside the
 // disc, never on it) and the right-click list (the six actions with their keys: no Tick or Cross on a node that only
 // tells, no Save for later on an app). A moved node adds "Moved by you · Put back" to the number's menu and the list;
@@ -27,11 +27,11 @@ const bookmark = (st: NodeState): MenuRow => (st.marks.bookmarked
   ? { act: 'unbookmark', label: nodeWords.removeBookmark, icon: 'bookmark', key: MARK_KEYS.bookmark }
   : { act: 'bookmark', label: nodeWords.bookmark, icon: 'bookmark', key: MARK_KEYS.bookmark });
 
-/** Save for later, or Bring back for a node in Later; none on an app (D-099 5). */
-const later = (n: ViewNode, st: NodeState): MenuRow[] => (n.kind === 'app' ? []
-  : [st.status === 'later'
-    ? { act: 'reopen', label: nodeWords.bringBack, icon: 'clock', key: MARK_KEYS.later }
-    : { act: 'later', label: nodeWords.saveForLater, icon: 'clock', key: MARK_KEYS.later }]);
+/** Save for later where the node's type offers it (`NODE_TYPES`: not an app, D-099 5), or Bring back for a node in Later
+ *  (an app a ledger saved before too). */
+const later = (n: ViewNode, st: NodeState): MenuRow[] => (st.status === 'later'
+  ? [{ act: 'reopen', label: nodeWords.bringBack, icon: 'clock', key: MARK_KEYS.later }]
+  : NODE_TYPES[n.kind].actions.includes('later') ? [{ act: 'later', label: nodeWords.saveForLater, icon: 'clock', key: MARK_KEYS.later }] : []);
 
 const moved = (st: NodeState): MenuEntry[] => (st.pinned ? ['separator', PUT_BACK] : []);
 

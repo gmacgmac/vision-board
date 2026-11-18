@@ -34,8 +34,9 @@ export interface RegionSet {
 
 /** `widths`: every ordinary frame has the Match card widths switch (widthsControl flag); `remove`:
  * Remove container in its settings (personRemove flag, N24); `rail`: every frame, Later too, has its
- * tools in a rail on its left edge (toolRail flag); `idPrefix`: the mount's, before every id a frame sets. */
-export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; layoutTooltip?: boolean; layoutControl?: boolean; direction?(region: string): Direction; idPrefix?: string; markdown?: MarkdownOptions } = {}): RegionSet {
+ * tools in a rail on its left edge (toolRail flag); `direction`: which way each flow runs, which its layout control marks
+ * (`directionOf`); `idPrefix`: the mount's, before every id a frame sets. */
+export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; direction?(region: string): Direction; idPrefix?: string; markdown?: MarkdownOptions } = {}): RegionSet {
   const els = new Map<string, VbRegionElement>();
   const drawn = new Map<string, string>();
   const shown = new Map<string, { box: string; state: string }>();
@@ -61,10 +62,8 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         if (drawn.get(r.id) !== key) {
           const rail = opts.rail === true;
           const railHover = opts.railHover === true;
-          const layoutTooltip = opts.layoutTooltip;
-          const control = opts.layoutControl === true ? { layoutControl: true, direction: opts.direction !== undefined } : {};
           const { idPrefix, markdown } = opts;
-          el.render(r, r.id === LATER_REGION ? { ...LATER_FRAME, rail, railHover, layoutTooltip, idPrefix, markdown } : { widths: opts.widths === true, remove: opts.remove === true, rail, railHover, layoutTooltip, ...control, idPrefix, markdown });
+          el.render(r, r.id === LATER_REGION ? { ...LATER_FRAME, rail, railHover, idPrefix, markdown } : { widths: opts.widths === true, remove: opts.remove === true, rail, railHover, idPrefix, markdown });
           drawn.set(r.id, key);
           shown.delete(r.id);
         }
@@ -84,7 +83,7 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         const count = fresh?.get(r.id);
         const pill = count && regionFresh(count.added, count.updated);
         const st = {
-          ...regionState(r, view, s, placed, holders?.[r.id], owed, replies), ...(opts.layoutControl && opts.direction && { direction: opts.direction(r.id) }), ...(gone && { retired: retiredMarker(gone.count, gone.version, gone.until) }), ...(pill && { fresh: pill }),
+          ...regionState(r, view, s, placed, holders?.[r.id], owed, replies), ...(opts.direction && { direction: opts.direction(r.id) }), ...(gone && { retired: retiredMarker(gone.count, gone.version, gone.until) }), ...(pill && { fresh: pill }),
         };
         const state = JSON.stringify(st);
         const was = shown.get(r.id);

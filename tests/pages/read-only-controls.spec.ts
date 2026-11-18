@@ -75,8 +75,7 @@ test('read-only: Allow all, Allow, Refuse, remove, Allow app and the card toolti
   const app = cardOf(page, cards[1]!);
   await expectPaused(app.locator('[data-app-act="app-allow"]'));
   const ask = cardOf(page, cards[0]!);
-  for (const act of ['ack', 'drop']) await expect(ask.locator(`button[data-act="${act}"]`)).toHaveAttribute('title', new RegExp(`^${REASON}`));
-  await expect(ask.locator('button[data-bookmark]')).toHaveAttribute('title', new RegExp(`^${REASON}`));
+  for (const m of ['answer', 'number']) await expect(ask.locator(`[data-mark="${m}"]`)).toHaveAttribute('title', new RegExp(`^${REASON}`));
   // A press changes nothing.
   const before = await head(page);
   await strip.locator('.vb-access-allow-all').click({ force: true });
@@ -99,7 +98,7 @@ test('Edit gives them back: enabled, with their usual tooltips', async ({ page, 
   await expect(strip.locator('.vb-access-allow-all')).not.toHaveAttribute('aria-disabled', 'true');
   await expect(strip.locator('.vb-access-allow').first()).not.toHaveAttribute('aria-disabled', 'true');
   await expect(cardOf(page, cards[1]!).locator('[data-app-act="app-allow"]')).not.toHaveAttribute('aria-disabled', 'true');
-  await expect(cardOf(page, cards[0]!).locator('button[data-act="ack"]')).toHaveAttribute('title', /^Check/);
+  await expect(cardOf(page, cards[0]!).locator('[data-mark="answer"]')).not.toHaveAttribute('title', REASON);
   await expect(cardOf(page, cards[1]!).locator('[data-app-act="app-allow"]')).not.toHaveAttribute('title', REASON);
 });
 
@@ -151,7 +150,7 @@ for (const theme of THEMES) {
     await page.goto('/gallery.html');
     const section = page.locator('section[data-feature="readOnlyControls"]');
     await expect(section).toBeVisible();
-    await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="oneChangeTab"])').last()).toHaveAttribute('data-feature', 'readOnlyControls');
+    await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"])').last()).toHaveAttribute('data-feature', 'readOnlyControls');
     for (const sel of ['.vb-access-allow-all', '.vb-access-allow', '.vb-agents-row .vb-btn', '[data-app-act="app-allow"]', '[data-app-act="app-revoke"]'])
       for (const el of await section.locator(sel).all()) await expectPaused(el);
     await expectNoAxeViolations(page);

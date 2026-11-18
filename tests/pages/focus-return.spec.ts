@@ -12,7 +12,7 @@ import { frame } from './board-page.ts';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
 
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 /** The ring on what has focus: its outline style ('none' when there is none), from what draws it (`at`, else itself). */
 const ring = (page: Page, at?: string) => page.evaluate((sel) => {
   const el = document.activeElement!;

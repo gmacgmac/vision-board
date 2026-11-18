@@ -34,7 +34,6 @@ export function bindClickIn(host: HTMLElement, o: { usable(): boolean; on(): voi
     const at = down;
     down = null;
     if (!at || stop || !o.usable() || !isClick(at, { x: e.clientX, y: e.clientY }, CLICK_PX)) return;
-    if ((e.target as Element).closest('.vb-af-bar')) return; // the stage's own bar
     host.toggleAttribute('data-active', true);
     stop = dismissable({ within: (t) => host.contains(t), dismiss: off, escape: host });
     o.on();

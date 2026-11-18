@@ -1,8 +1,5 @@
-// Words: notes. Notes: the toasts for saving and removing, and the group pins.
+// Words: notes. Notes: the toasts for saving and removing.
 // Keys: vision-board.notes.<name>. Plain code: no imports but other words files and types.
-
-// ---- group-pins.ts
-export const notesOnGroupsOfCards = 'Notes on groups of cards';
 
 // ---- notes.ts
 export const notSaved = (problem: string): string => `Not saved: ${problem}`;

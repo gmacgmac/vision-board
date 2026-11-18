@@ -59,7 +59,7 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/src/board/words/confirm.ts` | `confirm` | The confirm dialog, its list and the discard-changes confirm. |
 | `apps/board/src/board/words/go-to-card.ts` | `go-to-card` | Go to card and the open-items chip. |
 | `apps/board/src/board/words/key-help.ts` | `key-help` | The key command list and its headings. |
-| `apps/board/src/board/words/notes.ts` | `notes` | Notes: the toasts for saving and removing, and the group pins. |
+| `apps/board/src/board/words/notes.ts` | `notes` | Notes: the toasts for saving and removing, and the conversation box's (Ask now, its tabs). |
 | `apps/board/src/board/words/proposals.ts` | `proposals` | Proposal counts, the accept-all confirm and its toast. |
 | `apps/board/src/board/words/reply.ts` | `reply` | The reply panel. |
 | `apps/board/src/board/words/send.ts` | `send` | The Send button, its states and tooltips. |

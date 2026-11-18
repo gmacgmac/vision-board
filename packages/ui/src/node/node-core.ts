@@ -3,8 +3,8 @@
 import type { ActionId, NodeSize, ParkBundle, ViewNode } from '#format';
 import { NODE_TYPES } from '#format';
 import type { BoardState, ItemStatus, ProposalRow } from '#actions';
-import type { CardReply, NotesView } from './node-notes.ts';
-import { litReplies, notesView } from './node-notes.ts';
+import type { CardReply } from './node-notes.ts';
+import { litReplies } from './node-notes.ts';
 import type { CardUpdates, UpdatesView } from './node-updates.ts';
 import { type AppCardInput, type AppCardView, appView } from './node-app.ts';
 import { updatesView, updateWords } from './node-updates.ts';
@@ -14,27 +14,23 @@ import { ACTIONS, statusOf } from '#actions';
 import * as uiCommonWords from '../words/ui-common.ts';
 import * as nodeWords from '../words/node.ts';
 
-/** The footer's word for a status on a card that asks (D-045): ✓ and ✗ have none, since the lit mark
- *  is the state and the board gives it no meaning. A card whose note waits for the agent's answer is
- *  "Replied" (D-046; the person's word, replied-word ruling 1: agents read `with-agent`); an old More
- *  context reads as a note. */
-export const STATUS_LABEL: Record<ItemStatus, string> = {
-  open: uiCommonWords.open, acknowledged: '', dropped: '', commented: nodeWords.replied, context: nodeWords.replied, later: nodeWords.savedForLater,
+/** What a card's accessible name says for its status (D-045): the answer by name, or the status's word. A card whose
+ *  note waits for the agent's answer is "Replied" (D-046; the person's word, replied-word ruling 1: agents read
+ *  `with-agent`); an old More context reads as a note. */
+export const STATUS_NAME: Record<ItemStatus, string> = {
+  open: uiCommonWords.open, acknowledged: 'checked', dropped: 'crossed', commented: nodeWords.replied, context: nodeWords.replied, later: nodeWords.savedForLater,
 };
-
-/** What a card's accessible name says for its status: the footer's word, or the lit mark by name. */
-export const STATUS_NAME: Record<ItemStatus, string> = { ...STATUS_LABEL, acknowledged: 'checked', dropped: 'crossed' };
 
 export const isItem = (n: ViewNode): boolean => n.n !== undefined;
 
 /** Whether the card asks for an answer (D-045, answer-model ruling 4): only such a card shows a
- *  status, in its footer and its name. A card that only informs shows none and never counts. */
+ *  status, on its answer mark and in its name. A card that only informs shows none and never counts. */
 export const asksAnswer = (n: ViewNode): boolean => isItem(n) && NODE_TYPES[n.kind].answer;
 
-/** Review buttons shown on an item; non-items offer none. */
+/** The review actions an item offers (its kind's, `NODE_TYPES`); non-items offer none. */
 export const offers = (n: ViewNode): ActionId[] => (isItem(n) ? [...NODE_TYPES[n.kind].actions] : []);
 
-/** Whether an action's button shows as pressed for the current status. */
+/** Whether an action is the current status (its answer is lit). */
 export const isPressed = (action: ActionId, status: ItemStatus): boolean =>
   ACTIONS[action].status !== undefined && ACTIONS[action].status === status;
 
@@ -47,34 +43,14 @@ export function nodeLabel(n: ViewNode, status: ItemStatus, selected = false, ext
   return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}${extra}${selected ? nodeWords.selected : ''}`;
 }
 
-/** The bookmark's key (D-099 1, planner's call 3): B, as the action registry has it; Shift+F retired. */
-export const BOOKMARK_KEY = 'B';
-
-/** The bookmark button's name: it stays put, and aria-pressed says whether the card is bookmarked. A
- * bookmark is the person's private mark, never sent to an agent (api.md 128). */
-export const bookmarkLabel = (n: ViewNode): string => nodeWords.bookmarkItem(n.n, BOOKMARK_KEY);
-
-export function buttonLabel(action: ActionId, n: ViewNode): string {
-  const def = ACTIONS[action];
-  return nodeWords.item2(def.label, n.n, def.key ? ` (${def.key.toUpperCase()})` : '');
-}
-
 // A card's notes and the agent's replies (split out, card-polish FE_02): re-exported, so this stays the import.
 export * from './node-notes.ts';
 
-/** The size control's state (D-030): the card's tier, whether the person picked it, the trigger's
- *  label, and what the trigger shows in place of the glyph ("◆ S" for a pick, empty otherwise). */
+/** The node's width (D-030): its tier, and whether the person picked it (the selection bar's Width, D-099 3). */
 export interface SizeState {
   tier: NodeSize;
   picked: boolean;
-  label: string;
-  shown: string;
 }
-
-export const SIZE_LETTER: Record<NodeSize, string> = { s: 'S', m: 'M', l: 'L' };
-
-export const sizeLabel = (v: { tier: NodeSize; picked: boolean }): string =>
-  nodeWords.cardSizeChangeSize(SIZE_LETTER[v.tier], v.picked);
 
 /** One open proposal on a card (D-018, api.md 93), as the page passes it in: found by the conditions
  *  table (`proposal.open`, or `proposal.stale` when the card changed since), worded from the ledger.
@@ -84,7 +60,7 @@ export type CardProposal = Omit<ProposalRow, 'n'>;
 
 /** What the conditions table says about a card, passed in by the page like the selection. */
 export interface CardConditions {
-  /** Its open proposals (the proposals flag); none or absent shows no PROPOSAL tab. */
+  /** Its open proposals (the proposals flag); none or absent, the disc carries no proposal. */
   proposals?: readonly CardProposal[];
   /** The versions the person has not seen and the stepper (the cardUpdates flag, FE_02). */
   updates?: CardUpdates;
@@ -96,12 +72,7 @@ export interface CardConditions {
   handover?: ParkBundle;
   /** The agent's replies that belong on the card (the cardReplies flag). */
   replies?: readonly CardReply[];
-  /** The groupNoteOnce flag: the card leaves out notes on a group of cards and the replies to them,
-   *  which the group's own pin shows once (`notesView`'s `apart`). */
-  groupNotesApart?: boolean;
-  /** The oneChangeTab flag (point 444): unseen updates and a proposal share one tab and one box. */
-  oneTab?: boolean;
-  /** The node's latest version (nodeEdges): the change badge settles to a quiet "vN" once seen, from v2. */
+  /** The node's latest version: the change badge settles to a quiet "vN" once seen, from v2. */
   ver?: number;
   /** An app card's app from list_apps (`{}` until it answers; none with the appCards flag off), and whether a past version shows (node-app.ts). */
   app?: AppCardInput;
@@ -113,14 +84,12 @@ export interface ProposalEntry {
   seq: number; head: string; what: string; from: string; stale: boolean; why?: string; accept: string; reject: string;
 }
 
-/** The PROPOSAL tab (OUT OF DATE when every proposal is) and its box, newest first. `updated`: the
- *  tab also stands for the card's unseen updates (`oneChangeTab`), in the updated amber. */
-export interface ProposalsView { tab: string; stale: boolean; label: string; box: string; entries: ProposalEntry[]; updated?: true }
+/** The proposal box's name and its proposals, newest first. */
+export interface ProposalsView { box: string; entries: ProposalEntry[] }
 
-/** The tab and box for an item's open proposals; undefined with none. */
+/** The box for an item's open proposals; undefined with none. */
 export function proposalsView(n: ViewNode, list: readonly CardProposal[] = []): ProposalsView | undefined {
   if (!isItem(n) || !list.length) return undefined;
-  const stale = list.every((p) => p.stale);
   const entries = [...list].sort((a, b) => b.seq - a.seq).map((p): ProposalEntry => {
     const verb = `${ACTIONS[p.action].label.toLowerCase()} ${n.n}`;
     const who = p.agent ?? nodeWords.theAgent;
@@ -132,22 +101,7 @@ export function proposalsView(n: ViewNode, list: readonly CardProposal[] = []): 
       accept: nodeWords.acceptVerb(verb, p.stale), reject: nodeWords.reject(verb),
     };
   });
-  const k = list.length;
-  return {
-    tab: stale ? nodeWords.outOfDate2 : nodeWords.proposal, stale, entries,
-    label: nodeWords.proposalsOnItem(k, n.n, stale),
-    box: nodeWords.proposalsBox(k, n.n),
-  };
-}
-
-/** One tab for updates and proposals (oneChangeTab flag, point 444): with both, the proposal tab says both,
- *  "1 update · proposal", and its box holds the update steps beneath the proposals (`NodeState.oneTab`);
- *  past the last step ("You're up to date") the tab is the proposal's own again. Else the proposal as it is. */
-export function changeTab(n: ViewNode, p: ProposalsView, u: UpdatesView): ProposalsView {
-  if (!u.tab) return p;
-  const k = p.entries.length;
-  const label = nodeWords.updatesAndProposalsOnItem(u.tab, k, n.n, p.stale);
-  return { ...p, tab: nodeWords.updatesAndProposalsTab(u.tab, k, p.stale), label, box: label, updated: true };
+  return { entries, box: nodeWords.proposalsBox(list.length, n.n) };
 }
 
 /** What the proposals add to the card's name: ", 2 proposals, 1 out of date". */
@@ -157,9 +111,10 @@ function proposalWords(list: readonly CardProposal[]): string {
   return k ? nodeWords.proposalsInName(k, st) : '';
 }
 
-/** The HANDOVER tab and its box (FE_03 ruling 2): the park bundle's headed sections, then the sources. */
+/** The handover, a section of the node's body (FE_03 ruling 2, DESIGN_01): its heading, the park bundle's headed
+ *  sections, then the sources. */
 export interface HandoverView {
-  tab: string; label: string; box: string;
+  tab: string;
   sections: { head: string; text: string }[];
   sources: string[];
 }
@@ -168,19 +123,16 @@ const HANDOVER_HEADS = [
   ['situation', nodeWords.situation], ['background', nodeWords.background], ['assessment', nodeWords.assessment], ['recommendation', nodeWords.recommendation],
 ] as const;
 
-/** The tab and box for an item's written handover; undefined with none, or while it is still owed
+/** The section for an item's written handover; undefined with none, or while it is still owed
  * (a later "Later" outdates the old bundle until the agent writes a new one). */
 export function handoverView(n: ViewNode, bundle?: ParkBundle, awaiting = false): HandoverView | undefined {
   if (!isItem(n) || !bundle || awaiting) return undefined;
   return {
-    tab: nodeWords.handover, label: nodeWords.handoverOnItem(n.n), box: nodeWords.handoverOnItem(n.n),
+    tab: nodeWords.handover,
     sections: HANDOVER_HEADS.map(([key, head]) => ({ head, text: bundle[key] })),
     sources: bundle.sources ?? [],
   };
 }
-
-/** The footer state word of a card whose handover is owed, and the tip over it (FE_03 ruling 1). */
-export const AWAITING = { word: nodeWords.awaiting, tip: nodeWords.awaitingContext } as const;
 
 /** Everything a drawn node shows for the person's current state; `update()` applies it. */
 export interface NodeState {
@@ -190,38 +142,24 @@ export interface NodeState {
   selected: boolean;
   /** The node's accessible name: number, kind, title, (for cards that ask) status, and "selected". */
   label: string;
-  /** The status word in the footer, "Open" included; empty for ✓ and ✗ (the lit mark shows it) and
-   *  on a card that only informs (D-045). */
-  statusWord: string;
-  /** The person's notes: the pin and the "Your note" block, put away or not; absent with no notes. */
-  notes?: NotesView;
-  /** aria-pressed for each offered action. */
-  pressed: Partial<Record<ActionId, boolean>>;
-  /** The card's size tier and control; absent unless the page passed a tier (the nodeSize flag). */
+  /** The card's width tier; absent unless the page passed a tier (the nodeSize flag). */
   size?: SizeState;
-  /** The PROPOSAL tab and its box (FE_01); absent with no open proposal. */
+  /** The proposal box (FE_01); absent with no open proposal. */
   proposal?: ProposalsView;
-  /** The "N updates" tab and the stepper (FE_02); absent with nothing unseen. */
+  /** The steps in the history box (FE_02); absent with nothing unseen. */
   updates?: UpdatesView;
-  /** The updates share the proposal's tab and box (`changeTab`, oneChangeTab flag): no "N updates" tab, and
-   *  the step section and stepper sit in the proposal box, under the proposals. */
-  oneTab?: true;
-  /** The NEW tab (stage5-follow-ups FE_01): a card the agent added after the person first opened the board. */
-  fresh?: true;
-  /** The handover is still owed (FE_03): `statusWord` then reads "Awaiting", with `AWAITING.tip` over it. */
-  awaiting?: true;
-  /** The HANDOVER tab and its box (FE_03); absent until the agent writes it. */
+  /** The handover section (FE_03); absent until the agent writes it. */
   handover?: HandoverView;
-  /** The person bookmarked the card (`BoardState.bookmarks`, D-099 2): the bookmark button shows pressed and the
-   *  name says ", bookmarked". */
+  /** The person bookmarked the card (`BoardState.bookmarks`, D-099 2): the number shows it and the name says
+   *  ", bookmarked". */
   bookmarked?: true;
   /** The board is locked (`BoardState.locked`, N40 ruling 4), or its ledger read-only (`BoardState.readOnly`, D-085):
-   *  the review buttons, the size control, the note pin and a proposal's answers are paused (paused.ts); the bookmark is not. */
+   *  the answer and a proposal's answers are paused (paused.ts); the bookmark is not. */
   paused?: true;
   /** The ledger is read-only (`BoardState.readOnly`, D-085 3): the bookmark is paused too, since read-only writes no bookmark. */
   readOnly?: true;
   app?: AppCardView; // an app card's state view (node-app.ts `appView`); it takes no size control
-  /** What the marks on the node's edges show (nodeEdges flag, D-099; node-marks.ts): drawn only with `opts.edges`. */
+  /** What the marks on the node's edges show (D-099; node-marks.ts). */
   marks: NodeMarks;
 }
 
@@ -229,20 +167,15 @@ export interface NodeState {
  *  so do `selected` (the page's selection module, 3_FE_01) and `c` (the conditions table, FE_01). */
 export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected = false, c: CardConditions = {}): NodeState {
   const status = statusOf(s, n.id);
-  const pressed: Partial<Record<ActionId, boolean>> = {};
-  for (const a of offers(n)) pressed[a] = isPressed(a, status);
   const awaiting = isItem(n) && c.awaiting === true;
   const handover = handoverView(n, c.handover, awaiting);
   const picked = s.sizes.has(n.id);
   const updates = updatesView(n, c.updates);
-  const own = proposalsView(n, c.proposals);
-  const oneTab = c.oneTab === true && !!own && !!updates;
-  const proposal = oneTab ? changeTab(n, own, updates) : own;
+  const proposal = proposalsView(n, c.proposals);
   const fresh = isItem(n) && c.new === true;
   const bookmarked = isItem(n) && s.bookmarks.has(n.id);
   const app = n.kind === 'app' && c.app ? appView(n, c.app) : undefined;
   const replies = litReplies(c.replies, c.new === true || (!!updates && !updates.done));
-  const notes = notesView(n, s.items.get(n.id)?.notes ?? [], replies, s.notesHidden?.get(n.id), c.groupNotesApart);
   const open = c.proposals?.filter((p) => !p.stale).sort((a, b) => b.seq - a.seq)[0]?.action;
   const marks = nodeMarks(n, {
     status, notes: s.items.get(n.id)?.notes ?? [], ...(replies && { replies }), bookmarked, fresh, ...(updates && { updates }),
@@ -254,12 +187,10 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
     selected,
     label: nodeLabel(n, status, selected,
       `${awaiting ? nodeWords.awaitingContext2 : ''}${handover ? nodeWords.handoverReady : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${app?.words ?? ''}${fresh ? nodeWords.freshInName : ''}${bookmarked ? nodeWords.bookmarkedInName : ''}`),
-    statusWord: awaiting ? AWAITING.word : asksAnswer(n) ? STATUS_LABEL[status] : '',
-    ...(awaiting && { awaiting: true as const }),
-    ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(oneTab && { oneTab: true as const }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
+    ...(proposal && { proposal }), ...(updates && { updates }), ...(handover && { handover }),
     ...(bookmarked && { bookmarked: true as const }), ...((s.locked || s.readOnly) && { paused: true as const }),
     ...(s.readOnly && { readOnly: true as const }), ...(app && { app }),
-    pressed, marks,
-    ...(tier && n.kind !== 'app' ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
+    marks,
+    ...(tier && n.kind !== 'app' ? { size: { tier, picked } } : {}),
   };
 }

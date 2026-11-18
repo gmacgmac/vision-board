@@ -16,7 +16,7 @@
 | App panels kept loaded | a zoom step under 50 ms with panels loaded and frozen; no more than `LIVE_PANELS` loaded while no more are on screen (D-050) | 12 app cards, each zoomed to in turn | `tests/pages/app-alive.spec.ts`, `apps/board/tests/app-live-cap.test.ts` |
 | Same picture | the page after each change equals a page opened afresh | seeded random changes (acts, agent drawing) | `tests/pages/same-picture.spec.ts`, `apps/board/tests/layout-cache.test.ts` |
 | Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown.timing.ts` |
-| Board page weight | under 200 KB gzip (211.2 KB temporarily, FIX_04 measured 211.1, until the Node Overhaul's T_04 deletes the old node's code; maintainer, point 351) (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `shell/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
+| Board page weight | under 200 KB gzip (201.1 KB for now: the Node Overhaul's T_04 removed the old node and measured 201.0; a size pass brings it back; maintainer, point 351) (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `shell/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
 | Server start | under 1 s | a 100,000-event ledger | `apps/board/tests/server-start.timing.ts` |
 
 Today (2026-10-05, tracker N12, on the page-test machine: macOS, Chromium): layout of 1,000 cards takes about 3 ms (6 ms with 3 pins on a card in each of the 20
@@ -27,11 +27,11 @@ cards updates and measures 50 cards and lays out their 2 containers, and 1 chang
 container updates 1 card, lays out 1 container and redraws 2 connectors, with no full fetch in
 either; the server starts on a 100,000-event ledger in about 330 ms, so it keeps no checkpoint yet
 (approach 7 waits until it is needed).
-Zoom and the edge marks (node overhaul FE_05, 2026-11-17, nodeEdges on, the 1,000-card board, wheel steps): a step that
-changes no mark growth costs the same as with the flag off (4 to 8 ms); the edge marks' growth is written on the cards
+Zoom and the edge marks (node overhaul FE_05, 2026-11-17, measured while the marks were still behind a flag, the 1,000-card
+board, wheel steps): a step that changes no mark growth costs the same as on a node without them (4 to 8 ms); the edge marks' growth is written on the cards
 layer only when its step (1.2) changes, and a step that does restyles the cards in about 35 to 51 ms, about one wheel step
 in four below 64% (key presses: 38 to 57 ms, the first of a run over 50 ms), none above it; no card is updated, measured or laid out
-in either (flag off: 4 to 8 ms a step). A zoom step is still under the budget at its median.
+in either (without the marks: 4 to 8 ms a step). A zoom step is still under the budget at its median.
 A budget changes only with a reason in the PLAN of the task that changes it.
 
 **What the page leaves out of its start weight.** A budget is met by moving weight, never by moving

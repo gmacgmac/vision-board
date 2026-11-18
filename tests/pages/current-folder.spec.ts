@@ -74,8 +74,8 @@ test('at 768px the chip gives way to its icon alone, the whole path still in its
   expect((await chip(page).boundingBox())!.width).toBeLessThanOrEqual(40);
 });
 
-// The bar's full form down to its last width, then the bar as it was, which has no half form.
-for (const [width, flags] of [[1500, ''], [1300, ''], [1100, '-adaptiveHeader'], [1024, '-adaptiveHeader']] as const) {
+// The bar's full form down to its last width (1428px with Flows, header-tier.ts), then the bar as it was, which has no half form.
+for (const [width, flags] of [[1500, ''], [1430, ''], [1100, '-adaptiveHeader'], [1024, '-adaptiveHeader']] as const) {
   test(`at ${width}px${flags && ` (${flags})`} a long folder name is cut with an ellipsis and the toolbar stays whole`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await openLong(page, flags);

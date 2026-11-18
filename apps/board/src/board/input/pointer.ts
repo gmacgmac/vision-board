@@ -49,13 +49,12 @@ export interface PointerHandlers {
 }
 
 /** Nothing inside these starts a gesture: they are controls with their own click (a container's
- * tools, the note bubble the person types in, a note on a card that opens it, the selection bar, a
- * card's popover box). */
-const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-note-bubble, .vb-node-note, .vb-node-reply, .vb-region-note-block, vb-selection-bar, .vb-card-pop';
+ * tools, the note bubble the person types in, a container's note block, the selection bar, a card's popover box). */
+const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-note-bubble, .vb-region-note-block, vb-selection-bar, .vb-card-pop';
 /** Where the middle button keeps its own meaning (a link opens in a new tab; a field pastes). */
 const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
 /** Where a card is moved from (ruling 4): the kind tab with its grip dots, or, on a node with an icon, the grip in the
- *  middle of its top line (nodeEdges, decision 12), or the plate along the top where a skin's row puts one (FE_04; its
+ *  middle of its top line (decision 12), or the plate along the top where a skin's row puts one (FE_04; its
  *  buttons keep their own press, INTERACTIVE). */
 const HANDLE = '.vb-node-kind, .vb-node-grip, .vb-node-plate';
 /** The container's keyboard handle (3_FE_04 ruling 5), the start of its label; a drag on it, or on the

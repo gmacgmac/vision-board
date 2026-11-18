@@ -1,9 +1,9 @@
-// The boxes a node's marks open (nodeEdges flag, D-099 1; the design review of DESIGN_01): the change badge, or H,
+// The boxes a node's marks open (D-099 1; the design review of DESIGN_01): the change badge, or H,
 // opens the history box (with the stepper on top, planner's call 9), and the disc of a node with a proposal opens the
 // proposal box beside it, to its right. Both are the node's own card popover boxes (packages/ui node-edges.ts), opened
 // by a click or a key only, never on hover: a second press on the mark closes it, as do Esc (focus back to the mark)
 // and a click outside (focus where it was pressed); a drag outside, a pan, leaves it open. Focus moves in on opening.
-// The history box is filled as it shows, by the same event the old ⓘ fired (`POPOVER_SHOW`, history-flow.ts). One
+// The history box is filled as it shows, by its `POPOVER_SHOW` event (history-flow.ts). One
 // box or menu is open at a time: the caller closes the other first. Both are placed as every box beside a node is
 // (mark-place.ts `placeBeside`): top aligned with the node, right or below, the arrow on the mark; the box sits in the
 // node, so its place is written in the node's own pixels, counter-scaled so it keeps one size at any zoom (D-101). Its × (`data-box-close`) closes it.

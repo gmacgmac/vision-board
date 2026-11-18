@@ -32,9 +32,9 @@ test('the rail is on the left edge and the top line holds only the label, centre
   expect(Math.abs(m.labelMid - m.frameMid), 'the label is centred on the frame').toBeLessThanOrEqual(1);
   expect(m.toolsLeft).toBeLessThan(m.frameLeft);
   expect(m.toolsTop, 'the rail starts under the top line').toBeGreaterThan(m.headBottom);
-  // The same controls, in the same order: six layouts, the widths switch, Comment and the cog.
+  // The same controls, in the same order: the layout button, the widths switch, Comment and the cog.
   const names = await f.locator('.vb-mode-row button').evaluateAll((bs) => bs.map((b) => b.getAttribute('aria-label')));
-  expect(names).toEqual(['Grid', 'Flow', 'Lanes', 'Radial', 'Column', 'Row', 'Match card widths', `Comment on container ${TITLE}`, `Settings for ${TITLE}`]);
+  expect(names).toEqual(['Layout: Grid', 'Match card widths', `Comment on container ${TITLE}`, `Settings for ${TITLE}`]);
 });
 
 test('a narrow frame zoomed out keeps the whole line for its title: the label is cut only when the line itself is short', async ({ page, request }) => {
@@ -93,9 +93,9 @@ test('dim at rest, lit on hover, on focus and while a popover is open; Comment\'
   expect(await iconOpacity(f)).toBe(1);
   await page.mouse.move(2, 990);
   expect(await iconOpacity(f)).toBeCloseTo(rest, 2);
-  await f.locator('.vb-mseg[role="radio"][aria-checked="true"]').focus();
+  await f.locator('.vb-layout-btn').focus();
   expect(await iconOpacity(f)).toBe(1);
-  await f.locator('.vb-mseg[role="radio"][aria-checked="true"]').blur();
+  await f.locator('.vb-layout-btn').blur();
   expect(await iconOpacity(f)).toBeCloseTo(rest, 2);
   // An open popover with neither the pointer nor focus on the rail: the menu, opened without focus.
   await f.evaluate((e) => (e as HTMLElement & { showPanel(w: string, o: object): void }).showPanel('menu', { focus: false }));
@@ -126,7 +126,7 @@ for (const theme of THEMES) {
     const [canvas, fill] = await Promise.all([pixel(page, await resolved(page, 'var(--vb-surface-canvas)')),
       f.locator('.vb-mode-row').evaluate((e) => getComputedStyle(e).backgroundColor).then((c) => pixel(page, c))]);
     const [measured, lcs]: [string[], number[]] = [[], []];
-    for (const sel of ['.vb-mseg[aria-checked="false"]', '.vb-mseg[role="radio"][aria-checked="true"]', '.vb-cog']) {
+    for (const sel of ['.vb-layout-btn', '.vb-widths', '.vb-cog']) {
       const b = f.locator(sel).first();
       const [ink, back] = await b.evaluate((e) => [getComputedStyle(e).color, getComputedStyle(e).backgroundColor]);
       const own = back === 'rgba(0, 0, 0, 0)' ? fill : await pixel(page, back);
@@ -142,7 +142,7 @@ for (const theme of THEMES) {
     console.log(`APCA rest ${theme} (opacity ${rest}): ${measured.join('; ')}`);
     if (theme === 'light') for (const v of lcs) expect(v, 'at rest').toBeGreaterThanOrEqual(30);
     // Lit, the quiet icon is the row's as before: --vb-ink-subtle at full strength; only the opacity rests.
-    await f.locator('.vb-mseg[role="radio"][aria-checked="true"]').hover();
+    await f.locator('.vb-layout-btn').hover();
     const cog = f.locator('.vb-cog');
     expect(await cog.locator('.vb-mode-icon').evaluate((e) => Number(getComputedStyle(e).opacity))).toBe(1);
     expect(await pixel(page, await cog.evaluate((e) => getComputedStyle(e).color))).toEqual(await pixel(page, await resolved(page, 'var(--vb-ink-subtle)')));

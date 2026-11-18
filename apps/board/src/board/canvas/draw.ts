@@ -14,6 +14,7 @@ import type { Align, BoardLayout, Size } from '#layout';
 import { EDGE_ROW_GAP } from '#layout';
 import { widthsOf } from '#format';
 import type { CardConditions, CardReply, IconLibrary, MarkdownOptions, NodeTemplateOptions, SkinDef, VbNodeElement, VbRegionElement } from '#ui';
+import { SKIN_DEFS } from '#ui';
 import { holdersOf } from '../access/index.ts';
 import { createCardImages } from '../cards/index.ts';
 import { createCardSet } from '../cards/index.ts';
@@ -46,7 +47,7 @@ export interface DrawDeps {
   /** Tell the person something went wrong (a part's code did not load). */
   say?: (text: string) => void;
   vp: Viewport;
-  /** The nodeSize flag: cards carry a size tier and its control (D-030). */
+  /** The nodeSize flag: cards carry a size tier (D-030; the selection bar's Width picks one). */
   sizing: boolean;
   /** The agentAccess flag: frames show their holders (D-027). */
   access: boolean;
@@ -62,10 +63,6 @@ export interface DrawDeps {
   rail?: boolean;
   /** The railOnHover flag: a frame's rail icons show only while it is in use (hovered or holding focus). */
   railHover?: boolean;
-  /** The layoutTooltip flag: each layout icon shows a tooltip, and no layout popover opens. */
-  layoutTooltip?: boolean;
-  /** The layoutControl flag: each frame's one layout button, its popover offering a flow's direction when `direction` is given (flowDirection flag). */
-  layoutControl?: boolean;
   /** The mount's id prefix (mount-ids.ts): before every id the cards, frames and connectors set. */
   ids?: string;
   /** How the cards' and frames' Markdown renders (the board's flags and image route). */
@@ -75,11 +72,9 @@ export interface DrawDeps {
   /** The gap between a card and the card under it (`ROW_GAP` with updateSignals); absent: the layout's GAP. While
    *  the nodes draw their marks on their edges (`edges`, a skin whose marks are `edges`) it is at least EDGE_ROW_GAP. */
   rowGap?: number;
-  /** Which way container `region` runs if it is a flow (flowDirection flag: `directionOf` on the shown state);
-   *  absent, every flow runs across. */
+  /** Which way container `region` runs if it is a flow (`directionOf` on the shown state), which its layout control also
+   *  marks; absent (the gallery), every flow runs across. */
   direction?(region: string): Direction;
-  /** The flowBranches flag: a flow's branches on their own rows, a linked row or column laid out as a flow. */
-  branching?: boolean;
   data(): BoardData;
   hidden(): Set<string>;
   focus(): string | null;
@@ -93,11 +88,7 @@ export interface DrawDeps {
   facts(n: ViewNode): CardConditions;
   /** The agent's replies to show under container notes (parking.ts, FE_03). */
   replies(): readonly CardReply[];
-  /** The cardBookmark flag: every card with a number has the bookmark button (bookmark-flow.ts). */
-  bookmark?: boolean;
-  /** The cardHistory flag: every card with a footer has the ⓘ and its history box (history-flow.ts). */
-  history?: boolean;
-  /** The nodeEdges flag: each node draws its marks on its edges, where the board's skin puts them (D-099, D-100). */
+  /** Where each node draws its marks, the board's skin's row (D-099, D-100); absent, the default skin's. */
   edges?: SkinDef;
   /** Each container's "N cards retired" marker (retiredMarker flag, packages/actions retired.ts). */
   retired?(): ReadonlyMap<string, RetiredCount>;
@@ -105,10 +96,6 @@ export interface DrawDeps {
   fresh?(): ReadonlyMap<string, FreshCount>;
   /** The appCards flag: off, an app card draws as a plain card saying so (ruling 13). */
   appCards?: boolean;
-  /** The appWindow flag, with `edges`: an app card is a window, its drawer widening it (D-099 5, FE_08). */
-  appWindow?: boolean;
-  /** The appStage flag: an app window's bar has Open. */
-  appStage?: boolean;
   /** Cards were placed or the view moved: app cards load or remove their frames (app-cards.ts). */
   placed?(): void;
 }
@@ -130,7 +117,7 @@ export interface Drawing {
   wiresFor(layout: BoardLayout, focus: string | null): void;
   /** Hide the connectors as for a relayout (a container was dropped; its draw is on its way). */
   settle(): void;
-  /** How nodes draw changed (the board's skin, the icon library; nodeEdges): the nodes `which` names (all by
+  /** How nodes draw changed (the board's skin, the icon library): the nodes `which` names (all by
    *  default) draw again on the next draw. */
   restyle(o: { edges?: SkinDef | undefined; icons?: IconLibrary }, which?: (n: ViewNode) => boolean): void;
   /** Take away what the drawing put beside the stage (the image view). */
@@ -143,11 +130,10 @@ const SETTLE_MS = 380;
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
   const cardOpts: NodeTemplateOptions = {
-    sizeControl: d.sizing, bookmark: d.bookmark === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown, ...(d.edges && { edges: d.edges }),
-    ...(d.appWindow && { appWindow: true, appStage: d.appStage === true }),
+    appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown, ...(d.edges && { edges: d.edges }),
   };
   const cards = createCardSet(els.cards, cardOpts);
-  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, layoutTooltip: d.layoutTooltip, layoutControl: d.layoutControl, direction: d.direction, idPrefix: d.ids, markdown: d.markdown });
+  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, direction: d.direction, idPrefix: d.ids, markdown: d.markdown });
   const use = d.rail && d.railHover ? bindRegionUse(els.stage, () => regions.els, (id) => d.data().view.nodes.find((n) => n.id === id)?.region) : undefined;
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids);
   const cache = createLayoutCache();
@@ -206,9 +192,9 @@ export function createDrawing(d: DrawDeps): Drawing {
   /** The containers, packed, the frames and cards placed, the connectors routed, from `sizes`. */
   function lay(data: BoardData, fresh: boolean) {
     const { pins, modes, regionPins, widths } = data.state;
-    const rowGap = cardOpts.edges?.marks === 'edges' ? Math.max(d.rowGap ?? 0, EDGE_ROW_GAP) : d.rowGap;
+    const rowGap = (cardOpts.edges ?? SKIN_DEFS.default).marks === 'edges' ? Math.max(d.rowGap ?? 0, EDGE_ROW_GAP) : d.rowGap;
     const inputs = {
-      pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start', rowGap, branching: d.branching === true,
+      pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start', rowGap,
       ...(d.direction && { directions: new Map(data.view.regions.map((r) => [r.id, d.direction!(r.id)])) }),
       // The widths in force per container: the person's, the agent's, the shown mode's (as the server's show_layout).
       widths: new Map(data.view.regions.map((r) => [r.id, widthsOf(modes.get(r.id) ?? r.mode, r.widths, widths.get(r.id))])),

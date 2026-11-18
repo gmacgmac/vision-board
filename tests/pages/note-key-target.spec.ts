@@ -5,7 +5,7 @@
 // board, fresh for this file (servers.ts); no note is sent, and every bubble is closed with Esc.
 import type { Page } from '@playwright/test';
 import { expect, test, zoomToControls } from './helpers.ts';
-import { bubble, card, openBoard, selectedIds } from './board-page.ts';
+import { answerBy, bubble, card, openBoard, selectedIds } from './board-page.ts';
 
 /** Click a card's title (its content, not a control): selects it. */
 const clickCard = (page: Page, n: number, modifiers: ('Shift' | 'Meta' | 'Control')[] = []) =>
@@ -65,7 +65,7 @@ for (const [name, query] of [['on', ''], ['off', '?flags=-focusLeads']] as const
         if (route.request().method() === 'POST') await new Promise((r) => setTimeout(r, 600));
         await route.continue();
       });
-      await card(page, from).locator('button[data-act="drop"]').click();
+      await answerBy(page, from, 'Cross');
       await card(page, to).focus();
       await expect(card(page, from)).toHaveAttribute('data-status', 'dropped');
       expect(await focusedCard(page)).toBe(String(led ? to : from));
@@ -80,7 +80,7 @@ for (const [name, query] of [['on', ''], ['off', '?flags=-focusLeads']] as const
 test('a ✗ with the focus still on its card (or lost to the redraw) leaves the focus on that card', async ({ page }) => {
   await openBoard(page);
   await zoomToControls(page);
-  await card(page, 6).locator('button[data-act="drop"]').click();
+  await answerBy(page, 6, 'Cross');
   await expect(card(page, 6)).toHaveAttribute('data-status', 'dropped');
   await expect.poll(() => focusedCard(page)).toBe('6');
 });

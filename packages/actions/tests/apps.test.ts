@@ -6,9 +6,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ActEvent } from '#format';
-import { APP_ACTIONS, LEDGER_FORMAT } from '#format';
+import { APP_ACTIONS, boardView, LEDGER_FORMAT } from '#format';
 import type { LedgerState } from '../src/index.ts';
-import { ACTIONS, appCards, appOf, passesLock, REFERENCES, responsesAfter, scopeOf, validateAct } from '../src/index.ts';
+import { ACTIONS, appCards, appOf, boardState, passesLock, REFERENCES, responsesAfter, scopeOf, statusOf, validateAct } from '../src/index.ts';
 import { isAnswer } from '../src/registry.ts';
 import { A, scene } from './ledger-v3.ts';
 
@@ -88,8 +88,16 @@ test('validateAct: an app card takes no size; its panel size is the agent\'s', (
   assert.deepEqual(validateAct(asAct(s, { action: 'size', id: 5, size: 'l' }), s, 'b'),
     ['size: an app card is as big as its panel, which the agent sets']);
   assert.deepEqual(validateAct(asAct(s, { action: 'comment', id: 5, ver: 1, text: 'Nice.' }), s, 'b'), [], 'a note goes');
-  assert.deepEqual(validateAct(asAct(s, { action: 'later', id: 5, ver: 1 }), s, 'b'), [], 'Later goes');
+  assert.deepEqual(validateAct(asAct(s, { action: 'later', id: 5, ver: 1 }), s, 'b'), ['later: an app doesn\'t offer this'], 'no Later on a window (D-099 5)');
   assert.deepEqual(validateAct(asAct(s, { action: 'ack', id: 5, ver: 1 }), s, 'b'), ['ack: an app doesn\'t offer this']);
+});
+
+test('a ledger that saved an app card for later before (D-099 5) still reads: the fold keeps it in Later', () => {
+  const l = withApp();
+  l.act({ action: 'later', board: 'b', n: 5, ver: 1 });
+  const s = l.state();
+  const app = boardView(s, 'b').nodes.find((n) => n.kind === 'app')!;
+  assert.equal(statusOf(boardState(s, 'b'), app.id), 'later');
 });
 
 test('the app row: an app\'s live cards, and the app a card names', () => {

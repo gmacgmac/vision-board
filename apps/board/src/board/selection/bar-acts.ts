@@ -1,4 +1,4 @@
-// What the selection bar's extra commands do (nodeEdges flag, D-099 9, FE_06): Bookmark all, Save for later and Width,
+// What the selection bar's extra commands do (D-099 9, FE_06): Bookmark all, Save for later and Width,
 // each on every selected node, one act per node through the one sender (`run`: the acts side by side, drawn once). The
 // commands themselves, their words and keys are rows of the board's command table (input/commands.ts); this only acts.
 // Width opens the same list as Move to (move-menu.ts), under the bar. A node with no number takes none (an agent's
