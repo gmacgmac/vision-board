@@ -375,7 +375,7 @@ Where a page and this list differ, this list wins._
 - **588 line colour, 589 dot, 590 year label, 592 tone ink, 593 same-date band**: kept as DESIGN_01 run 1 drew them
   (no objection from the maintainer).
 - **M84** (tracker): rolled into this set as FIX_01 (the `anyOf` refusal wording), wave 2.
-- **D-106 draft** (for the maintainer's yes; D-105 item 3 says run down puts the nodes on one side): "Run down, a
+- **D-106** (appended on the maintainer's yes, point 596; D-105 item 3 says run down puts the nodes on one side): "Run down, a
   timeline's dated nodes alternate left and right of the line, the first on the left, spaced by the board's gaps
   rather than one step; the stem meets the middle of the node's facing edge in both forms; dated nodes follow the
   container's widths setting, `match` by default run down and `own` across."

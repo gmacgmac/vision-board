@@ -1384,3 +1384,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: plans, roadmaps and histories have dates, and nothing on the board showed order in time. A key the agent sets on purpose keeps a date in prose from moving a card, and a line beside the container's layout keeps the rest of the container as the person arranged it.
 - **Alternative rejected**: a `timeline` layout mode, which would take over the container and its undated nodes; a separate precision field; dates read from card text.
 - **Task**: cortex-tasks/board/2026-11-18_board-layout_timeline/TASK-STATUS.md
+
+## D-106 A timeline run down alternates left and right (amends D-105 3)
+- **Date**: 2026-11-18 · **Status**: Accepted (maintainer, points 587-596) · **From**: the design review of DESIGN_01's pages
+- **Decision**: Run down, a timeline's dated nodes alternate left and right of the line, the first on the left, spaced by the board's gaps rather than one step; the stem meets the middle of the node's facing edge in both forms; dated nodes follow the container's widths setting, `match` by default run down and `own` across.
+- **Why**: the same alternation as across, and no empty runs below short nodes.
+- **Task**: cortex-tasks/board/2026-11-18_board-layout_timeline/TASK-STATUS.md
