@@ -175,3 +175,64 @@ test('no Save for later on an app window: not in the number\'s menu, not in the 
   await expect(menu.getByRole('menuitem', { name: /Save for later/ })).toHaveCount(0);
   await expect(menu.getByRole('menuitem', { name: /Bookmark/ })).toHaveCount(1);
 });
+
+// FIX_03 ruling 2 (point 443): an idle app is the board's to pan over; a click makes it the app's until Esc or a click
+// outside; on stage it always is. The sandbox is not touched (only the frame's pointer-events change).
+test('an idle app: a wheel and a drag over it pan the board; a click gives the app the pointer until Esc or a click outside', async ({ page }) => {
+  await open(page, await draw());
+  const frame = win(page).locator('vb-app-frame');
+  const sandbox = await frame.locator('iframe').getAttribute('sandbox');
+  const world = () => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
+  const b = (await frame.boundingBox())!;
+  const [cx, cy] = [b.x + b.width / 2, b.y + b.height / 2];
+  const hit = () => page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.localName, [cx, cy]);
+  expect(await hit()).not.toBe('iframe');
+  let before = await world();
+  await page.mouse.move(cx, cy);
+  await page.mouse.wheel(0, 120);
+  await expect.poll(world).not.toBe(before);
+  before = await world();
+  const b2 = (await frame.boundingBox())!;
+  const [x2, y2] = [b2.x + b2.width / 2, b2.y + b2.height / 2];
+  await page.mouse.move(x2, y2);
+  await page.mouse.down();
+  await page.mouse.move(x2 + 60, y2 + 30, { steps: 6 });
+  await page.mouse.up();
+  await expect.poll(world).not.toBe(before);
+  await expect(frame).not.toHaveAttribute('data-active', '');
+  // A click: the app's now. A wheel over it no longer moves the board.
+  const b3 = (await frame.boundingBox())!;
+  const [x3, y3] = [b3.x + b3.width / 2, b3.y + b3.height / 2];
+  await page.mouse.click(x3, y3);
+  await expect(frame).toHaveAttribute('data-active', '');
+  expect(await page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.localName, [x3, y3])).toBe('iframe');
+  before = await world();
+  await page.mouse.wheel(0, 120);
+  await page.waitForTimeout(300);
+  expect(await world()).toBe(before);
+  // Esc in the panel (it sends ui/notifications/escape) gives them back, and focus to the window; so does the board's Esc.
+  await page.keyboard.press('Escape');
+  await expect(frame).not.toHaveAttribute('data-active', '');
+  await expect(win(page)).toBeFocused();
+  await page.mouse.click(x3, y3);
+  await expect(frame).toHaveAttribute('data-active', '');
+  await win(page).focus();
+  await page.keyboard.press('Escape');
+  await expect(frame).not.toHaveAttribute('data-active', '');
+  // A click in, then a click outside on the board's background.
+  await page.mouse.click(x3, y3);
+  await expect(frame).toHaveAttribute('data-active', '');
+  await page.mouse.click(5, (page.viewportSize()!.height) - 5);
+  await expect(frame).not.toHaveAttribute('data-active', '');
+  expect(await frame.locator('iframe').getAttribute('sandbox')).toBe(sandbox);
+});
+
+test('Open by a click, then Esc: focus back on the window with no ring (FIX_03 ruling 1)', async ({ page }) => {
+  await open(page, await draw());
+  await win(page).locator('[data-app-act="stage"]').click();
+  await expect(win(page)).toHaveAttribute('data-stage', '');
+  await page.keyboard.press('Escape');
+  await expect(win(page)).not.toHaveAttribute('data-stage', '');
+  await expect(win(page)).toBeFocused();
+  await expect(win(page)).toHaveCSS('outline-style', 'none');
+});

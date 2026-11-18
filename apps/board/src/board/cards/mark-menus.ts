@@ -7,7 +7,7 @@
 // takes Left and Right too. A row acts by its `data-menu-act`, which the caller runs once the menu has closed.
 import type { ViewNode } from '#format';
 import type { NodeState, StageBox } from '#ui';
-import { answerPicker, contextMenu, dismissable, firstItem, menuItems, menuKeydown, numberMenu } from '#ui';
+import { answerPicker, contextMenu, dismissable, firstItem, menuItems, menuKeydown, numberMenu, returnFocus } from '#ui';
 import { DRAG_THRESHOLD } from '../input/index.ts';
 import type { MarkSide } from './mark-place.ts';
 import { moveTo, placeMark } from './mark-place.ts';
@@ -101,7 +101,7 @@ export function showMarkMenu(stage: HTMLElement, spec: MarkMenuSpec): MarkMenu {
     spec.opener?.setAttribute('aria-expanded', 'false');
     spec.opener?.removeAttribute('aria-controls');
     spec.closed();
-    if (focusBack && back?.isConnected) back.focus({ preventScroll: true });
+    if (focusBack) returnFocus(back);
   }
   menu.addEventListener('keydown', onKey);
   holder.addEventListener('click', onClick);

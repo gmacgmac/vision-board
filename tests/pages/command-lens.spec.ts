@@ -8,7 +8,7 @@ import { nodeTemplate, SKIN_DEFS } from '#ui';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card, open as openBoard, write } from './agent-board.ts';
-import { drawEdges, mark } from './edge-board.ts';
+import { drawEdges, mark, menuOf } from './edge-board.ts';
 import { frame, head, idle, linesAfter, menu, menuButton } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
@@ -94,6 +94,39 @@ test('on a board: switching to the skin redraws in place and keeps the selection
   await idle(page);
   expect((await linesAfter(page, moved)).some((e) => e.action === 'move' || e.action === 'pin')).toBe(true);
 });
+
+// A press acts on the answer the person sees (FIX_03): Tick again soon after the lit half cleared it ticks, never clears
+// again. Both skins: the default disc's picker and Command Lens's switch go through the same item act.
+for (const skinFlag of ['default', 'command-lens']) {
+  test(`on a board: Tick soon after clearing ticks again, never clears twice (${skinFlag})`, async ({ page, request }) => {
+    const d = await drawEdges(request);
+    await openBoard(page, d, '?vbwork&flags=nodeEdges,skins');
+    if (skinFlag === 'command-lens') {
+      await menuButton(page).click();
+      await menu(page).getByRole('menuitemradio', { name: /Command Lens/ }).click();
+      await expect(card(page, d.n[0]!)).toHaveAttribute('data-marks-at', 'plate');
+    }
+    const lit = async (): Promise<string | null> => card(page, d.n[0]!).getAttribute('data-status');
+    const tick = async (): Promise<void> => {
+      if (skinFlag === 'command-lens') return mark(page, d.n[0]!, 'tick').click();
+      await mark(page, d.n[0]!, 'answer').click();
+      await menuOf(page, `Answer item ${d.n[0]!}`).getByRole('menuitem', { name: 'Tick (A)' }).click();
+    };
+    const before = await head(page);
+    await tick();
+    await expect.poll(lit).toBe('acknowledged');
+    // A write that takes a moment, as on a long ledger: the clear is still on its way when Tick is pressed again.
+    await page.route('**/api/boards/*/act', async (route) => { await new Promise((r) => setTimeout(r, 700)); await route.continue(); });
+    await page.waitForTimeout(450); // past the double-click guard (item-acts.ts REPEAT_MS)
+    await tick();
+    await page.waitForTimeout(450);
+    await tick();
+    const answers = async () => (await linesAfter(page, before)).map((e) => e.action).filter((a) => a === 'ack' || a === 'reopen');
+    await expect.poll(answers, { timeout: 5000 }).toHaveLength(3);
+    expect(await answers()).toEqual(['ack', 'reopen', 'ack']);
+    await expect.poll(lit).toBe('acknowledged');
+  });
+}
 
 test('on a board: the plate\'s Proposal chip opens the proposal box and a second press closes it; the conversation box\'s head is the plate\'s', async ({ page, request }) => {
   await setTheme(page, 'dark');

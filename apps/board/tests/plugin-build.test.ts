@@ -25,7 +25,8 @@ const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_
  * styles' 24,000 is temporary (node overhaul FE_01, 23,684): the new node's CSS ships beside the old footer's until T_04
  * deletes the old, and T_04 restores 22,000 (PLAN.md § House Rules). The view's 201,000 and the styles' 27,100 are temporary too (node overhaul FE_08,
  * 200,848 and 27,093 with the app window; budgets never block a task in this set), and T_04 restores 190,000. */
-const BUDGET: Record<string, number> = { 'view/board.js': 202_700, 'view/board.css': 27_600, 'engine/engine.js': 240_000 };
+const BUDGET: Record<string, number> = { 'view/board.js': 204_200, // 204,111 measured after FIX_02 and FIX_03 merged (temporary until T_04)
+  'view/board.css': 27_600, 'engine/engine.js': 240_000 };
 const dirs: string[] = [];
 const temp = () => { const d = makeTempDir('vb-plugin-'); dirs.push(d); return d; };
 const read = (dir: string, file: string) => fs.readFileSync(path.join(dir, file));

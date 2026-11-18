@@ -20,7 +20,7 @@
     "vb-nb-tabs": "conversation only, and only when the node is in a note on several nodes: role tablist 'Conversations', one vb-nb-tab (role tab, aria-selected, data-tab: '' for this node, else the group's sorted numbers) per conversation: 'This node', then 'With 28'",
     "vb-nb-queued": "conversation: a note of the person's not yet sent, dashed in the accent, its who line saying 'not sent yet · goes with Send' (em)",
     "vb-nb-wait": "conversation: 'Waiting for the agent' (role status) under the thread while its latest note went (Send or Ask now) and no reply came after it",
-    "vb-nb-pair": "conversation: the bottom row, Ask now (vb-nb-ask, its keys or why it is disabled in its title, aria-disabled while no message can go, still focusable) and Add note (vb-nb-primary, its key in its title), sharing the width"
+    "vb-nb-pair": "conversation: the bottom row, Ask now (vb-nb-ask, its keys or why it is disabled in its title, aria-disabled while no message can go, still focusable) and Add note (its keys in its title), sharing the width. They are two modes (FIX_03 ruling 3): the active one (BoxView.active, Add note by default) is vb-nb-primary and aria-pressed=true, the field's placeholder and name say it, and Enter does it; a press of either (not a disabled Ask now) makes it the mode at once and the vb-note event carries it as `active`"
   },
   "attributes": {
     "role": "dialog (set by show); not modal: the board stays usable",
@@ -41,7 +41,7 @@
     "reveal(seq?)": "in the conversation: scroll to the entry with that ledger seq, or to the bottom (the latest) when it is the last or not given; focusText then focuses it"
   },
   "events": [
-    "vb-note (bubbles): detail { choice: 'save' | 'cancel' | 'remove' | 'edit' | 'ask' | 'tab', text, note?, tab? }; Enter in the text is save, Esc anywhere is cancel, the × is cancel, Edit in the conversation is edit with the note's seq. In the conversation box Cmd or Ctrl Enter (fieldKey) and Ask now are ask, sent even while it is disabled so the page says why, and a tab is tab with its key. A cancel is sent only while the text is unchanged",
+    "vb-note (bubbles): detail { choice: 'save' | 'cancel' | 'remove' | 'edit' | 'ask' | 'tab', text, note?, tab? }; Enter in the text is save (in the conversation box, the active mode: save or ask), Esc anywhere is cancel, the × is cancel, Edit in the conversation is edit with the note's seq. In the conversation box Cmd or Ctrl Enter (fieldKey, whatever the mode) and Ask now are ask, a press of Add note or Ask now carries `active` (the mode it made active), sent even while it is disabled so the page says why, and a tab is tab with its key. A cancel is sent only while the text is unchanged",
     "vb-note-discard (bubbles): detail { text }; Esc or Cancel with changed text (cancelIntent 'ask'), in place of the cancel. The bubble stays open: the page asks \"Discard your changes?\" through its confirm dialog, then closes it (OK) or puts focus back with focusText (Cancel)"
   ],
   "whenToUse": "Writing, changing or reading the person's note on one card, and reading the card's conversation with the agent.",

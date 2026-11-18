@@ -14,7 +14,7 @@ import type { Box } from '#layout';
 import type { LedgerState, ProposalFound, ProposalRow } from '#actions';
 import { acceptAllPlan, answerable, proposalRows } from '#actions';
 import type { CardConditions } from '#ui';
-import { versionTime } from '#ui';
+import { returnFocus, versionTime } from '#ui';
 import type { ActFields } from '../io.ts';
 import type { ProposalAnswer } from './proposals.ts';
 import { acceptAllWords, answerDone, proposalAct } from './proposals.ts';
@@ -109,7 +109,7 @@ export function createProposalFlow(d: ProposalDeps): ProposalFlow {
       if (!ok) return refresh(); // refused: work the rows out again, so nothing stays stuck
       // Another proposal on the card: back to its tab; else the card itself.
       const card = d.card(id);
-      (tabOf(card) ?? card)?.focus({ preventScroll: true });
+      returnFocus(tabOf(card) ?? card);
       keepFocus();
       d.toast(answerDone(row, answer));
     },

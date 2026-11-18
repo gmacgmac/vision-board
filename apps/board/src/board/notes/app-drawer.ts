@@ -7,7 +7,7 @@
 // pane (moving it never reloads the panel beside it). Words typed are never lost: hiding a drawer that holds them asks
 // first, and the box rides through a new version of the node (vb-node `keepingDrawer`). Browser only.
 import type { VbNoteBubbleElement } from '#ui';
-import { NOTE_DISCARD_EVENT } from '#ui';
+import { NOTE_DISCARD_EVENT, returnFocus } from '#ui';
 import type { NoteEventDetail } from '#ui';
 import type * as NoteBox from './note-box.ts';
 import type { Open } from './note-views.ts';
@@ -59,9 +59,8 @@ export function createDrawers(d: DrawerDeps): Drawers {
   });
 
   function onChoice(e: Entry, detail: NoteEventDetail) {
-    const { choice, text, note, tab } = detail;
-    if (choice === 'save') return void box!.addNote(choices(e), e.o, text);
-    if (choice === 'ask') return void box!.askNow(choices(e), e.o, text);
+    const { choice, note, tab } = detail;
+    if (choice === 'save' || choice === 'ask') return void box!.choose(choices(e), e.o, detail);
     if (choice === 'edit' && note !== undefined) return d.edit(e.id, note);
     if (choice === 'tab') {
       e.o = { ...e.o, group: tab ? tab.split(',') : undefined, draft: e.bubble.text };
@@ -91,7 +90,7 @@ export function createDrawers(d: DrawerDeps): Drawers {
     e?.bubble.remove();
     entries.delete(id);
     d.relayout();
-    back?.focus({ preventScroll: true });
+    returnFocus(back);
   }
 
   function show(id: string, part?: number) {

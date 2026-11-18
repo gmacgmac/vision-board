@@ -17,8 +17,11 @@ import { APP_FRAME_RESIZE_EVENT, createAppBridge, hostContext, hostStyles, panel
 import { KIND_ICON, svgIcon } from '../node/node-icons.ts';
 import type { StageHold } from './app-frame-stage.ts';
 import { holdStage } from './app-frame-stage.ts';
+import type { ClickIn } from './app-frame-active.ts';
+import { bindClickIn } from './app-frame-active.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
 import * as appFrameWords from '../words/app-frame.ts';
+import { returnFocus } from '../base/focus-return.ts';
 
 export const VB_APP_FRAME_TAG = 'vb-app-frame';
 
@@ -52,6 +55,9 @@ export interface AppFrameWiring {
   onStage?(on: boolean): void;
   /** Esc in the panel; left out, focus goes back to the card the frame is in. */
   onEscape?(): void;
+  /** The panel takes the pointer and the wheel only once the person clicks into it, until a press outside or Esc; on
+   *  stage always (an app window, FIX_03 ruling 2, app-frame-active.ts). Left out, always, as before. */
+  clickIn?: boolean;
   /** The frame loaded: the panel, or the route's refusal once the app went (the page reads the
    * app's state again, so the card follows its folder). */
   onLoad?(): void;
@@ -183,6 +189,7 @@ export function defineVbAppFrame(): void {
       if (!held) return;
       this.held = undefined;
       held.release();
+      this.clicks?.off();
       if (held.host === this) this.parentElement?.style.removeProperty('min-height');
       this.bridge?.contextChanged();
       this.wiring?.onStage?.(false);
@@ -237,7 +244,13 @@ export function defineVbAppFrame(): void {
       }
     }
 
-    wire(w: AppFrameWiring): void { this.wiring = w; }
+    wire(w: AppFrameWiring): void {
+      this.wiring = w;
+      if (w.clickIn && !this.clicks) this.clicks = bindClickIn(this, { usable: () => this.dataset.state === 'ready' && !this.frozen && !this.staged, on: () => this.frame?.focus({ preventScroll: true }) });
+    }
+
+    /** The click into the panel (`clickIn`), while it is wired. */
+    private clicks: ClickIn | undefined;
 
     lookChanged(): void { this.bridge?.contextChanged(); }
 
@@ -259,7 +272,7 @@ export function defineVbAppFrame(): void {
         loadState: () => this.wiring?.loadState?.() ?? Promise.resolve(undefined),
         hostContext: () => hostContext(this.wiring?.look?.() ?? readLook(this), this.told),
         note: (text) => (this.wiring?.note ? this.wiring.note(text) : Promise.reject({ problem: 'not-found' })),
-        onEscape: () => (this.staged ? this.unstage() : this.wiring?.onEscape ? this.wiring.onEscape() : this.toCard()),
+        onEscape: () => { this.clicks?.off(); return this.staged ? this.unstage() : this.wiring?.onEscape ? this.wiring.onEscape() : this.toCard(); },
         onState: (s) => { if (s === 'ready') { this.show(); this.wiring?.onReady?.(); } },
         ...((this.wiring?.fit ?? flagOn('appFit')) && { fitHeight: (h: number) => this.fitTo(h) }),
       });
@@ -280,6 +293,7 @@ export function defineVbAppFrame(): void {
 
     freeze(): void {
       if (!this.frame || this.frozen || this.staged) return;
+      this.clicks?.off();
       // Focus in the panel would be lost to an inert frame: it goes back to the card.
       if (document.activeElement === this.frame) this.toCard();
       this.toggleAttribute('data-frozen', true);
@@ -293,6 +307,7 @@ export function defineVbAppFrame(): void {
 
     unload(): void {
       this.unstage();
+      this.clicks?.off();
       this.thaw();
       window.removeEventListener('message', this.onMessage);
       window.removeEventListener('blur', this.onFocusMove);
@@ -333,7 +348,7 @@ export function defineVbAppFrame(): void {
       this.removeAttribute('aria-busy');
     }
 
-    private toCard(): void { this.closest<HTMLElement>('vb-node')?.focus(); }
+    private toCard(): void { returnFocus(this.closest<HTMLElement>('vb-node')); }
 
     /** The placeholder: the app's icon and title, and "Loading…" while the panel starts. Hidden
      * from assistive tech, which reads the card's name and the frame's title. */

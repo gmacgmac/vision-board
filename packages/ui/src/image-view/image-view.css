@@ -12,7 +12,10 @@
 .vb-img:hover > .vb-md-img { box-shadow: 0 0 0 1px var(--vb-line-contrast), var(--vb-shadow-card); }
 .vb-img:active > .vb-md-img { opacity: 0.85; }
 .vb-img:focus-visible { outline: none; }
-.vb-img:focus-visible > .vb-md-img { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+/* Focus a click gave, or given back after a click or Esc (data-pointer-focus, base/focus-return.ts), draws no ring. */
+.vb-img {
+  &:focus-visible:not([data-pointer-focus]) > .vb-md-img { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+}
 
 .vb-iv {
   position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;

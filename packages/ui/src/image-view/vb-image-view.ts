@@ -12,6 +12,7 @@ import type { Rect } from './image-view-core.ts';
 import { centred, fitImage, flipFrom, motionMs } from './image-view-core.ts';
 import { imageViewTemplate } from './image-view-template.ts';
 import { IMAGE_BUTTON } from './card-image.ts';
+import { returnFocus } from '../base/focus-return.ts';
 
 export const VB_IMAGE_VIEW_TAG = 'vb-image-view';
 
@@ -109,7 +110,8 @@ export function defineVbImageView(): void {
       // From wherever it is now (an open still under way), back to the card, or in place if it went.
       const now = getComputedStyle(this.pic).transform;
       const back = card?.isConnected && card.getClientRects().length ? flipFrom(this.inView(card), this.box) : now;
-      void this.move(now, back, Number(getComputedStyle(this.scrim).opacity), 0, 'forwards').then(() => dlg.close());
+      // Given back in the same task as the dialog's own focus return, so no frame shows the ring a key would light.
+      void this.move(now, back, Number(getComputedStyle(this.scrim).opacity), 0, 'forwards').then(() => { dlg.close(); this.closed(); });
     }
 
     /** Where `el` is, in the view's pixels. */
@@ -166,7 +168,7 @@ export function defineVbImageView(): void {
       const back = [this.shown?.closest<HTMLElement>(`.${IMAGE_BUTTON}`), this.card].find((el) => el?.isConnected);
       this.shown = this.card = null;
       this.pic.removeAttribute('src');
-      back?.focus({ preventScroll: true });
+      returnFocus(back);
     }
   }
 

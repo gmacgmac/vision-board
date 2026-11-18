@@ -256,7 +256,7 @@ them on and renews the screenshots.
   suite.
 - **Temporary size budgets** (maintainer, point 351, until T_04 deletes the old node's code): the page's start
   budget 200 → 210 KB gzip (FIX_02 measured 210.2 and raised it to 211) (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
-  190,000 → 202,200 and `view/board.css` 22,000 → 27,600 gzip (raised as tasks measured; 201,229 and 27,093 after the FE_08 merge; FIX_01 measured 202,147 and 27,530 and raised them to 202,200 and 27,600; FIX_02 measured 202,639 and raised `view/board.js` to 202,700) (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
+  190,000 → 204,200 and `view/board.css` 22,000 → 27,600 gzip (raised as tasks measured; 201,229 and 27,093 after the FE_08 merge; FIX_01 measured 202,147 and 27,530 and raised them to 202,200 and 27,600; FIX_02 measured 202,639 and raised `view/board.js` to 202,700; after FIX_03 merged, 204,111 measured, raised to 204,200) (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
   Each task still loads on demand what opens on an action. T_04 restores 200 KB, 190,000 and 22,000.
   **Budgets never block a task in this set** (maintainer, 2026-11-17): if the work needs more, the task raises the
   temporary figure to what it measured, says so in its notes, and carries on. Size is optimised once, after the

@@ -5,7 +5,9 @@
 // keyboard (Tab, J, an arrow in a menu) never carries it, so what the keyboard focused always shows its
 // ring (WCAG 2.4.7). A text box is left alone: there the ring says where typing goes. One definition for
 // every key and command: the last input before the focus moved decides. The same reading decides
-// whether a focus may pan the board (focus.ts, review-polish ruling 11): only a key's may.
+// whether a focus may pan the board (focus.ts, review-polish ruling 11): only a key's may. Binding it also binds
+// `#ui` `bindFocusMoves`, which decides whether focus given back when a layer closes shows its ring (FIX_03).
+import { bindFocusMoves } from '#ui';
 const ATTR = 'data-pointer-focus';
 
 /** The kind of input that came last: a pointer press or a key press. */
@@ -61,7 +63,9 @@ export function bindPointerFocus(): () => void {
   window.addEventListener('focus', onFocus);
   document.addEventListener('focusin', onFocusIn);
   document.addEventListener('focusout', onFocusOut);
+  const unbindMoves = bindFocusMoves();
   return () => {
+    unbindMoves();
     document.removeEventListener('pointerdown', onPointer, true);
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKeyUp, true);
