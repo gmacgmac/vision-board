@@ -49,35 +49,36 @@ export function moveTo(el: HTMLElement, at: { x: number; y: number }): void {
   el.style.top = `${at.y}px`;
 }
 
-/** The room between a node and a box beside it, and how near a corner its arrow may come. */
+/** The room between a node and a box beside it. */
 export const BOX_GAP = 12;
-const ARROW_CORNER = 16;
+/** Where a box's pointer sits beside the node: down its left edge from its top, in screen pixels, level with the node's
+ *  upper part while the box is top aligned (FIX_04, point 459). The note bubble's own `--vb-arrow` default. */
+export const BOX_ARROW = 22;
 
 /** Where a box beside a node goes, and where its arrow meets the box's edge (`arrow`: down the left edge on the right,
- *  along the top edge below, along the bottom edge above), in stage pixels. */
+ *  along the top edge below, along the bottom edge above), in screen pixels from the box's corner. */
 export interface BoxPlace { side: 'right' | 'below' | 'above'; x: number; y: number; arrow: number }
 
 /**
  * One place for every box that opens beside a node, the conversation, the proposal and the history box (the
  * maintainer's ruling, FE_03 run 2): its top level with the node's top, to the right of the node's `reach` (`nodeReach`:
  * the node and the marks that hang off it) when the stage has room, else below it, centred on the node's width; never
- * over the node. Its arrow aims at the node's centre (`node`, the node's own box; FIX_02, points 430 to 438): beside it,
- * on the box's left edge at the node's vertical centre; below, at the middle of the box's top edge. It stays on the stage
- * (FIX_01): on the right, a box that would run past the stage's bottom (or top) moves up (or down) just enough, top
- * aligned whenever it fits; below, one that would run past the bottom opens above the node instead, and only when
- * neither fits is it kept inside the stage. A box moved to stay on screen still aims at the node's centre, its arrow
- * kept inside its edge. Pure.
+ * over the node. Its pointer is fixed on the box (FIX_04, point 459, replacing FIX_02's aim at the node's centre):
+ * beside the node, on the box's left edge `BOX_ARROW` from its top; below (or above), at the middle of its edge, the
+ * box centred on the node (`node`, the node's own box). It stays on the stage (FIX_01): on the right, a box that would
+ * run past the stage's bottom (or top) moves up (or down) just enough, top aligned whenever it fits; below, one that
+ * would run past the bottom opens above the node instead, and only when neither fits is it kept inside the stage. The
+ * pointer never moves when the box moves to stay on screen. Pure.
  */
 export function placeBeside(reach: StageBox, size: { w: number; h: number }, stage: { w: number; h: number }, node: StageBox = reach): BoxPlace {
   const right = reach.x + reach.w + BOX_GAP;
   const inside = (y: number) => clamp(y, STAGE_EDGE, stage.h - size.h - STAGE_EDGE);
   if (right + size.w <= stage.w - STAGE_EDGE) {
     const y = inside(node.y);
-    return { side: 'right', x: Math.round(right), y, arrow: clamp(node.y + node.h / 2 - y, ARROW_CORNER, size.h - ARROW_CORNER) };
+    return { side: 'right', x: Math.round(right), y, arrow: BOX_ARROW };
   }
-  const centre = node.x + node.w / 2;
-  const x = clamp(centre - size.w / 2, STAGE_EDGE, stage.w - size.w - STAGE_EDGE);
-  const arrow = clamp(centre - x, ARROW_CORNER, size.w - ARROW_CORNER);
+  const x = clamp(node.x + node.w / 2 - size.w / 2, STAGE_EDGE, stage.w - size.w - STAGE_EDGE);
+  const arrow = size.w / 2;
   const below = reach.y + reach.h + BOX_GAP;
   const above = node.y - BOX_GAP - size.h;
   if (below + size.h > stage.h - STAGE_EDGE && above >= STAGE_EDGE) return { side: 'above', x, y: Math.round(above), arrow };

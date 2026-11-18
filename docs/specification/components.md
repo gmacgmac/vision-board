@@ -549,9 +549,10 @@ record is `api.md` 58-61.
 10. **The box beside a node** (FE_03 run 2, the maintainer's rulings). The conversation, proposal and history boxes
    share one place and one look. `board/cards/mark-place.ts` `placeBeside` places each: its top level with the node's
    top, to its right when the stage has room, else below it, centred on the node's width, never over the node or the
-   marks that hang off it (`nodeReach`); its arrow aims at the node's centre (FIX_02, points 430 to 438): beside it, on
-   the box's left edge at the node's vertical centre; below, at the middle of the box's top edge; a box moved to stay on
-   screen still aims there, its arrow kept inside its edge. It stays on the stage (FIX_01): on
+   marks that hang off it (`nodeReach`); its pointer is fixed on the box (FIX_04, point 459, replacing FIX_02's aim at
+   the node's centre): beside the node, on the box's left edge `BOX_ARROW` (22px) from its top, level with the node's
+   upper part while the box is top aligned; below (or above), at the middle of the box's edge, the box centred on the
+   node. It never moves when the box moves to stay on screen. It stays on the stage (FIX_01): on
    the right it moves up just enough when it would run past the stage's bottom (top aligned whenever it fits); below, it
    opens above the node instead (`data-side="above"`), and only with room for neither is it kept inside the stage
    (`apps/board/tests/mark-place.test.ts`; `tests/pages/node-boxes.spec.ts`, "a node near the window's bottom"). Its
@@ -630,7 +631,14 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    text box, a code block; `input/wheel-latch.ts` `canScroll`, `scrollerOn`); otherwise the board pans,
    a container's title and its tip included. One gesture keeps the target its first wheel event found
    until a quiet gap of `WHEEL_GAP` (`createWheelLatch`), as browsers latch a scroll, so a flick that
-   reaches a bubble's end stops there and the next gesture pans. Off, the wheel inside the note bubble
+   reaches a bubble's end stops there and the next gesture pans. **Scroll first, then pan** (FIX_04 ruling 2, point
+   460, settling tracker M4): the gesture is decided by its first wheel event that moves (a trackpad can open one with
+   an event of no movement, which used to latch the whole gesture to a pan); `WHEEL_GAP` is 200 ms, so momentum that
+   follows the fingers stays in the gesture; a scroller at its end hands the rest of the gesture to no one
+   (`overscroll-behavior: contain` under `.vb-stage`, board.css); a wheel that counts in lines or pages pans (and
+   zooms) by 16px a line or a stage's height a page (`pointer.ts` `WHEEL_LINE`). Proven by
+   `tests/pages/scroll-before-pan.spec.ts` (the conversation box's thread, the history list, a code block in a node,
+   trackpad-style and mouse-style, Ctrl + wheel zooms). Off, the wheel inside the note bubble
    or any hover tip (`.vb-tip`) is always its own and never pans. Tests: `wheel-latch.test.ts`,
    `tests/pages/wheel-chaining.spec.ts`.
    The stage is `user-select: none` and a card's content `user-select: text`.

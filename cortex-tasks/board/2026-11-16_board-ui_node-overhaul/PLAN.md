@@ -255,7 +255,7 @@ them on and renews the screenshots.
   (`VB_TEST_WORKERS=3`, `nice -n 15`). Every run has a time limit: 10 minutes for unit tests, 25 for the full page
   suite.
 - **Temporary size budgets** (maintainer, point 351, until T_04 deletes the old node's code): the page's start
-  budget 200 → 210 KB gzip (FIX_02 measured 210.2 and raised it to 211) (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
+  budget 200 → 210 KB gzip (FIX_02 measured 210.2 and raised it to 211; FIX_04 measured 211.1 and raised it to 211.2) (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
   190,000 → 204,200 and `view/board.css` 22,000 → 27,600 gzip (raised as tasks measured; 201,229 and 27,093 after the FE_08 merge; FIX_01 measured 202,147 and 27,530 and raised them to 202,200 and 27,600; FIX_02 measured 202,639 and raised `view/board.js` to 202,700; after FIX_03 merged, 204,111 measured, raised to 204,200) (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
   Each task still loads on demand what opens on an action. T_04 restores 200 KB, 190,000 and 22,000.
   **Budgets never block a task in this set** (maintainer, 2026-11-17): if the work needs more, the task raises the
@@ -420,13 +420,20 @@ this list differ, **this list wins**. Anything not named here is accepted as the
 - **Mark presses (points 430-438, FIX_02)**: every mark takes its press, with the hand, above the far breakpoint; below
   it a press selects the node only, no hand; keyboard unchanged; axe `target-size` excused below 100% only for a mark
   drawing under 24px.
-- **The box's pointer (points 430-438, FIX_02)**: it aims at the node's centre: beside, on the box's left edge at the
-  node's vertical centre; below, the box centred on the node and the pointer at the middle of its top edge; still aimed
-  there when the box moved to stay on screen.
+- **The box's pointer (points 430-438, FIX_02; superseded by point 459, FIX_04)**: it aims at the node's centre: beside,
+  on the box's left edge at the node's vertical centre; below, the box centred on the node and the pointer at the middle
+  of its top edge; still aimed there when the box moved to stay on screen.
 - **The conversation box's zoom (point 444, FIX_02)**: one size below 80%, with the board from 80% to 120%, one size
   above (box scale = clamp(zoom, 0.8, 1.2)); the same for any box that scales with the board.
 - **One zoom registry (point 445, FIX_02)**: every zoom rule is a row of `packages/ui/src/zoom-rules.ts`; the code
   reads it, the CSS reads only the variables it names, a test fails on a zoom number anywhere else.
+- **The box's pointer is fixed (point 459, FIX_04)**: on the box's left edge at one set distance from its top (22px,
+  `BOX_ARROW`, level with the node's upper part while the box is top aligned); it never moves when the box moves to stay
+  on screen. A box below the node keeps its pointer at the middle of its top edge, the box centred on the node.
+- **Scroll first, then pan (point 460, FIX_04; settles tracker M4)**: over anything that can scroll in the wheel's
+  direction the wheel scrolls it and the board stays; a flick that carries it to its end stops there, and the rest of
+  that gesture neither pans nor scrolls anything else; only a new gesture that starts at the end pans. Pinch or
+  Ctrl/Cmd wheel always zooms. A gesture is decided by its first wheel event that moves; its quiet gap is 200 ms.
 
 ## Decision entries to append
 
