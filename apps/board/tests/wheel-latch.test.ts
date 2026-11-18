@@ -82,3 +82,69 @@ test('an event that does not move decides nothing: the gesture\'s first moving e
 test('the gesture gap is about 200 ms: a trackpad\'s momentum that follows the fingers stays in the same gesture', () => {
   assert.ok(WHEEL_GAP >= 150 && WHEEL_GAP <= 250, `WHEEL_GAP ${WHEEL_GAP}`);
 });
+
+// FIX_05 ruling 2 (point 485): on macOS a flick's momentum keeps sending wheel events for one to two seconds, a decaying
+// run. Once the scroller reached its end, that tail is swallowed (it stays the scroller's, so nothing pans), and a fresh
+// push of the fingers, which breaks the decay with a rise, is a new gesture at once, without waiting the tail out.
+// Streams in the shape a trackpad and a mouse send: one event a frame (16 ms), deltas in px.
+const FRAME = 16;
+/** Fingers speeding up, then a momentum tail decaying by `decay` a frame for `frames` frames; `jitter` (0 to 1) adds
+ *  the small wobble real momentum has, deterministically. */
+function flick(frames = 90, decay = 0.93, jitter = 0): number[] {
+  const fingers = [2, 6, 14, 24, 30, 30];
+  const tail = Array.from({ length: frames }, (_, i) => 30 * decay ** (i + 1) * (1 + (i % 3 === 1 ? jitter : i % 3 === 2 ? -jitter : 0)));
+  return [...fingers, ...tail.map((d) => Math.round(d * 10) / 10)];
+}
+/** Feed `deltas` (one a frame from `t0`) to `latch`; what each event's gesture is for. */
+const feed = <T>(latch: { target(e: { timeStamp: number; deltaX: number; deltaY: number }): T | null }, deltas: number[], t0 = 0) =>
+  deltas.map((d, i) => latch.target({ timeStamp: t0 + i * FRAME, deltaX: 0, deltaY: d }));
+
+test('a flick that reaches the scroller\'s end: its momentum tail stays the scroller\'s, nothing pans', () => {
+  const bubble = box('bubble', 0);
+  let room = true;
+  const latch = createWheelLatch(() => (room ? bubble : null));
+  const stream = flick(90, 0.93, 0.08); // with the wobble real momentum has
+  const out = stream.map((d, i) => { if (i === 12) room = false; return latch.target({ timeStamp: i * FRAME, deltaX: 0, deltaY: d }); });
+  assert.ok(out.every((t) => t === bubble), 'the whole flick, tail and all, is the bubble\'s');
+});
+
+test('a fresh push during the momentum tail is a new gesture at once: at the end it pans, without waiting the tail out', () => {
+  const bubble = box('bubble', 0);
+  let room = true;
+  const latch = createWheelLatch(() => (room ? bubble : null));
+  const tail = flick(40).slice(0, 46); // the fingers lifted; the tail is still running (about 2px a frame)
+  feed(latch, tail);
+  room = false; // it reached its end
+  const push = [1, 3, 8, 16, 25, 30];
+  const out = feed(latch, push, tail.length * FRAME);
+  const first = out.indexOf(null);
+  assert.ok(first >= 0 && first <= 2, `the push pans by its third event (${JSON.stringify(out.map((t) => t?.name ?? 'pan'))})`);
+  assert.ok(out.slice(first).every((t) => t === null), 'and keeps panning for the rest of the push');
+});
+
+test('a fresh push while the scroller still has room scrolls it, as a new gesture', () => {
+  const bubble = box('bubble', 0);
+  let asked = 0;
+  const latch = createWheelLatch(() => { asked += 1; return bubble; });
+  feed(latch, flick(40).slice(0, 46));
+  const out = feed(latch, [1, 3, 8, 16, 25], 46 * FRAME);
+  assert.ok(out.every((t) => t === bubble));
+  assert.equal(asked, 2, 'the push was found afresh');
+});
+
+test('a push whose speed wobbles is one gesture: after the end it never turns into a pan', () => {
+  const bubble = box('bubble', 0);
+  let room = true;
+  const latch = createWheelLatch(() => (room ? bubble : null));
+  const out = [4, 9, 7, 12, 10, 14, 11, 16, 13, 18, 15, 12, 17].map((d, i) => { if (i === 4) room = false; return latch.target({ timeStamp: i * FRAME, deltaX: 0, deltaY: d }); });
+  assert.ok(out.every((t) => t === bubble));
+});
+
+test('a mouse: notches while the wheel spins are one gesture; after a pause the next notch at the end pans', () => {
+  const bubble = box('bubble', 0);
+  let room = true;
+  const latch = createWheelLatch(() => (room ? bubble : null));
+  const spin = Array.from({ length: 10 }, (_, i) => { if (i === 3) room = false; return latch.target({ timeStamp: i * 60, deltaX: 0, deltaY: 100 }); });
+  assert.ok(spin.every((t) => t === bubble), 'the spin that reached the end stays the bubble\'s');
+  assert.equal(latch.target({ timeStamp: 9 * 60 + WHEEL_GAP + 50, deltaX: 0, deltaY: 100 }), null);
+});

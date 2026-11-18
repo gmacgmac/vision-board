@@ -127,8 +127,9 @@
    the standalone page is the page's (shell.css). */
 .vb-stage { position: relative; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
 /* Scroll first, then pan (FIX_04 ruling 2): a box on the board that scrolled to its end hands the rest of the gesture to
-   no one, neither the page nor its host's (input/wheel-latch.ts keeps the gesture from panning). */
-.vb-stage * { overscroll-behavior: contain; }
+   no one, neither the page nor its host's (input/wheel-latch.ts keeps the gesture from panning), and shows no elastic
+   bounce (FIX_05 ruling 2, point 485). */
+.vb-stage * { overscroll-behavior: none; }
 /* Nothing on the board is text to select but what is in a card or the note bubble (3_FE_01 ruling
    5, U5): a drag on a container's title pans instead. node.css gives card content back its text. */
 .vb-stage { user-select: none; }

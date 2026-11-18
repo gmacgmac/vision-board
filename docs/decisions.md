@@ -1366,3 +1366,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   4. A ledger whose format is newer than the build opens read-only and says why.
 - **Why**: reading old formats where they lie spreads version branches through the reader with every change; a migration keeps the code on one format and makes the next change cheap.
 - **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/TASK-STATUS.md
+
+## D-104 Every box beside a node behaves the same (replaces D-101's "history keeps one size")
+- **Date**: 2026-11-18 · **Status**: Accepted (maintainer, point 484) · **From**: the maintainer's use of the merged board
+- **Decision**: The conversation, history and proposal boxes share one placement and one zoom rule: beside the node with a fixed pointer near the box's top, or below it centred with the pointer at the middle of its top edge; and they scale with the board between 80% and 120% zoom, holding one size outside that range. This replaces D-101's listing of history among the parts that keep one size; menus, the answer picker, the right-click list, the selection bar and the toolbar still keep one size.
+- **Why**: one box should behave one way, whatever it holds.
+- **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/FIX_05_one-box-and-scroll-release.md

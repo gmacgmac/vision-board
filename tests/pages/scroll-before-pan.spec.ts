@@ -35,6 +35,17 @@ async function gesture(page: Page, at: { x: number; y: number }, dy: number, cou
 /** Scroll `el` back to its top, as a gesture of its own, then wait the gap out. */
 const toTop = async (page: Page, el: Locator) => { await el.evaluate((e) => { e.scrollTop = 0; }); await page.waitForTimeout(GAP); };
 
+/** Node `q`'s conversation box with a long note and a long reply, once the reply shows in its thread (a reply that lands
+ *  after the box opened draws it again, at the latest). */
+async function longThread(page: Page, request: Parameters<typeof drawEdges>[0], d: Awaited<ReturnType<typeof drawEdges>>, q: number): Promise<Locator> {
+  const seq = await act(page, d, { action: 'comment', n: q, ver: 1, text: LONG });
+  await reply(request, d, q, LONG, seq);
+  await mark(page, q, 'notes').click();
+  const thread = page.locator('vb-note-bubble.vb-node-box .vb-nb-thread');
+  await expect(thread.locator('.vb-nb-reply')).toHaveCount(1);
+  return thread;
+}
+
 async function scrollsThenPans(page: Page, el: Locator, style: 'trackpad' | 'mouse') {
   expect(await end(el), 'it has room to scroll').toBeGreaterThan(40);
   const at = await middle(el);
@@ -56,10 +67,7 @@ test.describe('scroll first, then pan', () => {
       const d = await drawEdges(request);
       const q = d.n[0]!;
       await open(page, d, FLAGS);
-      const seq = await act(page, d, { action: 'comment', n: q, ver: 1, text: LONG });
-      await reply(request, d, q, LONG, seq);
-      await mark(page, q, 'notes').click();
-      const thread = page.locator('vb-note-bubble.vb-node-box .vb-nb-thread');
+      const thread = await longThread(page, request, d, q);
       await expect(thread).toBeVisible();
       await toTop(page, thread);
       await scrollsThenPans(page, thread, style);
@@ -91,10 +99,7 @@ test.describe('scroll first, then pan', () => {
     const d = await drawEdges(request);
     const q = d.n[0]!;
     await open(page, d, FLAGS);
-    const seq = await act(page, d, { action: 'comment', n: q, ver: 1, text: LONG });
-    await reply(request, d, q, LONG, seq);
-    await mark(page, q, 'notes').click();
-    const thread = page.locator('vb-note-bubble.vb-node-box .vb-nb-thread');
+    const thread = await longThread(page, request, d, q);
     await toTop(page, thread);
     const before = await world(page);
     // Synthetic events scroll nothing themselves: the board's handler prevents the default exactly when it takes one.
@@ -118,14 +123,40 @@ test.describe('scroll first, then pan', () => {
     expect(y0 - (await ty()), 'three lines down').toBeGreaterThanOrEqual(40);
   });
 
+  // FIX_05 ruling 2 (point 485): a flick's momentum tail after the end is swallowed; a fresh push during it pans at once.
+  test('a flick with a momentum tail stops at the end, and a fresh push during the tail pans at once', async ({ page, request }) => {
+    const d = await drawEdges(request);
+    const q = d.n[0]!;
+    await open(page, d, FLAGS);
+    const thread = await longThread(page, request, d, q);
+    await toTop(page, thread);
+    const at = await middle(thread);
+    await page.mouse.move(at.x, at.y);
+    const before = await world(page);
+    // The fingers, then a tail decaying 7% a frame: it carries the thread to its end and keeps going.
+    const tail = Array.from({ length: 60 }, (_, i) => Math.max(1, Math.round(160 * 0.93 ** i)));
+    for (const dy of [20, 60, 120, 160, ...tail]) { await page.mouse.wheel(0, dy); await page.waitForTimeout(16); }
+    expect(await top(thread)).toBeGreaterThanOrEqual((await end(thread)) - 1);
+    expect(await world(page), 'the tail at the end moves nothing').toBe(before);
+    // A fresh push, with no pause: it rises out of the tail and pans the board straight away.
+    for (const dy of [2, 6, 14, 24]) { await page.mouse.wheel(0, dy); await page.waitForTimeout(16); }
+    expect(await world(page), 'the push pans without waiting the tail out').not.toBe(before);
+  });
+
+  test('a board scroller has no elastic bounce: its overscroll does nothing', async ({ page, request }) => {
+    const d = await drawEdges(request);
+    const q = d.n[0]!;
+    await open(page, d, FLAGS);
+    const thread = await longThread(page, request, d, q);
+    await expect(thread).toHaveCSS('overscroll-behavior-y', 'none');
+    await expect(card(page, q)).toHaveCSS('overscroll-behavior-y', 'none');
+  });
+
   test('Ctrl + wheel over the thread zooms the board, and leaves the thread where it was', async ({ page, request }) => {
     const d = await drawEdges(request);
     const q = d.n[0]!;
     await open(page, d, FLAGS);
-    const seq = await act(page, d, { action: 'comment', n: q, ver: 1, text: LONG });
-    await reply(request, d, q, LONG, seq);
-    await mark(page, q, 'notes').click();
-    const thread = page.locator('vb-note-bubble.vb-node-box .vb-nb-thread');
+    const thread = await longThread(page, request, d, q);
     await toTop(page, thread);
     const at = await middle(thread);
     await page.mouse.move(at.x, at.y);

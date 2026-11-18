@@ -5,12 +5,14 @@
 // and a click outside (focus where it was pressed); a drag outside, a pan, leaves it open. Focus moves in on opening.
 // The history box is filled as it shows, by its `POPOVER_SHOW` event (history-flow.ts). One
 // box or menu is open at a time: the caller closes the other first. Both are placed as every box beside a node is
-// (mark-place.ts `placeBeside`): top aligned with the node, right or below, the arrow on the mark; the box sits in the
-// node, so its place is written in the node's own pixels, counter-scaled so it keeps one size at any zoom (D-101). Its × (`data-box-close`) closes it.
+// (mark-place.ts `placeBeside`): top aligned with the node, right or below, its pointer fixed on it; the box sits in the
+// node, so its place is written in the node's own pixels, and it scales as the conversation box does, clamp(zoom, 0.8,
+// 1.2) (`boxScale`; point 484, D-104). Its × (`data-box-close`) closes it.
 // Browser only.
 import type { PopoverShowDetail } from '#ui';
 import { dismissable, POPOVER_HIDE, POPOVER_OPEN, POPOVER_SHOW, returnFocus } from '#ui';
 import { DRAG_THRESHOLD } from '../input/index.ts';
+import { boxScale } from '../canvas/index.ts';
 import { nodeReach, placeBeside, stageBoxOf } from './mark-place.ts';
 
 /** The boxes: the history (the badge, H) and the proposal (the disc while a proposal waits). */
@@ -26,21 +28,22 @@ export interface MarkBox {
   place(): void;
 }
 
-/** The box beside its node (`placeBeside`), measured on the stage and written in the node's pixels (`k`: its zoom). It
- *  keeps one size at any zoom (D-101): scaled by 1/k about its top left (node-box.css reads `--vb-box-scale`), so it
- *  measures what it draws, and its arrow, in stage pixels. */
+/** The box beside its node (`placeBeside`), measured on the stage and written in the node's pixels (`k`: its zoom). On
+ *  screen it is drawn at `boxScale(k)`, as the conversation box: in the node that is s/k about its top left (node-box.css
+ *  reads `--vb-box-scale`); its pointer is written in its own pixels, so it sits where `placeBeside` says on screen. */
 function place(card: HTMLElement, box: HTMLElement, opener: HTMLElement | null): void {
   const stage = card.closest<HTMLElement>('.vb-stage');
   if (!stage || !card.offsetWidth) return;
   const c = stageBoxOf(card, stage);
   const k = c.w / card.offsetWidth;
-  const at = placeBeside(nodeReach(card, stage), { w: box.offsetWidth, h: box.offsetHeight }, { w: stage.clientWidth, h: stage.clientHeight }, c);
+  const s = boxScale(k);
+  const at = placeBeside(nodeReach(card, stage), { w: box.offsetWidth * s, h: box.offsetHeight * s }, { w: stage.clientWidth, h: stage.clientHeight }, c);
   box.dataset.side = at.side;
   // left and top are from the node's padding edge: inside its border.
   box.style.left = `${(at.x - c.x) / k - card.clientLeft}px`;
   box.style.top = `${(at.y - c.y) / k - card.clientTop}px`;
-  box.style.setProperty('--vb-box-scale', String(1 / k));
-  box.style.setProperty('--vb-arrow', `${at.arrow}px`);
+  box.style.setProperty('--vb-box-scale', String(s / k));
+  box.style.setProperty('--vb-arrow', `${at.arrow / s}px`);
 }
 
 /** `back`: where focus goes on Esc (the opener, or the node when H opened it with no badge shown). */

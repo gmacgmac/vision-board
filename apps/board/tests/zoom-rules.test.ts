@@ -26,6 +26,12 @@ test('the conversation box: one size below 80%, with the board to 120%, one size
   assert.deepEqual([0.2, 0.79, 0.8, 1, 1.2, 1.5, 2.5].map(boxScale), [0.8, 0.8, 0.8, 1, 1.2, 1.2, 1.2]);
 });
 
+test('one row for every box beside a node: the conversation, history and proposal boxes (point 484, D-104)', () => {
+  const rows = ZOOM_RULES as Record<string, { rule: string; numbers: Record<string, number>; writes?: string }>;
+  assert.deepEqual(rows.boxes, { rule: 'clamped', numbers: { min: 0.8, max: 1.2 }, writes: '--vb-box-scale' });
+  assert.equal(Object.values(rows).filter((r) => r.writes === '--vb-box-scale').length, 1, 'no second box row');
+});
+
 test('every variable the table writes is read by the CSS, and no CSS sets it', () => {
   const css = styles.map((f) => readFileSync(f, 'utf8')).join('\n');
   for (const row of Object.values(ZOOM_RULES)) {

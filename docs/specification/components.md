@@ -509,8 +509,9 @@ record is `api.md` 58-61.
    counted on each member's notes mark, and is a tab of each member's box.
    Proven by `packages/ui/tests/conversation-box.test.ts`, `apps/board/tests/ask-now.test.ts` and
    `tests/pages/conversation-box.spec.ts`; the panel's agent hearing Ask now by `tests/pages/chat-ask.spec.ts`.
-10. **The box beside a node** (FE_03 run 2, the maintainer's rulings). The conversation, proposal and history boxes
-   share one place and one look. `board/cards/mark-place.ts` `placeBeside` places each: its top level with the node's
+10. **The box beside a node** (FE_03 run 2, the maintainer's rulings; one behaviour, FIX_05, point 484, D-104). The
+   conversation, proposal and history boxes share one place, one look and one zoom rule (`ZOOM_RULES.boxes`,
+   clamp(zoom, 0.8, 1.2); the history and proposal boxes, inside the node, are written at that scale over the zoom). `board/cards/mark-place.ts` `placeBeside` places each: its top level with the node's
    top, to its right when the stage has room, else below it, centred on the node's width, never over the node or the
    marks that hang off it (`nodeReach`); its pointer is fixed on the box (FIX_04, point 459, replacing FIX_02's aim at
    the node's centre): beside the node, on the box's left edge `BOX_ARROW` (22px) from its top, level with the node's
@@ -595,11 +596,18 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    reaches a bubble's end stops there and the next gesture pans. **Scroll first, then pan** (FIX_04 ruling 2, point
    460, settling tracker M4): the gesture is decided by its first wheel event that moves (a trackpad can open one with
    an event of no movement, which used to latch the whole gesture to a pan); `WHEEL_GAP` is 200 ms, so momentum that
-   follows the fingers stays in the gesture; a scroller at its end hands the rest of the gesture to no one
-   (`overscroll-behavior: contain` under `.vb-stage`, board.css); a wheel that counts in lines or pages pans (and
+   follows the fingers stays in the gesture. **Letting go of a scroll** (FIX_05 ruling 2, point 485): a flick's
+   momentum keeps sending events for one to two seconds; `createWheelLatch` reads it from the stream itself, a run of
+   `DECAY_RUN` events none faster than the last (a little wobble allowed), and a fresh push of the fingers breaks that
+   decay with a rise (`RISE` times the slowest of the run and `RISE_PX` more), which ends the gesture at once: at the
+   end it pans without waiting the tail out, while the tail itself stays the scroller's and moves nothing. A mouse's even
+   notches never rise out of a decay. A scroller at its end hands the rest of the gesture to no one and shows no elastic
+   bounce (`overscroll-behavior: none` under `.vb-stage`, board.css); a wheel that counts in lines or pages pans (and
    zooms) by 16px a line or a stage's height a page (`pointer.ts` `WHEEL_LINE`). Proven by
    `tests/pages/scroll-before-pan.spec.ts` (the conversation box's thread, the history list, a code block in a node,
-   trackpad-style and mouse-style, Ctrl + wheel zooms). Off, the wheel inside the note bubble
+   trackpad-style and mouse-style, Ctrl + wheel zooms, a momentum tail and a fresh push during it, no bounce) and
+   `wheel-latch.test.ts` (recorded-style streams: a flick with its tail, a push during the tail, a wobbling push, a
+   mouse). Off, the wheel inside the note bubble
    or any hover tip (`.vb-tip`) is always its own and never pans. Tests: `wheel-latch.test.ts`,
    `tests/pages/wheel-chaining.spec.ts`.
    The stage is `user-select: none` and a card's content `user-select: text`.
@@ -1800,8 +1808,9 @@ The source is one table: `packages/ui/src/zoom-rules.ts` `ZOOM_RULES` (`#ui`), o
 page writes for it. Read it there; this section says how it is held. `apps/board/src/board/canvas/viewport.ts` reads the
 numbers and writes `--vb-zoom` (the regions layer: a container's title line and rail, the hover halo, counter-scaled),
 `--vb-mark-grow` (the cards layer: the edge marks), `data-marks="small"` and `data-zoom="far"` (the stage); `mark-boxes.ts`
-and `notes.ts` write `--vb-box-scale` (the history and proposal box at 1/zoom, fixed; the conversation box at
-`boxScale(k)`, one size below 80%, with the board to 120%, one size above). The CSS reads only those variables; the
+and `notes.ts` write `--vb-box-scale` from the one `boxes` row (FIX_05, point 484, D-104): every box beside a node is
+drawn at `boxScale(k)`, one size below 80%, with the board to 120%, one size above (the history and proposal box, in the
+node, at `boxScale(k) / k`). The CSS reads only those variables; the
 selection bar's gap (`selection-bar-core.ts` `pillGap`), the zoom steps (+ and -, the wheel) and the fits read the table
 too. `apps/board/tests/zoom-rules.test.ts` holds the table equal to tokens.css (`--vb-mark-min`, `--vb-mark-h`) and to
 `viewport.ts`, checks every variable it names is read by the CSS and set by none, and fails on a zoom constant declared

@@ -146,7 +146,9 @@ test('the conversation box scales with the board to a readable floor, top aligne
   if (await talk.getAttribute('data-side') === 'right') near(b.y, n.y, 1.5);
 });
 
-test('the history box keeps one size at any zoom and stays open and attached while zooming', async ({ page, request }) => {
+// One box, one behaviour (FIX_05, point 484, D-104): the history and proposal boxes scale as the conversation box does,
+// clamp(zoom, 0.8, 1.2), and stay open and attached while zooming.
+test('the history box scales as the conversation box does and stays open and attached while zooming', async ({ page, request }) => {
   const d = await board(page, request);
   const dec = d.n[2]!;
   await zoomTo(page, 1);
@@ -154,17 +156,17 @@ test('the history box keeps one size at any zoom and stays open and attached whi
   const history = card(page, dec).locator('.vb-card-pop.vb-node-box[data-pop="history"]');
   await expect(history).toHaveAttribute('data-open', '');
   const first = await box(history);
-  for (const k of [0.4, 2.5, 0.2, 1]) {
+  for (const k of [0.4, 2.5, 0.2, 0.9, 1]) {
     await zoomTo(page, k);
     await expect(history).toHaveAttribute('data-open', '');
     const [b, n] = [await box(history), await box(card(page, dec))];
-    near(b.width, first.width, 1.5);
-    near(b.height, first.height, 1.5);
+    near(b.width, first.width * boxScale(k), 1.5);
+    near(b.height, first.height * boxScale(k), 1.5);
     if (await history.getAttribute('data-side') === 'right') { await beside(page, b, n); expect(b.x).toBeGreaterThan(n.x + n.width); }
   }
 });
 
-test('the proposal box keeps one size at any zoom', async ({ page, request }) => {
+test('the proposal box scales as the conversation box does', async ({ page, request }) => {
   const d = await board(page, request);
   const f = d.n[0]!;
   await write(request, d, [{ type: 'propose', n: f, ver: 1, action: 'check', reason: 'Seen on two runs', source: 'Ops log' }]);
@@ -173,12 +175,12 @@ test('the proposal box keeps one size at any zoom', async ({ page, request }) =>
   const proposal = card(page, f).locator('.vb-card-pop.vb-node-box[data-pop="proposal"]');
   await expect(proposal).toHaveAttribute('data-open', '');
   const first = await box(proposal);
-  for (const k of [0.4, 2.5]) {
+  for (const k of [0.4, 2.5, 1.1]) {
     await zoomTo(page, k);
     await expect(proposal).toHaveAttribute('data-open', '');
     const b = await box(proposal);
-    near(b.width, first.width, 1.5);
-    near(b.height, first.height, 1.5);
+    near(b.width, first.width * boxScale(k), 1.5);
+    near(b.height, first.height * boxScale(k), 1.5);
   }
 });
 
