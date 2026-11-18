@@ -367,6 +367,7 @@ type ViewNode = {
   app?: CommonAppRef;
   icon?: CommonIconName;
   tone?: CommonTone;
+  timeline?: string;
 };
 type CommonKind = "question" | "finding" | "decision" | "risk" | "action" | "topic" | "note" | "app";
 type CommonNodeBody = string;
@@ -434,7 +435,7 @@ type BoardStored = {
   key?: CommonKey;
 };
 type CommonStamp = {
-  v: 20;
+  v: 21;
   seq: number;
   at: string;
   by: "person" | "agent";
@@ -475,7 +476,10 @@ type CommonNodeVersion = {
   agent?: string;
   node: NodeBody;
 };
-type NodeBody = {
+type NodeBody = NodeFields & {
+  timeline?: string;
+};
+type NodeFields = {
   region: string;
   kind: CommonKind;
   title: CommonTitle;
@@ -558,12 +562,22 @@ type ShowLayoutResponse = {
   links: number;
   crossing: number;
   empty: number;
+  timeline?: ShowLayoutResponseTimeline;
 };
 type ShowLayoutResponseCell = {
   n: number;
   lane?: CommonLane;
   column: number;
   row: number;
+};
+type ShowLayoutResponseTimeline = {
+  direction: "across" | "down";
+  cards: ShowLayoutResponseDated[];
+};
+type ShowLayoutResponseDated = {
+  n: number;
+  at: string;
+  side: "above" | "below" | "beside";
 };
 type ListOpenResponse = {
   head: number;
@@ -841,10 +855,17 @@ type NodeSent = {
     after: CommonNodeRef;
     before: CommonNodeRef;
   };
-} & NodeCore & NodeNoItem & NodeAppRule;
+} & NodeSentCore & NodeNoItem & NodeAppRule;
 type CommonNodeRef = number | {
   key: CommonKey;
 };
+type NodeSentCore = {
+  node: NodeSentBody;
+};
+type NodeSentBody = NodeFields & {
+  timeline?: CommonTimelineSent;
+};
+type CommonTimelineSent = string | number;
 type NodeNoItem = {
   node?: {
     item?: unknown;

@@ -41,8 +41,8 @@ tracker: cortex-tasks/tracker.md#N53
 
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
-| 1 | T_01 | 1 | strong | no | Principal API engineer — a value has one spelling in the ledger; a model's habit is normalised at the edge and never stored, and a refusal says exactly what would have been accepted. | [Contract first](./T_01_contract.md) | Pending | |
-| 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Pending | |
+| 1 | T_01 | 1 | strong | no | Principal API engineer — a value has one spelling in the ledger; a model's habit is normalised at the edge and never stored, and a refusal says exactly what would have been accepted. | [Contract first](./T_01_contract.md) | Completed | Contract, write edge, format 21 landed; board.js budget +349 gzip (not raised); `npm run map` needed |
+| 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Completed | 8 pages + PNGs, README; 6 open choices for the design gate |
 | 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Pending | |
 | 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Pending | |
 | 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Pending | |
@@ -137,12 +137,25 @@ Waves 3 to 5 hold one task each; a task's *Files to modify* is its ownership. No
 ## Implementation Notes
 
 ### T_01: Contract first
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-18 21:02)  
+_Notes:_ `#format` `timeline.ts` is the one grammar (forms, normaliser, order via `sortByTimeline`, precision, year,
+`timelineProblems`); `geometry.ts` `TimelineDrawing`/`TimelineDot`/`TimelineSide`; flag `timeline` off. The node
+schema is split so reads stay strict and the sent item is lenient: `fields` + `body` (strict, stored and reads) +
+`sentBody`/`sentCore` (lenient `timelineSent`, `sent` only). Generated `NodeBody.timeline` is `string`; the write item's
+is `string | number`. `write-board.ts` `storedTimeline` normalises before the schema and the replay check (the only
+agent node-line path). `show_layout` `timeline` is in the schema, left out until BE_01 fills it with `sortByTimeline`.
+Format 21 = `restamp(20)`; fixtures restamped through the chain (only `v` changed). Field description is in
+`node.schema.json` `sentBody`, not `openapi.json`. Budget: plugin `view/board.js` 195,849 gzip vs 195,500 (not
+raised). `npm run map` needed. Pre-existing: `schema.ts` words a failed `tone`/`icon` anyOf as "must be a node number".
 
 ### DESIGN_01: Pages in line with the rulings
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-18 20:57)  
+_Notes:_ `design/mockups/timeline/`: `default-timeline-*`, `command-lens-timeline-*` (light new), `default-vertical-*`,
+`command-lens-vertical-*` (redrawn per 569C), PNGs, `timeline.css`, `README.md` (rulings by decision number, APCA
+tables, 6 open choices). Values for later tasks: node widths are tiers (s 280, m 360); step per call 6 with
+`SIDE_GAP` 28, `MIN_STEP` 120 (174 and 154 drawn); `STEM` 30 across, 46 run down; `TIMELINE_STEM_AT` 37 (the default
+skin's date line); other nodes `REGION_GAP` 56 below the line, run down `COL_GAP` 72 right. Every date colour passes
+Lc 45 (lowest dark topic 48.0, 46.4 on the default skin's tinted top). Generator in `temp/design-01-timeline/`.
 
 ### BE_01: The timeline in the layout
 _Status:_ Pending  

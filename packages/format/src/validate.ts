@@ -3,6 +3,7 @@ import type { View } from './view.ts';
 import { NODE_SIZES } from './ledger.ts';
 import { appNodeRules, appRefProblems } from './app-shape.ts';
 import { directionProblems, iconProblems, toneProblems } from './view-shape.ts';
+import { timelineProblems } from './timeline.ts';
 import * as formatViewWords from './words/format-view.ts';
 import * as formatCommonWords from './words/format-common.ts';
 import { isRecord } from './records.ts';
@@ -54,6 +55,7 @@ export function validateView(input: unknown): string[] {
     if (n.app !== undefined) appRefProblems(n.app, `${at}.app`, p);
     if (n.icon !== undefined) iconProblems(n.icon, `${at}.icon`, p);
     if (n.tone !== undefined) toneProblems(n.tone, `${at}.tone`, p);
+    if (n.timeline !== undefined) timelineProblems(n.timeline, `${at}.timeline`, p);
     appNodeRules(n, at, p);
     if (n.n !== undefined) {
       if (!Number.isInteger(n.n) || (n.n as number) < 1) p.push(`${at}.n: integer >= 1`);

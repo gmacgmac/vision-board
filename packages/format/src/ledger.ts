@@ -16,8 +16,9 @@ import * as formatLedgerWords from './words/format-ledger.ts';
  * refused with words that say so, and one in a newer format leaves the ledger read-only (D-103 4). What each format
  * added: api.md's "Ledger vN" points; v20 renamed the person's `flag` and `unflag` to `bookmark` and `unbookmark` and
  * added a board's skin, a node's icon and tone, the `icon` line, the person's `ask` and a flow's
- * `direction` (api.md 182-189). */
-export const LEDGER_FORMAT = 20;
+ * `direction` (api.md 182-189); v21 = the node's `timeline` key; the step restamps, no line's meaning changes (api.md
+ * 190, D-105). */
+export const LEDGER_FORMAT = 21;
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
@@ -142,6 +143,8 @@ export interface NodeBody {
   icon?: string;
   /** A palette name or a whole OKLCH hue angle (api.md 184). */
   tone?: Tone;
+  /** Its date in one of the four stored forms (api.md 190, `timeline.ts`); never on an app card. */
+  timeline?: string;
 }
 
 /** Handover written when an item is parked (D-020). */

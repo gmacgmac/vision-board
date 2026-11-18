@@ -68,7 +68,19 @@ test('step 19: flag becomes bookmark and unflag unbookmark, keys in their places
   assert.equal(step(19).to, 20);
   // A v12 flag (the format that added it) comes up the whole chain as a bookmark, and reads.
   const old = upgradeLine({ ...flag, v: 12 });
-  assert.deepEqual([(old as Line).v, (old as Line).action, eventProblems(old)], [20, 'bookmark', []]);
+  assert.deepEqual([(old as Line).v, (old as Line).action, eventProblems(old)], [LEDGER_FORMAT, 'bookmark', []]);
+});
+
+test('step 20 restamps only (D-105, api.md 190): a node line with every field changes `v` alone, keys in their places', () => {
+  const node = {
+    ...stamp(20, 9), by: 'agent', agent: 'a-abcdefgh', type: 'node', board: 'b', n: 3, ver: 2, key: 'k-3',
+    node: { region: 'r', kind: 'decision', title: 'T', body: 'B', lane: 'L', tags: ['x'], emphasis: true, size: 'l', icon: 'encoder', tone: 'teal' },
+  };
+  const up = step(20).up(node);
+  assert.deepEqual(up, { ...node, v: 21 });
+  assert.deepEqual(Object.keys(up), Object.keys(node));
+  assert.equal(step(20).to, 21);
+  assert.deepEqual(eventProblems(upgradeLine(node)), [], 'and reads at the current format');
 });
 
 test('steps 3 to 9 and 12 to 18 restamp only', () => {

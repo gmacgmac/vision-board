@@ -1,10 +1,32 @@
 // Box geometry, once (D-016: format is the layer both `layout` and `ui` may use). A box is where
 // something sits, in whatever pixels the caller works in; these answer where boxes meet, what
 // surrounds them and how far a value may go. Pure.
+import type { Direction } from './view.ts';
 
 export interface Size { w: number; h: number }
 export interface Point { x: number; y: number }
 export interface Box extends Point, Size {}
+
+/** Where a dated node sits beside its container's timeline (D-105 3): above or below a line that runs across, beside
+ * (to its right) a line that runs down. */
+export type TimelineSide = 'above' | 'below' | 'beside';
+
+/** One dated node on the line: its dot, its side, and the stem from the dot to the node. */
+export interface TimelineDot { id: string; at: Point; side: TimelineSide; stem: { from: Point; to: Point } }
+
+/** A container's timeline as drawn (D-105): region-local in a RegionPiece, board coordinates in a RegionBox. The one
+ * shape the layout returns and the page draws. */
+export interface TimelineDrawing {
+  direction: Direction;
+  /** The line; its arrow is at `to`. */
+  line: { from: Point; to: Point };
+  /** One per dated node, in line order. */
+  dots: TimelineDot[];
+  /** The year at the line's start, and at each turn of the year between two dots. */
+  years: { year: string; at: Point }[];
+  /** Behind each run of consecutive dots whose dates are exactly equal. */
+  bands: { from: Point; to: Point }[];
+}
 
 /** `v` within [lo, hi]; `lo` when the range is empty (a box bigger than its stage). */
 export const clamp = (v: number, lo: number, hi: number): number => Math.min(Math.max(v, lo), Math.max(lo, hi));

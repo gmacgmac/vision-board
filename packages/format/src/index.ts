@@ -18,6 +18,7 @@ export * from './apps.ts';
 export * from './images.ts';
 export * from './data-folder.ts';
 export * from './geometry.ts';
+export * from './timeline.ts';
 export * from './clip.ts';
 export * from './constants.ts';
 export * from './icon-file.ts';

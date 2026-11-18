@@ -150,8 +150,8 @@ precision field and a grip), these decisions supersede it.
 - **Skill**: one source (`skills/vision-board/source/core.md`, `differences.md`, `references/*.md`), built by
   `npm run build:skill` (standalone) and `npm run build:plugin` (the plugin's, within `SKILL_BYTES`, 8 KiB). Evals:
   `tests/evals/bot/` (`SCENARIOS`, `STANDALONE`, `--dry`, `--model haiku`).
-- **Budgets** (temporary, node-overhaul House Rules): the page's start 201.3 KB gzip (`scripts/verify-weight.mjs`
-  `PAGE`), the plugin's `view/board.js` 195,500 and `view/board.css` 24,950 gzip (`apps/board/tests/plugin-build.test.ts`
+- **Budgets** (temporary, node-overhaul House Rules): the page's start 201.3 KB gzip (T_01 raised it to 201.6, measured 201.5) (`scripts/verify-weight.mjs`
+  `PAGE`), the plugin's `view/board.js` 195,500 (T_01 raised it to 195,900, measured 195,849) and `view/board.css` 24,950 gzip (`apps/board/tests/plugin-build.test.ts`
   `BUDGET`). Headroom is a few dozen bytes, so this set raises them (§ House Rules).
 
 ---

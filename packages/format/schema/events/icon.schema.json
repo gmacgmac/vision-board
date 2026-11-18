@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/21/events/icon.schema.json",
   "title": "Icon event",
   "description": "Which drawing a name of the project's icon library means: the SHA-256 of its file in `.visionboard/icons/`. Written by an agent (add_icon, or the server when a node first names a library icon) or by the person (accepting a changed drawing). It names no board.",
   "$comment": "Was: api.md 185, D-100 3",
@@ -13,11 +13,11 @@
       ],
       "properties": {
         "name": {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName",
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/libraryIconName",
           "description": "The icon's name: `x-`, then what it shows."
         },
         "hash": {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/iconHash",
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/iconHash",
           "description": "The SHA-256 of the icon's file, in lowercase hex."
         }
       }
@@ -33,12 +33,12 @@
           "const": "icon"
         },
         "key": {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/key"
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"
         }
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/21/events/icon.schema.json#/$defs/core"
         }
       ],
       "unevaluatedProperties": false
@@ -55,13 +55,13 @@
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/stamp"
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/stamp"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/events/icon.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/21/events/icon.schema.json#/$defs/core"
         },
         {
           "type": "object",
@@ -74,7 +74,7 @@
               "description": "Who wrote the line: `agent`, or `person` (accepting a changed drawing)."
             },
             "key": {
-              "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/key"
+              "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"
             }
           }
         }

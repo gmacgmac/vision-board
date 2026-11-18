@@ -122,6 +122,9 @@ export interface ViewNode {
   icon?: string;
   /** Its tone (api.md 184): a name from `TONES`, or a whole OKLCH hue angle from 0 to 359. */
   tone?: Tone;
+  /** Its date (api.md 190, D-105), in one of the four stored forms (`timeline.ts` `isTimeline`): the nodes of a
+   * container that carry one share its timeline. Never on an app card. */
+  timeline?: string;
 }
 
 export interface Link {

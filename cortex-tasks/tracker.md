@@ -169,6 +169,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | M81 | Seen on a read-only board | **Problem:** a read-only board can't record what the person looked at (DO-05). **Solution:** left for later. | Node Overhaul close (T_04, VERIFY_01, FIX_01-05) |
 | M82 | Which layout modes to keep | **Problem:** U16's "fewer layouts" was left open: one control now offers all six. **Solution:** the maintainer's call once used. | Node Overhaul close (T_04, VERIFY_01, FIX_01-05) |
 | M83 | Fonts in the plugin | **Problem:** nclite's stylesheet check refuses `@font-face`, so the plugin brings no font (option C). **Solution:** option A, nclite lets a plugin's sheet name a woff2 in its own folder (an nclite change). | Node Overhaul close (T_04, VERIFY_01, FIX_01-05) |
+| M84 | A refusal worded as a card reference | **Problem:** `apps/board/server/schema.ts` `plain` words every failed `anyOf` as a card reference, so `write_board` refuses `tone: "pink"` or `icon: "rocket"` with "must be a node number or { key }". **Solution:** word an `anyOf` failure by the branch the value was closest to; a failing test first. | Timeline T_01 (found, not changed) |
 
 ## LONG TERM
 
