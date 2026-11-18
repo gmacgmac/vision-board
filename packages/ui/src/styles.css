@@ -20,6 +20,7 @@
 @import './node/node-plate.css';
 @import './app-frame/app-frame.css';
 @import './markdown/markdown.css';
+@import './timeline/timeline.css';
 @import './image-view/image-view.css';
 @import './region/region.css';
 @import './region/region-modes.css';

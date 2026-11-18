@@ -1,6 +1,7 @@
 // The gallery page (gallery.html): every pattern in every state, drawn from the fixture ledger.
 // Sections come from the patterns' own pattern.json files (`PATTERNS`, the same list the page
 // reads): a pattern added without a gallery entry fails the first test.
+import { flagOn } from '#format';
 import { PATTERNS } from '#ui';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -16,10 +17,13 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
 });
 
+// A pattern behind a flag that is off by default (its pattern.json `flag`, e.g. the timeline) has no section here.
+const SHOWN = PATTERNS.filter((p) => !p.flag || flagOn(p.flag));
+
 test('every pattern has a section with samples of its own element', async ({ page }) => {
-  expect(PATTERNS.length).toBeGreaterThan(0);
-  await expect(page.locator('section[data-pattern]')).toHaveCount(PATTERNS.length);
-  for (const p of PATTERNS) {
+  expect(SHOWN.length).toBeGreaterThan(0);
+  await expect(page.locator('section[data-pattern]')).toHaveCount(SHOWN.length);
+  for (const p of SHOWN) {
     const section = page.locator(`section[data-pattern="${p.name}"]`);
     await expect(section.getByRole('heading', { level: 2, name: p.title })).toBeVisible();
     const drawn = p.tag ?? p.selector!;

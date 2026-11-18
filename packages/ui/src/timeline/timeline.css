@@ -1,0 +1,26 @@
+/* Timeline pattern styles (packages/ui/src/timeline, D-105; design/mockups/timeline, PLAN § Design review 588-593): the
+   SVG timelineMarkup draws, in the world, so it scales with the board. Tokens only. The line, its stems and its arrow
+   in --vb-timeline-line (the container frame's colour at rest; decoration, Lc 30); a band behind consecutive equal
+   dates, the line's colour mixed into the canvas; the year on the line in the label face and the muted ink, in a gap
+   cut from the line by a halo of the canvas; a dot in the node's colour, its kind's (--vb-kind, set in place by
+   timeline-apply.ts) or its tone's line, ringed in the canvas so the line breaks round it. */
+.vb-timeline { pointer-events: none; }
+.vb-timeline :is(.vb-timeline-line, .vb-timeline-stem, .vb-timeline-band) { fill: none; stroke: var(--vb-timeline-line); }
+.vb-timeline .vb-timeline-line { stroke-width: var(--vb-timeline-w); }
+.vb-timeline .vb-timeline-stem { stroke-width: var(--vb-timeline-stem-w); }
+.vb-timeline .vb-timeline-arrow { fill: var(--vb-timeline-line); stroke: none; }
+.vb-timeline .vb-timeline-band {
+  stroke: color-mix(in srgb, var(--vb-timeline-line) var(--vb-timeline-band-mix), var(--vb-surface-canvas));
+  stroke-width: var(--vb-timeline-band); stroke-linecap: round;
+}
+.vb-timeline .vb-timeline-year {
+  fill: var(--vb-ink-subtle); font: 700 var(--vb-timeline-year)/1 var(--vb-font-label); letter-spacing: 0.14em;
+  dominant-baseline: central; paint-order: stroke; stroke: var(--vb-surface-canvas);
+  stroke-width: calc(var(--vb-space-2) * 2); stroke-linejoin: round;
+}
+.vb-timeline .vb-timeline-dot {
+  r: calc(var(--vb-timeline-dot) / 2);
+  fill: var(--vb-kind, var(--vb-timeline-line)); paint-order: stroke; stroke: var(--vb-surface-canvas);
+  stroke-width: calc(var(--vb-timeline-ring) * 2);
+}
+.vb-timeline .vb-timeline-dot[data-vb-tone] { fill: var(--vb-tone-line); }

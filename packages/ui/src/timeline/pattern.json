@@ -1,0 +1,26 @@
+{
+  "name": "timeline",
+  "title": "Timeline",
+  "entry": "timelineMarkup(drawing, look)",
+  "selector": ".vb-timeline",
+  "flag": "timeline",
+  "description": "A container's timeline (D-105): the dated nodes of a container share one line across its top (or down it, run down), each on its own dot joined by a stem, alternating above and below (left and right, the first on the left), in date order and not to scale; the year on the line where it starts and where it turns; a band behind consecutive equal dates; an arrow for the direction of time. SVG markup only, from the geometry the layout returns (#format TimelineDrawing); the page draws it in the wires layer, behind frames and cards, so it scales with the board (ZOOM_RULES.world). The dates themselves are on the nodes (the node pattern's dated node).",
+  "files": {
+    "template": "timeline-template.ts (timelineMarkup, TimelineLook, TIMELINE_ARROW: the line and its arrow as paths, no marker ids, so it never depends on the wires layer's defs; pure)",
+    "apply": "timeline-apply.ts (applyTimelineLook: each dot's kind and tone set in place through CSSOM, with node-edges-apply.ts applyTone; browser only)",
+    "styles": "timeline.css (tokens only: --vb-timeline-line, --vb-timeline-w, --vb-timeline-stem-w, --vb-timeline-dot, --vb-timeline-ring, --vb-timeline-band, --vb-timeline-band-mix, --vb-timeline-year)"
+  },
+  "states": ["across", "down", "dot per kind", "tone dot", "stem above", "stem below", "stem left", "stem right", "year at the start", "year at a turn", "band", "arrow"],
+  "classes": {
+    "vb-timeline": "g aria-hidden=true data-direction=across|down: one container's timeline",
+    "vb-timeline-band": "path: behind a run of consecutive dots whose dates are exactly equal; the line's colour mixed into the canvas, round ends",
+    "vb-timeline-line": "path: the line, stopping where its arrowhead starts; the container frame's colour at rest (decoration, Lc 30)",
+    "vb-timeline-arrow": "path: the arrowhead, its tip at the line's end",
+    "vb-timeline-stem": "path: from a dot to the middle of its node's facing edge",
+    "vb-timeline-year": "text text-anchor=start (across, at the line's start) or middle: the year, in the label face and the muted ink, in a gap the canvas cuts from the line",
+    "vb-timeline-dot": "circle data-node data-side data-kind data-tone: a dot in its node's colour (the kind's, or the tone's line), ringed in the canvas"
+  },
+  "whenToUse": "A container whose nodes carry a timeline date: the page draws one per container from the layout's geometry.",
+  "whenNotToUse": "Links between cards (the wires), or a date written in a card's text: only the key places a node on the line.",
+  "accessibility": "Decoration only, hidden from assistive technology: each dated node says its date in full in its own header (a <time> with the full form for screen readers), and the board's reading order is the cards'. The line, its stems and dots pass the decoration tier (Lc 30) on the canvas in both skins, light and dark; the year is the muted ink (the reading tier)."
+}

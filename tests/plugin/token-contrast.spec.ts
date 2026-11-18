@@ -13,6 +13,11 @@ const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'ap
 const INKS = ['var(--vb-ink-strong)', 'var(--vb-ink)', 'var(--vb-ink-subtle)'];
 const GROUNDS = ['var(--vb-surface-canvas)', 'var(--vb-surface-card)', 'var(--vb-surface-sunken)', 'var(--vb-surface-deep)'];
 
+/** A dated node's date in a kind's colour (node-edges.css, D-105): in dark at no less than --vb-node-date-l-dark. */
+const dated = (k: string) => `light-dark(${k}, oklch(from ${k} max(l, var(--vb-node-date-l-dark)) c h))`;
+/** The node's surfaces its date sits on: the card, a topic's sunken one, each with its tinted top (the worst place). */
+const DATE_GROUNDS = ['var(--vb-surface-card)', 'var(--vb-surface-sunken)'].flatMap((g) => [g, (k: string) => `color-mix(in srgb, ${k} var(--vb-node-tint), ${g})`]);
+
 /** A colour as a dark plate draws a mark in it (node-plate.css): its hue at no less than the plate's lightness. */
 const lift = (c: string) => `oklch(from ${c} max(l, var(--vb-plate-mark-l)) min(c, var(--vb-plate-mark-c)) h)`;
 
@@ -38,6 +43,11 @@ const PAIRS: [string, string, number][] = [
   ['var(--vb-glass-ink)', 'var(--vb-glass)', 60], ['var(--vb-glass-ink)', 'var(--vb-glass-hover)', 60], ['var(--vb-glass-muted)', 'var(--vb-glass)', 60],
   ['var(--vb-glass-tick)', 'var(--vb-glass)', 45], ['var(--vb-glass-cross)', 'var(--vb-glass)', 45],
   ['var(--vb-state-drop)', 'var(--vb-surface-card)', 45],
+  // The timeline (D-105; FE_01): a dated node's date (and the kind's word beside it) in each kind's colour on each surface
+  // it sits on, tinted top included (labels, 45); the line, its stems and arrow, and a kind's dot on the board (30).
+  ...KINDS.flatMap((k) => DATE_GROUNDS.map((g) => [dated(k), typeof g === 'string' ? g : g(k), 45] as [string, string, number])),
+  ['var(--vb-timeline-line)', 'var(--vb-surface-canvas)', 30],
+  ...KINDS.map((k) => [k, 'var(--vb-surface-canvas)', 30] as [string, string, number]),
 ];
 
 /** Put in the page once: `vbPx(el, css)`, the pixel a colour expression draws as on a probe in `el`; `vbLc(text, ground)`,
@@ -133,6 +143,8 @@ for (const skin of SKINS) {
             fixed.kinds.forEach((kind, i) => say(`kind ${i} on the body`, lc(kind, ground), 45));
           }
           say('the icon on its tile', lc(tint.ink, tint.tile), 45);
+          // A toned dated node's date, the tone's ink, on the tone's body (D-105; FE_01), see-through too (the loop above).
+          for (const ground of [tint.body, tint.body.map((v, i) => v * fill + fixed.canvas[i]! * (1 - fill))]) say('the date on the body', lc(tint.ink, ground), 45);
           for (const [g, ground] of [['card', fixed.card], ['canvas', fixed.canvas], ['body', tint.body]] as const) say(`the line on the ${g}`, lc(tint.line, ground), 30);
         }
         delete el.dataset.vbTone;
