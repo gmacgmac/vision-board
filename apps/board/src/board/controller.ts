@@ -201,7 +201,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; }, ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
     markdown, discard: () => ask(...DISCARD_ASK), paused: lock.paused, board: () => S.id, unsaved: (on) => status.set({ unsaved: on }), // a host's leave guard (M11)
     // The conversation box and Ask now (nodeEdges, FE_03, controller/ask-now.ts).
-    ...(edgesOn && { box: createAskNow({ state: () => live.state, board: () => S.id, oneAgent: () => live.oneAgent, context: () => askContextOf(b.store), attempt, seen: (m) => sender.seen(m),
+    ...(edgesOn && { box: createAskNow({ state: () => live.state, board: () => S.id, oneAgent: () => live.oneAgent, context: () => askContextOf(b.store), store: b.store, attempt, seen: (m) => sender.seen(m),
       node: (id) => { const n = nodeOf(id)?.n; const ver = S.data?.versions[id]; return n === undefined || ver === undefined ? undefined : { n, ver }; },
       paused: () => (versions.state ? READ_ONLY : live.readOnly ? MARK_MOMENT_WORDS.ledgerIsReadOnly : lock.paused()), working: () => chatStatus.now !== 'idle' }) }),
   });

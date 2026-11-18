@@ -136,7 +136,14 @@ export interface BubbleInput {
   tabs?: readonly BubbleTab[];
   blocked?: string | null;
   waiting?: boolean;
+  /** In `conversation` mode: the active mode, what Enter does (FIX_03 ruling 3); `save` (Add note) when left out. */
+  active?: BoxAct;
 }
+
+/** The conversation box's two modes (FIX_03 ruling 3), named by the choice each sends: Add note and Ask now. */
+export type BoxAct = 'save' | 'ask';
+/** What the field and the buttons say in one mode: the placeholder (also the field's name) and each button's tooltip. */
+export interface BoxModeWords { placeholder: string; addTip: string; askTip: string }
 
 /** A tab of the conversation box (the design review of DESIGN_01): this node first, then one per note on several nodes
  *  it is in. `key` is what the `tab` choice names; `on` the tab shown. */
@@ -150,6 +157,10 @@ export interface BoxView {
   ask: string;
   askTip: string;
   addTip: string;
+  /** The active mode: its button is the primary one and pressed (aria-pressed), and Enter does it. */
+  active: BoxAct;
+  /** What each mode says, so the element can turn to the other at once when its button is pressed. */
+  modes: Readonly<Record<BoxAct, BoxModeWords>>;
   blocked?: string;
   waiting?: string;
   /** "not sent yet · goes with Send", on a note that waits for the board's Send. */
@@ -213,13 +224,19 @@ function threadOf(mode: BubbleMode, replies: number): string {
 function boxView(b: BubbleInput, heading: string): BubbleView {
   const about = b.numbers ? (b.number === undefined && b.numbers.length > 2 ? noteBubbleWords.nCards(b.numbers.length) : noteBubbleWords.both(b.numbers)) : b.number;
   const blocked = b.blocked ?? undefined;
+  const active = b.active ?? 'save';
+  const words = (act: BoxAct): BoxModeWords => ({
+    placeholder: act === 'ask' ? noteBubbleWords.askAbout(about) : noteBubbleWords.noteAbout(about),
+    addTip: noteBubbleWords.addNoteTip(act === 'save'), askTip: blocked ?? noteBubbleWords.askNowTip(act === 'ask'),
+  });
+  const modes = { save: words('save'), ask: words('ask') };
   return {
-    mode: b.mode, heading, placeholder: noteBubbleWords.replyOrAskAbout(about), hint: '', primary: noteBubbleWords.addNote,
+    mode: b.mode, heading, placeholder: modes[active].placeholder, hint: '', primary: noteBubbleWords.addNote,
     cancel: noteBubbleWords.closeConversation, remove: false, text: b.text ?? '', replies: [], thread: noteBubbleWords.notesAndReplies,
     entries: b.entries ?? [],
     box: {
-      title: b.title ?? '', tabs: b.tabs ?? [], ask: noteBubbleWords.askNow, askTip: blocked ?? noteBubbleWords.askNowTip,
-      addTip: noteBubbleWords.addNoteTip, queued: noteBubbleWords.notSentYet,
+      title: b.title ?? '', tabs: b.tabs ?? [], ask: noteBubbleWords.askNow, askTip: modes[active].askTip,
+      addTip: modes[active].addTip, active, modes, queued: noteBubbleWords.notSentYet,
       ...(blocked && { blocked }), ...(b.waiting && { waiting: noteBubbleWords.waitingForTheAgent }),
     },
   };
@@ -262,12 +279,13 @@ export function cancelIntent(mode: BubbleMode, dirty: boolean): 'close' | 'ask' 
   return !readOnlyMode(mode) && dirty ? 'ask' : 'close';
 }
 
-/** What a key in the field does: `save` (Enter: Add note, or Save), `ask` (Cmd or Ctrl Enter, in the conversation
- *  box only: Ask now), else null (Shift Enter is a new line; a key while an IME composes is its own). Enter alone never
- *  sends to the agent. */
-export function fieldKey(e: Pick<KeyboardEvent, 'key' | 'shiftKey' | 'metaKey' | 'ctrlKey' | 'isComposing'>, mode: BubbleMode): 'save' | 'ask' | null {
+/** What a key in the field does: Enter does the box's active mode (`active`, FIX_03 ruling 3; Add note unless Ask now
+ *  was chosen), or Save outside the box; Cmd or Ctrl Enter is Ask now in the box, whatever the mode; else null (Shift
+ *  Enter is a new line; a key while an IME composes is its own). Outside the box nothing asks. */
+export function fieldKey(e: Pick<KeyboardEvent, 'key' | 'shiftKey' | 'metaKey' | 'ctrlKey' | 'isComposing'>, mode: BubbleMode, active: BoxAct = 'save'): BoxAct | null {
   if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return null;
-  return mode === 'conversation' && (e.metaKey || e.ctrlKey) ? 'ask' : 'save';
+  if (mode !== 'conversation') return 'save';
+  return e.metaKey || e.ctrlKey ? 'ask' : active;
 }
 
 /** `vb-note-discard` (bubbles): Esc or Cancel with changed text. The bubble stays open; the page

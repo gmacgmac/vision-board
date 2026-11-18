@@ -526,9 +526,14 @@ record is `api.md` 58-61.
    is in a note on several nodes (this node first, then one per group, "With 28", `boxView`); the thread oldest first,
    a note not yet sent dashed and saying "not sent yet · goes with Send", and "Waiting for the agent" while the
    latest note went and no reply came after it; a field of one line that grows to three, then scrolls; Ask now and
-   Add note sharing the width, their keys in their tooltips. **Add note** (Enter) writes the note for the board's Send
+   Add note sharing the width, their keys in their tooltips. They are two modes (FIX_03 ruling 3): the active one is
+   the primary (pink) button and `aria-pressed`, the field's placeholder and name say it ("Add a note about 4", "Ask
+   the agent about 4 now"), and Enter does it (`fieldKey`); a press of either button does it and makes it the mode at
+   once (`vb-note-bubble` `mode`, `NoteEventDetail.active`); the mode is kept per board for the tab, as its zoom is
+   (`controller/ask-now.ts`, `view.box-mode:<board>`), Add note until Ask now is pressed. Cmd or Ctrl Enter is always
+   Ask now and leaves the mode. **Add note** writes the note for the board's Send
    and keeps the box open; a node holds one note not yet sent (api.md 59), so later words join it as a `note-edit`.
-   **Ask now** (Cmd or Ctrl Enter, `fieldKey`; Enter alone never asks) writes the words to that note the same way,
+   **Ask now** writes the words to that note the same way,
    then one `ask` naming it with the page's `askContext` (`kept-view.ts` `askContextOf`, default `board`), apart from
    Send (api.md 188); the board's other answers keep waiting. While no message can go (a past version, a read-only
    ledger, a locked board, the chat's agent mid-turn: `controller/ask-now.ts`) Ask now is `aria-disabled`, its title
@@ -648,6 +653,12 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    ruling 5, by eye; FE_01's full step was 50%): deeper in light, lighter in dark, the same for every
    kind, read by the border, the half-pixel ring, the top hairline and the glow
    (`cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md`).
+   **Focus given back** (FIX_03 ruling 1, point 442): when Esc or a click closes a menu, a box, the image viewer, the
+   conversation box or an app's stage, focus returns to what opened it through one helper, `#ui` `returnFocus`
+   (`base/focus-return.ts`; `bindFocusMoves`, bound by `bindPointerFocus`). The ring shows there only if the person
+   was moving by the keyboard (Tab, or the arrows, Home, End, J and K outside a text field); after a pointer press the
+   element carries `data-pointer-focus` until focus leaves it, and `focusVisible: false` is passed where the browser
+   takes it. Proven by `tests/pages/focus-return.spec.ts` and `app-window.spec.ts` ("Open by a click, then Esc").
 
 **Frames and hover boxes (review polish FE_01).** A container's frame and every hover box's border
 (`.vb-tip`) read one token, `--vb-line-contrast`, the Lines scale's next step above `--vb-line-strong`

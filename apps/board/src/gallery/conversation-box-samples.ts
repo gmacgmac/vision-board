@@ -1,8 +1,8 @@
 // Gallery entry for the conversation box (nodeEdges flag, FE_03): every state of `conversation` mode beside a real card,
 // from the fixture's notes, parking and groups boards, through the board's own `boxView` (notes/note-box.ts), placed
 // with `placeBeside` as the board places every box beside a node. Empty (the field only), a note waiting for Send,
-// asking, sent and waiting for the agent, a reply arrived, failed (the words stay in the field), Ask now disabled with
-// its reason, and the tabs of a node in notes on several nodes. The box's template loads on first use, as on the board.
+// asking, sent and waiting for the agent, a reply arrived, failed (the words stay in the field), Ask now as the mode
+// (FIX_03), Ask now disabled with its reason, and the tabs of a node in notes on several nodes. The box's template loads on first use, as on the board.
 import type { BoardState } from '#actions';
 import { boardState } from '#actions';
 import type { View } from '#format';
@@ -31,6 +31,8 @@ interface BoxSample {
   message?: string;
   by?: 'save' | 'ask';
   blocked?: string;
+  /** The box's mode (FIX_03 ruling 3): Add note unless set. */
+  active?: 'save' | 'ask';
 }
 
 const SAMPLES: BoxSample[] = [
@@ -41,6 +43,7 @@ const SAMPLES: BoxSample[] = [
   { caption: 'A reply arrived: every note and reply, oldest first', board: 'parking', title: 'Who signs off the price change?' },
   { caption: 'Failed: the box says why and the words stay in the field', board: 'notes', title: 'A note not yet sent', draft: 'Is the floor price per seat?',
     phase: 'error', message: notesWords.notSaved('The board server is not reachable. Is it running?') },
+  { caption: 'Ask now as the mode: pink and pressed, the field says Enter asks (a press of either button turns the mode)', board: 'parking', title: 'Does the trial need a card?', active: 'ask' },
   { caption: 'Ask now disabled: its tooltip says why', board: 'parking', title: 'Should quarterly billing stay?', blocked: notesWords.theAgentIsWorking },
   { caption: 'In notes on several nodes: tabs, this node first', board: 'groups', title: 'Which plan is the default?', group: ['1', '3'] },
 ];
@@ -57,7 +60,8 @@ function sample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<ReturnType
   const n = b.view.nodes.find((x) => x.title === s.title)!;
   const deps = { node: (id: string) => b.view.nodes.find((x) => x.id === id), state: () => b.state, region: () => undefined,
     replies: (id: string) => b.cards.get(Number(b.view.nodes.find((x) => x.id === id)?.n))?.replies ?? [], regionReplies: () => [] };
-  const box: BoxDeps = { blocked: () => s.blocked ?? null, listening: () => true, ask: async () => null, looked() {}, asked: () => new Set() };
+  const box: BoxDeps = { blocked: () => s.blocked ?? null, listening: () => true, ask: async () => null, looked() {}, asked: () => new Set(),
+    mode: () => s.active ?? 'save', setMode() {} };
   const shown = boxView(deps, box, { id: n.id, anchor: [n.id], mode: 'conversation', kind: 'comment', ...(s.group && { group: s.group }), ...(s.draft && { draft: s.draft }) })!;
   const stage = el('div', 'g-bubble-stage vb-ground');
   stage.style.setProperty('width', '760px');

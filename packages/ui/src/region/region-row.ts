@@ -16,6 +16,7 @@ import { MODE_HINT } from './region-core.ts';
 import { regionIdsOf } from './region-template.ts';
 import { menuItems, menuKeydown } from '../base/menu.ts';
 import { dismissable } from '../base/layer.ts';
+import { returnFocus } from '../base/focus-return.ts';
 
 export type RegionOpen = 'modes' | 'menu';
 
@@ -100,7 +101,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     byRest = false;
     if (host.dataset.open === 'modes') delete host.dataset.open;
     layoutBtn()?.setAttribute('aria-expanded', 'false');
-    if (focusButton) layoutBtn()?.focus({ preventScroll: true });
+    if (focusButton) returnFocus(layoutBtn());
     highlight(null);
   }
 
@@ -110,7 +111,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     if (host.dataset.open !== 'menu') return;
     delete host.dataset.open;
     q(COG)?.setAttribute('aria-expanded', 'false');
-    if (focusCog) q<HTMLElement>(COG)?.focus({ preventScroll: true });
+    if (focusCog) returnFocus(q<HTMLElement>(COG));
   }
 
   function openModes(mode: Mode) {
@@ -249,8 +250,8 @@ export function bindModeRow(host: HTMLElement): ModeRow {
       return host.dataset.open === 'modes' ? undefined : openChoices(!(e as MouseEvent).detail);
     }
     // Enter on a tile (a hidden tile would drop the focus): back to that layout's icon, then close.
-    if (tile && document.activeElement === tile) (radios().find((b) => b.dataset.mode === tile.dataset.tile) ?? layoutBtn())?.focus({ preventScroll: true });
-    else if (choice && layoutBtn() && document.activeElement === choice) layoutBtn()!.focus({ preventScroll: true });
+    if (tile && document.activeElement === tile) returnFocus(radios().find((b) => b.dataset.mode === tile.dataset.tile) ?? layoutBtn());
+    else if (choice && layoutBtn() && document.activeElement === choice) returnFocus(layoutBtn());
     if (t.closest(RADIO) || choice || t.closest(COMMENT) || t.closest(WIDTHS)) {
       // A pick (icon or tile), Match card widths or Comment (its click bubbles on to the page, which sends the act
       // or opens the note bubble).

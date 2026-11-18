@@ -8,6 +8,7 @@
 // (card-polish FE_03) from the footer's ⓘ, a box the page fills as it shows (`POPOVER_SHOW`). Browser only.
 import type { HoverTip } from '../tip/hover-tip.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
+import { returnFocus } from '../base/focus-return.ts';
 
 /** Fired on the card, bubbling, when a click or Enter opened its popover; `detail` is the box, so
  *  the page can bring it into view. */
@@ -42,7 +43,7 @@ export function bindCardPopover(card: HTMLElement, name: string, tabSel = `.vb-n
       if (!on) card.dispatchEvent(new CustomEvent<string>(POPOVER_HIDE, { bubbles: true, detail: name }));
       tab()?.setAttribute('aria-expanded', String(on));
       box()?.toggleAttribute('data-open', on);
-      if (!on && box()?.contains(document.activeElement)) tab()?.focus({ preventScroll: true });
+      if (!on && box()?.contains(document.activeElement)) returnFocus(tab());
     },
   });
   card.addEventListener(POPOVER_CLOSE, (e) => { if ((e as CustomEvent<string>).detail === name) tip.close(); });

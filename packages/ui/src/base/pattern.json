@@ -1,12 +1,12 @@
 {
   "name": "base",
   "title": "Shared base: menu, layer, dialog, button, chip, surfaces",
-  "entry": "openMenu, menuKeydown, dismissable, syncModal, backdropClick, whenShut; and the recipes in #ui/styles.css",
+  "entry": "openMenu, menuKeydown, dismissable, returnFocus, bindFocusMoves, syncModal, backdropClick, whenShut; and the recipes in #ui/styles.css",
   "selector": ".vb-btn",
   "description": "What every screen and every sibling plugin builds its controls from, built once with every state and keyboard path (UI_01). The menu: a role=menu list of menuitem rows with the WAI-ARIA keys (Up and Down wrap, Home and End, Esc closes with focus back, Tab closes and moves on), a press outside closing it, its opener's aria-expanded, its first enabled row focused. The dismissable layer: Esc and a press (or only a click) outside close a menu, popover or tip, heard first in the capture phase, only while it is open; only Esc gives focus back. The modal dialog: a native <dialog> shown modal from the state that wants it (the browser keeps focus in it and gives it back on close), a click on its backdrop closing it like Cancel, its close event taken only while it is still shut. The recipes: the button, the chip, the menu's rows, the popover and panel surfaces, the dialog's parts, a key, code, visually hidden words, the focus ring, and the board's own baseline in any host's page (root.css).",
   "files": {
     "core": "menu-core.ts (menuStep), layer-core.ts (focusBackOn, isClick), dialog-core.ts (modalStep, onBackdrop): pure, no DOM",
-    "browser": "menu.ts (menuKeydown, openMenu, menuItems, firstItem), layer.ts (dismissable), dialog.ts (syncModal, backdropClick, whenShut): framework-free, nothing touches the DOM at import",
+    "browser": "menu.ts (menuKeydown, openMenu, menuItems, firstItem), layer.ts (dismissable), focus-return.ts (returnFocus, bindFocusMoves, ringOnReturn), dialog.ts (syncModal, backdropClick, whenShut): framework-free, nothing touches the DOM at import",
     "styles": "root.css (.vb-board, the board's scope [class*='vb-'], box-sizing, [hidden], the host guard for h1-h3, p, button, input, select, textarea, dialog), a11y.css (focus ring, visually hidden), text.css (kbd, code), surface.css (popover and panel), button.css, chip.css, menu.css, dialog.css; first in #ui/styles.css; tokens only"
   },
   "states": ["button idle", "hover", "focus", "pressed", "on", "busy", "disabled", "primary", "small", "chip tones", "chip button", "menu open", "menu row hover", "menu row focus", "menu row pressed", "menu row ticked", "menu row disabled", "dialog", "dialog problem", "key", "code"],
@@ -24,6 +24,8 @@
     "openMenu({ menu, opener?, within?, key?, onClose })": "a menu the caller drew open: its keys, a press outside, aria-expanded, first row focused; returns { close(focusBack?) }",
     "menuKeydown(e, items, close, { back?, stop? })": "the keys alone, for a menu that hears its keys itself",
     "dismissable({ within, dismiss, escape?, clickWithin? })": "listen for Esc (`escape`: true for the whole page, or an element: only when focus is in its board or nowhere, escapeIsOurs) and a press or click outside; returns the stop",
+    "returnFocus(el)": "give focus back to what opened a closing layer (Esc or a click), without scrolling: the ring shows only if the person was moving by the keyboard (Tab, or arrows, Home, End, J, K outside a text field; FIX_03 ruling 1); else el carries data-pointer-focus until focus leaves it. Every layer that gives focus back uses it",
+    "bindFocusMoves(doc?)": "listen for how the person moves (a key that moves focus, a pointer press); the page binds it once (pointer-focus.ts). Unbound, a returned focus shows its ring as before",
     "syncModal(dialog, wants, opened?)": "show the dialog modal or close it, following its state",
     "backdropClick(close)": "a click handler: a click on the backdrop closes it",
     "whenShut(shut)": "a close-event handler taken only while the dialog is still shut"

@@ -20,7 +20,7 @@ import type { ViewNode } from '#format';
 import type { LedgerState, SeenMark } from '#actions';
 import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '#actions';
 import type { CardConditions, CardStep } from '#ui';
-import { POPOVER_HIDE, POPOVER_OPEN, versionTime } from '#ui';
+import { POPOVER_HIDE, POPOVER_OPEN, returnFocus, versionTime } from '#ui';
 import type { SelectBy, Selection } from '../selection/index.ts';
 
 /** How long "You're up to date" stays before the section folds away (node-steps.css fades it first). */
@@ -131,7 +131,7 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     // proposal tab or box that held the steps, oneChangeTab).
     if (!inside || document.activeElement?.closest('.vb-node-btab:not([hidden]), [data-mark]:not([hidden]), .vb-card-pop[data-open]')) return;
     const tab = pieceOf(n, '[data-tab="updates"]');
-    (tab && !tab.hidden ? tab : card)?.focus({ preventScroll: true });
+    returnFocus(tab && !tab.hidden ? tab : card);
   }
 
   /** The tab: open the stepper on the first unseen version, or fold it. */

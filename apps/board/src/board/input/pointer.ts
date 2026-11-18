@@ -10,7 +10,8 @@
 // is held over the board the pointer is a hand, a closed one during the pan (review polish round 2
 // ruling 6; text fields keep their cursor, board.css). A drag on a container's label (its grip, title
 // or count, not its other buttons) moves the container (3_FE_04 ruling 5; open list and container
-// title FE_02, container-drag.ts); held still, a press on the title is the background's click. While a pan, a move or a lasso runs, nothing on
+// title FE_02, container-drag.ts); held still, a press on the title is the background's click. Over an app window's panel
+// not clicked into, a drag pans, and held still it is the card's click (FIX_03 ruling 2). While a pan, a move or a lasso runs, nothing on
 // the page gets text-selected (U5). Scroll pans (wheelChaining: once what is under the pointer can scroll
 // no further, wheel-latch.ts), Ctrl/Cmd + scroll zooms. Keyboard equivalents live
 // in keys.ts (project rule 5).
@@ -61,6 +62,8 @@ const HANDLE = '.vb-node-kind, .vb-node-grip, .vb-node-plate';
  *  rest of the label but its own buttons and its tip (FE_02), moves the container. */
 const GRIP = '.vb-region-grip';
 const LABEL = '.vb-region-label';
+/** An app window's panel not clicked into (FIX_03 ruling 2, `#ui` app-frame-active.ts): the board's, so a drag pans. */
+const IDLE_APP = 'vb-app-frame[data-click-in]:not([data-active])';
 /** Where a Cmd or Ctrl press keeps the field's own press (a caret, a selection): never a pan. */
 const OWN_PRESS = 'input, textarea, select, [contenteditable]';
 export const DRAG_THRESHOLD = 4;
@@ -167,6 +170,11 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     }
     begin(e, t);
     const own = g as Gesture | null; // what `begin` started
+    // Over an idle app a drag pans as over the board; held still, it is the card's click (which makes the app active).
+    if (own?.kind === 'press' && !panKey(e) && t.closest(IDLE_APP)) {
+      g = { kind: 'pan', ...start(e), x0: vp.x, y0: vp.y, middle: false, still: own };
+      return;
+    }
     // Cmd or Ctrl (Shift too is the additive lasso): a pan once it moves, from anywhere but a field.
     // No focus and no text selection on the press; a still click still reaches its target.
     if (e.button !== 0 || !panKey(e) || e.shiftKey || own?.kind === 'pan' || t.closest(OWN_PRESS)) return;

@@ -41,6 +41,12 @@ vb-app-frame[data-frozen] .vb-af-wait { display: none; }
 vb-app-frame {
   &[data-focus-in]:not([data-pointer-focus]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
 }
+/* An app window's panel idle (data-click-in, not data-active; FIX_03 ruling 2, app-frame-active.ts): the frame takes no
+   pointer, so a hover, a wheel or a drag over it is the board's, as over any node. A click into it makes it active; on
+   stage it always takes them. The sandbox is untouched. */
+vb-app-frame[data-click-in] {
+  &:not([data-active], [data-stage]):not([data-stage] *) .vb-af-frame { pointer-events: none; }
+}
 
 /* On stage (appStage, spike): the same frame in the top layer, filling the page, under a bar with
    the app's name and Back to card. A popover, so no ancestor's pan or zoom reaches it. */

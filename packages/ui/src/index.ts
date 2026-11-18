@@ -49,5 +49,6 @@ export * from './base/menu-core.ts';
 export * from './base/menu.ts';
 export * from './base/layer-core.ts';
 export * from './base/layer.ts';
+export * from './base/focus-return.ts';
 export * from './base/dialog-core.ts';
 export * from './base/dialog.ts';

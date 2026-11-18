@@ -99,3 +99,34 @@ test('a press says what it came to: written, failed, or nothing sent (a repeat, 
   });
   assert.equal(await failing('12', 'drop'), false);
 });
+
+// FIX_03: a press acts on the answer the person sees, not on the state drawn before the last write landed. A clear still
+// on its way when ✓ is pressed again leaves the card ticked (it was "12 cleared" twice), and the writes keep their order.
+test('✓ pressed while the clear is still on its way ticks again, after the clear', async () => {
+  let status: ItemStatus = 'acknowledged';
+  let clock = 1000;
+  const log: string[] = [];
+  let land: () => void = () => undefined;
+  const set: Partial<Record<ActionId, ItemStatus>> = { ack: 'acknowledged', drop: 'dropped', later: 'later', reopen: 'open' };
+  const act = createItemActs({
+    node: () => card,
+    state: () => ({ items: new Map([['12', { status, notes: [] }]]), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(),
+      moves: new Map(), regionPins: new Map(), regionNotes: new Map(), bookmarks: new Set() }),
+    notes: { press: () => undefined },
+    // The clear takes a moment to land; what it changes is drawn only then.
+    moves: { status: (_id, a) => new Promise((r) => { log.push(`${a} sent`); land = () => { status = set[a]!; r(true); }; }) },
+    record: async (f) => { log.push(`${f.action} sent`); status = set[f.action]!; return true; },
+    target: () => ({ n: 12, ver: 1 }), hiding: () => false, hidden: () => new Set(), neighbour: () => null,
+    focusCard: () => undefined, toast: (t) => void log.push(`toast ${t}`), now: () => clock,
+  });
+  const clearing = act('12', 'ack');
+  clock += REPEAT_MS;
+  const ticking = act('12', 'ack');
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(log, ['reopen sent'], 'the tick waits for the clear');
+  land();
+  await Promise.all([clearing, ticking]);
+  assert.equal(status, 'acknowledged');
+  assert.deepEqual(log.filter((x) => x.endsWith('sent')), ['reopen sent', 'ack sent']);
+  assert.deepEqual(log.filter((x) => x.startsWith('toast')).sort(), ['toast 12 cleared', 'toast 12 ✓']);
+});

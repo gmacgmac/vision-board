@@ -7,6 +7,7 @@
 import { menuStep } from './menu-core.ts';
 import { focusBackOn } from './layer-core.ts';
 import { dismissable } from './layer.ts';
+import { returnFocus } from './focus-return.ts';
 
 export interface MenuKeyOptions {
   /** More keys that close the menu with focus back (Esc always does). */
@@ -75,7 +76,7 @@ export function openMenu(o: OpenMenuOptions): OpenMenu {
     o.menu.removeEventListener('keydown', onKey);
     o.opener?.setAttribute('aria-expanded', 'false');
     o.onClose();
-    if (focusBack && back?.isConnected) back.focus({ preventScroll: true });
+    if (focusBack) returnFocus(back);
   }
   o.menu.addEventListener('keydown', onKey);
   o.opener?.setAttribute('aria-expanded', 'true');

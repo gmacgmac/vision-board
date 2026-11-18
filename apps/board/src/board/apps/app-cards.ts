@@ -27,7 +27,7 @@ import { HOST_REPLY } from '#format';
 import type { BoardLayout } from '#layout';
 import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } from '#ui';
 import type { OpenMenu } from '#ui';
-import { appView, defineAppFrame, openMenu } from '#ui';
+import { appView, defineAppFrame, openMenu, returnFocus } from '#ui';
 import { createAppStates } from './app-state.ts';
 import { appAsk, appDone, retryDone } from '../words/app-cards.ts';
 import { partDidNotLoad } from '../words/chrome-board.ts';
@@ -202,7 +202,9 @@ export function createAppCards(d: AppCardsDeps): AppCards {
       saveState: (state) => saved.save(key(), state),
       loadState: () => saved.load(key()),
       focusCame,
-      onEscape: () => card.focus({ preventScroll: true }),
+      // An app window's panel is the board's to pan over until the person clicks into it (FIX_03 ruling 2).
+      clickIn: card.hasAttribute('data-window'),
+      onEscape: () => returnFocus(card),
       onLoad: () => { toldTo.delete(frame); void states.refresh(); },
       // A window's Open is pressed while the window fills the page (appWindow, FE_08).
       onStage: (on) => card.querySelector('.vb-win-open')?.setAttribute('aria-pressed', String(on)),

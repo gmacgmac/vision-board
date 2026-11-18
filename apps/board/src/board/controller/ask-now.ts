@@ -1,8 +1,11 @@
 // Ask now's side of the board (nodeEdges flag, D-099 3, FE_03), split out of controller.ts: why no message can go
 // (a past version, a read-only ledger, a locked board, the chat's agent mid-turn), whether an agent is there to hear
 // it, the `ask` itself with the page's context setting (`askContextOf`, call 1), the notes it sent, and a node's replies
-// marked read when its box shows them (a card `seen` at the version already seen, which moves only when the person last looked).
+// marked read when its box shows them (a card `seen` at the version already seen, which moves only when the person last looked),
+// and the box's mode (FIX_03 ruling 3): Add note or Ask now, per board, kept in the host's store for this tab as the zoom is.
 import type { AskContext } from '#format';
+import type { BoxAct } from '#ui';
+import type { BoardStore } from '../host.ts';
 import type { LedgerState } from '#actions';
 import { seenDue, seenVer } from '#actions';
 import type { BoxDeps } from '../notes/index.ts';
@@ -22,7 +25,12 @@ export interface AskNowDeps {
   context(): AskContext;
   attempt(fields: { action: 'ask'; board: string; lines: number[]; context: AskContext }): Promise<string | null>;
   seen(marks: readonly { n: number; ver: number }[]): Promise<boolean>;
+  /** Where the box's mode is kept (`view.` keys: this tab only, kept.ts `pageStore`). */
+  store: BoardStore;
 }
+
+/** The key the box's mode is kept under, per board; `view.`, so a tab keeps its own (kept-view.ts). */
+const modeKey = (board: string): string => `view.box-mode:${board}`;
 
 export function createAskNow(d: AskNowDeps): BoxDeps {
   const looking = new Set<string>();
@@ -31,6 +39,8 @@ export function createAskNow(d: AskNowDeps): BoxDeps {
     listening: () => d.oneAgent() || (d.state()?.agents.size ?? 0) > 0,
     ask: (seq) => d.attempt({ action: 'ask', board: d.board(), lines: [seq], context: d.context() }),
     asked: () => new Set(d.state()?.asked.get(d.board())?.keys() ?? []),
+    mode: () => (d.store.get(modeKey(d.board())) === 'ask' ? 'ask' : 'save'),
+    setMode: (act) => d.store.set(modeKey(d.board()), act),
     looked(id) {
       const s = d.state();
       const at = d.node(id);

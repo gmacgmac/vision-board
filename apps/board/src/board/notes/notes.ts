@@ -14,7 +14,7 @@
 // (note-box.ts); a container's note and a note on several selected nodes keep today's bubbles.
 import type { NoteKind } from '#format';
 import type { VbNoteBubbleElement } from '#ui';
-import { boxAround, loadConversation, placeBubble, readOnlyMode, saveIntent } from '#ui';
+import { boxAround, loadConversation, placeBubble, readOnlyMode, returnFocus, saveIntent } from '#ui';
 import type { NoteEventDetail } from '#ui';
 import type { ActFields } from '../io.ts';
 import { bindDiscard, createLeave, mayLeave } from './note-discard.ts';
@@ -237,8 +237,8 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     // The part it opened from, drawn again since (a new version of the card) is found afresh.
     const host = o.region ? d.frame(o.region) : d.card(o.anchor[0]!);
     const back = o.back?.isConnected ? o.back : o.back && o.at ? host?.querySelector<HTMLElement>(o.at) : undefined;
-    if (focus && o.region) (back ?? host?.querySelector<HTMLElement>('.vb-region-comment'))?.focus({ preventScroll: true });
-    else if (focus) (back ?? host)?.focus({ preventScroll: true });
+    if (focus && o.region) returnFocus(back ?? host?.querySelector<HTMLElement>('.vb-region-comment'));
+    else if (focus) returnFocus(back ?? host);
     changed();
   }
 
@@ -274,11 +274,11 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   async function onChoice(e: Event) {
     const o = open;
     if (!o) return;
-    const { choice, text, note, tab } = (e as CustomEvent<NoteEventDetail>).detail;
+    const detail = (e as CustomEvent<NoteEventDetail>).detail;
+    const { choice, text, note, tab } = detail;
     if (choice === 'edit') return edit(o, note);
     if (o.mode === 'conversation' && choice === 'tab') return openNow({ ...o, group: tab ? tab.split(',') : undefined, part: undefined, draft: bubble.text });
-    if (o.mode === 'conversation' && choice === 'ask') return box!.askNow(boxChoices(), o, text);
-    if (o.mode === 'conversation' && choice === 'save') return box!.addNote(boxChoices(), o, text);
+    if (o.mode === 'conversation' && (choice === 'ask' || choice === 'save')) return box!.choose(boxChoices(), o, detail);
     const fields = choice === 'cancel' ? null : actFor(o, choice, text);
     // An edit opened from the box goes back to it, saved or not.
     if (!fields) return o.then ? openNow(o.then) : close();

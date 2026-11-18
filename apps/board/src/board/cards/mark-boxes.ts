@@ -9,7 +9,7 @@
 // node, so its place is written in the node's own pixels, counter-scaled so it keeps one size at any zoom (D-101). Its × (`data-box-close`) closes it.
 // Browser only.
 import type { PopoverShowDetail } from '#ui';
-import { dismissable, POPOVER_HIDE, POPOVER_OPEN, POPOVER_SHOW } from '#ui';
+import { dismissable, POPOVER_HIDE, POPOVER_OPEN, POPOVER_SHOW, returnFocus } from '#ui';
 import { DRAG_THRESHOLD } from '../input/index.ts';
 import { nodeReach, placeBeside, stageBoxOf } from './mark-place.ts';
 
@@ -69,7 +69,7 @@ export function openMarkBox(card: HTMLElement, name: MarkBoxName, opener: HTMLEl
     opener?.setAttribute('aria-expanded', 'false');
     card.dispatchEvent(new CustomEvent<string>(POPOVER_HIDE, { bubbles: true, detail: name }));
     closed();
-    if (focusBack && back.isConnected) back.focus({ preventScroll: true });
+    if (focusBack) returnFocus(back);
   }
   // The box scrolls when long, so it is a tab stop (history); else its first button that acts (a proposal's).
   (box.tabIndex >= 0 ? box : box.querySelector<HTMLElement>('button:not([aria-disabled="true"])') ?? box).focus({ preventScroll: true });
