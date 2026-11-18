@@ -39,11 +39,9 @@ export const ZOOM_RULES = {
   /** The space between the selection bar and the cards' top tabs: `perK` px per unit of zoom, between `minPx` and
    *  `maxPx` (selection-bar-core.ts `pillGap`). */
   barGap: { rule: 'clamped', numbers: { perK: 8, minPx: 4, maxPx: 16 } },
-  /** The history and the proposal box: in the node, counter-scaled by 1/zoom (mark-boxes.ts). */
-  markBoxes: { rule: 'fixed', numbers: {}, writes: '--vb-box-scale' },
-  /** The conversation box: one size below 80%, scales with the board from 80% to 120%, one size above (points 444,
-   *  445; notes.ts). */
-  conversationBox: { rule: 'clamped', numbers: { min: 0.8, max: 1.2 }, writes: '--vb-box-scale' },
+  /** Every box beside a node, the conversation, history and proposal boxes: one size below 80%, scales with the board
+   *  from 80% to 120%, one size above (points 444, 445, 484; D-104; notes.ts, mark-boxes.ts). */
+  boxes: { rule: 'clamped', numbers: { min: 0.8, max: 1.2 }, writes: '--vb-box-scale' },
   /** A node's edge marks (number, disc, notes, badges, kind tab, grip): under `minPx` on screen they grow in place by
    *  steps of `step`; past the far breakpoint (`farSteps` steps, about 37%) the growth stays and they scale with the
    *  node (points 430-438). */

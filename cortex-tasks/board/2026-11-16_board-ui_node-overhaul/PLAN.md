@@ -258,6 +258,8 @@ them on and renews the screenshots.
   budget 200 → 210 KB gzip (FIX_02 measured 210.2 and raised it to 211; FIX_04 measured 211.1 and raised it to 211.2) (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
   190,000 → 204,200 and `view/board.css` 22,000 → 27,600 gzip (raised as tasks measured; 201,229 and 27,093 after the FE_08 merge; FIX_01 measured 202,147 and 27,530 and raised them to 202,200 and 27,600; FIX_02 measured 202,639 and raised `view/board.js` to 202,700; after FIX_03 merged, 204,111 measured, raised to 204,200) (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
   Each task still loads on demand what opens on an action. T_04 restores 200 KB, 190,000 and 22,000.
+  After T_04 the budgets hold at its measures (page 201.0 KB, `view/board.js` 195,400, `view/board.css` 24,800); FIX_05
+  measured `view/board.js` 195,479 and raised it to 195,500.
   **Budgets never block a task in this set** (maintainer, 2026-11-17): if the work needs more, the task raises the
   temporary figure to what it measured, says so in its notes, and carries on. Size is optimised once, after the
   features are done (T_04 and a final pass). What keeps size down meanwhile is reuse: one pattern per control, used
@@ -434,6 +436,14 @@ this list differ, **this list wins**. Anything not named here is accepted as the
   direction the wheel scrolls it and the board stays; a flick that carries it to its end stops there, and the rest of
   that gesture neither pans nor scrolls anything else; only a new gesture that starts at the end pans. Pinch or
   Ctrl/Cmd wheel always zooms. A gesture is decided by its first wheel event that moves; its quiet gap is 200 ms.
+- **One box, one behaviour (point 484, FIX_05; D-104)**: the history and proposal boxes behave exactly as the
+  conversation box: the same fixed pointer and the same zoom rule, clamp(zoom, 0.8, 1.2), one row (`ZOOM_RULES.boxes`)
+  for all three. Replaces D-101's "history keeps one size"; menus, the picker, the right-click list, the selection bar
+  and the toolbar still keep one size.
+- **Letting go of a scroll (point 485, FIX_05)**: once a scroller reached its end, the rest of a flick's momentum is
+  swallowed quietly (no bounce, no pan), and a fresh push of the fingers is a new gesture at once and pans. Momentum is
+  read from the wheel stream (a decaying run; a push breaks it with a rise), never waited out. No elastic bounce on
+  board scrollers (`overscroll-behavior: none`).
 
 ## Decision entries to append
 

@@ -50,4 +50,40 @@ Fill Implementation Notes, update your TASK-STATUS row, append your own LOG line
 
 ## Implementation Notes
 
-**Status**: Pending
+**Status**: Completed (run 1, 2026-11-18)
+
+**Ruling 1, one box, one behaviour (484).** The pointer was already one rule (FIX_04's `placeBeside` serves all three
+boxes). The zoom rule is now one row, `ZOOM_RULES.boxes` (clamp 0.8 to 1.2, writes `--vb-box-scale`), in place of
+`markBoxes` (1/zoom) and `conversationBox`; `viewport.ts` `BOX_MIN_K`/`BOX_MAX_K` read it. `mark-boxes.ts` `place`
+draws the history and proposal boxes at `boxScale(k)` on screen (in the node, `boxScale(k) / k`), measures them at that
+size for `placeBeside`, and writes the pointer in the box's own pixels (`arrow / s`), as `notes.ts` does for the
+conversation box. Tests first: `zoom-rules.test.ts` "one row for every box" and `zoom-groups.spec.ts` (the history and
+proposal boxes now expected at `first × boxScale(k)`; both failed, 297.6 vs 238.1 at 80%); `node-boxes.spec.ts` (pointer)
+passes as it was. Docs: `node-box.css` comment, node `pattern.json` (`--vb-box-scale`), `components.md` (§ the box beside
+a node, § Zoom groups). D-104 is yours to append. Looked at, dark: `temp/fix05/history-{50,100,200}-dark.png` and
+`conversation-{50,100,200}-dark.png`.
+
+**Ruling 2, letting go of a scroll (485).** In `input/wheel-latch.ts` `createWheelLatch`: besides the quiet gap, a
+gesture now also ends at once when a fresh push rises out of a momentum tail. The tail is read from the stream: a run of
+`DECAY_RUN` (4) events none faster than the last (`WOBBLE` 1.15 allowed, so real momentum's jitter does not break it);
+then an event at least `RISE` (1.5) times the slowest of that run and `RISE_PX` (3) more is a fresh push, and is found
+afresh: at the scroller's end it pans straight away. The tail itself stays the scroller's, so it moves nothing; a
+mouse's even notches never rise out of a decay; a push whose speed wobbles has no long decay and stays one gesture.
+Nothing waits for the momentum to die out. No elastic bounce: `.vb-stage * { overscroll-behavior: none }` (was
+`contain`). The wheelChaining flag's description says so.
+Tests first: `wheel-latch.test.ts` with streams in the shape a trackpad and a mouse send (a flick and its jittery tail
+at the end: all the scroller's; a push during the tail: pans by its third event, failed before; a push with room: found
+afresh, failed before; a wobbling push; a mouse spin then a pause); `scroll-before-pan.spec.ts` "a flick with a momentum
+tail ... a fresh push during the tail pans at once" (fails with the rise detection off: "the push pans without waiting
+the tail out") and "no elastic bounce" (failed: `contain`). The thread tests now wait for the reply in the thread before
+scrolling (`longThread`): a reply that landed after the box opened redrew it at the latest, which made a flick start at
+the end in about one run in four. Stable after: 30 of 30.
+Not established: the numbers against the maintainer's own trackpad. They are named constants in one place, so a look
+on his machine can tune them.
+
+**Budgets.** Plugin `view/board.js` measured 195,479 over T_04's 195,400: raised to 195,500
+(`apps/board/tests/plugin-build.test.ts`, PLAN.md § Temporary size budgets). Page and CSS within.
+
+**Checks.** `npm run check` clean, `npm run gen -- --check` current, `npm run verify` clean, `npm test` (after the
+raise) all pass, `npm run test:plugin` 116 passed. Page specs scroll-before-pan, wheel-chaining, zoom-groups, node-boxes,
+conversation-box, card-history, proposals, app-window, app-pan-key, zoom-and-lasso, command-lens: 109 passed.

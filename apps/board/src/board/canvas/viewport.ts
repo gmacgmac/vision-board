@@ -38,10 +38,10 @@ export const marksPressable = (k: number): boolean => k > MARK_FAR_K;
 /** Whether `t` is in a node's mark while the marks take no pointer press (the stage's data-marks="small"). */
 export const smallMark = (t: Element): boolean => t.closest('[data-marks="small"] vb-node[data-edges] [data-mark]') !== null;
 
-/** The conversation box scales with the board only between two zooms (points 444, 445): one size below 80% (its text
- *  stays readable), with the board to 120%, one size above (it never swamps the board). */
-export const BOX_MIN_K = ZOOM_RULES.conversationBox.numbers.min;
-export const BOX_MAX_K = ZOOM_RULES.conversationBox.numbers.max;
+/** Every box beside a node scales with the board only between two zooms (points 444, 445, 484; D-104): one size below
+ *  80% (its text stays readable), with the board to 120%, one size above (it never swamps the board). */
+export const BOX_MIN_K = ZOOM_RULES.boxes.numbers.min;
+export const BOX_MAX_K = ZOOM_RULES.boxes.numbers.max;
 export const boxScale = (k: number): number => Math.min(BOX_MAX_K, Math.max(k, BOX_MIN_K));
 
 /** A zoom as the whole percentage the toolbar shows (0.55 is 55). It rounds down, so the number is never
