@@ -51,8 +51,8 @@ script needs a port (never 4466).
    relation between the line and the container's own layout is drawn once.
 5. [ ] **The vertical pages** (`default-vertical-*`, `command-lens-vertical-*`): redrawn with run 2's header, no grip,
    the kind word, entries; the line down the left, every dated node to its right, the stem meeting the left edge level
-   with the date line; years on the line; the other nodes below (PLAN.md call 4, pending the kickoff answer: if the
-   maintainer chose "to the right", draw that instead).
+   with the date line; years on the line; the other nodes in a second column to the line's right, in the container's
+   layout (PLAN.md decision 14 and call 4, maintainer 569C).
 6. [ ] **README**: replace "Choices to confirm" with what was ruled (cite PLAN.md decisions by number); remove "WEEK OF",
    the `timeline` mode, the precision field and the grip; list each page; then "Open choices" for anything the pages
    had to decide that § Decisions does not (at most 6, each with a recommendation): for example the line's colour

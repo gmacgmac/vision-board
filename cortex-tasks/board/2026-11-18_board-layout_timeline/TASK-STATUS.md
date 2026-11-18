@@ -2,7 +2,7 @@
 task_name: The Timeline
 created: 2026-11-18
 completed:
-status: planned
+status: in-progress
 categories: [board-layout, board-format, board-ui, board-agent, board-tokens]
 tracker: cortex-tasks/tracker.md#N53
 ---

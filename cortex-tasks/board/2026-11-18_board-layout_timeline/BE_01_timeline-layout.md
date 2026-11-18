@@ -8,7 +8,7 @@
 ## Objective
 
 Teach the pure layout a container's timeline: dated nodes on one line across the top (or down the left), in order,
-alternating, evenly spaced, with years and bands; the container's other nodes laid out below in its own mode; and the
+alternating, evenly spaced, with years and bands; the container's other nodes laid out below in its own mode (to the right, run down); and the
 same answer from `show_layout`.
 
 ---
@@ -61,7 +61,9 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
    - years: one at the line's start (the first dot's year), one at each turn, halfway between the two dots; none
      between dots of the same year;
    - bands: one per run of two or more consecutive exactly-equal values, from the run's first dot to its last;
-   - the other nodes: laid out by the container's mode below the timeline (`TIMELINE_GAP` under its lowest point), in
+   - the other nodes: laid out by the container's mode below the timeline (`TIMELINE_GAP` under its lowest point), or,
+     run down, to its right (`TIMELINE_GAP` beyond the dated nodes' right edge, tops level with the line's start;
+     PLAN.md decision 14, maintainer 569C), in
      every mode (`grid`, `row`, `column`, `flow` across and down, `lanes`, `radial`); their links pass to the mode,
      links touching a dated node do not; the line runs to the content's right edge when the nodes below are wider;
    - pins (decision 15): a pin on a dated node changes nothing; a pin on an undated node wins, even over the line;

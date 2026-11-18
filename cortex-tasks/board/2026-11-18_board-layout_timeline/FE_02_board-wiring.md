@@ -16,7 +16,7 @@ page specs that prove each.
 ## Context
 
 PLAN.md decisions 7-18, calls 4-5 and 11, and § Design review are this task's rulings. After wave 2: the layout returns
-`RegionBox.timeline` (`TimelineDrawing`, board coordinates) and lays a container's other nodes below it (BE_01); the
+`RegionBox.timeline` (`TimelineDrawing`, board coordinates) and lays a container's other nodes below it, or to its right run down (BE_01); the
 node draws its date header, sets `data-timeline`, and `#ui` `timelineMarkup` draws a drawing (FE_01); the server stores
 and reports the key (T_01). Nothing on the page uses them yet. The flag has one gate, here: with it off the board and
 its screenshots are exactly as before the set.
@@ -65,7 +65,7 @@ in its `REQUESTS`). Wave 3, alone, in `.claude/worktrees/app-window`, `VB_TEST_P
      container's line;
    - the link draws and highlights as any link;
    - the layout menu of a container with a timeline (a `row`) offers Across, Down and Auto; Down draws the vertical
-     form; Auto gives the board's or the agent's back;
+     form, the undated cards in a second column to the line's right; Auto gives the board's or the agent's back;
    - Tab reaches the dated cards in the order the board's focus rule gives (node overhaul: "order as drawn"); if that
      rule is card-number order, say so in the notes rather than change it;
    - both skins, light and dark: a screenshot of the container; axe clean.

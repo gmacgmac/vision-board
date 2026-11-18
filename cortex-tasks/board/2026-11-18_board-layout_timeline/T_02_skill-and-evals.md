@@ -74,7 +74,7 @@ plugin's; a build ships only the references its text names; the plugin's skill r
    time as the person said it, no zone; the board orders, spaces and alternates the cards, so write them in any order;
    the date is the card's header, so the title never repeats it; several events in one card as `###` headings or bold
    leads (each draws as an entry); dated cards of one timeline in one container, undated cards in it draw below the
-   line, a second timeline is a second container; no `timeline` mode (the container keeps its layout); a rewrite (a
+   line (beside it when it runs down), a second timeline is a second container; no `timeline` mode (the container keeps its layout); a rewrite (a
    `node` item with `n` and `base`) carries `timeline` again or the card leaves the line, `append` keeps it; a decision
    on the line is still a `decision`; `show_layout` lists the line in order. One worked `write_board` call (three dated
    cards, one with entries) as the other references show one.
