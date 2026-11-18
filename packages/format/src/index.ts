@@ -22,3 +22,6 @@ export * from './timeline.ts';
 export * from './clip.ts';
 export * from './constants.ts';
 export * from './icon-file.ts';
+
+/** The ledger's refusal words, for a server that words the same refusal another way (tracker M84). */
+export { iconName, toneOneOf } from './words/format-ledger.ts';

@@ -37,4 +37,10 @@ Fill Implementation Notes, update your TASK-STATUS row (only your row and notes)
 
 ## Implementation Notes
 
-**Status**: Pending
+**Status**: Completed (2026-11-18)
+
+- Test first: `apps/board/tests/schema-refusals.test.ts` (new; no existing file covered `plain`'s anyOf wording): `tone: "pink"` and `icon: "rocket"` failed with the card-reference words, a bad link target keeps them.
+- Fix: `apps/board/server/schema.ts` `plain` (`anyOf` case, `ANY_OF_FIELDS`): by the field, a tone says its names and hue range, an icon its name rule; every other board `anyOf` keeps the card-reference words; a foreign (app tool) schema keeps its own words. No schema changed.
+- Deviation noted: `toneOneOf`/`iconName` in `packages/format/src/words/` are not reachable from `apps/board` (`#format` does not export `view-shape`/words), so the same two sentences live in `apps/board/server/words/schema.ts` (`toneOneOf`, `iconName`). Duplicated wording; an export from `#format` would let it be one.
+- Not covered: `timeline` anyOf (`timelineSent`) failing on a non-text, non-integer value still reads as a card reference; T_01's write-edge normaliser refuses first, so not reachable through `write_board`.
+- Verified: schema-refusals 3/3, `npm run check` clean, `npm test` 2667 + 14 pass.
