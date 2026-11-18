@@ -1,57 +1,103 @@
-# Timeline layout
+# Timeline
 
-A container in a `timeline` layout, for a roadmap, a plan or a history. There is one line. Each node sits on
-its own dot, joined to it by a short stem, alternating above and below the line. Nodes are ordered by date
-and evenly spaced, not to scale. These pages are a proposal for the maintainer (DESIGN_02); nothing here is
-built. The content is a made-up product launch plan.
+A node may carry a `timeline` date. The dated nodes of a container share one line across its top, whatever the
+container's layout; its other nodes lay out below the line in the container's own layout (beside it, to the right,
+when the line runs down). These pages are a proposal for the maintainer; nothing here is built. The content is a
+made-up product launch plan.
+
+DESIGN_02 drew runs 1 and 2. DESIGN_01 of the Timeline set
+(`cortex-tasks/board/2026-11-18_board-layout_timeline/`) redrew every page to the rulings in its PLAN.md
+§ Decisions. **Where a page and § Decisions differ, § Decisions wins.**
+
+## Pages
+
+Open them in a browser; each makes no network request. Each page has a full-page PNG at 1440 px beside it. Each loads
+the skin's `../node-states/*.css`, then `../containers/containers.css` and `timeline.css`. A light page is its dark page
+with `light` added to the root class (`v9` or `cl`).
 
 | Page | What it shows |
 |---|---|
-| `default-timeline-dark`, `command-lens-timeline-dark` | **Run 2.** Shows:<ul><li>The date as each node's header.</li><li>Where the kind goes: A and B side by side in the default skin.</li><li>The Markdown the agent writes.</li><li>Seven events, three of which show how a body is drawn:<ul><li>"Private beta" has three entries.</li><li>"Pricing page live" has one entry, written as a bold lead.</li><li>"Public launch" holds a list.</li></ul></li><li>Two events on 3 Nov, each on its own dot, with a band behind them on the line.</li><li>The year on the line where it turns.</li><li>A link routed above the nodes.</li></ul>Light pages come later. |
-| `default-vertical-*`, `command-lens-vertical-*` | Run 1, unchanged. The vertical form for a long timeline: the line down the left and every node to its right. These pages still draw the date on the tab; run 2's header is not applied to them yet. |
+| `default-timeline-dark`, `-light`; `command-lens-timeline-dark`, `-light` | The four headers (day, month, year, time) with the key each comes from; what the agent writes (the key and plain Markdown); a launch plan of seven dated nodes (entries three ways, two nodes on one date with a band, a link, the year where it turns); the same container shape **with other nodes below the line**, once in a row and once in a grid; one dated node with a tone. |
+| `default-vertical-dark`, `-light`; `command-lens-vertical-dark`, `-light` | **Run down** (maintainer, 569C): the timeline is the container's first column (the line down the left, every dated node to its right), the container's other nodes a second column to its right, in a grid. A link from a dated node to an undated one. |
 
-Every page has a full-page PNG at 1440 px beside it. Each page loads the skin's `../node-states/*.css`, then
-`../containers/containers.css` and `timeline.css`. Standalone, no network.
+## What was ruled, as drawn
 
-The frames on these pages use the mock-ups' spacing and line colour. The build takes the real board's values
-instead (the maintainer, run 2).
+Decision numbers are PLAN.md § Decisions.
 
-## What changed in run 2 (the maintainer's review)
+- **The key** (1-3): one of four precisions, `2026`, `2026-10`, `2026-10-13`, `2026-10-13T14:30`; the precision is what is
+  written. No "week of" (a week is not a precision) and no precision field. A time is shown as written.
+- **One timeline per container, no new mode** (7): the line sits across the top in any layout; the other nodes lay out
+  below it in the container's own mode (the pages show Row and Grid on the layout button). The timeline goes only when
+  the last key goes.
+- **Dots, order, spacing** (8-10): each dated node on its own dot, joined by a stem, alternating, the first above. In
+  order by start; equal values in card-number order. Evenly spaced, one step for the whole line. The step is worked out
+  from the widths drawn (call 6): 174px for the launch plan (one node is size m, 360px), 154px where all are size s.
+- **Years and bands** (11, 12): the year at the start of the line and where it turns between two dots. A band behind
+  consecutive dots with exactly equal values ("Nov 3" and "Nov 3"; not "Nov 3" and "Nov 3 · 09:00").
+- **Links** (13): routed as between any cards: dated to dated (across), dated to undated (run down).
+- **Run down** (14, 569C; call 4): the line down the left; every dated node to its right, the stem meeting its left edge
+  37px below its top (level with the date line in the default skin; inside the plate in Command Lens). One step: the
+  tallest dated node plus `EDGE_ROW_GAP` (call 6). The other nodes in a second column to the right.
+- **Pins** (15): nothing is drawn under the line; the undated nodes start below it (beside it, run down).
+- **The header** (16): the date first, large and bold, month first, upper case: `SEP 15`, `OCT 2026`, `2027`,
+  `DEC 1 · 17:00`. No year on a day or a time. In the kind's colour, or the tone's on a toned node ("Price change
+  emails", teal).
+- **No grip** (17): the default skin's dated node has no tab and no grip; its top edge is plain and the stem meets it
+  centred. The kind is a small word at the end of the date line. The number, the disc, the change badge and the notes
+  mark stay where they are.
+- **Command Lens** (18): the plate keeps number, kind and marks and is not a handle; the date heads the body.
+- **Entries** (19): a `###` heading ("Private beta"), a paragraph opening with a bold name ("Pricing page live"), or a
+  list item opening with a bold name ("Public launch": that item is an entry, the others keep their bullets).
+- **Type** (20): date 23px (default skin: system face, 800; Command Lens: its display face, 700), title 18px, only on a
+  dated node. The undated nodes in the same container keep the board's sizes.
+- **Real values** (21): no forced 300px width; each node keeps its size tier (s 280px, m 360px). The kind colours on
+  every page are `tokens.css`'s, light and dark, and Command Lens's muted ink is `skins.css`'s, so the contrast below is
+  measured in the build's colours. The frame's spacing and the line's colour are still the mock-ups'; the build takes
+  the board's.
 
-- **The date is the node's header.** It is the first thing on the node: large and bold, uppercase, month
-  first ("SEP 15", "OCT 2026", "WEEK OF OCT 13", "2027"), in the kind's colour (a tone's, if the node has
-  one).
-  - Size: 23px. Default skin in the system font at weight 800; Command Lens in Space Grotesk at 700.
-  - Contrast, on the dark node surface: APCA Lc 48 to 64 for every kind colour. That passes 45, the tier
-    for short coloured labels.
-- **Bigger titles inside a timeline.** 17.5px at weight 750 in the default skin, 18px in Command Lens; the
-  board elsewhere uses 15px.
-- **Entries come from plain Markdown.** Inside a timeline container, a `###` heading, or a bold lead at the
-  start of a paragraph, draws as an entry: a 3px bar in the kind's colour, a bold name, then a line or two
-  of text. A list stays a list and plain text stays text. The agent learns nothing new; the container does
-  the presentation.
-- **Where the kind goes.**
-  - Default skin, B (recommended and used on the timeline): the kind tab leaves the top edge. The grip of
-    the architecture look takes its place, so the node is still dragged there, and the stem from the line
-    meets it. The kind becomes a small word at the end of the date line.
-  - Default skin, A: keeps the tab, which says the kind twice and competes with the date.
-  - Command Lens: the plate stays as it is (number, kind, marks, the handle). The date heads the body.
-- **Kept from run 1:** each node on its own dot; alternating above and below; even spacing; years on the
-  line; the same-date band; a link.
-- **Wider nodes:** 300px at a 164px step, so nodes on one side sit 28px apart.
+## Contrast of the date
 
-Not built yet, and a contract change: a node has no date today (`packages/format/src/view.ts`), and `MODES`
-has no `timeline`. The layout needs a date and its precision on the node (day, week, month or year), plus the
-new mode, behind a flag.
+APCA-W3 0.0.98G-4g; the tier for a short coloured label is **Lc 45** (D-009). The date colour on the node's surface
+(card `#ffffff` light; dark `#1a1a1c` default skin, `#1a1b1f` Command Lens). In brackets, the default skin's top tinted
+9% with the kind (`--vb-node-tint`), the worst place for the date. Command Lens has no tint. `note` is the muted ink.
 
-## Choices to confirm
+| Skin | Theme | question | finding | decision | risk | action | topic | note |
+|---|---|---|---|---|---|---|---|---|
+| default | light | 72.6 (64.6) | 66.7 (59.4) | 79.9 (70.1) | 64.7 (57.2) | 63.2 (56.3) | 76.6 (68.3) | 76.2 |
+| default | dark | 52.0 (50.1) | 58.9 (57.0) | 52.7 (50.9) | 52.5 (50.7) | 63.6 (61.4) | 48.0 (46.4) | 63.0 |
+| Command Lens | light | 72.6 | 66.7 | 79.9 | 64.7 | 63.2 | 76.6 | 81.9 |
+| Command Lens | dark | 51.8 | 58.8 | 52.6 | 52.4 | 63.5 | 47.9 | 63.6 |
 
-1. **Default skin: the kind tab gives way to the grip, with the kind as a word on the date line (B).**
-   Recommend B: the date is then the one loud thing at the top of the node. With A, a tab and a header
-   compete.
-2. **What counts as an entry.** Recommend a `###` heading, or a bold lead at the start of a paragraph. `##`
-   and `####` stay ordinary headings, so a node can still have a heading that is not an entry. The other
-   way is to treat any heading level as an entry.
-3. **Header sizes.** Recommend a 23px date and a 17.5px to 18px title, used only inside a timeline. The
-   rest of the board keeps its 15px titles, so a timeline reads as a presentation without changing other
-   nodes.
+A tone's date (the tone's ink, `--vb-tone-ink`, on the tone's body, `--vb-tone-body`; the same in both skins):
+
+| Theme | teal | blue | violet | magenta | amber | orange | green | slate |
+|---|---|---|---|---|---|---|---|---|
+| light | 71.7 | 72.8 | 73.7 | 73.8 | 73.3 | 73.5 | 72.2 | 72.9 |
+| dark | 67.2 | 65.2 | 63.7 | 62.9 | 64.8 | 63.9 | 66.8 | 65.3 |
+
+No miss. The closest is dark topic: 48.0 (46.4 on the tinted top, 47.9 in Command Lens), 1.4 above the tier. The
+tone's line colour, if it were used for the date, would read 48.9 to 58.5 (dark magenta lowest), so it also passes.
+
+## Open choices
+
+What the pages had to decide that § Decisions does not. Each has a recommendation.
+
+1. **The line's colour.** Decision 21 says the board's real value; the pages use the frame's rest colour
+   (`containers.css` `--c-rest`, decoration tier Lc 30). Recommend the build's container frame colour at rest, so the
+   line and the frame read as one, and never `--vb-wire`: in the links' grey the line would read as a link.
+2. **The dot.** 12px in the node's colour (the kind's, or the tone's line), ringed 3px in the canvas so the line
+   breaks around it. Recommend keep.
+3. **The year on the line.** Mono, 11.5px, weight 700, spaced `.14em`, in the muted ink, in a gap cut from the line
+   (as a container's title sits in its rule). Recommend keep.
+4. **Distances.** Stem 30px across and 46px run down; the other nodes 56px below the lowest timeline node (`REGION_GAP`)
+   and, run down, 72px right of the widest dated node (`COL_GAP`); the least step 120px; the line's end 30px past the
+   last dot run down. Recommend these: the gaps reuse existing layout numbers, so BE_01 adds only `STEM`, `SIDE_GAP`,
+   `MIN_STEP` and `TIMELINE_STEM_AT` (37px, the default skin's date line).
+5. **A toned node's date.** The tone's ink (`--vb-tone-ink`, Lc 62.9 to 73.8), the colour the tone makes for text;
+   the dot, the entry bar and the edge take the tone's line. Recommend the tone's ink.
+6. **The same-date band.** 10px, the line's colour at 32% into the canvas. Run down, the even step (about 300px here)
+   makes it a long bar between the two dots. Recommend keep, both forms: it marks exactly the dots that share a value.
+
+Run 2's review (the earlier version of this file) is in git history; every ruling it led to is in PLAN.md § Decisions.
+The pages are generated by a script in `temp/design-01-timeline/` (git-ignored): `gen.mjs`, `measure.mjs`, `gen.mjs`,
+then `shot.mjs`; `apca.mjs` prints the tables above.
