@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-17
-updated: 2026-11-03 (the folders' place from the paths module); 2026-10-27
+updated: 2026-11-18 (an app window's panel is the board's until clicked into, FIX_03 ruling 2: § The app window and the stage); 2026-11-03 (the folders' place from the paths module); 2026-10-27
 scope: The app card contract — an app's folder, manifest, panel protocol, saved panel state, tools module, limits, approval and states
 ---
 
@@ -382,6 +382,14 @@ thread; each reply shows there and is told to the panel (`vision-board/notificat
 drawer and all, on the whole page, and Esc brings it back; the frame is never moved in the page, so the panel never
 reloads. The frame stays `sandbox="allow-scripts"` with an opaque origin, its CSP is unchanged, and tools still need
 the person's Allow.
+
+An app window's panel is the board's until the person clicks into it (FIX_03 ruling 2, point 443): idle, its frame
+takes no pointer (`data-click-in` without `data-active`, `app-frame.css`), so hovering, the wheel and a drag over it
+pan and zoom the board as over any node (`pointer.ts` `IDLE_APP`). A click (a press that does not travel) makes it
+active (`app-frame-active.ts` `bindClickIn`): focus goes into the panel, which has the pointer and the wheel until a
+press outside it or Esc (the board's, or the panel's `ui/notifications/escape`, after which focus is on the window).
+On stage it always has them. Only the frame's `pointer-events` change, never its sandbox. Proven by
+`tests/pages/app-window.spec.ts` ("an idle app").
 
 ### A stuck panel
 

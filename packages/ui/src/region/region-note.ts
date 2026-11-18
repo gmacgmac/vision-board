@@ -14,6 +14,7 @@ import { dismissable } from '../base/layer.ts';
 import type { MarkdownOptions } from '../markdown/render.ts';
 import * as regionNoteWords from '../words/region-note.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
+import { returnFocus } from '../base/focus-return.ts';
 
 const COMMENT = 'button.vb-region-comment';
 const POP = '.vb-note-pop';
@@ -119,7 +120,7 @@ export function bindNoteParts(host: HTMLElement, markdown: () => MarkdownOptions
     e.preventDefault();
     e.stopPropagation();
     // Focus goes back to Comment, so the keyboard user is where the preview came from.
-    if (within(e.target, POP)) q(COMMENT)?.focus({ preventScroll: true });
+    if (within(e.target, POP)) returnFocus(q<HTMLElement>(COMMENT));
     step('escape');
   });
 

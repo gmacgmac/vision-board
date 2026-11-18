@@ -8,7 +8,7 @@
     "element": "vb-app-frame.ts (defineVbAppFrame, VbAppFrameElement, AppFrameWiring, readLook; light DOM; the route is packages/format APP_PANEL_PATH)",
     "styles": "app-frame.css (scoped by the tag; tokens only; the size from --vb-app-w and --vb-app-h)"
   },
-  "states": ["idle", "loading", "ready", "frozen", "focus"],
+  "states": ["idle", "loading", "ready", "frozen", "focus", "click-in idle", "click-in active"],
   "parts": {
     "vb-af-ph": "the placeholder (aria-hidden: the card's name and the frame's title say it): the app's icon in its kind colour (vb-af-icon), its title (vb-af-title) and, while loading, 'Loading…' (vb-af-wait)",
     "vb-af-frame": "the <iframe>, made by load(): sandbox=\"allow-scripts\", src /app-panels/<id>, title the app's name, referrerpolicy no-referrer; hidden until the panel says it is ready (ui/notifications/initialized) or 1.5 s after it loaded, and while frozen"
@@ -18,6 +18,8 @@
     "data-label": "the app's name: the placeholder's title and the frame's title",
     "data-w, data-h": "the panel's size in px, held to APP_SIZE (panelSize); set as --vb-app-w and --vb-app-h through the CSSOM; a change tells a ready panel (host-context-changed). With wire's fit (the appFit flag), the height a loaded panel tells (size-changed, panelHeight) takes data-h's place in --vb-app-h until the frame is removed; the host context keeps data-w and data-h",
     "data-state": "idle | loading | ready (set by the element)",
+    "data-click-in": "wired with clickIn (an app window, FIX_03 ruling 2, app-frame-active.ts): while not data-active and not on stage the frame takes no pointer, so a hover, a wheel or a drag over it is the board's",
+    "data-active": "the person clicked into the panel (a press that did not travel): the frame has the pointer and the wheel until a press outside it or Esc (the board's, or the panel's ui/notifications/escape); never set or needed on stage",
     "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame draws the focus ring unless data-pointer-focus is set",
     "data-pointer-focus": "focus came into the panel by a click (wire's focusCame said 'pointer'): no ring, as on a card; cleared when focus leaves, and the next focus by keyboard draws the ring",
     "data-frozen": "the frozen state (set by freeze(), cleared by thaw() and unload()): the panel keeps running and what it holds, its frame not painted (visibility: hidden) and the placeholder shown without 'Loading…', whatever data-state says",
@@ -25,7 +27,7 @@
     "aria-busy": "true while loading (set by the element)"
   },
   "methods": {
-    "wire({ callTool, saveState?, loadState?, look?, focusCame?, onEscape?, onLoad?, onStage?, note?, onReady?, fit? })": "once: whether the panel's own height is the frame's (fit: the appFit flag; left out, its default), the page's call_app_tool through its I/O layer, the card's saved panel state (saveState keeps a save, loadState gives the value for ui/initialize; left out, a save is refused and none is given), how focus came into the panel (left out: the ring shows), the board's look (left out: readLook, the tokens resolved through a probe, the theme from the card surface), what Esc in the panel does (left out: focus the card) and what each load of the frame's document does (the panel, or the panel route's 404 once the app went: the page reads list_apps again); with appStage, a pick the panel raises as the person's note (note), the panel ready (onReady), and on stage and back (onStage)",
+    "wire({ callTool, saveState?, loadState?, look?, focusCame?, onEscape?, onLoad?, onStage?, note?, onReady?, fit?, clickIn? })": "once: whether the panel takes the pointer only once clicked into (clickIn: an app window; left out, always); whether the panel's own height is the frame's (fit: the appFit flag; left out, its default), the page's call_app_tool through its I/O layer, the card's saved panel state (saveState keeps a save, loadState gives the value for ui/initialize; left out, a save is refused and none is given), how focus came into the panel (left out: the ring shows), the board's look (left out: readLook, the tokens resolved through a probe, the theme from the card surface), what Esc in the panel does (left out: focus the card) and what each load of the frame's document does (the panel, or the panel route's 404 once the app went: the page reads list_apps again); with appStage, a pick the panel raises as the person's note (note), the panel ready (onReady), and on stage and back (onStage)",
     "load()": "make the frame and its protocol bridge, and listen for messages; nothing while loaded, not in the page, or for a bad id",
     "unload()": "remove the frame, close the bridge, stop listening, thaw, and the height back to data-h's; focus in the panel goes back to the card; also on disconnect",
     "freeze()": "a loaded panel out of use: data-frozen and inert, the frame unpainted, the placeholder shown; focus in the panel goes back to the card; nothing while unloaded or already frozen",

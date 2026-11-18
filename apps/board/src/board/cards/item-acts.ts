@@ -7,8 +7,11 @@
 // back out (3_FE_03 ruling 6, moves.ts). With "Hide answered" on, focus goes on to the next card
 // when the card it was on is hidden by its answer. The write is slower than the keyboard: focus goes back
 // to the card only if it is still there or lost to the redraw, never from where the person moved it on.
+// A press acts on the answer the person meant (FIX_03): while a card's write is on its way, the next press reads the
+// status that write leaves, not the one drawn before it, and is sent after it, so a clear and a Tick a moment later
+// tick the card instead of clearing it twice.
 import type { ActionId, ViewNode } from '#format';
-import type { BoardState } from '#actions';
+import type { BoardState, ItemStatus } from '#actions';
 import { ACTIONS, DECIDED, statusOf } from '#actions';
 import { isPressed, offers } from '#ui';
 import type { ActFields } from '../io.ts';
@@ -43,6 +46,8 @@ export const REPEAT_MS = 400;
 export function createItemActs(d: ItemActDeps): (id: string, requested: ActionId) => Promise<boolean | undefined> {
   const now = d.now ?? (() => Date.now());
   let last = { key: '', at: -Infinity };
+  /** Per card, the status its writes on their way leave it with and the last of them, until that one lands. */
+  const ahead = new Map<string, { status: ItemStatus; done: Promise<unknown> }>();
   return async function act(id, requested) {
     const n = d.node(id);
     if (!n || n.n === undefined) return;
@@ -53,11 +58,15 @@ export function createItemActs(d: ItemActDeps): (id: string, requested: ActionId
     const repeat = key === last.key && at - last.at < REPEAT_MS;
     last = { key, at };
     if (repeat) return;
-    const action: ActionId = isPressed(requested, statusOf(d.state(), id)) ? 'reopen' : requested;
+    const before = ahead.get(id);
+    const action: ActionId = isPressed(requested, before?.status ?? statusOf(d.state(), id)) ? 'reopen' : requested;
     const def = ACTIONS[action];
     const next = d.hiding() && def.status && DECIDED.has(def.status) ? d.neighbour(id, 1) : null;
-    const done = action === 'later' || action === 'reopen' ? d.moves.status(id, action) : d.record({ action, ...d.target(id) });
-    if (!(await done)) return false;
+    const send = () => (action === 'later' || action === 'reopen' ? d.moves.status(id, action) : d.record({ action, ...d.target(id) }));
+    const done = before ? before.done.then(send, send) : send();
+    if (def.status) ahead.set(id, { status: def.status, done });
+    const ok = await done.finally(() => { if (ahead.get(id)?.done === done) ahead.delete(id); });
+    if (!ok) return false;
     if (!d.focusLeft?.(id)) d.focusCard(next && d.hidden().has(id) ? next : id);
     d.toast(`${n.n} ${action === 'reopen' ? 'cleared' : def.reply ?? def.label.toLowerCase()}`);
     return true;

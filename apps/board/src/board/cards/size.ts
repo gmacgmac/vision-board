@@ -5,6 +5,7 @@ import type { ActSize, NodeSize, ViewNode } from '#format';
 import { ACT_SIZES } from '#format';
 import type { BoardState } from '#actions';
 import { sizeTier } from '#layout';
+import { returnFocus } from '#ui';
 import type { ActFields } from '../io.ts';
 
 /** The tier a card is drawn at: the person's pick, else the agent's suggestion or the auto tier.
@@ -36,7 +37,7 @@ export function bindSizeControl(host: HTMLElement): () => void {
     const box = (e.target as HTMLElement).closest('.vb-size');
     if (!box) return;
     e.preventDefault();
-    box.closest<HTMLElement>('vb-node')?.focus({ preventScroll: true });
+    returnFocus(box.closest<HTMLElement>('vb-node'));
   };
   const events = ['focusin', 'focusout', 'mouseover', 'mouseout'] as const;
   for (const name of events) host.addEventListener(name, later);

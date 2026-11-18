@@ -5,7 +5,7 @@
 // the selection clearing; a new selection starts closed. The selection's keys work either way
 // (commands.ts). View state only, like the selection itself (selection.ts). The press outside is the
 // shared dismissable layer's (`#ui` `dismissable`).
-import { dismissable } from '#ui';
+import { dismissable, returnFocus } from '#ui';
 import type { Selection } from './selection.ts';
 
 export interface PillDeps {
@@ -45,7 +45,7 @@ export function createPill(d: PillDeps): Pill {
       if (!open) return false;
       const back = d.bar.contains(document.activeElement);
       set(false);
-      if (back) d.bar.querySelector<HTMLElement>('.vb-sb-pill')?.focus({ preventScroll: true });
+      if (back) returnFocus(d.bar.querySelector<HTMLElement>('.vb-sb-pill'));
       return true;
     },
     destroy() {

@@ -1,5 +1,5 @@
-// The conversation box's core and template (nodeEdges, FE_03, D-099 3): Enter adds a note and never sends to the agent;
-// only Cmd or Ctrl Enter (Ask now) does; Shift Enter is a new line. The box says the node, its tabs only when the node
+// The conversation box's core and template (nodeEdges, FE_03, D-099 3): Enter does the box's mode, Add note unless Ask
+// now was chosen (FIX_03 ruling 3); Cmd or Ctrl Enter is always Ask now; Shift Enter is a new line. The box says the node, its tabs only when the node
 // is in a note on several nodes, a note waiting for Send, "Waiting for the agent", and why Ask now is disabled. Its
 // field is never read-only, so changed words ask before they are discarded.
 import { test } from 'node:test';
@@ -15,13 +15,17 @@ const NOTES: NotesEntry[] = [
 ];
 
 test('fieldKey: Enter adds the note; Cmd or Ctrl Enter asks now, in the box only; Shift Enter and an IME are left alone', () => {
+  // In Ask now mode Enter asks (FIX_03 ruling 3); Cmd or Ctrl Enter still asks; outside the box the mode means nothing.
+  assert.equal(fieldKey(key({}), 'conversation', 'ask'), 'ask');
+  assert.equal(fieldKey(key({ metaKey: true }), 'conversation', 'save'), 'ask');
+  assert.equal(fieldKey(key({}), 'edit', 'ask'), 'save');
   assert.equal(fieldKey(key({}), 'conversation'), 'save');
   assert.equal(fieldKey(key({ metaKey: true }), 'conversation'), 'ask');
   assert.equal(fieldKey(key({ ctrlKey: true }), 'conversation'), 'ask');
   assert.equal(fieldKey(key({ shiftKey: true }), 'conversation'), null);
   assert.equal(fieldKey(key({ isComposing: true }), 'conversation'), null);
   assert.equal(fieldKey(key({ key: 'a' }), 'conversation'), null);
-  // Enter alone never asks; outside the box, Cmd Enter saves as it always did.
+  // Enter alone never asks in Add note mode (the default); outside the box, Cmd Enter saves as it always did.
   for (const mode of ['new', 'edit', 'conversation'] as const) assert.notEqual(fieldKey(key({}), mode), 'ask');
   assert.equal(fieldKey(key({ metaKey: true }), 'edit'), 'save');
 });
@@ -37,7 +41,8 @@ test('the box has a field: changed words ask before they go, and Add note writes
 test('bubbleView: the box says its node, its field, Add note and Ask now with their keys, and keeps a draft', () => {
   const v = bubbleView({ mode: 'conversation', kind: 'comment', number: 34, title: 'Hardware', text: 'draft', entries: NOTES });
   assert.equal(v.heading, 'Conversation on 34');
-  assert.equal(v.placeholder, 'Reply or ask about 34');
+  assert.equal(v.placeholder, 'Add a note about 34');
+  assert.equal(v.box?.active, 'save');
   assert.equal(v.primary, 'Add note');
   assert.equal(v.text, 'draft');
   assert.equal(v.box?.title, 'Hardware');
@@ -46,14 +51,20 @@ test('bubbleView: the box says its node, its field, Add note and Ask now with th
   assert.equal(v.box?.blocked, undefined);
   assert.equal(v.box?.waiting, undefined);
   const group = bubbleView({ mode: 'conversation', kind: 'comment', number: 35, numbers: [35, 28], entries: [] });
-  assert.equal(group.placeholder, 'Reply or ask about 35 and 28');
+  assert.equal(group.placeholder, 'Add a note about 35 and 28');
+  // Ask now as the mode: the field and both tooltips say Enter asks.
+  const asking = bubbleView({ mode: 'conversation', kind: 'comment', number: 34, active: 'ask' });
+  assert.equal(asking.placeholder, 'Ask the agent about 34 now');
+  assert.match(asking.box!.askTip, /^Ask now \(Enter, or Cmd or Ctrl Enter\)/);
+  assert.doesNotMatch(asking.box!.addTip, /\(Enter\)/);
+  assert.deepEqual(asking.box!.modes.save, v.box!.modes.save);
 });
 
 test('Ask now disabled: its tooltip is the reason, and the button stays focusable', () => {
   const v = bubbleView({ mode: 'conversation', kind: 'comment', number: 34, title: 'Hardware', blocked: 'Board is locked' });
   assert.equal(v.box?.askTip, 'Board is locked');
   const html = conversationTemplate(v, 34);
-  assert.match(html, /data-note-do="ask" title="Board is locked" aria-disabled="true"/);
+  assert.match(html, /data-note-do="ask" aria-pressed="false" title="Board is locked" aria-disabled="true"/);
   assert.doesNotMatch(html, /data-note-do="ask"[^>]*disabled>/);
 });
 
@@ -66,8 +77,12 @@ test('conversationTemplate: head, thread oldest first with the queued note marke
   assert.match(html, /not sent yet · goes with Send/);
   assert.equal((html.match(/vb-nb-queued/g) ?? []).length, 1);
   assert.match(html, /<p class="vb-nb-wait" role="status">Waiting for the agent<\/p>/);
-  assert.match(html, /<textarea class="vb-nb-text" aria-label="Reply or ask about 34" rows="1"/);
-  assert.match(html, /data-note-do="ask"[^>]*>Ask now<\/button><button title="Add note \(Enter\)[^"]*" type="button" class="vb-nb-btn vb-nb-primary" data-note-do="save">Add note/);
+  assert.match(html, /<textarea class="vb-nb-text" aria-label="Add a note about 34" rows="1"/);
+  assert.match(html, /class="vb-nb-btn vb-nb-ask" data-note-do="ask" aria-pressed="false"[^>]*>Ask now<\/button><button type="button" class="vb-nb-btn vb-nb-primary" data-note-do="save" aria-pressed="true" title="Add note \(Enter\)[^"]*">Add note/);
+  // Ask now as the mode: it is the primary, pressed one.
+  const asking = conversationTemplate(bubbleView({ mode: 'conversation', kind: 'comment', number: 34, title: 'Hardware', active: 'ask' }), 34);
+  assert.match(asking, /class="vb-nb-btn vb-nb-ask vb-nb-primary" data-note-do="ask" aria-pressed="true"/);
+  assert.match(asking, /class="vb-nb-btn" data-note-do="save" aria-pressed="false"/);
   assert.doesNotMatch(html, /role="tablist"/);
 });
 

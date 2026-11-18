@@ -96,6 +96,70 @@ test('Ask now (Cmd Enter) sends this node\'s note at once: one ask with its seq 
   await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
 });
 
+// FIX_03 ruling 3 (point 446): Add note and Ask now are two modes. The active one is pink (the primary style) and
+// pressed; Enter does it; pressing a button does it and makes it the mode, kept for the board through a reload (as its
+// zoom is), Add note on a board not yet set; the field says which. Light and dark: the pink is the accent fill.
+for (const theme of ['light', 'dark'] as Theme[]) {
+  test(`Add note and Ask now are two modes: the active one pink and pressed, Enter does it, kept for the board (${theme})`, async ({ page, request }) => {
+    await setTheme(page, theme);
+    const d = await drawEdges(request);
+    await open(page, d, FLAGS);
+    const [q, f] = d.n as [number, number];
+    const before = await head(page);
+    const [ask, add] = [box(page).getByRole('button', { name: 'Ask now' }), box(page).getByRole('button', { name: 'Add note' })];
+    await mark(page, q, 'notes').click();
+    await expect(add).toHaveAttribute('aria-pressed', 'true');
+    await expect(ask).toHaveAttribute('aria-pressed', 'false');
+    await expect(field(page)).toHaveAttribute('placeholder', `Add a note about ${q}`);
+    const pink = await add.evaluate((e) => getComputedStyle(e).backgroundColor);
+    const plain = await ask.evaluate((e) => getComputedStyle(e).backgroundColor);
+    expect(pink).not.toBe(plain);
+    // A press of Ask now asks and makes it the mode, at once.
+    await field(page).fill('Before noon?');
+    await ask.click();
+    await expect(ask).toHaveAttribute('aria-pressed', 'true');
+    await expect(add).toHaveAttribute('aria-pressed', 'false');
+    await expect(ask).toHaveCSS('background-color', pink);
+    await expect.poll(async () => (await lines(page, before, 'ask')).length).toBe(1);
+    await expect(field(page)).toHaveAttribute('placeholder', `Ask the agent about ${q} now`);
+    await expect(field(page)).toHaveAccessibleName(`Ask the agent about ${q} now`);
+    await expect(ask).toHaveAttribute('title', /^Ask now \(Enter/);
+    // Enter now asks.
+    await field(page).fill('And the crew?');
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => (await lines(page, before, 'ask')).length).toBe(2);
+    // Kept for the board: through a reload, and in another node's box.
+    await page.reload();
+    await mark(page, f, 'notes').click();
+    await expect(ask).toHaveAttribute('aria-pressed', 'true');
+    // A press of Add note writes the note and turns the mode back; Enter adds notes again, asking nothing.
+    await field(page).fill('Rain all day');
+    await add.click();
+    await expect(add).toHaveAttribute('aria-pressed', 'true');
+    await expect(box(page).locator('.vb-nb-queued')).toContainText('Rain all day');
+    await field(page).fill('and wind');
+    await page.keyboard.press('Enter');
+    await expect(box(page).locator('.vb-nb-queued')).toContainText('and wind');
+    expect(await lines(page, before, 'ask')).toHaveLength(2);
+    await expectNoAxeViolations(page);
+    await page.screenshot({ path: `temp/fix03/modes-${theme}.png` });
+  });
+}
+
+test('another board keeps its own mode: Add note until Ask now is pressed there', async ({ page, request }) => {
+  const [a, b] = [await drawEdges(request), await drawEdges(request)];
+  await open(page, a, FLAGS);
+  await mark(page, a.n[0]!, 'notes').click();
+  await field(page).fill('Now?');
+  await box(page).getByRole('button', { name: 'Ask now' }).click();
+  await expect(box(page).getByRole('button', { name: 'Ask now' })).toHaveAttribute('aria-pressed', 'true');
+  await open(page, b, FLAGS);
+  await page.reload(); // the same number of nodes: a fresh page is sure to show board b
+  await expect(page.locator('vb-node')).toHaveCount(4);
+  await mark(page, b.n[0]!, 'notes').click();
+  await expect(box(page).getByRole('button', { name: 'Add note' })).toHaveAttribute('aria-pressed', 'true');
+});
+
 test.describe('a failed write', () => {
   test.use({ expected: { problems: [/response 503: POST .*\/act/, /console error: Failed to load resource.*503/] } });
   test('words typed survive a redraw, a failed write and an accidental Esc', async ({ page, request }) => {

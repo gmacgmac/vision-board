@@ -4,10 +4,11 @@
 // (Cmd or Ctrl Enter) sends the tab's note at once: a node holds at most one note not yet sent (api.md 59), so words
 // typed join that note as an edit, or become the note, and then the `ask` is written for it (api.md 188), apart from
 // Send, whose other answers keep waiting. With no agent listening Ask now keeps the words as a note for the next Send
-// and says so. Words typed are never lost: a failed write keeps them in the field, and the field is kept through a
+// and says so. Enter does the box's mode, Add note unless the person pressed Ask now (FIX_03 ruling 3): the last of
+// the two pressed, kept for the board as its zoom is (`BoxDeps.mode`, ask-now.ts). Words typed are never lost: a failed write keeps them in the field, and the field is kept through a
 // redraw (vb-note-bubble `show(..., true)`). What it says: `boxView`; notes.ts opens, places and closes it.
 import type { ItemNote } from '#actions';
-import type { BubbleTab, VbNoteBubbleElement } from '#ui';
+import type { BoxAct, BubbleTab, NoteEventDetail, VbNoteBubbleElement } from '#ui';
 import { bubbleView, conversation } from '#ui';
 import type { ActFields } from '../io.ts';
 import type { Open, Shown, ViewDeps } from './note-views.ts';
@@ -26,6 +27,10 @@ export interface BoxDeps {
   looked(id: string): void;
   /** The notes on the board Ask now sent (asked.ts `askedBy`): they read "· Asked now". */
   asked(): ReadonlySet<number>;
+  /** The box's mode on the board shown, what Enter does: Add note (`save`) until the person presses Ask now. */
+  mode(): BoxAct;
+  /** The person pressed Add note or Ask now: it is the board's mode now. */
+  setMode(act: BoxAct): void;
 }
 
 /** A group of nodes, by its sorted numbers: a note on several nodes is one tab. */
@@ -64,7 +69,7 @@ export function boxView(d: ViewDeps, box: BoxDeps, o: Open): Shown | null {
   const sel = o.anchor.length > 1;
   const v = bubbleView({
     mode: 'conversation', kind: 'comment', text: o.draft, ...(sel ? { title: notesWords.cards(o.anchor.length), tabs: [] } : { number: n.n, title: n.title, tabs: tabsOf(all, n.n, key) }),
-    blocked: box.blocked(), waiting, entries: conversation(notes, replies, box.asked()), ...(o.group && { numbers: o.group.map(Number) }),
+    blocked: box.blocked(), waiting, active: box.mode(), entries: conversation(notes, replies, box.asked()), ...(o.group && { numbers: o.group.map(Number) }),
   });
   return { v, on: sel ? {} : { kind: n.kind, number: n.n } };
 }
@@ -106,6 +111,14 @@ export async function addNote(c: BoxChoiceDeps, o: Open, text: string): Promise<
   if (!(await write(c, o, words, 'save')) || !c.still(o)) return;
   c.again(o);
   c.toast(notesWords.noteOn(c.node(o.id)?.n ?? o.id, action));
+}
+
+/** Add note or Ask now in the box (`vb-note`'s `save` or `ask`): a press of either button makes it the mode first. */
+export function choose(c: BoxChoiceDeps, o: Open, { choice, text, active }: NoteEventDetail): Promise<void> | undefined {
+  if (active) c.box.setMode(active);
+  if (choice === 'save') return addNote(c, o, text);
+  if (choice === 'ask') return askNow(c, o, text);
+  return undefined;
 }
 
 /** Ask now: the tab's note, with the words typed joined to it, goes to the agent at once (the `ask`). While no message

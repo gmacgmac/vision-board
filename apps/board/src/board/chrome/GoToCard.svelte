@@ -12,6 +12,7 @@
   import * as commonWords from '../words/common.ts';
   import * as chromeGoToCardWords from '../words/chrome-go-to-card.ts';
   import { onMount } from 'svelte';
+  import { returnFocus } from '#ui';
   import { GO_DIGITS, goDigits, type GoBox } from '../find/index.ts';
 
   let { box, placement = 'board', search = false, ids = '', onedit, onenter, onclose, onpast, onstep }: {
@@ -39,7 +40,7 @@
     input.setSelectionRange(input.value.length, input.value.length);
     return () => {
       const at = document.activeElement;
-      if ((!at || at === document.body || host.contains(at)) && back?.isConnected) back.focus({ preventScroll: true });
+      if (!at || at === document.body || host.contains(at)) returnFocus(back);
     };
   });
 
