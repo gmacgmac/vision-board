@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline layout, Command Lens (dark)</title>
+<link rel="stylesheet" href="../node-states/command-lens.css">
+<link rel="stylesheet" href="../containers/containers.css">
+<link rel="stylesheet" href="timeline.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="column" viewBox="0 0 24 24"><rect x="8" y="2.5" width="8" height="5.5" rx="1.5"/><rect x="8" y="9.25" width="8" height="5.5" rx="1.5"/><rect x="8" y="16" width="8" height="5.5" rx="1.5"/></symbol>
+<symbol id="row" viewBox="0 0 24 24"><rect x="2.5" y="8" width="5.5" height="8" rx="1.5"/><rect x="9.25" y="8" width="5.5" height="8" rx="1.5"/><rect x="16" y="8" width="5.5" height="8" rx="1.5"/></symbol>
+<symbol id="timeline" viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/><path d="M6 10V5M12 14v5M18 10V5"/></symbol>
+<symbol id="widths" viewBox="0 0 24 24"><path d="M3 3v18M21 3v18"/><rect x="6" y="4" width="12" height="4" rx="1.5"/><rect x="6" y="10" width="12" height="4" rx="1.5"/><rect x="6" y="16" width="12" height="4" rx="1.5"/></symbol>
+<symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></symbol>
+</defs></svg>
+<div class="cl">
+<h1>Timeline layout</h1>
+<p class="lede">A container in the timeline layout: one line, each node on its own dot joined by a stem, alternating above and below, ordered by date and evenly spaced (not to scale). Inside a timeline the node's top tab shows its date instead of the kind word; the kind keeps its colour, on the tab and on the dot. Years sit on the line where they turn.</p>
+<div class="legend"><span class="it"><span class="m asks" style="--k:var(--dec);display:inline-block"><span class="pl" style="padding:0 12px"><span class="kd"><span class="dot"></span>Sep 15</span></span></span>day</span><span class="it"><span class="m asks" style="--k:var(--topic);display:inline-block"><span class="pl" style="padding:0 12px"><span class="kd"><span class="dot"></span>Oct 2026</span></span></span>month</span><span class="it"><span class="m asks" style="--k:var(--act);display:inline-block"><span class="pl" style="padding:0 12px"><span class="kd"><span class="dot"></span>Week of 13 Oct</span></span></span>week</span><span class="it"><span class="m asks" style="--k:var(--topic);display:inline-block"><span class="pl" style="padding:0 12px"><span class="kd"><span class="dot"></span>2027</span></span></span>year</span><span>The tab is the date, at the precision the agent gave; the kind keeps its colour.</span></div>
+<div class="sec"><b>A launch plan</b><span>Eight events. Three share 3 Nov: each has its own dot, one after another, with a band behind them on the line. "Private beta" holds a week of entries in Markdown. "Freeze the feature list" links to "2.1: offline drafts".</span></div>
+<div style="padding:24px 0 0"><div class="ct" style="width:max-content" role="region" aria-label="Atlas 2.0 launch"><div class="ct-h"><span class="hd2"><span class="grp" aria-hidden="true">⠿</span><h2>Atlas 2.0 launch</h2><span class="cnt">1/3</span></span></div><div class="tl" data-tl="h-command-lens" style="width:1258px;height:470px">
+<i class="tl-ax" style="top:216px"></i>
+<span class="tl-yr start" style="left:0;top:216px">2026</span>
+<span class="tl-yr" style="left:1061px;top:216px">2027</span>
+<i class="tl-same" style="left:548px;width:306px;top:216px"></i>
+<i class="tl-dot" style="--k:var(--topic);left:125px;top:216px"></i>
+<i class="tl-st" style="left:125px;top:186px;height:30px"></i>
+<div data-ev="0" class="m" style="--k:var(--topic);width:250px;left:0px;bottom:284px"><div class="pl"><button class="no">1</button><span class="kd"><span class="dot"></span>Jun 2026</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Discovery closes</h3><p class="tx">Twelve interviews, three jobs to be done.</p></div></div>
+<i class="tl-dot" style="--k:var(--dec);left:269px;top:216px"></i>
+<i class="tl-st" style="left:269px;top:216px;height:30px"></i>
+<div data-ev="1" data-below class="m asks" style="--k:var(--dec);width:250px;left:144px;top:246px"><div class="pl"><button class="no">2</button><span class="kd"><span class="dot"></span>Sep 15</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Freeze the feature list</h3><p class="tx">Offline drafts move to 2.1.</p></div><div class="sw"><button><svg class="ic" aria-hidden="true"><use href="#tick"/></svg>Tick</button><button><svg class="ic" aria-hidden="true"><use href="#cross"/></svg>Cross</button></div></div>
+<i class="tl-dot" style="--k:var(--act);left:413px;top:216px"></i>
+<i class="tl-st" style="left:413px;top:186px;height:30px"></i>
+<div data-ev="2" class="m" style="--k:var(--act);width:250px;left:288px;bottom:284px"><div class="pl"><button class="no">3</button><span class="kd"><span class="dot"></span>Week of 13 Oct</span><span class="sp"></span><button class="ch has" aria-label="2 notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg>2</button></div><div class="bd"><h3 class="ttl">Private beta</h3><div class="md"><ul><li><b>Mon</b> Invites go to 200 testers</li><li><b>Wed</b> First feedback review</li><li><b>Fri</b> Go or no-go for the public beta</li></ul></div></div></div>
+<i class="tl-dot" style="--k:var(--risk);left:557px;top:216px"></i>
+<i class="tl-st" style="left:557px;top:216px;height:30px"></i>
+<div data-ev="3" data-below class="m" style="--k:var(--risk);width:250px;left:432px;top:246px"><div class="pl"><button class="no">4</button><span class="kd"><span class="dot"></span>Nov 3</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Payment provider migration</h3><p class="tx">Checkout moves to the new API.</p></div></div>
+<i class="tl-dot" style="--k:var(--act);left:701px;top:216px"></i>
+<i class="tl-st" style="left:701px;top:186px;height:30px"></i>
+<div data-ev="4" class="m asks" style="--k:var(--act);width:250px;left:576px;bottom:284px"><div class="pl"><button class="no">5</button><span class="kd"><span class="dot"></span>Nov 3</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Pricing page live</h3><p class="tx">Annual plans shown first.</p></div><div class="sw"><button class="on-t"><svg class="ic" aria-hidden="true"><use href="#tick"/></svg>Ticked</button><button><svg class="ic" aria-hidden="true"><use href="#cross"/></svg>Cross</button></div></div>
+<i class="tl-dot" style="--k:var(--q);left:845px;top:216px"></i>
+<i class="tl-st" style="left:845px;top:216px;height:30px"></i>
+<div data-ev="5" data-below class="m asks" style="--k:var(--q);width:250px;left:720px;top:246px"><div class="pl"><button class="no">6</button><span class="kd"><span class="dot"></span>Nov 3</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Press briefing at 09:00 or 14:00?</h3></div><div class="sw"><button><svg class="ic" aria-hidden="true"><use href="#tick"/></svg>Tick</button><button><svg class="ic" aria-hidden="true"><use href="#cross"/></svg>Cross</button></div></div>
+<i class="tl-dot" style="--k:var(--topic);left:989px;top:216px"></i>
+<i class="tl-st" style="left:989px;top:186px;height:30px"></i>
+<div data-ev="6" class="m" style="--k:var(--topic);width:250px;left:864px;bottom:284px"><div class="pl"><button class="no">7</button><span class="kd"><span class="dot"></span>Dec 1</span><span class="sp"></span><button class="hb new">New</button><button class="ch" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">Public launch</h3><p class="tx">Store listing, blog post, webinar.</p></div></div>
+<i class="tl-dot" style="--k:var(--topic);left:1133px;top:216px"></i>
+<i class="tl-st" style="left:1133px;top:216px;height:30px"></i>
+<div data-ev="7" data-below class="m" style="--k:var(--topic);width:250px;left:1008px;top:246px"><div class="pl"><button class="no">8</button><span class="kd"><span class="dot"></span>2027</span><span class="sp"></span><button class="ch" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div><div class="bd"><h3 class="ttl">2.1: offline drafts</h3><p class="tx">Drafts sync when the network is back.</p></div></div>
+<svg class="tl-ln" aria-hidden="true"><path d="M309 410.3125V433.9375q0 10 10 10H1083q10 0 10 -10V393.15625"/><path class="ah" d="M1088 393.15625h10l-5 -9z"/></svg><span class="tl-lb" style="left:701px;top:443.9375px">moves to</span>
+</div></div></div>
+</div>
+</body>
+</html>

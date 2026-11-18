@@ -1,0 +1,46 @@
+/* A container in the timeline layout (DESIGN_02). Loaded after the skin's node-states stylesheet and
+   ../containers/containers.css (the open-corner frame). One line; each node on its own dot, joined by a stem,
+   alternating above and below; ordered by date, evenly spaced, not to scale. The node's top tab (the plate's kind word
+   in Command Lens) shows its date; the kind keeps its colour. */
+.tl{position:relative}
+/* the line: the frame's rest colour at 2px (decoration, Lc 30), with an arrowhead for the direction of time */
+.tl-ax{position:absolute;left:0;right:0;height:2px;margin-top:-1px;background:var(--c-rest)}
+.tl-ax::after{content:"";position:absolute;right:-2px;top:-5px;border:6px solid transparent;border-left:9px solid var(--c-rest);border-right:0}
+/* a year on the line, in a gap cut from it, the way a container's title sits in its top rule */
+.tl-yr{position:absolute;z-index:2;transform:translate(-50%,-50%);padding:0 8px;background:var(--cv);font:700 11.5px/20px var(--mono);letter-spacing:.14em;color:var(--mut)}
+.tl-yr.start{transform:translate(0,-50%);padding-left:0}
+/* a dot in the node's kind colour, ringed in the canvas so the line breaks around it; the stem in the line colour */
+.tl-dot{position:absolute;z-index:2;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--k);box-shadow:0 0 0 3px var(--cv)}
+.tl-st{position:absolute;width:1.5px;margin-left:-.75px;background:var(--c-rest)}
+/* several nodes on one date: a band on the line behind their dots */
+.tl-same{position:absolute;z-index:1;height:10px;margin-top:-5px;border-radius:5px;background:color-mix(in srgb,var(--c-rest) 32%,var(--cv))}
+.tl>.n,.tl>.m{position:absolute}
+.tv-ev>.tl-dot{z-index:2}
+/* a node holding several entries, in Markdown */
+.md ul{margin:6px 0 0;padding-left:16px;color:var(--ink2);font-size:12.5px}
+.md li+li{margin-top:2px}
+.md b{color:var(--ink);font-weight:650}
+/* a link between two events: a line in the in-use grey (Lc 45, it carries meaning), its label in a canvas gap */
+.tl-ln{position:absolute;inset:0;overflow:visible;pointer-events:none}
+.tl-ln path{fill:none;stroke:var(--c-hov);stroke-width:1.5}
+.tl-ln .ah{fill:var(--c-hov);stroke:none}
+.tl-lb{position:absolute;z-index:2;transform:translate(-50%,-50%);padding:0 8px;background:var(--cv);color:var(--mut);font:500 12px/20px var(--sys,Inter,system-ui,sans-serif);white-space:nowrap}
+/* the vertical form, for a long timeline: the line down the left, every node to its right */
+.tv{position:relative;padding:8px 0 8px 76px}
+.tv-ax{position:absolute;left:30px;top:18px;bottom:0;width:2px;margin-left:-1px;background:var(--c-rest)}
+.tv-ax::after{content:"";position:absolute;bottom:-2px;left:-5px;border:6px solid transparent;border-top:9px solid var(--c-rest);border-bottom:0}
+.tv-ev{position:relative}
+.tv-ev+.tv-ev,.tv-yr+.tv-ev{margin-top:40px}
+.cl .tv-ev+.tv-ev,.cl .tv-yr+.tv-ev{margin-top:28px}
+.tv-ev .tl-dot{left:-46px;top:22px}
+.tv-ev .tl-st{left:-46px;top:21.25px;width:46px;height:1.5px;margin:0}
+.cl .tv-ev .tl-dot{top:20px} .cl .tv-ev .tl-st{top:19.25px}
+.tv-yr{position:relative;height:20px;margin:30px 0 -10px -46px;transform:translateX(-50%);width:max-content;padding:4px 0;background:var(--cv);font:700 11.5px/20px var(--mono);letter-spacing:.14em;color:var(--mut)}
+.tv-yr:first-of-type{margin-top:0}
+.tl-lb.side{transform:translate(10px,-50%);padding:2px 0}
+/* several nodes on one date: a band down the line from each dot to the next one's */
+.tv-ev.run::after{content:"";position:absolute;z-index:1;left:-51px;top:17px;bottom:-68px;width:10px;border-radius:5px;background:color-mix(in srgb,var(--c-rest) 32%,var(--cv))}
+.cl .tv-ev.run::after{top:15px;bottom:-56px}
+.legend{display:flex;flex-wrap:wrap;gap:14px 40px;align-items:center;margin:0 0 44px;color:var(--mut);font-size:12.5px}
+.legend span.it{display:inline-flex;align-items:center;gap:10px}
+.v9 .legend .kind{position:static;transform:none}

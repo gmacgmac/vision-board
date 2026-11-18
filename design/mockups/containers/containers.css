@@ -1,0 +1,91 @@
+/* Containers with open corners (DESIGN_02). Loaded after ../node-states/default.css or command-lens.css, whose node
+   styles it reuses as they are. A container is four rules that stop short of its corners: the top one broken by the
+   title, as today. Pages set class "v9" / "cl" (dark) or add "light". No network: fonts fall back. */
+
+/* Line colours. --c-rest: the frame at rest, the decoration tier (APCA Lc 30). Dark: today's --vb-line-contrast
+   (#4a4a52) reads Lc 11.7 on the canvas, so the open frame proposes the next steps up its grey (Lc 31.8 / 32.5).
+   --c-hov: in use, a step brighter (Lc 45, it says "this one"). --c-sel: selected, the reading ink. --c-fresh: the
+   fresh teal, today's --vb-state-fresh (state: Lc 45 and over). --c-drop: the drop look, in ink (node-states). */
+.v9{--cv:var(--ground);--c-rest:#7a7a83;--c-hov:#9696a0;--c-sel:var(--ink2);--c-fresh:#2dd4bf;--c-drop:var(--ink2);--c-cr:14px;--c-font:var(--mono)}
+.v9.light{--c-rest:#b5b5bd;--c-hov:#9a9aa2;--c-fresh:#0d9488}
+.cl{--cv:var(--bg);--c-rest:#7a7c84;--c-hov:#9698a0;--c-sel:var(--ink2);--c-fresh:#2dd4bf;--c-drop:var(--ink2);--c-cr:6px;--c-font:var(--mono);--sunk:var(--surface2);--line3:var(--line)}
+.cl.light{--c-rest:#b7b3a8;--c-hov:#9a968b;--c-fresh:#0d9488}
+.v9 .upd-t{color:var(--upd)} .cl .upd-t{color:var(--upd)}
+
+/* The frame. --g is the open corner: the rules stop --g short of each corner. 28px = REGION_PAD, so the top and
+   bottom rules span exactly the content and the side rules span the frame minus its padding. */
+.ct{--g:28px;--lw:1.5px;--ln:var(--c-rest);position:relative;box-sizing:border-box;padding:66px 28px 28px}
+.ct::before,.ct::after{content:"";position:absolute;pointer-events:none}
+.ct::before{inset:0 var(--g);border-block:var(--lw) solid var(--ln)}
+.ct::after{inset:var(--g) 0;border-inline:var(--lw) solid var(--ln)}
+.ct.g14{--g:14px} .ct.g56{--g:56px}
+/* "sides a third": the side rules only across the middle third */
+.ct.third::after{inset:33.3% 0}
+
+/* The title line: centred on the top rule, in a gap cut from it (its canvas-coloured box), one size at any zoom. */
+.ct-h{position:absolute;top:calc(var(--lw) / 2);left:50%;z-index:3;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;height:28px;padding:0 10px;background:var(--cv);white-space:nowrap}
+.ct-h .hd2{display:flex;align-items:center;gap:8px;height:24px;padding:0 6px;border-radius:6px}
+.ct-h h2{margin:0;font:700 15px/1 var(--c-font);letter-spacing:.22em;text-transform:uppercase;color:color-mix(in srgb,var(--c-rest) 20%,var(--ink))}
+.ct-h .cnt{font:500 12px/1 var(--sys,Inter,system-ui,sans-serif);color:var(--mut)}
+.cl .ct-h .cnt{font-family:Inter,system-ui,sans-serif}
+.ct-h .grp{display:none;font:700 14px/1 var(--mono);color:var(--ink)}
+.ct-h .pill{padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--c-fresh) 12%,var(--surface));color:var(--c-fresh);font:700 11px/1.2 var(--sys,Inter,system-ui,sans-serif)}
+.cl .ct-h .pill{border-radius:3px;font-family:var(--mono);letter-spacing:.04em}
+
+/* The rail (toolRail, railOnHover): across the left side rule, from where that rule starts. Shown only in use. */
+.rail{position:absolute;left:-20px;top:var(--g);z-index:3;display:flex;flex-direction:column;width:30px;padding:2px;border:1px solid color-mix(in srgb,var(--c-rest) 55%,var(--line2));border-radius:10px;background:var(--surface);box-shadow:0 0 0 2px var(--cv)}
+.cl .rail{border-radius:4px}
+.rail button{display:grid;place-items:center;width:24px;height:24px;margin:1px 0;padding:0;border:0;border-radius:7px;background:none;color:var(--mut)}
+.cl .rail button{border-radius:3px}
+.rail button.on{background:color-mix(in srgb,var(--c-rest) 18%,var(--sunk));color:var(--ink)}
+.rail .ic{width:15px;height:15px;stroke-width:1.9}
+.rail .dv{height:1px;margin:3px 2px;background:var(--line3)}
+
+/* States */
+/* In use (hovered, or holding focus): a step brighter, the rail shown; the handle tinted under the pointer. */
+.ct.hov{--ln:var(--c-hov)}
+.ct .hd2.tint{background:var(--sunk)}
+.ct .hd2.tint .grp{display:inline}
+.ct .hd2.tint h2{color:color-mix(in srgb,var(--c-rest) 20%,var(--ink))}
+/* Selected: the reading ink, 2px, the title in full ink. Corners stay open. */
+.ct.sel{--ln:var(--c-sel);--lw:2px}
+.ct.sel .ct-h h2{color:var(--ink)}
+/* New and updated: the four rules take the fresh teal; the pill follows the count. */
+.ct.fresh{--ln:var(--c-fresh)}
+/* Drop target: the corners close (one rounded, dashed line in ink) and a soft fill, while a node is over it. */
+.ct.drop::before{inset:0;border:var(--lw) dashed var(--c-drop);border-radius:var(--c-cr);background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.ct.drop::after{display:none}
+.ct.drop .ct-h h2{color:var(--ink)}
+/* Locked: nothing at rest; in use the rail's controls are paused (quiet, not-allowed); a press says why. */
+.rail.paused button{opacity:.45;cursor:not-allowed}
+.rail.paused button.lk{opacity:1;background:var(--surface);outline:2px solid var(--line3);outline-offset:-2px;color:var(--ink)}
+.ct .tip{z-index:9}
+
+/* Page furniture */
+.cs{display:grid;grid-template-columns:repeat(2,620px);gap:64px 56px;padding-left:24px;align-items:start}
+.cs3{display:grid;grid-template-columns:repeat(3,410px);gap:40px 36px;padding-left:24px;align-items:start}
+.ct .row2{display:flex;gap:24px;align-items:flex-start}
+.ct .col{display:flex;flex-direction:column;gap:40px}
+.cl .ct .col{gap:30px}
+.board{display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start;padding:20px 0 0 24px}
+.far40{zoom:.4}
+.far40 .ct-h,.far40 .rail{zoom:2.5}
+.tiers{width:100%;max-width:1100px;margin-top:20px;border-collapse:collapse;font-size:12.5px;color:var(--ink2)}
+.tiers th{padding:6px 10px 6px 0;border-bottom:1px solid var(--line2);color:var(--mut);font-weight:600;text-align:left}
+.tiers td{padding:6px 10px 6px 0;border-bottom:1px solid var(--line2)}
+.tiers .lsw{display:inline-block;width:28px;height:0;border-top:2px solid;vertical-align:middle;margin-right:8px}
+.note2{max-width:1100px;margin-top:24px;padding:12px 16px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink2);font-size:13px}
+.cl .note2{border-radius:4px}
+.lede2{margin:-16px 0 34px;max-width:1000px;color:var(--mut);font-size:13px}
+.cl .cs .cap,.cl .cs3 .cap{margin-bottom:36px}
+.cl .sec{margin-top:72px}
+.cl .sec:first-of-type{margin-top:0}
+/* Today's closed frame, drawn only for comparison on the board page */
+.v9 .ct.today{--ln:#4a4a52} .v9.light .ct.today{--ln:#b5b5bd} .cl .ct.today{--ln:#4a4c53} .cl.light .ct.today{--ln:#b7b3a8}
+.ct.today::before{inset:0;border:var(--lw) solid var(--ln);border-radius:var(--c-cr)}
+.ct.today::after{display:none}
+.ct .grid2{display:grid;grid-template-columns:repeat(2,auto);align-items:start;gap:40px 24px}
+.cl .ct .grid2{gap:30px 24px}
+.farrow{display:flex;gap:80px;align-items:flex-start;padding-left:24px}
+.farrow figure{margin:0}
+.farrow figcaption{margin-top:16px;color:var(--mut);font-size:12.5px}
