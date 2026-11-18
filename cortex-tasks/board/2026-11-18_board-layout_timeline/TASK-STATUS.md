@@ -133,7 +133,15 @@ Waves 3 to 5 hold one task each; a task's *Files to modify* is its ownership. No
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
-| | | | | |
+| `apps/board/src/board/canvas/layout-cache.ts`: `nodeKey` must include `n.timeline`; `timelineWidths` goes into the cache's inputs and key | BE_01 | a changed date lays the container out again | FE_02 | Open |
+| `apps/board/src/board/canvas/draw.ts`: pass `timelineWidths` as `timelineWidthsOf(direction, r.widths, widths.get(r.id))` (the page's `widths` is already resolved with the mode's default) | BE_01 | the person's choice told from the default | FE_02 | Open |
+| `apps/board/src/board/links/wires.ts`: a lane band may carry `Lane.x` (a timeline run down beside it); draw from there | BE_01 | lanes beside a timeline | FE_02 | Open |
+| Call `applyTimelineLook` after injecting `timelineMarkup` (dot colours through CSSOM, the page's CSP) | FE_01 | the dots' colours | FE_02 | Open |
+| `docs/specification/components.md`: the node's half (`data-timeline`, `.vb-node-date`, `timelineLabel`, `datedOf`, `MarkdownOptions.entries`, the `timeline` pattern) | FE_01 | docs | FE_02 | Open |
+| Entries: `**Name:**` (colon inside the bold) keeps the colon in the name; drop one trailing `:` from the name as call 9 drops a leading one (a failing test first; `packages/ui/src/markdown/entries.ts`) | FE_01 notes | a common model habit | FE_02 | Open |
+| `tests/pages/gallery.spec.ts`: count only patterns whose flag is on by default | FE_01 | accepted by the orchestrator | — | Done |
+| `apps/board/tests/plugin-build.test.ts` `FILES` gains `references/timeline.md` | T_02 | the plugin build test | orchestrator | Done |
+| Budgets at the wave-2 merge: page 204.6 KB (measured 204.5), plugin JS 198,600 (measured 198,546); CSS 25,550 (measured 25,519) | BE_01, FE_01 | temporary, never blocking | orchestrator | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
