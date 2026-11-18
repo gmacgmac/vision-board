@@ -61,6 +61,7 @@ import { flowSection } from './flow-section.ts';
 import { layoutControlSection } from './layout-control-section.ts';
 import { commandLensSection } from './command-lens-section.ts';
 import { appWindowSection } from './app-window-section.ts';
+import { timelineSamples } from './timeline-section.ts';
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
@@ -73,6 +74,8 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   region: regionSamples,
   // The compact bar and its pill behind their flag (stage5-follow-ups FE_02); off, today's bar.
   'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags())),
+  // Shown with the timeline flag only (its pattern.json `flag`), so the gallery without it is unchanged (D-105).
+  timeline: timelineSamples,
 };
 
 const patterns = PATTERNS.filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));

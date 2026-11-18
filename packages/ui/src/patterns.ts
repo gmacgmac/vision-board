@@ -10,6 +10,7 @@ import node from './node/pattern.json' with { type: 'json' };
 import noteBubble from './note-bubble/pattern.json' with { type: 'json' };
 import region from './region/pattern.json' with { type: 'json' };
 import selectionBar from './selection-bar/pattern.json' with { type: 'json' };
+import timeline from './timeline/pattern.json' with { type: 'json' };
 
 /** What a pattern says about itself (its pattern.json). */
 export interface PatternInfo {
@@ -28,4 +29,4 @@ export interface PatternInfo {
   flag?: FlagName;
 }
 
-export const PATTERNS: readonly PatternInfo[] = [appFrame, base, imageView, markdown, node, noteBubble, region, selectionBar] as PatternInfo[];
+export const PATTERNS: readonly PatternInfo[] = [appFrame, base, imageView, markdown, node, noteBubble, region, selectionBar, timeline] as PatternInfo[];

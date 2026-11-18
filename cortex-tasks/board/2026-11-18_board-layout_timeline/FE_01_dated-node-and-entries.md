@@ -133,22 +133,133 @@ and keep the type exactly as T_01 left it (a change goes in `REQUESTS`).
 
 ## Implementation Notes
 
-_To be completed by agent after task completion._
-
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-18 23:05  
 
 ### Changes Made
-- 
+- **Header** (`packages/ui/src/node/node-date.ts`, new): `timelineLabel(value)` → `{ short, full, datetime }` from
+  `#format` `timelinePrecision` (`Oct 13` / "13 October 2026", `Oct 2026`, `2026`, `Oct 13 · 14:30` / "13 October 2026,
+  14:30"); `datedOf(n)` (a stored date on any kind but `app`; the one test the template, the element and entries use).
+  Month names, separator and full forms are words in `packages/ui/src/words/node.ts` § node-date.ts (no new words file).
+- **Node** (`node-edges.ts`): `handle()` draws nothing on the edges for a dated node (plate unchanged); `heading()` hands
+  a dated node to `datedHeading()`: `<p class="vb-node-date"><time datetime><span aria-hidden>short</span><span
+  class="vb-visually-hidden">full</span></time>[<span class="vb-node-date-kind">Kind</span> on the edges]</p>` then the
+  title; an icon node keeps its tile (beside the title) and loses the kick. `node-template.ts` passes `entries: true` to
+  the renderer for a dated node. `vb-node.ts` sets `data-timeline` (the stored value) in `render()`, cleared there when a
+  version drops the key. `node-edges-apply.ts` `applyTone` takes an SVG element too.
+- **Look** (`node-edges.css`, `node-plate.css`): date at `--vb-text-date`, `--vb-font-display`, 800 (edges) / 700
+  (plate), colour `--vb-node-date-ink` = the kind's (dark: lifted to `--vb-node-date-l-dark`) or `--vb-tone-ink` on a
+  toned node; the kind word shares `.vb-node-kick`'s rule; the line wraps on a narrow node; the title at
+  `--vb-text-title-dated`; no top line on a dated node; the plate of a dated node has `cursor: default`.
+- **Entries** (`markdown/entries.ts` new `boldLead`; `render.ts` `MarkdownOptions.entries`, `entryDoc`, `entryPara`,
+  `entryItem`, `endsEntry`; `markdown.css` `.vb-md-entry`, `.vb-md-entry-name`): call 9 as written. Off, the output is
+  byte for byte the same.
+- **Timeline pattern** (`packages/ui/src/timeline/`, new): `timelineMarkup(drawing, look)` (`<g class="vb-timeline"
+  aria-hidden>`: bands, the line stopping at the arrow's base, the arrow as a filled path, stems, years
+  (`text-anchor` start at the line's start across, else middle), dots with `data-node`, `data-side`, `data-kind`,
+  `data-tone`), `TIMELINE_ARROW` {9, 6}; `applyTimelineLook(root)` sets each dot's `--vb-kind` and tone through CSSOM
+  (reuses `applyTone`); `timeline.css` (tokens only; the year cut from the line by a canvas halo, `paint-order:
+  stroke`); `pattern.json` (`flag: timeline`, the 12 states). Registered in `patterns.ts`, exported from `index.ts`, CSS
+  in `styles.css`.
+- **Tokens** (`tokens.css`): see the diff below. **Contrast pairs** (`tests/plugin/token-contrast.spec.ts`): the date in
+  each kind on card and sunken, plain and tinted, Lc 45; `--vb-timeline-line` and each kind's dot on the canvas, Lc 30;
+  in the tone loop, the tone's ink on the tone's body (solid and see-through), Lc 45. All pass, both skins, light and dark.
+- **Gallery** (`apps/board/src/gallery/timeline-section.ts`, new; `main.ts` `SAMPLES.timeline`): the pattern's section
+  (shown only with `?flags=timeline`): both skins, the four headers, kinds, a tone, two icon nodes, answered (ticked,
+  crossed) and waiting, a proposal, a long title, entries of each form; the line across and down from hand-made geometry.
+- **Tests** (`packages/ui/tests/`): `node-date.test.ts` (every month, every form, `datedOf`), `node-dated.test.ts` (both
+  skins, icon, app card, entries on/off, an invalid date counts as none), `markdown-entries.test.ts` (each form, each
+  separator, mixed lists, `##`/`####`/quote/table/code untouched, details, escaping, off byte for byte),
+  `timeline-template.test.ts` (across with a band and a year turn; down; escaping; the pattern's flag and states).
+  `tests/pages/gallery.spec.ts`: the section count skips a pattern whose flag is off by default (see Deviations).
+- **Byte for byte**: before any change, every node of the four fixture ledgers through `nodeTemplate` in both skins with
+  Markdown options on and off, plus each body through `renderMarkdown` (981 renders, `temp/fe-01/baseline.ts`); after
+  the changes, identical (`cmp`).
+
+`tokens.css` diff (for the wave-2 gate):
+
+```diff
+@@ :root, after the tone numbers
++  /* A dated node and its container's timeline (D-105; ...) */
++  --vb-text-date: 23px;
++  --vb-text-title-dated: var(--vb-text-xl);
++  --vb-node-date-l-dark: 0.72;
++  --vb-timeline-w: 2px;
++  --vb-timeline-stem-w: 1.5px;
++  --vb-timeline-dot: 12px;
++  --vb-timeline-ring: 3px;
++  --vb-timeline-band: 10px;
++  --vb-timeline-band-mix: 32%;
++  --vb-timeline-year: 11.5px;
++  /* An entry in a dated node's text (D-105 5): the bar at its left, in the node's colour. */
++  --vb-md-entry-bar: 3px;
+@@ :root, .vb-board, after --vb-wire
++  /* A container's timeline (...): the container frame's colour at rest; in dark, halfway to the muted ink (...) */
++  --vb-timeline-line: light-dark(var(--vb-line-contrast), color-mix(in srgb, var(--vb-line-contrast) 50%, var(--vb-ink-subtle)));
+@@ the tone block
+-vb-node[data-vb-tone] {
++vb-node[data-vb-tone], .vb-timeline-dot[data-vb-tone] {
+-vb-node[data-vb-tone='slate'] { --vb-tone-strength: var(--vb-tone-strength-slate); }
++vb-node[data-vb-tone='slate'], .vb-timeline-dot[data-vb-tone='slate'] { --vb-tone-strength: var(--vb-tone-strength-slate); }
+```
+
+Measured (APCA-W3 0.0.98G-4g): line on the canvas Lc 33.7 / 35.0 (default light / dark), 32.6 / 34.5 (Command Lens);
+the frame's own dark grey `--vb-line-contrast` reads 11.7, so the line takes it only in light. Date, dark topic on its
+tinted sunken top: 44.8 unlifted, 46.9 with the 0.72 floor; every other kind and skin 50 or more (light 56 or more);
+tone ink on tone body 62.9 or more.
+
+### Measured weights (for the orchestrator; budget files not edited)
+- Board page: 207,912 B gzip = **203.0 KB** (budget 201.6; T_01 measured 201.5).
+- Plugin `view/board.js`: 670,928 B, **196,993 gzip** (budget 195,900; T_01 195,849).
+- Plugin `view/board.css`: 147,898 B, **25,519 gzip** (budget 24,950; FIX_06 24,901).
+
+### Verification
+- `npm run check` 0 errors; `npm run gen -- --check` current; `npm run verify`: 2 failures, both orchestrator-owned (page
+  weight 203.0 KB > 201.6; `modules.md` needs `npm run map`); `npm test` 2,686 of 2,687 pass, the one failure the plugin
+  `view/board.js` budget.
+- Pages (`VB_TEST_PORT=7910`): `gallery`, `node-edges`, `command-lens`, `markdown-more`, `big-titles`: 53 passed, no
+  screenshot renewed. `npm run test:plugin`: 116 passed (contrast pairs included).
+- axe (the page specs' WCAG tags) on the gallery's timeline section, `?flags=timeline`, light and dark: clean
+  (`temp/fe-01/axe.mjs`). WebKit: the dot's CSS `r`, the lifted date and the tone dot draw the same as in Chromium.
+- Looked at in a browser, light and dark, both skins, against the pages.
 
 ### Issues & Resolutions
 - 
 
+### Issues & Resolutions
+- **Dark topic missed Lc 45 by 0.2** on the default skin's tinted top (topic sits on the sunken surface; DESIGN_01's
+  table measured the card). Fixed by lightness within its hue, scoped to the date: `--vb-node-date-l-dark` 0.72, an OKLCH
+  floor in dark, the plate's lift pattern (`--vb-plate-mark-l`). `--vb-kind-topic` itself is unchanged, so no other
+  screen and no screenshot moves.
+- **The line's colour**: the frame's `--vb-line-contrast` passes Lc 30 in light only (dark 11.7). The new
+  `--vb-timeline-line` keeps the frame's colour in light and goes halfway to the muted ink in dark (DESIGN_01's run-1
+  dark value was a hand-picked #7a7a83; this is the same step derived per skin and per host).
+- **Printed states move screenshots**: the gallery prints each pattern's `states` and `entry`; adding the dated and
+  entry states there grew the markdown and node sections and shifted every later section by a fraction of a pixel (14
+  screenshot failures). The dated node's and the entries' states went under `flaggedStates.timeline` instead (the node
+  pattern's precedent for a flag's states), the markdown `entry` string as it was; the five specs then passed with no
+  screenshot renewed.
+- An icon node with a time header did not fit the date beside the tile at 248px: the date line now spans the content
+  and wraps the kind's word under it when short of room; the tile sits beside the title.
+
 ### Caught Beyond the Brief
-- None
+- The default skin's display face is vendored at weight 600 only (`fonts.css`, Bricolage Grotesque), so the date's 800
+  draws at 600 there (no synthesis: 600 counts as bold). The pages drew it in the system face at 800. Decision 20 says the
+  display face, which is what is built; a heavier cut is a font decision for the maintainer.
+- A bold lead that ends in a colon inside the bold (`**Name:** text`) keeps the colon in the name (call 9 drops a
+  separator only from the rest). Common model habit; worth a line in T_02's reference or a ruling.
+- Command Lens's entry name uses the text face like the default skin's (the pages drew it in Space Grotesk 600, 15px);
+  the bar's ends are square in both skins (the pages rounded the default's). Both are one-line CSS changes if wanted.
+- `--vb-line-contrast` (the container frame at rest) reads Lc 11.7 on the dark canvas: under the decoration tier today,
+  on every board. Not in scope; noted.
 
 ### Deviations from Plan
-- None
+- `tests/pages/gallery.spec.ts` (outside my File Ownership row): its first test counted every pattern in `PATTERNS`; a
+  pattern behind a flag that is off by default (the `timeline` pattern, as the task's pattern.json requires) has no
+  section, so the test would fail. Changed to count the patterns whose flag is on by default (`SHOWN`, 4 lines). This is
+  how the task's step 8 asked to "follow" the spec's treatment of a flagged pattern; the orchestrator should confirm.
+- Tests were not all written before the code: the byte-for-byte baseline was captured first (step 1's intent), the unit
+  tests next to each piece.
 
 ---
 

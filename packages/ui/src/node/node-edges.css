@@ -161,7 +161,7 @@ vb-node[data-edges] .vb-mark-notes:not([data-group]) .vb-mark-group, vb-node[dat
    the icon in a 40px tile at the right of the body, on the disc's vertical line. */
 vb-node[data-edges] .vb-node-head { display: flex; align-items: flex-start; gap: var(--vb-space-3); }
 vb-node[data-edges] .vb-node-heading { flex: 1; min-width: 0; display: grid; gap: 3px; }
-vb-node[data-edges] .vb-node-kick {
+vb-node[data-edges] :is(.vb-node-kick, .vb-node-date-kind) {
   margin: 0; font: 700 10.5px/1.5 var(--vb-font-text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--vb-kind);
 }
 vb-node[data-edges] {
@@ -173,6 +173,25 @@ vb-node[data-edges] .vb-node-tile {
 }
 vb-node[data-edges][data-vb-tone] .vb-node-tile { background: var(--vb-tone-tile); color: var(--vb-tone-ink); }
 vb-node[data-edges] .vb-node-tile-icon { width: var(--vb-tile-icon); height: var(--vb-tile-icon); }
+
+/* A dated node (D-105 4, decisions 16-20; data-timeline): the date is its header, the loudest thing on it, in the skin's
+   display face at --vb-text-date, month first and upper case, in the kind's colour (in dark at no less than
+   --vb-node-date-l-dark, so every kind keeps Lc 45 on its tinted top) or, on a toned node, the tone's ink. On the edges
+   it has no tab and no grip (its place is its date) and its kind is a small word at the end of the date line; a plate
+   keeps the kind (node-plate.css). Its title is a step larger. An undated node is untouched. */
+vb-node[data-edges][data-timeline] {
+  --vb-node-date-ink: light-dark(var(--vb-kind), oklch(from var(--vb-kind) max(l, var(--vb-node-date-l-dark)) c h));
+}
+vb-node[data-edges][data-timeline][data-vb-tone] { --vb-node-date-ink: var(--vb-tone-ink); }
+/* Its top edge is plain (the pages, decision 17): no icon node's top line where the grip was. */
+vb-node[data-edges][data-timeline]::before { content: none; }
+vb-node[data-edges] .vb-node-date {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; margin: 0; min-width: 0;
+  font: 800 var(--vb-text-date)/1.1 var(--vb-font-display); letter-spacing: 0.01em; text-transform: uppercase; color: var(--vb-node-date-ink);
+}
+vb-node[data-edges] .vb-node-date time { white-space: nowrap; }
+vb-node[data-edges] .vb-node-date .vb-node-date-kind { margin-left: auto; color: var(--vb-node-date-ink); }
+vb-node[data-edges][data-timeline] .vb-node-title { font-size: var(--vb-text-title-dated); line-height: 1.25; }
 
 /* The history box with its edges holds the stepper on top (planner's call 9) and opens from the badge, under it. */
 vb-node[data-edges] .vb-card-pop[data-pop='history'] .vb-node-steps { margin: 0; }

@@ -37,6 +37,10 @@ export * from './zoom-rules.ts';
 export * from './selection-bar/selection-bar-template.ts';
 export type { CommandEventDetail, ToggleEventDetail, VbSelectionBarElement } from './selection-bar/vb-selection-bar.ts';
 export { renderMarkdown, MARKDOWN_MAX } from './markdown/render.ts';
+// A dated node's header and a container's timeline (D-105).
+export * from './node/node-date.ts';
+export * from './timeline/timeline-template.ts';
+export { applyTimelineLook } from './timeline/timeline-apply.ts';
 export { imageNote, IMAGE_NOTE } from './markdown/image.ts';
 export type { MarkdownOptions } from './markdown/render.ts';
 export { bindHoverTip } from './tip/hover-tip.ts';

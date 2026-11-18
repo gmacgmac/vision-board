@@ -6,7 +6,7 @@ import type { NodeMarks } from './node-marks.ts';
 import { toneView } from './node-marks.ts';
 
 /** Set the node's tone (decision 17): `data-vb-tone` and `--vb-tone-h`, or neither (no tone, or not one). */
-export function applyTone(el: HTMLElement, tone: unknown): void {
+export function applyTone(el: HTMLElement | SVGElement, tone: unknown): void {
   const t = toneView(tone);
   if (t) {
     el.dataset.vbTone = t.attr;

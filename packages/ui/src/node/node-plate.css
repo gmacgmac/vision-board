@@ -103,6 +103,11 @@ vb-node[data-marks-at='plate'] .vb-node-content { padding: calc(var(--vb-space-3
 vb-node[data-marks-at='plate'] .vb-node-tile { margin-right: 0; border: 1px solid var(--vb-line); }
 vb-node[data-marks-at='plate'] .vb-node-tags li { border-radius: 3px; font-family: var(--vb-font-label); }
 
+/* A dated node (D-105 4, decision 18): the plate keeps the number, the kind and the marks but is not a handle (its place
+   is its date); the date heads the body, in the skin's display face at its own weight. */
+vb-node[data-marks-at='plate'][data-timeline] .vb-node-plate { cursor: default; }
+vb-node[data-marks-at='plate'] .vb-node-date { font-weight: 700; letter-spacing: 0; }
+
 /* The switch along the bottom: Tick | Cross, one press each; the lit half fills green or red, and pressing it again
    clears the answer (item-acts.ts). A proposal outlines the proposed half, dashed; a write on its way turns its icon
    into a spinner; one that failed rings it in the error red with "!"; a press on a locked board shows a lock. */

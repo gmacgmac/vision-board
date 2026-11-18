@@ -44,7 +44,7 @@ tracker: cortex-tasks/tracker.md#N53
 | 1 | T_01 | 1 | strong | no | Principal API engineer — a value has one spelling in the ledger; a model's habit is normalised at the edge and never stored, and a refusal says exactly what would have been accepted. | [Contract first](./T_01_contract.md) | Completed | Contract, write edge, format 21 landed; board.js budget +349 gzip (not raised); `npm run map` needed |
 | 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Completed | 8 pages + PNGs, README; 6 open choices for the design gate |
 | 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Pending | |
-| 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Pending | |
+| 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Completed | Date header, entries, `timeline` pattern, tokens (diff in task notes); budgets over (page 203.0 KB, board.js 196,993, board.css 25,519); `npm run map` needed |
 | 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Pending | |
 | 5b | FIX_01 | 2 | standard | no | — | [A refusal names what was wrong (M84)](./FIX_01_anyof-refusal-wording.md) | Pending | Rolled in at the design gate |
 | 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Pending | |
@@ -167,8 +167,16 @@ _Status:_ Pending
 _Notes:_ 
 
 ### FE_01: The dated node, entries and the line's drawing
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-18 23:05)  
+_Notes:_ `#ui` `node-date.ts` (`timelineLabel`, `datedOf`; words in `words/node.ts`), `data-timeline` on `vb-node` (the
+stored date), no tab/grip and the kind word on the date line (edges), the plate kept with `cursor: default` (Command
+Lens), `MarkdownOptions.entries` (`.vb-md-entry`, `.vb-md-entry-name`), the `timeline` pattern (`timelineMarkup(drawing,
+look)`, `applyTimelineLook(root)`: FE_02 calls it after setting the markup, as dot colours go in through CSSOM;
+`TIMELINE_ARROW` 9 by 6). Tokens: `--vb-text-date`, `--vb-text-title-dated`, `--vb-node-date-l-dark` (dark topic missed
+Lc 45 by 0.2), `--vb-timeline-*`, `--vb-md-entry-bar`, `--vb-timeline-line` (the frame's colour in light, halfway to the
+muted ink in dark). Undated markup byte for byte (981 renders). `tests/pages/gallery.spec.ts` changed outside the row (a
+flagged pattern's section is absent when its flag is off). Dated and entry states sit under `flaggedStates.timeline`, as
+printed `states` move gallery screenshots. Measured: page 203.0 KB, `view/board.js` 196,993, `view/board.css` 25,519 gzip.
 
 ### T_02: The skill and its evals
 _Status:_ Pending  

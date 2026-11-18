@@ -130,6 +130,25 @@
   --vb-tone-ink-l-light: 0.5; --vb-tone-ink-c-light: 0.085; --vb-tone-ink-l-dark: 0.8; --vb-tone-ink-c-dark: 0.1;
   --vb-tone-edge-l-light: 0.86; --vb-tone-edge-c-light: 0.04; --vb-tone-edge-l-dark: 0.4; --vb-tone-edge-c-dark: 0.06;
 
+  /* A dated node and its container's timeline (D-105; the timeline set's FE_01). Larger type only on a dated node
+     (decision 20): its date and its title. The date is its kind's colour: in dark at no less than this OKLCH lightness,
+     so dark topic, on its tinted sunken top, keeps the label tier (Lc 44.8 unlifted, 46.9 lifted; no other kind moves
+     visibly: question sits at 0.720). The line drawn across a container (or down it): its weight, its stems', the dot
+     (a diameter, ringed in the canvas so the line breaks round it), the same-date band and how much of the line's
+     colour it takes, and the year on the line. */
+  --vb-text-date: 23px;
+  --vb-text-title-dated: var(--vb-text-xl);
+  --vb-node-date-l-dark: 0.72;
+  --vb-timeline-w: 2px;
+  --vb-timeline-stem-w: 1.5px;
+  --vb-timeline-dot: 12px;
+  --vb-timeline-ring: 3px;
+  --vb-timeline-band: 10px;
+  --vb-timeline-band-mix: 32%;
+  --vb-timeline-year: 11.5px;
+  /* An entry in a dated node's text (D-105 5): the bar at its left, in the node's colour. */
+  --vb-md-entry-bar: 3px;
+
   /* Motion */
   --vb-motion-fast: 120ms;
   --vb-motion: 360ms;
@@ -168,6 +187,11 @@
      chosen by eye): the container frame and every hover box's border. */
   --vb-line-contrast: var(--vb-host-line-strong, light-dark(#b5b5bd, #4a4a52));
   --vb-wire: light-dark(#8a8a95, #7c7c89);
+  /* A container's timeline (D-105; README of design/mockups/timeline, choice 1, point 588): the container frame's colour at
+     rest, so the line and the frame read as one; in dark, halfway from it to the muted ink, as the frame's own grey
+     reads under the decoration tier there (Lc 11.7 on the canvas). Lc 33.7 / 35.0 on the canvas, light / dark (Command
+     Lens 32.6 / 34.5). Never the links' grey: the line would read as a link. */
+  --vb-timeline-line: light-dark(var(--vb-line-contrast), color-mix(in srgb, var(--vb-line-contrast) 50%, var(--vb-ink-subtle)));
   --vb-wire-hot: var(--vb-accent);
 
   /* Accent and focus */
@@ -307,8 +331,8 @@
 
 /* A toned node (decision 17): the node sets data-vb-tone to its tone's name, or `hue`, and
    --vb-tone-h to the checked number or, for a name, var(--vb-tone-hue-<name>), so a name and a hue
-   take one derivation. Text on a tint keeps its ink, which carries no hue. */
-vb-node[data-vb-tone] {
+   take one derivation; so does its dot on a timeline (D-105; #ui timeline-apply.ts). Text on a tint keeps its ink, which carries no hue. */
+vb-node[data-vb-tone], .vb-timeline-dot[data-vb-tone] {
   --vb-tone-body: light-dark(
     oklch(var(--vb-tone-body-l-light) calc(var(--vb-tone-body-c-light) * var(--vb-tone-strength)) var(--vb-tone-h)),
     oklch(var(--vb-tone-body-l-dark) calc(var(--vb-tone-body-c-dark) * var(--vb-tone-strength)) var(--vb-tone-h)));
@@ -325,7 +349,7 @@ vb-node[data-vb-tone] {
     oklch(var(--vb-tone-edge-l-light) calc(var(--vb-tone-edge-c-light) * var(--vb-tone-strength)) var(--vb-tone-h)),
     oklch(var(--vb-tone-edge-l-dark) calc(var(--vb-tone-edge-c-dark) * var(--vb-tone-strength)) var(--vb-tone-h)));
 }
-vb-node[data-vb-tone='slate'] { --vb-tone-strength: var(--vb-tone-strength-slate); }
+vb-node[data-vb-tone='slate'], .vb-timeline-dot[data-vb-tone='slate'] { --vb-tone-strength: var(--vb-tone-strength-slate); }
 
 [data-theme='light'] { color-scheme: light; }
 [data-theme='dark'] { color-scheme: dark; }

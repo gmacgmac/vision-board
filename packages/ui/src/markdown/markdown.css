@@ -129,3 +129,21 @@ vb-node {
 .vb-md-summary:hover { color: var(--vb-ink-strong); }
 .vb-md-details[open] > .vb-md-summary { color: var(--vb-ink-strong); }
 .vb-md-detail { margin-top: var(--vb-space-2); }
+
+/* An entry (D-105 5; MarkdownOptions.entries, a dated node's text): a bar in the node's colour (its kind's, or its
+   tone's line), the bold name in the strong ink, then its text. A `###` entry's name stays a heading; a bold lead stays
+   bold text; a list item that is an entry keeps its `li` and loses its bullet, the other items keep theirs. */
+.vb-md-entry {
+  position: relative; display: grid; gap: 2px; margin-top: var(--vb-space-1);
+  padding: 1px 0 1px calc(var(--vb-md-entry-bar) + 10px);
+  font-size: var(--vb-md-text, var(--vb-text-md)); line-height: 1.45; color: var(--vb-ink);
+}
+.vb-md-entry::before {
+  content: ''; position: absolute; left: 0; top: 2px; bottom: 2px; width: var(--vb-md-entry-bar);
+  background: var(--vb-node-color, var(--vb-kind, var(--vb-accent)));
+}
+.vb-md-entry > .vb-md-entry-name {
+  display: block; font: var(--vb-weight-bold) var(--vb-text-lg)/1.3 var(--vb-font-text); color: var(--vb-ink-strong);
+}
+.vb-md-list > li.vb-md-entry { margin-left: calc(-1 * (var(--vb-space-4) + var(--vb-space-1))); list-style: none; }
+.vb-md-list > li.vb-md-entry:not(:first-child) { margin-top: var(--vb-space-1); }
