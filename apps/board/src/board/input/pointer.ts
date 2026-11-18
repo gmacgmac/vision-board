@@ -16,7 +16,7 @@
 // in keys.ts (project rule 5).
 import type { Box, Point } from '#layout';
 import type { Viewport } from '../canvas/index.ts';
-import { smallMark } from '../canvas/index.ts';
+import { smallMark, ZOOM_RULES } from '../canvas/index.ts';
 import { createWheelLatch, scrollerIn } from './wheel-latch.ts';
 
 export interface PointerHandlers {
@@ -267,7 +267,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     // Ctrl/Cmd zooms everywhere. Off: inside the note bubble or a hover tip the wheel is always its own.
     if (latch ? !zoom && latch.target(e) : (e.target as HTMLElement).closest('vb-note-bubble, .vb-tip')) return;
     e.preventDefault();
-    if (zoom) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
+    if (zoom) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * ZOOM_RULES.steps.numbers.wheel));
     else vp.panBy(-e.deltaX, -e.deltaY);
   }, { passive: false });
   return () => {

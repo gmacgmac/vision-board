@@ -6,6 +6,7 @@
 import { boxAround, boxBetween, clamp, overlaps, touches } from '#format';
 import type { StageBox, StageSize } from '../note-bubble/note-bubble-core.ts';
 import * as selectionBarWords from '../words/selection-bar.ts';
+import { ZOOM_RULES } from '../zoom-rules.ts';
 
 // The lasso's box and the touch test are format's (geometry.ts); the bar's callers reach them here.
 export { boxAround, boxBetween, touches };
@@ -22,9 +23,9 @@ export interface BarPlacement { side: BarSide; x: number; y: number }
 export const TAB_RISE = 10;
 /** The clear space between the bar's bottom and the tabs, in screen pixels: TAB_CLEAR_PER_K per
  *  unit of zoom, never under TAB_CLEAR_MIN (zoomed out) nor over TAB_CLEAR_MAX (zoomed in). */
-export const TAB_CLEAR_MIN = 4;
-export const TAB_CLEAR_MAX = 16;
-export const TAB_CLEAR_PER_K = 8;
+export const TAB_CLEAR_MIN = ZOOM_RULES.barGap.numbers.minPx;
+export const TAB_CLEAR_MAX = ZOOM_RULES.barGap.numbers.maxPx;
+export const TAB_CLEAR_PER_K = ZOOM_RULES.barGap.numbers.perK;
 
 /** The bar over a selection of cards at zoom `k` (page-polish ruling C): the space from the
  *  selection's top edge to the bar's bottom, in screen pixels. The bar does not scale with zoom

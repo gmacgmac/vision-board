@@ -33,6 +33,7 @@ export * from './image-view/image-view-core.ts';
 export { imageButton, IMAGE_BUTTON, showProblem } from './image-view/card-image.ts';
 export type { VbImageViewElement } from './image-view/vb-image-view.ts';
 export * from './selection-bar/selection-bar-core.ts';
+export * from './zoom-rules.ts';
 export * from './selection-bar/selection-bar-template.ts';
 export type { CommandEventDetail, ToggleEventDetail, VbSelectionBarElement } from './selection-bar/vb-selection-bar.ts';
 export { renderMarkdown, MARKDOWN_MAX } from './markdown/render.ts';

@@ -13,15 +13,24 @@ import { drawEdges, mark } from './edge-board.ts';
 const FLAGS = '?vbwork&flags=nodeEdges';
 const box = async (l: Locator) => (await l.boundingBox())!;
 
+/** Where the box's arrow meets its edge, in screen pixels from its top (beside) or its left (below): `--vb-arrow`, in
+ *  the box's own pixels, scaled as the box draws. */
+const arrowAt = (opened: Locator) => opened.evaluate((e) => parseFloat(getComputedStyle(e).getPropertyValue('--vb-arrow')) * e.getBoundingClientRect().height / (e as HTMLElement).offsetHeight);
+
 async function besideTheNode(page: Page, n: number, opened: Locator) {
   const [c, b] = [await box(card(page, n)), await box(opened)];
   const side = await opened.getAttribute('data-side');
+  const arrow = await arrowAt(opened);
   if (side === 'right') {
     expect(Math.abs(b.y - c.y), 'top level with the node').toBeLessThanOrEqual(1.5);
     expect(b.x).toBeGreaterThanOrEqual(c.x + c.width);
+    // The arrow on its left edge at the node's vertical centre (FIX_02, points 430 to 438).
+    expect(Math.abs(b.y + arrow - (c.y + c.height / 2)), 'the arrow at the node\'s vertical centre').toBeLessThanOrEqual(2);
   } else {
     expect(side).toBe('below');
-    expect(Math.abs(b.x - c.x), 'left edges aligned').toBeLessThanOrEqual(1.5);
+    // Centred on the node's width, the arrow at the middle of its top edge (FIX_02).
+    expect(Math.abs(b.x + b.width / 2 - (c.x + c.width / 2)), 'centred on the node').toBeLessThanOrEqual(2);
+    expect(Math.abs(b.x + arrow - (c.x + c.width / 2)), 'the arrow at the node\'s centre').toBeLessThanOrEqual(2);
     expect(b.y).toBeGreaterThanOrEqual(c.y + c.height);
   }
 }
@@ -100,7 +109,12 @@ test('a node near the window\'s bottom: its box moves up to stay on screen, the 
   const b = await box(talk);
   expect(b.y + b.height, 'inside the stage').toBeLessThanOrEqual(stage.y + stage.height);
   for (const part of [talk.locator('textarea'), talk.getByRole('button', { name: 'Ask now' }), talk.getByRole('button', { name: 'Add note' })]) await expect(part).toBeInViewport({ ratio: 0.99 });
-  if (await talk.getAttribute('data-side') === 'right') expect(b.y, 'moved up from the node\'s top').toBeLessThan((await box(card(page, q))).y);
+  if (await talk.getAttribute('data-side') === 'right') {
+    const c = await box(card(page, q));
+    expect(b.y, 'moved up from the node\'s top').toBeLessThan(c.y);
+    // Moved, it still aims at the node's centre, kept inside its edge (16px from its corner).
+    expect(Math.abs(b.y + await arrowAt(talk) - Math.min(c.y + c.height / 2, b.y + b.height - 16)), 'the arrow at the node\'s centre').toBeLessThanOrEqual(2);
+  }
 });
 
 for (const theme of ['dark', 'light'] as Theme[]) {

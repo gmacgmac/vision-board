@@ -39,40 +39,40 @@ test('a tip sits above its mark, under it at the stage\'s top, and every box sta
 });
 
 // One place for every box beside a node, the conversation, proposal and history boxes (FE_03 run 2, the maintainer's
-// ruling): top aligned with the node, to its right when there is room, else below it with the left edges aligned, never
-// over the node; the arrow on the mark that opened it.
+// ruling): top aligned with the node, to its right when there is room, else below it, never over the node; the arrow
+// aims at the node's centre (FIX_02, points 430 to 438): beside it, at its vertical centre; below, at the middle of the
+// box's top edge, the box centred on the node's width.
 const node = { x: 100, y: 150, w: 250, h: 120 };
 const box = { w: 300, h: 260 };
 const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
-test('placeBeside: to the right, its top level with the node\'s, the arrow on the mark', () => {
-  const mark = { x: 330, y: 255, w: 22, h: 22 };
-  const p = placeBeside(node, box, stage, mark);
-  assert.deepEqual([p.side, p.x, p.y], ['right', node.x + node.w + BOX_GAP, node.y]);
-  assert.equal(p.arrow, mark.y + mark.h / 2 - p.y);
-  assert.equal(overlaps({ ...p, ...box }, node), false);
+test('placeBeside: to the right, its top level with the node\'s, the arrow on its left edge at the node\'s vertical centre', () => {
+  const reach = { ...node, w: node.w + 11, h: node.h + 11 }; // the marks hanging off the right and bottom
+  const p = placeBeside(reach, box, stage, node);
+  assert.deepEqual([p.side, p.x, p.y], ['right', reach.x + reach.w + BOX_GAP, node.y]);
+  assert.equal(p.arrow, node.h / 2);
+  assert.equal(overlaps({ ...p, ...box }, reach), false);
 });
 
-test('placeBeside: below when the right has no room, left edges aligned, never over the node; the arrow under the mark', () => {
+test('placeBeside: below when the right has no room, centred on the node\'s width, never over it; the arrow at the top\'s middle', () => {
   const narrow = { w: 600, h: 900 };
-  const mark = { x: 330, y: 255, w: 22, h: 22 };
-  const p = placeBeside(node, box, narrow, mark);
-  assert.deepEqual([p.side, p.x, p.y], ['below', node.x, node.y + node.h + BOX_GAP]);
-  assert.equal(p.arrow, Math.round(Math.min(mark.x + mark.w / 2 - p.x, box.w - 16)));
+  const p = placeBeside(node, box, narrow);
+  assert.deepEqual([p.side, p.x, p.y], ['below', node.x + node.w / 2 - box.w / 2, node.y + node.h + BOX_GAP]);
+  assert.equal(p.arrow, box.w / 2);
   assert.equal(overlaps({ ...p, ...box }, node), false);
-  // Near the stage's left edge, it stays inside it across and still clears the node.
-  const left = placeBeside({ ...node, x: 2, w: 400 }, box, narrow);
-  assert.equal(left.x, STAGE_EDGE);
+  // Near the stage's left edge it stays inside it across, and its arrow still aims at the node's centre.
+  const left = placeBeside({ ...node, x: 2, w: 300 }, box, narrow);
+  assert.deepEqual([left.side, left.x], ['below', STAGE_EDGE]);
+  assert.equal(left.arrow, 2 + 150 - STAGE_EDGE);
 });
 
 // FIX_01 (VERIFY_01 finding 7): a box near the window's bottom stays on screen.
-test('placeBeside: on the right near the stage\'s bottom it moves up just enough, its arrow still on the mark', () => {
+test('placeBeside: on the right near the stage\'s bottom it moves up just enough, its arrow still at the node\'s centre', () => {
   const low = { ...node, y: 600 };
-  const mark = { x: 330, y: 655, w: 22, h: 22 };
-  const p = placeBeside(low, box, stage, mark);
+  const p = placeBeside(low, box, stage);
   assert.deepEqual([p.side, p.y], ['right', stage.h - STAGE_EDGE - box.h]);
-  assert.equal(p.arrow, mark.y + mark.h / 2 - p.y, 'the arrow points at the mark');
+  assert.equal(p.arrow, Math.min(low.y + low.h / 2 - p.y, box.h - 16), 'aimed at the node\'s centre, kept inside the edge');
   assert.equal(overlaps({ ...p, ...box }, low), false);
   // Where it fits it keeps the node's top, and above the stage's top it comes down to the edge.
   assert.equal(placeBeside({ ...node, y: 300 }, box, stage).y, 300);

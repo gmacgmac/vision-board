@@ -6,5 +6,6 @@ export { outside, viewBounds } from './offscreen.ts';
 export { createPlaces } from './places.ts';
 export { bindPointerFocus, focusCame } from './pointer-focus.ts';
 export { LATER_FRAME } from './render.ts';
-export { APP_FIT, BOX_MIN_K, CROWD_GROW, FAR_K, MARK_H, MARK_HIT, MARK_MIN, SELECTION_FIT, TARGET_MIN, Viewport, boxScale, isFar, markGrow, marksPressable, smallMark, zoomPercent } from './viewport.ts';
+export { APP_FIT, BOX_MAX_K, BOX_MIN_K, FAR_GROW, FAR_K, MARK_FAR_K, MARK_H, MARK_MIN, SELECTION_FIT, Viewport, boxScale, isFar, markGrow, marksPressable, smallMark, zoomPercent } from './viewport.ts';
 export type { ViewSnapshot } from './viewport.ts';
+export { ZOOM_RULES } from '#ui';
