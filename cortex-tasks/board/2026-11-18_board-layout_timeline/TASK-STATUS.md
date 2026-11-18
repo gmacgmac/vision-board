@@ -43,7 +43,7 @@ tracker: cortex-tasks/tracker.md#N53
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | T_01 | 1 | strong | no | Principal API engineer — a value has one spelling in the ledger; a model's habit is normalised at the edge and never stored, and a refusal says exactly what would have been accepted. | [Contract first](./T_01_contract.md) | Completed | Contract, write edge, format 21 landed; board.js budget +349 gzip (not raised); `npm run map` needed |
 | 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Completed | 8 pages + PNGs, README; 6 open choices for the design gate. Run 2: vertical pages redrawn (587-595), README; 6 new open choices |
-| 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Pending | |
+| 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Completed | `layoutTimeline`, split in `layoutRegion`/`structureOf`, `show_layout` filled; page 202.9 KB; `npm run map` needed |
 | 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Pending | |
 | 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Pending | |
 | 5b | FIX_01 | 2 | standard | no | — | [A refusal names what was wrong (M84)](./FIX_01_anyof-refusal-wording.md) | Completed | Tone and icon refusals name what is accepted; words in `apps/board/server/words/schema.ts` |
@@ -169,8 +169,17 @@ is the skin's (`EDGE_ROW_GAP` 40 default, `ROW_GAP` 30 Command Lens; 587 says `R
 the line is one stem from the widest node on each side (open choice 3). README: run 1's choices settled; 6 new.
 
 ### BE_01: The timeline in the layout
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-18 23:40)  
+_Notes:_ `#layout` `timeline.ts` `layoutTimeline` (pure, region-local) fills T_01's `TimelineDrawing` unchanged.
+`layoutRegion` splits dated from the rest (no dated node: deep-equal to HEAD on 608 boards, a temp oracle); the rest go
+through the mode with their own links, `REGION_GAP` below or run down `COL_GAP` right, tops level; dated pins ignored,
+moved cards keep out of the timeline's band. `RegionPiece.timeline` (region-local), `RegionBox.timeline` (board),
+`LayoutStructure.timeline`, `show_layout` `timeline`. New inputs for FE_02: `LayoutOptions.timelineWidths` (the page
+resolves `timelineWidthsOf(direction, region.widths, chosen)`, since its `widths` is already resolved) and `Lane.x`
+(a lane band beside a timeline run down starts there). Years: the start year's `at` is `line.from` (the label begins
+there), a turn's is the label's centre. Constants: STEM 30, SIDE_GAP 28, MIN_STEP 120, MIN_DOT 56, YEAR_ROOM 56
+(across only), END_ROOM 30; run down the row gap is `rowGap`. FE_02: add `n.timeline` and `timelineWidths` to the
+layout cache's key. Page 202.9 KB gzip (budget 201.6); plugin `view/board.js` 197,492 (budget 195,900). `npm run map` needed.
 
 ### FE_01: The dated node, entries and the line's drawing
 _Status:_ Pending  

@@ -85,3 +85,19 @@ test(`layout of 1000 cards with 1200 links in flow and lanes stays under ${BUDGE
     assert.ok(branched < BUDGET_MS, `${direction}: ${branched.toFixed(1)} ms`);
   }
 });
+
+// The timeline (Timeline BE_01): one container of 40 dated and 40 undated cards, across and run down, with links among
+// both. Reported beside the cases above; no budget of its own.
+test('layout of a container with 40 dated and 40 undated cards, across and down (reported)', () => {
+  const months = Array.from({ length: 40 }, (_, i) => `${2026 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`);
+  const tl: View = { format: 1, session: 'tl', version: 1, title: 'Timeline', regions: [{ id: 't', title: 'T', mode: 'flow' }], nodes: [], links: [] };
+  for (let i = 0; i < 80; i++) {
+    tl.nodes.push({ id: `t${i}`, region: 't', kind: 'topic', title: 't', n: i + 1, ...(i % 2 === 0 && { timeline: months[(i * 7) % 40]! }) });
+    if (i > 1) tl.links.push({ from: `t${i - 2}`, to: `t${i}` });
+  }
+  const sz = new Map<string, Size>(tl.nodes.map((n, i) => [n.id, { w: [280, 360, 464][i % 3]!, h: 110 + (i % 5) * 30 }]));
+  for (const direction of ['across', 'down'] as const) {
+    const ms = time(() => layoutBoard(tl, sz, { directions: new Map([['t', direction]]) }));
+    console.log(`[Timeline BE_01] layout, 40 dated + 40 undated, ${direction}: ${ms.toFixed(1)} ms`);
+  }
+});

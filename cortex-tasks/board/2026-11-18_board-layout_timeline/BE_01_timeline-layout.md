@@ -47,7 +47,7 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
 
 ## Steps
 
-1. [ ] **Tests first** (`packages/layout/tests/timeline.test.ts`), with `sizes` maps of mixed widths and heights:
+1. [x] **Tests first** (`packages/layout/tests/timeline.test.ts`), with `sizes` maps of mixed widths and heights:
    - a container with no dated node: `layoutRegion` and `layoutBoard` return results deep-equal to today's for every
      view the existing layout tests build (run them as the "before" oracle; never change their expectations);
    - order follows `sortByTimeline` (decision 9), including a coarse and a fine value with the same start and two equal
@@ -72,7 +72,7 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
    - only dated nodes: no gap, no rest; one dated node: one dot, no stem crossing, line with an arrow;
    - hidden nodes (`LayoutOptions.hidden`) leave the line;
    - the same inputs give the same output twice (determinism), and the inputs are never mutated.
-2. [ ] **`packages/layout/src/timeline.ts`** (new, pure): `layoutTimeline(nodes, sizes, direction) → { pos:
+2. [x] **`packages/layout/src/timeline.ts`** (new, pure): `layoutTimeline(nodes, sizes, direction) → { pos:
    Map<string, Box>, drawing: TimelineDrawing, box: Box }`, region-local from (0, 0). Constants exported beside it
    (the layout's numbers, not zoom numbers): `TIMELINE_STEM`, `TIMELINE_SIDE_GAP` (28, run 2), `TIMELINE_MIN_STEP`,
    `TIMELINE_MIN_DOT`, `TIMELINE_YEAR_ROOM` (room on the line before the first dot for the year), `TIMELINE_END_ROOM`
@@ -80,7 +80,7 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
    the right (§ Design review 591). Widths: the container's `widthsOf` with the timeline default (run down `match`,
    across `own`) when neither the person nor the agent chose (PLAN.md decision 21, point 595). Pick values from run 2 and PLAN.md § Design review, measured from the pages; say
    which in the notes. The step is call 6's formula. Keep functions near 50 lines (split ordering, across and down).
-3. [ ] **`layoutRegion`** (`board.ts`): split the visible nodes into dated (`timeline` set) and the rest. With no
+3. [x] **`layoutRegion`** (`board.ts`): split the visible nodes into dated (`timeline` set) and the rest. With no
    dated node, take today's path untouched. Otherwise: `layoutTimeline` for the dated; the mode (`MODE_FNS`) for the
    rest with the links among the rest only; shift the rest down by the timeline's height plus `REGION_GAP`, or run down right by its width plus `COL_GAP` (and
    their lane bands with them); apply pins to the rest only, after the shift (pins stay region-local, as the page
@@ -88,32 +88,35 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
    (across). `RegionPiece.timeline?: TimelineDrawing` (region-local); `packRegions` puts it in board coordinates on
    `RegionBox.timeline`, as it does `lanes`. Dated nodes are in `groups` (links route around them) whatever the mode;
    in `radial` the rest stay out of `groups`, as today.
-4. [ ] **Direction**: the timeline reads the region's `direction` (`RegionOptions.direction`, which the page already
+4. [x] **Direction**: the timeline reads the region's `direction` (`RegionOptions.direction`, which the page already
    passes for every region from `directionOf`), whatever the mode. `downward` stays a flow's.
-5. [ ] **`structureOf`** (`structure.ts`): the same split. `cards`, `columns`, `links`, `crossing`, `empty` from the
+5. [x] **`structureOf`** (`structure.ts`): the same split. `cards`, `columns`, `links`, `crossing`, `empty` from the
    rest through the mode, as today; `LayoutStructure.timeline?: { direction, cards: { id, at, side }[] }` in line
    order (from `sortByTimeline`, the same alternation). No pixel sizes, as before.
-6. [ ] **`showLayout`** (`apps/board/server/engine/reads.ts`): fill the response's `timeline` (T_01's schema) from
+6. [x] **`showLayout`** (`apps/board/server/engine/reads.ts`): fill the response's `timeline` (T_01's schema) from
    `structureOf`, the direction from `directionOf` as the page draws it. Test (`api-layout-timeline.test.ts`, port
    7810 if it starts a server): a container with dated and undated cards reports both, in drawn order; a container
    with none leaves `timeline` out and answers as before; the person's direction choice turns `side` to `left` and `right`, alternating.
-7. [ ] **Same picture**: a test that the order and sides `structureOf` reports equal those `layoutRegion` draws, for the
+7. [x] **Same picture**: a test that the order and sides `structureOf` reports equal those `layoutRegion` draws, for the
    same view (the structure agrees with the picture, `types.ts` `LayoutStructure`).
-8. [ ] **Timing**: add a case to `layout.timing.ts` (a container of 40 dated and 40 undated nodes) and report the time
+8. [x] **Timing**: add a case to `layout.timing.ts` (a container of 40 dated and 40 undated nodes) and report the time
    beside the existing cases; no budget is set by this task.
-9. [ ] **Docs** (`cortex-docs`): `docs/specification/components.md` § The timeline (layout half): the split, order,
+9. [x] **Docs** (`cortex-docs`): `docs/specification/components.md` § The timeline (layout half): the split, order,
    sides, step, years, bands, gap, pins, direction, `show_layout`; each claim names its symbol and test. FE_02 adds the
    page's half in wave 3.
-10. [ ] Project checks (PLAN.md § Tests). No page spec: the page joins the layout in FE_02. Report the page weight
+10. [x] Project checks (PLAN.md § Tests). No page spec: the page joins the layout in FE_02. Report the page weight
     you measure (`npm run build` then the verify weight check) for the orchestrator; do not edit budget files.
 
 ---
 
 ## Validation
 
-- [ ] Every existing `packages/layout/tests/*` passes unchanged; `timeline.test.ts` covers step 1's list
-- [ ] `api-layout-timeline.test.ts` and the existing `api-layout*.test.ts` pass
-- [ ] `npm run verify`, `npm run check`, `npm test`, `npm run gen -- --check` pass
+- [x] Every existing `packages/layout/tests/*` passes unchanged; `timeline.test.ts` covers step 1's list
+- [x] `api-layout-timeline.test.ts` and the existing `api-layout*.test.ts` pass
+- [x] `npm run verify`, `npm run check`, `npm test`, `npm run gen -- --check` pass (verify: two orchestrator-owned
+      failures only, `modules.md` needs `npm run map` and the page weight 202.9 KB over the temporary 201.6; `npm test`:
+      2,686 of 2,687, the one failure the plugin budget, `view/board.js` 197,492 gzip over the temporary 195,900;
+      `test:timing` 15 of 15)
 
 ---
 
@@ -129,20 +132,75 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
 
 _To be completed by agent after task completion._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-18 23:40  
 
 ### Changes Made
-- 
+- `packages/layout/src/timeline.ts` (new, pure): `layoutTimeline(nodes, sizes, direction, { widths, rowGap })` returns
+  `{ pos, drawing: TimelineDrawing, box }` region-local from (0, 0); split into `across`, `down`, `stemEnd`, `yearsOf`,
+  `bandsOf`; `timelineOrder` (from `#format` `sortByTimeline`, with `timelineSide`), `timelineStep` (call 6),
+  `timelineWidthsOf` (decision 21, point 595), `reachTimeline` (the line to the content's right edge), `shiftTimeline`
+  (region-local to board). Constants: `TIMELINE_STEM` 30, `TIMELINE_SIDE_GAP` 28, `TIMELINE_MIN_STEP` 120,
+  `TIMELINE_MIN_DOT` 56, `TIMELINE_YEAR_ROOM` 56, `TIMELINE_END_ROOM` 30.
+- `board.ts` `layoutRegion`: splits dated from the rest; no dated node takes today's path untouched (proven against
+  HEAD, below). Otherwise the mode runs on the rest with the links among the rest; `beside` moves its answer
+  `REGION_GAP` below the timeline's box, or run down `COL_GAP` right of it with tops level with the line's start, lane
+  bands with it; pins apply to the rest only, after the move; `makeRoom` keeps moved cards out of the timeline's band
+  (`bandOf`); `reachTimeline` runs the line to the content's right edge. `RegionOptions.timelineWidths`.
+  `packRegions`: `RegionBox.timeline` in board coordinates; dated nodes in `groups` in every mode (radial's rest still
+  out). `layoutBoard` passes `LayoutOptions.timelineWidths`.
+- `types.ts`: `RegionPiece.timeline`, `RegionBox.timeline`, `LayoutStructure.timeline`, `LayoutOptions.timelineWidths`,
+  `Lane.x` (optional: where a lane band starts when a timeline runs down beside it).
+- `structure.ts` `structureOf`: the same split (`arranged` is the old body, on the rest); `timeline: { direction,
+  cards: { id, at, side }[] }` from `timelineOrder`.
+- `index.ts`: exports `layoutTimeline`, `timelineOrder`, `timelineStep`, `timelineWidthsOf`, the six constants, `COL_GAP`.
+- `apps/board/server/engine/reads.ts` `showLayout`: fills `timeline` (`n`, `at`, `side`), left out with no dated card.
+- Tests: `packages/layout/tests/timeline.test.ts` (9), `timeline-region.test.ts` (11), `layout.timing.ts` (one reported
+  case), `apps/board/tests/api-layout-timeline.test.ts` (3). No existing expectation changed.
+- `docs/specification/components.md` § The timeline: layout (each claim names its symbol and test).
+
+### Values chosen (from run 2, DESIGN_01 and § Design review)
+- `TIMELINE_STEM` 30 (591, both forms). `TIMELINE_SIDE_GAP` 28 and `TIMELINE_MIN_STEP` 120 (call 6, DESIGN_01: the
+  formula gives run 2's 154 for size s and 174 with one size m, tested). `TIMELINE_END_ROOM` 30 (DESIGN_01: the line's
+  end 30px past the last dot). `TIMELINE_MIN_DOT` 56 (DESIGN_01 run 2, the orchestrator's message).
+  `TIMELINE_YEAR_ROOM` 56: the start year's label (mono 11.5px, `.14em`, four figures, about 34px, plus its 8px gap and
+  the dot's ring); across only, since with a 280px node the first dot is at 140 anyway (the run-2 page). Run down, the
+  first node starts at the top of the content (run 2).
+- Run down the same-side gap is `RegionOptions.rowGap` (the skin's: `EDGE_ROW_GAP` 40 default, `ROW_GAP` 30 Command
+  Lens), `ROW_GAP` when absent.
 
 ### Issues & Resolutions
-- 
+- The orchestrator's mid-task message (DESIGN_01 run 2: row gap from the option, `TIMELINE_MIN_DOT` 56, the line one
+  stem from the widest node on each side, the first node at the top) applied; tests hold each.
+- A card moved out of a pin's way could land beside the timeline's nodes, in its rows, where the line (run on to the
+  content's edge) passes: `makeRoom` now keeps out of the timeline's band, not only its box (`bandOf`).
+- Oracle: a temp script (`temp/be01-oracle/`, HEAD's `packages/layout/src` beside the new one) found `layoutBoard`
+  and `structureOf` deep-equal to HEAD's on 608 boards with no dated node (the four fixtures, across and down, and 600
+  seeded boards over every mode with pins, directions, widths, hidden nodes and row gaps).
+- `npm run map -- --help` rewrote `docs/specification/modules.md` (the script ignores `--help`); its content was put back
+  from HEAD by hand (no git command). `npm run verify` fails on modules.md until the orchestrator runs `npm run map`
+  (the new exports), and on the page weight (below).
+
+### Measured (for the orchestrator's budget raise)
+- Page (`npm run build`, verify's weight check): 202.9 KB gzip, budget 201.6 (T_01 measured 201.5).
+- Plugin `view/board.js` (`plugin-build.test.ts`): 197,492 gzip, budget 195,900 (T_01 measured 195,849). The layout's
+  timeline code and the `#format` date grammar it imports (`sortByTimeline`, `timelineYear`) now reach both bundles.
+- Timing: 40 dated and 40 undated cards, 1.7 ms across, 2.0 ms down; the 1,000-card cases unchanged (6.4, 10.3, 50.3 ms).
 
 ### Caught Beyond the Brief
-- None
+- The page's layout cache (`apps/board/src/board/canvas/layout-cache.ts` `nodeKey`) keys a container on each node's
+  id, kind, lane, size and pin, not its `timeline`: a date written or changed would not lay the container out again.
+  FE_02 must add `n.timeline` to the key, and `timelineWidths` and the direction (already keyed) to the inputs.
+- The page passes `widths` already resolved with the mode's default (`canvas/draw.ts`), so the layout cannot tell a
+  person's choice from a default: `LayoutOptions.timelineWidths` carries the dated nodes' widths separately, worked
+  out by the caller with `timelineWidthsOf(direction, region.widths, chosen)`.
+- `show_layout`'s `widths` stays the rest's (`widthsOf`); the dated nodes' widths are not reported. Not in T_01's
+  schema; left as is.
 
 ### Deviations from Plan
-- None
+- None in substance. Additive beyond the step list: `Lane.x` (step 3's "lane bands with them" needs an x run down),
+  `LayoutOptions.timelineWidths`/`RegionOptions.timelineWidths` (decision 21 needs the person's raw choice), and the
+  band keep-out (decision 15's "out from under the line").
 
 ---
 

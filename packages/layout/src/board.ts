@@ -6,7 +6,7 @@
 import type { Direction, Link, Mode, Region, View, ViewNode, Widths } from '#format';
 import { widthsOf } from '#format';
 import type { Align, Box, BoardLayout, ModeFn, ModeOutput, Point, RegionBox, RegionPiece, Size } from './types.ts';
-import { LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
+import { COL_GAP, LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
 import { column, grid, row } from './modes/grid.ts';
 import { flow } from './modes/flow.ts';
 import { lanes } from './modes/lanes/lanes.ts';
@@ -15,6 +15,8 @@ import { boundsOf } from './geometry.ts';
 import { applyPins, makeRoom } from './collide.ts';
 import { placeContainers } from './place.ts';
 import { routeLinks } from './route/route.ts';
+import type { TimelineLayout } from './timeline.ts';
+import { layoutTimeline, reachTimeline, shiftTimeline, timelineWidthsOf } from './timeline.ts';
 import type { LayoutOptions } from './types.ts';
 
 export const MODE_FNS: Record<Mode, ModeFn> = { grid, column, row, flow, lanes, radial };
@@ -32,35 +34,75 @@ export interface RegionOptions {
   align?: Align | undefined;
   /** The gap between a card and the card under it (LayoutOptions.rowGap); absent: GAP. */
   rowGap?: number | undefined;
-  /** Which way the region runs if it is a `flow` (LayoutOptions.directions); absent: `across`. */
+  /** Which way the region runs if it is a `flow`, and its timeline whatever its mode (LayoutOptions.directions);
+   *  absent: `across`. */
   direction?: Direction | undefined;
+  /** The widths of its dated nodes (LayoutOptions.timelineWidths); absent: `timelineWidthsOf(direction, region.widths)`. */
+  timelineWidths?: Widths | undefined;
 }
 
 /** One region: `nodes` are its visible nodes in view order, `links` the links between them. Pins
  * for other regions' nodes are ignored. `headInset` (LayoutOptions.headInsets) adds room under the
  * top line: the frame is that much taller and the content starts that much lower; the mode's
- * answer does not change. The result is never changed afterwards. */
+ * answer does not change. Nodes with a date (D-105) go on the container's timeline (`timeline.ts`),
+ * across its top or, run down, as its first column; the rest go through the mode, below it or to its
+ * right, with the links among them only. A dated node's pin is ignored; the others' pins win, and
+ * unpinned ones keep out of the timeline's box. With no dated node, exactly the layout without one.
+ * The result is never changed afterwards. */
 export function layoutRegion(
   region: Region, nodes: ViewNode[], links: Link[], sizes: Map<string, Size>, opts: RegionOptions = {},
 ): RegionPiece {
   const mode = opts.mode ?? region.mode;
   const widths = opts.widths ?? widthsOf(mode, region.widths);
-  const out: ModeOutput = nodes.length
+  const direction = opts.direction ?? 'across';
+  const dated = nodes.filter((n) => n.timeline !== undefined);
+  const line = dated.length
+    ? layoutTimeline(dated, sizes, direction, { widths: opts.timelineWidths ?? timelineWidthsOf(direction, region.widths), rowGap: opts.rowGap })
+    : undefined;
+  const rest = line ? nodes.filter((n) => n.timeline === undefined) : nodes;
+  const ids = new Set(rest.map((n) => n.id));
+  const inner = line ? links.filter((l) => ids.has(l.from) && ids.has(l.to)) : links;
+  const mine: ModeOutput = rest.length
     ? MODE_FNS[mode]({
-      region: { ...region, mode }, nodes, links, sizes, align: opts.align ?? 'start', widths, rowGap: opts.rowGap,
+      region: { ...region, mode }, nodes: rest, links: inner, sizes, align: opts.align ?? 'start', widths, rowGap: opts.rowGap,
       direction: opts.direction,
     })
     : { pos: new Map() };
+  const out = line ? beside(mine, line) : mine;
   const pinned = applyPins(out.pos, opts.pins);
-  const laneBoxes: Box[] = (out.lanes ?? []).map((l) => ({ x: 0, y: l.y, w: LANE_GUTTER, h: l.h }));
-  makeRoom(out.pos, pinned, laneBoxes);
-  const b = boundsOf([...out.pos.values(), ...laneBoxes]);
+  const laneBoxes: Box[] = (out.lanes ?? []).map((l) => ({ x: l.x ?? 0, y: l.y, w: LANE_GUTTER, h: l.h }));
+  makeRoom(out.pos, pinned, line ? [...laneBoxes, bandOf(line)] : laneBoxes);
+  const drawn = line ? reachTimeline(line, rightOf([line.box, ...out.pos.values()])) : undefined;
+  const all: ModeOutput = drawn ? { ...out, pos: new Map([...drawn.pos, ...out.pos]) } : out;
+  const b = boundsOf([...all.pos.values(), ...laneBoxes, ...(drawn ? [drawn.box] : [])]);
   const w = Math.max(b.w, MIN_W) + REGION_PAD * 2;
   // Absent, 0, negative or not finite: no inset.
   const inset = opts.headInset ?? 0;
   const head = Number.isFinite(inset) && inset > 0 ? inset : 0;
   const h = (nodes.length ? b.h : EMPTY_H) + REGION_HEAD + head + REGION_PAD;
-  return { region, mode, out, b, w, h, head };
+  return { region, mode, out: all, b, w, h, head, ...(drawn && { timeline: drawn.drawing }) };
+}
+
+/** The timeline's band, which a card moved out of a pin's way keeps out of (decision 15): across, its rows the whole
+ * way right (the line runs on to the content's right edge); run down, its column the whole way down. */
+const BAND = 1e6;
+function bandOf({ box, drawing }: TimelineLayout): Box {
+  return drawing.direction === 'down' ? { ...box, h: BAND } : { ...box, w: BAND };
+}
+
+/** The right edge of the box round `boxes`. */
+function rightOf(boxes: Box[]): number {
+  const b = boundsOf(boxes);
+  return b.x + b.w;
+}
+
+/** The mode's answer moved clear of the timeline: below it by REGION_GAP across; run down, COL_GAP to its right, tops
+ * level with the line's start (569C). Lane bands move with their cards. A new output; `out` is not changed. */
+function beside(out: ModeOutput, line: TimelineLayout): ModeOutput {
+  const { box } = line;
+  const [dx, dy] = line.drawing.direction === 'down' ? [box.x + box.w + COL_GAP, line.drawing.line.from.y] : [0, box.y + box.h + REGION_GAP];
+  const pos = new Map([...out.pos].map(([id, b]) => [id, { ...b, x: b.x + dx, y: b.y + dy }]));
+  return { ...out, pos, ...(out.lanes && { lanes: out.lanes.map((l) => ({ ...l, y: l.y + dy, ...(dx && { x: dx }) })) }) };
 }
 
 /** Pack laid-out regions into rows (in order), put pinned containers at their `pins` (frame
@@ -86,13 +128,16 @@ export function packRegions(
   const groups = new Map<string, string>();
   const downward = new Set<string>();
   for (const p of pieces) {
-    if (p.mode !== 'radial') for (const id of p.out.pos.keys()) groups.set(id, p.region.id);
+    // Dated nodes route around as cards whatever the mode; in radial the rest stay out, as without a timeline.
+    const grouped = p.mode !== 'radial' ? p.out.pos.keys() : (p.timeline?.dots ?? []).map((d) => d.id);
+    for (const id of grouped) groups.set(id, p.region.id);
     if (p.out.down) downward.add(p.region.id);
     const box = frames.get(p.region.id)!;
     const origin = { x: box.x + REGION_PAD - p.b.x, y: box.y + REGION_HEAD + p.head - p.b.y };
     regions.push({
       id: p.region.id, title: p.region.title, mode: p.mode, box, origin,
-      lanes: p.out.lanes?.map((l) => ({ ...l, y: origin.y + l.y })),
+      lanes: p.out.lanes?.map((l) => ({ ...l, y: origin.y + l.y, ...(l.x !== undefined && { x: origin.x + l.x }) })),
+      ...(p.timeline && { timeline: shiftTimeline(p.timeline, origin) }),
     });
     for (const [id, at] of p.out.pos) nodes.set(id, { ...at, x: at.x + origin.x, y: at.y + origin.y });
   }
@@ -110,7 +155,7 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     return layoutRegion(region, nodes, links, sizes, {
       mode: opts.modes?.get(region.id), pins: opts.pins, headInset: opts.headInsets?.get(region.id),
       widths: opts.widths?.get(region.id), align: opts.align, rowGap: opts.rowGap,
-      direction: opts.directions?.get(region.id),
+      direction: opts.directions?.get(region.id), timelineWidths: opts.timelineWidths?.get(region.id),
     });
   });
   return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth, pins: opts.regionPins });

@@ -8,16 +8,29 @@ import { MODE_FNS } from './board.ts';
 import { laneNames } from './modes/lanes/lanes.ts';
 import { crossingLines } from './route/crossings.ts';
 import { routeLines } from './route/route.ts';
+import { timelineOrder } from './timeline.ts';
 
 /** The size every card is taken to be: a small card (D-030's S width) of a usual height. */
 export const STRUCTURE_CARD: Size = { w: 280, h: 120 };
 
 /** `nodes`: the container's cards in card order; `links`: any links, those joining two of these
  *  cards are used; `mode`: the mode shown (the person's, else the region's); `drawn`: the direction a `flow`
- *  runs (`directionOf`), as the page lays it out. */
+ *  runs and the timeline runs (`directionOf`), as the page lays it out. Dated cards (D-105) are reported under
+ *  `timeline` in line order with their sides, as `layoutRegion` draws them; the rest as the mode arranges them. */
 export function structureOf(
   region: Region, nodes: ViewNode[], links: Link[], mode: Mode = region.mode, widths?: Widths,
   drawn: { direction?: Direction | undefined } = {},
+): LayoutStructure {
+  const dated = nodes.filter((n) => n.timeline !== undefined);
+  if (!dated.length) return arranged(region, nodes, links, mode, widths, drawn);
+  const direction = drawn.direction ?? 'across';
+  const cards = timelineOrder(dated, direction).map(({ node, side }) => ({ id: node.id, at: node.timeline!, side }));
+  return { ...arranged(region, nodes.filter((n) => n.timeline === undefined), links, mode, widths, drawn), timeline: { direction, cards } };
+}
+
+/** How the mode arranges `nodes` (no dated card among them). */
+function arranged(
+  region: Region, nodes: ViewNode[], links: Link[], mode: Mode, widths: Widths | undefined, drawn: { direction?: Direction | undefined },
 ): LayoutStructure {
   const ids = new Set(nodes.map((n) => n.id));
   const inner = links.filter((l) => l.from !== l.to && ids.has(l.from) && ids.has(l.to));

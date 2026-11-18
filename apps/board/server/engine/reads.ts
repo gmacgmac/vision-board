@@ -71,8 +71,8 @@ const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
 
 /** How the board arranges one container (api.md 133), structure only: the cards in it now (the
  * person's moves count, retired cards are out) in card order, the links between them, the mode the
- * board shows, the card widths in effect and the direction a flow runs (api.md 189), worked out by the layout package as the page lays them
- * out. Board numbers out: a View node's id is its number. A retired container, like an unknown one
+ * board shows, the card widths in effect and the direction a flow runs (api.md 189), and its timeline's dated cards in line order
+ * with their sides (D-105), worked out by the layout package as the page lays them out. Board numbers out: a View node's id is its number. A retired container, like an unknown one
  * or the built-in Later, is `not-found`: nothing is arranged in it. */
 const showLayout: Op = ({ params, ledger }) => {
   const s = ledger.state();
@@ -89,11 +89,13 @@ const showLayout: Op = ({ params, ledger }) => {
   const view = placedView(drawn, st);
   const mode = st.modes.get(region) ?? r.mode;
   const widths = widthsOf(mode, r.widths, st.widths.get(region));
-  // As the page lays it out: the direction a flow runs, branches on their own rows.
+  // As the page lays it out: the direction a flow and a timeline run, branches on their own rows, dated cards on the line.
   const out = structureOf(r, view.nodes.filter((n) => n.region === region), view.links, mode, widths, { direction: directionOf(s, board, region) });
+  const timeline = out.timeline && { direction: out.timeline.direction, cards: out.timeline.cards.map(({ id, ...dot }) => ({ n: Number(id), ...dot })) };
   return reply(200, {
     head: s.seq, board, region, mode, widths, ...(out.lanes && { lanes: out.lanes }), columns: out.columns,
     cards: out.cards.map(({ id, ...cell }) => ({ n: Number(id), ...cell })), links: out.links, crossing: out.crossing, empty: out.empty,
+    ...(timeline && { timeline }),
   });
 };
 
