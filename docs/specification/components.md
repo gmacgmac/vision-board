@@ -1879,6 +1879,59 @@ function: a container's direction arrives as an input (`LayoutOptions.directions
    (the header's Flows menu, the act, the redraw, read-only, branching rows, the edge gap, the gallery's section, axe dark and
    light). The routing seed 174 of `routing.test.ts` is a known shared stretch (`SHARED_KNOWN`), a follow-up for the router.
 
+## The timeline: layout (D-105; Timeline BE_01, PLAN.md decisions 7-15, § Design review 587-595)
+
+A container's nodes that carry the `timeline` key share one line. It is not a mode (`MODES` is unchanged): `layoutRegion`
+(`packages/layout/src/board.ts`) runs it beside the container's mode, and the layout stays a pure function with no flag
+(the page's half, the flag's one gate and the drawing, is FE_02's). The geometry type is `#format` `geometry.ts`
+`TimelineDrawing`.
+
+1. **The split** (`layoutRegion`): the visible nodes with `timeline` go on the line (`timeline.ts` `layoutTimeline`), the
+   rest through the mode with the links among the rest only; a link touching a dated node still routes (decision 13).
+   With no dated node the layout is exactly the one before: no `timeline` on the piece, the region or the structure.
+   Hidden nodes (`LayoutOptions.hidden`) leave the line.
+2. **Order and sides** (`timelineOrder`, from `#format` `sortByTimeline`; `timelineSide`): by start, the coarser first at
+   one start, equal dates by card number; above, then below, alternating (run down: left, then right, point 594).
+3. **Across** (`across`, `timelineStep`): one step for the whole line, call 6's formula: the least that keeps two nodes
+   on the same side `TIMELINE_SIDE_GAP` (28) apart, over neighbours too, at least `TIMELINE_MIN_STEP` (120). The first
+   dot is at least `TIMELINE_YEAR_ROOM` (56) along the line, for the year at its start. A node above sits on its bottom
+   edge and a node below hangs from its top edge, each `TIMELINE_STEM` (30) from the line; the stem meets the middle
+   of the facing edge. The line runs from the content's left to its right edge (`reachTimeline`: the nodes below count),
+   at least `TIMELINE_END_ROOM` (30) past the last dot, for the arrow.
+4. **Run down** (`down`; § Design review 587, 594, DESIGN_01 run 2): the line one stem from the widest node on each side
+   (the exact middle under `match`); the first node at the top of the content; each later dot as high as keeps its
+   node the board's row gap (`RegionOptions.rowGap`, else `ROW_GAP`) below the last node on its side and
+   `TIMELINE_MIN_DOT` (56) below the dot before; each node centred on its dot, so the stem meets the middle of its facing
+   side. The line ends `TIMELINE_END_ROOM` past the last dot.
+5. **Years and bands** (`yearsOf`, `bandsOf`): the year at the line's start (its `at` is `line.from`: the label begins
+   there) and at each turn, halfway between the two dots (`at` is the label's centre); none between dots of one year.
+   A band from the first to the last dot of each run of two or more exactly equal dates.
+6. **Widths** (`timelineWidthsOf`, decision 21, point 595): the dated nodes take the person's choice, else the
+   container's `widths`, else `match` run down and `own` across (`match`: every dated node as wide as the widest). The
+   caller passes it per container (`LayoutOptions.timelineWidths`); a container left out gets the default from its
+   `widths`. The rest keep `widthsOf`.
+7. **The rest** (`beside`): the mode's own answer moved `REGION_GAP` below the timeline's box, or, run down, `COL_GAP`
+   to its right with tops level with the line's start (569C); its lane bands move with it (`Lane.x` set when they no
+   longer start at the frame's left).
+8. **Pins** (decision 15): a pin on a dated node is ignored. Pins on the rest apply after the move (region-local, as the
+   page writes them) and win, even over the line; an unpinned card moved out of a pin's way keeps out of the
+   timeline's band (`bandOf`: across, its rows the whole way right; run down, its column the whole way down).
+9. **Packing** (`packRegions`): `RegionPiece.timeline` (region-local) becomes `RegionBox.timeline` in board coordinates
+   (`shiftTimeline`), as a lane does. Dated nodes are in `groups` whatever the mode, so links route around them; in
+   `radial` the rest stay out, as before.
+10. **Direction**: the region's `direction` (`RegionOptions.direction`, which the page passes from `directionOf` for
+    every container), whatever the mode. `ModeOutput.down` stays a flow's.
+11. **`show_layout`** (`structure.ts` `structureOf`, `server/engine/reads.ts` `showLayout`): the same split; `cards`,
+    `columns`, `links`, `crossing`, `empty` of the rest through the mode, and `timeline` (`direction`, the dated cards
+    in line order with `n`, `at` and `side`) from `timelineOrder`, so it agrees with the picture. Left out with no
+    dated card.
+12. **Kept true by**: `packages/layout/tests/timeline.test.ts` (order, across and down over random sizes with no
+    overlap, the step, packing, widths, years, bands, one node, determinism), `timeline-region.test.ts` (the rest in
+    every mode both ways, the line to the content's edge, only dated nodes, pins, hidden, links, packing and groups,
+    widths, `structureOf` agrees with `layoutRegion`, fixtures with no dated node, determinism), every other
+    `packages/layout/tests/*` unchanged, `layout.timing.ts` (40 dated and 40 undated, reported),
+    `apps/board/tests/api-layout-timeline.test.ts` (`show_layout` with and without a timeline, the person's direction).
+
 ## The selection bar's node commands, and Z (node overhaul FE_06)
 
 The rulings are `cortex-tasks/board/2026-11-16_board-ui_node-overhaul/PLAN.md` decision 9 (D-099) and D-101.
