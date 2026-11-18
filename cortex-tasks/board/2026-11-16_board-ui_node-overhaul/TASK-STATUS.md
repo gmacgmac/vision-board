@@ -1,8 +1,8 @@
 ---
 task_name: Node Overhaul
 created: 2026-11-16
-completed:
-status: in-progress
+completed: 2026-11-18
+status: completed
 categories: [board-ui, board-format, board-actions, board-tokens, board-layout, board-app, board-agent, board-security]
 tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 ---
