@@ -9,6 +9,7 @@ import { expect, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { act, card, open, write } from './agent-board.ts';
 import { drawEdges, mark } from './edge-board.ts';
+import { BOX_ARROW } from '../../apps/board/src/board/cards/mark-place.ts';
 
 const FLAGS = '?vbwork&flags=nodeEdges';
 const box = async (l: Locator) => (await l.boundingBox())!;
@@ -24,13 +25,13 @@ async function besideTheNode(page: Page, n: number, opened: Locator) {
   if (side === 'right') {
     expect(Math.abs(b.y - c.y), 'top level with the node').toBeLessThanOrEqual(1.5);
     expect(b.x).toBeGreaterThanOrEqual(c.x + c.width);
-    // The arrow on its left edge at the node's vertical centre (FIX_02, points 430 to 438).
-    expect(Math.abs(b.y + arrow - (c.y + c.height / 2)), 'the arrow at the node\'s vertical centre').toBeLessThanOrEqual(2);
+    // The pointer fixed on its left edge, BOX_ARROW from its top (FIX_04, point 459).
+    expect(Math.abs(arrow - BOX_ARROW), 'the pointer at its set distance from the top').toBeLessThanOrEqual(1);
   } else {
     expect(side).toBe('below');
-    // Centred on the node's width, the arrow at the middle of its top edge (FIX_02).
+    // Centred on the node's width, the pointer at the middle of its top edge (FIX_04).
     expect(Math.abs(b.x + b.width / 2 - (c.x + c.width / 2)), 'centred on the node').toBeLessThanOrEqual(2);
-    expect(Math.abs(b.x + arrow - (c.x + c.width / 2)), 'the arrow at the node\'s centre').toBeLessThanOrEqual(2);
+    expect(Math.abs(arrow - b.width / 2), 'the pointer at the middle of its top edge').toBeLessThanOrEqual(1);
     expect(b.y).toBeGreaterThanOrEqual(c.y + c.height);
   }
 }
@@ -112,8 +113,8 @@ test('a node near the window\'s bottom: its box moves up to stay on screen, the 
   if (await talk.getAttribute('data-side') === 'right') {
     const c = await box(card(page, q));
     expect(b.y, 'moved up from the node\'s top').toBeLessThan(c.y);
-    // Moved, it still aims at the node's centre, kept inside its edge (16px from its corner).
-    expect(Math.abs(b.y + await arrowAt(talk) - Math.min(c.y + c.height / 2, b.y + b.height - 16)), 'the arrow at the node\'s centre').toBeLessThanOrEqual(2);
+    // Moved, its pointer stays where it is on the box (FIX_04, point 459).
+    expect(Math.abs(await arrowAt(talk) - BOX_ARROW), 'the pointer does not move with the box').toBeLessThanOrEqual(1);
   }
 });
 

@@ -67,3 +67,18 @@ test('the latch finds again when its target left the page', () => {
   found = other;
   assert.equal(latch.target({ timeStamp: 10, deltaX: 0, deltaY: 10 }), other);
 });
+
+// FIX_04 ruling 2 (point 460): a gesture is decided by its first wheel event that moves. A trackpad's gesture can open
+// with an event of no movement (or the browser's own zero-delta wheel); deciding on it found nothing to scroll and
+// latched the whole gesture to a pan, so a flick over a scrolling box moved the board.
+test('an event that does not move decides nothing: the gesture\'s first moving event finds its target', () => {
+  const bubble = box('bubble', 0);
+  const latch = createWheelLatch((e) => (e.deltaY !== 0 ? bubble : null));
+  assert.equal(latch.target({ timeStamp: 0, deltaX: 0, deltaY: 0 }), null, 'no movement: nothing to pan or scroll yet');
+  assert.equal(latch.target({ timeStamp: 16, deltaX: 0, deltaY: 12 }), bubble, 'the first moving event decides');
+  assert.equal(latch.target({ timeStamp: 32, deltaX: 0, deltaY: 0 }), bubble, 'and keeps it for the gesture');
+});
+
+test('the gesture gap is about 200 ms: a trackpad\'s momentum that follows the fingers stays in the same gesture', () => {
+  assert.ok(WHEEL_GAP >= 150 && WHEEL_GAP <= 250, `WHEEL_GAP ${WHEEL_GAP}`);
+});

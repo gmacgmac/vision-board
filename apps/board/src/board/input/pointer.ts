@@ -67,6 +67,8 @@ const IDLE_APP = 'vb-app-frame[data-click-in]:not([data-active])';
 /** Where a Cmd or Ctrl press keeps the field's own press (a caret, a selection): never a pan. */
 const OWN_PRESS = 'input, textarea, select, [contenteditable]';
 export const DRAG_THRESHOLD = 4;
+/** Pixels in a wheel's line (`deltaMode` lines, as some mice and browsers count), as browsers scroll one. */
+const WHEEL_LINE = 16;
 /** The key a drag pans with from anywhere (review-polish ruling 13): Cmd, or Ctrl on other systems, as
  *  Ctrl/Cmd + scroll zooms. The one place it is named (Option may replace it later, round 2 ruling 6). */
 export const panKey = (e: { metaKey: boolean; ctrlKey: boolean }): boolean => e.metaKey || e.ctrlKey;
@@ -275,8 +277,10 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     // Ctrl/Cmd zooms everywhere. Off: inside the note bubble or a hover tip the wheel is always its own.
     if (latch ? !zoom && latch.target(e) : (e.target as HTMLElement).closest('vb-note-bubble, .vb-tip')) return;
     e.preventDefault();
-    if (zoom) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * ZOOM_RULES.steps.numbers.wheel));
-    else vp.panBy(-e.deltaX, -e.deltaY);
+    // A mouse that counts in lines or pages (deltaMode) moves the board as far as one that counts in pixels would.
+    const unit = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? WHEEL_LINE : e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? stage.clientHeight : 1;
+    if (zoom) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * unit * ZOOM_RULES.steps.numbers.wheel));
+    else vp.panBy(-e.deltaX * unit, -e.deltaY * unit);
   }, { passive: false });
   return () => {
     window.removeEventListener('click', onClick, true);

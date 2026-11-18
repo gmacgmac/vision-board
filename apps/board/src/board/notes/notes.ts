@@ -210,14 +210,14 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (open.mode === 'conversation') refreshBox(open);
     const at = anchorBox(d, open.mode === 'conversation' ? { ...open, at: undefined } : open);
     if (!at) return close(false);
-    // The box beside a node, as every such box: top aligned, right or below, its arrow on the notes mark. It is the one
+    // The box beside a node, as every such box: top aligned, right or below, its pointer fixed on it (FIX_04). It is the one
     // box that scales with the board (D-101) only from 80% to 120% (`boxScale`, zoom-rules.ts; points 444, 445).
     const cards = open.mode === 'conversation' ? open.anchor.flatMap((id) => d.card(id) ?? []) : [];
     const card = cards[0];
     const s = card ? boxScale(d.vp.k) : 1;
     bubble.style.setProperty('--vb-box-scale', String(s));
     const size = { w: bubble.offsetWidth * s, h: bubble.offsetHeight * s };
-    // One node: beside it, its arrow at the node's centre. A selection: beside all of them, the arrow at their middle (FIX_02).
+    // One node: beside it. A selection: beside all of them, centred on them when below.
     if (card) {
       const p = placeBeside(boxAround(cards.map((c) => nodeReach(c, d.stage)))!, size, { w: d.stage.clientWidth, h: d.stage.clientHeight },
         boxAround(cards.map((c) => stageBoxOf(c, d.stage)))!);
