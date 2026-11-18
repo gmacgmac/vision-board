@@ -11,6 +11,10 @@ export const RUN_TURNS = 15;
 /** Each model run, every turn of it included: its whole process group is killed at this, SIGTERM then SIGKILL. */
 export const RUN_KILL_MS = 180_000;
 export const KILL_GRACE_MS = 5_000;
+/** Each model run: while a turn is open (its message sent, its `result` not yet back), no stream line for this long is a
+ * stall (T_03 run 2: a model request that hung): the run is killed and counted as a crash, so it is tried once more.
+ * Above the longest silence a working run has: a standalone `check_responses` `wait` of 60 s, which is not clamped. */
+export const STALL_MS = 75_000;
 /** A `check_responses` `wait` the bot asks for is cut to this at the door; the record keeps what it asked. */
 export const WAIT_CLAMP_S = 5;
 /** Every engine call at the door. */

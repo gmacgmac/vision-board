@@ -22,6 +22,11 @@ import * as serverChatWords from './words/server-chat.ts';
 export const MCP_NAME = 'vision-board';
 /** The launched agent's instructions (BE_03 ruling 7; T_01 rewrites the file). */
 export const INSTRUCTIONS_FILE = fileURLToPath(new URL('../../../skills/vision-board/SKILL.md', import.meta.url));
+/** The skill's references, beside it: the agent is told the skill's folder and reads them without asking, never
+ * writing there (maintainer point 547; skills/vision-board/source/build.mjs builds them). */
+export const SKILL_REFERENCES = path.join(path.dirname(INSTRUCTIONS_FILE), 'references');
+/** The line after the instructions, every turn, naming the skill's folder (Claude's; Kiro's agent file names it too). */
+export const SKILL_NOTE = serverChatWords.skillFolder(path.dirname(INSTRUCTIONS_FILE));
 /** What the agent may call without asking: the board's tools, ToolSearch, and the gated tools (reading
  * among them), which the gate decides by the access rules first (PLAN ruling 5, D-066). Its built-ins are
  * also the only ones the session has (`--tools`, buildClaudeArgs). */
@@ -73,7 +78,7 @@ export function boardMcpServer(base: string, secret: string, project: string): M
  * could not be, when it could not (a Kiro start then says so; nothing else stops). */
 export function keepKiroAgent(home: string): string | undefined {
   try {
-    writeKiroAgent(home, INSTRUCTIONS_FILE);
+    writeKiroAgent(home, INSTRUCTIONS_FILE, { note: SKILL_NOTE, readOnly: SKILL_REFERENCES });
     return undefined;
   } catch (err) {
     return serverChatWords.theKiroAgentFileCould(kiroAgentFile(home), err instanceof Error ? err.message : String(err));

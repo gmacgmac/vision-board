@@ -53,6 +53,8 @@ export interface ApprovalOptions {
   /** The open ledger now, and whether it may be written: only its pictures and apps are written, only while it may be
    * (the rules' `OpenLedger`; FIX_01 F2). Asked at each question, so Stop editing or a lost lock holds at once. */
   ledger?: (() => OpenLedger) | undefined;
+  /** The folder read without asking and never written: the skill's references (the rules' `readOnly`, point 547). */
+  readOnly?: string | undefined;
 }
 
 interface Pending { cover: Cover | null; scopes: AskScope[]; timer: NodeJS.Timeout | undefined; resolve: (o: ApprovalOutcome) => void }
@@ -61,7 +63,7 @@ const keyOf = (c: Cover) => (c.kind === 'command' ? `command\0${c.head}` : `${c.
 
 /** `emit` stamps and sends a draft, and returns the event. */
 export function createApprovals<E>(emit: (draft: ApprovalDraft) => E, options: ApprovalOptions): Approvals<E> {
-  const { folder, ttlMs = APPROVAL_TTL_MS, onWait, strict = false, kept, reader, ledger } = options;
+  const { folder, ttlMs = APPROVAL_TTL_MS, onWait, strict = false, kept, reader, ledger, readOnly } = options;
   const pending = new Map<string, Pending>();
   const settled = new Map<string, ApprovalStatus>();
   /** The covers of yeses for the session. */
@@ -86,7 +88,7 @@ export function createApprovals<E>(emit: (draft: ApprovalDraft) => E, options: A
   return {
     ask(facts, signal) {
       // A command's words are judged from the shell's folder, which the gate's facts carry when it is not the board's.
-      const at = { ...(reader && { reader }), ...(facts.kind === 'command' && facts.cwd !== undefined && { cwd: facts.cwd }), ledger: ledger?.() };
+      const at = { ...(reader && { reader }), ...(facts.kind === 'command' && facts.cwd !== undefined && { cwd: facts.cwd }), ledger: ledger?.(), readOnly };
       let rules = policy(facts, folder, { strict, ...at });
       // What the gate asked about, the server never lets through unasked (VERIFY_01 F4).
       if (facts.kind === 'command' && 'allow' in rules) rules = policy(facts, folder, { strict: true, ...at });

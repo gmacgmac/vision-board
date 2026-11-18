@@ -98,6 +98,7 @@ export const bounded = (): Check => ({
   run(r) {
     const ends = r.turns.map((t) => t.end);
     if (r.exit.killed) return no(`killed at ${r.exit.seconds} s`);
+    if (r.exit.stalled) return no(`stalled: no stream line while a turn was open, killed at ${r.exit.seconds} s`);
     if (r.problem) return no(`harness: ${r.problem}`);
     if (!ends.length) return no('no turn ran');
     const bad = ends.find((e) => !e || e.subtype !== 'success');
@@ -115,12 +116,30 @@ export const cardAdded = (): Check => check('card-added', 'a new card was drawn'
   return [added.length > 0, added.map((x) => `card ${x.n} "${x.title}"`).join(', ') || 'none'];
 });
 
+/** The reference a Read use opened (`references/<name>.md` beside the skill), or undefined; a read that failed opened none. */
+const referenceOf = (u: { name: string; input: any; isError?: boolean }) => (u.name === 'Read' && !u.isError ? /(?:^|\/)references\/([a-z-]+)\.md$/.exec(String(u.input?.file_path ?? ''))?.[1] : undefined);
+/** The skill's references the bot read, each once, in the order first read. */
+export const referencesRead = (r: RunRecord): string[] => [...new Set(r.turns.flatMap((t) => t.uses).map(referenceOf).filter((x): x is string => !!x))];
+
+/** The bot read every reference the request needs and none it doesn't (the core names each one's case; node-overhaul
+ * T_05). eval.ts `score` adds it to every scenario, from the scenario's `reads`. */
+export const readsReferences = (need: readonly string[] = [], may: readonly string[] = []): Check => check(
+  'reads-references', `reads ${need.length ? need.map((n) => `references/${n}.md`).join(' and ') : 'no reference'}${may.length ? ` (${may.join(', ')} allowed)` : ''}, and no other`,
+  (r) => {
+    const read = referencesRead(r);
+    const missing = need.filter((n) => !read.includes(n));
+    const extra = read.filter((n) => !need.includes(n) && !may.includes(n));
+    return [!missing.length && !extra.length, `read: ${read.join(', ') || 'none'}${missing.length ? `; missing ${missing.join(', ')}` : ''}${extra.length ? `; not needed ${extra.join(', ')}` : ''}`];
+  },
+);
+
 const LOOKS = ['Read', 'Glob', 'Grep', 'LS', 'Bash'];
-/** No look around the folder (standalone, where the bot has read tools): what it needs comes from the board's tools. */
+/** No look around the folder (standalone, where the bot has read tools): what it needs comes from the board's tools. A
+ * read of the skill's own references is no look around the folder: `reads-references` judges it. */
 export const noFolderRead = (): Check => ({
   id: 'no-folder-read', says: 'no Read, Glob, Grep, LS or Bash use: where things go comes from the board\'s tools',
   run(r) {
-    const used = r.turns.flatMap((t) => t.uses).filter((u) => LOOKS.includes(u.name));
+    const used = r.turns.flatMap((t) => t.uses).filter((u) => LOOKS.includes(u.name) && !referenceOf(u));
     return used.length ? no(used.map((u) => `${u.name} ${brief(u.input)}`).join('; ')) : ok('no look around the folder');
   },
 });

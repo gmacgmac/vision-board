@@ -16,6 +16,8 @@ const SERVER = 'vision-board';
 const scenario = scenarioById(process.env.VB_EVAL_SCENARIO ?? '');
 const script = (process.env.VB_EVAL_FAKE === 'bad' ? scenario.fake.bad : undefined) ?? scenario.fake.good;
 const dir = /folder is (\S+)/.exec(arg('--append-system-prompt'))?.[1] ?? '';
+/** The skill's folder, from the line that names it (eval.ts `skillLine`). */
+const skillDir = /^Base directory for the vision-board skill: (.+)$/m.exec(arg('--append-system-prompt'))?.[1] ?? '';
 const emit = (row: object) => process.stdout.write(`${JSON.stringify(row)}\n`);
 
 // The MCP pass-through, as the CLI starts it.
@@ -31,7 +33,7 @@ const rpc = (method: string, params: object): Promise<any> => new Promise((done)
 });
 await rpc('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'fake-bot', version: '1' } });
 const tools = (await rpc('tools/list', {})).result.tools.map((t: { name: string }) => `mcp__${SERVER}__${t.name}`);
-emit({ type: 'system', subtype: 'init', model: 'fake-bot', tools: ['Write', ...tools] });
+emit({ type: 'system', subtype: 'init', model: 'fake-bot', tools: ['Write', 'Read', ...tools] });
 
 let uses = 0;
 function useLine(name: string, input: unknown, result: string, isError: boolean) {
@@ -57,6 +59,10 @@ for await (const line of createInterface({ input: process.stdin })) {
       mkdirSync(path.dirname(file), { recursive: true });
       writeFileSync(file, text);
       useLine('Write', { file_path: file, content: text }, `File created successfully at: ${file}`, false);
+    },
+    read(name) {
+      const file = path.join(skillDir, 'references', `${name}.md`);
+      useLine('Read', { file_path: file }, readFileSync(file, 'utf8'), false);
     },
     use(name, input) { useLine(name, input, `<tool_use_error>Error: No such tool available: ${name}</tool_use_error>`, true); },
     say(text) { said.push(text); emit({ type: 'assistant', message: { content: [{ type: 'text', text }] } }); },

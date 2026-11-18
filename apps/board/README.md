@@ -172,8 +172,9 @@ replaces them on purpose. The board's test support (`startTestBoard`, the API ha
   one folder for another host: `manifest.json` (checked by `plugin/manifest.schema.json`; its tools are
   `engine.tools.list()`, its text keys into `words.json`), `view/board.js` (exports `mount`, carries its own
   Svelte) with `view/board.css`, `engine/engine.js` (exports `createEngine`, imports only `node:` modules,
-  reads nothing beside itself), `words.json` and `skill.md` (the skill less what only the standalone host has:
-  `plugin/words/skill-edits.ts`; the tool descriptions likewise, `server/words/plugin-tools.ts`). It is
+  reads nothing beside itself), `words.json`, and `skill.md` with its `references/` (the skill's plugin build, from
+  the same source as the standalone skill: `skills/vision-board/source/`, its differences in `differences.md`; the
+  tool descriptions are the standalone ones less what a host's bot lacks, `server/words/plugin-tools.ts`). It is
   built by `bin/build-plugin.ts` and `vite.plugin.config.ts` from the entries in `plugin/`; the same input
   gives the same bytes, and `-- --watch` rebuilds the two bundles on a change. A host sets `--host-font`,
   `--host-font-mono` and `--host-text-scale` on its root to theme it (`plugin/theme.css`). The names a host

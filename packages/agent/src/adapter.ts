@@ -34,6 +34,11 @@ export interface StartOptions {
   mcpServers: Record<string, McpServer>;
   /** Extra instructions appended to the agent's own system prompt, every turn. */
   instructionsFile?: string;
+  /** A line told after the instructions, every turn (where the skill's folder is, maintainer point 547). */
+  instructionsNote?: string;
+  /** A folder the agent reads without asking and never writes, wherever it is (the skill's references; `policy.ts`
+   * `PolicyOptions.readOnly`). Absolute. */
+  readOnlyFolder?: string;
   /** Tools the agent may call without asking, in the CLI's spelling. Gated tools still pause. */
   allowedTools: string[];
   gate: GateConfig;

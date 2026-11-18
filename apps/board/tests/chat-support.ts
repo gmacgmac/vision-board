@@ -18,6 +18,8 @@ export interface Given {
   /** The gate's whole environment as the CLI got it (AGENT_GATE_*): run bin/gate.ts with it. */
   gateEnv: Record<string, string>;
   mcpConfig: { mcpServers: Record<string, { command: string; args: string[]; env: Record<string, string> }> };
+  /** The instructions it was given, as they were for the run. */
+  instructions: string | null;
   pid: number;
   /** The folder the CLI ran in. */
   cwd: string;

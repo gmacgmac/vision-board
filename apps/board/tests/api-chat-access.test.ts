@@ -13,6 +13,7 @@ import path from 'node:path';
 import { GATE_BIN, GATE_STRICT_ENV, GATE_WAIT_ENV, accessFor, policy } from '#agent';
 import { createClient } from '#client';
 import { makeTempDir } from '#format/testing';
+import { SKILL_NOTE, SKILL_REFERENCES } from '../server/chat-access.ts';
 import { openLedger } from '../server/ledger.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -77,6 +78,8 @@ const why = (rel: string, op: 'read' | 'write') => accessFor(rel, op).rule.why;
 /** What the agent is told for a git command (346), as the policy says it. */
 const GIT_REFUSAL = (policy({ kind: 'command', command: 'git status', risks: [], paths: [] }, process.cwd()) as { refuse: string }).refuse;
 const at = (rel: string) => path.join(h.project, rel);
+/** What the agent is told when it would write the skill's references (point 547), as the policy says it. */
+const SKILL_REFERENCES_WHY = (policy({ kind: 'write', op: 'create', path: path.join(SKILL_REFERENCES, 'x.md') }, process.cwd(), { readOnly: SKILL_REFERENCES }) as { refuse: string }).refuse;
 
 test('Claude\'s Read: .env refused, a file in the folder allowed without a question, a file outside asked', async () => {
   assert.deepEqual(await gate('Read', { file_path: '.env' }), ['deny', why('.env', 'read')]);
@@ -87,6 +90,18 @@ test('Claude\'s Read: .env refused, a file in the folder allowed without a quest
   assert.deepEqual(request.scopes, ['once', 'session'], 'outside the folder: never for the folder');
   assert.equal('expiresAt' in request, false, 'approvalHold is on: it waits');
   assert.deepEqual(decision, ['allow', 'The person allowed it.']);
+});
+
+test('point 547: the skill\'s references, outside the folder, are read without a question and never written; the session names the skill\'s folder', async () => {
+  const layouts = path.join(SKILL_REFERENCES, 'layouts.md');
+  assert.ok(fs.existsSync(layouts), 'a reference the build ships');
+  assert.deepEqual(await gate('Read', { file_path: layouts }), ['allow', ALLOWED], 'no approval request: the person is not asked');
+  assert.deepEqual(await gate('Grep', { pattern: 'flow', path: SKILL_REFERENCES }), ['allow', ALLOWED]);
+  for (const [tool, input] of [['Write', { file_path: layouts, content: 'x' }], ['Edit', { file_path: layouts, old_string: 'a', new_string: 'b' }], ['Write', { file_path: path.join(SKILL_REFERENCES, 'new.md'), content: 'x' }]] as const) {
+    assert.deepEqual(await gate(tool, input), ['deny', SKILL_REFERENCES_WHY], `${tool} ${input.file_path}`);
+  }
+  assert.ok(run.args.some((a) => a.includes(`Edit(/${SKILL_REFERENCES}/**)`)), 'Claude Code\'s own deny rule, a second line');
+  assert.ok(run.instructions?.endsWith(`\n\n${SKILL_NOTE}\n`), 'the skill, then where its folder is');
 });
 
 test('VERIFY_01 (Run 3): a command naming a path outside is offered once only; a search of the parent is refused; the CLI\'s tools are only the chat\'s', async () => {

@@ -91,7 +91,7 @@
         },
         "columns": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/columns", "description": "Columns in a `grid` container."},
         "widths": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/widths", "description": "Card widths: `match` (a column's cards as wide as its widest) or `own`. Unset: `match` for `grid` and `column`, else `own`. The person's choice wins.", "$comment": "Was: api.md 132"},
-        "direction": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/direction", "description": "Which way a `flow` runs: `across` (left to right) or `down` (top to bottom). Left out: `across`. The person's choice wins.", "$comment": "Was: api.md 189"}
+        "direction": {"$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/direction", "description": "Which way a `flow` runs, `across` (left to right) or `down` (top to bottom): set it only when the person asks for one. Left out, the board's own direction holds (the person's choice in its header, else `across`). The person's choice wins.", "$comment": "Was: api.md 189"}
       },
       "if": {"type": "object", "required": ["mode"], "properties": {"mode": {"const": "lanes"}}},
       "then": {

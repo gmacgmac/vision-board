@@ -4,13 +4,13 @@
 // counts only the agent's own working time (`hold`, turn-clock.ts).
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { rmSync, writeFileSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
 import type { AgentAdapter, AgentSession, AgentUpdate, StartOptions } from './adapter.ts';
 import type { TurnSession } from './claude-args.ts';
-import { buildClaudeArgs, isWrongSessionFlag, mcpConfigJson, transcriptExists } from './claude-args.ts';
+import { buildClaudeArgs, instructionsText, isWrongSessionFlag, mcpConfigJson, transcriptExists } from './claude-args.ts';
 import { ClaudeStream } from './claude-stream.ts';
 import { gateEnv } from './gate.ts';
 import { startTurnClock } from './turn-clock.ts';
@@ -47,7 +47,12 @@ async function* runOnce(
 ): AsyncGenerator<AgentUpdate> {
   const config = path.join(tmpdir(), `agent-mcp-${randomUUID()}.json`);
   writeFileSync(config, mcpConfigJson(start.mcpServers), { mode: 0o600 });
-  const child = spawn(opts.command.file, [...(opts.command.args ?? []), ...buildClaudeArgs(start, session, config)], {
+  // With a note, the instructions and the note go in one private file for this turn (`instructionsText`).
+  const noted = instructionsText(start, (f) => readFileSync(f, 'utf8'));
+  const instructions = noted === undefined ? undefined : path.join(tmpdir(), `agent-instructions-${randomUUID()}.md`);
+  if (instructions !== undefined) writeFileSync(instructions, noted!, { mode: 0o600 });
+  const args = buildClaudeArgs(instructions === undefined ? start : { ...start, instructionsFile: instructions }, session, config);
+  const child = spawn(opts.command.file, [...(opts.command.args ?? []), ...args], {
     cwd: start.cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: {
@@ -93,6 +98,7 @@ async function* runOnce(
     turn.hold = undefined;
     if (!killed && child.exitCode === null && child.signalCode === null) kill();
     rmSync(config, { force: true });
+    if (instructions !== undefined) rmSync(instructions, { force: true });
     turn.kill = undefined;
   }
   if (!stream.sawEvent && !killed && isWrongSessionFlag(`${plain}\n${stderr}`)) {

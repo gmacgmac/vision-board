@@ -58,14 +58,26 @@ export function kiroAccess(): { rules: KiroRule[]; toolsSettings: Record<string,
   return { rules, toolsSettings: { read: reads, grep: reads, glob: reads, write: writes, shell: { autoAllowReadonly: false, deniedCommands: REFUSED_PROGRAMS.map((p) => `${p}(\\s.*)?`) } } };
 }
 
+/** What the host adds to the agent: a note told after the prompt (a file of its own, `kiroNoteFile`, given as a
+ * resource), and a folder read without asking and never written (`StartOptions.readOnlyFolder`; point 547). */
+export interface KiroExtras { note?: string; readOnly?: string }
+
+/** Where the note is kept, read by Kiro as a resource: a folder of its own, out of `agents/`, so it is never taken for an agent. */
+export const kiroNoteFile = (home: string): string => path.join(home, '.kiro', KIRO_AGENT, 'note.md');
+
 /** The file's text: the draft with `prompt` pointing at `promptFile`, an absolute path, and the access
- * rules (`kiroAccess`) after the draft's own rules. */
-export function kiroAgentText(promptFile: string): string {
+ * rules (`kiroAccess`) after the draft's own rules; with `extras`, the note file as a resource and the read-only
+ * folder denied to writes (reads there are asked, and `verdictFor` allows them without the person). */
+export function kiroAgentText(promptFile: string, extras: KiroExtras & { noteFile?: string } = {}): string {
   if (!path.isAbsolute(promptFile)) throw new Error(`The Kiro agent's prompt must be an absolute path, not ${promptFile}`);
-  const draft = JSON.parse(readFileSync(KIRO_AGENT_DRAFT, 'utf8')) as Record<string, unknown> & { permissions: { rules: KiroRule[] } };
+  const draft = JSON.parse(readFileSync(KIRO_AGENT_DRAFT, 'utf8')) as Record<string, unknown> & { permissions: { rules: KiroRule[] }; resources: string[] };
   const access = kiroAccess();
-  const permissions = { ...draft.permissions, rules: [...draft.permissions.rules, ...access.rules] };
-  return `${JSON.stringify({ ...draft, prompt: `file://${promptFile}`, permissions, toolsSettings: access.toolsSettings }, null, 2)}\n`;
+  const locked: KiroRule[] = extras.readOnly ? [{ capability: 'fs_write', match: [`${extras.readOnly}/**`], effect: 'deny' }] : [];
+  const permissions = { ...draft.permissions, rules: [...draft.permissions.rules, ...access.rules, ...locked] };
+  const write = access.toolsSettings.write as { deniedPaths: string[] };
+  const toolsSettings = extras.readOnly ? { ...access.toolsSettings, write: { ...write, deniedPaths: [...write.deniedPaths, `${extras.readOnly}/**`] } } : access.toolsSettings;
+  const resources = extras.noteFile ? [...draft.resources, `file://${extras.noteFile}`] : draft.resources;
+  return `${JSON.stringify({ ...draft, prompt: `file://${promptFile}`, resources, permissions, toolsSettings }, null, 2)}\n`;
 }
 
 const current = (file: string): string | undefined => {
@@ -74,11 +86,14 @@ const current = (file: string): string | undefined => {
 
 /** Write the agent file under `home` unless it already says the same; `written` says whether it did.
  * Throws when it cannot be written (the host says so where Kiro is chosen). */
-export function writeKiroAgent(home: string, promptFile: string): { file: string; written: boolean } {
+export function writeKiroAgent(home: string, promptFile: string, extras: KiroExtras = {}): { file: string; written: boolean } {
   const file = kiroAgentFile(home);
-  const text = kiroAgentText(promptFile);
-  if (current(file) === text) return { file, written: false };
+  const noteFile = extras.note === undefined ? undefined : kiroNoteFile(home);
+  const text = kiroAgentText(promptFile, { ...extras, ...(noteFile && { noteFile }) });
+  const note = extras.note === undefined ? undefined : `${extras.note}\n`;
+  if (current(file) === text && (noteFile === undefined || current(noteFile) === note)) return { file, written: false };
   mkdirSync(path.dirname(file), { recursive: true });
+  if (noteFile !== undefined) { mkdirSync(path.dirname(noteFile), { recursive: true }); writeFileSync(noteFile, note!); }
   writeFileSync(file, text);
   return { file, written: true };
 }

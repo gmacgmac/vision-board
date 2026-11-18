@@ -24,6 +24,7 @@ export const insertStep: Scenario = {
   title: 'Put a step between two linked cards of a flow, in one item',
   setup: drawSteps,
   turns: [{ say: 'On the release steps board, add a step to run the smoke tests between tagging and deploying.' }],
+  reads: { need: ['layouts'] },
   checks: [
     check('one-insert', 'one node item with `insert` went in between cards 2 and 3 (the answer\'s `inserted`)', (r) => {
       const done = callsTo(r, 'write_board').flatMap(resultsOf).filter((x) => x.ok && x.inserted);
@@ -39,6 +40,7 @@ export const insertStep: Scenario = {
   ],
   fake: {
     good: [async (bot) => {
+      bot.read('layouts');
       await bot.call('show_container', { board: BOARD, region: 'steps' });
       await bot.call('write_board', { board: BOARD, items: [{ ...SMOKE, insert: { after: 2, before: 3 } }] });
       bot.say('Done.');
@@ -52,6 +54,6 @@ export const insertStep: Scenario = {
       ] });
       bot.say('Done.');
     }],
-    badFails: ['one-insert', 'no-link-items'],
+    badFails: ['one-insert', 'no-link-items', 'reads-references'],
   },
 };

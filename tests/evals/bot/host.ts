@@ -101,6 +101,7 @@ export async function startEvalHost(o: { dir: string; port: number; dry: boolean
 
   const person: Person = {
     async mark(board, n, mark) { await act(board, { action: mark, n, ver: await latestVer(board, n) }); },
+    async direction(board, direction) { await act(board, { action: 'direction', direction }); },
     async note(board, n, text) {
       await act(board, { action: 'comment', n, ver: await latestVer(board, n), text });
       return (await ledger()).filter((e) => e.action === 'comment').at(-1)!.seq;
