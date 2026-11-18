@@ -46,6 +46,7 @@ tracker: cortex-tasks/tracker.md#N53
 | 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Pending | |
 | 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Pending | |
 | 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Pending | |
+| 5b | FIX_01 | 2 | standard | no | — | [A refusal names what was wrong (M84)](./FIX_01_anyof-refusal-wording.md) | Pending | Rolled in at the design gate |
 | 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Pending | |
 | 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
 | 8 | T_03 | 5 | standard | no | Staff engineer who owns deprecations — a switch-over is done only when nothing, not code, tests, words nor docs, still points at the flag. | [Switch on](./T_03_switch-on.md) | Pending | |
@@ -63,6 +64,8 @@ tracker: cortex-tasks/tracker.md#N53
 - **Wave 2 merge**: FE_01's `tokens.css` diff shown to the maintainer; budgets raised once on the merge (PLAN.md
   § House Rules); `npm run map`.
 - **Result** (before wave 5): the maintainer uses the board with `?flags=timeline` and says yes.
+
+**DESIGN_01 run 2** (2026-11-18, design gate 587-595): the vertical pages redrawn, alternating left and right; runs beside wave 2.
 
 **Own worktree**: wave 2 only (three code tasks that each run tests); the commands are in PLAN.md § House Rules.
 
@@ -113,6 +116,8 @@ PLAN.md § Kickoff answers.
 |------|-------|-------|
 | 1 | T_01 | `packages/format/src/` (`timeline.ts` new, `view.ts`, `ledger.ts`, `ledger-shape.ts`, `view-shape.ts`, `app-shape.ts`, `validate.ts`, `geometry.ts`, `flags.ts`, `index.ts`, `migrate/steps.ts`, `words/format-ledger.ts`), `packages/format/schema/`, `packages/format/fixtures/` except `legacy/`, `packages/format/tests/`, the generated files (`npm run gen`), `apps/board/server/write-board.ts`, `apps/board/server/examples.ts`, test files that hold a format-20 line or a `ledger/20/` `$id` (`apps/board/tests/`, `scripts/`), new `apps/board/tests/api-timeline.test.ts` and `schema-v21.test.ts`, `docs/specification/api.md`, `docs/specification/api-reference.md` (generated) |
 | 1 | DESIGN_01 | `design/mockups/timeline/` |
+| 2 | DESIGN_01 run 2 | `design/mockups/timeline/` (the vertical pages, README) |
+| 2 | FIX_01 | `apps/board/server/schema.ts`, its refusal test, a words file under `packages/format/src/words/` only for a new sentence |
 | 2 | BE_01 | `packages/layout/` (`src/timeline.ts` new, `board.ts`, `types.ts`, `structure.ts`, `index.ts`, `tests/`), `apps/board/server/engine/reads.ts` (`showLayout` only), `apps/board/tests/api-layout*.test.ts` and new `api-layout-timeline.test.ts`, `docs/specification/components.md` |
 | 2 | FE_01 | `packages/ui/src/node/`, `packages/ui/src/markdown/`, `packages/ui/src/timeline/` (new), `packages/ui/src/patterns.ts`, `packages/ui/src/index.ts`, `packages/ui/src/words/`, `packages/ui/tests/`, `packages/tokens/src/tokens.css` and its contrast pair list and tests, `apps/board/src/gallery/timeline-section.ts` (new), `apps/board/src/gallery/main.ts`, `scripts/words-homes.mjs` and `docs/specification/words.md` (only for a new words file), the screenshots its specs renew |
 | 2 | T_02 | `skills/vision-board/` (`source/`, the built `SKILL.md` and `references/`, `NOTES.md`, `scenarios.md`), `tests/evals/bot/`, `apps/board/tests/plugin-skill.test.ts`, `docs/specification/plugin.md` |

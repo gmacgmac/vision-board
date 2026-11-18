@@ -55,14 +55,15 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
    - across: the first dot above, then alternating; one step for the whole line; no two nodes overlap, over random
      widths from 200 to 480 (the `no-overlap.test.ts` shape); a node above sits on its bottom edge, a node below hangs
      from its top edge, each `TIMELINE_STEM` from the line; every stem joins its dot to the node's edge at the centre;
-   - down: the line on the left, every node `beside` it on the right, one step (the tallest node plus
-     `EDGE_ROW_GAP`), each stem at one fixed distance below the node's top (`TIMELINE_STEM_AT`, level with the date line in
-     the default skin; the layout knows no skin);
+   - down (PLAN.md § Design review 587, 594): the line down the middle of the timeline's column, nodes alternating
+     `left` and `right` (the first left), packed: each dot as high as keeps its node `ROW_GAP` below the last node on
+     its side and the dot `TIMELINE_MIN_DOT` below the previous dot; the stem meets the middle of the node's facing
+     side; no overlap over random heights and widths; with `match` widths every dated node as wide as the widest;
    - years: one at the line's start (the first dot's year), one at each turn, halfway between the two dots; none
      between dots of the same year;
    - bands: one per run of two or more consecutive exactly-equal values, from the run's first dot to its last;
-   - the other nodes: laid out by the container's mode below the timeline (`TIMELINE_GAP` under its lowest point), or,
-     run down, to its right (`TIMELINE_GAP` beyond the dated nodes' right edge, tops level with the line's start;
+   - the other nodes: laid out by the container's mode below the timeline (`REGION_GAP` under its lowest point), or,
+     run down, to its right (`COL_GAP` beyond the timeline's right edge, tops level with the line's start;
      PLAN.md decision 14, maintainer 569C), in
      every mode (`grid`, `row`, `column`, `flow` across and down, `lanes`, `radial`); their links pass to the mode,
      links touching a dated node do not; the line runs to the content's right edge when the nodes below are wider;
@@ -74,12 +75,14 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
 2. [ ] **`packages/layout/src/timeline.ts`** (new, pure): `layoutTimeline(nodes, sizes, direction) → { pos:
    Map<string, Box>, drawing: TimelineDrawing, box: Box }`, region-local from (0, 0). Constants exported beside it
    (the layout's numbers, not zoom numbers): `TIMELINE_STEM`, `TIMELINE_SIDE_GAP` (28, run 2), `TIMELINE_MIN_STEP`,
-   `TIMELINE_GAP`, `TIMELINE_YEAR_ROOM` (room on the line before the first dot for the year), `TIMELINE_END_ROOM`
-   (the arrow), `TIMELINE_STEM_AT`. Pick values from run 2 and PLAN.md § Design review, measured from the pages; say
+   `TIMELINE_MIN_DOT`, `TIMELINE_YEAR_ROOM` (room on the line before the first dot for the year), `TIMELINE_END_ROOM`
+   (the arrow); no `TIMELINE_GAP` or `TIMELINE_STEM_AT`: the gap to the other nodes is `REGION_GAP` below, `COL_GAP` to
+   the right (§ Design review 591). Widths: the container's `widthsOf` with the timeline default (run down `match`,
+   across `own`) when neither the person nor the agent chose (PLAN.md decision 21, point 595). Pick values from run 2 and PLAN.md § Design review, measured from the pages; say
    which in the notes. The step is call 6's formula. Keep functions near 50 lines (split ordering, across and down).
 3. [ ] **`layoutRegion`** (`board.ts`): split the visible nodes into dated (`timeline` set) and the rest. With no
    dated node, take today's path untouched. Otherwise: `layoutTimeline` for the dated; the mode (`MODE_FNS`) for the
-   rest with the links among the rest only; shift the rest down by the timeline's height plus `TIMELINE_GAP` (and
+   rest with the links among the rest only; shift the rest down by the timeline's height plus `REGION_GAP`, or run down right by its width plus `COL_GAP` (and
    their lane bands with them); apply pins to the rest only, after the shift (pins stay region-local, as the page
    writes them); `makeRoom` with the timeline's box among the fixed boxes; extend the line to the content's right edge
    (across). `RegionPiece.timeline?: TimelineDrawing` (region-local); `packRegions` puts it in board coordinates on
@@ -93,7 +96,7 @@ hand-made geometry right now, in another worktree: keep the type exactly as T_01
 6. [ ] **`showLayout`** (`apps/board/server/engine/reads.ts`): fill the response's `timeline` (T_01's schema) from
    `structureOf`, the direction from `directionOf` as the page draws it. Test (`api-layout-timeline.test.ts`, port
    7810 if it starts a server): a container with dated and undated cards reports both, in drawn order; a container
-   with none leaves `timeline` out and answers as before; the person's direction choice turns `side` to `beside`.
+   with none leaves `timeline` out and answers as before; the person's direction choice turns `side` to `left` and `right`, alternating.
 7. [ ] **Same picture**: a test that the order and sides `structureOf` reports equal those `layoutRegion` draws, for the
    same view (the structure agrees with the picture, `types.ts` `LayoutStructure`).
 8. [ ] **Timing**: add a case to `layout.timing.ts` (a container of 40 dated and 40 undated nodes) and report the time

@@ -96,8 +96,8 @@
           "description": "The card's date, as stored."
         },
         "side": {
-          "enum": ["above", "below", "beside"],
-          "description": "Where the card sits: `above` or `below` the line, alternating from the first above; `beside` it, to its right, when the line runs `down`."
+          "enum": ["above", "below", "left", "right"],
+          "description": "Where the card sits: `above` or `below` the line, alternating from the first above; `left` or `right` of it, alternating from the first on the left, when the line runs `down`."
         }
       },
       "unevaluatedProperties": false

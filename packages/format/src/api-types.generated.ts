@@ -577,7 +577,7 @@ type ShowLayoutResponseTimeline = {
 type ShowLayoutResponseDated = {
   n: number;
   at: string;
-  side: "above" | "below" | "beside";
+  side: "above" | "below" | "left" | "right";
 };
 type ListOpenResponse = {
   head: number;

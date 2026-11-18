@@ -7,9 +7,9 @@ export interface Size { w: number; h: number }
 export interface Point { x: number; y: number }
 export interface Box extends Point, Size {}
 
-/** Where a dated node sits beside its container's timeline (D-105 3): above or below a line that runs across, beside
- * (to its right) a line that runs down. */
-export type TimelineSide = 'above' | 'below' | 'beside';
+/** Where a dated node sits beside its container's timeline (D-105 3): above or below a line that runs across, left or
+ * right of a line that runs down, alternating from the first (above, or left; maintainer, point 594). */
+export type TimelineSide = 'above' | 'below' | 'left' | 'right';
 
 /** One dated node on the line: its dot, its side, and the stem from the dot to the node. */
 export interface TimelineDot { id: string; at: Point; side: TimelineSide; stem: { from: Point; to: Point } }

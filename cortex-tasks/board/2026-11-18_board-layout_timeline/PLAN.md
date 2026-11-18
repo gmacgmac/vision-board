@@ -60,11 +60,14 @@ precision field and a grip), these decisions supersede it.
    unchanged. The timeline goes only when the last key in the container goes; changing the container's mode never
    removes it. D-021 (a ledger-history layout mode, unbuilt) is a different thing and stands.
 8. **Each dated node sits on its own dot**, joined to the line by a stem, alternating above and below the line (the
-   first above). Two nodes never share a dot.
+   first above); run down, alternating left and right of it (the first on the left; maintainer, point 594). Two nodes
+   never share a dot. The stem meets the middle of the node's facing edge (point 587).
 9. **Order**: by start (`2026` starts on 1 January, `2026-10` on 1 October, `2026-10-13` at 00:00); at the same start,
    coarser before finer (`2026-10` before `2026-10-01` before `2026-10-01T00:00`); exactly equal values in the order
    the nodes were made (card number `n`).
-10. **Evenly spaced, not to scale.** One step for the whole line; a gap of months and a gap of minutes look the same.
+10. **Not to scale.** A gap of months and a gap of minutes look the same. Across, one step for the whole line. Run
+    down, normal spacing (point 587): each dot as close to the one before as keeps nodes apart by the board's own gaps,
+    so a short node leaves no empty run below it.
 11. **The year is shown on the line**: at its start, and where it turns between two dots. Day and time headers carry
     no year for that reason.
 12. **A same-date band** lies on the line behind consecutive dots whose values are exactly equal (`2026-11-03` and
@@ -72,7 +75,7 @@ precision field and a grip), these decisions supersede it.
 13. **Links work**: links to, from and between dated nodes route as they do between any cards.
 14. **The vertical form** follows the container's flow direction (`directionOf`: the person's choice for the container,
     else theirs for the board, else the container's own `direction`, else across). Run down, the line runs down the
-    left and every dated node sits on one side of it, to its right. **Maintainer (kickoff 569C)**: across, the
+    middle of the timeline's column and the dated nodes alternate left and right of it (point 594). **Maintainer (kickoff 569C)**: across, the
     container's other nodes lay out below the timeline; run down, the timeline is the container's first column and the
     other nodes lay out beside it, to its right, in the container's own layout mode (one container, two columns). The
     container's layout menu offers Across, Down and Auto on a container that has a timeline, as it does on a flow.
@@ -100,8 +103,10 @@ precision field and a grip), these decisions supersede it.
     both sizes are tokens, the date uses each skin's display font (`--vb-font-display`), and the title is 18px in both
     skins.
 21. **The build takes the board's real values** for the frame's spacing and the line's colour, not the mock-ups'
-    (run 2). **Planner**: the mock-ups' 300px node width is not adopted: a dated node keeps its size tier (`sizeTier`), and the step
-    of decision 10 is worked out from the widths drawn.
+    (run 2). **Maintainer (point 595)**: dated nodes follow the container's widths setting (`Widths`: `match` or
+    `own`, `widthsOf`, the same control in the container's menu); with no choice made, a timeline run down is `match`
+    (every dated node as wide as the widest) and across is `own`. The setting is the container's: it covers its dated
+    and its other nodes alike. The mock-ups' 300px width is not adopted.
 
 ### The agent (skill)
 
@@ -309,14 +314,13 @@ records any change here, and in § Decisions, before wave 1.
    are kept out from under it (decision 15).
 6. **Spacing** (BE_01): one step `s` for the line, the least that keeps two nodes on the same side `SIDE_GAP` (28px, as
    run 2) apart: `s = max(MIN_STEP, max over i of ((w[i] + w[i+2]) / 2 + SIDE_GAP) / 2)`, also taken over neighbours
-   `i, i+1` so two or three nodes never crowd; run down, `s` = the tallest dated node + `EDGE_ROW_GAP`. The stem is a
-   fixed length; nodes above sit on their bottom edge, nodes below hang from their top edge; run down, the stem meets
-   the node's left edge at one fixed distance from its top (`TIMELINE_STEM_AT`), level with the date line in the
-   default skin (the layout knows no skin; in Command Lens it meets the plate, as the box pointer's fixed
-   `BOX_ARROW` does). The line runs from the start of the content to its right edge (the
+   `i, i+1` so two or three nodes never crowd; run down, no single step: superseded by § Design review 587 (packed, alternating left and right). The
+   stem is one fixed length in both forms (`TIMELINE_STEM`); nodes above sit on their bottom edge, nodes below hang
+   from their top edge; run down, the stem meets the middle of the node's facing side (§ Design review 587; no
+   `TIMELINE_STEM_AT`). The line runs from the start of the content to its right edge (the
    wider of the timeline and the nodes below), ending in an arrow; run down, to the last dot, ending in an arrow.
 7. **Type**: 23px date and 18px title, both skins, as tokens; the date in the skin's display font (decision 20).
-8. **The node's width is its own** (decision 21): no forced 300px.
+8. **The node's width follows the container's widths setting** (decision 21, point 595): no forced 300px.
 9. **Entries in detail** (FE_01): a `###` entry is the heading and the blocks after it up to the next heading, rule or
    entry start; a bold-lead paragraph is one entry, its name the bold run and its text the rest, with one leading
    `:`, `-`, `–` or `—` and the spaces after it dropped; in a list, each top-level item that opens with a bold name is
@@ -350,6 +354,31 @@ _Recorded by the orchestrator: the answer to each call above and to the Requests
 
 _Recorded by the orchestrator at the design gate: the maintainer's answers on DESIGN_01's pages and open choices.
 Where a page and this list differ, this list wins._
+
+2026-11-18 (points 587-595), after the run-1 pages of DESIGN_01:
+- **587 and 594, the vertical form**: run down, the line runs down the middle of the timeline's column and the dated
+  nodes alternate left and right of it, the first on the left, as across alternates above and below. Spacing is
+  normal, not one even step: dot `i` sits as high as both of these allow: its node's top at least `ROW_GAP` below the
+  bottom of the last node on the same side (`i - 2`), and the dot at least `TIMELINE_MIN_DOT` (the dot plus room for a
+  year label) below dot `i - 1`. Nodes on opposite sides may overlap in height; that is the point of alternating. The
+  container's other nodes sit to the right of the whole timeline (569C stands). Contract: `TimelineSide` is
+  `above | below | left | right` (orchestrator, before wave 2: `geometry.ts`, `show-layout-response.schema.json`,
+  generated).
+- **587, the stem**: the stem meets the middle of the node's facing edge in both forms: across, the middle of the top
+  or bottom edge (as drawn); run down, the middle of the right side for a node on the left, of the left side for a
+  node on the right. `TIMELINE_STEM_AT` is dropped. Command Lens needs no special case.
+- **591, distances**: one stem length for both forms (`TIMELINE_STEM`, 30). Every other gap is a gap the layout
+  already has: `ROW_GAP`, `REGION_GAP` (the other nodes below the line), `COL_GAP` (the other nodes to the right of
+  a timeline run down). No new spacing number except the stem, the year's room and the arrow's.
+- **595, widths**: dated nodes follow the container's widths setting (decision 21): run down defaults to `match`,
+  across to `own`; the person's choice in the container's menu wins and covers the whole container.
+- **588 line colour, 589 dot, 590 year label, 592 tone ink, 593 same-date band**: kept as DESIGN_01 run 1 drew them
+  (no objection from the maintainer).
+- **M84** (tracker): rolled into this set as FIX_01 (the `anyOf` refusal wording), wave 2.
+- **D-106 draft** (for the maintainer's yes; D-105 item 3 says run down puts the nodes on one side): "Run down, a
+  timeline's dated nodes alternate left and right of the line, the first on the left, spaced by the board's gaps
+  rather than one step; the stem meets the middle of the node's facing edge in both forms; dated nodes follow the
+  container's widths setting, `match` by default run down and `own` across."
 
 ---
 
@@ -395,7 +424,7 @@ word for word, on his yes (with any change he makes recorded in § Kickoff answe
 | An older build writes into a ledger with dated cards | Format 21: an older build opens it read-only and says why (D-103 4); the step is a restamp, so migration is trivial and proven by `migrate.test.ts` |
 | Restamping fixtures and `$id`s touches many files | Mechanical, one task (T_01), through the chain (`npm run ledger:migrate` on fixture folders or the same `restamp`), never by hand; `gen --check` and the schema tests hold it |
 | A container without dates draws differently | BE_01 proves byte-for-byte equal layouts and structures for every existing layout test view with no key; flag off, the page drops the key |
-| Overlapping nodes on the line | The step formula (call 6) keeps same-side nodes `SIDE_GAP` apart for any widths; a no-overlap test over random widths (`no-overlap.test.ts` shape) |
+| Overlapping nodes on the line | The step formula (call 6; run down, § Design review 587) keeps same-side nodes apart for any widths and heights; a no-overlap test over random widths (`no-overlap.test.ts` shape) |
 | A dated node still drags (a skin's handle) | FE_01 marks dated nodes (`data-timeline`) and gives no grip; FE_02 refuses a drag start on them in `pointer.ts` and in a selection drag; the layout ignores a pin anyway |
 | The kind colour as a 23px date fails contrast in light | FE_01 measures every kind colour and tone ink on each skin's node surface, light and dark, at Lc 45; a miss is fixed in the token with the maintainer's yes, never per screen |
 | The plugin skill outgrows 8 KiB | T_02 measures; the core sentence is one line; a miss is reported with the bytes, never fixed by cutting other rules unasked |

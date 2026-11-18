@@ -64,6 +64,8 @@ in its `REQUESTS`). Wave 3, alone, in `.claude/worktrees/app-window`, `VB_TEST_P
    - Move to (the selection bar's Move, and its command) moves a dated card to another container, where it joins that
      container's line;
    - the link draws and highlights as any link;
+   - the container's widths control (match or own) changes the dated nodes as well as the others; run down with no
+     choice the dated nodes match (PLAN.md decision 21, point 595);
    - the layout menu of a container with a timeline (a `row`) offers Across, Down and Auto; Down draws the vertical
      form, the undated cards in a second column to the line's right; Auto gives the board's or the agent's back;
    - Tab reaches the dated cards in the order the board's focus rule gives (node overhaul: "order as drawn"); if that

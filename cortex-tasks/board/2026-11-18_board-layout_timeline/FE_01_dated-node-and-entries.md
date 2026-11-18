@@ -98,7 +98,7 @@ and keep the type exactly as T_01 left it (a change goes in `REQUESTS`).
    layer's `defs`), bands behind, stems, dots in the node's colour (kind or tone), year labels on the line where they
    fall; `aria-hidden="true"` (the dates are on the nodes). `timeline.css` (tokens only), `pattern.json` (`entry`,
    `selector: ".vb-timeline"`, `flag: "timeline"`, states: across, down, dot per kind, tone dot, stem above / below /
-   beside, year at the start and at a turn, band, arrow), registered in `patterns.ts`. Unit tests on the markup from
+   left / right (PLAN.md § Design review 587, 594), year at the start and at a turn, band, arrow), registered in `patterns.ts`. Unit tests on the markup from
    hand-made geometry (across with a band and a year turn; down). It scales with the board as part of the world
    (`ZOOM_RULES.world`): no zoom number; if one proves needed, it is a `ZOOM_RULES` row (say so in `REQUESTS`).
 8. [ ] **Gallery** (`apps/board/src/gallery/timeline-section.ts`, appended in `main.ts` `build()`, shown with the
