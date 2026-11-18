@@ -1,8 +1,7 @@
 // The stage's input wiring: the click delegate for every button on cards and frames, the pointer
-// (select, move by the kind tab, pan, lasso), the keyboard, the size control and how a card got
-// focus (pointer-focus.ts). Each control calls one handler; what the handler does lives in the
+// (select, move by the kind tab, pan, lasso), the keyboard and how a card got focus (pointer-focus.ts). Each control calls one handler; what the handler does lives in the
 // controller. Split out of controller.ts (N12_FE_01).
-import type { ActDirection, ActionId, ActSize, Mode, Widths } from '#format';
+import type { ActDirection, Mode, Widths } from '#format';
 import type { Box, Point } from '#layout';
 import { routeLinks } from '#layout';
 import type { View } from '#format';
@@ -12,21 +11,14 @@ import { bindKeys } from './keys.ts';
 import type { PointerHandlers } from './pointer.ts';
 import { bindPointer } from './pointer.ts';
 import { bindPointerFocus, smallMark } from '../canvas/index.ts';
-import { bindSizeControl, isSizePick } from '../cards/index.ts';
 import type { Viewport } from '../canvas/index.ts';
 
 export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'> {
-  /** A press on a mark on a node's edge (nodeEdges flag, mark-flow.ts): the number, the disc, the badge, the notes mark,
-   *  a switch's half. It says itself why a press the board can't take did nothing. */
-  mark?(id: string, mark: string, el: HTMLElement): void;
-  /** The pin: open its note, with the agent's replies to it. A note in the card's block
-   *  (`fromNote`): the card's conversation, at that note (review polish ruling 6). */
-  showNote(id: string, seq: number, fromNote?: boolean): void;
-  /** An agent's reply on a card: the card's conversation, at that reply (review polish ruling 6). */
-  showReply(id: string, seq: number): void;
-  setSize(id: string, size: ActSize): void;
+  /** A press on a mark on a node's edge (mark-flow.ts): the number, the disc, the badge, the notes mark, a switch's half,
+   *  an app window's bar. It says itself why a press the board can't take did nothing. */
+  mark(id: string, mark: string, el: HTMLElement): void;
   setMode(region: string, mode: Mode): void;
-  /** A flow's direction in a container's layout control (layoutControl and flowDirection flags): the container's `direction` act; `auto` gives back the agent's. */
+  /** A flow's direction in a container's layout control (PLAN decision 20, D-100 5): the container's `direction` act; `auto` gives back the agent's. */
   setDirection?(region: string, direction: ActDirection): void;
   /** Match card widths in a container's mode row (widthsControl flag): the widths a press sets. */
   setWidths(region: string, widths: Widths): void;
@@ -73,11 +65,6 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
 }
 
 const cardOf = (el: Element) => el.closest<HTMLElement>('vb-node')!.dataset.id!;
-/** Text the person selected inside `el` by dragging (a note is text to copy, not only a link). */
-const selectingIn = (el: Element) => {
-  const s = document.getSelection();
-  return !!s && !s.isCollapsed && !!s.anchorNode && el.contains(s.anchorNode);
-};
 
 /** Bind everything; returns the function that unbinds what outlives the stage (document, window).
  * `pageWide`: the board has its own page (`host.page`), so its keys work anywhere on it (keys.ts).
@@ -89,12 +76,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     // A mark too small to press at this zoom: the pointer's click picked its node (pointer.ts); Enter or Space (no clicks
     // counted, `detail` 0) still presses it.
     if (e.detail > 0 && smallMark(t)) return;
-    const markBtn = h.mark ? t.closest<HTMLElement>('vb-node[data-edges] [data-mark]') : null;
-    if (markBtn) return h.mark!(cardOf(markBtn), markBtn.dataset.mark!, markBtn);
-    const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
-    if (actBtn) return h.act(cardOf(actBtn), actBtn.dataset.act as ActionId);
-    const bookmarkBtn = t.closest<HTMLButtonElement>('button[data-bookmark]');
-    if (bookmarkBtn) return h.bookmark?.(cardOf(bookmarkBtn));
+    const markBtn = t.closest<HTMLElement>('vb-node [data-mark]');
+    if (markBtn) return h.mark(cardOf(markBtn), markBtn.dataset.mark!, markBtn);
     const retired = t.closest<HTMLButtonElement>('button.vb-region-retired');
     const until = retired?.dataset.until;
     if (retired) return retired.dataset.version ? h.showVersion(Number(retired.dataset.version), until ? Number(until) : undefined) : undefined;
@@ -102,17 +85,9 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     const answer = t.closest<HTMLButtonElement>('button[data-answer]');
     if (answer?.getAttribute('aria-disabled') === 'true') return;
     if (answer) return h.answer(cardOf(answer), Number(answer.dataset.proposal), answer.dataset.answer === 'accept' ? 'accept' : 'reject');
-    // A reply on a card (a sibling of its note, so not inside it); a container's are the frame's own.
-    const reply = t.closest<HTMLElement>('.vb-node-reply[data-reply]');
-    if (reply && !t.closest('a') && !selectingIn(reply)) return h.showReply(cardOf(reply), Number(reply.dataset.reply));
-    const note = t.closest<HTMLElement>('[data-note]');
-    if (note && !t.closest('a') && !selectingIn(note)) return h.showNote(cardOf(note), Number(note.dataset.note), note.matches('.vb-node-note'));
-    const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');
-    const pick = sizeBtn?.dataset.sizePick;
-    if (sizeBtn && isSizePick(pick)) return h.setSize(cardOf(sizeBtn), pick);
-    // A layout icon (data-mode) or a tile of the layout popover (data-tile): the one action.
-    const modeBtn = t.closest<HTMLButtonElement>('button[data-mode], button[data-tile]');
-    if (modeBtn) return h.setMode(modeBtn.dataset.region!, (modeBtn.dataset.mode ?? modeBtn.dataset.tile) as Mode);
+    // A tile of the layout button's popover (data-tile): the one action.
+    const modeBtn = t.closest<HTMLButtonElement>('button[data-tile]');
+    if (modeBtn) return h.setMode(modeBtn.dataset.region!, modeBtn.dataset.tile as Mode);
     const dirBtn = t.closest<HTMLButtonElement>('button[data-dir]');
     if (dirBtn) return h.setDirection?.(dirBtn.dataset.region!, dirBtn.dataset.dir as ActDirection);
     const widthsBtn = t.closest<HTMLButtonElement>('button.vb-widths[data-widths]');
@@ -165,7 +140,6 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
       if (b) h.pinRegion(region, { x: b.x + dx, y: b.y + dy });
     },
   }, stage.closest<HTMLElement>('.vb-board') ?? undefined, pageWide);
-  const unbindSize = bindSizeControl(stage);
   // A card a pointer focused draws no focus ring until the keyboard moves focus (pointer-focus.ts).
   const unbindFocus = bindPointerFocus();
   // The stage's own size, not the window's: the chat sidebar (chatPanel flag) and the strips change it too.
@@ -174,7 +148,6 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
   return () => {
     unbindPointer();
     unbindKeys();
-    unbindSize();
     unbindFocus();
     sized.disconnect();
   };

@@ -35,7 +35,7 @@ function title(): HTMLElement {
   return host;
 }
 
-/** The marks board's flag container, from `state`: its frame (the layout icons, the widths switch
+/** The marks board's flag container, from `state`: its frame (the layout choices, the widths switch
  * absent here, the grip and Comment), then its cards (`label` names their list). The read-only section draws it too. */
 export function pausedBoard(fx: Fixture, state: BoardState, label = 'A locked board\'s cards'): HTMLElement[] {
   const { view } = fx.marks;
@@ -45,7 +45,7 @@ export function pausedBoard(fx: Fixture, state: BoardState, label = 'A locked bo
   frame.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id))));
   const cards = view.nodes.filter((n) => n.region === 'flagged').map((n) => {
     const node = document.createElement('vb-node') as VbNodeElement;
-    node.render(n, { ...ownIds(), bookmark: true, sizeControl: true });
+    node.render(n, ownIds());
     node.update(nodeState(n, state, 'm'));
     return node;
   });
@@ -77,8 +77,8 @@ export function lockSection(fx: Fixture): HTMLElement {
     group('Lock board', 'In the "⋯" menu; it acts on the open board, with no confirm (nothing is lost either way). Off while no board is open or a past version shows.', menu(false)),
     group('Unlock board', 'The same row on a locked board.', menu(true)),
     group('Locked', 'Beside the board\'s name and version while it is locked; its title says why the controls are paused.', title()),
-    group('A locked board\'s container', 'The layout icons, the grip and Comment stay where they are, quiet and aria-disabled, and so do the widths switch and the cog menu\'s rows; a press says why. The checked layout keeps its colour; the cog still opens.', frame!),
-    group('A locked board\'s cards', 'The review buttons, the size control and the note pin stay where they are, quiet and aria-disabled; a press says why. A pressed answer keeps its colour. The flag is not paused: the person still marks cards.', cards!),
+    group('A locked board\'s container', 'The layout choices, the grip and Comment stay where they are, quiet and aria-disabled, and so do the widths switch and the cog menu\'s rows; a press says why. The checked layout keeps its colour; the cog still opens.', frame!),
+    group('A locked board\'s cards', 'Every disc looks as it would on an open board (an answered node keeps its tick or cross); a press turns it into a lock for a moment with "Board is locked" (point 328). The bookmark is not paused: the person still marks cards.', cards!),
     group('Send to agent', 'Paused too, with the reason as its title.', send()));
   return box;
 }

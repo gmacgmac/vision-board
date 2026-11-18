@@ -1,4 +1,4 @@
-// A container seen on the person's screen (nodeEdges flag, point 308, D-099 4; container-seen.ts): a click inside a
+// A container seen on the person's screen (point 308, D-099 4; container-seen.ts): a click inside a
 // container clears its new-and-updated pill on this page only, until its next change, and quiets the agent's replies
 // under its note (tracker N47); per board; nothing is written, so a new page (a reload) shows them again.
 import { test } from 'node:test';

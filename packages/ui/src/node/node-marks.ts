@@ -1,6 +1,6 @@
-// Node pattern, layer 1 (core), the marks on the node's edges (D-099, decisions 4 to 7, 12, 17; nodeEdges flag):
+// Node pattern, layer 1 (core), the marks on the node's edges (D-099, decisions 4 to 7, 12, 17):
 // what the number, the answer, the change badge and the notes mark show, and the node's icon and tone, worked out
-// from the same inputs the footer used (the board state, the conditions the page passes in). No DOM; the template
+// from the board state and the conditions the page passes in. No DOM; the template
 // draws them and the element applies them in place. The keys come from the action registry; History's (H) is the
 // node's own, since history is no act.
 import type { ViewNode } from '#format';
@@ -94,7 +94,7 @@ function notesOf(n: ViewNode, m: MarksInput): Pick<NodeMarks, 'notes' | 'notesTe
   };
 }
 
-/** Everything the edge marks show for a node, from the same inputs the footer used. */
+/** Everything the edge marks show for a node. */
 export function nodeMarks(n: ViewNode, m: MarksInput): NodeMarks {
   const asks = n.n !== undefined && NODE_TYPES[n.kind].answer;
   const answer: AnswerMark = asks ? ANSWER[m.status] ?? 'waiting' : 'none';

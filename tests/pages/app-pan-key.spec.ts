@@ -1,12 +1,13 @@
 // Cmd (Ctrl elsewhere) held over an app card (maintainer, point 313): the panel is a frame, so a wheel
 // or a drag over it goes to the panel's own page and never reached the board. While the key is held the
 // frame takes no pointer (board.css `.vb-stage[data-pan-key] vb-app-frame`), so Cmd+wheel zooms and
-// Cmd+drag pans over an app card as over any other; without the key the panel keeps its own pointer.
+// Cmd+drag pans over an app card as over any other; without the key a panel the person clicked into keeps its own
+// pointer (an idle one is the board's to pan over, FIX_03).
 import type { Page } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
 import { expect, test, bid } from './helpers.ts';
-import { card as cardOf, panelOf } from './board-page.ts';
+import { card as cardOf, panelOf, wake } from './board-page.ts';
 
 let s: AppServer;
 test.beforeAll(async () => { s = await startAppServer(); });
@@ -15,7 +16,7 @@ test.afterAll(async () => { await s.close(); });
 const PAN_KEY = process.platform === 'darwin' ? 'Meta' : 'Control';
 const world = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
 
-test('Cmd+wheel zooms and Cmd+drag pans over an app card; without Cmd the panel keeps the pointer', async ({ page }) => {
+test('Cmd+wheel zooms and Cmd+drag pans over an app card; without Cmd a woken panel keeps the pointer', async ({ page }) => {
   const { board, n: [n] } = await s.draw([CALCULATOR]);
   await page.goto(`${s.base}/#${board}`);
   const card = cardOf(page, n!);
@@ -23,6 +24,7 @@ test('Cmd+wheel zooms and Cmd+drag pans over an app card; without Cmd the panel 
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
   const f = (await card.locator('vb-app-frame').boundingBox())!;
   const mid = { x: f.x + f.width / 2, y: f.y + f.height / 2 };
+  await wake(card);
   // Focus on the board, as after a click on its canvas: the board hears the key.
   await page.locator(bid('stage')).focus();
   await page.mouse.move(mid.x, mid.y);

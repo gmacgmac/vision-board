@@ -177,14 +177,14 @@ export interface RegionState {
    *  the container holds new or updated cards the person has not engaged with. Left out while it
    *  does not; the page adds it (`regionFresh`). */
   fresh?: RegionFresh;
-  /** The board is locked (`BoardState.locked`, N40 ruling 4), or its ledger read-only (`BoardState.readOnly`, D-085): the layout icons, the widths switch,
+  /** The board is locked (`BoardState.locked`, N40 ruling 4), or its ledger read-only (`BoardState.readOnly`, D-085): the layout choices, the widths switch,
    *  the grip, Comment, the note's Edit and Remove, Reset places, Put container back and Remove
    *  access are paused (paused.ts); the cog still opens its menu. Left out while it is not. */
   paused?: true;
   /** The ledger is read-only (D-085): the layout control's choices say why they are off (READ_ONLY_PERSON). Left out while it is not. */
   readOnly?: true;
-  /** Which way this container runs if it is a flow (flowDirection flag, `directionOf`): the layout control marks it and names it. The
-   *  page adds it (render.ts); left out without the flag. */
+  /** Which way this container runs if it is a flow (`directionOf`, D-100 5): the layout control marks it and names it. The
+   *  page adds it (render.ts); left out for the gallery's frames that set none. */
   direction?: Direction;
 }
 

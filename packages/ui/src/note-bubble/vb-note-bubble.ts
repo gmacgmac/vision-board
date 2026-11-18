@@ -3,7 +3,7 @@
 // says, `place()` on every pan, zoom and relayout, and listens for `vb-note` events; the element
 // never writes anything itself (rule 8). Keys: Enter saves, Shift+Enter is a new line, Esc
 // cancels. The conversation (review polish ruling 6) opens at an entry: `reveal` scrolls to it and
-// `focusText` focuses it. The conversation box (`conversation` mode, nodeEdges, FE_03) draws from its own template,
+// `focusText` focuses it. The conversation box (`conversation` mode, FE_03) draws from its own template,
 // loaded on first use (`useConversation`); in it Enter does the active mode (Add note or Ask now: pressing either
 // button makes it the active one, FIX_03 ruling 3), Cmd or Ctrl Enter is always Ask now, and `show(..., true)` draws
 // it again keeping the words typed, the caret, the focus and what the box says of the last write.

@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-17 (show_layout works a flow out the way it runs and with its branches on rows, node-overhaul BE_01: 133); 2026-11-16 (a container's seen is the page's alone, never stored, point 308: 187 rewritten, `mark_seen` takes a card or a board only; D-054 stands); 2026-11-16 (one ledger format, node-overhaul BE_03, D-103 3: the reader, the schema and the fold know format 20 only; an older line is refused with words to migrate it; points 6, 11, 66, 90, 118, 129, 141, 178 and every "Only adds" say so); 2026-11-16 (ledger v20, node-overhaul T_01: Bookmark, a board's skin, a node's icon and tone, the icon library and its two operations, a seen container, Ask now, a flow's direction: 182-189; point 11 says format 20); 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-18 (show_layout's flow direction and branches with no engine flag, node-overhaul T_04: 133); 2026-11-17 (show_layout works a flow out the way it runs and with its branches on rows, node-overhaul BE_01: 133); 2026-11-16 (a container's seen is the page's alone, never stored, point 308: 187 rewritten, `mark_seen` takes a card or a board only; D-054 stands); 2026-11-16 (one ledger format, node-overhaul BE_03, D-103 3: the reader, the schema and the fold know format 20 only; an older line is refused with words to migrate it; points 6, 11, 66, 90, 118, 129, 141, 178 and every "Only adds" say so); 2026-11-16 (ledger v20, node-overhaul T_01: Bookmark, a board's skin, a node's icon and tone, the icon library and its two operations, a seen container, Ask now, a flow's direction: 182-189; point 11 says format 20); 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -682,12 +682,12 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     decision on the card, or the card's retire); `item.awaiting`, about a card, for both, on the card: an item in Later
     with no park after its "later" (the same helper as `item.owed`'s "later", so it is checked in
     one place). `item.unseen` is now for both and shown on the card; the page reads it as `ver >
-    max(seen, 1)`, so a card at version 1 carries no "updates" tab. The agent's reading
+    max(seen, 1)`, so a card at version 1 shows no updates on its change badge. The agent's reading
     (`list_open`'s `unseen`) is unchanged.
 
 ## NEW cards and what clears a label (stage5-follow-ups BE_01, D-033)
 
-97. **`item.new`**, about a card, for the person, on the card (its NEW tab): an undecided item the
+97. **`item.new`**, about a card, for the person, on the card ("New" on its change badge): an undecided item the
     agent first drew after the person first opened the board, with no `seen` at any version: NEW
     only on a card the agent adds after the person has already opened the board and after its first
     drawing. Cards are new from the later of the `head` of the person's first board seen on that
@@ -699,7 +699,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `firstSeenBoards`, beside `seenBoards`). It ends when the person selects the card (its `seen`),
     acts on it (94) or decides it, and only then: a Send and the agent drawing again end nothing
     (new-and-updated Design 2, which ended the rounds that used to; `rounds.test.ts` "item.new
-    ends"). The page leaves a NEW card out of `item.unseen` (NEW only, no "N updates" tab);
+    ends"). The page leaves a NEW card out of `item.unseen` (New only, never "N updates" on its badge);
     `list_open`'s `unseen` is unchanged, and agents are not told `item.new`. **`clearedBy`.** Every
     conditions row names what the person does that clears it: `select` or `act`, on a row shown on a
     card or a container (158), else none. `item.new` and `item.unseen` are cleared by both, the rest
@@ -1255,9 +1255,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     with the layout package from the same cards, links and mode the page draws
     (`packages/layout` `structureOf`, `LayoutStructure`, `CardCell`: node ids there, board numbers in
     the answer), taking every card at one size (280 by 120), so `crossing` is the arrangement's,
-    routed as the page routes it, not one viewer's measured picture. With the engine's `flowDirection` flag a `flow` is
-    worked out the way it runs (`directionOf`, 189), and with `flowBranches` its branches on their own rows and a
-    branching `row` or `column` as a flow, as the page draws them (BE_01; `api-layout-direction.test.ts`).
+    routed as the page routes it, not one viewer's measured picture. A `flow` is worked out the way it runs
+    (`directionOf`, 189), its branches on their own rows, and a branching `row` or `column` as a flow, as the page draws
+    them (BE_01; `api-layout-direction.test.ts`).
     Not in `write_board`'s answer. The same refusals as `show_container`: an unknown board or
     container, or `later`, is `not-found`; a retired container is `not-found` too (nothing is
     arranged). The skill calls it once after the first draw of a `flow` or `lanes` container,
@@ -1321,7 +1321,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 139. **Read-only for everyone** (rulings 1, 3, 7). One check in the action layer, beside the
     visibility check: `writeProblem(s, e)` (lock.ts), archived first (`archivedProblem`, 136), then
     locked (`lockedProblem`), which the ledger module asks of every line it appends, whoever writes
-    it: on a locked board only the person's own marks (flag, unflag, notes-hide, notes-show, archive, restore, lock, unlock;
+    it: on a locked board only the person's own marks (bookmark, unbookmark, notes-hide, notes-show, archive, restore, lock, unlock;
     `passesLock`) and a seen go; every other line is refused with `locked`, **423** (RFC 4918's
     Locked, in the IANA registry; not 409, which on agent operations means `wrong-folder` only (114),
     so a client tells a lock from every other refusal by status alone). Words: to an agent "This
@@ -1456,7 +1456,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     owed, so the card is with the agent again. `counts` returns `{ total, open, withAgent, answered,
     later }`: the header reads "N open · N with agent · N answered · N later", the with agent chip
     only above 0; the container's "N of M answered" and Hide answered are unchanged. The card's
-    footer and name say "With agent". Every agent read says `with-agent` (`registry.ts`
+    name says so (below, now "Replied"). Every agent read says `with-agent` (`registry.ts`
     `STATUS_OUT`, beside `checked` and `crossed`): the `itemStatus` enum is `open`, `checked`,
     `crossed`, `with-agent`, `context`, `later`. The page, `read_ledger` and the stored names keep
     `commented`. The person's word on the page is now "Replied" ("N replied" in the header; replied-word
@@ -1568,7 +1568,9 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `show_container`, `get_board`, `list_open` and `list_boards` leave them out, and they are no
     answer, not seeing the card and move no head, as the flag (128); `api-flag.test.ts` holds the whole
     of every agent read against both words. Only the page's `read_ledger` (130) serves the lines, by
-    identity. A locked board still takes them (`passesLock`, 139; lock.test.ts, api-lock-person.test.ts).
+    identity. A locked board still takes them (`passesLock`, 139; lock.test.ts, api-lock-person.test.ts). Since the node
+    overhaul a node has no notes block (its notes are in its conversation box, D-099 3), so the page sends neither act;
+    lines already written still fold.
     The page's reply to a note (`CardReply`) now carries `at`, the time of the agent's reply line, filled
     in `parking.ts` `createParking` from the reply event (parking.test.ts "every reply carries the time
     of its ledger line"); the ledger line already held it, so the format does not change for that.
@@ -1607,7 +1609,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     card `seen` or act naming any card now in the container (`LedgerState.looked`). So selecting one
     new or updated card in it, or acting on any of its cards, ends it for the whole container until
     the agent changes one of its cards again; nothing is stored and a Send ends nothing. A click inside
-    the container, on its background or its frame, clears the pill on the person's screen only (nodeEdges; point 308,
+    the container, on its background or its frame, clears the pill on the person's screen only (point 308,
     D-099 4): the page keeps, per board and container, the `seq` of the newest change it cleared, shows the pill again
     when a later change arrives, and a reload shows it again; nothing is written, and a read-only board is left as it
     is (`apps/board/src/board/cards/container-seen.ts`, `tests/pages/node-edges-seen.spec.ts`). `clearedBy` is `select` and `act`. `freshCards(state,

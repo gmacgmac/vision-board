@@ -46,8 +46,8 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   // its tooltip says the card or the cards (selectionButtons). Without the personRemove flag the bar
   // has no such button and the keys do nothing.
   remove: { label: commandsWords.remove, means: commandsWords.removeTheSelectedCards, listed: commandsWords.removeCards, keys: ['delete', 'backspace'], acts: true },
-  // The selection bar's three more commands with the node's edges (nodeEdges flag, D-099 9, FE_06): a bookmark on every selected
-  // node (its label turns to "Remove bookmarks" when all have one, `selectionButtons`), the Later container, and a width menu.
+  // The selection bar's Bookmark all, Save for later and Width (D-099 9, FE_06): a bookmark on every selected node (its label
+  // turns to "Remove bookmarks" when all have one, `selectionButtons`), the Later container, and a width menu.
   'bookmark-all': { label: commandsWords.bookmarkAll, means: commandsWords.bookmarkTheSelectedNodes, keys: ['shift+b'], acts: true },
   'save-for-later': { label: commandsWords.saveForLater, means: commandsWords.saveTheSelectedNodesForLater, keys: ['shift+l'], acts: true },
   width: { label: commandsWords.width, means: commandsWords.setTheWidthOfTheSelectedNodes, keys: ['shift+w'], acts: true },
@@ -65,9 +65,7 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */
 export const HEADER_COMMANDS: readonly CommandId[] = ['zoom-out', 'fit', 'zoom-in'];
-export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'remove', 'zoom-selection'];
-/** What the bar adds with the node's edges (nodeEdges flag), before Zoom: each acts only on the nodes selected. */
-export const EDGE_COMMANDS: readonly CommandId[] = ['bookmark-all', 'save-for-later', 'width'];
+export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'remove', 'bookmark-all', 'save-for-later', 'width', 'zoom-selection'];
 export const AREA_COMMANDS: readonly CommandId[] = ['zoom-area'];
 /** The commands whose keys apply on a focused container's title line, before any other meaning. */
 export const REGION_COMMANDS: readonly CommandId[] = ['container-note'];
@@ -103,17 +101,15 @@ export const barButtons = (ids: readonly CommandId[], readOnly = false, off: rea
     id, label: COMMANDS[id].label, ...(COMMANDS[id].means && { title: commandTitle(id) }), ...(COMMANDS[id].primary && { primary: true }), ...(off.includes(id) && { disabled: true }),
   }));
 
-/** What the bar's extra commands need to say (`selectionButtons`): which are offered, and whether every selected node is
- *  bookmarked (Bookmark all then reads "Remove bookmarks"). Absent with the nodeEdges flag off: today's bar. */
-export interface EdgeButtons { bookmark: boolean; allBookmarked: boolean }
+/** What Bookmark all needs to say (`selectionButtons`): whether it is offered (the cardBookmark flag), and whether every
+ *  selected node is bookmarked (it then reads "Remove bookmarks"). */
+export interface BookmarkButtons { bookmark: boolean; allBookmarked: boolean }
 
 /** The selection bar's buttons over `count` cards: Remove's tooltip says "card" for one, and
- * is left out without the personRemove flag (`remove`); `readOnly` and `off` as for `barButtons`; `edges`: the
- * node's edges' commands, before Zoom. */
-export const selectionButtons = (count: number, remove: boolean, readOnly = false, off: readonly CommandId[] = [], edges?: EdgeButtons) => {
-  const ids = SELECTION_COMMANDS.filter((id) => remove || id !== 'remove');
-  const at = ids.indexOf('zoom-selection');
-  const all = edges ? [...ids.slice(0, at), ...EDGE_COMMANDS.filter((id) => edges.bookmark || id !== 'bookmark-all'), ...ids.slice(at)] : ids;
-  return barButtons(all, readOnly, off).map((b) => (b.id === 'remove' && count === 1 ? { ...b, title: b.title!.replace('cards', 'card') }
-    : b.id === 'bookmark-all' && edges?.allBookmarked ? { ...b, label: commandsWords.removeBookmarks, title: commandTitle('bookmark-all').replace(commandsWords.bookmarkTheSelectedNodes, commandsWords.removeTheBookmarks) } : b));
+ * is left out without the personRemove flag (`remove`); `readOnly` and `off` as for `barButtons`; `marks`: whether
+ * Bookmark all is offered and what it says. */
+export const selectionButtons = (count: number, remove: boolean, readOnly = false, off: readonly CommandId[] = [], marks: BookmarkButtons = { bookmark: true, allBookmarked: false }) => {
+  const ids = SELECTION_COMMANDS.filter((id) => (remove || id !== 'remove') && (marks.bookmark || id !== 'bookmark-all'));
+  return barButtons(ids, readOnly, off).map((b) => (b.id === 'remove' && count === 1 ? { ...b, title: b.title!.replace('cards', 'card') }
+    : b.id === 'bookmark-all' && marks.allBookmarked ? { ...b, label: commandsWords.removeBookmarks, title: commandTitle('bookmark-all').replace(commandsWords.bookmarkTheSelectedNodes, commandsWords.removeTheBookmarks) } : b));
 };

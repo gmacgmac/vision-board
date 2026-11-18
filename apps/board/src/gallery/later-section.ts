@@ -1,5 +1,5 @@
 // Gallery samples for moving cards (3_FE_03): the board's built-in Later container holding the
-// two cards the fixture ledger's `move` put there (its frame is fixed: no layout icons, only the
+// two cards the fixture ledger's `move` put there (its frame is fixed: no layout button, only the
 // cog), and an empty Later as it shows while a card is dragged over it, lit as the drop target.
 // Both are real <vb-region> frames, built the way the board builds them (`placedView`,
 // `LATER_FRAME`, `regionState`).

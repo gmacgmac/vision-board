@@ -28,12 +28,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-tip-group { box-sizing: border-box; height: 780px; }
 
 /* Patterns are placed by the board page (position: absolute, transform). Here they flow. */
-.g-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-3); }
+/* A node's marks sit on its edges and reach past it (D-099; node-edges.css): every row leaves room for them, around
+   each card and between rows, as the board keeps EDGE_ROW_GAP under a node. */
+.g-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
 .g-cards vb-node, .g-frames vb-region { position: relative; }
-/* With updateSignals a card's bottom tabs hang about 17px below it (node-popover.css, tab lower): a list that
-   shows any keeps room for them and their 24px targets under each row, as the board keeps ROW_GAP under a card. Low
-   specificity, so a list's own gap and room (.g-tips, .g-sizes) still win. */
-.g-cards:where([data-update-signals] *):where(:has(.vb-node-btab:not([hidden]))) { row-gap: var(--vb-space-6); padding-bottom: var(--vb-space-5); }
 /* A card with its note preview open: room to its right for the box (the popover width and its reach) and below it for the box, which is taller than a short card. */
 .g-tips { gap: var(--vb-space-5) calc(var(--vb-pop-w) + var(--vb-space-6) * 2); padding-bottom: calc(var(--vb-space-6) * 3); }
 /* The frames sit on the board's dot-grid canvas (.vb-ground). The top line straddles each frame's
@@ -48,8 +46,6 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* An open popover is an overlay that reaches past its frame; here it gets room of its own so it
    does not cover the next sample. */
 .g-frames vb-region[data-open='modes'] { margin-bottom: calc(var(--vb-space-6) * 3); }
-/* An open layout tooltip (layoutTooltip flag) sits beside its icon; under the top line it needs a little room. */
-.g-frames vb-region:has([data-tip-open]) { margin-bottom: calc(var(--vb-space-6) * 1.5); }
 /* The long-title sample on a narrow frame; an open title tip gets room of its own as well. */
 .g-frames vb-region[data-region='title-wide'] { width: calc(var(--vb-card-w) * 2.4); }
 .g-frames vb-region[data-region='title-narrow'] { width: calc(var(--vb-card-w) * 1.4); }
@@ -80,9 +76,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
   letter-spacing: 0.04em; text-transform: uppercase; color: var(--vb-ink-subtle);
 }
 
-/* Node size samples (nodeSize flag only): on the board's canvas, with room above each row for the
-   size pill, which lifts above a card's top edge. .g-focused draws the focus ring on one sample,
-   the way :focus-visible would, since only one element can hold real focus. */
+/* Node size samples (nodeSize flag only): on the board's canvas. .g-focused draws the focus ring on one sample, the way
+   :focus-visible would, since only one element can hold real focus. */
 .g-sizes { padding: calc(var(--vb-space-6) * 2) var(--vb-space-5) var(--vb-space-5); border-radius: var(--vb-radius-lg); }
 .g-sizes .g-cards { gap: calc(var(--vb-space-6) * 2) var(--vb-space-6); }
 .g-focused, [data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight); }
@@ -145,9 +140,7 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* Agent proposals samples (proposals flag): Accept all's list drawn as the confirm dialog shows it. */
 .g-confirm-head { margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-lg); font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
 /* Open boxes reach past their card; one card per row, so none covers the next or runs off the page. */
-.g-tips-stack { flex-direction: column; row-gap: var(--vb-space-6); padding-bottom: calc(var(--vb-space-6) * 4); }
-/* Parking (FE_03): the handover box is tall, so its group leaves room below the card it opens from. */
-[data-feature='parking'] .g-tips-stack { padding-bottom: 300px; }
+.g-tips-stack { flex-direction: column; row-gap: calc(var(--vb-space-6) * 2); padding-bottom: calc(var(--vb-space-6) * 4); }
 /* Changed cards (FE_02): the gallery's "You're up to date" sample stays, where the board's fades. */
 [data-feature='card-updates'] .vb-step-done { animation: none; }
 
@@ -176,20 +169,18 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-alongside { flex: 1; }
 .g-alongside .vb-toolbar-end { margin-left: 0; }
 .g-alongside-toast { padding: var(--vb-space-2) 0; }
-/* The node's edges (nodeEdges flag, FE_01): room for the marks on each card's edges, and a menu drawn open beside its card. */
-[data-feature='nodeEdges'] .g-cards { gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
+/* The node's edges (FE_01): a menu or a tip drawn open beside its card. */
 .g-edge-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
 .g-edge-menu .vb-menu-list, .g-edge-menu .vb-mark-tip { position: static; }
 
-/* The layout-control entry's comparison (layoutControl flag, FE_07): the six layouts side by side. */
+/* The layout-control entry's comparison (FE_07, PLAN decision 20): the six layouts side by side. */
 .g-lc-compare { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
 .g-lc-compare > .g-group { flex: 0 1 auto; }
-.g-section[data-feature='layoutControl'] .g-lc-open .g-mini { overflow: visible; margin: 0 0 240px 380px; }
+.g-section[data-feature='layout-control'] .g-lc-open .g-mini { overflow: visible; margin: 0 0 240px 380px; }
 /* The Command Lens skin (FE_04): a board root carrying the skin, so its tokens reach the cards, on the skin's canvas. The
    root is a size container on the board (board.css); here it takes its content's height. */
 .g-skin.vb-board.vb-board {
   container-type: inline-size; padding: var(--vb-space-4); border-radius: var(--vb-radius-lg);
   background: var(--vb-surface-canvas) var(--vb-canvas-image); background-size: var(--vb-canvas-size) var(--vb-canvas-size);
 }
-[data-feature='skins'] .g-cards { gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5) 0 var(--vb-space-4); }
 .g-skin-bar vb-selection-bar { position: static; }

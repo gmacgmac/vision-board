@@ -85,7 +85,7 @@ test('without the flag (no focusLeft), focus always returns to the card, as befo
   assert.deepEqual(h.focused, ['12']);
 });
 
-// FE_02 (nodeEdges): the disc's picker reads what a press came to, so its mark can say a write failed.
+// FE_02: the disc's picker reads what a press came to, so its mark can say a write failed.
 test('a press says what it came to: written, failed, or nothing sent (a repeat, a note, a card it does not take)', async () => {
   const h = harness();
   assert.equal(await h.act('12', 'ack'), true);

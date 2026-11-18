@@ -13,8 +13,6 @@ import { bindModeRow } from './region-row.ts';
 import type { NoteParts } from './region-note.ts';
 import { bindNoteParts } from './region-note.ts';
 import { bindTitleTip } from './region-title.ts';
-import type { LayoutTips } from './region-layout-tip.ts';
-import { bindLayoutTips } from './region-layout-tip.ts';
 import { fillFreshPill } from './region-fresh.ts';
 import { holdersTemplate, regionIds, regionIdsOf, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
@@ -28,7 +26,7 @@ import * as regionWords from '../words/region.ts';
 /** The controls a locked board pauses on a frame (N40 ruling 4), but Reset places and Put container
  * back, whose aria-disabled `update` sets itself. The cog still opens its menu; Remove container
  * (N24 ruling 4) pauses with the rest. */
-const PAUSED = 'button[data-mode], button.vb-mtile, .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region], button[data-dir]';
+const PAUSED = 'button.vb-mtile, .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region], button[data-dir]';
 
 export const VB_REGION_TAG = 'vb-region';
 
@@ -40,7 +38,7 @@ export interface VbRegionElement extends HTMLElement {
   render(r: Region, opts?: RegionFrameOptions): void;
   /** Apply the current state (from `regionState`) without rebuilding the markup. */
   update(st: RegionState): void;
-  /** Open the layout popover (`mode` highlighted; with layoutTooltip, that layout's tip) or the settings menu; the gallery's samples. */
+  /** Open the layout popover (`mode` highlighted) or the settings menu; the gallery's samples. */
   showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void;
   /** Mark the container's note bubble open or closed: `data-note-open` on the frame (3_FE_04
    *  ruling 3), and opening closes the note preview. The page calls it as it opens or closes the
@@ -69,14 +67,11 @@ export function defineVbRegion(): void {
     private markdown: RegionFrameOptions['markdown'];
     private readonly note: NoteParts = bindNoteParts(this, () => this.markdown);
     private readonly titleTip = bindTitleTip(this);
-    /** The layout icons' tips (layoutTooltip flag); null when the frame is drawn with the popover. */
-    private layoutTips: LayoutTips | null = null;
 
     render(r: Region, opts: RegionFrameOptions = {}): void {
       this.markdown = opts.markdown;
       this.row.close();
       this.titleTip.close();
-      this.layoutTips?.close();
       this.dataset.region = r.id;
       if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
       else delete this.dataset.idPrefix;
@@ -87,10 +82,6 @@ export function defineVbRegion(): void {
       this.setAttribute('aria-labelledby', regionIds(r.id, opts.idPrefix).heading);
       this.style.setProperty('--vb-region', regionColour(r));
       this.innerHTML = regionTemplate(r, opts);
-      const tip = this.querySelector('.vb-mode-tip') !== null;
-      this.toggleAttribute('data-layout-tooltip', tip);
-      this.toggleAttribute('data-layout-control', this.querySelector('.vb-layout-btn') !== null);
-      this.layoutTips = tip ? bindLayoutTips(this) : null;
       this.note.bind();
       this.setNoteOpen(this.hasAttribute('data-note-open'));
       this.holdersKey = '';
@@ -98,8 +89,6 @@ export function defineVbRegion(): void {
 
     update(st: RegionState): void {
       this.dataset.mode = st.mode;
-      for (const b of this.querySelectorAll<HTMLButtonElement>('button[role="radio"]'))
-        b.setAttribute('aria-checked', String(b.dataset.mode === st.mode));
       for (const t of this.querySelectorAll<HTMLElement>('.vb-mtile')) t.toggleAttribute('data-current', t.dataset.tile === st.mode);
       this.applyWidths(st);
       this.applyLayoutControl(st);
@@ -124,12 +113,11 @@ export function defineVbRegion(): void {
         this.piece('.vb-region-holders').innerHTML = holdersTemplate(st.holders ?? []);
       }
       pauseControls(this, PAUSED, paused);
-      if (this.hasAttribute('data-layout-control')) explainPaused(this, '.vb-mtile, .vb-dir', st.readOnly === true ? READ_ONLY_PERSON : undefined);
+      explainPaused(this, '.vb-mtile, .vb-dir', st.readOnly === true ? READ_ONLY_PERSON : undefined);
     }
 
     showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void {
-      if (what === 'modes' && this.layoutTips) this.layoutTips.show(opts?.mode ?? (this.dataset.mode as Mode));
-      else this.row.open(what, opts);
+      this.row.open(what, opts);
     }
 
     setNoteOpen(open: boolean): void {
@@ -156,8 +144,8 @@ export function defineVbRegion(): void {
       return this.piece('.vb-region-head');
     }
 
-    /** The one layout control (layoutControl flag): the active layout's icon and name on the button, the chosen tile, and, on a flow,
-     *  the direction row with the container's direction marked. A frame drawn with the six icons has none of it. */
+    /** The one layout control (PLAN decision 20): the active layout's icon and name on the button, the chosen tile, and, on a flow,
+     *  the direction row with the container's direction marked. A fixed frame (Later) has none of it. */
     private applyLayoutControl(st: RegionState): void {
       const b = this.querySelector<HTMLButtonElement>('.vb-layout-btn');
       if (!b) return;

@@ -1,7 +1,7 @@
 // Node pattern, app cards in the element (D-047): what `VbNode.update` applies in place on an app
 // card, apart from the element so it stays one job (card-polish FE_04). Browser only. The panel's
-// size on the card, the slot's state and its state view, the footer's app status (card-polish
-// FE_01) and the footer's name with its hover tip (card-polish FE_04, the appTitle flag); and from
+// size on the card, the slot's state and its state view, the window bar's app status (card-polish
+// FE_01), its name with its hover tip (card-polish FE_04) and its drawer (FE_08); and from
 // `VbNode.render`, a new version's markup that keeps a loaded panel where it is (app-state-kept FE_01).
 import type { AppSize } from '#format';
 import type { AppCardView } from './node-app.ts';
@@ -70,14 +70,14 @@ export function renderKeepingPanel(card: HTMLElement, html: string): void {
 }
 
 /** An app card: the panel's size on the card (its width) and the frame, the state view (rebuilt only
- * when `v` differs from `last`, the view last drawn), the footer's app status and the footer's name.
+ * when `v` differs from `last`, the view last drawn), the bar's app status and the app's name.
  * A state with no panel unloads the frame. A change that takes the focused control away (or
  * rebuilds the view) leaves focus on the card. Gives the view drawn, for the next call's `last`. */
 export function applyApp(card: HTMLElement, v: AppCardView, last: string | undefined): string {
   const slot = card.querySelector<HTMLElement>('.vb-app')!;
   const had = document.activeElement;
-  const status = card.querySelector<HTMLElement>('.vb-app-status');
-  const inApp = slot.contains(had) || (status?.contains(had) ?? false);
+  const status = card.querySelector<HTMLElement>('.vb-app-status')!;
+  const inApp = slot.contains(had) || status.contains(had);
   applyPanelSize(card, v.size);
   slot.dataset.appState = v.state;
   if (v.state === 'checking') slot.setAttribute('aria-busy', 'true');
@@ -90,13 +90,13 @@ export function applyApp(card: HTMLElement, v: AppCardView, last: string | undef
   const src = JSON.stringify(v);
   // Markup from appStateMarkup, which escapes every text run.
   if (last !== src) slot.querySelector<HTMLElement>('.vb-app-state')!.innerHTML = appStateMarkup(v);
-  if (status) applyAppStatus(status, v);
+  applyAppStatus(status, v);
   for (const el of card.querySelectorAll('.vb-app-name-text, .vb-app-name-tip')) el.textContent = v.name;
   if (inApp && !had!.checkVisibility({ visibilityProperty: true })) card.focus({ preventScroll: true });
   return src;
 }
 
-/** The footer's app status: one control shows (or none), each named with the app; Allow's reason is
+/** The bar's app status: one control shows (or none), each named with the app; Allow's reason is
  * its tip. "Allowed ▾" hidden closes its menu. */
 function applyAppStatus(status: HTMLElement, v: AppCardView): void {
   const allow = status.querySelector<HTMLButtonElement>('[data-app-act="app-allow"]')!;
@@ -115,21 +115,21 @@ function applyAppStatus(status: HTMLElement, v: AppCardView): void {
   }
 }
 
-/** The footer name's tip (card-polish FE_04; the shared hover tip, WCAG 1.4.13): the whole name over
- * the footer while the name is cut, on hover of the name or while keyboard focus is in the footer
- * (a press on a footer button opens nothing), and not while the app's menu is open over the panel;
+/** The app name's tip (card-polish FE_04; the shared hover tip, WCAG 1.4.13): the whole name under
+ * the window's bar while the name is cut, on hover of the name or while keyboard focus is in the bar
+ * (a press on a bar button opens nothing), and not while the app's menu is open over the panel;
  * Esc closes it. Bound once per card. */
 export function bindAppNameTip(card: HTMLElement): HoverTip {
   const text = () => card.querySelector<HTMLElement>('.vb-app-name-text');
   const cut = () => { const t = text(); return t !== null && t.scrollWidth > t.clientWidth; };
   return bindHoverTip(card, {
-    anchor: '.vb-app-name', tip: '.vb-app-name-tip', group: '.vb-node-foot, .vb-win-bar', attr: 'data-name-tip-open',
+    anchor: '.vb-app-name', tip: '.vb-app-name-tip', group: '.vb-win-bar', attr: 'data-name-tip-open',
     needed: () => cut() && card.querySelector('.vb-app-menu:not([hidden])') === null
-      && card.querySelector('.vb-app-name:hover, .vb-node-foot :focus-visible, .vb-win-bar :focus-visible') !== null,
+      && card.querySelector('.vb-app-name:hover, .vb-win-bar :focus-visible') !== null,
   });
 }
 
-/** An app window's bar and drawer (appWindow flag, node-window.ts): why Allow shows, the drawer arrow (open or not, the
+/** An app window's bar and drawer (node-window.ts): why Allow shows, the drawer arrow (open or not, the
  *  notes count, filled while an agent's reply is unread, from the marks) and its pane, and Open while the panel shows.
  *  `data-drawer-open` widens the node by the drawer (node-app.css), so the page measures it open. */
 export function applyWindow(card: HTMLElement, v: AppCardView, m: NodeMarks): void {
@@ -147,11 +147,9 @@ export function applyWindow(card: HTMLElement, v: AppCardView, m: NodeMarks): vo
   const count = arrow.querySelector('.vb-mark-text')!;
   if (count.textContent !== m.notesText) count.textContent = m.notesText;
   card.querySelector<HTMLElement>('.vb-win-drawer-pane')!.hidden = !v.drawer;
-  const open = card.querySelector<HTMLElement>('.vb-win-open');
-  if (open) {
-    open.hidden = !v.frame;
-    open.setAttribute('aria-label', v.names.open);
-  }
+  const open = card.querySelector<HTMLElement>('.vb-win-open')!;
+  open.hidden = !v.frame;
+  open.setAttribute('aria-label', v.names.open);
 }
 
 /** Draw the card again (`render`) keeping what its open drawer holds (the conversation box the page docked there, the

@@ -76,11 +76,11 @@ test(`layout of 1000 cards with 1200 links in flow and lanes stays under ${BUDGE
   const ms = time(() => layoutBoard(dense, sz));
   console.log(`[M2] layout, ${dense.nodes.length} cards, ${dense.links.length} links: ${ms.toFixed(1)} ms`);
   assert.ok(ms < BUDGET_MS, `${ms.toFixed(1)} ms`);
-  // BE_01: with flowBranches each flow is laid out on rows and routed once more to weigh them against the stacked
-  // flow, across and, with flowDirection, down; the same budget.
+  // BE_01: each flow is laid out on rows and routed once more to weigh them against the stacked flow, across and
+  // down; the same budget.
   for (const direction of ['across', 'down'] as const) {
     const directions = new Map(dense.regions.map((g) => [g.id, direction]));
-    const branched = time(() => layoutBoard(dense, sz, { branching: true, directions }));
+    const branched = time(() => layoutBoard(dense, sz, { directions }));
     console.log(`[BE_01] layout, ${dense.nodes.length} cards, ${dense.links.length} links, branches ${direction}: ${branched.toFixed(1)} ms`);
     assert.ok(branched < BUDGET_MS, `${direction}: ${branched.toFixed(1)} ms`);
   }

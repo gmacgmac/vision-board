@@ -1,5 +1,5 @@
 /* The surfaces things float on (UI_01; review 18). The popover surface: raised, a strong line, the
-   middle radius, lifted: menus, the settings menu, the size control's pill and the container note's
+   middle radius, lifted: menus, the settings menu and the container note's
    preview. The panel surface: raised, the quiet line, the large radius, lifted: dialogs. Kept apart,
    on purpose (decided by eye, UI_01 notes): the layout popover sits on the card surface with the
    quiet line and the large radius (it shows card-coloured tiles), the hover tip has the contrast line
@@ -9,7 +9,6 @@
 .vb-surface-pop,
 .vb-menu-list,
 vb-region .vb-region-menu,
-vb-node .vb-size-menu,
 vb-region .vb-note-pop {
   border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
   background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);

@@ -2,7 +2,7 @@
 // the app as list_apps gives it (the app host's one state function, ruling 11) and what the page
 // knows of the card. No DOM: node-core.ts adds its words to the card's name, node-template.ts draws
 // it, vb-node.ts applies it in place. Every state keeps the panel's size, and Allow or "Allowed ▾"
-// sits in the footer (card-polish FE_01), so neither a state change nor the frame coming and going
+// sits in the window's bar (card-polish FE_01, FE_08), so neither a state change nor the frame coming and going
 // (ruling 14) moves the card. Only a new size does: a card with no `w`/`h` is the default until
 // list_apps first gives the manifest's size (components.md § App card 2).
 import type { AppInfo, AppProblem, AppSize, ViewNode } from '#format';
@@ -24,11 +24,11 @@ const FRAME_STATES: ReadonlySet<AppCardState> = new Set(['needs-approval', 'chan
  * (absent until list_apps has answered) and whether a past version of the board is showing. */
 export interface AppCardInput {
   info?: AppInfo; past?: boolean;
-  /** The window's drawer is open (appWindow flag, FE_08): the node is wider by it, so the page measures it so. */
+  /** The window's drawer is open (FE_08): the node is wider by it, so the page measures it so. */
   drawer?: boolean;
 }
 
-/** The footer's app status (card-polish FE_01): Allow while the app's tools wait for the person,
+/** The window bar's app status (card-polish FE_01): Allow while the app's tools wait for the person,
  * "Allowed ▾" (a menu holding Stop app) once they allowed this version, else nothing. */
 export type AppControl = 'allow' | 'allowed' | 'none';
 
@@ -40,7 +40,7 @@ export interface AppCardView {
   name: string;
   /** The panel shows: the page loads the frame while the card is on screen and near (ruling 14). */
   frame: boolean;
-  /** The footer's app status: Allow, "Allowed ▾" or nothing. */
+  /** The bar's app status: Allow, "Allowed ▾" or nothing. */
   control: AppControl;
   /** Why Allow shows ("Not allowed yet", "Code changed"): its tip, and the end of its name. */
   reason?: string;
@@ -52,13 +52,13 @@ export interface AppCardView {
   /** The controls' names, each with the app's name: Allow (with its reason), "Allowed ▾", the
    * Stop app item in its menu, and the try-again button. */
   names: { allow: string; allowed: string; stop: string; open: string; retry?: string };
-  /** The window's drawer is open (appWindow flag): the conversation docked on its right. */
+  /** The window's drawer is open: the conversation docked on its right. */
   drawer: boolean;
   /** What the card's name adds after its title (node-core.ts `nodeLabel`). */
   words: string;
 }
 
-/** The plain card the flag off draws (ruling 13). */
+/** What a plain node says in place of the app with the appCards flag off (ruling 13). */
 export const APPS_OFF = uiCommonWords.appCardsAreOff;
 
 /** One problem as the card lists it, for the agent to fix: the file and what (the server names the

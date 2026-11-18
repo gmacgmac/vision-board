@@ -2,14 +2,14 @@
 // direction (the conversation box's thread, the history list, a code block in a node's body) the wheel scrolls it and
 // the board does not move; a flick that carries it to its end stops there, the rest of that gesture never pans; only a
 // new gesture that starts at the end pans. Ctrl or Cmd with the wheel always zooms. Trackpad-style small deltas and
-// mouse-style large ones. With nodeEdges, on a board of its own.
+// mouse-style large ones. On a board of its own.
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
 import { act, card, open, reply, write } from './agent-board.ts';
 import { drawEdges, mark } from './edge-board.ts';
 import { box, scale, world } from './board-page.ts';
 
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 const LONG = Array.from({ length: 30 }, (_, i) => `Line ${i + 1} of a long answer.`).join('\n\n');
 const CODE = ['```', ...Array.from({ length: 40 }, (_, i) => `step ${i + 1}: run the check`), '```'].join('\n');
 /** Longer than a gesture's quiet gap: the next wheel is a new gesture. */

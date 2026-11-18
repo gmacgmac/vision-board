@@ -50,7 +50,7 @@ export interface Moves {
   drop(boxes: ReadonlyMap<string, Box>, at: Point | null): Promise<void>;
   /** L, the card's Later button, Reopen: the status act, with the move that goes with it. */
   status(id: string, action: 'later' | 'reopen'): Promise<boolean>;
-  /** Save for later on several nodes (the bar, nodeEdges): into Later with their `later` acts, as the Move to list's Later
+  /** Save for later on several nodes (the bar's Save for later): into Later with their `later` acts, as the Move to list's Later
    *  row does, but only the nodes that can be saved; the count saved, 0 when none can be (nothing is written). */
   saveLater(ids: readonly string[]): Promise<number>;
   /** Move to (Shift+M, the bar): the list of containers for `ids`, under `anchor`. */

@@ -40,22 +40,21 @@ async function draw(request: APIRequestContext, cards = 3): Promise<Drawn> {
   return d;
 }
 
-const bookmarkOf = (page: Page, n: number) => card(page, n).locator('button[data-bookmark]');
+/** The bookmark: a node's number (D-099 4), aria-pressed while bookmarked. */
+const bookmarkOf = (page: Page, n: number) => card(page, n).locator('[data-mark="number"]');
 const chip = (page: Page) => page.locator(bid('bookmarked'));
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
-test.beforeEach(async ({ page }) => { await page.goto('/gallery.html'); });
+test.beforeEach(async ({ page }) => { await page.goto('/?setup'); });
 
 const focusedId = (page: Page) => page.evaluate(() => document.activeElement?.closest('vb-node')?.getAttribute('data-id') ?? null);
 
 // ---- the bookmark --------------------------------------------------------------------------------
 
-test('the bookmark: a button beside Later on every card, B, stored by identity, kept through a redraw and a reload', async ({ page, request }) => {
+test('the bookmark: a click on the number of every card, B, stored by identity, kept through a redraw and a reload', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d, '?vbwork', 4);
   for (const n of [1, 2, 3, 4]) {
-    const buttons = card(page, n).locator('.vb-node-actions button');
-    await expect(buttons.last()).toHaveAttribute('data-bookmark', '');
-    await expect(buttons.nth(-2)).toHaveAttribute('data-act', 'later');
+    await expect(bookmarkOf(page, n)).toHaveText(String(n));
     await expect(bookmarkOf(page, n)).toHaveAttribute('aria-pressed', 'false');
   }
   await expect(chip(page)).toHaveCount(0);
@@ -125,16 +124,16 @@ test('a bookmark is nothing new to send, and an agent never reads it', async ({ 
   expect(JSON.stringify(node)).not.toMatch(/flag|bookmark/);
 });
 
-test('with the cardBookmark flag off: no button, B does nothing, no chip', async ({ page, request }) => {
+test('with the cardBookmark flag off: the number bookmarks nothing, B does nothing, no chip', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'bookmark', n: 1 });
   await open(page, d, '?vbwork&flags=-cardBookmark', 4);
-  await expect(page.locator('button[data-bookmark]')).toHaveCount(0);
   await expect(chip(page)).toHaveCount(0);
   await expect(card(page, 1)).not.toHaveAttribute('aria-label', /bookmarked/);
   const before = await head(page);
   await card(page, 2).focus();
   await page.keyboard.press('b');
+  await bookmarkOf(page, 3).click();
   await idle(page);
   expect((await linesAfter(page, before)).filter((e) => e.action === 'bookmark')).toEqual([]);
 });
@@ -206,14 +205,18 @@ test('with the retiredMarker flag off, a retired card still leaves, with no mark
 test('the container offers Column and Row, and no List; a sent list is refused', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d, '?vbwork', 4);
-  const names = await frame(page, 'p').getByRole('radio').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+  const pick = async (mode: string) => {
+    await frame(page, 'p').locator('.vb-layout-btn').click();
+    await frame(page, 'p').locator(`.vb-mtile[data-tile="${mode}"]`).click();
+  };
+  const names = await frame(page, 'p').locator('.vb-mtile .vb-mtile-name').allTextContents();
   expect(names).toEqual(['Grid', 'Flow', 'Lanes', 'Radial', 'Column', 'Row']);
-  for (const mode of ['Row', 'Column']) {
-    await frame(page, 'p').getByRole('radio', { name: mode, exact: true }).click();
-    await expect(frame(page, 'p')).toHaveAttribute('data-mode', mode.toLowerCase());
+  for (const mode of ['row', 'column']) {
+    await pick(mode);
+    await expect(frame(page, 'p')).toHaveAttribute('data-mode', mode);
   }
   // In a row the cards sit left to right in number order, tops aligned.
-  await frame(page, 'p').getByRole('radio', { name: 'Row', exact: true }).click();
+  await pick('row');
   await idle(page);
   const boxes = await Promise.all([1, 2, 3].map(async (n) => (await card(page, n).boundingBox())!));
   expect(boxes[0]!.x).toBeLessThan(boxes[1]!.x);
@@ -223,19 +226,21 @@ test('the container offers Column and Row, and no List; a sent list is refused',
   expect(r.status()).toBe(422);
 });
 
-test('on a second board the page names every card by its own number: buttons, seen, updates', async ({ page, request }) => {
+test('on a second board the page names every card by its own number: answers, seen, updates', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d, '?vbwork', 4);
   const before = await head(page);
-  await card(page, 2).locator('button[data-act="ack"]').click();
+  await card(page, 2).focus();
+  await page.keyboard.press('a');
   await expect(card(page, 2)).toHaveAttribute('data-status', 'acknowledged');
   await expect(card(page, 1)).toHaveAttribute('data-status', 'open');
-  // The agent changes card 3: its "1 update" tab, and no other card's.
+  // The agent changes card 3: "1 update" on its badge, and no other card's.
   await write(request, d, [{ type: 'node', n: 3, node: { region: 'p', kind: 'question', title: 'Question 3, sharper?' } }]);
-  await expect(card(page, 3).locator('[data-tab="updates"]')).toBeVisible();
-  await expect(page.locator('[data-tab="updates"]:visible')).toHaveCount(1);
-  await card(page, 3).click();
-  await expect(card(page, 3).locator('[data-tab="updates"]')).toBeHidden();
+  const updates = '[data-mark="badge"][data-badge="updates"]';
+  await expect(card(page, 3).locator(updates)).toBeVisible();
+  await expect(page.locator(`${updates}:visible`)).toHaveCount(1);
+  await card(page, 3).locator('.vb-node-title').click();
+  await expect(card(page, 3).locator(updates)).toBeHidden();
   await idle(page);
   const lines = await linesAfter(page, before);
   const ack = lines.find((e) => e.action === 'ack')!;
@@ -254,8 +259,10 @@ test('gallery: the bookmark section shows a card at rest, bookmarked, and bookma
   await page.goto('/gallery.html');
   const s = section(page, 'cardBookmark');
   await expect(s.getByRole('heading', { level: 2, name: 'The bookmark' })).toBeVisible();
-  await expect(s.locator('button[data-bookmark]')).toHaveCount(3);
-  expect(await s.locator('button[data-bookmark]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-pressed')))).toEqual(['false', 'true', 'true']);
+  // The number is the bookmark (DD-04): pressed and filled on the bookmarked nodes.
+  await expect(s.locator('[data-mark="number"]')).toHaveCount(3);
+  expect(await s.locator('[data-mark="number"]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-pressed')))).toEqual(['false', 'true', 'true']);
+  await expect(s.locator('vb-node[data-bookmarked]')).toHaveCount(2);
   await expect(s.locator('vb-node').nth(2).locator('.vb-node-body')).toContainText('the flag stays');
   await expect(s.getByRole('button', { name: /^2 bookmarked$/ })).toBeVisible();
   await expect(page.goto('/gallery.html?flags=-cardBookmark').then(() => section(page, 'cardBookmark').count())).resolves.toBe(0);

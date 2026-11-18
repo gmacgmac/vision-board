@@ -1,4 +1,4 @@
-// The conversation box's core and template (nodeEdges, FE_03, D-099 3): Enter does the box's mode, Add note unless Ask
+// The conversation box's core and template (FE_03, D-099 3): Enter does the box's mode, Add note unless Ask
 // now was chosen (FIX_03 ruling 3); Cmd or Ctrl Enter is always Ask now; Shift Enter is a new line. The box says the node, its tabs only when the node
 // is in a note on several nodes, a note waiting for Send, "Waiting for the agent", and why Ask now is disabled. Its
 // field is never read-only, so changed words ask before they are discarded.

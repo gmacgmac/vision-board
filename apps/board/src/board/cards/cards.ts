@@ -40,7 +40,7 @@ export interface CardSet {
    *  true when any card moved, changed width, or was shown or hidden. */
   place(layout: BoardLayout, sizes: ReadonlyMap<string, Size>): boolean;
   /** Draw again, on the next sync, the cards `which` names (all by default): how they draw changed (a skin, the icon
-   *  library; nodeEdges, FE_02), though the agent drew no new version. */
+   *  library; FE_02), though the agent drew no new version. */
   refresh(which?: (n: ViewNode) => boolean): void;
   /** Remove every card (another board, or a rebuild). */
   clear(): void;

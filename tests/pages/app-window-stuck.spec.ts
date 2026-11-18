@@ -31,7 +31,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => { await s.close(); });
 
 test('a panel in a tight loop leaves the board\'s own controls working', async ({ page }) => {
-  await page.goto(`${s.base}/?flags=nodeEdges,appWindow,appStage#${board}`);
+  await page.goto(`${s.base}/#${board}`);
   const win = page.locator('vb-node[data-window]');
   await expect(win.locator('vb-app-frame iframe')).toHaveCount(1);
   await page.waitForTimeout(800); // the loop has started

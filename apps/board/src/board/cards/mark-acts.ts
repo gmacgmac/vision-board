@@ -1,4 +1,4 @@
-// What a press on a node's mark does (nodeEdges flag; loaded after the board's first draw, or on the first press, by
+// What a press on a node's mark does (loaded after the board's first draw, or on the first press, by
 // mark-flow.ts, which hears the presses): one menu or box open at a time, the node's menus (mark-menus.ts) and boxes
 // (mark-boxes.ts), Tick and Cross through the item acts with their moments, and the tips over the marks
 // (mark-tips.ts). mark-flow.ts says what each mark does; this is how. Browser only.

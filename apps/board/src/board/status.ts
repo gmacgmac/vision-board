@@ -72,10 +72,10 @@ export interface BoardStatus {
   locked: boolean;
   /** The ledger is open read-only (D-085, the reads' `readOnly`): nothing changes until they switch to Editing. */
   readOnly: boolean;
-  /** The open board's skin (skins flag, D-100 2): the "⋯" menu's Skin rows; null with the flag off. */
+  /** The open board's skin (D-100 2): the "⋯" menu's Skin rows; null before a board opens. */
   skin: Skin | null;
-  /** The person's choice of which way the open board's flows run (flowDirection flag, BE_01): `across`, `down`, or
-   *  `auto` with none (each container's own); the header's Flows menu. null with the flag off. */
+  /** The person's choice of which way the open board's flows run (BE_01): `across`, `down`, or `auto` with none (each
+   *  container's own); the header's Flows menu. null until a board is drawn. */
   direction: ActDirection | null;
   /** The Go to card box (goToCard flag, go-to-card.ts), open while set. */
   go: GoBox | null;

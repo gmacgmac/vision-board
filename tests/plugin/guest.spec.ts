@@ -1,7 +1,7 @@
 // The board as a guest in a page that isn't its own (docs/specification/plugin.md § A guest in the host's page): a
 // second Svelte round it, a host's loud element rules, the host's own keys, a modal, and a short pane.
 import { sveltes } from './fake-host/host-svelte.ts';
-import { drawn, drawPicture, drawPlans, drive, expect, openHost, test } from './harness.ts';
+import { answerNode, drawn, drawPicture, drawPlans, drive, expect, openHost, test } from './harness.ts';
 
 test('a second Svelte: the host\'s runtime and the bundle\'s both work, the board nested in the host\'s tree, each click heard once', async ({ page, host }, info) => {
   const { host: theirs, bundle } = sveltes();
@@ -48,7 +48,7 @@ test('a host\'s loud element rules do not reach the board\'s controls', async ({
     const name = (e: Element) => `${e.tagName} ${e.getAttribute('class')}`;
     for (const e of root.querySelectorAll('*')) {
       const s = getComputedStyle(e);
-      if (e.tagName === 'svg' && s.display === 'none' && !e.closest('[hidden]') && !/vb-btn-icon|vb-widths-(own|same)/.test(e.getAttribute('class') ?? '')) seen.blankIcons.push(name(e));
+      if (e.tagName === 'svg' && s.display === 'none' && !e.closest('[hidden]') && !/vb-btn-icon|vb-widths-(own|same)|vb-mark-(tick|cross|lock|group)/.test(e.getAttribute('class') ?? '')) seen.blankIcons.push(name(e));
       if (s.fontSize === '30px' || s.fontSize === '26px' || s.color === 'rgb(255, 120, 0)' || s.color === 'rgb(10, 200, 10)' || s.color === 'rgb(255, 0, 255)') seen.loudText.push(name(e));
       if (e.closest('svg') && (s.fill === 'rgb(255, 0, 0)' || s.stroke === 'rgb(255, 0, 0)')) seen.painted.push(name(e));
       if (!e.closest('svg') && (s.letterSpacing === '2px' || parseFloat(s.letterSpacing) > 3.5)) seen.spaced.push(name(e));
@@ -56,7 +56,7 @@ test('a host\'s loud element rules do not reach the board\'s controls', async ({
     return seen;
   });
   expect(loud).toEqual({ blankIcons: [], loudText: [], spaced: [], painted: [] });
-  await expect(page.locator('.host-root vb-node').first().locator('button[data-act="ack"] svg')).toBeVisible();
+  await expect(page.locator('.host-root vb-node').first().locator('[data-mark="answer"]')).toBeVisible();
 });
 
 test('a picture stands too: a host\'s img rule does not shrink or border it', async ({ page, host }) => {
@@ -82,19 +82,20 @@ test('a host\'s color-scheme stays its own: the board carries its own on its roo
   expect((await scheme()).board).toBe('dark');
 });
 
-test('focus stays in the root when what held it goes: H on an answered card, and Reply closing, by Esc or by its button', async ({ page, host }) => {
+test('focus stays in the root when what held it goes: Shift+H on an answered card, and Reply closing, by Esc or by its button', async ({ page, host }) => {
   await drawPlans(host);
   await openHost(page, host);
   await drawn(page);
   const stage = page.locator('.host-root .vb-stage');
   const hide = async () => (await drive(page, 'boardStatus')).hide;
   const card = page.locator('.host-root vb-node[data-id="1"]');
-  await card.locator('button[data-act="ack"]').click();
+  await answerNode(card);
+  await expect(card.locator('[data-mark="answer"]')).toHaveAttribute('data-answer', 'ticked');
   await card.focus();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect.poll(hide).toBe(true);
   await expect(stage, 'the card went').toBeFocused();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect.poll(hide, 'the next key still acts').toBe(false);
   // A card the bot takes away while it holds the focus goes the same way.
   const third = page.locator('.host-root vb-node[data-id="3"]');
@@ -114,7 +115,7 @@ test('focus stays in the root when what held it goes: H on an answered card, and
   await reply();
   await page.locator('.host-root #vb1-reply-close').click();
   await expect(stage).toBeFocused();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect.poll(hide).toBe(true);
 });
 
@@ -141,21 +142,24 @@ test('keys: a host\'s listener on the document skips a key the board used; a cap
   await openHost(page, host);
   await drawn(page);
   await drive(page, 'hearKeys');
-  // Inside the board: `h` (Hide answered) is the board's, marked used before the document hears it.
+  // Inside the board: Shift+H (Hide answered) is the board's, marked used before the document hears it.
   await page.locator('.host-root .vb-stage').focus();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect.poll(async () => (await drive(page, 'boardStatus')).hide).toBe(true);
   // A key the board does not use stays the host's.
   await page.keyboard.press('q');
   // Outside it: the board hears nothing, the host's shortcut acts.
   await page.locator('#host-button').focus();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   expect((await drive(page, 'boardStatus')).hide, 'not the board\'s').toBe(true);
   await page.keyboard.press('q');
-  const { heard, order, mine } = await drive(page, 'keys');
-  expect(heard).toEqual([{ key: 'h', prevented: true }, { key: 'q', prevented: false }, { key: 'h', prevented: false }, { key: 'q', prevented: false }]);
+  // Shift's own keydowns are nobody's: left out.
+  const { heard: all, order: allOrder, mine } = await drive(page, 'keys');
+  const keyed = (l: { key: string; prevented: boolean }[]) => l.filter((k) => k.key !== 'Shift');
+  const [heard, order] = [keyed(all), keyed(allOrder)];
+  expect(heard).toEqual([{ key: 'H', prevented: true }, { key: 'q', prevented: false }, { key: 'H', prevented: false }, { key: 'q', prevented: false }]);
   expect(mine).toBe(2);
-  expect(order[0], 'a capture listener runs before the board\'s, so it reads nothing marked').toEqual({ key: 'h', prevented: false });
+  expect(order[0], 'a capture listener runs before the board\'s, so it reads nothing marked').toEqual({ key: 'H', prevented: false });
 });
 
 test('the zoomed view is a real modal: the page is inert while it is open, and its Esc goes no further than the root', async ({ page, host }) => {

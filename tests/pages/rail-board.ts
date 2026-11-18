@@ -79,5 +79,5 @@ export const reach = (f: Locator) => f.evaluate((e, ring) => {
   return { inside: right - fr.left, outside: fr.left - left, right, top: tools.top - ring, bottom: tools.bottom + ring, frameLeft: fr.left };
 }, RING);
 
-/** The opacity the rail's icons draw at, the first unchecked layout's. */
-export const iconOpacity = (f: Locator) => f.locator('.vb-mseg[aria-checked="false"] .vb-mode-icon').first().evaluate((e) => Number(getComputedStyle(e).opacity));
+/** The opacity the rail's icons draw at, the layout button's. */
+export const iconOpacity = (f: Locator) => f.locator('.vb-layout-btn .vb-mode-icon').first().evaluate((e) => Number(getComputedStyle(e).opacity));

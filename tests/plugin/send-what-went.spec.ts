@@ -3,7 +3,7 @@
 // those answers for the next message. A send that fails records nothing. The fake host is written from the spec.
 import type { Page } from '@playwright/test';
 import type { FakeHost } from './fake-host/server.ts';
-import { drawn, drawPlans, drive, expect, openHost, test } from './harness.ts';
+import { answerNode, drawn, drawPlans, drive, expect, openHost, test } from './harness.ts';
 
 type Line = { seq: number; type: string; action?: string; head?: number };
 /** The ledger as the person reads it. */
@@ -12,7 +12,7 @@ const lines = async (host: FakeHost): Promise<Line[]> =>
 const sends = async (host: FakeHost) => (await lines(host)).filter((e) => e.action === 'send');
 /** The person answers card `i` (0-based) with ✓, and the answers chip says so. */
 async function ack(page: Page, i: number) {
-  await page.locator('.host-root vb-node').nth(i).locator('button[data-act="ack"]').click();
+  await answerNode(page.locator('.host-root vb-node').nth(i));
 }
 const answersChip = async (page: Page) => (await drive(page, 'record')).chips.find((c: { kind: string }) => c.kind === 'answers');
 const send = (page: Page) => page.locator('.host-root #vb1-send').click();

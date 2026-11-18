@@ -1,9 +1,9 @@
-// A review button or its key on one card (split out of controller.ts in 3_FE_03): ✓ (Check), ✗
-// (Cross), comment, save for later, reopen. Pressing the button that is lit clears it (`reopen`,
+// An item action on one card, from its mark, its menu or its key (split out of controller.ts in 3_FE_03): ✓ (Check),
+// ✗ (Cross), comment, save for later, reopen. Pressing the answer that is lit clears it (`reopen`,
 // answer-model ruling 8): the card is open again and the toast says "12 cleared"; ✗ while ✓ is lit
-// switches straight to ✗. A second press of the same button on the same card within `REPEAT_MS` is
-// ignored, so a double click never undoes itself. Comment on a card with a note not yet sent opens
-// it to edit (2e_FE_01 ruling 1). Later and Reopen also move the card into the Later container and
+// switches straight to ✗. A second press of the same action on the same card within `REPEAT_MS` is
+// ignored, so a double click never undoes itself. Comment opens the node's conversation box (notes.ts
+// `press`). Later and Reopen also move the card into the Later container and
 // back out (3_FE_03 ruling 6, moves.ts). With "Hide answered" on, focus goes on to the next card
 // when the card it was on is hidden by its answer. The write is slower than the keyboard: focus goes back
 // to the card only if it is still there or lost to the redraw, never from where the person moved it on.
@@ -38,7 +38,7 @@ export interface ItemActDeps {
   now?(): number;
 }
 
-/** How soon a second press of the same button on the same card counts as a double click. */
+/** How soon a second press of the same action on the same card counts as a double click. */
 export const REPEAT_MS = 400;
 
 /** The handler for one item action on card `id`: true once written, false when the write failed, undefined when
@@ -51,9 +51,9 @@ export function createItemActs(d: ItemActDeps): (id: string, requested: ActionId
   return async function act(id, requested) {
     const n = d.node(id);
     if (!n || n.n === undefined) return;
-    // The keyboard can't send what the card doesn't offer (Reopen, O, is offered by a lit button).
+    // The keyboard can't send what the card doesn't offer (Reopen, O, is offered by a lit answer).
     if (requested !== 'reopen' && !offers(n).includes(requested)) return;
-    if (requested === 'comment') return void d.notes.press(id, requested);
+    if (requested === 'comment') return void d.notes.press(id);
     const at = now(), key = `${id}:${requested}`;
     const repeat = key === last.key && at - last.at < REPEAT_MS;
     last = { key, at };

@@ -28,7 +28,8 @@
 }
 
 /* Edit or Stop editing at full: the end group's button look (board.css `.vb-btn-iconic`), where there is room for it
-   (from a 1360px content box, a bar of about 1385px; under that the chip's menu holds it), its pencil alone under 1500px
+   (from a 1360px content box, a bar of about 1385px and 1513px with Flows' room at its end, header.css; under that the
+   chip's menu holds it), its pencil alone under 1500px
    (its word for screen readers and its tooltip). Busy, it keeps its place and focus (aria-disabled) and shows the spinner. */
 .vb-edit-btn { flex: none; display: inline-flex; align-items: center; gap: var(--vb-space-1); }
 .vb-edit-btn .vb-btn-icon { display: block; width: 14px; height: 14px; }

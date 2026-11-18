@@ -16,9 +16,12 @@ test('gallery ledger: every line passes the ledger checks', () => {
   assert.equal(events.length, lines.length);
 });
 
-test('gallery ledger: every act is one its node type offers, by the person', () => {
+// But one: the app saved for later in the kinds grid was drawn before an app window offered no Later (D-099 5). It stays,
+// as any ledger written before keeps such a line and still reads (apps.test.ts in packages/actions holds the fold).
+const BEFORE_WINDOWS = "later: an app doesn't offer this";
+test('gallery ledger: every act is one its node type offers, by the person, but the app saved for later before D-099 5', () => {
   events.forEach((e, i) => {
-    if (e.type === 'act') assert.deepEqual(validateAct(e as ActEvent, foldLedger(events.slice(0, i))), [], `seq ${e.seq}`);
+    if (e.type === 'act') assert.deepEqual(validateAct(e as ActEvent, foldLedger(events.slice(0, i))).filter((p) => p !== BEFORE_WINDOWS), [], `seq ${e.seq}`);
   });
 });
 

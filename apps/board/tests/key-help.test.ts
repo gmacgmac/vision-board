@@ -7,8 +7,8 @@ import { ACTIONS } from '#actions';
 import { COMMAND_IDS, COMMANDS } from '../src/board/input/commands.ts';
 import { KEY_GROUPS, keyGroups } from '../src/board/input/key-help.ts';
 
-// With the node's edges on, so the bar's three edge commands are listed too (they are not with the flag off).
-const rows = () => keyGroups({ edges: true, bookmark: true }).flatMap((g) => g.rows);
+// With the cardBookmark flag on, so Bookmark all is listed too.
+const rows = () => keyGroups({ bookmark: true }).flatMap((g) => g.rows);
 
 test('every command with a key is listed once, with its label and every one of its keys', () => {
   for (const id of COMMAND_IDS) {
@@ -97,16 +97,16 @@ test('Board lists Go to a card by its number as 0–9; without the goToCard flag
   assert.deepEqual(go(false), []);
 });
 
-// The bar's edge commands (nodeEdges flag, FE_06): listed under Selection with their keys, only with the flag on.
-test('Selection lists Bookmark all, Save for later and Width with the edges on, and not otherwise', () => {
-  const rows = (edges: boolean, bookmark = true) => keyGroups({ edges, bookmark }).find((g) => g.group === 'Selection')!.rows.map((r) => r.id);
+// The bar's Bookmark all, Save for later and Width (FE_06): listed under Selection with their keys; Bookmark all only
+// with the cardBookmark flag.
+test('Selection lists Bookmark all, Save for later and Width, Bookmark all only with the bookmark on', () => {
+  const rows = (bookmark: boolean) => keyGroups({ bookmark }).find((g) => g.group === 'Selection')!.rows.map((r) => r.id);
   assert.ok(['command:bookmark-all', 'command:save-for-later', 'command:width'].every((id) => rows(true).includes(id)));
-  assert.ok(!rows(false).some((id) => ['command:bookmark-all', 'command:save-for-later', 'command:width'].includes(id)));
-  assert.ok(!rows(true, false).includes('command:bookmark-all'));
+  assert.ok(!rows(false).includes('command:bookmark-all'));
+  assert.ok(rows(false).includes('command:width'));
 });
 
-test('Hide answered is H, and Shift+H with the nodes\' edges, where H is a node\'s history (FIX_01)', () => {
-  const hide = (edges: boolean) => keyGroups({ edges }).find((g) => g.group === 'Board')!.rows.find((r) => r.label === 'Hide answered')!.keys;
-  assert.deepEqual(hide(false), ['H']);
-  assert.deepEqual(hide(true), ['Shift+H']);
+test('Hide answered is Shift+H, since H is a node\'s history (FIX_01)', () => {
+  const hide = keyGroups().find((g) => g.group === 'Board')!.rows.find((r) => r.label === 'Hide answered')!.keys;
+  assert.deepEqual(hide, ['Shift+H']);
 });

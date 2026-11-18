@@ -158,39 +158,39 @@ async function drawStill(page: Page, request: APIRequestContext): Promise<Drawn>
 
 const boxOf = async (page: Page, n: number) => (await card(page, n).boundingBox())!;
 
-/** A 1000 by 320 window at the top zoom: card 1 is taller than the stage. */
+/** A 1000 by 250 window at the top zoom: card 1 is taller than the stage. */
 async function openTall(page: Page, d: Drawn): Promise<void> {
-  await page.setViewportSize({ width: 1000, height: 320 });
+  await page.setViewportSize({ width: 1000, height: 250 });
   await open(page, d);
   for (let i = 0; i < 20; i += 1) await page.keyboard.press('+');
   await expect.poll(() => scale(page)).toBeCloseTo(2.5, 3);
   expect((await boxOf(page, d.n[0]!)).height).toBeGreaterThan((await stageBox(page)).height);
 }
 
-test('a press on ✓ on a card bigger than the screen ticks it and does not pan', async ({ page, request }) => {
+test('Tick from the disc on a card bigger than the screen ticks it and does not pan', async ({ page, request }) => {
   const d = await drawStill(page, request);
   const [tall] = d.n as [number];
   await openTall(page, d);
-  // Its top above the stage, its footer on screen: the card overflows, as it always does.
+  // Its top on the stage, its bottom below it: the card overflows, as it always does.
   const s = await stageBox(page);
   const b = await boxOf(page, tall);
-  await panBy(page, s.x + 120 - b.x, s.y + s.height - 30 - (b.y + b.height));
-  const check = card(page, tall).locator('button[data-act="ack"]');
+  await panBy(page, s.x + 120 - b.x, s.y + 40 - b.y);
+  const check = card(page, tall).locator('[data-mark="answer"]');
   const [before, at] = [await world(page), (await check.boundingBox())!];
   await check.click();
+  await page.locator('.vb-mark-menu').getByRole('menuitem', { name: /^Tick / }).click();
   await expect(card(page, tall)).toHaveAttribute('data-status', 'acknowledged');
   expect(await world(page)).toBe(before);
   expect(await check.boundingBox()).toEqual(at);
 });
 
-test('a click on a card partly off screen, its note, its size control or its footer does not pan or zoom', async ({ page, request }) => {
+test('a click on a card partly off screen, its marks or its notes mark does not pan or zoom', async ({ page, request }) => {
   const d = await drawStill(page, request);
   const [, noted] = d.n as [number, number];
   await page.setViewportSize({ width: 1000, height: 600 });
   await open(page, d);
   for (let i = 0; i < 6; i += 1) await page.keyboard.press('+');
-  // The noted card hangs off the stage's right edge, its top on the stage (its notes' head, card-polish
-  // FE_02, made it taller than the stage's top half at this zoom).
+  // The noted card hangs off the stage's right edge, its top on the stage.
   const s = await stageBox(page);
   const b = await boxOf(page, noted);
   await panBy(page, s.x + s.width - 60 - b.x - b.width / 2, Math.max(0, s.y + 40 - b.y));
@@ -199,12 +199,9 @@ test('a click on a card partly off screen, its note, its size control or its foo
   await c.locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
   await expect(c).toBeFocused();
   expect(await world(page)).toBe(before);
-  await c.locator('.vb-node-foot').click({ position: { x: 4, y: 4 } });
+  await c.locator('[data-mark="number"]').click();
   expect(await world(page)).toBe(before);
-  await c.locator('.vb-size-trig').click();
-  expect(await world(page)).toBe(before);
-  await page.keyboard.press('Escape');
-  await c.locator('.vb-node-note').click();
+  await c.locator('[data-mark="notes"]').click();
   await expect(page.locator('vb-note-bubble')).toBeVisible();
   expect(await world(page)).toBe(before);
 });
@@ -308,7 +305,7 @@ test('focus coming back to the card it left (Esc closing its note) does not pan'
   await panBy(page, s.x + s.width - 60 - b.x - b.width / 2, 0);
   const before = await world(page);
   await page.keyboard.press('c');
-  await expect(page.locator('vb-note-bubble').getByLabel('Note text')).toBeFocused();
+  await expect(page.locator('vb-note-bubble textarea')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(card(page, noted)).toBeFocused();
   expect(await world(page)).toBe(before);

@@ -1,4 +1,4 @@
-// The tips over a node's marks (nodeEdges flag; the maintainer's design review of DESIGN_01, "Hover" and point 328):
+// The tips over a node's marks (the maintainer's design review of DESIGN_01, "Hover" and point 328):
 // one tip box on the stage, outside the scaled board, showing a mark's `data-tip` (packages/ui node-edges.ts) after a
 // deliberate hover of about two seconds, or at once when the keyboard brings focus to the mark; never after a click.
 // It also says a moment the page sets on a mark: a press on a locked board or a read-only ledger turns the mark into

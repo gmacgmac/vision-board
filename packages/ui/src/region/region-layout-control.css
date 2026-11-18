@@ -1,6 +1,6 @@
-/* Region pattern styles, the one layout control (<vb-region>, layoutControl flag; after region-modes.css). The six layout icons
-   become one button showing the active layout (.vb-layout-btn: the row's .vb-mseg look), and the layout popover is its menu: the same
-   tiles, and on a flow a row of directions (Across, Down, Auto; flowDirection flag). The popover keeps the top line's one size at any
+/* Region pattern styles, the one layout control (<vb-region>, PLAN decision 20; after region-modes.css). One button shows the
+   active layout (.vb-layout-btn: the row's .vb-mseg look), and the layout popover is its menu: the tiles, and on a flow a row of
+   directions (Across, Down, Auto; D-100 5). The popover keeps the top line's one size at any
    zoom, as before. A choice paused by a locked or read-only board keeps the quiet look (paused.css). Tokens only. */
 vb-region .vb-layout-btn[aria-expanded='true'] { background: color-mix(in srgb, var(--vb-region) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); }
 vb-region .vb-dir-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }

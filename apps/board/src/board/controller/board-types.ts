@@ -32,9 +32,9 @@ export interface Board {
   boardEdit: BoardEdit;
   /** The toolbar's "N bookmarked" chip: the next bookmarked card (cardBookmark flag, bookmark-flow.ts). */
   nextBookmarked(): void;
-  /** The "⋯" menu's Skin rows (skins flag, D-100 2): the open board's skin, the person's `skin` act. */
+  /** The "⋯" menu's Skin rows (D-100 2): the open board's skin, the person's `skin` act. */
   setSkin(skin: Skin): void;
-  /** The "⋯" menu's Flows rows (flowDirection flag, D-100 5): the person's `direction` act for the whole board; `auto`
+  /** The header's Flows menu and the "⋯" menu's Flows rows (D-100 5): the person's `direction` act for the whole board; `auto`
    *  clears their choice, giving back each container's own (BE_01). */
   setDirection(direction: ActDirection): void;
   go: GoTo; // the Go to card box's typing, Enter, Esc and offer (goToCard flag, go-to-card.ts)

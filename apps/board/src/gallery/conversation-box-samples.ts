@@ -1,4 +1,4 @@
-// Gallery entry for the conversation box (nodeEdges flag, FE_03): every state of `conversation` mode beside a real card,
+// Gallery entry for the conversation box (D-099 3, FE_03): every state of `conversation` mode beside a real card,
 // from the fixture's notes, parking and groups boards, through the board's own `boxView` (notes/note-box.ts), placed
 // with `placeBeside` as the board places every box beside a node. Empty (the field only), a note waiting for Send,
 // asking, sent and waiting for the agent, a reply arrived, failed (the words stay in the field), Ask now as the mode
@@ -18,12 +18,14 @@ import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
 
-interface Board { view: View; state: BoardState; cards: Map<number, CardConditions> }
+export interface Board { view: View; state: BoardState; cards: Map<number, CardConditions> }
 
-interface BoxSample {
+export interface BoxSample {
   caption: string;
-  board: 'notes' | 'parking' | 'groups';
+  board: 'notes' | 'parking' | 'groups' | 'other';
   title: string;
+  /** The node's board number, where its title is not unique on its board. */
+  n?: number;
   /** The tab of the note on these board numbers. */
   group?: string[];
   draft?: string;
@@ -56,8 +58,9 @@ function groupsBoard(fx: Fixture): Board {
   return { view, state: boardState(fx.ledger, 'groups'), cards: new Map(view.nodes.map((n) => [n.n!, parking.card(n)])) };
 }
 
-function sample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<ReturnType<typeof loadNoteBox>>['boxView']): HTMLElement {
-  const n = b.view.nodes.find((x) => x.title === s.title)!;
+/** One box beside its node on a small stage, placed as the board places it (`placeBeside`); `b` the board it is drawn from. */
+export function boxSample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<ReturnType<typeof loadNoteBox>>['boxView']): HTMLElement {
+  const n = b.view.nodes.find((x) => (s.n !== undefined ? x.n === s.n : x.title === s.title))!;
   const deps = { node: (id: string) => b.view.nodes.find((x) => x.id === id), state: () => b.state, region: () => undefined,
     replies: (id: string) => b.cards.get(Number(b.view.nodes.find((x) => x.id === id)?.n))?.replies ?? [], regionReplies: () => [] };
   const box: BoxDeps = { blocked: () => s.blocked ?? null, listening: () => true, ask: async () => null, looked() {}, asked: () => new Set(),
@@ -91,8 +94,8 @@ function sample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<ReturnType
 export function conversationBoxSamples(fx: Fixture): HTMLElement {
   const row = el('div', 'g-bubbles');
   const boards = { notes: fx.notes, parking: fx.parking, groups: groupsBoard(fx) };
-  void Promise.all([loadNoteBox(), loadConversation()]).then(([m]) => row.append(...SAMPLES.map((s) => sample(s, boards[s.board], fx, m.boxView))));
-  return group('The conversation box', 'With the nodeEdges flag a node\'s notes open one box to read and to write: the node\'s number and title, the thread, '
+  void Promise.all([loadNoteBox(), loadConversation()]).then(([m]) => row.append(...SAMPLES.map((s) => boxSample(s, boards[s.board as 'notes' | 'parking' | 'groups'], fx, m.boxView))));
+  return group('The conversation box', 'A node\'s notes open one box to read and to write: the node\'s number and title, the thread, '
     + 'a field of one line that grows to three, and Ask now (Cmd or Ctrl Enter) beside Add note (Enter). Add note keeps the note for the board\'s Send; '
     + 'Ask now sends it to the agent at once.', row);
 }

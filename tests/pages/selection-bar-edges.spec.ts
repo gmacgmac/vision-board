@@ -1,6 +1,6 @@
-// The selection bar with the node's edges (nodeEdges flag, D-099 9, FE_06): Bookmark all, Save for later and Width each write
+// The selection bar (D-099 9, FE_06): Bookmark all, Save for later and Width each write
 // one act per selected node; Comment on the selection opens the conversation box with Ask now; the bar steps aside for a
-// node's open menu; Z fits the selection. On a board of its own (edge-board.ts), flags on.
+// node's open menu; Z fits the selection. On a board of its own (edge-board.ts).
 import type { Page } from '@playwright/test';
 import { expect, openSelectionBar, setTheme, test } from './helpers.ts';
 import { bar } from './board-page.ts';
@@ -8,7 +8,7 @@ import { card, open } from './agent-board.ts';
 import { drawEdges, menuOf } from './edge-board.ts';
 import { head, linesAfter } from './board-page.ts';
 
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 const buttons = (page: Page) => bar(page).getByRole('button').allInnerTexts();
 const lines = async (page: Page, after: number, action: string) => (await linesAfter(page, after)).filter((e) => e.action === action);
 
@@ -18,15 +18,7 @@ async function selectThree(page: Page, n: number[]): Promise<void> {
   await openSelectionBar(page);
 }
 
-test('flag off: the bar is as it was, with no Bookmark all, Save for later or Width', async ({ page, request }) => {
-  const d = await drawEdges(request);
-  await open(page, d, '?vbwork&flags=-nodeEdges');
-  await selectThree(page, d.n);
-  expect(await buttons(page)).not.toContain('Width');
-  expect(await buttons(page)).not.toContain('Save for later');
-});
-
-test('nodeEdges: the bar offers Bookmark all, Save for later and Width before Zoom', async ({ page, request }) => {
+test('the bar offers Bookmark all, Save for later and Width before Zoom', async ({ page, request }) => {
   const d = await drawEdges(request);
   await open(page, d, FLAGS);
   await selectThree(page, d.n);

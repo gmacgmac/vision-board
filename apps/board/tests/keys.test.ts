@@ -26,12 +26,12 @@ const realDocument = (globalThis as { document?: unknown }).document;
 afterEach(() => { listener = null; });
 process.on('exit', () => { (globalThis as { document?: unknown }).document = realDocument; });
 
-/** Press `key` on `at`; the keys the board acted on. */
+/** Press `key` on `at` (a capital: with Shift, as Shift+H is Hide answered); the keys the board acted on. */
 function press(key: string, at: Fake, own: Fake, pageWide?: boolean): string[] {
   const acted: string[] = [];
   const h = { toggleHide: () => acted.push('hide'), escape: () => acted.push('escape') } as unknown as KeyHandlers;
   const unbind = bindKeys(h, own as unknown as HTMLElement, pageWide);
-  listener!({ target: at, key, defaultPrevented: false, metaKey: false, ctrlKey: false, altKey: false, shiftKey: false, preventDefault() {} } as unknown as KeyboardEvent);
+  listener!({ target: at, key, defaultPrevented: false, metaKey: false, ctrlKey: false, altKey: false, shiftKey: key === 'H', preventDefault() {} } as unknown as KeyboardEvent);
   unbind();
   return acted;
 }
@@ -39,9 +39,9 @@ function press(key: string, at: Fake, own: Fake, pageWide?: boolean): string[] {
 test('under a host, a key inside the root acts; outside every board or in another board it does not', () => {
   const mine = root();
   const other = root();
-  assert.deepEqual(press('h', target(mine), mine), ['hide']);
-  assert.deepEqual(press('h', target(null), mine), [], 'a host control is not the board\'s');
-  assert.deepEqual(press('h', target(other), mine), [], 'another board\'s root is not this one\'s');
+  assert.deepEqual(press('H', target(mine), mine), ['hide']);
+  assert.deepEqual(press('H', target(null), mine), [], 'a host control is not the board\'s');
+  assert.deepEqual(press('H', target(other), mine), [], 'another board\'s root is not this one\'s');
 });
 
 test('under a host, Esc follows the same rule', () => {
@@ -53,10 +53,10 @@ test('under a host, Esc follows the same rule', () => {
 
 test('on the board\'s own page, a key outside every board still acts; one in another board never does', () => {
   const mine = root();
-  assert.deepEqual(press('h', target(mine), mine, true), ['hide']);
-  assert.deepEqual(press('h', target(null), mine, true), ['hide'], 'the standalone page keeps its page-wide keys');
+  assert.deepEqual(press('H', target(mine), mine, true), ['hide']);
+  assert.deepEqual(press('H', target(null), mine, true), ['hide'], 'the standalone page keeps its page-wide keys');
   assert.deepEqual(press('Escape', target(null), mine, true), ['escape']);
-  assert.deepEqual(press('h', target(root()), mine, true), []);
+  assert.deepEqual(press('H', target(root()), mine, true), []);
 });
 
 // Search (cardSearch flag, SEARCH_02): `/` is the go command's key, so it follows the same rule.
@@ -79,13 +79,15 @@ test('every key it acts on is marked used, and one it leaves is not: an Esc with
   const mine = root();
   const marked = (key: string, handlers: Partial<KeyHandlers>, id?: string) => {
     let used = false;
-    const unbind = bindKeys({ toggleHide() {}, unpin() {}, escape: () => false, command: () => false, ...handlers } as KeyHandlers, mine as unknown as HTMLElement);
+    const unbind = bindKeys({ toggleHide() {}, unpin() {}, escape: () => false, command: () => false, onlySelected: () => null, nodeKey: () => true, ...handlers } as KeyHandlers, mine as unknown as HTMLElement);
     const at: Fake = { ...target(mine), closest: (sel) => (sel === '.vb-board' ? mine : sel === 'vb-node' && id ? { ...target(mine), dataset: { id } } : null) };
-    listener!({ target: at, key, defaultPrevented: false, metaKey: false, ctrlKey: false, altKey: false, shiftKey: false, preventDefault() { used = true; } } as unknown as KeyboardEvent);
+    listener!({ target: at, key, defaultPrevented: false, metaKey: false, ctrlKey: false, altKey: false, shiftKey: key === 'H', preventDefault() { used = true; } } as unknown as KeyboardEvent);
     unbind();
     return used;
   };
-  assert.equal(marked('h', {}), true, 'H');
+  assert.equal(marked('H', {}), true, 'Shift+H');
+  assert.equal(marked('h', {}, '4'), true, 'H on a node: its history');
+  assert.equal(marked('h', {}), false, 'H with no node and none selected');
   assert.equal(marked('r', {}, '4'), true, 'R on a card');
   assert.equal(marked('r', {}), false, 'R with no card');
   assert.equal(marked('Escape', { escape: () => true }), true, 'Esc that did something');
@@ -96,7 +98,7 @@ test('every key it acts on is marked used, and one it leaves is not: an Esc with
 test('typing is typing: a key in a contenteditable fires no shortcut', () => {
   const mine = root();
   const editing: Fake = { ...target(mine), closest: (sel) => (sel === '.vb-board' ? mine : sel.includes('[contenteditable]') ? editing : null) };
-  assert.deepEqual(press('h', editing, mine), []);
+  assert.deepEqual(press('H', editing, mine), []);
 });
 
 // KEY_01: a command key hears which card the focus is on, so C can write on it (selection-flow.ts `comment`).

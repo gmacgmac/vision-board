@@ -10,7 +10,6 @@ import { ROW_GAP } from '#layout';
 import { flagOn } from '#format';
 import { pageFlags } from '../flags.ts';
 import type { CardConditions } from '#ui';
-import { SKIN_DEFS } from '#ui';
 import { createDrawing, type Drawing } from '../board/canvas/index.ts';
 import { FAR_K, Viewport } from '../board/canvas/index.ts';
 import { el, ownIds } from './dom.ts';
@@ -28,18 +27,12 @@ export interface MiniOptions {
   suffix?: string;
   /** The zoom it is drawn at (1 when left out); below FAR_K the stage is far, as the board's is. */
   zoom?: number;
-  /** What the conditions table says about each card (its NEW or updates tab), by board number. */
+  /** What the conditions table says about each card (New or its updates on its badge), by board number. */
   facts?: (n: ViewNode) => CardConditions;
   /** The container's fresh pill counts (freshCards flag), keyed by its own id. */
   fresh?: ReadonlyMap<string, FreshCount>;
-  /** Which way a flow runs (flowDirection flag); left out, across. */
+  /** Which way a flow runs (D-100 5); left out, across. */
   direction?: Direction;
-  /** The flowBranches flag: a flow's branches on their own rows, a linked row or column laid out as a flow. */
-  branching?: boolean;
-  /** The nodeEdges flag: nodes draw their marks on their edges (the default skin), with room for them under each. */
-  edges?: boolean;
-  /** The layoutControl flag: the frame's one layout button; with `direction` its popover offers a flow's direction too. */
-  layoutControl?: boolean;
   /** Called once drawn, for a sample that shows a hover or focus look. */
   then?: (host: HTMLElement, drawing: Drawing) => void;
 }
@@ -80,19 +73,22 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
   world.append(regions, wires, cards, wiresTop, marks);
   stage.append(world);
   const k = o.zoom ?? 1;
-  const vp = new Viewport(stage, world, k < FAR_K);
+  // The marks grow in place as the board's do (`--vb-mark-grow` on the cards layer, D-101). A board drawn zoomed out is a
+  // picture of that zoom: inert, so nothing in it is a press target (axe target-size; the board excuses its small marks).
+  const vp = new Viewport(stage, world, k < FAR_K, world, cards);
+  stage.inert = k < 1;
   const drawing = createDrawing({
     // A prefix of its own, as a mount takes one (mount-ids.ts): this drawing's arrowheads are on the page once. The page never
     // unmounts a sample, so the prefix is never released.
     els: { stage, world, regions, cards, wires, wiresTop, marks }, vp, sizing: true, access: false, layers: true, ids: ownIds().idPrefix,
-    labels: o.labels === true, widthsControl: o.widths === true, layoutControl: o.layoutControl === true, align: () => o.align ?? 'start',
-    // The gap under a card as the board takes it: wider while the bottom tabs hang (updateSignals).
+    labels: o.labels === true, widthsControl: o.widths === true, align: () => o.align ?? 'start',
+    // The gap under a card as the board takes it (updateSignals); the edge marks' room is the drawing's (EDGE_ROW_GAP).
     rowGap: flagOn('updateSignals', pageFlags()) ? ROW_GAP : undefined,
     data: () => ({ head: 0, view, state: board.state, versions: {}, access: { requests: [], holders: {} } }),
     hidden: () => new Set(), focus: () => null, selected: () => false, insets: () => new Map(), owed: () => new Set(),
     facts: o.facts ?? (() => ({})), replies: () => [],
     fresh: () => new Map([...(o.fresh ?? [])].map(([id, c]) => [as(id), c])),
-    branching: o.branching === true, ...(o.direction && { direction: () => o.direction! }), ...(o.edges && { edges: SKIN_DEFS.default }),
+    ...(o.direction && { direction: () => o.direction! }),
   });
   pending.push(() => {
     drawing.draw(true);

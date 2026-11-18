@@ -1,4 +1,4 @@
-// A board of its own for the node's edges (nodeEdges flag, FE_02): node-edges-board.spec.ts and node-edges-seen.spec.ts.
+// A board of its own for the node's edges (FE_02): node-edges-board.spec.ts and node-edges-seen.spec.ts.
 // Container p holds a question, a finding with a built-in icon and a decision; container q one question. Drawn by a new
 // agent through the API, so every change arrives live.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';

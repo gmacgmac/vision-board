@@ -42,8 +42,8 @@ test('focus inside a container shows its icons; a hidden icon is still reachable
   expect(await iconOpacity(p)).toBe(0);
   await q.page().locator('vb-node').nth(1).blur();
   await expect.poll(() => iconOpacity(q)).toBe(0);
-  // Hidden, not removed: the rail's checked layout takes focus, and then the rail is lit.
-  const checked = p.locator('.vb-mseg[role="radio"][aria-checked="true"]');
+  // Hidden, not removed: the rail's layout button takes focus, and then the rail is lit.
+  const checked = p.locator('.vb-layout-btn');
   await expect(checked).toBeVisible();
   await checked.focus();
   await expect(checked).toBeFocused();

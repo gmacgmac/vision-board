@@ -87,7 +87,7 @@ test('archived by keyboard: it leaves the picker and every agent, and the next b
   await open(page, ONE);
   await menuButton(page).focus();
   await page.keyboard.press('Enter');
-  for (let i = 0; i < 6 && !(await archiveRow(page).evaluate((e) => e === document.activeElement)); i++) await page.keyboard.press('ArrowDown');
+  for (let i = 0; i < 12 && !(await archiveRow(page).evaluate((e) => e === document.activeElement)); i++) await page.keyboard.press('ArrowDown');
   await expect(archiveRow(page)).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#confirm-cancel')).toBeFocused();

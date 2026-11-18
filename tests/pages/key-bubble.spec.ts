@@ -35,7 +35,8 @@ test('hover shows the grouped list, it stays while the pointer is on it, and it 
   // Onto the list: it stays (WCAG 1.4.13).
   await list(page).locator('[data-row="command:fit"]').hover();
   await expect(list(page)).toBeVisible();
-  await page.mouse.move(600, 300);
+  // Off it, well clear of the list: with the node's own rows (H, Shift+F10) it is taller and reaches higher than it did.
+  await page.mouse.move(1200, 300);
   await expect(list(page)).toBeHidden();
 });
 

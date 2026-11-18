@@ -29,7 +29,7 @@ test('full: nothing moves, everything is in the bar', () => {
   assert.deepEqual(bar('full'), HEADER_CONTROLS);
 });
 
-test('with Flows (flowDirection flag) the full form starts FLOWS_W later; half and a third start where they did', () => {
+test('with Flows (a board is open) the full form starts FLOWS_W later; half and a third start where they did', () => {
   assert.equal(headerTier(FULL_MIN + FLOWS_W, true), 'full');
   assert.equal(headerTier(FULL_MIN + FLOWS_W - 1, true), 'half');
   assert.equal(headerTier(1470, true), 'full', 'the design\'s full width keeps its form');

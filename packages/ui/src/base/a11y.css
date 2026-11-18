@@ -9,8 +9,3 @@
 .vb-visually-hidden, vb-region .vb-region-count-words, vb-region .vb-region-fresh-words {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
-vb-node {
-  [data-app-title] & .vb-node-content:has(> .vb-app) > .vb-node-title {
-    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
-}

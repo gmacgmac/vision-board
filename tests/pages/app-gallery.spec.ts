@@ -34,16 +34,17 @@ test('app frame: the frame before it loads, an app card in every state of ruling
   const problems = section.getByRole('list', { name: 'App card states' }).locator('.vb-app[data-app-state="invalid"] li');
   await expect(problems).toHaveText(['app.json: size.w must be at most 960', 'app.json: unknown field colour', /^tools\.mjs: Import only Node's built-in modules/]);
   await expect(section.getByRole('list', { name: 'App cards off' }).locator('.vb-node-body')).toHaveText('App cards are off.');
-  // The footer's app status in the page's states (card-polish FE_01): loading, error, the menu open.
+  // The bar's app status in the page's states (card-polish FE_01): loading, error, the menu open.
   const status = section.getByRole('list', { name: 'App status states' });
   await expect(status.locator('[data-app-act="app-allow"][aria-busy="true"]')).toHaveCount(1);
   await expect(status.locator('[data-app-act="app-allow"][data-error]')).toHaveCount(1);
   await expect(status.getByRole('menuitem', { name: 'Stop app: Calculator' })).toBeVisible();
   await expect(section.getByText('Nothing to allow')).toHaveCount(0);
-  // The window look (card-polish FE_04): no title drawn, the name in the bar, cut at the least size, the long one's tip open.
+  // The window (D-099 5, card-polish FE_04): no title over the app, the name in the bar, cut at the least size, the long one's tip open.
   const win = section.getByRole('list', { name: 'App window look' });
   await expect(win.locator('.vb-app-name-text')).toHaveText(['Calculator', 'Calculator', 'Quarterly budget planner for the design team']);
-  expect(await win.locator('.vb-node-title').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width))).toEqual([1, 1, 1]);
+  await expect(win.locator('.vb-node-title')).toHaveCount(0);
+  await expect(win.locator('vb-node[data-window] .vb-win-bar')).toHaveCount(3);
   expect(await win.locator('.vb-app-name-text').last().evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(true);
   await expect(win.locator('.vb-app-name-tip').last()).toBeVisible();
   await expect(win.locator('.vb-app-name-tip').first()).toBeHidden();

@@ -20,7 +20,6 @@ import { holdStage } from './app-frame-stage.ts';
 import type { ClickIn } from './app-frame-active.ts';
 import { bindClickIn } from './app-frame-active.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
-import * as appFrameWords from '../words/app-frame.ts';
 import { returnFocus } from '../base/focus-return.ts';
 
 export const VB_APP_FRAME_TAG = 'vb-app-frame';
@@ -46,12 +45,12 @@ export interface AppFrameWiring {
   /** The appFit flag: the height the panel tells (size-changed) is the frame's; left out, the flag's
    * default. Off, the frame is the size the agent drew. */
   fit?: boolean;
-  /** A pick in the panel becomes the person's note on its card (`vision-board/note`, appStage);
+  /** A pick in the panel becomes the person's note on its card (`vision-board/note`);
    * left out, the request is refused. */
   note?(text: string): Promise<void>;
   /** The panel said it is ready: the page may tell it things now (`tell`). */
   onReady?(): void;
-  /** The panel went on stage (true) or came back (false) (appStage). */
+  /** The panel went on stage (true) or came back (false). */
   onStage?(on: boolean): void;
   /** Esc in the panel; left out, focus goes back to the card the frame is in. */
   onEscape?(): void;
@@ -79,11 +78,10 @@ export interface VbAppFrameElement extends HTMLElement {
   lookChanged(): void;
   /** Send a ready panel one of the board's notifications; false when nothing was sent. */
   tell(method: HostNotification, params: Record<string, unknown>): boolean;
-  /** The loaded panel leaves its card and fills the page, in the top layer (appStage): the same
-   * frame, never reloaded. `host`: the app window that holds the frame goes instead, its bar and
-   * drawer with it (appWindow, FE_08); left out, the frame alone under its own bar. Focus is held
-   * inside until Back or Esc (app-frame-stage.ts). Nothing while unloaded or already on stage. */
-  stage(host?: HTMLElement): void;
+  /** The loaded panel fills the page, in the top layer: the same frame, never reloaded. `host`, the app window that
+   * holds the frame, goes with it, its bar and drawer too (FE_08). Focus is held inside until Open again or Esc
+   * (app-frame-stage.ts). Nothing while unloaded or already on stage. */
+  stage(host: HTMLElement): void;
   /** Back into its card; focus goes to the card. */
   unstage(): void;
   readonly loaded: boolean;
@@ -168,16 +166,9 @@ export function defineVbAppFrame(): void {
 
     tell(method: HostNotification, params: Record<string, unknown>): boolean { return this.bridge?.post(method, params) ?? false; }
 
-    stage(host: HTMLElement = this): void {
+    stage(host: HTMLElement): void {
       if (!this.frame || this.staged) return;
       this.thaw();
-      if (host === this) {
-        // The card keeps the room the panel leaves (CSSOM: the page's CSP refuses style attributes).
-        const box = this.getBoundingClientRect();
-        const k = this.offsetWidth ? box.width / this.offsetWidth : 1;
-        this.parentElement?.style.setProperty('min-height', `${Math.round(box.height / (k || 1))}px`);
-        this.bar();
-      }
       this.held = holdStage(host, this, () => this.unstage(), () => this.bridge?.contextChanged());
       this.bridge?.contextChanged();
       this.wiring?.onStage?.(true);
@@ -190,21 +181,9 @@ export function defineVbAppFrame(): void {
       this.held = undefined;
       held.release();
       this.clicks?.off();
-      if (held.host === this) this.parentElement?.style.removeProperty('min-height');
       this.bridge?.contextChanged();
       this.wiring?.onStage?.(false);
       this.toCard();
-    }
-
-    /** The stage's bar: the app's name and Back to card. Made once, shown only on stage (CSS). */
-    private bar(): void {
-      if (this.querySelector('.vb-af-bar')) return;
-      const bar = document.createElement('div');
-      bar.className = 'vb-af-bar';
-      bar.innerHTML = `<span class="vb-af-bar-title"></span><button type="button" class="vb-pop-btn vb-af-back">${appFrameWords.backToCard}</button>`;
-      bar.querySelector('.vb-af-bar-title')!.textContent = this.label;
-      bar.querySelector('button')!.addEventListener('click', () => this.unstage());
-      this.prepend(bar);
     }
 
     /** The panel's size as it is told: the agent's, or on stage the room the frame has. */
@@ -280,6 +259,8 @@ export function defineVbAppFrame(): void {
       window.addEventListener('message', this.onMessage);
       window.addEventListener('blur', this.onFocusMove);
       window.addEventListener('focus', this.onFocusMove);
+      // Focus given back to the page (Esc in the panel): the window's focus can come before the page's active element moves.
+      document.addEventListener('focusin', this.onFocusMove);
       frame.addEventListener('load', () => {
         clearTimeout(this.timer);
         this.timer = setTimeout(() => this.show(), SHOW_AFTER_MS);
@@ -312,6 +293,7 @@ export function defineVbAppFrame(): void {
       window.removeEventListener('message', this.onMessage);
       window.removeEventListener('blur', this.onFocusMove);
       window.removeEventListener('focus', this.onFocusMove);
+      document.removeEventListener('focusin', this.onFocusMove);
       this.removeAttribute('data-focus-in');
       this.removeAttribute('data-pointer-focus');
       clearTimeout(this.timer);

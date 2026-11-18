@@ -85,7 +85,7 @@ test('Enter on a card hidden with the answered cards says so and keeps the box o
   const b = box({ 4: { to: 'hidden' } });
   b.go.open('4');
   b.go.enter();
-  assert.deepEqual(b.last(), { text: '4', said: 'Card 4 is hidden with the answered cards (H shows them)' });
+  assert.deepEqual(b.last(), { text: '4', said: 'Card 4 is hidden with the answered cards (Shift+H shows them)' });
 });
 
 test('Esc closes the box without going; Backspace edits, and Enter on nothing does nothing', () => {
@@ -134,5 +134,5 @@ test('a number chosen elsewhere (the open list) goes as Enter would, closing an 
   assert.equal(c.timer(), null, 'no pause starts');
   const d = box({ 4: { to: 'hidden' } });
   d.go.to(4);
-  assert.deepEqual(d.last(), { text: '4', said: 'Card 4 is hidden with the answered cards (H shows them)' });
+  assert.deepEqual(d.last(), { text: '4', said: 'Card 4 is hidden with the answered cards (Shift+H shows them)' });
 });

@@ -122,18 +122,18 @@ test('one act on the 1,000-card board is shown in under 50 ms, updating one card
   await open(page);
   await counts(page);
   const times: number[] = [];
-  // Five cards spread over the board, each the first open one with Acknowledge from a starting point.
+  // Five cards spread over the board, each the first open one that asks from a starting point, ticked by its key (A).
   for (const from of [5, 205, 405, 605, 805]) {
     await reset(page);
     times.push(await page.evaluate(async (start) => {
       const el = [...document.querySelectorAll<HTMLElement>('vb-node')].slice(start)
-        .find((e) => e.querySelector('button[data-act="ack"][aria-pressed="false"]'))!;
+        .find((e) => e.querySelector('[data-mark="answer"][data-answer="waiting"]'))!;
       const done = new Promise<void>((resolve) => {
         new MutationObserver((_m, o) => { if (el.dataset.status === 'acknowledged') { o.disconnect(); resolve(); } })
           .observe(el, { attributes: true, attributeFilter: ['data-status'] });
       });
       const t = performance.now();
-      el.querySelector<HTMLButtonElement>('button[data-act="ack"]')!.click();
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true }));
       await done;
       return performance.now() - t;
     }, from));

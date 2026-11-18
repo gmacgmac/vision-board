@@ -7,14 +7,14 @@ import { branchRows } from './branches.ts';
 import { crossingLines } from '../route/crossings.ts';
 import { routeLines } from '../route/route.ts';
 
-/** Left to right with branches, or with `direction: 'down'` top to bottom (flowDirection flag). Across: layered,
- *  then three barycentre sweeps to cut crossings; with `branching` (flowBranches flag), each branch of a fork on
- *  its own row instead (branches.ts), unless its links, routed, would cross more than stacked: then stacked. Cards
- *  line up by their tops (align `start`, ruling 4) or their centres. */
+/** Left to right with branches, or with `direction: 'down'` top to bottom (`directionOf`, D-100 5). Across: layered,
+ *  each branch of a fork on its own row (branches.ts, PLAN decision 19), unless its links, routed, would cross more
+ *  than stacked by three barycentre sweeps: then stacked. Cards line up by their tops (align `start`, ruling 4) or
+ *  their centres. */
 export const flow: ModeFn = (input) => (input.direction === 'down' ? down(input) : across(input));
 
 /** `turned`: the cards are a flow down turned a quarter (down), so arrangements are weighed turned back. */
-function across({ nodes, links, sizes: own, align, widths, rowGap = GAP, branching }: ModeInput, turned = false): ModeOutput {
+function across({ nodes, links, sizes: own, align, widths, rowGap = GAP }: ModeInput, turned = false): ModeOutput {
   const g = graphOf(nodes, links);
   const layers = layersOf(nodes, g);
   const sizes = matched(layers, own, widths);
@@ -32,10 +32,10 @@ function across({ nodes, links, sizes: own, align, widths, rowGap = GAP, branchi
     }
     return pos;
   };
-  let rows = branching ? branchRows(nodes, g, layers) : undefined;
-  let pos = at(rows ? onRows(rows, h, rowGap, f) : swept(cols, g, h, rowGap, f));
+  let rows: Map<string, number> | undefined = branchRows(nodes, g, layers);
+  let pos = at(onRows(rows, h, rowGap, f));
   // Rows are kept unless the links cross more on them than stacked by their links' average.
-  if (rows && links.length > 1) {
+  if (links.length > 1) {
     const count = links.length <= ROUTE_WEIGH ? (l: ModeInput['links'], p: Map<string, Box>) => crossed(l, p, turned) : straight;
     const mine = count(links, pos);
     const other = mine > 0 ? at(swept(cols, g, h, rowGap, f)) : undefined;

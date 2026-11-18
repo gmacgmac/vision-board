@@ -13,7 +13,7 @@ test('at every zoom from 60% to 145%, the rail\'s buttons are 24px and the top l
   for (const k of [0.6, 1, 1.45, 0.8, 1.45]) {
     await zoomTo(page, k);
     await frame(page).locator('.vb-region-tools').hover();
-    const button = await boxOf(frame(page).locator('.vb-mseg[role="radio"][aria-checked="true"]'));
+    const button = await boxOf(frame(page).locator('.vb-layout-btn'));
     const title = await boxOf(frame(page).locator('.vb-region-head h2'));
     sizes.push(`${k}: ${button.width.toFixed(1)}x${button.height.toFixed(1)} title ${title.height.toFixed(1)}`);
     expect(button.width, sizes.at(-1)).toBeCloseTo(24, 0);

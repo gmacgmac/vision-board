@@ -1,8 +1,8 @@
 // Gallery entry for card size tiers (D-030), shown by default (nodeSize is on by default;
-// gallery.html?flags=-nodeSize hides it). The three tiers as
-// the auto rule picks them, the agent's suggestion and emphasis, then the size control at rest,
-// with your pick, revealed and with keyboard focus. Each card is a real <vb-node>, drawn with the
-// tier the board would use (`tierOf`, through sizeTier) from the fixture ledger's "sizes" region.
+// gallery.html?flags=-nodeSize hides it). The three tiers as the auto rule picks them, the agent's suggestion and
+// emphasis, then the person's own pick, which the selection bar's Width sets (D-099 3; there is no control on the node).
+// Each card is a real <vb-node>, drawn with the tier the board would use (`tierOf`, through sizeTier) from the fixture
+// ledger's "sizes" region.
 import type { ViewNode } from '#format';
 import type { VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
@@ -11,21 +11,13 @@ import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_SIZES } from './fixture.ts';
 
-/** Samples drawn in a live state, keyed by title: the pill forced open, and a focus ring on L. */
-const OPEN = new Set(['Who sends the migration email?', 'Does the credit show on the invoice?']);
-const FOCUS_L = 'Does the credit show on the invoice?';
-/** The first five cards show the tiers; the rest show the control. */
+/** The first five cards show the tiers; the rest carry the person's pick or keep the automatic one. */
 const TIER_SAMPLES = 5;
 
 function sized(n: ViewNode, fx: Fixture): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
-  node.render(n, { ...ownIds(), sizeControl: true });
+  node.render(n, ownIds());
   node.update(nodeState(n, fx.state, tierOf(n, fx.state)));
-  if (OPEN.has(n.title)) {
-    node.querySelector<HTMLElement>('.vb-size')!.dataset.open = '';
-    node.querySelector('.vb-size-trig')!.setAttribute('aria-expanded', 'true');
-  }
-  if (n.title === FOCUS_L) node.querySelector('[data-size-pick="l"]')!.classList.add('g-focused');
   return node;
 }
 
@@ -48,7 +40,7 @@ export function sizeSection(fx: Fixture): HTMLElement {
     meta,
     group('The three tiers, picked automatically', 'S (280px), M (360px) and L (464px) from the body alone, then a short card the agent asked to be M, and a short emphasised card (M).',
       canvas('Size tiers', cards.slice(0, TIER_SAMPLES))),
-    group('The size control', 'At rest on automatic, at rest with your pick (◆ S), revealed on hover with the moved-by-you marker, and opened by keyboard with focus on L.',
-      canvas('Size control states', cards.slice(TIER_SAMPLES))));
+    group('The person\'s pick', 'Width on the selection bar sets the selected nodes\' tier, or gives them back to Auto; a pick is the person\'s `size` act and wins over the agent\'s suggestion.',
+      canvas('Picked and automatic sizes', cards.slice(TIER_SAMPLES))));
   return box;
 }

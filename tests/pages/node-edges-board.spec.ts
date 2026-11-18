@@ -1,4 +1,4 @@
-// The node's edges on a real board (nodeEdges flag, D-099; FE_02): each mark does what it shows, by pointer and by key.
+// The node's edges on a real board (D-099; FE_02): each mark does what it shows, by pointer and by key.
 // The number bookmarks at once and, held, opens its menu instead; the disc opens Tick and Cross beside it, a second
 // click closes them and a double click never answers; nothing opens on hover; tips show after a deliberate hover and
 // at once on keyboard focus; the badge and H open history; the notes mark opens the conversation; right-click and
@@ -13,7 +13,7 @@ import type { Page } from '@playwright/test';
 import { head, idle, linesAfter, menuButton, stageBox } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 const lines = async (page: Page, after: number, action: string) => (await linesAfter(page, after)).filter((e) => e.action === action);
 
 test('the number: a click bookmarks at once; held, it opens its menu and bookmarks nothing; Shift+F10 opens it too', async ({ page, request }) => {

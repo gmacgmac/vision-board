@@ -12,7 +12,7 @@ import type { Page, Route } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
 import { addApp } from '#board/testing';
-import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
+import { bid, expect, expectNoAxeOnBoard, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
@@ -127,61 +127,61 @@ for (const theme of THEMES) {
     await expect(card(page, 2).locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
     await expect(card(page, 2).locator('.vb-af-title')).toHaveText('Probe');
     await expect(card(page, 2).locator('.vb-af-title')).toBeVisible();
-    // The footer's controls hide as the quick actions do.
+    // The bar's controls hide zoomed out (hideControlsZoomedOut).
     await expect(card(page, 0).locator('[data-app-act="app-allow"]')).toBeHidden();
     await expect(card(page, 2).locator('[data-app-menu]')).toBeHidden();
-    await expectNoAxeViolations(page);
+    await expectNoAxeOnBoard(page);
     for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) === 'far'; i += 1) await page.keyboard.press('+');
     await expectStates(page);
     await expect(page.locator('vb-app-frame[data-frozen]')).toHaveCount(0);
   });
 }
 
-/** Card `i`'s footer: its height, whether it overflows, and the spread of its controls' middles. */
-const footOf = (page: Page, i: number) => card(page, i).locator('.vb-node-foot').evaluate((f) => {
-  const kids = [...f.querySelectorAll<HTMLElement>(':scope > *, .vb-node-actions > *, .vb-app-status > *')].filter((k) => k.checkVisibility());
+/** App window `i`'s bar (D-099 5): its height, whether it overflows, and the spread of its controls' middles. */
+const barOf = (page: Page, i: number) => card(page, i).locator('.vb-win-bar').evaluate((f) => {
+  const kids = [...f.querySelectorAll<HTMLElement>(':scope > *, .vb-app-status > *')].filter((k) => k.checkVisibility());
   const mids = kids.map((k) => { const b = k.getBoundingClientRect(); return b.top + b.height / 2; });
   return { h: (f as HTMLElement).offsetHeight, over: f.scrollWidth - f.clientWidth, spread: Math.max(...mids) - Math.min(...mids) };
 });
-/** The app's name in card `i`'s footer, and whether it is cut. */
+/** The app's name in window `i`'s bar, and whether it is cut. */
 const nameOf = (page: Page, i: number) => card(page, i).locator('.vb-app-name-text');
 const cut = (page: Page, i: number) => nameOf(page, i).evaluate((e) => e.scrollWidth > e.clientWidth);
 
-test('the window look (appTitle flag, on): no title above the panel in any state, the app\'s name in the footer, cut at the least width with the whole name in its tip, and one footer line at one height', async ({ page }) => {
+test('the window: no title over the app in any state, the app\'s name in its bar, cut at the least width with the whole name in its tip, one bar line at one height', async ({ page }) => {
   await open(page);
   await expectStates(page);
   const NAMES = ['Calculator', 'Good', 'Probe', 'Nope', 'Broken manifest', 'Crash'];
   for (const [i, name] of NAMES.entries()) {
-    // No title drawn in any state, still in the card's name.
-    expect(((await card(page, i).locator('.vb-node-title').boundingBox())?.width ?? 0), STATES[i]).toBeLessThanOrEqual(2);
+    // No title drawn in any state, still in the node's name.
+    await expect(card(page, i).locator('.vb-node-title'), STATES[i]).toHaveCount(0);
     await expect(card(page, i)).toHaveAttribute('aria-label', new RegExp(`App: ${name}`));
     await expect(nameOf(page, i), STATES[i]).toHaveText(name);
     await expect(nameOf(page, i), STATES[i]).toBeVisible();
   }
-  // The panel meets the card's top: no title's room above it.
-  const [c, f] = await Promise.all([card(page, 0).boundingBox(), card(page, 0).locator('vb-app-frame').boundingBox()]);
-  expect(f!.y - c!.y).toBeLessThan(16);
-  // One size, one footer height, one line, nothing over the edge, whatever the state (282px cards).
+  // One size, one bar height, one line, nothing over the edge, whatever the state.
   expect(await sizes(page)).toHaveLength(1);
-  const feet = await Promise.all(STATES.map((_, i) => footOf(page, i)));
-  expect(new Set(feet.map((x) => x.h)).size).toBe(1);
-  for (const [i, x] of feet.entries()) {
+  const bars = await Promise.all(STATES.map((_, i) => barOf(page, i)));
+  expect(new Set(bars.map((x) => x.h)).size).toBe(1);
+  for (const [i, x] of bars.entries()) {
     expect(x.over, STATES[i]).toBeLessThanOrEqual(0);
     expect(x.spread, STATES[i]).toBeLessThanOrEqual(6);
   }
-  // The state view stays in the panel's room, scrolling when it must: Check again is above the footer, not over it.
+  // The app meets the bar: the panel starts under it.
+  const [bar, f] = await Promise.all([card(page, 0).locator('.vb-win-bar').boundingBox(), card(page, 0).locator('vb-app-frame').boundingBox()]);
+  expect(Math.abs(f!.y - (bar!.y + bar!.height))).toBeLessThan(4);
+  // The state view stays in the panel's room, scrolling when it must: Check again is inside the window.
   const retry = card(page, 4).getByRole('button', { name: 'Check again: Broken manifest' });
   await retry.scrollIntoViewIfNeeded();
-  const [view, button, foot] = await Promise.all([slot(page, 4).locator('.vb-app-state').boundingBox(), retry.boundingBox(), card(page, 4).locator('.vb-node-foot').boundingBox()]);
-  expect(view!.y + view!.height).toBeLessThanOrEqual(foot!.y + 0.5);
-  expect(button!.y + button!.height).toBeLessThanOrEqual(foot!.y + 0.5);
+  const [view, button, win] = await Promise.all([slot(page, 4).locator('.vb-app-state').boundingBox(), retry.boundingBox(), card(page, 4).boundingBox()]);
+  expect(view!.y + view!.height).toBeLessThanOrEqual(win!.y + win!.height + 0.5);
+  expect(button!.y + button!.height).toBeLessThanOrEqual(win!.y + win!.height + 0.5);
   await expectNoAxeViolations(page);
   // A name that fits shows no tip.
   expect(await cut(page, 5)).toBe(false);
   await nameOf(page, 5).hover();
   await expect(card(page, 5).locator('.vb-app-name-tip')).toBeHidden();
-  // A name too long for the bar at the least width (a 282px card, beside Allow): cut, one line still;
-  // hover shows the whole name in its tip, so does keyboard focus in the footer, and Esc closes it.
+  // A name too long for the bar at the least width (beside Allow): cut, one line still; hover shows the whole name in
+  // its tip.
   const LONG = 'Tries too much';
   addApp(s.project, 'fs-write');
   const other = await s.draw([{ kind: 'app', title: 'Writer', app: { id: 'fs-write', w: 280, h: 160 } }]);
@@ -192,10 +192,9 @@ test('the window look (appTitle flag, on): no title above the panel in any state
   await expect(long.locator('[data-app-act="app-allow"]')).toBeVisible();
   const name = long.locator('.vb-app-name-text');
   await expect(name).toHaveText(LONG); // list_apps' title, the app's name, over the card's
-  expect(await long.evaluate((c: HTMLElement) => c.offsetWidth)).toBe(282);
   expect(await name.evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(true);
-  const box = await long.locator('.vb-node-foot').evaluate((f) => [f.scrollWidth - f.clientWidth, (f as HTMLElement).offsetHeight]);
-  expect(box).toEqual([0, feet[0]!.h]);
+  const box = await long.locator('.vb-win-bar').evaluate((f) => [f.scrollWidth - f.clientWidth, (f as HTMLElement).offsetHeight]);
+  expect(box).toEqual([0, bars[0]!.h]);
   const tip = long.locator('.vb-app-name-tip');
   await expect(tip).toBeHidden();
   await name.hover();
@@ -203,23 +202,6 @@ test('the window look (appTitle flag, on): no title above the panel in any state
   await expect(tip).toHaveText(LONG);
   await page.mouse.move(0, 0);
   await expect(tip).toBeHidden();
-  // A press on a footer button opens nothing; keyboard focus there does.
-  await long.locator('button.vb-history').click();
-  await expect(tip).toBeHidden();
-  await page.keyboard.press('Escape');
-  await long.locator('[data-app-act="app-allow"]').focus();
-  await page.keyboard.press('Tab');
-  await expect(tip).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(tip).toBeHidden();
-});
-
-test('with the appTitle flag off, the title shows above the panel and the footer names nothing', async ({ page }) => {
-  await open(page, ['-appTitle']);
-  await expectStates(page);
-  expect(((await card(page, 0).locator('.vb-node-title').boundingBox())?.width ?? 0)).toBeGreaterThan(2);
-  await expect(nameOf(page, 0)).toBeHidden();
-  expect(await sizes(page)).toHaveLength(1);
 });
 
 /** Pan the board by (dx, dy) screen pixels with the wheel, as a person scrolls. */

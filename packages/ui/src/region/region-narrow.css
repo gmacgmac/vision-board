@@ -1,7 +1,8 @@
 /* Region pattern styles, a container's top line in its narrow forms (<vb-region>, after region.css;
    split out of it in review polish round 2). The line keeps its on-screen size at every zoom
    (region.css), so it is the query container: these forms follow the room on screen. From wide to
-   narrow: the full mode row; the collapsed row (408px, or 568px with a retired marker); the marker's
+   narrow: the full mode row; the collapsed row (408px, or 568px with a retired marker; thresholds measured with the six
+   layout icons the one layout button replaced, PLAN decision 20); the marker's
    icon and number in place of "3 retired" (under 290px); the row down to the cog (under 226px, or
    261px with a marker). Each step keeps the label side uncovered at every zoom where the controls
    show (FAR_K, 55%, to 250%; round 2 rulings 1 and 2). Tokens only.
@@ -10,9 +11,8 @@
    scoped to vb-region:not([data-rail]). The retired marker's form is the line's, so it holds for both. */
 
 /* Collapsed (under 408px of top line on screen, a 440px frame at 100%, where the full row would
-   leave under ~200px for the label side): only the checked icon, Comment and the cog show (Match card widths waits for the row to
-   expand too). Hovering or focusing the row expands it to all
-   six layout icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
+   leave under ~200px for the label side): only the layout button, Comment and the cog show (Match card widths waits for the row to
+   expand too). Hovering or focusing the row expands it whole as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
    it collapses again on leave, blur or Esc. The row keeps its box size collapsed, so expanding
    never reflows the frame.
    A frame with a retired marker collapses the row under 568px of line (a 600px frame at 100%), since
@@ -39,7 +39,7 @@ vb-region {
      (24px icons + 2 x 3px padding + 2 x 1px border), so they open just below it as in a wide frame. */
   vb-region {
     &:not([data-rail]) .vb-region-tools { min-height: var(--vb-control-h); }
-    &:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']), &:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) .vb-widths {
+    &:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) .vb-widths {
       width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
     }
     &:not([data-rail]) .vb-mode-row:hover, &:not([data-rail]) .vb-mode-row:focus-within {
@@ -72,7 +72,7 @@ vb-region {
   vb-region {
     &:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) { gap: 0; }
     &:not([data-rail]) .vb-region-holders { display: none; }
-    &:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) :is(.vb-mseg[role='radio'], .vb-mode-div), &:not([data-rail], [data-badge='unsent'], [data-badge='sent']) .vb-mode-row:not(:hover, :focus-within) .vb-region-comment {
+    &:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) :is(.vb-layout-btn, .vb-widths, .vb-mode-div), &:not([data-rail], [data-badge='unsent'], [data-badge='sent']) .vb-mode-row:not(:hover, :focus-within) .vb-region-comment {
       width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
     }
   }

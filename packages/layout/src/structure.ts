@@ -14,10 +14,10 @@ export const STRUCTURE_CARD: Size = { w: 280, h: 120 };
 
 /** `nodes`: the container's cards in card order; `links`: any links, those joining two of these
  *  cards are used; `mode`: the mode shown (the person's, else the region's); `drawn`: the direction a `flow`
- *  runs (`directionOf`, flowDirection flag) and the flowBranches flag, as the page lays it out. */
+ *  runs (`directionOf`), as the page lays it out. */
 export function structureOf(
   region: Region, nodes: ViewNode[], links: Link[], mode: Mode = region.mode, widths?: Widths,
-  drawn: { direction?: Direction | undefined; branching?: boolean | undefined } = {},
+  drawn: { direction?: Direction | undefined } = {},
 ): LayoutStructure {
   const ids = new Set(nodes.map((n) => n.id));
   const inner = links.filter((l) => l.from !== l.to && ids.has(l.from) && ids.has(l.to));

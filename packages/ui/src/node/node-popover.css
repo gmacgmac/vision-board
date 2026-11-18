@@ -1,63 +1,7 @@
-/* The card's bottom-edge tabs and the card popover (proposals FE_01 rulings 1-3, mockup 03 option C;
-   node-popover.ts). Tokens only. The tabs sit in gaps cut from the bottom border, like the number
-   and kind on the top one; each is hidden until it applies, so the card never changes size. The box
-   is the note preview's (tip/tip.css `.vb-tip`, node.css `.vb-note-tip`), beside the card, shown
-   while `data-open` is on it, which also raises the card above its neighbours. */
-
-vb-node .vb-node-btabs { position: absolute; left: 14px; bottom: -11px; display: flex; gap: var(--vb-space-2); }
-vb-node .vb-node-btab {
-  position: relative; display: inline-flex; align-items: center; height: 20px; padding: 0 var(--vb-space-2); cursor: pointer;
-  border: 1px solid var(--vb-accent-line); border-radius: var(--vb-radius-sm); background: var(--vb-accent-soft);
-  box-shadow: 0 0 0 var(--vb-space-1) var(--vb-gap); color: var(--vb-accent-text); white-space: nowrap;
-  font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); letter-spacing: 0.06em; text-transform: uppercase;
-  transition: border-color var(--vb-motion-fast), background var(--vb-motion-fast);
-}
-vb-node .vb-node-btab[hidden] { display: none; }
-/* Without updateSignals: two tabs or more (a proposal and "N updates", FE_02) reach under the footer's
-   buttons. The buttons rise to the footer's top and the row drops 2px, so each tab's 24px target circle
-   clears them (WCAG 2.5.8) while the card keeps its size and the row stays clear of the card below. The one
-   tab that stands for updates and a proposal (data-updated, oneChangeTab) counts as two: it is as wide as
-   two on an S card. */
-vb-node {
-  &:not([data-update-signals] *):has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), .vb-node-btab[data-updated]:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
-  &:not([data-update-signals] *) .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden]), > .vb-node-btab[data-updated]:not([hidden])) { bottom: -13px; }
-}
-/* With updateSignals (D-091, tab lower) the tabs hang below the footer: the row's top is 2px inside the
-   card's edge (3px over its border, still on it), so a tab's 24px target starts below the footer buttons,
-   which end 5.5px above the edge, and the buttons never rise, on any size, with any number of tabs. The
-   layout leaves 30px under a card for them (packages/layout `ROW_GAP`). Across, the tabs start just after
-   the footer's state word, left-aligned, and grow rightwards (maintainer, by eye): the offset is the
-   footer's own, border, left padding, kind icon, two gaps, the divider, room for the state word ("Open";
-   3em of the footer's text size) and a space. The row lets the pointer through to the footer; the tabs
-   take it back. */
-vb-node {
-  [data-update-signals] & .vb-node-btabs {
-    bottom: -18px; font-size: var(--vb-text-sm); pointer-events: none;
-    left: calc(1px + var(--vb-space-2) + 14px + 2 * var(--vb-space-1) + 1px + 3em + var(--vb-space-2));
-  }
-  [data-update-signals] & .vb-node-btab:not([data-tab='new']) { pointer-events: auto; }
-}
-/* A 24px hit area, without growing the tab. */
-vb-node .vb-node-btab::after { content: ''; position: absolute; inset: -3px -2px; }
-vb-node .vb-node-btab:hover, vb-node .vb-node-btab[aria-expanded='true'] { border-color: var(--vb-accent); }
-vb-node .vb-node-btab:active { transform: translateY(1px); }
-/* Out of date (ruling 3): the CHANGED family, amber, in place of the accent. */
-vb-node .vb-node-btab[data-stale] {
-  border-color: color-mix(in srgb, var(--vb-state-context) 45%, var(--vb-line)); background: var(--vb-state-context-soft); color: var(--vb-state-context);
-}
-vb-node .vb-node-btab[data-stale]:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); }
-/* NEW (stage5-follow-ups FE_01): the "new" tone, like the toolbar's chip (board.css `.vb-chip[data-tone='new']`).
-   A label, not a button: nothing to open, so no pointer, no hover and no hit area. */
-vb-node .vb-node-btab[data-tab='new'] { cursor: default; pointer-events: none; background: var(--vb-accent-soft); color: var(--vb-accent); }
-vb-node .vb-node-btab[data-tab='new']::after { content: none; }
-/* With updateSignals (D-088, one colour per meaning) new is teal, as the container's pill and the toolbar's
-   chip: the words --vb-state-fresh on its -soft (Lc 54.8 light, 63.5 dark; labels 45), the edge as the
-   stale tab's, the colour 45% toward the line. */
-vb-node {
-  [data-update-signals] & .vb-node-btab[data-tab='new'] {
-    border-color: color-mix(in srgb, var(--vb-state-fresh) 45%, var(--vb-line)); background: var(--vb-state-fresh-soft); color: var(--vb-state-fresh);
-  }
-}
+/* The box beside a node (proposals FE_01 rulings 1-3, mockup 03 option C; card-polish FE_03): the proposal box and the
+   history box its marks open, on the shared tip (tip/tip.css `.vb-tip`) and node-box.css's look, shown while
+   `data-open` is on it, which also raises the node above its neighbours; the page places it (mark-place.ts). Tokens
+   only. */
 
 /* The box: beside the card at its top, with a bridge over the gap so the pointer can cross onto it.
    Its sizes are the shared popover tokens (--vb-pop-*), so it scales with the note bubble
@@ -78,7 +22,7 @@ vb-node .vb-prop { display: grid; gap: var(--vb-space-1); }
 vb-node .vb-prop + .vb-prop { padding-top: var(--vb-space-3); border-top: 1px solid var(--vb-line); }
 vb-node .vb-prop[aria-busy='true'] { opacity: 0.6; cursor: progress; }
 vb-node .vb-prop p { margin: 0; }
-vb-node .vb-prop-head, vb-node .vb-history-head {
+vb-node .vb-prop-head {
   margin: 0;
   font-size: var(--vb-text-md); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-accent-text);
 }
@@ -91,7 +35,7 @@ vb-node .vb-pop-btn {
   height: var(--vb-control-h-small); padding: 0 var(--vb-space-3); cursor: pointer; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
   background: var(--vb-surface-raised); color: var(--vb-ink-strong); font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font);
 }
-/* In the popover box they take its size (the card's stepper keeps the small ones, node-steps.css). */
+/* In the box they take its size. */
 vb-node .vb-card-pop .vb-pop-btn { height: var(--vb-space-6); padding: 0 var(--vb-pop-pad); font-size: var(--vb-pop-text); }
 vb-node .vb-pop-btn:hover { background: var(--vb-surface-sunken); }
 vb-node .vb-pop-btn:active { transform: translateY(1px); }
@@ -101,17 +45,8 @@ vb-node .vb-pop-primary:hover { background: var(--vb-accent-fill-hover); }
 vb-node .vb-pop-btn[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; transform: none; }
 vb-node .vb-pop-primary[aria-disabled='true']:hover { background: var(--vb-accent-fill); }
 
-/* The history box (card-polish FE_03, node-history.ts): when things happened to the card, newest first,
-   a time and one line each. A row naming a note or a reply is a button in the link colour (the Lc 45
-   tier); the rest are text. The ⓘ that opens it sits at the footer's far right, 24px like the bookmark. */
-vb-node .vb-history { flex: none; }
-/* Opened from the ⓘ at the card's bottom, so it sits level with the card's bottom and grows upward
-   (maintainer, 2026-10-19). */
-vb-node .vb-card-pop[data-pop='history'] { top: auto; bottom: 0; }
-vb-node {
-  [data-zoom='far'] & .vb-history { visibility: hidden; }
-}
-vb-node .vb-history[aria-expanded='true'] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+/* The history box (card-polish FE_03, node-history.ts): when things happened to the card, newest first. A row naming
+   a note or a reply is a button in the link colour (the Lc 45 tier); the rest are text (node-box.css lays them out). */
 vb-node .vb-history-list { display: grid; margin: 0 calc(-1 * var(--vb-space-2)); padding: 0; list-style: none; }
 vb-node .vb-history-row {
   display: grid; grid-template-columns: 8.5em 1fr; gap: var(--vb-space-3); align-items: baseline; width: 100%;

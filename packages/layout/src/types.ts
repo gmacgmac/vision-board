@@ -20,11 +20,8 @@ export interface ModeInput {
   widths?: Widths | undefined;
   /** The gap between a card and the card under it (column, grid rows, flow, a lane's stacks); absent: GAP. */
   rowGap?: number | undefined;
-  /** Which way a `flow` runs (`directionOf`, flowDirection flag): `down` lays its layers top to bottom; absent, `across`. */
+  /** Which way a `flow` runs (`directionOf`, D-100 5): `down` lays its layers top to bottom; absent, `across`. */
   direction?: Direction | undefined;
-  /** The flowBranches flag (BE_01): a flow keeps each branch of a fork on its own row (branches.ts), and a `row` or
-   *  `column` whose links are more than a chain in card order is laid out as a flow across or down. Absent, off. */
-  branching?: boolean | undefined;
 }
 
 export interface Lane { name: string; y: number; h: number }
@@ -64,12 +61,10 @@ export interface LayoutOptions {
   /** The viewer's alignment (ruling 4); default `start` (top, or left for vertical layouts). */
   align?: Align;
   /** The gap between a card and the card under it; absent: GAP. The board passes ROW_GAP with updateSignals, and
-   *  EDGE_ROW_GAP when its nodes draw their marks on their edges (nodeEdges). */
+   *  EDGE_ROW_GAP when its nodes draw their marks on their edges (D-099). */
   rowGap?: number;
-  /** Which way each `flow` container runs (region id -> `directionOf`, flowDirection flag); left out, `across`. */
+  /** Which way each `flow` container runs (region id -> `directionOf`); left out, `across`. */
   directions?: Map<string, Direction>;
-  /** The flowBranches flag (ModeInput.branching); absent, off. */
-  branching?: boolean;
   /** Nodes not drawn (e.g. decided items when hidden). */
   hidden?: Set<string>;
   /** Width after which regions wrap to a new row. */
@@ -147,7 +142,7 @@ export const GAP = 24;
  *  tabs (11px above it) by 3 to 4px.
  *  Cards side by side stay GAP apart. */
 export const ROW_GAP = 30;
-/** The gap under a node that draws its marks on its edges (nodeEdges, D-099): the bottom marks hang 11px below it
+/** The gap under a node that draws its marks on its edges (D-099): the bottom marks hang 11px below it
  *  (--vb-mark-h 22px, centred on the border) and the next node's answer disc 14px above (--vb-answer-size 28px), a
  *  proposal's ring 5px more; this leaves about 10px clear between them. Side by side stays GAP: no mark overhangs a
  *  node's sides. */

@@ -11,13 +11,12 @@ import type { CommandId } from './commands.ts';
 import { commandForKey, regionCommandForKey } from './commands.ts';
 
 export interface KeyHandlers {
-  /** A node's act; with the node's edges the result says whether it was written (item-acts.ts). */
+  /** A node's act; the result says whether it was written (item-acts.ts). */
   act(id: string, action: ActionId): Promise<boolean | undefined> | void;
-  /** A key on a node drawn with its edges (nodeEdges flag, mark-flow.ts): the menu key or Shift+F10 (`menu`), or H
-   *  (`history`); true when it acted. Absent with the flag off, when H is Hide answered everywhere. */
-  nodeKey?(id: string, target: HTMLElement, key: 'menu' | 'history'): boolean;
-  /** The one node selected, if exactly one is (H opens its history with nodeEdges, FIX_01). */
-  onlySelected?(): string | null;
+  /** A key on a node (mark-flow.ts): the menu key or Shift+F10 (`menu`), or H (`history`); true when it acted. */
+  nodeKey(id: string, target: HTMLElement, key: 'menu' | 'history'): boolean;
+  /** The one node selected, if exactly one is (H opens its history, FIX_01). */
+  onlySelected(): string | null;
   /** B on a focused card: its bookmark on or off (cardBookmark flag, bookmark-flow.ts); absent with the flag off. */
   bookmark?(id: string): void;
   nudge(id: string, dx: number, dy: number): void;
@@ -83,15 +82,14 @@ function onCommand(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | n
   if (id && BY_KEY.has(key)) { e.preventDefault(); h.act(id, BY_KEY.get(key)!); return true; }
   // R with no selection (a selection's R is Reset places, commands.ts): the focused card's reset.
   if (id && key === 'r') { e.preventDefault(); h.unpin(id); return true; }
-  // With the nodes' edges (nodeEdges) H is the history of the focused node, else of the one selected, and Shift+H is
-  // Hide answered (planner's call 3; FIX_01: one key, one meaning). Without them H is Hide answered.
-  if (key === 'h' && h.nodeKey) {
+  // H is the history of the focused node, else of the one selected, and Shift+H is Hide answered (planner's call 3;
+  // FIX_01: one key, one meaning).
+  if (key === 'h') {
     if (e.shiftKey) { e.preventDefault(); h.toggleHide(); return true; }
-    const on = id ?? h.onlySelected?.() ?? null;
+    const on = id ?? h.onlySelected();
     if (on && h.nodeKey(on, target, 'history')) { e.preventDefault(); return true; }
     return false;
   }
-  if (key === 'h') { e.preventDefault(); h.toggleHide(); return true; }
   return false;
 }
 
@@ -107,8 +105,8 @@ function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement, pageWide = 
   if (e.key === 'Escape') { if (h.escape()) e.preventDefault(); return; }
   if (e.metaKey || e.ctrlKey) return;
   const id = target.closest<HTMLElement>('vb-node')?.dataset.id ?? null;
-  // The menu key or Shift+F10 on a node: its actions, or on its number the number's menu (nodeEdges flag, D-099 1).
-  if (id && (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) && h.nodeKey?.(id, target, 'menu')) return e.preventDefault();
+  // The menu key or Shift+F10 on a node: its actions, or on its number the number's menu (D-099 1).
+  if (id && (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) && h.nodeKey(id, target, 'menu')) return e.preventDefault();
   /** The container whose title line (or one of its controls) has focus, outside every card. */
   const region = id ? undefined : target.closest('.vb-region-head')?.closest<HTMLElement>('vb-region')?.dataset.region;
   if (nudged(h, e, id, region, target) || e.altKey) return;

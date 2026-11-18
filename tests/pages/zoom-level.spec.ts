@@ -1,11 +1,11 @@
 // The zoom level and the hidden card controls (tracker N13; task 2026-10-12_board-app_zoom-level-hide-controls).
 // The toolbar's zoom group shows the zoom as a percentage that follows every zoom path (keys, buttons,
 // Fit, wheel and pinch), the buttons' tooltips say the level, and a polite status announces it once the
-// zoom settles. With the hideControlsZoomedOut flag (on by default) the cards' buttons, the size control
-// and the containers' icon rows hide below FAR_K, and nothing small is drawn, so axe excuses nothing at
-// the opening zoom. Read-only on the roadmap board, so it leaves the shared ledger as it found it.
+// zoom settles. With the hideControlsZoomedOut flag (on by default) the containers' tools hide below FAR_K; a node's
+// edge marks follow the zoom rules (D-101) and stay, so at the opening zoom axe excuses only a mark drawing under
+// 24px (`expectNoAxeOnBoard`, FIX_02). Read-only on the roadmap board, so it leaves the shared ledger as it found it.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
+import { expect, expectNoAxeOnBoard, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { openBoard } from './board-page.ts';
 
@@ -113,9 +113,9 @@ test('the level a board opens at is not news: the status stays empty until the p
   await expect(status(page)).toHaveText(`Zoom ${now}%`);
 });
 
-test('card controls hide below the level and show above it, and focus never lands on a hidden one', async ({ page }) => {
+test('container tools hide below the level and show above it, and focus never lands on a hidden one', async ({ page }) => {
   await openBoard(page);
-  const controls = '.vb-act:visible, .vb-size-trig:visible, .vb-mode-row:visible';
+  const controls = '.vb-region-tools .vb-layout-btn:visible';
   // Zoom out until the stage is far, then back in: the controls follow the level.
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
   expect(await percent(page)).toBeLessThan(FAR_PERCENT);
@@ -128,7 +128,7 @@ test('card controls hide below the level and show above it, and focus never land
     await page.keyboard.press('Tab');
     stops.add(await page.evaluate(() => {
       const a = document.activeElement as HTMLElement | null;
-      return a?.closest('.vb-act, .vb-size, .vb-mode-row') ? `hidden control: ${a.className}` : (a?.localName ?? '');
+      return a?.closest('.vb-region-tools') ? `hidden control: ${a.className}` : (a?.localName ?? '');
     }));
   }
   expect([...stops].filter((s) => s.startsWith('hidden control')), [...stops].join('\n')).toEqual([]);
@@ -136,15 +136,14 @@ test('card controls hide below the level and show above it, and focus never land
   for (let i = 0; i < 20 && (await percent(page)) < FAR_PERCENT; i += 1) await page.keyboard.press('+');
   expect(await percent(page)).toBeGreaterThanOrEqual(FAR_PERCENT);
   await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
-  await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
-  await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
+  await expect(page.locator('vb-region .vb-layout-btn:visible').first()).toBeVisible();
 });
 
-test('the keyboard shortcuts for a card still work while its buttons are hidden', async ({ page }) => {
+test('the keyboard shortcuts for a card work zoomed out', async ({ page }) => {
   await openBoard(page);
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
   await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
-  // C opens the focused card's note bubble (nothing is written until it is sent).
+  // C opens the focused card's conversation box (nothing is written until Add note).
   await page.locator('vb-node[data-id="1"]').focus();
   await page.keyboard.press('c');
   await expect(page.locator('vb-note-bubble')).toBeVisible();
@@ -157,17 +156,16 @@ test('with -hideControlsZoomedOut every control stays visible at every zoom', as
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
   expect(await percent(page)).toBeLessThan(FAR_PERCENT);
   await expect(page.locator(bid('stage'))).not.toHaveAttribute('data-zoom', 'far');
-  await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
-  await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
+  await expect(page.locator('vb-region .vb-layout-btn:visible').first()).toBeVisible();
 });
 
 for (const theme of THEMES) {
-  test(`axe passes with nothing excused at the opening zoom, zoomed out and at 1:1 (${theme})`, async ({ page }) => {
+  test(`axe passes at the opening zoom and zoomed out, small marks excused, and at 1:1 with nothing excused (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page);
-    await expectNoAxeViolations(page);
+    await expectNoAxeOnBoard(page);
     for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
-    await expectNoAxeViolations(page);
+    await expectNoAxeOnBoard(page);
     for (let i = 0; i < 20 && (await percent(page)) < 100; i += 1) await page.keyboard.press('+');
     expect(await percent(page)).toBeGreaterThanOrEqual(100);
     await expectNoAxeViolations(page);

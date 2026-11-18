@@ -1,7 +1,7 @@
 // Gallery entry for the container tool rail (toolRail flag; cortex-tasks/board/2026-10-25_board-ui_
 // container-tool-rail.md): a container's tools in a slim rail on the frame's left edge, the top line
 // holding only the label. A tall frame's full rail at rest (dimmed) and lit; a short frame's collapsed
-// rail (the checked layout, Comment, the cog) at rest and expanded over the cards; the narrowest rail
+// rail (the layout button, Comment, the cog) at rest and expanded over the cards; the narrowest rail
 // (the cog, and Comment while its badge shows); the layout popover and the settings menu open to the
 // right of the rail; and Later's rail, only the cog. Real <vb-region> frames from the fixture ledger,
 // rendered with `rail` as the board renders them and updated with `regionState`; the hovered look is
@@ -30,8 +30,6 @@ interface Sample {
   open?: { what: 'modes'; mode: 'flow' } | { what: 'menu' };
   /** The popover's tiles drawn pressed and with the focus ring (data-look), by layout. */
   tiles?: { pressed: string; focus: string };
-  /** Drawn with layoutTooltip off: the popover and its tiles. */
-  popover?: true;
   /** The board cannot change (locked): the tiles are paused. */
   paused?: true;
   /** The railOnHover look: the frame carries data-rail-hover, and data-use when it is the one in use. */
@@ -41,7 +39,7 @@ interface Sample {
 /** Draw one frame of `region` (from `view` and `state`) under the sample id. */
 function frame(s: Sample, region: Region, view: View, state: BoardState, owed?: ReadonlySet<string>, fixed = false): VbRegionElement {
   const f = document.createElement('vb-region') as VbRegionElement;
-  f.render({ ...region, id: `rail-${s.id}` }, { ...ownIds(), ...(s.popover && { layoutTooltip: false }), ...(fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true, ...(s.hover && { railHover: true }) }) });
+  f.render({ ...region, id: `rail-${s.id}` }, { ...ownIds(), ...(fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true, ...(s.hover && { railHover: true }) }) });
   f.update({ ...regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed), ...(s.paused && { paused: true }) });
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.dataset.sample = s.height;
@@ -76,7 +74,7 @@ export function railSection(fx: Fixture, hover = false): HTMLElement {
   const meta = el('p', 'g-meta');
   meta.append(el('code', undefined, 'vb-region[data-rail] .vb-region-rail > .vb-region-tools'), ' · feature flag toolRail, on by default · off with ?flags=-toolRail');
   box.append(heading,
-    el('p', 'g-desc', 'A container\'s tools (the six layouts, Match card widths, Comment and the settings cog) sit in a slim rail across '
+    el('p', 'g-desc', 'A container\'s tools (the layout button, Match card widths, Comment and the settings cog) sit in a slim rail across '
       + 'the frame\'s left border, so the top line holds only the title, centred, with the whole line for it. The rail keeps one '
       + 'size on screen at every zoom and never reaches a card or the next container.'),
     meta,
@@ -88,19 +86,19 @@ export function railSection(fx: Fixture, hover = false): HTMLElement {
       + 'Comment\'s badge still shows, and a touch screen keeps every rail shown.',
     frames(draw({ id: 'hidden', height: 'tall', hover: 'hidden' }), draw({ id: 'inuse', height: 'tall', hover: 'use' }),
       draw({ id: 'inuse-lit', height: 'tall', hover: 'use', lit: true })))] : []),
-    group('A short frame', 'With no room for the whole rail it keeps the checked layout, Comment and the cog. Hovered or focused it '
+    group('A short frame', 'With no room for the whole rail it keeps the layout button, Comment and the cog. Hovered or focused it '
       + 'expands upward over the cards, so Comment and the cog stay under the pointer, and collapses on leave, blur or Esc.',
     frames(draw({ id: 'collapsed', height: 'short' }), draw({ id: 'expanded', height: 'short', lit: true }))),
     group('The narrowest', 'Only the cog, and Comment while its badge shows (an unsent or a waiting note); the badge is never dimmed.',
       frames(draw({ id: 'narrowest', height: 'shortest' }),
         frame({ id: 'badged', height: 'shortest' }, badged, notes.view, notes.state, notes.owed))),
-    group('Popovers', 'The layout tooltip and the settings menu open to the right of the rail, over the cards, top-aligned with '
-      + 'what opened them: the layouts, the cog.',
+    group('Popovers', 'The layout menu and the settings menu open to the right of the rail, over the cards, top-aligned with '
+      + 'what opened them: the layout button, the cog.',
     frames(draw({ id: 'modes', height: 'tall', open: { what: 'modes', mode: 'flow' } }), draw({ id: 'menu', height: 'tall', open: { what: 'menu' } }))),
-    group('Layout tiles', 'A tile is a button: a click, or Enter on it, sets that layout as the rail\'s icon does, and the popover closes. '
+    group('Layout tiles', 'A tile is a menu choice: a click, or Enter on it, sets that layout, and the popover closes. '
       + 'Flow is hovered, Radial pressed, Row has the focus ring and Grid is the layout in force; locked, the tiles are paused.',
-    frames(draw({ id: 'tiles', height: 'tall', popover: true, open: { what: 'modes', mode: 'flow' }, tiles: { pressed: 'radial', focus: 'row' } }),
-      draw({ id: 'tiles-locked', height: 'tall', popover: true, open: { what: 'modes', mode: 'flow' }, paused: true }))),
+    frames(draw({ id: 'tiles', height: 'tall', open: { what: 'modes', mode: 'flow' }, tiles: { pressed: 'radial', focus: 'row' } }),
+      draw({ id: 'tiles-locked', height: 'tall', open: { what: 'modes', mode: 'flow' }, paused: true }))),
     group('Later', 'The board sets Later\'s layout, so its rail holds only the cog.',
       frames(frame({ id: 'later', height: 'short' }, laterRegion, later, fx.state, undefined, true))));
   return box;

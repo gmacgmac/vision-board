@@ -25,7 +25,7 @@ test.beforeAll(async () => { srv = await startFolderServer({ ledgers: true, read
 test.afterAll(async () => { await srv.close(); });
 
 /** The page at `width` with the flags on (or `flags` as given), drawn and settled. */
-async function open(page: Page, width = 1400, flags = FLAGS) {
+async function open(page: Page, width = 1440, flags = FLAGS) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto(`${srv.base}/?vbwork&flags=${flags}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
@@ -65,7 +65,7 @@ test('a press takes the lock and shows Editing; one more gives it back; a write 
   await expect(toggle(page)).toHaveAccessibleName('Edit');
   await expect(toggle(page)).toHaveAttribute('title', 'Editing: this ledger is open for changes here; press to make it read-only again');
   await expect(page.getByRole('status').filter({ hasText: 'You are editing this ledger.' })).toHaveCount(1);
-  const ack = page.locator('vb-node').first().locator('button[data-act]').first();
+  const ack = page.locator('vb-node [data-mark="answer"]').first();
   await expect(ack).not.toHaveAttribute('aria-disabled', 'true');
   await toggle(page).click();
   await says(page, 'read-only');
@@ -110,8 +110,8 @@ test.describe('another computer edits', () => {
   });
 });
 
-test('every tier: the toggle is in the bar at 1400, 900 and 600 px, its word gives way at a third; "⋯" holds no Edit row', async ({ page }) => {
-  for (const [width, form] of [[1400, 'full'], [900, 'half'], [620, 'half'], [600, 'third']] as const) {
+test('every tier: the toggle is in the bar at 1440, 900 and 600 px, its word gives way at a third; "⋯" holds no Edit row', async ({ page }) => {
+  for (const [width, form] of [[1440, 'full'], [900, 'half'], [620, 'half'], [600, 'third']] as const) {
     await open(page, width);
     await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', form);
     await expect(toggle(page), `${width}px`).toBeVisible();
@@ -135,9 +135,9 @@ test('every tier: the toggle is in the bar at 1400, 900 and 600 px, its word giv
 });
 
 for (const theme of THEMES) {
-  test(`axe at 1400, 900 and 600 px, read-only and editing (${theme})`, async ({ page }) => {
+  test(`axe at 1440, 900 and 600 px, read-only and editing (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    for (const width of [1400, 900, 600]) {
+    for (const width of [1440, 900, 600]) {
       await open(page, width);
       await expectBarPasses(page);
       await toggle(page).click();
@@ -150,7 +150,7 @@ for (const theme of THEMES) {
 
   test(`APCA (${theme}): the word Lc 60 and the icon Lc 30, read-only, hovered and editing`, async ({ page }) => {
     await setTheme(page, theme);
-    await open(page, 1400);
+    await open(page, 1440);
     const colour = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).color).then((c) => pixel(page, c));
     const ground = () => toggle(page).evaluate((e) => getComputedStyle(e).backgroundColor).then((c) => pixel(page, c));
     const found: [string, number, number][] = [];
@@ -172,7 +172,7 @@ for (const theme of THEMES) {
 }
 
 test('the flag off: the chip opens its menu and Edit is a button beside it, as before', async ({ page }) => {
-  await open(page, 1400, 'readOnlyStart,ledgerFolders,-readOnlyToggle');
+  await open(page, 1520, 'readOnlyStart,ledgerFolders,-readOnlyToggle');
   await expect(toggle(page)).toHaveAttribute('aria-haspopup', 'menu');
   await expect(toggle(page)).not.toHaveAttribute('aria-pressed');
   await expect(toggle(page)).toHaveAccessibleName('Read-only: switch to Editing to change this ledger');

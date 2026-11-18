@@ -1,5 +1,5 @@
-// Node pattern, layer 1 (core), the changed card's part (FE_02): the "N updates" tab and the
-// stepper a changed card opens, worded from the versions the page passes in. Split out of
+// Node pattern, layer 1 (core), the changed card's part (FE_02): the change badge's "N updates" and the
+// stepper in its history box, worded from the versions the page passes in. Split out of
 // node-core.ts along this seam (the flag, field report batch 2, grew it past 300 lines). No DOM.
 import type { ViewNode } from '#format';
 import type { Change, FieldChange, UnseenStep } from '#actions';
@@ -23,8 +23,9 @@ export interface UpdateChip { change: Change; text: string }
 /** The step shown: the section's name, its line, chips and what the text gained; the footer's count. */
 export interface UpdateStep { label: string; head: string; chips: UpdateChip[]; lines: string[]; count: string; first: boolean; source?: string }
 
-/** The "N updates" tab and the stepper (mockup 03 Part B, option B). `tab` is empty once up to date. */
-export interface UpdatesView { tab: string; label: string; open: boolean; done: boolean; step?: UpdateStep }
+/** The change badge's "N updates" (`tab`, node-marks.ts) and the stepper in the history box (mockup 03 Part B, option B).
+ *  `tab` is empty once up to date. */
+export interface UpdatesView { tab: string; open: boolean; done: boolean; step?: UpdateStep }
 
 const SIGN: Record<Change, string> = { added: '+', changed: '~', removed: '-' };
 
@@ -46,18 +47,18 @@ function stepLines(changes: readonly FieldChange[], reply?: string): string[] {
   });
 }
 
-/** The tab and the stepper for a changed item; undefined with nothing unseen and no stepper open. */
+/** The badge's words and the stepper for a changed item; undefined with nothing unseen and no stepper open. */
 export function updatesView(n: ViewNode, u?: CardUpdates): UpdatesView | undefined {
   if (n.n === undefined || !u || (!u.steps && u.count < 1)) return undefined;
   const { steps } = u, k = steps?.length ?? u.count;
   const tab = nodeUpdatesWords.update(k);
   const at = u.at ?? 0;
-  if (!steps) return { tab, label: nodeUpdatesWords.sinceYouLastLookedShow(tab), open: false, done: false };
+  if (!steps) return { tab, open: false, done: false };
   const s = steps[at];
-  if (!s) return { tab: '', label: nodeUpdatesWords.upToDate, open: true, done: true };
+  if (!s) return { tab: '', open: true, done: true };
   const count = nodeUpdatesWords.updateOf(at + 1, k);
   return {
-    tab, label: nodeUpdatesWords.sinceYouLastLookedHide(tab), open: true, done: false,
+    tab, open: true, done: false,
     step: {
       label: `${count}, ${s.reply === undefined ? `v${s.ver}` : nodeUpdatesWords.theAgentSReply}`, count, first: at === 0, ...(u.source && { source: u.source }),
       head: `${s.reply === undefined ? `v${s.ver}` : nodeUpdatesWords.reply} · ${s.when} · ${s.agent ?? nodeUpdatesWords.theAgent}`,

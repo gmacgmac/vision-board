@@ -1,5 +1,5 @@
-// Node pattern, layer 2 (template), the node with its marks on its edges (D-099; nodeEdges flag, `opts.edges`): no
-// footer; the number is the Bookmark toggle; the kind tab (or, for a node with an icon, a grip and a kind word over
+// Node pattern, layer 2 (template), the node with its marks on its edges (D-099; `opts.edges`, the skin's row):
+// the number is the Bookmark toggle; the kind tab (or, for a node with an icon, a grip and a kind word over
 // the title); the answer, where the skin's row puts it; the change badge, the quiet Awaiting tab and the notes mark on
 // the bottom edge; the icon tile at the right of the body. It reads the skin's row (skins.ts), never a skin's name:
 // with `marks: 'plate'` the number, the kind, the badge, Awaiting and the notes mark sit in a plate along the top,

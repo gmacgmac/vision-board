@@ -1,5 +1,5 @@
 // The view seam (docs/specification/plugin.md § The view): a fake host written from that spec, on the built folder.
-import { drawn, drawPicture, drawPlans, drive, expect, openHost, test } from './harness.ts';
+import { answerNode, drawn, drawPicture, drawPlans, drive, expect, openHost, test } from './harness.ts';
 
 test('api and events: the whole board draws through api, and a change reaches it through events', async ({ page, host }) => {
   await drawPlans(host);
@@ -143,7 +143,7 @@ test('a host with no chat at all: three lines of it, and Send only records', asy
   await drawn(page);
   await page.locator('.host-root vb-node').nth(1).click();
   await expect(page.locator('.host-root #vb1-send'), 'a selection has nowhere to go').toHaveAttribute('aria-disabled', 'true');
-  await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
+  await answerNode(page.locator('.host-root vb-node').first());
   await page.locator('.host-root #vb1-send').click();
   await expect.poll(async () => (await drive(page, 'record')).calls.filter((c: string) => c === 'POST boards/plans/act').length).toBe(2);
 });
@@ -289,7 +289,7 @@ test('chat.status: now drives the working mark; held and staged drive Send; agen
   await drive(page, 'status', { now: 'idle', held: false, staged: undefined });
   // The person answers a card: the answers chip is live, and `agent` puts the agent in its ref.
   await drive(page, 'status', { agent: host.bot.by === 'agent' ? host.bot.agent : undefined });
-  await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
+  await answerNode(page.locator('.host-root vb-node').first());
   const answers = async () => (await drive(page, 'record')).chips.find((c: { kind: string }) => c.kind === 'answers');
   await expect.poll(answers).toEqual(expect.objectContaining({ kind: 'answers', ref: expect.objectContaining({ board: 'plans', agent: (host.bot as { agent: string }).agent }) }));
 });
@@ -304,7 +304,7 @@ test.describe('the engine runs singleAgent', () => {
     await drive(page, 'status', { agent: 'bot-0123456789abcdef' });
     const send = page.locator('.host-root #vb1-send');
     await expect(send).toHaveAttribute('aria-disabled', 'true');
-    await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
+    await answerNode(page.locator('.host-root vb-node').first());
     const answers = async () => (await drive(page, 'record')).chips.find((c: { kind: string }) => c.kind === 'answers');
     await expect.poll(async () => (await answers())?.ref).toEqual({ board: 'plans', since: expect.any(Number) });
     await expect(send, 'the answer lights Send').not.toHaveAttribute('aria-disabled', 'true');
@@ -317,9 +317,8 @@ test('chat.status: a `singleAgent` view setting alone changes nothing: the engin
   await openHost(page, host, { settings: { singleAgent: true } });
   await drawn(page);
   await drive(page, 'status', { agent: 'bot-0123456789abcdef' });
-  const ack = page.locator('.host-root vb-node').first().locator('button[data-act="ack"]');
-  await ack.click();
-  await expect(ack, 'the answer is in').toHaveAttribute('aria-pressed', 'true');
+  await answerNode(page.locator('.host-root vb-node').first());
+  await expect(page.locator('.host-root vb-node').first().locator('[data-mark="answer"]'), 'the answer is in').toHaveAttribute('data-answer', 'ticked');
   await drive(page, 'status', {}); // one more status change, so the chips are worked out again after the answer
   expect((await drive(page, 'record')).chips.some((c: { kind: string }) => c.kind === 'answers'), 'scoped to an agent with no cards: no answers chip').toBe(false);
 });
@@ -349,9 +348,9 @@ test('chat.reveal and chat.hasLine: a changed card links to the chat\'s line onl
   await drawn(page);
   await host.tool('write_board', { board: 'plans', items: [{ type: 'node', n: 1, node: { region: 'now', kind: 'question', title: 'Ship on Friday, or Monday?' } }] });
   const card = page.locator('.host-root vb-node[data-id="1"]');
-  const updates = card.locator('[data-tab="updates"]');
-  await expect(updates).toHaveText('1 update');
-  await updates.click();
+  const badge = card.locator('[data-mark="badge"]');
+  await expect(badge).toHaveText('1 update');
+  await badge.click(); // the history box, its stepper on top
   const link = card.getByRole('button', { name: 'Show in the chat' });
   await expect(link).toBeVisible();
   await link.click();
@@ -364,7 +363,7 @@ test('chat.reveal left out: no link, and the card still changes', async ({ page,
   await drawn(page);
   await host.tool('write_board', { board: 'plans', items: [{ type: 'node', n: 1, node: { region: 'now', kind: 'question', title: 'Ship on Friday, or Monday?' } }] });
   const card = page.locator('.host-root vb-node[data-id="1"]');
-  await expect(card.locator('[data-tab="updates"]')).toHaveText('1 update');
-  await card.locator('[data-tab="updates"]').click();
+  await expect(card.locator('[data-mark="badge"]')).toHaveText('1 update');
+  await card.locator('[data-mark="badge"]').click();
   await expect(card.getByRole('button', { name: 'Show in the chat' })).toHaveCount(0);
 });

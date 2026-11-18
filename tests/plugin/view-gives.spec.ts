@@ -1,6 +1,6 @@
 // What the view gives its host (docs/specification/plugin.md § The view gives): the built folder, a fake host written from that spec.
 import type { Page } from '@playwright/test';
-import { drawn, drawPlans, drive, expect, openHost, test } from './harness.ts';
+import { answerNode, drawn, drawPlans, drive, expect, openHost, test } from './harness.ts';
 
 test('pageChip: the chip for the board on show, or null with none', async ({ page, host }) => {
   await openHost(page, host);
@@ -39,9 +39,11 @@ test('reveal: a board, a card, a note, several cards with nothing selected; a bo
   await page.locator('.host-root vb-node[data-id="1"]').focus();
   await page.keyboard.press('c');
   await page.keyboard.type('A note to find.');
-  await page.keyboard.press('ControlOrMeta+Enter');
-  await expect(page.locator('.host-root vb-note-bubble')).toBeHidden();
+  // Enter does the box's mode, Add note (FIX_03); the box stays open on the conversation, Esc closes it.
+  await page.keyboard.press('Enter');
   await expect.poll(async () => (await drive(page, 'record')).calls).toContain('POST boards/plans/act');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.host-root vb-note-bubble')).toBeHidden();
   const lines = (await host.engine.route({ method: 'GET', path: 'ledger', query: new URLSearchParams() }, { caller: { by: 'person' } }))!.body as { events: { seq: number; action?: string; text?: string }[] };
   const note = lines.events.find((e) => e.text === 'A note to find.');
   expect(note).toBeTruthy();
@@ -145,7 +147,7 @@ test('a stopped mount ignores what a host keeps calling, when its unsubscribes h
   await drawPlans(host);
   await openHost(page, host, { plainOn: true });
   await drawn(page);
-  await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
+  await answerNode(page.locator('.host-root vb-node').first());
   await expect(page.locator('#host-chips li')).toHaveCount(1);
   await drive(page, 'unmount');
   await expect(page.locator('#host-chips li')).toHaveCount(0);
@@ -213,13 +215,12 @@ test('reveal of what is not on the board says so through notify, and takes no fo
   await drive(page, 'reveal', { n: 2 });
   await expect(page.locator('.host-root vb-node[data-id="2"]'), 'a card that is there still goes').toBeFocused();
   // A card hidden with Hide answered, or one that went: said, and not gone to.
-  const ack = page.locator('.host-root vb-node[data-id="1"] button[data-act="ack"]');
-  await ack.click();
+  await answerNode(page.locator('.host-root vb-node[data-id="1"]'));
   // The ✓ lands first: Hide answered hides what is answered when it draws, so until the ✓ is in, card 1
   // is still open and on the board, and reveal rightly goes to it (the flake under load).
-  await expect(ack).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.host-root vb-node[data-id="1"] [data-mark="answer"]')).toHaveAttribute('data-answer', 'ticked');
   await page.locator('.host-root .vb-stage').focus();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await page.locator('#host-input').focus();
   await drive(page, 'reveal', { n: 1 });
   await expect.poll(async () => (await said()).at(-1)).toContain('hidden');
@@ -233,9 +234,9 @@ test('reveal of what is not on the board says so through notify, and takes no fo
 /** A long title in a narrow container, and a link with words that have no room on their line. */
 const TIPS: Record<string, { items?: object[]; open(page: Page): Promise<void> }> = {
   'the key help': { open: (page) => page.locator('.host-root .vb-keys-btn').hover() },
-  'a card popover, opened for good': {
+  'a node\'s history box': {
     items: [{ type: 'node', n: 1, node: { region: 'now', kind: 'question', title: 'Ship on Friday, or Monday?' } }],
-    open: (page) => page.locator('.host-root vb-node[data-id="1"] [data-tab="updates"]').click(),
+    open: (page) => page.locator('.host-root vb-node[data-id="1"] [data-mark="badge"]').click(),
   },
   'a container title': {
     items: [{ type: 'region', region: { id: 'now', title: 'Now, and a title much too long to fit in one narrow container here', mode: 'column' } }],
@@ -261,7 +262,7 @@ for (const [name, { items, open }] of Object.entries(TIPS)) {
     await drawn(page);
     await open(page);
     await expect.poll(async () => (await drive<string[]>(page, 'listenerNames')).length, 'the tip listens on the document').toBeGreaterThan(baseline.length + 2);
-    expect(await page.locator('.host-root').locator('[data-keys-open], [data-tab="updates"][aria-expanded="true"], [data-title-tip-open], [data-tip-open]').count(), 'the tip is open').toBeGreaterThan(0);
+    expect(await page.locator('.host-root').locator('[data-keys-open], [data-mark="badge"][aria-expanded="true"], [data-title-tip-open], [data-tip-open]').count(), 'the tip is open').toBeGreaterThan(0);
     await drive(page, 'unmount');
     await expect.poll(async () => (await drive<string[]>(page, 'listenerNames')).filter((l) => !baseline.includes(l))).toEqual([]);
     // Its close grace went too: the pointer leaving now, nothing is left to run.

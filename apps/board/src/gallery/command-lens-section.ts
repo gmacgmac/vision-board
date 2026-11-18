@@ -1,5 +1,4 @@
-// Gallery entry for the Command Lens skin (the skins and nodeEdges flags, D-100; FE_04), shown with
-// gallery.html?flags=nodeEdges,skins: the edges board's cards drawn by the skin's row (SKIN_DEFS) inside a board root
+// Gallery entry for the Command Lens skin (D-100; FE_04): the edges board's cards drawn by the skin's row (SKIN_DEFS) inside a board root
 // that carries the skin (data-vb-skin), so its tokens apply as on a board: every mark in every state on the plate and
 // the switch, selected, the moments a press leaves on a half or the number, and the menus and the selection bar on the
 // dark glass. The same cards, marks and menus as the edges section: a skin moves the controls, never what they do.
@@ -32,15 +31,14 @@ function glassBar(): HTMLElement {
 
 export function commandLensSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
-  box.dataset.feature = 'skins';
-  box.setAttribute('aria-labelledby', 'feature-skins');
+  box.dataset.feature = 'command-lens';
+  box.setAttribute('aria-labelledby', 'feature-command-lens');
   const heading = el('h2', 'g-title', 'The Command Lens skin');
-  heading.id = 'feature-skins';
+  heading.id = 'feature-command-lens';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, `<vb-node> render(n, { edges: SKIN_DEFS['${SKIN}'] })`), ' in a board root with data-vb-skin · feature flags skins and nodeEdges, off by default · on with ?flags=nodeEdges,skins');
+  meta.append(el('code', undefined, `<vb-node> render(n, { edges: SKIN_DEFS['${SKIN}'] })`), ' in a board root with data-vb-skin (D-100)');
   const skin = el('div', 'vb-board g-skin');
   skin.dataset.vbSkin = SKIN;
-  skin.toggleAttribute('data-vb-edges', true);
   const every = fx.edges.view.nodes.map((n) => edgeCard(fx, n, false, ROW).node);
   const selected = ['Go-ahead to install', 'Switch to the satellite backup at 2% loss'].map((t) => edgeCard(fx, byTitle(fx, t), true, ROW).node);
   skin.append(

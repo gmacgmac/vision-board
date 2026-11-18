@@ -1,8 +1,7 @@
-// The board's side of the node's edges (nodeEdges and skins flags, D-099, D-100; FE_02), split out of controller.ts:
-// the board root says the node draws its edges (`data-vb-edges`, Decision's fuchsia) and which skin the board is in
-// (`data-vb-skin`); the nodes draw in the skin's row (packages/ui skins.ts) and with the project's icon library; the
-// marks' presses, menus, boxes and tips (cards/mark-flow.ts); a container's pill cleared on this screen by a click
-// inside it, its replies quieted too (cards/container-seen.ts). With both flags off it changes nothing.
+// The board's side of the node's edges and its skin (D-099, D-100; FE_02), split out of controller.ts: the board root
+// says which skin the board is in (`data-vb-skin`); the nodes draw in the skin's row (packages/ui skins.ts) and with
+// the project's icon library; the marks' presses, menus, boxes and tips (cards/mark-flow.ts); a container's pill
+// cleared on this screen by a click inside it, its replies quieted too (cards/container-seen.ts).
 import type { ActionId, LedgerEvent, Skin, ViewNode } from '#format';
 import { DEFAULT_SKIN, isLibraryIcon } from '#format';
 import type { FreshCount, LedgerState } from '#actions';
@@ -15,10 +14,6 @@ import type { Io } from '../io.ts';
 import type { Status } from '../status.ts';
 
 export interface NodeEdgesDeps {
-  /** The nodeEdges flag. */
-  on: boolean;
-  /** The skins flag: the board's skin applies and the person can change it. */
-  skins: boolean;
   stage: HTMLElement;
   prefix: string;
   status: Status;
@@ -42,9 +37,9 @@ export interface NodeEdgesDeps {
 }
 
 export interface NodeEdges {
-  readonly marks: MarkFlow | undefined;
-  /** How the nodes first draw: the default skin's row with the flag on. */
-  readonly first: (typeof SKIN_DEFS)[Skin] | undefined;
+  readonly marks: MarkFlow;
+  /** How the nodes first draw: the default skin's row. */
+  readonly first: (typeof SKIN_DEFS)[Skin];
   /** The open board's skin, before each draw: the root says it, and nodes draw again in a new one. */
   skin(skin: Skin): void;
   /** Lines were applied (`full`: a ledger opened): an `icon` line reads the library again. */
@@ -59,38 +54,36 @@ export interface NodeEdges {
 
 export function createNodeEdges(d: NodeEdgesDeps): NodeEdges {
   const root = d.stage.closest<HTMLElement>('.vb-board');
-  if (d.on) root?.toggleAttribute('data-vb-edges', true);
   let shown: Skin | undefined;
   const seen = createContainerSeen();
   const regionOf = (to: number) => d.ledger()?.asks.get(to)?.region;
   const icons = createIconLibrary({
-    on: d.on, load: () => d.io.listIcons(),
+    load: () => d.io.listIcons(),
     changed: (library) => { d.drawing().restyle({ icons: library }, (n) => n.icon !== undefined && isLibraryIcon(n.icon)); d.redraw(); },
   });
-  const marks = d.on ? createMarkFlow(d) : undefined;
+  const marks = createMarkFlow(d);
   return {
     marks,
-    first: d.on ? SKIN_DEFS[DEFAULT_SKIN] : undefined,
+    first: SKIN_DEFS[DEFAULT_SKIN],
     skin(skin) {
       if (skin === shown) return;
       shown = skin;
-      if (d.skins && root) root.dataset.vbSkin = skin;
-      if (d.on) d.drawing().restyle({ edges: SKIN_DEFS[skin] });
-      if (d.skins) d.status.set({ skin });
+      if (root) root.dataset.vbSkin = skin;
+      d.drawing().restyle({ edges: SKIN_DEFS[skin] });
+      d.status.set({ skin });
     },
     lines(lines, full) {
-      if (d.on && (full || lines.some((l) => l.type === 'icon'))) void icons.refresh();
+      if (full || lines.some((l) => l.type === 'icon')) void icons.refresh();
     },
-    fresh: (fresh) => (d.on ? seen.fresh(d.board(), fresh) : fresh),
-    replies: (replies) => (d.on ? seen.replies(d.ledger(), d.board(), replies, regionOf) : replies),
+    fresh: (fresh) => seen.fresh(d.board(), fresh),
+    replies: (replies) => seen.replies(d.ledger(), d.board(), replies, regionOf),
     seen(region) {
-      if (!d.on || d.readOnly()) return;
+      if (d.readOnly()) return;
       if (seen.clear(d.board(), region, d.freshIn(), d.replies(), regionOf)) d.redraw();
     },
-    place: () => marks?.place(),
+    place: () => marks.place(),
     destroy() {
-      marks?.destroy();
-      root?.removeAttribute('data-vb-edges');
+      marks.destroy();
       if (root) delete root.dataset.vbSkin;
     },
   };

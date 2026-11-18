@@ -41,8 +41,8 @@ pattern's markup or styles it.
 - `KINDS` stays the list; `Kind` is its type. A new kind is one entry in `KINDS`, one in
   `NODE_TYPES` and the compiler-required UI entries. Nothing else lists kinds: CSS reads a kind's
   colour through `--vb-kind`, which the element sets from `--vb-kind-<kind>`.
-- **The app card** (`app`, D-047, ledger v17) was added that way: `NODE_TYPES.app` is
-  `tells('App')` (a note and Later, a number, no status word), `KIND_ICON.app` a small window, and
+- **The app card** (`app`, D-047, ledger v17) was added that way: `NODE_TYPES.app` only tells (a number, no answer;
+  D-099 5: a window, so no Save for later), `KIND_ICON.app` a small window, and
   `--vb-kind-app` a cyan measured against the label tier in light and dark. What it shows (the
   app's panel in a sandboxed frame) and its states are § App card; the app contract is
   [apps.md](./apps.md).
@@ -218,7 +218,7 @@ ships behind one. The pattern was defined by the first such task (U7, node size)
   directly.
 - **Where it is checked**: once, where the behaviour enters (the board controller, through its host's
   `settings` and `board/host.ts` `flagOf`, a value the host does not give reading as the default; the
-  gallery's entry point), and passed down as data (`render(n, { sizeControl })`, a tier for `nodeState`), so
+  gallery's entry point), and passed down as data (`render(n, { appCards })`, a tier for `nodeState`), so
   packages never read the address or storage. Pure packages (`layout`) take the result as input.
   `cardImages` and `svgImages` are no different: `board/host.ts` `markdownOf` reads both from the host once
   per board and passes them to every surface that renders Markdown (§ Images in cards); there is no
@@ -387,7 +387,7 @@ host; nclite's pane will be another.
 ## Node size (D-030, tracker U7)
 
 A card has one of three widths. The engine picks one from what the card holds, and the person can
-override it by hand. Mockup `prototypes/board-v3-design/mockups/07-node-sizing.html`, option A.
+override it from the selection bar (D-099 3, DD-10: Width left the node).
 
 1. **Tiers** are tokens: `--vb-card-w-s` 280px, `--vb-card-w-m` 360px, `--vb-card-w-l` 464px.
    Body text then runs about 37, 49 and 70 characters a line. Cards still grow taller to fit.
@@ -399,12 +399,9 @@ override it by hand. Mockup `prototypes/board-v3-design/mockups/07-node-sizing.h
    tier. Emphasis raises the result one tier, up to `l`. The person's `auto` removes their pick.
 4. **Where it is applied**: the page sets `data-size` on `<vb-node>` before it measures cards,
    because height depends on width; layout keeps reading measured sizes, so it stays pure (rule 9).
-5. **The control** (option A): a faint width glyph in the card's top-right border gap. On hover
-   or keyboard focus it lifts an S / M / L / Auto pill above the card's top edge, with 26px
-   buttons and a visible focus ring. Only the glyph is in the tab order until the pill opens; Esc
-   closes it. The label reads "Card size: S, automatic. Change size". When the person has picked
-   a size, the glyph shows the letter (for example "◆ S"). On a small card the "Moved by you" tab
-   shrinks to "◆" so the two fit side by side.
+5. **The control**: the selection bar's Width (Shift+W; `apps/board/src/board/selection/bar-acts.ts` `width`, the Move
+   to list's look) offers S, M, L and Auto for the selected nodes, one `size` act each; an app node takes none. The node
+   carries no size control; `data-size-picked` says the person picked its width (`vb-node.ts` `updateSize`).
 6. **The record**: a person-only `act` `size { n, size }` (`docs/specification/api.md` point 16),
    folded like `pin`. The tier is a word, never a width, so no coordinates or pixel sizes enter
    the ledger.
@@ -421,8 +418,8 @@ record is `api.md` 58-61.
    draws above the board at any zoom and moves nothing; `bubbleView` says what it reads in each
    mode (`new`, `edit`, `sent`, and `thread` for the conversation, item 6); the element emits
    `vb-note` and never writes anything itself.
-2. **The page** has one bubble, owned by `apps/board/src/board/notes/notes.ts`: C, M, the footer
-   buttons, the pin and a click on a note open it; it follows its card through
+2. **The page** has one bubble, owned by `apps/board/src/board/notes/notes.ts`: on a node it is the conversation box
+   (item 9), on a container the bubble beside its title line; it follows its anchor through
    `Viewport.onApply` and every relayout; every write goes through the controller's `attempt`.
    **Which card C writes on** is the one the keyboard focus is on (`focusLeads` flag, point 394):
    with two or more cards selected C is the group note only while the focus is on one of them or on
@@ -430,21 +427,18 @@ record is `api.md` 58-61.
    `tests/pages/note-key-target.spec.ts`); N and the selection bar's Comment are the selection's
    wherever the focus is. A ✓ or ✗ whose write finishes after the focus has moved on does not take
    it back (`createItemActs` `focusLeft`). Off, C follows the selection and a press always refocuses.
-3. **On the card** (`<vb-node>`): `nodeState().notes` gives the pin (the latest note's number,
-   `.vb-note-pin`, hanging off the top-right corner) and the "Your note" block (`notesMarkup`,
-   `data-sent` notes grey). The block reads like a chat, oldest first, top to bottom (review polish
-   ruling 8, `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_03_card-notes.md`): note 1,
-   its replies oldest first, note 2..., so a new note goes at the bottom; a reply that names no note
-   of the card takes its place by time (`seq`) among the notes (decision 8). `notesView` puts them
-   in that order once (`NotesView.entries`: a `NoteEntry` with its `replies`, or an `OrphanEntry`;
-   `isNoteEntry` tells them apart) and every reader lists it as it is, never sorting again. The pin
-   still opens the latest note.
+3. **On the node** (`<vb-node>`): no notes are drawn on the node itself (D-099 3); its notes mark counts them, fills when
+   an agent's reply is unread, and opens the conversation box (`node-marks.ts` `nodeMarks`, item 9). The box reads the
+   thread like a chat, oldest first (review polish ruling 8): note 1, its replies oldest first, note 2..., a reply that
+   names no note in its place by time (`seq`) among the notes (decision 8), as `conversation` (`node-notes.ts`) puts
+   them once.
 4. **Zoomed out.** The `hideControlsZoomedOut` flag (on by default) is the only thing that sets the
    stage's `data-zoom="far"` below `FAR_K` (`viewport.ts`, one constant: 0.55 since review polish
    round 2 ruling 2, the maintainer's pick after trying it, which closed tracker N13; it was 0.75);
-   the cards' buttons, the size control and the containers' icon rows, grips, retired markers and
-   holders are then not drawn, so none draws too small to press. Off (`?flags=-hideControlsZoomedOut`),
-   every control shows at every zoom. The toolbar's zoom group shows the level as a percentage beside
+   the containers' icon rows, grips, retired markers and holders and an app window's bar buttons are then not drawn, so
+   none draws too small to press; a node's edge marks follow the zoom rules instead (§ Zoom groups). Off
+   (`?flags=-hideControlsZoomedOut`), every such control shows at every zoom. The toolbar's zoom group shows the level as
+   a percentage beside
    Fit (`ZoomLevel.svelte`, rounded down so "55%" means the controls show; `Viewport` decides "far"
    from the same number), its buttons' tooltips say it ("Zoom in · + · 55% now"), and a polite status
    announces it once the zoom settles; the level a board opens at (its first draw's fit or kept place, a switch) is not
@@ -455,72 +449,40 @@ record is `api.md` 58-61.
    popover, 15px: the text typed in the comment box is the size of the text around it; the
    maintainer's changes, chats 698 and 701), `--vb-pop-w` (360px),
    `--vb-pop-max-h` (320px, past which the text box, the read-only part and the boxes scroll) and
-   `--vb-pop-pad`. The note bubble, the card popover (`.vb-card-pop`: proposal, handover and history), the
-   container note preview (`.vb-note-pop`) and the note and reply hover tip (`.vb-note-tip`) all
-   read them, so changing a token scales every popover together. Labels and chips in them are
+   `--vb-pop-pad`. The note bubble, the boxes beside a node (`.vb-card-pop`: proposal and history, item 10) and the
+   container note preview (`.vb-note-pop`) all read them, so changing a token scales every popover together. Labels and chips in them are
    `--vb-text-md`; buttons are 32px tall.
    A hover tip stays open while the pointer travels to it (hover-tip-reachable,
    `cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md`): the pointer leaving the anchor or
    the tip waits `CLOSE_GRACE_MS` (300 ms, `closeGrace`, `packages/ui/src/tip/close-grace.ts`) before
    the close, and coming back cancels it; opening, Esc, a press outside, focus leaving and `close()`
-   stay immediate. `bindHoverTip` and the container note preview (`region-note.ts`) both use it. The
-   note and reply tip (`.vb-note-tip`) keeps its box unclipped so its bridge over the gap takes the
-   pointer, and scrolls the `.vb-tip-body` inside it, which the wheel scrolls while it can (§ Selecting and
-   moving, 3: the wheel). The card popover's box is itself the scroller (a tab stop, filled by
-   three producers), so it relies on the grace alone. Tests: `close-grace.test.ts`,
-   `tests/pages/hover-tip.spec.ts`.
-6. **The conversation** (review polish rulings 6 and 7, decisions 8 and 9,
-   `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_04_conversation-window.md`; it replaced
-   popovers-larger-thread ruling 2's one-note exchange). A click, Enter or Space on a note in a card's
-   block or on an agent's reply (`.vb-node-reply`, wired in `wiring.ts` `showReply`) opens the bubble
-   in `thread` mode: every note and reply on the card, oldest first, in `conversation`'s order (the
-   function `notesView` reads, so the window lists exactly what the card shows: a reply naming no note
-   sits by time among the notes), each with who wrote it ("Your note 2 · Sent", "Agent reply · label")
-   over its words as Markdown, in one read-only list that scrolls as a whole (`.vb-nb-thread`, a
-   labelled group and a tab stop). It opens beside the card with its arrow on what was pressed
-   (`partAnchor`), scrolled to the bottom (the latest) or, when an older note or reply was pressed, to
-   that one, which takes focus (`vb-note-bubble` `reveal`). Read-only (`thread`, and `sent`, which the
-   pin still opens on a note that is history) the bubble has no bottom row: an × in its top corner
-   (24px, named "Close") closes it, as do Esc and a click outside (`note-outside.ts`: a drag outside
-   pans and keeps it; a press on another note or reply moves it there), and focus goes back to the
-   note or reply pressed; the board never moves (focus.ts). The person's note that can still be edited
-   carries Edit, which turns the window into today's edit mode for it (Cancel and Save, the discard
-   question when words changed). The pin and C still open the latest note. A container's note block
-   works the same way: its note's text and each reply (`.vb-nblock-reply`) report `open`
-   (`vb-region-note`), and the container's conversation opens beside the part pressed (`notes.ts`
-   `showContainer`), listing every note on the container and the replies to them. What the bubble
-   says is `note-views.ts` (`cardView`, `containerView`, from the replies `parking.ts` reads, the
-   `cardReplies` flag). Hovering a note or a reply still shows only that one (`bindNoteTip`).
+   stay immediate. `bindHoverTip` and the container note preview (`region-note.ts`) both use it. Tests:
+   `close-grace.test.ts`.
+6. **A container's conversation** (review polish rulings 6 and 7, decisions 8 and 9,
+   `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_04_conversation-window.md`). A container's note block
+   works as a node's box once did: its note's text and each reply (`.vb-nblock-reply`) report `open`
+   (`vb-region-note`), and the bubble opens in `thread` mode beside the part pressed (`notes.ts` `showContainer`,
+   `partAnchor`): every note on the container and the replies to them, oldest first, in `conversation`'s order, each
+   with who wrote it over its words as Markdown, in one read-only list that scrolls as a whole (`.vb-nb-thread`, a
+   labelled group and a tab stop), scrolled to the part pressed (`vb-note-bubble` `reveal`). Read-only (`thread`, and
+   `sent`) the bubble has no bottom row: an × in its top corner (24px, named "Close") closes it, as do Esc and a click
+   outside (`note-outside.ts`: a drag outside pans and keeps it), and focus goes back to the part pressed. The person's
+   note that can still be edited carries Edit, which turns the window into the edit mode for it (Cancel and Save, the
+   discard question when words changed). What the bubble says is `note-views.ts` (`containerView`, and `cardView` for
+   the edit bubble a node's box opens, from the replies `parking.ts` reads, the `cardReplies` flag).
 7. **A note locks once answered** (ruling 5, api.md 143). A note is history after a Send or the
    agent's answer (a reply naming it, or a newer version of its card), whichever comes first. The
    page reads `ItemNote.locked` (from `lockOf`, the server's own check): a locked note is read-only
-   in the conversation ("· Answered" when no Send came yet, no Edit), and its pin opens it read-only,
-   its head "Note 1 on 42, answered"; on the card
-   it is grey and says "· Answered", and its pin shows it rather than editing it; C or M on the card
-   then starts a new note. A container note answered before a Send reads "Answered" and is
+   in the conversation box ("· Answered" when no Send came yet, no Edit); the box's field then starts a new note. A container note answered before a Send reads "Answered" and is
    read-only in its block.
-8. **Put away, and timed** (card-polish FE_02,
-   `cortex-tasks/board/2026-10-19_board-ui_card-polish-and-history/FE_02_hide-notes-and-times.md`).
-   The block's head (`node-template.ts` `notesHead`) is the count on the left ("1 note", "3 notes",
-   "2 replies" with only replies; `node-notes.ts` `notesView`) and one toggle that always sits on
-   the right (maintainer, 2026-10-19): Hide, which puts the thread away, and then Show. Put away, the
-   head alone shows, and the count adds the replies that came after the person's `notes-hide`
-   ("2 notes · 1 new reply", from `BoardState.notesHidden`, board number to that line's `seq`). The
-   toggle sends `notes-hide` or `notes-show` (`note-hide.ts` `notesAct`), the person's private mark
-   (api.md 156), and keeps focus when the card is drawn again (`vb-node.ts` `updateNotes`); only the
-   card's container lays out again. Each note and reply carries `data-at` and shows its time in a
-   chip on its top edge at the right on hover and keyboard focus only (`node-notes.css`
-   `.vb-note-time`, `title` the whole date, `fullTime`); screen readers hear it once, after who wrote
-   it. The words are `node-time.ts` `noteTime` ("Today 09:42", "Yesterday 18:10", else
-   `versionTime`). `note-hide.ts` `highlight` brings a note or reply into view on its card
-   (`vp.reveal`), showing the thread first if it is put away, and rings it for `FLASH_MS`
-   (`data-flash`). Proven by `packages/ui/tests/node-core.test.ts` (notesView put away),
-   `node-template.test.ts`, `node-time.test.ts`, `tests/pages/notes.spec.ts` (Hide and Show) and
-   `note-polish.spec.ts` (note time); `highlight` by `tests/pages/card-history.spec.ts` (a note row
-   and a reply row of the history box).
-9. **The conversation box** (nodeEdges flag, D-099 3, node-overhaul FE_03; the design review of DESIGN_01). With the
-   flag a node's notes open one box, to read and to write: C, the notes mark, right-click's Comment, a note and a reply
-   all reach `notes.ts` `press` or `talk`, which open the bubble in `conversation` mode, its field focused. Its markup is
+8. **Times**: each note and reply in the box says when (`node-time.ts` `noteTime`: "Today 09:42", "Yesterday 18:10",
+   else `versionTime`). The card-polish FE_02 toggle that put a node's thread away (`notes-hide`, `notes-show`, api.md
+   156) is gone with the notes block: the page sends neither act, and lines already written still fold. A history row
+   naming a note or a reply opens the node's box at it (`history-flow.ts`, `notes.ts` `show`;
+   `tests/pages/card-history.spec.ts`).
+9. **The conversation box** (D-099 3, node-overhaul FE_03; the design review of DESIGN_01). A node's notes open one
+   box, to read and to write: C, the notes mark, right-click's Comment, a history row and a chat's note link all reach
+   `notes.ts` `press` or `show`, which open the bubble in `conversation` mode, its field focused. Its markup is
    `conversation-template.ts` (loaded on first use, `loadConversation`, with the box's page code
    `notes/note-box.ts`, `loadNoteBox`): a compact head (the number chip, the node's title, ×); tabs only when the node
    is in a note on several nodes (this node first, then one per group, "With 28", `boxView`); the thread oldest first,
@@ -542,8 +504,9 @@ record is `api.md` 58-61.
    true)` keeps the field, caret, focus and phase), a failed write (the box says why) and Esc (the discard question);
    an empty box closes on a click outside. Showing a node's replies writes a card `seen` at the version already seen,
    so the notes mark goes back to its count. Edit on a queued note opens today's edit mode and comes back to the box.
-   A container's note and a note on several selected nodes keep the bubbles above. The box scales with the board in
-   FE_05. With the flag no group pin draws: a note on several nodes is counted on their notes marks, and is a tab.
+   A container's note keeps the bubble above; Comment on several selected nodes opens the box beside the selection, on
+   a note for the group. The box scales with the board (§ Zoom groups). No pin draws for a note on several nodes: it is
+   counted on each member's notes mark, and is a tab of each member's box.
    Proven by `packages/ui/tests/conversation-box.test.ts`, `apps/board/tests/ask-now.test.ts` and
    `tests/pages/conversation-box.spec.ts`; the panel's agent hearing Ask now by `tests/pages/chat-ask.spec.ts`.
 10. **The box beside a node** (FE_03 run 2, the maintainer's rulings). The conversation, proposal and history boxes
@@ -562,36 +525,34 @@ record is `api.md` 58-61.
    compact, about 1.2 times the node's width, the node's body text size, in the mock-ups' proportions
    (`design/mockups/node-states/`). The history box with the edges is "History of 28" and its ×, the stepper, then one
    row per entry: its version (↩ for "Proposal withdrawn: the node changed", `card-times.ts` `withdrawn`), its words,
-   who and when (`node-history.ts` `historyBox`, `historyMarkup` with `box`). Proven by `apps/board/tests/mark-place.test.ts`,
+   who and when (`node-history.ts` `historyBox`, `historyMarkup`). Proven by `apps/board/tests/mark-place.test.ts`,
    `packages/ui/tests/node-edges.test.ts`, `packages/actions/tests/card-history.test.ts` and
    `tests/pages/node-boxes.spec.ts`.
 
 ## A card's history (card-polish FE_03)
 
-The ⓘ at the far right of a card's footer opens, beside the card, when things happened to it
-(maintainer, 2026-10-19, point 20: `cortex-tasks/board/2026-10-19_board-ui_card-polish-and-history/FE_03_history-box.md`).
-Behind the `cardHistory` flag (on by default).
+The change badge on a node's bottom edge, H, or right-click's History opens, beside the node, when things happened to
+it (maintainer, 2026-10-19, point 20: `cortex-tasks/board/2026-10-19_board-ui_card-polish-and-history/FE_03_history-box.md`;
+D-099 1, planner's call 9: the same box holds the update stepper on top).
 
 - **Property**: the box lists first drawn and each update (vN), each note sent, each agent reply,
-  ✓, ✗ and reopened, and the card's app allowed or stopped (`TIME_KINDS`), newest first, a time
+  ✓, ✗ and reopened, a proposal withdrawn, and the card's app allowed or stopped (`TIME_KINDS`), newest first, a time
   (`noteTime`, the whole date as its `title`) and one line in the history model's words, the agent's
   label on its rows. No note or reply text and no private mark (bookmark, hidden notes) reaches it. A row
-  naming a note still on the card, or an agent's reply, is a button that closes the box and rings
-  that note (`note-hide.ts` `highlight`); the rest are text. Up and Down move between those rows.
+  naming a note still on the card, or an agent's reply, is a button that closes the box and opens the node's
+  conversation at that note (`notes.ts` `show`); the rest are text. Up and Down move between those rows.
   A line for the card that lands while the box is open adds its row at the top, focus left alone.
 - **Where**: the times are folded with the ledger, no ledger read: `packages/actions/src/card-times.ts`
   `foldCardTimes` (called by `fold.ts` `applyEvent`, `LedgerState.times`, ids only, no words) and
   `cardTimeRows`, which match and word each line with the history model's own `cardsAbout`, `saidOf`
-  and `historyRow` (`card-history.ts`), so the box and `cardHistory` never disagree. The ⓘ and the
-  empty box are `packages/ui/src/node/node-history.ts` (`historyButton`, `historyBox`, drawn by
-  `node-template.ts` `footer` when `NodeTemplateOptions.history`); the box is the card popover
-  (`node-popover.ts` `bindCardPopover` with the ⓘ as its tab), which fires `POPOVER_SHOW` as it shows
-  and closes on `POPOVER_CLOSE`; the page fills it then (`apps/board/src/board/cards/history-flow.ts`
+  and `historyRow` (`card-history.ts`), so the box and `cardHistory` never disagree. The box is
+  `packages/ui/src/node/node-history.ts` `historyBox`, drawn by `node-edges.ts` `edgesMarkup` (and in an app window's,
+  `node-window.ts`); the page opens it from its mark (`board/cards/mark-boxes.ts`), which fires `POPOVER_SHOW` as it
+  shows, and closes it on `POPOVER_CLOSE`; the page fills it then (`apps/board/src/board/cards/history-flow.ts`
   `createHistoryFlow`, `historyMarkup`).
 - **Proven by**: `packages/actions/tests/card-history.test.ts` (card times: the box's kinds only, as
-  `cardHistory` says them; no words and no private mark kept), `tests/pages/card-history.spec.ts`
-  (click and keyboard, rows in order, no note text and no flag, note and reply rows, a live row, Esc,
-  the footer on one line on an S card and the smallest app card, axe light and dark).
+  `cardHistory` says them; no words and no private mark kept), `packages/ui/tests/node-history.test.ts`,
+  `tests/pages/card-history.spec.ts`.
 - **Not covered**: a new version of the card draws its markup again, which closes an open box.
 
 ## Selecting and moving (3_FE_01)
@@ -731,7 +692,7 @@ the grip takes focus after the move and keeps Alt+arrows. Held still, a click on
 background's click (it clears the selection). The rest of the line, and Cmd or Ctrl + drag anywhere,
 still pan; on a past version the title pans. Hovering the handle tints the grip, the title and the
 count together in the grip's hover look (`--vb-surface-sunken`), kept while the frame moves. Held by
-`tests/pages/container-title.spec.ts` (centred within 2px at 100%, slid left at 70%, never on the
+`tests/pages/container-title.spec.ts` (centred within 2px at 100%, slid left at 60%, never on the
 tools, at the start from 50% and cut at 20%; the drag at 100% and 40%; the click; the tint and its APCA, the
 title Lc 60 or more on it) and `containers.spec.ts`.
 
@@ -749,26 +710,21 @@ across on screen (24px buttons, WCAG 2.5.8) and offset outward, so at every zoom
 reaches at most `REGION_PAD` x `FAR_K` - 2 into the frame and `REGION_GAP` x `FAR_K` - 2 past it, its
 canvas ring and Comment's badge (on its outer side) included: it never covers a card or a lane label
 and never touches the next container (`packages/layout` is unchanged). By its room on screen it is
-whole, collapsed to the checked layout, Comment and the cog, or down to the cog and Comment while its
+whole, collapsed to the layout button, Comment and the cog, or down to the cog and Comment while its
 badge shows; a collapsed rail sits by its foot, so hovered or focused it expands upward over the cards
 (the frame raised as for an open popover) and Comment and the cog stay under the pointer; it collapses
 on leave, blur or Esc (`region-row.ts`, `data-shut`). At rest its icons draw at `--vb-rail-rest`
 (`tokens.css`: 0.5 in both themes, a trial approved 2026-10-26: light keeps the quiet icon at APCA Lc 30
-or more, dark does not, Lc 16.9 to 17.7 for the unchecked icons and the cog, recorded in
+or more, dark does not, Lc 16.9 to 17.7 for the quiet icons and the cog, recorded in
 `container-rail.spec.ts` until the maintainer rules); hovered, focused, with a popover or the note bubble open, or on a touch screen they are at
 full strength, and the badge is never dimmed. Popovers open to the right of the rail, top-aligned with
-the layouts, Comment and the cog. **Layout tooltip (layoutTooltip flag, on).** Each layout icon shows a tooltip on
-hover and on keyboard focus, its name over what it does (`MODE_LABEL` over `MODE_HINT`): `span.vb-mode-tip` inside the
-icon (`region-template.ts` `modeButton`), shown by the shared hover tip (`region-layout-tip.ts` `bindLayoutTips`,
-`data-tip-open` on the icon), beside the icon and never over it, hoverable, and dismissed by Esc (that Esc does nothing
-else; the next one collapses a short rail). The hint is the icon's accessible description (`aria-describedby`, whether
-or not the tip shows), and no layout popover is drawn (`layout-tooltip.spec.ts`). The popover below is the flag-off form.
-**One layout control (layoutControl flag, FE_07; off by default).** A container shows one button, `vb-layout-btn` (`region-template.ts` `layoutButton`), the active layout's icon named "Layout: Flow" ("Layout: Flow, down" with flowDirection), in place of the six icons; the existing popover is its menu (`modePopover`, role=menu, tiles `menuitemradio`). A press, or a pointer resting on it for 400 ms (`REST_MS`, `region-row.ts`), opens it; arrows move between the tiles, Esc returns focus to the button. On a flow the popover also holds Across, Down and Auto (`directionRow`, `button[data-dir]`): a press is the container's `direction` act (`places.ts` `setDirection`, `wiring.ts`), Auto clearing the person's choice so the agent's shows. Tests: `layout-control.spec.ts`, `region-template.test.ts`. Gallery: "One layout control".
+the layout button, Comment and the cog.
+**One layout control (FE_07, PLAN decision 20).** A container shows one button, `vb-layout-btn` (`region-template.ts` `layoutButton`), the active layout's icon named "Layout: Flow" ("Layout: Flow, down" on a flow drawn down); the layout popover is its menu (`modePopover`, role=menu, tiles `menuitemradio`). The six layout icons it replaced, their tooltips and the hover popover are gone (node-overhaul T_04). A press, or a pointer resting on it for 400 ms (`REST_MS`, `region-row.ts`), opens it; arrows move between the tiles, Esc returns focus to the button. On a flow the popover also holds Across, Down and Auto (`directionRow`, `button[data-dir]`): a press is the container's `direction` act (`places.ts` `setDirection`, `wiring.ts`), Auto clearing the person's choice so the agent's shows. Tests: `layout-control.spec.ts`, `region-template.test.ts`. Gallery: "One layout control".
 
 A tile of the layout popover (`region-template.ts` `modePopover`,
 `button.vb-mtile`, out of the tab order) applies its layout on a click or Enter: the page's click wiring
-(`wiring.ts`) sends the rail icon's `setMode` for it, so there is one action; the popover closes, a past
-version and a locked board keep it inert (`layout-tiles.spec.ts`, `lock-board.spec.ts`; both with `?flags=-layoutTooltip`). A container's title
+(`wiring.ts`) sends `setMode` for it, so there is one action; the popover closes, a past
+version and a locked board keep it inert (`layout-tiles.spec.ts`, `lock-board.spec.ts`). A container's title
 (`.vb-region-handle` and its `h2`) takes `--vb-text-md`. Keys: Up and Down move through the rail; on the cog Right opens the
 menu and Left in the menu closes it. Flag off, the row is on the line exactly as before: the template
 places it there, and `region-narrow.css` scopes the row's narrow forms to frames without `data-rail`.
@@ -815,32 +771,12 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    clamp(8k, 4, 16)`: the tabs' rise (10 world px) plus a clear space from 4px zoomed out to 16px
    zoomed in (6px at 0.2, 18px at 1, 41px at 2.5), so it never covers the tabs and a press there
    grabs the card. The area bar and the bar below a selection keep `BAR_GAP` (12px).
-4. **Group notes.** Comment on two or more selected cards opens one note on the group
-   (`notes.ts` `group()`, `BubbleInput.numbers`): the bubble's head names every item ("Note on 3
-   cards: 12, 14, 15") instead of a number chip, and its act carries `nodes` in place of `n`/`ver`
-   (api.md 62-65). A card may also hold its own single-card note (named by `n`) independently. With
-   exactly one card selected, Comment is that card's own note (2e), unchanged.
-   **Drawn once** (`groupNoteOnce` flag, on by default; task
-   `cortex-tasks/board/2026-10-25_board-ui_group-note-once.md`, maintainer ruling point 103). The
-   note is one pin per group of cards (`node-notes.ts` `groupMarkers`: its latest note, numbered
-   among the group's notes, labelled as a card's pin is), in its own layer of the world above the
-   cards (`group-pins.ts` `createGroupPins`, `.vb-group-notes`), on the right edge of the group's
-   lowest-numbered card drawn, in the column of that card's own pin and just under it
-   (`groupPinAt`). A group whose lowest card already holds a group pin takes its next card drawn that
-   holds none (`groupAnchors`); only when all of them do does it stack, down clear of the footer, then
-   a column out.
-   It wears the card pin's look and states (`node.css` `.vb-note-pin`, `paused.css`). Hovering or
-   focusing it, and its bubble being open, put a dashed ring round each card of the group
-   (`data-group-ring`, `node-notes.css`): the accent while the note can be edited, `--vb-ink-subtle`
-   once it is history; never a box, so no unrelated card is marked. Pressing it selects the group's
-   cards and opens the note (`notes.ts` `show`), to edit or remove it, with the agent's replies to
-   it once; focus goes back to the pin. The cards' pins, "Your note" blocks and conversations leave
-   the group's notes and the replies to them out (`notesView`'s `apart`, `CardConditions.groupNotesApart`
-   from `parking.ts`; `note-views.ts` `cardView`). Off, the note and its replies show on every card
-   of the group and any of their pins opens it. Kept true by `packages/ui/tests/group-notes.test.ts`
-   and `tests/pages/group-note.spec.ts` (one pin, no card repeating it, its place, rings on hover,
-   focus and open, select, edit, the reply once, two groups sharing a card, Remove, the flag off, axe
-   light and dark); the gallery's "Notes on groups of cards" section (`group-notes-section.ts`).
+4. **Group notes.** Comment on two or more selected cards opens the conversation box beside the selection, on a note
+   for the group (`notes.ts` `group`, FE_06): its act carries `nodes` in place of `n`/`ver` (api.md 62-65). A card may
+   also hold its own single-card note (named by `n`) independently. With exactly one card selected, Comment is that
+   card's own box. A note on a group is drawn once (maintainer ruling point 103, kept by D-099): counted on each member's
+   notes mark and a tab of each member's box ("With 28", `note-box.ts` `boxView`); no pin draws. Kept true by
+   `packages/ui/tests/conversation-box.test.ts` and `tests/pages/conversation-box.spec.ts`.
 5. **View commands are never ledger events.** Zoom and clearing only move the viewport or the
    selection. **Z** (Zoom to the selection, and the chat's "zoom to these cards", which runs it)
    fits one card or several to 75% of the stage's width or height, whichever binds, centred, up to the
@@ -860,7 +796,7 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    opens the list through `bindHoverTip` (`packages/ui/src/tip/`): it stays while the pointer is on
    it, Esc closes it, and `?` opens it. The list is generated by `board/input/key-help.ts` `keyGroups()`
    from `COMMANDS` and the registry `ACTIONS` (Items, Selection, Board, View); only inputs neither
-   table owns (J/K, Space, Alt+arrows, H, pointer gestures) are listed by hand there, and a unit
+   table owns (J/K, Space, Alt+arrows, Shift+H, a node's H and menu key, pointer gestures) are listed by hand there, and a unit
    test fails when a command or action with a key is missing. A command with too many keys to list
    one by one gives the list its own `shown` (Go to card's ten digits read "0–9"). Off, the board
    shows no key help.
@@ -947,8 +883,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    decided before D-045) and Reply move into a "⋯" menu at the toolbar's end (`board/chrome/ToolbarMenu.svelte`):
    rows with their icon and key, Hide answered a `menuitemcheckbox`; a click or Enter opens it and focuses the first row; Up,
    Down, Home, End, Esc (focus back on "⋯") and Tab are the Move to list's keys, one helper for both
-   (`#ui` `menuKeydown`, `packages/ui/src/base/menu.ts`); a press outside or a choice closes it; H works on the board and in the
-   menu. Agents (a bot with its holder count), Send to agent (a bot with a send arrow) and Chat show
+   (`#ui` `menuKeydown`, `packages/ui/src/base/menu.ts`); a press outside or a choice closes it; Shift+H works on the board and
+   in the menu (H is a node's history). Agents (a bot with its holder count), Send to agent (a bot with a send arrow) and Chat show
    their icon only when narrow. The smallest supported width is 768px: at 1000px and below the
    gaps tighten, the app icon steps aside, the picker may go to 150px, the version and containers
    dropdowns take 6em and the count chips draw closer, so every control stays whole. (With the folder chip, § 6, the picker goes to
@@ -962,7 +898,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    maintainer's approved mock-up, 2026-10-31). The bar takes one of three forms by its own width, not the window's
    (`board/chrome/Toolbar.svelte`, a `ResizeObserver`; the window's width only as the first guess, so a page opens in its form),
    so it holds in a host's pane. `board/chrome/header-tier.ts` is the one table: `headerTier` (full from `FULL_MIN` 1300px, or
-   `FULL_MIN + FLOWS_W` 1428px with Flows, the `flowDirection` flag's button, whose room `styles/header.css` keeps out of the box
+   `FULL_MIN + FLOWS_W` 1428px with Flows, the board's flow direction button, whose room `styles/header.css` keeps out of the box
    the bar measures itself on, so every breakpoint holds as measured without it; from half Flows is rows of "⋯"; half
    from `HALF_MIN` 620px, else a third), `inBar`, `inMenu`. One copy of each control, in the bar or as a row of "⋯".
    Full: the app icon, the path "folder / board ▾ / version ▾" (`<nav>`), Containers, "N open" and "N new", − 47% + and Fit,
@@ -998,7 +934,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    Allow and Refuse), `BoardAgents.svelte` (`readOnly`, else the board's own state: Remove access), `ProposalsBar.svelte` (Accept all,
    `data-paused`), and, in `#ui`, `paused.ts` `explainPaused` (every paused card control's title is the reason, its own tip back on Edit)
    with the app card's Allow app and Stop app paused (`vb-node.ts`; `app-cards.ts` `press` toasts the reason and sends nothing). A paused
-   button takes `button.css` `.vb-btn[data-paused][aria-disabled='true']`: a quiet outline, no hover or press; an app card's footer
+   button takes `button.css` `.vb-btn[data-paused][aria-disabled='true']`: a quiet outline, no hover or press; an app window's
    Allow takes `paused.css`. The gallery's last section, "Write controls on a read-only ledger" (`read-only-controls-section.ts`), shows
    the strip, the Agents panel and an app card; held by `tests/pages/read-only-controls.spec.ts` and `packages/ui/tests/node-paused.test.ts`.
 6. **The folder picker** (`openFolder` flag, on by default; task
@@ -1125,118 +1061,83 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    off, axe light and dark, and the gallery samples' screenshots (`gallery/open-list-section.ts`,
    in the toolbar section). Off, the chip is plain.
 8. **New and updated cards at board scale** (`freshCards` flag, on by default; task
-   `cortex-tasks/board/2026-10-25_board-ui_new-and-updated.md`, api.md 158). The "N updates" tab is
-   outlined in the accent's pink with pink words at rest (`node-steps.css`, scoped by the world's
-   `data-fresh-cards`), so it reads at a distance as NEW does; hovered or open it takes the amber
-   edge as before. A container holding a card new or updated since the person last engaged with any
-   card in it (`container.fresh`) carries `data-fresh`: its border takes `--vb-state-fresh` (teal)
+   `cortex-tasks/board/2026-10-25_board-ui_new-and-updated.md`, api.md 158). A node's change badge says it: "New" or
+   "N updates" (`node-edges.css` `.vb-mark-badge`, item 2 of § The node's edges). A container holding a card new or
+   updated since the person last engaged with any card in it (`container.fresh`) carries `data-fresh`: its border takes `--vb-state-fresh` (teal)
    and its title line a pill after the count, "3 new · 1 updated" (`region-fresh.ts` `regionFresh`,
    `region-fresh.css`), which leaves a narrow line whole, after the holders and before the title,
    and stays zoomed out. The person's own select of one of its new or updated cards (a click, not a
-   find), or any act on one of its cards, ends it; a click on the frame does not. The toolbar's "N new" chip beside "N open" is the same
+   find), or any act on one of its cards, ends it; a click inside the container clears its pill on the person's screen
+   only (point 308, `cards/container-seen.ts`). The toolbar's "N new" chip beside "N open" is the same
    `OpenChip` (generalised: its word, tone and names are props), listing `freshCards` as "46 ·
    title", an updated one ending "· updated" (`finder.ts` `openRow`, the title giving way to a cut,
    never the ending); choosing one goes to it as Go to card does, which selects it but leaves its
-   NEW or "updated" mark (finding keeps marks, § Go to card and search item 6). The count, the list, the pills and the tabs read one list (`freshCards`, conditions.ts), so
+   NEW or "updated" mark (finding keeps marks, § Go to card and search item 6). The count, the list and the pills read one list (`freshCards`, conditions.ts), so
    they never disagree. Hidden at zero, and with the flag off or a past version (`attention.ts`
    `freshIn`, `Toolbar.svelte`). APCA, measured by `tests/pages/fresh-cards.spec.ts`: the border on
-   the canvas Lc 58.6 light, 67.4 dark; the pill's words 54.8 and 63.5; the tab's words 74.8 and
-   49.8, its outline 72.0 and 47.7. The gallery's "New and updated cards" section draws them
-   (`gallery/fresh-section.ts`). Off, the tab is grey until hovered and no container, pill or chip
-   shows.
+   the canvas Lc 58.6 light, 67.4 dark; the pill's words 54.8 and 63.5. The gallery's "New and updated cards" section
+   draws them (`gallery/fresh-section.ts`). Off, no container border, pill or chip shows.
 
    **Updated in amber** (`updateSignals` flag, on by default; PLAN decision 10, points 429-432; task
    `cortex-tasks/board/2026-11-05_board-ui_insert-markdown-signals/FE_01_update-signals.md`). One colour per meaning:
    updated is `--vb-state-updated` (its APCA figures in `packages/tokens/src/tokens.css`), new stays `--vb-state-fresh`.
-   At rest the "N updates" tab's outline and words take the amber in place of the pink above (`node-steps.css`, the world's
-   `data-fresh-cards` and `data-update-signals`); hovered or open it keeps the amber and gains its soft fill
-   (`--vb-state-updated-soft`), never the duller changed amber. The pill writes each count in its own
+   A node's change badge saying "N updates" is `--vb-badge-updated` (the amber), "New" `--vb-badge-new` (the teal),
+   settled "vN" quiet (`tokens.css`, `node-edges.css` `.vb-mark-badge`). The pill writes each count in its own
    span (`region-fresh.ts` `fillFreshPill`, called by `vb-region.ts` `applyFresh`), so "updated" takes the amber
    (`region-fresh.css` `.vb-region-fresh-updated`) and "new" stays teal; the border stays teal, also when only updated
-   cards are inside. New is teal wherever it shows: the card's NEW tab (`node-popover.css`, the world's
-   `data-update-signals`) and the toolbar's "N new" chip (`OpenChip.svelte` `newTone`: tone `fresh`, `chip.css`;
+   cards are inside. New is teal wherever it shows: the badge's New and the toolbar's "N new" chip (`OpenChip.svelte` `newTone`: tone `fresh`, `chip.css`;
    `Toolbar.svelte`, `HeaderFields.svelte`), which counts new and updated cards together under the one word "new", and
    the narrowest bar's "new" dot (`Toolbar.svelte` `.vb-count-dot` `data-tone={newTone(…)}`, `header.css`). The other
    boards' "N boards updated" chip is amber (`chip-tone.ts` `updatedTone`: chip tone `updated`, `chip.css`). The
    agent's reply carries the amber on its left edge, apart from the person's notes: bright while
-   its card is unseen, then a muted amber (`color-mix` halfway to `--vb-line-strong`), on the card (`node-parking.css`)
-   in the note bubble (`note-bubble.css`), and under a container's note on its frame (`region-note.css`
-   `.vb-nblock-reply`, muted: the frame's replies carry no `data-unseen`). A reply is unseen when written after the person last looked at its card
+   its card is unseen, then a muted amber (`color-mix` halfway to `--vb-line-strong`), in the note bubble
+   (`note-bubble.css`) and under a container's note on its frame (`region-note.css` `.vb-nblock-reply`). On a node an
+   unread reply fills its notes mark (`node-marks.ts`); opening the conversation box reads it, so the box draws its
+   replies muted. A reply is unseen when written after the person last looked at its card
    (`apps/board/src/board/cards/parking.ts` `repliesOn`, from `LedgerState.looked`; never while a past version shows),
-   and keeps it only while the card itself is NEW or has an "N updates" tab not stepped through (`node-notes.ts`
-   `litReplies`, in `node-core.ts` `nodeState`); the templates mark it `data-unseen` (`node-template.ts` `replyMarkup`,
-   `note-bubble-template.ts` `replyItem`). Opening the bubble from a reply is not engagement: the reply stays bright until
-   the card is selected (D-054). The tests are `tests/pages/update-signals.spec.ts` (the card's edge bright then muted
-   on select, the note keeping its own edge; the bubble the same; APCA as words Lc 45 and edges Lc 30 on the card,
-   sunken and deep, light and dark; in dark brighter than `--vb-kind-action` and `--vb-state-context`; in both themes
-   ΔE76 20 or more from those two and from `--vb-bookmark` and `--vb-kind-risk`; the tab hovered still amber; the NEW
-   tab and the "N new" chip teal; a container's reply muted; the flag off; the gallery) and
-   `tests/pages/fresh-cards.spec.ts` (the amber tab, the two-colour pill, the teal border with only
-   updated cards), with `packages/ui/tests/{node-core,node-template,region-fresh}.test.ts` and
-   `apps/board/tests/parking.test.ts`. The gallery's sample is the last section, `gallery/update-signals-section.ts`.
-   Not covered here: the "N new" dot on the narrowest bar (`styles/header.css` `.vb-count-dot`, still pink) and the
-   toolbar's "N updated" chip for other boards (tone `new`, pink). Off, the tab, the NEW tab and the chip are the pink
-   above and replies are grey.
+   and keeps it only while the card itself is NEW or has updates not stepped through (`node-notes.ts`
+   `litReplies`, in `node-core.ts` `nodeState`); the bubble's template marks it `data-unseen` (`note-bubble-template.ts`
+   `replyItem`). The tests are `tests/pages/update-signals.spec.ts` and `tests/pages/fresh-cards.spec.ts` (the
+   two-colour pill, the teal border with only updated cards), with `packages/ui/tests/{node-core,region-fresh}.test.ts`
+   and `apps/board/tests/parking.test.ts`. The gallery's sample is `gallery/update-signals-section.ts`. Not covered
+   here: the "N new" dot on the narrowest bar (`styles/header.css` `.vb-count-dot`, still pink) and the toolbar's "N
+   updated" chip for other boards (tone `new`, pink). Off, the chip is pink and replies are grey. The badge's colours
+   are its tokens', whatever the flag (a tracker row asks which should win).
 
-   **Tab place** (`updateSignals` flag, D-091; tasks `cortex-tasks/board/2026-11-05_board-ui_title-weight-and-tab-place.md`,
-   `cortex-tasks/board/2026-11-05_board-ui_tab-lower.md`). The bottom-edge tabs (`.vb-node-btabs`: a proposal, the
-   handover, "N updates", NEW) hang below the footer and start just after the footer's state word, left-aligned, growing
-   right (`node-popover.css`, the world's `data-update-signals`; the offset is the footer's own: border, padding, kind
-   icon, gaps, divider, 3em for the state word and a space). The row's top sits just inside the card's edge, so the tabs
-   stay on the border while each tab's 24px target begins below the footer's buttons: the buttons never rise, on any
-   size, with any number of tabs. The row lets the pointer through to the footer; the tabs take it back. So the hung
-   tabs clear the next card's top tabs, the board lays out a card and the card under it `ROW_GAP` (30px) apart instead
-   of `GAP` (24px) in column, grid rows, flow and a lane's stacks; side by side stays `GAP` (`packages/layout/src/types.ts`
-   `ROW_GAP`, `LayoutOptions.rowGap`, passed by `controller.ts` and the gallery's `mini-board.ts` with the flag; the
-   layout cache keys on it). Off, the tabs sit at 14px on the edge, two tabs (or the combined tab) raise the buttons,
-   and cards are `GAP` apart every way. Tests: `tests/pages/tab-place.spec.ts` (one tab, the combined tab, two tabs and
-   a proposal alone on S, M and L: the first tab 4 to 24px after the state word, at the same place on every size, never
-   past the right edge less 14px; no tab over the kind icon or the state word; no tab's 24px target over a footer button;
-   the buttons level with the state word; every tab on the card's edge; a stacked column 30px apart with the hung tab
-   clear of the next card's top tabs, 24px with the flag off; axe light and dark), `packages/layout/tests/stack-gap.test.ts`
+   **Row gap** (`updateSignals` flag, D-091; task `cortex-tasks/board/2026-11-05_board-ui_tab-lower.md`). The bottom-edge
+   tabs that once hung below the footer are gone with it (D-099); what stays is the row gap: the board lays out a card
+   and the card under it `ROW_GAP` (30px) apart instead of `GAP` (24px) in column, grid rows, flow and a lane's stacks,
+   side by side `GAP` (`packages/layout/src/types.ts` `ROW_GAP`, `LayoutOptions.rowGap`, passed by `controller.ts`
+   and the gallery's `mini-board.ts` with the flag; the layout cache keys on it), and at least `EDGE_ROW_GAP` while the
+   skin's marks hang on the edges (§ Flow branching and direction, item 6). Tests: `packages/layout/tests/stack-gap.test.ts`
    (`rowGap` in each mode that stacks; side by side `GAP`), `apps/board/tests/layout-cache.test.ts` (the gap lays out
    every container and equals `layoutBoard`).
 
-   **One tab for updates and a proposal** (`oneChangeTab` flag; point 444, task
-   `cortex-tasks/board/2026-11-05_board-ui_one-change-tab.md`). A card with both unseen updates and a proposal shows one
-   bottom tab, the proposal's (`data-tab="proposal"`, `data-updated`), saying both: "1 update · proposal", "2 updates · 2
-   proposals", "1 update · out of date" when every proposal is, named "1 update and a proposal on item 3"
-   (`packages/ui/src/node/node-core.ts` `changeTab`, words `packages/ui/src/words/node.ts` `updatesAndProposalsTab`,
-   `updatesAndProposalsOnItem`). It takes the "N updates" tab's look in `--vb-state-updated` (D-088), hovered or open on
-   its soft fill (`node-steps.css`); with `updateSignals` off it counts as two tabs for the buttons' rise (`node-popover.css`). Its box holds the
-   proposals first, then the card's own step section and stepper, moved in, never copied (`vb-node.ts` `placeSteps`,
-   `NodeState.oneTab`); the footer stays as it is and the card keeps its size. Opening the box for good (a click or
-   Enter; `POPOVER_OPEN`) opens the stepper at the first unseen step with focus left on Reject, and the box hiding,
-   however it hides (`POPOVER_HIDE`, `node-popover.ts`), folds it (`apps/board/src/board/cards/update-flow.ts`); past
-   the last step focus goes to the proposal's first answer and the box stays open. Accept and Reject are the proposal
-   box's own; an act clears the updates too (D-054). A proposal alone and updates alone keep their own tabs. Off, two
-   tabs. Tests: `packages/ui/tests/node-change-tab.test.ts`, `tests/pages/one-change-tab.spec.ts` (the tab and names;
-   the box's order; Next to "You're up to date"; Accept from the box and from the preview; out of date; either alone;
-   the flag off; keyboard, focus and Esc; the place on S and M; APCA Lc 45 at rest and hovered and axe, light and dark;
-   the gallery's section, `gallery/one-tab-section.ts`, the last). `tests/pages/tab-place.spec.ts` draws its two tabs
-   with the flag off.
+   **One tab for updates and a proposal** (point 444) is gone with the bottom tabs (D-099): the change badge opens the
+   updates (in the history box) and the disc opens the proposal (its own box), so a card with both shows each on its own
+   mark.
 
 ## Every card in the conversation (every-node FE_01)
 
 Task set `cortex-tasks/board/2026-10-10_board-actions_every-node/` (rulings 1-4, 6; api.md 118-120),
 behind the `everyNode` flag (on by default; `?flags=-everyNode`).
 
-1. **Numbers and buttons from the kind.** Every card shows its number; `offers` reads
-   `NODE_TYPES[kind].actions`, so a question, decision or action draws ✓, ✗, Comment and Later, and
-   every other kind Comment and Later (More context is gone, D-045). Off, `numberedView`
-   (`apps/board/src/board/board-data.ts`, the page's own draw rule) drops the number from cards that need no answer, so they
-   draw with no number, buttons or tabs and take no note.
+1. **Numbers and actions from the kind.** Every card shows its number; `offers` reads
+   `NODE_TYPES[kind].actions`, so a question, decision or action offers ✓, ✗, Comment and Save for later (its disc, its
+   keys and its right-click list, § The node's edges), and every other kind Comment and Save for later (More context is
+   gone, D-045). Off, `numberedView` (`apps/board/src/board/board-data.ts`, the page's own draw rule) drops the number
+   from cards that need no answer, so they draw with no number and take no note.
 2. **No meaning on ✓ and ✗** (superseded by D-045; was one meaning per kind, `action-words.ts`,
    now deleted). See "The answer model" below.
 3. **Comment on any group.** The selection's Comment takes every selected card, any kinds: one note
    on exactly those cards (`selection-flow.ts` `comment`); one card alone is its own note.
 4. **Counts and states.** The toolbar and container counts count only cards that need an answer
-   (`counts`, `regionState`); a plain card's note or Later lights its button and counts nowhere,
-   and since D-045 shows no status word. No new colour.
+   (`counts`, `regionState`); a plain card's note or Later counts nowhere, and since D-045 shows no status. No new
+   colour.
 5. **Hide answered** (Hide decided before D-045) keeps an answered card while the agent owes it an
    answer (`item.owed`, read into `pageConditions` `owedCards`), so the reply lands where the person
    can see it; it hides once nothing is owed (`answeredIds`).
-6. Tests: `tests/pages/every-node.spec.ts` (numbers, tooltips, a plain card commented by key, a
+6. Tests: `tests/pages/every-node.spec.ts` (numbers, a plain card commented by key, a
    lasso of mixed cards commented once, counts, hide while owed, the flag off, axe light and dark);
    the gallery's node section shows the cards that ask and the cards that tell in every status each
    can reach.
@@ -1245,31 +1146,29 @@ behind the `everyNode` flag (on by default; `?flags=-everyNode`).
 
 Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-5, 7, 8; api.md 144-146).
 
-1. **✓ and ✗ are tools.** The buttons are named Check and Cross (registry labels, `buttonLabel`:
-   "Check item 12 (A)", tooltip "Check · a"); the board never says what they mean, the card does.
-   Lit, the mark shows in its state colour and no word follows it in the footer (`STATUS_LABEL` has
-   none for `acknowledged` or `dropped`, and the divider hides with no word, `node.css`); the
-   accessible name says "checked" or "crossed" (`STATUS_NAME`). ✗ no longer fades the card or strikes
-   its title through.
+1. **✓ and ✗ are tools.** Tick and Cross (keys A and X) answer on the disc's picker or a skin's switch (§ The node's
+   edges); the board never says what they mean, the card does. Answered, the disc fills green with a tick or red with a
+   cross; the accessible name says "checked" or "crossed" (`STATUS_NAME`). ✗ no longer fades the card or strikes its
+   title through.
 2. **"Answered", never "decided".** The toolbar reads "N open · N answered · N later" (`shell.counts`,
    `toolbar-counts.ts`), a container "N/M" with "N of M answered" as its tooltip and name (`regionState`
    `countText`, `countLabel`; round 2 ruling 1), an emptied frame "Everything here
-   is answered.", and the H toggle "Hide answered" (`answeredIds`).
+   is answered.", and the Shift+H toggle "Hide answered" (`answeredIds`).
 3. **Only cards that ask show a status** (`asksAnswer` in `node-core.ts` reads
-   `NODE_TYPES[kind].answer`): a finding, risk, topic or note has no status word and none in its
-   name, whatever its state; its lit Later and its note pin still show.
+   `NODE_TYPES[kind].answer`): a finding, risk, topic or note has no disc and no status in its
+   name, whatever its state; its notes mark still counts its notes.
 4. **One way to write back.** No card, container or selection offers More context, and M is no key.
    An old `context` note reads as "Your note" everywhere (`KIND_WORD`, the bubble's placeholder).
 5. **The agent's answer clears the card** (`ItemState.unseenAnswer`, from the action layer): the card
-   is open and unmarked, and the reply is one update of its own on the "N updates" tab, the marker a
+   is open and unmarked, and the reply is one update of its own on the change badge ("N updates"), the marker a
    new version gets (`packages/actions/src/answers/updates.ts` `unseenCount`, `unseenSteps`; `packages/actions/tests/updates.test.ts`: a step "Reply · when · who" with its
    words, at the card's latest version). Selecting the card or stepping past the reply sends the card
    seen line that ends it (`seenDue`: due although that version was seen). An answer by a new version
    is that version's step. **Any reply of the agent's is such an update** (review polish round 2
    ruling 4, `clears.ts` `unseenReply`, api.md 149), whether or not it answers a note or clears
    anything: a reply to an older note leaves the card's ✓ as it was and still shows "1 update".
-6. **A lit button clears.** Pressing a lit ✓, ✗ or Later records `reopen` and the toast says
-   "12 cleared"; ✗ while ✓ is lit switches straight to ✗; a second press of the same button on the
+6. **A lit answer clears.** Pressing a lit ✓ or ✗ (or A, X on an answered card, or Later again) records `reopen` and the
+   toast says "12 cleared"; ✗ while ✓ is lit switches straight to ✗; a second press of the same action on the
    same card within 400 ms (`REPEAT_MS`) is ignored (`item-acts.ts`).
 7. Tests: `packages/ui/tests/node-core.test.ts`, `apps/board/tests/item-acts.test.ts`,
    `updates.test.ts`, `every-node-page.test.ts`; `tests/pages/answer-model.spec.ts` (names, no M,
@@ -1278,13 +1177,13 @@ Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-
    ✗ Crossed and "Answered by the agent".
 8. **Replied: with the agent** (with-agent-state task, D-046, api.md 148; the word from
    `cortex-tasks/board/2026-10-16_board-ui_replied-word-and-unclear-marks.md`). A note puts a card that
-   asks with the agent until its answer, and the person reads "Replied": in the footer and name
-   (`STATUS_LABEL.commented`), and in the toolbar, "N open · N replied · N answered · N later", the
+   asks with the agent until its answer, and the person reads "Replied": in its name
+   (`STATUS_NAME.commented`), and in the toolbar, "N open · N replied · N answered · N later", the
    replied chip (title "Replied items", `data-tone='agent'`, `--vb-state-comment` on
    `--vb-state-comment-soft`: APCA Lc 64.0 light, 49.1 dark) only above 0 (`counts().withAgent`, `shell.counts.withAgent`). The gallery's
    matrices name the row "Replied". Agents keep reading `with-agent` (it tells them they owe a
    reply), and the Send message keeps "Waiting for your reply". Tests: `node-core.test.ts`,
-   `answer-model.spec.ts` (footer, name, the header chip at 1600px and at a 1470px toolbar).
+   `answer-model.spec.ts` (name, the header chip).
 9. **Open means "your move".** Open = no ✓, no ✗, no note, no Later; the agent's answer to a note
    makes the card open again (`cardStatus`, D-046).
 
@@ -1298,11 +1197,7 @@ Task `cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md`.
    Lc 76.2, dark 63.0 since point 415, a short label at Lc 45), no hover or press, `aria-disabled` and still in the
    tab order, its title "Nothing new to send". A click, Enter or Space records nothing. The gallery's
    Send row shows it after Waiting. Tests: `tests/pages/send-nothing-new.spec.ts`.
-2. **The "N updates" tab, smaller and quieter** (`packages/ui/src/node/node-steps.css`): lower case,
-   medium weight, 18px tall with 4px sides (the other bottom tabs stay 20px, uppercase; 1px margins
-   keep it centred on the edge beside them), `--vb-ink-subtle` on `--vb-surface-card` (a status
-   word: Lc 76.2 light, 63.0 dark). Hovered or open, its edge takes `--vb-state-context` and its
-   words `--vb-ink`. Still a button with a 24px target, still opens the stepper.
+2. **The "N updates" tab** of this batch became the node's change badge (D-099, § The node's edges item 2).
 
 ## Archive a board (N39)
 
@@ -1362,8 +1257,8 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    from the folded ledger through the action layer's `boardLocked` and sets `data-locked` on the world
    and the status's `locked` (`board/status.ts`). The elements pause their own controls from `BoardState.locked`
    (`NodeState.paused`, `RegionState.paused`; `packages/ui/src/paused/paused.ts` `pauseControls`,
-   `paused.css`): the review buttons, the size control, the note pin, a proposal's Accept and Reject,
-   the layout icons, the widths switch, the grip, Comment, the note's Edit and Remove, Reset places,
+   `paused.css`): a node's answer (the disc or the switch's halves, which keep their look at rest and show the lock for a
+   moment when pressed, point 328), a proposal's Accept and Reject, the layout choices, the widths switch, the grip, Comment, the note's Edit and Remove, Reset places,
    Put container back and Remove access stay in place and in the tab order, `aria-disabled` and
    `data-paused`, in the quiet ink with no hover or press; a pressed answer and the checked layout keep
    their colour; the cog still opens. Send to agent is disabled with the reason as its title
@@ -1374,16 +1269,16 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    asks `refuse` before every line, with the action layer's `passesLock`, so a path the page doesn't
    guard is refused there, and the server refuses it again (423 `locked`).
 5. **The bookmark stays usable** (ruling 4; the flag before D-099 2): the person's private mark changes nothing an agent reads,
-   so its button and B work on a locked board (`passesLock`).
+   so the number and B work on a locked board (`passesLock`).
 6. **The chat**: messages still go; the composer's chip carries no answers on a locked board
    (`#actions` `answersChip`), as the server sends none (api.md 140).
 6a. **A read-only ledger** (D-085, `readOnlyStart`; api.md 173) pauses the same way, with its own reason, "Read-only:
    switch to Editing to change it" (`#actions` `READ_ONLY_PERSON`): `lock-flow.ts` `paused` gives it, so the stage's acting
    handlers, the note bubble and the selection bar's acting commands stop, and the sender refuses every line first
-   (`controller.ts`), the flag too, which a lock lets through. It is not a lock: no "Locked", no `data-locked`. The page
+   (`controller.ts`), the bookmark too, which a lock lets through. It is not a lock: no "Locked", no `data-locked`. The page
    learns it from its reads (`live.ts` `readOnly`), not from the standalone shell; nothing is written, not even a seen
    mark (a card seen is kept in the page). `BoardState.readOnly` carries it for the elements; the header's control
-   and the elements' paused look are § 6, Read-only and Edit (`NodeState.readOnly` pauses the flag too). Tests:
+   and the elements' paused look are § 6, Read-only and Edit (`NodeState.readOnly` pauses the bookmark too). Tests:
    `tests/pages/read-only-writes.spec.ts`, `tests/pages/read-only.spec.ts`.
 7. Tests: `tests/pages/lock-board.spec.ts` (the menu row by mouse and keyboard, "Locked", every
    paused control aria-disabled, a press on a button, a key, a note, a layout and the selection bar
@@ -1456,7 +1351,7 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
    the retire, as the container's retired marker does (`packages/actions/src/answers/retired.ts` `lastShown`, shared with
    `retiredCounts`), then goes to the card there. Without the versionView flag it only says so. A
    card on the board but not drawn (hidden with the answered cards, H): "Card 4 is hidden with the
-   answered cards (H shows them)".
+   answered cards (Shift+H shows them)".
 5. Tests: `apps/board/tests/go-to-card.test.ts` (digits, Enter on a card, an unknown number, a
    retired card, a hidden one; Esc; Backspace; the timed go), `key-help.test.ts`;
    `tests/pages/go-to-card.spec.ts` (1 2 Enter on an off-screen card: selected, focused, panned in,
@@ -1467,7 +1362,7 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
 6. **Finding keeps marks** (`findKeepsMarks` flag, on by default; the maintainer's ruling 322 in
    `cortex-tasks/board/2026-10-28_board-app_search-and-finding/`). Looking for a card is not reading
    it: going to a card by Go to card, the "N new" list, the open list or a chat chip's reveal selects,
-   focuses and shows it but never marks it seen, so its NEW or "N updates" tab, the toolbar's count and
+   focuses and shows it but never marks it seen, so its change badge (New or "N updates"), the toolbar's count and
    its container's pill stay. Every one of those goes through `go-to-card.ts` `to`, which ends in the
    controller's `arrive`: `selection.select(ids, 'only', 'find')` (`selection.ts` `SelectBy`, carried
    on `SelectionChange.by`), and `update-flow.ts` `saw` reads it. The conditions table states which
@@ -1526,25 +1421,16 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
 What an app is, its folder, the panel protocol and the limits are [apps.md](./apps.md); this
 section is how the board draws one. Two patterns share the work.
 
-1. **The node pattern draws the card.** For kind `app`, `node-template.ts` `nodeTemplate` draws,
-   under the title, the panel slot (`appSlot`) in place of the Markdown body: the frame and the state
-   view; and in the footer, after the kind icon, the app status (`appStatus`, card-polish FE_01): Allow,
-   or "Allowed ▾" and its one-item menu, Stop app. An app card has a footer even without a number,
-   for Allow. An app card takes no size control (whatever `sizeControl` says) and no status word (it
-   tells, D-045). With the appCards flag off the page passes `{ appCards: false }` and the card is a
-   plain one saying `APPS_OFF` (ruling 13). **The window look** (card-polish FE_04; the `appTitle`
-   flag, on; the page sets `data-app-title` on the world, the gallery on its `main`): the card reads
-   as the app's window. Its title is drawn in no state (visually hidden, still in the card's name):
-   the panel meets the top border, its corners following the border's curve, under the tabs; a
-   state without a panel says what is wrong in its own head; zoomed far, the frame's placeholder
-   shows the app's title. The footer is the window's bar: a tint of the kind's colour under a
-   hairline in it, the card's border a step stronger in it, and between the app status and the quick
-   actions the app's name (`appName`, `AppCardView.name`, written in place by `node-app-apply.ts`
-   `applyApp`), one line taking the room left, cut with "…" and whole in a tip while cut, on hover of
-   the name or while keyboard focus is in the footer, not while the app's menu is open
-   (`bindAppNameTip`, the shared hover tip). The title takes no room, so no state moves the card and
-   the bar's height never changes (`app-states.spec.ts` "the window look …", with a cut name beside
-   Allow on a 282px card; "with the appTitle flag off …"). The state view never draws past the panel's
+1. **The node pattern draws the card.** For kind `app`, `node-template.ts` `nodeTemplate` draws a window
+   (`node-window.ts` `windowMarkup`, § The app window): a thin title bar and, under it, the panel slot (`appSlot`) in
+   place of the Markdown body: the frame and the state view. The bar holds the app status (`appStatus`, card-polish
+   FE_01): Allow, or "Allowed ▾" and its one-item menu, Stop app. An app card takes no width tier and no status (it
+   tells, D-045). With the appCards flag off the page passes `{ appCards: false }` and the card is a plain node saying
+   `APPS_OFF` (ruling 13). The window has no title over the panel in any state (the card's name still says it): the
+   panel meets the bar; a state without a panel says what is wrong in its own head; zoomed far, the frame's placeholder
+   shows the app's title. The app's name sits in the bar (`AppCardView.name`, written in place by `node-app-apply.ts`
+   `applyApp`), one line taking the room left, cut with "…" and whole in a tip while cut (`bindAppNameTip`, the shared
+   hover tip). No state moves the card and the bar's height never changes. The state view never draws past the panel's
    room: it scrolls when the panel is too small for it (`node-app.css` `.vb-app-state`).
 2. **Its size.** `app-frame-core.ts` `panelSize` is the panel's size: the agent's `app.w`/`app.h`,
    else the manifest's `size`, else the default, held to `APP_SIZE`. `node-app-apply.ts` sets it as
@@ -1554,7 +1440,7 @@ section is how the board draws one. Two patterns share the work.
    the title, tags and notes keep theirs; `app-cards.spec.ts` "end to end: …" and
    `app-states.spec.ts` "every state the app host gives…" check its sides meet the border within
    1px). The slot is the panel's size in every state (`node-app.css`: a state without a panel hides
-   the frame and keeps its room, and draws its view over it), and Allow is in the footer, so a state
+   the frame and keeps its room, and draws its view over it), and Allow is in the bar, so a state
    change, or the frame coming and going, never moves the card: one size for every state
    (`tests/pages/app-states.spec.ts` "every state the app host gives…", "loading: …"), and Allow, a
    code change and Stop app keep it (`app-follow.spec.ts` "Allow, a code change and Stop app leave
@@ -1573,19 +1459,19 @@ section is how the board draws one. Two patterns share the work.
    | State | Shows |
    |---|---|
    | `checking` | "Loading…" in place of the panel |
-   | `needs-approval` | the panel; Allow in the footer, its tip "Not allowed yet" |
-   | `changed` | the panel; Allow in the footer, its tip "Code changed" |
-   | `ready` | the panel; "Allowed ▾" in the footer once the person allowed this version, else nothing |
+   | `needs-approval` | the panel; Allow in the bar, its tip "Not allowed yet" |
+   | `changed` | the panel; Allow in the bar, its tip "Code changed" |
+   | `ready` | the panel; "Allowed ▾" in the bar once the person allowed this version, else nothing |
    | `missing` | "App <id> not found" and Check again in place of the panel |
    | `invalid` | "This app has problems", the problems (a list that scrolls, a tab stop) and Check again |
    | `broken` | "This app stopped" and Restart |
    | `past` | the app's title and "Apps don't run in past versions." |
 
    The words are in `packages/ui/src/words/node-app.ts`, laid out by `node-app.ts` `COPY`; `appView`'s `control` (`allow`, `allowed` or `none`) says
-   which footer control shows, and `reason` is Allow's tip. `node-template.ts` `appStateMarkup` draws
+   which bar control shows, and `reason` is Allow's tip. `node-template.ts` `appStateMarkup` draws
    the view. `node-app-apply.ts` `applyApp`, from `vb-node.ts` `update`, applies it in place (the view
-   rebuilt only when it changed, the footer's control shown and named, its menu closed when
-   "Allowed ▾" hides, the footer's name) and unloads the frame in any state without a panel.
+   rebuilt only when it changed, the bar's control shown and named, its menu closed when
+   "Allowed ▾" hides, the bar's name) and unloads the frame in any state without a panel.
 4. **Its buttons** carry `data-app-act` for the page's delegated listener: `app-allow` and
    `app-revoke` (the action layer's acts: the person only, confirmed by the page) and `retry`
    (Check again, Restart: the page reads list_apps again). Each is named with the app; Allow's name
@@ -1593,9 +1479,9 @@ section is how the board draws one. Two patterns share the work.
    "Allowed ▾" (`data-app-menu`, "App allowed: Calculator") is a menu button: the page opens its menu
    upward over the panel, in the board's menu look, focuses Stop app ("Stop app: Calculator") and
    handles its keys with `#ui` `menuKeydown` (`apps/app-cards.ts` `createAppMenus`; Esc gives
-   focus back to the button). While an act is in flight its footer control is `aria-busy` (loading)
-   and when it is refused `data-error`, until the next press. The footer's controls and the state
-   view's buttons hide at far zoom as the quick actions do. A state change that takes the focused
+   focus back to the button). While an act is in flight its bar control is `aria-busy` (loading)
+   and when it is refused `data-error`, until the next press. The bar's controls (Allow, the drawer arrow, Open) and
+   the state view's buttons hide at far zoom (`node-app.css`, `[data-zoom='far']`). A state change that takes the focused
    control away leaves focus on the card (`node-app-apply.ts` `applyApp`; `app-follow.spec.ts` "a state
    change that takes the focused button away leaves focus on the card"). Stop app, then Allow again:
    `app-cards.spec.ts` "Stop app (in "Allowed ▾"'s menu) asks first…".
@@ -1704,10 +1590,9 @@ section is how the board draws one. Two patterns share the work.
      the same way, from the served project's `.visionboard/apps/calculator/`.
 9. **Kept true by**: `packages/ui/tests/app-frame-core.test.ts` and `app-frame-limits.test.ts`
    (every protocol rule, with fake windows: `app-frame-harness.ts`), `packages/ui/tests/node-app.test.ts`
-   (every state's view, words and markup), `node-template.test.ts` (the footer), and the gallery
-   (`apps/board/src/gallery/app-frame-section.ts`: the frame unloaded and loading, an app card in
-   every state, the footer's app status loading, refused and with its menu open, the window look with
-   a cut name and its tip, the flag off), which `tests/pages/gallery.spec.ts` checks has samples. The element
+   (every state's view, words and markup), `node-window.test.ts` (the bar), and the gallery
+   (`apps/board/src/gallery/app-frame-section.ts`: the frame unloaded and loading, an app window in
+   every state, the bar's app status loading, refused and with its menu open, a cut name and its tip, the flag off), which `tests/pages/gallery.spec.ts` checks has samples. The element
    and the page's part in a browser: `tests/pages/app-cards.spec.ts` (end to end, the keyboard, a
    code change, Stop app, the flag off), `app-states.spec.ts` (every state, on and off screen, far
    zoom, a past version), `app-safety.spec.ts` (opaque origin, CSP, other windows' messages) and
@@ -1812,8 +1697,9 @@ the gallery shows its section only with the flag on).
 
 ## The node's edges (D-099, D-100; node overhaul FE_01)
 
-Behind the `nodeEdges` flag (off by default until T_04). The page passes `render(n, { edges, icons })`: `edges` is
-the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it holds. The look is
+Every node is drawn this way (D-099; node overhaul T_04 made it the only node). The page passes `render(n, { edges,
+icons })`: `edges` is the board's skin row from `SKIN_DEFS` (the default skin's when left out), `icons` the project's
+icon library it holds. The look is
 `design/mockups/node-skins/default-skin-*.html` and the states `design/mockups/node-states/`, as PLAN.md's
 "Design review of DESIGN_01" rules them.
 
@@ -1822,18 +1708,17 @@ the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it hol
    name (`node-edges.ts` `edgesMarkup`); the element sets `data-answer-at` and `data-marks-at` from it, and CSS places
    by those. Every row offers the same actions: the menus never read the skin.
 2. **The marks** (`node-marks.ts` `nodeMarks`, carried as `NodeState.marks`; pure): the number is the Bookmark toggle
-   (aria-pressed; its name stays put, as the flag button's did); the answer is none on a node that only tells, else
+   (aria-pressed; its name stays put); the answer is none on a node that only tells, else
    waiting, ticked or crossed, with an open proposal's mark (`proposed`, the dashed ring; an out-of-date one is no
    ring); the change badge is New, "N updates" or, once seen, a quiet "vN" from v2 (`CardConditions.ver`, the
    node's latest version); the notes mark counts every note and reply, is filled while a reply is unseen and shows two
    bubbles for a note on several nodes; Awaiting is a quiet tab. Keys come from the action registry (`MARK_KEYS`);
    History's H is `HISTORY_KEY`, since history is no act.
-3. **The template** (`node-edges.ts`): no footer, no notes block, no bottom tabs. In visual order, so reading and Tab
+3. **The template** (`node-edges.ts`): no footer, no notes on the node, no bottom tabs. In visual order, so reading and Tab
    order follow it: the number, the kind tab (or, for a node with an icon, a grip and the kind's word over the title),
    the disc on a node that asks, the body (a written handover is a section of it), the badge, Awaiting and the notes
    mark on the bottom edge. Items also get the history box, holding the step section and stepper on top (planner's call
-   9), which the badge controls, and the proposal box. An app card keeps today's card (FE_08). With `edges` unset the
-   markup is today's, byte for byte.
+   9), which the badge controls, and the proposal box. An app card is a window (§ The app window).
 4. **The element** (`vb-node.ts`, `node-edges-apply.ts` `applyMarks`, `applyTone`): applies the marks in place; sets the
    tone as `data-vb-tone` (the name or `hue`) and `--vb-tone-h` through CSSOM from `toneView`'s checked value, never a
    style attribute. It binds no popover on the marks: the page opens the history and proposal boxes and the menus
@@ -1859,29 +1744,29 @@ the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it hol
    ring is `--vb-focus-edge` and shows after Tab only.
 8. **Kept true by**: `packages/ui/tests/icon-set.test.ts` (every name drawn, every drawing passes the check, a library
    icon from its paths, missing, failing and too many draw nothing), `node-marks.test.ts` (every answer, badge and notes
-   state; the tone; `nodeState.marks`), `node-edges.test.ts` (off is today's card; the order of the marks; the tile;
+   state; the tone; `nodeState.marks`), `node-edges.test.ts` (the order of the marks; the tile;
    no tone in the markup; the three menus; every skin offers the same actions), `node-paused.test.ts` (the marks
    pause). In a browser, `tests/pages/node-edges.spec.ts` (the element builds the template's markup; the tone through
    CSSOM; Tab order, names and hit area; the ring after Tab only, in each theme; axe; screenshots light and dark) and
-   the gallery's "The node's edges" section (`apps/board/src/gallery/edges-section.ts`, `?flags=nodeEdges`).
+   the gallery's "The node's edges" section (`apps/board/src/gallery/edges-section.ts`).
 
 ### On the board (node overhaul FE_02)
 
 The page wires the marks (`apps/board/src/board/controller/node-edges.ts` `createNodeEdges`; `cards/mark-flow.ts`, which
 hears the presses; `cards/mark-acts.ts`, `mark-menus.ts`, `mark-boxes.ts`, `mark-tips.ts`, `mark-place.ts`, loaded once
-the board is idle or on the first press). Behind `nodeEdges`; the skin behind `skins`.
+the board is idle or on the first press).
 
-1. **The root**: `data-vb-edges` on the board's root with `nodeEdges` (Decision's fuchsia, `tokens.css`), and
-   `data-vb-skin` with `skins`, from the board's skin (`skinOf`). A new skin draws every node again in its row.
+1. **The root**: `data-vb-skin` on the board's root, from the board's skin (`skinOf`). A new skin draws every node
+   again in its row. Decision's fuchsia is the token's own value (`tokens.css` `--vb-kind-decision`, D-100 4).
 2. **The number**: a click toggles Bookmark at once (`bookmark` or `unbookmark`); held 400 ms (`HOLD_MS`; a long press
    on touch) it opens the number's menu instead and bookmarks nothing; the menu key or Shift+F10 on it opens the menu.
-   B on a node bookmarks it (Shift+F, the flag's key, is retired).
+   B on a node bookmarks it.
 3. **The disc**: a click opens the answer picker to its right (`placeMark` `right`, flipped left when the stage has no
    room), a second click closes it, so a double click never answers; Left and Right move along it. Tick and Cross are
    the item acts (`item-acts.ts`: its 400 ms guard; a lit answer pressed again clears it). A disc whose node has a
    proposal opens the proposal box. Nothing opens on hover.
 4. **History and notes**: the badge, or H on a node (the focused one, else the one selected; FIX_01: Hide answered is
-   Shift+H with the edges, `input/keys.ts`, `key-help.ts` `hideKey`), opens the history box (its stepper opens with it,
+   Shift+H, `input/keys.ts`, `key-help.ts` `HIDE_KEY`), opens the history box (its stepper opens with it,
    `update-flow.ts`); the notes mark, or C, the conversation. Esc gives the focus back to the mark that opened a menu or a
    box (the node, after C); an Esc closes the newest layer open only (`base/layer.ts` `dismissable`). A and X answer
    as the disc does: on a locked board, a past version or a read-only ledger the lock on the mark for a moment, no toast. A box with no room on the node's right opens on its left.
@@ -1900,7 +1785,7 @@ the board is idle or on the first press). Behind `nodeEdges`; the skin behind `s
    under its note (`data-unseen` on `.vb-nblock-reply`, tracker N47). Nothing is written.
 9. **The icon library** (`cards/icon-library.ts`): `list_icons` with `paths` when a ledger opens and when an `icon` line
    arrives; the nodes naming a library icon draw again. A node with an icon is dragged by its grip (`pointer.ts` `HANDLE`).
-10. **The skin** (skins flag): the "⋯" menu lists each skin (`menuitemradio`, the board's ticked) and writes the `skin`
+10. **The skin** (D-100 2): the "⋯" menu lists each skin (`menuitemradio`, the board's ticked) and writes the `skin`
     act; paused, with the reason, on a read-only ledger or a past version.
 11. **Kept true by**: `apps/board/tests/mark-place.test.ts`, `container-seen.test.ts`, `item-acts.test.ts` (a press
     says what it came to), `key-help.test.ts` (B, H, Shift+F10), `bookmark-flow.test.ts` (a format-19 ledger's flags
@@ -1940,29 +1825,29 @@ and axe at 100% in both skins). Below 100% page specs excuse axe's `target-size`
 
 ## Flow branching and direction (PLAN decisions 19 and 25, D-100 5; node overhaul BE_01)
 
-Two flags, off by default until T_04: `flowBranches` and `flowDirection` (`packages/format/src/flags.ts`). The layout
-stays a pure function: both arrive as inputs (`LayoutOptions.branching`, `LayoutOptions.directions`), never a page read.
+No flag since node-overhaul T_04. The layout stays a pure
+function: a container's direction arrives as an input (`LayoutOptions.directions`), never a page read.
 
-1. **Branches on rows** (`flowBranches`, `packages/layout/src/modes/branches.ts` `branchRows`): a flow is drawn as
+1. **Branches on rows** (`packages/layout/src/modes/branches.ts` `branchRows`): a flow is drawn as
    chains, each on one row from its first card to its last. The main line follows each card's first link in card order;
    a branch takes the nearest row to the card it forks from (below first, then above) that is free over its whole run;
    a branch that rejoins keeps its row up to the column before the card it rejoins, so it comes back with one link; a
    run that skips columns keeps its row empty there, so its long link runs straight. Cards not linked to each other are
    separate bands of rows. `flow.ts` keeps the rows unless their links, routed as the board routes them, cross more than
    the stacked flow's (up to `ROUTE_WEIGH`, 30 links; above it, straight strokes), so branching never adds a crossing.
-2. **A linked row or column** (`modes/grid.ts` `row`, `column`, `plainChain`): with `flowBranches`, a `row` whose links
+2. **A linked row or column** (`modes/grid.ts` `row`, `column`, `plainChain`): a `row` whose links
    are more than a chain in card order (a link between two cards that are not neighbours in card order) is laid out as
-   a flow across, a `column` as a flow down. No links, or a plain chain, draws exactly as before.
-3. **Down** (`flowDirection`, `flow.ts` `down`): a flow across on cards turned a quarter, turned back; layers top to
+   a flow across, a `column` as a flow down. No links, or a plain chain, stays one line in card order.
+3. **Down** (`flow.ts` `down`): a flow across on cards turned a quarter, turned back; layers top to
    bottom `COL_GAP` apart, cards in a layer side by side `GAP` apart; under `match`, every card the widest card's width;
    cells read as drawn. `ModeOutput.down` marks it, `BoardLayout.downward` names those containers, and the router
    (`routeLinks(links, boxes, groups, downward)`) leaves and enters such cards by the bottom and top first
    (`ports.ts` `sidesFor`), with ports kept off the middle fifth of the side, where the kind tab sits (`offCentre`). A
    drag reroutes with the layout's `downward` too (`input/wiring.ts`, `selection/container-drag.ts`).
 4. **Which way** (`directionOf`, api.md 189): the page passes each container's direction from `directionOf` on the
-   shown state (`canvas/draw.ts` `DrawDeps.direction`); `show_layout` reads the same fold with the engine's flags
+   shown state (`canvas/draw.ts` `DrawDeps.direction`); `show_layout` reads the same fold
    (`server/engine/reads.ts` `showLayout`), so its answer stays true for the picture. The layout cache keys a container
-   on its direction and on `branching` (`canvas/layout-cache.ts`).
+   on its direction (`canvas/layout-cache.ts`).
 5. **The board's choice** (`chrome/FlowMenu.svelte`, in the header's end group, `ToolbarEnd.svelte`): a button with its words
    at full ("Flows: Auto"; its icon alone on a narrow bar), its Flows menu, Flows: Across, Flows: Down and
    Flows: Auto (`menuitemradio`; choosing the ticked one closes the menu and writes nothing; from the header's half form
@@ -1971,20 +1856,21 @@ stays a pure function: both arrive as inputs (`LayoutOptions.branching`, `Layout
    clears the choice, giving back each container's own. Paused, with the reason, on a read-only ledger or a past
    version. A container's own choice is FE_07's layout control. Words: `words/toolbar.ts` `directionName`,
    `directionTip`, `directionTitle`.
-6. **Room for edge marks** (`nodeEdges`, `packages/layout/src/types.ts` `EDGE_ROW_GAP` = 40): while nodes draw their
-   marks on their edges (a skin whose marks are `edges`), the gap under a node is at least 40px, so its bottom marks
-   (11px below) and the next node's number, kind tab and disc (14px above) stay clear; side by side stays `GAP`.
-   Off, the gap is as before.
-7. **Kept true by**: `packages/layout/tests/flow-branches.test.ts` (the maintainer's example before and after, in row,
-   column and flow, both directions; flags off unchanged; down is across turned; `structureOf` agrees; seeded boards
-   with no overlap, no line under a card off the fallback, deterministic; never more crossings; the edge gap),
+6. **Room for edge marks** (`packages/layout/src/types.ts` `EDGE_ROW_GAP` = 40): while nodes draw their marks on their
+   edges (a skin whose marks are `edges`, `canvas/draw.ts`), the gap under a node is at least 40px, so its bottom marks
+   (11px below) and the next node's number, kind tab and disc (14px above) stay clear; side by side stays `GAP`. A plate
+   skin keeps the row gap as it is.
+7. **Kept true by**: `packages/layout/tests/flow-branches.test.ts` (the maintainer's example in row, column and flow,
+   both directions; a plain chain stays one line; down is across turned; `structureOf` agrees; seeded boards with no
+   overlap, no line under a card off the fallback, deterministic; the edge gap; `flow.ts` `across` keeps the rows only
+   while their routed links cross no more than stacked),
    `layout.timing.ts` (1,000 cards and 1,200 links with branches, across and down, under 100 ms),
    `apps/board/tests/flow-direction-layout.test.ts` (the precedence as the layout sees it, another page draws the same,
    the cache), `api-layout-direction.test.ts` (`show_layout` both ways); in a browser, `tests/pages/flow-direction.spec.ts`
    (the header's Flows menu, the act, the redraw, read-only, branching rows, the edge gap, the gallery's section, axe dark and
-   light).
+   light). The routing seed 174 of `routing.test.ts` is a known shared stretch (`SHARED_KNOWN`), a follow-up for the router.
 
-## The selection bar with the node's edges, and Z (node overhaul FE_06)
+## The selection bar's node commands, and Z (node overhaul FE_06)
 
 The rulings are `cortex-tasks/board/2026-11-16_board-ui_node-overhaul/PLAN.md` decision 9 (D-099) and D-101.
 
@@ -1994,8 +1880,9 @@ The rulings are `cortex-tasks/board/2026-11-16_board-ui_node-overhaul/PLAN.md` d
    `zoomTo`); with no selection the title line's container is zoomed as before. Pinned by
    `tests/pages/zoom-selection.spec.ts` (Shift-click, Cmd-click, Ctrl-click and a lasso, each with focus on a node, on a
    mark, in the bar and on a container's title line, and across containers) and `tests/pages/container-zoom.spec.ts`.
-2. **Three more commands** with `nodeEdges`, rows of the one table (`commands.ts` `EDGE_COMMANDS`, `selectionButtons`'
-   `edges` argument; words in `words/commands.ts`; key help lists them): **Bookmark all** (Shift+B; reads "Remove
+2. **Three more commands**, rows of the one table and of `SELECTION_COMMANDS` (`commands.ts`; `selectionButtons`'
+   `marks` argument says whether Bookmark all is offered, the cardBookmark flag, and what it reads; words in
+   `words/commands.ts`; key help lists them): **Bookmark all** (Shift+B; reads "Remove
    bookmarks" when every numbered selected node has one), **Save for later** (Shift+L) and **Width** (Shift+W, a list: S, M,
    L, Auto). They sit before Zoom. Each writes one act per selected node through the one sender, drawn once
    (`selection/bar-acts.ts` `createBarActs`: `bookmark`/`unbookmark`; `Moves.saveLater`, the Move to list's Later plan,
@@ -2003,18 +1890,18 @@ The rulings are `cortex-tasks/board/2026-11-16_board-ui_node-overhaul/PLAN.md` d
    for later are skipped, and none being able says so. A locked board disables Save for later and Width, not Bookmark all
    (the bookmark is the person's private mark). Width's list is the Move to list (`move-menu.ts`) with other rows.
    "Match widths" stays a container tool.
-3. **Comment on the selection** (`notes.ts` `group`): with `nodeEdges` it opens FE_03's conversation box
+3. **Comment on the selection** (`notes.ts` `group`): it opens FE_03's conversation box
    (`note-box.ts` `boxView`, mode `conversation`, `group` set, several `anchor`s), titled "N cards", with Ask now beside
    Add note by the same `askNow` path; the box is placed by `placeBeside` over the union of the nodes' reach (`nodeReach`), its
    arrow at the centre of the nodes' union. Add note leaves one note on the group for the board's Send.
 4. **Place.** `placeBar` as before (centred above the bounding box at one size, below when there is no room, inside the
-   stage, clear of a container's title line). With `nodeEdges` the bar also steps aside, hidden, while a menu or box of a node
+   stage, clear of a container's title line). The bar also steps aside, hidden, while a menu or box of a node
    (`.vb-mark-menu`, an open `.vb-card-pop`) or the conversation box is open (`selection-flow.ts` `covered`), and comes back
    when it closes. Tests: `tests/pages/selection-bar-edges.spec.ts`, `apps/board/tests/commands.test.ts`, `key-help.test.ts`.
 ### The Command Lens skin (node overhaul FE_04)
 
 The second row of `SKIN_DEFS`, `command-lens` (`answer: 'switch'`, `marks: 'plate'`), and its token values
-(`packages/tokens/src/skins.css`). Behind `skins` with `nodeEdges`. The look is
+(`packages/tokens/src/skins.css`). A board in it sets `data-vb-skin="command-lens"` on its root. The look is
 `design/mockups/node-skins/command-lens-skin-*.html` and `design/mockups/node-states/command-lens-*`.
 
 1. **By the row, never the name** (`node-edges.ts` `edgesMarkup`): with `marks: 'plate'` the number, the kind (its word
@@ -2042,12 +1929,12 @@ The second row of `SKIN_DEFS`, `command-lens` (`answer: 'switch'`, `marks: 'plat
    glass at their tiers, light and dark, both skins); in a browser, `tests/pages/command-lens.spec.ts` (the element
    builds the template's markup; the same actions as the default skin, node by node; the proposal; Tab order, names
    and the skin's rings; axe; screenshots light and dark) and the gallery's "The Command Lens skin" section
-   (`apps/board/src/gallery/command-lens-section.ts`, `?flags=nodeEdges,skins`).
+   (`apps/board/src/gallery/command-lens-section.ts`).
 
 ## The app window (D-099 5; node overhaul FE_08)
 
-Behind `appWindow` with `nodeEdges` (both off by default until T_04); Open behind `appStage`. The page passes
-`render(n, { edges, appWindow: true, appStage })` (`canvas/draw.ts`, `controller.ts`). The look is
+Every app card is a window while the appCards flag is on (D-099 5; T_04 made it the only app card). The page passes
+`render(n, { edges, appCards })` (`canvas/draw.ts`, `controller.ts`). The look is
 `design/mockups/node-states/default-app-*.html` and `command-lens-app-*.html`; what an app is stays [apps.md](./apps.md).
 
 1. **One title bar** (`packages/ui/src/node/node-window.ts` `windowMarkup`, `node-template.ts` `isWindow`): in visual and
@@ -2057,9 +1944,9 @@ Behind `appWindow` with `nodeEdges` (both off by default until T_04); Open behin
    reader, so the name keeps the room; `tests/pages/app-window.spec.ts`, "a 360px window"), Allow or "Allowed ▾" (today's `appStatus`, its menu opening under the bar), the drawer arrow
    (`data-drawer`) and Open (`data-app-act="stage"`, a toggle). Under the bar everything is the app's: today's slot
    (`appSlot`) and its state views, every `APP_CARD_STATES` state. No footer, no kind tab, no disc, no notes under the
-   app, no coloured border: the window's border is the strong line, selected the ink. The node keeps `data-edges`, so
-   the marks, menus, keys and right-click work as on any node (`cards/mark-flow.ts`); its menus have no Save for later
-   (`node-menus.ts` `later`; T_04 changes the node type's own list, so L still works until then).
+   app, no coloured border: the window's border is the strong line, selected the ink. The node carries `data-edges`, so
+   the marks, menus, keys and right-click work as on any node (`cards/mark-flow.ts`); it offers no Save for later
+   (`node-menus.ts` `later`; D-099 5, `NODE_TYPES.app`).
 2. **By the row, never the name**: the bar is a plate (`vb-node-plate vb-win-bar`), so with `marks: 'plate'` it is
    Command Lens's light plate (an app only tells) and in every skin it is the drag handle (`pointer.ts` `HANDLE`). Its
    look is `node-app.css` (§ "An app node as a window"), keyed by `data-window` and `data-marks-at`, tokens only.
@@ -2072,19 +1959,19 @@ Behind `appWindow` with `nodeEdges` (both off by default until T_04); Open behin
 4. **The drawer** (`apps/board/src/board/notes/app-drawer.ts` `createDrawers`): the node's conversation box (FE_03's
    `<vb-note-bubble>` in conversation mode and `note-box.ts`: its tabs, Add note and Ask now), one per open drawer,
    docked in the window's pane at its height, with no head, arrow or shadow of its own. The arrow shows and hides it;
-   C, a note or a reply on the node show it (`notes.ts` `press`, `talk`). Open or closed is kept per board and node for
+   C, the notes mark or a history row on the node show it (`notes.ts` `press`, `show`). Open or closed is kept per board and node for
    the page's session; `app-cards.ts` reads it into the card's conditions (`drawer`). Hiding a drawer with words typed
    asks first. Moving the box never touches the frame, so the panel never reloads.
-5. **On stage** (Open, `appStage`; `app-frame-stage.ts` `holdStage`, `vb-app-frame.ts` `stage(host)`): the whole window,
+5. **On stage** (Open; `app-frame-stage.ts` `holdStage`, `vb-app-frame.ts` `stage(host)`): the whole window,
    bar and drawer, goes into the top layer as a manual popover and fills the page; the frame never leaves its place
    in the page, so the panel never reloads, and a change of its size is told to the panel. Focus is held inside (a focus
    that lands outside comes back, at the start, or the end after Shift+Tab) until Open again or Esc, then goes to the
-   node. Open is pressed (`aria-pressed`) meanwhile. Without `appWindow` the frame alone goes, as the spike did.
-6. **Kept true by**: `packages/ui/tests/node-window.test.ts` (off is today's card byte for byte; the bar in order; no
-   footer, kind tab, notes or disc; Open only with appStage; the plate; no Save for later; the drawer's state);
+   node. Open is pressed (`aria-pressed`) meanwhile. The frame never goes on stage alone: its host is always the window.
+6. **Kept true by**: `packages/ui/tests/node-window.test.ts` (the bar in order; no footer, kind tab, notes or disc;
+   Open; the plate; no Save for later; the drawer's state);
    `packages/ui/tests/app-frame-note.test.ts` (the panel's note and the reply); in a browser,
    `tests/pages/app-window.spec.ts` (both skins, light and dark, axe; the drawer moving the neighbour and back, the
    panel never reloaded, the drawer kept through a redraw; Add note, the agent's reply and the panel's raised note in
    one thread; the stage holding focus, Esc, focus back on the node; no Save for later) and
    `tests/pages/app-window-stuck.spec.ts`; the gallery's "The app window" section
-   (`apps/board/src/gallery/app-window-section.ts`, `?flags=nodeEdges,skins,appWindow`).
+   (`apps/board/src/gallery/app-window-section.ts`).

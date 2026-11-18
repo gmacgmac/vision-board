@@ -1,5 +1,5 @@
-// Gallery entry for the agent's proposals (proposals flag, FE_01, D-018): the PROPOSAL tab at rest,
-// the card popover open on an open proposal, on an out-of-date one and on two proposals on one card,
+// Gallery entry for the agent's proposals (proposals flag, FE_01, D-018): the disc's dashed ring at rest,
+// the proposal box open on an open proposal, on an out-of-date one and on two proposals on one card,
 // the notice over the board and its pill, and Accept all's list. Shown only with the flag on, so ?flags=-proposals
 // draws the gallery as it was. The cards are real <vb-node> elements updated with `nodeState` and the
 // fixture ledger's proposals, read through the conditions table as the board reads them; the open
@@ -26,8 +26,10 @@ function card(n: ViewNode, fx: Fixture, open: boolean): VbNodeElement {
   node.render(n, ownIds());
   node.update(nodeState(n, state, undefined, false, { proposals: rows.filter((r) => r.n === n.n) }));
   if (open) {
-    node.querySelector('[data-pop="proposal"]')!.toggleAttribute('data-open', true);
-    node.querySelector('[data-tab="proposal"]')!.setAttribute('aria-expanded', 'true');
+    const pop = node.querySelector<HTMLElement>('[data-pop="proposal"]')!;
+    pop.toggleAttribute('data-open', true);
+    pop.dataset.side = 'right';
+    node.querySelector('[data-mark="answer"]')?.setAttribute('aria-expanded', 'true');
   }
   return node;
 }
@@ -65,10 +67,10 @@ export function proposalsSection(fx: Fixture): HTMLElement {
   const open = cardList('Cards with their proposal box open', ...nodes.slice(0, -1).map((n) => card(n, fx, true)));
   open.classList.add('g-tips', 'g-tips-stack');
   box.append(heading,
-    el('p', 'g-desc', 'An agent proposes ✓ (Check) or ✗ (Cross) on a card, say from an email the person pasted into the chat; only the person decides. The card gets a tab on its bottom edge and never changes size; the tab opens a box beside it.'),
+    el('p', 'g-desc', 'An agent proposes ✓ (Check) or ✗ (Cross) on a card, say from an email the person pasted into the chat; only the person decides. The node\'s disc wears a dashed ring and the node never changes size; the disc opens a box beside it.'),
     meta,
-    group('The tab', 'PROPOSAL on the bottom edge. Hover or keyboard focus shows the box; a click or Enter opens it and moves focus into it; Esc or a press outside closes it and focus goes back to the tab.', cardList('A card with a proposal', ...rest)),
-    group('The box', 'Who proposes, what, from where and when, then Reject and Accept. Out of date (the card changed since): the tab says so, the box says why, and Accept can\'t be pressed; Reject still clears it. Several on one card: newest first.', open),
+    group('The disc', 'A dashed ring on the disc while a proposal waits (Command Lens: a proposal chip in the plate and the outlined half). A click or Enter on it opens the box and moves focus into it; nothing opens on hover; Esc or a press outside closes it and focus goes back to the disc.', cardList('A card with a proposal', ...rest)),
+    group('The box', 'Who proposes, what, from where and when, then Reject and Accept. Out of date (the card changed since): the box says why, and Accept can\'t be pressed; Reject still clears it. Several on one card: newest first.', open),
     group('The notice', 'Over the board\'s top left while any proposal is open, see-through, and it moves nothing: Review opens the first card\'s box; Accept all lists what it applies first; Hide or Esc collapses it to the pill, kept for this viewer.', notice(fx, atRest, false)),
     group('The pill', 'The notice hidden, in the same place: the count, kept up to date. A press brings the notice back.', notice(fx, atRest, true)),
     group('Accept all', 'The confirm step: the newest proposal on each card that is not out of date, in card order; the rest are not included, with why.', acceptAll(fx)));

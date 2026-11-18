@@ -70,7 +70,7 @@ export const cardWidths = (w: string | number): string => `Card widths: ${w}`;
 // ---- region-fresh.ts
 export const and = ' and ';
 
-// ---- The one layout control (layoutControl flag, node-overhaul FE_07: region-template.ts, region-core.ts)
+// ---- The one layout control (PLAN decision 20, node-overhaul FE_07: region-template.ts, region-core.ts)
 /** The control's name: what it is and what is chosen, "Layout: Flow" or, on a flow, "Layout: Flow, down". */
 export const layoutChosen = (layout: string, direction?: string): string => (direction ? `Layout: ${layout}, ${direction}` : `Layout: ${layout}`);
 export const layoutMenuFor = (esc: string): string => `Layout for ${esc}`;

@@ -1,7 +1,7 @@
 // `show_layout` in both directions (BE_01 step 6, api.md 133, 189): the server works the answer out from the same
-// fold the page draws from (`directionOf`), so with flowDirection and flowBranches on a flow the agent drew `down`
-// answers down, the person's board-wide Across turns it across, and Auto gives the agent's back; the cells always
-// agree with `structureOf` called as the page lays the container out. Flags off, the answer is as before.
+// fold the page draws from (`directionOf`), so a flow the agent drew `down` answers down, the person's board-wide
+// Across turns it across, and Auto gives the agent's back; the cells always agree with `structureOf` called as the
+// page lays the container out, branches on their own rows.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Direction } from '#format';
@@ -24,7 +24,7 @@ const ITEMS = [
 ];
 
 before(async () => {
-  on = await startBoard({ flags: { flowDirection: true, flowBranches: true } });
+  on = await startBoard();
   A = await on.join('Line chat');
   await on.ok('write_board', { board: 'line', body: { items: ITEMS } }, { as: A.client });
 });
@@ -38,7 +38,7 @@ function expected(h: Harness, direction: Direction) {
   const s = h.ledger.state();
   const view = placedView(boardView(s, 'line'), boardState(s, 'line'));
   const region = view.regions.find((r) => r.id === 'line')!;
-  const out = structureOf(region, view.nodes.filter((n) => n.region === 'line'), view.links, 'flow', undefined, { direction, branching: true });
+  const out = structureOf(region, view.nodes.filter((n) => n.region === 'line'), view.links, 'flow', undefined, { direction });
   return out.cards.map(({ id, ...cell }) => ({ n: Number(id), ...cell }));
 }
 
@@ -54,16 +54,4 @@ test('the agent\'s down answers down; the person\'s Across turns it; Auto gives 
   assert.deepEqual(across.cards.map((c: any) => ({ n: c.n, column: c.row, row: c.column })), down.cards, 'across is down turned');
   await act('auto');
   assert.deepEqual((await layout(on, A)).cards, down.cards);
-});
-
-test('flags off, the same container answers as before: across, the fork stacked', async () => {
-  const off = await startBoard();
-  try {
-    const B = await off.join('Line chat');
-    await off.ok('write_board', { board: 'line', body: { items: ITEMS } }, { as: B.client });
-    const s = off.ledger.state();
-    const view = placedView(boardView(s, 'line'), boardState(s, 'line'));
-    const plain = structureOf(view.regions[0]!, view.nodes, view.links, 'flow');
-    assert.deepEqual((await layout(off, B)).cards, plain.cards.map(({ id, ...cell }) => ({ n: Number(id), ...cell })));
-  } finally { await off.close(); }
 });

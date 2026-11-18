@@ -1,4 +1,4 @@
-// Where a node's menu, picker or tip goes on the stage (nodeEdges flag, FE_02, mark-place.ts): the picker to the right
+// Where a node's menu, picker or tip goes on the stage (FE_02, mark-place.ts): the picker to the right
 // of the disc, never on it; the number's menu under the number; the right-click list at the pointer; a tip above its
 // mark; each flipped to the other side when the stage has no room, and always inside the stage.
 import { test } from 'node:test';

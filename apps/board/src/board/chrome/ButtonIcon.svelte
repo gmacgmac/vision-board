@@ -9,7 +9,7 @@
      the adaptiveHeader flag, a dropdown's mark (a chevron) and the "⋯" menu's Version (a clock), Containers (two frames),
      Open cards (a ring), New cards (a four-point star) and Zoom (a magnifier); with the ledgerFolders flag, the page's ledger
      chip and New ledger… (a bound book, two lines on its cover); with the readOnlyStart flag, the page's Read-only chip (an
-     eye) and its Editing chip, Edit and Stop editing (a pencil); with the flowDirection flag, the "⋯" menu's Flows
+     eye) and its Editing chip, Edit and Stop editing (a pencil); the header's Flows and the "⋯" menu's Flows
      across (two cards side by side, linked), Flows down (two cards one above the other, linked) and Flows: Auto (a
      card linked both ways). -->
 <script lang="ts">

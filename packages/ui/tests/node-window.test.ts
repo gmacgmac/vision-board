@@ -1,7 +1,6 @@
-// An app node as a window (D-099 5; appWindow flag, FE_08; node-window.ts): with the edges and the flag, one title bar
-// (number, name, badge, why Allow shows, Allow or "Allowed ▾", the drawer arrow, Open with appStage), the app under it,
-// the drawer's pane and the history box; no footer, no kind tab, no notes, no Save for later in its menus. Without the
-// flag, or without the edges, an app card is today's, byte for byte. The drawer's state rides in the card's input.
+// An app node as a window (D-099 5, FE_08; node-window.ts): one title bar (number, name, badge, why Allow shows, Allow
+// or "Allowed ▾", the drawer arrow, Open), the app under it, the drawer's pane and the history box; no footer, no kind
+// tab, no notes, no Save for later in its menus. The drawer's state rides in the card's input.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '#format';
@@ -18,14 +17,8 @@ const bar = (html: string): string[] =>
   [...html.split('vb-win-bar')[1]!.split('vb-win-body')[0]!.matchAll(/data-mark="(\w+)"|class="(vb-app-name vb-win-name|vb-win-reason|vb-app-status|vb-win-btn vb-win-drawer|vb-win-btn vb-win-open)"/g)]
     .map((m) => m[1] ?? m[2]!);
 
-test('without the flag, or without the edges, an app card is today\'s', () => {
-  assert.equal(nodeTemplate(app(), { edges }), nodeTemplate(app(), { edges, appWindow: false }));
-  assert.equal(nodeTemplate(app(), { appWindow: true }), nodeTemplate(app()));
-  assert.ok(nodeTemplate(app(), { edges }).includes('vb-node-foot'));
-});
-
 test('a window: the bar in order, the app under it, the drawer\'s pane and history; no footer, kind tab, notes or disc', () => {
-  const html = nodeTemplate(app(), { edges, appWindow: true, appStage: true, idPrefix: 'p-' });
+  const html = nodeTemplate(app(), { edges, idPrefix: 'p-' });
   assert.deepEqual(bar(html), ['number', 'vb-app-name vb-win-name', 'badge', 'vb-win-reason', 'vb-app-status', 'vb-win-btn vb-win-drawer', 'vb-win-btn vb-win-open']);
   for (const gone of ['vb-node-foot', 'vb-node-kind', 'vb-node-notes', 'data-mark="notes"', 'data-mark="answer"', 'vb-node-btabs', 'data-act=']) assert.ok(!html.includes(gone), gone);
   assert.ok(html.includes('<vb-app-frame data-app="mission-control"'));
@@ -34,9 +27,9 @@ test('a window: the bar in order, the app under it, the drawer\'s pane and histo
   assert.ok(html.includes('Mission &#60;control&#62;') && !html.includes('Mission <control>'), 'the name is escaped');
 });
 
-test('Open only with appStage; the bar is a plate, so a plate skin draws it as its own and it is the drag handle', () => {
-  assert.ok(!nodeTemplate(app(), { edges, appWindow: true }).includes('vb-win-open'));
-  const lens = nodeTemplate(app(), { edges: SKIN_DEFS['command-lens'], appWindow: true });
+test('the bar is a plate, so a plate skin draws it as its own and it is the drag handle', () => {
+  const lens = nodeTemplate(app(), { edges: SKIN_DEFS['command-lens'] });
+  assert.ok(lens.includes('vb-win-open'));
   assert.ok(lens.includes('class="vb-node-plate vb-win-bar"'));
   assert.ok(!lens.includes('vb-mark-switch'), 'an app only tells: no switch');
 });

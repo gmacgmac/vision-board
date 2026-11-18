@@ -1,4 +1,4 @@
-// Branches on their own rows (BE_01, flowBranches flag; PLAN decision 19): a flow drawn as chains, each on one row
+// Branches on their own rows (BE_01, PLAN decision 19): a flow drawn as chains, each on one row
 // from its first card to its last, so a fork continues as parallel rows and its links run in the gaps between
 // columns, never round a card. The main line is the chain that follows each card's first successor in card order;
 // a branch takes the nearest row to the card it forks from (below first, then above) that is free over its whole

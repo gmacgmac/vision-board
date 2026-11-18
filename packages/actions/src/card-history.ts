@@ -30,7 +30,7 @@ export type HistoryKind = (typeof HISTORY_KINDS)[number];
 export interface HistoryRow {
   seq: number; at: string; who: 'person' | 'agent'; agent?: string; kind: HistoryKind; words: string;
   note?: number; reply?: number;
-  /** The version a `drawn` row drew (the history box shows it, nodeEdges). */
+  /** The version a `drawn` row drew (the history box shows it). */
   ver?: number;
 }
 

@@ -89,54 +89,42 @@ test('APP_CARD_STATES lists every state appView draws', () => {
   assert.deepEqual([...seen].sort(), [...APP_CARD_STATES].sort());
 });
 
-test('nodeState: an app card carries its view, adds its words to the name, shows no status word and no size', () => {
+test('nodeState: an app card carries its view, adds its words to the name, has no answer and no size', () => {
   const st = nodeState(card(), board(), 'm', false, { app: { info: info({ state: 'needs-approval', allowed: false }) } });
   assert.equal(st.app?.state, 'needs-approval');
   assert.equal(st.label, 'Item 4, App: Price calculator, not allowed yet');
-  assert.deepEqual([st.statusWord, st.size], ['', undefined]);
+  assert.deepEqual([st.marks.answer, st.size], ['none', undefined]);
   assert.equal(nodeState(card({ kind: 'finding' }), board(), undefined, false, { app: {} }).app, undefined);
   assert.equal(nodeState(card(), board(), undefined, false, { app: {} }).label, 'Item 4, App: Price calculator, loading');
   // No app given (the appCards flag off, or a page that draws no state): no view, a plain name.
   assert.deepEqual([nodeState(card(), board()).app, nodeState(card(), board()).label], [undefined, 'Item 4, App: Price calculator']);
 });
 
-test('nodeTemplate: an app card draws its slot in place of the Markdown body, with the frame at the panel\'s size, and no row over it', () => {
+test('nodeTemplate: an app card draws its slot under the window\'s bar in place of the Markdown body, with the frame at the panel\'s size', () => {
   const html = nodeTemplate(card({ body: 'Work out a **price**.' }));
-  assert.doesNotMatch(html, /vb-node-body|<strong>|vb-app-ask/);
-  assert.match(html, /<h3 class="vb-node-title">Price calculator<\/h3><div class="vb-app" data-app-state="checking" aria-busy="true"><vb-app-frame data-app="calculator" data-label="Price calculator" data-w="360" data-h="440"><\/vb-app-frame>/);
+  assert.doesNotMatch(html, /vb-node-body|<strong>|vb-app-ask|vb-node-title/);
+  assert.match(html, /<div class="vb-node-content vb-win-body"><div class="vb-app" data-app-state="checking" aria-busy="true"><vb-app-frame data-app="calculator" data-label="Price calculator" data-w="360" data-h="440"><\/vb-app-frame>/);
   assert.ok(html.includes(`<div class="vb-app-state">${appStateMarkup(appView(card()))}</div>`), 'drawn as checking until update()');
   assert.doesNotMatch(html, /style=|<style/);
 });
 
-test('nodeTemplate: an app card\'s status is the footer\'s left-side slot, after the kind icon: Allow, "Allowed ▾" and its one-item menu, hidden for update()', () => {
+test('nodeTemplate: an app card\'s status sits in its bar: Allow, "Allowed ▾" and its one-item menu, hidden for update()', () => {
   const html = nodeTemplate(card());
-  const foot = html.slice(html.indexOf('<footer'), html.indexOf('</footer>'));
-  assert.ok(foot.indexOf('vb-node-kico') < foot.indexOf('vb-app-status') && foot.indexOf('vb-app-status') < foot.indexOf('vb-node-actions'), 'kind icon, the status, then the quick actions');
-  assert.match(foot, /<div class="vb-app-status"><button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" hidden>Allow<\/button>/);
-  assert.match(foot, /<button type="button" class="vb-pop-btn vb-app-allowed" data-app-menu aria-haspopup="menu" aria-expanded="false" aria-controls="vb-app-menu-7" hidden>Allowed<span class="vb-app-caret" aria-hidden="true">▾<\/span><\/button>/);
-  assert.match(foot, /<div class="vb-menu-list vb-app-menu" id="vb-app-menu-7" role="menu" hidden><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-app-act="app-revoke">Stop app<\/button><\/div><\/div>/);
+  const bar = html.slice(html.indexOf('<div class="vb-node-plate vb-win-bar">'), html.indexOf('<div class="vb-node-content'));
+  assert.match(bar, /<div class="vb-app-status"><button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" hidden>Allow<\/button>/);
+  assert.match(bar, /<button type="button" class="vb-pop-btn vb-app-allowed" data-app-menu aria-haspopup="menu" aria-expanded="false" aria-controls="vb-app-menu-7" hidden>Allowed<span class="vb-app-caret" aria-hidden="true">▾<\/span><\/button>/);
+  assert.match(bar, /<div class="vb-menu-list vb-app-menu" id="vb-app-menu-7" role="menu" hidden><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-app-act="app-revoke">Stop app<\/button><\/div><\/div>/);
   assert.equal(appMenuId(card()), 'vb-app-menu-7');
-  // Not inside the state span, which is hidden from assistive tech.
-  assert.doesNotMatch(foot.slice(0, foot.indexOf('vb-app-status')), /data-app-act/);
   // Another kind, or the flag off: no status.
   assert.doesNotMatch(nodeTemplate(card({ kind: 'finding' })), /vb-app-status/);
-  // An app card with no number (the everyNode flag off) still has its footer, for Allow, and no quick actions.
-  const plain = nodeTemplate(card({ n: undefined }), { bookmark: true });
-  assert.match(plain, /<footer class="vb-node-foot">.*vb-app-status/);
-  assert.doesNotMatch(plain, /data-act=|data-bookmark/);
+  // An app card with no number (the everyNode flag off) still has its bar, for Allow, and no number.
+  const plain = nodeTemplate(card({ n: undefined }));
+  assert.match(plain, /<div class="vb-node-plate vb-win-bar"><span class="vb-app-name vb-win-name">.*vb-app-status/);
+  assert.doesNotMatch(plain, /data-mark="number"/);
 });
 
-test('nodeTemplate: an app card\'s name sits in the footer between its status and the quick actions, with its tip hidden from assistive tech; escaped; no other kind has one (card-polish FE_04)', () => {
-  const html = nodeTemplate(card({ title: 'Price <b>calculator</b>' }), { bookmark: true, history: true });
-  const foot = html.slice(html.indexOf('<footer'), html.indexOf('</footer>'));
-  assert.ok(foot.indexOf('vb-app-status') < foot.indexOf('vb-app-name') && foot.indexOf('vb-app-name') < foot.indexOf('vb-node-actions'), 'status, name, then the quick actions');
-  assert.match(foot, /<span class="vb-app-name"><span class="vb-app-name-text">Price &#60;b&#62;calculator&#60;\/b&#62;<\/span><span class="vb-tip vb-app-name-tip" aria-hidden="true">Price &#60;b&#62;calculator&#60;\/b&#62;<\/span><\/span>/);
-  assert.doesNotMatch(nodeTemplate(card({ kind: 'finding' })), /vb-app-name/);
-  assert.doesNotMatch(nodeTemplate(card(), { appCards: false }), /vb-app-name/);
-});
-
-test('nodeTemplate: an app card never takes the size control, and escapes what the agent wrote', () => {
-  const html = nodeTemplate(card({ title: '"><b>x', app: { id: 'calculator' } }), { sizeControl: true });
+test('nodeTemplate: an app card never takes a size control, and escapes what the agent wrote', () => {
+  const html = nodeTemplate(card({ title: '"><b>x', app: { id: 'calculator' } }));
   assert.doesNotMatch(html, /vb-size/);
   assert.doesNotMatch(html, /<b>/);
   assert.match(html, /data-label="&#34;&#62;&#60;b&#62;x"/);

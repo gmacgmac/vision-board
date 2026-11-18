@@ -1,12 +1,11 @@
 /* Node pattern styles (<vb-node>, packages/ui/src/node). Scoped by the tag, light DOM; tokens only.
    Every state in pattern.json has a rule here. A kind's colour arrives as --vb-kind, set by the
    element from --vb-kind-<kind>, so no rule here lists kinds for colour. The look is board v3's
-   card (D-024, mockup 01b): a soft top-down tint of the kind colour, tabs in gaps cut from the
-   top border, and a footer with the kind icon, the state word and the quick actions. */
+   card (D-024, mockup 01b): a soft top-down tint of the kind colour and tabs in gaps cut from the
+   top border; the marks on its edges are node-edges.css's and node-plate.css's (D-099, D-100). */
 
 vb-node {
   --vb-kind: var(--vb-ink-subtle);
-  --vb-state: var(--vb-ink-subtle);
   /* What shows through the gaps cut from the border around the tabs. */
   --vb-gap: var(--vb-surface-canvas);
   /* --vb-card-surface, --vb-card-surface-sunken and --vb-note-surface: see-through fills the page sets
@@ -16,9 +15,9 @@ vb-node {
   display: flex; flex-direction: column;
   border: 1px solid color-mix(in srgb, var(--vb-kind) 38%, var(--vb-line)); border-radius: var(--vb-radius-lg);
   background: linear-gradient(170deg, color-mix(in srgb, var(--vb-kind) 9%, var(--vb-surface)) 0%, var(--vb-surface) 55%);
-  /* Only the kind tab moves a card (3_FE_01 ruling 4); the content is text to select and copy
-     (ruling 5), so the card itself is neither a grab handle nor selectable: its tabs, size
-     control, pin and footer stay out of a text selection. */
+  /* Only the kind tab, grip or plate moves a card (3_FE_01 ruling 4); the content is text to select and copy
+     (ruling 5), so the card itself is neither a grab handle nor selectable: its marks stay out of a text
+     selection. */
   box-shadow: var(--vb-shadow-card); cursor: default; user-select: none;
   transition: transform var(--vb-motion) var(--vb-ease), opacity var(--vb-motion) var(--vb-ease),
     border-color var(--vb-motion-fast), box-shadow var(--vb-motion-fast);
@@ -62,24 +61,14 @@ vb-node[data-size='l'] { width: var(--vb-card-w-l); }
 vb-node {
   &[data-kind='app']:has(> .vb-node-content > .vb-app) { width: calc(var(--vb-app-w) + 2px); }
 }
-/* The size pill draws over the card above, so an open card sits over its neighbours. */
-vb-node {
-  &[data-size]:is(:hover, :focus-within) { z-index: var(--vb-z-hover); }
-}
 
 vb-node[data-kind='topic'] { --vb-surface: var(--vb-card-surface-sunken, var(--vb-surface-sunken)); }
 vb-node[data-kind='note'] {
   background: var(--vb-note-surface, transparent); box-shadow: none; border-style: dashed;
 }
 
-/* The state word's colour; open is muted. ✓ and ✗ show no word, only their lit mark (D-045): ✗ no
-   longer fades the card or strikes its title through, so it reads like ✓. */
-vb-node[data-status='commented'] { --vb-state: var(--vb-state-comment); }
-vb-node[data-status='later'] { --vb-state: var(--vb-state-later); }
-
-/* Tabs on the top border, each in a gap cut from the line: number left, kind centred, the
-   moved-by-you marker right. */
-vb-node .vb-node-num, vb-node .vb-node-kind, vb-node .vb-node-pin {
+/* Tabs on the top border, each in a gap cut from the line: number left, kind centred. */
+vb-node .vb-node-num, vb-node .vb-node-kind {
   position: absolute; top: -11px; display: inline-flex; align-items: center; gap: 5px;
   height: 20px; padding: 0 var(--vb-space-2); border-radius: var(--vb-radius-sm);
   box-shadow: 0 0 0 var(--vb-space-1) var(--vb-gap); white-space: nowrap;
@@ -102,16 +91,7 @@ vb-node .vb-node-kind::before {
   content: ''; width: 6px; height: 8px; opacity: 0.7;
   background: radial-gradient(currentColor 1px, transparent 1.2px) 0 0 / 3px 3px;
 }
-vb-node .vb-node-pin {
-  display: none; right: 14px; padding: 0 6px; border: 1px solid var(--vb-line-strong);
-  background: var(--vb-surface-card); color: var(--vb-ink-subtle); font-size: var(--vb-text-xs);
-}
-vb-node[data-pinned] .vb-node-pin { display: inline-flex; }
-/* With the size control in the top-right gap, the moved-by-you tab sits to its left. */
-vb-node[data-size] .vb-node-pin { right: 54px; }
-vb-node[data-size-picked] .vb-node-pin { right: 62px; }
-
-/* Content: title, body, tags as chips, the note block. */
+/* Content: title, body, tags as chips. */
 vb-node .vb-node-content {
   display: grid; gap: var(--vb-space-2); user-select: text; cursor: text;
   padding: calc(var(--vb-space-4) + var(--vb-space-1)) var(--vb-space-4) var(--vb-space-3);
@@ -139,171 +119,6 @@ vb-node .vb-node-tags li {
   border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); color: var(--vb-ink);
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); white-space: nowrap;
 }
-/* The "Your note" block (2e_FE_01 ruling 7, mockup 05 `.note-saved`): the latest note first, a
-   note not yet sent in the accent colour, sent ones grey and marked Sent. A click on one opens it
-   in the note bubble; the keyboard path is the pin and the C and M keys. */
-vb-node .vb-node-notes { display: grid; gap: var(--vb-space-1); }
-vb-node .vb-node-notes-count {
-  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em;
-  text-transform: uppercase; color: var(--vb-ink-subtle);
-}
-/* Neutral, like the agent's reply below it (maintainer, 2026-10-26): strong ink on the sunken surface,
-   the label quiet. The accent stays in one place, a rule down the left edge feathering into the fill,
-   while the note can still be edited; once sent the rule is the reply's grey and the feather goes. */
-vb-node .vb-node-note {
-  display: grid; gap: var(--vb-space-1); padding: 10px var(--vb-space-3); cursor: pointer;
-  border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-accent); border-radius: var(--vb-radius-md);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--vb-accent) 14%, transparent), transparent var(--vb-space-3)) var(--vb-surface-sunken);
-  font-size: var(--vb-text-md); color: var(--vb-ink-strong);
-}
-vb-node .vb-node-note[data-sent] { border-left-color: var(--vb-line-strong); background: var(--vb-surface-sunken); }
-vb-node .vb-node-note-who {
-  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em;
-  text-transform: uppercase; color: var(--vb-ink-subtle);
-}
-/* Three lines: the line clamp ends plain text in "…"; the height cap (three lines of the Markdown
-   paragraph) is what cuts a list or a code block, which the clamp does not reach (grid blocks). */
-vb-node .vb-node-note-text {
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-  max-height: calc(var(--vb-text-md) * 1.5 * 3);
-}
-/* The note's full-text tip (notePreview flag, WCAG 1.4.13; box: tip/tip.css), beside the card while
-   data-tip-open is on the note, which also raises the card above its neighbours. The note is a tab
-   stop (focus shows the tip), so it takes the focus ring. The bridge spans the gap to the card. */
-vb-node .vb-node-note { position: relative; --vb-reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2)); }
-vb-node {
-  &:has(.vb-node-note[data-tip-open]) { z-index: var(--vb-z-open); }
-}
-vb-node .vb-note-tip {
-  top: 0; left: calc(100% + var(--vb-reach)); width: var(--vb-pop-w); max-width: none; padding: 0;
-  font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text); line-height: 1.45;
-  font-weight: var(--vb-weight-regular); cursor: text; user-select: text;
-}
-/* The box itself never scrolls or clips (overflow would cut its bridge, which sits outside it, and
-   the pointer would lose the tip on the way across); the body inside it scrolls (hover-tip-reachable). */
-vb-node .vb-note-tip .vb-tip-body {
-  max-height: calc(var(--vb-pop-max-h) - 2px); overflow: auto; border-radius: inherit;
-  padding: var(--vb-space-2) var(--vb-pop-pad);
-}
-vb-node .vb-note-tip::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--vb-reach); height: auto; }
-vb-node .vb-node-note[data-tip-open] .vb-note-tip { display: block; }
-/* The note is Markdown too, on a tint, so its code sits one step deeper. */
-vb-node :is(.vb-node-note-text, .vb-note-tip) :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
-
-/* The note pin (ruling 7, 05 `.card .pin`): a numbered drop hanging off the top-right corner,
-   the latest note's number. It clears the size control's hit area (tracker N10). A group's pin
-   (groupNoteOnce flag) wears the same look in its own layer (node-notes.css `.vb-group-notes`). */
-vb-node, .vb-group-notes {
-  & .vb-note-pin {
-    position: absolute; z-index: var(--vb-z-open); top: -12px; right: -12px; display: grid; place-items: center;
-    width: 26px; height: 26px; padding: 0; cursor: pointer;
-    border: 2px solid var(--vb-gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
-    color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); box-shadow: var(--vb-shadow-card);
-    transition: scale var(--vb-motion-fast);
-  }
-  & .vb-note-pin[hidden] { display: none; }
-  & .vb-note-pin:hover { scale: 1.1; }
-  & .vb-note-pin[data-sent] {
-    background: var(--vb-surface-raised); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong), var(--vb-shadow-card);
-  }
-}
 /* While its bubble is open, the card draws over its neighbours (05 `.card.has-ovl`). */
 vb-node[data-bubble] { z-index: var(--vb-z-drag); }
 
-/* Footer: kind icon, divider, state word, then the quick actions. */
-vb-node .vb-node-foot {
-  display: flex; align-items: center; gap: var(--vb-space-1); min-height: 38px;
-  padding: var(--vb-space-1) var(--vb-space-1) var(--vb-space-1) var(--vb-space-2);
-  border-top: 1px solid color-mix(in srgb, var(--vb-kind) 18%, var(--vb-line));
-  font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--vb-state);
-}
-/* Tighter than 01b's spacing so the longest word fits beside the buttons on a 248px card. */
-vb-node .vb-node-state { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: var(--vb-space-1); }
-vb-node .vb-node-status { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-vb-node .vb-node-kico { flex: none; width: 14px; height: 14px; color: var(--vb-kind); }
-vb-node .vb-node-sep { flex: none; width: 1px; height: 12px; background: var(--vb-line-strong); }
-/* No word to set off (✓, ✗, or a card that only informs: D-045), so no divider either. */
-vb-node .vb-node-sep:has(+ .vb-node-status:empty) { display: none; }
-vb-node .vb-node-kico, vb-node .vb-act-icon {
-  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-}
-vb-node .vb-node-actions { display: flex; flex: none; }
-
-vb-node .vb-act {
-  display: grid; place-items: center; width: var(--vb-control-target); height: var(--vb-control-h-small); padding: 0; cursor: pointer;
-  background: none; border: 1px solid transparent; border-radius: var(--vb-radius-sm); color: var(--vb-ink-subtle);
-}
-vb-node .vb-act-icon { width: 15px; height: 15px; stroke-width: 1.8; }
-vb-node .vb-act:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
-vb-node .vb-act:active { transform: translateY(1px); }
-vb-node .vb-act[data-act='ack'][aria-pressed='true'] { color: var(--vb-state-ack); border-color: var(--vb-state-ack); }
-vb-node .vb-act[data-act='drop'][aria-pressed='true'] { color: var(--vb-state-drop); border-color: var(--vb-state-drop); }
-vb-node .vb-act[data-act='later'][aria-pressed='true'] { color: var(--vb-state-later); border-color: var(--vb-state-later); }
-/* The bookmark (cardBookmark flag): the person's private mark, its cloth filled while the card is bookmarked.
-   Its colour is --vb-bookmark, its own, not a kind's (a decoration, Lc 30 tier: APCA Lc 74.5
-   light, -56.6 dark on the card). */
-vb-node .vb-bookmark[aria-pressed='true'] { color: var(--vb-bookmark); border-color: currentColor; }
-vb-node .vb-bookmark[aria-pressed='true'] .vb-bookmark-cloth { fill: currentColor; }
-
-/* Zoomed out (N8): the stage carries data-zoom="far" below FAR_K (viewport.ts, 0.55 since review
-   polish round 2 ruling 2, the maintainer's pick after trying it; it was 0.75), where the buttons
-   would draw too small to press. They are hidden but keep their space, so no card changes size; the keyboard shortcuts still act on the
-   focused card. */
-vb-node {
-  [data-zoom='far'] & .vb-node-actions { visibility: hidden; }
-}
-
-/* The size control (D-030, option A, mockup 07): a faint glyph in the top-right border gap. It
-   opens like the region mode picker (region.css), through :hover and :focus-within, with no JS
-   state; the pill is visibility:hidden at rest, so only the glyph is in the tab order. It draws
-   on top, so the card never changes size or moves while it is open. data-open forces it open
-   (gallery samples). */
-vb-node .vb-size { position: absolute; z-index: var(--vb-z-panel); top: -11px; right: var(--vb-space-5); }
-vb-node .vb-size-trig {
-  position: relative; display: inline-grid; grid-auto-flow: column; place-items: center; gap: var(--vb-space-1);
-  height: 20px; min-width: 22px; padding: 0 5px; cursor: pointer;
-  border: 1px solid transparent; border-radius: var(--vb-radius-sm); background: var(--vb-surface-card);
-  box-shadow: 0 0 0 var(--vb-space-1) var(--vb-gap); color: var(--vb-ink-subtle); white-space: nowrap; opacity: 0.5;
-  transition: opacity var(--vb-motion-fast), color var(--vb-motion-fast), border-color var(--vb-motion-fast);
-}
-/* A 24px hit area at rest, without growing the glyph. */
-vb-node .vb-size-trig::after { content: ''; position: absolute; inset: -3px -2px; }
-vb-node .vb-size-glyph { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-vb-node .vb-size-shown:empty { display: none; }
-vb-node:hover .vb-size-trig, vb-node .vb-size:is(:hover, :focus-within, [data-open]) .vb-size-trig {
-  opacity: 1; color: var(--vb-ink-strong); border-color: var(--vb-line-strong);
-}
-/* The person's pick: the letter, not the glyph, always at full strength. */
-vb-node[data-size-picked] .vb-size-trig {
-  opacity: 1; border-color: var(--vb-line-strong); color: var(--vb-ink);
-  font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font-mono);
-}
-vb-node[data-size-picked] .vb-size-glyph { display: none; }
-
-/* The pill lifts above the top edge, right-aligned to the glyph. */
-vb-node .vb-size-menu {
-  position: absolute; right: calc(var(--vb-space-1) * -1); bottom: calc(100% + var(--vb-space-2));
-  display: flex; gap: 2px; padding: 3px; /* on the popover surface: base/surface.css */
-  visibility: hidden; opacity: 0; transition: opacity var(--vb-motion-fast), visibility 0s var(--vb-motion-fast);
-}
-/* A bridge over the gap, so the pointer can travel from the glyph to the pill. */
-vb-node .vb-size-menu::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: var(--vb-space-3); }
-vb-node .vb-size:is(:hover, :focus-within, [data-open]) .vb-size-menu { visibility: visible; opacity: 1; transition: opacity var(--vb-motion-fast); }
-vb-node .vb-size-opt {
-  display: inline-flex; align-items: center; justify-content: center; min-width: var(--vb-control-h-small); height: var(--vb-control-h-small); padding: 0 7px;
-  border: 0; border-radius: 7px; background: none; cursor: pointer; white-space: nowrap;
-  color: var(--vb-ink); font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
-}
-vb-node .vb-size-opt:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
-vb-node .vb-size-opt:active { transform: translateY(1px); }
-vb-node .vb-size-opt[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--vb-kind) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
-}
-/* While Auto is on, the tier it chose is outlined. */
-vb-node .vb-size-opt[data-auto] { box-shadow: inset 0 0 0 1px var(--vb-line-strong); }
-vb-node .vb-size-opt:focus-visible, vb-node .vb-size-trig:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
-vb-node .vb-size-sep { width: 1px; align-self: stretch; margin: var(--vb-space-1) 2px; background: var(--vb-line-strong); }
-/* The size control hides the same way, the pill included, which would otherwise stay visible. */
-vb-node {
-  [data-zoom='far'] & .vb-size, [data-zoom='far'] & .vb-size .vb-size-menu { visibility: hidden; }
-}

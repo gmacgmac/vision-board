@@ -3,27 +3,23 @@
 // attributes, text and the note's Markdown, so focus and transitions survive. Browser only: the
 // class is created inside defineVbNode(), so importing this file never touches HTMLElement (Node
 // tests import the ui front door). It knows nothing about layout; the page measures and places it.
-import type { ActionId, ViewNode } from '#format';
+import type { ViewNode } from '#format';
 import type { NodeState } from './node-core.ts';
 import type { HoverTip } from '../tip/hover-tip.ts';
 import type { NodeTemplateOptions } from './node-template.ts';
-import { bindNoteTip } from './node-note-tip.ts';
-import { bindCardPopover } from './node-popover.ts';
-import { HISTORY, HISTORY_TAB } from './node-history.ts';
 import { applyApp, applyPanelSize, applyWindow, bindAppNameTip, keepingDrawer, renderKeepingPanel } from './node-app-apply.ts';
-import { handoverMarkup, isWindow, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup } from './node-template.ts';
+import { handoverMarkup, isWindow, nodeTemplate, proposalsMarkup, stepMarkup } from './node-template.ts';
 import { panelSize } from '../app-frame/app-frame-core.ts';
-import { AWAITING, isItem } from './node-core.ts';
-import { bindHoverTip } from '../tip/hover-tip.ts';
 import { explainPaused, pauseControls } from '../paused/paused.ts';
 import { READ_ONLY_PERSON } from '#actions';
+import { SKIN_DEFS } from '../skins.ts';
 import { applyMarks, applyTone } from './node-edges-apply.ts';
 
-/** The controls a locked board pauses on a card (N40 ruling 4): everything that changes it but the bookmark. With the
- *  edges (nodeEdges), the answer: the disc or the switch's halves, which look as they would at rest (point 328). */
-const PAUSED = 'button[data-act], .vb-size-trig, .vb-size-opt, .vb-note-pin, button[data-answer], [data-mark="answer"], [data-mark="tick"], [data-mark="cross"]';
-/** The bookmark, which a lock lets be but a read-only ledger pauses with the rest (D-085 3); with the edges, the number. */
-const BOOKMARK = 'button[data-bookmark], [data-mark="number"]';
+/** The controls a locked board pauses on a node (N40 ruling 4): everything that changes it but the bookmark: the
+ *  answer, the disc or the switch's halves, which look as they would at rest (point 328), and a proposal's answers. */
+const PAUSED = 'button[data-answer], [data-mark="answer"], [data-mark="tick"], [data-mark="cross"]';
+/** The bookmark, the number, which a lock lets be but a read-only ledger pauses with the rest (D-085 3). */
+const BOOKMARK = '[data-mark="number"]';
 /** An app card's Allow and Stop app, which a read-only ledger pauses too (FE_01); "Allowed ▾" only opens the menu. */
 const APP = 'button[data-app-act="app-allow"], button[data-app-act="app-revoke"]';
 /** An out-of-date proposal's Accept is aria-disabled for its own reason, locked or not. */
@@ -33,8 +29,7 @@ export const VB_NODE_TAG = 'vb-node';
 
 /** What the page holds: a <vb-node> it renders once and updates in place. */
 export interface VbNodeElement extends HTMLElement {
-  /** Build from the template; sets data-id, data-kind, data-emphasis, role, tabindex, --vb-kind.
-   *  `opts.sizeControl` draws the size control (the nodeSize flag). */
+  /** Build from the template; sets data-id, data-kind, data-emphasis, data-edges, role, tabindex, --vb-kind. */
   render(n: ViewNode, opts?: NodeTemplateOptions): void;
   /** Apply the person's current state (from `nodeState`) without rebuilding the markup. */
   update(st: NodeState): void;
@@ -45,51 +40,35 @@ export function defineVbNode(): void {
   if (customElements.get(VB_NODE_TAG)) return;
 
   class VbNode extends HTMLElement implements VbNodeElement {
-    /** The notes last drawn, so unchanged notes are not rebuilt (a focused link in one keeps focus). */
-    private noteSrc: string | undefined;
-    /** One tip per drawn note; closed before the notes are rebuilt, so none leaves a listener behind. */
-    private noteTips: HoverTip[] = [];
-    /** The proposal box (FE_01): its popover, bound once per card, and the proposals last drawn. */
-    private proposalPop: HoverTip | undefined;
+    /** The proposals last drawn in the proposal box (FE_01). */
     private proposalSrc: string | undefined;
     /** The step section last drawn (FE_02). */
     private stepSrc: string | undefined;
-    /** The handover box (FE_03): its popover, bound once per card, and the handover last drawn. */
-    private handoverPop: HoverTip | undefined;
+    /** The handover last drawn in the node's body (FE_03, DESIGN_01). */
     private handoverSrc: string | undefined;
-    /** The history box (card-polish FE_03), bound once per card; the page fills it as it shows. */
-    private historyPop: HoverTip | undefined;
-    /** The tip over an app card's name in its footer (card-polish FE_04), bound once per card. */
+    /** The tip over an app window's name in its bar (card-polish FE_04), bound once per node. */
     private nameTip: HoverTip | undefined;
-    /** The tip over the footer's "Awaiting" (FE_03), bound once per card. */
-    private statusTip: HoverTip | undefined;
     /** An app card's state view last drawn (D-047). */
     private appSrc: string | undefined;
     /** How `render` was told this card's Markdown renders; `update` draws by it too. */
     private markdown: NodeTemplateOptions['markdown'];
-    /** Drawn with its marks on its edges (`opts.edges`, nodeEdges): no footer, no notes block, no bottom tabs. */
-    private edges = false;
 
     render(n: ViewNode, opts: NodeTemplateOptions = {}): void {
       this.markdown = opts.markdown;
-      for (const t of this.noteTips) t.close();
-      this.noteTips = [];
-      this.noteSrc = undefined;
       this.dataset.id = n.id;
       this.dataset.kind = n.kind;
       if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
       else delete this.dataset.idPrefix;
       this.toggleAttribute('data-emphasis', Boolean(n.emphasis));
-      // An app card drawn as a window (appWindow, node-window.ts) has the edges' number, badge and history too.
+      // An app card is a window (node-window.ts), with the edges' number, badge and history in its bar.
       const win = isWindow(n, opts);
-      this.edges = opts.edges !== undefined && (n.kind !== 'app' || win);
-      this.toggleAttribute('data-edges', this.edges);
+      const def = opts.edges ?? SKIN_DEFS.default;
+      this.toggleAttribute('data-edges', true);
       this.toggleAttribute('data-window', win);
       // Where the skin's row puts the answer and the marks (skins.ts): CSS places by these, never by a skin's name.
-      if (this.edges) Object.assign(this.dataset, { answerAt: opts.edges!.answer, marksAt: opts.edges!.marks });
-      else for (const k of ['answerAt', 'marksAt']) delete this.dataset[k];
-      this.toggleAttribute('data-icon', this.edges && n.icon !== undefined);
-      applyTone(this, this.edges ? n.tone : undefined);
+      Object.assign(this.dataset, { answerAt: def.answer, marksAt: def.marks });
+      this.toggleAttribute('data-icon', n.icon !== undefined);
+      applyTone(this, n.tone);
       this.setAttribute('role', 'listitem');
       this.tabIndex = 0;
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
@@ -101,21 +80,9 @@ export function defineVbNode(): void {
       // ...and an open drawer keeps its conversation, the words typed in it and its focus (FE_08).
       keepingDrawer(this, () => renderKeepingPanel(this, nodeTemplate(n, opts)));
       this.proposalSrc = this.stepSrc = this.handoverSrc = this.appSrc = undefined;
-      // Bound once: each listens on the card itself and finds its tab and box afresh on every event.
-      this.proposalPop?.close();
-      this.handoverPop?.close();
-      this.historyPop?.close();
-      // With the edges the page opens the history and proposal boxes from their marks (FE_02): nothing opens on hover.
-      if (opts.history && !this.edges) this.historyPop ??= bindCardPopover(this, HISTORY, HISTORY_TAB);
+      // The page opens the history and proposal boxes from their marks (FE_02): nothing opens on hover.
       if (app) this.nameTip ??= bindAppNameTip(this);
       this.nameTip?.close();
-      if (isItem(n) && !this.edges) {
-        this.proposalPop ??= bindCardPopover(this, 'proposal');
-        this.handoverPop ??= bindCardPopover(this, 'handover');
-        this.statusTip ??= bindHoverTip(this, {
-          anchor: '.vb-node-state', tip: '.vb-status-tip', attr: 'data-status-tip-open', needed: () => this.hasAttribute('data-awaiting'),
-        });
-      }
     }
 
     update(st: NodeState): void {
@@ -123,55 +90,23 @@ export function defineVbNode(): void {
       this.setAttribute('aria-label', st.label);
       this.toggleAttribute('data-pinned', st.pinned);
       this.toggleAttribute('data-selected', st.selected);
-      for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-act]'))
-        b.setAttribute('aria-pressed', String(st.pressed[b.dataset.act as ActionId] ?? false));
       this.toggleAttribute('data-bookmarked', st.bookmarked === true);
-      this.querySelector('button[data-bookmark]')?.setAttribute('aria-pressed', String(st.bookmarked === true));
-      // A non-item has no footer, so no status word.
-      const status = this.piece('status');
-      if (status) status.textContent = st.statusWord;
-      this.toggleAttribute('data-awaiting', st.awaiting === true);
-      const tip = this.querySelector('.vb-status-tip');
-      if (tip) tip.textContent = st.awaiting ? AWAITING.tip : '';
-      if (!st.awaiting) this.statusTip?.close();
-      if (this.edges) applyMarks(this, st.marks);
-      this.updateNotes(st);
+      applyMarks(this, st.marks);
       this.updateSize(st);
       this.updateProposal(st);
       this.updateHandover(st);
       this.updateSteps(st);
       if (st.app && this.querySelector('.vb-app')) this.appSrc = applyApp(this, st.app, this.appSrc);
       if (st.app && this.hasAttribute('data-window')) applyWindow(this, st.app, st.marks);
-      const fresh = this.querySelector<HTMLElement>('[data-tab="new"]');
-      if (fresh) fresh.hidden = st.fresh !== true;
       pauseControls(this, PAUSED, st.paused === true, staleAccept);
       pauseControls(this, BOOKMARK, st.readOnly === true);
       pauseControls(this, APP, st.readOnly === true);
       explainPaused(this, `${PAUSED}, ${BOOKMARK}, ${APP}`, st.readOnly === true ? READ_ONLY_PERSON : undefined);
     }
 
-    /** The HANDOVER tab and its box (FE_03): rebuilt only when the handover changed, closed when none is left. */
+    /** The handover (DESIGN_01 ruling): once written it is a section of the node's body, under a "Handover" heading;
+     *  while owed, the quiet Awaiting tab says so (node-edges-apply.ts). */
     private updateHandover(st: NodeState): void {
-      if (this.edges) return this.updateHandoverSection(st);
-      const tab = this.querySelector<HTMLButtonElement>('[data-tab="handover"]');
-      if (!tab) return;
-      const v = st.handover;
-      tab.hidden = v === undefined;
-      tab.textContent = v?.tab ?? '';
-      if (v) tab.setAttribute('aria-label', v.label);
-      const src = v ? JSON.stringify(v) : '';
-      if (this.handoverSrc === src) return;
-      this.handoverSrc = src;
-      const box = this.querySelector<HTMLElement>('[data-pop="handover"]')!;
-      // Markup from handoverMarkup, which escapes every text run and renders the Markdown safely.
-      box.innerHTML = v ? handoverMarkup(v, this.markdown) : '';
-      if (v) box.setAttribute('aria-label', v.box);
-      else this.handoverPop?.close();
-    }
-
-    /** The handover with the edges (DESIGN_01 ruling): once written it is a section of the node's body, under a
-     *  "Handover" heading; while owed, the quiet Awaiting tab says so (node-edges-apply.ts). */
-    private updateHandoverSection(st: NodeState): void {
       const section = this.piece('handover');
       if (!section) return;
       const v = st.handover;
@@ -183,22 +118,11 @@ export function defineVbNode(): void {
       section.innerHTML = v ? `<h4 class="vb-node-handover-head">${v.tab}</h4>${handoverMarkup(v, this.markdown)}` : '';
     }
 
-    /** The "N updates" tab, the step section and the stepper in the footer (FE_02): the section is
-     *  rebuilt only when its step changed; data-stepping swaps the footer for the stepper. */
+    /** The step section and the stepper in the history box (FE_02, planner's call 9; the badge opens it): the section
+     *  is rebuilt only when its step changed. */
     private updateSteps(st: NodeState): void {
-      const tab = this.querySelector<HTMLButtonElement>('[data-tab="updates"]');
-      // With the edges the steps live in the history box (planner's call 9) and the badge stands for the tab.
-      if (!tab && !(this.edges && this.piece('steps'))) return;
+      if (!this.piece('steps')) return;
       const v = st.updates;
-      if (tab) {
-        this.placeSteps(st.oneTab === true);
-        tab.hidden = !v?.tab || st.oneTab === true;
-        tab.textContent = v?.tab ?? '';
-        tab.setAttribute('aria-expanded', String((v?.open ?? false) && !st.oneTab));
-        if (v) tab.setAttribute('aria-label', v.label);
-      }
-      // In the proposal box the stepper is the box's, so the footer stays as it is.
-      this.toggleAttribute('data-stepping', v?.step !== undefined && !st.oneTab);
       const section = this.piece('steps')!;
       section.hidden = !v?.open;
       if (v?.step) section.setAttribute('aria-label', v.step.label);
@@ -215,73 +139,18 @@ export function defineVbNode(): void {
       else back.removeAttribute('aria-disabled');
     }
 
-    /** The step section and the stepper: in the proposal box, under the proposals, while one tab stands for both
-     *  (`NodeState.oneTab`, point 444), else at home, under the card's text and in its footer. Moved, never copied. */
-    private placeSteps(inBox: boolean): void {
-      const section = this.piece('steps')!, nav = this.piece('stepnav')!;
-      const box = this.querySelector<HTMLElement>('[data-pop="proposal"]')!;
-      if (inBox && section.parentElement !== box) box.append(section, nav);
-      else if (!inBox && section.parentElement === box) {
-        this.piece('content')!.insertBefore(section, this.piece('notes'));
-        this.piece('foot')!.append(nav);
-      }
-    }
-
-    /** The PROPOSAL tab and its box (FE_01): rebuilt only when the proposals changed, closed when none is left. */
+    /** The proposal box (FE_01), which the disc or a switch's proposal chip opens (node-edges-apply.ts): rebuilt only
+     *  when the proposals changed. */
     private updateProposal(st: NodeState): void {
-      const tab = this.querySelector<HTMLButtonElement>('[data-tab="proposal"]');
       const box = this.querySelector<HTMLElement>('[data-pop="proposal"]');
-      // With the edges the disc stands for the tab (its dashed ring, node-edges-apply.ts); the box is filled the same.
-      if (!box || (!tab && !this.edges)) return;
+      if (!box) return;
       const v = st.proposal;
-      if (tab) {
-        tab.hidden = v === undefined;
-        tab.textContent = v?.tab ?? '';
-        tab.toggleAttribute('data-stale', v?.stale ?? false);
-        tab.toggleAttribute('data-updated', v?.updated ?? false);
-        if (v) tab.setAttribute('aria-label', v.label);
-      }
       if (v) box.setAttribute('aria-label', v.box);
       const src = v ? JSON.stringify(v.entries) : '';
       if (this.proposalSrc === src) return;
       this.proposalSrc = src;
-      // Markup from proposalsMarkup, which escapes every text run. Only the proposals: steps moved in stay (placeSteps).
-      for (const p of box.querySelectorAll(':scope > .vb-prop')) p.remove();
-      if (v) box.insertAdjacentHTML('afterbegin', proposalsMarkup(v, this.dataset.idPrefix));
-      else this.proposalPop?.close();
-    }
-
-    /** The note pin and the "Your note" block (2e_FE_01 ruling 7), put away or not (card-polish FE_02). */
-    private updateNotes(st: NodeState): void {
-      // With the edges the notes live in the conversation box (DD-05, FE_03); the notes mark counts them.
-      const block = this.piece('notes');
-      if (!block) return;
-      const pin = this.querySelector<HTMLButtonElement>('.vb-note-pin');
-      const v = st.notes;
-      block.hidden = v === undefined;
-      this.toggleAttribute('data-noted', v?.pin !== undefined);
-      if (pin) {
-        pin.hidden = v?.pin === undefined;
-        pin.textContent = v?.pin ? String(v.pin.index) : '';
-        pin.toggleAttribute('data-sent', v?.pin?.sent ?? false);
-        if (v?.pin) {
-          pin.dataset.note = String(v.pin.seq);
-          pin.setAttribute('aria-label', v.pin.label);
-        }
-      }
-      // Markdown (D-023): notesMarkup escapes every text run, so this is safe markup. The times say
-      // "Today" and "Yesterday", so the first update on a new day draws them again.
-      const now = new Date();
-      const src = v ? JSON.stringify(v) + now.toDateString() : '';
-      if (this.noteSrc !== src) {
-        // The Hide or Show toggle had focus: the one drawn in its place takes it (card-polish FE_02).
-        const toggled = block.contains(document.activeElement) && document.activeElement!.matches('[data-notes]');
-        for (const t of this.noteTips) t.close();
-        block.innerHTML = v ? notesMarkup(v, now, this.markdown) : '';
-        this.noteTips = [...block.querySelectorAll<HTMLElement>('.vb-node-note, .vb-node-reply')].map(bindNoteTip);
-        if (toggled) block.querySelector<HTMLElement>('[data-notes]')?.focus({ preventScroll: true });
-      }
-      this.noteSrc = src;
+      // Markup from proposalsMarkup, which escapes every text run.
+      box.innerHTML = v ? proposalsMarkup(v, this.dataset.idPrefix) : '';
     }
 
     /** data-size sets the width (node.css), so the page applies it before it measures the card. */
@@ -290,16 +159,6 @@ export function defineVbNode(): void {
       if (size) this.dataset.size = size.tier;
       else delete this.dataset.size;
       this.toggleAttribute('data-size-picked', size?.picked ?? false);
-      const trig = this.querySelector<HTMLButtonElement>('.vb-size-trig');
-      if (!trig || !size) return;
-      trig.setAttribute('aria-label', size.label);
-      trig.querySelector('.vb-size-shown')!.textContent = size.shown;
-      for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-size-pick]')) {
-        const pick = b.dataset.sizePick;
-        b.setAttribute('aria-pressed', String(size.picked ? pick === size.tier : pick === 'auto'));
-        // While Auto is on, the tier it chose is outlined.
-        b.toggleAttribute('data-auto', !size.picked && pick === size.tier);
-      }
     }
 
     private piece(name: string): HTMLElement | null {

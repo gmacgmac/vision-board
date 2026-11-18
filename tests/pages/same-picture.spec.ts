@@ -68,10 +68,12 @@ async function step(page: Page, request: APIRequestContext, a: Agent, r: Random,
   const n = r.pick(ITEMS);
   const kind = r.int(9);
   if (kind === 0) {
-    // The page's own path: a click on a card's button.
+    // The page's own path: a card's key (A, X, L), as its disc's picker or menu sends it.
     const action = r.pick(['ack', 'drop', 'later']);
-    await page.evaluate(({ n, action }) => document.querySelector<HTMLButtonElement>(`vb-node[data-id="${n}"] button[data-act="${action}"]`)?.click(), { n, action });
-    return `click ${action} on ${n}`;
+    const key = { ack: 'a', drop: 'x', later: 'l' }[action]!;
+    await page.evaluate(({ n, key }) => document.querySelector<HTMLElement>(`vb-node[data-id="${n}"]`)
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })), { n, key });
+    return `key ${key} on ${n}`;
   }
   if (kind === 1) {
     const action = r.pick(['ack', 'drop', 'later', 'reopen']);

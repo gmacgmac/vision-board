@@ -61,7 +61,9 @@ tracker: cortex-tasks/tracker.md#U14,U15,U16,U17,U18,U19,U20,N47,N51,N52,L5
 | 17c | FIX_02 | 14 | strong | no | Senior front-end engineer — a finding is closed when its test proves it, not when the code looks right. | [Far zoom and the box's pointer](./FIX_02_far-zoom-and-box-pointer.md) | Completed | Run 1: one far breakpoint (about 37%): above it marks keep their minimum and take presses with the hand; below it they scale with the node (growth frozen, no jump, nothing hides) and a press selects the node; the box's pointer aims at the node's centre (below: box centred). Points 444-445: conversation box clamp(k, 0.8, 1.2); one zoom registry `#ui` zoom-rules.ts held by zoom-rules.test.ts. Budgets 211 KB page, 202,700 plugin JS. Needs `npm run map`. |
 | 17d | FIX_03 | 14 | strong | yes | Interaction engineer — a control never does two things depending on timing, and no click is lost or doubled. | [Rings after Esc, panning over apps, Ask now as a mode](./FIX_03_focus-pan-ask-mode.md) | Completed | 442: one `#ui` `returnFocus`; 443: `app-frame-active.ts` `bindClickIn` (idle app pans the board, active after a click, sandbox untouched); 446: the pink pressed button is the mode, Enter does it, kept per board; clear-then-Tick race fixed in `item-acts.ts`. Open: an active app has no look of its own (maintainer). |
 | 17e | FIX_04 | 14 | strong | no | Interaction engineer — a control never does two things depending on timing, and no click is lost or doubled. | [A fixed pointer, and scroll before pan](./FIX_04_pointer-and-scroll.md) | Completed | 459: `placeBeside` pointer fixed, `BOX_ARROW` 22px down the left edge beside, the middle of the edge below or above, never moved with the box. 460 (settles M4): a wheel gesture is decided by its first event that moves (a zero-delta opener latched whole gestures to a pan), `WHEEL_GAP` 200 ms, line and page deltas pan by 16px a line and a stage a page, `overscroll-behavior: contain` under the stage; `scroll-before-pan.spec.ts`. Page budget 211.2 KB. Full pages: 1,087 passed, 64 gallery screenshot diffs only. |
-| 18 | T_04 | 15 | strong | no | Staff engineer who owns deprecations — a removal is done only when nothing, not code, tests, words nor docs, still points at the old thing. | [Switch over and remove the old](./T_04_defaults-on.md) | Pending | |
+| 18 | T_04 | 15 | strong | no | Staff engineer who owns deprecations — a removal is done only when nothing, not code, tests, words nor docs, still points at the old thing. | [Switch over and remove the old](./T_04_defaults-on.md) | Completed | Run 1: 13 flags gone (the set's 7 and 6 older ones only the old node used) with every old path; app windows offer no Later; Decision's fuchsia is the token's value. Checks green; pages 1,060 + 10 budgets passed (1 test race fixed after, 3/3), plugin 116. Budgets not restorable: page 201.0 KB, view.js 195,372, view.css 24,723 (held there). Needs `npm run map`. |
+| 18b | FIX_05 | 16 | strong | no | Interaction engineer — a control never does two things depending on timing, and no click is lost or doubled. | [One box behaviour, and letting go of a scroll](./FIX_05_one-box-and-scroll-release.md) | Pending | Points 484-485; after T_04, beside T_05 (different files) |
+| 19 | T_05 | 16 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [One skill source, a core and references](./T_05_skill-core-and-references.md) | Pending | Maintainer's skill strategy, points 479-483; after T_04 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -242,8 +244,15 @@ _Status:_ Completed
 _Notes:_ Run 1. For T_04: `smallMarksExcused` (tests/pages/helpers.ts) is the one excuse for axe target-size on a zoomed-out board; `data-marks="small"` and `data-marks-crowded` on the stage (`viewport.ts` `marksPressable`, `CROWD_GROW`); `headerTier(width, flows)` with `FLOWS_W`; a dismissable layer with `escape` now stacks (newest first). Findings 4 and 15 are yours. Renewed only node-edges-{dark,light} (the "⋯" row's Shift+H). Requests: `npm run map`; the "?" key-help button covering cards; a hover tip left open when a zoom moves its anchor from under a still pointer; a crowded full bar without Flows overlaps 5px at about 1540px (pre-existing); the live `npm run eval:bot` (plugin words changed).
 
 ### T_04: Switch over and remove the old
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1 (four forks of the run did slices: layout flags, `packages/ui`, the gallery, the page specs, the docs).
+Removed flags `nodeEdges`, `skins`, `layoutControl`, `flowDirection`, `flowBranches`, `appWindow`, `appStage`, and
+`layoutTooltip`, `oneChangeTab`, `appTitle`, `notePreview`, `cardHistory`, `groupNoteOnce` (they gated only the old
+node). Gone: the footer, size control, note pin and group pins, notes block, bottom tabs, card popovers, the six layout
+buttons and their tips, the frame-alone stage, `notes/group-pins.ts`, `bubble-clear.ts`, `note-hide.ts`. H is history,
+Shift+H Hide answered, everywhere. `NODE_TYPES.app` is `WINDOW_ACTIONS` (VERIFY_01 4); gallery redrawn (VERIFY_01 15).
+Screenshots renewed once and 46 looked at; plugin specs rewritten through the marks. Budgets reported in the task.
+The tokens diff is in the task's notes. Requests: `npm run map`; the follow-up rows.
 
 ---
 

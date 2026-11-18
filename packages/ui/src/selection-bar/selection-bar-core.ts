@@ -31,9 +31,10 @@ export const TAB_CLEAR_PER_K = ZOOM_RULES.barGap.numbers.perK;
  *  selection's top edge to the bar's bottom, in screen pixels. The bar does not scale with zoom
  *  but the cards' tabs do, so it is the tabs' rise at this zoom plus a clear space that grows
  *  with zoom between its minimum and maximum: the bar never covers the tabs, and a press near
- *  them grabs the card, not the bar. */
-export function pillGap(k: number): number {
-  return TAB_RISE * k + clamp(TAB_CLEAR_PER_K * k, TAB_CLEAR_MIN, TAB_CLEAR_MAX);
+ *  them grabs the card, not the bar. `rise`: how far the marks stand above the top edge on screen, when the page knows
+ *  it (the node's edge marks grow when zoomed out, D-101); else the tabs' rise. */
+export function pillGap(k: number, rise = TAB_RISE * k): number {
+  return rise + clamp(TAB_CLEAR_PER_K * k, TAB_CLEAR_MIN, TAB_CLEAR_MAX);
 }
 
 /** The bar centred on `box` (the selection on the stage), `gap` above it (BAR_GAP, or `pillGap`

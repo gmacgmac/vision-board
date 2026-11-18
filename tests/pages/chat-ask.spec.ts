@@ -1,4 +1,4 @@
-// Ask now with the board's chat panel (nodeEdges flag, api.md 188; FE_03 run 2): the page records the `ask` as before,
+// Ask now with the board's chat panel (api.md 188; FE_03 run 2): the page records the `ask` as before,
 // and the server hands the panel's agent that node's asked note at once, with the board, as its own message ("Asked
 // now."): never the board's other answers, and no Send, so the tick waits for Send. The server is chat-server.ts with
 // the agent package's fake `claude`, never the real one, on its own empty project.
@@ -27,7 +27,7 @@ test('Ask now in the conversation box goes to the panel\'s agent alone, at once,
     { type: 'node', key: 'a', node: { region: 'r', kind: 'question', title: 'Is 96 GB enough?' } },
     { type: 'node', key: 'b', node: { region: 'r', kind: 'question', title: 'Book the truck?' } },
   ]);
-  await page.goto(`${srv.base}/?vbwork&flags=nodeEdges#asks`);
+  await page.goto(`${srv.base}/?vbwork#asks`);
   await expect(page.locator('vb-node')).toHaveCount(2);
   await page.locator('#chat-toggle').click();
   await expect(side(page)).toBeVisible();

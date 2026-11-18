@@ -1,4 +1,4 @@
-// The conversation box on the board (nodeEdges flag, D-099 3, FE_03): a node's notes open one box to read and to write.
+// The conversation box on the board (D-099 3, FE_03): a node's notes open one box to read and to write.
 // Its tabs are this node, then each note on several nodes it is in (the design review of DESIGN_01); a tab lists that
 // conversation and writes to it. Add note (Enter) keeps the note for the board's Send, as a note always did. Ask now
 // (Cmd or Ctrl Enter) sends the tab's note at once: a node holds at most one note not yet sent (api.md 59), so words

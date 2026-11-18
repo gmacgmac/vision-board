@@ -127,8 +127,8 @@ test('every key the board acts on is marked used, whenever the host listens; a k
   await page.locator('#a .vb-stage').focus();
   expect(await press('Escape'), 'nothing to escape').toBe(false);
   expect(await press('q'), 'no such key').toBe(false);
-  expect(await press('h'), 'Hide answered').toBe(true);
-  expect(await press('h')).toBe(true);
+  expect(await press('Shift+H'), 'Hide answered').toBe(true);
+  expect(await press('Shift+H')).toBe(true);
   expect(await press('Shift+?'), 'the keys help').toBe(true);
   await first.focus();
   expect(await press('j'), 'the next card').toBe(true);

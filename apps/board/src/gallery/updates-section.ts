@@ -1,13 +1,11 @@
-// Gallery entry for changed cards (cardUpdates flag, FE_02, D-018): the "N updates" tab at rest, a
-// card mid-step with its change chips and the stepper in its footer, and "You're up to date". Shown
+// Gallery entry for changed cards (cardUpdates flag, FE_02, D-018): "N updates" on the change badge at rest, a
+// card mid-step with its change chips and the stepper in its history box (planner's call 9), and "You're up to date". Shown
 // only with the flag on, so ?flags=-cardUpdates draws the gallery as it was. The cards are real
 // <vb-node> elements updated with `nodeState` and the fixture ledger's unseen versions, read through
 // the conditions table as the board reads them; each stepper state is the one the page passes in.
 import type { ViewNode } from '#format';
-import { flagOn } from '#format';
 import type { CardUpdates, VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
-import { pageFlags } from '../flags.ts';
 import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
@@ -18,6 +16,13 @@ function card(n: ViewNode, fx: Fixture, at?: (steps: number) => number): VbNodeE
   const node = document.createElement('vb-node') as VbNodeElement;
   node.render(n, ownIds());
   node.update(nodeState(n, state, undefined, false, { updates, proposals: rows.filter((r) => r.n === n.n) }));
+  if (at) {
+    // The stepper lives in the history box the badge opens, drawn open as the page opens it (mark-boxes.ts).
+    const box = node.querySelector<HTMLElement>('[data-pop="history"]')!;
+    box.toggleAttribute('data-open', true);
+    box.dataset.side = 'right';
+    node.querySelector('[data-mark="badge"]')?.setAttribute('aria-expanded', 'true');
+  }
   return node;
 }
 
@@ -31,7 +36,7 @@ function newCard(n: ViewNode, fx: Fixture): VbNodeElement {
 
 /** `fresh`: the freshCards flag, whose pink tab (amber with updateSignals, read from the page's flags) the first group's words describe (words the length of the
  * old ones, so the sections below keep their place and their screenshots). */
-export function updatesSection(fx: Fixture, newCards: boolean, fresh = false): HTMLElement {
+export function updatesSection(fx: Fixture, newCards: boolean): HTMLElement {
   const box = el('section', 'g-section');
   box.dataset.feature = 'card-updates';
   box.setAttribute('aria-labelledby', 'feature-card-updates');
@@ -40,18 +45,21 @@ export function updatesSection(fx: Fixture, newCards: boolean, fresh = false): H
   const meta = el('p', 'g-meta');
   meta.append(el('code', undefined, 'mark_seen { n, ver }'), ' · feature flag cardUpdates (D-018, api.md 94), on by default · off with ?flags=-cardUpdates');
   const [rest, stepping, done, added] = fx.updates.view.nodes as [ViewNode, ViewNode, ViewNode, ViewNode];
+  const open = (label: string, ...cards: VbNodeElement[]) => {
+    const list = cardList(label, ...cards);
+    list.classList.add('g-tips', 'g-tips-stack');
+    return list;
+  };
   box.append(heading,
     el('p', 'g-desc', 'A card the agent changed since the person last looked, past version 1, says how many times. Selecting the card, or any act on it, counts as looking; Send does not.'),
     meta,
-    group('The tab', `"3 updates" on the bottom edge, ${fresh ? `small, its outline and words ${flagOn('updateSignals', pageFlags()) ? 'amber' : 'pink'}` : 'small and quiet in the muted ink'}, after any other tab there (here an out-of-date proposal); hovered or open it takes the CHANGED amber.`
-      + (flagOn('updateSignals', pageFlags()) ? ' The tabs hang below the footer, so the card\'s buttons stay where they are.' : ' With two tabs the card\'s buttons rise a little to leave them room.')
-      + ' The card never changes size for it.',
+    group('The badge', '"3 updates" on the change badge at the bottom left; once seen it settles to a quiet "vN". A node that never changed has no badge. The node never changes size for it.',
       cardList('A changed card', card(rest, fx))),
-    group('The stepper', 'The tab opens the card in place, one step per unseen version: when and who, the change chips (+ added, ~ changed, - removed) and what the text gained. The footer becomes "Update 3 of 3 · Back · Next"; each step shown marks its version seen; Esc folds it.',
-      cardList('A changed card at its last step', card(stepping, fx, (k) => k - 1))),
-    group('Up to date', 'After the last step the tab goes; "You\'re up to date" fades and the card folds back.',
-      cardList('A changed card after its last step', card(done, fx, (k) => k))));
-  if (newCards) box.append(group('A new card', 'A card the agent added after the person first opened the board says NEW on its bottom edge, in the toolbar chip\'s colour. It is a label, not a button; it never says "N updates". Selecting the card or any act on it takes it away; a Send, or the agent drawing again, never does. Feature flag newCards, on by default.',
-      cardList('A new card', newCard(added, fx))));
+    group('The stepper', 'The badge (or H) opens the history box with the stepper on top, one step per unseen version: when and who, the change chips (+ added, ~ changed, - removed) and what the text gained, then "Update 3 of 3 · Back · Next"; each step shown marks its version seen; Esc closes the box.',
+      open('A changed card at its last step', card(stepping, fx, (k) => k - 1))),
+    group('Up to date', 'After the last step "You\'re up to date" shows, then the stepper folds away.',
+      open('A changed card after its last step', card(done, fx, (k) => k))));
+  if (newCards) box.append(group('A new card', 'A card the agent added after the person first opened the board says "New" on its badge. It never says "N updates". Selecting the card or any act on it takes it away; a Send, or the agent drawing again, never does. Feature flag newCards, on by default.',
+    cardList('A new card', newCard(added, fx))));
   return box;
 }

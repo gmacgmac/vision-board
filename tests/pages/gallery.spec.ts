@@ -50,25 +50,24 @@ test('node: every kind in every status it can reach, cards that ask apart from c
       await expect(where.locator(`vb-node[data-kind="${kind}"][data-status="${status}"]`), `${kind} / ${status}`)
         .toHaveCount(closed && !ASKS.includes(kind) ? 0 : status === 'open' ? 2 : 1);
     }
-    const cleared = (ASKS.includes(kind) ? asks : tells).locator(`vb-node[data-kind="${kind}"][data-status="open"]:has([data-tab="updates"]:not([hidden]))`);
+    const cleared = (ASKS.includes(kind) ? asks : tells).locator(`vb-node[data-kind="${kind}"][data-status="open"]:has([data-mark="badge"][data-badge="updates"]:not([hidden]))`);
     await expect(cleared, `${kind}: answered by the agent`).toHaveCount(1);
-    await expect(cleared.locator('[data-tab="updates"]')).toHaveText('1 update');
-    await expect(cleared.locator('.vb-node-reply')).toHaveCount(1);
+    await expect(cleared.locator('[data-mark="badge"] .vb-mark-text')).toHaveText('1 update');
+    // The agent's reply is read in the conversation box; its notes mark fills while it is unread (an app window's is its drawer).
+    if (kind !== 'app') await expect(cleared.locator('[data-mark="notes"]')).toHaveAttribute('data-notes-mark', /unread|count/);
   }
   await expect(asks.locator('vb-node')).toHaveCount(18);
   await expect(tells.locator('vb-node')).toHaveCount(20);
-  // Every card is numbered; ✓ and ✗ only on cards that ask, Check and Cross on every kind (D-045).
-  await expect(asks.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
-  await expect(tells.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
-  await expect(tells.locator('button[data-act="ack"], button[data-act="drop"]')).toHaveCount(0);
-  await expect(tells.locator('vb-node').first().locator('button[data-act]')).toHaveCount(2);
-  for (const kind of ASKS) {
-    await expect(asks.locator(`vb-node[data-kind="${kind}"] button[data-act="ack"]`).first()).toHaveAttribute('title', 'Check · a');
-    await expect(asks.locator(`vb-node[data-kind="${kind}"] button[data-act="drop"]`).first()).toHaveAttribute('title', 'Cross · x');
-  }
-  // ✓ and ✗ show no word; a card that tells shows none in any state.
-  await expect(asks.locator('vb-node:is([data-status="acknowledged"], [data-status="dropped"]) .vb-node-status:not(:empty)')).toHaveCount(0);
-  await expect(tells.locator('.vb-node-status:not(:empty)')).toHaveCount(0);
+  // Every card is numbered; the answer (the disc) only on cards that ask (D-045, DD-07). No footer.
+  await expect(asks.locator('vb-node:not(:has([data-mark="number"]))')).toHaveCount(0);
+  await expect(tells.locator('vb-node:not(:has([data-mark="number"]))')).toHaveCount(0);
+  await expect(tells.locator('[data-mark="answer"]')).toHaveCount(0);
+  await expect(asks.locator('vb-node:not(:has([data-mark="answer"]))')).toHaveCount(0);
+  await expect(page.locator('section[data-pattern="node"] .vb-node-foot')).toHaveCount(0);
+  // A ticked disc and a crossed one say so in their names; an open one waits.
+  await expect(asks.locator('vb-node[data-status="acknowledged"] [data-mark="answer"]').first()).toHaveAttribute('data-answer', 'ticked');
+  await expect(asks.locator('vb-node[data-status="dropped"] [data-mark="answer"]').first()).toHaveAttribute('data-answer', 'crossed');
+  await expect(asks.locator('vb-node[data-status="open"] [data-mark="answer"]').first()).toHaveAttribute('data-answer', 'waiting');
 });
 
 test('node: the other states are drawn', async ({ page }) => {
@@ -81,24 +80,18 @@ test('node: the other states are drawn', async ({ page }) => {
   await expect(node.locator('vb-node[data-selected]')).toHaveCount(9);
   await expect(node.locator('vb-node[data-selected]').first()).toHaveAttribute('aria-label', /, selected$/);
   await expect(node.locator('.vb-node-tags li')).toHaveCount(3);
-  const notes = node.locator('.vb-node-notes');
-  await expect(notes.filter({ has: page.locator('.vb-node-note-who:text-is("Your note 1")') }).filter({ hasText: 'Ship it' })).toBeVisible();
-  await expect(notes.filter({ hasText: 'Second thought, which replaces the first' })).toBeVisible();
-  // An old More context reads as a note (D-045).
-  await expect(notes.locator('.vb-node-note-who:text-is("More context 1")')).toHaveCount(0);
-  // The notes board: a pin per noted card, sent notes grey and marked, the count over several.
-  await expect(notes.locator('.vb-node-notes-count:text-is("3 notes")')).toBeVisible();
-  await expect(notes.locator('.vb-node-note[data-sent] .vb-node-note-who:text-is("Your note 2 · Sent")')).toBeVisible();
-  // One sent; eight the agent answered (the matrices' "Answered by the agent" rows, D-045), and two in
-  // "Notes put away, and note times" (card-polish FE_02), history too.
-  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(11);
-  // A topic and a note are numbered and take a comment and Later (every-node ruling 2, D-045).
+  // The notes live in the conversation box (D-099 3); on the node, the notes mark: quiet, counted or unread.
+  const notes = node.getByRole('list', { name: 'Note states' }).locator('[data-mark="notes"]');
+  await expect(notes.filter({ has: page.locator('.vb-mark-text:text-is("3")') }).first()).toBeVisible();
+  await expect(node.locator('.vb-node-notes, .vb-note-pin, .vb-node-note')).toHaveCount(0);
+  // A topic and a note are numbered and take a comment and Later, never an answer (every-node ruling 2, D-045).
   const others = node.locator('[aria-label="Other node states"]');
   for (const kind of ['topic', 'note']) {
     const card = others.locator(`vb-node[data-kind="${kind}"]`);
     await expect(card).toHaveCount(1);
-    await expect(card.locator('button[data-act]')).toHaveCount(2);
-    await expect(card.locator('.vb-node-num')).toHaveCount(1);
+    await expect(card.locator('[data-mark="answer"]')).toHaveCount(0);
+    await expect(card.locator('[data-mark="notes"]')).toHaveCount(1);
+    await expect(card.locator('[data-mark="number"]')).toHaveCount(1);
   }
 });
 
@@ -106,26 +99,27 @@ test('region: each mode, the count, the empty message and no count; Later and a 
   const frames = page.locator('section[data-pattern="region"] vb-region');
   // Eleven frames (a row frame, field report batch 2 ruling 4), the three long titles (FE_03), then the eight container
   // samples (3_FE_04), the three container note states (step 4G), a container drawn at 40% (review polish FE_02)
-  // and the title's three places (open list and container title FE_02), then the layout tooltip's three (layoutTooltip flag).
-  await expect(frames).toHaveCount(32);
+  // and the title's three places (open list and container title FE_02).
+  await expect(frames).toHaveCount(29);
   for (const mode of ['grid', 'flow', 'lanes', 'radial', 'column', 'row']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);
     await expect(frame.locator('.vb-region-count')).toHaveAttribute('title', '1 of 2 answered');
-    await expect(frame.locator('[role="radio"][aria-checked="true"]')).toHaveCount(1);
-    await expect(frame.locator(`[role="radio"][data-mode="${mode}"]`)).toHaveAttribute('aria-checked', 'true');
+    await expect(frame.locator('.vb-mtile[aria-checked="true"]')).toHaveCount(1);
+    await expect(frame.locator(`.vb-mtile[data-tile="${mode}"]`)).toHaveAttribute('aria-checked', 'true');
+    await expect(frame.locator('.vb-layout-btn')).toHaveAccessibleName(new RegExp(`^Layout: ${mode[0]!.toUpperCase()}${mode.slice(1)}`));
     await expect(frame.locator('.vb-mode-row [tabindex="0"]')).toHaveCount(1);
   }
   await expect(frames.locator('.vb-region-empty:visible')).toHaveCount(2);
   const bare = frames.filter({ has: page.locator('h2:text-is("Nothing to decide, so no count")') });
   await expect(bare.locator('.vb-region-count')).toHaveText('');
-  // Later: fixed (no layout icons, the cog its one stop), holding the fixture's two moved cards;
+  // Later: fixed (no layout button, the cog its one stop), holding the fixture's two moved cards;
   // an empty one lit as the drop target, with its own empty message.
   const later = frames.filter({ has: page.locator('h2:text-is("Later")') });
   await expect(later).toHaveCount(2);
   for (const f of await later.all()) {
     await expect(f).toHaveAttribute('data-fixed', '');
-    await expect(f.locator('[role="radio"]')).toHaveCount(0);
+    await expect(f.locator('.vb-layout-btn')).toHaveCount(0);
     await expect(f.locator('.vb-cog')).toHaveAttribute('tabindex', '0');
   }
   // Of its two cards, finding 2 needs no answer and counts nowhere; decision 3 does (every-node ruling 6).
@@ -137,7 +131,7 @@ test('region: each mode, the count, the empty message and no count; Later and a 
 
 test('region: the open samples: the popover wide and compact, and the settings menu enabled and disabled', async ({ page }) => {
   const frame = (id: string) => page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
-  const wide = frame('frame-grid').getByRole('tooltip');
+  const wide = frame('frame-grid').locator('.vb-mode-pop');
   await expect(wide).toBeVisible();
   await expect(wide.locator('.vb-mtile')).toHaveCount(6);
   await expect(wide.locator('.vb-mtile[data-current]')).toHaveAttribute('data-tile', 'grid');
@@ -145,11 +139,11 @@ test('region: the open samples: the popover wide and compact, and the settings m
   await expect(wide.locator('.vb-mtile small')).toHaveCount(6);
   await expect(wide.locator('.vb-mtile small').first()).toBeVisible();
   await expect(wide.locator('.vb-mode-line')).toBeHidden();
-  // The frame's ids carry its own prefix (the page draws no two with the same ids): the radio points at this popover.
+  // The frame's ids carry its own prefix (the page draws no two with the same ids): the layout button controls this popover.
   await expect(wide).toHaveAttribute('id', /^vb\d+-region-frame-grid-modes$/);
-  await expect(frame('frame-grid').getByRole('radio', { name: 'Flow' })).toHaveAttribute('aria-describedby', (await wide.getAttribute('id'))!);
+  await expect(frame('frame-grid').locator('.vb-layout-btn')).toHaveAttribute('aria-controls', (await wide.getAttribute('id'))!);
   // Under 600px of frame: icon and name only, and the highlighted layout's one-liner once.
-  const compact = frame('frame-empty').getByRole('tooltip');
+  const compact = frame('frame-empty').locator('.vb-mode-pop');
   await expect(compact).toBeVisible();
   await expect(compact.locator('.vb-mtile small').first()).toBeHidden();
   await expect(compact.locator('.vb-mode-line')).toHaveText('One subject, everything related around it');
@@ -166,7 +160,7 @@ test('region: the open samples: the popover wide and compact, and the settings m
     await expect(frame(id).getByRole('button', { name: /^Settings for / })).toHaveAttribute('aria-expanded', 'true');
 });
 
-test('region: a narrow frame collapses the row to the checked icon, Comment and the cog, expanding on hover', async ({ page }) => {
+test('region: a narrow frame keeps the layout button, Comment and the cog, and hovering it moves nothing out', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
   const widths = await frames.evaluateAll((els) => els.map((e) => [(e as HTMLElement).dataset.region!, (e as HTMLElement).offsetWidth] as const));
   const narrowest = Math.min(...widths.map(([, w]) => w));
@@ -177,14 +171,14 @@ test('region: a narrow frame collapses the row to the checked icon, Comment and 
   for (const id of ids) {
     const frame = page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
     const row = frame.locator('.vb-mode-row');
-    // Collapsed: the checked layout, Comment and the cog only (3), not 8.
+    // Collapsed: the layout button, Comment and the cog (3); these frames have no Match card widths to hide.
     expect(await visible(row), `${id}: collapsed count`).toBe(3);
     const cut = (sel: string) => frame.locator(sel).evaluate((e) => e.scrollWidth > e.clientWidth);
     // A long title is cut on one line with "…" (review polish ruling 9); a short one fits.
     expect(await cut('h2'), `${id}: title ellipsized at ${narrowest}px`).toBe(id.startsWith('title-'));
-    // Hovering (or focusing) the row expands it to all six layout icons plus Comment and the cog, as an overlay.
+    // Hovering (or focusing) the row expands it as an overlay: the same three.
     await row.hover();
-    expect(await visible(row), `${id}: expanded count`).toBe(8);
+    expect(await visible(row), `${id}: expanded count`).toBe(3);
     await page.mouse.move(0, 0);
     expect(await visible(row), `${id}: collapses again on leave`).toBe(3);
   }
@@ -249,7 +243,7 @@ test('theme button cycles system, light, dark', async ({ page }) => {
   expect(await bodyColour()).toBe(system);
 });
 
-test('markdown: one card per construct, one with everything, and a Markdown note', async ({ page }) => {
+test('markdown: one card per construct, one with everything, and no note on the node', async ({ page }) => {
   const md = page.locator('section[data-pattern="markdown"]');
   for (const sel of ['p.vb-md-p', 'span.vb-md-label[role="heading"][aria-level="4"]', 'ul.vb-md-list', 'ol.vb-md-list',
     'blockquote.vb-md-quote', 'pre.vb-md-code > code', 'code.vb-md-icode', 'a.vb-md-link', 'strong', 'em', 'del']) {
@@ -269,10 +263,8 @@ test('markdown: one card per construct, one with everything, and a Markdown note
     await expect(a).toHaveAttribute('rel', 'noopener noreferrer');
     await expect(a).toHaveAttribute('target', '_blank');
   }
-  // The note renders Markdown too and keeps its three-line clamp.
-  const note = md.locator('.vb-node-note-text').filter({ has: page.locator('strong') });
-  await expect(note).toBeVisible();
-  expect(await note.evaluate((e) => getComputedStyle(e).webkitLineClamp)).toBe('3');
+  // A node's notes are Markdown too, read in its conversation box (note bubble section), never on the node.
+  await expect(md.locator('.vb-node-note-text')).toHaveCount(0);
   // A long code block scrolls inside its cap and can be reached by keyboard.
   const code = md.locator('pre.vb-md-code').filter({ hasText: 'line 30' });
   expect(await code.evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(true);

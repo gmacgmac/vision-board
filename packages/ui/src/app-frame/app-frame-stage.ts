@@ -1,5 +1,5 @@
-// App frame pattern, the stage (appStage; FE_08): what holds a loaded panel on the whole page. The host, the frame itself
-// (the spike's look) or the app window that holds it (appWindow: its bar and drawer come along), goes into the top layer
+// App frame pattern, the stage (FE_08): what holds a loaded panel on the whole page. The host, the app window that
+// holds the frame (its bar and drawer come along), goes into the top layer
 // as a manual popover, so no ancestor's pan or zoom reaches it and nothing in the page moves: the frame is never taken
 // out of the page, so the panel never reloads. While it is there, focus is held inside it (a focus that lands outside,
 // by Tab or a click, comes back in, at its start, or its end after Shift+Tab), Esc anywhere goes back, and a change of

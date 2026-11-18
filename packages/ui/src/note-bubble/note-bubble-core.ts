@@ -100,7 +100,7 @@ export function partAnchor(card: StageBox, at: StageBox): StageBox {
  * `sent`: a note that is history (sent, or answered by the agent: ruling 5), only shown, with its
  * replies (the pin on it). `thread`: the conversation, every note and reply on the card or the
  * container, oldest first (review polish ruling 6: a click, Enter or Space on a note or a reply).
- * `conversation`: the conversation box (nodeEdges, D-099 3, FE_03): one node's thread with a reply field, Add note
+ * `conversation`: the conversation box (D-099 3, FE_03): one node's thread with a reply field, Add note
  * and Ask now; its template loads on first use (`loadConversation`). */
 export type BubbleMode = 'new' | 'edit' | 'sent' | 'thread' | 'conversation';
 
@@ -124,7 +124,7 @@ export interface BubbleInput {
   container?: string;
   /** The agent's replies to the note, oldest first, as the card shows them (`replyEntry`). */
   replies?: readonly ReplyEntry[];
-  /** In `thread` mode: the whole conversation as `conversation` (`notesView`) lists it, never sorted again. */
+  /** In `thread` mode: the whole conversation as `conversation` (node-notes.ts) lists it, never sorted again. */
   entries?: readonly NotesEntry[];
   /** In `sent` mode: the note is history because the agent answered it, not because of a Send
    *  (popovers-larger-thread ruling 5), so its head says "answered". */

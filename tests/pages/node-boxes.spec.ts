@@ -1,4 +1,4 @@
-// The boxes beside a node (nodeEdges flag; FE_03 run 2, the maintainer's rulings): the conversation, proposal and
+// The boxes beside a node (FE_03 run 2, the maintainer's rulings): the conversation, proposal and
 // history boxes share one place (mark-place.ts `placeBeside`): top level with the node's top, to its right when there is
 // room, else below it with their left edges aligned, never over the node, and one look (node-box.css). The history box
 // is the designed one: "History of N" with an ×, the stepper, one row per entry with its version, and "Proposal
@@ -11,7 +11,7 @@ import { act, card, open, write } from './agent-board.ts';
 import { drawEdges, mark } from './edge-board.ts';
 import { BOX_ARROW } from '../../apps/board/src/board/cards/mark-place.ts';
 
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 const box = async (l: Locator) => (await l.boundingBox())!;
 
 /** Where the box's arrow meets its edge, in screen pixels from its top (beside) or its left (below): `--vb-arrow`, in
@@ -70,13 +70,12 @@ test('the conversation, history and proposal boxes open beside the node, top ali
   expect(await look(proposal)).toEqual(await look(history));
 });
 
-test('below the node when the right has no room; no group pin with the edges on', async ({ page, request }) => {
+test('below the node when the right has no room; a note on two nodes counts on each one\'s notes mark', async ({ page, request }) => {
   await page.setViewportSize({ width: 820, height: 1000 });
   const d = await drawEdges(request);
   await open(page, d, FLAGS);
   const [q, f] = d.n as [number, number];
   await act(page, d, { action: 'comment', nodes: [q, f], text: 'Do these two clash?' });
-  await expect(page.locator('.vb-group-pin')).toHaveCount(0);
   await expect(mark(page, q, 'notes')).toHaveAttribute('data-group', '');
   const right = (await box(card(page, f)));
   // Fitted to 820px the marks are too small to press with the pointer (FIX_01, small-marks.spec.ts): the keyboard opens it.

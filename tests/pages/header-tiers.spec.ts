@@ -17,11 +17,9 @@ const THEMES: Theme[] = ['light', 'dark'];
 const LONG = 'Quarterly hiring plan for the platform and data teams across every region, with budgets and open questions';
 const BOARD = 'header-board';
 const QUIET = 'quiet-board';
-const FORMS = [[1600, 'full'], [1470, 'full'], [1300, 'full'], [1299, 'half'], [1000, 'half'], [735, 'half'], [620, 'half'], [619, 'third'], [490, 'third'], [400, 'third']] as const;
-/** With Flows in the bar (flowDirection flag) the full form starts FLOWS_W later; from half Flows is rows of "⋯" (FIX_01). */
+/** Flows is in the bar, so the full form starts FLOWS_W after FULL_MIN; from half Flows is rows of "⋯" (FIX_01). */
 const FULL_FLOWS = FULL_MIN + FLOWS_W;
-const FLOW_FORMS = [[1600, 'full'], [1470, 'full'], [FULL_FLOWS, 'full'], [FULL_FLOWS - 1, 'half'], [1000, 'half'], [620, 'half'], [619, 'third'], [400, 'third']] as const;
-const FLOWS = `${OLD_HEADER},flowDirection`;
+const FORMS = [[1600, 'full'], [1470, 'full'], [FULL_FLOWS, 'full'], [FULL_FLOWS - 1, 'half'], [FULL_MIN, 'half'], [1000, 'half'], [735, 'half'], [620, 'half'], [619, 'third'], [490, 'third'], [400, 'third']] as const;
 
 let agent = '';
 async function writeAs(request: APIRequestContext, board: string, items: object[]) {
@@ -77,17 +75,17 @@ async function crowd(page: Page, request: APIRequestContext) {
 }
 const uncrowd = (page: Page) => act(page, { action: 'unlock' });
 
-for (const [flows, forms, first] of [[false, FORMS, FULL_MIN], [true, FLOW_FORMS, FULL_FLOWS]] as const) for (const [width, form] of forms) {
-  test(`${width}px is the ${form} form and a long name leaves every control whole, quiet or crowded${flows ? ', with Flows' : ''}`, async ({ page, request }) => {
-    await open(page, request, width, BOARD, flows ? FLOWS : OLD_HEADER);
-    if (flows) await expect(page.locator(bid('flow-menu'))).toHaveCount(form === 'full' ? 1 : 0);
+for (const [width, form] of FORMS) {
+  test(`${width}px is the ${form} form and a long name leaves every control whole, quiet or crowded, with Flows`, async ({ page, request }) => {
+    await open(page, request, width, BOARD);
+    await expect(page.locator(bid('flow-menu'))).toHaveCount(form === 'full' ? 1 : 0);
     await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-tier', form);
     await expectWhole(page, 'quiet');
     await crowd(page, request);
     await expect(page.locator(bid('locked'))).toBeVisible();
     await expectWhole(page, 'crowded');
     // At full's first width the path can still give 70px, for Send's longest word and Chat's marks (floors: folder 36, board 100).
-    if (width === first) {
+    if (width === FULL_FLOWS) {
       const [folder, name] = [(await page.locator(bid('folder-chip')).boundingBox())!, (await page.locator('.vb-path-board').boundingBox())!];
       expect(folder.width + name.width).toBeGreaterThanOrEqual(206);
     }
@@ -95,7 +93,7 @@ for (const [flows, forms, first] of [[false, FORMS, FULL_MIN], [true, FLOW_FORMS
     if (width === 1470) expect(await page.locator(`${bid('folder-chip')} .vb-folder-chip-name`).evaluate((e) => e.getBoundingClientRect().width)).toBeGreaterThan(30);
     // The open "⋯" stays inside the window, and scrolls inside itself when it is the taller.
     await menuButton(page).click();
-    if (flows) await expect(page.getByRole('menuitemradio', { name: 'Flows: Auto' })).toHaveCount(form === 'full' ? 0 : 1);
+    await expect(page.getByRole('menuitemradio', { name: 'Flows: Auto' })).toHaveCount(form === 'full' ? 0 : 1);
     const box = (await page.locator(`${bid('toolbar-menu')} ~ .vb-menu-surface[data-fields], ${bid('toolbar-menu')} ~ .vb-menu-surface > .vb-menu-list`).first().boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
@@ -173,7 +171,7 @@ test('half: Version and Containers are rows of "⋯" that do what they did; the 
   await expect(page.locator(`.vb-path ${bid('folder-chip')} .vb-folder-chip-name`)).toBeHidden();
   await expect(page.locator(`.vb-path ${bid('version')}`)).toHaveCount(0);
   await menuButton(page).click();
-  await expect(page.locator(bid('toolbar-menu'))).toHaveAttribute('title', /^More: Version, Containers, Theme/);
+  await expect(page.locator(bid('toolbar-menu'))).toHaveAttribute('title', /^More: Version, Containers, Flows, Theme/);
   const fields = page.getByRole('group', { name: 'Moved from the bar' });
   await expect(fields.locator(bid('version'))).toBeFocused();
   await expect(fields).toContainText(/Version\s*v\d+/);
@@ -221,7 +219,7 @@ test('a third: the bar is the name, a compact count, Send, Chat and "⋯"; every
   for (const id of [bid('send'), '#chat-toggle', bid('toolbar-menu'), bid('board')]) await expect(page.locator(id)).toBeVisible();
   for (const gone of ['.vb-brand', '.vb-zoom', '.vb-toolbar-end > .vb-agents', `${bid('counts')} [data-tone="agent"]`]) await expect(page.locator(gone)).toHaveCount(0);
   await reopen();
-  await expect(menuButton(page)).toHaveAttribute('title', /Folder, Version, Containers, Open cards, New cards, Zoom, Agents, Theme/);
+  await expect(menuButton(page)).toHaveAttribute('title', /Folder, Version, Containers, Open cards, New cards, Zoom, Agents, Flows, Theme/);
   // The rows, in the design's order, then the menu's own.
   await expect(fields.locator('> *').first()).toContainText('Folder');
   for (const word of ['Version', 'Containers', 'Open cards', 'New cards', 'Bookmarked', 'Zoom', 'Agents', 'Board updated']) await expect(fields).toContainText(word);
@@ -284,7 +282,7 @@ test('a third: the zoom row, the version row, Agents and the menu\'s own rows', 
   expect(panel.x).toBeGreaterThanOrEqual(surface.x);
   expect(panel.x + panel.width).toBeLessThanOrEqual(surface.x + surface.width);
   await agents.locator('summary').click();
-  // The menu's own rows work as ever: Theme, and H for Hide answered.
+  // The menu's own rows work as ever: Theme, and Shift+H for Hide answered.
   await menu(page).getByRole('menuitem', { name: /Theme: system/ }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await menuButton(page).click();
@@ -292,11 +290,11 @@ test('a third: the zoom row, the version row, Agents and the menu\'s own rows', 
   await menuButton(page).click();
   await menu(page).getByRole('menuitem', { name: /Theme: dark/ }).click();
   await menuButton(page).click();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   await expect(fields).toBeHidden();
   await expect(page.locator(bid('hide'))).toHaveAttribute('aria-checked', 'true');
   await menuButton(page).click();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Shift+H');
   // The version row: a past version, then back.
   await writeAs(request, BOARD, [node(`A later card ${Date.now()}`)]);
   await menuButton(page).click();
@@ -376,7 +374,7 @@ test('gallery: the section is last, draws the three forms with ids of its own, a
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto(`/gallery.html?flags=${OLD_HEADER}`);
-  await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="oneChangeTab"])').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
+  await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"])').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).getByRole('menu', { name: 'Zoom' })).toBeVisible();
   await expect(section(page).locator(`${bid('board')}, ${bid('version')}, ${bid('containers')}, ${bid('send')}, [id="chat-toggle"], ${bid('toolbar-menu')}, ${bid('counts')}, ${bid('title')}, ${bid('folder-chip')}, ${bid('open-cards')}, ${bid('locked')}`)).toHaveCount(0);

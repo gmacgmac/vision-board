@@ -99,7 +99,7 @@ test('a change chip\'s link in a card\'s updates, with the panel closed, loads i
   const seen: string[] = [];
   page.on('request', (r) => { if (CHUNK.test(r.url())) seen.push(r.url()); });
   await expect(side(page)).toBeHidden();
-  const updates = page.locator('vb-node[data-id="1"] [data-tab="updates"]');
+  const updates = page.locator('vb-node[data-id="1"] [data-mark="badge"][data-badge="updates"]');
   await expect(updates).toHaveText('1 update');
   await updates.click();
   expect(seen).toEqual([]);

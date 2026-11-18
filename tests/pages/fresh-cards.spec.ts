@@ -1,8 +1,8 @@
 // New and updated cards at board scale (new-and-updated task, freshCards flag, on by default; api.md
-// 158): the "N updates" tab outlined at rest (amber with the updateSignals flag, D-088, pink without); a container holding a new or updated card the
+// 158): a node's change badge, "N updates" outlined in the updated amber and New in teal (D-088, D-099 6); a container holding a new or updated card the
 // person has not engaged with has a teal border and a "1 new · 1 updated" pill, until they select or
 // act on one of its cards (a click on the frame ends nothing); the toolbar's "N new" chip lists those
-// cards and goes to each; count = list = tabs. APCA measured light and dark; axe; the flag off is
+// cards and goes to each; count = list = badges. APCA measured light and dark; axe; the flag off is
 // today; a past version shows none of it; the gallery's section.
 // Each test draws a board of its own through the API as a joined agent (agent-board.ts), opens it,
 // waits for the person's first board seen (NEW needs it), sees every card at version 1, then the
@@ -13,7 +13,7 @@ import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { card, write } from './agent-board.ts';
 import { lc, pixel, resolved } from './apca.ts';
-import { frame, idle, tab } from './board-page.ts';
+import { frame, idle, updatesBadge as tab } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 let boards = 0;
@@ -21,7 +21,7 @@ let boards = 0;
 const pill = (page: Page, id: string) => frame(page, id).locator('.vb-region-fresh');
 /** The pill's words to the eye (its full words are for screen readers only). */
 const said = (page: Page, id: string) => pill(page, id).locator('.vb-region-fresh-n');
-const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
+const isNew = (page: Page, n: number) => card(page, n).locator('[data-mark="badge"][data-badge="new"]');
 const list = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
 const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="fresh"]:has(${bid('fresh-cards')})`);
 /** The rows' words: each option's `label` (MenuSelect). */
@@ -83,26 +83,19 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/?setup');
 });
 
-test('the updates tab: the updated amber outline and words at rest, and on hover with its soft fill; NEW teal', async ({ page, request }) => {
+test('the change badge: "1 update" in the updated amber, words and outline; New teal', async ({ page, request }) => {
   const { d, added } = await fresh(page, request);
   const t = tab(page, d.n[2]!);
   await expect(t).toHaveText('1 update');
   expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-updated'));
   expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-state-updated'));
-  expect(await colour(page, t, 'backgroundColor')).toEqual(await token(page, '--vb-surface-card'));
-  // Hovered it never steps down to the duller changed amber (FIX_01): the amber stays, on its soft fill.
-  await t.hover();
-  expect(await colour(page, t, 'borderTopColor')).toEqual(await token(page, '--vb-state-updated'));
-  expect(await colour(page, t, 'color')).toEqual(await token(page, '--vb-state-updated'));
-  expect(await colour(page, t, 'backgroundColor')).toEqual(await token(page, '--vb-state-updated-soft'));
-  // NEW is teal, as the pill's "new" (one colour per meaning; pink with updateSignals off: update-signals.spec.ts).
+  // New is teal, as the pill's "new" (one colour per meaning).
   const nw = isNew(page, added);
-  await expect(nw).toHaveText('NEW');
-  expect(await colour(page, nw, 'backgroundColor')).toEqual(await token(page, '--vb-state-fresh-soft'));
+  await expect(nw).toHaveText('New');
   expect(await colour(page, nw, 'color')).toEqual(await token(page, '--vb-state-fresh'));
 });
 
-test('a fresh container: teal border and "1 new" / "1 updated" pills; count = list = tabs', async ({ page, request }) => {
+test('a fresh container: teal border and "1 new" / "1 updated" pills; count = list = badges', async ({ page, request }) => {
   const { d, added } = await fresh(page, request);
   await expect(frame(page, 'p')).toHaveAttribute('data-fresh', '');
   await expect(frame(page, 'q')).toHaveAttribute('data-fresh', '');
@@ -117,8 +110,8 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   expect(await colour(page, frame(page, 'q'), 'borderTopColor')).toEqual(await token(page, '--vb-state-fresh'));
   await expect(chip(page)).toContainText('2 new');
   await expect.poll(() => texts(page)).toEqual(['2 new', `${d.n[2]} · Card 3 · updated`, `${added} · Card 4`]);
-  // One definition: the tabs the board shows are the list's rows.
-  await expect(page.locator('.vb-node-btab:is([data-tab="new"], [data-tab="updates"]):visible')).toHaveCount(2);
+  // One definition: the badges the board shows are the list's rows.
+  await expect(page.locator('[data-mark="badge"]:is([data-badge="new"], [data-badge="updates"]):visible')).toHaveCount(2);
   // Another update in "p": its pill counts both.
   await write(request, d, [{ type: 'node', n: d.n[0], node: { region: 'p', kind: 'question', title: 'Card 1', body: 'Changed too.' } }]);
   await expect(said(page, 'p')).toHaveText('1 new · 1 updated');
@@ -126,12 +119,9 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   await expect(chip(page)).toContainText('3 new');
 });
 
-test('selecting a new card ends its container\'s border and pill; a click on the frame\'s empty space ends nothing', async ({ page, request }) => {
+// A click on a frame's empty space clears its pill on this screen only (point 308): node-edges-seen.spec.ts.
+test('selecting a new card ends its container\'s border and pill; another container stays fresh until an act in it', async ({ page, request }) => {
   const { d, added } = await fresh(page, request, '?vbwork');
-  const box = (await frame(page, 'q').boundingBox())!;
-  await page.mouse.click(box.x + box.width - 8, box.y + box.height - 8);
-  await idle(page);
-  await expect(frame(page, 'q'), 'a click on the frame').toHaveAttribute('data-fresh', '');
   await card(page, added).locator('.vb-node-title').click();
   await expect(isNew(page, added)).toBeHidden();
   await expect(frame(page, 'p')).not.toHaveAttribute('data-fresh', '');
@@ -156,7 +146,7 @@ test('"N new": choosing a card goes to it, selected and focused, and keeps its m
   await expect(list(page)).toHaveValue('');
   // Finding is no engagement: the list, the chip and the tab are as they were (find-keeps-marks.spec.ts).
   await expect(chip(page)).toContainText('2 new');
-  await expect(isNew(page, added)).toHaveText('NEW');
+  await expect(isNew(page, added)).toHaveText('New');
   await expect.poll(() => texts(page)).toEqual(['2 new', expect.stringMatching(/ · Card 3 · updated$/), `${added} · Card 4`]);
   // The person's own click on each ends it.
   await card(page, added).locator('.vb-node-title').click();
@@ -170,7 +160,7 @@ test('"N new": choosing a card goes to it, selected and focused, and keeps its m
 });
 
 for (const theme of THEMES) {
-  test(`APCA (${theme}): the border Lc 30, the pill's words and the updates tab's Lc 45, its outline Lc 30; axe passes`, async ({ page, request }) => {
+  test(`APCA (${theme}): the border Lc 30, the pill's words and the updates badge's Lc 45, its outline Lc 30; axe passes`, async ({ page, request }) => {
     await setTheme(page, theme);
     const { d } = await fresh(page, request);
     const canvas = await token(page, '--vb-surface-canvas');
@@ -209,11 +199,9 @@ test('the pill leaves a narrow title line whole, and stays zoomed out', async ({
   await expect(p).toBeVisible();
 });
 
-test('flag off: the tab is grey at rest, no container is fresh and no "N new" chip', async ({ page, request }) => {
+test('flag off: no container is fresh and no "N new" chip; the badge still says what changed', async ({ page, request }) => {
   const { d } = await fresh(page, request, '?flags=-freshCards');
   await expect(tab(page, d.n[2]!)).toHaveText('1 update');
-  expect(await colour(page, tab(page, d.n[2]!), 'borderTopColor')).toEqual(await token(page, '--vb-line-strong'));
-  expect(await colour(page, tab(page, d.n[2]!), 'color')).toEqual(await token(page, '--vb-ink-subtle'));
   await expect(page.locator('vb-region[data-fresh]')).toHaveCount(0);
   await expect(page.locator('.vb-region-fresh:visible')).toHaveCount(0);
   await expect(page.locator(bid('fresh-cards'))).toHaveCount(0);

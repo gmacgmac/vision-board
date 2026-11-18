@@ -1,4 +1,4 @@
-// A node's three menus on the board (nodeEdges flag, D-099, D-101; loaded on the first open, lazy.ts): the number's
+// A node's three menus on the board (D-099, D-101; loaded on the first open, lazy.ts): the number's
 // menu, the answer picker and the right-click list, drawn from the pattern's markup (packages/ui node-menus.ts) on the
 // stage, outside the scaled board, so each keeps one size at any zoom. It is placed from its anchor (mark-place.ts),
 // and placed again when the view moves, so it stays attached while the person zooms or pans: a drag outside it pans

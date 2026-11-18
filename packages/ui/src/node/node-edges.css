@@ -1,4 +1,4 @@
-/* The node with its marks on its edges (D-099; nodeEdges flag, data-edges; the look of
+/* The node with its marks on its edges (D-099; data-edges; the look of
    design/mockups/node-skins/default-skin-*.html and node-states/). Placed by the skin's row (data-answer-at,
    data-marks-at), never by a skin's name. Each mark is 22px tall (--vb-mark-h) with a hit area of at least 24px; the
    disc, the icon tile and the notes mark share one vertical line, 34px in from the right edge. A mark's colours are

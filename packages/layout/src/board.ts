@@ -34,8 +34,6 @@ export interface RegionOptions {
   rowGap?: number | undefined;
   /** Which way the region runs if it is a `flow` (LayoutOptions.directions); absent: `across`. */
   direction?: Direction | undefined;
-  /** The flowBranches flag (ModeInput.branching). */
-  branching?: boolean | undefined;
 }
 
 /** One region: `nodes` are its visible nodes in view order, `links` the links between them. Pins
@@ -50,7 +48,7 @@ export function layoutRegion(
   const out: ModeOutput = nodes.length
     ? MODE_FNS[mode]({
       region: { ...region, mode }, nodes, links, sizes, align: opts.align ?? 'start', widths, rowGap: opts.rowGap,
-      direction: opts.direction, branching: opts.branching,
+      direction: opts.direction,
     })
     : { pos: new Map() };
   const pinned = applyPins(out.pos, opts.pins);
@@ -112,7 +110,7 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     return layoutRegion(region, nodes, links, sizes, {
       mode: opts.modes?.get(region.id), pins: opts.pins, headInset: opts.headInsets?.get(region.id),
       widths: opts.widths?.get(region.id), align: opts.align, rowGap: opts.rowGap,
-      direction: opts.directions?.get(region.id), branching: opts.branching,
+      direction: opts.directions?.get(region.id),
     });
   });
   return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth, pins: opts.regionPins });

@@ -58,8 +58,10 @@ const lockRow = (page: Page) => page.locator(bid('lock-board'));
 const chip = (page: Page) => page.locator(bid('locked'));
 const frame = (page: Page) => page.locator('vb-region[data-region="ideas"]');
 
-/** Every control a lock pauses on the board, and the flag, which it never does. */
-const PAUSED = 'vb-node button[data-act], vb-node .vb-size-trig, vb-region button[data-mode], vb-region .vb-region-grip, vb-region .vb-region-comment';
+/** Every control a lock pauses on the board; never the bookmark, the number. */
+const PAUSED = 'vb-node [data-mark="answer"], vb-region button.vb-mtile, vb-region .vb-region-grip, vb-region .vb-region-comment';
+const disc = (page: Page, n: number) => card(page, n).locator('[data-mark="answer"]');
+const number = (page: Page, n: number) => card(page, n).locator('[data-mark="number"]');
 
 /** Leave the vault unlocked whatever a test did. */
 test.afterEach(async ({ page }) => {
@@ -82,9 +84,9 @@ test('"⋯" › Lock board pauses the board in place, says so beside its name, a
   expect(await serverLocked(page)).toBe(true);
   await expect(page.locator('.vb-world')).toHaveAttribute('data-locked', '');
   const paused = page.locator(PAUSED);
-  expect(await paused.count()).toBeGreaterThan(10);
+  expect(await paused.count()).toBeGreaterThanOrEqual(6);
   for (const el of await paused.all()) await expect(el).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.locator('vb-node button[data-bookmark]').first()).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('vb-node [data-mark="number"]').first()).not.toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator(bid('send'))).toHaveAttribute('title', REASON);
   for (const theme of THEMES) {
@@ -102,27 +104,26 @@ test('"⋯" › Lock board pauses the board in place, says so beside its name, a
   expect(await serverLocked(page)).toBe(false);
 });
 
-test('locked, a press on a paused control says why and writes nothing: a button, a key, a note, a layout, the selection bar', async ({ page, request }) => {
+test('locked, a press on a paused control says why and writes nothing: the disc, a key, a note, a layout, the selection bar', async ({ page, request }) => {
   await setUp(request);
-  await open(page, '-layoutTooltip'); // the tiles of the layout popover are its off look
+  await open(page);
   await mark(page, 'lock');
   await idle(page);
   const before = await head(page);
-  // A paused control is aria-disabled, which Playwright won't press unless forced; a person's click still lands.
-  await card(page, 1).locator('button[data-act="ack"]').click({ force: true });
-  await expect(toast(page)).toHaveText(REASON);
-  await expect(card(page, 1).locator('button[data-act="ack"]')).toHaveAttribute('aria-pressed', 'false');
+  // A paused control is aria-disabled, which Playwright won't press unless forced; a person's click still lands: the
+  // disc turns into a lock for a moment and says why (point 328).
+  await disc(page, 1).click({ force: true });
+  await expect(disc(page, 1)).toHaveAttribute('data-locked', '');
+  await expect(page.locator('.vb-mark-tip')).toHaveText('Board is locked');
+  await expect(disc(page, 1)).toHaveAttribute('data-answer', 'waiting');
+  // X answers as the disc does: the lock on the mark.
   await card(page, 2).focus();
   await page.keyboard.press('x');
-  await expect(toast(page)).toHaveText(REASON);
-  await expect(card(page, 2).locator('button[data-act="drop"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(disc(page, 2)).toHaveAttribute('data-locked', '');
+  await expect(disc(page, 2)).toHaveAttribute('data-answer', 'waiting');
   await page.keyboard.press('c');
   await expect(page.locator('vb-note-bubble')).toBeHidden(); // no note can be written
-  // A short frame's rail (toolRail flag) shows its other layouts while hovered.
-  if ((await frame(page).getAttribute('data-rail')) !== null) await frame(page).locator('.vb-region-tools').hover();
-  await frame(page).locator('button[data-mode="column"]').click({ force: true });
-  await expect(frame(page)).toHaveAttribute('data-mode', 'grid');
-  // A tile of the layout popover is paused with the icons: aria-disabled, and a press says why and sends nothing.
+  // A tile of the layout popover is paused: aria-disabled, and a press says why and sends nothing.
   const tile = frame(page).locator('button.vb-mtile[data-tile="column"]');
   await expect(tile).toHaveAttribute('aria-disabled', 'true');
   await tile.evaluate((e) => (e as HTMLElement).click());
@@ -136,18 +137,19 @@ test('locked, a press on a paused control says why and writes nothing: a button,
   expect((await linesAfter(page, before)).map((e) => e.type).filter((t) => t !== 'seen'), 'nothing but what the person saw').toEqual([]);
   await mark(page, 'unlock');
   await idle(page);
-  await card(page, 1).locator('button[data-act="ack"]').click();
+  await card(page, 1).focus();
+  await page.keyboard.press('a');
   await idle(page);
-  await expect(card(page, 1).locator('button[data-act="ack"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(disc(page, 1)).toHaveAttribute('data-answer', 'ticked');
   expect(await head(page)).toBeGreaterThan(before);
 });
 
-test('locked, the bookmark still works: by its button and by B (it changes nothing an agent reads)', async ({ page, request }) => {
+test('locked, the bookmark still works: by the number and by B (it changes nothing an agent reads)', async ({ page, request }) => {
   await setUp(request);
   await open(page);
   await mark(page, 'lock');
   await idle(page);
-  const bookmark = card(page, 2).locator('button[data-bookmark]');
+  const bookmark = number(page, 2);
   await bookmark.click();
   await idle(page);
   await expect(bookmark).toHaveAttribute('aria-pressed', 'true');
@@ -165,11 +167,11 @@ test('locked or unlocked in another tab, the page follows at once', async ({ pag
   await mark(page, 'lock');
   await idle(page);
   await expect(chip(page)).toHaveText('Locked');
-  await expect(card(page, 1).locator('button[data-act="ack"]')).toHaveAttribute('aria-disabled', 'true');
+  await expect(disc(page, 1)).toHaveAttribute('aria-disabled', 'true');
   await mark(page, 'unlock');
   await idle(page);
   await expect(chip(page)).toHaveCount(0);
-  await expect(card(page, 1).locator('button[data-act="ack"]')).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(disc(page, 1)).not.toHaveAttribute('aria-disabled', 'true');
 });
 
 test('by keyboard: the "⋯" menu\'s Lock board, then Unlock board', async ({ page, request }) => {
@@ -199,7 +201,7 @@ test('with -lockBoard: no Lock board row; a board locked elsewhere still shows L
   await mark(page, 'lock');
   await idle(page);
   await expect(chip(page)).toHaveText('Locked');
-  await expect(card(page, 1).locator('button[data-act="ack"]')).toHaveAttribute('aria-disabled', 'true');
+  await expect(disc(page, 1)).toHaveAttribute('aria-disabled', 'true');
 });
 
 // ---- The gallery's lock section (lockBoard flag) ----
@@ -213,8 +215,8 @@ test('gallery: the lock section shows by default, and not with -lockBoard', asyn
   await expect(section(page).getByRole('menuitem', { name: 'Lock board', exact: true })).toBeVisible();
   await expect(section(page).getByRole('menuitem', { name: 'Unlock board' })).toBeVisible();
   await expect(section(page).locator('.vb-chip-locked')).toHaveText('Locked');
-  await expect(section(page).locator('vb-node button[data-act]').first()).toHaveAttribute('aria-disabled', 'true');
-  await expect(section(page).locator('vb-node button[data-bookmark]').first()).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(section(page).locator('vb-node [data-mark="answer"]').first()).toHaveAttribute('aria-disabled', 'true');
+  await expect(section(page).locator('vb-node [data-mark="number"]').first()).not.toHaveAttribute('aria-disabled', 'true');
   await expect(section(page).locator(`${bid('lock-board')}, ${bid('locked')}`)).toHaveCount(0);
 });
 

@@ -1,4 +1,4 @@
-// The board's side of the node's edges (nodeEdges and skins flags; FE_02): the flags reach the board's root; a click
+// The board's side of the node's edges and its skin (FE_02): the skin reaches the board's root; a click
 // inside a container clears its new-and-updated pill on this screen only (point 308) and quiets its replies (N47),
 // writing nothing; the project's icon library is read with `list_icons` and `paths` when the ledger opens and when an
 // `icon` line arrives; a node with an icon is dragged by its grip; the "⋯" menu sets the board's skin; and the moments
@@ -11,24 +11,25 @@ import { drawEdges, mark, menuOf } from './edge-board.ts';
 import { frame, head, idle, linesAfter, menu, menuButton } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 const root = (page: Page) => page.locator('.vb-board').first();
 const pill = (page: Page, id: string) => frame(page, id).locator('.vb-region-fresh');
 
-test('the flags reach the board\'s root: data-vb-edges with nodeEdges (Decision in fuchsia), data-vb-skin with skins; off, neither', async ({ page, request }) => {
+test('the board\'s root says its skin; every node draws its marks on its edges; Decision is off the accent pink (D-100 4)', async ({ page, request }) => {
   const d = await drawEdges(request);
-  await open(page, d, '?vbwork');
-  await expect(root(page)).not.toHaveAttribute('data-vb-edges');
-  await expect(root(page)).not.toHaveAttribute('data-vb-skin');
-  await expect(page.locator('vb-node[data-edges]')).toHaveCount(0);
-  const pink = await card(page, d.n[2]!).evaluate((e) => getComputedStyle(e).getPropertyValue('--vb-kind-decision'));
   await open(page, d, FLAGS);
-  await expect(root(page)).toHaveAttribute('data-vb-edges', '');
-  await expect(root(page)).not.toHaveAttribute('data-vb-skin');
-  await expect(page.locator('vb-node[data-edges]')).toHaveCount(4);
-  expect(await card(page, d.n[2]!).evaluate((e) => getComputedStyle(e).getPropertyValue('--vb-kind-decision'))).not.toBe(pink);
-  await open(page, d, `${FLAGS},skins`);
   await expect(root(page)).toHaveAttribute('data-vb-skin', 'default');
+  await expect(page.locator('vb-node[data-edges]')).toHaveCount(4);
+  // Each resolved through a probe, so the two colours compare as drawn.
+  const [decision, accent] = await card(page, d.n[2]!).evaluate((e) => ['--vb-kind-decision', '--vb-accent'].map((v) => {
+    const probe = document.createElement('span');
+    probe.style.setProperty('color', `var(${v})`);
+    e.append(probe);
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return c;
+  }));
+  expect(decision).not.toBe(accent);
 });
 
 test('a click inside a container clears its pill on this screen only, until its next change; nothing is written; a reload shows it again', async ({ page, request }) => {
@@ -100,7 +101,7 @@ test('a node with an icon is dragged by the grip in the middle of its top line',
 
 test('the skin: the "⋯" menu lists each skin, the board\'s ticked; a choice writes the skin act and the board draws in it', async ({ page, request }) => {
   const d = await drawEdges(request);
-  await open(page, d, `${FLAGS},skins`);
+  await open(page, d, FLAGS);
   await menuButton(page).click();
   const rows = menu(page).getByRole('menuitemradio');
   await expect(rows).toHaveText([/Default skin/, /Command Lens skin/]);
@@ -111,10 +112,6 @@ test('the skin: the "⋯" menu lists each skin, the board\'s ticked; a choice wr
   await expect(card(page, d.n[0]!)).toHaveAttribute('data-answer-at', 'switch');
   const skins = (await linesAfter(page, before)).filter((e) => e.action === 'skin');
   expect(skins.map((e) => [e.skin, e.board])).toEqual([['command-lens', d.board]]);
-  // Without the skins flag there is no such row.
-  await open(page, d, FLAGS);
-  await menuButton(page).click();
-  await expect(menu(page).getByRole('menuitemradio')).toHaveCount(0);
 });
 
 test('a locked board: the disc looks as at rest; a press turns it into a lock with "Board is locked" for a moment and writes nothing', async ({ page, request }) => {
@@ -179,7 +176,7 @@ for (const theme of THEMES) {
   test(`axe passes with a container's reply bright, and the actions listed (${theme})`, async ({ page, request }) => {
     await setTheme(page, theme);
     const d = await drawEdges(request);
-    await open(page, d, `${FLAGS},skins`);
+    await open(page, d, FLAGS);
     const note = await act(page, d, { action: 'comment', board: d.board, region: 'q', text: 'Who has a licence?' });
     await write(request, d, [{ type: 'reply', n: d.n[3]!, text: 'Two of the crew.', to: note }]);
     await expect(frame(page, 'q').locator('.vb-nblock-reply[data-unseen]')).toHaveCount(1);

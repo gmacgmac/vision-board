@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline layout, vertical, default skin (light)</title>
+<link rel="stylesheet" href="../node-states/default.css">
+<link rel="stylesheet" href="../containers/containers.css">
+<link rel="stylesheet" href="timeline.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="cross" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M4 5h16v11h-9l-4 4v-4H4z"/></symbol>
+<symbol id="hist" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="column" viewBox="0 0 24 24"><rect x="8" y="2.5" width="8" height="5.5" rx="1.5"/><rect x="8" y="9.25" width="8" height="5.5" rx="1.5"/><rect x="8" y="16" width="8" height="5.5" rx="1.5"/></symbol>
+<symbol id="row" viewBox="0 0 24 24"><rect x="2.5" y="8" width="5.5" height="8" rx="1.5"/><rect x="9.25" y="8" width="5.5" height="8" rx="1.5"/><rect x="16" y="8" width="5.5" height="8" rx="1.5"/></symbol>
+<symbol id="timeline" viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/><path d="M6 10V5M12 14v5M18 10V5"/></symbol>
+<symbol id="widths" viewBox="0 0 24 24"><path d="M3 3v18M21 3v18"/><rect x="6" y="4" width="12" height="4" rx="1.5"/><rect x="6" y="10" width="12" height="4" rx="1.5"/><rect x="6" y="16" width="12" height="4" rx="1.5"/></symbol>
+<symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></symbol>
+</defs></svg>
+<div class="v9 light">
+<h1 class="pg">Timeline layout, vertical</h1>
+<p class="lede">The same layout run down the board, for a long timeline: the line down the left, every node to its right, so the dates read as one column. Same rules: a dot and a stem for each node, evenly spaced, the date on the tab, years on the line, a band behind nodes that share a date, links on the right.</p>
+<div style="padding:24px 0 0 24px"><div class="ct" style="width:max-content" role="region" aria-label="Atlas 2.0 launch"><div class="ct-h"><span class="hd2"><span class="grp" aria-hidden="true">⠿</span><h2>Atlas 2.0 launch</h2><span class="cnt">2/3</span></span></div><div class="tv" data-tl="v-default" style="width:680px"><i class="tv-ax"></i>
+<div class="tv-yr">2026</div>
+<div class="tv-ev" data-ev="0"><i class="tl-dot" style="--k:var(--k-topic)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-topic);width:380px;"><button class="num">1</button><span class="kind">Jun 2026</span><div class="nb"><h3 class="ttl">Discovery closes</h3><p class="bd">Twelve interviews, three jobs to be done.</p></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev" data-ev="1"><i class="tl-dot" style="--k:var(--k-live)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-live);width:380px;"><button class="num">9</button><span class="kind">Jul 6</span><div class="nb"><h3 class="ttl">Offline drafts lead the asks</h3><p class="bd">Nine of twelve teams named them first.</p></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev" data-ev="2"><i class="tl-dot" style="--k:var(--k-decision)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-decision);width:380px;"><button class="num">2</button><span class="kind">Sep 15</span><button class="ans ok" aria-label="Ticked"><svg class="ic" aria-hidden="true"><use href="#tick"/></svg></button><div class="nb"><h3 class="ttl">Freeze the feature list</h3><p class="bd">Offline drafts move to 2.1.</p></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev" data-ev="3"><i class="tl-dot" style="--k:var(--k-action)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-action);width:380px;"><button class="num">3</button><span class="kind">Week of 13 Oct</span><div class="nb"><h3 class="ttl">Private beta</h3><div class="md"><ul><li><b>Mon</b> Invites go to 200 testers</li><li><b>Wed</b> First feedback review</li><li><b>Fri</b> Go or no-go for the public beta</li></ul></div></div><button class="nc" aria-label="2 notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg>2</button></div></div>
+<div class="tv-ev" data-ev="4"><i class="tl-dot" style="--k:var(--k-topic)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-topic);width:380px;"><button class="num">10</button><span class="kind">Oct 2026</span><div class="nb"><h3 class="ttl">Help centre rewrite</h3><p class="bd">Forty articles, screenshots redone.</p></div><div class="btm"><span class="badge">1 update</span></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev run" data-ev="5"><i class="tl-dot" style="--k:var(--k-risk)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-risk);width:380px;"><button class="num">4</button><span class="kind">Nov 3</span><div class="nb"><h3 class="ttl">Payment provider migration</h3><p class="bd">Checkout moves to the new API.</p></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev run" data-ev="6"><i class="tl-dot" style="--k:var(--k-action)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-action);width:380px;"><button class="num">5</button><span class="kind">Nov 3</span><button class="ans ok" aria-label="Ticked"><svg class="ic" aria-hidden="true"><use href="#tick"/></svg></button><div class="nb"><h3 class="ttl">Pricing page live</h3><p class="bd">Annual plans shown first.</p></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev" data-ev="7"><i class="tl-dot" style="--k:var(--k-question)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-question);width:380px;"><button class="num">6</button><span class="kind">Nov 3</span><button class="ans" aria-label="Waiting for your answer"></button><div class="nb"><h3 class="ttl">Press briefing at 09:00 or 14:00?</h3></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev" data-ev="8"><i class="tl-dot" style="--k:var(--k-topic)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-topic);width:380px;"><button class="num">7</button><span class="kind">Dec 1</span><div class="nb"><h3 class="ttl">Public launch</h3><p class="bd">Store listing, blog post, webinar.</p></div><div class="btm"><span class="badge new">New</span></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-yr">2027</div>
+<div class="tv-ev" data-ev="9"><i class="tl-dot" style="--k:var(--k-action)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-action);width:380px;"><button class="num">11</button><span class="kind">Jan 2027</span><div class="nb"><h3 class="ttl">First-month review</h3><p class="bd">Churn, support load, top asks.</p></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev" data-ev="10"><i class="tl-dot" style="--k:var(--k-action)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-action);width:380px;"><button class="num">12</button><span class="kind">Week of 8 Feb</span><div class="nb"><h3 class="ttl">Offline drafts beta</h3><div class="md"><ul><li><b>Mon</b> Opt-in for beta teams</li><li><b>Thu</b> Sync conflict review</li></ul></div></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<div class="tv-ev" data-ev="11"><i class="tl-dot" style="--k:var(--k-topic)"></i><i class="tl-st"></i><div class="n" style="--k:var(--k-topic);width:380px;"><button class="num">8</button><span class="kind">2027</span><div class="nb"><h3 class="ttl">2.1: offline drafts</h3><p class="bd">Drafts sync when the network is back.</p></div><button class="nc none" aria-label="No notes"><svg class="ic" aria-hidden="true"><use href="#note"/></svg></button></div></div>
+<svg class="tl-ln" aria-hidden="true"><path d="M464 793.75H486q10 0 10 10V1145.25q0 10 -10 10H473"/><path class="ah" d="M465 1155.25l8 -5v10z"/></svg><span class="tl-lb side" style="left:496px;top:974.5px">must land before</span>
+</div></div></div>
+</div>
+</body>
+</html>

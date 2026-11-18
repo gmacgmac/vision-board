@@ -1,7 +1,7 @@
 // An agent's proposals on the page (proposals-seen-parking FE_01, D-018, api.md 93), behind the
-// proposals flag (rule 12, on by default): the PROPOSAL tab on a card's bottom edge and its box,
-// Accept and Reject, an out-of-date proposal that can't be accepted, the bar with Review and Accept
-// all, the keyboard path, axe light and dark; then the gallery's Agent proposals section.
+// proposals flag (rule 12, on by default; D-099 7): a dashed ring on the card's disc and the box it opens beside the
+// card, Accept and Reject, an out-of-date proposal withdrawn from the disc (its history box says so), the bar with
+// Review and Accept all, the keyboard path, axe light and dark; then the gallery's Agent proposals section.
 //
 // Each test draws its own board through the API, as an agent would, so the bar counts only its own
 // proposals: a joined agent writes the board and its cards, opens the page, then proposes, so a
@@ -16,9 +16,6 @@ import { open, tabTo, write } from './agent-board.ts';
 import { bar, box, draw, propose, review, tab } from './proposals-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-/** A change makes a proposal out of date and is an update too; the tests of the proposal tab alone keep two tabs
- *  (oneChangeTab off). The one tab for both is one-change-tab.spec.ts's. */
-const ONE_TAB_OFF = '?flags=-oneChangeTab';
 // The proposal's time and the gallery's screenshot read the same in every test machine's clock.
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
 
@@ -32,7 +29,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/?setup');
 });
 
-test('a proposal arrives live: the PROPOSAL tab on its card, the bar counts it and announces it', async ({ page, request }) => {
+test('a proposal arrives live: a dashed ring on its card\'s disc, the bar counts it and announces it; the disc opens its box', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
   await open(page, d);
@@ -41,16 +38,17 @@ test('a proposal arrives live: the PROPOSAL tab on its card, the bar counts it a
   const height = await card(page, n).evaluate((e) => (e as HTMLElement).offsetHeight);
   await propose(request, d, n, 'cross', 'the client declined');
   await expect(tab(page, n)).toBeVisible();
-  await expect(tab(page, n)).toHaveText('Proposal');
-  await expect(tab(page, n)).toHaveAttribute('aria-label', `Proposal on item ${n}`);
+  await expect(tab(page, n)).toHaveAttribute('data-proposed', 'drop');
   await expect(card(page, n)).toHaveAttribute('aria-label', new RegExp(`, Open, 1 proposal$`));
-  expect(await card(page, n).evaluate((e) => (e as HTMLElement).offsetHeight), 'the card never changes size for a tab').toBe(height);
+  expect(await card(page, n).evaluate((e) => (e as HTMLElement).offsetHeight), 'the card never changes size for a proposal').toBe(height);
   await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal');
   await expect(bar(page).getByRole('button', { name: 'Accept all (1)' })).toBeVisible();
   await expect(page.locator('span[aria-live="polite"]').filter({ hasText: 'proposes' }))
     .toHaveText(`Pricing chat proposes: the client declined, on item ${n}`);
-  // Hover previews the box beside the card; it holds who, what, from where and when.
+  // Nothing opens on hover; the disc opens the box beside the card, which holds who, what, from where and when.
   await tab(page, n).hover();
+  await expect(box(page, n)).toBeHidden();
+  await tab(page, n).click();
   await expect(box(page, n)).toBeVisible();
   await expect(box(page, n)).toHaveAccessibleName(`Proposal on item ${n}`);
   await expect(box(page, n).locator('.vb-prop-head')).toHaveText('Pricing chat proposes');
@@ -59,11 +57,11 @@ test('a proposal arrives live: the PROPOSAL tab on its card, the bar counts it a
   const c = await card(page, n).boundingBox();
   const b = await box(page, n).boundingBox();
   expect(b!.x, 'beside the card').toBeGreaterThan(c!.x + c!.width);
-  await page.mouse.move(0, 500);
+  await page.keyboard.press('Escape');
   await expect(box(page, n)).toBeHidden();
 });
 
-test('Accept drops the card through the proposal; the tab and the bar go', async ({ page, request }) => {
+test('Accept drops the card through the proposal; the ring and the bar go', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
   await propose(request, d, n, 'cross', 'the client declined');
@@ -71,7 +69,6 @@ test('Accept drops the card through the proposal; the tab and the bar go', async
   const before = await head(page);
   await tab(page, n).click();
   await expect(box(page, n)).toBeVisible();
-  await expect(tab(page, n)).toHaveAttribute('aria-expanded', 'true');
   await expect(box(page, n).getByRole('button', { name: `Reject: cross ${n}` })).toBeFocused();
   await box(page, n).getByRole('button', { name: `Accept: cross ${n}` }).click();
   await expect(card(page, n)).toHaveAttribute('data-status', 'dropped');
@@ -85,7 +82,7 @@ test('Accept drops the card through the proposal; the tab and the bar go', async
   expect(typeof act!.proposal).toBe('number');
 });
 
-test('retiring the card ends its proposal: the tab and the bar go, and the page sends no accept without a version', async ({ page, request }) => {
+test('retiring the card ends its proposal: the card and the bar go, and the page sends no accept without a version', async ({ page, request }) => {
   const d = await draw(request, ['question', 'question']);
   const [n, other] = d.n as [number, number];
   await open(page, d);
@@ -119,31 +116,22 @@ test('Reject clears the proposal and leaves the card open', async ({ page, reque
   expect((await actsAfter(page, d.board, before)).map((e) => e.action)).toEqual(['reject']);
 });
 
-test('out of date: the tab and the box say so, Accept is aria-disabled and does nothing, Reject still works', async ({ page, request }) => {
+test('out of date: the proposal leaves the disc, the history box says it was withdrawn, and the bar counts it', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
   await propose(request, d, n, 'cross', 'the client declined');
-  await open(page, d, ONE_TAB_OFF);
-  await expect(tab(page, n)).toHaveText('Proposal');
+  await open(page, d);
+  await expect(tab(page, n)).toBeVisible();
   // The agent adds to the card: a new version, so the proposal made on version 1 is out of date.
   await write(request, d, [{ type: 'append', n, text: 'The credit amount is in.' }]);
-  await expect(tab(page, n)).toHaveText('Out of date');
-  await expect(tab(page, n)).toHaveAttribute('data-stale', '');
+  await expect(tab(page, n)).toBeHidden();
+  await expect(card(page, n).locator('[data-mark="answer"]')).toHaveAttribute('data-answer', 'waiting');
   await expect(bar(page)).toContainText('1 proposal');
   await expect(bar(page)).toContainText('· 1 out of date');
   await expect(bar(page).getByRole('button', { name: /^Accept all/ })).toHaveCount(0);
-  const before = await head(page);
-  await tab(page, n).click();
-  const accept = box(page, n).getByRole('button', { name: `Accept: cross ${n} (out of date)` });
-  await expect(accept).toHaveAttribute('aria-disabled', 'true');
-  await expect(accept).toHaveAccessibleDescription(`${n} changed after this was proposed. Ask the agent to look again.`);
-  await expect(box(page, n).getByRole('button', { name: `Reject: cross ${n}` })).toBeFocused();
-  await accept.click({ force: true });
-  await expect(card(page, n)).toHaveAttribute('data-status', 'open');
-  expect(await actsAfter(page, d.board, before), 'no act sent').toEqual([]);
-  await box(page, n).getByRole('button', { name: `Reject: cross ${n}` }).click();
-  await expect(tab(page, n)).toBeHidden();
-  expect((await actsAfter(page, d.board, before)).map((e) => e.action)).toEqual(['reject']);
+  await card(page, n).focus();
+  await page.keyboard.press('h');
+  await expect(card(page, n).locator('.vb-card-pop[data-pop="history"] .vb-history-row').first()).toContainText('Proposal withdrawn: the node changed');
 });
 
 test('Accept all lists what it applies and what it skips, then applies it in order', async ({ page, request }) => {
@@ -155,14 +143,16 @@ test('Accept all lists what it applies and what it skips, then applies it in ord
   await write(request, d, [{ type: 'append', n: b, text: 'The credit amount is in.' }]);
   await propose(request, d, c, 'check', 'the sheet confirms it');
   await propose(request, d, c, 'cross', 'the new prices remove it');
-  await open(page, d, ONE_TAB_OFF);
+  await open(page, d);
   await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('4 proposals');
   await expect(bar(page)).toContainText('· 1 out of date');
   // Two proposals on one card: the box lists both, newest first.
   await tab(page, c).click();
+  // Open first: the box's text is there while it is shut too, and the marks' code may still be loading on a first press.
+  await expect(box(page, c)).toBeVisible();
   await expect(box(page, c).locator('.vb-prop-what')).toHaveText([`Cross ${c}: the new prices remove it`, `Check ${c}: the sheet confirms it`]);
   await page.keyboard.press('Escape');
-  await expect(tab(page, c)).toBeFocused();
+  await expect(box(page, c)).toBeHidden();
   const before = await head(page);
   await bar(page).getByRole('button', { name: 'Accept all (2)' }).click();
   const dialog = page.getByRole('dialog', { name: 'Accept these 2 proposals?' });
@@ -177,23 +167,19 @@ test('Accept all lists what it applies and what it skips, then applies it in ord
   await expect(card(page, a)).toHaveAttribute('data-status', 'dropped');
   await expect(card(page, c)).toHaveAttribute('data-status', 'dropped');
   await expect(card(page, b)).toHaveAttribute('data-status', 'open');
-  await expect(tab(page, b)).toHaveText('Out of date');
+  await expect(tab(page, b)).toBeHidden();
   await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal');
   expect((await actsAfter(page, d.board, before)).map((e) => [e.action, e.n])).toEqual([['drop', a], ['drop', c]]);
 });
 
-test('keyboard only: focus on the tab previews, Enter opens with focus in the box, Esc returns to the tab, Enter on Accept acts', async ({ page, request }) => {
+test('keyboard only: focus on the disc opens nothing, Enter opens the box with focus in it, Esc returns to the disc, Enter on Accept acts', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
   await propose(request, d, n, 'check', 'settled in chat');
   await open(page, d);
   await page.locator(bid('stage')).focus();
   await tabTo(page, tab(page, n));
-  await expect(box(page, n)).toBeVisible();
-  await expect(tab(page, n)).toHaveAttribute('aria-expanded', 'true');
-  await page.keyboard.press('Escape');
   await expect(box(page, n)).toBeHidden();
-  await expect(tab(page, n)).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(box(page, n).getByRole('button', { name: `Reject: check ${n}` })).toBeFocused();
   await page.keyboard.press('Escape');
@@ -225,7 +211,7 @@ test('Review with one card with proposals goes straight to it: its box opens wit
 });
 
 
-test('flag off: no tab and no bar', async ({ page, request }) => {
+test('flag off: no ring and no bar', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
   await propose(request, d, n, 'cross', 'the client declined');
@@ -236,21 +222,17 @@ test('flag off: no tab and no bar', async ({ page, request }) => {
 });
 
 for (const theme of THEMES) {
-  test(`axe passes with the bar and an open box, open and out of date (${theme})`, async ({ page, request }) => {
+  test(`axe passes with the bar, an open box and one out of date (${theme})`, async ({ page, request }) => {
     const d = await draw(request, ['question', 'action']);
     const [a, b] = d.n as [number, number];
     await propose(request, d, a, 'cross', 'the client declined');
     await propose(request, d, b, 'check', 'the draft is done');
     await write(request, d, [{ type: 'append', n: b, text: 'The credit amount is in.' }]);
     await setTheme(page, theme);
-    await open(page, d, ONE_TAB_OFF);
-    await expect(tab(page, b)).toHaveText('Out of date');
+    await open(page, d);
+    await expect(bar(page)).toContainText('· 1 out of date');
     await tab(page, a).click();
     await expect(box(page, a)).toBeVisible();
-    await expectNoAxeViolations(page);
-    await page.keyboard.press('Escape');
-    await tab(page, b).click();
-    await expect(box(page, b)).toBeVisible();
     await expectNoAxeViolations(page);
   });
 }
@@ -267,7 +249,8 @@ test('gallery: the Agent proposals section shows by default and not with -propos
   const s = section(page);
   await expect(s.locator('vb-node')).toHaveCount(6);
   await expect(s.locator('.vb-card-pop[data-open]')).toHaveCount(3);
-  await expect(s.locator('.vb-node-btab[data-stale]')).toHaveText('Out of date');
+  // A proposal waiting rings the disc; an out-of-date one leaves it as it was (the history box says it was withdrawn).
+  await expect(s.locator('[data-mark="answer"][data-proposed]')).not.toHaveCount(0);
   await expect(s.locator('.vb-card-pop[data-open] .vb-prop')).toHaveCount(4);
   await expect(s.locator('.vb-pop-btn[aria-disabled="true"]')).toHaveCount(1);
   await expect(s.locator('.vb-proposals h2')).toHaveText('5 proposals');

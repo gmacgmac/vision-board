@@ -1,4 +1,4 @@
-// The conversation box (nodeEdges flag, D-099 3, FE_03): a node's notes open one box, to read and to write. The notes
+// The conversation box (D-099 3, FE_03): a node's notes open one box, to read and to write. The notes
 // mark, C and right-click's Comment open it with the field focused. Add note (Enter) writes the note for the board's
 // Send and keeps the box open; only Ask now (Cmd or Ctrl Enter) sends to the agent, as one `ask` naming the note's
 // `seq` with `context: "board"`, and the board's other answers stay for Send. Words typed survive a redraw, a failed
@@ -11,7 +11,7 @@ import { drawEdges, mark, menuOf } from './edge-board.ts';
 import { head, idle, linesAfter } from './board-page.ts';
 import { lc, pixel } from './apca.ts';
 
-const FLAGS = '?vbwork&flags=nodeEdges';
+const FLAGS = '?vbwork';
 const box = (page: Page) => page.locator('vb-note-bubble[data-mode="conversation"]');
 const field = (page: Page) => box(page).getByRole('textbox');
 const lines = async (page: Page, after: number, action: string) => (await linesAfter(page, after)).filter((e) => e.action === action);

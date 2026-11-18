@@ -1,8 +1,8 @@
 // What the note bubble says for the note that is open (split out of notes.ts): its head, mode and
 // text from `bubbleView`, the edge it wears, and the agent's replies to the note under it, oldest
-// first, as the card shows them. The conversation (`thread` mode, review polish ruling 6) lists every
-// note and reply on the card or the container, in `conversation`'s order (the card's own). Facts
-// only: notes.ts opens, places and closes.
+// first. A node's notes are read and written in its conversation box (note-box.ts); here, only the edit bubble an Edit in
+// the box opens. The conversation (`thread` mode, review polish ruling 6) lists every note and reply on a container, in
+// `conversation`'s order. Facts only: notes.ts opens, places and closes.
 import type { NoteKind, Region, ViewNode } from '#format';
 import type { BoardState, ItemNote } from '#actions';
 import type { BubbleMode, BubbleView, CardReply, VbNoteBubbleElement } from '#ui';
@@ -30,9 +30,6 @@ export interface ViewDeps {
   replies(id: string): readonly CardReply[];
   /** The agent's replies to notes on whole containers, oldest first. */
   regionReplies(): readonly CardReply[];
-  /** The groupNoteOnce flag: a card's conversation leaves out notes on a group of cards, which the
-   *  group's own pin and bubble show once (group-pins.ts). */
-  groups?: boolean;
 }
 
 /** What `show` takes: the view, and the edge and chip the bubble wears. */
@@ -54,7 +51,8 @@ export function cardView(d: ViewDeps, o: Open): Shown | null {
   const n = d.node(o.id);
   if (!n || n.n === undefined) return null;
   const all = d.state().items.get(o.id)?.notes ?? [];
-  const notes = d.groups && !o.group ? all.filter((x) => !x.nodes) : all;
+  // A node's own note is counted among its own notes; a note on a group of nodes has its own tab (note-box.ts).
+  const notes = o.group ? all : all.filter((x) => !x.nodes);
   const index = o.note ? notes.findIndex((x) => x.seq === o.note!.seq) + 1 : undefined;
   const numbers = o.group?.map(Number);
   const replies = repliesOf(o, d.replies(o.id));

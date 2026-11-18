@@ -1,5 +1,4 @@
-// Gallery entry for the node's edges (nodeEdges flag, D-099; FE_01), shown with the flag on (gallery.html?flags=nodeEdges):
-// the edges board's cards drawn from the fixture ledger through `nodeState`, as the board draws them, in the default
+// Gallery entry for the node's edges (D-099; FE_01): the edges board's cards drawn from the fixture ledger through `nodeState`, as the board draws them, in the default
 // skin's row: every mark in every state (waiting, ticked, crossed, a proposal, bookmarked, New, N updates, a settled
 // vN, Awaiting, notes none, counted, on a group, unread), icons built in and from the library (one drawn, one with a
 // failing path and one missing: the plain tile), tones by name and by hue; then the moments the page sets on a mark
@@ -67,7 +66,7 @@ function withTip(fx: Fixture, title: string, m: string, words?: string, attr?: s
   return pair;
 }
 
-/** The "⋯" menu with the board's Skin rows (skins flag), the default ticked. */
+/** The "⋯" menu with the board's Skin rows (D-100 2), the default ticked. */
 function skinRows(): HTMLElement {
   const host = el('div', 'g-edge-menu');
   mount(ToolbarMenu, { target: host, context: chromeSample({}, { skin: 'default', version: 3 }), props: { onhide: () => undefined, onskin: () => undefined, open: true, placement: 'gallery' } });
@@ -76,16 +75,16 @@ function skinRows(): HTMLElement {
 
 export function edgesSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
-  box.dataset.feature = 'nodeEdges';
-  box.setAttribute('aria-labelledby', 'feature-nodeEdges');
+  box.dataset.feature = 'node-edges';
+  box.setAttribute('aria-labelledby', 'feature-node-edges');
   const heading = el('h2', 'g-title', 'The node\'s edges');
-  heading.id = 'feature-nodeEdges';
+  heading.id = 'feature-node-edges';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, '<vb-node> render(n, { edges: SKIN_DEFS.default, icons })'), ' · feature flag nodeEdges (D-099), off by default · on with ?flags=nodeEdges');
+  meta.append(el('code', undefined, '<vb-node> render(n, { edges: SKIN_DEFS.default, icons })'), ' · D-099, the default skin (D-100)');
   const every = fx.edges.view.nodes.map((n) => edgeCard(fx, n).node);
   const selected = ['Go-ahead to install', 'Switch to the satellite backup at 2% loss'].map((t) => edgeCard(fx, byTitle(fx, t), true).node);
   box.append(heading,
-    el('p', 'g-desc', 'Every action sits on the node\'s edge, and each mark is the control for what it shows: the number is the bookmark, the disc the answer, the badge opens history, the notes mark the conversation. The footer row is gone.'),
+    el('p', 'g-desc', 'Every action sits on the node\'s edge, and each mark is the control for what it shows: the number is the bookmark, the disc the answer, the badge opens history, the notes mark the conversation. No footer.'),
     meta,
     group('Every mark, in every state', 'Waiting, ticked and crossed discs; a proposal\'s dashed ring; bookmarked numbers; New, "1 update" and a settled "v3"; Awaiting; notes none, counted, on a group of nodes, and unread. Icons built in and from the project\'s library: one drawn, one whose path fails its check and one missing, both the plain tile. Tones by name and by hue.',
       cardList('Node edges, every state', ...every)),
@@ -100,6 +99,6 @@ export function edgesSection(fx: Fixture): HTMLElement {
     group('Tips', 'After a deliberate hover of about two seconds, or at once when Tab brings focus to a mark, its tip shows above it; never after a click. A press the board can\'t take turns the mark into a lock for a moment with the reason beside it; a write that failed keeps its words until the next press.',
       withTip(fx, 'Go-ahead to install', 'answer'), withTip(fx, 'Keep the backup encoder warm', 'answer', MARK_MOMENT_WORDS.boardIsLocked, 'data-locked'),
       withTip(fx, 'Install window agreed', 'answer', MARK_MOMENT_WORDS.tickNotSaved, 'data-failed')),
-    group('The board\'s skin', 'With the skins flag the "⋯" menu lists each skin, the board\'s ticked; a choice is the person\'s skin act, for everyone who opens the board.', skinRows()));
+    group('The board\'s skin', 'The "⋯" menu lists each skin, the board\'s ticked; a choice is the person\'s skin act, for everyone who opens the board.', skinRows()));
   return box;
 }

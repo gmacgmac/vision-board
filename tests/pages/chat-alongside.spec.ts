@@ -14,6 +14,7 @@ import { lc, pixel, resolved } from './apca.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card, log, sendButton, side, text, toggle } from './chat-page.ts';
+import { answerBy } from './board-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -43,7 +44,8 @@ const mark = (page: Page) => toggle(page).locator('.vb-chat-mark');
 const news = (page: Page) => toggle(page).locator('.vb-chat-news');
 const toast = (page: Page) => page.locator('#toast-news');
 const replies = (page: Page) => log(page).locator('chat-message[data-from="agent"]');
-const ack = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"] button[data-act="ack"]`);
+/** ✓ on card `n` by pointer: its disc, then Tick in the picker. */
+const ack = (page: Page, n: number) => ({ click: () => answerBy(page, n, 'Tick') });
 
 /** Open the board (the flags as given), with the chat closed, and wait for its first draw. */
 async function open(page: Page, flags = '') {

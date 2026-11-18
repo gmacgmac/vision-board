@@ -12,7 +12,7 @@ import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { card } from './board-page.ts';
+import { answerBy, card } from './board-page.ts';
 import { sendButton, side, status, text } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
@@ -71,7 +71,7 @@ test('a ✓ shows "1 answer" in the composer; it opens a preview of the answers 
   await expect(answers(page)).toHaveCount(0);
   await expect(submit(page)).toBeDisabled();
   await expect(sendButton(page)).toHaveAttribute('title', NOTHING);
-  await card(page, 1).locator('button[data-act="ack"]').click();
+  await answerBy(page, 1, 'Tick');
   await expect(answers(page)).toHaveText('1 answer');
   await expect(answers(page)).toHaveAttribute('aria-expanded', 'false');
   await answers(page).click();
@@ -109,7 +109,7 @@ test('the words, "The person selected these cards:" and the answers go as one me
 
 test('no words: the context alone goes; the toolbar\'s Send is the same message', async ({ page }) => {
   await open(page, 'scratch');
-  await card(page, 2).locator('button[data-act="ack"]').click();
+  await answerBy(page, 2, 'Tick');
   await expect(answers(page)).toHaveText('1 answer');
   await expect(text(page)).toHaveValue('');
   const shown = await previewText(page);
@@ -118,7 +118,7 @@ test('no words: the context alone goes; the toolbar\'s Send is the same message'
   expect(fromComposer.prompt).toBe(`${shown}\n\nBoard: scratch`);
   await expect(answers(page)).toHaveCount(0);
   await expect(status(page)).toHaveText('Status: Ready');
-  await card(page, 2).locator('button[data-act="drop"]').click();
+  await answerBy(page, 2, 'Cross');
   await expect(answers(page)).toHaveText('1 answer');
   await sendButton(page).click();
   await expect(sendButton(page)).toHaveAttribute('data-state', 'sent');
@@ -138,7 +138,7 @@ test('a comment shows as one answers chip and no note chip; the note\'s words go
   const note = 'Ask the venue first';
   await card(page, 2).focus();
   await page.keyboard.press('c');
-  await page.getByLabel('Note text').fill(note);
+  await page.locator('vb-note-bubble textarea').fill(note);
   await page.keyboard.press('Enter');
   await expect(answers(page)).toHaveText('1 answer');
   await expect(side(page).locator('chat-composer .chat-chip')).toHaveCount(1);
@@ -177,7 +177,7 @@ test('while the agent works, a message with context waits and goes when the turn
     const busy = await srv.fake.run(++runs);
     await expect(status(page)).toHaveText('Status: Working');
     await expect(submit(page)).toBeDisabled();
-    await card(page, 3).locator('button[data-act="ack"]').click();
+    await answerBy(page, 3, 'Tick');
     await expect(answers(page)).toHaveText('1 answer');
     await expect(side(page).locator('.chat-cmp-line')).toHaveText('The agent is working. What is attached goes when it finishes; words you send now are queued.');
     await text(page).fill('Also these');
@@ -185,7 +185,7 @@ test('while the agent works, a message with context waits and goes when the turn
     await expect(side(page).locator('.chat-system').last()).toHaveText(QUEUED_WORDS);
     await expect(text(page)).toHaveValue('');
     await expect(sendButton(page)).toHaveAttribute('data-state', 'waiting');
-    await card(page, 1).locator('button[data-act="drop"]').click();
+    await answerBy(page, 1, 'Cross');
     srv.fake.mode('replay');
     await side(page).getByRole('button', { name: 'Stop' }).click();
     const given = await srv.fake.run(++runs);
@@ -210,7 +210,7 @@ test('a board with no session: Send is as today, the act alone; no agent runs', 
   ]);
   await open(page, 'other');
   await expect(side(page).locator('.chat-empty')).toHaveText('No messages yet. Ask the agent about this board.');
-  await card(page, 1).locator('button[data-act="ack"]').click();
+  await answerBy(page, 1, 'Tick');
   await sendButton(page).click();
   await expect(sendButton(page)).toHaveAttribute('data-state', 'sent');
   await expect(sendButton(page)).toHaveAttribute('title', NOTHING);
@@ -224,9 +224,9 @@ for (const theme of ['dark', 'light'] as Theme[]) {
     await open(page, 'scratch');
     // ✓ in one theme, Later in the other: pressing the same answer again would clear it, and ✗ after ✓
     // could put the card back where the last Send left it, which folds to nothing to send (D-045).
-    const answer = card(page, 2).locator(`button[data-act="${theme === 'dark' ? 'ack' : 'later'}"]`);
-    await answer.click();
-    await expect(answer).toHaveAttribute('aria-pressed', 'true');
+    if (theme === 'dark') await answerBy(page, 2, 'Tick');
+    else { await card(page, 2).focus(); await page.keyboard.press('l'); }
+    await expect(card(page, 2)).toHaveAttribute('data-status', theme === 'dark' ? 'acknowledged' : 'later');
     await card(page, 3).locator('.vb-node-title').click();
     await expect(answers(page)).toHaveText('1 answer · 1 selected');
     await text(page).click();

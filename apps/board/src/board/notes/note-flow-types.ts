@@ -4,7 +4,6 @@ import type { NoteKind } from '#format';
 import type { BoardState } from '#actions';
 import type { MarkdownOptions } from '#ui';
 import type { ActFields } from '../io.ts';
-import type { Selection } from '../selection/index.ts';
 import type { AskDiscard } from './note-discard.ts';
 import type { AnchorDeps } from './note-anchor.ts';
 import type { ViewDeps } from './note-views.ts';
@@ -31,12 +30,8 @@ export interface NoteDeps extends ViewDeps, AnchorDeps {
   unsaved?(on: boolean): void;
   /** Why the board can't change now (a locked board, lock-flow.ts): no bubble opens, the toast says why. */
   paused?(): string | null;
-  /** The world, where the group pins draw in their own layer (groupNoteOnce flag, group-pins.ts). */
-  world: HTMLElement;
-  /** A press on a group pin selects the group's cards. */
-  selection: Pick<Selection, 'select'>;
-  /** The conversation box (nodeEdges flag, FE_03): with it, a node's notes open one box to read and write, with Ask now. */
-  box?: BoxDeps;
+  /** The conversation box (FE_03): a node's notes open one box to read and write, with Ask now. */
+  box: BoxDeps;
   /** The board shown: an app window's drawer is remembered open per board and node (app-drawer.ts). */
   board?(): string;
 }
@@ -45,16 +40,12 @@ export interface NoteDeps extends ViewDeps, AnchorDeps {
 export interface NoteGone { card?(id: string): boolean; region?(id: string): boolean }
 
 export interface NoteFlow {
-  /** C on a card: edit its note not yet sent, or start a new one. */
-  press(id: string, kind: NoteKind): void;
-  /** Comment on two or more selected cards (3_FE_02 ruling 3): one note on the group, beside the
-   *  selection's box; the group's own note not yet sent, if it has one, opens to edit. */
+  /** C, the notes mark or Comment on a node: its conversation box (an app window's drawer). */
+  press(id: string): void;
+  /** Comment on two or more selected nodes (FE_06): the conversation box beside the selection, on a note for the group. */
   group(ids: readonly string[]): void;
-  /** The pin: open that note (read-only once sent) with the agent's replies to it. A note in the
-   *  "Your note" block (`fromNote`): the card's conversation, beside it and scrolled to it. */
-  show(id: string, seq: number, fromNote?: boolean): void;
-  /** An agent's reply on the card: the card's conversation, beside the reply and scrolled to it. */
-  reply(id: string, seq: number): void;
+  /** Node `id`'s conversation at note or reply `part` (a history row, a chat link): open and scrolled to it. */
+  show(id: string, part: number): void;
   /** Comment on a container's title line (3_FE_04): edit its note not yet sent, or start one
    *  (`kind` sets what it asks for; default: the note's own, else a comment). */
   container(region: string, kind?: NoteKind): void;
@@ -77,7 +68,7 @@ export interface NoteFlow {
    *  Archive; point 309): when that takes the open bubble's card (every card of a group's) or its
    *  container, and its words are unsaved, `leave()`; else true at once. True: go ahead. */
   leaveIf(gone: NoteGone): Promise<boolean>;
-  /** Whether app node `id`'s window has its drawer open (appWindow flag, app-drawer.ts). */
+  /** Whether app node `id`'s window has its drawer open (app-drawer.ts). */
   drawer(id: string): boolean;
   /** Write `text` on node `id` as the person's note, joined to its note not yet sent (an app panel's note, app-cards.ts);
    *  null when recorded, else the problem's words. */

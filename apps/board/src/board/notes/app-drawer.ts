@@ -1,4 +1,4 @@
-// An app window's drawer (appWindow flag, D-099 5, FE_08): the node's conversation docked on the window's right, the
+// An app window's drawer (D-099 5, FE_08): the node's conversation docked on the window's right, the
 // same box as any node's (FE_03's `<vb-note-bubble>` in conversation mode, note-box.ts: its tabs, Add note and Ask
 // now), one per open drawer, so a window's conversation stays open while other boxes come and go. The arrow in the bar
 // (`data-drawer`) shows and hides it; C, a note or a reply on the node show it. Open or closed is remembered per node

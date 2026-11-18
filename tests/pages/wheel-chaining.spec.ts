@@ -31,7 +31,7 @@ async function board(page: Page, request: APIRequestContext, note: string, answe
   await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(1);
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(card(page, n).locator('.vb-node-reply')).toHaveCount(1);
+  await expect(card(page, n).locator('[data-mark="notes"]')).toHaveAttribute('data-notes-mark', 'unread');
   return { ...d, n: [n] };
 }
 
@@ -71,9 +71,9 @@ async function wheel(page: Page, at: { x: number; y: number }, dy: number): Prom
 }
 
 const thread = (page: Page) => bubble(page).locator('.vb-nb-thread');
-/** Open the card's conversation (a press on the agent's reply): scrolled to the latest, at the bottom. */
+/** Open the card's conversation box (its notes mark): scrolled to the latest, at the bottom. */
 async function conversation(page: Page, n: number): Promise<Locator> {
-  await card(page, n).locator('.vb-node-reply').click();
+  await card(page, n).locator('[data-mark="notes"]').click();
   await expect(thread(page)).toBeVisible();
   return thread(page);
 }
@@ -120,25 +120,6 @@ for (const theme of THEMES) {
       const list = await conversation(page, n);
       expect(await room(list)).toBe(0);
       expect(await wheel(page, await middle(list), 120)).toBe(true);
-    });
-
-    test('over a long tip the wheel scrolls it; the gesture that reaches its end does not pan, the next one does', async ({ page, request }) => {
-      const { n: [n] } = await board(page, request, LONG, 'Short reply.');
-      const note = card(page, n).locator('.vb-node-note');
-      const body = note.locator('.vb-note-tip .vb-tip-body');
-      await note.hover();
-      await expect(body).toBeVisible();
-      const [a, t] = [await box(note), await box(body)];
-      // Across to the tip along the note's top line, as a person does (hover-tip.spec.ts).
-      await page.mouse.move(a.x + a.width - 10, a.y + 20);
-      await page.mouse.move(t.x + 40, a.y + 20, { steps: 10 });
-      await expect(note).toHaveAttribute('data-tip-open', '');
-      expect(await wheel(page, { x: t.x + 40, y: a.y + 20 }, 200), 'it scrolls, the board stays').toBe(false);
-      expect(await scrollTop(body)).toBeGreaterThan(0);
-      await expect(note).toHaveAttribute('data-tip-open', '');
-      expect(await gesture(body, 100)).toEqual([false, false, false]);
-      await page.waitForTimeout(GAP);
-      expect(await alone(body, 100), 'the next gesture at its end pans').toBe(true);
     });
 
     test('a text box scrolls only while it can', async ({ page, request }) => {
