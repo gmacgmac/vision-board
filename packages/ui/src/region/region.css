@@ -15,12 +15,22 @@
 
 vb-region {
   --vb-region-line-w: 1.5px;
+  /* Open corners (FIX_06; design/mockups/containers): the frame is a top rule broken by the title, a bottom rule and
+     two side rules that stop --vb-region-gap short of each corner, REGION_PAD (28) in packages/layout/src/types.ts, so
+     the top and bottom rules span what the frame holds. The element keeps its transparent border (the same box and
+     geometry as before; the top line and the rail read it); the rules are drawn on its two pseudo-elements, behind
+     the content (isolation: the rail's ring and the title's gap cover them). --vb-region-ln is the rules' colour and
+     --vb-region-ln-w their weight: states set these, never the border. */
+  --vb-region-gap: 28px; --vb-region-ln: var(--vb-region); --vb-region-ln-w: var(--vb-region-line-w);
   display: block; position: absolute; left: 0; top: 0; container-type: inline-size; border-radius: var(--vb-radius-lg);
-  border: var(--vb-region-line-w) solid var(--vb-region);
+  border: var(--vb-region-line-w) solid transparent; isolation: isolate;
   /* The top line's room: REGION_HEAD in packages/layout/src/types.ts (38). Keep the two equal. */
   padding-top: 38px;
   transition: transform var(--vb-motion) var(--vb-ease), width var(--vb-motion) var(--vb-ease), height var(--vb-motion) var(--vb-ease);
 }
+vb-region::before, vb-region::after { content: ''; position: absolute; z-index: -1; pointer-events: none; box-sizing: border-box; }
+vb-region::before { inset: calc(-1 * var(--vb-region-line-w)) calc(var(--vb-region-gap) - var(--vb-region-line-w)); border-block: var(--vb-region-ln-w) solid var(--vb-region-ln); }
+vb-region::after { inset: calc(var(--vb-region-gap) - var(--vb-region-line-w)) calc(-1 * var(--vb-region-line-w)); border-inline: var(--vb-region-ln-w) solid var(--vb-region-ln); }
 
 /* The top line straddles the border. Only its two groups take the pointer, so the rest of the line
    stays part of the frame. The label's canvas-coloured background is the gap in the border;
@@ -164,11 +174,15 @@ vb-region .vb-region-empty { margin: var(--vb-space-2) var(--vb-space-4); color:
 
 /* A drop target (3_FE_03 ruling 3): while a card is dragged by its kind tab, the frame under the
    pointer that can take it is drawn in the accent, with a soft fill. The page sets data-drop. */
-vb-region[data-drop] {
-  border-color: var(--vb-accent-line); border-style: dashed;
-  background: color-mix(in srgb, var(--vb-accent-soft) 60%, transparent);
-}
-vb-region[data-drop] .vb-region-head h2 { color: var(--vb-accent-text); }
+vb-region[data-drop] { background: color-mix(in srgb, var(--vb-ink) 4%, transparent); }
+/* A drop target closes the corners: one dashed rounded line, in ink (design/mockups/containers). */
+vb-region[data-drop]::before { inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) dashed var(--vb-ink); border-radius: var(--vb-radius-lg); }
+vb-region[data-drop]::after { display: none; }
+vb-region[data-drop] .vb-region-head h2 { color: var(--vb-ink-strong); }
+
+/* Selected (data-selected, set by the page): the reading ink and a heavier rule; the corners stay open. */
+vb-region[data-selected] { --vb-region-ln: var(--vb-ink); --vb-region-ln-w: 2px; }
+vb-region[data-selected] .vb-region-head h2 { color: var(--vb-ink-strong); }
 
 /* A fixed frame (the built-in Later, ruling 5): the board sets its layout, so its mode row holds
    only the cog. */
@@ -255,7 +269,7 @@ vb-region .vb-region-grip:is(:focus-visible, [data-look='focus'])::after {
   outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight);
 }
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
-vb-region[data-dragging] { transition: none; z-index: var(--vb-z-open); border-color: color-mix(in srgb, var(--vb-region) 85%, var(--vb-ink-strong)); }
+vb-region[data-dragging] { transition: none; z-index: var(--vb-z-open); --vb-region-ln: color-mix(in srgb, var(--vb-region) 85%, var(--vb-ink-strong)); }
 
 /* The title's full-text tip (titleTip flag, WCAG 1.4.13; box: tip/tip.css), below the label over the
    frame's top room while data-title-tip-open is on the frame, which also raises the frame above the

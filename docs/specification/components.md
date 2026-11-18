@@ -821,7 +821,7 @@ the format is api.md 66-70.
    for Reopen, which sends a card back where its agent drew it.
 2. **A drag** (`pointer.ts`) on a kind tab carries the card, or the whole selection when the card
    is in it (`moves.ts` `carried`); every carried card keeps its offset. The frame under the
-   pointer that can take the cards gets `data-drop` (`region.css`: a dashed accent line and a soft
+   pointer that can take the cards gets `data-drop` (`region.css`: the corners close, a dashed ink line and a soft
    fill); a frame of the drag writes only the carried cards' transforms and that attribute, so it
    touches no other card and lays out nothing. The drop (`moves.ts` `drop`): in another container,
    one `move` (with `nodes` for a group) and then each card's pin where it landed, local to that

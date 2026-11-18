@@ -30,5 +30,5 @@ export function laterSamples(body: HTMLElement, fx: Fixture): void {
   body.append(group('Later, and a drop target',
     'Every board has a Later container, last, laid out as a grid; it shows while it holds a card. Here it holds two '
     + 'cards the person moved there. While a card is dragged, an empty Later shows too, and the container under '
-    + 'the pointer that can take the card is lit (dashed accent line, soft fill).', frames));
+    + 'the pointer that can take the card is lit (its corners close: a dashed line in ink, soft fill).', frames));
 }

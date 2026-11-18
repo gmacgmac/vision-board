@@ -57,6 +57,9 @@
     "put-back",
     "put-back-disabled",
     "title-long",
+    "in-use",
+    "selected",
+    "fresh",
     "title-tip"
   ],
   "flaggedStates": {

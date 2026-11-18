@@ -259,7 +259,7 @@ them on and renews the screenshots.
   190,000 → 204,200 and `view/board.css` 22,000 → 27,600 gzip (raised as tasks measured; 201,229 and 27,093 after the FE_08 merge; FIX_01 measured 202,147 and 27,530 and raised them to 202,200 and 27,600; FIX_02 measured 202,639 and raised `view/board.js` to 202,700; after FIX_03 merged, 204,111 measured, raised to 204,200) (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
   Each task still loads on demand what opens on an action. T_04 restores 200 KB, 190,000 and 22,000.
   After T_04 the budgets hold at its measures (page 201.0 KB, `view/board.js` 195,400, `view/board.css` 24,800); FIX_05
-  measured `view/board.js` 195,479 and raised it to 195,500.
+  measured `view/board.js` 195,479 and raised it to 195,500; FIX_06 (open corners) measured the page at 201.2 KB and raised its budget 201.1 → 201.3. It measured `view/board.css` 24,901 and raised it 24,800 → 24,950 (`apps/board/tests/plugin-build.test.ts`).
   **Budgets never block a task in this set** (maintainer, 2026-11-17): if the work needs more, the task raises the
   temporary figure to what it measured, says so in its notes, and carries on. Size is optimised once, after the
   features are done (T_04 and a final pass). What keeps size down meanwhile is reuse: one pattern per control, used

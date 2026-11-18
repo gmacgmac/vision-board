@@ -34,6 +34,8 @@ interface Sample {
   paused?: true;
   /** The railOnHover look: the frame carries data-rail-hover, and data-use when it is the one in use. */
   hover?: 'hidden' | 'use';
+  /** The frame's other rule looks (open corners, FIX_06): selected or fresh (new and updated). */
+  rules?: 'selected' | 'fresh';
 }
 
 /** Draw one frame of `region` (from `view` and `state`) under the sample id. */
@@ -44,6 +46,7 @@ function frame(s: Sample, region: Region, view: View, state: BoardState, owed?: 
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.dataset.sample = s.height;
   if (s.hover === 'use') f.setAttribute('data-use', '');
+  if (s.rules) f.setAttribute(`data-${s.rules}`, '');
   if (s.lit) f.querySelector('.vb-region-tools')!.setAttribute('data-look', 'hover');
   if (s.open) f.showPanel(s.open.what, { ...(s.open.what === 'modes' && { mode: s.open.mode }), focus: false });
   if (s.tiles) {
@@ -86,6 +89,8 @@ export function railSection(fx: Fixture, hover = false): HTMLElement {
       + 'Comment\'s badge still shows, and a touch screen keeps every rail shown.',
     frames(draw({ id: 'hidden', height: 'tall', hover: 'hidden' }), draw({ id: 'inuse', height: 'tall', hover: 'use' }),
       draw({ id: 'inuse-lit', height: 'tall', hover: 'use', lit: true })))] : []),
+    group('The rules: open corners', 'A frame is a top rule broken by the title, a bottom rule and side rules that stop 28px short of each corner. In use (railOnHover) the rules step up a little; selected is brighter and thicker, the corners still open; new and updated are teal; a drop target (Later, above) closes the corners, dashed in ink, with a soft fill.',
+      frames(draw({ id: 'sel', height: 'tall', hover: 'use', rules: 'selected' }), draw({ id: 'fresh', height: 'tall', hover: 'use', rules: 'fresh' }))),
     group('A short frame', 'With no room for the whole rail it keeps the layout button, Comment and the cog. Hovered or focused it '
       + 'expands upward over the cards, so Comment and the cog stay under the pointer, and collapses on leave, blur or Esc.',
     frames(draw({ id: 'collapsed', height: 'short' }), draw({ id: 'expanded', height: 'short', lit: true }))),
