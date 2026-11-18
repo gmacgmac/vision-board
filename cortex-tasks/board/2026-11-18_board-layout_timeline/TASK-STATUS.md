@@ -45,7 +45,7 @@ tracker: cortex-tasks/tracker.md#N53
 | 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Completed | 8 pages + PNGs, README; 6 open choices for the design gate. Run 2: vertical pages redrawn (587-595), README; 6 new open choices |
 | 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Completed | `layoutTimeline`, split in `layoutRegion`/`structureOf`, `show_layout` filled; page 202.9 KB; `npm run map` needed |
 | 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Completed | Date header, entries, `timeline` pattern, tokens (diff in task notes); budgets over (page 203.0 KB, board.js 196,993, board.css 25,519); `npm run map` needed |
-| 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Pending | |
+| 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Completed | Run 2 on the orchestrator's option C: plugin skill 8,148 of 8,192; v3.36; timeline scenarios pass live in both hosts; $0.1051 |
 | 5b | FIX_01 | 2 | standard | no | — | [A refusal names what was wrong (M84)](./FIX_01_anyof-refusal-wording.md) | Completed | Tone and icon refusals name what is accepted; words in `apps/board/server/words/schema.ts` |
 | 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Pending | |
 | 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
@@ -194,8 +194,22 @@ flagged pattern's section is absent when its flag is off). Dated and entry state
 printed `states` move gallery screenshots. Measured: page 203.0 KB, `view/board.js` 196,993, `view/board.css` 25,519 gzip.
 
 ### T_02: The skill and its evals
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-18 23:20), run 2; run 1 blocked at step 4  
+_Notes:_ Core sentence word for word + "Before you date cards, read `references/timeline.md`."; `references/timeline.md`
+(2,823 B) in both builds; scenarios `timeline-plan`, `timeline-unprompted`, `timeline-not-for-prose` in `SCENARIOS` and
+`STANDALONE` (`timeline-checks.ts` judges by `normaliseTimeline`; `FakeBot.tools` + `secretArg` so one script plays both
+hosts). Dry plugin 129/129, standalone 115/115, bad scripts fail exactly their `badFails`. **Blocked**: plugin
+`skill.md` 8,301 of `SKILL_BYTES` 8,192 (+184 B bullet on 8,117). Options: A raise `SKILL_BYTES` (host contract); B
+unwrap list lines (−86) + shorter read clause (−16) = 8,199, still over; C unwrap + drop Answering's restated "Done."
+line (−53) = 8,162. Also: `SCENARIOS` is 18 > the 16-run cap; proposed plugin live run `--only` the timeline three +
+`linked-pipeline`, `insert-step`. Live not run, $0 spent. Steps 4 (plugin.md), 6, 7 (v3.36, NOTES, scenarios.md) wait.
+Run 2: on the orchestrator's ruling (option C: list items on one line, "(read `references/timeline.md` first)", the
+restated Answering "Done." line dropped; `SKILL_BYTES` unchanged) the plugin `skill.md` is 8,148, standalone 19,079;
+skill v3.36; `plugin.md`, NOTES.md, scenarios.md 53-55. Live Haiku: plugin `--only` 11 runs 85/86 $0.0302 (miss:
+insert-step skipped reading layouts.md); standalone all 14, 113/115 $0.0749 (misses: architecture-icons recapped after
+"Done." [INFERENCE: maybe the dropped line], radial-ideas linked). All timeline checks pass in both. Total $0.1051.
+`check` 0 errors; `npm test` 2,662/2,665: `plugin-build.test.ts` `FILES` lacks `references/timeline.md` (request: add it),
+and `api-ledgers` 215 is the known fresh-worktree failure until `npm run build` (T_05 note).
 
 ### FE_02: The board draws the timeline
 _Status:_ Pending  

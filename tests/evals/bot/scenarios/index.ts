@@ -1,5 +1,6 @@
 // Every scenario, in the order the eval runs them: the plugin's (`SCENARIOS`) and the standalone bot's (`STANDALONE`,
-// `--standalone`). Add one here to run it; a check is never loosened to pass.
+// `--standalone`). Add one here to run it; a check is never loosened to pass. The timeline's three run in both: their
+// scripts join only where `join` is given (timeline-checks.ts `secretArg`).
 import type { Scenario } from '../types.ts';
 import { answeredNote } from './answered-note.ts';
 import { appBuild } from './app-build.ts';
@@ -24,6 +25,9 @@ import { readOnly } from './read-only.ts';
 import { refusals } from './refusals.ts';
 import { sendRound } from './send-round.ts';
 import { summaryCard } from './summary-card.ts';
+import { timelineNotForProse } from './timeline-not-for-prose.ts';
+import { timelinePlan } from './timeline-plan.ts';
+import { timelineUnprompted } from './timeline-unprompted.ts';
 import { twoTurns } from './two-turns.ts';
 import { wait } from './wait.ts';
 import { whereCardsStand } from './where-cards-stand.ts';
@@ -31,11 +35,13 @@ import { whereCardsStand } from './where-cards-stand.ts';
 export const SCENARIOS: readonly Scenario[] = [
   draw, sendRound, picture, refusals, wait, answeredNote, ownBoard, twoTurns, readOnly,
   whereCardsStand, newCardNumber, insertStep, summaryCard, personBoard, linkedPipeline,
+  timelinePlan, timelineUnprompted, timelineNotForProse,
 ];
 // The modes of the skill's references (node-overhaul T_05) run here, with room under the default run cap for retries.
 export const STANDALONE: readonly Scenario[] = [
   ledgerPicture, otherLedger, joinLedger, architectureIcons,
   findingsGrid, flowBranches, lanesHandoffs, radialIdeas, directionDefault, handoverPark, appBuild,
+  timelinePlan, timelineUnprompted, timelineNotForProse,
 ];
 
 export const scenarioById = (id: string): Scenario => {

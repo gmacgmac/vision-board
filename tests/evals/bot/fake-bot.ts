@@ -32,8 +32,8 @@ const rpc = (method: string, params: object): Promise<any> => new Promise((done)
   server.stdin!.write(`${JSON.stringify({ jsonrpc: '2.0', id, method, params })}\n`);
 });
 await rpc('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'fake-bot', version: '1' } });
-const tools = (await rpc('tools/list', {})).result.tools.map((t: { name: string }) => `mcp__${SERVER}__${t.name}`);
-emit({ type: 'system', subtype: 'init', model: 'fake-bot', tools: ['Write', 'Read', ...tools] });
+const given: string[] = (await rpc('tools/list', {})).result.tools.map((t: { name: string }) => t.name);
+emit({ type: 'system', subtype: 'init', model: 'fake-bot', tools: ['Write', 'Read', ...given.map((t) => `mcp__${SERVER}__${t}`)] });
 
 let uses = 0;
 function useLine(name: string, input: unknown, result: string, isError: boolean) {
@@ -48,7 +48,7 @@ for await (const line of createInterface({ input: process.stdin })) {
   const message = JSON.parse(line).message.content[0].text as string;
   const said: string[] = [];
   const bot: FakeBot = {
-    dir, message,
+    dir, message, tools: given,
     async call(name, input) {
       const reply = await rpc('tools/call', { name, arguments: input });
       const text = String(reply.result?.content?.[0]?.text ?? JSON.stringify(reply.error));

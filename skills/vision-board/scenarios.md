@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.35
+status: v3.36
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -1016,3 +1016,35 @@ board, naming no layout. Asked, they answer "One container for all nine, please.
   and draws an `app` card naming that id. Chat words: one or two short lines ("Done.", and "Press Allow on card 1" only
   when it has tools).
 - **Fails if** the files land outside the open ledger's `apps/`, `list_apps` is never called, or no app card is drawn.
+
+## 53. A launch plan as a timeline (own chat or host; eval `timeline-plan`, both hosts)
+
+**Situation.** The person asks for a launch plan "as a timeline" on a new board, the year said once: a month, a day, a
+day and a time, a launch week kept on one card with three events on its days, and a review in the next year.
+
+**A good run**
+- Reads `references/timeline.md`, and no other reference.
+- Each event's card carries `timeline` at the precision said: `2027-09`, `2027-10-22`, `2027-11-03T09:45`, the week by
+  its first day (`2027-11-15`), `2028`. No day invented for a month; no quarter or week form.
+- The week's card writes its three events as `###` headings or bold leads. No title or body starts with a date. The
+  dated cards share one container, with no `timeline` mode; one `write_board` call. Chat words: "Done.".
+- **Fails if** a date sits in a title instead of the key, a precision changes, the events are `##` or plain bullets, or
+  a quarter is sent.
+
+## 54. How an incident unfolded (own chat or host; eval `timeline-unprompted`, both hosts)
+
+**Situation.** The person asks to draw how an outage on one day unfolded, a card per moment, its times given out of
+order; the request never says "timeline", "date" or "key".
+
+**A good run**
+- Reads `references/timeline.md`; each moment's card carries its time in the minute form (`2027-03-04T09:12`), in any
+  order: the board orders them. No time leads a title. Chat words: "Done.".
+- **Fails if** the times go in titles with no key, or the cards are dated without their time.
+
+## 55. A deadline in passing (own chat or host; eval `timeline-not-for-prose`, both hosts)
+
+**Situation.** Four code review findings in a row; one says it must be fixed before an audit on a given day.
+
+**A good run**
+- No card gets a `timeline` key; the deadline stays in the finding's text. No reference is read. Chat words: "Done.".
+- **Fails if** the finding is dated or `references/timeline.md` is read.
