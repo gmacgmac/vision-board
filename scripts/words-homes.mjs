@@ -26,7 +26,7 @@ export const PARTS = [
 export const OTHER_HOMES = [
   { path: 'packages/format/schema/openapi.json', why: 'Tool, parameter and route descriptions are one source (D-056); the MCP tools and the vb commands are generated from it.' },
   { path: 'packages/format/schema/ledger-event.schema.json', why: 'Field descriptions the OpenAPI source refers to; JSON cannot import.' },
-  { path: 'skills/vision-board/SKILL.md', why: 'The agent\'s instructions are a Markdown file the agent\'s client loads; it cannot import.' },
+  { path: 'skills/vision-board/source', why: 'The agent\'s instructions are Markdown files the agent\'s client loads, so they cannot import: the skill\'s core, its references and the one place its two builds differ; build.mjs builds both skills from them.' },
   { path: 'apps/board/server/apps/runner.mjs', why: 'An app\'s tools run in a child under Node\'s permission model that may read only the app\'s folder and this file, so it cannot import; it tells the supervisor what failed, which tells the agent.' },
   { path: 'packages/format/src/images.ts', why: 'A pure file that imports nothing (images-pure.test.ts: the page and the server both run it); its reasons are the one `IMAGE_WORDS` object, with that test.' },
   { path: 'apps/board/index.html', why: 'A static page: its title is read before any script runs.' },

@@ -12,10 +12,13 @@ import { INSTRUCTIONS, MCP_BIN, httpTools } from '#mcp';
 import { personAct, personCookie, startTestBoard } from '#board/testing';
 import { openLedger } from '../../../apps/board/server/ledger.ts';
 import { CALL_MS } from './limits.ts';
+import { skillLine } from './model.ts';
 import type { BotHost, Call, Person, RunRecord, TurnRecord } from './types.ts';
 
 /** The real skill, as the person's client loads it (D-057: `~/.claude/skills/vision-board` links to it). */
 export const STANDALONE_SKILL = path.resolve(import.meta.dirname, '../../../skills/vision-board/SKILL.md');
+/** Its folder, which holds its `references/`. */
+const SKILL_DIR = path.dirname(STANDALONE_SKILL);
 /** The person's project folder's name, which the skill has the bot join with. */
 export const PROJECT = 'trip-plans';
 export const MAIN = 'main';
@@ -72,6 +75,7 @@ export async function startStandaloneHost(o: { base: string; port: number; flags
   };
   const person: Person = {
     async mark(b, n, mark) { await act(b, n, { action: mark }); },
+    async direction(b, direction) { await personAct(board.base, cookie, b, { board: b, action: 'direction', direction }); },
     async note(b, n, text) { await act(b, n, { action: 'comment', text }); return events().filter((e) => e.action === 'comment').at(-1)!.seq; },
     async send() { throw new Error('standalone: no Send; the person writes in their own chat'); },
     async board() { throw new Error('standalone: no scenario has the person make a board'); },
@@ -81,7 +85,7 @@ export async function startStandaloneHost(o: { base: string; port: number; flags
     dir, cwd: project, calls, person,
     seen: { instructions: INSTRUCTIONS }, // what vb-mcp sends with no VB_AGENT_SECRET (protocol.ts)
     mcp: { command: process.execPath, args: [MCP_BIN], env: { [ENV.server]: board.base, [ENV.project]: project, [ENV.agentSecret]: '' } },
-    bot: { skill: STANDALONE_SKILL, prompt: `Your working folder is ${project}`, tools: 'Write,Read,Glob,Grep', addDir: project },
+    bot: { skill: STANDALONE_SKILL, prompt: `Your working folder is ${project}\n${skillLine(SKILL_DIR)}`, tools: 'Write,Read,Glob,Grep', addDirs: [project, SKILL_DIR], skillDir: SKILL_DIR },
     tool: async (name, input) => call(name, input, await earlier()),
     setReadOnly: () => { throw new Error('standalone: the ledger opens for editing; no read-only scenario here'); },
     async openLedger(name) {

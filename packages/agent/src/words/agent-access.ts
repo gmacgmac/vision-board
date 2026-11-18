@@ -17,6 +17,7 @@ export const theirAttachments = 'The files the person attached are the agent\'s 
 export const gitFolder = 'Git is the person\'s: the agent does not read or change .git. Ask the person for what you need from it.';
 export const iconLibrary = 'The project\'s icon library is read freely and added to only through add_icon, which checks each drawing. Never write a file there yourself.';
 export const appState = 'What apps save on the board is the person\'s and the app\'s: not open to the agent.';
+export const skillReferences = 'The skill\'s references are read freely and never changed by the agent.';
 
 // ---- approvals.ts
 export const refusedByTheRules = 'Refused: the board\'s access rules do not allow it, whatever the answer. Do not retry it, and do not work around it.';

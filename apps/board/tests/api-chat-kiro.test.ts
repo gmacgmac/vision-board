@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { KIRO_AGENT_DRAFT, createKiroAdapter } from '#agent';
 import { FAKE_KIRO, KIRO_DENIED } from '#agent/testing';
-import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME } from '../server/chat-access.ts';
+import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, SKILL_NOTE, SKILL_REFERENCES } from '../server/chat-access.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -46,13 +46,18 @@ test('the board\'s MCP server is `vision-board` everywhere the chats name it: Cl
   assert.doesNotMatch(JSON.stringify(draft), /@vb\b|"vb\//, 'no old server name');
 });
 
-test('start-up writes the agent file under home: the repo\'s skill as its prompt, by an absolute path', () => {
+test('start-up writes the agent file under home: the repo\'s skill as its prompt, by an absolute path, and the note naming its folder (point 547)', () => {
   const file = path.join(home, '.kiro', 'agents', 'vision-board.json');
   const made = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(made.name, 'vision-board');
   assert.equal(made.prompt, `file://${INSTRUCTIONS_FILE}`);
   assert.ok(path.isAbsolute(INSTRUCTIONS_FILE) && fs.existsSync(INSTRUCTIONS_FILE));
-  assert.deepEqual(fs.readdirSync(path.join(home, '.kiro'), { recursive: true }).sort(), ['agents', path.join('agents', 'vision-board.json')]);
+  const note = path.join(home, '.kiro', 'vision-board', 'note.md');
+  assert.deepEqual(fs.readdirSync(path.join(home, '.kiro'), { recursive: true }).sort(), ['agents', path.join('agents', 'vision-board.json'), 'vision-board', path.join('vision-board', 'note.md')]);
+  assert.equal(fs.readFileSync(note, 'utf8'), `${SKILL_NOTE}\n`);
+  assert.ok(made.resources.includes(`file://${note}`), 'Kiro reads the note with the prompt');
+  assert.ok(SKILL_NOTE.endsWith(path.dirname(INSTRUCTIONS_FILE)) && fs.existsSync(path.join(SKILL_REFERENCES, 'layouts.md')));
+  assert.ok(made.permissions.rules.some((r: { capability: string; match: string[]; effect: string }) => r.capability === 'fs_write' && r.match[0] === `${SKILL_REFERENCES}/**` && r.effect === 'deny'), 'Kiro itself never writes the references');
 });
 
 test('start: Kiro joins the board as its agent; a message becomes a turn; a file change asks the person; the answer reaches Kiro', async () => {

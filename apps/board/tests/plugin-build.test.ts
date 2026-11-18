@@ -19,7 +19,8 @@ import { SEAM } from '../plugin/seam.ts';
 import { checkPluginStylesheet, checkStylesheet } from '../../../tests/plugin/contract/nclite/engine/plugins/stylesheet.ts';
 import { scopeOf } from '../../../tests/plugin/contract/nclite/shared/plugin-checks.ts';
 
-const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
+/** The skill ships with the references its plugin build names (skills/vision-board/source/build.mjs, node-overhaul T_05). */
+const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'references/architecture.md', 'references/handover.md', 'references/layouts.md', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
 const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_layout', 'list_open', 'check_responses', 'request_grant', 'write_board'];
 /** Gzip budgets in bytes, a little over the size at the time (BUILD_01: view 164030, styles 18799, engine 210716). The
  * view and the styles were 190,000 and 22,000 before the Node Overhaul; its T_04 removed the old node and measured 195,372
@@ -42,7 +43,7 @@ before(async () => {
 });
 after(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true }); });
 
-test('a clean build writes exactly the folder: manifest, view and styles, engine, words, skill and types', () => {
+test('a clean build writes exactly the folder: manifest, view and styles, engine, words, skill and its references, and types', () => {
   assert.deepEqual(filesOf(first), FILES);
 });
 

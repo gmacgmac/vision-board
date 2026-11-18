@@ -31,11 +31,12 @@ export const draw: Scenario = {
   fake: {
     good: [fakeDraw],
     bad: [async (bot) => {
+      bot.read('handover'); // just in case: the request needs no reference
       const items = offsiteItems('offsite').map((item, i) => (i === 2 ? { ...item, key: undefined } : item));
       (items[3] as any).node.size = 'L';
       await bot.call('write_board', { board: BOARD, items });
       bot.say('Done. Here is what I drew:\n- the office\n- the cabin\n- the hotel');
     }],
-    badFails: ['every-item-keyed', 'no-coordinates', 'done-only'],
+    badFails: ['every-item-keyed', 'no-coordinates', 'done-only', 'reads-references'],
   },
 };

@@ -23,6 +23,8 @@ if (process.env.FAKE_CLAUDE_NOTE) {
     /** Every AGENT_GATE_* variable, so a test can run the gate as this CLI would. */
     gateEnv: Object.fromEntries(Object.entries(process.env).filter(([k]) => k.startsWith('AGENT_GATE_'))),
     mcpConfig: JSON.parse(readFileSync(config, 'utf8')),
+    /** The instructions file's text as it was for this run (a turn's own file is removed with it). */
+    instructions: args.includes('--append-system-prompt-file') ? readFileSync(args[args.indexOf('--append-system-prompt-file') + 1]!, 'utf8') : null,
     pid: process.pid,
     cwd: process.cwd(),
   };

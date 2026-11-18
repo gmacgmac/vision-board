@@ -269,6 +269,11 @@ before anything remembered:
 - **Off** (`agentAccessRules`, `VB_FLAGS`): nothing goes ahead unasked, `folder` is never offered and
   nothing kept for the folder is used; the refusals hold either way (`strictAccess` on the adapter,
   `AGENT_GATE_STRICT` for the gate).
+- **The skill's references** (maintainer point 547): the agent is told the skill's folder after its instructions
+  ("Base directory for the vision-board skill", `chat-access.ts` `SKILL_NOTE`; Kiro reads it as a resource) and reads
+  `skills/vision-board/references/` without asking, wherever the board's folder is; a write there is refused
+  (`SKILL_REFERENCES`, the adapter's `readOnlyFolder`). Held by `apps/board/tests/api-chat-access.test.ts` "point 547"
+  and `packages/agent/tests/policy-readonly.test.ts`.
 - **Searches and paths outside**: a search of a folder that holds a refused file (any board folder holds
   an `agents.json`, at `.visionboard/` or in a ledger's folder) is refused, and so is a search of a folder that holds the board's folder (the
   parent, `/`): the board's folder is walked for it. A command naming a path outside the folder is asked

@@ -12,7 +12,7 @@ import { projectSlug } from '#agent';
 import { createClient } from '#client';
 import { openAgents } from '../server/agents.ts';
 import { personCookie, startTestBoard } from './test-board.ts';
-import { INSTRUCTIONS_FILE } from '../server/chat-access.ts';
+import { INSTRUCTIONS_FILE, SKILL_NOTE, SKILL_REFERENCES } from '../server/chat-access.ts';
 import { QUEUED_WORDS } from '../server/chat-session.ts';
 import type { StoredSession } from '../server/chat-index.ts';
 import { openLedger } from '../server/ledger.ts';
@@ -72,7 +72,11 @@ test('a message: chips, the board\'s Send, the prompt, and the turn streamed in 
   // The selection right after the words (composer-one-chip ruling 3), then the note an older client names.
   assert.equal(run.prompt, `Draw the options.\n\nThe person selected these cards:\n- Card ${q}: ${title}\n\nAttached from the board:\n- Note ${comment} on card ${q} "${title}": Why per seat?\n\nBoard: pricing`);
   const flag = (name: string) => run.args[run.args.indexOf(name) + 1];
-  assert.deepEqual([flag('--session-id'), flag('--model'), flag('--append-system-prompt-file')], [first.session, 'sonnet', INSTRUCTIONS_FILE]);
+  assert.deepEqual([flag('--session-id'), flag('--model')], [first.session, 'sonnet']);
+  // The skill, then the line naming its folder (point 547), in one file for the turn: the skill read fresh, the file gone after.
+  assert.equal(run.instructions, `${fs.readFileSync(INSTRUCTIONS_FILE, 'utf8').trimEnd()}\n\n${SKILL_NOTE}\n`);
+  assert.equal(fs.existsSync(flag('--append-system-prompt-file')!), false, 'the turn\'s instructions file is removed with it');
+  assert.equal(run.gateEnv.AGENT_GATE_READONLY, SKILL_REFERENCES, 'the gate reads the references without asking and refuses a write there');
   assert.ok(run.args.includes('mcp__vision-board__*'));
   assert.deepEqual(run.gate.url, `${h.base}/api/run/approvals`);
 });

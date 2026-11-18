@@ -7,7 +7,7 @@ dependencies, nothing imported from this repo, so it moves into nclite as it is.
 uses it: `docs/specification/chat.md`.
 
 - **The interface** (`src/adapter.ts`): `AgentAdapter.start({ cwd, sessionId?, model?, mcpServers,
-  instructionsFile?, allowedTools, gate, approvalHold?, strictAccess? })` returns an `AgentSession`; `prompt(text)` yields
+  instructionsFile?, instructionsNote?, readOnlyFolder?, allowedTools, gate, approvalHold?, strictAccess? })` returns an `AgentSession`; `prompt(text)` yields
   `AgentUpdate`s (`text` interim or final, `tool` running/done/failed with a short name and, for a
   board write, the board, cards and head; then one `done` with usage, `stopped` or `error`);
   `cancel()`, and `close()` when the CLI stays up between turns (Kiro). A tool's raw input and output never leave the adapter.
@@ -16,7 +16,12 @@ uses it: `docs/specification/chat.md`.
   host does. `hold(on)` (optional): the host says a question is waiting (`true`) or no longer is (`false`);
   the turn's time limit then pauses and goes on with the time left (`src/turn-clock.ts`, `startTurnClock`,
   both adapters), so it counts only the agent's own working time. `strictAccess` (the host's
-  `agentAccessRules` flag off): nothing the rules allow goes ahead unasked.
+  `agentAccessRules` flag off): nothing the rules allow goes ahead unasked. `instructionsNote`: a line told after
+  the instructions every turn (Claude: the two in one private file for the turn, `instructionsText`; Kiro: a
+  resource file of its own, `kiroNoteFile`). `readOnlyFolder`: a folder read without asking and never written,
+  wherever it is (the board's skill references, point 547): the policy's `readOnly`, the gate's `AGENT_GATE_READONLY`,
+  Kiro's verdict, and a deny rule for writes in Claude Code's settings and Kiro's agent file
+  (`tests/policy-readonly.test.ts`).
 - **Chat events** (`src/events.ts`): `toChatEvent(update)` gives the chat schema's event
   (`packages/chat/schema/chat-event.schema.json`) without its stamp; the host adds `at`,
   `session` and `seq` and forwards it.
@@ -110,7 +115,9 @@ uses it: `docs/specification/chat.md`.
   one table relative to the folder, decides: the most specific row wins (a row naming a file beats one
   naming a folder's contents, then more named parts, then the order written), matched as written and
   ignoring case, the stricter kept. Each per-ledger row has a twin for the ledger folders' layout,
-  `.visionboard/*/<file>` beside `.visionboard/<file>` (D-084; `tests/policy-ledgers.test.ts`). Outside the folder is asked `once` or `session` only; inside, `folder`
+  `.visionboard/*/<file>` beside `.visionboard/<file>` (D-084; `tests/policy-ledgers.test.ts`). The `readOnly` folder,
+  given, comes first for a file tool: read without asking (asked under `strict`, a hard link once, a name the rules refuse
+  anywhere still refused), never written. Outside the folder is asked `once` or `session` only; inside, `folder`
   is offered too; a hard-linked file is asked `once`; `strict` (the `agentAccessRules` flag off) allows
   nothing unasked. A search is allowed only when nothing under the folder is refused. A command is
   read-only (`readOnlyCommand`) when every `|`-joined part is on the allow-list with plain words

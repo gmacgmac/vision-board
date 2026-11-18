@@ -1,7 +1,7 @@
 // The eval's own test, in `npm test`, with no model and no cost (`--dry`): the host, the MCP pass-through, the person,
 // the stream reader and every check run against the scripted fake bot, in both modes (the plugin's host, and the
 // standalone board server with the real vb-mcp). The good script passes every check; the bad one fails the checks it breaks; a `wait` is recorded as asked and clamped; the caps refuse to be raised past their
-// ceilings; a run that never answers is killed.
+// ceilings; a run that never answers is killed; a run that goes silent mid-turn is stalled, a crash, and tried again.
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
@@ -75,4 +75,20 @@ test('kill: a bot that never answers is killed at the wall clock, with its proce
   assert.equal(run.exit.killed, true);
   assert.equal(run.exit.crashed, false);
   assert.equal(run.turns[0]!.end, null);
+});
+
+test('stall: a bot silent mid-turn is killed by the watchdog and counted as a crash; silence between turns is not a stall', async () => {
+  const dir = mkdtempSync(path.join(out, 'stall-'));
+  // Answers the first message at once; on the second it writes one line and goes quiet, as the live run's hung requests did.
+  const bot = `let n = 0; require('readline').createInterface({ input: process.stdin }).on('line', () => {
+    n += 1; console.log(JSON.stringify({ type: 'system', subtype: 'init' }));
+    if (n === 1) console.log(JSON.stringify({ type: 'result', subtype: 'success', num_turns: 1, total_cost_usd: 0, is_error: false }));
+  }); setInterval(() => {}, 1000);`;
+  const later = async () => { await new Promise((done) => setTimeout(done, 600)); return 'second'; };
+  const run = await runTurns({ command: process.execPath, args: ['-e', bot], cwd: dir, env: process.env, out: dir, killMs: 60_000, stallMs: 400 }, [async () => 'first', later], () => {});
+  assert.equal(run.turns[0]!.end?.subtype, 'success', 'the 600 ms before the second message is no stall');
+  assert.equal(run.exit.stalled, true);
+  assert.equal(run.exit.killed, false);
+  assert.equal(run.exit.crashed, true, 'a stall is a crash: the eval tries it once more');
+  assert.ok(run.exit.seconds < 10, `ended by the watchdog, not the wall clock: ${run.exit.seconds} s`);
 });

@@ -9,11 +9,13 @@ const STEPS = [['upload', 'Upload'], ['transcode', 'Transcode'], ['captions', 'A
 const RISKS = [['vendor', 'Captions vendor turnaround'], ['cost', 'CDN cost']] as const;
 const LINKED = new Set(['flow', 'lanes']);
 
-/** Each card's container, by the key that drew it and by its number, and each container's latest mode. */
-function placesOf(r: RunRecord) {
+/** Each card's container, by the key that drew it and by its number, and each container's latest mode; each accepted
+ * link as its two containers (`links`) and its two cards' numbers (`ends`). */
+export function placesOf(r: RunRecord) {
   const byKey = new Map<string, string>();
   const byN = new Map<number, string>();
   const modes = new Map<string, string>();
+  const numbers = new Map<string, number>();
   for (const { item, index, call } of itemsOf(r)) {
     const done = resultsOf(call)[index];
     if (!done?.ok) continue;
@@ -21,11 +23,15 @@ function placesOf(r: RunRecord) {
     if (item.type !== 'node' || typeof item.node?.region !== 'string') continue;
     if (typeof item.key === 'string') byKey.set(item.key, item.node.region);
     if (typeof done.n === 'number') byN.set(done.n, item.node.region);
+    if (typeof item.key === 'string' && typeof done.n === 'number') numbers.set(item.key, done.n);
   }
   const at = (ref: any) => (typeof ref === 'number' ? byN.get(ref) : typeof ref?.key === 'string' ? byKey.get(ref.key) : undefined);
-  const links = itemsOf(r).filter(({ item, index, call }) => item.type === 'link' && resultsOf(call)[index]?.ok)
-    .map(({ item }) => [at(item.from), at(item.to)] as const);
-  return { links, modes };
+  const linked = itemsOf(r).filter(({ item, index, call }) => item.type === 'link' && resultsOf(call)[index]?.ok).map(({ item }) => item);
+  const links = linked.map((item) => [at(item.from), at(item.to)] as const);
+  const card = (ref: any) => (typeof ref === 'number' ? ref : numbers.get(ref?.key));
+  /** Each accepted link as its two cards' numbers and the container it starts in. */
+  const ends = linked.map((item) => [card(item.from), card(item.to), at(item.from)] as const);
+  return { links, modes, ends };
 }
 
 /** The linked cards sit in one container, a `flow` (or `lanes`), with at least `least` links in it. */
@@ -51,6 +57,7 @@ const risks = () => [
 ];
 
 async function good(bot: FakeBot) {
+  bot.read('layouts');
   await bot.call('list_boards', {});
   await bot.call('write_board', { board: BOARD, items: [
     { type: 'board', key: 'video-board', title: 'Video publishing', summary: 'How a video goes from upload to the CDN, and what could hold it up.' },
@@ -87,5 +94,6 @@ export const linkedPipeline: Scenario = {
     }),
     linkedInOneFlow(4), fewCrossLinks(), everyItemKeyed(), noCoordinates(), doneOnly(),
   ],
-  fake: { good: [good], bad: [bad], badFails: ['linked-in-one-flow', 'few-cross-links'] },
+  reads: { need: ['layouts'] },
+  fake: { good: [good], bad: [bad], badFails: ['linked-in-one-flow', 'few-cross-links', 'reads-references'] },
 };

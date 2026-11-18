@@ -777,10 +777,19 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   `.visionboard/images/` 2 of 5 after the quiet rule grew (v3.29: 0 of 4, with the path once said aloud); naming
   `"ledger": "main"` → `.visionboard/main/images/` in the Images line, 4 of 4 then 2 of 2. Model `sonnet`.
 
-## Skill versions v3.1 to v3.27 (from SKILL.md's front matter)
+## Skill versions v3.1 to v3.34 (from SKILL.md's front matter)
 
 - 2026-11-17, agent (node-overhaul T_03): moved here from the `status` line, word for word, newest first, so the
   skill a bot reads every turn carries only its recent versions. v1 to v2.5 are in the sections above.
+- 2026-11-18, agent (node-overhaul T_05): v3.28 to v3.34 moved here too, word for word; the `status` line now carries
+  only the current version.
+- v3.34 (2026-11-17, node overhaul T_03: a flow lives in one container and links between containers are rare and tidy; an icon for a component, from `list_icons` first, added only with `add_icon` under an `x-` name; a tone sets apart a flow's parts and groups related cards; a board's `skin`, a flow's `direction`; the flag is a bookmark; Ask now's notes; a handover's parts are Markdown)
+- v3.33 (2026-11-09, a `label` for a host's Skills page, and the description says when to read the skill (nclite reads only these until the bot opens it); asking to sum cards up in one card is asking to retire the cards it replaces)
+- v3.32 (2026-11-07, the description is one line on when to use the board)
+- v3.31 (2026-11-06, a container with no `mode` is a `row`, and a `row` per container is the way to lay out a chat unless you have a reason for another layout; a `column` is for a reason, not the default for a few cards)
+- v3.30 (2026-11-05, `list_open` is where cards stand, never every card read with `get_board`; to name a new card in a reply, draw it, then reply with the `n` its answer gave; `insert` puts a card into a flow in one item; a summary card takes `##` headings and a table of 4 columns at most; the agent id and secret go in the session's scratchpad or notes file; read-only: the person switches it to Editing; quiet while you work names plans and reasoning; what you can't do is one short sentence, however many things)
+- v3.29 (2026-11-03, in your own chat a drawn round, a summary from another ledger too, is "Done." and the board's title and id, never what its cards say; `join` naming another folder or ledger: the whole reply is one sentence saying which is open, no offer)
+- v3.28 (2026-11-03, ledgers and read-only: check that `join`'s `project` and `ledger` are the ones you mean; pictures and apps in the open ledger's folder; keys are yours across the ledger; a write refused `read-only`: one line, press Edit, stop; another ledger is read with `ledger`, then summed up on the open one)
 - v3.27 (2026-11-03, `answered` names what answered a note and where, not the reply's words: unsure, read the card with `show_node`)
 - v3.26 (2026-11-03, a read marks an answered note `answered`: leave it)
 - v3.25 (2026-11-03, keys name their item so no later turn reuses one; a note is yours to answer only while a read marks it `owed` or `list_open` has it in `pending`; asked to press ✓ or ✗ for the person: one line, propose nothing; what you can't do takes one line, no list, no offer)
@@ -827,3 +836,94 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   fails exactly the checks it breaks. **Not run with a live model**: the one approved live run (`--model haiku --port
   7310`) stopped at the CLI's sign-in ("OAuth session expired"), $0 spent, every run crashed in about a second and the
   crash retries used up the 16-run cap. Scenario 45 needs `--standalone`, which that command does not run.
+
+## Skill v3.35 (one source, two builds: a core and references)
+
+- 2026-11-18, agent (node-overhaul T_05, maintainer points 479-483): the skill is built, never hand-edited. The source
+  is `source/`: `core.md` (what every bot reads), `references/` (read only when a request needs one: `layouts`,
+  `architecture`, `handover`, `apps`) and `differences.md`, the one place the standalone and plugin builds differ (a
+  block per slot per build). `source/build.mjs` builds both: `SKILL.md` and `references/` here (`npm run build:skill`,
+  held current by `source/build.test.mjs`) and the plugin folder's `skill.md` and `references/` (`npm run
+  build:plugin`). `apps/board/plugin/words/skill-edits.ts` and `plugin/skill.ts`, which cut the plugin skill out of
+  this one section by section, are gone. A build ships the references its text names, so `apps.md` is standalone's.
+- 2026-11-18, agent: sizes. The standalone skill read every turn is 19,148 bytes (v3.34: 44,614); its references
+  add 13,957, read on demand. The plugin's `skill.md` is 8,167 of 8,192 bytes (v3.34: 8,174), now with the
+  references index, the two skins, the icon line, colour and Ask now in it.
+- 2026-11-18, agent: what the core holds (points 480, 481): the default board (kinds, Markdown, the answering loop,
+  Add note and Ask now), the layout headlines (DL-01 to DL-03), the icon library (standalone: list first, reuse, name
+  for reuse, `add_icon`, never a file; a host's bot has no icon tools, so the `icon` field's names), colour, and the
+  two skins as headlines. The references index sits right under the title, each file with the one case to read it in,
+  and "never just in case": every eval scenario now checks which references the bot read (`reads-references`).
+- 2026-11-18, agent: the shared core is the plugin skill's wording (proven on the plugin's 15 eval scenarios), not
+  v3.34's longer standalone sections, so the standalone bot now reads the same default-board text a host's bot does.
+  Standalone lost detail no eval scenario held: "say where it applies", the answer-is-words reply ("Sam writes it. ✓ if
+  that's right"), the consolidation proposal's steps and "a new direction" (new container, retire the old), changing
+  a card in place only while it is the same subject, a proposal on an older version, "your reads are...". Watch the
+  panel for them; any that comes back costs plugin bytes, since the core is shared.
+- 2026-11-18, agent: cut from the plugin build because its MCP instructions already say it (`tools.instructions`,
+  botToolRules): Access (locked, read-only) and "never hold your turn open". Images under a host: the never-list
+  ("Image not shown") left, since `write_board`'s answer names a picture it can't show (botToolRules `images`).
+- 2026-11-18, agent: moved to `references/layouts.md`: each mode and when to use it, the worked `write_board` call
+  (a flow of two cards and a link by key; `write-examples.test.ts` reads it there), branches, lanes, `insert`, and the
+  one `show_layout` check. New there: a fork links the card it forks from to each branch's first card, the main line's
+  cards written first; a branch that rejoins links its last card to the card it rejoins.
+- 2026-11-18, agent: **direction narrowed**. v3.34 said to set `direction` when the content fits it better; the
+  layouts reference now says leave it out, so the board's header choice holds, and set it only when the person asks
+  for one (point 483, "the header's direction default respected"; `directionOf`: the person's choice wins anyway, so
+  an agent's `direction` only shows once they clear theirs). For the maintainer to confirm.
+- 2026-11-18, agent: new in `references/architecture.md`: one card per component, kinds by meaning, the path one
+  flow with links labelled by what moves, an icon wherever one fits and the same icon for the same kind of
+  component, two to four tones by part, and Command Lens in depth (plate, switch, dark plate asks; short titles). In
+  `references/handover.md`: `sources` is a list (the schema's), the card shows the parts as its Handover section.
+- 2026-11-18, agent: **live, Haiku 5.5 (`claude-haiku-5-5`, CLI 2.1.301)**, each approved command once. Plugin
+  (`--model haiku --port 7310`): 99 of 103 checks, 15 runs, $0.0392, no stall; `refusals`, `answered-note` and
+  `insert-step`, which stalled in T_03's run, ran through. Failed: `send-round` asks-again (the reply said "It stays
+  ruled out, as you marked it": the ✗ its own reply had cleared), `two-turns` done-only in both turns (a recap of the
+  cards after "Done."), and the new `insert-step` reads-references (it inserted right from the schema, without
+  reading layouts). `linked-pipeline` read `layouts.md` and passed all 8.
+- 2026-11-18, agent: the two that passed before were wording this build had trimmed from v3.34's plugin skill; put back
+  word for word: the quiet rule ends 'Then only "Done."', and a note after a mark is answered "so end it by asking for ✓
+  or ✗ again"; "Done." also "never recaps the cards".
+- 2026-11-18, agent: standalone (`--standalone --model haiku --port 7310`, on the build with those two fixed): 81 of 96
+  checks, 12 runs, $0.5560, of which $0.50 is the per-run cap counted for one run the new stall watchdog ended
+  (`join-ledger`, 78 s, no stream line; retried, 7 of 7). `ledger-picture`, `other-ledger` and `join-ledger`, which
+  passed before, pass; `handover-park` read `handover.md` and `app-build` read `apps.md`, each 100%. The finding: Haiku
+  read `layouts.md` once in five scenarios that needed it (`lanes-handoffs`) and `architecture.md` never, because the
+  core already lets it act; without them `radial-ideas` linked the ideas and set no centre, `flow-branches` set
+  `direction: across`, and `architecture-icons` (never run live before) skipped `list_icons` and drew the watermark
+  as `shield`. `findings-grid` drew nine cards before asking (the structure rule, trimmed from v3.34's "ask anyway").
+- 2026-11-18, agent: fixes after it, **not yet run live** (the approved runs were used): the read put where it is
+  needed, in Layout ("**Linked cards** ... **or a `radial`: read `references/layouts.md` before you write them.**
+  Leave `direction` out."), the index entries phrased "before you ..."; "ask anyway ... Never draw a big board unasked"
+  back in the structure rule; "**Call `list_icons` first**, before you name any icon" (standalone). The eval's
+  `layout-checked-once` now counts only answered calls (the bot's first `show_layout` was refused for a `secret` it
+  doesn't take). Room for them in the plugin build: "(a run sheet)", "Answer what a card owes first" (the retire's
+  refusal says it) and a few words cut. A live rerun of both commands is the proof still owed.
+- 2026-11-18, orchestrator (run 2, the fixes above): plugin 102 of 103 ($0.03; `insert-step` still read no reference),
+  standalone 90 of 96 ($0.56: `join-ledger` stalled again on its first attempt and passed on retry; `architecture-icons`
+  read layouts but not architecture; `flow-branches` set `direction: across` and read nothing). `radial-ideas`,
+  `lanes-handoffs`, `direction-default` and `findings-grid` passed.
+- 2026-11-18, agent (run 3): the references index is gone; each read sits where it is needed, which is what Haiku
+  followed: Layout ("**Before you write linked cards** (...; a card put between two linked cards) **or a `radial`, read
+  `references/layouts.md`**; for a system's architecture, `references/architecture.md` first. **Leave `direction` out**
+  unless the person asks"), Later ("read `references/handover.md` before you write it"), and the standalone `app` kind
+  ("read `references/apps.md` before you build or fix one"); one line under the title says the files hold detail, read
+  where the page says, never just in case. The region schema's `direction` now says the same ("set it only when the
+  person asks"; `region.schema.json`, `npm run gen`). The panel's bot is told the folder and reads the references
+  unasked (point 547), so the standalone line adds "reading them needs no Allow".
+- 2026-11-18, agent: **live run 3**, Haiku 5.5, both approved commands once: standalone **89 of 89**, 11 runs,
+  $0.0599, no stall; every reference read where needed (architecture-icons: architecture and layouts; flow-branches,
+  lanes, radial, direction-default: layouts; handover-park: handover; app-build: apps) and none elsewhere. Plugin 98 of
+  103, 15 runs, $0.0393: `insert-step` and `linked-pipeline` read layouts; two flakes of scenarios that passed in runs 1
+  and 2: `picture` wrote `![...](images/offsite-day.svg)` (the engine answered "not found"; it retried the same path),
+  and `two-turns` drew the three venues the person would answer as `topic` cards, so the person's ✗ was refused.
+- 2026-11-18, agent: after run 3, **not yet run live**: the plugin's Images line gets back v3.34's "(that file is
+  `images/ui/settings.png`)", which this build had trimmed; the kinds line says "options the person will answer too"
+  are cards that ask, "never a `topic`". Room: "A reference only is no link", the title example and "the board's header
+  sets it" cut (8,117 of 8,192 bytes).
+- 2026-11-18, agent: the `join-ledger` stalls (runs 1 and 2, first attempt each; none in run 3): our side answered at
+  once (join and list_boards results in the stream, vb-mcp sends nothing unasked, stderr empty), then the CLI's next
+  model request never started (no thinking event, no assistant line) until the watchdog at 75 s; the retry with the same
+  inputs passed in 8 s. [INFERENCE: a request that never began streaming, on the API's or the CLI's side, not ours.] A
+  live run now writes the CLI's own `debug.log` per run (`--debug-file`), which logs each request and its first byte,
+  so the next stall shows where it waited.
