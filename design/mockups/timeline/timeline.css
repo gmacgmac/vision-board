@@ -1,7 +1,8 @@
 /* The timeline (DESIGN_02 runs 1-2, brought in line with the rulings by DESIGN_01: PLAN.md § Decisions in
    cortex-tasks/board/2026-11-18_board-layout_timeline/). Loaded after the skin's node-states stylesheet and
-   ../containers/containers.css (the open-corner frame). A container's dated nodes share one line across its top (or
-   down its left, run down); each node on its own dot, joined by a stem; the date is the node's header. */
+   ../containers/containers.css (the open-corner frame). A container's dated nodes share one line across its top (or,
+   run down, down the middle of the timeline's column: § Design review 587-595); each node on its own dot, joined by a
+   stem that meets the middle of the node's facing edge; the date is the node's header. */
 
 /* The board's real colours (packages/tokens/src/tokens.css kinds; skins.css Command Lens muted ink), so the dates are
    drawn and measured in the values the build uses. The node-states pages keep a few older mock-up values. */

@@ -136,6 +136,52 @@ _To be completed by agent after task completion._
 ### Deviations from Plan
 - None
 
+### Run 2
+
+**Status**: Completed  
+**Completed**: 2026-11-18 (design review 587-595, decisions 8, 10, 14, 21)
+
+#### Changes Made
+- Vertical pages redrawn (`default-vertical-{dark,light}`, `command-lens-vertical-{dark,light}`) and their PNGs, three
+  containers each: the launch plan run down with no width chosen (`match`, all 360 px, the widths button on); "Pricing"
+  with the four undated nodes `COL_GAP` (72) right of the whole timeline in a grid, a toned node, and a link from an
+  undated node into a dated one; the launch plan again with `own` (each its tier).
+- Run down: the line down the middle of the timeline's column; nodes alternate left and right, the first left; the stem
+  (30, as across) meets the middle of the facing side; packed per 587 (`dots` in `temp/design-01-timeline/place.mjs`):
+  node top at least the skin's row gap below the last node on its side, dot at least 56 below the one before. The
+  launch plan run down is 815 px tall (default skin), was about 2,000.
+- Across pages: same geometry (stems already at the middle of top or bottom; other nodes already `REGION_GAP` 56 below);
+  the grid's row gap is now the skin's (Command Lens 30, was 40); lede and row caption say the stem rule, `REGION_GAP`
+  and `own`. The rail's widths button shows the container's setting.
+- `timeline.css`: header comment only (run down). `README.md`: run-down rulings (8, 10, 14, 21, 569C, 587-595), run 1's six
+  open choices moved to "kept as drawn" (588-593) or ruled (591), `TIMELINE_STEM_AT` and the 46 px stem gone, six new
+  open choices.
+- Generator: `content.mjs` (`DOWN_*` copies keyed apart, `match` widths), `place.mjs` (`dots`, `down` rewritten, `G`
+  with `MIN_DOT`, `ARROW`, per-skin `ROW`), `lib.mjs` (`ct` `widths`), `gen.mjs`, new `check.mjs`.
+
+#### Validation
+- `shot.mjs`: eight pages, no console error, no non-`file:` request; every PNG 1440 px wide.
+- `check.mjs`: no two nodes overlap in any container on any page; run down, every stem ends within 1 px of its node's
+  facing-side middle.
+- Looked at: default and Command Lens vertical (dark, light) and Command Lens across (dark).
+- Rulings against the pages: 8 (alternate, first above / first left) ✓; 10 (across one step; run down packed, 587) ✓;
+  14 (line in the column's middle, others right, 569C) ✓; 21/595 (`match` run down, `own` across, `own` drawn as the
+  person's choice) ✓; 587 stem (middle of facing edge, both forms, no `STEM_AT`) ✓; 591 (one stem 30; `REGION_GAP`,
+  `COL_GAP`; new numbers only stem, year room 56, arrow 30) ✓; 588-590, 592, 593 unchanged ✓.
+
+#### Caught Beyond the Brief
+- 587 names `ROW_GAP` (30); the board's row gap in the default skin is `EDGE_ROW_GAP` (40, `draw.ts`), because its marks
+  sit on the edges. Drawn with the skin's gap; open choice 1 recommends the layout's `rowGap` option.
+- Under `own`, run down, "the middle of the column" holds only when both sides' widest nodes are equal; drawn with the
+  line one stem from the widest node on each side (open choice 3).
+- A link from the other nodes to a node on the left of the line would cross the line; only a right-side target is
+  drawn (open choice 5).
+- Packing still leaves the "Nov 3" band 193 px long (237 in Command Lens): a tall node on the other side pushes the next
+  dot down (open choice 6).
+
+#### Deviations from Plan
+- None
+
 ---
 
 ## On Completion

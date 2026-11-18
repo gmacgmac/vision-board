@@ -42,7 +42,7 @@ tracker: cortex-tasks/tracker.md#N53
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | T_01 | 1 | strong | no | Principal API engineer — a value has one spelling in the ledger; a model's habit is normalised at the edge and never stored, and a refusal says exactly what would have been accepted. | [Contract first](./T_01_contract.md) | Completed | Contract, write edge, format 21 landed; board.js budget +349 gzip (not raised); `npm run map` needed |
-| 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Completed | 8 pages + PNGs, README; 6 open choices for the design gate |
+| 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Completed | 8 pages + PNGs, README; 6 open choices for the design gate. Run 2: vertical pages redrawn (587-595), README; 6 new open choices |
 | 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Pending | |
 | 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Pending | |
 | 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Pending | |
@@ -161,6 +161,12 @@ tables, 6 open choices). Values for later tasks: node widths are tiers (s 280, m
 `SIDE_GAP` 28, `MIN_STEP` 120 (174 and 154 drawn); `STEM` 30 across, 46 run down; `TIMELINE_STEM_AT` 37 (the default
 skin's date line); other nodes `REGION_GAP` 56 below the line, run down `COL_GAP` 72 right. Every date colour passes
 Lc 45 (lowest dark topic 48.0, 46.4 on the default skin's tinted top). Generator in `temp/design-01-timeline/`.
+Run 2: (2026-11-18, § Design review 587-595) vertical pages redrawn: line down the column's middle, nodes left/right
+(first left), stem 30 to the facing side's middle (no `TIMELINE_STEM_AT`), packed (`dots` in `place.mjs`: the skin's row
+gap on a side, `TIMELINE_MIN_DOT` 56 between dots, arrow 30), other nodes `COL_GAP` right; `match` default run down,
+`own` drawn as the person's choice. Across: Command Lens grid row gap 30 (the skin's). Values for BE_01: the row gap
+is the skin's (`EDGE_ROW_GAP` 40 default, `ROW_GAP` 30 Command Lens; 587 says `ROW_GAP`: open choice 1); under `own`
+the line is one stem from the widest node on each side (open choice 3). README: run 1's choices settled; 6 new.
 
 ### BE_01: The timeline in the layout
 _Status:_ Pending  

@@ -374,6 +374,12 @@ Where a page and this list differ, this list wins._
   across to `own`; the person's choice in the container's menu wins and covers the whole container.
 - **588 line colour, 589 dot, 590 year label, 592 tone ink, 593 same-date band**: kept as DESIGN_01 run 1 drew them
   (no objection from the maintainer).
+- **DESIGN_01 run 2's open choices** (orchestrator, on the run's recommendations, under the maintainer's autonomy;
+  he may overrule on his look): (1) the row gap run down is the skin's own row gap, the layout's `rowGap` option
+  (`EDGE_ROW_GAP` 40 in the default skin, `ROW_GAP` 30 in Command Lens), not a fixed `ROW_GAP`; (2) `TIMELINE_MIN_DOT`
+  56; (3) under `own`, run down, the line sits one stem from the widest node on each side (the column's middle under
+  `match`); (4) run down, the first dated node starts at the top of the content and the other nodes start level with
+  it; (5) no special link routing around the line (out of scope); (6) the same-date band keeps its length.
 - **M84** (tracker): rolled into this set as FIX_01 (the `anyOf` refusal wording), wave 2.
 - **D-106** (appended on the maintainer's yes, point 596; D-105 item 3 says run down puts the nodes on one side): "Run down, a
   timeline's dated nodes alternate left and right of the line, the first on the left, spaced by the board's gaps
