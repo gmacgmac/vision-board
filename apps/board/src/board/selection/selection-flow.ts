@@ -21,7 +21,7 @@ import type { Selection } from './selection.ts';
 import { commentOnSelection } from './comment-key.ts';
 import { createPill } from './selection-pill.ts';
 import type { Viewport } from '../canvas/index.ts';
-import { APP_FIT, SELECTION_FIT } from '../canvas/index.ts';
+import { APP_FIT, SELECTION_FIT, ZOOM_RULES } from '../canvas/index.ts';
 
 /** The selection's commands that change the board, which a locked board shows disabled. */
 const ACTING_COMMANDS: readonly CommandId[] = [...SELECTION_COMMANDS, ...EDGE_COMMANDS].filter((id) => COMMANDS[id].acts && id !== 'bookmark-all');
@@ -196,8 +196,8 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const layout = d.layout();
     if (COMMANDS[id].acts && (d.readOnly() || d.paused?.())) return false;
     switch (id) {
-      case 'zoom-in': d.vp.zoomCentre(1.2); return true;
-      case 'zoom-out': d.vp.zoomCentre(1 / 1.2); return true;
+      case 'zoom-in': d.vp.zoomCentre(ZOOM_RULES.steps.numbers.button); return true;
+      case 'zoom-out': d.vp.zoomCentre(1 / ZOOM_RULES.steps.numbers.button); return true;
       case 'fit': if (layout) d.vp.fit(layout.bounds); return true;
       case 'comment': return comment(key, focused);
       case 'move': {

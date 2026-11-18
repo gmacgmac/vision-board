@@ -211,16 +211,16 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     const at = anchorBox(d, open.mode === 'conversation' ? { ...open, at: undefined } : open);
     if (!at) return close(false);
     // The box beside a node, as every such box: top aligned, right or below, its arrow on the notes mark. It is the one
-    // box that scales with the board (D-101), to a floor where its text is still readable (`boxScale`).
+    // box that scales with the board (D-101) only from 80% to 120% (`boxScale`, zoom-rules.ts; points 444, 445).
     const cards = open.mode === 'conversation' ? open.anchor.flatMap((id) => d.card(id) ?? []) : [];
     const card = cards[0];
     const s = card ? boxScale(d.vp.k) : 1;
     bubble.style.setProperty('--vb-box-scale', String(s));
     const size = { w: bubble.offsetWidth * s, h: bubble.offsetHeight * s };
-    // One node: beside it, its arrow on the notes mark. A selection: beside all of them, the arrow at their middle.
-    const mark = cards.length === 1 ? card?.querySelector('[data-mark="notes"]') : null;
+    // One node: beside it, its arrow at the node's centre. A selection: beside all of them, the arrow at their middle (FIX_02).
     if (card) {
-      const p = placeBeside(boxAround(cards.map((c) => nodeReach(c, d.stage)))!, size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, mark ? stageBoxOf(mark, d.stage) : at);
+      const p = placeBeside(boxAround(cards.map((c) => nodeReach(c, d.stage)))!, size, { w: d.stage.clientWidth, h: d.stage.clientHeight },
+        boxAround(cards.map((c) => stageBoxOf(c, d.stage)))!);
       return bubble.place({ ...p, arrow: p.arrow / s });
     }
     // Clear of the neighbouring cards' footer buttons where it can be (bubble-clear.ts).

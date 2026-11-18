@@ -34,8 +34,7 @@ function place(card: HTMLElement, box: HTMLElement, opener: HTMLElement | null):
   if (!stage || !card.offsetWidth) return;
   const c = stageBoxOf(card, stage);
   const k = c.w / card.offsetWidth;
-  const at = placeBeside(nodeReach(card, stage), { w: box.offsetWidth, h: box.offsetHeight }, { w: stage.clientWidth, h: stage.clientHeight },
-    opener && !opener.hidden ? stageBoxOf(opener, stage) : c);
+  const at = placeBeside(nodeReach(card, stage), { w: box.offsetWidth, h: box.offsetHeight }, { w: stage.clientWidth, h: stage.clientHeight }, c);
   box.dataset.side = at.side;
   // left and top are from the node's padding edge: inside its border.
   box.style.left = `${(at.x - c.x) / k - card.clientLeft}px`;

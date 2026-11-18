@@ -1,45 +1,48 @@
 // Pan and zoom: one transform on the world layer. Screen <-> world conversion lives here only.
 import type { Box, Point } from '#layout';
+import { ZOOM_RULES } from '#ui';
 
-const MIN_K = 0.2;
-const MAX_K = 2.5;
+// Every zoom number is a row of zoom-rules.ts; this file reads them and writes what the CSS reads.
+const MIN_K = ZOOM_RULES.range.numbers.min;
+const MAX_K = ZOOM_RULES.range.numbers.max;
 /** The zoom below which the stage is "far" (data-zoom="far"), the one place it is set, and so the level
  *  below which the cards' and the containers' controls hide (hideControlsZoomedOut flag). The toolbar
  *  shows the zoom as a percentage (`zoomPercent`). 55%, the maintainer's pick after trying it (review
  *  polish round 2 ruling 2, tracker N13 closed; it was 75%). */
-export const FAR_K = 0.55;
+export const FAR_K = ZOOM_RULES.farControls.numbers.below;
 
 /** A node's edge marks never draw under `MARK_MIN` px tall on screen (nodeEdges, D-101): below the zoom where a mark of
  *  `MARK_H` px would, they grow in place by `markGrow(k)`. The two are tokens.css's `--vb-mark-min` and `--vb-mark-h`
  *  (zoom-groups.test.ts holds them equal). The growth goes in steps of `GROW_STEP` (never under what is needed, so a
  *  mark is 14 to 17px), because changing it restyles every card: a zoom between two steps writes nothing. */
-export const MARK_MIN = 14;
-export const MARK_H = 22;
-const GROW_STEP = 1.2;
+export const MARK_MIN = ZOOM_RULES.marks.numbers.minPx;
+export const MARK_H = ZOOM_RULES.marks.numbers.heightPx;
+const GROW_STEP = ZOOM_RULES.marks.numbers.step;
+/** The far breakpoint (FIX_02, the maintainer's points 430 to 438): the zoom where a mark needs three steps of growth to
+ *  keep its minimum, about 37%. Below it nothing grows any more: the growth stays what it is there (`FAR_GROW`), so every
+ *  mark scales down with its node from there, with no jump, nothing moving or hiding; and a press on a mark is its
+ *  node's (`smallMark`). Above it the marks keep their minimum and take their presses. */
+const FAR_STEPS = ZOOM_RULES.marks.numbers.farSteps;
+export const FAR_GROW = Math.round(GROW_STEP ** FAR_STEPS * 1000) / 1000;
+export const MARK_FAR_K = MARK_MIN / (MARK_H * FAR_GROW);
 export function markGrow(k: number): number {
+  if (k <= MARK_FAR_K) return FAR_GROW;
   const need = MARK_MIN / (MARK_H * k);
   return need <= 1 ? 1 : Math.round(GROW_STEP ** Math.ceil(Math.log(need) / Math.log(GROW_STEP) - 1e-9) * 1000) / 1000;
 }
 
-/** A mark's hit area: a 22px mark with 3px of transparent edge each side (node-edges.css), and the 28px disc. Below the
- *  zoom where it draws under `TARGET_MIN` px on screen (WCAG 2.5.8; about 86%), the marks take no pointer press: a press
- *  there is the node's, as on its body, and the keyboard reaches them as ever (FIX_01 ruling). The stage then carries
- *  data-marks="small" (`smallMark`). */
-export const MARK_HIT = 28;
-export const TARGET_MIN = 24;
-export const marksPressable = (k: number): boolean => MARK_HIT * k * markGrow(k) >= TARGET_MIN - 1e-9;
-/** Far out the grown marks no longer fit side by side on a node's edge (FIX_01, VERIFY_01 finding 5): past a growth of
- *  CROWD_GROW (under about 37%) the stage carries data-marks-crowded, and a node keeps the marks that tell its state from
- *  a distance, its number, its answer and its notes; the kind tab, the grip and the change badge give way (node-edges.css). */
-export const CROWD_GROW = 1.8;
-
+/** Whether the marks take their pointer press at zoom `k`: above the far breakpoint (FIX_02). Below it the stage carries
+ *  data-marks="small", a press on a mark selects its node only (so the person can zoom to it), with no hand cursor; the
+ *  keyboard reaches and presses every mark as ever. */
+export const marksPressable = (k: number): boolean => k > MARK_FAR_K;
 /** Whether `t` is in a node's mark while the marks take no pointer press (the stage's data-marks="small"). */
 export const smallMark = (t: Element): boolean => t.closest('[data-marks="small"] vb-node[data-edges] [data-mark]') !== null;
 
-/** The conversation box scales with the board (D-101) down to this zoom, where its text would be too small to read:
- *  below it the box keeps this scale. 13px text at 0.75 draws at about 10px. */
-export const BOX_MIN_K = 0.75;
-export const boxScale = (k: number): number => Math.max(k, BOX_MIN_K);
+/** The conversation box scales with the board only between two zooms (points 444, 445): one size below 80% (its text
+ *  stays readable), with the board to 120%, one size above (it never swamps the board). */
+export const BOX_MIN_K = ZOOM_RULES.conversationBox.numbers.min;
+export const BOX_MAX_K = ZOOM_RULES.conversationBox.numbers.max;
+export const boxScale = (k: number): number => Math.min(BOX_MAX_K, Math.max(k, BOX_MIN_K));
 
 /** A zoom as the whole percentage the toolbar shows (0.55 is 55). It rounds down, so the number is never
  *  higher than the zoom: "55%" means the board is at 0.55 or more, which is where the controls show. */
@@ -56,10 +59,10 @@ export interface ViewSnapshot { x: number; y: number; k: number }
  *  the zoom it never goes past. Without options a fit leaves 32px a side and stops at 110%. */
 export interface FitOptions { fill: number; cap: number }
 /** Z, zoom to the selection (review-polish ruling 12): 75% of the stage, up to the top zoom. */
-export const SELECTION_FIT: FitOptions = { fill: 0.75, cap: MAX_K };
+export const SELECTION_FIT: FitOptions = { fill: ZOOM_RULES.selectionFit.numbers.fill, cap: MAX_K };
 /** Z on exactly one app card (card-polish FE_01): its longer side fills 95% of the stage, so the app
  *  is big enough to use, up to the top zoom. */
-export const APP_FIT: FitOptions = { fill: 0.95, cap: MAX_K };
+export const APP_FIT: FitOptions = { fill: ZOOM_RULES.appFit.numbers.fill, cap: MAX_K };
 
 /** The margin a reveal leaves between a card and the stage's edge, in screen pixels. */
 const REVEAL_MARGIN = 48;
@@ -136,8 +139,6 @@ export class Viewport {
     else delete this.stage.dataset.zoom;
     if (this.markOn && !marksPressable(this.k)) this.stage.dataset.marks = 'small';
     else delete this.stage.dataset.marks;
-    if (this.markOn && grow > CROWD_GROW) this.stage.dataset.marksCrowded = '';
-    else delete this.stage.dataset.marksCrowded;
     this.onApply?.();
   }
 
@@ -200,8 +201,8 @@ export class Viewport {
     if (!b.w || !b.h) return;
     this.waiting = this.sized ? null : { b, o };
     if (this.waiting) return;
-    const k = o ? Math.min(r.width * o.fill / b.w, r.height * o.fill / b.h) : Math.min((r.width - 64) / b.w, (r.height - 64) / b.h);
-    this.k = Math.min(o?.cap ?? 1.1, Math.max(MIN_K, k));
+    const k = o ? Math.min(r.width * o.fill / b.w, r.height * o.fill / b.h) : Math.min((r.width - 2 * ZOOM_RULES.fit.numbers.marginPx) / b.w, (r.height - 2 * ZOOM_RULES.fit.numbers.marginPx) / b.h);
+    this.k = Math.min(o?.cap ?? ZOOM_RULES.fit.numbers.cap, Math.max(MIN_K, k));
     this.x = (r.width - b.w * this.k) / 2 - b.x * this.k;
     this.y = (r.height - b.h * this.k) / 2 - b.y * this.k;
     this.glide(animate);

@@ -9,6 +9,7 @@ import { scale as zoom } from './board-page.ts';
 import type { Theme } from './helpers.ts';
 import { REGION_GAP, REGION_PAD } from '#layout';
 import { FAR_K } from '../../apps/board/src/board/canvas/viewport.ts';
+import { ZOOM_RULES } from '#ui';
 
 export type Box = { x: number; y: number; width: number; height: number };
 export const THEMES: Theme[] = ['light', 'dark'];
@@ -47,7 +48,7 @@ export async function zoomTo(page: Page, k: number, id = 'p'): Promise<void> {
   const t = await boxOf(frame(page, id).locator('.vb-region-head h2'));
   await page.mouse.move(t.x + t.width / 2, t.y + t.height / 2);
   await page.keyboard.down('Control');
-  await page.mouse.wheel(0, -Math.log(k / await zoom(page)) / 0.0015);
+  await page.mouse.wheel(0, -Math.log(k / await zoom(page)) / ZOOM_RULES.steps.numbers.wheel);
   await page.keyboard.up('Control');
   await expect.poll(() => zoom(page)).toBeCloseTo(k, 2);
   await page.mouse.move(2, 990);

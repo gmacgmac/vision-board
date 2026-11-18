@@ -543,8 +543,10 @@ record is `api.md` 58-61.
    `tests/pages/conversation-box.spec.ts`; the panel's agent hearing Ask now by `tests/pages/chat-ask.spec.ts`.
 10. **The box beside a node** (FE_03 run 2, the maintainer's rulings). The conversation, proposal and history boxes
    share one place and one look. `board/cards/mark-place.ts` `placeBeside` places each: its top level with the node's
-   top, to its right when the stage has room, else below it with their left edges aligned, never over the node or the
-   marks that hang off it (`nodeReach`); its arrow points at the mark that opened it. It stays on the stage (FIX_01): on
+   top, to its right when the stage has room, else below it, centred on the node's width, never over the node or the
+   marks that hang off it (`nodeReach`); its arrow aims at the node's centre (FIX_02, points 430 to 438): beside it, on
+   the box's left edge at the node's vertical centre; below, at the middle of the box's top edge; a box moved to stay on
+   screen still aims there, its arrow kept inside its edge. It stays on the stage (FIX_01): on
    the right it moves up just enough when it would run past the stage's bottom (top aligned whenever it fits); below, it
    opens above the node instead (`data-side="above"`), and only with room for neither is it kept inside the stage
    (`apps/board/tests/mark-place.test.ts`; `tests/pages/node-boxes.spec.ts`, "a node near the window's bottom"). Its
@@ -1830,7 +1832,7 @@ the board's skin row from `SKIN_DEFS`, `icons` the project's icon library it hol
    actions with their keys; no Tick or Cross on a node that only tells, no Save for later on an app). Markup only, drawn
    hidden, rows acting by `data-menu-act`; the page opens them (FE_02, `mark-menus.ts`: the shared menu's keys, `menuKeydown`, and a press outside through `dismissable` with `clickWithin`, so a pan leaves one open).
 7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a 28px hit area (3px of transparent edge; the disc is
-   28px), `viewport.ts` `MARK_HIT`; the disc, the icon
+   28px); the disc, the icon
    tile and the notes mark on one vertical line, 34px in from the right edge; selection is the node's own border,
    thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); the node's colour (`--vb-node-color`) is
    the kind's, or its tone's line (point 366, FE_04): it colours the grip or kind tab, the top line, the hover and
@@ -1887,37 +1889,35 @@ the board is idle or on the first press). Behind `nodeEdges`; the skin behind `s
     time; size and place while zooming and panning; axe, dark and light) and `node-edges-seen.spec.ts` (the root, the
     container seen and N47, the icon library, the grip, the skin, a locked board, a failed write).
 
-### Zoom groups (D-101; node overhaul FE_05)
+### Zoom groups (D-101; node overhaul FE_05; FIX_02, points 430-438, 444, 445)
 
-Every part of the board follows one of three rules for zoom. With `nodeEdges` on; parts already right are listed as
-they are. One mechanism: the viewport writes a value, CSS (or the placement in `mark-place.ts`) reads it; overlays sit
-on the stage in stage pixels.
-
-| Group | Part | What holds it |
-|---|---|---|
-| Scales with the board | nodes, links, container frames | the world's one transform (`viewport.ts` `apply`) |
-| | the conversation box | on the stage; `boxScale(k)` = `max(k, BOX_MIN_K)` (0.75: its 13px text draws about 10px) written as `--vb-box-scale`, read by `node-box.css`; placed by `placeBeside` from the size it draws (`notes.ts` `place`), so it stays attached while zooming and panning |
-| Keeps one size | menus, the answer picker, the number menu, the right-click list, tips | on the stage, placed again from their anchor on every `vp.onApply` (`mark-menus.ts`, `mark-tips.ts`); open while zooming |
-| | the history and the proposal box | in the node, counter-scaled by 1/k (`mark-boxes.ts` `place` writes `--vb-box-scale`; `node-box.css` scales it about its top left), placed by `placeBeside`, top aligned with the node; open while zooming |
-| | a container's title line and rail, the selection bar, the toolbar | `--vb-zoom` on the regions layer (`region.css`); the bar is a stage overlay (`selection-bar-core.ts` `pillGap`); the toolbar is the page's |
-| Scales, never under a minimum | a node's edge marks | `--vb-mark-grow` on the cards layer (`viewport.ts` `markGrow`: 1 down to `MARK_MIN / MARK_H`, then stepped by 1.2 so a mark is 14 to 17px on screen; written only when the step changes); `node-edges.css` reads it as `scale`, about each mark's own centre on the border: the disc, the kind tab and the notes mark stay on their vertical line, the number and the change badge grow from their left edge and stay on their corner. A plate skin's marks (in flow) are not scaled. Marks stay visible below `FAR_K`; the body's controls follow the far rules (above) |
+The source is one table: `packages/ui/src/zoom-rules.ts` `ZOOM_RULES` (`#ui`), one row per part with its rule
+(scales, fixed, grows to a minimum, clamped range, hidden below), its numbers and the CSS variable or stage attribute the
+page writes for it. Read it there; this section says how it is held. `apps/board/src/board/canvas/viewport.ts` reads the
+numbers and writes `--vb-zoom` (the regions layer: a container's title line and rail, the hover halo, counter-scaled),
+`--vb-mark-grow` (the cards layer: the edge marks), `data-marks="small"` and `data-zoom="far"` (the stage); `mark-boxes.ts`
+and `notes.ts` write `--vb-box-scale` (the history and proposal box at 1/zoom, fixed; the conversation box at
+`boxScale(k)`, one size below 80%, with the board to 120%, one size above). The CSS reads only those variables; the
+selection bar's gap (`selection-bar-core.ts` `pillGap`), the zoom steps (+ and -, the wheel) and the fits read the table
+too. `apps/board/tests/zoom-rules.test.ts` holds the table equal to tokens.css (`--vb-mark-min`, `--vb-mark-h`) and to
+`viewport.ts`, checks every variable it names is read by the CSS and set by none, and fails on a zoom constant declared
+anywhere else in the board's or the patterns' code.
 
 `MARK_MIN` and `MARK_H` are `--vb-mark-min` and `--vb-mark-h` in tokens.css; `apps/board/tests/zoom-groups.test.ts` holds them
 equal. Kept true by that test and, in a browser, `tests/pages/zoom-groups.spec.ts` (at 20%, 40%, 100% and 250%: mark
 sizes, the shared vertical line, a menu's size, the conversation's scale, the history and proposal box's size while zooming).
 
-Two thresholds follow (FIX_01, VERIFY_01 findings 2 and 5). Below the zoom where a mark's 28px hit area (`MARK_HIT`)
-draws under 24px on screen (`marksPressable`, about 86%) the stage carries `data-marks="small"`: a pointer press on a
-mark is its node's (it selects the node; `smallMark`, read by `input/pointer.ts`, `input/wiring.ts`, `mark-flow.ts`,
-`mark-tips.ts`), no tip shows on hover, and the keyboard reaches and presses every mark as ever. Page specs excuse axe's
-`target-size` there only (`tests/pages/helpers.ts` `smallMarksExcused`); at 100% every mark's hit area is at least 24px in
-both skins and nothing is excused (`tests/pages/small-marks.spec.ts`). Past a growth of `CROWD_GROW` (1.8, under about
-37%) the stage also carries `data-marks-crowded`: with the marks on the edges a node keeps its number, its answer and
-a counted notes mark; the kind tab, the grip, the bottom edge's badges and an empty notes mark give way, the number and
-the disc grow down into the node from its top border (so the first row never reaches the container's title line), and
-the notes mark takes the bottom-left corner (`zoom-groups.spec.ts`, "far out (20%)"). A node under about 110px tall (a
-title alone) is too short at 20% for its number and a counted notes mark both.
-
+One breakpoint follows (FIX_02, the maintainer's points 430 to 438, replacing FIX_01's two): the far one, `MARK_FAR_K`
+(the zoom where a mark needs three steps of growth, about 37%). Above it the marks keep their minimum and every mark takes
+its press with the hand cursor. Below it nothing grows any more: the growth stays what it is at the breakpoint, so the
+number, the disc, the notes mark, the badges, the kind tab and the grip scale down with the node from there, with no
+jump, nothing moving or hiding (only container titles and their rail keep their size); the stage carries
+`data-marks="small"`, a press on a mark selects its node only (`smallMark`, read by `input/pointer.ts`, `input/wiring.ts`,
+`mark-flow.ts`, `mark-tips.ts`), no hand and no hover tip, and the keyboard reaches and presses every mark as ever.
+`apps/board/tests/zoom-groups.test.ts`; `tests/pages/zoom-groups.spec.ts` ("nothing jumps or hides at the far
+breakpoint"); `tests/pages/small-marks.spec.ts` (presses at 83% and 45%, a press selecting the node at 30%, 24px hit areas
+and axe at 100% in both skins). Below 100% page specs excuse axe's `target-size` only for a mark drawing under 24px
+(`tests/pages/helpers.ts` `expectNoAxeOnBoard`): the keyboard reaches it, and the person zooms in to press it.
 
 ## Flow branching and direction (PLAN decisions 19 and 25, D-100 5; node overhaul BE_01)
 
@@ -1987,7 +1987,7 @@ The rulings are `cortex-tasks/board/2026-11-16_board-ui_node-overhaul/PLAN.md` d
 3. **Comment on the selection** (`notes.ts` `group`): with `nodeEdges` it opens FE_03's conversation box
    (`note-box.ts` `boxView`, mode `conversation`, `group` set, several `anchor`s), titled "N cards", with Ask now beside
    Add note by the same `askNow` path; the box is placed by `placeBeside` over the union of the nodes' reach (`nodeReach`), its
-   arrow at their middle. Add note leaves one note on the group for the board's Send.
+   arrow at the centre of the nodes' union. Add note leaves one note on the group for the board's Send.
 4. **Place.** `placeBar` as before (centred above the bounding box at one size, below when there is no room, inside the
    stage, clear of a container's title line). With `nodeEdges` the bar also steps aside, hidden, while a menu or box of a node
    (`.vb-mark-menu`, an open `.vb-card-pop`) or the conversation box is open (`selection-flow.ts` `covered`), and comes back

@@ -255,8 +255,8 @@ them on and renews the screenshots.
   (`VB_TEST_WORKERS=3`, `nice -n 15`). Every run has a time limit: 10 minutes for unit tests, 25 for the full page
   suite.
 - **Temporary size budgets** (maintainer, point 351, until T_04 deletes the old node's code): the page's start
-  budget 200 → 210 KB gzip (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
-  190,000 → 202,200 and `view/board.css` 22,000 → 27,600 gzip (raised as tasks measured; 201,229 and 27,093 after the FE_08 merge; FIX_01 measured 202,147 and 27,530 and raised them to 202,200 and 27,600) (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
+  budget 200 → 210 KB gzip (FIX_02 measured 210.2 and raised it to 211) (`scripts/verify-weight.mjs` `PAGE`, `performance.md`); the plugin's `view/board.js`
+  190,000 → 202,200 and `view/board.css` 22,000 → 27,600 gzip (raised as tasks measured; 201,229 and 27,093 after the FE_08 merge; FIX_01 measured 202,147 and 27,530 and raised them to 202,200 and 27,600; FIX_02 measured 202,639 and raised `view/board.js` to 202,700) (`apps/board/tests/plugin-build.test.ts` `BUDGET`).
   Each task still loads on demand what opens on an action. T_04 restores 200 KB, 190,000 and 22,000.
   **Budgets never block a task in this set** (maintainer, 2026-11-17): if the work needs more, the task raises the
   temporary figure to what it measured, says so in its notes, and carries on. Size is optimised once, after the
@@ -415,6 +415,18 @@ this list differ, **this list wins**. Anything not named here is accepted as the
   red token changes. Where today's dark red misses Lc 45 (on the tip box), fix the tip's background, not the red.
   The focus ring colours are approved: default `#8b9bb8` dark / `#5a6478` light, Command Lens `#b9bfc8` / `#4a4e57`.
   The mock-ups' softened red (`#dc8f88` / `#b2554f`) is not used.
+- **Far zoom (points 430-438, FIX_02)**: one breakpoint, about 37%; above it marks keep their minimum; below it nothing
+  grows (marks scale down with the node from there), nothing jumps or hides; only container titles keep their size.
+- **Mark presses (points 430-438, FIX_02)**: every mark takes its press, with the hand, above the far breakpoint; below
+  it a press selects the node only, no hand; keyboard unchanged; axe `target-size` excused below 100% only for a mark
+  drawing under 24px.
+- **The box's pointer (points 430-438, FIX_02)**: it aims at the node's centre: beside, on the box's left edge at the
+  node's vertical centre; below, the box centred on the node and the pointer at the middle of its top edge; still aimed
+  there when the box moved to stay on screen.
+- **The conversation box's zoom (point 444, FIX_02)**: one size below 80%, with the board from 80% to 120%, one size
+  above (box scale = clamp(zoom, 0.8, 1.2)); the same for any box that scales with the board.
+- **One zoom registry (point 445, FIX_02)**: every zoom rule is a row of `packages/ui/src/zoom-rules.ts`; the code
+  reads it, the CSS reads only the variables it names, a test fails on a zoom number anywhere else.
 
 ## Decision entries to append
 

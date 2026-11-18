@@ -6,15 +6,15 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { act, card, open, write } from './agent-board.ts';
+import { card, open, write } from './agent-board.ts';
 import { drawEdges, mark, menuOf } from './edge-board.ts';
 import { zoomTo } from './rail-board.ts';
-import { BOX_MIN_K, CROWD_GROW, MARK_MIN, boxScale, markGrow, marksPressable } from '../../apps/board/src/board/canvas/viewport.ts';
+import { BOX_MAX_K, BOX_MIN_K, FAR_GROW, MARK_FAR_K, MARK_MIN, boxScale, marksPressable } from '../../apps/board/src/board/canvas/viewport.ts';
 
 const FLAGS = '?vbwork&flags=nodeEdges';
 const ZOOMS = [0.2, 0.4, 1, 2.5];
 const box = async (l: ReturnType<Page['locator']>) => (await l.boundingBox())!;
-/** Press a mark as a person can at zoom `k`: a click, or Enter where marks are too small to press (FIX_01, small-marks.spec.ts). */
+/** Press a mark as a person can at zoom `k`: a click, or Enter past the far breakpoint, where a press selects the node (FIX_02). */
 const press = async (l: Locator, k: number) => { if (marksPressable(k)) await l.click(); else { await l.focus(); await l.press('Enter'); } };
 /** On the right a box is top aligned with its node where it fits on the stage, else kept on it (FIX_01, finding 7). */
 const beside = async (page: Page, b: { y: number; height: number }, n: { y: number }) => {
@@ -39,47 +39,47 @@ test('the edge marks never draw under the minimum and grow in place: one vertica
     await zoomTo(page, k);
     const n = await box(card(page, q));
     const [num, disc, notes, badge] = [await box(mark(page, q, 'number')), await box(mark(page, q, 'answer')), await box(mark(page, q, 'notes')), await box(mark(page, dec, 'badge'))];
-    for (const [name, m] of Object.entries({ num, disc, notes, badge })) expect(m.height, `${name} at ${k}`).toBeGreaterThanOrEqual(MARK_MIN - 0.6);
+    // Down to the far breakpoint never under the minimum; past it they scale with the node from there (FIX_02).
+    for (const [name, m] of Object.entries({ num, disc, notes, badge })) {
+      if (k > MARK_FAR_K) expect(m.height, `${name} at ${k}`).toBeGreaterThanOrEqual(MARK_MIN - 0.6);
+      else expect(m.height, `${name} at ${k}`).toBeLessThan(MARK_MIN);
+    }
+    if (k <= MARK_FAR_K) near(num.height, 22 * k * FAR_GROW, 1);
     // At or above the zoom where 22px reaches the minimum a mark is its plain scaled size.
     if (k >= 1) near(num.height, 22 * k, 1);
-    // The disc and the notes mark on one vertical line; crowded far out, the notes mark takes the badge's corner (FIX_01).
-    if (markGrow(k) > CROWD_GROW) near(notes.x, num.x, 1.5);
-    else near(disc.x + disc.width / 2, notes.x + notes.width / 2, 1.5);
+    near(disc.x + disc.width / 2, notes.x + notes.width / 2, 1.5); // the disc and the notes mark on one vertical line
     near(num.x - n.x, 15 * k, 1.5); // the number's left edge stays 14px (node pixels) in from the border's inner edge
-    if (markGrow(k) > CROWD_GROW) near(num.y, n.y - 11 * k, k + 1.5); // crowded, it grows down from where its top sits (FIX_01)
-    else expect(Math.abs(num.y + num.height / 2 - n.y), `number on the top border at ${k}`).toBeLessThanOrEqual(k + 1.5); // centred on the padding edge, one border in
+    expect(Math.abs(num.y + num.height / 2 - n.y), `number on the top border at ${k}`).toBeLessThanOrEqual(k + 1.5); // centred on the padding edge, one border in
     expect(Math.abs(notes.y + notes.height / 2 - (n.y + n.height)), `notes on the bottom border at ${k}`).toBeLessThanOrEqual(k + 1.5);
   }
 });
 
-test('far out (20%) a node keeps its number, answer and notes; no mark covers another or rises into the container\'s title (FIX_01)', async ({ page, request }) => {
+test('nothing jumps or hides at the far breakpoint: just above and just below it every mark is where it was, its size in step with the node (FIX_02)', async ({ page, request }) => {
   const d = await board(page, request);
-  // Nodes as an agent draws them, with a body of a few lines (one under about 110px, a title alone, is too short at 20%
-  // for its number and a counted notes mark both), and a note on one.
-  await write(request, d, d.n.map((n, i) => ({ type: 'node', n, node: { region: i === 3 ? 'q' : 'p', kind: ['question', 'finding', 'decision', 'question'][i], title: `Item ${n}`, body: 'Doors open at 18:00; the stage manager confirms the crew call at gate four, and the second truck leaves at nine.', ...(i === 1 && { icon: 'signal' }) } })));
-  await act(page, d, { action: 'comment', n: d.n[0]!, ver: 2, text: 'Which truck?' });
-  const visible = async (id: number) => card(page, id).locator('[data-mark], .vb-node-kind, .vb-node-grip').evaluateAll((els) => els
-    .filter((e) => getComputedStyle(e).visibility === 'visible' && e.getClientRects().length && !(e as HTMLElement).hidden)
-    .map((e) => { const r = e.getBoundingClientRect(); return { name: (e as HTMLElement).dataset.mark ?? e.className, x: r.x, y: r.y, w: r.width, h: r.height }; }));
-  const overlap = (a: { x: number; y: number; w: number; h: number }, b: typeof a) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-  await zoomTo(page, 0.4);
-  await expect(page.locator('.vb-stage[data-marks-crowded]')).toHaveCount(0);
-  await expect(card(page, d.n[0]!).locator('.vb-node-kind')).toBeVisible();
+  const [q, f, dec] = d.n as [number, number, number];
+  /** Every mark's box (and the kind tab and grip) in the node's own terms: its share of the node's width. */
+  const shape = async () => {
+    const out: Record<string, number[]> = {};
+    for (const id of [q, f, dec]) {
+      const n = await box(card(page, id));
+      for (const [name, l] of Object.entries({ num: mark(page, id, 'number'), notes: mark(page, id, 'notes'), tab: card(page, id).locator('.vb-node-kind, .vb-node-grip') })) {
+        await expect(l, `${name} of ${id}`).toBeVisible();
+        const b = await box(l);
+        out[`${id} ${name}`] = [(b.x - n.x) / n.width, (b.y - n.y) / n.width, b.width / n.width, b.height / n.width];
+      }
+    }
+    return out;
+  };
+  await zoomTo(page, 0.38);
+  const above = await shape();
+  await zoomTo(page, 0.36);
+  const below = await shape();
+  for (const [name, a] of Object.entries(above)) a.forEach((v, i) => near(v, below[name]![i]!, 0.01));
+  // At 20% still nothing hides and the notes mark stays bottom right, under the disc.
   await zoomTo(page, 0.2);
-  await expect(page.locator('.vb-stage[data-marks-crowded]')).toHaveCount(1);
-  for (const id of d.n) {
-    const marks = await visible(id);
-    expect(marks.map((m) => m.name), `item ${id}`).toContain('number');
-    expect(marks.some((m) => /vb-node-kind|vb-node-grip/.test(m.name) || m.name === 'badge'), `item ${id}: the tab and badge give way`).toBe(false);
-    const h = (await box(card(page, id))).height;
-    for (const [i, a] of marks.entries()) for (const b of marks.slice(i + 1)) expect(overlap(a, b), `item ${id} (${h}px tall): ${a.name} over ${b.name}`).toBe(false);
-    // None rises past where it sits at rest (half a disc, 14px of the node's, above its top): the first row's never reach up
-    // into the container's title line, which ends at the row's top (the title's own text box already meets it).
-    const top = (await box(card(page, id))).y;
-    for (const m of marks) expect(m.y, `item ${id}: ${m.name} rises past its place`).toBeGreaterThanOrEqual(top - 14 * 0.2 - 0.5);
-  }
-  await expect(mark(page, d.n[0]!, 'notes')).toBeVisible(); // a note to count stays
-  await expect(mark(page, d.n[0]!, 'answer')).toBeVisible();
+  for (const l of [mark(page, q, 'notes'), mark(page, f, 'notes'), card(page, q).locator('.vb-node-kind'), card(page, f).locator('.vb-node-grip'), mark(page, dec, 'badge')]) await expect(l).toBeVisible();
+  const [disc, notes] = [await box(mark(page, q, 'answer')), await box(mark(page, q, 'notes'))];
+  near(disc.x + disc.width / 2, notes.x + notes.width / 2, 1);
 });
 
 test('a menu keeps one size at every zoom, and stays open and attached while the board zooms', async ({ page, request }) => {
@@ -134,6 +134,7 @@ test('the conversation box scales with the board to a readable floor, top aligne
     await expect(talk).toBeHidden();
   }
   expect(widths.find(([k]) => k === 0.2)![1], 'below the floor it holds its size').toBeCloseTo(BOX_MIN_K, 2);
+  expect(widths.find(([k]) => k === 2.5)![1], 'above 120% it holds its size too (points 444, 445)').toBeCloseTo(BOX_MAX_K, 2);
   // Open, it follows a zoom (stays attached).
   await zoomTo(page, 1);
   await mark(page, q, 'notes').click();
@@ -141,7 +142,7 @@ test('the conversation box scales with the board to a readable floor, top aligne
   await zoomTo(page, 2.5);
   await expect(talk).toBeVisible();
   const [b, n] = [await box(talk), await box(card(page, q))];
-  near(b.width / at100, 2.5, 0.03);
+  near(b.width / at100, boxScale(2.5), 0.03); // held at its top scale above 120% (points 444, 445)
   if (await talk.getAttribute('data-side') === 'right') near(b.y, n.y, 1.5);
 });
 

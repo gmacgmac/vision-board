@@ -130,13 +130,29 @@ export async function expectNoAxeViolations(page: Page | Frame, known: string[] 
 }
 
 /**
- * The axe rules excused on a board right now: `target-size` only while the stage says its nodes' marks are too small
- * to press (data-marks="small", below the zoom where a mark's 28px hit area draws under 24px: viewport.ts
- * `marksPressable`). There a press on a mark is its node's and the keyboard reaches the mark as ever (FIX_01 ruling), so
- * the marks are not pointer targets. At any other zoom nothing is excused.
+ * axe on a board, with one excuse (FIX_02, the maintainer's ruling, points 430 to 438): below 100%, a node's edge mark
+ * that draws under 24px is not a `target-size` failure. The keyboard reaches and presses every mark at any zoom, and the
+ * person zooms in to press one: above the far breakpoint (about 37%) marks keep a 14px minimum with 28px hit areas
+ * (axe measures the box, not the hit area), below it a press selects the node. Every other target, and every mark at
+ * 100% or more, still fails it.
  */
-export async function smallMarksExcused(page: Page): Promise<string[]> {
-  return (await page.locator('[data-marks="small"]').count()) > 0 ? ['target-size'] : [];
+export async function expectNoAxeOnBoard(page: Page): Promise<void> {
+  const found = await axeFindings(page);
+  const left = await page.evaluate((all) => {
+    const world = document.querySelector<HTMLElement>('.vb-world');
+    const k = world ? new DOMMatrixReadOnly(getComputedStyle(world).transform).a : 1;
+    const excused = (t: string) => {
+      const el = document.querySelector(t);
+      const mark = el?.closest('vb-node[data-edges] [data-mark]');
+      const r = mark?.getBoundingClientRect();
+      return k < 1 && !!r && (r.width < 24 || r.height < 24);
+    };
+    return (all as { id: string; help: string; targets: string[] }[]).flatMap((f) => {
+      const targets = f.id === 'target-size' ? f.targets.filter((t) => !excused(t)) : f.targets;
+      return targets.length ? [{ ...f, targets }] : [];
+    });
+  }, found);
+  expect(left, describe(left)).toEqual([]);
 }
 
 /** Open the selection bar from its pill (selectionPill flag, stage5-follow-ups FE_02), so its

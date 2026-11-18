@@ -60,18 +60,14 @@ vb-node[data-edges] .vb-mark {
   background: var(--vb-mark-bg); color: var(--vb-mark-ink);
   font: 700 11.5px/1 var(--vb-font-label); white-space: nowrap; cursor: pointer;
 }
-/* The hit area: a transparent edge around a 22px mark makes it 28px, as the disc is (viewport.ts MARK_HIT). Zoomed out
-   where that draws under 24px, the stage carries data-marks="small" and a press on a mark is its node's (FIX_01): no
-   pointer, no hover look. */
+/* The hit area: a transparent edge around a 22px mark makes it 28px, as the disc is. */
 vb-node[data-edges] .vb-mark:not(.vb-mark-answer)::before { content: ''; position: absolute; inset: -3px; }
-.vb-stage[data-marks='small'] vb-node[data-edges] .vb-mark { cursor: inherit; }
-/* Further out still the grown marks would cover each other (the stage's data-marks-crowded, viewport.ts CROWD_GROW): a node
-   keeps its number, its answer and its notes, what it says from a distance; the kind tab, the grip, the bottom edge's
-   badges and a notes mark with nothing to count give way, keeping their place (FIX_01). H and C still open them. */
-.vb-stage[data-marks-crowded] vb-node[data-edges][data-marks-at='edges'] :is(.vb-node-kind, .vb-node-grip, .vb-node-edge > .vb-mark:not(.vb-mark-notes), .vb-mark-notes[data-notes-mark='none']) { visibility: hidden; }
 vb-node[data-edges] .vb-mark[hidden] { display: none; }
 vb-node[data-edges] .vb-mark[data-paused][aria-disabled='true'],
 vb-node[data-edges] .vb-mark[data-paused][aria-disabled='true']:is(:hover, :active) { color: var(--vb-mark-ink); background: var(--vb-mark-bg); cursor: pointer; }
+/* Past the far breakpoint (viewport.ts MARK_FAR_K, about 37%; FIX_02) the stage carries data-marks="small": a press on a
+   mark selects its node only, so no hand. */
+.vb-stage[data-marks='small'] vb-node[data-edges] .vb-mark:is(*, [data-paused]) { cursor: inherit; }
 /* The ring shows only after Tab (point 338): a press focuses a mark without it (a11y.css's pointer-focus rule). */
 vb-node[data-edges] .vb-mark:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
 vb-node[data-edges] .vb-mark[data-pointer-focus]:focus-visible { outline: none; }
@@ -185,8 +181,9 @@ vb-node[data-edges] .vb-card-pop[data-pop='history'] .vb-node-stepnav:not([hidde
 /* A skin row's other places (skins.ts), the marks in a plate and the answer as a switch: node-plate.css. */
 
 /* Zoom (D-101, FE_05): the node scales with the board, so a mark would shrink with it; below the zoom where a 22px mark
-   draws under --vb-mark-min (14px) it grows in place instead. The page writes --vb-mark-grow on the cards layer (the
-   viewport, 1 above that zoom, so a zoom step there restyles nothing). `scale` composes with the marks' own translate,
+   draws under --vb-mark-min (14px) it grows in place instead, down to the far breakpoint (about 37%): past it the growth
+   stays what it is there and every mark scales down with its node, nothing moving or hiding (FIX_02). The page writes
+   --vb-mark-grow on the cards layer (the viewport, 1 above that zoom, so a zoom step there restyles nothing). `scale` composes with the marks' own translate,
    so each grows about its own centre on the border: the disc, the kind tab and the notes mark stay on their vertical line;
    the number and the change badge grow from their left edge and stay on their corner. A plate skin keeps its marks in
    flow, at the node's scale (FE_04). */
@@ -200,11 +197,3 @@ vb-node[data-edges] .vb-node-kind, vb-node[data-edges] .vb-node-grip { transform
 vb-node[data-edges] :is(.vb-node-kind, .vb-node-grip) { translate: -50% 0; }
 /* A plate keeps its marks in flow, at the node's scale. */
 vb-node[data-edges][data-marks-at='plate'] :is(.vb-mark, .vb-node-kind, .vb-node-grip) { scale: none; translate: none; }
-/* Crowded (above, FIX_01), the number and the disc grow down into the node from its top border, not up past it, so the
-   first row's never reach the container's title line; a notes mark with a count takes the corner the badge left, bottom
-   left, so it never meets the disc. */
-.vb-stage[data-marks-crowded] vb-node[data-edges][data-marks-at='edges'] {
-  & .vb-node-num, &[data-bookmarked] .vb-node-num { transform-origin: 0 0; }
-  & .vb-mark-answer { transform-origin: 50% 0; }
-  & .vb-mark-notes { left: 0; right: auto; translate: none; transform-origin: 0 50%; }
-}
