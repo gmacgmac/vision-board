@@ -88,6 +88,8 @@ const head = (skin?: string) => [
 
 async function good(bot: FakeBot) {
   const { secret } = await bot.call('join', { label: path.basename(bot.dir) });
+  bot.read('architecture');
+  bot.read('layouts');
   await bot.call('list_icons', {});
   await bot.call('write_board', { secret, board: BOARD, items: [...head(), ...PARTS.map((p) => card(p)), ...links()] });
   await bot.call('show_layout', { board: BOARD, region: 'service' });
@@ -111,8 +113,9 @@ export const architectureIcons: Scenario = {
   setup: async (s) => { await s.tool('add_icon', { name: LIBRARY, title: 'Watermark', svg: WATERMARK }); },
   turns: [{ say: 'Put the architecture of our live video service on a new board as a flow: the camera feed comes into ingest, then the encoder, then our watermarking service, then the packager, which writes to storage; the CDN serves it from storage to the player. Make it easy to see which parts are capture, processing and delivery.' }],
   checks: [lists, builtIns, library, names, noFile, tones, kinds, skin, linkedInOneFlow(5), fewCrossLinks(), everyItemKeyed(), noCoordinates(), doneOnly()],
+  reads: { need: ['architecture'], may: ['layouts'] },
   fake: {
     good: [good], bad: [bad],
-    badFails: ['lists-icons-first', 'built-ins-reused', 'library-reused', 'added-names', 'no-visionboard-write', 'tones-group', 'kinds-by-meaning', 'skin-fits'],
+    badFails: ['lists-icons-first', 'built-ins-reused', 'library-reused', 'added-names', 'no-visionboard-write', 'tones-group', 'kinds-by-meaning', 'skin-fits', 'reads-references'],
   },
 };

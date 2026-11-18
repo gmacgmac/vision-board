@@ -7,13 +7,15 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { bounded, brief, itemsOf } from './checks.ts';
+import { ledgerFiles } from '#format';
+import { bounded, brief, itemsOf, readsReferences } from './checks.ts';
 import { deadline, startEvalHost } from './host.ts';
 import { CALL_MS, CEILING_RUNS, CEILING_USD, CRASH_RETRIES, RUN_TURNS, RUN_USD } from './limits.ts';
-import { runCost, runTurns } from './model.ts';
+import { runCost, runTurns, skillLine } from './model.ts';
 import { picturesIn } from './scenarios/picture.ts';
 import { SCENARIOS, STANDALONE } from './scenarios/index.ts';
 import { startStandaloneHost } from './standalone.ts';
+import { buildSkill } from '../../../skills/vision-board/source/build.mjs';
 import type { BotHost, RunRecord, Scenario, Stage } from './types.ts';
 
 export const ROOT = path.resolve(import.meta.dirname, '../../..');
@@ -48,15 +50,24 @@ export interface RunResult {
 
 export const sha = (text: string) => createHash('sha256').update(text).digest('hex').slice(0, 12);
 
-/** The CLI's arguments for one run: the host's skill and line, only the board's tools and the host's built-in ones. */
-export function botArgs(o: { model: string; bot: BotHost['bot']; mcp: string }): string[] {
+/** The last board a `board` line in the ledger of folder `dir` names, if any. */
+function lastBoard(dir: string): string | undefined {
+  try {
+    return readFileSync(ledgerFiles(dir).ledger, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((e) => e.type === 'board').at(-1)?.board;
+  } catch { return undefined; }
+}
+
+/** The CLI's arguments for one run: the host's skill and line, only the board's tools and the host's built-in ones. With
+ * `debugFile` (a real run), the CLI's own debug log, so a stalled run says what the CLI was waiting on (T_05 run 2). */
+export function botArgs(o: { model: string; bot: BotHost['bot']; mcp: string; debugFile?: string }): string[] {
   return [
     '-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
     '--model', o.model, '--system-prompt-file', o.bot.skill, '--append-system-prompt', o.bot.prompt,
     '--mcp-config', o.mcp, '--strict-mcp-config', '--tools', o.bot.tools, '--allowedTools', `mcp__${SERVER}`,
-    '--permission-mode', 'acceptEdits', '--permission-prompts', 'none', '--add-dir', o.bot.addDir,
+    '--permission-mode', 'acceptEdits', '--permission-prompts', 'none', ...o.bot.addDirs.flatMap((d) => ['--add-dir', d]),
     '--max-budget-usd', String(RUN_USD), '--max-turns', String(RUN_TURNS),
     '--no-session-persistence', '--disable-slash-commands', '--setting-sources', '', '--no-chrome',
+    ...(o.debugFile ? ['--debug-file', o.debugFile] : []),
   ];
 }
 
@@ -67,16 +78,20 @@ export function checkCaps(o: Pick<EvalOptions, 'maxRuns' | 'maxUsd' | 'repeat'>)
   if (!(Number.isInteger(o.repeat) && o.repeat >= 1)) throw new Error('--repeat must be a whole number from 1');
 }
 
-/** The plugin's host (host.ts) as the bot sees it: the built skill, the pass-through to the door, `Write` only. */
+/** The plugin's host (host.ts) as the bot sees it: the built skill and its references (which it may Read), the pass-through
+ * to the door, `Write` and `Read` only (plugin.md § The bot: a host lets its bot read the references). */
 async function pluginHost(o: EvalOptions, base: string): Promise<BotHost> {
   const dir = path.join(base, 'board');
   mkdirSync(dir);
+  // A real run reads the built plugin folder (run.ts builds it first); a dry run, the skill's plugin build written here.
+  const skillDir = o.dry ? path.join(base, 'skill') : path.dirname(SKILL);
+  if (o.dry) for (const [f, text] of Object.entries(buildSkill('plugin'))) { mkdirSync(path.dirname(path.join(skillDir, f)), { recursive: true }); writeFileSync(path.join(skillDir, f), text); }
   const host = await startEvalHost({ dir, port: o.port, dry: o.dry, ...(o.flags && { flags: o.flags }) });
   return {
     ...host, cwd: base, setReadOnly: host.setReadOnly, image: async (p) => host.image(p), record: () => {},
     openLedger: async () => { throw new Error('a host has one board folder: no other ledger to open'); },
     mcp: { command: process.execPath, args: [MCP_BOT], env: { VB_EVAL_DOOR: host.door, VB_EVAL_TOKEN: host.token, VB_EVAL_INSTRUCTIONS: o.instructions } },
-    bot: { skill: SKILL, prompt: `The host: your Vision Board's board folder is ${dir}`, tools: 'Write', addDir: dir },
+    bot: { skill: path.join(skillDir, 'skill.md'), prompt: `The host: your Vision Board's board folder is ${dir}\n${skillLine(skillDir)}`, tools: 'Write,Read', addDirs: [dir, skillDir], skillDir },
   };
 }
 
@@ -89,12 +104,14 @@ async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: num
   const { dir } = host;
   try {
     const facts: Record<string, number | string> = { boardDir: dir };
-    const botBoard = () => host.calls.filter((c) => c.name === 'write_board' && typeof c.input.board === 'string').at(-1)?.input.board as string | undefined;
+    // The door logs the plugin bot's calls as they happen; the standalone bot's come from its stream after the run, so
+    // mid-run its board is the ledger's last `board` line (no scenario's setup draws a board in standalone's later turns).
+    const botBoard = () => (host.calls.filter((c) => c.name === 'write_board' && typeof c.input.board === 'string').at(-1)?.input.board as string | undefined) ?? lastBoard(dir);
     const stage: Stage = { dir, tool: host.tool, person: host.person, facts, botBoard, readOnly: host.setReadOnly, ledger: host.openLedger };
     if (s.setup) await deadline(s.setup(stage), CALL_MS, `${s.id} setup`);
     const mcp = path.join(runDir, 'mcp.json');
     writeFileSync(mcp, `${JSON.stringify({ mcpServers: { [SERVER]: host.mcp } }, null, 2)}\n`);
-    const args = botArgs({ model: o.model, bot: host.bot, mcp });
+    const args = botArgs({ model: o.model, bot: host.bot, mcp, ...(!o.dry && { debugFile: path.join(runDir, 'debug.log') }) });
     writeFileSync(path.join(runDir, 'args.json'), `${JSON.stringify(args, null, 2)}\n`);
     const turns = s.turns.map((t) => async () => {
       if (t.act) await deadline(t.act(stage), CALL_MS, `${s.id} person`);
@@ -125,9 +142,9 @@ async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: num
   }
 }
 
-/** Score a record: the scenario's checks, then `bounded`. A check that throws fails, with why. */
+/** Score a record: the scenario's checks, then which references it read, then `bounded`. A check that throws fails, with why. */
 export function score(s: Scenario, r: RunRecord): Scored[] {
-  return [...s.checks, bounded()].map((c) => {
+  return [...s.checks, readsReferences(s.reads?.need, s.reads?.may), bounded()].map((c) => {
     try { return { id: c.id, says: c.says, ...c.run(r) }; } catch (err) { return { id: c.id, says: c.says, pass: false, evidence: `check threw: ${brief(String(err))}` }; }
   });
 }
@@ -153,7 +170,7 @@ export async function runEval(o: EvalOptions): Promise<{ results: RunResult[]; r
         const checks = score(s, record);
         results.push({ scenario: s.id, rep, attempt, runDir, costUsd: record.costUsd, exit: record.exit, problem, model: record.model, instructions: record.instructions, checks });
         for (const c of checks) o.log(`${c.pass ? 'PASS' : 'FAIL'} ${s.id}/${c.id} (rep ${rep}${attempt > 1 ? `, retry` : ''}): ${c.evidence}`);
-        o.log(`  run ${runs}: $${record.costUsd.toFixed(4)}, ${record.exit.seconds} s${record.exit.crashed ? `, CRASHED${problem ? `: ${problem}` : ''}` : ''}`);
+        o.log(`  run ${runs}: $${record.costUsd.toFixed(4)}, ${record.exit.seconds} s${record.exit.stalled ? ', STALLED' : ''}${record.exit.crashed ? `, CRASHED${problem ? `: ${problem}` : ''}` : ''}`);
         if (!record.exit.crashed) break;
       }
     }

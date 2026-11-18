@@ -1,20 +1,25 @@
 // One run of the bot: the model's CLI in print mode (or the fake bot, which takes the same arguments), one
 // conversation for every turn of the scenario, as a host keeps one: the CLI reads the host's messages as stream-json
-// on stdin, one per turn, and answers each with a `result` line. Its whole process group is killed at RUN_KILL_MS.
+// on stdin, one per turn, and answers each with a `result` line. Its whole process group is killed at RUN_KILL_MS, or
+// sooner by the stall watchdog: no stream line for STALL_MS while a turn is open, which counts as a crash.
 // The stream is kept as it came (stream.jsonl) and read into the run's turns: every text block (the chat), every tool
 // use and its answer, the CLI's end of each turn.
 import { spawn } from 'node:child_process';
 import { createWriteStream, openSync } from 'node:fs';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
-import { KILL_GRACE_MS, RUN_KILL_MS } from './limits.ts';
+import { KILL_GRACE_MS, RUN_KILL_MS, STALL_MS } from './limits.ts';
 import type { Exit, TurnRecord, Use } from './types.ts';
 
-export interface Launch { command: string; args: string[]; cwd: string; env: NodeJS.ProcessEnv; out: string; killMs?: number }
+export interface Launch { command: string; args: string[]; cwd: string; env: NodeJS.ProcessEnv; out: string; killMs?: number; stallMs?: number }
 
 const cut = (s: string, n = 4000) => (s.length > n ? `${s.slice(0, n)}…` : s);
 const textOf = (content: unknown): string => (typeof content === 'string' ? content
   : Array.isArray(content) ? content.map((c) => (c && typeof c === 'object' && 'text' in c ? String(c.text) : JSON.stringify(c))).join('\n') : JSON.stringify(content));
+
+/** The line that tells the bot where its skill's folder is, as a client names a skill's base directory: the skill names
+ * its references by their path in it (`references/layouts.md`). fake-bot.ts reads it back. */
+export const skillLine = (dir: string) => `Base directory for the vision-board skill: ${dir}`;
 
 /** The host's message, as one stream-json user line. */
 export const userLine = (text: string) =>
@@ -42,23 +47,29 @@ export async function runTurns(l: Launch, turns: (() => Promise<string>)[], onTu
   const byId = new Map<string, Use>();
   let model: string | null = null;
   let killed = false;
+  let stalled = false;
   let ended: (() => void) | null = null;
   const group = (signal: NodeJS.Signals) => { try { process.kill(-child.pid!, signal); } catch { /* gone */ } };
+  const end = () => { group('SIGTERM'); setTimeout(() => group('SIGKILL'), KILL_GRACE_MS).unref(); };
+  // The watchdog runs only while a turn is open: between turns the CLI is silent by design, waiting for the next message.
+  let watchdog: NodeJS.Timeout | null = null;
+  const watch = (open: boolean) => {
+    if (watchdog) clearTimeout(watchdog);
+    watchdog = open ? setTimeout(() => { if (!killed) { stalled = true; end(); } }, l.stallMs ?? STALL_MS) : null;
+  };
   child.stdin!.on('error', () => { /* the process is gone: its exit says so */ });
   if (child.pid) running.add(child.pid);
   const exited = new Promise<{ code: number | null; signal: string | null }>((done) => {
     child.on('exit', (code, signal) => { running.delete(child.pid!); done({ code, signal }); });
     child.on('error', (err) => { child.stdout?.destroy(); done({ code: null, signal: `spawn failed: ${err.message}` }); });
   });
-  const kill = setTimeout(() => {
-    killed = true; group('SIGTERM');
-    setTimeout(() => group('SIGKILL'), KILL_GRACE_MS).unref();
-  }, l.killMs ?? RUN_KILL_MS);
+  const kill = setTimeout(() => { killed = true; end(); }, l.killMs ?? RUN_KILL_MS);
 
   const lines = createInterface({ input: child.stdout! });
   const closed = new Promise<void>((done) => { lines.once('close', () => done()); setTimeout(done, (l.killMs ?? RUN_KILL_MS) + 2 * KILL_GRACE_MS).unref(); });
   lines.on('line', (line) => {
     stream.write(`${line}\n`);
+    if (watchdog) watch(true);
     let row: any;
     try { row = JSON.parse(line); } catch { return; }
     const now = records.at(-1);
@@ -73,6 +84,7 @@ export async function runTurns(l: Launch, turns: (() => Promise<string>)[], onTu
     }
     if (row.type === 'result' && now) {
       now.end = { subtype: String(row.subtype), numTurns: Number(row.num_turns ?? 0), costUsd: Number(row.total_cost_usd ?? 0), isError: Boolean(row.is_error) };
+      watch(false);
       ended?.();
     }
   });
@@ -84,6 +96,7 @@ export async function runTurns(l: Launch, turns: (() => Promise<string>)[], onTu
       records.push({ message, text: '', uses: [], end: null });
       onTurn(i);
       const turnEnded = new Promise<void>((done) => { ended = done; });
+      watch(true);
       child.stdin!.write(userLine(message));
       const how = await Promise.race([turnEnded.then(() => 'ended'), exited.then(() => 'exited')]);
       if (how === 'exited') break;
@@ -96,13 +109,14 @@ export async function runTurns(l: Launch, turns: (() => Promise<string>)[], onTu
   }
   const { code, signal } = await exited;
   clearTimeout(kill);
+  watch(false);
   group('SIGTERM'); // what it started (the MCP pass-through) goes with it, at once
   await closed;
   await new Promise<void>((done) => stream.end(done));
   const missing = records.length < turns.length || records.some((r) => !r.end);
   const exit: Exit = {
-    code, signal, killed, seconds: (Date.now() - started) / 1000,
-    crashed: !killed && !problem && (missing || records.some((r) => r.end!.isError && !/^error_max/.test(r.end!.subtype))),
+    code, signal, killed, seconds: (Date.now() - started) / 1000, ...(stalled ? { stalled } : {}),
+    crashed: stalled || (!killed && !problem && (missing || records.some((r) => r.end!.isError && !/^error_max/.test(r.end!.subtype)))),
   };
   return { turns: records, exit, model, problem };
 }

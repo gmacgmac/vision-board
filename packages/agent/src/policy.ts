@@ -53,6 +53,10 @@ export interface PolicyOptions {
   /** The ledger the chat works on (`OpenLedger`): only its pictures and apps are written, only while it may be.
    * Left out, every ledger's are, as the rows say. */
   ledger?: OpenLedger | undefined;
+  /** A folder the agent reads without asking and never writes, wherever it is: the skill's references, which the
+   * agent is told about (maintainer point 547). Absolute. A file tool's call only; a command naming it is judged as
+   * any other, and a file with a second name (a hard link) is asked, once. */
+  readOnly?: string | undefined;
 }
 
 const gone = (e: unknown) => ['ENOENT', 'ENOTDIR'].includes((e as { code?: string }).code ?? '');
@@ -220,6 +224,24 @@ function commandPolicy(command: string, root: string, reader: PathReader, strict
   return settle(verdict, judged, strict, once);
 }
 
+/** The decision for a file tool's call inside the read-only folder (`PolicyOptions.readOnly`), or undefined when it
+ * names a path outside it: read without asking (asked under `strict`, or once for a second name), never written. A name
+ * the rules refuse anywhere stays refused. */
+function readOnlyFor(root: string, input: string, read: boolean, reader: PathReader, strict: boolean, folder?: string): Decision | undefined {
+  if (folder === undefined) return undefined;
+  let real: string;
+  try { real = reader.realpath(folder); } catch { return undefined; }
+  const at = place(root, input, reader);
+  const rel = path.relative(real, at.abs);
+  if (rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel)) return undefined;
+  if (!read) return { refuse: words.skillReferences };
+  // A name the rules refuse anywhere (`.env`, `.git/`) stays refused here too.
+  const refused = refusedTail(at.abs, 'read');
+  if (refused) return { refuse: refused.why };
+  const second = !!at.stat?.isFile() && at.stat.nlink > 1;
+  return strict || second ? { ask: true, scopes: ['once'] } : { allow: true };
+}
+
 /** Allow, ask or refuse one tool call of the agent's, in the board's `folder`. */
 export function policy(facts: PolicyFacts, folder: string, options: PolicyOptions = {}): Decision {
   const reader = options.reader ?? NODE_READER;
@@ -233,6 +255,8 @@ export function policy(facts: PolicyFacts, folder: string, options: PolicyOption
       return commandPolicy(facts.command, root, reader, strict, base, 0, false, options.ledger);
     }
     if (facts.path === '') return { refuse: words.noPath };
+    const kept = readOnlyFor(root, facts.path, facts.kind === 'read', reader, strict, options.readOnly);
+    if (kept) return kept;
     const j = judge(root, facts.path, facts.kind === 'read' ? 'read' : 'write', reader, root, options.ledger);
     if (j.verdict === 'refuse') return { refuse: j.why };
     const found = facts.kind === 'read' && facts.recursive ? searchOf(root, j, reader) : undefined;

@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.30
+status: v3.35
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -64,6 +64,12 @@ v3.30 (skill v3.30, insert-markdown-signals BOT_01, decisions 1, 4-9): 40 (where
 card named in a reply), 42 (a step put into a flow) and 43 (a summary card with headings and a table) new, each run by
 `npm run eval:bot` (`where-cards-stand`, `new-card-number`, `insert-step`, `summary-card`). 36: the person switches the
 ledger to Editing (the toggle, or the menu's Edit).
+v3.35 (skill v3.35, node-overhaul T_05, points 479-483: a core and references read on demand): in every scenario a good
+run reads only the references its request needs (none, unless the scenario says; every eval scenario checks it,
+`reads-references`); 42 and 44 read `references/layouts.md`, 45 `references/architecture.md` (and may read layouts).
+46 to 52 new, each a mode or a layout, run by `npm run eval:bot -- --standalone`: 46 (a flow that forks and rejoins), 47
+(lanes), 48 (a radial), 49 (the header's direction holds), 50 (a grid of findings, from the core alone), 51 (a card moved
+to Later: the handover) and 52 (build an app).
 
 ## 1. A review with 12 findings (panel)
 
@@ -929,3 +935,84 @@ the player. Make it easy to see which parts are capture, processing and delivery
   The board keeps the default skin. Chat words: "Done." and the board's title and id.
 - **Fails if** it adds before listing, adds a second watermark icon or a built-in again, writes a file into
   `.visionboard/icons/`, tones every card alike or one card per tone, or picks a kind for its colour.
+
+## 46. A flow that forks and rejoins (own chat; eval `--standalone` `flow-branches`)
+
+**Situation.** No board yet. The person writes: "Draw our support ticket flow on a new board as one flow: a ticket comes
+in and is triaged; urgent tickets go straight to the on-call engineer, the rest wait in the queue until an agent picks
+them up; both paths end at resolve, then close."
+
+**A good run**
+- Reads `references/layouts.md` (it links cards), and no other reference.
+- One `flow` container: triage links to both the on-call engineer and the queue (a fork); the on-call engineer and the
+  agent both link to resolve (a rejoin). `direction` left out; `show_layout` once. Chat words: "Done." and the board's
+  title and id.
+- **Fails if** the paths are drawn as separate chains with no rejoin, the cards spread over containers, or `direction`
+  is set.
+
+## 47. Work between three owners, as lanes (own chat; eval `--standalone` `lanes-handoffs`)
+
+**Situation.** No board yet. The person asks for how a feature request moves between Product, Design and Engineering,
+as lanes: each owner's two steps, the handoffs between them, and a review back in Product.
+
+**A good run**
+- Reads `references/layouts.md`, and no other reference.
+- One `lanes` container naming the three owners, every card in one of them, each lane its own sequence, three handoffs;
+  `show_layout` once, and at most one redraw. Chat words: "Done." and the board's title and id.
+- **Fails if** each owner gets a container of its own, links cross between containers, or the layout is checked twice
+  or never.
+
+## 48. Ideas around one topic, as a radial (own chat; eval `--standalone` `radial-ideas`)
+
+**Situation.** No board yet. The person asks for their ideas for better onboarding around the topic, as a radial: a
+buddy, a first-week checklist, welcome videos, a glossary, a 30-day check-in.
+
+**A good run**
+- Reads `references/layouts.md`, and no other reference.
+- One `radial` container with the topic and the five ideas, no links; then the container sent again with `center` set
+  to the topic card's number, from the first write's answer. Chat words: "Done." and the board's title and id.
+- **Fails if** the ideas are linked to the topic, or `center` is never set.
+
+## 49. The header's direction holds (own chat; eval `--standalone` `direction-default`)
+
+**Situation.** The bot drew "deploy steps" as a flow (build, test, deploy). The person turns the board's flows to run
+down in its header, then asks for the rollback steps as their own flow on that board.
+
+**A good run**
+- Reads `references/layouts.md`, and no other reference.
+- The rollback steps in a second `flow` container, linked; no container the bot sends sets `direction`, in either
+  turn: the header's choice holds. Chat words: "Done.".
+- **Fails if** the bot sets `direction` (even `down`), or adds the rollback steps to the first flow.
+
+## 50. A grid of findings (own chat; eval `--standalone` `findings-grid`)
+
+**Situation.** No board yet. The person lists nine findings from an accessibility audit and asks for them on a new
+board, naming no layout. Asked, they answer "One container for all nine, please."
+
+**A good run**
+- Reads no reference: the core is enough.
+- First turn: suggests the structure in a line or two, writes nothing. Second: the nine as `finding` cards in one
+  container drawn as a `grid` (more than about 6 cards), no links. Chat words: "Done." and the board's title and id.
+- **Fails if** it draws before asking, reads a reference, links the findings, or leaves nine cards in a `row`.
+
+## 51. A card moved to Later (own chat; eval `--standalone` `handover-park`)
+
+**Situation.** The bot drew three questions about an office move as a row. The person saves card 2 for later and writes
+"I saved card 2 on the office move board for later. Do what you owe me there."
+
+**A good run**
+- Reads `references/handover.md`, and no other reference.
+- One `park` on card 2: situation, background, assessment and recommendation, each short Markdown, and its sources as
+  a list; no reply in its place. Chat words: "Done.".
+- **Fails if** it replies instead of parking, parks another card, or reads every reference.
+
+## 52. Build an app (own chat; eval `--standalone` `app-build`)
+
+**Situation.** The person asks for a small tip-splitter app on a new board called Dinner tools.
+
+**A good run**
+- Reads `references/apps.md`, and no other reference.
+- Writes `app.json` and `panel.html` in the open ledger's `apps/<id>/` (`.visionboard/main/apps/`), calls `list_apps`,
+  and draws an `app` card naming that id. Chat words: one or two short lines ("Done.", and "Press Allow on card 1" only
+  when it has tools).
+- **Fails if** the files land outside the open ledger's `apps/`, `list_apps` is never called, or no app card is drawn.

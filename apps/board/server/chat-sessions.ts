@@ -23,7 +23,7 @@ import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
 import { checked, withSaid } from './chat-files.ts';
-import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, agentName, boardMcpServer, chatLabel, joinAndGrant, newIdentity, rekey } from './chat-access.ts';
+import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, SKILL_NOTE, SKILL_REFERENCES, agentName, boardMcpServer, chatLabel, joinAndGrant, newIdentity, rekey } from './chat-access.ts';
 import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
 import type { ChatMessage, ResolveChip } from './chat-prompt.ts';
@@ -161,12 +161,13 @@ export function openChats(o: ChatOptions): Chats {
 
   /** What the adapter needs for one session: the board's MCP server with its secret, and the gate. */
   const options = (secret: string, token: string, extra: Partial<StartOptions>): StartOptions => ({
-    cwd, ledgerFolder: openFolder, ...extra, instructionsFile: INSTRUCTIONS_FILE, allowedTools: CHAT_TOOLS, approvalHold, strictAccess,
+    cwd, ledgerFolder: openFolder, ...extra, instructionsFile: INSTRUCTIONS_FILE, instructionsNote: SKILL_NOTE, readOnlyFolder: SKILL_REFERENCES,
+    allowedTools: CHAT_TOOLS, approvalHold, strictAccess,
     mcpServers: { [MCP_NAME]: boardMcpServer(base(), secret, cwd) }, gate: { url: `${base()}/api/run/approvals`, token },
   });
 
   const keep = (record: StoredSession, adapterSession: Parameters<typeof createLiveSession>[1], token: string, resumed = false) => {
-    const access = { folder: cwd, strict: strictAccess, ledger: openLedger, ...(!strictAccess && { kept: permissions() }) };
+    const access = { folder: cwd, strict: strictAccess, ledger: openLedger, readOnly: SKILL_REFERENCES, ...(!strictAccess && { kept: permissions() }) };
     const live = createLiveSession(record, adapterSession, token, { access, ttlMs: approvalTtlMs, hold: approvalHold, resumed });
     sessions.set(record.session, live);
     return live;

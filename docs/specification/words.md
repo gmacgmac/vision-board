@@ -71,7 +71,6 @@ layer: its words import nothing, not even `node:`.
 |---|---|---|
 | `apps/board/plugin/words/change.ts` | `change` | The line a host's chat draws for a board write, one per count (no card, one, more), with the host's `{count}` and `{subject}` slots (the manifest's `changeWords`; plugin.md § Tools). |
 | `apps/board/plugin/words/plugin.ts` | `plugin` | The plugin's name and its chip kinds, as a host shows them (the manifest names them by key). |
-| `apps/board/plugin/words/skill-edits.ts` | `skill-edits` | The edits that make the skill a plugin's bot reads from the standalone skill: one per section, each cut to what a host's bot needs (within 8 KiB; no join, grants, chat panel, other ledgers or apps; pictures' folder) and what it says instead. |
 
 ### The standalone page around the board
 
@@ -170,7 +169,7 @@ Homes that are not a words folder, each with the reason it cannot import one.
 |---|---|
 | `packages/format/schema/openapi.json` | Tool, parameter and route descriptions are one source (D-056); the MCP tools and the vb commands are generated from it. |
 | `packages/format/schema/ledger-event.schema.json` | Field descriptions the OpenAPI source refers to; JSON cannot import. |
-| `skills/vision-board/SKILL.md` | The agent's instructions are a Markdown file the agent's client loads; it cannot import. |
+| `skills/vision-board/source` | The agent's instructions are Markdown files the agent's client loads, so they cannot import: the skill's core (`core.md`), its references (`references/`) and the one place its two builds differ (`differences.md`). `build.mjs` builds the standalone skill (`skills/vision-board/SKILL.md` and `references/`, never edited by hand) and the plugin's `skill.md` from them (node-overhaul T_05). |
 | `apps/board/server/apps/runner.mjs` | An app's tools run in a child under Node's permission model that may read only the app's folder and this file, so it cannot import; it tells the supervisor what failed, which tells the agent. |
 | `packages/format/src/images.ts` | A pure file that imports nothing (images-pure.test.ts: the page and the server both run it); its reasons are the one `IMAGE_WORDS` object, with that test. |
 | `apps/board/index.html` | A static page: its title is read before any script runs. |

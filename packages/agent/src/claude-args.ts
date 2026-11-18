@@ -33,7 +33,7 @@ const ruleRoot = (folder: string) => `/${folder.replace(/[*?[\]\\]/g, '\\$&')}`;
  * real, when they differ). A row a more specific row lets through (`.env.*` has `.env.example`) is left
  * out: a deny rule has no exception, and the gate still refuses the rest.
  */
-export function claudeDenyRules(folder: string): string[] {
+export function claudeDenyRules(folder: string, readOnly?: string): string[] {
   const roots = [...new Set([folder, (() => { try { return realpathSync(folder); } catch { return folder; } })()])];
   const carved = (row: (typeof ACCESS_RULES)[number], op: AccessOp) => exceptionsTo(row, op).length > 0;
   const rules: string[] = [];
@@ -44,6 +44,8 @@ export function claudeDenyRules(folder: string): string[] {
     }
   }
   for (const program of REFUSED_PROGRAMS) rules.push(`Bash(${program})`, `Bash(${program} *)`);
+  // The read-only folder (the skill's references, point 547) is never written.
+  if (readOnly !== undefined) rules.push(`Edit(${ruleRoot(readOnly)}/**)`);
   return rules;
 }
 
@@ -54,14 +56,21 @@ export function claudeDenyRules(folder: string): string[] {
  * rather than letting it through (exit 2 blocks; any other failure would not). `hold` (approvalHold):
  * the hook waits 24 hours.
  */
-export function gateSettings(node = process.execPath, gate = GATE_BIN, hold = false, folder?: string): string {
+export function gateSettings(node = process.execPath, gate = GATE_BIN, hold = false, folder?: string, readOnly?: string): string {
   const command = `${sh(node)} --no-warnings ${sh(gate)} || exit 2`;
   return JSON.stringify({
     hooks: {
       PreToolUse: [{ matcher: `^(${GATED_TOOLS.join('|')})$`, hooks: [{ type: 'command', command, timeout: hold ? HELD_HOOK_TIMEOUT_S : HOOK_TIMEOUT_S }] }],
     },
-    ...(folder !== undefined && { permissions: { deny: claudeDenyRules(folder) } }),
+    ...(folder !== undefined && { permissions: { deny: claudeDenyRules(folder, readOnly) } }),
   });
+}
+
+/** The instructions a turn appends: the instructions file, then the note (`instructionsNote`), or undefined for none.
+ * Written to a private file for the turn, so the file the host names is read fresh every turn. */
+export function instructionsText(options: Pick<StartOptions, 'instructionsFile' | 'instructionsNote'>, read: (file: string) => string): string | undefined {
+  if (!options.instructionsFile || !options.instructionsNote) return undefined;
+  return `${read(options.instructionsFile).trimEnd()}\n\n${options.instructionsNote}\n`;
 }
 
 /** The `--mcp-config` file's content. Written to a private file, so a secret in `env` never reaches argv. */
@@ -77,7 +86,7 @@ export function mcpConfigJson(servers: StartOptions['mcpServers']): string {
  * so a built-in the gate doesn't match (a subagent, messaging, scheduling) doesn't exist. `--allowedTools`
  * is variadic, so it comes last. Never `--bare` (it would skip the person's login).
  */
-export function buildClaudeArgs(options: StartOptions, session: TurnSession, mcpConfigFile: string, settings = gateSettings(undefined, undefined, options.approvalHold, options.cwd)): string[] {
+export function buildClaudeArgs(options: StartOptions, session: TurnSession, mcpConfigFile: string, settings = gateSettings(undefined, undefined, options.approvalHold, options.cwd, options.readOnlyFolder)): string[] {
   const args = ['-p', '--output-format', 'stream-json', '--verbose', session.resume ? '--resume' : '--session-id', session.id];
   if (options.model) args.push('--model', options.model);
   if (options.instructionsFile) args.push('--append-system-prompt-file', options.instructionsFile);

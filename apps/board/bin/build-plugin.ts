@@ -1,6 +1,7 @@
 // `npm run build:plugin [-- --watch] [-- --out <folder>]`: the board as one plugin folder, `dist/plugin/vision-board/` (D-074;
 // docs/specification/plugin.md): manifest.json, view/board.js and view/board.css, engine/engine.js, words.json,
-// skill.md and plugin.d.ts (the seam's types, with its version checked against them). A host links or copies the
+// skill.md and its references/ (the skill's plugin build, skills/vision-board/source/build.mjs) and plugin.d.ts (the seam's
+// types, with its version checked against them). A host links or copies the
 // folder; nothing in it depends on how it was made. The same input gives the same bytes (a test builds twice and compares).
 // With `--watch` the two bundles rebuild on a change, so a host linked to the folder picks it up; the manifest, the
 // words, the skill and the types are written once, at the start.
@@ -16,7 +17,7 @@ import { openapiDoc, toolRows } from '../server/format-files.ts';
 import { engineBuild, viewBuild } from '../vite.plugin.config.ts';
 import { PARTS, manifestOf } from '../plugin/manifest.ts';
 import { TYPES_FILE } from '../plugin/seam.ts';
-import { skillFor } from '../plugin/skill.ts';
+import { buildSkill } from '../../../skills/vision-board/source/build.mjs';
 import { pluginTypes, seamProblem } from './plugin-types.ts';
 import { wordsFile } from './plugin-words.ts';
 
@@ -25,7 +26,7 @@ export const DEFAULT_OUT = path.join(ROOT, 'dist/plugin', CHIP_PLUGIN);
 
 const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
 
-/** The manifest, words, skill and types as text, by the file's name in the folder. The manifest is checked against its schema. */
+/** The manifest, words, skill (with its references) and types as text, by the file's path in the folder. The manifest is checked against its schema. */
 export async function textFiles(): Promise<Record<string, string>> {
   // The engine only lists its tools here: it opens nothing in a folder that has no data.
   const tools = createEngine({ dir: path.join(os.tmpdir(), 'vb-plugin-build-has-no-data') }).tools.list();
@@ -34,11 +35,12 @@ export async function textFiles(): Promise<Record<string, string>> {
   const check = new Ajv2020({ strict: true, allErrors: true });
   const schema = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../plugin/manifest.schema.json'), 'utf8'));
   if (!check.validate(schema, manifest)) throw new Error(`manifest.json does not fit its schema: ${check.errorsText(check.errors)}`);
-  const skill = skillFor(fs.readFileSync(path.join(ROOT, 'skills/vision-board/SKILL.md'), 'utf8'));
+  const skill = buildSkill('plugin');
+  if (!(PARTS.skill in skill)) throw new Error(`the skill's plugin build has no ${PARTS.skill}`);
   const types = pluginTypes();
   const moved = seamProblem(types);
   if (moved) throw new Error(moved);
-  return { 'manifest.json': json(manifest), [PARTS.words]: json(await wordsFile(tools)), [PARTS.skill]: skill, [TYPES_FILE]: types };
+  return { 'manifest.json': json(manifest), [PARTS.words]: json(await wordsFile(tools)), ...skill, [TYPES_FILE]: types };
 }
 
 /** Write the folder `out` anew. */

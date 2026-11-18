@@ -5,7 +5,7 @@
    line (--vb-region, --vb-line-contrast): APCA on the canvas Lc 58.6 light, 67.4 dark (decoration tier
    30; the plain line is 33.7 light). A dragged frame keeps its drag look; a drop target its own. */
 vb-region {
-  &[data-fresh]:not([data-dragging], [data-drop]) { border-color: var(--vb-state-fresh); }
+  &[data-fresh]:not([data-dragging], [data-drop]) { --vb-region-ln: var(--vb-state-fresh); }
 }
 
 /* The pill after the count: "3 new · 1 updated", teal words on the -soft fill (APCA Lc 54.8 light,

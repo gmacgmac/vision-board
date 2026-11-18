@@ -76,6 +76,8 @@ async function fresh(page: Page, request: APIRequestContext, query = ''): Promis
 /** A colour of `l` as the pixel drawn. */
 const colour = async (page: Page, l: Locator, prop: 'color' | 'borderTopColor' | 'backgroundColor') =>
   pixel(page, await l.evaluate((e, p) => getComputedStyle(e)[p], prop));
+/** A frame's top rule as drawn (open corners, FIX_06: the rules are its ::before and ::after, not its border). */
+const rule = async (page: Page, l: Locator) => pixel(page, await l.evaluate((e) => getComputedStyle(e, '::before').borderTopColor));
 const token = async (page: Page, name: string) => pixel(page, await resolved(page, `var(${name})`));
 
 test.beforeEach(async ({ page }) => {
@@ -99,7 +101,7 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   const { d, added } = await fresh(page, request);
   await expect(frame(page, 'p')).toHaveAttribute('data-fresh', '');
   await expect(frame(page, 'q')).toHaveAttribute('data-fresh', '');
-  expect(await colour(page, frame(page, 'p'), 'borderTopColor')).toEqual(await token(page, '--vb-state-fresh'));
+  expect(await rule(page, frame(page, 'p'))).toEqual(await token(page, '--vb-state-fresh'));
   await expect(said(page, 'p')).toHaveText('1 new');
   await expect(pill(page, 'p')).toHaveAttribute('title', '1 new card in this container');
   await expect(said(page, 'q')).toHaveText('1 updated');
@@ -107,7 +109,7 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   // updated card keeps its teal border (point 432).
   expect(await colour(page, said(page, 'p').locator('.vb-region-fresh-new'), 'color')).toEqual(await token(page, '--vb-state-fresh'));
   expect(await colour(page, said(page, 'q').locator('.vb-region-fresh-updated'), 'color')).toEqual(await token(page, '--vb-state-updated'));
-  expect(await colour(page, frame(page, 'q'), 'borderTopColor')).toEqual(await token(page, '--vb-state-fresh'));
+  expect(await rule(page, frame(page, 'q'))).toEqual(await token(page, '--vb-state-fresh'));
   await expect(chip(page)).toContainText('2 new');
   await expect.poll(() => texts(page)).toEqual(['2 new', `${d.n[2]} · Card 3 · updated`, `${added} · Card 4`]);
   // One definition: the badges the board shows are the list's rows.
@@ -165,7 +167,7 @@ for (const theme of THEMES) {
     const { d } = await fresh(page, request);
     const canvas = await token(page, '--vb-surface-canvas');
     const cardBg = await token(page, '--vb-surface-card');
-    const border = lc(await colour(page, frame(page, 'p'), 'borderTopColor'), canvas);
+    const border = lc(await rule(page, frame(page, 'p')), canvas);
     const plain = lc(await token(page, '--vb-line-contrast'), canvas);
     const words = lc(await colour(page, pill(page, 'p'), 'color'), await colour(page, pill(page, 'p'), 'backgroundColor'));
     const t = tab(page, d.n[2]!);

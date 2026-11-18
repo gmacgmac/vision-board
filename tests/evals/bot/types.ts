@@ -35,7 +35,9 @@ export interface Exit {
   /** Killed by our wall clock. */
   killed: boolean;
   seconds: number;
-  /** Ended without an answer for every turn, and not by our kill or a CLI cap: worth one retry. */
+  /** Killed by the stall watchdog: no stream line for `STALL_MS` while a turn was open. */
+  stalled?: boolean;
+  /** Ended without an answer for every turn, and not by our kill or a CLI cap, or stalled: worth one retry. */
   crashed: boolean;
 }
 
@@ -65,7 +67,10 @@ export interface Check { id: string; says: string; run(r: RunRecord): Verdict }
 
 /** The person, at the host's door for people (engine.route with the person as caller). */
 export interface Person {
-  mark(board: string, n: number, mark: 'ack' | 'drop'): Promise<void>;
+  /** ✓ (`ack`), ✗ (`drop`) or Later on card `n`. */
+  mark(board: string, n: number, mark: 'ack' | 'drop' | 'later'): Promise<void>;
+  /** Which way the board's flows run, from its header (a `direction` act with no container). */
+  direction(board: string, direction: 'across' | 'down'): Promise<void>;
   /** A note on card `n`; answers its `seq`. */
   note(board: string, n: number, text: string): Promise<number>;
   /** Send: the answers chip resolved as a host does, and the Send recorded; answers the message's text. */
@@ -98,8 +103,9 @@ export interface BotHost {
   cwd: string;
   /** The bot's `vision-board` MCP server entry. */
   mcp: { command: string; args: string[]; env: Record<string, string> };
-  /** The bot's instructions (a file), the line appended to them, and its built-in tools. */
-  bot: { skill: string; prompt: string; tools: string; addDir: string };
+  /** The bot's instructions (a file), the line appended to them, its built-in tools, the folders it may reach, and the
+   * skill's folder (its `references/`), which the line names as a client names a skill's base directory. */
+  bot: { skill: string; prompt: string; tools: string; addDirs: string[]; skillDir: string };
   /** The bot's board tool calls: logged at the door as they happen, or (standalone) read from its stream. */
   calls: Call[];
   seen: { instructions: string | null };
@@ -115,6 +121,9 @@ export interface BotHost {
   close(): Promise<void>;
 }
 
+/** A reference file beside the skill (`references/<name>.md`; skills/vision-board/source/references/). */
+export type Reference = 'layouts' | 'architecture' | 'handover' | 'apps';
+
 /** One message from the host: the person's words, and/or what the person did on the board, then their Send. */
 export interface Turn {
   say?: string;
@@ -129,6 +138,8 @@ export interface FakeBot {
   message: string;
   call(name: string, input: Record<string, unknown>): Promise<any>;
   write(file: string, text: string): void;
+  /** Read the skill's reference `name` (`references/<name>.md`), as the model does with its Read tool. */
+  read(name: string): void;
   use(name: string, input: unknown): void;
   say(text: string): void;
 }
@@ -142,6 +153,9 @@ export interface Scenario {
   checks: Check[];
   /** Engine flags this scenario runs with, over the eval's (`--flags`): one about a host's switch holds it on. */
   flags?: Record<string, boolean>;
+  /** The skill's references this request needs (`need`) and those it may read (`may`); any other read fails
+   * `reads-references`, which every scenario gets. Left out: the core is enough, so no reference is read. */
+  reads?: { need?: Reference[]; may?: Reference[] };
   /** `good` keeps every rule; `bad` breaks the ones the dry test expects to see fail. */
   fake: { good: FakeTurn[]; bad?: FakeTurn[]; badFails?: string[] };
 }

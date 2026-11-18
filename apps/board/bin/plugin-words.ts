@@ -12,8 +12,8 @@ import { toolKey } from '../plugin/manifest.ts';
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 /** The words folders of the view's parts: the board, the patterns, and the plugin's own. */
 export const VIEW_WORDS = ['apps/board/src/board/words', 'packages/ui/src/words', 'apps/board/plugin/words'] as const;
-/** Words files that are not the view's text: the edits that make the bot's skill. */
-const NOT_VIEW_TEXT = new Set(['skill-edits.ts']);
+/** Words files that are not the view's text (none since the skill is built from its own source, node-overhaul T_05). */
+const NOT_VIEW_TEXT = new Set<string>();
 
 /** A file's fixed text: `<id>.<area>.<name>` for each string, an object's members dotted on. */
 async function stringsOf(file: string): Promise<[string, string][]> {

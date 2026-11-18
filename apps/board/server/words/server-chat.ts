@@ -37,6 +37,8 @@ export const openThesePictures = 'Open the pictures named under a file with your
 export const noBoardIsOpenIn = 'No board is open in this folder yet. When there is something to draw, suggest its structure first; once the person agrees, create a board with write_board and the person\'s page opens it.';
 export const theMessageNamesNotesOr = 'The message names notes or cards that are not on this board.';
 export const board = (board: string): string => `Board: ${board}`;
+/** After the skill, every turn: where its folder is, so the agent can read its references (maintainer point 547). */
+export const skillFolder = (dir: string): string => `Base directory for the vision-board skill: ${dir}`;
 export const noBoardIsOpenSo = (seq: number): string => `no board is open, so there is no note ${seq}`;
 export const noBoardIsOpenSoThere = (n: number): string => `no board is open, so there is no card ${n}`;
 export const theMessageNamesNotesOrCards = 'The message names notes or cards, but no board is open.';

@@ -1,0 +1,194 @@
+---
+task_name: The Timeline
+created: 2026-11-18
+completed:
+status: planned
+categories: [board-layout, board-format, board-ui, board-agent, board-tokens]
+tracker: cortex-tasks/tracker.md#N53
+---
+
+# The Timeline - Task Status
+
+> **Plan**: [PLAN.md](./PLAN.md) · **Code map**: [CODE-MAP.md](./CODE-MAP.md)  
+> **Created**: 2026-11-18 · **Runs after**: the Node Overhaul set closes
+
+---
+
+## Instructions for Agents
+
+1. **Read PLAN.md first** (§ Decisions is every ruling), then `CODE-MAP.md`
+2. **Read notes from completed tasks** before starting yours
+3. **Respect the Wave column** — do not start a task whose wave has not been reached
+4. **Reuse Shared Foundations** — check that table before writing a helper, type, or component;
+   if it is listed, import it, do not reinvent it
+5. **Touch only the files you own** (File Ownership below, or your task's *Files to modify*). Need
+   a change elsewhere? List it under `REQUESTS` in your return block — the orchestrator routes it
+6. **If you need to deviate, STOP and inform the user**
+7. **Update frontmatter `status`**: `planned` → `in-progress` when the first task starts. Closing the
+   set (`completed`) is the orchestrator's job, after the full gates
+8. **Update your row** in the Task List table below when you finish
+9. **Add implementation notes** to your task file and brief notes here. Re-run? Add a `Run N:`
+   line here and a `### Run N` block in your task file; never overwrite an earlier run
+10. **No git commands that change state** (commit, merge, branch, stash, checkout) — the
+    orchestrator commits each checked task or wave
+11. **Working in a git worktree?** Follow the Where You Work block in your prompt. Edit this file,
+    your task file and `cortex/LOG.md` only in `.claude/worktrees/app-window`, never the main checkout; never
+    port 4466; use your task's `VB_TEST_PORT` (PLAN.md § House Rules)
+
+---
+
+## Task List
+
+| # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
+|---|-----|------|-------|--------------|---------|------|--------|-------|
+| 1 | T_01 | 1 | strong | no | Principal API engineer — a value has one spelling in the ledger; a model's habit is normalised at the edge and never stored, and a refusal says exactly what would have been accepted. | [Contract first](./T_01_contract.md) | Pending | |
+| 2 | DESIGN_01 | 1 | strong | no | Principal product designer for planning tools — a page the build follows must agree with the rulings in every detail, or the build inherits the contradiction. | [Pages in line with the rulings](./DESIGN_01_timeline-pages.md) | Pending | |
+| 3 | BE_01 | 2 | strong | yes | Graph-layout engineer — a layout is a pure function; the same view draws the same picture, and a container without a date draws exactly as it did. | [The timeline in the layout](./BE_01_timeline-layout.md) | Pending | |
+| 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Pending | |
+| 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Pending | |
+| 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Pending | |
+| 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
+| 8 | T_03 | 5 | standard | no | Staff engineer who owns deprecations — a switch-over is done only when nothing, not code, tests, words nor docs, still points at the flag. | [Switch on](./T_03_switch-on.md) | Pending | |
+
+**Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
+
+**Wave**: execution order. Same number = safe to run in parallel. A wave completes before the next starts.
+
+**Gates the orchestrator holds**:
+- **Kickoff** (before wave 1): the maintainer's yes on D-105 and the steering change (PLAN.md § Decision entry to
+  append, § Planner's calls 12), on § Planner's calls, and the answers to § Requests for the maintainer below. Record
+  them in PLAN.md § Kickoff answers; append D-105 word for word.
+- **Design** (before wave 2): the maintainer's yes on DESIGN_01's pages and open choices, recorded in PLAN.md § Design
+  review.
+- **Wave 2 merge**: FE_01's `tokens.css` diff shown to the maintainer; budgets raised once on the merge (PLAN.md
+  § House Rules); `npm run map`.
+- **Result** (before wave 5): the maintainer uses the board with `?flags=timeline` and says yes.
+
+**Own worktree**: wave 2 only (three code tasks that each run tests); the commands are in PLAN.md § House Rules.
+
+---
+
+## Requests for the maintainer (kickoff)
+
+The planner's questions, each with a recommendation. The orchestrator asks them with D-105 and records the answers in
+PLAN.md § Kickoff answers.
+
+1. **D-105 and the steering line** (PLAN.md § Decision entry to append; § Planner's calls 12). Recommend: yes as
+   drafted.
+2. **Ledger format 21 with a restamp step** (PLAN.md decision 6). Recommend: yes. `main` already runs format 20, so a
+   `timeline` key under 20 would be refused, card by card, by your board's build while it stayed writable; 21 makes it
+   open read-only and say why. The step changes nothing but `v`.
+3. **The vertical form**: the other nodes stay below the timeline in both forms, and a container with a timeline gets
+   Across, Down and Auto in its layout menu, as a flow does (decision 14). Recommend: yes. The other way: run down,
+   the other nodes sit to the right of the line.
+4. **Live Haiku eval runs in T_02**: one plugin run and one standalone run, within the default caps in
+   `tests/evals/bot/limits.ts`, never raised. Recommend: yes; without it, T_02 runs the dry evals only and the live
+   runs wait.
+5. **No timeline on an app card** (decision 5): refused with words. Recommend: yes; an app card is a window with no
+   header to carry a date.
+
+---
+
+## Shared Foundations
+
+| Artifact | Created by | Consumed by |
+|----------|-----------|-------------|
+| `packages/format/src/timeline.ts` (`TIMELINE_FORMS`, `normaliseTimeline`, `timelineProblems`, `isTimeline`, `timelinePrecision`, `timelineYear`, `compareTimeline`, `sortByTimeline`) | T_01 | BE_01, FE_01, T_02, FE_02 |
+| `packages/format/src/geometry.ts` (`TimelineDrawing`, `TimelineDot`, `TimelineSide`: the line's geometry the layout returns and the page draws) | T_01 | BE_01, FE_01, FE_02 |
+| `ViewNode.timeline`, the node schemas, `show-layout-response.schema.json` `timeline`, `LEDGER_FORMAT` 21 and `restamp(20)`, the generated types | T_01 | every later task |
+| `packages/format/src/words/format-ledger.ts` (`timelineForms`, `timelineOnApp`) | T_01 | T_02 (the scenario checks name the refusal), VERIFY_01 |
+| `packages/format/src/flags.ts` (`timeline`, off) | T_01 | FE_01, FE_02, T_03 |
+| `design/mockups/timeline/` (run 2, plus DESIGN_01's pages and PLAN.md § Design review) | DESIGN_01 | FE_01, FE_02, VERIFY_01 |
+| `packages/layout/src/timeline.ts` (`layoutTimeline`, the `TIMELINE_*` spacing constants), `RegionPiece.timeline`, `RegionBox.timeline`, `LayoutStructure.timeline` | BE_01 | FE_02, VERIFY_01 |
+| `packages/ui/src/node/node-date.ts` (`timelineLabel`: the short header, the full accessible form, the `datetime`) and the `data-timeline` attribute on `vb-node` | FE_01 | FE_02, T_03 |
+| `packages/ui/src/markdown/` (`MarkdownOptions.entries`, `.vb-md-entry`) | FE_01 | FE_02 |
+| `packages/ui/src/timeline/` (`timelineMarkup(drawing, look)`, `timeline.css`, `pattern.json`) | FE_01 | FE_02, T_03 |
+| Tokens for the dated node and the line (`packages/tokens/src/tokens.css`) | FE_01 | FE_02 |
+
+---
+
+## File Ownership
+
+| Wave | Owner | Files |
+|------|-------|-------|
+| 1 | T_01 | `packages/format/src/` (`timeline.ts` new, `view.ts`, `ledger.ts`, `ledger-shape.ts`, `view-shape.ts`, `app-shape.ts`, `validate.ts`, `geometry.ts`, `flags.ts`, `index.ts`, `migrate/steps.ts`, `words/format-ledger.ts`), `packages/format/schema/`, `packages/format/fixtures/` except `legacy/`, `packages/format/tests/`, the generated files (`npm run gen`), `apps/board/server/write-board.ts`, `apps/board/server/examples.ts`, test files that hold a format-20 line or a `ledger/20/` `$id` (`apps/board/tests/`, `scripts/`), new `apps/board/tests/api-timeline.test.ts` and `schema-v21.test.ts`, `docs/specification/api.md`, `docs/specification/api-reference.md` (generated) |
+| 1 | DESIGN_01 | `design/mockups/timeline/` |
+| 2 | BE_01 | `packages/layout/` (`src/timeline.ts` new, `board.ts`, `types.ts`, `structure.ts`, `index.ts`, `tests/`), `apps/board/server/engine/reads.ts` (`showLayout` only), `apps/board/tests/api-layout*.test.ts` and new `api-layout-timeline.test.ts`, `docs/specification/components.md` |
+| 2 | FE_01 | `packages/ui/src/node/`, `packages/ui/src/markdown/`, `packages/ui/src/timeline/` (new), `packages/ui/src/patterns.ts`, `packages/ui/src/index.ts`, `packages/ui/src/words/`, `packages/ui/tests/`, `packages/tokens/src/tokens.css` and its contrast pair list and tests, `apps/board/src/gallery/timeline-section.ts` (new), `apps/board/src/gallery/main.ts`, `scripts/words-homes.mjs` and `docs/specification/words.md` (only for a new words file), the screenshots its specs renew |
+| 2 | T_02 | `skills/vision-board/` (`source/`, the built `SKILL.md` and `references/`, `NOTES.md`, `scenarios.md`), `tests/evals/bot/`, `apps/board/tests/plugin-skill.test.ts`, `docs/specification/plugin.md` |
+| 2 | orchestrator | `scripts/verify-weight.mjs`, `apps/board/tests/plugin-build.test.ts` (`BUDGET`), `docs/specification/performance.md` (raised once, on the merge) |
+| — | orchestrator | `docs/decisions.md`, `docs/principles.md`, `.kiro/steering/vision-board-proj.md`, `AGENTS.md`, `CLAUDE.md`, `package-lock.json`, `docs/specification/modules.md`, `cortex-tasks/tracker.md` |
+
+Waves 3 to 5 hold one task each; a task's *Files to modify* is its ownership. Nobody edits
+`packages/format/fixtures/legacy/`.
+
+---
+
+## Requests
+
+| Request | From | Need | Routed to | Status |
+|---------|------|------|-----------|--------|
+| | | | | |
+
+**Status Values**: `Open` | `Done` | `Closed`
+
+---
+
+## Implementation Notes
+
+### T_01: Contract first
+_Status:_ Pending  
+_Notes:_ 
+
+### DESIGN_01: Pages in line with the rulings
+_Status:_ Pending  
+_Notes:_ 
+
+### BE_01: The timeline in the layout
+_Status:_ Pending  
+_Notes:_ 
+
+### FE_01: The dated node, entries and the line's drawing
+_Status:_ Pending  
+_Notes:_ 
+
+### T_02: The skill and its evals
+_Status:_ Pending  
+_Notes:_ 
+
+### FE_02: The board draws the timeline
+_Status:_ Pending  
+_Notes:_ 
+
+### VERIFY_01: Final verification
+_Status:_ Pending  
+_Notes:_ 
+
+### T_03: Switch on
+_Status:_ Pending  
+_Notes:_ 
+
+---
+
+## Completion Checklist
+
+- [ ] All implementation tasks complete
+- [ ] VERIFY_01 complete, its findings fixed or routed
+- [ ] The maintainer's yes on the result, then T_03
+- [ ] Every request `Done` or `Closed`
+- [ ] Tracker row N53 deleted
+- [ ] LOG entry created (see below)
+
+---
+
+## On Completion
+
+When all tasks are done and the full gates pass, the orchestrator:
+
+1. Sets frontmatter `status: completed` and `completed: YYYY-MM-DD`.
+2. Appends the set's LOG entry, one line, terminated with a newline, append-only:
+   ```
+   [[YYYY-MM-DD HH:MM]] [board-layout] Completed set: The Timeline → Task: [[cortex-tasks/board/2026-11-18_board-layout_timeline/TASK-STATUS.md]]
+   ```
+3. Deletes tracker row N53.
+4. Commits the close.

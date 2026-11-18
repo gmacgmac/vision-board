@@ -8,7 +8,7 @@ const fail = (file, message) => ({ level: 'fail', file, message });
 const warn = (file, message) => ({ level: 'warn', file, message });
 
 /** Rule 15: the board page's JS and CSS, gzipped (docs/specification/performance.md § Budgets). */
-export const PAGE = { html: 'apps/board/dist/index.html', budgetKb: 201.1 } // 200 (D-049); 201.1 since the Node Overhaul's T_04 removed the old node (measured 201.0; was 211.2 while both shipped): the new node's marks, menus and skins outweigh the footer they replaced; back to 200 is a tracker row.
+export const PAGE = { html: 'apps/board/dist/index.html', budgetKb: 201.3 } // 200 (D-049); 201.3 since FIX_06 (open corners measured 201.2; 201.1 before it) and the Node Overhaul's T_04 removed the old node (measured 201.0; was 211.2 while both shipped): the new node's marks, menus and skins outweigh the footer they replaced; back to 200 is a tracker row.
 
 /** The board page's assets at start: what its HTML loads from /assets/, and every file those import
  * statically. A chunk reached only through `import()` is not loaded at start (the chat panel's drawing,

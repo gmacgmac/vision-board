@@ -2,7 +2,7 @@
 // each write item form carries an `examples` entry in its schema, every x-agent operation with a
 // JSON body shows a request example, every example fits its own schema, and a refused item comes
 // back with the example for its type (read from the schema, never written in code). The skill's
-// one worked `write_board` call (SKILL.md § Writing cards) fits the body schema and writes.
+// one worked `write_board` call (the skill's references/layouts.md, since T_05) fits the body schema and writes.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -42,12 +42,12 @@ test('the write_board request example draws a region, nodes and a link by key', 
   assert.ok(items.includes('region') && items.includes('link') && items.filter((t) => t === 'node').length >= 2, items.join());
 });
 
-/** The skill's worked example: the first JSON block under § Writing cards in SKILL.md. */
+/** The skill's worked example: the first JSON block under § Each mode, by the content in its layouts reference (both builds ship it). */
 function skillExample(): { board: string; items: { type: string; key?: string; from?: unknown; to?: unknown }[] } {
-  const skill = readFileSync(new URL('../../../skills/vision-board/SKILL.md', import.meta.url), 'utf8');
-  const section = skill.slice(skill.indexOf('\n## Writing cards\n'));
+  const skill = readFileSync(new URL('../../../skills/vision-board/references/layouts.md', import.meta.url), 'utf8');
+  const section = skill.slice(skill.indexOf('\n## Each mode, by the content\n'));
   const block = /```json\n([\s\S]*?)```/.exec(section.slice(0, section.indexOf('\n## ', 1)));
-  assert.ok(block, 'Writing cards has a json block');
+  assert.ok(block, 'the layouts reference has a json block');
   return JSON.parse(block[1]!);
 }
 

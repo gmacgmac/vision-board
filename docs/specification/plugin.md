@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-18 (§ The engine: `show_layout` lays a flow out the way it runs with its branches on rows, no flag, node-overhaul T_04); 2026-11-17 (§ The engine: the flow direction and branching reach `show_layout`, node-overhaul BE_01); 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-18 (§ The folder, § The bot: `skill.md` and its `references/`, built from the same source as the standalone skill; a host lets its bot read the references, node-overhaul T_05); 2026-11-18 (§ The engine: `show_layout` lays a flow out the way it runs with its branches on rows, no flag, node-overhaul T_04); 2026-11-17 (§ The engine: the flow direction and branching reach `show_layout`, node-overhaul BE_01); 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -45,6 +45,7 @@ the same bytes, and neither bundle imports anything a host must supply but Node'
 | `engine/engine.js` | Node ES module, one export: `createEngine`. Reads and writes only the folder it is given |
 | `words.json` | The manifest's words keys, and the board's fixed words, by `vision-board.<area>.<name>` |
 | `skill.md` | What the bot reads while the plugin is on (§ The bot) |
+| `references/` | What the bot reads only when a request needs it, each file named in `skill.md` with when to read it: `layouts.md`, `architecture.md`, `handover.md` (§ The bot) |
 | `plugin.d.ts` | The seam's types for a TypeScript host (§ The types and the seam version) |
 
 To update: rebuild, and reload the page and restart the engine. `npm run build:plugin -- --out <folder>` writes elsewhere;
@@ -306,15 +307,19 @@ bot's own data: no call of the engine's gives it back. It holds on another engin
 again on a restart. Grants and scoping hold between agents as standalone's do (api.md 81-86) (`tools.spec.ts` "the bot").
 
 **Words differ per host.** The engine's tool descriptions are standalone's less what a bot under a host doesn't have:
-`join` and its secret, the chat panel, attachments and apps (`apps/board/server/words/plugin-tools.ts`). `skill.md` is the
-standalone skill cut, section by section, to what a host's bot needs with `singleAgent` on, within 8 KiB: no grants, no
-other ledgers, no apps, its pictures in the board folder's `images/`, and detail about one tool in that tool's description
-(`apps/board/plugin/words/skill-edits.ts`). A change to it lands only with `npm run eval:bot` passing. Give the bot
+`join` and its secret, the chat panel, attachments and apps (`apps/board/server/words/plugin-tools.ts`). `skill.md` and its
+`references/` are the skill's plugin build: the same core and reference files as the standalone skill, differing only
+where `skills/vision-board/source/differences.md` says, for a host's bot with `singleAgent` on: no grants, no other ledgers,
+no apps and no icon tools, its pictures in the board folder's `images/`, and detail about one tool in that tool's
+description. `skill.md` stays within 8 KiB. A change to either lands only with `npm run eval:bot` passing. Give the bot
 `skill.md` while the plugin is on, whole or as a skill it opens when it needs it: its front matter is simple `key: value`
 lines, `name` (the id, `vision-board`), `label` (the few words a Skills page names it by) and `description` (one line,
 under 1,000 characters, that says when to read it), and the instructions tell the bot to open it before its first
-`write_board`. Proven by
-`apps/board/tests/plugin-skill.test.ts` "the plugin skill names no tool", "the plugin skill opens with front matter". The MCP instructions a bot reads before its first
+`write_board`. **The references** are read on demand: `skill.md` names each one by its path beside it
+(`references/layouts.md`) with the case to read it in, so let the bot read the folder's `references/` and tell it where
+`skill.md` lives (a skill it opens says so; given whole, say it in the bot's instructions). A bot that can't read them
+still has the core, and loses only the detail. Proven by
+`apps/board/tests/plugin-skill.test.ts` "the plugin build names no tool", "the plugin skill opens with front matter", "v3.35 (node-overhaul T_05)", `apps/board/tests/plugin-build.test.ts` "a clean build writes exactly the folder". The MCP instructions a bot reads before its first
 call are the plugin's too (`tools.instructions`, below). With `singleAgent` on, the descriptions and the instructions also
 drop every grant step: `request_grant` stays listed (the manifest's tools are the engine's with no flags) and its
 description says it is not needed (`words/plugin-tools.ts` `singleAgentEdits`, `singleAgentInstructionEdits`). So give
@@ -616,7 +621,7 @@ Reviewed by the maintainer (D-074 rule 7): all settled, 2026-11-02. Each is stil
    `images/` folder and the engine reads it with its usual checks (`engine.image`; `imagePathProblem`, `imageHeadProblem`, the size
    limit), so the engine stays the one reader and no bytes pass through a tool's input. That holds where the bot can reach the
    folder: the last section says where it lives. **Done**: the plugin's `skill.md` has its own Images section
-   (`apps/board/plugin/words/skill-edits.ts` `IMAGES`): the `images/` folder of the board folder the host names, the formats and
+   (`skills/vision-board/source/differences.md`, slot `images`): the `images/` folder of the board folder the host names, the formats and
    limits, and how a card names a picture, with no host named (`apps/board/tests/plugin-skill.test.ts` "the plugin skill has an Images section").
 2. **The answers are a chip** (D-074 rule 6), through `chat.attach` and `resolve`, with no extra prompt hook. **Settled**
    (point 377): a host may let the person drop them; the Send then counts only what went, by what `resolve` read

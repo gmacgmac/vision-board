@@ -538,7 +538,7 @@
                             "across",
                             "down"
                           ],
-                          "description": "Which way a `flow` runs: `across` (left to right) or `down` (top to bottom). Left out: `across`. The person's choice wins."
+                          "description": "Which way a `flow` runs, `across` (left to right) or `down` (top to bottom): set it only when the person asks for one. Left out, the board's own direction holds (the person's choice in its header, else `across`). The person's choice wins."
                         }
                       },
                       "additionalProperties": false,

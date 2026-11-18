@@ -22,7 +22,10 @@ for (const theme of THEMES) {
   test(`${theme}: the container frame is drawn in the Lines scale's next step, with no fill`, async ({ page }) => {
     await setTheme(page, theme);
     const frame = page.locator('section[data-pattern="region"] vb-region').first();
-    const border = await frame.evaluate((e) => getComputedStyle(e).borderTopColor);
+    // FIX_06: the lines are drawn by ::before (top and bottom) and ::after (sides), the frame's own border is transparent.
+    const [top, side] = await frame.evaluate((e) => [getComputedStyle(e, '::before').borderTopColor, getComputedStyle(e, '::after').borderLeftColor]);
+    const border = top;
+    expect(await pixel(page, side)).toEqual(await pixel(page, top));
     expect(await pixel(page, border)).toEqual(await pixel(page, await resolved(page, 'var(--vb-line-contrast)')));
     // Ruling answer 126: the inside is left as it is, and the fill and grey-lift tokens are not added.
     expect(await frame.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
