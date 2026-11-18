@@ -44,3 +44,29 @@
 .legend{display:flex;flex-wrap:wrap;gap:14px 40px;align-items:center;margin:0 0 44px;color:var(--mut);font-size:12.5px}
 .legend span.it{display:inline-flex;align-items:center;gap:10px}
 .v9 .legend .kind{position:static;transform:none}
+
+/* Run 2 (the maintainer's review): inside a timeline the date is the node's header, large and bold, the first
+   thing on it, in the kind's (or tone's) colour; titles are bigger; Markdown that starts with a heading or a bold
+   lead draws as entries with a left bar. Plain Markdown in; the container does the presentation. */
+.tn .nb{padding:24px 16px 20px}
+.tn .tdate{display:flex;align-items:baseline;gap:10px;margin:0 0 6px;font:800 23px/1.1 var(--sys);letter-spacing:.01em;text-transform:uppercase;color:var(--k)}
+.cl .tn .tdate{font:700 23px/1.1 var(--disp);letter-spacing:0}
+.tn .tkind{margin-left:auto;font:700 10.5px/1 var(--sys);font-style:normal;letter-spacing:.1em;color:var(--k)}
+.tn .ttl{margin:0 0 6px;font-size:17.5px;line-height:1.25;font-weight:750;letter-spacing:-.005em}
+.cl .tn .ttl{font-size:18px;font-weight:600}
+.tn p.bd,.tn p.tx{font-size:13.5px;line-height:1.5}
+.tn .bd ul,.tn ul.ls{margin:6px 0 0;padding-left:18px;color:var(--ink2);font-size:13.5px;line-height:1.5}
+.ent{position:relative;margin-top:12px;padding:1px 0 1px 13px}
+.ent::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:3px;border-radius:2px;background:var(--k)}
+.cl .ent::before{border-radius:0}
+.ent b{display:block;font:700 14.5px/1.3 var(--sys);color:var(--ink)}
+.cl .ent b{font:600 15px/1.3 var(--disp)}
+.ent p{margin:3px 0 0;font-size:13px;line-height:1.45;color:var(--ink2)}
+.cl .tn .bd{padding:16px 16px 18px}
+/* the side-by-side: where the kind goes, and the Markdown a node is written in */
+.pair2{display:flex;gap:48px;align-items:flex-start;padding:30px 0 0 8px}
+.pair2 figure{margin:0}
+.pair2 figcaption{margin-top:22px;max-width:300px;color:var(--mut);font-size:12.5px}
+.pair2 figcaption b{color:var(--ink)}
+.src{width:330px;margin:0;padding:12px 14px;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink2);font:12px/1.55 var(--mono);white-space:pre-wrap}
+.cl .src{border-radius:4px}

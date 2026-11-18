@@ -1,39 +1,57 @@
 # Timeline layout
 
-A container in a `timeline` layout: a horizontal line; each node on its own dot, joined by a short stem,
-alternating above and below; ordered by date and evenly spaced (not to scale). Inside a timeline the node's
-top tab (in Command Lens, the plate's kind word) shows its date instead of the kind word; the kind keeps its
-colour, on the tab and on the dot. Proposal for the maintainer (DESIGN_02); nothing here is built. The
-content is a made-up product launch plan.
+A container in a `timeline` layout, for a roadmap, a plan or a history. There is one line. Each node sits on
+its own dot, joined to it by a short stem, alternating above and below the line. Nodes are ordered by date
+and evenly spaced, not to scale. These pages are a proposal for the maintainer (DESIGN_02); nothing here is
+built. The content is a made-up product launch plan.
 
 | Page | What it shows |
 |---|---|
-| `default-timeline-*`, `command-lens-timeline-*` | The four date formats (day "SEP 15", month "OCT 2026", week "WEEK OF 13 OCT", year "2027"); eight events; three on one date (3 Nov), each on its own dot with a band behind them on the line; "Private beta" holding a week of entries in Markdown; a link from "Freeze the feature list" to "2.1: offline drafts", routed under the nodes; asking, ticked and new nodes |
-| `default-vertical-*`, `command-lens-vertical-*` | The vertical form for a long timeline: twelve events, the line down the left, every node to its right; years on the line; the same-date band; a link routed on the right |
+| `default-timeline-dark`, `command-lens-timeline-dark` | **Run 2.** Shows:<ul><li>The date as each node's header.</li><li>Where the kind goes: A and B side by side in the default skin.</li><li>The Markdown the agent writes.</li><li>Seven events, three of which show how a body is drawn:<ul><li>"Private beta" has three entries.</li><li>"Pricing page live" has one entry, written as a bold lead.</li><li>"Public launch" holds a list.</li></ul></li><li>Two events on 3 Nov, each on its own dot, with a band behind them on the line.</li><li>The year on the line where it turns.</li><li>A link routed above the nodes.</li></ul>Light pages come later. |
+| `default-vertical-*`, `command-lens-vertical-*` | Run 1, unchanged. The vertical form for a long timeline: the line down the left and every node to its right. These pages still draw the date on the tab; run 2's header is not applied to them yet. |
 
-- **Dark and light:** each page comes in both; the PNG beside it is the full page at 1440 px.
-- **Styles:** the skin's `../node-states/*.css`, then `../containers/containers.css` (the frame is drawn
-  with open corners), then `timeline.css`. Standalone, no network.
-- **Geometry:** a step of 144px for 250px nodes, so nodes on one side sit 38px apart; stems 30px. The
-  line and stems are the frame's rest colour (Lc 30 tier); the link is the in-use grey (Lc 45), its label
-  in a canvas gap; years sit in gaps cut from the line, like the container's title.
-- **Not built yet, a contract change:** a node has no date today (`packages/format/src/view.ts`), and
-  `MODES` has no `timeline`. The layout needs a date with its precision on the node (day, week, month or
-  year) and the mode, behind a flag, with the agent skill told how to give them.
+Every page has a full-page PNG at 1440 px beside it. Each page loads the skin's `../node-states/*.css`, then
+`../containers/containers.css` and `timeline.css`. Standalone, no network.
+
+The frames on these pages use the mock-ups' spacing and line colour. The build takes the real board's values
+instead (the maintainer, run 2).
+
+## What changed in run 2 (the maintainer's review)
+
+- **The date is the node's header.** It is the first thing on the node: large and bold, uppercase, month
+  first ("SEP 15", "OCT 2026", "WEEK OF OCT 13", "2027"), in the kind's colour (a tone's, if the node has
+  one).
+  - Size: 23px. Default skin in the system font at weight 800; Command Lens in Space Grotesk at 700.
+  - Contrast, on the dark node surface: APCA Lc 48 to 64 for every kind colour. That passes 45, the tier
+    for short coloured labels.
+- **Bigger titles inside a timeline.** 17.5px at weight 750 in the default skin, 18px in Command Lens; the
+  board elsewhere uses 15px.
+- **Entries come from plain Markdown.** Inside a timeline container, a `###` heading, or a bold lead at the
+  start of a paragraph, draws as an entry: a 3px bar in the kind's colour, a bold name, then a line or two
+  of text. A list stays a list and plain text stays text. The agent learns nothing new; the container does
+  the presentation.
+- **Where the kind goes.**
+  - Default skin, B (recommended and used on the timeline): the kind tab leaves the top edge. The grip of
+    the architecture look takes its place, so the node is still dragged there, and the stem from the line
+    meets it. The kind becomes a small word at the end of the date line.
+  - Default skin, A: keeps the tab, which says the kind twice and competes with the date.
+  - Command Lens: the plate stays as it is (number, kind, marks, the handle). The date heads the body.
+- **Kept from run 1:** each node on its own dot; alternating above and below; even spacing; years on the
+  line; the same-date band; a link.
+- **Wider nodes:** 300px at a 164px step, so nodes on one side sit 28px apart.
+
+Not built yet, and a contract change: a node has no date today (`packages/format/src/view.ts`), and `MODES`
+has no `timeline`. The layout needs a date and its precision on the node (day, week, month or year), plus the
+new mode, behind a flag.
 
 ## Choices to confirm
 
-1. **Years on the line, not on every tab.** Recommend a day or week tab without the year ("SEP 15"), and the
-   year drawn on the line where it turns ("2026", "2027"), so the tabs stay short. Note the formats as given
-   put the month first for a day ("SEP 15") and the day first for a week ("13 OCT"); recommend one order,
-   month first ("WEEK OF OCT 13"), unless the day-first week is meant.
-2. **Several nodes on one date.** Recommend the band behind their dots, so "same date" reads without
-   reading the tabs. Without it they are plain neighbours on the line.
-3. **The vertical form puts every node on one side.** Recommend one side: the dates then read down one
-   column, which is what a long timeline is for. Alternating left and right halves the height but zigzags
-   the eye.
-4. **Dots in the kind's colour.** Recommend yes, echoing the tab, so a run of decisions or risks shows from
-   a distance. A node's tone, when it has one, would colour the dot instead (point 366).
-5. **A node with no date in a timeline.** Not drawn. Recommend it sits after the dated ones, past the
-   line's arrow, under a "No date" label on the line, rather than being refused, so an agent's slip still
-   shows.
+1. **Default skin: the kind tab gives way to the grip, with the kind as a word on the date line (B).**
+   Recommend B: the date is then the one loud thing at the top of the node. With A, a tab and a header
+   compete.
+2. **What counts as an entry.** Recommend a `###` heading, or a bold lead at the start of a paragraph. `##`
+   and `####` stay ordinary headings, so a node can still have a heading that is not an entry. The other
+   way is to treat any heading level as an entry.
+3. **Header sizes.** Recommend a 23px date and a 17.5px to 18px title, used only inside a timeline. The
+   rest of the board keeps its 15px titles, so a timeline reads as a presentation without changing other
+   nodes.
