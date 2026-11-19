@@ -24,12 +24,13 @@ export function appRefProblems(v: unknown, f: string, p: string[]): void {
   }
 }
 
-/** An app card names its app and takes its size from it; no other card names one. `f` names the
- * node in messages (`node`, or a view's `nodes[3]`). */
+/** An app card names its app and takes its size from it, and carries no date (api.md 190: a window has no header for
+ * one); no other card names an app. `f` names the node in messages (`node`, or a view's `nodes[3]`). */
 export function appNodeRules(node: Rec, f: string, p: string[]): void {
   if (node.kind === 'app') {
     if (node.app === undefined) p.push(formatLedgerWords.appRequiredOnAnApp(f));
     if (node.size !== undefined) p.push(formatLedgerWords.sizeAnAppCardIs(f));
+    if (node.timeline !== undefined) p.push(formatLedgerWords.timelineOnApp(f));
   } else if (node.app !== undefined) p.push(formatLedgerWords.appOnlyAnAppCard(f));
 }
 

@@ -171,20 +171,71 @@ no date and nothing normalises an agent's field (CODE-MAP.md § Format, § Serve
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-11-18 21:02  
 
 ### Changes Made
-- 
+- `packages/format/src/timeline.ts` (new, pure, no `Date`): `TIMELINE_FORMS`, `TIMELINE_MAX` 40, `TIMELINE_PATTERN`,
+  `isTimeline`, `normaliseTimeline`, `timelinePrecision`, `timelineYear`, `compareTimeline`, `sortByTimeline`,
+  `timelineProblems`; exported through `index.ts`. Tests first: `packages/format/tests/timeline.test.ts` (the table of
+  step 1, order, sort, the schema twin).
+- Words (`format-ledger.ts`): `timelineForms(f, forms)` (a new `timeline.ts` section; the caller passes
+  `TIMELINE_FORMS`, the words file formats them) and `timelineOnApp(f)` (app-shape section).
+- The field: `ViewNode.timeline`, `NodeBody.timeline`, `NODE.fields.timeline`, `validateView`, `appNodeRules`.
+- Schemas: `common.schema.json` `$defs.timeline` (strict) and `$defs.timelineSent` (text up to 40 or an integer);
+  `events/node.schema.json` split: `fields` (every field but `timeline`, open), `body` (fields + strict `timeline`,
+  closed: stored lines and every read), `sentBody` (fields + lenient `timeline`, closed) and `sentCore`, which `sent`
+  now uses instead of `core`; `appRule` refuses `timeline` on an app card; `api/view.schema.json` refers to the strict
+  def; `show-layout-response.schema.json` gains optional `timeline` (`$defs.timeline`, `$defs.dated`) and the
+  `cards`/`columns`/`links`/`empty` descriptions name the cards laid out in the mode. Generated: reads type
+  `timeline?: string`, the sent item `string | number`.
+- `geometry.ts`: `TimelineSide`, `TimelineDot`, `TimelineDrawing` (`Direction` imported as a type from `view.ts`: no
+  cycle, view.ts imports nothing from geometry).
+- Write edge (`write-board.ts` `storedTimeline`): before `itemProblems` and the replay check; a copy with the
+  normalised value, or `refuse` with `timelineForms` at `/items/<i>/node/timeline` and the node example. The only path
+  that appends an agent's node line is `writeOne` (`append` via `appended`, `insert` via `appendInsert`); grep of
+  `apps/board/server/` for node appends found no other (engine/chat paths append join, grant, act, seen, board, retire
+  only). Tests: `apps/board/tests/api-timeline.test.ts` (forms and habits stored and read back by get_board and
+  show_node, 12 refusals, app card, rewrite without key, retry replay and key conflict, MCP `checkArgs` passes habits).
+- Format 21: `LEDGER_FORMAT = 21`, `restamp(20)`; every `ledger/20/` → `ledger/21/` (schemas, `openapi.test.ts`,
+  `schema.test.ts`, `schema-apps.test.ts`, `scripts/gen-contract.mjs`); `stamp.v` const 21; openapi examples `"v": 21`
+  (data and serialized); `info.version` 1.43.0. Fixtures restamped by a one-off `temp/` script running `upgradeLines`
+  (removed after): 468 lines, only `v` changed (checked by diff). `bookmark-flow.test.ts`, `migrate.test.ts` and
+  `schema-v20.test.ts` use `LEDGER_FORMAT` where they meant "current"; `migrate.test.ts` "step 20 restamps only";
+  new `apps/board/tests/schema-v21.test.ts`.
+- Flag `timeline` (off) and its `FLAG_DESCRIPTIONS` row.
+- `docs/specification/api.md`: "## Ledger v21: the timeline key" 190-196; 133 points to 194; points 5 and 11 say 21;
+  the `updated:` line. `npm run gen` regenerated the six generated files.
 
 ### Issues & Resolutions
-- 
+- The node schema's `body` served sent items, stored lines and reads alike, and the MCP server checks tool calls
+  against the flattened schema (`packages/mcp/src/check-args.ts`), so a strict `timeline` there would refuse
+  `2026-10-13T14:30:00Z` before the board could normalise it, and a lenient one would type every read as
+  `string | number`. Resolved with the `fields`/`body`/`sentBody`/`sentCore` split above.
+- `packages/mcp/tests/tools.test.ts` failed `write_board` 19,486 characters over its 19,400 cap with the first wording;
+  the field's description was tightened (no content lost) and the anyOf branches lost their descriptions: it now
+  passes without a budget change.
+- `apps/board/tests/plugin-build.test.ts`: `view/board.js` is 195,849 gzip, over its budget of 195,500 (+349; raw
+  667,137 bytes against 666,209 in the pre-change `dist/plugin` build). Not raised (orchestrator's).
+- `npm run verify` fails only on `docs/specification/modules.md` "out of date: run npm run map" (new imports:
+  `ledger-shape.ts`/`validate.ts` → `timeline.ts`, `geometry.ts` → `view.ts`, the new tests). Orchestrator's file.
 
 ### Caught Beyond the Brief
-- None
+- Existing bug, not this task's files: `apps/board/server/schema.ts` `plain` reads every failed `anyOf` as a card
+  reference, so `write_board` refuses `tone: "pink"` with "`tone` must be a node number or { "key": "…" }" and
+  `icon: "rocket"` the same (checked with `schemaProblems(WRITE_ITEM_ID, …)`). `tone` and `iconName` are `anyOf`s.
+  The timeline never reaches it (normalised or refused first), which is also why `timelineSent` is safe as an anyOf.
+- `schema.ts` `PATTERNS` has no words for the stored timeline pattern, so a schema-only refusal of a stored line says
+  "is not in the expected …"; agents never reach it (the write edge refuses first) and the reader's hand check words
+  name the four forms.
+- A day its month lacks (`2026-02-30`) passes the schema and is refused by the code: recorded in the `$comment` and
+  held by `schema-v21.test.ts`, so the split is a stated contract, not drift.
 
 ### Deviations from Plan
-- None
+- The agent-facing field description lives in `events/node.schema.json` `sentBody.timeline` (where every node field's
+  description lives, and what the MCP tool and `vb` read), not in `openapi.json`, which has no node field
+  descriptions; `openapi.json` changed only in `info.version` and the restamped examples.
+- `sent` uses a new `sentCore` instead of `core` (the schema split above); `core` still serves `stored`.
 
 ---
 

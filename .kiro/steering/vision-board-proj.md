@@ -97,7 +97,7 @@ The same word for the same thing in code, docs and the UI:
 board (what the person sees for one session) · view (one immutable version the agent wrote) · ledger
 (the append-only record) · container (a region of the board, with one layout mode) · node (anything
 drawn) · item (a card that needs an answer: question, decision, action) · number (a card's stable
-number on its board) · bookmark (the person's private mark, never sent to an agent) · link · note (the
+number on its board) · bookmark (the person's private mark, never sent to an agent) · link · timeline (a container's line of dated nodes; a node joins it by its timeline key) · note (the
 person's comment on one or more cards) · answered (✓ or ✗; a note never answers, D-045).
 
 ## Running

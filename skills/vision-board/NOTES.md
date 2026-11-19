@@ -927,3 +927,34 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   inputs passed in 8 s. [INFERENCE: a request that never began streaming, on the API's or the CLI's side, not ours.] A
   live run now writes the CLI's own `debug.log` per run (`--debug-file`), which logs each request and its first byte,
   so the next stall shows where it waited.
+
+## Skill v3.36 (a node's date: the timeline)
+
+- 2026-11-18, agent (timeline T_02, D-105, PLAN.md decisions 22-23): the core's Layout gains one bullet, the
+  maintainer's sentence word for word: "To put an event on a timeline, give its node a `timeline` key with its date;
+  nodes with one share their container's timeline (read `references/timeline.md` first)." Everything else is in the new
+  `references/timeline.md` (2,823 bytes, both builds): the four forms at the precision known, a quarter or a week by
+  its first month or day, a time as said, the date as the card's header, entries as `###` or bold leads, one
+  container per timeline and no `timeline` mode, a rewrite carries the key again, and one worked call on a subject no
+  scenario uses (so a run can't copy its answers).
+- 2026-11-18, orchestrator's ruling (the maintainer gave it autonomy for the set): the bullet put the plugin's
+  `skill.md` at 8,301 of 8,192 bytes. Option C: every `core.md` list item on one line (no word changed: −86 bytes of
+  indentation in the plugin build), the reading clause as "(read `references/timeline.md` first)" (was "Before you
+  date cards, read ...", −16), and Answering's "Answer on the board, and the chat is still "Done."" dropped: The
+  conversation already says it (one home per fact). `SKILL_BYTES` stays 8,192. Sizes now: plugin `skill.md` 8,148;
+  standalone `SKILL.md` 19,079.
+- 2026-11-18, agent: scenarios 53-55 (`timeline-plan`, `timeline-unprompted`, `timeline-not-for-prose`) run in both
+  hosts; their checks read a sent date through `#format` `normaliseTimeline`, so they take exactly what the board
+  stores. The plugin's `SCENARIOS` is now 18, over the 16-run cap: its live runs name scenarios with `--only`.
+- 2026-11-18, live Haiku 5.5, plugin (`--only` the timeline three, linked-pipeline, insert-step, and the scenarios on
+  Answering and "Done.": where-cards-stand, send-round, answered-note, two-turns, new-card-number, draw): 85/86 checks,
+  11 runs, $0.0302. Every timeline check passed: dates at the precision said (the week by its first day, the year said
+  once), the week's three events as entries, nothing dated in the findings and no reference read there. One miss:
+  insert-step inserted the card correctly but did not read `references/layouts.md` (its words unchanged, only
+  rewrapped; it read it in node-overhaul T_05 run 3, not in run 1). Reported, not chased.
+- 2026-11-18, live Haiku 5.5, standalone (all 14): 113/115 checks, 14 runs, $0.0749, no stall. Every timeline check
+  passed in both hosts. Two misses outside the timeline: architecture-icons wrote "Done." with the board's title and
+  id, then a sentence recapping the board (`done-only`); radial-ideas linked its five ideas (`no-links`). The radial
+  miss is the one node-overhaul T_05 run 1 saw too, from `layouts.md`, whose words are unchanged. [INFERENCE] The
+  recap may be linked to dropping Answering's restated "Done." line (one fewer time the core says it). It was a first
+  draw, not an answer. Per the ruling, reported, and no words added back.

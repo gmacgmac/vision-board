@@ -21,6 +21,7 @@ import { SKIN_DEFS } from '../skins.ts';
 import type { IconLibrary } from '../icons/icon.ts';
 import { edgesMarkup } from './node-edges.ts';
 import { drawerId, windowMarkup } from './node-window.ts';
+import { datedOf } from './node-date.ts';
 
 // One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
 export { esc } from '../markdown/inline.ts';
@@ -139,10 +140,13 @@ function appSlot(n: ViewNode): string {
 }
 
 /** The content under the title: an app card's slot (or, with the flag off, a line saying so), else
- * the body as Markdown (D-023; the renderer escapes every text run, so its output is safe markup). */
+ * the body as Markdown (D-023; the renderer escapes every text run, so its output is safe markup), with entries on a
+ * dated node. */
 function bodyMarkup(n: ViewNode, opts: NodeTemplateOptions): string {
   if (n.kind === 'app') return isWindow(n, opts) ? appSlot(n) : `<div class="vb-node-body">${renderMarkdown(APPS_OFF, opts.markdown)}</div>`;
-  return n.body ? `<div class="vb-node-body">${renderMarkdown(n.body, opts.markdown)}</div>` : '';
+  // A dated node draws `###` headings and bold leads as entries (D-105 5, PLAN call 9); every other node as before.
+  const md = datedOf(n) ? { ...opts.markdown, entries: true } : opts.markdown;
+  return n.body ? `<div class="vb-node-body">${renderMarkdown(n.body, md)}</div>` : '';
 }
 
 export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): string {

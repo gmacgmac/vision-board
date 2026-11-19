@@ -1372,3 +1372,21 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: The conversation, history and proposal boxes share one placement and one zoom rule: beside the node with a fixed pointer near the box's top, or below it centred with the pointer at the middle of its top edge; and they scale with the board between 80% and 120% zoom, holding one size outside that range. This replaces D-101's listing of history among the parts that keep one size; menus, the answer picker, the right-click list, the selection bar and the toolbar still keep one size.
 - **Why**: one box should behave one way, whatever it holds.
 - **Task**: cortex-tasks/board/2026-11-16_board-ui_node-overhaul/FIX_05_one-box-and-scroll-release.md
+
+## D-105 A node may carry a date, and a container's dated nodes share one timeline
+- **Date**: 2026-11-18 · **Status**: Accepted (maintainer, points 466-541) · **From**: tracker N53; design/mockups/timeline (DESIGN_02 runs 1 and 2)
+- **Decision**:
+  1. A node may carry `timeline`, an ISO 8601 date at one of four precisions: `2026`, `2026-10`, `2026-10-13`, `2026-10-13T14:30`. The precision is what is written; there is no precision field. The board normalises a time zone or offset, seconds and a space for `T` without changing the precision, and refuses anything else (quarters, weeks, words) with words naming the four forms. A time is shown as written, with no zone conversion.
+  2. The key is intentional: a date in a card's text is only text. The nodes of a container that carry the key form its one timeline, a line across the top of the container in whatever layout the container has; its other nodes lay out in the container's own layout, below the line, or beside it to the right when the line runs down. No layout mode is added. The timeline goes only when the last key goes.
+  3. Each dated node sits on its own dot, joined by a stem, alternating above and below the line; ordered by start (`2026-10` starts on 1 October; a coarser date before a finer one with the same start; equal dates in the order the nodes were made); evenly spaced, not to scale; the year on the line where it turns; a band behind consecutive equal dates; links as anywhere. Run down (the container's flow direction), the line runs down the left with the nodes on one side.
+  4. The date is the node's header, large and bold, month first: `OCT 13`, `OCT 2026`, `2026`, `OCT 13 · 14:30` (the year is on the line), in the kind's colour or the node's tone. A dated node has no grip: its place is its date; Move to still moves it. In the default skin its kind is a small word at the end of the date line; Command Lens keeps its plate and the date heads the body.
+  5. Inside a timeline, a `###` heading, or a paragraph or list item opening with a bold name, draws as an entry: a bar in the kind's colour, the bold name, then its text. Other headings and plain lists stay as they are. Dates and titles are larger only inside a timeline.
+- **Why**: plans, roadmaps and histories have dates, and nothing on the board showed order in time. A key the agent sets on purpose keeps a date in prose from moving a card, and a line beside the container's layout keeps the rest of the container as the person arranged it.
+- **Alternative rejected**: a `timeline` layout mode, which would take over the container and its undated nodes; a separate precision field; dates read from card text.
+- **Task**: cortex-tasks/board/2026-11-18_board-layout_timeline/TASK-STATUS.md
+
+## D-106 A timeline run down alternates left and right (amends D-105 3)
+- **Date**: 2026-11-18 · **Status**: Accepted (maintainer, points 587-596) · **From**: the design review of DESIGN_01's pages
+- **Decision**: Run down, a timeline's dated nodes alternate left and right of the line, the first on the left, spaced by the board's gaps rather than one step; the stem meets the middle of the node's facing edge in both forms; dated nodes follow the container's widths setting, `match` by default run down and `own` across.
+- **Why**: the same alternation as across, and no empty runs below short nodes.
+- **Task**: cortex-tasks/board/2026-11-18_board-layout_timeline/TASK-STATUS.md

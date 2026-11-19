@@ -11,11 +11,11 @@
   ],
   "properties": {
     "name": {
-      "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName",
+      "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/libraryIconName",
       "description": "The icon's name, for a node's `icon`."
     },
     "hash": {
-      "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/iconHash",
+      "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/iconHash",
       "description": "The SHA-256 of its file."
     },
     "replayed": {

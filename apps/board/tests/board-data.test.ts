@@ -4,7 +4,7 @@
 // page build the board from the one `boardData` (packages/actions); the server sends `boardJson` of it.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import type { LedgerEvent, LedgerLine } from '#format';
+import type { LedgerEvent, LedgerLine, View } from '#format';
 import { fromLine, LEDGER_FORMAT } from '#format';
 import { applyEvent, boardData, boardJson, eventBoard, foldLedger, pageConditions } from '#actions';
 import type { Harness } from './api-harness.ts';

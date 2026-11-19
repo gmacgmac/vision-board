@@ -6,9 +6,10 @@
 // failed item's key, directly or through another failed item. Results name cards by board number. A node item's
 // `insert` is checked whole before its node line is appended, then written as three more lines (write-insert.ts). A
 // node's first use of a library icon this ledger has no `icon` line for writes that line first, from the file as it is
-// now (icons.ts `firstUse`); a file that is missing or fails the check refuses the node.
+// now (icons.ts `firstUse`); a file that is missing or fails the check refuses the node. A node's `timeline` is
+// normalised first, before the schema and the retry key, so a retry in another habit form replays (`storedTimeline`).
 import type { LedgerEvent } from '#format';
-import { LIMITS, codePoints, flagOn, isRecord, latest } from '#format';
+import { LIMITS, codePoints, flagOn, isRecord, latest, normaliseTimeline, timelineProblems } from '#format';
 import type { LedgerState, RetireTarget, WriteItem } from '#actions';
 import { ACTION_OUT, actionIn, canWrite, numberOf, proposeProblem, retireProblem } from '#actions';
 import { WRITE_ITEM_ID, itemExample, itemTypes } from './examples.ts';
@@ -174,6 +175,21 @@ function checkProposeWord(i: number, raw: unknown): void {
 /** The item as the ledger names it: a proposal's `check` or `cross` stored as `ack` or `drop`. */
 const storedNames = (item: Rec): Rec => (item.type === 'propose' ? { ...item, action: actionIn(String(item.action)) } : item);
 
+/** A node item with its `timeline` in the one stored spelling (api.md 191, D-105): a model's habit (a zone, seconds,
+ * a space for `T`, a whole-number year) normalised in a copy, the item never changed; anything else refused with the
+ * four forms and the node item's example. Before the schema, as `checkProposeWord`, and before the retry key, as
+ * `storedNames`, so what is checked, compared and stored is one value. */
+function storedTimeline(b: Batch, i: number, raw: unknown): unknown {
+  if (!isRecord(raw) || raw.type !== 'node' || !isRecord(raw.node) || !Object.hasOwn(raw.node, 'timeline')) return raw;
+  const timeline = normaliseTimeline(raw.node.timeline);
+  if (timeline === undefined) {
+    const detail: string[] = [];
+    timelineProblems(raw.node.timeline, 'node.timeline', detail);
+    refuse(b, i, raw, [{ pointer: '/node/timeline', detail: detail[0]! }]);
+  }
+  return timeline === raw.node.timeline ? raw : { ...raw, node: { ...raw.node, timeline } };
+}
+
 /** The item's schema problems. With `insertBetween` off, a node item's `insert` is an unknown field, as it was
  * before the schema had one: the rest of the item is checked as it stands. */
 function itemProblems(b: Batch, raw: unknown): PointerError[] {
@@ -222,9 +238,10 @@ function appendInsert(b: Batch, i: number, key: string | undefined, item: Rec, e
 
 function writeOne(b: IconBatch, i: number, raw: unknown, key: string | undefined, grants: boolean): WriteResult {
   checkProposeWord(i, raw);
-  const errors = itemProblems(b, raw);
-  if (errors.length) refuse(b, i, raw, errors);
-  const item = storedNames(raw as Rec);
+  const sent = storedTimeline(b, i, raw);
+  const errors = itemProblems(b, sent);
+  if (errors.length) refuse(b, i, sent, errors);
+  const item = storedNames(sent as Rec);
   const r = resolve(b, i, item);
   const at = item.type === 'node' ? insertOf(r) : undefined;
   const e = item.type === 'append' ? appended(b, i, r, key) : eventOf(b, r);

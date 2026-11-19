@@ -162,7 +162,7 @@ for (const theme of THEMES) {
 
   test(`the gallery's samples of the base and the patterns draw the same under a host's element rules (${theme})`, async ({ page }) => {
     // About 250 samples, each shot twice.
-    test.setTimeout(300_000); // the gallery has grown with the node overhaul: 3.4 min measured (FIX_02)
+    test.setTimeout(480_000); // the gallery has grown (node overhaul 3.4 min, FIX_02; timeline sections on by default, over 5 min under a full run); splitting it is tracker N55
     await setTheme(page, theme);
     // Without the chat panel's samples: the chat is the standalone page's (nclite brings its own). Without the ledger
     // section's either: the ledger chip, its list and the New ledger dialog are the standalone page's parts, and a host

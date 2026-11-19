@@ -13,7 +13,7 @@
     "builtIn": {
       "type": "array",
       "items": {
-        "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/iconName"
+        "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/iconName"
       },
       "description": "The built-in icons, by name."
     },
@@ -42,7 +42,7 @@
       ],
       "properties": {
         "name": {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName",
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/libraryIconName",
           "description": "The icon's name, as a node names it."
         },
         "title": {
@@ -71,11 +71,11 @@
       ],
       "properties": {
         "name": {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/libraryIconName",
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/libraryIconName",
           "description": "The icon."
         },
         "detail": {
-          "$ref": "https://vision-board.invalid/schema/ledger/20/common.schema.json#/$defs/text",
+          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/text",
           "description": "What is wrong, in plain words."
         }
       },

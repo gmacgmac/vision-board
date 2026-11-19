@@ -111,4 +111,5 @@ export const FORMAT_STEPS: readonly UpgradeStep[] = [
   fromFormat2,
   restamp(3), restamp(4), toFormat6, restamp(6), restamp(7), restamp(8), restamp(9), toFormat11, toFormat12,
   restamp(12), restamp(13), restamp(14), restamp(15), restamp(16), restamp(17), restamp(18), toFormat20,
+  restamp(20),
 ];

@@ -1,4 +1,4 @@
-import type { Box, Direction, Link, Mode, Point, Region, Size, ViewNode, Widths } from '#format';
+import type { Box, Direction, Link, Mode, Point, Region, Size, TimelineDrawing, TimelineSide, ViewNode, Widths } from '#format';
 
 // The box types are format's (geometry.ts); a layout's callers reach them here.
 export type { Box, Point, Size };
@@ -24,7 +24,9 @@ export interface ModeInput {
   direction?: Direction | undefined;
 }
 
-export interface Lane { name: string; y: number; h: number }
+/** A lane band. `x`: where its band starts when not at the frame's left (a timeline run down beside it, point 594);
+ *  region-local in ModeOutput and RegionPiece, board coordinates in RegionBox. */
+export interface Lane { name: string; y: number; h: number; x?: number }
 
 /** A card's cell in its mode's arrangement, from 1 (CardCell without the id). */
 export type Cell = Omit<CardCell, 'id'>;
@@ -55,15 +57,17 @@ export interface LayoutOptions {
   headInsets?: Map<string, number>;
   /** The person's mode choice per region (from the transcript). */
   modes?: Map<string, Mode>;
-  /** Card widths per region, resolved by the caller with `widthsOf` (the person's, the region's,
-   *  the mode's default). A region left out uses `widthsOf(mode, region.widths)`. */
+  /** Card widths per region, for its dated and other nodes alike, resolved by the caller with `widthsOf` (the
+   *  person's, the region's, the default: the mode's, or the timeline's on a region with dated nodes). A region left out
+   *  uses `widthsOf(mode, region.widths)`, with the timeline's default when it has dated nodes. */
   widths?: Map<string, Widths>;
   /** The viewer's alignment (ruling 4); default `start` (top, or left for vertical layouts). */
   align?: Align;
   /** The gap between a card and the card under it; absent: GAP. The board passes ROW_GAP with updateSignals, and
    *  EDGE_ROW_GAP when its nodes draw their marks on their edges (D-099). */
   rowGap?: number;
-  /** Which way each `flow` container runs (region id -> `directionOf`); left out, `across`. */
+  /** Which way each `flow` container runs, and each container's timeline (region id -> `directionOf`); left out,
+   *  `across`. */
   directions?: Map<string, Direction>;
   /** Nodes not drawn (e.g. decided items when hidden). */
   hidden?: Set<string>;
@@ -79,6 +83,8 @@ export interface RegionBox {
   /** World point that region-local (0, 0) maps to. Pins are relative to it. */
   origin: Point;
   lanes?: Lane[];
+  /** The container's timeline (D-105), in board coordinates; absent when no node of it has a date. */
+  timeline?: TimelineDrawing;
 }
 
 /** Where a link's label goes (ruling 3), near the source end. `fits`: the label's box (centred on
@@ -101,6 +107,9 @@ export interface RegionPiece {
   w: number;
   h: number;
   head: number;
+  /** The container's timeline (D-105), region-local like `out.pos`; absent when no node of it has a date. Its dated
+   *  nodes' boxes are in `out.pos` with the rest. */
+  timeline?: TimelineDrawing;
 }
 
 /** One card's place in its container's structure (show_layout, api.md 133). `id` is the node id
@@ -122,6 +131,9 @@ export interface LayoutStructure {
   links: number;
   crossing: number;
   empty: number;
+  /** The container's dated cards (D-105) in line order, with their sides; absent when none. `cards`, `columns`,
+   *  `links`, `crossing` and `empty` are of the other cards only, as the mode lays them out. */
+  timeline?: { direction: Direction; cards: { id: string; at: string; side: TimelineSide }[] };
 }
 
 export interface BoardLayout {

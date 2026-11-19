@@ -150,7 +150,7 @@ for (const theme of THEMES) {
     await page.goto('/gallery.html');
     const section = page.locator('section[data-feature="readOnlyControls"]');
     await expect(section).toBeVisible();
-    await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"])').last()).toHaveAttribute('data-feature', 'readOnlyControls');
+    await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"]):not([data-feature="timeline-board"])').last()).toHaveAttribute('data-feature', 'readOnlyControls');
     for (const sel of ['.vb-access-allow-all', '.vb-access-allow', '.vb-agents-row .vb-btn', '[data-app-act="app-allow"]', '[data-app-act="app-revoke"]'])
       for (const el of await section.locator(sel).all()) await expectPaused(el);
     await expectNoAxeViolations(page);

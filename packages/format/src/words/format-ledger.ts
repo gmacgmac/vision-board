@@ -12,6 +12,7 @@ export const wholeNumberFromTo = (f: string, d: string, min: number, max: number
 export const appRequiredOnAnApp = (f: string): string => `${f}.app: required on an app card: the app's id, and the panel size if not the default`;
 export const sizeAnAppCardIs = (f: string): string => `${f}.size: an app card is as big as its panel; set app.w and app.h instead`;
 export const appOnlyAnAppCard = (f: string): string => `${f}.app: only an app card names an app; draw kind app`;
+export const timelineOnApp = (f: string): string => `${f}.timeline: an app card is a window with no header for a date; put the date on another card`;
 export const theAppSHash64 = (f: string): string => `${f}: the app's hash, 64 lowercase hex characters, as list_apps gives it`;
 export const appRequiredTheIdOf = (a: string): string => `app: required, the id of the app to ${a}`;
 export const hashRequiredTheVersionOf = 'hash: required, the version of the app\'s code to allow';
@@ -138,6 +139,10 @@ export const iconName = (f: string): string => `${f}: a built-in icon (list_icon
 export const libraryIconName = (f: string): string => `${f}: "x-", then lowercase letters, digits or "-", up to 40 in all`;
 export const toneOneOf = (f: string, names: string): string => `${f}: one of ${names}, or a whole hue from 0 to 359`;
 export const iconHash = (f: string): string => `${f}: the file's SHA-256, 64 lowercase hex characters`;
+
+// ---- timeline.ts (a node's date: ledger v21, api.md 190, D-105)
+export const timelineForms = (f: string, forms: readonly string[]): string =>
+  `${f}: a date in one of four forms, ${forms.slice(0, -1).map((x) => `\`${x}\``).join(', ')} or \`${forms.at(-1)}\`; never a quarter, a week or words`;
 
 // ---- act-shape.ts (the person's skin, ask and direction acts: ledger v20, api.md 183, 188, 189)
 export const skinBoardAndSkinRequired = 'skin: board and skin required';

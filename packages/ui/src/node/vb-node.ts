@@ -14,6 +14,7 @@ import { explainPaused, pauseControls } from '../paused/paused.ts';
 import { READ_ONLY_PERSON } from '#actions';
 import { SKIN_DEFS } from '../skins.ts';
 import { applyMarks, applyTone } from './node-edges-apply.ts';
+import { datedOf } from './node-date.ts';
 
 /** The controls a locked board pauses on a node (N40 ruling 4): everything that changes it but the bookmark: the
  *  answer, the disc or the switch's halves, which look as they would at rest (point 328), and a proposal's answers. */
@@ -29,7 +30,7 @@ export const VB_NODE_TAG = 'vb-node';
 
 /** What the page holds: a <vb-node> it renders once and updates in place. */
 export interface VbNodeElement extends HTMLElement {
-  /** Build from the template; sets data-id, data-kind, data-emphasis, data-edges, role, tabindex, --vb-kind. */
+  /** Build from the template; sets data-id, data-kind, data-emphasis, data-edges, data-timeline, role, tabindex, --vb-kind. */
   render(n: ViewNode, opts?: NodeTemplateOptions): void;
   /** Apply the person's current state (from `nodeState`) without rebuilding the markup. */
   update(st: NodeState): void;
@@ -68,6 +69,11 @@ export function defineVbNode(): void {
       // Where the skin's row puts the answer and the marks (skins.ts): CSS places by these, never by a skin's name.
       Object.assign(this.dataset, { answerAt: def.answer, marksAt: def.marks });
       this.toggleAttribute('data-icon', n.icon !== undefined);
+      // A dated node (D-105): its date, the hook the page's pointer and CSS read (no drag starts on it); a new version
+      // that adds or drops the key sets or clears it here, in place.
+      const dated = datedOf(n);
+      if (dated) this.dataset.timeline = dated;
+      else delete this.dataset.timeline;
       applyTone(this, n.tone);
       this.setAttribute('role', 'listitem');
       this.tabIndex = 0;

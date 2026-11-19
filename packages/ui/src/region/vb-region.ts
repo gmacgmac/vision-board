@@ -144,14 +144,16 @@ export function defineVbRegion(): void {
       return this.piece('.vb-region-head');
     }
 
-    /** The one layout control (PLAN decision 20): the active layout's icon and name on the button, the chosen tile, and, on a flow,
-     *  the direction row with the container's direction marked. A fixed frame (Later) has none of it. */
+    /** The one layout control (PLAN decision 20): the active layout's icon and name on the button, the chosen tile, and, on a flow
+     *  or a container with a timeline (D-105), the direction row with the container's direction marked; the button names the
+     *  direction on a flow only, where it is the layout's. A fixed frame (Later) has none of it. */
     private applyLayoutControl(st: RegionState): void {
       const b = this.querySelector<HTMLButtonElement>('.vb-layout-btn');
       if (!b) return;
       const flow = st.mode === 'flow';
-      const dir = flow ? st.direction : undefined;
-      b.setAttribute('aria-label', regionWords.layoutChosen(MODE_LABEL[st.mode], dir));
+      const runs = flow || st.timeline === true;
+      const dir = runs ? st.direction : undefined;
+      b.setAttribute('aria-label', regionWords.layoutChosen(MODE_LABEL[st.mode], flow ? dir : undefined));
       if (b.dataset.shown !== st.mode) {
         b.dataset.shown = st.mode;
         b.querySelector('svg')!.outerHTML = svgIcon(MODE_ICON[st.mode], 24, 'vb-mode-icon vb-layout-icon');
@@ -159,7 +161,7 @@ export function defineVbRegion(): void {
       for (const t of this.querySelectorAll<HTMLElement>('.vb-mtile')) t.setAttribute('aria-checked', String(t.dataset.tile === st.mode));
       const row = this.querySelector<HTMLElement>('.vb-dir-row');
       if (!row) return;
-      row.hidden = !flow;
+      row.hidden = !runs;
       for (const d of row.querySelectorAll<HTMLElement>('.vb-dir')) d.setAttribute('aria-checked', String(d.dataset.dir === dir));
     }
 

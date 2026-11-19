@@ -6,7 +6,7 @@
 // imports it, so ajv never reaches the page bundle (rule 15).
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
-import { LEDGER_FORMAT } from '#format';
+import { LEDGER_FORMAT, TONES, iconName, toneOneOf } from '#format';
 import { allSchemaFiles } from './format-files.ts';
 import * as schemaWords from './words/schema.ts';
 
@@ -121,6 +121,12 @@ function removedWords(schemaPath: string): string | undefined {
 /** What a failed `anyOf` says: in the board's own schemas, the one `anyOf` names a card. */
 const CARD_ANY_OF = schemaWords.mustBeANodeNumber;
 
+/** What a failed `anyOf` says for a field that is not a card reference: what the field accepts (tracker M84). */
+const ANY_OF_FIELDS: Record<string, (f: string) => string> = {
+  tone: (f) => toneOneOf(f, TONES.join(', ')),
+  icon: iconName,
+};
+
 /** One plain-English problem for one ajv error. */
 function plain(e: ErrorObject, anyOf: string): SchemaProblem {
   const p = e.params as Record<string, unknown>;
@@ -160,7 +166,11 @@ function plain(e: ErrorObject, anyOf: string): SchemaProblem {
       const words = removedWords(e.schemaPath);
       return { pointer: at, detail: words ? schemaWords.isNotAllowedHere2(f, words) : schemaWords.isNotValid(f) };
     }
-    case 'anyOf': return { pointer: at, detail: `${f} ${anyOf}` };
+    case 'anyOf': {
+      // The words are the field's own where it is not a card reference (a tone, an icon); the board's other `anyOf`s name a card.
+      const own = anyOf === CARD_ANY_OF ? ANY_OF_FIELDS[fieldOf(at)]?.(f) : undefined;
+      return { pointer: at, detail: own ?? `${f} ${anyOf}` };
+    }
     default: return { pointer: at, detail: schemaWords.isNotValid(f) };
   }
 }

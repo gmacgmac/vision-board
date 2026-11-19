@@ -4,7 +4,7 @@
 // and the chat chips read the same with and without bookmarks. On board b every card's number differs from its identity.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger, upgradeLines } from '#format';
+import { LEDGER_FORMAT, readLedger, upgradeLines } from '#format';
 import { boardData, foldLedger, replyText } from '#actions';
 import { selectedCards } from '../src/board/chat-side.ts';
 import type { ActFields } from '../src/board/io.ts';
@@ -41,7 +41,7 @@ function state(marks = true) {
 
 test('a format-19 ledger\'s flags, migrated on open (the 19-to-20 step), are its bookmarks', () => {
   // The same ledger as written before format 20: every line at 19, the private mark the `flag` act.
-  const old = lines().map((l) => l.replace(/^\{"v":20,/, '{"v":19,').replace('"action":"bookmark"', '"action":"flag"'));
+  const old = lines().map((l) => l.replace(`{"v":${LEDGER_FORMAT},`, '{"v":19,').replace('"action":"bookmark"', '"action":"flag"'));
   assert.equal(old.filter((l) => l.includes('"action":"flag"')).length, 3);
   const up = upgradeLines(old);
   assert.deepEqual([up.stops, up.newer, up.lines.length], [[], [], old.length], 'line for line, nothing refused');

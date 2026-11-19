@@ -27,6 +27,19 @@ export function sidesFor(a: Box, b: Box, down = false): { sa: Side; sb: Side } {
   return b.y > a.y ? { sa: 'b', sb: 't' } : { sa: 't', sb: 'b' };
 }
 
+/** The other pair of facing sides for a link from `a` to `b` (`sa` its source side now), top and bottom for left and
+ *  right and back, each port in the middle of its side; the router tries them when the first pair leaves no free route
+ *  (route.ts `lineFor`). In the middle, a port on a dated node's facing side starts where its timeline stem does, so the
+ *  link runs on from the stem and crosses the line at the node's own dot rather than along the line (a port leaning
+ *  aside was tried: the search then took the line's own band, the only free one, and ran along it). */
+export function otherSides(a: Box, b: Box, sa: Side): { sa: Side; sb: Side; pa: Point; pb: Point } {
+  const [ca, cb] = [centre(a), centre(b)];
+  const sides: { sa: Side; sb: Side } = sa === 'l' || sa === 'r'
+    ? (cb.y > ca.y ? { sa: 'b', sb: 't' } : { sa: 't', sb: 'b' })
+    : (cb.x > ca.x ? { sa: 'r', sb: 'l' } : { sa: 'l', sb: 'r' });
+  return { ...sides, pa: portPoint(a, sides.sa, 0.5), pb: portPoint(b, sides.sb, 0.5) };
+}
+
 export function assignPorts(plans: Plan[]): void {
   const slots = new Map<string, { plan: Plan; end: 'a' | 'b'; key: number }[]>();
   for (const plan of plans) {
@@ -56,7 +69,7 @@ export function assignPorts(plans: Plan[]): void {
  *  the rest keeps its order (a lone straight link: just right of the middle, so a chain still runs straight). */
 const offCentre = (f: number): number => (f < 0.5 ? 0.1 + f * 0.56 : 0.62 + (f - 0.5) * 0.56);
 
-function portPoint(b: Box, side: Side, f: number): Point {
+export function portPoint(b: Box, side: Side, f: number): Point {
   if (side === 'r') return { x: b.x + b.w, y: b.y + b.h * f };
   if (side === 'l') return { x: b.x, y: b.y + b.h * f };
   if (side === 't') return { x: b.x + b.w * f, y: b.y };

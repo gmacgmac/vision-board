@@ -12,6 +12,7 @@ import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, WIDTHS } from './view.ts';
 import { appActRules, appHashProblems, appNodeRules, appRefProblems } from './app-shape.ts';
 import { directionProblems, iconHashProblems, iconProblems, libraryIconProblems, skinProblems, toneProblems } from './view-shape.ts';
 import { v20ActRules } from './act-shape.ts';
+import { timelineProblems } from './timeline.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
 import * as formatCommonWords from './words/format-common.ts';
 import { isRecord } from './records.ts';
@@ -129,7 +130,7 @@ const NODE: Shape = {
   fields: {
     region: id, kind: oneOf(KINDS), title: text(LIMITS.title), body: text(LIMITS.body),
     lane: text(LIMITS.lane), tags: list(text(LIMITS.tag), LIMITS.tags), emphasis: bool, size: oneOf(NODE_SIZES), app: appRefProblems,
-    icon: iconProblems, tone: toneProblems,
+    icon: iconProblems, tone: toneProblems, timeline: timelineProblems,
   },
 };
 

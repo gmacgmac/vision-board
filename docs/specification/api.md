@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-18 (show_layout's flow direction and branches with no engine flag, node-overhaul T_04: 133); 2026-11-17 (show_layout works a flow out the way it runs and with its branches on rows, node-overhaul BE_01: 133); 2026-11-16 (a container's seen is the page's alone, never stored, point 308: 187 rewritten, `mark_seen` takes a card or a board only; D-054 stands); 2026-11-16 (one ledger format, node-overhaul BE_03, D-103 3: the reader, the schema and the fold know format 20 only; an older line is refused with words to migrate it; points 6, 11, 66, 90, 118, 129, 141, 178 and every "Only adds" say so); 2026-11-16 (ledger v20, node-overhaul T_01: Bookmark, a board's skin, a node's icon and tone, the icon library and its two operations, a seen container, Ask now, a flow's direction: 182-189; point 11 says format 20); 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-18 (ledger v21, timeline T_01, D-105: a node's `timeline` key, normalised at the write edge, refused on an app card, its order, `show_layout`'s `timeline`, format 21 a restamp, the page's flag: 190-196; points 5, 11 and 133 say so); 2026-11-18 (show_layout's flow direction and branches with no engine flag, node-overhaul T_04: 133); 2026-11-17 (show_layout works a flow out the way it runs and with its branches on rows, node-overhaul BE_01: 133); 2026-11-16 (a container's seen is the page's alone, never stored, point 308: 187 rewritten, `mark_seen` takes a card or a board only; D-054 stands); 2026-11-16 (one ledger format, node-overhaul BE_03, D-103 3: the reader, the schema and the fold know format 20 only; an older line is refused with words to migrate it; points 6, 11, 66, 90, 118, 129, 141, 178 and every "Only adds" say so); 2026-11-16 (ledger v20, node-overhaul T_01: Bookmark, a board's skin, a node's icon and tone, the icon library and its two operations, a seen container, Ask now, a flow's direction: 182-189; point 11 says format 20); 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -48,7 +48,7 @@ packages/format/schema/openapi.json               every operation, input, output
 ## Schemas
 
 5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/<LEDGER_FORMAT>/<file>`
-   (today `.../ledger/20/<file>`).
+   (today `.../ledger/21/<file>`).
    `.invalid` is reserved (RFC 2606), so it is plainly a name and is never fetched. Every `$ref`
    uses the target's `$id`. API body schemas live under `.../schema/api/<file>` and version with
    `openapi.json` `info.version`, not with the ledger.
@@ -84,9 +84,9 @@ packages/format/schema/openapi.json               every operation, input, output
     - limits: node and board title 200, region title 80, node body 8000, text and reason 4000,
       summary 2000, link label 80, agent label 80, tags 12 of 40, lanes 12 of 40, columns 1-12,
       sources 20 of 500, propose source 500, park bundle fields 4000, key 64, person 80
-11. **Versions: one format.** `LEDGER_FORMAT` is 20 (`packages/format/src/ledger.ts`; each format's additions are in
+11. **Versions: one format.** `LEDGER_FORMAT` is 21 (`packages/format/src/ledger.ts`; each format's additions are in
     the "Ledger vN" sections below). Every change to a ledger schema bumps it and the `$id` path. The reader, the
-    schema and the fold know this one format (D-103 3): `common.schema.json` `stamp.v` is `const` 20, and
+    schema and the fold know this one format (D-103 3): `common.schema.json` `stamp.v` is `const` 21, and
     `eventProblems` refuses a line with no `v` or an older one with one problem, words that say to migrate the ledger
     (`npm run ledger:migrate`, 181; `format-ledger.ts` `olderFormat`), its other fields unchecked. Older ledgers are
     migrated when they are opened for writing (§ Migration, 176-181), and read through the same chain in memory when
@@ -1237,7 +1237,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     scope the container, `references.ts`). What is in effect: the person's latest choice, else the
     region's, else the default of the mode the board shows (`DEFAULT_WIDTHS`, the one place:
     `match` for `grid` and `column`, `own` for `flow`, `row`, `lanes` and `radial`; `widthsOf(mode,
-    own?, chosen?)`). So a person who changes the mode and never chose widths gets the new mode's
+    own?, chosen?, timeline?)`), or, on a container with a timeline (D-105, D-106), the timeline's for the whole
+    container: `match` run down, `own` across (`show_layout`'s `widths` says which). So a person who changes the mode and never chose widths gets the new mode's
     default. `get_board`'s `state.widths` is region id to the person's choice, left out when none.
     `check_responses` reports a `widths` act as it reports `mode` (a container act, sorted at the
     lowest card in it), to the agents that may answer in that container.
@@ -1257,7 +1258,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     the answer), taking every card at one size (280 by 120), so `crossing` is the arrangement's,
     routed as the page routes it, not one viewer's measured picture. A `flow` is worked out the way it runs
     (`directionOf`, 189), its branches on their own rows, and a branching `row` or `column` as a flow, as the page draws
-    them (BE_01; `api-layout-direction.test.ts`).
+    them (BE_01; `api-layout-direction.test.ts`). A container whose cards carry a date also answers `timeline`, its
+    dated cards in line order, and `cards` then holds the cards it lays out in its mode (194).
     Not in `write_board`'s answer. The same refusals as `show_container`: an unknown board or
     container, or `later`, is `not-found`; a retired container is `not-found` too (nothing is
     arranged). The skill calls it once after the first draw of a `flow` or `lanes` container,
@@ -2055,3 +2057,58 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     and `auto` clears their choice at that level. `view.ts` `directionOf(state, board, region)`, beside `widthsOf`: the
     person's choice for the container, else theirs for the board, else the container's own, else `across`
     (`LedgerState.directions`, `directions.ts`). No answer, no Send (`flow-direction.test.ts`).
+
+## Ledger v21: the timeline key (timeline T_01, D-105)
+
+190. **A node's date.** A node may carry `timeline`, an ISO 8601 date in one of four forms, each a precision:
+    `2026`, `2026-10`, `2026-10-13`, `2026-10-13T14:30` (`packages/format/src/timeline.ts` `TIMELINE_FORMS`). The
+    precision is what is written; there is no precision field. A stored value matches `TIMELINE_PATTERN` and names a
+    real date (`isTimeline`: month 01-12, a day its month has, Gregorian leap years, hour 00-23, minute 00-59). The
+    module is pure string arithmetic, with no `Date`, so no time zone reaches a value or its order. On any kind but
+    `app` (192), in a ledger line (`NodeBody.timeline`, `ledger-shape.ts` `NODE`) and in a View (`ViewNode.timeline`,
+    `validate.ts`); a bad value is a problem naming the field and the four forms (`timelineProblems`,
+    `format-ledger.ts` `timelineForms`). `common.schema.json` `$defs.timeline` is the pattern's twin; the calendar check
+    is the code's, which its `$comment` says (`timeline.test.ts` "the schema twin", `schema-v21.test.ts` "a day its
+    month lacks"). The key is intentional: a date in a card's text is only text.
+191. **Normalised at the write edge, one spelling stored.** `write_board` puts a node item's `timeline` in its stored
+    form before anything else checks the item (`write-board.ts` `storedTimeline`, `normaliseTimeline`): surrounding
+    spaces trimmed; a whole number from 1000 to 9999 read as a year; a space or `t` before the time read as `T`;
+    seconds, their fraction and a zone (`Z`, `z`, `±HH:mm`, `±HHmm`, `±HH`) dropped, the time digits kept as written,
+    with no conversion. The precision never changes: a date with no time never gains one, and a zone on a date alone
+    is refused. Anything else (a quarter, an ISO week, words, an hour without minutes, an impossible date, a two-digit
+    year, over `TIMELINE_MAX`, 40 characters as sent) is refused `invalid` at `/items/<i>/node/timeline` with the four
+    forms and the node item's example. It runs before the retry key is compared, so a retry in another habit form
+    replays. The item is never changed: the normalised value is a copy. The sent form in the schema is lenient
+    (`node.schema.json` `sentBody`, `common.schema.json` `timelineSent`: text up to 40 characters or a whole number), so
+    the MCP server's own check of the flattened tool schema lets a habit through to the board; every ledger line and
+    every read (`body`) holds the stored form only (`api-timeline.test.ts`). `write_board` is the one path that
+    appends a node line for an agent (`append` and `insert` go through `writeOne`), so it is the one normaliser.
+192. **Not on an app card.** An app card is a window with its own title bar and no header for a date: `timeline` on
+    kind `app` is refused, in the sent item, the ledger line and a View (`node.schema.json` `appRule`, `app-shape.ts`
+    `appNodeRules`, `timelineOnApp`; `schema-v21.test.ts` "an app line carries no date").
+193. **The order.** The nodes of a container that carry the key form its one timeline, ordered by start (`2026` starts
+    on 1 January, `2026-10` on 1 October, a day at 00:00), the coarser first at the same start, equal values by card
+    number, then as given (`compareTimeline`, `sortByTimeline`; `timeline.test.ts` "order", "sortByTimeline"). The
+    layout and `show_layout` both use `sortByTimeline`, so there is one order everywhere. A rewrite of a node without
+    the key takes it off the line (`api-timeline.test.ts` "a rewrite without the key").
+194. **`show_layout`'s timeline** (133). The answer may carry `timeline`, `{ direction, cards }`: `direction` `across`
+    or `down`, as the container's flow direction (`directionOf`, 189), and `cards` the dated cards in line order, each
+    `{ n, at, side }`, `at` the stored value and `side` where the card sits. Across, the line runs along the top and
+    `side` is `above` or `below` (alternating, the first above); run down, the line runs down the middle of the
+    container's first column and `side` is `left` or `right` (alternating, the first on the left; D-106)
+    (`show-layout-response.schema.json` `$defs.timeline`, `$defs.dated`). Left out when no card of the container has a
+    date; `cards`, `columns`, `links`, `crossing` and `empty` describe the cards the container lays out in its mode. The
+    layout fills it with the order and sides the page draws (`#layout` `layoutRegion`, `structureOf`). The line's drawn
+    geometry is one type, `geometry.ts` `TimelineDrawing` (`TimelineDot`, `TimelineSide`), which the layout returns and
+    the page draws. Kept true by `api-layout-timeline.test.ts` ("the person's direction turns the sides", "the schema
+    and api.md describe the line").
+195. **Format 21, and the step is a restamp** (D-103, D-105 decision 6). `LEDGER_FORMAT` becomes 21 and every ledger
+    `$id` moves to `.../schema/ledger/21/`; `openapi.json` `info.version` becomes 1.43.0. Adding an optional key
+    changes no existing line's meaning, so the chain's step 20 rewrites nothing but `v` (`FORMAT_STEPS` `restamp(20)`;
+    `migrate.test.ts` "step 20 restamps only", `schema-v21.test.ts` "a format-20 ledger restamps"). The bump is still
+    needed: the reader refuses an unknown field, so a format-20 build would refuse every dated card line while staying
+    writable; with 21 it opens such a ledger read-only and says why (180). The fixtures were restamped through the
+    chain, never by hand.
+196. **No flag.** The timeline was behind a page flag until timeline T_03 switched it on (2026-11-19) and removed it:
+    the contract, the server and the page all take a stored date as it is, and the page draws the line and the date
+    header for every dated node. An app card never carries one (the write refuses it, `timelineOnApp`).

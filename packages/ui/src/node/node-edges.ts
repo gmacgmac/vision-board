@@ -1,6 +1,6 @@
 // Node pattern, layer 2 (template), the node with its marks on its edges (D-099; `opts.edges`, the skin's row):
 // the number is the Bookmark toggle; the kind tab (or, for a node with an icon, a grip and a kind word over
-// the title); the answer, where the skin's row puts it; the change badge, the quiet Awaiting tab and the notes mark on
+// the title; a dated node has neither, its date heads it and its kind ends the date line, D-105 4); the answer, where the skin's row puts it; the change badge, the quiet Awaiting tab and the notes mark on
 // the bottom edge; the icon tile at the right of the body. It reads the skin's row (skins.ts), never a skin's name:
 // with `marks: 'plate'` the number, the kind, the badge, Awaiting and the notes mark sit in a plate along the top,
 // which is the drag handle; with `answer: 'switch'` a node that asks gets the Tick | Cross switch along the bottom
@@ -16,6 +16,7 @@ import { esc } from '../markdown/inline.ts';
 import { isItem } from './node-core.ts';
 import { historyBox } from './node-history.ts';
 import { MARK_KEYS } from './node-marks.ts';
+import { datedOf, timelineLabel } from './node-date.ts';
 import * as nodeWords from '../words/node.ts';
 
 /** What the template hands over: the body and tags it built, and the ids and stepper of the boxes the marks open. */
@@ -49,10 +50,12 @@ const answerSwitch = (n: ViewNode): string => `<div class="vb-mark-switch" role=
   + half(n, 'tick', nodeWords.tick, MARK_KEYS.tick) + half(n, 'cross', nodeWords.cross, MARK_KEYS.cross) + '</div>';
 
 /** What moves the node: the kind tab, or on a node with an icon the grip; in a plate (the plate is the handle) the
- *  kind's word with its dot, or with the node's icon in place of the dot. */
+ *  kind's word with its dot, or with the node's icon in place of the dot. A dated node's place is its date (D-105 4):
+ *  on the edges it has neither tab nor grip (its kind is on the date line); a plate stays as it is. */
 function handle(n: ViewNode, def: SkinDef, icons?: IconLibrary): string {
   const label = NODE_TYPES[n.kind].label;
   if (def.marks === 'plate') return `<span class="vb-node-kind">${n.icon ? icon(n.icon, 'vb-node-kind-icon', icons) : ''}<span class="vb-node-kind-word">${label}</span></span>`;
+  if (datedOf(n)) return '';
   return n.icon ? '<span class="vb-node-grip" aria-hidden="true"></span>' : `<span class="vb-node-kind">${label}</span>`;
 }
 
@@ -88,10 +91,28 @@ function trailMarks(def: SkinDef, asks: boolean, parts: EdgeParts): string {
  *  on a node that only tells; a plate already says the kind); a library name the library lacks, or one that fails its
  *  check, draws the plain tile. */
 function heading(n: ViewNode, def: SkinDef, icons?: IconLibrary): string {
+  const dated = datedOf(n);
+  if (dated) return datedHeading(n, dated, def, icons);
   const title = `<h3 class="vb-node-title">${esc(n.title)}</h3>`;
   if (!n.icon) return title;
   const kick = def.marks === 'edges' ? `<p class="vb-node-kick">${NODE_TYPES[n.kind].label}</p>` : '';
   return `<div class="vb-node-head"><div class="vb-node-heading">${kick}${title}</div>`
+    + `<span class="vb-node-tile" aria-hidden="true">${icon(n.icon, 'vb-node-tile-icon', icons)}</span></div>`;
+}
+
+/** A dated node's head (D-105 4, decisions 16-18): the date line first, then the title. The date's short form is for the
+ *  eye only, in its <time>: the card's name carries the full form (`nodeLabel`), so a screen reader hears the date
+ *  once and a copy holds it once (FIX_03, point 602). On the edges the kind's word ends the line (a plate already says
+ *  the kind). A node with an icon keeps its tile, at the right of the title, and loses the kick. */
+function datedHeading(n: ViewNode, value: string, def: SkinDef, icons?: IconLibrary): string {
+  const { short, datetime } = timelineLabel(value);
+  const kind = def.marks === 'edges' ? `<span class="vb-node-date-kind">${NODE_TYPES[n.kind].label}</span>` : '';
+  const date = `<p class="vb-node-date"><time datetime="${esc(datetime)}"><span aria-hidden="true">${esc(short)}</span></time>`
+    + `${kind}</p>`;
+  const title = `<h3 class="vb-node-title">${esc(n.title)}</h3>`;
+  if (!n.icon) return date + title;
+  // The date spans the content, so a time fits beside its kind's word on the narrowest node; the tile sits by the title.
+  return `${date}<div class="vb-node-head"><div class="vb-node-heading">${title}</div>`
     + `<span class="vb-node-tile" aria-hidden="true">${icon(n.icon, 'vb-node-tile-icon', icons)}</span></div>`;
 }
 

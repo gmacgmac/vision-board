@@ -2,15 +2,21 @@
 // (N12_FE_01, performance.md approach 2): every route is worked out (pure and cheap), and only a
 // connector whose path, label or look changed is written. A link's route changes when a box it
 // touches moved, or when a neighbour on the same side of a card moved its port. The SVG's children
-// stay in the order a full draw writes them: lanes, then connectors, then labels, each in link order.
+// stay in the order a full draw writes them: lanes, then timelines, then connectors, then labels, then the timelines' dots,
+// each in link order. A container's timeline (D-105) is drawn by timelines.ts, in groups that move with the cards: its
+// line and stems between the lane bands and the connectors, its dots above everything; it scales with the world.
 // With the wireLayers flag (D-032) the page puts this SVG behind frames and cards, and `top`, an SVG
 // above the cards, repeats the focused card's connectors. With the linkLabels flag a label sits on
 // its line where the layout found it room (link-labels.ts), else a marker does (link-marks.ts, in
 // `marks`, a layer outside this SVG); off, every label is drawn at the middle of its line.
 import type { BoardLayout, Route } from '#layout';
+import { REGION_PAD } from '#layout';
+import type { TimelineLook } from '#ui';
 import { esc } from '#ui';
 import { fitLabel, labelElement, labelMarkup, tagAt } from './link-labels.ts';
 import { createLinkMarks } from './link-marks.ts';
+import { createTimelines } from './timelines.ts';
+import type { Timelines } from './timelines.ts';
 import { work } from '../work.ts';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -27,26 +33,30 @@ export interface Wires {
 }
 
 const keyOf = (r: Route) => `${r.from}>${r.to}`;
+/** How far a lane band starts before its cards: as at the frame's left, from its 8px inset to the content's REGION_PAD. */
+const LANE_INSET = REGION_PAD - 8;
 
 /** `top`: the layer above the cards (wireLayers flag); `labels`: the linkLabels flag, with `marks`, the
- *  markers' layer. */
-export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { marks: HTMLElement }, ids = ''): Wires {
+ *  markers' layer; `look`: a timeline dot's node, its kind and tone (D-105). */
+export function createWires(
+  svg: SVGSVGElement, top?: SVGSVGElement, labels?: { marks: HTMLElement }, ids = '', look: (id: string) => TimelineLook | undefined = () => undefined,
+): Wires {
   const [arrow, arrowHot] = [`${ids}arrow`, `${ids}arrow-hot`];
   const on = !!labels;
   const marks = labels && createLinkMarks(labels.marks);
-  let groups: { lanes: SVGGElement; paths: SVGGElement; labels: SVGGElement } | null = null;
+  let groups: { lanes: SVGGElement; timelines: Timelines; paths: SVGGElement; labels: SVGGElement } | null = null;
   let lanesSrc = '';
   let topSrc = '';
   let size = '';
   const drawn = new Map<string, Drawn>();
 
   function frame() {
-    svg.innerHTML = `<defs>${marker(arrow)}${marker(arrowHot)}</defs><g class="vb-lanes"></g><g></g><g></g>`;
-    const [lanes, paths, labels] = [...svg.querySelectorAll<SVGGElement>(':scope > g')] as [SVGGElement, SVGGElement, SVGGElement];
+    svg.innerHTML = `<defs>${marker(arrow)}${marker(arrowHot)}</defs><g class="vb-lanes"></g><g class="vb-timelines"></g><g></g><g></g><g class="vb-timeline-dots"></g>`;
+    const [lanes, timelines, paths, labels, dots] = [...svg.querySelectorAll<SVGGElement>(':scope > g')] as [SVGGElement, SVGGElement, SVGGElement, SVGGElement, SVGGElement];
     lanesSrc = topSrc = '';
     size = '';
     drawn.clear();
-    return { lanes, paths, labels };
+    return { lanes, timelines: createTimelines(timelines, dots, look), paths, labels };
   }
 
   /** The focused card's connectors and labels, drawn again above the cards. */
@@ -55,10 +65,14 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { 
     return `<path class="vb-wire hot" d="${r.d}" marker-end="url(#${arrowHot})"/>` + (at ? labelMarkup(r.label!, at, on) : '');
   }).join('');
 
+  /** A lane band runs from the frame's left, or from `Lane.x` when a timeline run down sits beside the lanes (point
+   *  594), to the frame's right; its label is inset as at the frame's left. */
   function lanesOf(layout: BoardLayout): string {
-    return layout.regions.flatMap((r) => (r.lanes ?? []).map((l, i) =>
-      `<rect class="vb-lane${i % 2 ? ' odd' : ''}" x="${r.box.x + 8}" y="${l.y}" width="${r.box.w - 16}" height="${l.h}" rx="8"/>`
-      + `<text class="vb-lane-label" x="${r.box.x + 24}" y="${l.y + 22}">${esc(l.name)}</text>`)).join('');
+    return layout.regions.flatMap((r) => (r.lanes ?? []).map((l, i) => {
+      const x = l.x === undefined ? r.box.x + 8 : l.x - LANE_INSET;
+      return `<rect class="vb-lane${i % 2 ? ' odd' : ''}" x="${x}" y="${l.y}" width="${r.box.x + r.box.w - 8 - x}" height="${l.h}" rx="8"/>`
+        + `<text class="vb-lane-label" x="${x + 16}" y="${l.y + 22}">${esc(l.name)}</text>`;
+    })).join('');
   }
 
   /** Put `el` right after `prev` in `parent` (first when `prev` is null), moving it only if needed. */
@@ -121,6 +135,7 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { 
       fitSize(layout);
       const lanes = lanesOf(layout);
       if (lanes !== lanesSrc) groups.lanes.innerHTML = lanesSrc = lanes;
+      groups.timelines.draw(layout);
       const hot = (r: Route) => focus !== null && (r.from === focus || r.to === focus);
       if (top) {
         const src = topOf(layout.routes.filter(hot));

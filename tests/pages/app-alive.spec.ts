@@ -201,6 +201,26 @@ const stateUrl = (url: string, n: number) => url.endsWith(`/nodes/${n}/panel-sta
 const savedSum = (page: Page, n: number, sum: string) => page.waitForResponse((r) =>
   r.request().method() === 'PUT' && stateUrl(r.url(), n) && r.ok() && (r.request().postData() ?? '').includes(`"sum":"${sum}"`));
 
+test('a timeline reordering the cards around a loaded panel does not load it again (FIX_03: reading order by date)', async ({ page }) => {
+  // In a container with a timeline its dated card reads first (card-numbers.ts `readingOrder`); dropping the date
+  // puts the app card first again, which moves it in the page: moved with moveBefore, its document stays.
+  const { board, n: [n, dated] } = await s.draw([CALCULATOR, { kind: 'finding', title: 'Dated', timeline: '2026-10' }]);
+  const loads = countLoads(page);
+  await page.goto(`${s.base}/#${board}`);
+  await expect(page.locator('vb-node')).toHaveCount(2);
+  const card = cardOf(page, n!);
+  const panel = await panelOf(card);
+  await wake(card);
+  await panel.evaluate(() => { (window as { kept?: string }).kept = 'yes'; });
+  const order = () => page.locator('vb-node').evaluateAll((els) => els.map((e) => Number((e as HTMLElement).dataset.id)));
+  expect(await order()).toEqual([dated, n]);
+  await s.write(board, [{ type: 'node', n: dated, node: { region: 'tools', kind: 'finding', title: 'Dated no more' } }]);
+  await expect(cardOf(page, dated!)).not.toHaveAttribute('data-timeline');
+  await expect.poll(order).toEqual([n, dated]);
+  expect(await panel.evaluate(() => (window as { kept?: string }).kept)).toBe('yes');
+  expect(loads).toHaveLength(1);
+});
+
 test('a panel gets back what it saved after a page reload: the calculator still shows the sum typed', async ({ page }) => {
   const { board, n: [n] } = await s.draw([CALCULATOR]);
   await open(page, board, 1);

@@ -76,7 +76,7 @@ const BROKEN: [string, Rec][] = [
 ];
 
 test('ledger v20: every new line is accepted by both checks', () => {
-  assert.equal(LEDGER_FORMAT, 20);
+  assert.ok(LEDGER_FORMAT >= 20);
   for (const [name, e] of GOOD) assert.deepEqual(verdict(JSON.parse(JSON.stringify(e)) as Rec), { schema: true, hand: true }, name);
 });
 
@@ -123,7 +123,7 @@ test('read as it lies, an older ledger is refused line by line, each with the wo
   const lines = legacy('gallery');
   const read = readLedger(lines);
   assert.deepEqual([read.events.length, read.problems.length], [0, lines.length]);
-  for (const p of read.problems) assert.match(p, /^line \d+: v: this line is in ledger format \d+, older than this Vision Board reads \(20\); the ledger must be migrated first$/);
+  for (const p of read.problems) assert.match(p, new RegExp(`^line \\d+: v: this line is in ledger format \\d+, older than this Vision Board reads \\(${LEDGER_FORMAT}\\); the ledger must be migrated first$`));
 });
 
 /** Every valid line of the current format: one per event type, one per action. */

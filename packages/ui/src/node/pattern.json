@@ -4,7 +4,7 @@
   "tag": "vb-node",
   "description": "Anything the agent draws on the board, as one generic element whatever its type (D-015). Every node carries its actions on its edges, where the board's skin puts them (D-099, D-100; skins.ts SKIN_DEFS): the number is the Bookmark toggle, the answer (a disc, or a Tick | Cross switch) answers a node that asks, the change badge opens its history, the notes mark opens its conversation; right-click or a long press lists the six actions with their keys. No footer. An app node is a window (node-window.ts). ✓ and ✗ are tools with no meaning of their own (D-045): lit, the answer in its state colour is the whole state.",
   "files": {
-    "core": "node-core.ts (nodeState, nodeLabel, offers, isPressed, proposalsView, handoverView; no DOM); node-notes.ts (conversation, replyEntry, litReplies: a card's notes and replies as one conversation; no DOM); node-time.ts (noteTime, versionTime, fullTime: a time in the person's clock; no DOM); node-updates.ts (updatesView: a changed card's badge words and stepper; no DOM); node-app.ts (appView, APP_CARD_STATES, APPS_OFF: an app card's state view, D-047; no DOM); node-marks.ts (nodeMarks, toneView, MARK_KEYS, HISTORY_KEY: what the marks on the node's edges show; no DOM)",
+    "core": "node-core.ts (nodeState, nodeLabel, offers, isPressed, proposalsView, handoverView; no DOM); node-notes.ts (conversation, replyEntry, litReplies: a card's notes and replies as one conversation; no DOM); node-time.ts (noteTime, versionTime, fullTime: a time in the person's clock; no DOM); node-updates.ts (updatesView: a changed card's badge words and stepper; no DOM); node-app.ts (appView, APP_CARD_STATES, APPS_OFF: an app card's state view, D-047; no DOM); node-marks.ts (nodeMarks, toneView, MARK_KEYS, HISTORY_KEY: what the marks on the node's edges show; no DOM); node-date.ts (timelineLabel, datedOf, TimelineLabel: a dated node's header, short and in full, D-105; no DOM)",
     "template": "node-template.ts (nodeTemplate: the only place the markup is built); node-edges.ts (edgesMarkup: the node with its marks on its edges, or in a plate with the answer as a switch, by the skin's row); node-window.ts (windowMarkup: an app node as a window); node-menus.ts (numberMenu, answerPicker, contextMenu, menuId: the node's three fixed-size menus, as markup for ../menu/menu-template.ts)",
     "icons": "node-icons.ts (KIND_ICON per kind, ACTION_ICON's close and comment, svgIcon); ../icons/icon-set.ts (ICONS, MARK_ICONS: every built-in and mark drawing as path data) and ../icons/icon.ts (icon, iconPaths, iconLibrary: a built-in, or a library icon from the checked paths the page passes in, else nothing: the plain tile); ../skins.ts (SKIN_DEFS: where each skin puts the answer and the marks)",
     "element": "vb-node.ts (defineVbNode, VbNodeElement; light DOM)",
@@ -55,7 +55,14 @@
     "app menu open",
     "app drawer open",
     "app on stage",
-    "app cards off"
+    "app cards off",
+    "dated",
+    "dated toned",
+    "dated with an icon",
+    "dated day",
+    "dated month",
+    "dated year",
+    "dated time"
   ],
   "parts": {
     "vb-node-num": "the number (items only), a mark on the top border, left: the Bookmark toggle (vb-mark, data-mark number); in a plate, its first mark",
@@ -78,7 +85,8 @@
     "vb-win-name": "app window: the app's icon and name, cut with '…', whole in its tip (vb-app-name-tip)",
     "vb-win-reason": "app window: why Allow shows ('Not allowed yet', 'Code changed'), beside it: a lock and its words, on a window under 480px the lock alone with its words in its tip (data-tip) and for a screen reader, so the app's name keeps the room; hidden otherwise",
     "vb-win-btn": "app window: the drawer arrow (data-drawer, the notes count, data-notes-mark) and Open (data-app-act stage, aria-pressed while on stage)",
-    "vb-win-drawer-pane": "app window: the drawer, a region named 'Conversation on N', holding the node's conversation box the page docks there (notes/app-drawer.ts)"
+    "vb-win-drawer-pane": "app window: the drawer, a region named 'Conversation on N', holding the node's conversation box the page docks there (notes/app-drawer.ts)",
+    "vb-node-date": "a dated node (D-105 4): the date line first in the content, p.vb-node-date: a <time datetime> holding the short form for the eye only (aria-hidden: 'Oct 13', 'Oct 2026', '2026', 'Oct 13 · 14:30', upper case by CSS); the full form ('13 October 2026', 'October 2026', '2026', '13 October 2026, 14:30') is in the card's accessible name, so it is heard and copied once; on the edges the kind's word ends the line (vb-node-date-kind). Large and bold in the skin's display face (--vb-text-date; 800 on the edges, 700 under a plate), in the kind's colour (in dark at no less than --vb-node-date-l-dark) or the tone's ink; the title then at --vb-text-title-dated. On the edges a dated node has no kind tab and no grip; with an icon it keeps its tile and loses the kick. Under a plate the plate stays, not a handle (no grab cursor). Its body draws entries (renderMarkdown entries, the markdown pattern). An app card never has one"
   },
   "attributes": {
     "data-id": "the node id; the page finds a node with closest('vb-node')",
@@ -91,7 +99,7 @@
     "data-size-picked": "nodeSize flag only: present when the person picked the size (set by update)",
     "role": "listitem (set by render)",
     "tabindex": "0 (set by render)",
-    "aria-label": "number, kind, title and, on a card that asks, its status (nodeLabel, set by update: 'Open', 'checked', 'crossed', 'Replied', 'Saved for later'), then ', selected' while selected",
+    "aria-label": "number, kind, on a dated node its full date ('13 October 2026'), title and, on a card that asks, its status (nodeLabel, set by update: 'Open', 'checked', 'crossed', 'Replied', 'Saved for later'), then ', selected' while selected",
     "data-bubble": "present while its note bubble is open, so the card draws over its neighbours (set by the page)",
     "data-pointer-focus": "present while the card has focus that a pointer press gave it (set by the page, apps/board/src/board/canvas/pointer-focus.ts): no focus ring draws when a key that moves no focus (Z, Esc, Space) makes the browser match :focus-visible; focus the keyboard moves never carries it",
     "data-open": "on a box beside the node (vb-card-pop), while it shows (set by the page, which opens it from its mark and sets the mark's aria-expanded); the node is drawn above its neighbours meanwhile",
@@ -109,7 +117,8 @@
     "data-vb-tone, --vb-tone-h": "the node's tone (decision 17), the name or `hue`, and the hue through CSSOM (the checked number, or the name's hue token)",
     "data-window": "the node is an app window (node-window.ts; an app card with the appCards flag on)",
     "data-drawer-open": "the window's drawer is open; the node is wider by --vb-drawer-w (the card's conditions carry it, so the page measures it so)",
-    "data-stage": "the app window fills the page as a manual popover in the top layer (app-frame-stage.ts)"
+    "data-stage": "the app window fills the page as a manual popover in the top layer (app-frame-stage.ts)",
+    "data-timeline": "a dated node (D-105): its stored date (datedOf: any kind but app), set by render and cleared there when a new version drops the key; the hook the page's pointer (no drag starts on it) and CSS read"
   },
   "methods": {
     "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, data-selected, data-bookmarked, aria-label, the marks' names and states from st.marks; with st.size, data-size and data-size-picked; with st.proposal, the proposal box's contents when they changed; with st.handover, the handover section; with st.updates, the step section (rebuilt only when its step changed) and the stepper's count; with st.app, the app's slot, status and window bar); so focus survives",

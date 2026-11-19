@@ -23,8 +23,11 @@ export const DEFAULT_WIDTHS: Readonly<Record<Mode, Widths>> = {
 };
 
 /** The card widths in effect for a container shown in `mode`: the person's choice wins, then the
- * container's own (`Region.widths`), then the mode's default (api.md 132). */
-export const widthsOf = (mode: Mode, own?: Widths, chosen?: Widths): Widths => chosen ?? own ?? DEFAULT_WIDTHS[mode];
+ * container's own (`Region.widths`), then the default (api.md 132): the mode's, or, on a container with a timeline
+ * (`timeline`: which way it runs), the timeline's, `match` run down and `own` across, for every node of the container
+ * (D-106; the timeline set's PLAN § Design review "After FE_02" (a)). */
+export const widthsOf = (mode: Mode, own?: Widths, chosen?: Widths, timeline?: Direction): Widths =>
+  chosen ?? own ?? (timeline ? (timeline === 'down' ? 'match' : 'own') : DEFAULT_WIDTHS[mode]);
 
 /** Node kinds the agent draws from. The kind decides what a card offers (`NODE_TYPES`). An `app`
  * card shows an app the agent built, in a panel inside the card (ledger v17, D-047). */
@@ -122,6 +125,9 @@ export interface ViewNode {
   icon?: string;
   /** Its tone (api.md 184): a name from `TONES`, or a whole OKLCH hue angle from 0 to 359. */
   tone?: Tone;
+  /** Its date (api.md 190, D-105), in one of the four stored forms (`timeline.ts` `isTimeline`): the nodes of a
+   * container that carry one share its timeline. Never on an app card. */
+  timeline?: string;
 }
 
 export interface Link {

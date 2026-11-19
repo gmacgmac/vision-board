@@ -2,7 +2,7 @@
 // bodies and notes now; replies, the chat and parking bundles later). Source to safe HTML with
 // the pattern's CSS hooks (markdown.css); no inline styles, no DOM, so it runs under node --test.
 // blocks.ts splits the lines into blocks; inline.ts renders each block's text, escaped; table.ts a table; image.ts
-// writes `![alt](path)` (D-048), unless images are off. No switch of its own: whoever renders passes the
+// writes `![alt](path)` (D-048), unless images are off; entries.ts finds a bold lead (a dated node's entries, D-105 5). No switch of its own: whoever renders passes the
 // flags it was given (`MarkdownOptions`), so two boards on one page can differ; left out, each flag's default.
 import { flagOn } from '#format';
 import { parseBlocks } from './blocks.ts';
@@ -11,6 +11,7 @@ import type { ImageWriter } from './image.ts';
 import { imageMarkup } from './image.ts';
 import { esc, renderInline } from './inline.ts';
 import { tableHtml } from './table.ts';
+import { boldLead } from './entries.ts';
 
 export interface MarkdownOptions {
   /** aria-level of a `#` label (1 to 6). Default 4: the card title is an h3. */
@@ -27,6 +28,10 @@ export interface MarkdownOptions {
   /** `+++ Label` to a closing `+++` line: the lines between are detail behind a disclosure triangle,
    * closed until the person opens it. The cardDetails flag; default, its default. */
   details?: boolean;
+  /** Entries (D-105 5): a `###` heading and the blocks after it up to the next heading, rule or entry start; a
+   * paragraph opening with a bold run; a top-level list item opening with one (it stays an `li`). Each draws as
+   * `.vb-md-entry` with its `.vb-md-entry-name`. The node template turns it on for a dated node; default false. */
+  entries?: boolean;
 }
 
 /** Longer input is cut here with an ellipsis (2c_FE_01, Safety). */
@@ -38,11 +43,56 @@ const inlineOf = (b: Block, ctx: Ctx): string => renderInline(b.lines.join('\n')
 
 const kids = (b: Block, ctx: Ctx): string => b.kids.map((k) => blockHtml(k, ctx)).join('');
 
-function list(b: Block, ctx: Ctx): string {
+/** A list; with `entries` (a top-level list in a dated node), each item opening with a bold name is an entry that keeps
+ *  its `li`, and the other items keep their bullets. */
+function list(b: Block, ctx: Ctx, entries = false): string {
   const tag = b.ordered ? 'ol' : 'ul';
   const start = b.ordered && b.startNum !== 1 ? ` start="${b.startNum}"` : '';
   const inner = { ...ctx, lists: ctx.lists + 1, tight: b.tight === true };
-  return `<${tag} class="vb-md-list"${start}>${b.kids.map((li) => `<li>${kids(li, inner)}</li>`).join('')}</${tag}>`;
+  const item = (li: Block): string => (entries && entryItem(li, inner)) || `<li>${kids(li, inner)}</li>`;
+  return `<${tag} class="vb-md-list"${start}>${b.kids.map(item).join('')}</${tag}>`;
+}
+
+/** The item's opening paragraph as a bold lead, if it is one. */
+const itemLead = (li: Block, ctx: Ctx) => (li.kids[0]?.t === 'para' ? boldLead(inlineOf(li.kids[0], ctx)) : undefined);
+
+/** A list item that opens with a bold name, as an entry: the name, the rest of its paragraph, then its other blocks. */
+function entryItem(li: Block, ctx: Ctx): string | undefined {
+  const lead = itemLead(li, ctx);
+  if (!lead) return undefined;
+  // A space between the name and a tight item's text, so the two never run together when read as text.
+  const rest = !lead.rest ? '' : ctx.tight ? ` ${lead.rest}` : `<p class="vb-md-p">${lead.rest}</p>`;
+  return `<li class="vb-md-entry"><strong class="vb-md-entry-name">${lead.name}</strong>${rest}${li.kids.slice(1).map((k) => blockHtml(k, ctx)).join('')}</li>`;
+}
+
+/** A paragraph opening with a bold name, as an entry: the name, then the rest as the entry's text. */
+function entryPara(b: Block, ctx: Ctx): string | undefined {
+  const lead = boldLead(inlineOf(b, ctx));
+  if (!lead) return undefined;
+  return `<div class="vb-md-entry"><strong class="vb-md-entry-name">${lead.name}</strong>${lead.rest ? `<p class="vb-md-p">${lead.rest}</p>` : ''}</div>`;
+}
+
+/** Where a `###` entry stops: a heading, a rule, or the start of another entry. */
+const endsEntry = (b: Block, ctx: Ctx): boolean => b.t === 'head' || b.t === 'hr'
+  || (b.t === 'para' && boldLead(inlineOf(b, ctx)) !== undefined) || (b.t === 'list' && b.kids.some((li) => itemLead(li, ctx)));
+
+/** A document's blocks with entries (MarkdownOptions.entries): a `###` heading and what follows it, bold leads, and
+ *  top-level lists whose items may be entries. `##`, `####`, quotes, tables, code and details stay as they are. */
+function entryDoc(doc: Block, ctx: Ctx): string {
+  const blocks = doc.kids;
+  let out = '';
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i]!;
+    if (b.t === 'head' && b.level === 3) {
+      let j = i + 1;
+      while (j < blocks.length && !endsEntry(blocks[j]!, ctx)) j++;
+      const name = `<span class="vb-md-entry-name" role="heading" aria-level="${ctx.level}">${inlineOf(b, ctx)}</span>`;
+      out += `<div class="vb-md-entry">${name}${blocks.slice(i + 1, j).map((k) => blockHtml(k, ctx)).join('')}</div>`;
+      i = j - 1;
+    } else if (b.t === 'para') out += entryPara(b, ctx) ?? blockHtml(b, ctx);
+    else out += b.t === 'list' ? list(b, ctx, true) : blockHtml(b, ctx);
+  }
+  return out;
 }
 
 /** A list nested deeper than one level is plain text: each item a paragraph led by its marker. */
@@ -119,7 +169,7 @@ export function renderMarkdown(src: string, opts: MarkdownOptions = {}): string 
   const image = (opts.images ?? flagOn('cardImages')) ? imageMarkup(opts.svg, opts.imageRoute) : undefined;
   const more = opts.more ?? flagOn('markdownMore');
   const ctx: Ctx = { level, lists: 0, tight: false, image, more };
-  const html = (part: string): string => kids(parseBlocks(part, more), ctx);
+  const html = (part: string): string => (opts.entries ? entryDoc : kids)(parseBlocks(part, more), ctx);
   if (!(opts.details ?? flagOn('cardDetails')) || !text.includes('+++')) return html(text);
   return splitDetails(text).map((p) => (p.label === undefined ? html(p.text)
     : `<details class="vb-md-details"><summary class="vb-md-summary">${renderInline(p.label, undefined)}</summary><div class="vb-md-detail">${html(p.text)}</div></details>`)).join('');

@@ -84,6 +84,7 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         const pill = count && regionFresh(count.added, count.updated);
         const st = {
           ...regionState(r, view, s, placed, holders?.[r.id], owed, replies), ...(opts.direction && { direction: opts.direction(r.id) }), ...(gone && { retired: retiredMarker(gone.count, gone.version, gone.until) }), ...(pill && { fresh: pill }),
+          ...(r.timeline && { timeline: true as const }), // its layout control offers the directions (D-105)
         };
         const state = JSON.stringify(st);
         const was = shown.get(r.id);

@@ -57,6 +57,13 @@ const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
  *  middle of its top line (decision 12), or the plate along the top where a skin's row puts one (FE_04; its
  *  buttons keep their own press, INTERACTIVE). */
 const HANDLE = '.vb-node-kind, .vb-node-grip, .vb-node-plate';
+/** A dated node (D-105 4, `#ui` `data-timeline`): its place is its date, so no drag starts anywhere on it, its plate
+ *  included; a press on it is a click, as on its content. Where an undated card's drag would start (its plate, its top
+ *  edge) and on the content's own box (its padding and gaps), the press selects no text (FIX_02 S4): the text inside
+ *  stays selectable. */
+const DATED = 'vb-node[data-timeline]';
+/** A card's content box: a press on the box itself, not on an element inside it, is on no text. */
+const CONTENT = '.vb-node-content';
 /** The container's keyboard handle (3_FE_04 ruling 5), the start of its label; a drag on it, or on the
  *  rest of the label but its own buttons and its tip (FE_02), moves the container. */
 const GRIP = '.vb-region-grip';
@@ -81,8 +88,9 @@ type Gesture =
   /** `still`: a Cmd or Ctrl press, which pans only once it moves; held still it ends as the
    *  gesture the press alone would have started (null: none, the control's own click). */
   | Start & { kind: 'pan'; x0: number; y0: number; middle: boolean; still?: Gesture | null }
-  /** On a card's content: the browser selects text on a drag; a click picks the card. */
-  | Start & { kind: 'press'; id: string; el: HTMLElement; add: boolean }
+  /** On a card's content: the browser selects text on a drag; a click picks the card. `bare`: a dated card pressed on
+   *  no text (DATED), which selects none. */
+  | Start & { kind: 'press'; id: string; el: HTMLElement; add: boolean; bare?: true }
   /** Shift on a background: the lasso; `add` when Cmd or Ctrl is held too. */
   | Start & { kind: 'lasso'; add: boolean }
   /** On a container's label: the frame and its cards move (container-drag.ts). `el`: its grip, which
@@ -139,12 +147,14 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     const add = e.shiftKey || e.metaKey || e.ctrlKey;
     if (card) {
       const id = card.dataset.id!;
-      const cards = t.closest(HANDLE) && h.box(id) ? carriedFrom(id) : [];
+      const cards = t.closest(HANDLE) && !card.matches(DATED) && h.box(id) ? carriedFrom(id) : [];
       if (cards.length) {
         g = { kind: 'move', ...start(e), id, el: card, cards, boxes: new Map(cards.map((c) => [c.id, c.box0])), add };
         return capture(e);
       }
-      g = { kind: 'press', ...start(e), id, el: card, add };
+      const bare = card.matches(DATED) && (!!t.closest(HANDLE) || t.matches(CONTENT) || !t.closest(CONTENT));
+      g = { kind: 'press', ...start(e), id, el: card, add, ...(bare && { bare: true as const }) };
+      if (bare) document.getSelection()?.removeAllRanges();
       // A modified click adds or removes the card: it must not extend a text selection.
       stopMouse = add;
       return;
@@ -186,9 +196,9 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     if (stopMouse) e.preventDefault();
   });
   // While a pan or a move runs, no text anywhere is selected (U5); a press on a card's content
-  // is the one gesture that selects text.
+  // is the one gesture that selects text, but on a dated card's plate, edge or content box (`bare`).
   stage.addEventListener('selectstart', (e) => {
-    if (g && g.kind !== 'press') e.preventDefault();
+    if (g && (g.kind !== 'press' || g.bare)) e.preventDefault();
   });
 
   const unbindPanKey = bindPanKey(stage);

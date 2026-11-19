@@ -114,3 +114,20 @@ export const putBack = 'Moved by you · Put back';
 export const numberMenu = (n: number | undefined): string => `Item ${n}`;
 export const answerPicker = (n: number | undefined): string => `Answer item ${n}`;
 export const actionsOn = (n: number | undefined): string => `Actions on item ${n}`;
+
+// ---- node-date.ts: a dated node's header (D-105 4): short on the node (upper case by CSS, so it reads naturally),
+// the full date for assistive technology. Times as written, with no zone (decision 3).
+export const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
+export const monthsLong = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as const;
+/** A month: "Oct 2026", "October 2026". */
+export const dateMonth = (month: string, year: string): string => `${month} ${year}`;
+/** A day on the node, with no year (the year is on the line): "Oct 13". */
+export const dateDay = (month: string, day: string): string => `${month} ${day}`;
+/** A day in full: "13 October 2026". */
+export const dateDayFull = (day: string, month: string, year: string): string => `${day} ${month} ${year}`;
+/** A time on the node: "Oct 13 · 14:30". */
+export const dateTime = (day: string, time: string): string => `${day} · ${time}`;
+/** A time in full: "13 October 2026, 14:30". */
+export const dateTimeFull = (day: string, time: string): string => `${day}, ${time}`;
+/** What a dated card's name adds after its kind, before its title: ", 13 October 2026" (the full form, FIX_02 S3). */
+export const dateInName = (full: string): string => `, ${full}`;
