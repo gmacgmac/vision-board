@@ -2,7 +2,7 @@
 task_name: Export, Import and Print
 created: 2026-11-19
 completed:
-status: planned
+status: in-progress
 categories: [board-app, board-format, board-actions, board-ui]
 tracker: cortex-tasks/tracker.md#N56
 ---

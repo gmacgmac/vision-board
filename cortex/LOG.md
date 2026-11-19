@@ -633,3 +633,4 @@
 [[2026-11-19 12:00]] [board-ui] FIX_04: a timeline's dots draw above every link and label, in a group of their own; the line and stems stay beneath → Task: [[cortex-tasks/board/2026-11-18_board-layout_timeline/FIX_04_dots-above-links.md]]
 [[2026-11-19 14:00]] [board-layout] T_03: the timeline switched on, flag removed → Task: [[cortex-tasks/board/2026-11-18_board-layout_timeline/T_03_switch-on.md]]
 [[2026-11-19 10:04]] [board-layout] Completed set: The Timeline (D-105, D-106; format 21; skill v3.36; M84 fixed; unit 2,723, plugin 116, pages 1,087 + 3 rerun green; host-styles limit 8 min, tracker N55; N53 and M84 removed, M85-M88 added) → Task: [[cortex-tasks/board/2026-11-18_board-layout_timeline/TASK-STATUS.md]]
+[[2026-11-19 10:04]] [project-docs] D-107 appended (export, import and print; maintainer points 605-609) → Task: [[cortex-tasks/board/2026-11-19_board-app_export-import-print/TASK-STATUS.md]]
