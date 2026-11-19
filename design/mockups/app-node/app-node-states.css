@@ -1,0 +1,42 @@
+/* App card states mockup. Real tokens (packages/tokens/src/tokens.css, skins.css); the only local value is the bottom radius. */
+* { box-sizing: border-box; }
+body { margin: 0; padding: 32px; background: light-dark(#e9e9ec, #0b0b0c); color-scheme: light dark; font: 14px/1.4 var(--vb-font); color: light-dark(#18181b, #ededef); }
+header { max-width: 1100px; margin-bottom: 24px; }
+h1 { margin: 0 0 6px; font: 700 24px var(--vb-font-display); }
+header p { margin: 0; font-size: 13px; }
+.panel { margin: 0 0 24px; padding: 20px 24px 22px; border-radius: var(--vb-radius-md); background-color: var(--vb-surface-canvas); background-image: var(--vb-canvas-image); background-size: 24px 24px; color: var(--vb-ink); }
+.panel h2 { margin: 0 0 18px; font: 600 15px var(--vb-font-display); color: var(--vb-ink-strong); }
+.row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 22px; }
+figure { margin: 0; min-width: 0; }
+figcaption { margin-top: 14px; font-size: 11px; line-height: 1.4; color: var(--vb-ink-subtle); }
+figcaption b { display: block; font: 600 12px var(--vb-font-label); color: var(--vb-ink-strong); }
+
+.win {
+  --top-r: var(--vb-node-radius); --bottom-r: 2px; --vb-focus: var(--vb-focus-edge);
+  position: relative; overflow: visible; border: 1px solid var(--vb-line-strong); border-radius: var(--top-r) var(--top-r) var(--bottom-r) var(--bottom-r);
+  background: var(--vb-surface-card); font-family: var(--vb-font-text);
+}
+.bar { position: relative; display: flex; align-items: center; gap: var(--vb-space-2); height: 36px; padding: 0 6px 0 var(--vb-space-3);
+  border-bottom: 1px solid var(--vb-line); border-radius: calc(var(--top-r) - 1px) calc(var(--top-r) - 1px) 0 0; background: var(--vb-surface-sunken); }
+.no { position: absolute; left: 0; top: 0; z-index: 1; display: grid; place-items: center; width: 40px; height: 36px; border-right: 1px solid var(--vb-line);
+  border-radius: calc(var(--top-r) - 1px) 0 0 0; font: 700 14px var(--vb-font-label); color: var(--vb-ink-strong); }
+.win:has(.no) .bar { padding-left: 52px; }
+.ic { flex: none; width: 15px; height: 15px; fill: none; stroke: var(--vb-ink-subtle); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nm { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 650 13px var(--vb-font-display); color: var(--vb-ink); }
+.btn { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-mark-radius); }
+.body { display: grid; gap: var(--vb-space-2); padding: var(--vb-space-3); border-radius: 0 0 var(--bottom-r) var(--bottom-r); }
+.disp { display: grid; justify-items: end; padding: var(--vb-space-2) var(--vb-space-3); border: 1px solid var(--vb-line); border-radius: var(--vb-radius-sm); background: var(--vb-surface-sunken); }
+.disp small { font: 500 11px var(--vb-font-label); color: var(--vb-ink-subtle); }
+.disp b { font: 600 24px var(--vb-font-display); color: var(--vb-ink-strong); font-variant-numeric: tabular-nums; }
+.keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.keys span { display: grid; place-items: center; height: 30px; border: 1px solid var(--vb-line); border-radius: var(--vb-radius-sm); background: var(--vb-surface-card); font: 600 13px var(--vb-font-label); color: var(--vb-ink); }
+.keys .op { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+
+/* States: one border throughout. */
+.win.hover { border-color: color-mix(in srgb, var(--vb-line-strong) 50%, var(--vb-ink-subtle)); }
+.win.selected::before, .win.active::before {
+  content: ''; position: absolute; z-index: 2; left: 0; right: 0; top: 0; height: 2px; background: var(--vb-accent);
+  border-radius: calc(var(--top-r) - 1px) calc(var(--top-r) - 1px) 0 0; pointer-events: none;
+}
+.win.active .nm { color: var(--vb-ink-strong); }
+.win.focus { outline: 1.5px solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
