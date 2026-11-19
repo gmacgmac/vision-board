@@ -56,7 +56,7 @@ function handle(n: ViewNode, def: SkinDef, icons?: IconLibrary): string {
   const label = NODE_TYPES[n.kind].label;
   if (def.marks === 'plate') return `<span class="vb-node-kind">${n.icon ? icon(n.icon, 'vb-node-kind-icon', icons) : ''}<span class="vb-node-kind-word">${label}</span></span>`;
   if (datedOf(n)) return '';
-  return n.icon ? '<span class="vb-node-grip" aria-hidden="true"></span>' : `<span class="vb-node-kind">${label}</span>`;
+  return n.icon ? `<span class="vb-node-grip" aria-hidden="true">${icon('grip', 'vb-node-grip-dots')}</span>` : `<span class="vb-node-kind">${label}</span>`;
 }
 
 /** The top edge: the number (items), the kind tab or the grip, and the disc on a node that asks. */

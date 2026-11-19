@@ -242,7 +242,7 @@ test.describe('the dialog', () => {
 
 /** What the page looks like in print media while it prints, read by the test's `print`. */
 interface Printed {
-  root: { print: string | null; border: string | null; w: number; h: number; colors: string; theme: string | null; dark: boolean };
+  root: { print: string | null; border: string | null; w: number; h: number; colors: string; theme: string | null; dark: boolean; ground: string };
   shown: Record<string, boolean>;
   wires: { attr: string | null; fill: string; shown: boolean; inside: boolean }[];
   frames: { region: string; rules: string; shown: boolean }[];
@@ -282,7 +282,7 @@ async function printAs(page: Page, name: string): Promise<{ last(): Printed | nu
       return {
         root: {
           print: scope, border: root.dataset.vbPrintBorder ?? null, w: box.width, h: box.height, colors: getComputedStyle(root.querySelector('vb-node')!).printColorAdjust,
-          theme: root.dataset.vbPrintTheme ?? null, dark: inkIsLight(root.querySelector('vb-node')!),
+          theme: root.dataset.vbPrintTheme ?? null, dark: inkIsLight(root.querySelector('vb-node')!), ground: getComputedStyle(root.querySelector('.vb-stage')!).backgroundImage,
         },
         shown: Object.fromEntries(['.vb-toolbar', '.vb-reply', '.vb-region-tools', '.vb-region-grip', '.vb-wires-top', 'vb-node'].map((s) => [s, shown(s)])),
         wires: [...root.querySelectorAll<SVGPathElement>('.vb-wires:not(.vb-wires-top) path.vb-wire')].map((p, i) => ({
@@ -322,6 +322,7 @@ test.describe('print', () => {
     expect(p.root.print).toBe('board');
     expect(p.pages).toBe(1);
     expect(p.root.colors).toBe('exact');
+    expect(p.root.ground, 'no dot grid on paper').toBe('none');
     for (const s of ['.vb-toolbar', '.vb-reply', '.vb-region-tools', '.vb-region-grip', '.vb-wires-top']) expect(p.shown[s], s).toBe(false);
     expect(p.shown['vb-node']).toBe(true);
     expect(p.wires.length).toBeGreaterThan(0);
