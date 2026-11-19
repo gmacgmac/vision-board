@@ -1408,3 +1408,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: The board has one keyboard-focus colour, on every card, mark, button and app card: blue, light-dark(#2563eb, #60a5fa), 2px with its gap, shown only after Tab. A host may override it (`--vb-host-focus`). It replaces the slate node ring (D-099, point 338) and the accent on controls.
 - **Why**: two focus colours read as inconsistent, and the slate was dull; blue is the focus colour people know.
 - **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/FIX_02_app-card-look.md
+
+## D-110 A folder the person picks in the system's chooser may be anywhere but hidden (amends api.md 110's home-only rule)
+- **Date**: 2026-11-19 · **Status**: Accepted (maintainer, point 639) · **From**: points 635-639 (folders people could not find)
+- **Decision**: The folder dialog keeps its own list (wider, names wrapping) and, on macOS, also opens the system's own folder chooser through the local board server. A folder the person picks there opens wherever it is, unless any part of its real path starts with a dot. Only a path the server's own chooser returned (or its own recent list then holds) is trusted outside home; a path a page lists, types or sends, or an agent names, stays under home as before. Home itself is never a project.
+- **Why**: our list cannot show everything Finder does (drives, shares, links), so people could not find their folders; the person's own pick in the system's chooser is their intent, and only the server can vouch that a path came from it.
+- **Task**: cortex-tasks/board/2026-11-19_board-app_folder-chooser-setup/T_01_chooser.md
