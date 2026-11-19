@@ -1396,3 +1396,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: A board or one container exports its current state as `{ v, title, items, answers?, notes? }`, the items being what `write_board` takes; no history. Import goes through `write_board` in an `import` mode, into a new board or the current one, as if freshly written: older versions upgrade by `v`, unsupported parts are dropped and named, missing required parts get defaults; answers apply only as the person's own acts. Print is a print stylesheet over the live page (board or container, the container border optional), then the browser's PDF. Agents export through `get_board` and `show_container` and import through the same mode; an import never merges into an existing container, and cards keep their places within their own container. Files and printing go through three optional host hooks (`saveFile`, `openFile`, `print`); a host without one shows no such item.
 - **Why**: the most direct way that still lets older files in and lets nclite add the hooks when ready.
 - **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/TASK-STATUS.md
+
+## D-108 A person's import writes as the person (amends D-107)
+- **Date**: 2026-11-19 · **Status**: Accepted (maintainer, points 613-614) · **From**: export, import and print T_01
+- **Decision**: Export and import are the person's function. A person's import is authorised by the browser session and writes its containers, cards and links as the person (ledger format 22, a restamp); no agent is needed. An agent's import, still allowed, drops the person's own acts, answers and moved places, and names them.
+- **Why**: people share boards as files; the person's ✓/✗ and moves stay the person's.
+- **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/TASK-STATUS.md

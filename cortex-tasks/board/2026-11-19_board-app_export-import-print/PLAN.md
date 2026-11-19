@@ -93,6 +93,12 @@ export; any format beyond the wrapper.
 
 _Recorded by the orchestrator._
 
+2026-11-19 (points 613-614, after T_01): **613** export and import are the person's function: a person's import is
+authorised by the browser session (as `retire_cards` is) and writes the containers, cards and links as the person
+(those line kinds join `PERSON_TOO` for import; ledger format 22, a restamp, per D-103); no agent is needed. Agents keep
+export and import as decision 7 says. **614** an agent's import drops the pins (the person's moves) and names them, as it
+drops answers; the person's import keeps them. A radial container's `center` must round-trip (BE_01).
+
 2026-11-19 (points 608-609): A D-107 yes (worded for 608D and 7a below before appending); B conversations off by
 default; C `.vboard.json`; D agents export (through `get_board`/`show_container`) and import (through `write_board`'s
 `import` mode), answers only from the person (decision 7); E places kept within each container, containers placed by
