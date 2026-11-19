@@ -2173,9 +2173,12 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     the person's cookie as well as an agent's secret (`agent-or-person`), and from the person only `import`: `items`
     from the person are `invalid` at `/items`, never `forbidden`, which the page takes for a stale cookie and reloads
     on. The person's import writes every line as the person, then the conversation (206), then the places and answers
-    as the person's own acts, the answers last so a ✓ or ✗ closes the notes before it. An agent's import writes as the
-    agent, held to the grants as `items` are, the conversation too, and leaves out the answers and places, each named
-    (the person's own acts). An imported line never carries a key the writer
+    as the person's own acts: each card in `later` moved there, the pins, and the answers last so a ✓ or ✗ closes the
+    notes before it. A card in `later` is drawn first in the file's first container (`writer.ts` `laterHome`; a node
+    line names a container, and Later is a place only the person's move gives); with no container in the file it is
+    refused and named. An agent's import writes as the agent, held to the grants as `items` are, the conversation too,
+    and leaves out the answers and places, each named (the person's own acts); its cards in `later` stay in the file's
+    first container, the move named. An imported line never carries a key the writer
     holds: the person's lines carry none, an agent's carry `import-<seq>-<file key>` under a prefix none of its keys
     starts with, so importing a file twice writes it twice.
 205. **How an import runs.** Refused whole, before anything is written: a file the chain can't bring to the current
@@ -2187,7 +2190,9 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     beside what the board holds. The items go through the normal write path on one batch (`writeBatch`), one result
     each, `index` being the item's place in the conditioned file: one call takes a file's 2,000 items, past `items`'
     200 (`write-result.schema.json` `results`). Each part left out is named in `dropped`, conditioning's first; past
-    2,000, the last says how many more. Kept true by `api-import.test.ts`.
+    2,000, the last says how many more. The person's `dropped` also names each item the normal checks refused (the page
+    shows `dropped` alone; an agent reads `results`). Kept true by `api-import.test.ts` (with "a card the person moved
+    to Later" and "nothing goes silently").
 
 ## The whole conversation imported; the reply worded for its reader (export-import-print FIX_01)
 
@@ -2201,9 +2206,11 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     other line may carry `from` (`ledger-shape.ts` `fromRules`, `act.ts` `validateAct`, `reply.schema.json`). A reply
     to a container's note goes on the container's first card, else the file's first. An imported note is history: no
     Send carries it (`unsent.ts`), it can't be changed (`note-lock.ts` `lockOf`: `sent`), `check_responses` reports it
-    to no agent (`pending.ts` `responsesAfter`), and an import is no look at its cards (`fold.ts` `seeCards`); the reads
+    to no agent (`pending.ts` `responsesAfter`), an import is no look at its cards (`fold.ts` `seeCards`), and it owes
+    nothing (ruling 621; `note-answer.ts` `owes`): unanswered, its card or container is not with the agent, while a
+    note the person writes after the import is owed as usual (36); the reads
     mark it `imported: true` (`notes.ts` `itemOf`, `containerNotes`; the API's `note`), and a reply keeps its `from`
-    (the API's `reply`). Kept true by `api-import.test.ts` and `schema-v22.test.ts` "an imported line keeps its author".
+    (the API's `reply`). Kept true by `api-import.test.ts` (and its "an imported note owes nothing") and `schema-v22.test.ts` "an imported line keeps its author".
 207. **`dropped` is worded for whoever imports** (point 619; `export/person.ts` `forPerson`). Each part left out is
     recorded once with its pointer, whether all of it went, and the agent's words (`condition.ts` `Drop`). An agent
     reads the agent's words, pointer first (`items[1].node.glow: not a field Vision Board knows`). The person reads one

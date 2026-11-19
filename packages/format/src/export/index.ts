@@ -11,5 +11,5 @@ export type ExportFile = OperationOutput<'export_board'>;
 export { EXPORT_STEPS, EXPORT_VERSION, upgradeExport } from './upgrade.ts';
 export type { Conditioned, Drop } from './condition.ts';
 export { conditionExport, gone, less } from './condition.ts';
-export { keptFor } from './writer.ts';
+export { keptFor, laterHome } from './writer.ts';
 export { forPerson } from './person.ts';

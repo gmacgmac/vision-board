@@ -34,6 +34,7 @@ export const answerOneOf = (at: string): string => `${at}.answer: one of check, 
 // ---- export/writer.ts (what an import keeps, by who writes it, D-108)
 export const agentAnswer = (at: string): string => `${at}: ✓ and ✗ are the person's own acts, and an agent's import can't make them`;
 export const agentPin = (at: string): string => `${at}: where a card sits is the person's own act, and an agent's import can't make it`;
+export const agentLater = (at: string): string => `${at}: a card moved to Later is the person's own act, and an agent's import can't make it`;
 
 // ---- export/person.ts (the parts an import left out, as a person reads them, point 619)
 export const card = (title: string | undefined): string => (title ? `Card "${title}"` : 'A card');

@@ -10,7 +10,8 @@
 // Each part left out is named in `dropped`.
 import type { Drop, ExportFile, UpgradeStep } from '#format';
 import {
-  LATER_REGION, LIMITS, codePoints, conditionExport, containerKey, forPerson, gone, isRecord, isUpgradeStop, keptFor, less, upgradeExport,
+  LATER_REGION, LIMITS, codePoints, conditionExport, containerKey, forPerson, gone, isRecord, isUpgradeStop, keptFor, laterHome, less,
+  upgradeExport,
 } from '#format';
 import type { LedgerState } from '#actions';
 import type { Caller, Ledger } from './ledger.ts';
@@ -70,9 +71,10 @@ function freshKeys(s: LedgerState, writer: Caller): (key: string) => string {
   };
 }
 
-/** A file item as the write item it is sent as: its container's new id, its keys made fresh, a centre left for later
- * (`centres`: it names a card drawn after it). */
-function itemFor(x: Rec, ids: Map<string, string>, key: (k: string) => string): Rec {
+/** A file item as the write item it is sent as: its container's new id (a card in Later drawn in `home`, the person's
+ * move then puts it back: `personActs`), its keys made fresh, a centre left for later (`centres`: it names a card drawn
+ * after it). */
+function itemFor(x: Rec, ids: Map<string, string>, key: (k: string) => string, home: string | undefined): Rec {
   const k = x.key === undefined ? {} : { key: key(String(x.key)) };
   if (x.type === 'region') {
     const { center: _center, ...r } = x.region as Rec;
@@ -80,7 +82,8 @@ function itemFor(x: Rec, ids: Map<string, string>, key: (k: string) => string): 
   }
   if (x.type === 'node') {
     const n = x.node as Rec;
-    return { type: 'node', ...k, node: { ...n, region: ids.get(String(n.region)) ?? n.region } };
+    const region = n.region === LATER_REGION && home !== undefined ? home : String(n.region);
+    return { type: 'node', ...k, node: { ...n, region: ids.get(region) ?? region } };
   }
   const end = (e: unknown) => ({ key: key(String((e as Rec).key)) });
   return { type: 'link', ...k, from: end(x.from), to: end(x.to), ...(x.label !== undefined && { label: x.label }) };
@@ -149,8 +152,9 @@ function conversation(c: After, file: ExportFile, regions: Map<string, string>):
   });
 }
 
-/** The person's places and answers, as the person's own acts after the conversation (D-107 7), the answers last so a ✓
- * or ✗ closes the notes before it, as on the board the file came from; one whose card was not written is named. */
+/** The person's places and answers, as the person's own acts after the conversation (D-107 7): each card in Later moved
+ * there, then the pins, then the answers last so a ✓ or ✗ closes the notes before it, as on the board the file came
+ * from; one whose card was not written is named. */
 function personActs(c: After, file: ExportFile): void {
   const card = (at: string, key: string, then: (id: number) => Rec) => {
     const id = c.card(key);
@@ -158,6 +162,10 @@ function personActs(c: After, file: ExportFile): void {
     else put(c, at, then(id));
   };
   const ver = (id: number) => c.ledger.state().index.nodes.get(id)?.ver;
+  (file.items as Rec[]).forEach((x, i) => {
+    if (x.type === 'node' && (x.node as Rec).region === LATER_REGION && x.key !== undefined && c.card(String(x.key)) !== undefined)
+      put(c, `items[${i}].node.region`, { type: 'act', action: 'move', n: c.card(String(x.key)), region: LATER_REGION });
+  });
   file.pins?.forEach((p, i) => card(`pins[${i}]`, p.key, (n) => ({ type: 'act', action: 'pin', n, x: p.x, y: p.y })));
   file.answers?.forEach((a, i) => card(`answers[${i}]`, a.key, (n) => ({ type: 'act', action: a.answer === 'check' ? 'ack' : 'drop', n, ver: ver(n) })));
 }
@@ -192,7 +200,10 @@ export function importFile(ledger: Ledger, args: ImportArgs, steps?: readonly Up
     ledger, agent: writer.by === 'agent' ? writer.agent : '', board, failed: new Set(), keyHelp: args.keyHelp, insert: false,
     icons: args.icons, person, made: new Map(),
   };
-  const results = writeBatch(b, items.map((x) => itemFor(x, ids, key)), grants);
+  const results = writeBatch(b, items.map((x) => itemFor(x, ids, key, laterHome(file))), grants);
+  // The page shows the person `dropped` alone: an item the normal checks refused is named there too (an agent reads
+  // `results`).
+  if (person) results.forEach((r, i) => { if (!r.ok) dropped.push(gone(`items[${i}]`, writesWords.importNotApplied(`items[${i}]`, r.problem.errors?.[0]?.detail ?? r.problem.detail))); });
   centres(b, file, results, ids, key, grants, dropped);
   const regions = new Map(items.flatMap((x) => (x.type === 'region' && x.key !== undefined ? [[String(x.key), ids.get(String((x.region as Rec).id))!]] : [])));
   const after: After = { ledger, board, writer, card: (k) => b.made!.get(key(k)), dropped };

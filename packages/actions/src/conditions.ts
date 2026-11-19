@@ -11,7 +11,7 @@ import type { LedgerNode } from '#format';
 import { latest, NODE_TYPES, nodesOf } from '#format';
 import type { LedgerState } from './fold.ts';
 import { latestAsk } from './notes.ts';
-import { noteAnswer } from './note-answer.ts';
+import { owes } from './note-answer.ts';
 import { unseenAnswer, unseenReply } from './clears.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
@@ -89,13 +89,13 @@ export { replied };
 export const owedOn = (s: LedgerState, node: LedgerNode): number | undefined => owedNote(s, node) ?? awaitingPark(s, node.id);
 
 /** The `seq` of the person's latest note on a card (an old "needs context" is one) that nothing
- * answers (`noteAnswer`: a reply, a newer version, or a ✓ or ✗ after it). A note never answers a
+ * answers (`noteAnswer`: a reply, a newer version, or a ✓ or ✗ after it; an imported one, never owed: `owes`). A note never answers a
  * card, so it is owed on any card until then (D-045). While it is owed, the card is with the agent
  * (`cardStatus`, D-046). */
 export function owedNote(s: LedgerState, node: LedgerNode): number | undefined {
   const ask = s.marks.get(node.id)?.ask;
   const made = ask && s.asks.get(ask.seq);
-  return made && !noteAnswer(s, made, node.id) ? made.seq : undefined;
+  return made && owes(s, made, node.id) ? made.seq : undefined;
 }
 
 /** Where card `node` stands with the person (D-046), the one status every read gives: its ✓, ✗ or
@@ -165,7 +165,7 @@ export const CONDITIONS: Rows = {
       if (!s.index.boards.get(board)?.has(region)) return [];
       if (ctx.agent !== undefined && !mayAnswerIn(s, ctx.agent, { board, region })) return [];
       const ask = latestAsk(log);
-      return ask && !noteAnswer(s, ask) ? [{ kind: 'container.owed' as const, board, container: region, seq: ask.seq }] : [];
+      return ask && owes(s, ask) ? [{ kind: 'container.owed' as const, board, container: region, seq: ask.seq }] : [];
     })),
   },
   'item.new': {

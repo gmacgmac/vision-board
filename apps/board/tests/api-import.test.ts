@@ -9,6 +9,7 @@ import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { UpgradeStep } from '#format';
 import { EXPORT_VERSION } from '#format';
+import { conditionsOf, nodeDetail } from '#actions';
 import { importFile } from '../server/write-import.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -160,6 +161,50 @@ test('imported notes are history: none waits for Send, none can be edited, check
   await h.fails('act', { board: 'history', body: { type: 'act', action: 'note-edit', note: card.seq, text: 'Changed.' } }, 422, 'invalid');
   const r = await h.ok('check_responses', { board: 'history', after: head }, { as: A.client });
   assert.ok(!JSON.stringify(r).includes('Per seat suits'), 'an imported note is no new response');
+});
+
+test('an imported note owes nothing (ruling 621); a note the person writes after the import is owed as usual', async () => {
+  const file = {
+    v: EXPORT_VERSION, title: 'Owed', items: [
+      { type: 'region', key: 'r', region: { id: 'r', title: 'R', mode: 'grid' } },
+      { type: 'node', key: 'card:1', node: { region: 'r', kind: 'question', title: 'Which venue?' } },
+    ],
+    notes: [{ key: 'card:1', text: 'Ask the team first.' }, { key: 'r', text: 'The whole list waits.' }],
+  };
+  await importAs('person', 'owed', 'new', file);
+  const owed = () => conditionsOf(h.ledger.state(), { board: 'owed' }).filter((c) => c.kind === 'item.owed' || c.kind === 'container.owed');
+  const id = h.ledger.state().index.cards.get('owed')![0]!;
+  const status = () => nodeDetail(h.ledger.state(), id)!.status;
+  assert.deepEqual([owed(), status()], [[], 'open'], 'no reply, and the card is not with the agent');
+  await act('owed', { action: 'comment', n: 1, ver: 1, text: 'Now we know: the hall.' });
+  assert.deepEqual([owed().map((c) => c.kind), status()], [['item.owed'], 'with-agent'], 'the new note is owed');
+});
+
+test('a card the person moved to Later comes into the new board\'s Later; an agent\'s import draws it in a container and names its place', async () => {
+  await write('lt', [
+    { type: 'board', title: 'Later source' },
+    { type: 'region', region: { id: 'q', title: 'Questions', mode: 'grid' } },
+    { type: 'node', node: { region: 'q', kind: 'question', title: 'Stay' } },
+    { type: 'node', node: { region: 'q', kind: 'question', title: 'Set aside' } },
+  ]);
+  await act('lt', { action: 'move', n: 2, region: 'later' });
+  const file = await exported('lt');
+  const r = await importAs('person', 'lt-copy', 'new', file);
+  assert.ok(r.results.every((x: Rec) => x.ok), JSON.stringify(r.results));
+  assert.equal(r.dropped, undefined);
+  assert.deepEqual(await exported('lt-copy'), { ...file, title: 'Later source' }, 'the card is in Later, as on the source');
+  const a = await importAs(A, 'lt-agent', 'new', file);
+  assert.ok(a.results.every((x: Rec) => x.ok), JSON.stringify(a.results));
+  assert.deepEqual(a.dropped, ['items[2].node.region: a card moved to Later is the person\'s own act, and an agent\'s import can\'t make it; left out']);
+  const drawn = (await exported('lt-agent')).items.filter((x: Rec) => x.type === 'node').map((x: Rec) => [x.node.title, x.node.region]);
+  assert.deepEqual(drawn, [['Stay', 'q'], ['Set aside', 'q']], 'drawn in the file\'s first container');
+});
+
+test('a person\'s import names each item the normal checks refused: nothing goes silently', async () => {
+  const file = { v: EXPORT_VERSION, title: 'Only Later', items: [{ type: 'node', key: 'card:1', node: { region: 'later', kind: 'question', title: 'Nowhere to draw' } }] };
+  const r = await importAs('person', 'only-later', 'new', file);
+  assert.equal(r.results[0].ok, false);
+  assert.deepEqual(r.dropped, ['Card "Nowhere to draw" was left out.']);
 });
 
 test('import: an unknown field and an unknown kind are dropped and named, for whoever imports; the rest is written', async () => {
