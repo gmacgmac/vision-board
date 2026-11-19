@@ -19,6 +19,9 @@ export { elidePath, folderName, folderPath } from './folder-path.ts';
 /** The current-folder flag (on by default; needs openFolder): the open folder is always on show. */
 export const currentFolderOn = (): boolean => openFolderOn() && flagOn('currentFolder', pageFlags());
 
+/** The system's folder chooser (on by default; needs openFolder; D-110): "Choose in Finder…" where the server offers it. */
+export const folderChooserOn = (): boolean => openFolderOn() && flagOn('systemFolderChooser', pageFlags());
+
 /** Read the open folder and name it in the page title; null when it can't be read (the board
  * still opens, with the last board kept for every folder alike). */
 export async function loadFolder(): Promise<FolderInfo | null> {

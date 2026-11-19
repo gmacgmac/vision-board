@@ -311,7 +311,7 @@ test('gallery: the section is there only with the flag, last, with the three for
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto('/gallery.html?flags=readOnlyStart,-ledgerFolders,-readOnlyToggle');
-  await expect(page.locator('main > section:not([data-feature="readOnlyControls"]):not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"]):not([data-feature="timeline-board"]):not([data-feature="exportImportPrint"])').last()).toHaveAttribute('data-feature', 'readOnlyStart');
+  await expect(page.locator('main > section:not([data-feature="readOnlyControls"]):not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"]):not([data-feature="timeline-board"]):not([data-feature="exportImportPrint"]):not([data-feature="systemFolderChooser"])').last()).toHaveAttribute('data-feature', 'readOnlyStart');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"] .vb-chip-editing`).first()).toBeVisible();
   await expect(section(page).locator(`${bid('editing')}, ${bid('edit')}`)).toHaveCount(0);
   await expect(section(page).locator('vb-node [data-mark="number"]').first()).toHaveAttribute('aria-disabled', 'true');

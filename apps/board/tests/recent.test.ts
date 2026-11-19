@@ -1,7 +1,8 @@
 // The recent folders and the folder the server starts in (open-folder task, api.md 110, 112): the
 // list lives in the person's `recent.json` (`homeFiles`), newest first, at most 10, readable by this user
 // only; a bad file is ignored, never fatal. At start VB_PROJECT wins, then the newest recent folder
-// if it is still a folder under home, then this repo. The home folder is a temp folder here.
+// if it is still a folder under home, or outside it one the server vouches for (D-110: not hidden, not home or above
+// it, still its own real path), then this repo. The home folder is a temp folder here.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -60,10 +61,23 @@ test('start: VB_PROJECT wins, then the newest recent folder under home, then the
   assert.equal(startFolder({ home, fallback }), a);
   fs.rmSync(a, { recursive: true });
   assert.equal(startFolder({ home, fallback }), fallback, 'the newest is gone: the fallback, not an older one');
-  write(JSON.stringify({ folders: [outside] }));
-  assert.equal(startFolder({ home, fallback: b }), b, 'a recent folder outside home is never opened');
   write('not json');
   assert.equal(startFolder({ home, fallback }), fallback);
+});
+
+test('start outside home (D-110): a recent folder there opens, unless hidden, home or above it, or now a link', () => {
+  const fallback = folder('fallback');
+  const picked = path.join(outside, 'drive', 'project');
+  const hidden = path.join(outside, '.hidden', 'project');
+  for (const d of [picked, hidden]) fs.mkdirSync(d, { recursive: true });
+  const link = path.join(outside, 'link-to-project');
+  fs.symlinkSync(picked, link);
+  const start = (dir: string) => { write(JSON.stringify({ folders: [dir] })); return startFolder({ home, fallback }); };
+  assert.equal(start(picked), picked, 'a folder the person picked, in the recent list');
+  assert.equal(start(hidden), fallback, 'hidden');
+  assert.equal(start(path.dirname(home)), fallback, 'a folder holding home');
+  assert.equal(start(link), fallback, 'not its own real path');
+  assert.equal(start(path.join(outside, 'gone')), fallback, 'gone');
 });
 
 test('the last ledger is found by the folder\'s real path too: a link to it, or /var for /private/var (FIX_01 F14)', () => {

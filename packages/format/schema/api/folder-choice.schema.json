@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/folder-choice.schema.json",
+  "title": "A folder chosen in the system's chooser",
+  "description": "`{ path, name, found, boards? }`, the folder the person picked in the system's own folder chooser, as list_folders heads its listing; or `{ cancelled: true }` when the person closed the chooser without picking one.",
+  "$comment": "systemFolderChooser flag (D-110; folder-chooser-setup T_01; api.md 208-211)",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["path", "name", "found"],
+      "properties": {
+        "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath", "description": "The picked folder's real path. open_project opens it, wherever it is, for the rest of this server's run."},
+        "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName"},
+        "found": {"type": "boolean", "description": "True when this folder has a Vision Board: open it with open_project; else create one there with `create: true`."},
+        "boards": {"type": "integer", "minimum": 0, "description": "How many boards its ledgers hold; given only when `found` is true."}
+      },
+      "unevaluatedProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["cancelled"],
+      "properties": {
+        "cancelled": {"const": true, "description": "The person closed the chooser without picking a folder; nothing changed."}
+      },
+      "unevaluatedProperties": false
+    }
+  ]
+}

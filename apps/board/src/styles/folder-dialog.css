@@ -1,12 +1,17 @@
 /* The folder picker (openFolder flag, shell/FolderDialog.svelte, FolderPicker.svelte): the board's
-   dialog look (board.css .vb-dialog), a little wider; a breadcrumb of buttons; the folder lists
-   scroll inside a capped height; rows in the menu's look, a folder with a board marked with a chip. */
-.vb-folder-dialog { width: min(560px, 92vw); }
+   dialog look (board.css .vb-dialog), wide enough to read long names (720px, never past the window: a 16px gutter
+   each side, at phone width too); a breadcrumb of buttons; the folder lists scroll inside a capped height; rows in
+   the menu's look, a folder with a board marked with a chip. Every folder name, the path and a problem naming one
+   wrap anywhere, never cut with an ellipsis (D-110 decision 1). "Choose in Finder…" under the lists, and the folder
+   chosen apart from them on its own line, as the Current folder line (current-folder.css). */
+.vb-folder-dialog { width: min(720px, calc(100vw - 2 * var(--vb-space-4))); }
+.vb-folder-crumbs li { min-width: 0; max-width: 100%; }
 .vb-folder-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
 .vb-folder-crumbs li + li::before { content: '/'; margin-right: var(--vb-space-1); color: var(--vb-ink-subtle); }
 .vb-folder-crumb {
   min-height: var(--vb-control-target); padding: 0 var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm); background: none;
-  font: inherit; font-weight: var(--vb-weight-medium); color: var(--vb-accent); cursor: pointer;
+  max-width: 100%; font: inherit; font-weight: var(--vb-weight-medium); color: var(--vb-accent); text-align: left;
+  overflow-wrap: anywhere; cursor: pointer;
 }
 .vb-folder-crumb:hover { background: var(--vb-surface-sunken); text-decoration: underline; }
 .vb-folder-crumb[aria-current] { color: var(--vb-ink-strong); }
@@ -18,7 +23,7 @@
 .vb-folder-lists[aria-busy='true'] { cursor: progress; }
 .vb-folder-head {
   margin: var(--vb-space-2) var(--vb-space-2) var(--vb-space-1); font-size: var(--vb-text-xs);
-  font-weight: var(--vb-weight-bold); color: var(--vb-ink-subtle);
+  font-weight: var(--vb-weight-bold); color: var(--vb-ink-subtle); overflow-wrap: anywhere;
 }
 .vb-folder-list { margin: 0; padding: 0; list-style: none; }
 .vb-folder-row {
@@ -31,7 +36,17 @@
 .vb-folder-row:active { transform: translateY(1px); }
 .vb-folder-row:disabled { cursor: progress; transform: none; }
 .vb-folder-row .vb-btn-icon { display: block; flex: none; width: 18px; height: 18px; color: var(--vb-ink-subtle); }
-.vb-folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vb-folder-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .vb-folder-mark { flex: none; }
 .vb-folder-empty { margin: var(--vb-space-2); color: var(--vb-ink); }
 .vb-folder-status { min-height: 1.5em; margin: var(--vb-space-3) 0 0; font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); }
+.vb-folder-dialog .vb-dialog-problem { overflow-wrap: anywhere; }
+.vb-folder-finder { margin: var(--vb-space-3) 0 0; }
+.vb-folder-finder .vb-btn[aria-disabled='true'] { opacity: 0.5; cursor: progress; }
+.vb-folder-finder .vb-btn[aria-disabled='true']:active { transform: none; }
+.vb-folder-chosen {
+  display: grid; gap: var(--vb-space-1); margin-top: var(--vb-space-3); padding: var(--vb-space-2) var(--vb-space-3);
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
+}
+.vb-folder-chosen-label { font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); color: var(--vb-ink); }
+.vb-folder-chosen-path { min-width: 0; overflow-wrap: anywhere; font-size: var(--vb-text-sm); color: var(--vb-ink-strong); }

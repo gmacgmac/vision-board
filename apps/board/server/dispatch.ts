@@ -9,6 +9,7 @@ import type { OperationId } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
+import type { Chooser } from './chooser.ts';
 import { checkFolder, secretElsewhere } from './caller-folder.ts';
 import { callerOf } from './callers.ts';
 import type { Chats } from './chat-sessions.ts';
@@ -21,9 +22,9 @@ import type { Project } from './project.ts';
 import { SPECS } from './spec.ts';
 import * as httpWords from './words/http.ts';
 
-/** What the server holds for every request: the person's token, the open folder (project.ts),
- * and the build in watch mode. */
-export interface ServerEnv { person: string; project: Project; build?: BuildWatch | undefined }
+/** What the server holds for every request: the person's token, the open folder (project.ts), the system's folder
+ * chooser and what was picked in it (chooser.ts, D-110), and the build in watch mode. */
+export interface ServerEnv { person: string; project: Project; chooser: Chooser; build?: BuildWatch | undefined }
 
 /** What a handler gets: the request and its URL, its parsed parameters (defaults filled in), the open
  * folder's engine, ledger, agents store, chat sessions and app host, the signal that ends its streams
@@ -44,6 +45,8 @@ export interface Ctx {
   /** Aborted when this folder closes (a switch, the server closing): a stream or held read ends. */
   closed: AbortSignal;
   project: Project;
+  /** The system's folder chooser, and the folders picked in it this run (D-110). */
+  chooser: Chooser;
   /** The person, an agent, or undefined for a read without credentials. */
   caller: Caller | undefined;
   build?: BuildWatch | undefined;
@@ -76,6 +79,6 @@ export async function dispatch(
   });
   await handlers[match.id]({
     req, res, url, params, engine: open.engine, ledger: open.ledger, editing: open.editing, agents: open.agents, chats: open.chats, apps: open.apps,
-    closed: open.closed, project: env.project, caller, build: env.build,
+    closed: open.closed, project: env.project, chooser: env.chooser, caller, build: env.build,
   });
 }

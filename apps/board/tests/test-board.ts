@@ -35,6 +35,7 @@ export interface TestBoardOptions extends Omit<BoardServerOptions, 'ledger' | 'd
   /** 0 (default): a free port. */
   port?: number;
 }
+// `chooser`: none unless the test brings its own runner, so no test opens the system's real folder chooser (D-110).
 
 export interface TestBoard {
   base: string;
@@ -45,7 +46,7 @@ export interface TestBoard {
   close(): Promise<void>;
 }
 
-export async function startTestBoard({ project, prefix = 'vb-board-', seed, dist = DIST, port = 0, ledger: given, edit = true, ...options }: TestBoardOptions = {}): Promise<TestBoard> {
+export async function startTestBoard({ project, prefix = 'vb-board-', seed, dist = DIST, port = 0, ledger: given, edit = true, chooser = false, ...options }: TestBoardOptions = {}): Promise<TestBoard> {
   const dir = project ?? fs.realpathSync(makeTempDir(prefix));
   const file = ledgerPath(dir);
   if (seed && !fs.existsSync(file)) {
@@ -53,7 +54,7 @@ export async function startTestBoard({ project, prefix = 'vb-board-', seed, dist
     fs.copyFileSync(seed, file);
   }
   const ledger = given ?? openLedger(file, () => {});
-  const server = createBoardServer({ ...options, ledger, dist, edit });
+  const server = createBoardServer({ ...options, ledger, dist, edit, chooser });
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', () => { server.off('error', reject); resolve(); });

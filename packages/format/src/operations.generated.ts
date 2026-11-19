@@ -166,6 +166,10 @@ export const OPERATIONS = {
     operationId: 'list_folders', method: 'GET', path: '/api/folders',
     pathParams: [], xAgent: false, auth: 'person',
   },
+  choose_folder: {
+    operationId: 'choose_folder', method: 'POST', path: '/api/folders/choose',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
   list_icons: {
     operationId: 'list_icons', method: 'GET', path: '/api/icons',
     pathParams: [], xAgent: true, auth: 'none',

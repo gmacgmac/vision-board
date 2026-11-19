@@ -9,11 +9,13 @@
 // ledger folders' layout with two ledgers, `main` (open at first) and `ui`, each with one board; the
 // other folders stay in the old layout, so opening one moves it into `main/`. With `readOnly` as well (the
 // `readOnlyStart` flag on, D-085) the server opens every ledger read-only, as without `--edit`: Edit takes its lock.
+// With `chooser`, a stand-in for the system's folder chooser (D-110), so no test opens the real one; without, none.
 import fs from 'node:fs';
 import path from 'node:path';
 import { makeTempDir } from '#format/testing';
 import { fakeChat, personCookie, startTestBoard } from '#board/testing';
 import { ledgerFiles, ledgerFolder } from '#format';
+import type { ChooserRun } from '../../apps/board/server/chooser.ts';
 import type { Caller } from '../../apps/board/server/ledger.ts';
 import { ledgerPath, openLedger } from '../../apps/board/server/ledger.ts';
 import { PORTS } from './ports.ts';
@@ -40,7 +42,7 @@ export interface FolderServer {
 
 /** A folder whose ledger (`ledger` of its ledger folders; none, the old layout's) holds board `board`
  * with one card titled `title`, drawn by an agent. */
-function seed(dir: string, board: string, title: string, ledgerName?: string): void {
+export function seed(dir: string, board: string, title: string, ledgerName?: string): void {
   const file = ledgerName ? ledgerFiles(ledgerFolder(dir, ledgerName)).ledger : ledgerPath(dir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const ledger = openLedger(file, () => {});
@@ -50,7 +52,7 @@ function seed(dir: string, board: string, title: string, ledgerName?: string): v
   ledger.append({ type: 'node', board, node: { region: 'ideas', kind: 'question', title } }, AGENT);
 }
 
-export async function startFolderServer({ ledgers = false, readOnly = false }: { ledgers?: boolean; readOnly?: boolean } = {}): Promise<FolderServer> {
+export async function startFolderServer({ ledgers = false, readOnly = false, chooser }: { ledgers?: boolean; readOnly?: boolean; chooser?: ChooserRun } = {}): Promise<FolderServer> {
   const home = fs.realpathSync(makeTempDir('vb-folder-pages-'));
   const [start, other, empty] = ['start', 'other', 'empty-app'].map((n) => path.join(home, 'projects', n)) as [string, string, string];
   seed(start, 'start-board', 'Start card', ledgers ? 'main' : undefined);
@@ -66,6 +68,7 @@ export async function startFolderServer({ ledgers = false, readOnly = false }: {
     // Both flags named, so the server is the one asked for whatever their defaults are.
     flags: { ledgerFolders: ledgers, readOnlyStart: readOnly },
     edit: !readOnly,
+    ...(chooser && { chooser }),
   });
   const { base } = board;
   const cookie = await personCookie(base);

@@ -43,13 +43,19 @@ Every MCP client takes the same entry. Use absolute paths (`which node` gives th
 }
 ```
 
-Where it goes:
+Where it goes (read from each vendor's docs on 2026-11-19; URLs in `SETUP.md` § Sources):
 
-- Kiro: `~/.kiro/settings/mcp.json` (every project) or `.kiro/settings/mcp.json` (one project).
-- Claude Code: `.mcp.json` in a project, or from the terminal (add `-s user` for every project):
-  `claude mcp add vision-board -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`
-- Cursor: `~/.cursor/mcp.json` or `.cursor/mcp.json`.
-- Any other client: the same `command` and `args`.
+| Client | Where the entry goes | After adding |
+|---|---|---|
+| Claude Code | Terminal, once for every project: `claude mcp add --transport stdio --scope user vision-board -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts` (or `.mcp.json` in one project, same JSON as above). | `claude mcp list` shows `vision-board` as connected. Docs do not say a running session picks it up: start a new session. |
+| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS), the JSON above. Settings, Developer, Edit Config opens it. | Quit the app completely, then open it. |
+| Kiro CLI and Kiro IDE | `~/.kiro/settings/mcp.json` (every project, both read it) or `.kiro/settings/mcp.json` (one project), the JSON above. | None: both reload when the file is saved. |
+| Kiro Crew | Its dashboard: Customize, MCP Servers (Agent Capabilities, Integrations in versions before 0.13.0), add a server by command: `/absolute/path/to/node` with the argument `/absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`, named `vision-board`. Or click Discover & Sync to import from existing MCP config; the docs do not say which files it reads, so do not rely on it for the entry above. | Click Probe All; `vision-board` should complete the handshake. |
+| Codex | `~/.codex/config.toml`: a `[mcp_servers.vision-board]` table with `command = "/absolute/path/to/node"` and `args = ["/absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts"]`. Or `codex mcp add vision-board -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`. | `codex mcp list`. The docs do not say whether the CLI needs a restart; restart it if the server is missing. The Codex desktop app and IDE extension share this config and ask for Restart. |
+| Cursor | `~/.cursor/mcp.json` or `.cursor/mcp.json`, the JSON above. | Not read from the vendor's docs; restart Cursor if the server is missing. |
+| Any other client | The same `command` and `args`. | Its own restart step. |
+
+ChatGPT on the web is left out: it connects only to MCP servers reachable over the internet, and the board stays on your machine by design.
 
 The board must be running (`npm run board`). Add `"env"` only to change a setting above.
 
