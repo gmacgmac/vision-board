@@ -16,7 +16,9 @@ The shapes everything else builds on (PLAN.md decisions 3-7, 11, 13-14).
    write items' own `key`) so answers and notes name their card.
 2. `write-request.schema.json`: an optional `import: { into: "new" | "current", file: <export file> }` (or the
    shape that reuses the request best; say which). A route for export in `openapi.json`
-   (`GET /boards/{board}/export?region=&notes=`). `npm run gen`.
+   (`GET /boards/{board}/export?region=&notes=`); `export: true` (and `notes`) on `get_board` and
+   `show_container` returning the export file (PLAN.md decision 7). `write_board`'s tool description names the
+   `import` mode in one sentence, within the tool cap. `npm run gen`.
 3. `packages/format/src/export/`: `upgradeExport` (a step list by `v`, empty, tested with a fake v0 step in the
    test only), `conditionExport` (drops what the schema does not know, names each drop; fills required defaults).
 4. `BoardHost`: `saveFile?`, `openFile?`, `print?` (types and doc comments only); `plugin.md` § the hooks; the flag

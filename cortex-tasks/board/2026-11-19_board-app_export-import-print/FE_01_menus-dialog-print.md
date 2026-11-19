@@ -11,12 +11,13 @@ The person's side (PLAN.md decisions 8-12), behind the flag `boardFiles`.
 
 ## Steps
 
-1. **Menus**: Export, Import, Print on the board menu (`chrome/BoardChrome.svelte` / `Toolbar.svelte`, where Rename
-   board lives) and the container's menu (`packages/ui/src/region/region-row.ts`). An item shows only when the host
-   has its hook and the flag is on.
-2. **One dialog** (reuse the board's existing dialog pattern, `chrome/BoardDialog.svelte`, before making one): Export
-   (board or container; include the conversations on notes), Import (into a new board or this one; then the reply's
-   dropped parts shown), Print (board or container; the container border, off by default for a container).
+1. **Menus** (PLAN.md decision 12): the board's ⋯ menu gets its own section, Print, Export, Import (the toolbar menu,
+   `chrome/Toolbar.svelte`); a container's settings (cog) menu, beside Reset places, gets Print container and Export
+   container (`packages/ui/src/region/region-row.ts`). An item shows only when the host has its hook and the flag is
+   on.
+2. **One dialog** (reuse the board's existing dialog pattern, `chrome/BoardDialog.svelte`, before making one): the scope
+   comes from where it was opened: Export asks only to include the conversations on notes; Import, into a new board
+   or this one (then the reply's dropped parts shown); Print, the container border (off by default for a container).
 3. **Print view**: `@media print` in `apps/board/src/styles/`: no toolbars, rails, menus or chat; the chosen scope
    fitted to the page; the border per the choice; `print-color-adjust: exact`. Link paths get `fill="none"` as an
    attribute (`links/wires.ts`). Then `host.print()`.

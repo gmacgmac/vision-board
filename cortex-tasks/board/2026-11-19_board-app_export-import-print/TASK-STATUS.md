@@ -25,8 +25,9 @@ PLAN.md § House Rules.
 | 1 | T_01 | 1 | strong | no | Principal API engineer — one shape reused, never a near-copy; an import refuses nothing silently and names what it dropped. | [Contract first](./T_01_contract.md) | Pending | |
 | 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Pending | |
 | 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Pending | |
-| 4 | VERIFY_01 | 3 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
-| 5 | T_02 | 4 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Pending | |
+| 3b | T_03 | 3 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios. | [The agent learns export and import](./T_03_skill.md) | Pending | |
+| 4 | VERIFY_01 | 4 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
+| 5 | T_02 | 5 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Pending | |
 
 ## Shared Foundations
 
@@ -60,6 +61,8 @@ _Status:_ Pending
 ### BE_01
 _Status:_ Pending
 ### FE_01
+_Status:_ Pending
+### T_03
 _Status:_ Pending
 ### VERIFY_01
 _Status:_ Pending

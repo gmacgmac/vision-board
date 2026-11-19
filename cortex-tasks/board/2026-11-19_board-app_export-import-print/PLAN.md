@@ -36,9 +36,16 @@ All the maintainer's (2026-11-19) unless marked **planner**.
    (`packages/format/src/migrate/`). Today the chain is empty; the path exists.
 6. **Conditioning**: anything not supported is dropped and named in the reply; anything required and missing gets its
    default; then the normal `write_board` checks.
-7. **Answers are the person's clicks** (board invariant): an import the person makes on the page applies them as the
-   person's acts, after the cards. **Planner**: an agent's `write_board` in `import` mode drops `answers` and says so,
-   so ✓/✗ never come from an agent.
+7. **Agents export and import too** (point 608D): export through the reads they already have (`get_board` and
+   `show_container` with `export: true` return the export file; no new tool); import through `write_board`'s
+   `import` mode, which the tool description and the skill name. Import differs from a write only in what comes
+   before the normal checks: the upgrade by `v`, the conditioning, fresh keys so the file's keys never clash with the
+   writer's own, and a reply naming what was dropped. **Answers are the person's clicks** (board invariant): an
+   import the person makes on the page applies them as the person's acts, after the cards; an agent's import carries
+   the cards, links and notes and drops ✓/✗, naming them.
+7a. **Places on import** (point 608E): import never merges into an existing container; every imported container is
+   new. A card's place is kept relative to its own container (pins are region-local), and the containers themselves
+   are placed by the layout beside what the board already holds, so nothing lands on top of existing cards.
 
 ### Print
 8. **Scope**: the whole board or one container. **The container border** is a choice; off by default when printing a
@@ -51,8 +58,10 @@ All the maintainer's (2026-11-19) unless marked **planner**.
 11. **Three optional hooks on `BoardHost`** (`apps/board/src/board/host.ts`, beside `store?`, `pageChanged?`):
     `saveFile(name, type, bytes)`, `openFile(accept) → { name, bytes } | undefined`, `print()`. The standalone host
     implements them (a download, a file picker, `window.print`). A host without one: that menu item does not show.
-12. **One entry each** (Export, Import, Print) on the board menu and the container's menu, opening one small dialog
-    with the choices.
+12. **Where** (points 608-609): the board's ⋯ menu has its own section with Print, Export and Import; a container's
+    settings (cog) menu, beside Reset places, has Print container and Export container. Where you click sets the
+    scope, so one small dialog asks only: Print, the container border (off by default for a container); Export,
+    include the conversations on notes; Import, into a new board or this one.
 
 ### Not built (right-sized)
 History; merging into or de-duplicating existing cards; keeping card numbers; any PDF or image library; PNG/SVG
@@ -68,7 +77,7 @@ export; any format beyond the wrapper.
 ## House Rules
 
 - **Where**: `.claude/worktrees/app-window`, branch `spike/stage-apps`. Never the main checkout; never port 4466.
-- **Ports**: T_01 8410, BE_01 8510, FE_01 8610, VERIFY_01 8710, T_02 8810.
+- **Ports**: T_01 8410, BE_01 8510, FE_01 8610, VERIFY_01 8710, T_02 8810, T_03 8910.
 - **Own worktrees** (wave 2): `npm run worktree -- files-<id-kebab> --base spike/stage-apps`; the orchestrator
   merges, checks and removes them.
 - **Page specs** always with `--config tests/pages/playwright.config.ts`; baselines are tracked in
@@ -84,6 +93,12 @@ export; any format beyond the wrapper.
 
 _Recorded by the orchestrator._
 
+2026-11-19 (points 608-609): A D-107 yes (worded for 608D and 7a below before appending); B conversations off by
+default; C `.vboard.json`; D agents export (through `get_board`/`show_container`) and import (through `write_board`'s
+`import` mode), answers only from the person (decision 7); E places kept within each container, containers placed by
+the layout, import never merges into an existing container (decision 7a); F flag `boardFiles`. 609: Export container
+beside Print container (decision 12).
+
 ---
 
 ## Decision entry to append
@@ -91,7 +106,7 @@ _Recorded by the orchestrator._
 ```
 ## D-107 Export, import and print: the current state, through write_board and host hooks
 - **Date**: 2026-11-19 · **Status**: Accepted (maintainer, points 605-607) · **From**: tracker N56
-- **Decision**: A board or one container exports its current state as `{ v, title, items, answers?, notes? }`, the items being what `write_board` takes; no history. Import goes through `write_board` in an `import` mode, into a new board or the current one, as if freshly written: older versions upgrade by `v`, unsupported parts are dropped and named, missing required parts get defaults; answers apply only as the person's own acts. Print is a print stylesheet over the live page (board or container, the container border optional), then the browser's PDF. Files and printing go through three optional host hooks (`saveFile`, `openFile`, `print`); a host without one shows no such item.
+- **Decision**: A board or one container exports its current state as `{ v, title, items, answers?, notes? }`, the items being what `write_board` takes; no history. Import goes through `write_board` in an `import` mode, into a new board or the current one, as if freshly written: older versions upgrade by `v`, unsupported parts are dropped and named, missing required parts get defaults; answers apply only as the person's own acts. Print is a print stylesheet over the live page (board or container, the container border optional), then the browser's PDF. Agents export through `get_board` and `show_container` and import through the same mode; an import never merges into an existing container, and cards keep their places within their own container. Files and printing go through three optional host hooks (`saveFile`, `openFile`, `print`); a host without one shows no such item.
 - **Why**: the most direct way that still lets older files in and lets nclite add the hooks when ready.
 - **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/TASK-STATUS.md
 ```
