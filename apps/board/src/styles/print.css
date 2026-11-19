@@ -19,7 +19,8 @@
   .vb-board[data-vb-print-page='landscape'] { page: vb-print-landscape; }
   .vb-board[data-vb-print-page='portrait'] { page: vb-print-portrait; }
   .vb-board[data-vb-print] > :not(.vb-stage), .vb-board[data-vb-print] > .vb-stage > :not(.vb-world) { display: none !important; }
-  .vb-board[data-vb-print] > .vb-stage { position: absolute; inset: 0; overflow: hidden; }
+  /* No dot grid on paper: the canvas colour alone. */
+  .vb-board[data-vb-print] > .vb-stage { position: absolute; inset: 0; overflow: hidden; background-image: none; }
   .vb-board[data-vb-print] .vb-world { transform: var(--vb-print-transform) !important; transition: none !important; }
   /* No soft shadows on paper: a PDF draws a blurred shadow under the fit's scale as a grey block round the card. */
   .vb-board[data-vb-print] .vb-world * { transition: none !important; animation: none !important; box-shadow: none !important; }

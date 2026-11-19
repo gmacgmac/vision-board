@@ -94,7 +94,13 @@ vb-node[data-edges] .vb-node-kind {
 vb-node[data-edges] .vb-node-grip {
   position: absolute; top: -7px; left: 50%; z-index: 1; width: 40px; height: 14px; transform: translateX(-50%);
   border: 1px solid color-mix(in srgb, var(--vb-node-color) 60%, var(--vb-line-strong)); border-radius: 7px;
-  background: radial-gradient(var(--vb-node-color) 1.3px, transparent 1.5px) 7px 3px / 6px 4px, var(--vb-surface-card); cursor: grab;
+  background: var(--vb-surface-card); cursor: grab;
+}
+/* Its dots are the grip icon turned sideways (three across, two down): vector paths, so a print or a PDF at any scale
+   keeps them, where a CSS-gradient pattern was dropped. */
+vb-node[data-edges] .vb-node-grip-dots {
+  position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; translate: -50% -50%; rotate: 90deg;
+  color: var(--vb-node-color); stroke-width: 2.6; pointer-events: none;
 }
 vb-node[data-edges].dragging .vb-node-grip { cursor: grabbing; }
 
