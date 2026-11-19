@@ -32,7 +32,7 @@ test('nodeTemplate carries no inline style and no style element (the CSP refuses
 
 test('nodeTemplate puts the number and the kind on the top border, before the content, and no footer', () => {
   const html = nodeTemplate(node({ n: 41, kind: 'risk' }));
-  assert.match(html, /^<button type="button" class="vb-mark vb-node-num"[^>]*>41<\/button><span class="vb-node-kind">Risk<\/span>/);
+  assert.match(html, /^<button type="button" class="vb-mark vb-node-num"[^>]*>41<\/button><span class="vb-node-kind"><svg [^>]*class="vb-icon vb-node-kind-dots"[^>]*>.*?<\/svg>Risk<\/span>/, 'the grip dots, then the word (point 633)');
   assert.ok(html.indexOf('vb-node-kind') < html.indexOf('vb-node-content'));
   for (const kind of KINDS) assert.doesNotMatch(nodeTemplate(node({ kind, n: 3 })), /<footer|data-act=/, kind);
 });
