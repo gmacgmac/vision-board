@@ -1,6 +1,6 @@
 # Plugin patterns: Journal and Vision Board, merged for nclite
 
-updated: 2026-11-19 (first version, from Journal's and Vision Board's notes of the same day)
+updated: 2026-11-19 (§ 4: both plugins wear the host's scrollbar, point 632); 2026-11-19 (first version, from Journal's and Vision Board's notes of the same day)
 
 nclite's two plugins each wrote down the patterns they built that the host could own: Journal in its own
 `docs/specification/plugin-patterns.md`, Vision Board in `docs/specification/plugin-patterns.md` here. This merges
@@ -15,7 +15,7 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
 | Dates and times | One written rule and one normaliser; the person's locale and first day of the week | Each plugin has its own; they agree |
 | Printing | `print(ask?)` and the `@page` rules | VB has `print()`; J proposes `print({ title, content })`; merged in § 2 |
 | Files | `saveFile`, `openFile` | In VB's contract; J has no files |
-| Scrollbar | The overlay scrollbar, as today, written into the contract | nclite has it; VB draws its own |
+| Scrollbar | The overlay scrollbar, as today, written into the contract | nclite has it; both plugins wear it |
 | Calendar | `ui.calendar(...)`, or at least its tokens | J's own package |
 | Popover | `ui.popover(...)` | J's own package; VB's menus are its own |
 | Confirm | `confirm(ask)`, as today | Both use it |
@@ -104,19 +104,18 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
 
 1. **The need**: every scrolling area looks like the app's: a thin thumb, not the system bar.
 2. **What each built**: nclite installs its overlay scrollbar once for the whole document (`installOverlayScroll`),
-   and J relies on it with no styles of its own. VB draws its own: one CSS rule, a thin thumb at the scroller's far
-   right, always visible, no rail (`packages/ui/src/base/root.css`). It does not yet opt out of nclite's
-   (`data-overlay-off`), so inside nclite the two would double.
+   and J relies on it with no styles of its own. VB draws a thin, always-visible thumb on its standalone page only
+   (`apps/board/src/styles/shell.css`); its plugin carries no scrollbar rule, so inside nclite it wears nclite's
+   (point 632).
 3. **Proposed**: the host's, for every plugin, written into the contract. Plugins don't style scrollbars;
    `data-overlay-off` opts an area out. A plugin that wants another behaviour asks for a host option (for example an
    attribute for always visible), not its own rule.
-4. **What each changes**: J nothing. VB, inside nclite, drops its rule; it keeps the rule for its standalone page
-   only.
+4. **What each changes**: nothing; both already wear the host's.
 5. **Fallback**: native scrollbars.
 6. **Versioning**: none needed; no API.
 7. **Pitfalls found**: two thumbs when a plugin draws its own as well (J). `overflow: hidden` on a label inside a
    scroller stopped a wheel scroll mid-thread; `clip` did not (VB).
-8. **Open**: always visible (VB's, at the maintainer's ask) or fading (nclite's chat today). One answer for all.
+8. **Open**: none; nclite's look stands, for consistency (point 632).
 
 ## 5. The calendar (J)
 
@@ -180,7 +179,6 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
 1. Dates: the rule in § 1, and a zone on a floating time dropped or refused.
 2. Print: the `ask` in § 2, and margins on a coloured page.
 3. Whether `light-dark()` pairs are part of the contract.
-4. Scrollbar: always visible or fading.
-5. Calendar and popover: host components, or tokens only.
-6. A naming rule for plugin files.
-7. An `undoable` field on `confirm`.
+4. Calendar and popover: host components, or tokens only.
+5. A naming rule for plugin files.
+6. An `undoable` field on `confirm`.

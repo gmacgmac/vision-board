@@ -1,6 +1,6 @@
 # Plugin patterns: what Vision Board built, for nclite's plugin specification
 
-updated: 2026-11-19 (first version: printing, files, the scrollbar, dates, small cross-cutting rules)
+updated: 2026-11-19 (§ 3: the host's scrollbar, point 632); 2026-11-19 (first version: printing, files, the scrollbar, dates, small cross-cutting rules)
 
 A note for nclite. nclite will own shared patterns and give them to every plugin through hooks and CSS variables, so a
 hard problem is solved once and no plugin keeps an old copy. This is what Vision Board built and what it suggests the
@@ -53,18 +53,15 @@ the same headings; nclite merges both and picks one answer where they differ.
 ## 3. The scrollbar
 
 1. **The need**: every scrolling area looks the same, quiet but findable.
-2. **What we built**: one CSS rule for every scroller in the board (`packages/ui/src/base/root.css`): a thin thumb at
-   the scroller's far right edge, always visible, no rail, CSS only (`scrollbar-width`, `scrollbar-color`, and
-   `::-webkit-scrollbar` for WebKit windows). The look follows nclite's chat (`app/src/styles/overlay-scroll.css`),
-   without its script. The scroller spans its box's full width and pads its own content, so the thumb sits at the edge.
-3. **What the host should provide**: the thumb's colour and width as CSS variables, so every plugin matches the host.
-4. **How a plugin uses it**: reads the variables in its one rule.
-5. **Fallback**: without the variables, the plugin's own defaults.
-6. **Versioning**: variables only; nothing to call.
+2. **What we built**: inside a host, nothing: the plugin carries no scrollbar rule and wears the host's (point 632).
+   The standalone page draws a thin, always-visible thumb, CSS only (`apps/board/src/styles/shell.css`).
+3. **What the host should provide**: its scrollbar, for every plugin, written into the contract.
+4. **How a plugin uses it**: draws none of its own.
+5. **Fallback**: native scrollbars.
+6. **Versioning**: nothing to call.
 7. **Pitfalls found**: `overflow: hidden` on a label inside a scroller stopped a wheel scroll mid-thread; `clip` did
-   not. When the host draws its own overlay thumb, the plugin's mount should opt out of it (nclite's
-   `data-overlay-off`), so the two don't double.
-8. **Open questions for nclite**: always visible (ours, at the maintainer's ask) or fading (nclite's chat)? One answer.
+   not. A plugin rule that beats the host's `*` rule brings back a second bar next to the host's thumb.
+8. **Open questions for nclite**: none (point 632: nclite's look, for consistency).
 
 ## 4. Dates
 

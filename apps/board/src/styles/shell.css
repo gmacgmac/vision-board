@@ -53,3 +53,24 @@ body > .vb-board { position: absolute; inset: 0; }
   :root:has(> body > .vb-board[data-vb-print-theme='light']) { color-scheme: light; }
   :root:has(> body > .vb-board[data-vb-print-theme='dark']) { color-scheme: dark; }
 }
+/* The board's one scrollbar, on the standalone page only (point 618's look; point 632: inside a host the board draws
+   none and wears the host's, as nclite's overlay scrollbar): a 3px thumb at the scroller's far right edge (the bottom,
+   sideways), 2px in from it, always shown, no rail; it widens under the pointer. One rule for every scroller in the
+   board. Chromium and WebKit draw it from the -webkit- parts; Firefox, which has none, gets the thin bar in the thumb's
+   colour. */
+.vb-board, .vb-board * {
+  --vb-scroll-thumb: color-mix(in srgb, var(--vb-ink) 38%, transparent);
+  scrollbar-width: auto;
+}
+.vb-board::-webkit-scrollbar, .vb-board *::-webkit-scrollbar { display: block; width: 7px; height: 7px; background: transparent; }
+.vb-board::-webkit-scrollbar-track, .vb-board *::-webkit-scrollbar-track,
+.vb-board::-webkit-scrollbar-corner, .vb-board *::-webkit-scrollbar-corner { background: transparent; }
+.vb-board::-webkit-scrollbar-thumb, .vb-board *::-webkit-scrollbar-thumb {
+  border: 2px solid transparent; border-left-width: 2px; border-radius: 4px; background: var(--vb-scroll-thumb) padding-box;
+}
+.vb-board::-webkit-scrollbar-thumb:hover, .vb-board *::-webkit-scrollbar-thumb:hover {
+  border-left-width: 0; background-color: color-mix(in srgb, var(--vb-ink) 55%, transparent);
+}
+@supports not selector(::-webkit-scrollbar) {
+  .vb-board, .vb-board * { scrollbar-width: thin; scrollbar-color: var(--vb-scroll-thumb) transparent; }
+}
