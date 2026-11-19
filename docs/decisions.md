@@ -1402,3 +1402,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: Export and import are the person's function. A person's import is authorised by the browser session and writes its containers, cards and links as the person (ledger format 22, a restamp); no agent is needed. An agent's import, still allowed, drops the person's own acts, answers and moved places, and names them.
 - **Why**: people share boards as files; the person's ✓/✗ and moves stay the person's.
 - **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/TASK-STATUS.md
+
+## D-109 One keyboard-focus colour: blue (amends D-099's node ring)
+- **Date**: 2026-11-19 · **Status**: Accepted (maintainer, point 627) · **From**: design/mockups/focus-ring (options A ink, B blue, C accent)
+- **Decision**: The board has one keyboard-focus colour, on every card, mark, button and app card: blue, light-dark(#2563eb, #60a5fa), 2px with its gap, shown only after Tab. A host may override it (`--vb-host-focus`). It replaces the slate node ring (D-099, point 338) and the accent on controls.
+- **Why**: two focus colours read as inconsistent, and the slate was dull; blue is the focus colour people know.
+- **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/FIX_02_app-card-look.md
