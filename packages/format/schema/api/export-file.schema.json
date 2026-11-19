@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/export-file.schema.json",
+  "title": "Export file",
+  "description": "A board, or one of its containers, as it stands now: its containers, cards and links as the `write_board` items that draw them, each with a `key`, and the person's answers, places and, when asked, notes, naming their card by that key. No history, no card numbers. `write_board`'s `import` takes it back.",
+  "$comment": "Was: D-107; api.md 197-199. The wrapper is the only new shape: `items` are write items (write-item.schema.json), of three types.",
+  "examples": [
+    {
+      "v": 1,
+      "title": "Pricing",
+      "items": [
+        {"type": "region", "key": "options", "region": {"id": "options", "title": "Options", "mode": "grid"}},
+        {"type": "node", "key": "fee-q", "node": {"region": "options", "kind": "question", "title": "Flat fee or per seat?"}},
+        {"type": "node", "key": "annual", "node": {"region": "options", "kind": "note", "title": "Revisit annual billing"}},
+        {"type": "link", "key": "fee-annual", "from": {"key": "fee-q"}, "to": {"key": "annual"}}
+      ],
+      "answers": [{"key": "fee-q", "answer": "check"}],
+      "pins": [{"key": "annual", "x": 320, "y": 40}],
+      "notes": [{"key": "fee-q", "text": "Per seat suits a growing team.", "thread": [{"text": "Agreed: seats it is."}]}]
+    }
+  ],
+  "type": "object",
+  "required": ["v", "title", "items"],
+  "properties": {
+    "v": {
+      "const": 1,
+      "description": "The export format's version. A file of an older version is upgraded before it is read."
+    },
+    "title": {
+      "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/title",
+      "description": "The board's title, or the container's: an import into a new board takes it as the board's."
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 2000,
+      "$comment": "Bounded as every list is; write_board's 512 KiB body binds first.",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/write-item.schema.json",
+        "type": "object",
+        "properties": {"type": {"enum": ["region", "node", "link"], "description": "An export draws with these three item types only."}}
+      },
+      "description": "The `region`, `node` and `link` items that draw it, in an order that writes: each container before its cards, each card before its links. A link names its cards by `{ key }`."
+    },
+    "answers": {
+      "type": "array",
+      "maxItems": 2000,
+      "items": {
+        "type": "object",
+        "required": ["key", "answer"],
+        "properties": {
+          "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key", "description": "The card's key in `items`."},
+          "answer": {"enum": ["check", "cross"], "description": "✓ `check` or ✗ `cross`."}
+        },
+        "unevaluatedProperties": false
+      },
+      "description": "The person's ✓ and ✗ on the cards that ask. Only the person's import applies them, as the person's own acts."
+    },
+    "pins": {
+      "type": "array",
+      "maxItems": 2000,
+      "items": {
+        "type": "object",
+        "required": ["key", "x", "y"],
+        "properties": {
+          "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key", "description": "The card's key in `items`."},
+          "x": {"type": "number", "description": "Across, in its container's coordinates."},
+          "y": {"type": "number", "description": "Down, in its container's coordinates."}
+        },
+        "unevaluatedProperties": false
+      },
+      "description": "Where the person placed a card in its container; the containers themselves are placed by the layout."
+    },
+    "notes": {
+      "type": "array",
+      "maxItems": 2000,
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key", "description": "The card's or the container's key in `items`."},
+          "keys": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 500,
+            "uniqueItems": true,
+            "items": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"},
+            "description": "A note on a group of cards, in place of `key`: each card's key."
+          },
+          "text": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/longText", "description": "The person's words."},
+          "thread": {
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "object",
+              "required": ["text"],
+              "properties": {
+                "text": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/longText", "description": "The agent's words."}
+              },
+              "unevaluatedProperties": false
+            },
+            "description": "The agent's replies to this note, oldest first."
+          }
+        },
+        "oneOf": [{"required": ["key"]}, {"required": ["keys"]}],
+        "unevaluatedProperties": false
+      },
+      "description": "The person's notes and the agent's replies to them, when the export was asked for them; left out otherwise."
+    }
+  },
+  "unevaluatedProperties": false
+}

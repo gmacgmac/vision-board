@@ -191,6 +191,18 @@ export interface BoardHost {
    *  or renamed): the board calls it once its first draw settles, then on each such change. The host asks `pageChip()`
    *  again and reads nothing from the call. Left out, the board tells no one. */
   pageChanged?(): void;
+  /** Saves a file the person asked for (an export, D-107): `name` with its extension (`<board>.vboard.json`), `type` its
+   *  media type, `bytes` its content. The host's own save: the standalone page downloads it. Resolves once handed over;
+   *  rejects with the host's words when it could not. Left out, the board shows no Export item. */
+  saveFile?(name: string, type: string, bytes: Uint8Array): Promise<void>;
+  /** Asks the person for one file to open (an import), of the types `accept` names (`.vboard.json,application/json`, as
+   *  an input's `accept`). Resolves its name and content, or undefined when the person chose none. Left out, the board
+   *  shows no Import item. */
+  openFile?(accept: string): Promise<{ name: string; bytes: Uint8Array } | undefined>;
+  /** Prints the page as it is now: the board has already set what is printed (the board or one container) and its print
+   *  styles. The standalone page calls `window.print()`. Resolves once the host's print has closed. Left out, the board
+   *  shows no Print item. */
+  print?(): Promise<void>;
   /** The standalone page's own part; a host leaves it out. */
   page?: BoardPage;
 }

@@ -285,6 +285,10 @@ export const FLAGS = {
     // engine's `flags`. Read by the engine only; ?flags= does not reach it.
     default: true,
   },
+  boardFiles: {
+    // Off by default (export-import-print PLAN decision 14, D-107): on once the maintainer says yes, then removed (T_02).
+    default: false,
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
@@ -403,4 +407,5 @@ export const FLAG_DESCRIPTIONS = {
   hostStyling: 'Under a host, the plugin\'s board wears the host\'s colours and mode: each `--host-*` colour property it sets (`--host-accent`, `--host-surface`, `--host-ink` and the rest) replaces the board\'s tokens it feeds, `--vb-accent-soft` and `--vb-accent-line` mix the host\'s accent into its surface, and `--host-color-scheme` sets light or dark at the board\'s root, ahead of `data-theme` and the system; set on the mount root or any ancestor, live (docs/specification/plugin.md § Theme and host styling). A host that sets none, and standalone, look as before. Off, the board keeps its own colours and mode as before; the font properties still apply.',
   singleAgent: 'One agent per data folder, as a host with one bot per folder has it (docs/specification/plugin.md § The bot). The engine asks no sign-up and takes any caller id, which it never compares: no `needs-grant`, no refusal for another agent\'s card, `request_grant` answers `held`, and every read is unscoped (`check_responses`, `list_open`, the caller\'s marks, the answers chip); each agent line is written as the folder\'s one agent, the first already joined in the ledger, else one the engine joins on its first write, named by `name()`. The view, told by the engine\'s ledger read (`oneAgent`), ignores `chat.status.agent`. The person\'s ✓, ✗ and approving stay the person\'s, and a locked board still refuses every write. Off, as before: `POST agents` names each agent, grants and scoping hold.',
   followOtherWriters: 'The engine polls the ledger file for another program\'s appends (`ledger.ts` `follow`, every `FOLLOW_MS`) while `watch` or a held read listens, so a second writer on the folder reaches the view. Off, it never polls: `watch` hears the engine\'s own writes, and a held read wakes on them alone; a host turns it off where its engine is the folder\'s only writer.',
+  boardFiles: 'The board\'s "⋯" menu has Print, Export and Import, and a container\'s settings menu Print container and Export container, each shown only when the host gives its hook (`BoardHost` `print`, `saveFile`, `openFile`; D-107). Export saves the board or the container as an export file (`.vboard.json`), Import writes one into a new board or this one, Print prints the board or the container through the browser. Off, none of the five shows; `write_board`\'s `import` and the export reads are the contract\'s and answer either way.',
 } as const satisfies Record<FlagName, string>;

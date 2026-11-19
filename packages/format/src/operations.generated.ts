@@ -34,6 +34,10 @@ export const OPERATIONS = {
     operationId: 'put_board', method: 'PUT', path: '/api/boards/{board}',
     pathParams: ['board'], xAgent: false, auth: 'person',
   },
+  export_board: {
+    operationId: 'export_board', method: 'GET', path: '/api/boards/{board}/export',
+    pathParams: ['board'], xAgent: false, auth: 'none',
+  },
   show_node: {
     operationId: 'show_node', method: 'GET', path: '/api/boards/{board}/nodes/{n}',
     pathParams: ['board', 'n'], xAgent: true, auth: 'none',

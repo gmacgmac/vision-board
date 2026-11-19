@@ -38,13 +38,17 @@ export const UPGRADE_STEPS: readonly UpgradeStep[] = /* @__PURE__ */ [noVersion]
  * bundle that never upgrades a line (the board's page and view: the server upgrades first) leaves the chain out. */
 let byFrom: Map<number | 'none', UpgradeStep> | undefined;
 
-/** One parsed line in the current format, or why it can't be. A line already current comes back untouched (the same
- * object), and so does one whose `v` the chain does not know (newer, or not a format): the reader judges it. */
-export function upgradeLine(line: Readonly<Line>): Line | UpgradeStop {
-  let v: unknown = line.v === undefined ? 'none' : line.v;
-  let cur = line as Line;
-  while (v !== LEDGER_FORMAT) {
-    const step = (byFrom ??= new Map(UPGRADE_STEPS.map((s) => [s.from, s]))).get(v as number | 'none');
+/** `value` brought up a chain of steps by its `v` (`'none'` when it has none), one step at a time, to `target`. Already
+ * there, it comes back untouched (the same object); a step that stops, its stop; no step from its `v` (newer, or not a
+ * version), the value as far as it got, for the caller to judge. One chain runner, two chains: the ledger's lines
+ * (`upgradeLine`) and the export file's (export/upgrade.ts `upgradeExport`). */
+export function runUpgradeChain(
+  value: Readonly<Line>, target: number, stepFrom: (v: number | 'none') => UpgradeStep | undefined,
+): Line | UpgradeStop {
+  let v: unknown = value.v === undefined ? 'none' : value.v;
+  let cur = value as Line;
+  while (v !== target) {
+    const step = stepFrom(v as number | 'none');
     if (!step) return cur;
     const out = step.up(cur);
     if (isUpgradeStop(out)) return out;
@@ -52,6 +56,14 @@ export function upgradeLine(line: Readonly<Line>): Line | UpgradeStop {
     v = step.to;
   }
   return cur;
+}
+
+const ledgerStep = (v: number | 'none'): UpgradeStep | undefined => (byFrom ??= new Map(UPGRADE_STEPS.map((s) => [s.from, s]))).get(v);
+
+/** One parsed line in the current format, or why it can't be. A line already current comes back untouched (the same
+ * object), and so does one whose `v` the chain does not know (newer, or not a format): the reader judges it. */
+export function upgradeLine(line: Readonly<Line>): Line | UpgradeStop {
+  return runUpgradeChain(line, LEDGER_FORMAT, ledgerStep);
 }
 
 /** A whole file upgraded, as text. */

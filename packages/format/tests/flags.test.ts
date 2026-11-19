@@ -133,3 +133,8 @@ test('the host-only flags never reach the board\'s own engine: withoutHostFlags 
   const project = readFileSync(path.resolve(import.meta.dirname, '../../../apps/board/server/project.ts'), 'utf8');
   assert.match(project, /createEngine\(\{.*flags: withoutHostFlags\(o\.apps\?\.flags\)/s, 'the standalone server gives its engine its flags less the host-only ones');
 });
+
+test('boardFiles is off by default (export-import-print PLAN decision 14), and boardFiles turns it on', () => {
+  assert.equal(flagOn('boardFiles'), false);
+  assert.equal(flagOn('boardFiles', { boardFiles: true }), true);
+});

@@ -22,7 +22,7 @@ test('a command\'s help is written from the table: usage, each input with its ki
 
 test('a command with a body says the body can come whole', () => {
   const text = commandHelp(COMMANDS.find((c) => c.name === 'write-board')!);
-  assert.match(text, /Usage: vb write-board --board <string> --items <json> \[--json-body <file\|->\]/);
+  assert.match(text, /Usage: vb write-board --board <string> \[--items <json>\] \[--import <json>\] \[--json-body <file\|->\]/);
   assert.match(text, /body field \(or in --json-body\)/);
   assert.ok(text.split('\n').every((l) => l.length <= 140), 'lines stay readable');
 });

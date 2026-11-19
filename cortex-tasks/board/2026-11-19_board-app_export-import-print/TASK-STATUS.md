@@ -22,7 +22,7 @@ PLAN.md § House Rules.
 
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
-| 1 | T_01 | 1 | strong | no | Principal API engineer — one shape reused, never a near-copy; an import refuses nothing silently and names what it dropped. | [Contract first](./T_01_contract.md) | Pending | |
+| 1 | T_01 | 1 | strong | no | Principal API engineer — one shape reused, never a near-copy; an import refuses nothing silently and names what it dropped. | [Contract first](./T_01_contract.md) | Completed | Contract and tests landed. One decision blocks the person's import (who writes the cards; see notes). BE_01 owes the `export_board` handler. |
 | 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Pending | |
 | 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Pending | |
 | 3b | T_03 | 3 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios. | [The agent learns export and import](./T_03_skill.md) | Pending | |
@@ -52,12 +52,25 @@ PLAN.md § House Rules.
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
-| | | | | |
+| `apps/board/server/handlers.ts` + engine: `export_board` handler (tsc and `api-errors.test.ts` red until then) | T_01 | blocking for the wave gate | BE_01 | Open |
+| `docs/specification/modules.md`: `npm run map` (new `packages/format/src/export/`) | T_01 | blocking for verify | orchestrator | Open |
+| `packages/mcp/tests/tools.test.ts` budgets: get_board 1,413, show_container 1,044, write_board 20,126, list 38,265 | T_01 | non-blocking | orchestrator | Open |
+| The person's import: who writes the cards (ledger 22, `PERSON_TOO`, cookie on `import`); pins on an agent's import | T_01 | blocking BE_01 step 2, FE_01 step 4 | maintainer | Open |
 
 ## Implementation Notes
 
 ### T_01
-_Status:_ Pending
+_Status:_ Completed (2026-11-19). The full notes are in the task file. For wave 2:
+- Shapes: `ExportFile` (`OperationOutput<'export_board'>`) adds `pins?` (decision 7a) and `notes[].keys` (a note on a
+  group of cards). The request is `import: { into, file }`, and `file` is any object until `upgradeExport` and
+  `conditionExport` have run. The result is `dropped: string[]`.
+- `conditionExport(raw) → { file, dropped }` already drops refs to cards the file no longer holds, ✓/✗ on cards that
+  don't ask, a card's number/`n`/`base`/`insert`, and a container's `center`. BE_01 only adds the agent-side drop of
+  answers (and pins, if that is ruled).
+- **Open, for the maintainer:** a person's import has no author for its region, node and link lines. `write_board` is
+  agent-only, and in ledger 21 those line types are agent-only. Recommended: they join `PERSON_TOO`, ledger format 22
+  (a restamp), and `write_board` takes the person's cookie for `import` only.
+- Also open: pins on an agent's import (recommended: drop and name them, like answers).
 ### BE_01
 _Status:_ Pending
 ### FE_01

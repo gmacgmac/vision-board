@@ -16,8 +16,10 @@ export interface OperationTypes {
     input: {
       board: string;
       ledger?: string;
+      export?: boolean;
+      notes?: boolean;
     };
-    output: GetBoardResponse;
+    output: GetBoardResponse | ExportFile;
   };
   put_board: {
     input: {
@@ -25,6 +27,14 @@ export interface OperationTypes {
       body: BoardRequest;
     };
     output: BoardStored;
+  };
+  export_board: {
+    input: {
+      board: string;
+      region?: string;
+      notes?: boolean;
+    };
+    output: ExportFile;
   };
   show_node: {
     input: {
@@ -39,8 +49,10 @@ export interface OperationTypes {
     input: {
       board: string;
       region: string;
+      export?: boolean;
+      notes?: boolean;
     };
-    output: ShowContainerResponse;
+    output: ShowContainerResponse | ExportFile;
   };
   show_layout: {
     input: {
@@ -421,12 +433,170 @@ type GetBoardResponseHolder = {
   label: CommonAgentLabel;
   creator?: true;
 };
-type BoardRequest = BoardCore;
+type ExportFile = {
+  v: 1;
+  title: CommonTitle;
+  items: (WriteItem & {
+    type?: "region" | "node" | "link";
+  })[];
+  answers?: {
+    key: CommonKey;
+    answer: "check" | "cross";
+  }[];
+  pins?: {
+    key: CommonKey;
+    x: number;
+    y: number;
+  }[];
+  notes?: {
+    key?: CommonKey;
+    keys?: CommonKey[];
+    text: CommonLongText;
+    thread?: {
+      text: CommonLongText;
+    }[];
+  }[];
+};
+type WriteItem = BoardSent | RegionSent | NodeSent | LinkSent | UnlinkSent | ReplySent | {
+  type: "propose";
+  n: CommonNodeRef;
+  ver: number;
+  action: "check" | "cross";
+  reason: CommonLongText;
+  source?: CommonSource;
+  key?: CommonKey;
+} | ParkSent | RetireSent | {
+  type: "append";
+  n: CommonNodeRef;
+  text: CommonNodeBody;
+  base?: number;
+  key?: CommonKey;
+};
+type BoardSent = {
+  type: "board";
+  key?: CommonKey;
+} & BoardCore;
+type CommonKey = string;
 type BoardCore = {
   title: CommonTitle;
   summary?: CommonSummary;
   skin?: "default" | "command-lens";
 };
+type RegionSent = {
+  type: "region";
+  key?: CommonKey;
+} & RegionCore & RegionNoList;
+type RegionCore = {
+  region: RegionRegion;
+};
+type RegionRegion = {
+  id: string;
+  title: CommonRegionTitle;
+  mode?: CommonLineMode;
+  lanes?: CommonLanes;
+  center?: number;
+  columns?: number;
+  widths?: "match" | "own";
+  direction?: "across" | "down";
+};
+type CommonLineMode = "grid" | "flow" | "lanes" | "radial" | "column" | "row" | "list";
+type RegionNoList = {
+  region?: {
+    mode?: JsonValue;
+  };
+};
+type NodeSent = {
+  type: "node";
+  n?: CommonNodeRef;
+  base?: number;
+  key?: CommonKey;
+  insert?: {
+    after: CommonNodeRef;
+    before: CommonNodeRef;
+  };
+} & NodeSentCore & NodeNoItem & NodeAppRule;
+type CommonNodeRef = number | {
+  key: CommonKey;
+};
+type NodeSentCore = {
+  node: NodeSentBody;
+};
+type NodeSentBody = NodeFields & {
+  timeline?: CommonTimelineSent;
+};
+type NodeFields = {
+  region: string;
+  kind: CommonKind;
+  title: CommonTitle;
+  body?: CommonNodeBody;
+  item?: boolean;
+  lane?: CommonLane;
+  tags?: CommonTags;
+  emphasis?: boolean;
+  size?: "s" | "m" | "l";
+  app?: CommonAppRef;
+  icon?: CommonIconName;
+  tone?: CommonTone;
+};
+type CommonTimelineSent = string | number;
+type NodeNoItem = {
+  node?: {
+    item?: unknown;
+  };
+};
+type NodeAppRule = {
+  node?: unknown;
+};
+type LinkSent = {
+  type: "link";
+  from: CommonNodeRef;
+  to: CommonNodeRef;
+  key?: CommonKey;
+} & LinkCore;
+type LinkCore = {
+  label?: CommonLinkLabel;
+};
+type UnlinkSent = {
+  type: "unlink";
+  from: CommonNodeRef;
+  to: CommonNodeRef;
+  key?: CommonKey;
+} & LinkCore;
+type ReplySent = {
+  type: "reply";
+  n: CommonNodeRef;
+  key?: CommonKey;
+} & ReplyCore;
+type ReplyCore = {
+  text: CommonLongText;
+  to?: number;
+};
+type CommonSource = string;
+type ParkSent = {
+  type: "park";
+  n: CommonNodeRef;
+  key?: CommonKey;
+} & ParkCore;
+type ParkCore = {
+  bundle: ParkBundle;
+};
+type ParkBundle = {
+  situation: CommonLongText;
+  background: CommonLongText;
+  assessment: CommonLongText;
+  recommendation: CommonLongText;
+  sources?: CommonSources;
+};
+type CommonSources = CommonSource[];
+type RetireSent = {
+  type: "retire";
+  n?: CommonNodeRef;
+  key?: CommonKey;
+} & RetireCore;
+type RetireCore = {
+  region?: string;
+};
+type BoardRequest = BoardCore;
 type BoardStored = {
   type: "board";
 } & CommonStamp & CommonStampAgent & BoardCore & {
@@ -446,7 +616,6 @@ type CommonPerson = string;
 type CommonStampAgent = {
   agent?: string;
 };
-type CommonKey = string;
 type ShowNodeResponse = {
   head: number;
   linked?: CommonNodeDetail[];
@@ -479,20 +648,6 @@ type CommonNodeVersion = {
 type NodeBody = NodeFields & {
   timeline?: string;
 };
-type NodeFields = {
-  region: string;
-  kind: CommonKind;
-  title: CommonTitle;
-  body?: CommonNodeBody;
-  item?: boolean;
-  lane?: CommonLane;
-  tags?: CommonTags;
-  emphasis?: boolean;
-  size?: "s" | "m" | "l";
-  app?: CommonAppRef;
-  icon?: CommonIconName;
-  tone?: CommonTone;
-};
 type CommonReply = {
   seq: number;
   at: string;
@@ -512,15 +667,6 @@ type CommonProposal = {
   decidedBy?: number;
   outcome?: "accepted" | "rejected" | "closed";
 };
-type CommonSource = string;
-type ParkBundle = {
-  situation: CommonLongText;
-  background: CommonLongText;
-  assessment: CommonLongText;
-  recommendation: CommonLongText;
-  sources?: CommonSources;
-};
-type CommonSources = CommonSource[];
 type CommonLink = {
   from: number;
   to: number;
@@ -539,17 +685,6 @@ type ShowContainerResponse = {
     y: number;
   };
 };
-type RegionRegion = {
-  id: string;
-  title: CommonRegionTitle;
-  mode?: CommonLineMode;
-  lanes?: CommonLanes;
-  center?: number;
-  columns?: number;
-  widths?: "match" | "own";
-  direction?: "across" | "down";
-};
-type CommonLineMode = "grid" | "flow" | "lanes" | "radial" | "column" | "row" | "list";
 type ShowLayoutResponse = {
   head: number;
   board: string;
@@ -663,9 +798,6 @@ type RegionStored = {
   board: string;
   key?: CommonKey;
 };
-type RegionCore = {
-  region: RegionRegion;
-};
 type NodeStored = {
   type: "node";
 } & CommonStamp & CommonStampAgent & NodeCore & NodeRules & {
@@ -679,9 +811,6 @@ type NodeCore = {
   node: NodeBody;
 };
 type NodeRules = NodeAppRule;
-type NodeAppRule = {
-  node?: unknown;
-};
 type LinkStored = {
   type: "link";
 } & CommonStamp & CommonStampAgent & LinkCore & {
@@ -689,9 +818,6 @@ type LinkStored = {
   from: number;
   to: number;
   key?: CommonKey;
-};
-type LinkCore = {
-  label?: CommonLinkLabel;
 };
 type UnlinkStored = {
   type: "unlink";
@@ -722,10 +848,6 @@ type ReplyStored = {
   n: number;
   key?: CommonKey;
 };
-type ReplyCore = {
-  text: CommonLongText;
-  to?: number;
-};
 type ProposeStored = {
   type: "propose";
 } & CommonStamp & CommonStampAgent & ProposeCore & {
@@ -745,9 +867,6 @@ type ParkStored = {
   by?: "agent";
   n: number;
   key?: CommonKey;
-};
-type ParkCore = {
-  bundle: ParkBundle;
 };
 type JoinStored = {
   type: "join";
@@ -776,9 +895,6 @@ type RetireStored = {
   board: string;
   cards: CommonCards;
   key?: CommonKey;
-};
-type RetireCore = {
-  region?: string;
 };
 type CommonCards = number[];
 type IconStored = {
@@ -816,93 +932,18 @@ type GrantResponseHeld = {
   held: true;
 };
 type WriteRequest = {
-  items: WriteItem[];
-};
-type WriteItem = BoardSent | RegionSent | NodeSent | LinkSent | UnlinkSent | ReplySent | {
-  type: "propose";
-  n: CommonNodeRef;
-  ver: number;
-  action: "check" | "cross";
-  reason: CommonLongText;
-  source?: CommonSource;
-  key?: CommonKey;
-} | ParkSent | RetireSent | {
-  type: "append";
-  n: CommonNodeRef;
-  text: CommonNodeBody;
-  base?: number;
-  key?: CommonKey;
-};
-type BoardSent = {
-  type: "board";
-  key?: CommonKey;
-} & BoardCore;
-type RegionSent = {
-  type: "region";
-  key?: CommonKey;
-} & RegionCore & RegionNoList;
-type RegionNoList = {
-  region?: {
-    mode?: JsonValue;
+  items?: WriteItem[];
+  import?: {
+    into: "new" | "current";
+    file: Record<string, unknown>;
   };
 };
-type NodeSent = {
-  type: "node";
-  n?: CommonNodeRef;
-  base?: number;
-  key?: CommonKey;
-  insert?: {
-    after: CommonNodeRef;
-    before: CommonNodeRef;
-  };
-} & NodeSentCore & NodeNoItem & NodeAppRule;
-type CommonNodeRef = number | {
-  key: CommonKey;
-};
-type NodeSentCore = {
-  node: NodeSentBody;
-};
-type NodeSentBody = NodeFields & {
-  timeline?: CommonTimelineSent;
-};
-type CommonTimelineSent = string | number;
-type NodeNoItem = {
-  node?: {
-    item?: unknown;
-  };
-};
-type LinkSent = {
-  type: "link";
-  from: CommonNodeRef;
-  to: CommonNodeRef;
-  key?: CommonKey;
-} & LinkCore;
-type UnlinkSent = {
-  type: "unlink";
-  from: CommonNodeRef;
-  to: CommonNodeRef;
-  key?: CommonKey;
-} & LinkCore;
-type ReplySent = {
-  type: "reply";
-  n: CommonNodeRef;
-  key?: CommonKey;
-} & ReplyCore;
-type ParkSent = {
-  type: "park";
-  n: CommonNodeRef;
-  key?: CommonKey;
-} & ParkCore;
-type RetireSent = {
-  type: "retire";
-  n?: CommonNodeRef;
-  key?: CommonKey;
-} & RetireCore;
 type WriteResult = {
   results: (WriteResultWritten | WriteResultFailed)[];
   head: number;
   pending: CommonOpenItem[];
   containers?: CommonOpenContainer[];
+  dropped?: string[];
 };
 type WriteResultWritten = {
   index: number;

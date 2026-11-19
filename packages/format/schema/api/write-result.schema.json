@@ -43,6 +43,13 @@
       },
       "description": "Whole containers the caller holds whose latest note still waits for it; left out when none.",
       "$comment": "Was: api.md 77"
+    },
+    "dropped": {
+      "type": "array",
+      "maxItems": 2000,
+      "items": {"type": "string", "maxLength": 500},
+      "description": "For an `import`: each part of the file left out, where it was and why, in reading order; left out when nothing was.",
+      "$comment": "Was: D-107, api.md 198"
     }
   },
   "unevaluatedProperties": false,

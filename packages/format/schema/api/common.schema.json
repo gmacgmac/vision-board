@@ -58,6 +58,18 @@
       "default": false,
       "description": "True adds the nodes linked to this one"
     },
+    "export": {
+      "type": "boolean",
+      "default": false,
+      "description": "True answers with the export file in place of the read",
+      "$comment": "Was: D-107, api.md 197"
+    },
+    "exportNotes": {
+      "type": "boolean",
+      "default": false,
+      "description": "True adds the notes and their replies to an export",
+      "$comment": "Was: D-107, api.md 197"
+    },
     "iconPaths": {
       "type": "boolean",
       "default": false,

@@ -55,6 +55,9 @@ const host: PluginHost = {
   store: { get: (key) => (key ? null : ''), set: (key, value) => void [key, value] },
   imageRoute: '/board-images/',
   pageChanged: () => {},
+  saveFile: async (name, type, bytes) => void [name, type, bytes.byteLength],
+  openFile: async (accept) => (accept ? { name: 'plans.vboard.json', bytes: new Uint8Array() } : undefined),
+  print: async () => {},
 };
 
 export async function useView(root: HTMLElement): Promise<unknown[]> {
@@ -65,8 +68,9 @@ export async function useView(root: HTMLElement): Promise<unknown[]> {
   view.status.on((patch) => void [patch.boardId, patch.title, patch.counts?.open, patch.unsaved, patch.chatWork]);
   const sent = await view.send();
   const left = await view.leave();
+  const file = await host.openFile?.('.vboard.json');
   view.unmount();
-  return [chip?.plugin, chip?.kind, chip?.label, chip?.detail, chip?.preview, chip && refOf(chip), boardId, title, counts.open, counts.withAgent, counts.answered, counts.later, unsaved, chatWork, view.unsaved(), sent, left];
+  return [file?.name, file?.bytes, chip?.plugin, chip?.kind, chip?.label, chip?.detail, chip?.preview, chip && refOf(chip), boardId, title, counts.open, counts.withAgent, counts.answered, counts.later, unsaved, chatWork, view.unsaved(), sent, left];
 }
 
 export async function useEngine(signal: AbortSignal): Promise<unknown[]> {

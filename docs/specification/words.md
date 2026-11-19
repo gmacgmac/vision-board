@@ -87,6 +87,7 @@ layer: its words import nothing, not even `node:`.
 | File | Area | Holds |
 |---|---|---|
 | `packages/format/src/words/format-common.ts` | `format-common` | Sentences more than one area of the format says, said once. |
+| `packages/format/src/words/format-export.ts` | `format-export` | Why an export file can't be read, and each part of one an import leaves out (D-107). |
 | `packages/format/src/words/format-icons.ts` | `format-icons` | Why a drawing of the project's icon library is refused: what was found in its path data, its title or its file. |
 | `packages/format/src/words/format-kinds.ts` | `format-kinds` | The names of the kinds of card. |
 | `packages/format/src/words/format-ledger.ts` | `format-ledger` | Why a ledger line or an act is refused: the field, what it must be, and what it names. |

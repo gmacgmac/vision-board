@@ -311,3 +311,14 @@ export function eventProblems(input: unknown): string[] {
 /** The keys of `o` that `shape` knows, so an unknown type reports only the stamp's problems. */
 const pick = (o: Rec, shape: Shape): Rec =>
   Object.fromEntries(Object.entries(o).filter(([k]) => k in shape.fields));
+
+/** One field of a container (region.schema.json `region`) or a node (node.schema.json `fields`) as the ledger checks it:
+ * its problems, named `<prefix><field>`, or undefined when the shape has no such field. An export file's conditioning
+ * (export/condition.ts) keeps what passes and drops the rest, so it holds no field list of its own. */
+export function shapeFieldProblems(shape: 'region' | 'node', field: string, value: unknown, prefix: string): string[] | undefined {
+  const { fields } = shape === 'region' ? REGION : NODE;
+  if (!Object.hasOwn(fields, field)) return undefined;
+  const p: string[] = [];
+  fields[field]!(value, `${prefix}${field}`, p);
+  return p;
+}
