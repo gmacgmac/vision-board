@@ -391,6 +391,15 @@ Where a page and this list differ, this list wins._
   rather than one step; the stem meets the middle of the node's facing edge in both forms; dated nodes follow the
   container's widths setting, `match` by default run down and `own` across."
 
+2026-11-19, the result review (points 597-603, VERIFY_01's findings):
+- **597, the year label at Fit**: left for now (tracker row).
+- **598, a year-only date before its months**: kept as decision 9 says.
+- **599, the same-date band in dark**: asked what it is; open.
+- **600, a link along the line run down**: a tracker row (routing around the line, later).
+- **601, Tab order**: inside a timeline, Tab goes in date order (the order the line draws); elsewhere unchanged. FIX_03.
+- **602, the date said twice**: remove the hidden full form from the card's content; the card's name carries it. FIX_03.
+- **603, a one-dot line for a lone dated card**: no objection; kept.
+
 ---
 
 ## Decision entry to append
