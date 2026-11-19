@@ -42,25 +42,25 @@ Check, from another terminal:
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4466
 ```
 
-It prints `200`. Open http://localhost:4466 in a browser to see the board. It opens one folder at a time:
+It prints `200`. If port 4466 is taken, start it on another with `VB_PORT=<port> npm run board`, and set the same
+address as `VB_SERVER` in each MCP entry's `env` (`packages/mcp/README.md` § Settings). Open http://localhost:4466 in a
+browser to see the board. It opens one folder at a time:
 `VB_PROJECT` if set, else the last folder opened from the board, else this repo (`.kiro/steering/vision-board-proj.md`
 § Running). The person opens their project with "⋯", Open folder…; an agent works only in the folder the board has
-open. Only one board server may hold a
-folder's ledger; a second one refuses to start and names who holds it (`README.md` § Running).
+open. Only one board server may hold a folder's ledger; a second one refuses to start and names who holds it
+(`README.md` § Running).
+
+The board opens **read-only**: nothing is written, by the person or an agent, until it is switched to Editing (an
+agent's writes answer `read-only` until then). The person presses Read-only in the toolbar to switch; or start it
+writable with `VB_EDIT=1 npm run board` (the server says which when it starts).
 
 ## 4. Add the MCP server to each client
 
 Do this for each client the person uses. The entry for every client is written once, in
 [packages/mcp/README.md](packages/mcp/README.md) § Adding it to a client: follow its table row.
-Use `<node>` from `which node` and `<clone>/packages/mcp/bin/vb-mcp.ts` as the two absolute paths.
-
-| Client | MCP entry file | Restart |
-|---|---|---|
-| Claude Code | `claude mcp add --scope user` (stored in `~/.claude.json`) | New session |
-| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` | Quit the app completely, reopen |
-| Kiro CLI, Kiro IDE | `~/.kiro/settings/mcp.json` | None, reloads on save |
-| Kiro Crew | Its dashboard, Customize, MCP Servers | Probe All |
-| Codex | `~/.codex/config.toml` or `codex mcp add` | `codex mcp list`; restart if missing |
+Use `<node>` from `which node` and `<clone>/packages/mcp/bin/vb-mcp.ts` as the two absolute paths. Each row there
+gives the exact file or command (Claude Code's full `claude mcp add` line is only there) and how to restart the client:
+Claude Code, Claude Desktop, Kiro CLI and Kiro IDE, Kiro Crew, Codex.
 
 Check for each: the client lists a server named `vision-board` (Claude Code: `claude mcp list`; Codex:
 `codex mcp list`; Kiro and Claude Desktop: in the client's MCP or connectors list; Crew: Probe All).
@@ -71,8 +71,9 @@ this machine by design.
 ## 5. Link the skill into each client
 
 The skill's one source is `<clone>/skills/vision-board`. Each client gets a link to it, never a copy
-(D-057, `docs/decisions.md`). Make the client's skills folder first if it is missing. If a `vision-board` entry
-already exists there, look at it before replacing it.
+(D-057, `docs/decisions.md`). If a `vision-board` entry
+already exists there, look at it before replacing it. Make the client's skills folder first, for example
+`mkdir -p ~/.claude/skills`, or the link fails with "No such file or directory".
 
 | Client | Skills folder | Link |
 |---|---|---|
@@ -80,8 +81,6 @@ already exists there, look at it before replacing it.
 | Kiro CLI, Kiro IDE | `~/.kiro/skills` | `ln -s <clone>/skills/vision-board ~/.kiro/skills/vision-board` |
 | Kiro Crew | `~/.kiro/crew/skills` | `ln -s <clone>/skills/vision-board ~/.kiro/crew/skills/vision-board` |
 | Codex | `~/.agents/skills` | `ln -s <clone>/skills/vision-board ~/.agents/skills/vision-board` |
-
-Make the folder first, for example `mkdir -p ~/.claude/skills`.
 
 Check for each: `ls ~/.claude/skills/vision-board/SKILL.md` (with the client's own folder) lists the file. A
 `ls -l` on the entry shows `->` to the clone.
@@ -117,7 +116,8 @@ A tool error or "no such tool" is a fault: see below.
 | `list_boards` cannot reach the board | The board is not running: step 3, and `curl` it. |
 | Server missing or "failed to connect" | A relative path or `~` in the entry: use absolute paths, check that `<clone>/packages/mcp/bin/vb-mcp.ts` exists. |
 | Server absent after editing | The client was not restarted: step 4's restart column. |
-| `wrong-folder` | The board has another folder open than the agent's. Stop and tell the person; do not call `join`. |
+| `wrong-folder` | The board has another folder open than the agent's. Stop and tell the person; do not call `join`. The fix: the person opens the agent's folder in the board ("⋯", Open folder…), or the entry's `env` sets `VB_PROJECT` to the folder the board has open (`packages/mcp/README.md` § Settings). |
+| `read-only` | The board is read-only: the person switches it to Editing (step 3). |
 | Skill not listed | The link is broken (`ls -l`), or the client was not restarted. |
 
 ## Sources

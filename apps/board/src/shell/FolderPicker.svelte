@@ -95,7 +95,7 @@
 {/snippet}
 
 <h2 id="{uid}-title">{here ? foldersWords.openFolderChooseAProject : foldersWords.openFolder}</h2>
-<p id="{uid}-body" class="vb-dialog-item">{foldersWords.theBoardThenShowsThat(here ? foldersWords.underYourHomeFolder : foldersWords.chooseAProjectFolderUnderYour)}</p>
+<p id="{uid}-body" class="vb-dialog-item">{foldersWords.theBoardThenShowsThat(here ? foldersWords.chooseOneBelow : foldersWords.chooseAProjectFolder)}</p>
 {#if here}
   <div class="vb-folder-current" role="group" aria-labelledby="{uid}-current">
     <span class="vb-folder-current-label" id="{uid}-current">{foldersWords.currentFolder}</span>
