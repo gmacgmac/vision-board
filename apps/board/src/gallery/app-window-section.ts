@@ -25,6 +25,13 @@ function windowCard(fx: Fixture, def: SkinDef, suffix: string, app: AppCardInput
   return node;
 }
 
+/** Selected, and active (the app clicked into: the frame's data-active): the card's top line, one border, no ring (FIX_02). */
+function lines(fx: Fixture, def: SkinDef, skin: Skin): VbNodeElement[] {
+  const [sel, active] = [false, true].map((on) => windowCard(fx, def, `${skin}-l${on ? 1 : 0}`, { info: CALCULATOR }, { selected: true }));
+  active!.querySelector('vb-app-frame')!.toggleAttribute('data-active', true);
+  return [sel!, active!];
+}
+
 /** Allow on its way and refused, as the page leaves them (app-cards.ts), and "Allowed ▾" with its menu open. */
 function moments(fx: Fixture, def: SkinDef): VbNodeElement[] {
   const [busy, refused, menu] = [ASKING, ASKING, { info: CALCULATOR }].map((app, i) => windowCard(fx, def, `m${i}`, app));
@@ -61,6 +68,8 @@ function skinPart(fx: Fixture, skin: Skin): HTMLElement {
       cardList(`App window states, ${skin}`, ...STATES.map(([, app], i) => windowCard(fx, def, `${skin}-${i}`, app)))),
     group(`Allow and its menu (${skin})`, 'Allow on its way (loading), Allow refused (until the next press), and "Allowed ▾" with Stop app open under the bar; then bookmarked and selected.',
       cardList(`App window moments, ${skin}`, ...moments(fx, def), windowCard(fx, def, `${skin}-b`, { info: CALCULATOR }, { bookmarked: true, selected: true }))),
+    group(`Selected and active (${skin})`, 'One border in every state and no ring. Selected: the full accent line along the top, following the corners. Active (clicked into the app): the same line and the title at full ink. Hover is a gentler line (not shown here). Bottom corners 2px.',
+      cardList(`App window, selected and active, ${skin}`, ...lines(fx, def, skin))),
     group(`The drawer open (${skin})`, 'The node\'s conversation docked on the right at the window\'s height: a sent note and the agent\'s reply, then a note the panel raised, waiting for Send. The node is wider by it; on the board its neighbours move aside.',
       cardList(`App window with its drawer, ${skin}`, withDrawer(fx, def))));
   return root;

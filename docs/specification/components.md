@@ -1751,7 +1751,7 @@ icon library it holds. The look is
    thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); the node's colour (`--vb-node-color`) is
    the kind's, or its tone's line (point 366, FE_04): it colours the grip or kind tab, the top line, the hover and
    selected borders, the tags and the tile, while the kind's word over the title and the disc keep the kind's; the
-   ring is `--vb-focus-edge` and shows after Tab only.
+   ring is `--vb-focus-edge`, the board's one focus colour (blue, `--vb-focus`; point 627, D-109), and shows after Tab only.
 8. **Kept true by**: `packages/ui/tests/icon-set.test.ts` (every name drawn, every drawing passes the check, a library
    icon from its paths, missing, failing and too many draw nothing), `node-marks.test.ts` (every answer, badge and notes
    state; the tone; `nodeState.marks`), `node-edges.test.ts` (the order of the marks; the tile;

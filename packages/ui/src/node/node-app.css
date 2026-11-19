@@ -100,7 +100,7 @@ vb-node[data-window][data-marks-at='edges'][data-bookmarked] .vb-win-bar .vb-nod
 }
 vb-node[data-window] .vb-win-bar > .vb-app-name.vb-win-name {
   display: inline-flex; flex: 1 1 auto; align-items: center; gap: 6px; min-width: 0; padding-inline: var(--vb-space-1);
-  font: 650 var(--vb-text-md) var(--vb-font-display); color: var(--vb-ink-strong);
+  font: 650 var(--vb-text-md) var(--vb-font-display); color: var(--vb-ink);
 }
 vb-node[data-window] .vb-win-name .vb-app-name-text { text-align: left; }
 vb-node[data-window] .vb-win-icon {
@@ -144,19 +144,46 @@ vb-node[data-window] :is(.vb-win-drawer[aria-expanded='true']:not([data-notes-ma
 /* Under the bar, the app's: the panel edge to edge, its bottom corners following the window's. */
 vb-node[data-window] .vb-node-content.vb-win-body { grid-column: 1; min-width: 0; padding: 0; }
 vb-node[data-window] .vb-app { margin: 0; }
-vb-node[data-window] .vb-app > :is(vb-app-frame, .vb-app-state) { box-shadow: none; border-radius: 0 0 calc(var(--vb-node-radius) - 1px) calc(var(--vb-node-radius) - 1px); }
-vb-node[data-window][data-drawer-open] .vb-app > :is(vb-app-frame, .vb-app-state) { border-radius: 0 0 0 calc(var(--vb-node-radius) - 1px); }
+vb-node[data-window] .vb-app > :is(vb-app-frame, .vb-app-state) { box-shadow: none; border-radius: 0 0 1px 1px; }
+vb-node[data-window][data-drawer-open] .vb-app > :is(vb-app-frame, .vb-app-state) { border-radius: 0 0 0 1px; }
 vb-node[data-window] .vb-app > vb-app-frame[data-focus-in]:not([data-pointer-focus]) { box-shadow: inset 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+
+/* The card's look (FIX_02; design/mockups/app-node/app-node-states.html): one 1px border in every state and no ring, never
+   the selected node's outer line. The top corners are the skin's node radius, the bottom ones 2px. The state is a line
+   along the top, an inset shadow on an overlay with the frame's own radius, so it follows the top corners: a gentle accent
+   on hover, the full accent selected, and active (clicked into the app) with the title at full ink. Keyboard focus keeps
+   its own ring (node.css); on stage the page's own edge draws. */
+vb-node[data-window][data-kind='app'][data-edges] {
+  border-width: 1px; border-color: var(--vb-line-strong); border-radius: var(--vb-node-radius) var(--vb-node-radius) 2px 2px;
+  box-shadow: var(--vb-shadow-card);
+}
+vb-node[data-window][data-kind='app'][data-edges].dragging { box-shadow: var(--vb-shadow-lift); }
+vb-node[data-window][data-kind='app'][data-edges]::before {
+  content: ''; position: absolute; z-index: 2; inset: -1px; height: auto; border-radius: inherit; background: none; pointer-events: none;
+  box-shadow: inset 0 2px 0 var(--vb-win-line, transparent);
+}
+vb-node[data-window][data-kind='app'][data-edges]:hover { --vb-win-line: color-mix(in srgb, var(--vb-accent) 45%, transparent); }
+vb-node[data-window][data-kind='app'][data-edges][data-selected] { --vb-win-line: var(--vb-accent); }
+vb-node {
+  &[data-window][data-kind='app'][data-edges]:has(vb-app-frame[data-active]) { --vb-win-line: var(--vb-accent); }
+  &[data-window]:has(vb-app-frame[data-active]) .vb-win-bar > .vb-app-name.vb-win-name { color: var(--vb-ink-strong); }
+}
+/* On stage the page's own edge draws (below), all four corners the node's. */
+vb-node[data-window][data-kind='app'][data-edges][data-stage] {
+  border-radius: var(--vb-node-radius); box-shadow: 0 0 0 1px var(--vb-line-contrast), var(--vb-shadow-lift);
+}
+vb-node[data-window][data-kind='app'][data-edges][data-stage]::before { content: none; }
+vb-node[data-window] .vb-win-bar { border-radius: calc(var(--vb-node-radius) - 1px) calc(var(--vb-node-radius) - 1px) 0 0; }
 
 /* The drawer: the node's conversation box (FE_03), docked at the window's height, its thread scrolling, the field at
    the foot. It scales with the board as the node does; it has no arrow, head or shadow of its own (the bar names it). */
 vb-node[data-window] .vb-win-drawer-pane {
   grid-column: 2; grid-row: 2; display: grid; min-height: 0; overflow: hidden; border-left: 1px solid var(--vb-line);
-  border-radius: 0 0 calc(var(--vb-node-radius) - 1px) 0; background: var(--vb-surface-card);
+  border-radius: 0 0 1px 0; background: var(--vb-surface-card);
 }
 vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble.vb-node-box {
   position: relative; left: auto; top: auto; z-index: auto; display: flex; flex-direction: column; width: auto; min-height: 0;
-  border: 0; border-radius: 0 0 calc(var(--vb-node-radius) - 1px) 0; background: transparent; box-shadow: none; scale: none;
+  border: 0; border-radius: 0 0 1px 0; background: transparent; box-shadow: none; scale: none;
 }
 vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble.vb-node-box::before { content: none; }
 vb-node[data-window] .vb-win-drawer-pane > vb-note-bubble .vb-node-box-head { display: none; }

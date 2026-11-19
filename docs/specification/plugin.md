@@ -446,7 +446,7 @@ keeps the board's own value, light / dark.
 | `--host-ink-muted` | Secondary text | `--vb-ink-subtle` | `#6b6b74` / `#b8b8c0` |
 | `--host-line` | Hairlines and borders | `--vb-line` | `#e1e1e5` / `#2a2a2e` |
 | `--host-line-strong` | Borders that must be seen, a container's frame | `--vb-line-strong`, `--vb-line-contrast` | `#cbcbd1` / `#3a3a40`; contrast `#b5b5bd` / `#4a4a52` |
-| `--host-focus` | The focus ring | `--vb-focus` | The accent, yours when you give one |
+| `--host-focus` | The focus ring | `--vb-focus` | `#2563eb` / `#60a5fa`, yours when you give one (one focus colour, point 627, D-109) |
 | `--host-color-scheme` | Light or dark: `light`, `dark`, or `light dark` (the system's) | The `color-scheme` of the board's root | **Mode**, below |
 
 **Derived.** `--vb-accent-soft` (a selected or commented ground) and `--vb-accent-line` (its edge) mix `--host-accent` into

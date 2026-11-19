@@ -28,13 +28,12 @@
   --vb-plate-muted: #aab5c3;
   --vb-plate-line: #2b323c;
   /* FE_04: marks on the dark plate keep their hue at a lightness that reads on it in both themes (the mockups'
-     light page mixed each with white); its ring and the skin's other rings, white toned down (point 338); menus and
+     light page mixed each with white); its ring is the one focus colour; menus and
      the selection bar on the plate's dark glass; a flat body and a plain border, the kind's colour only on the
      selected border, the plate's dot and the tile. */
   --vb-plate-mark-l: 0.8;
   --vb-plate-mark-c: 0.16;
-  --vb-plate-focus: #b9bfc8;
-  --vb-focus-edge: light-dark(#4a4e57, #b9bfc8);
+  --vb-plate-focus: #60a5fa; /* the one blue; the plate is dark in both themes, so the dark theme's (Lc 30 needs it) */
   --vb-glass: var(--vb-plate);
   --vb-glass-hover: #1c222b;
   --vb-glass-ink: var(--vb-plate-ink);
