@@ -14,7 +14,7 @@ const verdict = (e: Rec) => ({ schema: schemaProblems(LEDGER_EVENT_ID, e).length
 const node = (extra: Rec) => ({ ...AGENT, type: 'node', board: 'b', n: 1, ver: 1, node: { region: 'plan', kind: 'topic', title: 'T', ...extra } });
 
 test('format 21: a dated node line in each stored form is accepted by both checks', () => {
-  assert.equal(LEDGER_FORMAT, 21);
+  assert.ok(LEDGER_FORMAT >= 21);
   for (const at of [...TIMELINE_FORMS, '2024-02-29', '2026-12-31T23:59']) assert.deepEqual(verdict(node({ timeline: at })), { schema: true, hand: true }, at);
   assert.deepEqual(verdict(node({ timeline: '2026-10', icon: 'milestone', tone: 'amber' })), { schema: true, hand: true });
 });

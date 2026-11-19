@@ -72,7 +72,7 @@ export const OPERATIONS = {
   },
   write_board: {
     operationId: 'write_board', method: 'POST', path: '/api/boards/{board}/write',
-    pathParams: ['board'], xAgent: true, auth: 'agent',
+    pathParams: ['board'], xAgent: true, auth: 'agent-or-person',
   },
   act: {
     operationId: 'act', method: 'POST', path: '/api/boards/{board}/act',

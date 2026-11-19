@@ -27,7 +27,7 @@
       "description": "The export format's version. A file of an older version is upgraded before it is read."
     },
     "title": {
-      "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/title",
+      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/title",
       "description": "The board's title, or the container's: an import into a new board takes it as the board's."
     },
     "items": {
@@ -48,7 +48,7 @@
         "type": "object",
         "required": ["key", "answer"],
         "properties": {
-          "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key", "description": "The card's key in `items`."},
+          "key": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key", "description": "The card's key in `items`."},
           "answer": {"enum": ["check", "cross"], "description": "✓ `check` or ✗ `cross`."}
         },
         "unevaluatedProperties": false
@@ -62,7 +62,7 @@
         "type": "object",
         "required": ["key", "x", "y"],
         "properties": {
-          "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key", "description": "The card's key in `items`."},
+          "key": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key", "description": "The card's key in `items`."},
           "x": {"type": "number", "description": "Across, in its container's coordinates."},
           "y": {"type": "number", "description": "Down, in its container's coordinates."}
         },
@@ -77,16 +77,16 @@
         "type": "object",
         "required": ["text"],
         "properties": {
-          "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key", "description": "The card's or the container's key in `items`."},
+          "key": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key", "description": "The card's or the container's key in `items`."},
           "keys": {
             "type": "array",
             "minItems": 2,
             "maxItems": 500,
             "uniqueItems": true,
-            "items": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"},
+            "items": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key"},
             "description": "A note on a group of cards, in place of `key`: each card's key."
           },
-          "text": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/longText", "description": "The person's words."},
+          "text": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/longText", "description": "The person's words."},
           "thread": {
             "type": "array",
             "maxItems": 200,
@@ -94,7 +94,7 @@
               "type": "object",
               "required": ["text"],
               "properties": {
-                "text": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/longText", "description": "The agent's words."}
+                "text": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/longText", "description": "The agent's words."}
               },
               "unevaluatedProperties": false
             },

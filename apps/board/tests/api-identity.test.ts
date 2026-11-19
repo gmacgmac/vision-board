@@ -110,8 +110,10 @@ test('person routes need the page\'s cookie and refuse a Bearer; the refusal nev
 
 test('agent writes refuse the person cookie; an Origin, when sent, must be this server', async () => {
   const items = { items: [{ type: 'reply', n: h.seeded.q, text: 'Hi' }] };
-  const p = await h.fails('write_board', { board: 'pricing', body: items }, 403, 'forbidden', h.person);
+  // write_board takes the person's `import` alone (D-108): `items` are refused, never `forbidden`, which reloads the page.
+  const p = await h.fails('write_board', { board: 'pricing', body: items }, 422, 'invalid', h.person);
   assert.doesNotMatch(p.detail, /cookie/i);
+  assert.equal(p.errors?.[0]?.pointer, '/items');
   await h.fails('request_grant', { body: { board: 'pricing', region: 'options', reason: 'x' } }, 403, 'forbidden', h.person);
   const evil = await raw('/api/boards/pricing/write', {
     method: 'POST', body: JSON.stringify(items),

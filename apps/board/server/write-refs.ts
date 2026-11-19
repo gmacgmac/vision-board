@@ -17,8 +17,13 @@ type Rec = Record<string, unknown>;
 
 /** One `write_board` call's state: the ledger, the writing agent, the path's board, and the keys of items that failed;
  * `keyHelp`: a key conflict's words say what the key holds (`botToolRules`); `insert`: a node item may carry `insert`
- * (`insertBetween`, write-insert.ts). */
-export interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string>; keyHelp?: boolean; insert?: boolean }
+ * (`insertBetween`, write-insert.ts). `person`: the person writes, an import from the page (D-108; write-import.ts): no
+ * agent, no stored key. `made`: the cards this batch drew, by the key their item carried, which a `{ key }` names first:
+ * the person has no stored keys, so an import's keys live only here. */
+export interface Batch {
+  ledger: Ledger; agent: string; board: string; failed: Set<string>; keyHelp?: boolean; insert?: boolean; person?: boolean;
+  made?: Map<string, number>;
+}
 
 /** The top-level fields of an item of `type` that hold one card's board number or `{ key }` (api.md
  * 35), from the one card-reference table (`CARD_FIELDS`): a link's two ends, else `n`. A reply's
@@ -43,7 +48,9 @@ function keyed(b: Batch, ref: Rec, pointer: string): number {
     fail('depends-on-failed', writesWords.thisItemNamesTheKey(key),
       { errors: [{ pointer, detail: writesWords.theItemWithKeyFailed(key) }] });
   }
-  const e = storedFor(b, key);
+  const made = b.made?.get(key);
+  if (made !== undefined) return made;
+  const e = b.person ? undefined : storedFor(b, key);
   if (e?.type !== 'node') {
     fail('invalid', writesWords.noNodeYouMadeHas(key),
       { errors: [{ pointer, detail: writesWords.noNodeYouMadeHasThe(key) }] });

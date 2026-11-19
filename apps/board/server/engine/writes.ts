@@ -14,6 +14,7 @@ import { bodyExample } from '../examples.ts';
 import { problem } from '../problem.ts';
 import { SPECS, bodyProblems } from '../spec.ts';
 import { writeItems } from '../write-board.ts';
+import { importFile } from '../write-import.ts';
 import { imageProblem } from '../images.ts';
 import type { AddIconBody } from '../icons.ts';
 import { addIcon as addToLibrary } from '../icons.ts';
@@ -162,10 +163,16 @@ function withPictures<R extends { ok: boolean }>(results: R[], items: unknown[],
 
 /** One batch of write items (api.md 34, 37): a body that cannot be read at all, an unknown board
  * with no `board` item, a batch making a board whose id isn't available (api.md 136), or a batch
- * on a locked board (api.md 139), is one problem; otherwise 200 with a result per item. */
+ * on a locked board (api.md 139), is one problem; otherwise 200 with a result per item. An `import` writes an export
+ * file in place of `items` (`importBoard`); the person, from the page, sends only that (D-108). */
 const writeBoard: Op = async (ctx) => {
   const { params, ledger } = ctx;
   const value = await ctx.body(WRITE_LIMIT);
+  const asked = (value as { import?: unknown } | null)?.import;
+  // Not `forbidden`: the page reloads on that, taking it for a stale cookie (api.md 20); this cookie is good.
+  if (ctx.caller?.by === 'person' && asked === undefined) {
+    throw invalid([{ pointer: '/items', detail: writesWords.thePersonWritesOnlyAnImport }], 'write_board');
+  }
   const items = (value as { items?: unknown } | null)?.items;
   const most = maxItems();
   if (Array.isArray(items) && items.length > most) {
@@ -174,17 +181,36 @@ const writeBoard: Op = async (ctx) => {
   // Each item is checked on its own as it runs, so one bad item never fails the batch.
   const top = bodyProblems('write_board', value).filter((p) => !/^\/items\/\d+(\/|$)/.test(p.pointer));
   if (top.length) throw invalid(top, 'write_board');
+  if (asked !== undefined) return importBoard(ctx, asked as { into: 'new' | 'current'; file: unknown });
   const list = items as unknown[];
   const board = String(params.board);
   writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));
   const agent = ctx.writer(); // after the up-front refusals, so a locked board joins nobody
   const written = writeItems(ledger, agent, board, list, flagOn('botToolRules', ctx.flags), flagOn('insertBetween', ctx.flags), !ctx.one, ctx.icons);
   const results = flagOn('botToolRules', ctx.flags) ? withPictures(written, list, ctx) : written;
-  const s = ledger.state();
+  return reply(200, { results, ...afterWrite(ctx, board) });
+};
+
+/** What every write answers after its results (api.md 34): `head`, the cards waiting for the caller, and its waiting
+ * containers. */
+function afterWrite(ctx: OpCtx, board: string) {
+  const s = ctx.ledger.state();
   const pending = s.boards.has(board) ? openItems(s, board, scopeOf(ctx)).filter((x) => x.pending !== undefined) : [];
   const containers = s.boards.has(board) ? openContainers(s, board, scopeOf(ctx)) : [];
-  return reply(200, { results, head: s.seq, pending, ...(containers.length > 0 && { containers }) });
-};
+  return { head: s.seq, pending, ...(containers.length > 0 && { containers }) };
+}
+
+/** `write_board`'s `import` (D-107, D-108; write-import.ts): the person's, from the page, writes as the person; an
+ * agent's as `writer()`, held to the grants unless it is the folder's one agent. Answers the results, `dropped` when
+ * anything was left out, and what every write answers. */
+function importBoard(ctx: OpCtx, { into, file }: { into: 'new' | 'current'; file: unknown }) {
+  const board = String(ctx.params.board);
+  const writer = ctx.caller?.by === 'person' ? { by: 'person' as const } : { by: 'agent' as const, agent: ctx.writer() };
+  const { results, dropped } = importFile(ctx.ledger, {
+    board, into, file, writer, grants: !ctx.one, keyHelp: flagOn('botToolRules', ctx.flags), icons: ctx.icons,
+  });
+  return reply(200, { results, ...afterWrite(ctx, board), ...(dropped.length > 0 && { dropped }) });
+}
 
 /** Add a drawing to the project's icon library (api.md 186; icons.ts `addIcon`): reduced to paths, checked, written
  * where no file has its name, then its `icon` line. A read-only ledger refused it before the body was read (engine.ts). */

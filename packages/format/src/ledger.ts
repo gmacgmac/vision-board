@@ -17,8 +17,9 @@ import * as formatLedgerWords from './words/format-ledger.ts';
  * added: api.md's "Ledger vN" points; v20 renamed the person's `flag` and `unflag` to `bookmark` and `unbookmark` and
  * added a board's skin, a node's icon and tone, the `icon` line, the person's `ask` and a flow's
  * `direction` (api.md 182-189); v21 = the node's `timeline` key; the step restamps, no line's meaning changes (api.md
- * 190, D-105). */
-export const LEDGER_FORMAT = 21;
+ * 190, D-105); v22 = the person's `region`, `node` and `link` lines (a person's import, `PERSON_TOO`); a restamp too
+ * (api.md 201, D-108). */
+export const LEDGER_FORMAT = 22;
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
@@ -78,8 +79,9 @@ export const AGENT_EVENTS: ReadonlySet<EventType> = new Set([
 ]);
 /** Agent event types a person may also write: the person's `board` line creates a board or renames one (`put_board`,
  * api.md 90); the person's `retire` line removes cards or a container (`retire_cards`, api.md 141); the person's `icon`
- * line accepts a changed drawing of a library icon (api.md 185). */
-export const PERSON_TOO: ReadonlySet<EventType> = new Set(['board', 'retire', 'icon']);
+ * line accepts a changed drawing of a library icon (api.md 185); the person's `region`, `node` and `link` lines draw
+ * what the person imports from a file (`write_board`'s `import`, api.md 201, D-108). */
+export const PERSON_TOO: ReadonlySet<EventType> = new Set(['board', 'retire', 'icon', 'region', 'node', 'link']);
 /** Event types only a person writes. */
 export const PERSON_EVENTS: ReadonlySet<EventType> = new Set(['seen']);
 

@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.44.0",
+    "version": "1.45.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -222,7 +222,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -242,7 +242,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -853,7 +853,7 @@
                 "example": {
                   "responses": [
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 50,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -864,7 +864,7 @@
                       "text": "Rule 6 needs an example."
                     },
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 51,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -935,7 +935,7 @@
                 "example": {
                   "events": [
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 1,
                       "at": "2026-10-05T08:00:00Z",
                       "by": "agent",
@@ -946,7 +946,7 @@
                       "key": "pricing-board"
                     },
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 2,
                       "at": "2026-10-05T08:00:01Z",
                       "by": "agent",
@@ -978,7 +978,7 @@
                     "summary": "Two lines",
                     "dataValue": [
                       {
-                        "v": 21,
+                        "v": 22,
                         "seq": 1,
                         "at": "2026-10-05T08:00:00Z",
                         "by": "agent",
@@ -989,7 +989,7 @@
                         "key": "pricing-board"
                       },
                       {
-                        "v": 21,
+                        "v": 22,
                         "seq": 2,
                         "at": "2026-10-05T08:00:01Z",
                         "by": "agent",
@@ -1006,7 +1006,7 @@
                         "key": "pricing-q"
                       }
                     ],
-                    "serializedValue": "{\"v\":21,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":21,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
+                    "serializedValue": "{\"v\":22,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":22,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
                   }
                 }
               }
@@ -1236,6 +1236,9 @@
         "security": [
           {
             "agentSecret": []
+          },
+          {
+            "personCookie": []
           }
         ],
         "parameters": [
@@ -1435,7 +1438,7 @@
                   "$ref": "#/components/schemas/act"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 50,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -1533,7 +1536,7 @@
                   "$ref": "#/components/schemas/retire"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 61,
                   "at": "2026-10-12T09:00:00Z",
                   "by": "person",
@@ -1631,7 +1634,7 @@
                   "$ref": "#/components/schemas/seen"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 53,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -3673,46 +3676,46 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-editing.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/grant-request.schema.json#/$defs/stored"
       },
       "retire": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/retire.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/retire.schema.json#/$defs/stored"
       },
       "icon": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/icon.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/icon.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -3868,7 +3871,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -3886,7 +3889,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -3895,7 +3898,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "after": {
@@ -3961,7 +3964,7 @@
         "description": "Export only this container (region) and its cards; left out, the whole board.",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "linked": {
@@ -4025,7 +4028,7 @@
         "description": "The app's id: its folder's name in the open ledger's `apps/`.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       }
     },

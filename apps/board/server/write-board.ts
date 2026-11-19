@@ -59,9 +59,12 @@ function withMode(s: LedgerState, board: string, e: Rec): Rec {
 }
 
 /** The ledger line an item becomes: `base` and a node's `insert` dropped, the path's board on the lines that carry
- * one (api.md 34), a container's mode filled in, and a retire's cards filled in (api.md 126). */
+ * one (api.md 34), a container's mode filled in, and a retire's cards filled in (api.md 126). The person's line holds no
+ * `key` (D-108): keys are an agent's. */
 function eventOf(b: Batch, item: Rec): Rec {
-  const { base: _base, insert: _insert, ...rest } = item;
+  const { base: _base, insert: _insert, ...all } = item;
+  const { key: _key, ...keyless } = all;
+  const rest = b.person ? keyless : all;
   const e = ON_BOARD.has(String(item.type)) ? { ...rest, board: b.board } : rest;
   if (e.type === 'region') return withMode(b.ledger.state(), b.board, e);
   return e.type === 'retire' ? retireLine(b.ledger.state(), e) : e;
@@ -151,7 +154,7 @@ function checkOwed(b: Batch, s: LedgerState, i: number, item: Rec, e: Rec): void
  * `/cards` pointer is about the card or container the item named. */
 function append(b: Batch, i: number, item: Rec, e: Rec): LedgerEvent {
   try {
-    return b.ledger.append(e, { by: 'agent', agent: b.agent }, { board: b.board });
+    return b.ledger.append(e, b.person ? { by: 'person' } : { by: 'agent', agent: b.agent }, { board: b.board });
   } catch (err) {
     if (!(err instanceof ProblemError)) throw err;
     const { status: _status, errors, ...rest } = err.body;
@@ -211,7 +214,7 @@ function refuse(b: Batch, i: number, raw: unknown, errors: readonly PointerError
 
 /** A batch that may name library icons: `icons`, the library's folder (`EngineOptions.icons`); none, and a library
  * icon with no `icon` line is the ledger's to refuse. */
-type IconBatch = Batch & { icons?: string | undefined };
+export type IconBatch = Batch & { icons?: string | undefined };
 
 /** The `icon` line a node's first use of a library icon needs, checked last so a refused item writes nothing (api.md
  * 185; ledger review O4): the file's hash as it is now, by the caller, before the node line, as `RetireEvent.cards`
@@ -245,7 +248,7 @@ function writeOne(b: IconBatch, i: number, raw: unknown, key: string | undefined
   const r = resolve(b, i, item);
   const at = item.type === 'node' ? insertOf(r) : undefined;
   const e = item.type === 'append' ? appended(b, i, r, key) : eventOf(b, r);
-  const replayed = key === undefined ? undefined : replay(b, i, key, e, at);
+  const replayed = key === undefined || b.person ? undefined : replay(b, i, key, e, at);
   if (replayed) return replayed;
   const s = b.ledger.state();
   checkBase(s, i, item, e);
@@ -257,7 +260,10 @@ function writeOne(b: IconBatch, i: number, raw: unknown, key: string | undefined
   checkOwed(b, s, i, item, e);
   const icon = libraryLine(b, i, e);
   if (icon) append(b, i, item, icon);
-  return at ? appendInsert(b, i, key, item, e, at) : written(b.ledger.state(), i, key, append(b, i, item, e));
+  if (at) return appendInsert(b, i, key, item, e, at);
+  const stored = append(b, i, item, e);
+  if (key !== undefined && stored.type === 'node') b.made?.set(key, stored.id);
+  return written(b.ledger.state(), i, key, stored);
 }
 
 /** Write `items` for `agent` on `board`, in order, one result each (api.md 34). `keyHelp`: a key conflict says what the
@@ -267,7 +273,12 @@ function writeOne(b: IconBatch, i: number, raw: unknown, key: string | undefined
  * the project's icon library, for a node's first use of a library icon (`libraryLine`). */
 export function writeItems(ledger: Ledger, agent: string, board: string, items: readonly unknown[], keyHelp = false,
   insert = flagOn('insertBetween', {}), grants = true, icons?: string): WriteResult[] {
-  const b: IconBatch = { ledger, agent, board, failed: new Set(), keyHelp, insert, icons };
+  return writeBatch({ ledger, agent, board, failed: new Set(), keyHelp, insert, icons }, items, grants);
+}
+
+/** `items` written in order on batch `b`, one result each (`writeItems`); an import runs its parts on one batch
+ * (write-import.ts), so a later part names the cards an earlier one drew. */
+export function writeBatch(b: IconBatch, items: readonly unknown[], grants: boolean): WriteResult[] {
   return items.map((raw, i) => {
     const key = keyOf(raw);
     try {

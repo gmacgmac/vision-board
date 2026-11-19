@@ -23,7 +23,7 @@ PLAN.md § House Rules.
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | T_01 | 1 | strong | no | Principal API engineer — one shape reused, never a near-copy; an import refuses nothing silently and names what it dropped. | [Contract first](./T_01_contract.md) | Completed | Contract and tests landed. One decision blocks the person's import (who writes the cards; see notes). BE_01 owes the `export_board` handler. |
-| 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Pending | |
+| 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Completed | Ledger 22, the person's import by cookie, export read, import mode, centre by key; suite green but the tool budget. Two rulings asked (notes on an agent's import, replies on the person's). |
 | 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Pending | |
 | 3b | T_03 | 3 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios. | [The agent learns export and import](./T_03_skill.md) | Pending | |
 | 4 | VERIFY_01 | 4 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
@@ -52,10 +52,13 @@ PLAN.md § House Rules.
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
-| `apps/board/server/handlers.ts` + engine: `export_board` handler (tsc and `api-errors.test.ts` red until then) | T_01 | blocking for the wave gate | BE_01 | Open |
+| `apps/board/server/handlers.ts` + engine: `export_board` handler (tsc and `api-errors.test.ts` red until then) | T_01 | blocking for the wave gate | BE_01 | Done (BE_01, `engine/reads.ts` `exportBoard`) |
 | `docs/specification/modules.md`: `npm run map` (new `packages/format/src/export/`) | T_01 | blocking for verify | orchestrator | Open |
 | `packages/mcp/tests/tools.test.ts` budgets: get_board 1,413, show_container 1,044, write_board 20,126, list 38,265 | T_01 | non-blocking | orchestrator | Open |
-| The person's import: who writes the cards (ledger 22, `PERSON_TOO`, cookie on `import`); pins on an agent's import | T_01 | blocking BE_01 step 2, FE_01 step 4 | maintainer | Open |
+| The person's import: who writes the cards (ledger 22, `PERSON_TOO`, cookie on `import`); pins on an agent's import | T_01 | blocking BE_01 step 2, FE_01 step 4 | maintainer | Ruled (D-108, 613-614); built by BE_01 |
+| `packages/mcp/tests/tools.test.ts` budgets: tools/list 38,543 (cap 38,300), write_board 20,404 (cap 20,150; a region's `center` takes `{ key }`) | BE_01 | non-blocking | orchestrator | Open |
+| Ruling: an agent's import drops the person's notes (D-108) though decision 7 said it carries them; the person's import drops the agent's replies (`reply` not in `PERSON_TOO`) | BE_01 | non-blocking | maintainer | Open |
+| Conditioning's `dropped` words are pointer-first (for an agent); the page shows them to the person as they are | BE_01 | non-blocking | orchestrator (T_03 or a words pass) | Open |
 
 ## Implementation Notes
 
@@ -72,7 +75,14 @@ _Status:_ Completed (2026-11-19). The full notes are in the task file. For wave 
   (a restamp), and `write_board` takes the person's cookie for `import` only.
 - Also open: pins on an agent's import (recommended: drop and name them, like answers).
 ### BE_01
-_Status:_ Pending
+_Status:_ Completed (2026-11-19, worktree `files-be-01`). Full notes in the task file. For FE_01, T_03, VERIFY_01:
+- The page: `GET export_board?region=&notes=`; `write_board` `{ import: { into, file } }` with the cookie. A clash on
+  `into: new` is `409 conflict` at `/import/into`; `items` from the person are `422 invalid` at `/items`. No refusal
+  of a good cookie is `forbidden`. The reply's `dropped` is left out when nothing was.
+- Keys in a file: a container's id, `card:<n>`, `link:<n>><n>`. An agent's import writes `import-<seq>-<key>` keys
+  (in `results`); the person's lines hold no key. `results` can pass 200 (up to 2,000) for an import.
+- Ledger format 22; openapi 1.45.0; a sent region `center` takes `{ key }`; api.md 201-205.
+- Asked of the maintainer (Requests): notes on an agent's import, replies on the person's import.
 ### FE_01
 _Status:_ Pending
 ### T_03

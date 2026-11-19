@@ -23,8 +23,16 @@ export const missing = (at: string, field: string): string => `${at}: has no ${f
 export const noContainer = (at: string, region: string): string => `${at}: its container \`${region}\` is not in the file`;
 export const byNumber = (at: string): string => `${at}: names a card by its number on the board it came from`;
 export const fromItsBoard = (at: string): string => `${at}: belongs to the board it came from`;
+export const centerByKey = (at: string): string => `${at}: names its card by \`{ key }\``;
+export const keyTaken = (at: string, key: string): string => `${at}.key: \`${key}\` is the key of an earlier item`;
 export const noSuchKey = (at: string, key: string): string => `${at}: no card or container in the file has key \`${key}\``;
 export const keyOrKeys = (at: string): string => `${at}: names one card or container by \`key\`, or two or more cards by \`keys\`, never both`;
 export const notAList = (at: string): string => `${at}: not a list`;
 export const notAsked = (at: string, key: string): string => `${at}: card \`${key}\` asks for no ✓ or ✗`;
 export const answerOneOf = (at: string): string => `${at}.answer: one of check, cross`;
+
+// ---- export/writer.ts (what an import keeps, by who writes it, D-108)
+export const agentAnswer = (at: string): string => `${at}: ✓ and ✗ are the person's own acts, and an agent's import can't make them`;
+export const agentPin = (at: string): string => `${at}: where a card sits is the person's own act, and an agent's import can't make it`;
+export const agentNote = (at: string): string => `${at}: a note is the person's own words, and an agent's import can't write them`;
+export const personThread = (at: string): string => `${at}.thread: the agent's replies are the agent's words, and an import writes as the person`;

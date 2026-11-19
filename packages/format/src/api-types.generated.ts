@@ -494,12 +494,15 @@ type RegionRegion = {
   title: CommonRegionTitle;
   mode?: CommonLineMode;
   lanes?: CommonLanes;
-  center?: number;
+  center?: CommonNodeRef;
   columns?: number;
   widths?: "match" | "own";
   direction?: "across" | "down";
 };
 type CommonLineMode = "grid" | "flow" | "lanes" | "radial" | "column" | "row" | "list";
+type CommonNodeRef = number | {
+  key: CommonKey;
+};
 type RegionNoList = {
   region?: {
     mode?: JsonValue;
@@ -515,9 +518,6 @@ type NodeSent = {
     before: CommonNodeRef;
   };
 } & NodeSentCore & NodeNoItem & NodeAppRule;
-type CommonNodeRef = number | {
-  key: CommonKey;
-};
 type NodeSentCore = {
   node: NodeSentBody;
 };
@@ -605,7 +605,7 @@ type BoardStored = {
   key?: CommonKey;
 };
 type CommonStamp = {
-  v: 21;
+  v: 22;
   seq: number;
   at: string;
   by: "person" | "agent";
@@ -794,14 +794,14 @@ type LedgerEvent = BoardStored | RegionStored | NodeStored | LinkStored | Unlink
 type RegionStored = {
   type: "region";
 } & CommonStamp & CommonStampAgent & RegionCore & {
-  by?: "agent";
+  by?: "agent" | "person";
   board: string;
   key?: CommonKey;
 };
 type NodeStored = {
   type: "node";
 } & CommonStamp & CommonStampAgent & NodeCore & NodeRules & {
-  by?: "agent";
+  by?: "agent" | "person";
   board: string;
   n: number;
   ver: number;
@@ -814,7 +814,7 @@ type NodeRules = NodeAppRule;
 type LinkStored = {
   type: "link";
 } & CommonStamp & CommonStampAgent & LinkCore & {
-  by?: "agent";
+  by?: "agent" | "person";
   from: number;
   to: number;
   key?: CommonKey;

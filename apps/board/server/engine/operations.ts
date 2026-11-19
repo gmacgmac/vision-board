@@ -126,11 +126,12 @@ const NO_AGENT = httpWords.thisNeedsAnAgentThe;
 
 /** Refuse a caller the operation does not take (the host's caller check already ran in the
  * standalone server, so there this never refuses): the person's operations take the person, an
- * agent's writes never take the person, and an agent's need an agent. */
+ * agent's writes never take the person, and an agent's need an agent. A write either may call (`write_board`, whose
+ * `import` the person makes from the page, D-108) says itself what the person may send. */
 export function checkCaller(id: OperationId, caller: Caller | undefined): void {
   const { auth, method, xAgent } = OPERATIONS[id];
   if (auth === 'person' && caller?.by !== 'person') throw problem('forbidden', ONLY_PERSON);
-  if (xAgent && method !== 'GET' && caller?.by === 'person') throw problem('forbidden', ONLY_AGENT);
+  if (xAgent && method !== 'GET' && auth !== 'agent-or-person' && caller?.by === 'person') throw problem('forbidden', ONLY_AGENT);
   if (auth === 'agent' && caller?.by !== 'agent') throw problem('not-authenticated', NO_AGENT);
   if (auth === 'agent-or-person' && caller === undefined) throw problem('not-authenticated', NO_AGENT);
 }

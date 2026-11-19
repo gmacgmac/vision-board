@@ -2,8 +2,10 @@
 // carries (containers, cards and links as keyed write items; the person's answers, places and notes by those keys),
 // drops everything else and names each drop where it was (`items[3].node.glow`), and fills a required title with its
 // default. A container's or a card's field is judged by the ledger's own check (`shapeFieldProblems`), so this module
-// knows only which fields an item needs and which of them has a default. What names the board a file came from (a card's number, `n`, `base`, `insert`, a
-// container's `center`) means nothing on another board, so it goes too. The normal write checks run after. Pure.
+// knows only which fields an item needs and which of them has a default. What names the board a file came from (a card's
+// number, `n`, `base`, `insert`, a container's `center` by number) means nothing on another board, so it goes too; a
+// radial container names its centre by `{ key }` of a card in the file. Every key names one item: a later item with an
+// earlier one's key is left out. The normal write checks run after. Pure.
 import { LATER_REGION } from '../ledger.ts';
 import { LIMITS, codePoints, shapeFieldProblems } from '../ledger-shape.ts';
 import { NODE_TYPES } from '../node-types.ts';
@@ -57,15 +59,15 @@ function listOf(raw: unknown, at: string, dropped: string[]): [string, unknown][
 }
 
 /** A container's or a card's body: each field the ledger knows and accepts kept, any other dropped and named, a
- * container's `center` dropped as of its board, a card's `timeline` normalised first (the write edge's forms). A refused
- * required field is reported back, not named, for the caller to default or to leave the item out. */
+ * container's `center` kept as `{ key }` (by number it is of its board), a card's `timeline` normalised first (the write
+ * edge's forms). A refused required field is reported back, not named, for the caller to default or to leave the item out. */
 function body(shape: 'region' | 'node', raw: Rec, at: string, dropped: string[]): { out: Rec; refused: Map<string, string> } {
   const out: Rec = {};
   const refused = new Map<string, string>();
   const required = shape === 'region' ? ['id', 'title'] : ['region', 'kind', 'title'];
   for (const [k, v] of Object.entries(raw)) {
     if (v === undefined) continue;
-    if (shape === 'region' && k === 'center') { dropped.push(formatExportWords.fromItsBoard(`${at}.center`)); continue; }
+    if (shape === 'region' && k === 'center') { center(v, `${at}.center`, out, dropped); continue; }
     const value = shape === 'node' && k === 'timeline' ? normaliseTimeline(v) ?? v : v;
     const problems = shapeFieldProblems(shape, k, value, `${at}.`);
     if (problems === undefined) dropped.push(formatExportWords.unknownField(`${at}.${k}`));
@@ -74,6 +76,14 @@ function body(shape: 'region' | 'node', raw: Rec, at: string, dropped: string[])
     else dropped.push(formatExportWords.refused(problems[0]!));
   }
   return { out, refused };
+}
+
+/** A container's centre: `{ key }` of a card, kept for `linked` to check against the file's cards; a card number is of
+ * its board; anything else is refused. */
+function center(v: unknown, at: string, out: Rec, dropped: string[]): void {
+  if (typeof v === 'number') return void dropped.push(formatExportWords.fromItsBoard(at));
+  if (isRecord(v) && Object.keys(v).length === 1 && !textProblem(v.key, '', LIMITS.key)) out.center = v;
+  else dropped.push(formatExportWords.refused(formatExportWords.centerByKey(at)));
 }
 
 /** A required title: kept, else its default; one that was there and was refused is named. */
@@ -141,7 +151,13 @@ interface Keys { cards: Map<string, Kind>; containers: Set<string> }
 
 /** The items that name what the file holds: a card whose container is in the file (or the board's Later), a link
  * between two of its cards; each other one left out, named. */
-function linked(items: [string, Rec][], dropped: string[]): { items: Rec[]; keys: Keys } {
+function linked(all: [string, Rec][], dropped: string[]): { items: Rec[]; keys: Keys } {
+  const seen = new Set<string>();
+  const items = all.filter(([at, x]) => {
+    const key = x.key === undefined ? undefined : String(x.key);
+    if (key === undefined || !seen.has(key)) return key === undefined || seen.add(key);
+    return void dropped.push(formatExportWords.itemLeftOut(formatExportWords.keyTaken(at, key)));
+  });
   const regions = new Set<string>([LATER_REGION]);
   const keys: Keys = { cards: new Map(), containers: new Set() };
   for (const [, x] of items) {
@@ -161,6 +177,12 @@ function linked(items: [string, Rec][], dropped: string[]): { items: Rec[]; keys
     const end = (['from', 'to'] as const).map((e) => String((x[e] as Rec).key)).find((k) => !keys.cards.has(k));
     return end === undefined || void dropped.push(formatExportWords.itemLeftOut(formatExportWords.noSuchKey(at, end)));
   });
+  for (const [at, x] of kept) {
+    const c = x.type === 'region' ? (x.region as Rec).center : undefined;
+    if (!isRecord(c) || keys.cards.has(String(c.key))) continue;
+    dropped.push(formatExportWords.refused(formatExportWords.noSuchKey(`${at}.region.center`, String(c.key))));
+    delete (x.region as Rec).center;
+  }
   return { items: kept.map(([, x]) => x), keys };
 }
 

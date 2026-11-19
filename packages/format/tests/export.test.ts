@@ -4,8 +4,8 @@
 // the rest and names each drop, and fills a required part that has a default.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { UpgradeStep } from '../src/index.ts';
-import { EXPORT_STEPS, EXPORT_VERSION, conditionExport, isUpgradeStop, upgradeExport } from '../src/index.ts';
+import type { ExportFile, UpgradeStep } from '../src/index.ts';
+import { EXPORT_STEPS, EXPORT_VERSION, conditionExport, isUpgradeStop, keptFor, upgradeExport } from '../src/index.ts';
 
 type Rec = Record<string, unknown>;
 
@@ -87,11 +87,27 @@ test('condition: a missing or refused title is defaulted, on the file, a contain
   assert.match(dropped[0]!, /^items\[1\]\.node\.title/, 'a title that was there and is refused is named; one left out is not');
 });
 
-test('condition: what names the board it came from is dropped and named: a card number, `n`, `base`, `insert`, a centre', () => {
+test('condition: what names the board it came from is dropped and named: a card number, `n`, `base`, `insert`, a centre by number', () => {
   const f = file({ items: [region('plan', { center: 2 }), node('a', {}, { n: 4, base: 2 }), node('b', {}, { insert: { after: 1, before: 2 } }), link(1, { key: 'b' })] });
   const { file: out, dropped } = conditionExport(f);
   assert.deepEqual(out.items, [region(), node('a'), node('b')]);
   assert.equal(dropped.length, 5, dropped.join('\n'));
+});
+
+test('condition: a radial container\'s centre by `{ key }` of a card in the file is kept; one naming no card is dropped, named', () => {
+  const kept = file({ items: [region('plan', { mode: 'radial', center: { key: 'b' } }), node('a'), node('b')] });
+  assert.deepEqual(conditionExport(kept), { file: kept, dropped: [] });
+  for (const center of [{ key: 'zz' }, { key: 'r-plan' }, { key: 'a', n: 1 }, 'b']) {
+    const { file: out, dropped } = conditionExport(file({ items: [region('plan', { mode: 'radial', center }), node('a')] }));
+    assert.deepEqual([out.items[0], dropped.length], [region('plan', { mode: 'radial' }), 1], JSON.stringify(center));
+    assert.match(dropped[0]!, /^items\[0\]\.region\.center: /);
+  }
+});
+
+test('condition: an item whose key an earlier item has is left out, named, so every key names one thing', () => {
+  const { file: out, dropped } = conditionExport(file({ items: [region(), node('a'), node('a', { title: 'Again' }), { ...region('two'), key: 'a' }] }));
+  assert.deepEqual(out.items, [region(), node('a')]);
+  assert.deepEqual(dropped, ['items[2].key: `a` is the key of an earlier item; the item is left out', 'items[3].key: `a` is the key of an earlier item; the item is left out']);
 });
 
 test('condition: a value the ledger refuses is dropped where it is optional, named with why', () => {
@@ -115,4 +131,17 @@ test('condition: answers, pins and notes that name no card, or are malformed, ar
   assert.deepEqual(out.pins, [{ key: 'b', x: 1, y: 2 }]);
   assert.deepEqual(out.notes, [{ key: 'r-plan', text: 'On the container' }]);
   assert.equal(dropped.length, 8, dropped.join('\n'));
+});
+
+test('by writer (D-108): an agent\'s import leaves out the person\'s answers, places and notes; the person\'s, the agent\'s replies', () => {
+  const f = file({ answers: [{ key: 'a', answer: 'check' }], pins: [{ key: 'b', x: 1, y: 2 }],
+    notes: [{ key: 'a', text: 'Why?', thread: [{ text: 'Because.' }] }, { key: 'b', text: 'Plain' }] }) as ExportFile;
+  const agent = keptFor(f, 'agent');
+  assert.deepEqual(agent.file, { v: f.v, title: f.title, items: f.items });
+  assert.deepEqual(agent.dropped.map((d) => d.split(':')[0]), ['answers[0]', 'pins[0]', 'notes[0]', 'notes[1]']);
+  assert.ok(agent.dropped.every((d) => d.endsWith('; left out')));
+  const person = keptFor(f, 'person');
+  assert.deepEqual(person.file, { ...f, notes: [{ key: 'a', text: 'Why?' }, { key: 'b', text: 'Plain' }] });
+  assert.deepEqual(person.dropped, ['notes[0].thread: the agent\'s replies are the agent\'s words, and an import writes as the person; left out']);
+  assert.deepEqual(keptFor(file() as ExportFile, 'agent'), { file: file(), dropped: [] });
 });

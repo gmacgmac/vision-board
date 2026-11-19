@@ -193,7 +193,7 @@ export const BROKEN: [string, Rec][] = [
   ['container place with a bad region id', act('pin', { board: 'b', region: 'Plan A', n: undefined })],
   ['join written by a person', { ...V.join!, by: 'person' }],
   ['grant-request written by a person', { ...V['grant-request']!, by: 'person' }],
-  ['node written by a person', { ...V.node!, by: 'person' }],
+  ['unlink written by a person', { ...V.unlink!, by: 'person' }],
   ['seen written by an agent', { ...V.seen!, by: 'agent', agent: 'a-abcd1234' }],
   ['grant-request for a bad region id', patch(V['grant-request']!, 'region', '-x')],
   ['seen with neither a node nor a board', { ...PERSON, type: 'seen' }],

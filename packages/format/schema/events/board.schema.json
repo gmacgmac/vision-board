@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/21/events/board.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/22/events/board.schema.json",
   "title": "Board event",
   "description": "An agent opens a board, or the person creates or renames one. A sent `board` item names no board; the path does.",
   "$comment": "Was: api.md 34, 90",
@@ -9,9 +9,9 @@
       "type": "object",
       "required": ["title"],
       "properties": {
-        "title": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/title", "description": "The board's title."},
-        "summary": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/summary", "description": "One or two sentences on what the board is for."},
-        "skin": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/skin", "description": "How the board looks: `default` or `command-lens`. Left out: `default`. Set it when you make the board; the person can change it.", "$comment": "Was: api.md 183"}
+        "title": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/title", "description": "The board's title."},
+        "summary": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/summary", "description": "One or two sentences on what the board is for."},
+        "skin": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/skin", "description": "How the board looks: `default` or `command-lens`. Left out: `default`. Set it when you make the board; the person can change it.", "$comment": "Was: api.md 183"}
       }
     },
     "sent": {
@@ -20,11 +20,11 @@
       "required": ["type"],
       "properties": {
         "type": {"const": "board"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"}
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key"}
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/events/board.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/events/board.schema.json#/$defs/core"
         }
       ],
       "unevaluatedProperties": false
@@ -34,20 +34,20 @@
       "required": ["type"],
       "properties": {"type": {"const": "board"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/events/board.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/events/board.schema.json#/$defs/core"
         },
         {
           "type": "object",
           "required": ["board"],
           "properties": {
             "by": {"enum": ["agent", "person"], "description": "Who wrote the line: `agent`, or `person` (put_board)."},
-            "board": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"}
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key"}
           }
         }
       ],

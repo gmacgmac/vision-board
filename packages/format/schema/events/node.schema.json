@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json",
   "title": "Node event",
   "description": "A new version of node `n`. The server resolves `n`, assigns `ver` and takes the board from the path; a sent item may name `base`, the version it was based on. Its `kind` decides whether it asks the person for an answer.",
   "$comment": "Was: api.md 6, 30, 118",
@@ -9,7 +9,7 @@
       "type": "object",
       "required": ["node"],
       "properties": {
-        "node": {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/body", "description": "The content of this version of the node."}
+        "node": {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/body", "description": "The content of this version of the node."}
       }
     },
     "sent": {
@@ -21,22 +21,22 @@
       "required": ["type"],
       "properties": {
         "type": {"const": "node"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/nodeRef"},
-        "base": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/version", "description": "The `ver` you read; if the card has moved on, the item fails with `conflict`."},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeRef"},
+        "base": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/version", "description": "The `ver` you read; if the card has moved on, the item fails with `conflict`."},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key"},
         "insert": {
           "type": "object",
           "description": "Put this card (new or existing) between two linked cards of one `flow` or `lanes` container, in one write: `after`→`before` becomes `after`→card→`before`, keeping the label. Its `region` must be that container.",
           "$comment": "Sent only: the ledger gets the node, unlink and link lines (PLAN Decision 5, point 424).",
           "required": ["after", "before"],
           "properties": {
-            "after": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/nodeRef", "description": "Where the link starts."},
-            "before": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/nodeRef", "description": "Where the link ends."}
+            "after": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeRef", "description": "Where the link starts."},
+            "before": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeRef", "description": "Where the link ends."}
           },
           "additionalProperties": false
         }
       },
-      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/sentCore"}, {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/noItem"}, {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/appRule"}],
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/sentCore"}, {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/noItem"}, {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/appRule"}],
       "unevaluatedProperties": false
     },
     "stored": {
@@ -44,21 +44,21 @@
       "required": ["type"],
       "properties": {"type": {"const": "node"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/stampAgent"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/rules"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/rules"},
         {
           "type": "object",
           "required": ["board", "n", "ver"],
           "properties": {
-            "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "board": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
-            "n": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
-            "ver": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/version", "description": "The node version this line wrote."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"}
+            "by": {"enum": ["agent", "person"], "description": "Who wrote the line: `agent`, or `person` (an import the person makes, D-108)."},
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
+            "n": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
+            "ver": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/version", "description": "The node version this line wrote."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key"}
           }
         }
       ],
@@ -80,9 +80,9 @@
         {
           "$comment": "Always applies; through `if`/`then` so the generators read the node's fields from `core`, not from this piece.",
           "if": {"type": "object"},
-          "then": {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/noItem"}
+          "then": {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/noItem"}
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/appRule"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/appRule"}
       ]
     },
     "appRule": {
@@ -115,31 +115,31 @@
       "type": "object",
       "required": ["region", "kind", "title"],
       "properties": {
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id", "description": "The container (region) the node sits in."},
-        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/kind", "description": "`question`, `decision` and `action` ask the person for ✓ or ✗; `finding`, `risk`, `topic` and `note` don't; `app` shows an app you built in a panel (name it in `app`). The person can note or save any node."},
-        "title": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/title", "description": "The node's title."},
-        "body": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/nodeBody", "description": "The node's text."},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id", "description": "The container (region) the node sits in."},
+        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/kind", "description": "`question`, `decision` and `action` ask the person for ✓ or ✗; `finding`, `risk`, `topic` and `note` don't; `app` shows an app you built in a panel (name it in `app`). The person can note or save any node."},
+        "title": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/title", "description": "The node's title."},
+        "body": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeBody", "description": "The node's text."},
         "item": {"type": "boolean", "deprecated": true, "description": "Gone: the node's kind decides whether it asks for an answer. A line or item naming it is refused (`noItem`).", "$comment": "Was: api.md 118"},
-        "lane": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/lane", "description": "The lane the node sits in, for a container in `lanes` mode."},
-        "tags": {"$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/tags", "description": "Short labels for the node."},
+        "lane": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/lane", "description": "The lane the node sits in, for a container in `lanes` mode."},
+        "tags": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/tags", "description": "Short labels for the node."},
         "emphasis": {"type": "boolean", "description": "True draws the card emphasised; never over the person's size."},
         "size": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/nodeSize",
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeSize",
           "description": "Your suggested size; the person's wins. Not on an app card.",
           "$comment": "Was: api.md 17"
         },
         "app": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/appRef",
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/appRef",
           "description": "App cards only, and required there: which app, and the panel's size in px.",
           "$comment": "Was: api.md 150"
         },
         "icon": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/iconName",
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/iconName",
           "description": "An icon drawn on the node: a built-in name, or one from the project's icon library (`x-` then what it shows). Call list_icons first; reuse before you add one with add_icon.",
           "$comment": "Was: api.md 184, 185"
         },
         "tone": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/tone",
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/tone",
           "description": "The node's tone: a palette name, or a hue from 0 to 359 (the OKLCH hue angle). Use it to set apart the parts of a flow or show which nodes belong together; leave it out when the kind already says it.",
           "$comment": "Was: api.md 184"
         }
@@ -147,11 +147,11 @@
     },
     "body": {
       "description": "A node as the ledger holds it and every read gives it: its `timeline`, when it has one, in its stored form.",
-      "$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/fields",
+      "$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/fields",
       "type": "object",
       "properties": {
         "timeline": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/timeline",
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/timeline",
           "description": "The node's date, which puts it on its container's timeline: `2026`, `2026-10`, `2026-10-13` or `2026-10-13T14:30`.",
           "$comment": "Was: api.md 190, D-105"
         }
@@ -160,11 +160,11 @@
     },
     "sentBody": {
       "description": "A node as an agent sends it: `body`, with `timeline` taken in the forms the board normalises.",
-      "$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/fields",
+      "$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/fields",
       "type": "object",
       "properties": {
         "timeline": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/timelineSent",
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/timelineSent",
           "description": "A date: nodes with one share their container's timeline, a line in date order. `2026`, `2026-10`, `2026-10-13` or `2026-10-13T14:30`: the precision is what you write, the time as written (no zone). The board drops a zone or seconds and reads a space as `T`; a quarter, a week or words are refused. Not on an app card. A rewrite without it takes the node off the line.",
           "$comment": "write-board.ts normalises it (normaliseTimeline) before this schema is checked. Was: api.md 190, D-105"
         }
@@ -175,7 +175,7 @@
       "type": "object",
       "required": ["node"],
       "properties": {
-        "node": {"$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/sentBody", "description": "The content of this version of the node."}
+        "node": {"$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/sentBody", "description": "The content of this version of the node."}
       }
     }
   }
