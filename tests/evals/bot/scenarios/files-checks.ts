@@ -1,6 +1,7 @@
 // Checks the export and import scenarios share (export-import-print T_03, D-107, D-108): an agent exports through
 // `get_board`/`show_container` with `export: true` and imports through `write_board`'s `import` mode, passing the file as
-// it is; its import leaves the person's ✓, ✗, places and notes behind, and the chat says so in one plain line.
+// it is; its import carries the notes and replies (each keeping its author) and leaves the person's ✓, ✗ and places
+// behind, and the chat says so in one plain line.
 import { callsTo, check, resultsOf } from '../checks.ts';
 import type { Call, Check, RunRecord } from '../types.ts';
 
@@ -67,3 +68,14 @@ export const dropsRelayed = (turn: number, named: readonly (readonly [string, Re
 
 /** ✓ and ✗, however the chat names them. */
 export const MARKS = ['the ✓ and ✗', /✓|✗|\b(answers?|marks?|ticks?|crosses|checks?)\b/i] as const;
+
+/** The notes come across: the import's file carries the notes (`want`, with their replies) as given, and the chat never says they stayed behind. */
+export const notesKept = (want: (r: RunRecord) => unknown[] | undefined, turn = 0): Check => check(
+  'notes-kept', 'the import carries the notes as given, and the chat does not say they stayed behind', (r) => {
+    const notes = want(r), sent = importsOf(r)[0]?.input.import?.file?.notes;
+    const text = r.turns[turn]?.text ?? '';
+    const said = /\bnotes?\b[^.]*\b(stayed|left|dropped|behind|lost)\b|\b(stayed|left|dropped)\b[^.]*\bnotes?\b/i.test(text);
+    const same = !!notes?.length && canonical(sent) === canonical(notes);
+    return [same && !said, `${same ? 'notes sent as given' : `notes ${notes?.length ? 'not as given' : 'none to give'}`}${said ? '; the chat says they stayed behind' : ''}`];
+  },
+);

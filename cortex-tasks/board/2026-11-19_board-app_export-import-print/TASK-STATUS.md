@@ -62,7 +62,7 @@ PLAN.md § House Rules.
 | Conditioning's `dropped` words are pointer-first (for an agent); the page shows them to the person as they are | BE_01 | non-blocking | orchestrator (T_03 or a words pass) | Open |
 | `docs/specification/plugin.md` § What the host gives, `print()`: the board's root names its page `vb-print-landscape` or `vb-print-portrait`; a host defines both (`@page`, 10 mm margins) for the one-page fit to hold | FE_01 | non-blocking | orchestrator | Open |
 | Budgets: `verify-weight.mjs` page 211.1 KB (budget 206.2), `plugin-build.test.ts` `view/board.js` 206,315 (budget 200,600) | FE_01 | non-blocking | orchestrator | Open |
-| `skills/vision-board/references/files.md` § What stays behind (and its example chat line): an agent's import now carries the notes and replies, each keeping its author (api.md 206); only ✓/✗ and places stay behind. Bot instructions: `npm run eval:bot` | FIX_01 | blocking before VERIFY_01 | orchestrator (T_03's file) | Open |
+| `skills/vision-board/references/files.md` § What stays behind (and its example chat line): an agent's import now carries the notes and replies, each keeping its author (api.md 206); only ✓/✗ and places stay behind. Bot instructions: `npm run eval:bot` | FIX_01 | blocking before VERIFY_01 | orchestrator (T_03's file) | Done |
 | `docs/specification/plugin.md` § What the host gives, `print()`: a host whose tokens resolve `light-dark()` at its own root sets the root's `color-scheme` while the board's root carries `data-vb-print-theme` (as `shell.css` does); a host with native `light-dark()` needs nothing. nclite: `data-overlay-off` on the board's mount, so its overlay thumb doesn't double the board's | FIX_01 | non-blocking | orchestrator | Open |
 | Budgets: page 212.0 KB gzip (budget 211.2), plugin `view/board.js` 207,015 gzip (budget 206,400) | FIX_01 | non-blocking | orchestrator | Open |
 | Ruling: an imported note with no reply stays owed (the card "with the agent", as on the source board); one line in `note-answer.ts` makes imported notes owe nothing | FIX_01 | non-blocking | maintainer | Open |
@@ -111,6 +111,8 @@ _Status:_ Completed (2026-11-19). Full notes in the task file. For VERIFY_01, T_
   then `write_board` `import` with the file as it is; no `propose`; "Done." and one plain line on what stayed behind.
 - `eval:bot` lists grew: `SCENARIOS` 20 (the dry test's `maxRuns` is 20), `STANDALONE` 16 (the default run cap).
 - Owed: one live run of `import-file` (it read no reference in the plugin run; the line was reworded after).
+### T_03 Run 2
+_Status:_ Completed (2026-11-19). `files.md` § What stays behind and its chat line match api.md 206 (notes and replies come, ✓/✗ and places stay); the export read says `notes: true`. Evals: `notes-kept`; dry 21/21 both hosts; live Haiku $0.0310 billed (plugin 19/21 then 21/21, standalone 21/21). Plugin skill unchanged at 8,187/8,192.
 ### FIX_01
 _Status:_ Completed (2026-11-19). The full notes are in the task file. For VERIFY_01 and T_02:
 - **Imported lines**: `from` (`{ by, agent?, label? }`) on an imported note or reply, ledger 22, no bump. An agent may

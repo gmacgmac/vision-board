@@ -82,3 +82,32 @@ scripts fail what they break.
 6. **The run cap and the plugin list**: `SCENARIOS` is now 20 and `STANDALONE` 16 (the default `--max-runs`), so a
    standalone run with one retry drops the last scenario, as here. The dry test's `maxRuns: 20` equals `SCENARIOS`: the
    next plugin scenario needs it raised.
+
+### Run 2 (2026-11-19, after FIX_01)
+
+**Status**: Completed, in `.claude/worktrees/app-window`, nothing committed. Skill v3.37 text only; no version bump.
+
+**What changed**
+- `references/files.md` (1,656 bytes): § What stays behind now says the import writes the notes and replies, each keeping
+  its author (api.md 206); only the ✓ and ✗ and the places stay behind, and the example chat line is "Done. Your ✓ and ✗
+  stayed behind: they're yours to add again." Two small words the change needed: the export read says `notes: true` adds the
+  notes and replies (without it the file has none, `reads.ts`), and a copy is "export it with the notes".
+- Plugin `skill.md` unchanged (8,187 of 8,192); `plugin-skill.test.ts` needed no edit (it pins none of the changed words).
+- Evals: new check `notes-kept` (`files-checks.ts`: the import's file carries the notes as given, and the chat never says
+  they stayed behind); `copy-board` exports with `notes: true` and no longer expects the note to be named; `import-file`'s
+  file gains a reply and its chat expects the ✓ and ✗ only. The bad scripts fail `notes-kept`. `scenarios.md` 56-57 match.
+
+**Verification** (normal tier): dry good 21/21 and bad 8/21 in both hosts; `bot-eval.test.ts` 7/7; `plugin-skill.test.ts`,
+`plugin-build.test.ts`, `build.test.mjs` 30/30; `tsc` clean.
+
+**Live Haiku** (default caps, never raised). Spend: **$0.0310 billed** (3 invocations of 2 runs).
+- Plugin: run A 19/21 (both scenarios read no reference), run B 21/21; the same build, so the reading is a coin toss.
+  Notes and replies came across and no chat said they stayed behind in either run.
+- Standalone: 21/21, $0.0130 (`--port 8920`, a second port, to keep clear of the plugin run).
+
+**Caught Beyond the Brief**
+1. Without `notes: true` the export holds no notes: an agent that exports plain loses them in a copy. Taught in the file.
+2. Plugin reference-reading is unreliable on Haiku (A miss, B hit). The remedy is a core-line change, and the plugin has 5
+   bytes left; not touched.
+3. TASK-STATUS Requests row for `files.md` (FIX_01) is now met: the orchestrator closes it.
+

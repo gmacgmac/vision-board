@@ -1,13 +1,14 @@
 // Export-import-print T_03, scenario 57 (D-107, D-108; PLAN.md decisions 7, 7a): "bring this exported file into the
 // board". The bot draws a small board, then the person names an export file a colleague made, its cards answered (a ✓,
-// a ✗), one moved, one noted, and one carrying a field this board doesn't know. The bot reads `references/files.md`,
+// a ✗), one moved, one noted with the agent's reply, and one carrying a field this board doesn't know. The bot reads `references/files.md`,
 // reads the file and imports it unchanged `into: "current"` on the board it drew; it draws nothing by hand and proposes
-// no mark. The chat names what stayed behind in one plain line, not the `dropped` paths.
+// no mark. The notes and replies come across with it; the chat names what stayed behind (the ✓ and ✗) in one plain line,
+// not the notes and not the `dropped` paths.
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { callsTo, doneOnly } from '../checks.ts';
 import type { FakeBot, RunRecord, Scenario } from '../types.ts';
-import { MARKS, dropsRelayed, fileAsGiven, importedInto, noHandDrawn, noMarksSent } from './files-checks.ts';
+import { MARKS, dropsRelayed, fileAsGiven, importedInto, noHandDrawn, noMarksSent, notesKept } from './files-checks.ts';
 import { secretArg } from './timeline-checks.ts';
 
 const BOARD = 'team-offsite';
@@ -24,7 +25,7 @@ export const WORKSHOP = {
   ],
   answers: [{ key: 'card:1', answer: 'check' }, { key: 'card:2', answer: 'cross' }],
   pins: [{ key: 'card:3', x: 40, y: 20 }],
-  notes: [{ key: 'card:1', text: 'Most of the team is remote anyway.' }],
+  notes: [{ key: 'card:1', text: 'Most of the team is remote anyway.', thread: [{ text: 'Noted: remote it is.', from: { by: 'agent', agent: 'planner', label: 'Planner' } }] }],
 };
 const DRAW = 'Start a board for our team offsite: one row of three topics, venue, agenda and travel.';
 /** The board the bot drew in turn 1. */
@@ -47,7 +48,7 @@ async function bring(bot: FakeBot) {
   const file = named(bot);
   bot.read('files');
   await bot.call('write_board', { ...secret, board: BOARD, import: { into: 'current', file } });
-  bot.say('Done. Their ✓ and ✗, the moved card and the note stayed behind, with a glow setting this board doesn\'t have.');
+  bot.say('Done. Their ✓ and ✗ and the moved card stayed behind, with a glow setting this board doesn\'t have.');
 }
 /** Tidies the file first (the unknown field out), imports it into a new board, and lists the `dropped` paths. */
 async function bringBadly(bot: FakeBot) {
@@ -72,11 +73,11 @@ export const importFile: Scenario = {
     importedInto('current', (b, r) => b === drewOn(r), 'on the board it drew in turn 1', 1),
     fileAsGiven('file-as-given', () => WORKSHOP.items, 'the import carries the file\'s items unchanged'),
     noHandDrawn(1), noMarksSent(),
-    dropsRelayed(1, [MARKS, ['the note', /\bnotes?\b/i]]), doneOnly(0), doneOnly(1),
+    notesKept(() => WORKSHOP.notes, 1), dropsRelayed(1, [MARKS]), doneOnly(0), doneOnly(1),
   ],
   reads: { need: ['files'] },
   fake: {
     good: [draw, bring], bad: [draw, bringBadly],
-    badFails: ['imported-current', 'file-as-given', 'done-only-t2', 'reads-references'],
+    badFails: ['imported-current', 'file-as-given', 'done-only-t2', 'notes-kept', 'reads-references'],
   },
 };

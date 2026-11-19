@@ -1058,20 +1058,20 @@ to try a second version without touching the first.
 
 **A good run**
 - Reads `references/files.md`, and no other reference.
-- `get_board` with `export: true`, then `write_board` with `import: { into: "new", file }` under a new id, the file
-  exactly as the export answered. No `items`, no `propose`, no grant asked.
-- Chat words: "Done." and one short line saying the ✓ and ✗ stayed behind, the person's to press again.
+- `get_board` with `export: true, notes: true`, then `write_board` with `import: { into: "new", file }` under a new id,
+  the file exactly as the export answered, notes included. No `items`, no `propose`, no grant asked.
+- Chat words: "Done." and one short line saying the ✓ and ✗ stayed behind, the person's to press again; the note came across, so the line never says it stayed.
 - **Fails if** the copy is drawn by hand, the file is changed, a mark is proposed, or the chat recaps what came across.
 
 ## 57. Bring in an exported file (own chat or host; eval `import-file`, both hosts)
 
 **Situation.** The bot drew a small board; the person names an export file a colleague made (its cards answered, one
-moved, one noted, one with a field this board doesn't know) and asks to bring it into this board, beside what's there.
+moved, one noted (with a reply), one with a field this board doesn't know) and asks to bring it into this board, beside what's there.
 
 **A good run**
 - Reads `references/files.md` and the file, and imports it unchanged with `import: { into: "current", file }` on the
   board it drew. No `items`, no `propose`.
-- Chat words: "Done." and one short line, in plain words, naming what stayed behind (the ✓ and ✗, the note, the moved
-  card); never the `dropped` paths.
+- Chat words: "Done." and one short line, in plain words, naming what stayed behind (the ✓ and ✗, the moved card), never the notes (they came across) and never the `dropped`
+  paths. The file's notes go in as given.
 - **Fails if** the file is tidied first, it goes into a new board, or the chat lists the drops.
 
