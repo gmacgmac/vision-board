@@ -161,6 +161,7 @@ test('the view bundle is one file with no import, exporting only mount, and one 
   const css = text(first, 'view/board.css');
   assert.ok(!/@import/.test(css) && !/url\((?!["']?data:)/.test(css), 'no other file, no address');
   assert.ok(!/sourceMappingURL/.test(code + css), 'no sourcemap for a host to serve');
+  assert.ok(!/scrollbar/.test(css), 'no scrollbar of its own: the board wears the host\'s (point 632; the standalone page\'s is shell.css)');
 });
 
 test('the built sheet stays in its scope: the host\'s own check passes it with no reads and no waiver, and so does the board\'s', async () => {

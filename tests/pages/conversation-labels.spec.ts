@@ -1,6 +1,6 @@
 // The conversation box's one scrollbar, one label line and one divider (export-import-print FIX_01, points 617-619): the
-// thread scrolls the box's full width with the board's skinny bar at its edge, even under a host's rule that hides every
-// bar; a note reads "User" (its number on hover), a reply "Agent · <name> <id>" on one line, the name alone cut and whole
+// thread scrolls the box's full width with the standalone page's skinny bar at its edge (inside a host, the host's: point 632,
+// plugin-build.test.ts); a note reads "User" (its number on hover), a reply "Agent · <name> <id>" on one line, the name alone cut and whole
 // on hover; an imported conversation comes in whole, each line by its author, with one "Imported" divider after it. The
 // headless shell hides every scrollbar by default (`--hide-scrollbars`), so this file runs with it shown, as a person's
 // browser draws it.
@@ -44,25 +44,6 @@ test('the thread scrolls the box\'s full width: one skinny scrollbar at its righ
   expect(m.bar, 'a skinny bar, no wide rail').toBe(7);
   expect(m.inner - m.noteRight, 'a gap between the bubbles and the scrollbar').toBeGreaterThanOrEqual(8);
   expect(m.noteLeft - m.boxLeft, 'a little more room on the left').toBeGreaterThanOrEqual(16);
-});
-
-test('a host that hides every scrollbar (as nclite does) leaves the board\'s own: the same skinny bar (point 618)', async ({ page, request }) => {
-  const d = await drawEdges(request);
-  await open(page, d, FLAGS);
-  // The host's sheet, as nclite's overlay-scroll.css hides the native bar on everything (a constructed sheet: the page's
-  // policy refuses an inline one).
-  await page.evaluate(() => {
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync('* { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }');
-    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-  });
-  const [q] = d.n as [number];
-  await longThread(page, request, d, q);
-  await mark(page, q, 'notes').click();
-  const thread = box(page).locator('.vb-nb-thread');
-  await expect(thread).toBeVisible();
-  expect(await thread.evaluate((t) => (t as HTMLElement).offsetWidth - t.clientWidth)).toBe(7);
-  expect(await page.locator('body').evaluate((b) => (b as HTMLElement).offsetWidth - b.clientWidth), 'the host\'s own page keeps its rule').toBe(0);
 });
 
 test('one label line (point 619): "User", its number in the hover; "Agent · <name> <id>", the name alone cut and whole on hover', async ({ page, request }) => {
