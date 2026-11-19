@@ -2,21 +2,22 @@
 // FolderPicker, drawn in the dialog's box in the page flow (not modal) from fixture listings, in each
 // state: the home folder with its Cloud storage places (folder-links-cloud task), a folder with a
 // Vision Board (Open), one without (Create), reading the first listing, a refusal kept in the
-// dialog, and Open on its way. Paths are examples under a made-up home folder.
+// dialog, and Open on its way. Paths are examples under a made-up home folder. The long names and the system's folder
+// chooser have their own section, last in the gallery (folder-chooser-section.ts), drawn with this one's `sample`.
 // Shown only with the flag on, so ?flags=-openFolder draws the gallery as it was.
 import { mount } from 'svelte';
 import FolderPicker from '../shell/FolderPicker.svelte';
-import type { FolderList } from '../shell/page-io.ts';
+import type { FolderHead, FolderList } from '../shell/page-io.ts';
 import { el, group } from './dom.ts';
 
 const HOME = '/home/example';
-const at = (rel: string) => `${HOME}/${rel}`;
-const RECENT = [
+export const at = (rel: string) => `${HOME}/${rel}`;
+export const RECENT = [
   { name: '~/projects/example', path: at('projects/example'), hasBoard: true },
   { name: '~/notes/2026-plans', path: at('notes/2026-plans'), hasBoard: true },
 ];
 const CLOUD = `${HOME}/Library/CloudStorage`;
-const HOME_LIST: FolderList = {
+export const HOME_LIST: FolderList = {
   path: HOME, name: '~', found: false, recent: RECENT,
   places: [{ name: 'Cloud-Example', path: `${CLOUD}/Cloud-Example`, hasBoard: false }, { name: 'Cloud-Team', path: `${CLOUD}/Cloud-Team`, hasBoard: false }],
   folders: [{ name: 'Library', path: at('Library'), hasBoard: false }, { name: 'notes', path: at('notes'), hasBoard: false }, { name: 'projects', path: at('projects'), hasBoard: false }],
@@ -37,7 +38,8 @@ const NEW_APP: FolderList = { path: at('projects/new-app'), name: '~/projects/ne
 const CONFLICT = 'Another board server holds this ledger: computer "example-laptop", process 4242, port 4466, running since 2026-10-09T09:00:00.000Z. Stop that server first.';
 
 let samples = 0;
-function sample(listing: FolderList | null, opts: { loading?: boolean; problem?: string; busy?: boolean } = {}): HTMLElement {
+/** The board's own FolderPicker in the dialog's box, in the page flow, with `opts` as its props. */
+export function sample(listing: FolderList | null, opts: { loading?: boolean; problem?: string; busy?: boolean; chooser?: boolean; choosing?: boolean; picked?: FolderHead } = {}): HTMLElement {
   const host = el('div', 'vb-dialog vb-folder-dialog g-folder');
   const none = () => undefined;
   mount(FolderPicker, {

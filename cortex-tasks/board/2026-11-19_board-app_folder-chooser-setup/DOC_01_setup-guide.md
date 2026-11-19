@@ -57,4 +57,4 @@ No git command that changes state. A deviation: stop and say so.
 
 ## Implementation Notes
 
-_Fill in on completion: sources read (URL, date), anything a vendor's docs left unclear._
+Sources read 2026-11-19 (URLs in SETUP.md Sources). Unclear in the docs: Kiro and Crew symlinked skill folders; Crew Discover & Sync file paths; Codex CLI restart; Claude Code restart after mcp add; Claude Desktop skills (ZIP upload only, sources conflict on menu names); Cursor not re-read. Codex docs say the ChatGPT desktop app can add STDIO servers (shares Codex config); ChatGPT web is remote-only: SETUP names the web app as left out. npm run verify ok.

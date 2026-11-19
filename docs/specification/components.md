@@ -962,6 +962,21 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    each state (`gallery/folder-section.ts`); `tests/pages/open-folder.spec.ts` covers it. Off, the menu
    and title are as before and the page never calls the folder routes.
 
+   **Wider, wrapping, and the system's own chooser** (D-110; task
+   `cortex-tasks/board/2026-11-19_board-app_folder-chooser-setup/T_01_chooser.md`; api.md 208-211). The dialog is 720px
+   wide, never past the window (a 16px gutter each side at phone width), and every folder name, the breadcrumb, a list's
+   heading and a problem naming a folder wrap anywhere, never cut with an ellipsis. With the `systemFolderChooser` flag
+   (on by default, needs `openFolder`) and where the server's listing says `chooser` (macOS), a "Choose in Finder…"
+   button (`.vb-btn-small`, `FolderPicker.svelte` `chooser`) sits under the lists: the server opens Finder's own
+   folder chooser; while it is open the status line says so, the button is `aria-disabled` (it keeps focus), the lists
+   and Open wait, and Cancel closes the dialog and the chooser. The pick, or a recent folder outside home (named by its
+   whole path; it can't be listed), is the chosen folder (`picked`): a "Chosen folder" line in the Current folder line's
+   look, on the card surface, with the status and Open or Create its own, Open focused. A refused pick (hidden) shows in
+   the problem line. Reading text Lc 60 or more, light and dark. The gallery's section is last
+   (`gallery/folder-chooser-section.ts`, long names and each chooser state); tests are
+   `tests/pages/folder-chooser.spec.ts` and `apps/board/tests/api-folder-chooser.test.ts`. Off, no button; the width and
+   wrapping are not flagged (a fix to a look, not new behaviour).
+
    **The open folder always on show** (`currentFolder` flag, on by default, needs `openFolder`; task
    `cortex-tasks/board/2026-10-26_board-app_current-folder.md`). Nothing else on the page names the open
    folder, so three places do, from `shell.folder` (`FolderInfo`), with no server, ledger or schema change.

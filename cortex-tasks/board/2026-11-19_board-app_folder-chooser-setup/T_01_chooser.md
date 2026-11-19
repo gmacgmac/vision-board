@@ -66,5 +66,78 @@ changes state. No PII in examples. A deviation from PLAN.md: stop and say so (`D
 
 ## Implementation Notes
 
-_Fill in on completion: what changed (files and symbols), baselines renewed, budgets measured, anything caught
-beyond the brief._
+Done 2026-11-19 (Opus 5.5).
+
+**Contract.** `choose_folder` (`POST /api/folders/choose`, person only, `openapi.json` 1.46.0) answers
+`folder-choice.schema.json`: `{ path, name, found, boards? }` or `{ cancelled: true }`. `folder-list.schema.json` gains
+`chooser: true` and says recent may hold a picked folder outside home. The flag is `systemFolderChooser` (on by
+default; page `?flags=-systemFolderChooser`, server `VB_FLAGS`). `npm run gen` was re-run. The `apiVersion` line also
+changed in `packages/mcp/src/tools.generated.json`.
+
+**Server.**
+- `server/chooser.ts`: `macChooser` runs `osascript` by `execFile` on the fixed `server/choose-folder.applescript`, with
+  the prompt and open folder as argv. The script is its own file so the words scan doesn't read AppleScript as prose.
+  `createChooser` allows one chooser at a time (`conflict`), is closed when the caller goes away, times out after 10
+  min, and keeps the trusted set in memory.
+- `createBoardServer({ chooser })`: the default is `macChooser` on macOS. `false` means none, which is the default in
+  `startTestBoard`, so no test opens the real dialog.
+- `folders.ts`:
+  - `resolvePicked`: real path; refuses hidden parts, control characters, and home or a folder holding home.
+  - `resolveVouched`: the trust rule. A path outside home must be that very path the server returned (the picked set
+    or the server's recent list) and still be its own real path.
+- `open-folder.ts`: `chooseFolder`; `openProject` goes through `resolveVouched`; `recent()` lists vouched folders
+  outside home; the listing says `chooser`.
+- `recent.ts` `startFolder`: may start in a vouched folder outside home.
+- `project.ts`, `caller-folder.ts`, the lock and the chat are unchanged. The audit found nothing in them that depends on
+  home (agents are checked by real path against the open folder; chat cwd and permissions belong to the folder).
+
+**Page.**
+- `FolderDialog.svelte`: `picked`, `choosing`, `inFinder`, `pickRecent`, `stopChoosing`.
+- `FolderPicker.svelte`: `chooser`/`choosing`/`picked` props, a `target` for status and Open, the "Chosen folder" line.
+- `page-io.ts` `chooseFolder`, `FolderHead`; `folder.ts` `folderChooserOn`; words in `shell/words/folders.ts`.
+- `styles/folder-dialog.css`: 720px wide, 16px gutter; every name, crumb, list heading and problem wraps anywhere.
+- Gallery: new last section `gallery/folder-chooser-section.ts` (long names plus each chooser state); `folder-section.ts`
+  exports its `sample`.
+
+**A refused pick is `invalid` (422), not `forbidden`.** The page's `asPerson` treats any `forbidden` as a stale cookie
+and reloads, which closed the dialog in the browser check. `forbidden` stays for the wrong caller, and for `open_project`
+outside home as before.
+
+**Tests.**
+- `apps/board/tests/api-folder-chooser.test.ts` (new, 13): trust, recent, hidden, control character, home and above,
+  node_modules, cancelled, one at a time, abort, runner failure, and the real script compiling (`osacompile`, never run).
+- `recent.test.ts`: the old "a recent folder outside home is never opened" is replaced by D-110's rule.
+- `openapi.test.ts` and `route-table.test.ts`: version and operation updates.
+- `tests/pages/folder-chooser.spec.ts` (new, 12): width and gutter, wrapping, Tab, waiting, pick and Open, Recent,
+  hidden, Cancel aborting, flag off, axe and APCA light and dark (chosen label Lc 94.3 / 71.6, path 104.5 / 94.9),
+  gallery.
+- The "section is last" lists in header-tiers, ledgers, read-only and read-only-controls specs gain the new section.
+- `api-read-only.test.ts` `STILL_GO` names `choose_folder` (it writes nothing; D-085 3).
+- Full unit suite (`npm test`, temp HOME): 2,790 of 2,791 passed; the one failure was this `STILL_GO` row, now added and green.
+
+**Baselines.** New: `folder-chooser.spec.ts/folder-chooser-{dark,light}`. Renewed: see TASK-STATUS T_01 notes (the
+wider dialog makes the gallery's folder picker section about 23px shorter, which moves every section below it by a
+fraction of a pixel; untouched HEAD passed all 140 gallery tests).
+
+**Budgets.** Board page 212.3 KB gzip against a 212.2 KB budget (`npm run verify` FAIL by 0.1 KB). Reported, not
+raised.
+
+**Looked at** on port 8420 with a temporary HOME and a stand-in chooser: dark at 1024 wide, light at 375. Pick, Open,
+Recent and the hidden refusal all work. That check caught a focus bug (Open was still disabled when focus went to it),
+now fixed.
+
+### Caught Beyond the Brief
+1. **Home's ancestors are refused too.** D-110 says home is never a project. `/Users` or `/` picked in Finder would be
+   every project's nearest board, which is the reason home itself is refused, so `resolvePicked` refuses any folder that
+   holds home. This is stricter than the ruling's words; the maintainer may overrule.
+2. **The trust is to the exact path, and only while it is still its own real path.** A link to a picked folder is not
+   trusted, and a picked folder later swapped for a link is refused.
+3. **Recent as a trust source.** Any process running as the person can write `~/.visionboard/recent.json`, including
+   the chat agent if it is allowed to write there. That only puts a folder in the person's list: opening it still takes
+   the person's click (`open_project` is person-only), and hidden or home paths are still refused. Worth knowing; no
+   change made.
+4. **Control characters.** A folder named with a line break would come back from Finder but could not be carried in any
+   answer, request or recent file. It is refused at the pick, in words.
+5. **`asPerson` reloads on every `forbidden`.** This is a latent page-wide issue: any person route refused as
+   `forbidden` for a reason other than a stale cookie reloads the page once. It was avoided here; it is not fixed
+   page-wide.

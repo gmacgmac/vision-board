@@ -36,3 +36,10 @@ export const visionBoard = (folderName: string): string => `${folderName} · Vis
 // ---- FolderPicker.svelte
 export const theBoardThenShowsThat = (here: string | number): string => `${here} The board then shows that folder's boards, and the chat works there.`;
 export const thisFolderIsOpenNow = (boards: string | number): string => `This folder is open now${boards}.`;
+
+// ---- FolderPicker.svelte (the system's folder chooser, systemFolderChooser flag, D-110)
+export const chooseInFinder = 'Choose in Finder…';
+/** The button's tooltip: what it is for. */
+export const chooseInFinderTip = "Pick a folder in macOS's own chooser: a drive, a share, or a folder this list doesn't show";
+export const waitingForFinder = 'Waiting for Finder… Choose a folder there, or Cancel here.';
+export const chosenFolder = 'Chosen folder';

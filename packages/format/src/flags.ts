@@ -92,6 +92,11 @@ export const FLAGS = {
     // On by default (maintainer, 2026-10-26, current-folder task, chat points 193-197); ?flags=-currentFolder turns it off.
     default: true,
   },
+  systemFolderChooser: {
+    // On by default (maintainer, 2026-11-19, D-110, folder-chooser-setup T_01); ?flags=-systemFolderChooser (page) or
+    // VB_FLAGS=-systemFolderChooser (server) turns it off.
+    default: true,
+  },
   everyNode: {
     // On by default (maintainer, 2026-10-10, every-node PLAN rulings 1-4, FE_01); ?flags=-everyNode turns it off.
     default: true,
@@ -357,6 +362,7 @@ export const FLAG_DESCRIPTIONS = {
   toolbarMenu: 'Theme, Hide decided and Reply move into a "⋯" menu at the end of the toolbar (a click or Enter opens it; Esc, a click outside or a choice closes it; Shift+H still hides decided items), and Agents (with its holder count), Send to agent and Chat show an icon only on a narrow window, so no toolbar control is cut off from 768px up. Off, the toolbar is as it was.',
   openFolder: 'The "⋯" menu ends with Open folder…, a picker of the folders under the home folder (recent first, a folder with a Vision Board marked) that opens one, or creates its Vision Board, in place of the open folder (api.md 109-113); every open page then reloads onto it. The page title names the open folder and the last board is kept per folder. Off, the page never asks which folder is open.',
   currentFolder: 'The folder the board has open is always on show (needs openFolder): a chip with its name at the far left of the toolbar, its full path in the tooltip, a click opening the folder dialog; a "Current:" line under Open folder… in the "⋯" menu; and a "Current folder" line with the full path and a Copy button at the top of the folder dialog, apart from its lists. Off, the name is only in the page title and the Open folder… tooltip.',
+  systemFolderChooser: 'The folder dialog offers "Choose in Finder…" (needs openFolder; macOS only, where the server says `chooser: true`): the board server opens the system\'s own folder chooser, and the folder the person picks there opens wherever it is, a drive, a share or a folder reached by a link, unless it is hidden or the home folder (D-110, api.md 208-211). Only a path the server\'s own chooser returned, or its own recent list holds, is trusted outside home. Off (page or server), no button, and choose_folder answers not-found.',
   everyNode: 'Every card has its number and the actions its kind offers: a question, decision or action ✓, ✗, Comment and Save for later (✓ and ✗ read "Yes" and "No" on a question, ✓ "Done" on an action); every other kind Comment and Save for later. Comment on a selection takes any cards. Off, only cards that need an answer have a number and actions (api.md 118-120).',
   cardBookmark: 'Every card with a number can be bookmarked: a click on its number, B on a focused card, the number\'s menu, right-click, or Bookmark all on the selection bar. It is the person\'s private mark, kept in the ledger and never sent to an agent (api.md 128; called the flag before ledger format 20, D-099 2). A bookmarked number fills with the bookmark colour and grows a notched tail, keeps it through a redraw, and a "N bookmarked" chip in the toolbar steps through the bookmarked cards. Off while a past version shows. Off, the number does not bookmark, no key, no Bookmark all and no chip; bookmarks stay in the ledger.',
   retiredMarker: 'A container the agent retired cards from, one at a time, shows a small "N cards retired" marker in its title line; it opens the board version where they last appeared (read-only, with the versionView flag). Retired cards and containers are gone from the board either way. Off, no marker.',

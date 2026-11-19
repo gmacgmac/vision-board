@@ -237,6 +237,10 @@ export interface OperationTypes {
     };
     output: FolderList;
   };
+  choose_folder: {
+    input: Record<never, never>;
+    output: FolderChoice;
+  };
   list_icons: {
     input: {
       paths?: boolean;
@@ -1282,12 +1286,21 @@ type FolderList = {
   folders: ProjectEntry[];
   recent: ProjectEntry[];
   places?: ProjectEntry[];
+  chooser?: true;
   more?: true;
 };
 type ProjectEntry = {
   name: string;
   path: string;
   hasBoard: boolean;
+};
+type FolderChoice = {
+  path: string;
+  name: string;
+  found: boolean;
+  boards?: number;
+} | {
+  cancelled: true;
 };
 type ListIconsResponse = {
   builtIn: CommonIconName[];

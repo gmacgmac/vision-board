@@ -114,6 +114,7 @@ const PERSON_WRITES: Partial<Record<OperationId, Rec>> = {
 /** The rest of the person's writes, and why they still go: none writes the ledger's folder (D-085 3). */
 const STILL_GO: Partial<Record<OperationId, string>> = {
   open_project: 'opens a folder: read-only, with no lock (api-read-only start and switch below)',
+  choose_folder: 'opens the system\'s folder chooser and remembers the pick in memory; writes nothing (D-110)',
   edit_ledger: 'is how the person leaves read-only', stop_editing: 'is how the person enters it',
   send_chat: 'the repo-wide chat; recorded as no Send while read-only (chat-sessions.ts deliver)',
   stop_chat: 'stops a turn', answer_approval: 'the repo-wide chat', ask_approval: 'the gate of a running turn',

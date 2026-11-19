@@ -163,6 +163,16 @@ export const getProject = () => person(() => client.call('get_project'));
 export const listFolders = (path?: string) =>
   person(() => client.call('list_folders', path === undefined ? {} : { path }));
 
+/** A folder as the server heads it (`get_project`, a listing's head, a pick): its path, name and whether it has a board. */
+export type FolderHead = Pick<FolderInfo, 'path' | 'name' | 'found' | 'boards'>;
+
+/** A folder picked in the system's own chooser, as `list_folders` heads one; or `{ cancelled: true }` (D-110). */
+export type FolderChoice = OperationOutput<'choose_folder'>;
+
+/** The server opens the system's folder chooser (macOS) and answers the pick; `signal` aborting closes it. */
+export const chooseFolder = (signal?: AbortSignal) =>
+  person(() => client.call('choose_folder', {}, signal ? { signal } : {}));
+
 /** One ledger of the open folder, as `get_project` lists it (ledgerFolders flag, D-084). */
 export type LedgerEntry = NonNullable<FolderInfo['ledgers']>[number];
 

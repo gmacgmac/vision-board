@@ -8,12 +8,16 @@
 // The cloud storage places (folder-links-cloud task) are the real folders in `~/Library/CloudStorage`,
 // where macOS keeps Dropbox and the like (home only holds links to them, and links are not listed);
 // each passes the same checks, so a place is just another folder under home, by its real path.
+// Outside home (D-110): a folder the server vouches for, because the person picked it in the system's chooser this run
+// (chooser.ts) or it is in the server's own recent list, may be anywhere but hidden (`resolvePicked`, `resolveVouched`);
+// every other path keeps `resolveFolder`'s rule. Home itself, or a folder holding it, is never a project.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { OperationOutput } from '#format';
+import type { ProblemCode } from './problem.ts';
 import { ledgerFiles } from '#format';
 import { boardsIn, hasLedger, ledgerFoldersIn } from './ledgers.ts';
-import { problem } from './problem.ts';
+import { ProblemError, problem } from './problem.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
 
 /** The most folders one listing holds; `more` says there were more. */
@@ -69,6 +73,39 @@ export function resolveFolder(home: string, raw: string): string {
   if (!isUnder(home, real) || path.relative(home, real).split(path.sep).some(skipped)) throw problem('forbidden', OUTSIDE);
   if (!fs.statSync(real).isDirectory()) throw problem('not-found', serverFoldersWords.isNotAFolderChoose(displayName(home, real)));
   return real;
+}
+
+/** A path the API and the recent list can carry: absolute, no control character (`project.schema.json` `folderPath`). */
+const CARRIED = /^\/[^\u0000-\u001f\u007f]*$/;
+
+/** Any part of the real path `real` is hidden: its name starts with a dot (D-110). */
+export const hiddenPart = (real: string): boolean => real.split(path.sep).some((part) => part.startsWith('.'));
+
+/** The real folder `raw` names, when the server vouches for it (D-110: picked in the system's chooser, or in its own
+ * recent list): anywhere but hidden. `refuse` (default `forbidden`, as `resolveFolder`) when a part of its real path
+ * starts with a dot, it holds a control character (no answer or request could carry it), or it is the home folder or
+ * holds it; `not-found` when it is not there or not a folder. */
+export function resolvePicked(home: string, raw: string, refuse: ProblemCode = 'forbidden'): string {
+  let real: string;
+  try { real = fs.realpathSync(raw); } catch {
+    throw problem('not-found', serverFoldersWords.thereIsNoFolderChoose(displayName(home, path.resolve(raw))));
+  }
+  if (!CARRIED.test(real)) throw problem(refuse, serverFoldersWords.controlCharacter(displayName(home, real)));
+  if (hiddenPart(real)) throw problem(refuse, serverFoldersWords.hiddenFolder(displayName(home, real)));
+  if (isUnder(real, home)) throw problem(refuse, serverFoldersWords.holdsHome(displayName(home, real)));
+  if (!fs.statSync(real).isDirectory()) throw problem('not-found', serverFoldersWords.isNotAFolderChoose(displayName(home, real)));
+  return real;
+}
+
+/** The real folder `raw` names: under home as `resolveFolder` checks it; else, only when `vouched(raw)` (the server
+ * returned that very path from its chooser, or holds it in its recent list), by `resolvePicked`, and only while `raw`
+ * is still its own real path (a folder since swapped for a link is refused). Otherwise `resolveFolder`'s refusal. */
+export function resolveVouched(home: string, raw: string, vouched: (raw: string) => boolean): string {
+  try { return resolveFolder(home, raw); } catch (err) {
+    if (!(err instanceof ProblemError) || err.code !== 'forbidden' || !vouched(raw)) throw err;
+    if (resolvePicked(home, raw) !== raw) throw err;
+    return raw;
+  }
 }
 
 const UNREADABLE = serverFoldersWords.theBoardServerIsNot;

@@ -44,6 +44,7 @@ import { folderAccessSection } from './folder-access-section.ts';
 import { attachSection } from './attach-section.ts';
 import { toolbarSection } from './toolbar-section.ts';
 import { folderSection } from './folder-section.ts';
+import { folderChooserSection } from './folder-chooser-section.ts';
 import { currentFolderSection } from './current-folder-section.ts';
 import { headerSection } from './header-section.ts';
 import { editingSection } from './editing-section.ts';
@@ -187,6 +188,7 @@ function build(): void {
   if (flagOn('appCards', flags)) main.append(appWindowSection(fx)); // FE_08; last of all, so no section moves
   main.append(timelineBoardSection(fx)); // D-105, FE_02; last of all, so no section moves
   main.append(filesSection(fx)); // D-107, export-import-print FE_01; last of all, so no section moves
+  if (flagOn('openFolder', flags)) main.append(folderChooserSection()); // D-110, folder-chooser-setup T_01; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

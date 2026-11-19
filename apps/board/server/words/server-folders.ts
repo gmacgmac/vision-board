@@ -24,6 +24,22 @@ export const runningSinceStopThatServer = (started: string): string => `running 
 // ---- open-folder.ts
 export const chooseAProjectFolderUnder = 'Choose a project folder under ~, not the home folder itself.';
 
+// ---- chooser.ts and folders.ts (the system's folder chooser, D-110)
+/** The chooser's own prompt, above its list. */
+export const chooserPrompt = 'Choose a project folder for Vision Board';
+export const chooserNotOffered = "This board server does not offer the system's folder chooser (it is on macOS only). Choose a folder from the list.";
+export const chooserAlreadyOpen = "The system's folder chooser is already open. Choose a folder there, or cancel it, then try again.";
+export const chooserFailed = (why: string): string => `The system's folder chooser could not open (${why}). Choose a folder from the list.`;
+/** A pick, or a recent folder, with a hidden part in its real path. */
+export const hiddenFolder = (displayName: string): string =>
+  `${displayName} is hidden (a part of its path starts with a dot), so it can't be a project folder. Choose a folder that is not hidden.`;
+/** A pick whose path holds a control character (a line break): no answer, recent list or request can carry it. */
+export const controlCharacter = (displayName: string): string =>
+  `${JSON.stringify(displayName)} has a line break or another control character in its path, so the board can't keep it. Rename the folder, or choose another.`;
+/** A pick that is the home folder, or a folder holding it. */
+export const holdsHome = (displayName: string): string =>
+  `${displayName} is your home folder or holds it, so it can't be a project folder. Choose a folder inside it.`;
+
 // ---- project.ts
 export const makeOr = 'make or ';
 

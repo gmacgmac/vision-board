@@ -9,15 +9,20 @@
      folder on a "Current folder" line with Copy. Opened, closed and closed by its backdrop by the shared
      modal dialog (`#ui` `syncModal`, `backdropClick`, `whenShut`). With `guard` (the board, leavePrompt
      flag; M11_01-R4) a note's unsaved words ask before the server switches: the dialog closes, the
-     board asks, and Cancel leaves page and server on the same folder with focus back in the note. -->
+     board asks, and Cancel leaves page and server on the same folder with focus back in the note.
+     The system's folder chooser (systemFolderChooser flag, D-110; offered when the listing says `chooser`): "Choose in
+     Finder…" asks the server to open it (`choose_folder`); while it is open the status line says so and Cancel still
+     closes this dialog, aborting the call, which closes the chooser too. The pick, or a recent folder outside home (which
+     can't be listed), is the chosen folder (`picked`): shown on its own line, with Open or Create, as a listed one is;
+     choosing anything in the lists goes back to them. A refusal (a hidden pick) shows in the problem line. -->
 <script lang="ts">
   import { tick } from 'svelte';
   import { shell, toast } from './shell.svelte.ts';
   import type { BoardView } from '../board/host.ts';
   import FolderPicker from './FolderPicker.svelte';
   import { backdropClick, syncModal, whenShut } from '#ui';
-  import { listFolders, openProject, type FolderList } from './page-io.ts';
-  import { currentFolderOn, reloadOnto } from './folder.ts';
+  import { chooseFolder, listFolders, openProject, type FolderChoice, type FolderEntry, type FolderHead, type FolderList } from './page-io.ts';
+  import { currentFolderOn, folderChooserOn, reloadOnto } from './folder.ts';
 
   /** The board, asked before the folder changes under it (leavePrompt flag); none: nothing asks. */
   let { guard = null }: { guard?: Pick<BoardView, 'unsaved' | 'leave'> | null } = $props();
@@ -28,16 +33,21 @@
   let loading = $state(false);
   let problem: string | null = $state(null);
   let busy = $state(false);
+  /** A folder chosen apart from the listing: picked in the system's chooser, or a recent one outside home (D-110). */
+  let picked: FolderHead | null = $state(null);
+  /** The system's chooser call on its way; aborting it closes the chooser. */
+  let choosing: AbortController | null = $state(null);
   /** The latest listing asked for; an older answer is dropped. */
   let asked = 0;
 
   const words = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
-  /** Focus where the next step is: Open on a folder with a board, else its first folder, else Create. */
+  /** Focus where the next step is: Open on a folder with a board (or Open or Create on a chosen one), else its first
+   * folder, else Create. */
   function focusNext() {
     const accept = dlg.querySelector<HTMLButtonElement>(`#${UID}-accept:not(:disabled)`);
     const first = dlg.querySelector<HTMLButtonElement>('.vb-folder-in .vb-folder-row');
-    const target = listing?.found ? accept ?? first : first ?? accept;
+    const target = picked ? accept : listing?.found ? accept ?? first : first ?? accept;
     (target ?? dlg.querySelector<HTMLButtonElement>(`#${UID}-cancel`))?.focus();
   }
 
@@ -45,6 +55,7 @@
     const ask = ++asked;
     loading = true;
     problem = null;
+    picked = null;
     try {
       const next = await listFolders(path);
       if (ask !== asked) return;
@@ -61,10 +72,44 @@
 
   $effect(() => {
     syncModal(dlg, shell.folderDialog, () => {
-      [listing, problem, busy] = [null, null, false];
+      [listing, problem, busy, picked] = [null, null, false, null];
       void choose();
     });
   });
+
+  /** A chosen folder, on its own line with Open or Create. */
+  async function choosePicked(folder: FolderHead) {
+    asked++; // a listing still on its way no longer replaces it
+    [picked, problem, loading] = [folder, null, false];
+    await tick();
+    focusNext();
+  }
+
+  /** A recent folder outside home: it can't be listed, so it is the chosen folder. */
+  const pickRecent = (f: FolderEntry) => void choosePicked({ path: f.path, name: f.name, found: f.hasBoard });
+
+  /** Ask the server to open the system's folder chooser; the pick becomes the chosen folder. */
+  async function inFinder() {
+    if (choosing || busy) return;
+    const call = new AbortController();
+    [choosing, problem] = [call, null];
+    let answer: FolderChoice;
+    try {
+      answer = await chooseFolder(call.signal);
+    } catch (err) {
+      if (!call.signal.aborted) problem = words(err);
+      return;
+    } finally {
+      if (choosing === call) choosing = null; // first, so Open is enabled when focus goes to it
+    }
+    if (!call.signal.aborted && !('cancelled' in answer)) await choosePicked(answer);
+  }
+
+  /** The dialog is closing: a chooser still open closes too. */
+  function stopChoosing() {
+    choosing?.abort();
+    choosing = null;
+  }
 
   /** Open the folder on the server, then reload onto it. */
   async function openFolder(path: string, create: boolean) {
@@ -73,8 +118,9 @@
   }
 
   async function accept() {
-    if (!listing || busy) return;
-    const { path, found } = listing;
+    const target = picked ?? listing;
+    if (!target || busy || choosing) return;
+    const { path, found } = target;
     // Unsaved words ask first, before anything switches: this dialog closes so Cancel's focus can go
     // back in the note; once discarded, a refusal shows as a toast (the dialog is gone).
     if (guard?.unsaved()) {
@@ -93,7 +139,11 @@
     }
   }
 
-  const close = () => { if (!busy) shell.folderDialog = false; };
+  const close = () => {
+    if (busy) return;
+    stopChoosing();
+    shell.folderDialog = false;
+  };
 
   /** A click on the backdrop closes it like Cancel. */
   const backdrop = backdropClick(close);
@@ -101,7 +151,8 @@
 
 <dialog id={UID} class="vb-dialog vb-folder-dialog" aria-labelledby="{UID}-title" aria-describedby="{UID}-body"
   bind:this={dlg} onclick={backdrop} oncancel={(e) => { if (busy) e.preventDefault(); }}
-  onclose={whenShut(() => { shell.folderDialog = false; })}>
+  onclose={whenShut(() => { stopChoosing(); shell.folderDialog = false; })}>
   <FolderPicker uid={UID} {listing} current={shell.folder?.path ?? null} here={currentFolderOn() ? shell.folder : null} {loading} {problem} {busy}
-    onchoose={(p) => void choose(p)} onaccept={() => void accept()} oncancel={close} />
+    {picked} chooser={folderChooserOn() && listing?.chooser === true} choosing={choosing !== null}
+    onchoose={(p) => void choose(p)} onpick={pickRecent} onfinder={() => void inFinder()} onaccept={() => void accept()} oncancel={close} />
 </dialog>
