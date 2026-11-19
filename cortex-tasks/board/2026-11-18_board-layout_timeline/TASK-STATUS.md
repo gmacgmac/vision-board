@@ -48,7 +48,8 @@ tracker: cortex-tasks/tracker.md#N53
 | 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Completed | Run 2 on the orchestrator's option C: plugin skill 8,148 of 8,192; v3.36; timeline scenarios pass live in both hosts; $0.1051 |
 | 5b | FIX_01 | 2 | standard | no | — | [A refusal names what was wrong (M84)](./FIX_01_anyof-refusal-wording.md) | Completed | Tone and icon refusals name what is accepted; words in `apps/board/server/words/schema.ts` |
 | 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Completed | Gate `datedView`; line in `wires.ts`; no drag; direction row; gallery board section; 16 page tests; budgets page 205.5, board.js 199,700 |
-| 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
+| 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Completed | Gates green (pages 1,094 passed, 2 skipped, 14.6 min); 1 must fix (M1 docs), 4 should (S1-S4) |
+| 7b | FIX_02 | 4 | strong | no | Accessibility engineer — a date a sighted person reads at a glance is one a screen-reader user hears, and a refused drag leaves no stray selection. | [VERIFY_01's must and should fixes](./FIX_02_verify-findings.md) | Pending | M1, S3, S4 |
 | 8 | T_03 | 5 | standard | no | Staff engineer who owns deprecations — a switch-over is done only when nothing, not code, tests, words nor docs, still points at the flag. | [Switch on](./T_03_switch-on.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -252,8 +253,16 @@ Renewed: the four across board baselines and the two gallery ones. Named specs 1
 `test:plugin` 116 pass; board.js 200,300 (200,296); page within 206.0.
 
 ### VERIFY_01: Final verification
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-19 00:40)  
+_Notes:_ Gates: `verify` ok, `check` 0 errors, `gen --check` current, `npm test` 2,720/2,720 + timing 15/15, the full
+page suite once 1,094 passed, 2 skipped (14.6 min, no baseline changed), `test:plugin` 116 and webkit 116, eval dry
+114/114 (stopped at the 16-run cap; 129/129 with `--max-runs 18`) and standalone 115/115. Contract by the API, the
+format-20 migration, flag off, every card's actions, drag, Move to, Down/Auto/Grid, Tab and the accessible tree all
+as ruled; dates Lc 48.3 at worst. **Must fix before T_03**: M1, docs behind D-106 (`api.md` 194 `beside` and a stale
+"until then"; `show-layout-response.schema.json` `$defs.timeline` "down the left", so `api-reference.md`). **Should**:
+S1 run down a link runs along the line over five dots; S2 the year is about 6px on screen at fit; S3 an item's
+accessible name has no date; S4 a drag on a dated card selects text across cards. Later: L1 band Lc 0-12; L2 a "2027"
+card sorts before March; L3 a dated card saved for later draws a one-dot line in Later; L4 the dry eval's run cap.
 
 ### T_03: Switch on
 _Status:_ Pending  
