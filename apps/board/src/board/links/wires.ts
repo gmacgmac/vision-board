@@ -33,6 +33,8 @@ export interface Wires {
 }
 
 const keyOf = (r: Route) => `${r.from}>${r.to}`;
+/** Mark `el` with the link's two ends (`data-from`, `data-to`: node ids). */
+const ends = (el: Element, r: Route) => { el.setAttribute('data-from', r.from); el.setAttribute('data-to', r.to); };
 /** How far a lane band starts before its cards: as at the frame's left, from its 8px inset to the content's REGION_PAD. */
 const LANE_INSET = REGION_PAD - 8;
 
@@ -62,7 +64,7 @@ export function createWires(
   /** The focused card's connectors and labels, drawn again above the cards. */
   const topOf = (routes: Route[]) => routes.map((r) => {
     const at = tagAt(r, on);
-    return `<path class="vb-wire hot" d="${r.d}" marker-end="url(#${arrowHot})"/>` + (at ? labelMarkup(r.label!, at, on) : '');
+    return `<path class="vb-wire hot" d="${r.d}" fill="none" marker-end="url(#${arrowHot})"/>` + (at ? labelMarkup(r.label!, at, on) : '');
   }).join('');
 
   /** A lane band runs from the frame's left, or from `Lane.x` when a timeline run down sits beside the lanes (point
@@ -110,6 +112,10 @@ export function createWires(
     let d = drawn.get(key);
     if (!d) {
       d = { path: document.createElementNS(NS, 'path'), label: null, look: '' };
+      // `fill="none"` as an attribute, not only CSS: a print (or any sheet that drops ours) never fills a curve (D-107). Its
+      // ends name the link, so a container's print leaves out the links that leave it (canvas/print-view.ts).
+      ends(d.path, r);
+      d.path.setAttribute('fill', 'none');
       drawn.set(key, d);
     }
     if (d.look === look) return null;
@@ -119,6 +125,7 @@ export function createWires(
     let fresh: SVGGElement | null = null;
     if (at) {
       d.label = labelElement(r.label!, at, on, d.label ?? undefined);
+      ends(d.label, r);
       fresh = d.label;
     } else {
       d.label?.remove();

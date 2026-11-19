@@ -33,7 +33,7 @@
 
   const { state: shown, parts, flag, id: idIn, ids } = useChrome();
 
-  let { oncommand, onhide, onsend, onrevoke, onarchive, onlock, onskin, ondirection, holders, menu, zoom, placement = 'board', menuOpen = false, tier, fields, also, folderAbove = false, ledgerAbove = false, zoomOpen = false, look, send }: {
+  let { oncommand, onhide, onsend, onrevoke, onarchive, onlock, onskin, ondirection, onfiles, holders, menu, zoom, placement = 'board', menuOpen = false, tier, fields, also, folderAbove = false, ledgerAbove = false, zoomOpen = false, look, send }: {
     oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
@@ -46,6 +46,8 @@
     onskin?: ((skin: Skin) => void) | undefined;
     /** Which way the board's flows run, a menu in the header (D-100 5; FlowMenu.svelte); left out (the gallery's samples), none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
+    /** Print…, Export… and Import… in the "⋯" menu (boardFiles flag); left out, no such rows. */
+    onfiles?: ((kind: 'print' | 'export' | 'import') => void) | undefined;
     /** The board's holders, when Agents and Send to agent show; null hides both. */
     holders: AccessHolder[] | null;
     /** The toolbarMenu flag. */
@@ -112,5 +114,5 @@
   {/if}
   {#if parts.chat}<PagePart draw={parts.chat} />{/if}
   {#if ondirection && shown.direction && here('flows')}<FlowMenu {ondirection} {placement} />{/if}
-  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {onskin} ondirection={here('flows') ? undefined : ondirection} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
+  {#if menu}<ToolbarMenu {onhide} {onarchive} {onlock} {onskin} {onfiles} ondirection={here('flows') ? undefined : ondirection} {placement} open={menuOpen} {fields} {also} {folderAbove} {ledgerAbove} />{/if}
 </div>

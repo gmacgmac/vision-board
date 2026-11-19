@@ -59,6 +59,8 @@ export interface DrawDeps {
   widthsControl?: boolean;
   /** The personRemove flag: Remove container in each frame's settings (N24). */
   removing?: boolean;
+  /** Print container… and Export container… in each container's settings (boardFiles flag, with the host's hooks; D-107). */
+  files?: { print?: boolean; export?: boolean };
   /** The toolRail flag: each frame's tools in a rail on its left edge (container tool rail). */
   rail?: boolean;
   /** The railOnHover flag: a frame's rail icons show only while it is in use (hovered or holding focus). */
@@ -133,7 +135,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     appCards: d.appCards !== false, idPrefix: d.ids, markdown: d.markdown, ...(d.edges && { edges: d.edges }),
   };
   const cards = createCardSet(els.cards, cardOpts);
-  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, direction: d.direction, idPrefix: d.ids, markdown: d.markdown });
+  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, ...(d.files && { files: d.files }), rail: d.rail === true, railHover: d.railHover === true, direction: d.direction, idPrefix: d.ids, markdown: d.markdown });
   const use = d.rail && d.railHover ? bindRegionUse(els.stage, () => regions.els, (id) => d.data().view.nodes.find((n) => n.id === id)?.region) : undefined;
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids, lookOf);
   const cache = createLayoutCache();

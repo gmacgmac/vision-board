@@ -24,7 +24,7 @@ PLAN.md § House Rules.
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | T_01 | 1 | strong | no | Principal API engineer — one shape reused, never a near-copy; an import refuses nothing silently and names what it dropped. | [Contract first](./T_01_contract.md) | Completed | Contract and tests landed. One decision blocks the person's import (who writes the cards; see notes). BE_01 owes the `export_board` handler. |
 | 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Completed | Ledger 22, the person's import by cookie, export read, import mode, centre by key; suite green but the tool budget. Two rulings asked (notes on an agent's import, replies on the person's). |
-| 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Pending | |
+| 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Completed | Page side done and tested. The server round trip is `test.fixme` until BE_01. Budgets over (page 211.1/206.2 KB, plugin 206,315/200,600). A host must define two `@page` names (Requests). |
 | 3b | T_03 | 3 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios. | [The agent learns export and import](./T_03_skill.md) | Pending | |
 | 4 | VERIFY_01 | 4 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
 | 5 | T_02 | 5 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Pending | |
@@ -59,6 +59,8 @@ PLAN.md § House Rules.
 | `packages/mcp/tests/tools.test.ts` budgets: tools/list 38,543 (cap 38,300), write_board 20,404 (cap 20,150; a region's `center` takes `{ key }`) | BE_01 | non-blocking | orchestrator | Open |
 | Ruling: an agent's import drops the person's notes (D-108) though decision 7 said it carries them; the person's import drops the agent's replies (`reply` not in `PERSON_TOO`) | BE_01 | non-blocking | maintainer | Open |
 | Conditioning's `dropped` words are pointer-first (for an agent); the page shows them to the person as they are | BE_01 | non-blocking | orchestrator (T_03 or a words pass) | Open |
+| `docs/specification/plugin.md` § What the host gives, `print()`: the board's root names its page `vb-print-landscape` or `vb-print-portrait`; a host defines both (`@page`, 10 mm margins) for the one-page fit to hold | FE_01 | non-blocking | orchestrator | Open |
+| Budgets: `verify-weight.mjs` page 211.1 KB (budget 206.2), `plugin-build.test.ts` `view/board.js` 206,315 (budget 200,600) | FE_01 | non-blocking | orchestrator | Open |
 
 ## Implementation Notes
 
@@ -84,7 +86,20 @@ _Status:_ Completed (2026-11-19, worktree `files-be-01`). Full notes in the task
 - Ledger format 22; openapi 1.45.0; a sent region `center` takes `{ key }`; api.md 201-205.
 - Asked of the maintainer (Requests): notes on an agent's import, replies on the person's import.
 ### FE_01
-_Status:_ Pending
+_Status:_ Completed (2026-11-19). The full notes are in the task file.
+- **For BE_01**
+  - The page calls `export_board` (`?region=&notes=true`) and `write_board` with `{ import: { into, file } }` as the
+    person (cookie, through `asPerson`, which reloads once on `forbidden`).
+  - For `new`, the path's board id is `boardIdFor(file.title)`, unique among the boards.
+  - The page shows the reply's `dropped` strings as a list.
+- **Fixme until BE_01**: `tests/pages/board-files.spec.ts` "against the server (BE_01)". Two round-trip tests; remove the
+  `test.fixme` line.
+- **Print**
+  - `canvas/print-view.ts` and `styles/print.css`.
+  - The board's sheet can't hold `@page` (the host's sheet check), so the standalone page defines `vb-print-landscape` and
+    `vb-print-portrait` in `shell.css`. A plugin host has to define them too (Requests).
+- **Caught**: soft shadows print as grey blocks in a PDF (dropped in print); links were hidden while settling (fixed).
+- **For the maintainer**: dark mode prints dark. Force light while printing? (Task file, Caught 4.)
 ### T_03
 _Status:_ Pending
 ### VERIFY_01

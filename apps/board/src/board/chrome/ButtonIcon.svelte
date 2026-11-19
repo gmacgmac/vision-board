@@ -11,9 +11,10 @@
      chip and New ledger… (a bound book, two lines on its cover); with the readOnlyStart flag, the page's Read-only chip (an
      eye) and its Editing chip, Edit and Stop editing (a pencil); the header's Flows and the "⋯" menu's Flows
      across (two cards side by side, linked), Flows down (two cards one above the other, linked) and Flows: Auto (a
-     card linked both ways). -->
+     card linked both ways); with the boardFiles flag, the "⋯" menu's Print… (a printer), Export… (an arrow up out of a
+     tray) and Import… (an arrow down into a tray). -->
 <script lang="ts">
-  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'bookmark' | 'align' | 'archive' | 'lock' | 'unlock' | 'chevron' | 'version' | 'containers' | 'open' | 'new' | 'zoom' | 'ledger' | 'eye' | 'pencil' | 'across' | 'down' | 'auto' } = $props();
+  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'bookmark' | 'align' | 'archive' | 'lock' | 'unlock' | 'chevron' | 'version' | 'containers' | 'open' | 'new' | 'zoom' | 'ledger' | 'eye' | 'pencil' | 'across' | 'down' | 'auto' | 'print' | 'export' | 'import' } = $props();
 </script>
 <svg class="vb-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -34,6 +35,12 @@
     <path d="M10 12H5V7h5v5c0 3-1.5 5-4.5 6" /><path d="M19 12h-5V7h5v5c0 3-1.5 5-4.5 6" />
   {:else if name === 'more'}
     <circle cx="5" cy="12" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="19" cy="12" r="1.5" fill="currentColor" />
+  {:else if name === 'print'}
+    <path d="M7 9V3h10v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M7 14h10v7H7z" />
+  {:else if name === 'export'}
+    <path d="M12 15V3 M8 7l4-4 4 4" /><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />
+  {:else if name === 'import'}
+    <path d="M12 3v12 M8 11l4 4 4-4" /><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />
   {:else if name === 'folder'}
     <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
   {:else if name === 'bookmark'}

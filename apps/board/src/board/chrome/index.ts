@@ -47,4 +47,5 @@ export { default as Toolbar } from './Toolbar.svelte';
 export { default as ToolbarEnd } from './ToolbarEnd.svelte';
 export { default as ToolbarMenu } from './ToolbarMenu.svelte';
 export { default as FlowMenu } from './FlowMenu.svelte';
+export { default as FilesForm } from './FilesForm.svelte';
 export { default as VersionBanner } from './VersionBanner.svelte';

@@ -29,6 +29,10 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   putBack(region: string): void;
   /** Remove container in a container's settings (personRemove flag, N24); absent without it. */
   removeRegion?(region: string): void;
+  /** Print container… and Export container… in a container's settings (boardFiles flag, D-107): open the files dialog
+   *  for that container; absent without the flag. */
+  printRegion?(region: string): void;
+  exportRegion?(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
   /** A container's "N cards retired" marker (retiredMarker flag): show board version `seq`, with the
@@ -98,6 +102,10 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     if (back) return h.putBack(back.dataset.putBack!);
     const removeRegion = t.closest<HTMLButtonElement>('button[data-remove-region]');
     if (removeRegion) return h.removeRegion?.(removeRegion.dataset.removeRegion!);
+    const printRegion = t.closest<HTMLButtonElement>('button[data-print-region]');
+    if (printRegion) return h.printRegion?.(printRegion.dataset.printRegion!);
+    const exportRegion = t.closest<HTMLButtonElement>('button[data-export-region]');
+    if (exportRegion) return h.exportRegion?.(exportRegion.dataset.exportRegion!);
     const regionComment = t.closest<HTMLButtonElement>('button[data-region-comment]');
     if (regionComment) return h.regionComment(regionComment.dataset.regionComment!);
     const holder = t.closest<HTMLButtonElement>('button[data-revoke]');

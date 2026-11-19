@@ -7,7 +7,8 @@
 // cookie. Its chat is the chat panel's, through its bridge (chat-panel.ts, chat-bridge.ts `host`): the
 // board's selection and answers, Send and the agent's status all go through `BoardChat`. With the
 // leavePrompt flag it guards its own tab: a close or reload while a note holds unsaved words gets the
-// browser's "Leave site?" prompt (`guardLeave`).
+// browser's "Leave site?" prompt (`guardLeave`). Its files and print are the browser's: a download, the file picker and
+// `window.print()` (page-files.ts).
 import { flagOn, isFlag } from '#format';
 import type { BoardChat, BoardHost, BoardPageParts, PluginEvent } from '../board/host.ts';
 import type { Status } from '../board/status.ts';
@@ -15,6 +16,7 @@ import { pageFlags } from '../flags.ts';
 import { readEditing } from './editing.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
 import { pageStore } from './kept.ts';
+import { openFile, print, saveFile } from './page-files.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
 import { askConfirm, shell, toast } from './shell.svelte.ts';
 import * as pageHelpWords from './words/page-help.ts';
@@ -87,6 +89,8 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     notify: (text, tone) => toast(text, tone),
     confirm: ({ heading, body, confirm, list }) => askConfirm(heading, body, confirm, list),
     store,
+    // Export, import and print (boardFiles flag, D-107): a download, the file picker, the browser's print (page-files.ts).
+    saveFile, openFile, print,
     page: {
       async wanted() {
         if (openFolder && !shell.folder) await loadFolder(); // read before the mount (App.svelte)

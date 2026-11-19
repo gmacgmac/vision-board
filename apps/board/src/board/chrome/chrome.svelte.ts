@@ -45,13 +45,17 @@ export interface Chrome {
   help: BoardPage['help'];
   /** The board has its own page: `?` is heard outside its root too (keys.ts `pageWide`). */
   pageWide: boolean;
+  /** Which of Print, Export and Import show (boardFiles flag, D-107): each only when the host gives its hook. */
+  files: { print: boolean; export: boolean; import: boolean };
 }
 
 /** One mount's controls, over its host. */
-export function createChrome(host: Pick<BoardHost, 'settings' | 'notify' | 'page'>, root: HTMLElement, ids: string, store: BoardStore = memoryStore(), state = chromeState()): Chrome {
+export function createChrome(host: Pick<BoardHost, 'settings' | 'notify' | 'page' | 'saveFile' | 'openFile' | 'print'>, root: HTMLElement, ids: string, store: BoardStore = memoryStore(), state = chromeState()): Chrome {
+  const files = flagOf(host, 'boardFiles');
   return {
     state, root, ids, flag: (f) => flagOf(host, f), id: (name) => `${ids}${name}`, notify: (text, tone) => host.notify(text, tone),
     store, parts: host.page?.parts ?? {}, help: host.page?.help, pageWide: !!host.page,
+    files: { print: files && !!host.print, export: files && !!host.saveFile, import: files && !!host.openFile },
   };
 }
 
