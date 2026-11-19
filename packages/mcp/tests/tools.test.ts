@@ -142,10 +142,10 @@ test('no tool description carries an example: examples live in the skill, the sc
  * for a node item's `insert`, two card references (insert-markdown-signals ACT_01, point 424), and for a container's
  * `mode` default (`"default": "row"`, host-styling FE_03), and for ledger v20 (node-overhaul T_01): a node's `icon` (the
  * built-in names) and `tone`, a board's `skin`, a flow's `direction`, and the icon library's two tools. */
-const LIST_CAP = 38_300; // export and import (files T_01) measured 38,265; a size pass may trim (tracker N54)
+const LIST_CAP = 38_600; // export and import (files T_01, BE_01) measured 38,543; a size pass may trim (tracker N54)
 const TOOL_CAPS: Record<string, number> = {
   list_boards: 760, get_board: 1450, show_node: 1150, show_container: 1050, show_layout: 1050, list_open: 1150,
-  check_responses: 2600, join: 1600, request_grant: 1900, write_board: 20_150, list_apps: 1350, read_attachment: 2450,
+  check_responses: 2600, join: 1600, request_grant: 1900, write_board: 20_450, list_apps: 1350, read_attachment: 2450,
   list_icons: 1050, add_icon: 1900,
 };
 

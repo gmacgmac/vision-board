@@ -6,8 +6,8 @@
 // the scope fitted to one page, the border as chosen, colours kept, every link path `fill="none"`), then `host.print()`.
 // The standalone page's `print` is `window.print()`: here it is replaced by a binding that looks at the page in print
 // media and prints it to PDF (temp/print/), so the test sees what the person's PDF would hold. Export and import
-// against the real server need BE_01 (the `export_board` handler, the person's `import`): until then those are fixme,
-// and the page's side is held by the same calls answered here (`page.route`).
+// against the real server (BE_01: `export_board`, the person's `import`, D-108) run in "against the server";
+// the page's own states are held by calls answered here (`page.route`).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import type { Page, Route } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
@@ -379,9 +379,7 @@ test.describe('print', () => {
 });
 
 test.describe('against the server (BE_01)', () => {
-  // The person's import is authorised on the server by BE_01 (the maintainer's ruling: who writes the cards; TASK-STATUS
-  // Requests), and the export route's handler is BE_01's: until both land these cannot pass.
-  test.fixme(true, 'needs BE_01: the export_board handler and the person\'s write_board import');
+  // The person's import is authorised by the browser session (D-108); the export route is BE_01's `export_board`.
 
   test('a board exported, then imported into a new board, draws the same cards and links, with the person\'s answers', async ({ page }) => {
     await open(page);
