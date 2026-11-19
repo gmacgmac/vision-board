@@ -57,7 +57,13 @@
         },
         {"$ref": "https://vision-board.invalid/schema/ledger/22/events/act.schema.json#/$defs/core"},
         {"$ref": "https://vision-board.invalid/schema/ledger/22/events/act.schema.json#/$defs/rules"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/22/events/act.schema.json#/$defs/lineRules"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/22/events/act.schema.json#/$defs/lineRules"},
+        {
+          "type": "object",
+          "properties": {
+            "from": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/from", "description": "On a `comment` an import wrote: the words are the person's, from the board the file came from (`by: person`). Such a note is history: it waits for no Send and can't be changed."}
+          }
+        }
       ],
       "unevaluatedProperties": false
     },

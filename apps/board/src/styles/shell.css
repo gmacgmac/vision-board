@@ -48,4 +48,8 @@ body > .vb-board { position: absolute; inset: 0; }
   html:has(body > .vb-board[data-vb-print]), body:has(> .vb-board[data-vb-print]) { height: auto; overflow: visible; background: none; }
   body:has(> .vb-board[data-vb-print]) > :not(.vb-board) { display: none !important; }
   body > .vb-board[data-vb-print] { position: relative; inset: auto; }
+  /* The print's theme (point 615): this page's built tokens resolve light-dark() at its root, so the theme is set there
+     for the print, as the toolbar's data-theme sets it for the screen. */
+  :root:has(> body > .vb-board[data-vb-print-theme='light']) { color-scheme: light; }
+  :root:has(> body > .vb-board[data-vb-print-theme='dark']) { color-scheme: dark; }
 }

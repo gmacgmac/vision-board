@@ -27,6 +27,10 @@ export const exportContainerBody = (title: string): string => `Saves the contain
 export const importBody = 'Opens a .vboard.json file. Its cards arrive as new cards with new numbers, in containers of their own; nothing already here changes.';
 export const borderBoard = 'Container borders';
 export const borderContainer = 'Container border';
+/** Print in light or dark (point 615), the screen's theme first. */
+export const printIn = 'Print in';
+export const light = 'Light';
+export const dark = 'Dark';
 export const notes = 'Include the conversations on notes';
 export const notesHint = 'Your notes and the agents\' replies to them.';
 export const into = 'Import into';

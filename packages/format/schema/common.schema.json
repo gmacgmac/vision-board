@@ -117,6 +117,18 @@
         "person": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/person", "description": "The person's name, written only once a board has more than one person."}
       }
     },
+    "from": {
+      "description": "Whose words an imported note or reply holds, from the board the file came from (point 617): the person's (`by: person`), or an agent's, by its id and label there. The line's own `by` is who imported it.",
+      "$comment": "One optional field on an imported `comment` act or `reply` line; no format bump, it rides ledger 22.",
+      "type": "object",
+      "required": ["by"],
+      "properties": {
+        "by": {"enum": ["person", "agent"], "description": "Who wrote the words first: `person` or `agent`."},
+        "agent": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/agentId", "description": "The agent that wrote them first: its id on the ledger they came from."},
+        "label": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/agentLabel", "description": "That agent's label."}
+      },
+      "unevaluatedProperties": false
+    },
     "stampAgent": {
       "description": "`agent` is an agent id.",
       "$comment": "Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",

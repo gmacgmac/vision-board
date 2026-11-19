@@ -5,7 +5,7 @@
 // append-only (D-017). After a Send, or once the agent answers it, it is history (note-lock.ts). A note on a group of cards (3_FE_02, api.md
 // 62-65) is one ask shared by the log of every card it names. Pure: the fold calls `foldNoteAct`
 // and `itemOf`; the reads call `liveNotes` and `noteView`.
-import type { ActEvent, NoteKind } from '#format';
+import type { ActEvent, From, NoteKind } from '#format';
 import { isContainerAct } from '#format';
 import type { ItemStatus } from './registry.ts';
 import { ACTIONS, CLOSED } from './registry.ts';
@@ -15,7 +15,11 @@ import { ACTIONS, CLOSED } from './registry.ts';
  * `nodes` when it is a note on a group of cards (api.md 62): every item it is on (identities in the
  * fold, board numbers once a read gives it: numbers.ts `noteOut`). `region` when it is a note on a
  * whole container (api.md 73), in place of a card. */
-export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true; locked?: true; nodes?: number[]; region?: string }
+export interface ItemNote {
+  seq: number; kind: NoteKind; text: string; at: string; sent?: true; locked?: true; nodes?: number[]; region?: string;
+  /** It came with an import (point 617): history from the board the file came from. */
+  imported?: true;
+}
 
 /** One `comment` or `context` act on an item, as it stands after its edits. `pos` is the `seq`
  * where it counts for the item's status: its own, or the latest edit that set its kind (the
@@ -29,6 +33,8 @@ export interface Ask {
   seq: number; id: number; kind: NoteKind; ver: number; at: string; pos: number;
   text?: string; person?: string; changed?: number; removed?: number;
   nodes?: number[]; vers?: Record<number, number>; region?: string;
+  /** An imported note (point 617): the person's words from the board the file came from; history. */
+  from?: From;
 }
 
 /** A decision act on an item (ack, drop, later, reopen): it sets the status outright. */
@@ -62,7 +68,7 @@ export function askOf(e: ActEvent, verOf: (id: number) => number): Ask {
   const ver = e.ver ?? verOf(cards[0]!);
   return {
     seq: e.seq, id: cards[0]!, kind: e.action as NoteKind, ver, at: e.at, pos: e.seq,
-    ...(e.text?.trim() && { text: e.text.trim() }), ...(e.person !== undefined && { person: e.person }),
+    ...(e.text?.trim() && { text: e.text.trim() }), ...(e.person !== undefined && { person: e.person }), ...(e.from && { from: e.from }),
     ...(e.nodes && { nodes: [...e.nodes], vers: Object.fromEntries(e.nodes.map((id) => [id, verOf(id)])) }),
   };
 }
@@ -92,7 +98,7 @@ const standing = (log: ItemLog): Ask[] => log.asks.filter((a) => a.removed === u
 export function itemOf(log: ItemLog, cut = 0): ItemState {
   return {
     status: markOf(log, cut),
-    notes: liveNotes(log).map(({ seq, kind, text, at, nodes }) => ({ seq, kind, text, at, ...(nodes && { nodes: [...nodes] }) })),
+    notes: liveNotes(log).map(({ seq, kind, text, at, nodes, from }) => ({ seq, kind, text, at, ...(nodes && { nodes: [...nodes] }), ...(from && { imported: true as const }) })),
   };
 }
 

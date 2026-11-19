@@ -10,8 +10,8 @@ import { conversationTemplate } from '../src/note-bubble/conversation-template.t
 
 const key = (k: Partial<KeyboardEvent>) => ({ key: 'Enter', shiftKey: false, metaKey: false, ctrlKey: false, isComposing: false, ...k });
 const NOTES: NotesEntry[] = [
-  { seq: 10, index: 1, who: 'Your note 1 · Sent', text: 'Is 96 GB enough?', sent: true, at: '', replies: [{ seq: 11, who: 'Agent reply', text: 'Yes.', at: '' }] },
-  { seq: 12, index: 2, who: 'Your note 2', text: 'Book it then.', sent: false, at: '' },
+  { seq: 10, index: 1, who: 'User', text: 'Is 96 GB enough?', sent: true, at: '', replies: [{ seq: 11, who: 'Agent', text: 'Yes.', at: '' }] },
+  { seq: 12, index: 2, who: 'User', text: 'Book it then.', sent: false, at: '' },
 ];
 
 test('fieldKey: Enter adds the note; Cmd or Ctrl Enter asks now, in the box only; Shift Enter and an IME are left alone', () => {
@@ -74,7 +74,7 @@ test('conversationTemplate: head, thread oldest first with the queued note marke
   assert.match(html, /vb-nb-num[^>]*>34<\/span><span class="vb-node-box-title">Hardware/);
   assert.ok(html.indexOf('Is 96 GB enough?') < html.indexOf('Yes.') && html.indexOf('Yes.') < html.indexOf('Book it then.'));
   assert.match(html, /class="vb-nb-note vb-nb-queued" data-seq="12"/);
-  assert.match(html, /not sent yet · goes with Send/);
+  assert.equal((html.match(/Not sent/g) ?? []).length, 1, '"Not sent" only on the note no agent has had');
   assert.equal((html.match(/vb-nb-queued/g) ?? []).length, 1);
   assert.match(html, /<p class="vb-nb-wait" role="status">Waiting for the agent<\/p>/);
   assert.match(html, /<textarea class="vb-nb-text" aria-label="Add a note about 34" rows="1"/);
@@ -94,4 +94,26 @@ test('conversationTemplate: empty, only the field; tabs only with a note on seve
   assert.match(html, /role="tablist" aria-label="Conversations"/);
   assert.match(html, /data-tab="" aria-selected="false">This node/);
   assert.match(html, /data-tab="28,35" aria-selected="true">With 28/);
+});
+
+test('conversationTemplate (points 618-619): "User" with the note\'s number in its hover; "Agent · <name> <id>" on one line', () => {
+  const entries: NotesEntry[] = [{ seq: 10, index: 3, who: 'User', text: 'Why?', sent: true, at: '',
+    replies: [{ seq: 11, who: 'Agent · pricing a-7k2m9q4x', name: 'pricing', id: 'a-7k2m9q4x', text: 'Because.', at: '' }] }];
+  const html = conversationTemplate(bubbleView({ mode: 'conversation', kind: 'comment', number: 4, title: 'T', entries }), 4);
+  assert.match(html, /<span class="vb-nb-who" title="Note 3">User<\/span>/);
+  assert.match(html, /<span class="vb-nb-who vb-nb-agent"><span class="vb-nb-who-lead">Agent · <\/span><span class="vb-nb-who-name">pricing<\/span><span class="vb-nb-who-id"> a-7k2m9q4x<\/span><\/span>/);
+  assert.doesNotMatch(html, /Sent|Asked now|Answered/);
+});
+
+test('conversationTemplate (point 617): one "Imported" divider after the last imported message, none without one', () => {
+  const entries: NotesEntry[] = [
+    { seq: 10, index: 1, who: 'User', text: 'Old note', sent: true, at: '', imported: true, replies: [{ seq: 11, who: 'Agent', text: 'Old reply', at: '', imported: true }] },
+    { seq: 12, index: 2, who: 'User', text: 'New note', sent: false, at: '' },
+  ];
+  const html = conversationTemplate(bubbleView({ mode: 'conversation', kind: 'comment', number: 4, title: 'T', entries }), 4);
+  assert.equal((html.match(/vb-nb-imported/g) ?? []).length, 1);
+  assert.ok(html.indexOf('Old reply') < html.indexOf('>Imported<') && html.indexOf('>Imported<') < html.indexOf('New note'));
+  assert.match(html, /<li class="vb-nb-imported"><span>Imported<\/span><\/li>/);
+  const none = conversationTemplate(bubbleView({ mode: 'conversation', kind: 'comment', number: 4, title: 'T', entries: NOTES }), 4);
+  assert.doesNotMatch(none, /vb-nb-imported/);
 });

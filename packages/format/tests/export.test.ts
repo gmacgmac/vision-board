@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ExportFile, UpgradeStep } from '../src/index.ts';
-import { EXPORT_STEPS, EXPORT_VERSION, conditionExport, isUpgradeStop, keptFor, upgradeExport } from '../src/index.ts';
+import { EXPORT_STEPS, EXPORT_VERSION, conditionExport as conditionDrops, forPerson, isUpgradeStop, keptFor as keptDrops, upgradeExport } from '../src/index.ts';
 
 type Rec = Record<string, unknown>;
 
@@ -13,6 +13,9 @@ const region = (id = 'plan', extra: Rec = {}) => ({ type: 'region', key: `r-${id
 const node = (key: string, extra: Rec = {}, item: Rec = {}) =>
   ({ type: 'node', key, node: { region: 'plan', kind: 'question', title: `Card ${key}`, ...extra }, ...item });
 const link = (from: unknown, to: unknown) => ({ type: 'link', key: 'l-1', from, to, label: 'leads to' });
+/** The conditioning and the writer's cut, each part left out as the agent's words (pointer first). */
+const conditionExport = (raw: Rec) => { const c = conditionDrops(raw); return { file: c.file, dropped: c.dropped.map((d) => d.text) }; };
+const keptFor = (f: ExportFile, by: 'person' | 'agent') => { const c = keptDrops(f, by); return { file: c.file, dropped: c.dropped.map((d) => d.text) }; };
 const file = (extra: Rec = {}): Rec => ({ v: EXPORT_VERSION, title: 'Pricing', items: [region(), node('a'), node('b'), link({ key: 'a' }, { key: 'b' })], ...extra });
 
 test('upgrade: a file of the current v comes back untouched; the chain is empty today', () => {
@@ -43,7 +46,7 @@ test('upgrade: no step from its v, a newer v, no v and not an object each stop w
 
 test('condition: a clean file comes through as it was, nothing dropped', () => {
   const f = file({ answers: [{ key: 'a', answer: 'check' }], pins: [{ key: 'b', x: 40, y: 12.5 }],
-    notes: [{ key: 'a', text: 'Why per seat?', thread: [{ text: 'It grows with the team.' }] }, { keys: ['a', 'b'], text: 'Both cards' }] });
+    notes: [{ key: 'a', text: 'Why per seat?', thread: [{ text: 'It grows with the team.', from: { by: 'agent', label: 'pricing' } }] }, { keys: ['a', 'b'], text: 'Both cards' }] });
   const { file: out, dropped } = conditionExport(f);
   assert.deepEqual(dropped, []);
   assert.deepEqual(out, f);
@@ -133,15 +136,44 @@ test('condition: answers, pins and notes that name no card, or are malformed, ar
   assert.equal(dropped.length, 8, dropped.join('\n'));
 });
 
-test('by writer (D-108): an agent\'s import leaves out the person\'s answers, places and notes; the person\'s, the agent\'s replies', () => {
+test('by writer (D-108, point 617): an agent\'s import leaves out the person\'s answers and places; the conversation comes in whoever imports', () => {
   const f = file({ answers: [{ key: 'a', answer: 'check' }], pins: [{ key: 'b', x: 1, y: 2 }],
-    notes: [{ key: 'a', text: 'Why?', thread: [{ text: 'Because.' }] }, { key: 'b', text: 'Plain' }] }) as ExportFile;
+    notes: [{ key: 'a', text: 'Why?', thread: [{ text: 'Because.', from: { by: 'agent', label: 'pricing' } }] }, { key: 'b', text: 'Plain' }] }) as ExportFile;
   const agent = keptFor(f, 'agent');
-  assert.deepEqual(agent.file, { v: f.v, title: f.title, items: f.items });
-  assert.deepEqual(agent.dropped.map((d) => d.split(':')[0]), ['answers[0]', 'pins[0]', 'notes[0]', 'notes[1]']);
+  assert.deepEqual(agent.file, { v: f.v, title: f.title, items: f.items, notes: f.notes });
+  assert.deepEqual(agent.dropped.map((d) => d.split(':')[0]), ['answers[0]', 'pins[0]']);
   assert.ok(agent.dropped.every((d) => d.endsWith('; left out')));
-  const person = keptFor(f, 'person');
-  assert.deepEqual(person.file, { ...f, notes: [{ key: 'a', text: 'Why?' }, { key: 'b', text: 'Plain' }] });
-  assert.deepEqual(person.dropped, ['notes[0].thread: the agent\'s replies are the agent\'s words, and an import writes as the person; left out']);
-  assert.deepEqual(keptFor(file() as ExportFile, 'agent'), { file: file(), dropped: [] });
+  assert.deepEqual(keptFor(f, 'person'), { file: f, dropped: [] });
+});
+
+test('condition (point 617): a reply keeps its author; one with none, or a refused one, comes in as an agent\'s', () => {
+  const by = { by: 'agent', agent: 'a-7k2m9q4x', label: 'pricing' };
+  const thread = [{ text: 'Kept.', from: by }, { text: 'No author.' }, { text: 'Bad author.', from: { by: 'person' } }];
+  const { file: out, dropped } = conditionExport(file({ notes: [{ key: 'a', text: 'Why?', thread }] }));
+  assert.deepEqual(out.notes![0]!.thread, [{ text: 'Kept.', from: by }, { text: 'No author.', from: { by: 'agent' } }, { text: 'Bad author.', from: { by: 'agent' } }]);
+  assert.deepEqual(dropped, ['notes[0].thread[2].from.by: person on an imported reply; left out']);
+});
+
+test('for a person (point 619): each part left out once, named by what it is, saying whether all of it went', () => {
+  const raw = file({
+    made: 'today',
+    items: [region(), node('a', { glow: true, kind: 'question' }), node('b', { kind: 'hologram', title: 'Hologram card' }), node('c', { glow: 1, shine: 2 }),
+      { type: 'region', key: 'r-two', region: { id: 'two', title: 'T'.repeat(300), mode: 'grid', tint: 'red' } }, link({ key: 'a' }, { key: 'zz' })],
+    answers: [{ key: 'zz', answer: 'check' }], pins: [{ key: 'zz', x: 1, y: 1 }],
+    notes: [{ key: 'zz', text: 'Lost' }, { key: 'a', text: 'Why?', thread: [{ text: '' }] }],
+  });
+  const lines = forPerson(raw, conditionDrops(raw).dropped);
+  assert.deepEqual(lines, [
+    'The file came in, but part of it was left out.',
+    'Card "Card a" came in, but part of it was left out.',
+    'Card "Hologram card" was left out.',
+    'Card "Card c" came in, but part of it was left out.',
+    `Container "${'T'.repeat(59)}…" came in, but part of it was left out.`,
+    'A link was left out.',
+    'A ✓ or ✗ was left out.',
+    'A card\'s place was left out.',
+    'A note was left out.',
+    'A reply was left out.',
+  ]);
+  assert.ok(lines.every((l) => !/\[\d+\]|`/.test(l)), 'no pointer, no code');
 });

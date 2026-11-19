@@ -16,7 +16,7 @@
       ],
       "answers": [{"key": "fee-q", "answer": "check"}],
       "pins": [{"key": "annual", "x": 320, "y": 40}],
-      "notes": [{"key": "fee-q", "text": "Per seat suits a growing team.", "thread": [{"text": "Agreed: seats it is."}]}]
+      "notes": [{"key": "fee-q", "text": "Per seat suits a growing team.", "thread": [{"text": "Agreed: seats it is.", "from": {"by": "agent", "agent": "a-7k2m9q4x", "label": "pricing"}}]}]
     }
   ],
   "type": "object",
@@ -94,7 +94,8 @@
               "type": "object",
               "required": ["text"],
               "properties": {
-                "text": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/longText", "description": "The agent's words."}
+                "text": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/longText", "description": "The agent's words."},
+                "from": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/from", "description": "The agent that wrote them (`by: agent`), by its id and label; an import keeps it on the reply (point 617)."}
               },
               "unevaluatedProperties": false
             },
@@ -104,7 +105,7 @@
         "oneOf": [{"required": ["key"]}, {"required": ["keys"]}],
         "unevaluatedProperties": false
       },
-      "description": "The person's notes and the agent's replies to them, when the export was asked for them; left out otherwise."
+      "description": "The person's notes and the agents' replies to them, when the export was asked for them; left out otherwise. Whoever imports, every note and reply comes in, each keeping its author (point 617)."
     }
   },
   "unevaluatedProperties": false

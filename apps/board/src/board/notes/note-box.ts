@@ -25,8 +25,6 @@ export interface BoxDeps {
   ask(seq: number): Promise<string | null>;
   /** The box shows node `id`'s replies: the person has read them (the notes mark goes back to its count). */
   looked(id: string): void;
-  /** The notes on the board Ask now sent (asked.ts `askedBy`): they read "· Asked now". */
-  asked(): ReadonlySet<number>;
   /** The box's mode on the board shown, what Enter does: Add note (`save`) until the person presses Ask now. */
   mode(): BoxAct;
   /** The person pressed Add note or Ask now: it is the board's mode now. */
@@ -69,7 +67,7 @@ export function boxView(d: ViewDeps, box: BoxDeps, o: Open): Shown | null {
   const sel = o.anchor.length > 1;
   const v = bubbleView({
     mode: 'conversation', kind: 'comment', text: o.draft, ...(sel ? { title: notesWords.cards(o.anchor.length), tabs: [] } : { number: n.n, title: n.title, tabs: tabsOf(all, n.n, key) }),
-    blocked: box.blocked(), waiting, active: box.mode(), entries: conversation(notes, replies, box.asked()), ...(o.group && { numbers: o.group.map(Number) }),
+    blocked: box.blocked(), waiting, active: box.mode(), entries: conversation(notes, replies), ...(o.group && { numbers: o.group.map(Number) }),
   });
   return { v, on: sel ? {} : { kind: n.kind, number: n.n } };
 }

@@ -51,7 +51,7 @@ test('Add note (Enter) writes the note for Send and keeps the box open; Enter ne
   await expect(field(page)).toHaveValue('Book it for Thursday\n');
   await page.keyboard.press('Enter');
   await expect(box(page).locator('.vb-nb-queued')).toContainText('Book it for Thursday');
-  await expect(box(page).locator('.vb-nb-queued')).toContainText('not sent yet · goes with Send');
+  await expect(box(page).locator('.vb-nb-queued')).toContainText('User · Not sent');
   await expect(field(page)).toHaveValue('');
   await expect(field(page)).toBeFocused();
   expect(await lines(page, before, 'comment')).toHaveLength(1);
@@ -253,7 +253,8 @@ for (const theme of ['dark', 'light'] as Theme[]) {
     await page.keyboard.press('Tab');
     await expect(box(page).getByRole('button', { name: 'Add note' })).toBeFocused();
     await idle(page);
-    await expect(box(page)).toHaveScreenshot(`box-${theme}.png`, { maxDiffPixelRatio: 0.01 });
+    // The agent's id is new each run: masked (point 619 puts it on the label line).
+    await expect(box(page)).toHaveScreenshot(`box-${theme}.png`, { maxDiffPixelRatio: 0.01, mask: [box(page).locator('.vb-nb-who-id')] });
     await page.screenshot({ path: `temp/fe03/page-box-${theme}.png` });
     await expectNoAxeViolations(page);
     // APCA (rule 3): reading text Lc 60, the short labels Lc 45, on the box's own surface.

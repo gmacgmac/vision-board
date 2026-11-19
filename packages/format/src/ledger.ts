@@ -199,12 +199,18 @@ export interface ActEvent extends Base {
   lines?: number[]; context?: AskContext;
   /** For `direction` (api.md 189): which way a flow runs, on one container (`region`) or with none the whole board. */
   direction?: ActDirection;
+  /** On a `comment` an import wrote (point 617): the person's words, from the board the file came from; history. */
+  from?: From;
 }
+/** Whose words an imported note or reply holds (point 617): the person's, or an agent's by its id and label on the ledger
+ * they came from. The line's own `by` is who imported it. */
+export interface From { by: 'person' | 'agent'; agent?: string; label?: string }
 /** The person has seen version `ver` of card `id` (D-018), or has looked at `board` up to its
  * line `head` (api.md 87). A container's seen is the page's alone, never stored (D-054, point 308). */
 export type SeenEvent = Base & { type: 'seen' } & ({ id: number; ver: number } | { board: string; head: number });
-/** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */
-export interface ReplyEvent extends Base, Keyed { type: 'reply'; id: number; text: string; to?: number }
+/** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. `from`: on a reply an import
+ * wrote (point 617), the agent whose words they are; the person may write such a line. */
+export interface ReplyEvent extends Base, Keyed { type: 'reply'; id: number; text: string; to?: number; from?: From }
 /** The agent proposes a decision; only the person can make it (D-018). */
 export interface ProposeEvent extends Base, Keyed {
   type: 'propose'; id: number; ver: number; action: 'ack' | 'drop'; reason: string; source?: string;

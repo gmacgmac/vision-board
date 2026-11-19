@@ -2,7 +2,8 @@
 // as the write items that draw it, the person's answers and places, and on request the notes; `write_board`'s `import`
 // writes it back as fresh cards. The person's import (the page's cookie) writes every line as the person and applies
 // the answers and places as the person's own acts, after the cards; an agent's import writes as the agent with fresh
-// keys and drops the person's acts, naming each. An import never merges into a container the board holds, and a radial
+// keys and drops the person's answers and places, naming each. Whoever imports, the whole conversation comes in: every
+// note and reply, each line keeping its original author in `from` (point 617), as history. An import never merges into a container the board holds, and a radial
 // container's centre comes through. Board `src` is drawn after the seeded boards, so its numbers are not identities.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -39,7 +40,8 @@ before(async () => {
   await act('src', { action: 'ack', n: 1, ver: 1 });
   await act('src', { action: 'drop', n: 2, ver: 1 });
   await act('src', { action: 'pin', n: 3, x: 140, y: 32 });
-  await act('src', { action: 'comment', board: 'src', region: 'plan', text: 'The whole plan needs numbers.' });
+  const planNote = await act('src', { action: 'comment', board: 'src', region: 'plan', text: 'The whole plan needs numbers.' });
+  await write('src', [{ type: 'reply', n: 2, text: 'Numbers come Friday.', to: planNote.seq }]);
 });
 after(() => h.close());
 
@@ -50,7 +52,15 @@ const exported = (board: string, extra: Rec = {}): Promise<Rec> => h.ok('export_
 const importAs = (who: 'person' | Joined, board: string, into: 'new' | 'current', file: unknown): Promise<Rec> =>
   h.ok('write_board', { board, body: { import: { into, file } } }, { as: who === 'person' ? h.person : who.client });
 const linesOn = (board: string, after: number) => h.ledger.events().filter((e) => e.seq > after && (e as Rec).board === board);
+/** Every line after `after`: an import's own, those on a card naming no board too. */
+const linesAfter = (after: number) => h.ledger.events().filter((e) => e.seq > after) as Rec[];
 const without = (file: Rec, ...names: string[]) => Object.fromEntries(Object.entries(file).filter(([k]) => !names.includes(k)));
+/** The reply's original author, as the export and an imported line name it. */
+const byA = () => ({ by: 'agent', agent: A.agent, label: 'Export chat' });
+const notesWith = (thread: (text: string) => Rec) => [
+  { key: 'card:1', text: 'Per seat suits a growing team.', thread: [thread('Agreed: seats it is.')] },
+  { key: 'plan', text: 'The whole plan needs numbers.', thread: [thread('Numbers come Friday.')] },
+];
 
 test('export: the board as write items with keys, the person\'s answers and places; no notes unless asked', async () => {
   const file = await exported('src');
@@ -65,10 +75,7 @@ test('export: the board as write items with keys, the person\'s answers and plac
   assert.deepEqual(file.pins, [{ key: 'card:3', x: 140, y: 32 }]);
   assert.equal(file.notes, undefined);
   const notes = (await exported('src', { notes: true })).notes;
-  assert.deepEqual(notes, [
-    { key: 'card:1', text: 'Per seat suits a growing team.', thread: [{ text: 'Agreed: seats it is.' }] },
-    { key: 'plan', text: 'The whole plan needs numbers.' },
-  ]);
+  assert.deepEqual(notes, notesWith((text) => ({ text, from: byA() })), 'each reply names its author');
 });
 
 test('export: an agent reads the same file through get_board and show_container with export', async () => {
@@ -85,12 +92,17 @@ test('the person\'s import into a new board: the same cards, links, answers, pla
   const r = await importAs('person', 'copy', 'new', file);
   assert.ok(r.results.every((x: Rec) => x.ok), JSON.stringify(r.results));
   assert.deepEqual(r.results.map((x: Rec) => x.n).filter(Boolean), [1, 2, 3, 4, 5], 'fresh numbers from 1');
-  assert.deepEqual(r.dropped, ['notes[0].thread: the agent\'s replies are the agent\'s words, and an import writes as the person; left out']);
+  assert.equal(r.dropped, undefined, 'the whole conversation comes in');
   const lines = linesOn('copy', head);
   assert.ok(lines.every((e) => e.by === 'person' && !('agent' in e) && !('key' in e)), JSON.stringify(lines.filter((e) => e.by !== 'person')));
+  const said = linesAfter(head).filter((e) => e.type === 'reply' || (e.type === 'act' && e.action === 'comment'));
+  assert.ok(said.every((e) => e.by === 'person'));
+  assert.deepEqual(said.map((e) => [e.type, e.text, e.from]), [
+    ['act', 'Per seat suits a growing team.', { by: 'person' }], ['reply', 'Agreed: seats it is.', byA()],
+    ['act', 'The whole plan needs numbers.', { by: 'person' }], ['reply', 'Numbers come Friday.', byA()],
+  ], 'each line keeps its original author');
   const again = await exported('copy', { notes: true });
-  assert.deepEqual(without(again, 'notes'), without(file, 'notes'), 'a round trip gives the same board');
-  assert.deepEqual(again.notes, [{ key: 'card:1', text: file.notes[0].text }, file.notes[1]]);
+  assert.deepEqual(again, file, 'a round trip gives the same board and conversation');
   const clash = await h.fails('write_board', { board: 'copy', body: { import: { into: 'new', file } } }, 409, 'conflict', h.person);
   assert.match(clash.detail, /^Board "copy" exists already/);
 });
@@ -107,7 +119,7 @@ test('the person\'s import into the current board: every container new beside th
   assert.deepEqual([copy.answers, copy.pins], [[{ key: 'card:6', answer: 'check' }, { key: 'card:7', answer: 'cross' }], [{ key: 'card:8', x: 140, y: 32 }]]);
 });
 
-test('an agent\'s import: written as the agent with fresh keys; the person\'s answers, places and notes dropped and named', async () => {
+test('an agent\'s import: written as the agent with fresh keys; the person\'s answers and places dropped and named, the conversation kept', async () => {
   const full: Rec = { ...(await exported('src', { notes: true })), title: 'Agent copy' };
   const head = h.ledger.state().seq;
   const r = await importAs(A, 'agent-copy', 'new', full);
@@ -117,12 +129,17 @@ test('an agent\'s import: written as the agent with fresh keys; the person\'s an
   assert.deepEqual(r.dropped, [
     ...named('answers', full.answers.length, '✓ and ✗ are the person\'s own acts, and an agent\'s import can\'t make them'),
     ...named('pins', full.pins.length, 'where a card sits is the person\'s own act, and an agent\'s import can\'t make it'),
-    ...named('notes', full.notes.length, 'a note is the person\'s own words, and an agent\'s import can\'t write them'),
   ]);
-  assert.ok(linesOn('agent-copy', head).every((e) => e.by === 'agent' && e.agent === A.agent));
-  const copy = await exported('agent-copy');
+  const lines = linesOn('agent-copy', head);
+  assert.ok(lines.every((e) => e.by === 'agent' && e.agent === A.agent));
+  const said = linesAfter(head).filter((e) => e.type === 'reply' || e.type === 'act');
+  assert.ok(said.every((e) => e.by === 'agent' && e.agent === A.agent));
+  assert.deepEqual(said.map((e) => [e.type, e.from]), [['act', { by: 'person' }], ['reply', byA()], ['act', { by: 'person' }], ['reply', byA()]],
+    'the person\'s words and the agent\'s, written by the importing agent');
+  const copy = await exported('agent-copy', { notes: true });
   assert.deepEqual([copy.title, copy.answers, copy.pins], ['Agent copy', undefined, undefined]);
   assert.deepEqual(copy.items, full.items);
+  assert.deepEqual(copy.notes, full.notes, 'every note and reply, each with its author');
   // A second import of a file writes again, with other fresh keys: the file's keys never clash, and the centre follows.
   const twice = await importAs(A, 'agent-copy', 'current', await exported('src', { region: 'wheel' }));
   assert.ok(twice.results.every((x: Rec) => x.ok && !x.replayed));
@@ -130,7 +147,22 @@ test('an agent\'s import: written as the agent with fresh keys; the person\'s an
   assert.deepEqual(wheel.items[0].region.center, { key: wheel.items[1].key });
 });
 
-test('import: an unknown field and an unknown kind are dropped and named; the rest is written', async () => {
+test('imported notes are history: none waits for Send, none can be edited, check_responses lists none', async () => {
+  const head = h.ledger.state().seq;
+  // The agent's own import, so every line on the board concerns it.
+  await importAs(A, 'history', 'new', await exported('src', { notes: true }));
+  const s = h.ledger.state();
+  const notes = linesAfter(head).filter((e) => e.type === 'act' && e.action === 'comment');
+  assert.equal(notes.length, 2);
+  const unsent = s.unsent.get('history') ?? new Set<number>();
+  assert.ok(notes.every((e) => !unsent.has(e.seq)), 'no imported note goes with Send');
+  const card = notes.find((e) => e.id !== undefined)!;
+  await h.fails('act', { board: 'history', body: { type: 'act', action: 'note-edit', note: card.seq, text: 'Changed.' } }, 422, 'invalid');
+  const r = await h.ok('check_responses', { board: 'history', after: head }, { as: A.client });
+  assert.ok(!JSON.stringify(r).includes('Per seat suits'), 'an imported note is no new response');
+});
+
+test('import: an unknown field and an unknown kind are dropped and named, for whoever imports; the rest is written', async () => {
   const file = { v: EXPORT_VERSION, title: 'Odd', made: 'today', items: [
     { type: 'region', key: 'r', region: { id: 'r', title: 'R', mode: 'grid' } },
     { type: 'node', key: 'a', node: { region: 'r', kind: 'question', title: 'A', glow: true } },
@@ -138,10 +170,14 @@ test('import: an unknown field and an unknown kind are dropped and named; the re
   ] };
   const r = await importAs('person', 'odd', 'new', file);
   assert.deepEqual(r.dropped, [
+    'The file came in, but part of it was left out.', 'Card "A" came in, but part of it was left out.', 'Card "B" was left out.',
+  ], 'worded for a person (point 619)');
+  assert.deepEqual(r.results.map((x: Rec) => [x.ok, x.key]), [[true, 'r'], [true, 'a']]);
+  const agent = await importAs(A, 'odd-agent', 'new', file);
+  assert.deepEqual(agent.dropped, [
     'made: not a field Vision Board knows', 'items[1].node.glow: not a field Vision Board knows',
     'items[2]: card kind `hologram` is unknown; the item is left out',
-  ]);
-  assert.deepEqual(r.results.map((x: Rec) => [x.ok, x.key]), [[true, 'r'], [true, 'a']]);
+  ], 'pointer first, for an agent');
 });
 
 test('import: a file a newer Vision Board made, or none at all, is refused whole with words, and nothing is written', async () => {

@@ -6,9 +6,9 @@
 // and direction it shows, a radial container's centre by its card's key; retired cards and containers are out, and the
 // board's Later is no container of the file (its cards keep `later`). One function for every door: `export_board` (the
 // page), `get_board` and `show_container` with `export` (an agent). Built from the reads' own shapes; nothing is folded.
-import type { ExportFile, Region, ViewNode } from '#format';
+import type { ExportFile, From, Region, ViewNode } from '#format';
 import { EXPORT_VERSION, LATER_REGION, NODE_TYPES, boardView, directionOf } from '#format';
-import type { BoardState, LedgerState } from '#actions';
+import type { BoardState, LedgerReply, LedgerState } from '#actions';
 import { boardState, placedView } from '#actions';
 import { problem } from '../problem.ts';
 import * as writesWords from '../words/writes.ts';
@@ -36,15 +36,20 @@ function nodeBody(st: BoardState, node: ViewNode): Rec {
   return { ...body, ...(size !== undefined && { size }) };
 }
 
-/** The agent's replies on the board, by the `seq` of the note each answers, oldest first. */
-function threads(s: LedgerState, nodes: readonly ViewNode[], ids: (n: string) => number | undefined): Map<number, { text: string }[]> {
-  const out = new Map<number, { seq: number; text: string }[]>();
+/** Who wrote reply `r` (point 617): the author an import kept, else the agent that wrote the line, by its id and label. */
+function authorOf(s: LedgerState, r: LedgerReply): From {
+  if (r.from) return r.from;
+  const label = r.agent === undefined ? undefined : s.agents.get(r.agent);
+  return { by: 'agent', ...(r.agent !== undefined && { agent: r.agent }), ...(label !== undefined && { label }) };
+}
+
+/** The agents' replies on the board, by the `seq` of the note each answers, oldest first, each with its author. */
+function threads(s: LedgerState, nodes: readonly ViewNode[], ids: (n: string) => number | undefined): Map<number, { text: string; from: From }[]> {
+  const out = new Map<number, LedgerReply[]>();
   for (const node of nodes) {
-    for (const r of s.replies.get(ids(node.id) ?? -1) ?? []) {
-      if (r.to !== undefined) out.set(r.to, [...(out.get(r.to) ?? []), { seq: r.seq, text: r.text }]);
-    }
+    for (const r of s.replies.get(ids(node.id) ?? -1) ?? []) if (r.to !== undefined) out.set(r.to, [...(out.get(r.to) ?? []), r]);
   }
-  return new Map([...out].map(([to, list]) => [to, list.sort((a, b) => a.seq - b.seq).map(({ text }) => ({ text }))]));
+  return new Map([...out].map(([to, list]) => [to, list.sort((a, b) => a.seq - b.seq).map((r) => ({ text: r.text, from: authorOf(s, r) }))]));
 }
 
 /** The person's notes on the cards and containers in the file, each once (a note on a group is on each of its cards),

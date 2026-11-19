@@ -94,12 +94,12 @@ test('importFile: no file chosen is null; a file that is no export file, or a re
 
 test('print sets the view, waits for the host\'s print, then takes the view off, even when the print fails', async () => {
   const { files, log } = flow();
-  assert.equal(await files.print({ region: 'review', border: false }), null);
-  assert.deepEqual(log, [['view', { region: 'review', border: false }], ['print'], ['undo']]);
+  assert.equal(await files.print({ region: 'review', border: false, theme: 'light' }), null);
+  assert.deepEqual(log, [['view', { region: 'review', border: false, theme: 'light' }], ['print'], ['undo']]);
   const failed = flow({}, { print: async () => { throw new Error('No printer'); } });
-  assert.equal(await failed.files.print({ border: true }), 'No printer');
+  assert.equal(await failed.files.print({ border: true, theme: 'dark' }), 'No printer');
   assert.deepEqual(failed.log.at(-1), ['undo']);
-  assert.notEqual(await flow({ printView: () => null }).files.print({ border: true }), null);
+  assert.notEqual(await flow({ printView: () => null }).files.print({ border: true, theme: 'dark' }), null);
 });
 
 test('printFit: padded, turned to the longer side, shrunk to one page and never enlarged', () => {

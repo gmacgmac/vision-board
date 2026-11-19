@@ -58,7 +58,7 @@ export function applyContainerAct(s: LedgerState, e: ActEvent): void {
 export function containerNotes(s: LedgerState, board: string, region: string): ItemNote[] {
   const log = containerLog(s, board, region);
   if (!log) return [];
-  return sentNotes(s, board, liveNotes(log).map(({ seq, kind, text, at }) => ({ seq, kind, text, at, region })));
+  return sentNotes(s, board, liveNotes(log).map(({ seq, kind, text, at, from }) => ({ seq, kind, text, at, region, ...(from && { imported: true as const }) })));
 }
 
 /** Where the person put a container, or undefined when it is where layout puts it. */

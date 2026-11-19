@@ -2,8 +2,9 @@
 // Keys: vision-board.node-notes.<name>. Plain code: no imports but other words files and types.
 
 // ---- node-notes.ts
-export const agentReply = (agent: string): string => `Agent reply${agent}`;
-export const cards = (count: number): string => ` · ${count} cards`;
-
-// ---- node-notes.ts `conversation` (the conversation box, FE_03)
-export const askedNow = ' · Asked now';
+// One label line (points 618-619): "User" on a note, "Agent · <name> <id>" on a reply; the name may be cut, the id never.
+export const user = 'User';
+export const agent = 'Agent';
+export const agentLead = 'Agent · ';
+export const agentWho = (name: string | undefined, id: string | undefined): string =>
+  (name || id ? `${agentLead}${[name, id].filter(Boolean).join(' ')}` : agent);

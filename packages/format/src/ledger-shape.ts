@@ -142,6 +142,9 @@ const BUNDLE: Shape = {
   },
 };
 
+/** An imported line's original author (point 617). */
+const FROM: Shape = { req: ['by'], fields: { by: oneOf(['person', 'agent']), agent: agentId, label: text(LIMITS.agentLabel) } };
+
 const link: Shape = { req: ['from', 'to'], fields: { from: nodeNumber, to: nodeNumber, label: text(LIMITS.linkLabel), key } };
 
 /** Fields of each event type, besides the stamp and `type`. */
@@ -159,11 +162,11 @@ const SHAPES: Record<EventType, Shape> = {
       note: int(formatLedgerWords.seqOfTheCommentOr), kind: oneOf(NOTE_KINDS),
       nodes: nodeNumbers, widths: oneOf(WIDTHS), app: id, hash: appHashProblems, head: line,
       skin: skinProblems, lines: list(int(formatLedgerWords.seqOfALine), LIMITS.nodes), context: oneOf(ASK_CONTEXTS),
-      direction: oneOf(ACT_DIRECTIONS),
+      direction: oneOf(ACT_DIRECTIONS), from: obj(FROM),
     },
   },
   seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, head: int(formatLedgerWords.seqOfALine) } },
-  reply: { req: ['n', 'text'], fields: { n: nodeNumber, text: text(LIMITS.text), to: int(formatLedgerWords.seqOfTheActIt), key } },
+  reply: { req: ['n', 'text'], fields: { n: nodeNumber, text: text(LIMITS.text), to: int(formatLedgerWords.seqOfTheActIt), key, from: obj(FROM) } },
   propose: {
     req: ['n', 'ver', 'action', 'reason'],
     fields: { n: nodeNumber, ver: int(), action: oneOf(['ack', 'drop']), reason: text(LIMITS.text), source: text(LIMITS.source), key },
@@ -298,7 +301,10 @@ export function eventProblems(input: unknown): string[] {
   fieldProblems(rest, LINES[t], '', p);
   // The stamped agent is an agent id (api.md 11).
   if (agent !== undefined) agentId(agent, 'agent', p);
-  if (AGENT_EVENTS.has(t) && e.by !== 'agent' && !(e.by === 'person' && PERSON_TOO.has(t))) p.push(formatLedgerWords.writtenByAnAgent(t));
+  // The person may write a reply an import holds, with its agent in `from` (point 617).
+  const imported = t === 'reply' && isRecord(e.from);
+  if (AGENT_EVENTS.has(t) && e.by !== 'agent' && !(e.by === 'person' && (PERSON_TOO.has(t) || imported))) p.push(formatLedgerWords.writtenByAnAgent(t));
+  if ((t === 'act' || t === 'reply') && e.from !== undefined) fromRules(e, t, p);
   if (PERSON_EVENTS.has(t) && e.by !== 'person') p.push(formatLedgerWords.writtenByAPerson(t));
   if (t === 'join' && agent === undefined) p.push(formatLedgerWords.agentRequiredAJoinIs);
   if (t === 'act') actRules(e, p);
@@ -308,6 +314,13 @@ export function eventProblems(input: unknown): string[] {
   return p;
 }
 
+/** An imported line's original author (point 617): a note (`comment`) holds the person's words, a reply an agent's. */
+function fromRules(e: Rec, t: EventType, p: string[]): void {
+  const want = t === 'reply' ? 'agent' : e.action === 'comment' ? 'person' : undefined;
+  if (want === undefined) return void p.push(formatLedgerWords.fromOnlyOnImported);
+  if (isRecord(e.from) && e.from.by !== undefined && e.from.by !== want) p.push(formatLedgerWords.fromByOn('from.by', String(e.from.by), t));
+}
+
 /** The keys of `o` that `shape` knows, so an unknown type reports only the stamp's problems. */
 const pick = (o: Rec, shape: Shape): Rec =>
   Object.fromEntries(Object.entries(o).filter(([k]) => k in shape.fields));
@@ -315,6 +328,15 @@ const pick = (o: Rec, shape: Shape): Rec =>
 /** One field of a container (region.schema.json `region`) or a node (node.schema.json `fields`) as the ledger checks it:
  * its problems, named `<prefix><field>`, or undefined when the shape has no such field. An export file's conditioning
  * (export/condition.ts) keeps what passes and drops the rest, so it holds no field list of its own. */
+/** An imported reply's author in an export file (`notes[].thread[].from`, point 617), as the ledger checks it: its
+ * problems, named `at`. */
+export function fromProblems(value: unknown, at: string): string[] {
+  const p: string[] = [];
+  obj(FROM)(value, at, p);
+  if (isRecord(value) && value.by !== undefined && value.by !== 'agent') p.push(formatLedgerWords.fromByOn(`${at}.by`, String(value.by), 'reply'));
+  return p;
+}
+
 export function shapeFieldProblems(shape: 'region' | 'node', field: string, value: unknown, prefix: string): string[] | undefined {
   const { fields } = shape === 'region' ? REGION : NODE;
   if (!Object.hasOwn(fields, field)) return undefined;

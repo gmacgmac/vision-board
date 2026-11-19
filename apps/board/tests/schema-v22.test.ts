@@ -34,6 +34,16 @@ test('format 22: the agent\'s other lines stay the agent\'s alone', () => {
   }
 });
 
+test('an imported line keeps its author in `from` (point 617): the person writes a reply, an agent a note, nothing else', () => {
+  const said = { type: 'reply', n: 1, text: 'Yes', to: 3, from: { by: 'agent', agent: 'a-k3m9x2pq', label: 'pricing' } };
+  const note = { type: 'act', action: 'comment', n: 1, ver: 1, text: 'Why?', from: { by: 'person' } };
+  assert.deepEqual(verdict({ ...PERSON, ...said }), { schema: true, hand: true }, 'the person\'s imported reply');
+  assert.deepEqual(verdict({ ...AGENT, ...note }), { schema: true, hand: true }, 'an agent\'s imported note');
+  assert.deepEqual(verdict({ ...PERSON, ...said, from: { by: 'person' } }).hand, false, 'a reply\'s words are an agent\'s');
+  assert.deepEqual(verdict({ ...PERSON, ...note, action: 'ack', text: undefined, from: { by: 'person' } }).hand, false, 'only a note');
+  assert.deepEqual(verdict({ ...PERSON, ...said, from: { by: 'agent', colour: 'red' } }), { schema: false, hand: false }, 'no unknown field');
+});
+
 test('a format-21 ledger restamps to 22, line for line, only `v` changed, and reads the same', () => {
   const current = fixtureLines('gallery');
   const older = current.map((l) => l.replace(`{"v":${LEDGER_FORMAT},`, '{"v":21,'));

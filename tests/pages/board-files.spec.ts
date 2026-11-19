@@ -252,16 +252,26 @@ test.describe('the dialog', () => {
 
 /** What the page looks like in print media while it prints, read by the test's `print`. */
 interface Printed {
-  root: { print: string | null; border: string | null; w: number; h: number; colors: string };
+  root: { print: string | null; border: string | null; w: number; h: number; colors: string; theme: string | null; dark: boolean };
   shown: Record<string, boolean>;
   wires: { attr: string | null; fill: string; shown: boolean; inside: boolean }[];
   frames: { region: string; rules: string; shown: boolean }[];
   pages: number;
 }
 
+/** Whether the card's ink is light: the board shows dark (the ink, any colour syntax, through a canvas). In the page. */
+function inkIsLight(card: Element): boolean {
+  const x = document.createElement('canvas').getContext('2d')!;
+  x.fillStyle = getComputedStyle(card).color;
+  x.fillRect(0, 0, 1, 1);
+  const [r = 0, g = 0, b = 0] = x.getImageData(0, 0, 1, 1).data;
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.5;
+}
+
 /** Replace the page's `window.print` with a look at the page in print media, then its PDF in temp/print/`name`.pdf. */
 async function printAs(page: Page, name: string): Promise<{ last(): Printed | null }> {
   let last: Printed | null = null;
+  await page.evaluate(`window.inkIsLight = ${inkIsLight.toString()}`);
   await page.exposeBinding('vbPrinted', async () => {
     // Which links are the printed container's own, by where they lie on screen: a path wholly inside its frame.
     const inside = await page.evaluate(() => {
@@ -280,7 +290,10 @@ async function printAs(page: Page, name: string): Promise<{ last(): Printed | nu
       const shown = (sel: string) => [...root.querySelectorAll<HTMLElement>(sel)].some((e) => getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0);
       const box = root.getBoundingClientRect();
       return {
-        root: { print: scope, border: root.dataset.vbPrintBorder ?? null, w: box.width, h: box.height, colors: getComputedStyle(root.querySelector('vb-node')!).printColorAdjust },
+        root: {
+          print: scope, border: root.dataset.vbPrintBorder ?? null, w: box.width, h: box.height, colors: getComputedStyle(root.querySelector('vb-node')!).printColorAdjust,
+          theme: root.dataset.vbPrintTheme ?? null, dark: inkIsLight(root.querySelector('vb-node')!),
+        },
         shown: Object.fromEntries(['.vb-toolbar', '.vb-reply', '.vb-region-tools', '.vb-region-grip', '.vb-wires-top', 'vb-node'].map((s) => [s, shown(s)])),
         wires: [...root.querySelectorAll<SVGPathElement>('.vb-wires:not(.vb-wires-top) path.vb-wire')].map((p, i) => ({
           attr: p.getAttribute('fill'), fill: getComputedStyle(p).fill, shown: getComputedStyle(p).display !== 'none' && getComputedStyle(p).opacity !== '0', inside: inside[i]!,
@@ -354,6 +367,26 @@ test.describe('print', () => {
       for (const f of p.frames.filter((x) => x.region !== 'prove')) expect(f.shown, f.region).toBe(false);
       expect(p.wires.some((w) => w.inside && w.shown)).toBe(true);
       for (const w of p.wires.filter((x) => !x.inside)) expect(w.shown).toBe(false);
+    });
+  }
+
+  // Point 615: Print offers light or dark, the screen's theme first; the print view sets it for the print only.
+  for (const theme of THEMES) {
+    test(`Print… offers light or dark, the screen's (${theme}) first; the print takes the one chosen, the screen keeps its own`, async ({ page }) => {
+      await setTheme(page, theme);
+      await open(page);
+      const other = theme === 'dark' ? 'light' : 'dark';
+      const printed = await printAs(page, `board-${other}-from-${theme}`);
+      await menuButton(page).click();
+      await row(page, 'print-board').click();
+      await expect(row(page, `files-theme-${theme}`)).toBeChecked();
+      await expect(dialog(page).getByRole('radio')).toHaveCount(2);
+      await row(page, `files-theme-${other}`).check();
+      await printFromDialog(page);
+      const p = printed.last()!;
+      expect([p.root.theme, p.root.dark], 'the print in the theme chosen').toEqual([other, other === 'dark']);
+      expect(await page.locator('vb-node').first().evaluate(inkIsLight), 'the screen in its own').toBe(theme === 'dark');
+      await expect(page.locator('.vb-board')).not.toHaveAttribute('data-vb-print-theme');
     });
   }
 

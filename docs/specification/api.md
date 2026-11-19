@@ -2165,17 +2165,17 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     container in the mode, widths and direction it shows; retired cards and containers out; the board's Later is no
     container of the file, its cards keep `later`. Keys: a container's is its id, a card's `card:<n>`, a link's
     `link:<n>><n>`. `answers` are the cards' ✓ (`check`) and ✗ (`cross`) now; `pins` the person's places; `notes`
-    (with `notes=true`) each note once, card notes in card order then container notes, `thread` the agent's replies to
-    it; a container's export leaves out a group note with a card outside it, and a centre outside it. `export_board`
+    (with `notes=true`) each note once, card notes in card order then container notes, `thread` the agents' replies to
+    it, each with its author in `from` (206); a container's export leaves out a group note with a card outside it, and a centre outside it. `export_board`
     names any board the person may (`personBoard`); `get_board` and `show_container` with `export` the boards an agent
     sees. Kept true by `api-import.test.ts` "export: …".
 204. **Who imports, and what goes** (`write-import.ts` `importFile`; `export/writer.ts` `keptFor`). `write_board` takes
     the person's cookie as well as an agent's secret (`agent-or-person`), and from the person only `import`: `items`
     from the person are `invalid` at `/items`, never `forbidden`, which the page takes for a stale cookie and reloads
-    on. The person's import writes every line as the person, then the notes, places and answers as the person's own
-    acts, the answers last so a ✓ or ✗ closes the notes before it; the agent's replies on a note (`thread`) are left
-    out, named. An agent's import writes as the agent, held to the grants as `items` are, and leaves out the answers,
-    places and notes, each named (the person's own acts and words). An imported line never carries a key the writer
+    on. The person's import writes every line as the person, then the conversation (206), then the places and answers
+    as the person's own acts, the answers last so a ✓ or ✗ closes the notes before it. An agent's import writes as the
+    agent, held to the grants as `items` are, the conversation too, and leaves out the answers and places, each named
+    (the person's own acts). An imported line never carries a key the writer
     holds: the person's lines carry none, an agent's carry `import-<seq>-<file key>` under a prefix none of its keys
     starts with, so importing a file twice writes it twice.
 205. **How an import runs.** Refused whole, before anything is written: a file the chain can't bring to the current
@@ -2188,3 +2188,27 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     each, `index` being the item's place in the conditioned file: one call takes a file's 2,000 items, past `items`'
     200 (`write-result.schema.json` `results`). Each part left out is named in `dropped`, conditioning's first; past
     2,000, the last says how many more. Kept true by `api-import.test.ts`.
+
+## The whole conversation imported; the reply worded for its reader (export-import-print FIX_01)
+
+206. **The whole conversation comes in, whoever imports** (point 617; `write-import.ts` `conversation`). Every note in
+    the file and every reply in its `thread` is written, each note then its replies, each line keeping its original
+    author in one optional field, `from` (`common.schema.json` `$defs.from`: `{ by, agent?, label? }`), with no format
+    bump: it rides ledger 22. A note's `from` is `{ by: "person" }`; a reply's names the agent that wrote it on the board
+    the file came from, by its id and label (the export gives each reply's `from`, 203; a file's reply with none, or a
+    refused one, comes in as `{ by: "agent" }`). The line's own `by` is who imported it: an agent's import may write a
+    note (`comment` act, `by: agent`, `from.by: person`) and the person's a reply (`by: person`, `from.by: agent`); no
+    other line may carry `from` (`ledger-shape.ts` `fromRules`, `act.ts` `validateAct`, `reply.schema.json`). A reply
+    to a container's note goes on the container's first card, else the file's first. An imported note is history: no
+    Send carries it (`unsent.ts`), it can't be changed (`note-lock.ts` `lockOf`: `sent`), `check_responses` reports it
+    to no agent (`pending.ts` `responsesAfter`), and an import is no look at its cards (`fold.ts` `seeCards`); the reads
+    mark it `imported: true` (`notes.ts` `itemOf`, `containerNotes`; the API's `note`), and a reply keeps its `from`
+    (the API's `reply`). Kept true by `api-import.test.ts` and `schema-v22.test.ts` "an imported line keeps its author".
+207. **`dropped` is worded for whoever imports** (point 619; `export/person.ts` `forPerson`). Each part left out is
+    recorded once with its pointer, whether all of it went, and the agent's words (`condition.ts` `Drop`). An agent
+    reads the agent's words, pointer first (`items[1].node.glow: not a field Vision Board knows`). The person reads one
+    line per part, named by what it is (a card or container by its title, cut past 60 characters; a link, a note, a
+    reply, a ✓ or ✗, a card's place, the file) and whether all of it was left out ("Card "Hologram card" was left
+    out.") or only something in it ("… came in, but part of it was left out."); the same part is named once, and past
+    2,000 the last line says how many more. The sentences are `words/format-export.ts`'s. Kept true by
+    `export.test.ts` "for a person" and `api-import.test.ts` "an unknown field and an unknown kind".

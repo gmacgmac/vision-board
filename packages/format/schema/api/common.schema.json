@@ -150,6 +150,10 @@
           "const": true,
           "description": "The note is history and can no longer be edited or removed: the person has pressed Send since writing it (`sent`), or the agent has answered it (a reply naming it in `to`, or a newer version of one of its cards)"
         },
+        "imported": {
+          "const": true,
+          "description": "The note came with an import (point 617): the person's words from the board the file came from, history here, which no Send carries and which can't be changed."
+        },
         "nodes": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumbers",
           "description": "For a note on a group of cards: every item it is on. Left out for a note on one card."
@@ -251,7 +255,8 @@
         "agent": {
           "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/text",
           "description": "The agent that replied."
-        }
+        },
+          "from": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/from", "description": "On a reply an import wrote (point 617): the agent whose words they are, from the board the file came from; `agent` is then who imported it, if an agent did."}
       },
       "unevaluatedProperties": false
     },

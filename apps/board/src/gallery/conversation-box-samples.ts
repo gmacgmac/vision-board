@@ -22,7 +22,7 @@ export interface Board { view: View; state: BoardState; cards: Map<number, CardC
 
 export interface BoxSample {
   caption: string;
-  board: 'notes' | 'parking' | 'groups' | 'other';
+  board: 'notes' | 'parking' | 'groups' | 'imported' | 'other';
   title: string;
   /** The node's board number, where its title is not unique on its board. */
   n?: number;
@@ -48,7 +48,29 @@ const SAMPLES: BoxSample[] = [
   { caption: 'Ask now as the mode: pink and pressed, the field says Enter asks (a press of either button turns the mode)', board: 'parking', title: 'Does the trial need a card?', active: 'ask' },
   { caption: 'Ask now disabled: its tooltip says why', board: 'parking', title: 'Should quarterly billing stay?', blocked: notesWords.theAgentIsWorking },
   { caption: 'In notes on several nodes: tabs, this node first', board: 'groups', title: 'Which plan is the default?', group: ['1', '3'] },
+  { caption: 'Imported (point 617): the conversation as the file held it, each line by its author, then one divider and what was said here; '
+    + 'a name too long for its line is cut, whole on hover, and the id stays', board: 'imported', title: 'Who signs off the price change?' },
 ];
+
+/** An agent name too long for the label line (point 619). */
+const LONG_NAME = 'The field operations planning agent for the northern uplink sites';
+
+/** The parking board as an import brought it in (point 617): the card `title`'s notes but its last, and their replies,
+ *  imported, the first of those by an agent whose name is too long for the line. */
+function importedBoard(b: Board, title: string): Board {
+  const n = b.view.nodes.find((x) => x.title === title)!;
+  const item = b.state.items.get(n.id)!;
+  const last = item.notes.at(-1)!.seq;
+  const notes = item.notes.map((x) => (x.seq === last ? x : { ...x, imported: true as const }));
+  const old = new Set(notes.filter((x) => x.imported).map((x) => x.seq));
+  const c = b.cards.get(n.n!)!;
+  const replies = c.replies?.map((r, i) => (r.to === undefined || !old.has(r.to) ? r
+    : { ...r, imported: true as const, ...(i === 0 && { agent: LONG_NAME, agentId: 'a-7k2m9q4x' }) }));
+  return {
+    view: b.view, state: { ...b.state, items: new Map(b.state.items).set(n.id, { ...item, notes }) },
+    cards: new Map(b.cards).set(n.n!, { ...c, ...(replies && { replies }) }),
+  };
+}
 
 /** The groups board, with its replies as the page reads them (parking.ts). */
 function groupsBoard(fx: Fixture): Board {
@@ -63,10 +85,11 @@ export function boxSample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<
   const n = b.view.nodes.find((x) => (s.n !== undefined ? x.n === s.n : x.title === s.title))!;
   const deps = { node: (id: string) => b.view.nodes.find((x) => x.id === id), state: () => b.state, region: () => undefined,
     replies: (id: string) => b.cards.get(Number(b.view.nodes.find((x) => x.id === id)?.n))?.replies ?? [], regionReplies: () => [] };
-  const box: BoxDeps = { blocked: () => s.blocked ?? null, listening: () => true, ask: async () => null, looked() {}, asked: () => new Set(),
+  const box: BoxDeps = { blocked: () => s.blocked ?? null, listening: () => true, ask: async () => null, looked() {},
     mode: () => s.active ?? 'save', setMode() {} };
   const shown = boxView(deps, box, { id: n.id, anchor: [n.id], mode: 'conversation', kind: 'comment', ...(s.group && { group: s.group }), ...(s.draft && { draft: s.draft }) })!;
-  const stage = el('div', 'g-bubble-stage vb-ground');
+  // A board root (as `.g-skin` is), so the box has the board's own base: its one scrollbar (point 618).
+  const stage = el('div', 'g-bubble-stage vb-ground vb-board');
   stage.style.setProperty('width', '760px');
   const list = el('div', 'g-bubble-card');
   list.setAttribute('role', 'list');
@@ -93,8 +116,8 @@ export function boxSample(s: BoxSample, b: Board, fx: Fixture, boxView: Awaited<
 /** The group, filled once the box's template has loaded. */
 export function conversationBoxSamples(fx: Fixture): HTMLElement {
   const row = el('div', 'g-bubbles');
-  const boards = { notes: fx.notes, parking: fx.parking, groups: groupsBoard(fx) };
-  void Promise.all([loadNoteBox(), loadConversation()]).then(([m]) => row.append(...SAMPLES.map((s) => boxSample(s, boards[s.board as 'notes' | 'parking' | 'groups'], fx, m.boxView))));
+  const boards = { notes: fx.notes, parking: fx.parking, groups: groupsBoard(fx), imported: importedBoard(fx.parking, 'Who signs off the price change?') };
+  void Promise.all([loadNoteBox(), loadConversation()]).then(([m]) => row.append(...SAMPLES.map((s) => boxSample(s, boards[s.board as keyof typeof boards], fx, m.boxView))));
   return group('The conversation box', 'A node\'s notes open one box to read and to write: the node\'s number and title, the thread, '
     + 'a field of one line that grows to three, and Ask now (Cmd or Ctrl Enter) beside Add note (Enter). Add note keeps the note for the board\'s Send; '
     + 'Ask now sends it to the agent at once.', row);

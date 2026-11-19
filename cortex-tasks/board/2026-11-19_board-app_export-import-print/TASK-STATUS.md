@@ -26,7 +26,7 @@ PLAN.md § House Rules.
 | 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Completed | Ledger 22, the person's import by cookie, export read, import mode, centre by key; suite green but the tool budget. Two rulings asked (notes on an agent's import, replies on the person's). |
 | 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Completed | Page side done and tested. The server round trip is `test.fixme` until BE_01. Budgets over (page 211.1/206.2 KB, plugin 206,315/200,600). A host must define two `@page` names (Requests). |
 | 3b | T_03 | 3 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios. | [The agent learns export and import](./T_03_skill.md) | Completed | Skill v3.37: `references/files.md` and one core line; scenarios 56-57 in both hosts. Live: plugin 33/35, standalone 120/130, counted $0.5875 ($0.0875 billed). Owed: a live run of import-file on the reworded line. Plugin skill 8,187/8,192. |
-| 3c | FIX_01 | 3 | strong | no | Design-systems engineer — one scrollbar, one label line, one divider: the most direct way, the same look as nclite. | [The whole conversation imported; a tidier conversation box](./FIX_01_conversation-and-import-polish.md) | Pending | Points 615-619 |
+| 3c | FIX_01 | 3 | strong | no | Design-systems engineer — one scrollbar, one label line, one divider: the most direct way, the same look as nclite. | [The whole conversation imported; a tidier conversation box](./FIX_01_conversation-and-import-polish.md) | Completed | `from` on imported lines (ledger 22), `dropped` by reader, Print light or dark, one scrollbar, one label line, one divider. 118 baselines renewed (most a subpixel shift of the gallery). Budgets over (page 212.0/211.2 KB, plugin 207,015/206,400). The skill's `files.md` now untrue (Requests). |
 | 4 | VERIFY_01 | 4 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
 | 5 | T_02 | 5 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Pending | |
 
@@ -62,6 +62,10 @@ PLAN.md § House Rules.
 | Conditioning's `dropped` words are pointer-first (for an agent); the page shows them to the person as they are | BE_01 | non-blocking | orchestrator (T_03 or a words pass) | Open |
 | `docs/specification/plugin.md` § What the host gives, `print()`: the board's root names its page `vb-print-landscape` or `vb-print-portrait`; a host defines both (`@page`, 10 mm margins) for the one-page fit to hold | FE_01 | non-blocking | orchestrator | Open |
 | Budgets: `verify-weight.mjs` page 211.1 KB (budget 206.2), `plugin-build.test.ts` `view/board.js` 206,315 (budget 200,600) | FE_01 | non-blocking | orchestrator | Open |
+| `skills/vision-board/references/files.md` § What stays behind (and its example chat line): an agent's import now carries the notes and replies, each keeping its author (api.md 206); only ✓/✗ and places stay behind. Bot instructions: `npm run eval:bot` | FIX_01 | blocking before VERIFY_01 | orchestrator (T_03's file) | Open |
+| `docs/specification/plugin.md` § What the host gives, `print()`: a host whose tokens resolve `light-dark()` at its own root sets the root's `color-scheme` while the board's root carries `data-vb-print-theme` (as `shell.css` does); a host with native `light-dark()` needs nothing. nclite: `data-overlay-off` on the board's mount, so its overlay thumb doesn't double the board's | FIX_01 | non-blocking | orchestrator | Open |
+| Budgets: page 212.0 KB gzip (budget 211.2), plugin `view/board.js` 207,015 gzip (budget 206,400) | FIX_01 | non-blocking | orchestrator | Open |
+| Ruling: an imported note with no reply stays owed (the card "with the agent", as on the source board); one line in `note-answer.ts` makes imported notes owe nothing | FIX_01 | non-blocking | maintainer | Open |
 
 ## Implementation Notes
 
@@ -108,7 +112,22 @@ _Status:_ Completed (2026-11-19). Full notes in the task file. For VERIFY_01, T_
 - `eval:bot` lists grew: `SCENARIOS` 20 (the dry test's `maxRuns` is 20), `STANDALONE` 16 (the default run cap).
 - Owed: one live run of `import-file` (it read no reference in the plugin run; the line was reworded after).
 ### FIX_01
-_Status:_ Pending
+_Status:_ Completed (2026-11-19). The full notes are in the task file. For VERIFY_01 and T_02:
+- **Imported lines**: `from` (`{ by, agent?, label? }`) on an imported note or reply, ledger 22, no bump. An agent may
+  write an imported note, the person an imported reply; nothing else carries it.
+  - Imported notes are history: no Send, no edit, not in `check_responses`, `imported: true` in the reads.
+  - They stay owed when unanswered (a ruling is asked in Requests).
+- **`dropped`** is worded for whoever imports. The person gets `export/person.ts` `forPerson`, one line per part; the
+  page needed no change.
+- **Print** asks Light or Dark, defaulting to the screen's theme.
+  - `data-vb-print-theme` is set while printing. `print.css` (native hosts) and `shell.css` (the standalone, at
+    `:root`) make it the `color-scheme`, in print only.
+- **One scrollbar** for every board scroller (`root.css`, nclite's look, CSS only).
+  - The page tests that measure it run with scrollbars shown (`conversation-labels.spec.ts`).
+- **Labels**: "User" (its number on hover) and "Not sent"; "Agent · <name> <id>" on one line, the name cut, with its
+  tip only then. One "Imported" divider.
+- The skill's `references/files.md` now says notes stay behind on an agent's import: untrue (Requests, needs
+  `eval:bot`).
 ### VERIFY_01
 _Status:_ Pending
 ### T_02

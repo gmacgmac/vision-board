@@ -411,6 +411,7 @@ type CommonNote = {
   at: string;
   sent?: true;
   locked?: true;
+  imported?: true;
   nodes?: CommonCardNumbers;
   owed?: true;
   answered?: CommonNoteAnswer;
@@ -454,6 +455,7 @@ type ExportFile = {
     text: CommonLongText;
     thread?: {
       text: CommonLongText;
+      from?: CommonFrom;
     }[];
   }[];
 };
@@ -596,6 +598,11 @@ type RetireSent = {
 type RetireCore = {
   region?: string;
 };
+type CommonFrom = {
+  by: "person" | "agent";
+  agent?: string;
+  label?: CommonAgentLabel;
+};
 type BoardRequest = BoardCore;
 type BoardStored = {
   type: "board";
@@ -654,6 +661,7 @@ type CommonReply = {
   text: CommonLongText;
   to?: number;
   agent?: string;
+  from?: CommonFrom;
 };
 type CommonProposal = {
   seq: number;
@@ -829,7 +837,9 @@ type UnlinkStored = {
 };
 type ActStored = {
   type: "act";
-} & CommonStamp & CommonStampAgent & ActCore;
+} & CommonStamp & CommonStampAgent & ActCore & {
+  from?: CommonFrom;
+};
 type SeenStored = {
   type: "seen";
 } & CommonStamp & CommonStampAgent & SeenCore & {
@@ -844,7 +854,8 @@ type SeenCore = {
 type ReplyStored = {
   type: "reply";
 } & CommonStamp & CommonStampAgent & ReplyCore & {
-  by?: "agent";
+  by?: "agent" | "person";
+  from?: CommonFrom;
   n: number;
   key?: CommonKey;
 };

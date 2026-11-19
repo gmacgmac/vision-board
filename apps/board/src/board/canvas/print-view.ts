@@ -5,7 +5,8 @@
 // screen. A container's print hides every other frame, card and link (`data-vb-print-out`). The world's transform, the
 // zoom level's marks on the stage (`data-zoom`, `data-marks`), the zoom's own properties on the layers (`--vb-zoom`, the
 // marks' growth) and the page's orientation are the print's own while it lasts, so a board printed zoomed out still prints
-// its cards whole. Browser only, no sentence.
+// its cards whole. The print's theme, light or dark (point 615), is the print's own too (`data-vb-print-theme`): the screen
+// keeps its own. Browser only, no sentence.
 import type { View } from '#format';
 import type { BoardLayout, Box } from '#layout';
 
@@ -26,8 +27,9 @@ export function printFit(box: Box, pad = PRINT_PAD): PrintFit {
   return { x, y, w, h, scale: Math.min(1, pw / w, ph / h), landscape };
 }
 
-/** What to print: one container (`region`) or, without it, the whole board; `border`, the containers' borders. */
-export interface PrintScope { region?: string | undefined; border: boolean }
+/** What to print: one container (`region`) or, without it, the whole board; `border`, the containers' borders; `theme`,
+ *  light or dark on paper (point 615), whatever the screen shows. */
+export interface PrintScope { region?: string | undefined; border: boolean; theme: 'light' | 'dark' }
 
 const OUT = 'data-vb-print-out';
 /** The stage's zoom level marks (viewport.ts): the print shows the cards as at 100%, then shrinks them with the world. */
@@ -48,7 +50,9 @@ export function preparePrint(root: HTMLElement, layout: BoardLayout, view: View,
   const layers = [...root.querySelectorAll<HTMLElement>('.vb-regions, .vb-cards')];
   const zoom = layers.map((el) => ZOOM.map((v) => el.style.getPropertyValue(v)));
   for (const el of layers) for (const v of ZOOM) el.style.setProperty(v, '1');
-  Object.assign(root.dataset, { vbPrint: scope.region ?? 'board', vbPrintBorder: scope.border ? 'on' : 'off', vbPrintPage: fit.landscape ? 'landscape' : 'portrait' });
+  Object.assign(root.dataset, {
+    vbPrint: scope.region ?? 'board', vbPrintBorder: scope.border ? 'on' : 'off', vbPrintPage: fit.landscape ? 'landscape' : 'portrait', vbPrintTheme: scope.theme,
+  });
   root.style.setProperty('--vb-print-w', `${Math.ceil(fit.w * fit.scale)}px`);
   root.style.setProperty('--vb-print-h', `${Math.ceil(fit.h * fit.scale)}px`);
   root.style.setProperty('--vb-print-transform', `scale(${fit.scale}) translate(${-fit.x}px, ${-fit.y}px)`);
@@ -60,6 +64,7 @@ export function preparePrint(root: HTMLElement, layout: BoardLayout, view: View,
     delete root.dataset.vbPrint;
     delete root.dataset.vbPrintBorder;
     delete root.dataset.vbPrintPage;
+    delete root.dataset.vbPrintTheme;
     for (const [a, v] of level) if (v !== null) stage?.setAttribute(a, v);
     layers.forEach((el, i) => ZOOM.forEach((v, j) => (zoom[i]![j] ? el.style.setProperty(v, zoom[i]![j]!) : el.style.removeProperty(v))));
   };

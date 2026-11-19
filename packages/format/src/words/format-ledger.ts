@@ -108,6 +108,9 @@ export const uTCTimestampLike202610 = (f: string): string => `${f}: UTC timestam
 export const typeOneOf = (join: string): string => `type: one of ${join}`;
 export const writtenByAnAgent = (t: string): string => `${t}: written by an agent`;
 export const writtenByAPerson = (t: string): string => `${t}: written by a person`;
+/** An imported line's original author (`from`, point 617): only on a note (`comment`) or a reply an import wrote. */
+export const fromOnlyOnImported = 'from: only on a note (`comment`) or a reply an import wrote';
+export const fromByOn = (f: string, by: string, t: string): string => `${f}: ${by} on an imported ${t}`;
 export const agentRequiredAJoinIs = 'agent: required; a join is stamped with the new agent id';
 /** A line in an older ledger format (D-103): the reader knows one format, so the ledger is migrated first. Host-neutral:
  * the board's view says it under any host, so it names no command (the standalone's is `bin.ts` `ledgerMigrateUsage`). */

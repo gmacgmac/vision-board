@@ -7,7 +7,8 @@
    `[data-zoom='far']`), the borders as chosen (`data-vb-print-border`), and the colours as on screen (`print-color-adjust:
    exact`). The root names its page, `vb-print-landscape` or `vb-print-portrait`, as the scope is wider or taller
    (`data-vb-print-page`); a host's page defines the two (`@page`, 10 mm margins: PRINT_PAGE in print-view.ts is the area
-   left), as the standalone page does in shell.css: a host's sheet check allows no `@page` in the board's sheet. Off print, and outside a print the board set, nothing here applies.
+   left), as the standalone page does in shell.css: a host's sheet check allows no `@page` in the board's sheet. The print's theme,
+   light or dark (`data-vb-print-theme`, point 615), is its `color-scheme`, in print only. Off print, and outside a print the board set, nothing here applies.
    Link paths also carry fill="none" as an attribute (links/wires.ts). The page around the board is the host's: the
    standalone page hides its own in shell.css. */
 @media print {
@@ -28,4 +29,8 @@
   .vb-board[data-vb-print] .vb-wires.settling .vb-wire, .vb-board[data-vb-print] .vb-wires.settling ~ .vb-link-marks { opacity: 1; }
   .vb-board[data-vb-print] vb-region :is(.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-region-holders) { display: none !important; }
   .vb-board[data-vb-print-border='off'] vb-region::before, .vb-board[data-vb-print-border='off'] vb-region::after { display: none; }
+  /* Light or dark on paper (point 615), whatever the screen shows: a host that keeps light-dark() native resolves every
+     colour against this. The standalone page, whose built tokens resolve at its root, sets it there too (shell.css). */
+  .vb-board[data-vb-print-theme='light'] { color-scheme: light; }
+  .vb-board[data-vb-print-theme='dark'] { color-scheme: dark; }
 }

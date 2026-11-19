@@ -327,7 +327,7 @@ Media type `application/json`.
 | `items` | list of object | yes | The `region`, `node` and `link` items that draw it, in an order that writes: each container before its cards, each card before its links. A link names its cards by `{ key }`. |
 | `answers` | list of object | no | The person's ✓ and ✗ on the cards that ask. Only the person's import applies them, as the person's own acts. |
 | `pins` | list of object | no | Where the person placed a card in its container; the containers themselves are placed by the layout. |
-| `notes` | list of object | no | The person's notes and the agent's replies to them, when the export was asked for them; left out otherwise. |
+| `notes` | list of object | no | The person's notes and the agents' replies to them, when the export was asked for them; left out otherwise. Whoever imports, every note and reply comes in, each keeping its author (point 617). |
 
 Example:
 
@@ -1374,6 +1374,7 @@ Media type `application/json`.
 | `lines` | list of integer | no | For `ask`: the `seq` of each note of the person's it carried (a `comment`, a `context` with words, or a note on several cards or on a container), on the act's board, none sent or asked before. |
 | `context` | `"node"` or `"board"` or `"session"` | no | For `ask`: what the agent was given with the notes: `node`, `board` or `session`. |
 | `direction` | `"across"` or `"down"` or `"auto"` | no | For `direction`: which way a flow runs, `across` or `down`, or `auto` to give back the agent's; on the container in `region`, or with none on the whole board. |
+| `from` | object | no | On a `comment` an import wrote: the words are the person's, from the board the file came from (`by: person`). Such a note is history: it waits for no Send and can't be changed. |
 | `type` | `"act"` | yes |  |
 
 Example:

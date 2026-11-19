@@ -34,5 +34,21 @@ export const answerOneOf = (at: string): string => `${at}.answer: one of check, 
 // ---- export/writer.ts (what an import keeps, by who writes it, D-108)
 export const agentAnswer = (at: string): string => `${at}: ✓ and ✗ are the person's own acts, and an agent's import can't make them`;
 export const agentPin = (at: string): string => `${at}: where a card sits is the person's own act, and an agent's import can't make it`;
-export const agentNote = (at: string): string => `${at}: a note is the person's own words, and an agent's import can't write them`;
-export const personThread = (at: string): string => `${at}.thread: the agent's replies are the agent's words, and an import writes as the person`;
+
+// ---- export/person.ts (the parts an import left out, as a person reads them, point 619)
+export const card = (title: string | undefined): string => (title ? `Card "${title}"` : 'A card');
+export const container = (title: string | undefined): string => (title ? `Container "${title}"` : 'A container');
+export const aLink = 'A link';
+export const aPart = 'A part of the board';
+export const anAnswer = 'A ✓ or ✗';
+export const aPlace = 'A card\'s place';
+export const aNote = 'A note';
+export const aReply = 'A reply';
+export const theBoard = 'The board';
+export const theAnswers = 'The ✓ and ✗';
+export const thePlaces = 'The cards\' places';
+export const theNotes = 'The notes';
+export const theFile = 'The file';
+export const personOut = (what: string): string => `${what} was left out.`;
+export const personPart = (what: string): string => `${what} came in, but part of it was left out.`;
+export const personMore = (n: number): string => `And ${n} more.`;

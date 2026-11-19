@@ -3,12 +3,15 @@
 // (`conditionExport`), the board (`importTarget`), every container a new one (`freshIds`: an id the board holds or held
 // takes the next free `-2`, `-3`), and keys made fresh. Then the items through the normal write path on one batch
 // (write-board.ts `writeBatch`), each radial container's centre once its cards are drawn, and last the person's acts.
-// Who writes decides what goes. The person's import (the page, its cookie) writes every line as the person, with no
-// key, then the answers, places and notes as the person's own acts; the agent's replies on a note are the agent's words,
-// so they are left out. An agent's import writes as the agent with keys of its own (`import-<seq>-<file key>`), so a
-// file's keys never meet the agent's, and leaves out the person's acts. Each part left out is named in `dropped`.
-import type { ExportFile, UpgradeStep } from '#format';
-import { LATER_REGION, LIMITS, codePoints, conditionExport, containerKey, isRecord, isUpgradeStop, keptFor, upgradeExport } from '#format';
+// Whoever imports, the whole conversation comes in (point 617): each note and reply as a history line keeping its author
+// in `from`. The person's import (the page, its cookie) writes every line as the person, with no key, then the places
+// and answers as the person's own acts. An agent's import writes as the agent with keys of its own
+// (`import-<seq>-<file key>`), so a file's keys never meet the agent's, and leaves out the person's places and answers.
+// Each part left out is named in `dropped`.
+import type { Drop, ExportFile, UpgradeStep } from '#format';
+import {
+  LATER_REGION, LIMITS, codePoints, conditionExport, containerKey, forPerson, gone, isRecord, isUpgradeStop, keptFor, less, upgradeExport,
+} from '#format';
 import type { LedgerState } from '#actions';
 import type { Caller, Ledger } from './ledger.ts';
 import { ProblemError, problem } from './problem.ts';
@@ -85,7 +88,7 @@ function itemFor(x: Rec, ids: Map<string, string>, key: (k: string) => string): 
 
 /** Each radial container's centre, now that its cards are drawn: the container written again with `center`, unless the
  * container itself failed; a centre that can't be set is named. */
-function centres(b: IconBatch, file: ExportFile, results: WriteResult[], ids: Map<string, string>, key: (k: string) => string, grants: boolean, dropped: string[]): void {
+function centres(b: IconBatch, file: ExportFile, results: WriteResult[], ids: Map<string, string>, key: (k: string) => string, grants: boolean, dropped: Drop[]): void {
   const at: string[] = [];
   const items = (file.items as Rec[]).flatMap((x, i) => {
     const r = x.type === 'region' ? (x.region as Rec) : undefined;
@@ -94,43 +97,78 @@ function centres(b: IconBatch, file: ExportFile, results: WriteResult[], ids: Ma
     return [{ type: 'region', region: { ...r, id: ids.get(String(r.id)), center: { key: key(String(r.center.key)) } } }];
   });
   writeBatch(b, items, grants).forEach((r, i) => {
-    if (!r.ok) dropped.push(writesWords.importNotApplied(at[i]!, r.problem.detail));
+    if (!r.ok) dropped.push(less(at[i]!, writesWords.importNotApplied(at[i]!, r.problem.detail)));
   });
 }
 
-/** The person's notes, places and answers, as the person's own acts after the cards (D-107 7), the answers last so a ✓
- * or ✗ closes the notes before it, as on the board the file came from: each on the card or container its key drew
- * here; one whose card was not written, or that the ledger refuses, is named. */
-function personActs(ledger: Ledger, board: string, file: ExportFile, made: Map<string, number>, regions: Map<string, string>, dropped: string[]): void {
-  const put = (at: string, e: Rec) => {
-    try { ledger.append(e, { by: 'person' }, { board }); } catch (err) {
-      if (!(err instanceof ProblemError)) throw err;
-      dropped.push(writesWords.importNotApplied(at, err.body.errors?.[0]?.detail ?? err.body.detail));
-    }
-  };
-  const card = (at: string, key: string, then: (id: number) => Rec) => {
-    const id = made.get(key);
-    if (id === undefined) dropped.push(writesWords.importNotWritten(at, key));
-    else put(at, then(id));
-  };
-  const ver = (id: number) => ledger.state().index.nodes.get(id)?.ver;
+/** What the lines after the cards need: where they go, who writes them, each file key's card here, what is left out. */
+interface After { ledger: Ledger; board: string; writer: Caller; card: (key: string) => number | undefined; dropped: Drop[] }
+
+/** Append `e` as the writer: its `seq`, or undefined when the ledger refuses it, named `at`. */
+function put(c: After, at: string, e: Rec): number | undefined {
+  try { return c.ledger.append(e, c.writer, { board: c.board }).seq; } catch (err) {
+    if (!(err instanceof ProblemError)) throw err;
+    c.dropped.push(gone(at, writesWords.importNotApplied(at, err.body.errors?.[0]?.detail ?? err.body.detail)));
+    return undefined;
+  }
+}
+
+/** The card a note's replies go on: its own card, a group's first, or for a container's note the container's first card
+ * in the file, else the file's first; undefined when no such card was written. */
+function replyCard(c: After, file: ExportFile, note: NonNullable<ExportFile['notes']>[number], container: boolean): number | undefined {
+  const nodes = (file.items as Rec[]).filter((x) => x.type === 'node' && x.key !== undefined);
+  if (!container) return c.card(note.key ?? note.keys![0]!);
+  const id = (file.items as Rec[]).find((x) => x.type === 'region' && x.key === note.key)?.region as Rec | undefined;
+  const mine = nodes.filter((x) => (x.node as Rec).region === id?.id);
+  return [...mine, ...nodes].map((x) => c.card(String(x.key))).find((n) => n !== undefined);
+}
+
+/** The whole conversation, whoever imports (point 617): each note, then the replies to it, as history lines that keep
+ * their author in `from`, each on the card or container its key drew here. A note whose card was not written, or that
+ * the ledger refuses, is named, its replies with it. */
+function conversation(c: After, file: ExportFile, regions: Map<string, string>): void {
+  const ver = (id: number) => c.ledger.state().index.nodes.get(id)?.ver;
+  const from = { by: 'person' };
   file.notes?.forEach((note, i) => {
     const at = `notes[${i}]`;
     const region = note.key === undefined ? undefined : regions.get(note.key);
-    if (region !== undefined) return put(at, { type: 'act', action: 'comment', board, region, text: note.text });
-    if (note.key !== undefined) return card(at, note.key, (n) => ({ type: 'act', action: 'comment', n, ver: ver(n), text: note.text }));
-    const ids = (note.keys ?? []).map((k) => made.get(k));
-    const lost = (note.keys ?? []).find((_, j) => ids[j] === undefined);
-    if (lost !== undefined) return void dropped.push(writesWords.importNotWritten(at, lost));
-    put(at, { type: 'act', action: 'comment', nodes: ids, text: note.text });
+    const keys = note.keys ?? (region === undefined ? [note.key!] : []);
+    const ids = keys.map((k) => c.card(k));
+    const lost = keys.find((_, j) => ids[j] === undefined);
+    if (lost !== undefined) return void c.dropped.push(gone(at, writesWords.importNotWritten(at, lost)));
+    const seq = put(c, at, region !== undefined ? { type: 'act', action: 'comment', board: c.board, region, text: note.text, from }
+      : note.keys ? { type: 'act', action: 'comment', nodes: ids, text: note.text, from }
+        : { type: 'act', action: 'comment', n: ids[0], ver: ver(ids[0]!), text: note.text, from });
+    if (seq === undefined || !note.thread) return;
+    const n = replyCard(c, file, note, region !== undefined);
+    note.thread.forEach((r, j) => {
+      const where = `${at}.thread[${j}]`;
+      if (n === undefined) c.dropped.push(gone(where, writesWords.importNotWritten(where, note.key!)));
+      else put(c, where, { type: 'reply', n, to: seq, text: r.text, from: r.from });
+    });
   });
+}
+
+/** The person's places and answers, as the person's own acts after the conversation (D-107 7), the answers last so a ✓
+ * or ✗ closes the notes before it, as on the board the file came from; one whose card was not written is named. */
+function personActs(c: After, file: ExportFile): void {
+  const card = (at: string, key: string, then: (id: number) => Rec) => {
+    const id = c.card(key);
+    if (id === undefined) c.dropped.push(gone(at, writesWords.importNotWritten(at, key)));
+    else put(c, at, then(id));
+  };
+  const ver = (id: number) => c.ledger.state().index.nodes.get(id)?.ver;
   file.pins?.forEach((p, i) => card(`pins[${i}]`, p.key, (n) => ({ type: 'act', action: 'pin', n, x: p.x, y: p.y })));
   file.answers?.forEach((a, i) => card(`answers[${i}]`, a.key, (n) => ({ type: 'act', action: a.answer === 'check' ? 'ack' : 'drop', n, ver: ver(n) })));
 }
 
-/** At most `MAX_DROPPED` parts, the last saying how many more. */
-const capped = (dropped: string[]): string[] =>
-  (dropped.length <= MAX_DROPPED ? dropped : [...dropped.slice(0, MAX_DROPPED - 1), writesWords.importMoreLeftOut(dropped.length - MAX_DROPPED + 1)]);
+/** The parts left out as the writer reads them, at most `MAX_DROPPED`, the last saying how many more: the person's
+ * worded for a person (point 619), the agent's pointer first. */
+const named = (raw: Rec, dropped: Drop[], person: boolean): string[] => {
+  if (person) return forPerson(raw, dropped, MAX_DROPPED);
+  const words = dropped.map((d) => d.text);
+  return words.length <= MAX_DROPPED ? words : [...words.slice(0, MAX_DROPPED - 1), writesWords.importMoreLeftOut(words.length - MAX_DROPPED + 1)];
+};
 
 /** Write the export file `args.file` on `args.board` (api.md 198, 201): refused whole, before anything is written, when
  * the file can't be brought to this build's version or the board doesn't fit `into`; else one result per item of the
@@ -157,6 +195,8 @@ export function importFile(ledger: Ledger, args: ImportArgs, steps?: readonly Up
   const results = writeBatch(b, items.map((x) => itemFor(x, ids, key)), grants);
   centres(b, file, results, ids, key, grants, dropped);
   const regions = new Map(items.flatMap((x) => (x.type === 'region' && x.key !== undefined ? [[String(x.key), ids.get(String((x.region as Rec).id))!]] : [])));
-  if (person) personActs(ledger, board, file, b.made!, regions, dropped);
-  return { results, dropped: capped(dropped) };
+  const after: After = { ledger, board, writer, card: (k) => b.made!.get(key(k)), dropped };
+  conversation(after, file, regions);
+  if (person) personActs(after, file);
+  return { results, dropped: named(up, dropped, person) };
 }

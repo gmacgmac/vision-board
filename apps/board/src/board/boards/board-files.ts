@@ -9,6 +9,7 @@
 import type { LedgerState } from '#actions';
 import type { BoardHost } from '../host.ts';
 import type { Io } from '../io.ts';
+import type { PrintScope } from '../canvas/index.ts';
 import { ApiError } from '../io.ts';
 import { boardIdFor } from './board-edit.ts';
 import * as filesWords from '../words/chrome-files.ts';
@@ -36,7 +37,7 @@ export interface BoardFilesDeps {
   /** Open or close the dialog (the board's status, `files`). */
   show(ask: FilesAsk | null): void;
   /** Set the print view for the board, or one container; what undoes it, or null when nothing is drawn to print. */
-  printView(scope: { region?: string | undefined; border: boolean }): (() => void) | null;
+  printView(scope: PrintScope): (() => void) | null;
   /** Open board `id` once its first line has arrived (a new board an import made). */
   jump(id: string): void;
   toast(text: string): void;
@@ -50,7 +51,7 @@ export interface BoardFiles {
   /** Ask for a file and write it into a new board or the open one. */
   importFile(into: 'new' | 'current'): Promise<ImportOutcome>;
   /** Print the board, or container `region`; null once the host's print has closed, else the problem. */
-  print(o: { region?: string | undefined; border: boolean }): Promise<string | null>;
+  print(o: PrintScope): Promise<string | null>;
 }
 
 /** A failure's words: the server's problem with its pointer errors, or what the host rejected with. */
@@ -111,9 +112,9 @@ export function createBoardFiles(d: BoardFilesDeps): BoardFiles {
         return { problem: wordsOf(err) };
       }
     },
-    async print({ region, border }) {
+    async print(scope) {
       if (!d.host.print) return filesWords.noBoardOpen;
-      const undo = d.printView({ region, border });
+      const undo = d.printView(scope);
       if (!undo) return filesWords.noBoardOpen;
       try {
         await d.host.print();

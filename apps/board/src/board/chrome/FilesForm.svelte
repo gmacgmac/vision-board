@@ -1,7 +1,7 @@
 <!-- The files dialog's contents (boardFiles flag, D-107, export-import-print PLAN decisions 8-12): one form for Print,
      Export and Import, which asks only what the place it was opened from leaves open. The scope (the board, or the
      container `ask.region` named in its words) is already chosen. Print: the container border (`border`), checked for the
-     board and not for a container. Export: whether the conversations on notes go too (`notes`, unchecked). Import: into a
+     board and not for a container, and light or dark (`theme`, the screen's first; point 615). Export: whether the conversations on notes go too (`notes`, unchecked). Import: into a
      new board or this one (`into`), This board off, saying why, while `current` gives a reason; once done with parts left out
      (`dropped`), the list of them and Close. The one button acts; while it works it says so (aria-busy) and Cancel waits; a
      problem shows above the buttons and the choices are kept. A view only: FilesDialog.svelte holds it in the modal dialog and
@@ -13,7 +13,7 @@
   import * as chromeBoardsWords from '../words/chrome-boards.ts';
   import type { FilesAsk } from '../boards/index.ts';
 
-  let { ask, idOf, busy = false, problem = null, dropped = null, current = null, border = $bindable(true), notes = $bindable(false), into = $bindable('new'), onsubmit, oncancel }: {
+  let { ask, idOf, busy = false, problem = null, dropped = null, current = null, border = $bindable(true), theme = $bindable('light'), notes = $bindable(false), into = $bindable('new'), onsubmit, oncancel }: {
     ask: FilesAsk;
     idOf: (name: string) => string;
     busy?: boolean;
@@ -23,6 +23,7 @@
     /** Why This board can't take an import now (none open, locked); null when it can. */
     current?: string | null;
     border?: boolean;
+    theme?: 'light' | 'dark';
     notes?: boolean;
     into?: 'new' | 'current';
     onsubmit: () => void;
@@ -53,6 +54,15 @@
       <input id={idOf('files-border')} type="checkbox" bind:checked={border} disabled={busy} />
       <span>{container ? filesWords.borderContainer : filesWords.borderBoard}</span>
     </label>
+    <fieldset class="vb-choices" disabled={busy}>
+      <legend class="vb-field">{filesWords.printIn}</legend>
+      {#each [['light', filesWords.light], ['dark', filesWords.dark]] as const as [value, word] (value)}
+        <label class="vb-choice" for={idOf(`files-theme-${value}`)}>
+          <input id={idOf(`files-theme-${value}`)} type="radio" name={idOf('files-theme')} {value} bind:group={theme} />
+          <span>{word}</span>
+        </label>
+      {/each}
+    </fieldset>
   {:else if ask.kind === 'export'}
     <label class="vb-choice" for={idOf('files-notes')}>
       <input id={idOf('files-notes')} type="checkbox" bind:checked={notes} disabled={busy} aria-describedby={idOf('files-notes-hint')} />
