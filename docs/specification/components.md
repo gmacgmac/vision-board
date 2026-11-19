@@ -1947,8 +1947,11 @@ board page joins the layout's geometry to that drawing behind the `timeline` fla
    words (`words/node.ts`). In the default skin a dated node has no kind tab and no grip, and its kind is a small word at
    the end of the date line (`.vb-node-date-kind`); Command Lens keeps its plate, with `cursor: default`, and the date
    heads the body. The date takes `--vb-text-date` in the skin's display font and the kind's colour (a toned node's
-   ink); the title `--vb-text-title-dated`; only on a dated node. Kept true by `packages/ui/tests/node-date.test.ts`,
-   `node-dated.test.ts`.
+   ink); the title `--vb-text-title-dated`; only on a dated node. The card's accessible name carries the full form
+   after its kind ("Item 6, Action, 13 October 2026: Pricing page live, Open"; `node-core.ts` `nodeLabel`,
+   `words/node.ts` `dateInName`), so moving card to card a screen reader hears the date. Kept true by
+   `packages/ui/tests/node-date.test.ts`, `node-dated.test.ts`, `node-core.test.ts` ("a dated card's name") and
+   `timeline.spec.ts` ("a dated card's name").
 3. **Entries** (`MarkdownOptions.entries`, which the node template turns on for a dated node; `markdown/entries.ts`
    `boldLead`; `render.ts`): a `###` heading and its blocks, a paragraph opening with a bold name, or a top-level list
    item opening with one, draw as `.vb-md-entry` with `.vb-md-entry-name`. One colon closing the name inside the bold
@@ -1983,8 +1986,11 @@ board page joins the layout's geometry to that drawing behind the `timeline` fla
 8. **No drag on a dated node** (D-105 4): `input/pointer.ts` starts no move inside `vb-node[data-timeline]` (`DATED`),
    its plate included, so a press there is a click; `selection/moves.ts` `placeable` keeps dated nodes out of what a
    drag carries and out of a drop's pins; `canvas/places.ts` `pin` (Alt+arrows) writes nothing for one. No new action
-   or record: a dated node simply never writes a `pin`, and the layout ignores one written anyway. Kept true by
-   `timeline.spec.ts` (both skins; a selection drag moves only the undated card; Reset places leaves the line).
+   or record: a dated node simply never writes a `pin`, and the layout ignores one written anyway. A press on its plate,
+   its edge or its content's own box (padding and gaps, not an element inside) is `bare`: it selects no text, so a
+   drag where an undated card would move leaves no selection across cards; the text inside selects as on any card.
+   Kept true by `timeline.spec.ts` (both skins; a selection drag moves only the undated card; Reset places leaves the
+   line; "selects no text on a dated card").
 9. **Move to** is the existing `move` (Shift+M, the selection bar's Move to): a dated node moves to another container
    and joins its line (`timeline.spec.ts`).
 9a. **Links never run under a card** (PLAN § Out of Scope: links route around cards "as today"): the cards above and

@@ -129,3 +129,5 @@ export const dateDayFull = (day: string, month: string, year: string): string =>
 export const dateTime = (day: string, time: string): string => `${day} · ${time}`;
 /** A time in full: "13 October 2026, 14:30". */
 export const dateTimeFull = (day: string, time: string): string => `${day}, ${time}`;
+/** What a dated card's name adds after its kind, before its title: ", 13 October 2026" (the full form, FIX_02 S3). */
+export const dateInName = (full: string): string => `, ${full}`;

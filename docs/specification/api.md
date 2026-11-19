@@ -2093,12 +2093,15 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     the key takes it off the line (`api-timeline.test.ts` "a rewrite without the key").
 194. **`show_layout`'s timeline** (133). The answer may carry `timeline`, `{ direction, cards }`: `direction` `across`
     or `down`, as the container's flow direction (`directionOf`, 189), and `cards` the dated cards in line order, each
-    `{ n, at, side }`, `at` the stored value and `side` `above` or `below` (alternating, the first above) or `beside`
-    when the line runs down (`show-layout-response.schema.json` `$defs.timeline`, `$defs.dated`). Left out when no card
-    of the container has a date; `cards`, `columns`, `links`, `crossing` and `empty` describe the cards the container
-    lays out in its mode. The layout fills it (timeline BE_01); until then the answer leaves it out, which the schema
-    allows. The line's drawn geometry is one type, `geometry.ts` `TimelineDrawing` (`TimelineDot`, `TimelineSide`),
-    which the layout returns and the page draws.
+    `{ n, at, side }`, `at` the stored value and `side` where the card sits. Across, the line runs along the top and
+    `side` is `above` or `below` (alternating, the first above); run down, the line runs down the middle of the
+    container's first column and `side` is `left` or `right` (alternating, the first on the left; D-106)
+    (`show-layout-response.schema.json` `$defs.timeline`, `$defs.dated`). Left out when no card of the container has a
+    date; `cards`, `columns`, `links`, `crossing` and `empty` describe the cards the container lays out in its mode. The
+    layout fills it with the order and sides the page draws (`#layout` `layoutRegion`, `structureOf`). The line's drawn
+    geometry is one type, `geometry.ts` `TimelineDrawing` (`TimelineDot`, `TimelineSide`), which the layout returns and
+    the page draws. Kept true by `api-layout-timeline.test.ts` ("the person's direction turns the sides", "the schema
+    and api.md describe the line").
 195. **Format 21, and the step is a restamp** (D-103, D-105 decision 6). `LEDGER_FORMAT` becomes 21 and every ledger
     `$id` moves to `.../schema/ledger/21/`; `openapi.json` `info.version` becomes 1.43.0. Adding an optional key
     changes no existing line's meaning, so the chain's step 20 rewrites nothing but `v` (`FORMAT_STEPS` `restamp(20)`;

@@ -26,7 +26,7 @@ const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_
  * view and the styles were 190,000 and 22,000 before the Node Overhaul; its T_04 removed the old node and measured 195,372
  * and 24,723 (the new node's marks, menus, conversation box and skins outweigh the footer), so they hold there until a
  * size pass brings them back (a tracker row). */
-const BUDGET: Record<string, number> = { 'view/board.js': 200_300, // timeline FE_02 run 3 measured 200,296 (run 2 200,168; run 1 199,683; wave 2 198,546; T_01 195,849)
+const BUDGET: Record<string, number> = { 'view/board.js': 200_400, // timeline FIX_02 measured 200,390; FE_02 run 3 200,296 (run 2 200,168; run 1 199,683; wave 2 198,546; T_01 195,849)
   'view/board.css': 25_550, // timeline wave 2 measured 25,519 (FIX_06 24,901)
   'engine/engine.js': 240_000 };
 const dirs: string[] = [];

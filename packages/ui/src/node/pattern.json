@@ -92,7 +92,7 @@
     "data-size-picked": "nodeSize flag only: present when the person picked the size (set by update)",
     "role": "listitem (set by render)",
     "tabindex": "0 (set by render)",
-    "aria-label": "number, kind, title and, on a card that asks, its status (nodeLabel, set by update: 'Open', 'checked', 'crossed', 'Replied', 'Saved for later'), then ', selected' while selected",
+    "aria-label": "number, kind, on a dated node its full date ('13 October 2026'), title and, on a card that asks, its status (nodeLabel, set by update: 'Open', 'checked', 'crossed', 'Replied', 'Saved for later'), then ', selected' while selected",
     "data-bubble": "present while its note bubble is open, so the card draws over its neighbours (set by the page)",
     "data-pointer-focus": "present while the card has focus that a pointer press gave it (set by the page, apps/board/src/board/canvas/pointer-focus.ts): no focus ring draws when a key that moves no focus (Z, Esc, Space) makes the browser match :focus-visible; focus the keyboard moves never carries it",
     "data-open": "on a box beside the node (vb-card-pop), while it shows (set by the page, which opens it from its mark and sets the mark's aria-expanded); the node is drawn above its neighbours meanwhile",

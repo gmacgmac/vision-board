@@ -65,13 +65,13 @@
   "$defs": {
     "timeline": {
       "type": "object",
-      "description": "The container's timeline: its dated cards, each on its own dot of one line across the top (down the left when it runs `down`), in date order. Left out when no card of the container has a date.",
+      "description": "The container's timeline: its dated cards in date order, each on its own dot of one line. Across, the line runs along the container's top, the cards alternating above and below it, the first above; when it runs `down`, the line runs down the middle of the container's first column, the cards alternating left and right, the first on the left. Left out when no card of the container has a date.",
       "$comment": "packages/format timeline.ts sortByTimeline; was: api.md 190, D-105",
       "required": ["direction", "cards"],
       "properties": {
         "direction": {
           "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/direction",
-          "description": "Which way the line runs: `across` the top, or `down` the left, as the container's flow direction."
+          "description": "Which way the line runs, as the container's flow direction: `across` the top, or `down` the middle of the container's first column."
         },
         "cards": {
           "type": "array",

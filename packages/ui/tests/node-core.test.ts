@@ -37,6 +37,18 @@ test('nodeLabel names the number, kind, title and, on a card that asks, its stat
   assert.equal(nodeLabel(node({ kind: 'topic', title: 'Stack' }), 'open'), 'Topic: Stack');
 });
 
+// A screen reader moving card to card hears the date a sighted person reads first (FIX_02 S3): its full form, after
+// the kind, at every precision; an app card never carries one (datedOf), and an undated card's name is unchanged.
+test('a dated card\'s name carries its full date after its kind', () => {
+  assert.equal(nodeLabel(node({ kind: 'action', n: 6, title: 'Pricing page live', timeline: '2026-10-13' }), 'open'),
+    'Item 6, Action, 13 October 2026: Pricing page live, Open');
+  assert.equal(nodeLabel(node({ kind: 'topic', title: 'Beta', timeline: '2026-10' }), 'open'), 'Topic, October 2026: Beta');
+  assert.equal(nodeLabel(node({ kind: 'topic', title: 'Next', timeline: '2027' }), 'open'), 'Topic, 2027: Next');
+  assert.equal(nodeLabel(node({ kind: 'decision', n: 2, title: 'Go', timeline: '2026-11-12T09:30' }), 'acknowledged', true),
+    'Item 2, Decision, 12 November 2026, 09:30: Go, checked, selected');
+  assert.equal(nodeLabel(node({ kind: 'app', n: 3, title: 'Chart', timeline: '2026' }), 'open'), 'Item 3, App: Chart');
+});
+
 test('a card whose note the agent owes reads "Replied" in its name (D-046, replied-word ruling 1)', () => {
   const st = nodeState(node({ kind: 'decision', n: 8, title: 'Ship' }), withItem('commented'));
   assert.equal(st.label, 'Item 8, Decision: Ship, Replied');

@@ -590,7 +590,7 @@ Media type `application/json`.
 | `links` | integer | yes | How many links join two cards of `cards`. |
 | `crossing` | integer | yes | How many of those links cross at least one other link. 0 is the aim. |
 | `empty` | integer | yes | How many cells hold no card of `cards`. A cell is a column and row (in `lanes` mode, a lane and column, its cards stacked inside); within the columns and rows the container uses. Always 0 in `radial` mode. |
-| `timeline` | object | no | The container's timeline: its dated cards, each on its own dot of one line across the top (down the left when it runs `down`), in date order. Left out when no card of the container has a date. |
+| `timeline` | object | no | The container's timeline: its dated cards in date order, each on its own dot of one line. Across, the line runs along the container's top, the cards alternating above and below it, the first above; when it runs `down`, the line runs down the middle of the container's first column, the cards alternating left and right, the first on the left. Left out when no card of the container has a date. |
 
 Example:
 

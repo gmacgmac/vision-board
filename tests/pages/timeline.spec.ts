@@ -117,6 +117,48 @@ test('flag off: no line, no date header, and every card where the same board wit
   expect(a).toEqual(await boxes(plain));
 });
 
+test('a dated card\'s name carries its full date after its kind; an undated card\'s and, flag off, every card\'s does not', async ({ page, request }) => {
+  const d = await drawPlan(request);
+  await open(page, d, ON);
+  await idle(page);
+  const name = (i: number, rest: string) => expect(card(page, d.n[i]!)).toHaveAccessibleName(new RegExp(`^Item ${d.n[i]}, ${rest}`));
+  await name(SIGN, 'Action, 3 November 2026: Beta sign-off, Open');
+  await name(BETA, 'Topic, October 2026: Private beta');
+  await name(LOAD, 'Finding, 12 November 2026, 09:30: Load test passed');
+  await name(DRAFTS, 'Topic, 2027: 2\\.1: offline drafts');
+  await name(POST, 'Action: Write the launch post, Open');
+  await openOn(page, d, '?vbwork');
+  await idle(page);
+  await name(SIGN, 'Action: Beta sign-off, Open');
+});
+
+/** The page's text selection, as a copy would take it. */
+const selected = (page: Page) => page.evaluate(() => String(document.getSelection() ?? ''));
+
+test('a drag where an undated card would move selects no text on a dated card, in both skins; its text stays selectable', async ({ page, request }) => {
+  const d = await drawPlan(request);
+  await open(page, d, ON);
+  await idle(page);
+  const none = async (from: { x: number; y: number }) => {
+    await drag(page, from, { x: from.x + 160, y: from.y + 220 });
+    expect(await selected(page), 'nothing selected, nothing to copy').toBe('');
+  };
+  for (const i of [FREEZE, SIGN]) {
+    const b = await boxOf(page, i, d.n);
+    await none({ x: b.x + b.width / 2, y: b.y + 3 }); // the top edge, where an undated card's kind tab is
+  }
+  // Text inside a dated card selects as on any card.
+  const title = (await card(page, d.n[SIGN]!).locator('.vb-node-title').boundingBox())!;
+  await drag(page, { x: title.x + 2, y: title.y + title.height / 2 }, { x: title.x + title.width - 2, y: title.y + title.height / 2 });
+  expect(await selected(page)).toContain('sign');
+  await page.mouse.click(5, 300); // the background clears it
+  await act(page, d, { action: 'skin', board: d.board, skin: 'command-lens' });
+  await expect(card(page, d.n[FREEZE]!)).toHaveAttribute('data-marks-at', 'plate');
+  await idle(page);
+  const plate = (await card(page, d.n[FREEZE]!).locator('.vb-node-plate').boundingBox())!;
+  await none({ x: plate.x + plate.width / 2, y: plate.y + plate.height / 2 });
+});
+
 test('a drag anywhere on a dated card moves nothing and writes nothing, in both skins; Alt+arrows neither', async ({ page, request }) => {
   const d = await drawPlan(request);
   await open(page, d, ON);

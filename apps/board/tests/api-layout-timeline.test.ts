@@ -5,6 +5,7 @@
 // the harness (a free port per run).
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { boardView, directionOf } from '#format';
 import { layoutRegion, structureOf } from '#layout';
 import { boardState, placedView } from '#actions';
@@ -88,4 +89,23 @@ test('the person\'s direction turns the sides to left and right, alternating fro
   assert.equal(down.widths, 'match', 'run down, no choice: match');
   await act('auto');
   assert.deepEqual((await layout('plan')).timeline.cards.map((c: any) => c.side), ['above', 'below', 'above', 'below']);
+});
+
+// What an agent is told (the schema's descriptions, so api-reference.md) and the spec (api.md 194) say what the layout
+// draws (D-106, FIX_02 M1): every side the answer can carry, and run down the line down the middle, the cards
+// alternating left and right, the first on the left.
+test('the schema and api.md describe the line the layout draws, across and down (D-106)', () => {
+  const read = (f: string) => fs.readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
+  const defs = JSON.parse(read('packages/format/schema/api/show-layout-response.schema.json')).$defs;
+  const sides: string[] = defs.dated.properties.side.enum;
+  assert.deepEqual(sides, ['above', 'below', 'left', 'right']);
+  for (const text of [defs.timeline.description, defs.timeline.properties.direction.description]) {
+    assert.match(text, /down`? the middle/);
+    assert.doesNotMatch(text, /down the left/);
+  }
+  assert.match(defs.timeline.description, /alternating left and right, the first on the left/);
+  const item = read('docs/specification/api.md').split(/\n(?=\d+\. )/).find((x) => x.startsWith('194. '))!;
+  for (const side of sides) assert.ok(item.includes(`\`${side}\``), `api.md 194 names \`${side}\``);
+  assert.doesNotMatch(item, /beside|until then/);
+  assert.match(item, /down the middle/);
 });

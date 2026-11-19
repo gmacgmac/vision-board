@@ -13,6 +13,7 @@ import { nodeMarks } from './node-marks.ts';
 import { ACTIONS, statusOf } from '#actions';
 import * as uiCommonWords from '../words/ui-common.ts';
 import * as nodeWords from '../words/node.ts';
+import { datedOf, timelineLabel } from './node-date.ts';
 
 /** What a card's accessible name says for its status (D-045): the answer by name, or the status's word. A card whose
  *  note waits for the agent's answer is "Replied" (D-046; the person's word, replied-word ruling 1: agents read
@@ -36,11 +37,14 @@ export const isPressed = (action: ActionId, status: ItemStatus): boolean =>
 
 /** The accessible name; `selected` adds ", selected" last (3_FE_01 ruling 9, mockup 05), since a
  *  list item can carry no aria-selected and the selection must be perceivable without colour.
- *  `extra` comes before it: what the card's tabs say, such as ", 1 proposal" (FE_01). */
+ *  `extra` comes before it: what the card's tabs say, such as ", 1 proposal" (FE_01). A dated card's full date
+ *  follows its kind (FIX_02 S3), so moving card to card a screen reader hears what the eye reads first. */
 export function nodeLabel(n: ViewNode, status: ItemStatus, selected = false, extra = ''): string {
   const num = isItem(n) ? nodeWords.item(n.n) : '';
+  const dated = datedOf(n);
+  const date = dated ? nodeWords.dateInName(timelineLabel(dated).full) : '';
   const st = asksAnswer(n) ? `, ${STATUS_NAME[status]}` : '';
-  return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}${extra}${selected ? nodeWords.selected : ''}`;
+  return `${num}${NODE_TYPES[n.kind].label}${date}: ${n.title}${st}${extra}${selected ? nodeWords.selected : ''}`;
 }
 
 // A card's notes and the agent's replies (split out, card-polish FE_02): re-exported, so this stays the import.
