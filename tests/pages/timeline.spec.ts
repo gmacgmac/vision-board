@@ -2,8 +2,8 @@
 // on one line across its top (a dot each, in date order, alternating, a band behind equal dates, the year at the start
 // and the turn, the arrow), the rest below; flag off, exactly the board without dates (the page's one gate,
 // `board-data.ts` `datedView`); a dated card never moves under the pointer or the keys and writes no pin, while Move to,
-// links, the widths switch, the direction row and Tab work on it as on any card; the line stays joined to its cards from
-// 20% to 250%; both skins, light and dark, axe clean. Each test draws its own board through the API, as an agent would.
+// links, the widths switch and the direction row work on it as on any card, and Tab walks a timeline in date order; the
+// line stays joined to its cards from 20% to 250%; both skins, light and dark, axe clean. Each test draws its own board through the API, as an agent would.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { axeFindings, expect, expectNoAxeOnBoard, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -134,6 +134,35 @@ test('a dated card\'s name carries its full date after its kind; an undated card
 
 /** The page's text selection, as a copy would take it. */
 const selected = (page: Page) => page.evaluate(() => String(document.getSelection() ?? ''));
+
+test('a dated card\'s date is said once: copying its content gives the short date only, its name the full one (602)', async ({ page, request, context }) => {
+  const d = await drawPlan(request);
+  await open(page, d, ON);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(page.url()).origin });
+  await idle(page);
+  for (const skin of ['default', 'command-lens']) {
+    if (skin !== 'default') {
+      await act(page, d, { action: 'skin', board: d.board, skin });
+      await expect(card(page, d.n[SIGN]!)).toHaveAttribute('data-marks-at', 'plate');
+      await idle(page);
+    }
+    for (const [i, short, full] of [[SIGN, /nov 3/gi, '3 November 2026'], [LOAD, /nov 12 · 09:30/gi, '12 November 2026, 09:30']] as const) {
+      // A real copy (the keys, then the clipboard): the selection's own text leaves out a visually hidden form; a copy does not.
+      await card(page, d.n[i]!).locator('.vb-node-content').evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        document.getSelection()!.removeAllRanges();
+        document.getSelection()!.addRange(range);
+      });
+      await page.keyboard.press('ControlOrMeta+C');
+      const copied = await page.evaluate(() => navigator.clipboard.readText());
+      expect(copied.match(short)?.length, `${skin}: ${copied}`).toBe(1);
+      expect(copied, skin).not.toContain(full);
+      await expect(card(page, d.n[i]!).locator('.vb-node-date time')).toHaveAttribute('datetime', /^2026-11/);
+      await expect(card(page, d.n[i]!)).toHaveAccessibleName(new RegExp(`, ${full}: `));
+    }
+  }
+});
 
 test('a drag where an undated card would move selects no text on a dated card, in both skins; its text stays selectable', async ({ page, request }) => {
   const d = await drawPlan(request);
@@ -376,18 +405,34 @@ test('the layout menu of a container with a timeline offers Across, Down and Aut
   await expect(frame(page, 'misc').locator('.vb-dir-row')).toBeHidden();
 });
 
-test('Tab reaches the dated cards in the board\'s reading order, by card number, not by date', async ({ page, request }) => {
-  const d = await drawPlan(request);
-  await open(page, d, ON);
-  await card(page, d.n[SIGN]!).focus();
-  const reached = [d.n[SIGN]!];
-  for (let i = 0; i < 40 && reached.length < 4; i += 1) {
-    await page.keyboard.press('Tab');
+/** The cards Tab (or Shift Tab, `back`) reaches from card `from`, in turn, until `count` are reached. */
+async function tabbed(page: Page, from: number, count: number, back = false): Promise<number[]> {
+  await card(page, from).focus();
+  const reached = [from];
+  for (let i = 0; i < 200 && reached.length < count; i += 1) {
+    await page.keyboard.press(back ? 'Shift+Tab' : 'Tab');
     const id = await page.evaluate(() => document.activeElement?.closest<HTMLElement>('vb-node')?.dataset.id);
     if (id !== undefined && Number(id) !== reached.at(-1)) reached.push(Number(id));
   }
-  expect(reached).toEqual([SIGN, FREEZE, BETA, REGION].map((i) => d.n[i]));
-});
+  return reached;
+}
+
+for (const direction of ['across', 'down']) {
+  test(`Tab and Shift Tab walk a timeline in date order, then the container's other cards, ${direction}; flag off, card-number order`, async ({ page, request }) => {
+    const d = await drawPlan(request, { direction });
+    await open(page, d, ON);
+    await idle(page);
+    // The line's order (its dots, as drawn), then Launch plan's undated cards; After launch's line of one, its other
+    // card; Loose ends, with no timeline, as today.
+    const want = [...BY_DATE, POST, QUEUE, RETRO, RETRO + 1, RETRO + 2].map((i) => d.n[i]!);
+    expect((await dots(page, 'plan')).map((x) => Number(x.node))).toEqual(BY_DATE.map((i) => d.n[i]));
+    expect(await tabbed(page, want[0]!, want.length)).toEqual(want);
+    expect(await tabbed(page, want.at(-1)!, want.length, true)).toEqual([...want].reverse());
+    await openOn(page, d, '?vbwork');
+    await idle(page);
+    expect(await tabbed(page, d.n[0]!, d.n.length)).toEqual([...d.n]);
+  });
+}
 
 test('from 20% to 250% the line, its stems and its dots stay joined to their cards', async ({ page, request }) => {
   const d = await drawPlan(request, { direction: 'down' });

@@ -76,13 +76,19 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
     return true;
   }
 
-  /** Move only the cards that are out of reading order. */
+  /** Move only the cards that are out of reading order. A card already in the page moves with `moveBefore` where the
+   *  browser has it, so an app card's loaded panel keeps its document when a timeline's date order moves it (FIX_03);
+   *  an `<iframe>` taken out of the page and put back loads again. */
   function order(ids: string[]) {
     let prev: Element | null = null;
     for (const id of ids) {
       const el = els.get(id)!;
       const want: Element | null = prev ? prev.nextElementSibling : host.firstElementChild;
-      if (want !== el) host.insertBefore(el, want);
+      if (want !== el) {
+        const move = (host as { moveBefore?: (node: Node, child: Node | null) => void }).moveBefore;
+        if (move && el.isConnected) move.call(host, el, want);
+        else host.insertBefore(el, want);
+      }
       prev = el;
     }
   }

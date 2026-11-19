@@ -326,7 +326,7 @@ records any change here, and in § Decisions, before wave 1.
    `:`, `-`, `–` or `—` and the spaces after it dropped; in a list, each top-level item that opens with a bold name is
    an entry and keeps its list semantics (`li`), the other items keep their bullets. A `###` entry's name stays a
    heading for assistive technology; a bold lead stays bold text.
-10. **The date's accessible form** is the full date ("13 October 2026, 14:30"), from the words file, with the short
+10. **Superseded by point 602 (FIX_03)**: the full date is in the card's accessible name (FIX_02 `dateInName`), and the content holds only the short form, hidden from assistive technology. Was: **The date's accessible form** is the full date ("13 October 2026, 14:30"), from the words file, with the short
     form hidden from assistive technology; the value is in `<time datetime>`.
 11. **One flag, removed at the end** (decision 25), with the page's single gate in FE_02.
 12. **The steering change** (protected; with the same yes): in `.kiro/steering/vision-board-proj.md` § Words, after

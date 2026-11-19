@@ -1573,8 +1573,9 @@ section is how the board draws one. Two patterns share the work.
      A new version of the card keeps a loaded frame where it is (`node-app-apply.ts`
      `renderKeepingPanel`, from `vb-node.ts` `render`: the frame and the elements it sits in stay
      and take the new markup's attributes, since an `<iframe>` taken out of the page reloads), and
-     the card set never moves a card already in the page (`card-numbers.ts` `readingOrder` sorts by the
-     card's number, which never changes).
+     the card set moves a card already in the page only when a timeline's date order asks it to
+     (`card-numbers.ts` `readingOrder`: otherwise by the card's number, which never changes), and then with
+     `moveBefore`, which the frame takes without unloading (§ The timeline: the node and the page, 12).
      `app-alive.spec.ts` proves a panel keeps what it holds, loaded once, through a far zoom, a pan
      two screens away, a new version, a relayout, a selection and a new size.
    - **Saved panel states** (app-state-kept FE_02; apps.md § Saving the panel's state):
@@ -1942,16 +1943,17 @@ board page joins the layout's geometry to that drawing behind the `timeline` fla
    element and the Markdown entries all ask this one function. `vb-node` sets `data-timeline` to the stored value in
    `render()` and clears it when a version drops the key (`vb-node.ts`): the hook the page's pointer and CSS read.
 2. **The header** (`node-edges.ts` `datedHeading`, `timelineLabel`): `<p class="vb-node-date">` first on the node, a
-   `<time datetime>` holding the short form (`OCT 13`, `OCT 2026`, `2026`, `OCT 13 · 14:30`; upper case is CSS's) hidden
-   from assistive technology and the full form ("13 October 2026, 14:30") visually hidden; month names and forms are
-   words (`words/node.ts`). In the default skin a dated node has no kind tab and no grip, and its kind is a small word at
+   `<time datetime>` holding the short form only (`OCT 13`, `OCT 2026`, `2026`, `OCT 13 · 14:30`; upper case is CSS's),
+   hidden from assistive technology; month names and forms are words (`words/node.ts`). In the default skin a dated node has no kind tab and no grip, and its kind is a small word at
    the end of the date line (`.vb-node-date-kind`); Command Lens keeps its plate, with `cursor: default`, and the date
    heads the body. The date takes `--vb-text-date` in the skin's display font and the kind's colour (a toned node's
    ink); the title `--vb-text-title-dated`; only on a dated node. The card's accessible name carries the full form
    after its kind ("Item 6, Action, 13 October 2026: Pricing page live, Open"; `node-core.ts` `nodeLabel`,
-   `words/node.ts` `dateInName`), so moving card to card a screen reader hears the date. Kept true by
-   `packages/ui/tests/node-date.test.ts`, `node-dated.test.ts`, `node-core.test.ts` ("a dated card's name") and
-   `timeline.spec.ts` ("a dated card's name").
+   `words/node.ts` `dateInName`), so moving card to card a screen reader hears the date, once: the content holds no
+   second, visually hidden full form (point 602), so a copy of the card's text holds the date once too. Kept true by
+   `packages/ui/tests/node-date.test.ts`, `node-dated.test.ts` ("the four header forms"), `node-core.test.ts` ("a
+   dated card's name") and `timeline.spec.ts` ("a dated card's name", "the date is said once": a real copy, both
+   skins).
 3. **Entries** (`MarkdownOptions.entries`, which the node template turns on for a dated node; `markdown/entries.ts`
    `boldLead`; `render.ts`): a `###` heading and its blocks, a paragraph opening with a bold name, or a top-level list
    item opening with one, draw as `.vb-md-entry` with `.vb-md-entry-name`. One colon closing the name inside the bold
@@ -2014,8 +2016,15 @@ board page joins the layout's geometry to that drawing behind the `timeline` fla
     so it always shows what is in force. Kept true by `packages/ui/tests/region-widths.test.ts`,
     `packages/format/tests/widths.test.ts`, `packages/layout/tests/timeline-region.test.ts`,
     `apps/board/tests/api-layout-timeline.test.ts` and `timeline.spec.ts`.
-12. **Tab order** stays the board's reading order (`card-numbers.ts` `readingOrder`: items by card number), not date
-    order (`timeline.spec.ts`).
+12. **Tab order** is the board's reading order (`card-numbers.ts` `readingOrder`, which also orders the cards in the
+    page and J and K), read the way the line draws (point 601): a container with a timeline is read at its first
+    card's place, its dated cards in the line's order (`#format` `sortByTimeline`, as the layout), then its other cards
+    by number; every other card keeps its card-number place, so a board with no date, or with the flag off, reads
+    exactly as before. Across and run down alike. A card already in the page that the order moves goes with
+    `moveBefore` where the browser has it (`cards/cards.ts` `order`), and `vb-app-frame` takes the move
+    (`connectedMoveCallback`), so a loaded app panel beside a timeline keeps its document. Kept true by
+    `apps/board/tests/card-numbers.test.ts` ("reading order"), `timeline.spec.ts` ("Tab and Shift Tab walk a
+    timeline", both forms, flag off) and `app-alive.spec.ts` ("a timeline reordering the cards").
 13. **Gallery**: the pattern's section (`gallery/timeline-section.ts`, the node and the drawing from hand-made
     geometry) and "The timeline on the board" (`timeline-board-section.ts`: a container laid out for real by the
     board's drawing, across and down, default and Command Lens; `mini-board.ts` takes the skin's row as `edges`), both

@@ -172,6 +172,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | M84 | A refusal worded as a card reference | **Problem:** `apps/board/server/schema.ts` `plain` words every failed `anyOf` as a card reference, so `write_board` refuses `tone: "pink"` or `icon: "rocket"` with "must be a node number or { key }". **Solution:** word an `anyOf` failure by the branch the value was closest to; a failing test first. | Timeline T_01 (found, not changed) |
 | M85 | The year on a timeline at Fit | **Problem:** the year label on a timeline's line is 11.5px in the world, about 6px on screen at Fit, and it is the only place a day's year shows. **Solution:** a `ZOOM_RULES` row that keeps it a readable minimum, as container titles are; the maintainer's call (point 597: left for now). | Timeline VERIFY_01 (S2) |
 | M86 | Links around a timeline's line | **Problem:** run down, a link from a card left of the line to one on its right can run along the line over several dots. **Solution:** the router treats the line and its dots as an obstacle it crosses once, at right angles (point 600). | Timeline VERIFY_01 (S1) |
+| M87 | Date order moves a card without `moveBefore` | **Problem:** a container's date order can move a card already in the page; where the browser has no `moveBefore` (Safari today) a loaded app panel reloads and a focused card loses focus, when an agent's write changes the order. **Solution:** check in Safari; keep focus across the move, and hold an app card's place where the browser can't move it alive. | Timeline FIX_03 |
 
 ## LONG TERM
 

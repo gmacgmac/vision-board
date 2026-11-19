@@ -1,17 +1,17 @@
 // A dated node (D-105 4, PLAN decisions 16-19): the date is its header. Default skin: no kind tab and no grip, the date
-// line first (short for the eye, full for assistive technology, both in <time datetime>), the kind's word ending it; an
+// line first (the short form in <time datetime>, hidden from assistive technology: the card's name carries the full
+// date, FIX_03 point 602, so it is heard and copied once), the kind's word ending it; an
 // icon node keeps its tile and loses the kick. Command Lens: the plate as it was, the date line (no kind word) before
 // the title. An app card never gets one. Its body draws entries. An undated node is untouched.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '#format';
-import { nodeTemplate, SKIN_DEFS } from '../src/index.ts';
+import { nodeTemplate, SKIN_DEFS, timelineLabel } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode> = {}): ViewNode => ({ id: '28', region: 'r', kind: 'decision', title: 'Freeze <the> list', n: 28, ...f });
 const edges = SKIN_DEFS.default;
 const plate = SKIN_DEFS['command-lens'];
-const DATE = '<p class="vb-node-date"><time datetime="2026-09-15"><span aria-hidden="true">Sep 15</span>'
-  + '<span class="vb-visually-hidden">15 September 2026</span></time>';
+const DATE = '<p class="vb-node-date"><time datetime="2026-09-15"><span aria-hidden="true">Sep 15</span></time>';
 
 test('default skin: no kind tab and no grip; the content starts with the date line, the kind word at its end', () => {
   const html = nodeTemplate(node({ timeline: '2026-09-15' }), { edges });
@@ -22,11 +22,15 @@ test('default skin: no kind tab and no grip; the content starts with the date li
   assert.match(html, /data-mark="badge"[^]*data-mark="notes"/, 'the badge and the notes mark stay on the bottom edge');
 });
 
-test('the four header forms, each with its full form and datetime', () => {
+test('the four header forms, each with its datetime; the full form is the name\'s, never in the content (602)', () => {
   for (const [value, short, full] of [['2026', '2026', '2026'], ['2026-10', 'Oct 2026', 'October 2026'],
-    ['2026-10-13', 'Oct 13', '13 October 2026'], ['2026-10-13T14:30', 'Oct 13 · 14:30', '13 October 2026, 14:30']]) {
-    const html = nodeTemplate(node({ timeline: value }), { edges });
-    assert.ok(html.includes(`<time datetime="${value}"><span aria-hidden="true">${short}</span><span class="vb-visually-hidden">${full}</span></time>`), value);
+    ['2026-10-13', 'Oct 13', '13 October 2026'], ['2026-10-13T14:30', 'Oct 13 · 14:30', '13 October 2026, 14:30']] as const) {
+    for (const def of [edges, plate]) {
+      const html = nodeTemplate(node({ timeline: value }), { edges: def });
+      assert.ok(html.includes(`<time datetime="${value}"><span aria-hidden="true">${short}</span></time>`), value);
+      assert.ok(!html.includes('vb-visually-hidden'), `${value}: no hidden date in the content`);
+    }
+    assert.equal(timelineLabel(value).full, full, value);
   }
 });
 

@@ -50,7 +50,7 @@ tracker: cortex-tasks/tracker.md#N53
 | 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Completed | Gate `datedView`; line in `wires.ts`; no drag; direction row; gallery board section; 16 page tests; budgets page 205.5, board.js 199,700 |
 | 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Completed | Gates green (pages 1,094 passed, 2 skipped, 14.6 min); 1 must fix (M1 docs), 4 should (S1-S4) |
 | 7b | FIX_02 | 4 | strong | no | Accessibility engineer — a date a sighted person reads at a glance is one a screen-reader user hears, and a refused drag leaves no stray selection. | [VERIFY_01's must and should fixes](./FIX_02_verify-findings.md) | Completed | M1 docs, S3 date in the name, S4 no selection; budgets page 206.1 (206.01), board.js 200,400 (200,390) |
-| 7c | FIX_03 | 4 | strong | no | Accessibility engineer — the keyboard walks a timeline the way the eye reads it, and hears each date once. | [Tab in date order, the date said once](./FIX_03_date-order-and-one-date.md) | Pending | Points 601, 602 |
+| 7c | FIX_03 | 4 | strong | no | Accessibility engineer — the keyboard walks a timeline the way the eye reads it, and hears each date once. | [Tab in date order, the date said once](./FIX_03_date-order-and-one-date.md) | Completed | 601 `readingOrder`, 602 no hidden date; app panel kept on a move (`moveBefore`); board.js 200,500 (200,472) |
 | 8 | T_03 | 5 | standard | no | Staff engineer who owns deprecations — a switch-over is done only when nothing, not code, tests, words nor docs, still points at the flag. | [Switch on](./T_03_switch-on.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -275,6 +275,17 @@ Gates: check, gen --check, verify, `npm test` 2,722, pages (timeline, node-edges
 screenshot renewed; test:plugin 116. Budgets raised to measured: page 206.1 (206.01), board.js 200,400 (200,390).
 For the maintainer: copying a dated card's text doubles the date (short and hidden full form); a screen reader
 entering the card hears the date twice now that the name carries it.
+
+### FIX_03: Tab in date order, the date said once
+_Status:_ Completed (2026-11-19)  
+_Notes:_ 601: `card-numbers.ts` `readingOrder` reads a container with a timeline at its first card's place, dated cards
+by `sortByTimeline`, then its others by number; all else unchanged (DOM order, so Tab and Shift Tab, and J/K). 602:
+`node-edges.ts` `datedHeading` drops the visually hidden full date; the name carries it. PLAN.md call 10 is superseded by
+point 602 (orchestrator to record). Beyond the brief: date order could move a loaded app card and reload its panel; now
+`cards.ts` `order` uses `moveBefore` where present and `vb-app-frame` `connectedMoveCallback` (test in
+`app-alive.spec.ts`). Gates: check, gen --check, verify, `npm test`, test:plugin 116; the page suite ran in full (named
+files matched it all) 1,097 passed, 2 skipped, 12.4 min, no screenshot renewed. Budgets: board.js 200,500 (measured
+200,472); page 206.10 inside 206.1. `timeline.spec.ts` at 495 lines.
 
 ### T_03: Switch on
 _Status:_ Pending  

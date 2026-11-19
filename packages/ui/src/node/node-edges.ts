@@ -101,13 +101,14 @@ function heading(n: ViewNode, def: SkinDef, icons?: IconLibrary): string {
 }
 
 /** A dated node's head (D-105 4, decisions 16-18): the date line first, then the title. The date's short form is for the
- *  eye and its full form for assistive technology, both in its <time>; on the edges the kind's word ends the line (a
- *  plate already says the kind). A node with an icon keeps its tile, at the right of the title, and loses the kick. */
+ *  eye only, in its <time>: the card's name carries the full form (`nodeLabel`), so a screen reader hears the date
+ *  once and a copy holds it once (FIX_03, point 602). On the edges the kind's word ends the line (a plate already says
+ *  the kind). A node with an icon keeps its tile, at the right of the title, and loses the kick. */
 function datedHeading(n: ViewNode, value: string, def: SkinDef, icons?: IconLibrary): string {
-  const { short, full, datetime } = timelineLabel(value);
+  const { short, datetime } = timelineLabel(value);
   const kind = def.marks === 'edges' ? `<span class="vb-node-date-kind">${NODE_TYPES[n.kind].label}</span>` : '';
-  const date = `<p class="vb-node-date"><time datetime="${esc(datetime)}"><span aria-hidden="true">${esc(short)}</span>`
-    + `<span class="vb-visually-hidden">${esc(full)}</span></time>${kind}</p>`;
+  const date = `<p class="vb-node-date"><time datetime="${esc(datetime)}"><span aria-hidden="true">${esc(short)}</span></time>`
+    + `${kind}</p>`;
   const title = `<h3 class="vb-node-title">${esc(n.title)}</h3>`;
   if (!n.icon) return date + title;
   // The date spans the content, so a time fits beside its kind's word on the narrowest node; the tile sits by the title.

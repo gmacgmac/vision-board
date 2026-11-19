@@ -206,6 +206,8 @@ export function defineVbAppFrame(): void {
     }
 
     disconnectedCallback(): void { this.unload(); }
+    /** Moved within the page by `moveBefore` (the card set's reading order, FIX_03): no disconnect, so the panel stays loaded. */
+    connectedMoveCallback(): void {}
 
     attributeChangedCallback(name: string, before: string | null, after: string | null): void {
       if (before === after) return;

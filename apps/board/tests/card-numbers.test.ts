@@ -4,8 +4,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger, LEDGER_FORMAT } from '#format';
+import type { View, ViewNode } from '#format';
 import { applyEvent, boardData, foldLedger } from '#actions';
-import { answerEvent, idOf, numOf } from '../src/board/card-numbers.ts';
+import { answerEvent, idOf, numOf, readingOrder } from '../src/board/card-numbers.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
@@ -52,4 +53,28 @@ test('an answer applied in place lands on the card it names on the board it was 
   assert.equal(b.state.items.get('2')?.status, 'acknowledged', 'board b\'s 2, the ledger\'s 4');
   assert.deepEqual(b.state.items.get('1')?.notes.map((x) => x.nodes), [[1, 2]], 'the note names b\'s cards by number');
   assert.equal(boardData(s, 'a').state.items.get('2'), undefined, 'board a\'s 2 untouched');
+});
+
+/** A view of `nodes` (id = number), as the page draws it: [n, region, timeline?]. */
+const viewOf = (nodes: [number | undefined, string, string?][]): View => ({
+  format: 1, session: 's', version: 1, title: 'T', regions: [], links: [],
+  nodes: nodes.map(([n, region, timeline], i): ViewNode => ({ id: String(n ?? `x${i}`), region, kind: 'topic', title: `C${i}`,
+    ...(n !== undefined && { n }), ...(timeline && { timeline }) })),
+});
+const order = (v: View) => readingOrder(v).map((x) => x.id);
+
+test('reading order with no timeline: card-number order exactly, cards with no number last, as given', () => {
+  assert.deepEqual(order(viewOf([[3, 'a'], [1, 'b'], [undefined, 'a'], [2, 'a'], [undefined, 'b']])), ['1', '2', '3', 'x2', 'x4']);
+});
+
+test('reading order in a container with a timeline: its dated cards in the line\'s order, then its others; other containers as before (FIX_03, 601)', () => {
+  const v = viewOf([
+    [1, 'loose'], [2, 'plan', '2026-11-03'], [3, 'plan', '2026-09-15'], [4, 'plan'], [5, 'other'],
+    [6, 'plan', '2026-10'], [7, 'plan', '2026-11-03'], [8, 'plan'], [9, 'after', '2027-02'], [10, 'after'],
+  ]);
+  // plan's place is its first card's (2): 3 (Sep 15), 6 (Oct), 2 and 7 (Nov 3, equal dates by number), then 4 and 8;
+  // card 5 of another container keeps its place after card 4, as today.
+  assert.deepEqual(order(v), ['1', '3', '6', '2', '7', '4', '5', '8', '9', '10']);
+  // The container's first card undated: the line still comes first in it.
+  assert.deepEqual(order(viewOf([[1, 'p'], [2, 'p', '2027'], [3, 'p', '2026']])), ['3', '2', '1']);
 });

@@ -22,5 +22,5 @@
   },
   "whenToUse": "A container whose nodes carry a timeline date: the page draws one per container from the layout's geometry.",
   "whenNotToUse": "Links between cards (the wires), or a date written in a card's text: only the key places a node on the line.",
-  "accessibility": "Decoration only, hidden from assistive technology: each dated node says its date in full in its own header (a <time> with the full form for screen readers), and the board's reading order is the cards'. The line, its stems and dots pass the decoration tier (Lc 30) on the canvas in both skins, light and dark; the year is the muted ink (the reading tier)."
+  "accessibility": "Decoration only, hidden from assistive technology: each dated node says its date in full in its accessible name (its header's <time> is for the eye), and the board's reading order walks a container's dated cards in the line's order (card-numbers.ts readingOrder). The line, its stems and dots pass the decoration tier (Lc 30) on the canvas in both skins, light and dark; the year is the muted ink (the reading tier)."
 }
