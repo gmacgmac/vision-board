@@ -26,7 +26,8 @@ export function foldUnsent(s: LedgerState, board: string, e: ActEvent): void {
   else if (e.action === 'note-remove') lines.delete(e.note!);
   else if (e.action === 'ask') for (const seq of e.lines!) lines.delete(seq);
   else if (MARK_ACTIONS.has(e.action)) foldMark(s, board, lines, e);
-  else if (e.action !== 'note-edit' && isAnswer(e.action)) lines.add(e.seq);
+  // An imported note (`from`, point 617) is history: no Send carries it.
+  else if (e.action !== 'note-edit' && isAnswer(e.action) && !e.from) lines.add(e.seq);
 }
 
 /** A ✓, ✗, Later or clear on a card: it replaces the card's earlier one since the Send (kept per card

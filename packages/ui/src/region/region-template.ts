@@ -120,16 +120,22 @@ const modePopover = (r: Pick<Region, 'id' | 'mode' | 'title'>, prefix?: string):
 };
 
 /** The settings menu: "Reset places" (the cards' pins) and "Put container back" (the container's
- * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it; with `remove`
- * (personRemove flag, N24) then "Remove container", which the page confirms first. */
-const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, prefix?: string): string => {
+ * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it; with `files` (D-107)
+ * "Print container…" and "Export container…", each when its host hook is given, which open the board's files dialog (never
+ * disabled: neither changes the board); with `remove` (personRemove flag, N24) then "Remove container", which the page
+ * confirms first. */
+const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, files: RegionFrameOptions['files'], prefix?: string): string => {
   const ids = regionIds(r.id, prefix);
   const item = (data: string, label: string, hint: string, hintId: string) =>
     `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" ${data}="${esc(r.id)}" aria-label="${label}"`
     + ` aria-disabled="true" aria-describedby="${hintId}">${label}<span class="vb-menu-hint" id="${hintId}">${hint}</span></button>`;
+  const opens = (data: string, label: string) =>
+    `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" aria-haspopup="dialog" ${data}="${esc(r.id)}">${label}</button>`;
   return `<div class="vb-region-menu" id="${ids.menu}" role="menu" aria-label="${regionWords.settingsFor(esc(r.title))}">`
     + item('data-reset', regionWords.resetPlaces, RESET_NONE_HINT, ids.hint)
     + item('data-put-back', regionWords.putContainerBack, PUT_BACK_NONE_HINT, ids.back)
+    + (files?.print ? opens('data-print-region', regionWords.printContainer) : '')
+    + (files?.export ? opens('data-export-region', regionWords.exportContainer) : '')
     + (remove ? `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-remove-region="${esc(r.id)}">${regionWords.removeContainer}</button>` : '')
     + '</div>';
 };
@@ -144,8 +150,12 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, prefix?:
  * instead of on the top line (toolRail flag, container tool rail Design 1); the top line then holds
  * the label alone. A fixed frame's rail holds only the cog. `railHover`: with `rail`, the frame carries
  * data-rail-hover and its rail icons show only while it is in use (railOnHover flag; region-rail.css). `idPrefix`: put before every id the frame
- * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions }
+ * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. `files`: Print container…
+ * and Export container… in the settings menu (each when the host gives its hook, D-107); a fixed frame never has them. */
+export interface RegionFrameOptions {
+  fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions;
+  files?: { print?: boolean; export?: boolean };
+}
 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = regionWords.everythingHereIsAnswered;
@@ -184,7 +194,7 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="${regionWords.settingsFor(title)}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
   const tools = `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r, opts.idPrefix)}${notes ? notePreview(r.id, title, opts.idPrefix) : ''}`
-    + `${settingsMenu(r, opts.remove === true && !opts.fixed, opts.idPrefix)}</div>`;
+    + `${settingsMenu(r, opts.remove === true && !opts.fixed, opts.fixed ? undefined : opts.files, opts.idPrefix)}</div>`;
   return `<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">${handle(title, ids.heading)}`
     + `${FRESH}${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
     + `${opts.rail ? '' : tools}</div></header>${opts.rail ? `<div class="vb-region-rail">${tools}</div>` : ''}`

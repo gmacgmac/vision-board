@@ -82,9 +82,11 @@ for (const theme of THEMES) {
         return c;
       });
       const lifted = await pixel(page, edge);
-      expect(await pixel(page, border), `${kind} border`).toEqual(lifted);
+      // An app card keeps one border in every state, its selection a line along the top (FIX_02), so no selected edge or inset ring.
+      const win = kind === 'app';
+      if (!win) expect(await pixel(page, border), `${kind} border`).toEqual(lifted);
       expect(await card.evaluate((e) => getComputedStyle(e).outlineStyle), `${kind} no outer ring`).toBe('none');
-      expect(await card.evaluate((e) => getComputedStyle(e).boxShadow), `${kind} thicker`).toMatch(/inset/);
+      if (!win) expect(await card.evaluate((e) => getComputedStyle(e).boxShadow), `${kind} thicker`).toMatch(/inset/);
       const plain = await pixel(page, await resolved(page, `var(--vb-kind-${kind})`));
       const [was, now] = [lc(plain, canvas), lc(lifted, canvas)];
       test.info().annotations.push({ type: `${theme} selected ${kind} on canvas`, description: `Lc ${now.toFixed(1)} (was ${was.toFixed(1)})` });

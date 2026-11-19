@@ -1,7 +1,7 @@
 // What answered a note (api.md 36, D-045; bot-quality TOOLS_02): the one rule that ends owing. `item.owed` and
 // `container.owed` (conditions.ts) owe the latest note that `noteAnswer` finds nothing for, and an agent's read names
 // what it found (`answered`, apps/board/server/engine/caller-marks.ts), so a bot reads "answered" rather than working
-// it out from a missing `owed`. Pure.
+// it out from a missing `owed`. An imported note (`from`, point 617) owes nothing (ruling 621): it is history. Pure.
 import type { LedgerState } from './fold.ts';
 import type { Ask } from './notes.ts';
 import { askVer, cardsOf, closedAfter } from './notes.ts';
@@ -29,3 +29,7 @@ export function noteAnswer(s: LedgerState, a: Ask, id?: number): NoteAnswer | un
   if (!log || !closedAfter(log, status, a)) return undefined;
   return { kind: status === 'acknowledged' ? 'check' : 'cross', seq: log.decisions.at(-1)!.seq };
 }
+
+/** Whether ask `a` is still owed an answer as card `id` shows it (no `id`: a whole container's note): never for an
+ * imported note (ruling 621), else while `noteAnswer` finds nothing. */
+export const owes = (s: LedgerState, a: Ask, id?: number): boolean => a.from === undefined && !noteAnswer(s, a, id);

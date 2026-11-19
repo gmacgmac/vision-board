@@ -17,7 +17,7 @@ import { makeTempDir } from '#format/testing';
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/21/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/22/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 

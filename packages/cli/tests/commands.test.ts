@@ -44,7 +44,9 @@ test('the inputs the README and the agent docs rely on exist with the right type
   assert.equal(input('show-node', 'n')?.type, 'integer');
   assert.equal(input('show-node', 'linked')?.type, 'boolean');
   assert.deepEqual([input('join', 'label')?.in, input('join', 'label')?.required], ['body', true]);
-  assert.deepEqual([input('write-board', 'items')?.type, input('write-board', 'items')?.required], ['json', true]);
+  // `items` or `import` (D-107): the schema requires one of them, so neither is required on its own.
+  assert.deepEqual([input('write-board', 'items')?.type, input('write-board', 'items')?.required], ['json', false]);
+  assert.deepEqual([input('write-board', 'import')?.type, input('write-board', 'import')?.required], ['json', false]);
 });
 
 test('vb list-apps (D-047 ruling 12) takes no input; no command calls an app tool', () => {

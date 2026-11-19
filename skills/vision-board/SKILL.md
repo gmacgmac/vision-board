@@ -2,7 +2,7 @@
 name: vision-board
 label: Chats through the board
 description: The Vision Board, where each point you would number in a reply is its own card that the person answers (✓, ✗, a note, Later). Read this before you draw on it or answer what they sent, and when the person says "put it on the board", the conversation runs through the board or its chat panel, a reply would be a long numbered list, or a picture or an app you build should show in a card.
-status: v3.36 (2026-11-18, timeline T_02: a node's `timeline` key in one core sentence, and references/timeline.md read before dating cards); v1 to v3.35 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
+status: v3.37 (2026-11-19, export-import-print T_03: one core line, and references/files.md read before copying a board or importing a file); v1 to v3.36 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
 ---
 
 # Vision Board
@@ -95,6 +95,7 @@ Their words, the cards they selected (their "these"), and the Send: a line per a
 
 - Call `list_boards` first and reuse the board for the same subject; when "the board" could mean more than one, ask which. A new board's `title` is the subject only.
 - **Skin** (`skin`, set when you make the board; the person may change it): `default` to read and discuss, `command-lens` for an operational board with many cards to answer. Both offer the same actions.
+- To copy a board or bring in an exported file, read `references/files.md` first.
 - Creating a board needs no grant: you hold it, and you make and edit your own containers on it.
   Only a board's creator writes its `board` item, and only once. The person renames boards.
 
@@ -144,7 +145,7 @@ A folder can hold several ledgers, each with its own boards; you work on the ope
 
 - One `write_board` call per round, in reading order: board, containers, cards, links.
 - **Give every item a `key` that names it**, starting with the board, so no later turn reuses it (`pricing-reply-n3-s41`); a new version takes a new key. Name a new card by its `key`: its `n` comes in the answer to the call that draws it, so a reply that names it ("Added as card 7.") goes in a second call.
-- **Body**: Markdown. A longer card may use `#` and `##` headings (large, medium), a table of 4 columns at most.
+- **Body**: Markdown. A longer card may use `#` and `##` headings, a table of 4 columns at most.
 - **Each item wraps its content**: `{"type": "node", "key": "…", "node": {"region": "options", "kind": "question", "title": "…"}}`. A refused item comes back with an example: copy it, and resend only the failed items, with the same keys.
 
 ### Images in cards
@@ -182,7 +183,7 @@ Show a picture when it beats words: a screenshot of the page you mean, a diagram
   singular noun, a qualifier after it if needed (`x-encoder`, `x-encoder-audio`); no board names,
   numbers or colours. Never write a file into `.visionboard/icons/`. A name is taken for good: if
   yours is refused, reuse that icon or pick a more specific name.
-- **Colour**: a card takes its kind's colour. A `tone` sets apart a flow's parts and shows which cards belong together (same tone, related); leave it off when the kind says it, never one tone on every card, a hue only for content with its own colour. Neither replaces the kind.
+- **Colour**: a card takes its kind's colour. A `tone` sets apart a flow's parts and shows which cards belong together; leave it off when the kind says it, never one tone on every card, a hue only for content with its own colour. Neither replaces the kind.
 
 ## What the person's answers mean
 
@@ -194,7 +195,7 @@ Show a picture when it beats words: a screenshot of the page you mean, a diagram
 ## Retiring and distilling
 
 - Only when the person asks (to sum cards up in one card is to retire them), or after their ✓ on your proposal to.
-- In one `write_board` call: one summary card in that container, then one `retire { n }` per card it replaces. Keep a card that still asks and is unanswered.
+- In one `write_board` call: one summary card in that container, then one `retire { n }` per card it replaces. Keep a card that asks and is unanswered.
 - **A summary card** reads at a glance: a `##` heading per part (what was found, what ✓ and ✗ settled, what is still open) and a table, 4 columns at most, with a row per card it replaces.
 
 ## Answering

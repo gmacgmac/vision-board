@@ -1390,3 +1390,21 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: Run down, a timeline's dated nodes alternate left and right of the line, the first on the left, spaced by the board's gaps rather than one step; the stem meets the middle of the node's facing edge in both forms; dated nodes follow the container's widths setting, `match` by default run down and `own` across.
 - **Why**: the same alternation as across, and no empty runs below short nodes.
 - **Task**: cortex-tasks/board/2026-11-18_board-layout_timeline/TASK-STATUS.md
+
+## D-107 Export, import and print: the current state, through write_board and host hooks
+- **Date**: 2026-11-19 · **Status**: Accepted (maintainer, points 605-609) · **From**: tracker N56
+- **Decision**: A board or one container exports its current state as `{ v, title, items, answers?, notes? }`, the items being what `write_board` takes; no history. Import goes through `write_board` in an `import` mode, into a new board or the current one, as if freshly written: older versions upgrade by `v`, unsupported parts are dropped and named, missing required parts get defaults; answers apply only as the person's own acts. Print is a print stylesheet over the live page (board or container, the container border optional), then the browser's PDF. Agents export through `get_board` and `show_container` and import through the same mode; an import never merges into an existing container, and cards keep their places within their own container. Files and printing go through three optional host hooks (`saveFile`, `openFile`, `print`); a host without one shows no such item.
+- **Why**: the most direct way that still lets older files in and lets nclite add the hooks when ready.
+- **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/TASK-STATUS.md
+
+## D-108 A person's import writes as the person (amends D-107)
+- **Date**: 2026-11-19 · **Status**: Accepted (maintainer, points 613-614) · **From**: export, import and print T_01
+- **Decision**: Export and import are the person's function. A person's import is authorised by the browser session and writes its containers, cards and links as the person (ledger format 22, a restamp); no agent is needed. An agent's import, still allowed, drops the person's own acts, answers and moved places, and names them.
+- **Why**: people share boards as files; the person's ✓/✗ and moves stay the person's.
+- **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/TASK-STATUS.md
+
+## D-109 One keyboard-focus colour: blue (amends D-099's node ring)
+- **Date**: 2026-11-19 · **Status**: Accepted (maintainer, point 627) · **From**: design/mockups/focus-ring (options A ink, B blue, C accent)
+- **Decision**: The board has one keyboard-focus colour, on every card, mark, button and app card: blue, light-dark(#2563eb, #60a5fa), 2px with its gap, shown only after Tab. A host may override it (`--vb-host-focus`). It replaces the slate node ring (D-099, point 338) and the accent on controls.
+- **Why**: two focus colours read as inconsistent, and the slate was dull; blue is the focus colour people know.
+- **Task**: cortex-tasks/board/2026-11-19_board-app_export-import-print/FIX_02_app-card-look.md

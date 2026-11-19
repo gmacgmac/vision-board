@@ -39,7 +39,7 @@ const PAIRS: [string, string, number][] = [
   // the edges' ring; the glass under the menus and the selection bar, with Tick and Cross on it; a failed half's word.
   ...KINDS.map((k) => [lift(k), 'var(--vb-plate)', 30] as [string, string, number]),
   ...['--vb-badge-new', '--vb-badge-updated', '--vb-notes-count'].map((c) => [lift(`var(${c})`), 'var(--vb-plate)', 45] as [string, string, number]),
-  ['var(--vb-plate-focus)', 'var(--vb-plate)', 30], ['var(--vb-focus-edge)', 'var(--vb-surface-card)', 30], ['var(--vb-focus-edge)', 'var(--vb-surface-canvas)', 30],
+  ['var(--vb-plate-focus)', 'var(--vb-plate)', 30], ['var(--vb-focus-edge)', 'var(--vb-surface-card)', 30], ['var(--vb-focus-edge)', 'var(--vb-surface-canvas)', 30], ['var(--vb-focus)', 'var(--vb-surface-card)', 30], ['var(--vb-focus)', 'var(--vb-surface-canvas)', 30],
   ['var(--vb-glass-ink)', 'var(--vb-glass)', 60], ['var(--vb-glass-ink)', 'var(--vb-glass-hover)', 60], ['var(--vb-glass-muted)', 'var(--vb-glass)', 60],
   ['var(--vb-glass-tick)', 'var(--vb-glass)', 45], ['var(--vb-glass-cross)', 'var(--vb-glass)', 45],
   ['var(--vb-state-drop)', 'var(--vb-surface-card)', 45],

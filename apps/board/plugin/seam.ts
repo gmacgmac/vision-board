@@ -6,9 +6,9 @@
 
 /** The seam a host implements. Raised by one for each breaking change to the types, never lowered. 2: the host
  *  contract's shapes (plugin.md § The types and the seam version, Seam 2). The host's optional `pageChanged` (nclite
- *  item 160) is an addition, not a break: seam 2 still. */
+ *  item 160) is an addition, not a break: seam 2 still; so are its optional `saveFile`, `openFile` and `print` (D-107). */
 export const SEAM = 2;
 /** sha256, in hex, of the seam's types (see above). */
-export const SEAM_TYPES = '93b6e44a8c3bf44003681f4e77621a681eb4e60d3434b3528678edc155d32c82';
+export const SEAM_TYPES = '847eba597b0c6c4a1581f8d1edffb429b81e3e99709e8fd35042d5036008c022';
 /** The types' file in the plugin folder. */
 export const TYPES_FILE = 'plugin.d.ts';

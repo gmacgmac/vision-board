@@ -2,12 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/write-request.schema.json",
   "title": "Write request",
-  "description": "`{ items }`, at most 200. Items run in order.",
-  "$comment": "Was: api.md 28, 34",
+  "description": "`{ items }`, at most 200, run in order; or `{ import }`, an export file written as if its items were sent.",
+  "$comment": "Was: api.md 28, 34, 198",
   "type": "object",
-  "required": [
-    "items"
-  ],
   "properties": {
     "items": {
       "description": "The items to write, run in order (1 to 200); each has a `type`.",
@@ -17,7 +14,47 @@
       "items": {
         "$ref": "https://vision-board.invalid/schema/api/write-item.schema.json"
       }
+    },
+    "import": {
+      "type": "object",
+      "required": [
+        "into",
+        "file"
+      ],
+      "properties": {
+        "into": {
+          "enum": [
+            "new",
+            "current"
+          ],
+          "description": "`new`: the path's board is made for it, titled from the file, and must not exist yet. `current`: added to the path's board, every container a new one, beside what it holds."
+        },
+        "file": {
+          "type": "object",
+          "description": "An export file (`get_board` with `export`) of any version: upgraded first, then what this board can't take is dropped and named in `dropped`, then its items are written as if sent here, with new card numbers."
+        }
+      },
+      "unevaluatedProperties": false,
+      "description": "Write an export file in place of `items`.",
+      "$comment": "Was: D-107, api.md 198. `file` is any object here: an older version or an unknown field must reach the upgrade and the conditioning, which name what they drop; export-file.schema.json checks the result."
     }
   },
-  "unevaluatedProperties": false
+  "allOf": [
+    {"$ref": "https://vision-board.invalid/schema/api/write-request.schema.json#/$defs/itemsOrImport"}
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "itemsOrImport": {
+      "description": "A write carries `items` or `import`, one of them.",
+      "$comment": "Kept in `$defs` and referenced by `$id`, so the `not` below is reported with the words beside it (server/schema.ts `removedWords`).",
+      "type": "object",
+      "allOf": [
+        {"if": {"type": "object", "not": {"type": "object", "required": ["import"]}}, "then": {"type": "object", "required": ["items"]}},
+        {
+          "if": {"type": "object", "required": ["import"]},
+          "then": {"type": "object", "not": {"type": "object", "required": ["items"]}, "description": "an import's items are in its `file`: send `items` or `import`, not both"}
+        }
+      ]
+    }
+  }
 }

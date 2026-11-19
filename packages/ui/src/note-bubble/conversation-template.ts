@@ -21,7 +21,7 @@ const tabs = (b: BoxView): string => (b.tabs.length < 2 ? ''
 function thread(v: BubbleView, b: BoxView, md?: MarkdownOptions): string {
   const wait = b.waiting ? `<p class="vb-nb-wait" role="status">${esc(b.waiting)}</p>` : '';
   if (!v.entries.length && !wait) return '';
-  return `<div class="vb-nb-thread" role="group" aria-label="${esc(v.thread)}" tabindex="0">${conversationList(v.entries, md, b.queued)}${wait}</div>`;
+  return `<div class="vb-nb-thread" role="group" aria-label="${esc(v.thread)}" tabindex="0">${conversationList(v.entries, md, true)}${wait}</div>`;
 }
 
 /** One of the pair: primary and pressed while its mode is the active one. */

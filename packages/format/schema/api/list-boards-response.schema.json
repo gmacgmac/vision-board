@@ -22,15 +22,15 @@
         ],
         "properties": {
           "board": {
-            "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id",
+            "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id",
             "description": "The board id, which the other operations take in their path."
           },
           "title": {
-            "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/title",
+            "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/title",
             "description": "The board's title."
           },
           "seq": {
-            "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/seq",
+            "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/seq",
             "description": "The board's own last ledger line (`seq`)."
           },
           "locked": {
@@ -39,7 +39,7 @@
             "$comment": "Was: api.md 139"
           },
           "skin": {
-            "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/skin",
+            "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/skin",
             "description": "The board's skin, when it is not `default`.",
             "$comment": "Was: api.md 183"
           },

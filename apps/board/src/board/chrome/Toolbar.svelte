@@ -65,7 +65,7 @@
   const chrome = useChrome();
   const { parts, flag } = chrome;
 
-  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onbookmarked, onarchive, onlock, onskin, ondirection, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
+  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onbookmarked, onarchive, onlock, onskin, ondirection, onfiles, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
     onboard: (id: string) => unknown;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
@@ -88,6 +88,8 @@
     onskin?: ((skin: Skin) => void) | undefined;
     /** Which way the board's flows run, a menu in the header (D-100 5; FlowMenu.svelte); left out (the gallery's samples), none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
+    /** Print…, Export… and Import… in the "⋯" menu : open the files dialog for the whole board; left out, none. */
+    onfiles?: ((kind: 'print' | 'export' | 'import') => void) | undefined;
     placement?: 'board' | 'gallery';
     /** The form to draw (the gallery's); left out, the bar's own width says. */
     form?: HeaderTier;
@@ -222,7 +224,7 @@
       {/if}
     {/if}
   </div>
-  <ToolbarEnd {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} {onskin} {ondirection} menu={toolbarMenu}
+  <ToolbarEnd {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} {onskin} {ondirection} {onfiles} menu={toolbarMenu}
     {holders} {placement} {zoom} {menuOpen} {zoomOpen} {look} {send} tier={adaptive ? tier : undefined} {also} folderAbove={adaptive && inMenu(tier, 'folder') && !!parts.folderField}
     ledgerAbove={adaptive && inMenu(tier, 'ledger') && !!parts.ledgerField}
     fields={adaptive && tier !== 'full' ? fields : undefined} />

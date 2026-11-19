@@ -57,8 +57,13 @@ export function createParking(d: ParkingDeps): Parking {
       if (!s) return;
       for (const [id, list] of s.replies) {
         for (const r of list) {
-          const agent = r.agent === undefined ? undefined : s.agents.get(r.agent);
-          const reply: CardReply = { seq: r.seq, text: r.text, at: r.at, ...(r.to !== undefined && { to: r.to }), ...(agent && { agent }) };
+          // Its author (point 619): an imported reply's own (`from`, point 617), else the agent that wrote the line.
+          const agentId = r.from ? r.from.agent : r.agent;
+          const agent = r.from ? r.from.label : r.agent === undefined ? undefined : s.agents.get(r.agent);
+          const reply: CardReply = {
+            seq: r.seq, text: r.text, at: r.at, ...(r.to !== undefined && { to: r.to }), ...(agent && { agent }), ...(agentId && { agentId }),
+            ...(r.from && { imported: true as const }),
+          };
           push(own, id, reply);
           if (r.to === undefined) continue;
           push(answers, r.to, reply);

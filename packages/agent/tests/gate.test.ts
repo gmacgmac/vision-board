@@ -106,7 +106,7 @@ test('the open ledger (FIX_01 F2): the hook can\'t tell whether it may be writte
   const run = async (input: Record<string, unknown>) => decided(await decide(JSON.stringify({ ...hook('Write', input), cwd: fx.folder }), yes, none, access));
   assert.deepEqual(await run({ file_path: '.visionboard/main/images/a.png', content: 'x' }), ['allow', 'The person allowed it.']);
   assert.equal(asked.length, 1, 'asked of the board');
-  assert.deepEqual(await run({ file_path: '.visionboard/ui/images/a.png', content: 'x' }), ['deny', words.boardFiles]);
+  assert.deepEqual(await run({ file_path: '.visionboard/ui/images/a.png', content: 'x' }), ['deny', words.boardOwnFiles]);
   assert.equal(asked.length, 1);
   const gate = { url: 'http://127.0.0.1:1/api/run/approvals', token: 't' };
   assert.equal(gateEnv({ cwd: '/p', gate, ledgerFolder: '.visionboard/main' })[GATE_LEDGER_ENV], '.visionboard/main');

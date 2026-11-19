@@ -83,6 +83,8 @@ export interface Person {
  * and the facts to fill. */
 export interface Stage {
   dir: string;
+  /** The bot's working folder, where a file the person names for it can sit. */
+  cwd: string;
   tool(name: string, input: Record<string, unknown>): Promise<any>;
   person: Person;
   facts: Record<string, number | string>;
@@ -122,11 +124,12 @@ export interface BotHost {
 }
 
 /** A reference file beside the skill (`references/<name>.md`; skills/vision-board/source/references/). */
-export type Reference = 'layouts' | 'architecture' | 'timeline' | 'handover' | 'apps';
+export type Reference = 'layouts' | 'architecture' | 'timeline' | 'handover' | 'apps' | 'files';
 
 /** One message from the host: the person's words, and/or what the person did on the board, then their Send. */
 export interface Turn {
-  say?: string;
+  /** The person's words; from the stage when they name what setup made (a file's path). */
+  say?: string | ((s: Stage) => string);
   act?: (s: Stage) => Promise<void>;
   /** The board whose Send goes with the message. */
   send?: string | ((s: Stage) => string);

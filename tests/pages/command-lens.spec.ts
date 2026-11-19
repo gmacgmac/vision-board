@@ -15,8 +15,9 @@ const THEMES: Theme[] = ['dark', 'light'];
 const ROW = SKIN_DEFS['command-lens'];
 const skin = (page: Page): Locator => page.locator('section[data-feature="command-lens"]');
 /** The rings: on the dark plate the light one in both themes; elsewhere the skin's own (point 338). */
-const PLATE_RING = 'rgb(185, 191, 200)';
-const RING: Record<Theme, string> = { dark: 'rgb(185, 191, 200)', light: 'rgb(74, 78, 87)' };
+// The one focus colour (point 627, D-109): blue, on the plate too.
+const RING: Record<Theme, string> = { dark: 'rgb(96, 165, 250)', light: 'rgb(37, 99, 235)' };
+const PLATE_RING = RING.dark; // a mark on the plate: the dark plate keeps the dark theme's blue in both themes
 
 async function open(page: Page): Promise<void> {
   await page.goto('/gallery.html');

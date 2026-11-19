@@ -103,7 +103,7 @@ test('a reply to a container note shows under it in the note block, on no node',
   await expect(block.locator('.vb-nblock-reply')).toHaveCount(0);
   await reply(request, d, n, 'Yes, in **price** order.', note);
   await expect(block.locator('.vb-nblock-reply')).toHaveCount(1);
-  await expect(block.locator('.vb-nblock-reply .vb-nblock-who')).toHaveText('Agent reply · Pricing chat');
+  await expect(block.locator('.vb-nblock-reply .vb-nblock-who')).toHaveText(`Agent · Pricing chat ${(d.agent as { agent?: string }).agent}`);
   await expect(block.locator('.vb-nblock-reply strong')).toHaveText('price');
   // It is on no node.
   await expect(card(page, n).locator('[data-mark="notes"] .vb-mark-text')).toHaveText('');

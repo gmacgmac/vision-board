@@ -12,7 +12,7 @@
 // (`writeProblem`). No other server module asks whether a board is locked.
 import type { LedgerEvent } from '#format';
 import type { LedgerState } from '#actions';
-import { boardLocked, boardVisibility, eventBoard, LOCKED, UNAVAILABLE } from '#actions';
+import { boardLocked, boardVisibility, eventBoard, LOCKED, LOCKED_PERSON, UNAVAILABLE } from '#actions';
 import type { ProblemCode } from './problem.ts';
 import { problem } from './problem.ts';
 import * as writesWords from './words/writes.ts';
@@ -46,6 +46,22 @@ export function writeTarget(s: LedgerState, board: string, made: number): void {
     throw problem('not-found', writesWords.thereIsNoBoardCallList(board));
   }
   if (v === 'archived') throw problem('invalid', UNAVAILABLE, { errors: [{ pointer: `/items/${made}`, detail: UNAVAILABLE }] });
+}
+
+/** An import's board (D-107, D-108; write-import.ts), before anything is written. `into: new` names a board that is not
+ * there yet: one the writer sees is a `conflict`, saying to import into it or name another; an agent naming a board it doesn't see gets
+ * `UNAVAILABLE`, as a batch making it would. `into: current` names one the writer may write on now: the person's any
+ * board (`personBoard`), an agent's one it sees (`requireBoard`); either refused `locked` while the board is locked. */
+export function importTarget(s: LedgerState, board: string, into: 'new' | 'current', person: boolean): void {
+  if (into === 'new') {
+    if (!s.boards.has(board)) return;
+    const seen = person || boardVisibility(s, board) === 'visible';
+    const detail = seen ? writesWords.intoNewNamesABoardThatIsNotThereYet : UNAVAILABLE;
+    throw problem(seen ? 'conflict' : 'invalid', seen ? writesWords.boardExistsSoImportCurrent(board) : UNAVAILABLE, { errors: [{ pointer: '/import/into', detail }] });
+  }
+  if (person) personBoard(s, board);
+  else requireBoard(s, board);
+  if (isLocked(s, board)) throw problem('locked', person ? LOCKED_PERSON : LOCKED);
 }
 
 /** Whether agents see the line `e`: it is on no board, or on one they see. A retry key stored on a

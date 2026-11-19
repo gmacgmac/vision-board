@@ -10,7 +10,7 @@ import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const section = (page: Page): Locator => page.locator('section[data-feature="node-edges"]');
-const RING: Record<Theme, string> = { dark: 'rgb(139, 155, 184)', light: 'rgb(90, 100, 120)' };
+const RING: Record<Theme, string> = { dark: 'rgb(96, 165, 250)', light: 'rgb(37, 99, 235)' };
 
 async function open(page: Page): Promise<void> {
   await page.goto('/gallery.html');
@@ -79,7 +79,7 @@ test('every mark is reachable by Tab in the order drawn, named by its state, wit
 });
 
 for (const theme of THEMES) {
-  test(`the ring shows after Tab, never after a press, in the calm slate (${theme})`, async ({ page }) => {
+  test(`the ring shows after Tab, never after a press, in the one focus colour (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await open(page);
     const card = section(page).locator('vb-node', { hasText: 'Go-ahead to install' }).first();

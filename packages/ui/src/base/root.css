@@ -54,3 +54,25 @@
   :is(svg):where(& *):not(html):where([fill='none']) { fill: none; }
   :is(svg):where(& *):not(html):where([stroke='currentColor']) { stroke: currentColor; }
 }
+/* The board's one scrollbar (point 618; nclite's look, styles/overlay-scroll.css, without its script): a 3px thumb at the
+   scroller's far right edge (the bottom, sideways), 2px in from it, always shown, no rail; it widens under the pointer.
+   One rule for every scroller in the board (the thread, the history list, menus, a card's body). Chromium and WebKit (a
+   host's desktop webview) draw it from the -webkit- parts; Firefox, which has none, gets the thin bar in the thumb's
+   colour. It names the root and its class, so it wins over a host's `*` rule that hides every bar, and reaches no
+   scroller of the host's. */
+.vb-board, .vb-board * {
+  --vb-scroll-thumb: color-mix(in srgb, var(--vb-ink) 38%, transparent);
+  scrollbar-width: auto;
+}
+.vb-board::-webkit-scrollbar, .vb-board *::-webkit-scrollbar { display: block; width: 7px; height: 7px; background: transparent; }
+.vb-board::-webkit-scrollbar-track, .vb-board *::-webkit-scrollbar-track,
+.vb-board::-webkit-scrollbar-corner, .vb-board *::-webkit-scrollbar-corner { background: transparent; }
+.vb-board::-webkit-scrollbar-thumb, .vb-board *::-webkit-scrollbar-thumb {
+  border: 2px solid transparent; border-left-width: 2px; border-radius: 4px; background: var(--vb-scroll-thumb) padding-box;
+}
+.vb-board::-webkit-scrollbar-thumb:hover, .vb-board *::-webkit-scrollbar-thumb:hover {
+  border-left-width: 0; background-color: color-mix(in srgb, var(--vb-ink) 55%, transparent);
+}
+@supports not selector(::-webkit-scrollbar) {
+  .vb-board, .vb-board * { scrollbar-width: thin; scrollbar-color: var(--vb-scroll-thumb) transparent; }
+}

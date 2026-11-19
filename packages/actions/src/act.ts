@@ -134,7 +134,9 @@ function answers(e: ActEvent, s: LedgerState, board: string | undefined, p: stri
 export function validateAct(e: ActEvent, s: LedgerState, board?: string): string[] {
   const def = ACTIONS[e.action];
   if (!def) return [actionsRefusalsWords.actionUnknown(String(e.action))];
-  if (e.by !== 'person' || def.by !== 'person')
+  // An agent's import writes the person's notes as they were (`from`, point 617).
+  const imported = e.action === 'comment' && e.from?.by === 'person';
+  if ((e.by !== 'person' && !imported) || def.by !== 'person')
     return [actionsRefusalsWords.onlyThePersonCanDo(e.action)];
   const refused = writeProblem(s, e);
   if (refused) return [refused.detail];

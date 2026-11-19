@@ -47,7 +47,8 @@ test('Ask now in the conversation box goes to the panel\'s agent alone, at once,
   expect(asked.prompt).toContain('Board: asks');
   expect(asked.prompt).not.toContain(ROUND_HEAD);
   await expect(mine(page).last()).toContainText('Asked now.');
-  await expect(page.locator('vb-note-bubble .vb-nb-who').first()).toContainText('Asked now');
+  // Asked, it has reached the agent: "User" alone, no "Not sent" (point 619).
+  await expect(page.locator('vb-note-bubble .vb-nb-who').first()).toHaveText('User');
   // Recorded as an `ask` with its context, and no Send: the tick still waits for the board's Send.
   const lines = (await (await page.request.get(`${srv.base}/api/ledger?after=0`)).json() as { events: Record<string, unknown>[] }).events;
   expect(lines.filter((e) => e.action === 'ask')).toEqual([expect.objectContaining({ board: 'asks', context: 'board' })]);

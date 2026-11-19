@@ -93,6 +93,21 @@ export; any format beyond the wrapper.
 
 _Recorded by the orchestrator._
 
+2026-11-19 (points 615-619, after wave 2): **615** Print offers light or dark, default the screen's theme. **617** the
+whole conversation comes in whoever imports: every note and reply, each keeping its original author (an imported line
+carries that author; no further format bump, it rides ledger 22); one "Imported" divider after the last imported
+message, no per-message icons. **618-619** the conversation box: the board's one scrollbar pattern (a skinny thumb at
+the scroller's far right edge, always visible, no rail, CSS only, as nclite's chat; for every board scroller);
+padding inside the thread; labels "User" (the note's number on hover) and "Agent · <name> <id>" on one line, no wrap,
+an ellipsis and the full name on hover only when cut; no "Asked now" or "Sent", only "Not sent" when a note has not
+reached an agent. The import reply's dropped list worded for a person. All in FIX_01, before VERIFY_01.
+
+2026-11-19 (points 613-614, after T_01): **613** export and import are the person's function: a person's import is
+authorised by the browser session (as `retire_cards` is) and writes the containers, cards and links as the person
+(those line kinds join `PERSON_TOO` for import; ledger format 22, a restamp, per D-103); no agent is needed. Agents keep
+export and import as decision 7 says. **614** an agent's import drops the pins (the person's moves) and names them, as it
+drops answers; the person's import keeps them. A radial container's `center` must round-trip (BE_01).
+
 2026-11-19 (points 608-609): A D-107 yes (worded for 608D and 7a below before appending); B conversations off by
 default; C `.vboard.json`; D agents export (through `get_board`/`show_container`) and import (through `write_board`'s
 `import` mode), answers only from the person (decision 7); E places kept within each container, containers placed by

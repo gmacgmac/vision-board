@@ -38,7 +38,6 @@ export function createAskNow(d: AskNowDeps): BoxDeps {
     blocked: () => d.paused() ?? (d.working() ? notesWords.theAgentIsWorking : null),
     listening: () => d.oneAgent() || (d.state()?.agents.size ?? 0) > 0,
     ask: (seq) => d.attempt({ action: 'ask', board: d.board(), lines: [seq], context: d.context() }),
-    asked: () => new Set(d.state()?.asked.get(d.board())?.keys() ?? []),
     mode: () => (d.store.get(modeKey(d.board())) === 'ask' ? 'ask' : 'save'),
     setMode: (act) => d.store.set(modeKey(d.board()), act),
     looked(id) {

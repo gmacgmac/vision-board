@@ -73,11 +73,12 @@ test('a past version has no awaiting (today\'s fact); the written handover still
 
 test('a reply sits on the card its note is on; one naming no note stays on its own card', () => {
   const p = make(ledger());
+  const ID = 'a-aaaa1111'; // the agent that wrote each reply, beside its name (point 619)
   assert.deepEqual(p.card(card(3)).replies, [
-    { seq: 14, text: 'Because.', at: AT(14), to: 11, agent: 'Pricing chat', unseen: true }, { seq: 15, text: 'Also, FYI', at: AT(15), agent: 'Pricing chat', unseen: true },
-    { seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat', unseen: true },
+    { seq: 14, text: 'Because.', at: AT(14), to: 11, agent: 'Pricing chat', agentId: ID, unseen: true }, { seq: 15, text: 'Also, FYI', at: AT(15), agent: 'Pricing chat', agentId: ID, unseen: true },
+    { seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat', agentId: ID, unseen: true },
   ]);
-  assert.deepEqual(p.card(card(4)).replies, [{ seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat', unseen: true }], 'a group note is answered on every card it is on');
+  assert.deepEqual(p.card(card(4)).replies, [{ seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat', agentId: ID, unseen: true }], 'a group note is answered on every card it is on');
 });
 
 test('a reply is unseen on a card until the person looks at that card (updateSignals, D-054); never on a past version', () => {

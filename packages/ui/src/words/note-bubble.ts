@@ -46,7 +46,10 @@ export const addNoteTip = (active: boolean): string => (active
   ? 'Add note (Enter): it waits for the board\'s Send'
   : 'Add note: it waits for the board\'s Send. Pressing it makes Enter add notes');
 export const waitingForTheAgent = 'Waiting for the agent';
-export const notSentYet = 'not sent yet · goes with Send';
+// A note no agent has had yet (point 619), and where an imported conversation ends (point 617).
+export const notSent = 'Not sent';
+export const noteNumber = (index: number): string => `Note ${index}`;
+export const imported = 'Imported';
 export const asking = 'Asking…';
 export const conversations = 'Conversations';
 export const closeConversation = 'Close conversation';

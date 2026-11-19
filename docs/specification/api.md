@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-11-18 (ledger v21, timeline T_01, D-105: a node's `timeline` key, normalised at the write edge, refused on an app card, its order, `show_layout`'s `timeline`, format 21 a restamp, the page's flag: 190-196; points 5, 11 and 133 say so); 2026-11-18 (show_layout's flow direction and branches with no engine flag, node-overhaul T_04: 133); 2026-11-17 (show_layout works a flow out the way it runs and with its branches on rows, node-overhaul BE_01: 133); 2026-11-16 (a container's seen is the page's alone, never stored, point 308: 187 rewritten, `mark_seen` takes a card or a board only; D-054 stands); 2026-11-16 (one ledger format, node-overhaul BE_03, D-103 3: the reader, the schema and the fold know format 20 only; an older line is refused with words to migrate it; points 6, 11, 66, 90, 118, 129, 141, 178 and every "Only adds" say so); 2026-11-16 (ledger v20, node-overhaul T_01: Bookmark, a board's skin, a node's icon and tone, the icon library and its two operations, a seen container, Ask now, a flow's direction: 182-189; point 11 says format 20); 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-11-19 (ledger v22 and the import as built, export-import-print BE_01, D-108: the person's `region`, `node` and `link` lines, a restamp, `write_board` takes the person's cookie for `import` alone, a container's centre by `{ key }`, the export read and the import run: 201-205; points 5, 11 and 198 say so; info.version 1.45.0); 2026-11-19 (export and import, export-import-print T_01, D-107: the export file, `write_board`'s `import`, `dropped`, `export_board`, `export` on get_board and show_container: 197-200; info.version 1.44.0); 2026-11-18 (ledger v21, timeline T_01, D-105: a node's `timeline` key, normalised at the write edge, refused on an app card, its order, `show_layout`'s `timeline`, format 21 a restamp, the page's flag: 190-196; points 5, 11 and 133 say so); 2026-11-18 (show_layout's flow direction and branches with no engine flag, node-overhaul T_04: 133); 2026-11-17 (show_layout works a flow out the way it runs and with its branches on rows, node-overhaul BE_01: 133); 2026-11-16 (a container's seen is the page's alone, never stored, point 308: 187 rewritten, `mark_seen` takes a card or a board only; D-054 stands); 2026-11-16 (one ledger format, node-overhaul BE_03, D-103 3: the reader, the schema and the fold know format 20 only; an older line is refused with words to migrate it; points 6, 11, 66, 90, 118, 129, 141, 178 and every "Only adds" say so); 2026-11-16 (ledger v20, node-overhaul T_01: Bookmark, a board's skin, a node's icon and tone, the icon library and its two operations, a seen container, Ask now, a flow's direction: 182-189; point 11 says format 20); 2026-11-16 (§ Migration: older ledgers are migrated to the current format, a newer one opens read-only, D-103: 176-181; points 5 and 11 brought up to date); 2026-11-09 (the Send message's last line: answer from it, read again only if the person says they changed more); 2026-11-07 (plugin seam 2, the host contract's shapes, the change line `plugin/change`, the `singleAgent` and `followOtherWriters` engine flags: 175; 46, 159, 160, 162, 163); 2026-11-06 (a sent container may leave out `mode`: a new one is a `row`, point 451; 129); 2026-11-05 (read-only words name Editing, the toggle's state: FIX_02); 2026-11-05 (a node item's `insert`: a card into a flow in one write, `inserted` in its result: 174); 2026-11-03 (ledgers and read-only fixes: chat sessions per ledger, reads refused elsewhere, a watcher follows a move, the person's Edit words: FIX_01); 2026-11-03 (data-folder paths from one module, `data-folder.ts`: 161); 2026-11-03 (the tools keep a bot's rules, the reads give it the facts, `x-hosts` on an input: 171); 2026-11-02 (a Send whose chat can't be reached is a 409 saying why: 170); 2026-10-31 (the engine's seam: `route` with a context, `tools` in MCP's shapes, two live chips, the chat reads through `resolve`: 131, 159, 162, 163; a picture's cap, measured, and a blank page in its name: 168); 2026-10-30 (a PDF's pages and a fitted copy, `of`: 168; read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -48,7 +48,7 @@ packages/format/schema/openapi.json               every operation, input, output
 ## Schemas
 
 5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/<LEDGER_FORMAT>/<file>`
-   (today `.../ledger/21/<file>`).
+   (today `.../ledger/22/<file>`).
    `.invalid` is reserved (RFC 2606), so it is plainly a name and is never fetched. Every `$ref`
    uses the target's `$id`. API body schemas live under `.../schema/api/<file>` and version with
    `openapi.json` `info.version`, not with the ledger.
@@ -84,9 +84,9 @@ packages/format/schema/openapi.json               every operation, input, output
     - limits: node and board title 200, region title 80, node body 8000, text and reason 4000,
       summary 2000, link label 80, agent label 80, tags 12 of 40, lanes 12 of 40, columns 1-12,
       sources 20 of 500, propose source 500, park bundle fields 4000, key 64, person 80
-11. **Versions: one format.** `LEDGER_FORMAT` is 21 (`packages/format/src/ledger.ts`; each format's additions are in
+11. **Versions: one format.** `LEDGER_FORMAT` is 22 (`packages/format/src/ledger.ts`; each format's additions are in
     the "Ledger vN" sections below). Every change to a ledger schema bumps it and the `$id` path. The reader, the
-    schema and the fold know this one format (D-103 3): `common.schema.json` `stamp.v` is `const` 21, and
+    schema and the fold know this one format (D-103 3): `common.schema.json` `stamp.v` is `const` 22, and
     `eventProblems` refuses a line with no `v` or an older one with one problem, words that say to migrate the ledger
     (`npm run ledger:migrate`, 181; `format-ledger.ts` `olderFormat`), its other fields unchecked. Older ledgers are
     migrated when they are opened for writing (§ Migration, 176-181), and read through the same chain in memory when
@@ -249,16 +249,17 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | operationId | Method and path | Who | Does |
 |---|---|---|---|
 | `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq, locked?, skin? }], head }`; `seq` is that board's own last line; `locked` on a locked board (139); `skin` when not `default` (183); `ledger` reads another ledger of the folder (113b) |
-| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty); `locked` on a locked board (139); `ledger` reads another ledger (113b) |
+| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty); `locked` on a locked board (139); `ledger` reads another ledger (113b); `export=true` answers the export file instead (199) |
 | `show_node` | `GET /api/boards/{board}/nodes/{n}` | anyone | Every version of node `n`, its notes, replies, proposals, park bundle, links, container and size; `linked=true` adds linked nodes; `ledger` reads another ledger (113b) |
-| `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note |
+| `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note; `export=true` answers the export file instead (199) |
+| `export_board` | `GET /api/boards/{board}/export` | page | The export file of the board, or of one container with `region`; `notes=true` adds the notes (197, 199) |
 | `show_layout` | `GET /api/boards/{board}/regions/{region}/layout` | anyone | How the board arranges one container, structure only: mode and widths in effect, each card's lane, column and row, how many links cross, how many cells are empty (133) |
 | `list_open` | `GET /api/boards/{board}/open` | anyone | Items not yet decided, with `pending` (36) and `unseen` (a newer version than the person last saw) |
 | `check_responses` | `GET /api/boards/{board}/responses` | anyone | The person's actions after `after`, and answers to the caller's grant requests; `wait` (0-60 s) holds the call until the person presses Send or answers a request; a timed-out wait returns `{ responses: [], head }` |
 | `read_ledger` | `GET /api/ledger` | person | Every ledger line after `after`, from anyone, oldest first, as the file holds it (cards by ledger number, flags included: 125, 128); `board` filters (through a node's board for lines that name only a node); JSON, or `application/jsonl` |
 | `join` | `POST /api/agents` | agent | Get an agent id and secret; grants nothing |
 | `request_grant` | `POST /api/grants` | agent | Ask the person for write access to a board, or to one container on it (85) |
-| `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `append`, `retire` (126); per-item results |
+| `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `append`, `retire` (126); per-item results; or `import: { into, file }`, an export file written as fresh cards, with `dropped` (198) |
 | `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8); a `send` also hands the board's chat session the answers (121) |
 | `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87); never a container (187) |
 | `put_board` | `PUT /api/boards/{board}` | person | `{ title, summary? }`: create the board when the id is new, rename it when it exists (90) |
@@ -2112,3 +2113,109 @@ headers and answers) is [images.md](./images.md); this section is what the API s
 196. **No flag.** The timeline was behind a page flag until timeline T_03 switched it on (2026-11-19) and removed it:
     the contract, the server and the page all take a stored date as it is, and the page draws the line and the date
     header for every dated node. An app card never carries one (the write refuses it, `timelineOnApp`).
+
+## Export and import (export-import-print T_01, D-107)
+
+197. **The export file** (`export-file.schema.json`, `ExportFile`). A board, or one container, as it stands now:
+    `{ v, title, items, answers?, pins?, notes? }`. `v` is the export format's version, `EXPORT_VERSION` (1; the
+    schema's `v` is the same `const`, `schema-export.test.ts` "v is the code's EXPORT_VERSION"). `items` are write items
+    (`write-item.schema.json`, by reference, never a copy) of three types only, `region`, `node` and `link`, each with a
+    `key`; a link names its cards by `{ key }`. `answers` (`{ key, answer: check | cross }`), `pins` (`{ key, x, y }`,
+    in the card's container's coordinates) and `notes` (`{ key | keys, text, thread? }`, `thread` being the agent's
+    replies, oldest first) name their card, or a note its container, by that key. No history, no card numbers, no
+    ledger numbers. Saved as `<name>.vboard.json`. Kept true by `schema-export.test.ts` "a card of every kind".
+198. **`write_board`'s `import`** (`write-request.schema.json` `import`, `$defs.itemsOrImport`). A write sends `items`
+    or `import: { into, file }`, never both (`invalid`, with the words beside the rule) and never neither. `into: new`
+    makes the path's board, titled from the file; `into: current` adds to it, every container a new one. `file` is any
+    object in the request schema, so an older version or an unknown field reaches the two steps before the write:
+    `upgradeExport` (a chain by `v` on the ledger's runner, `runUpgradeChain`; `EXPORT_STEPS` is empty today), then
+    `conditionExport`, which keeps what an export holds, drops the rest and names each drop where it was, and gives a
+    missing or refused title its default. A field is judged by the ledger's own check (`ledger-shape.ts`
+    `shapeFieldProblems`). What names the board a file came from (a card number, `n`, `base`, `insert`, a container's
+    `center` by number) is dropped, named; a container's `center` by `{ key }` of a card in the file is kept (202). An
+    item whose key an earlier item has is left out, named, so every key names one thing; so is an item, answer, place or note that names a card the file no longer holds, and an
+    answer on a card that asks for none. The result's `dropped` lists them, in reading order (`write-result.schema.json`).
+    The words are `packages/format/src/words/format-export.ts`. Kept true by `export.test.ts` and
+    `schema-export.test.ts` "conditioning gives a file the schema takes".
+199. **The export read.** `export_board` (`GET /api/boards/{board}/export?region=&notes=`, the page's) answers the
+    export file of the board or of one container; `notes=true` adds the notes. An agent reads the same file with
+    `get_board` or `show_container` and `export=true` (`notes=true` likewise), so no tool is added (D-107). Each of the
+    two reads answers its own response or the export file (`oneOf`).
+200. **On, with no flag** (D-107, T_02): the page's Print, Export and Import items. The board's host gives the
+    file and print hooks (`BoardHost` `saveFile`, `openFile`, `print`; plugin.md § What the host gives); a host without
+    one shows no such item.
+
+## Ledger v22 and the import as built (export-import-print BE_01, D-108)
+
+201. **Format 22: the person draws an import** (D-108, D-103). A person's import writes its containers, cards and
+    links as the person, so `region`, `node` and `link` join `PERSON_TOO` (`ledger.ts`) and their stored `by` is
+    `agent` or `person`; a person's line carries no `agent` and no `key`. Every other agent line stays the agent's.
+    `LEDGER_FORMAT` becomes 22, every ledger `$id` moves to `.../schema/ledger/22/`, `openapi.json` `info.version`
+    becomes 1.45.0. Adding a writer changes no existing line's meaning, so step 21 rewrites nothing but `v`
+    (`FORMAT_STEPS` `restamp(21)`); the fixtures (not `legacy/`) carry `v` 22, the same lines the chain gives
+    (`schema-v22.test.ts` "a format-21 ledger restamps to 22"). A person's line is no agent drawing (92): no version,
+    no "the agent drew". Kept true by `schema-v22.test.ts`.
+202. **A container's centre by `{ key }`.** A sent `region`'s `center` names its card by number or by `{ key }` of the
+    item that drew it (`region.schema.json` `center`, `nodeRef`); the stored line names its ledger number
+    (`$defs.rules`). The export file names a radial container's centre so, and an import sets it once the cards are
+    drawn, by writing the container again. Kept true by `schema-v22.test.ts` "a container's centre" and
+    `api-import.test.ts`.
+203. **The export read, as built** (`server/engine/export.ts` `exportFile`; 199). The board as it shows: each card in
+    the container it is in now (the person's moves count), at its latest version, with the size the person picked; each
+    container in the mode, widths and direction it shows; retired cards and containers out; the board's Later is no
+    container of the file, its cards keep `later`. Keys: a container's is its id, a card's `card:<n>`, a link's
+    `link:<n>><n>`. `answers` are the cards' ✓ (`check`) and ✗ (`cross`) now; `pins` the person's places; `notes`
+    (with `notes=true`) each note once, card notes in card order then container notes, `thread` the agents' replies to
+    it, each with its author in `from` (206); a container's export leaves out a group note with a card outside it, and a centre outside it. `export_board`
+    names any board the person may (`personBoard`); `get_board` and `show_container` with `export` the boards an agent
+    sees. Kept true by `api-import.test.ts` "export: …".
+204. **Who imports, and what goes** (`write-import.ts` `importFile`; `export/writer.ts` `keptFor`). `write_board` takes
+    the person's cookie as well as an agent's secret (`agent-or-person`), and from the person only `import`: `items`
+    from the person are `invalid` at `/items`, never `forbidden`, which the page takes for a stale cookie and reloads
+    on. The person's import writes every line as the person, then the conversation (206), then the places and answers
+    as the person's own acts: each card in `later` moved there, the pins, and the answers last so a ✓ or ✗ closes the
+    notes before it. A card in `later` is drawn first in the file's first container (`writer.ts` `laterHome`; a node
+    line names a container, and Later is a place only the person's move gives); with no container in the file it is
+    refused and named. An agent's import writes as the agent, held to the grants as `items` are, the conversation too,
+    and leaves out the answers and places, each named (the person's own acts); its cards in `later` stay in the file's
+    first container, the move named. An imported line never carries a key the writer
+    holds: the person's lines carry none, an agent's carry `import-<seq>-<file key>` under a prefix none of its keys
+    starts with, so importing a file twice writes it twice.
+205. **How an import runs.** Refused whole, before anything is written: a file the chain can't bring to the current
+    `v` (`invalid` at `/import/file`, the chain's words); `into: new` naming a board the writer sees (`conflict` at
+    `/import/into`: import into it, or name another), or one an agent doesn't see (`UNAVAILABLE`, as a batch making it
+    would); `into: current` naming no board (`not-found`) or a locked one (`locked`) (`visibility.ts` `importTarget`).
+    `into: new` writes the board's line titled from the file. Every container is new: an id the board holds, or held,
+    takes the next free `<id>-2`, `<id>-3`, and Later is never one (`freshIds`); the layout places the new containers
+    beside what the board holds. The items go through the normal write path on one batch (`writeBatch`), one result
+    each, `index` being the item's place in the conditioned file: one call takes a file's 2,000 items, past `items`'
+    200 (`write-result.schema.json` `results`). Each part left out is named in `dropped`, conditioning's first; past
+    2,000, the last says how many more. The person's `dropped` also names each item the normal checks refused (the page
+    shows `dropped` alone; an agent reads `results`). Kept true by `api-import.test.ts` (with "a card the person moved
+    to Later" and "nothing goes silently").
+
+## The whole conversation imported; the reply worded for its reader (export-import-print FIX_01)
+
+206. **The whole conversation comes in, whoever imports** (point 617; `write-import.ts` `conversation`). Every note in
+    the file and every reply in its `thread` is written, each note then its replies, each line keeping its original
+    author in one optional field, `from` (`common.schema.json` `$defs.from`: `{ by, agent?, label? }`), with no format
+    bump: it rides ledger 22. A note's `from` is `{ by: "person" }`; a reply's names the agent that wrote it on the board
+    the file came from, by its id and label (the export gives each reply's `from`, 203; a file's reply with none, or a
+    refused one, comes in as `{ by: "agent" }`). The line's own `by` is who imported it: an agent's import may write a
+    note (`comment` act, `by: agent`, `from.by: person`) and the person's a reply (`by: person`, `from.by: agent`); no
+    other line may carry `from` (`ledger-shape.ts` `fromRules`, `act.ts` `validateAct`, `reply.schema.json`). A reply
+    to a container's note goes on the container's first card, else the file's first. An imported note is history: no
+    Send carries it (`unsent.ts`), it can't be changed (`note-lock.ts` `lockOf`: `sent`), `check_responses` reports it
+    to no agent (`pending.ts` `responsesAfter`), an import is no look at its cards (`fold.ts` `seeCards`), and it owes
+    nothing (ruling 621; `note-answer.ts` `owes`): unanswered, its card or container is not with the agent, while a
+    note the person writes after the import is owed as usual (36); the reads
+    mark it `imported: true` (`notes.ts` `itemOf`, `containerNotes`; the API's `note`), and a reply keeps its `from`
+    (the API's `reply`). Kept true by `api-import.test.ts` (and its "an imported note owes nothing") and `schema-v22.test.ts` "an imported line keeps its author".
+207. **`dropped` is worded for whoever imports** (point 619; `export/person.ts` `forPerson`). Each part left out is
+    recorded once with its pointer, whether all of it went, and the agent's words (`condition.ts` `Drop`). An agent
+    reads the agent's words, pointer first (`items[1].node.glow: not a field Vision Board knows`). The person reads one
+    line per part, named by what it is (a card or container by its title, cut past 60 characters; a link, a note, a
+    reply, a ✓ or ✗, a card's place, the file) and whether all of it was left out ("Card "Hologram card" was left
+    out.") or only something in it ("… came in, but part of it was left out."); the same part is named once, and past
+    2,000 the last line says how many more. The sentences are `words/format-export.ts`'s. Kept true by
+    `export.test.ts` "for a person" and `api-import.test.ts` "an unknown field and an unknown kind".

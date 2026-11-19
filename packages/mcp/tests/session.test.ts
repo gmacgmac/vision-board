@@ -19,11 +19,14 @@ for (const f of readdirSync(SCHEMA_DIR, { recursive: true, encoding: 'utf8' })) 
   if (f.endsWith('.schema.json') && !f.startsWith('vendor')) ajv.addSchema(JSON.parse(readFileSync(`${SCHEMA_DIR}${f}`, 'utf8')));
 }
 const spec = JSON.parse(readFileSync(OPENAPI_FILE, 'utf8'));
-/** Each tool's success response schema: its operation's lowest 2xx, a component that names a schema file. */
+/** A component that names a schema file, as that file's `$id`. */
+const fileOf = (ref: string) => ({ $ref: spec.components.schemas[ref.split('/').pop()!].$ref });
+/** Each tool's success response schema: its operation's lowest 2xx, a component that names a schema file, or one of
+ * several (`get_board` and `show_container` answer an export file with `export`, D-107). */
 const outputs = new Map(Object.values<any>(spec.paths).flatMap((item) => Object.values<any>(item)).filter((op) => op['x-agent']).map((op) => {
   const status = Object.keys(op.responses).filter((s) => /^2\d\d$/.test(s)).sort()[0]!;
-  const ref: string = op.responses[status].content['application/json'].schema.$ref;
-  return [op.operationId as string, ajv.compile({ $ref: spec.components.schemas[ref.split('/').pop()!].$ref })];
+  const schema = op.responses[status].content['application/json'].schema;
+  return [op.operationId as string, ajv.compile(schema.oneOf ? { oneOf: schema.oneOf.map((x: { $ref: string }) => fileOf(x.$ref)) } : fileOf(schema.$ref))];
 }));
 const SERVER_INFO = 'io.modelcontextprotocol/serverInfo';
 

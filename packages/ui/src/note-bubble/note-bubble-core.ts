@@ -163,8 +163,6 @@ export interface BoxView {
   modes: Readonly<Record<BoxAct, BoxModeWords>>;
   blocked?: string;
   waiting?: string;
-  /** "not sent yet · goes with Send", on a note that waits for the board's Send. */
-  queued: string;
 }
 
 /** Everything the bubble says; the element applies it. */
@@ -236,7 +234,7 @@ function boxView(b: BubbleInput, heading: string): BubbleView {
     entries: b.entries ?? [],
     box: {
       title: b.title ?? '', tabs: b.tabs ?? [], ask: noteBubbleWords.askNow, askTip: modes[active].askTip,
-      addTip: modes[active].addTip, active, modes, queued: noteBubbleWords.notSentYet,
+      addTip: modes[active].addTip, active, modes,
       ...(blocked && { blocked }), ...(b.waiting && { waiting: noteBubbleWords.waitingForTheAgent }),
     },
   };

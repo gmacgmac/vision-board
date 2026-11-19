@@ -67,7 +67,7 @@ for (const theme of THEMES) {
     await block.locator('.vb-nblock-text').click();
     await expect(page.getByRole('dialog', { name: 'Conversation on container Pricing thread' })).toBeVisible();
     await expect(bubble(page)).toHaveAttribute('data-on', 'container');
-    await expect(list(page).locator('.vb-nb-who')).toHaveText(['Your note 1 · Sent', 'Agent reply · Pricing chat', 'Your note 2']);
+    await expect(list(page).locator('.vb-nb-who')).toHaveText(['User', `Agent · Pricing chat ${(d.agent as { agent?: string }).agent}`, 'User · Not sent']);
     await expect(list(page).locator('[data-seq]').last()).toBeFocused();
     await expect(bubble(page).getByRole('button', { name: 'Edit note 2' })).toBeVisible();
     await expectNoAxeViolations(page);

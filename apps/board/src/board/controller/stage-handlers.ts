@@ -42,6 +42,8 @@ export interface HandlerFlows {
   marks: MarkFlow;
   /** A click inside container `region` (its background or frame): its pill cleared on this screen. */
   seen(region: string): void;
+  /** Print container… and Export container… (board-files.ts): open the files dialog for a container. */
+  files?: { ask(kind: 'print' | 'export', region: string): void };
 }
 
 export function stageHandlers(f: HandlerFlows): StageHandlers {
@@ -53,6 +55,7 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
     resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
     regionComment: (region) => notes.container(region),
     ...(access && { revoke: (region: string, holder: string) => void access.revoke(region, holder) }), ...(removal && { removeRegion: removal.container }),
+    ...(f.files && { printRegion: (region: string) => f.files!.ask('print', region), exportRegion: (region: string) => f.files!.ask('export', region) }),
     pin: (id, box) => void places.pin(id, box), pinRegion: (region, at) => void frames.pin(region, at),
     frameStart: frames.start, frameMove: frames.move, frameEnd: (d) => void frames.end(d),
     regionCommand: (_id, region) => notes.container(region, 'comment'), unpin: (id) => void places.unpin(id),

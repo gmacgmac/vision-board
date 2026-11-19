@@ -52,6 +52,14 @@ export function createIo(api: Transport, asPerson: PersonCall = (run) => run()) 
     sendAct: (id: string, fields: ActFields) => person(() => client.call('act', {
       board: id, body: { type: 'act', ...fields, ...(namesBoard(fields) && { board: id }) },
     })),
+    /** Board `board` as an export file (`export_board`, D-107): the whole board, or with `region` one container; `notes` adds
+     *  the conversations on notes. No credential: the page's own read. */
+    exportBoard: (board: string, o: { region?: string | undefined; notes?: boolean } = {}) =>
+      asApiError(() => client.call('export_board', { board, ...(o.region !== undefined && { region: o.region }), ...(o.notes && { notes: true }) })),
+    /** Write export file `file` into board `board` as the person (`write_board`'s `import`, api.md 198): `new`, a board made for it at
+     *  that id; `current`, beside what the board holds. The reply names in `dropped` what the board left out. */
+    importBoard: (board: string, into: 'new' | 'current', file: Record<string, unknown>) =>
+      person(() => client.call('write_board', { board, body: { import: { into, file } } })),
     /** Create board `id`, or rename it when it exists (api.md 90); the stored `board` line. */
     putBoard: (id: string, fields: BoardFields) => person(() => client.call('put_board', { board: id, body: fields })),
     /** Remove cards, or a container with its cards, from board `id`; the stored `retire` line, its cards

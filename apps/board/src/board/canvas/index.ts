@@ -4,6 +4,8 @@ export type { BoardElements, Drawing } from './draw.ts';
 export { createFocus } from './focus.ts';
 export { outside, viewBounds } from './offscreen.ts';
 export { createPlaces } from './places.ts';
+export { PRINT_PAD, PRINT_PAGE, preparePrint, printFit } from './print-view.ts';
+export type { PrintFit, PrintScope } from './print-view.ts';
 export { bindPointerFocus, focusCame } from './pointer-focus.ts';
 export { LATER_FRAME } from './render.ts';
 export { APP_FIT, BOX_MAX_K, BOX_MIN_K, FAR_GROW, FAR_K, MARK_FAR_K, MARK_H, MARK_MIN, SELECTION_FIT, Viewport, boxScale, isFar, markGrow, marksPressable, smallMark, zoomPercent } from './viewport.ts';

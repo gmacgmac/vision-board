@@ -86,3 +86,14 @@ export const cardsInTwoContainers = (region: string, region2: string): string =>
 export const containerLaysOutAs = (region: string, mode: string): string => `"${region}" lays out as \`${mode}\``;
 export const notTheContainer = (container: string): string => `not "${container}"`;
 export const thePersonMovedIt = (region: string): string => `the person moved it to "${region}"`;
+
+// ---- writes.ts, visibility.ts (an import, D-107, D-108)
+export const thePersonWritesOnlyAnImport = 'The person writes to a board through write_board only by importing a file (`import`); `items` are an agent\'s to send.';
+export const boardExistsSoImportCurrent = (board: string): string =>
+  `Board "${board}" exists already. Import into it with \`into: current\`, or name a board that doesn't exist yet.`;
+export const intoNewNamesABoardThatIsNotThereYet = 'with `into: new`, the path names a board that is not there yet';
+
+// ---- write-import.ts
+export const importNotWritten = (at: string, key: string): string => `${at}: \`${key}\` was not written; left out`;
+export const importNotApplied = (at: string, why: string): string => `${at}: ${why}; left out`;
+export const importMoreLeftOut = (n: number): string => `and ${n} more parts of the file left out`;

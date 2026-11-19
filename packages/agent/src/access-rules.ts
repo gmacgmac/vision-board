@@ -59,15 +59,15 @@ export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '**/.visionboard/*/chat-sessions.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
   { path: '**/.visionboard/ledger.jsonl', read: 'allow', write: 'refuse', why: words.theLedger },
   { path: '**/.visionboard/*/ledger.jsonl', read: 'allow', write: 'refuse', why: words.theLedger },
-  { path: '.visionboard/lock', read: 'allow', write: 'refuse', why: words.boardFiles },
-  { path: '.visionboard/*/lock', read: 'allow', write: 'refuse', why: words.boardFiles },
+  { path: '.visionboard/lock', read: 'allow', write: 'refuse', why: words.boardOwnFiles },
+  { path: '.visionboard/*/lock', read: 'allow', write: 'refuse', why: words.boardOwnFiles },
   { path: '**/.visionboard/app-state/**', read: 'refuse', write: 'refuse', why: words.appState },
   { path: '**/.visionboard/*/app-state/**', read: 'refuse', write: 'refuse', why: words.appState },
   { path: '.visionboard/permissions.json', read: 'allow', write: 'refuse', why: words.permissionsFile },
   // The icon library (api.md 185): `.visionboard/**` already refuses a write there; this row says why, in words that
   // name add_icon, the one way in. Read freely: an agent lists and reuses before it adds.
   { path: '**/.visionboard/icons/**', read: 'allow', write: 'refuse', why: words.iconLibrary },
-  { path: '.visionboard/**', read: 'allow', write: 'refuse', why: words.boardFiles },
+  { path: '.visionboard/**', read: 'allow', write: 'refuse', why: words.boardOwnFiles },
   { path: '.visionboard/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps, openLedger: true },
   { path: '.visionboard/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps, openLedger: true },
   { path: '.visionboard/attachments/**', read: 'allow', write: 'refuse', unknownCommand: 'ask', why: words.theirAttachments },

@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.43.0",
+    "version": "1.45.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -79,7 +79,7 @@
         "x-agent": true,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Read a board as it is now",
-        "description": "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). For one node's history, use `show_node`.",
+        "description": "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). `export: true` returns the export file instead. For one node's history, use `show_node`.",
         "security": [],
         "parameters": [
           {
@@ -89,16 +89,29 @@
             "$ref": "#/components/parameters/otherLedger"
           },
           {
+            "$ref": "#/components/parameters/export"
+          },
+          {
+            "$ref": "#/components/parameters/exportNotes"
+          },
+          {
             "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
           "200": {
-            "description": "The board.",
+            "description": "The board, or with `export` its export file.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getBoardResponse"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/getBoardResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/exportFile"
+                    }
+                  ]
                 },
                 "example": {
                   "head": 52,
@@ -209,7 +222,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -229,7 +242,7 @@
                   "$ref": "#/components/schemas/board"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 60,
                   "at": "2026-10-08T09:00:00Z",
                   "by": "person",
@@ -264,6 +277,107 @@
           },
           "423": {
             "$ref": "#/components/responses/locked"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/export": {
+      "get": {
+        "operationId": "export_board",
+        "x-agent": false,
+        "summary": "Export a board or one container",
+        "description": "Export a board, or with `region` one of its containers, as it stands now. It returns the export file, `{ v, title, items, answers?, pins?, notes? }`: `items` are the `region`, `node` and `link` items that draw it, as `write_board` takes them, each with a `key`; `answers` (the person's ✓ and ✗), `pins` (where the person placed a card in its container) and `notes` name their card by that key. `notes=true` adds the person's notes and the agent's replies to them. No history and no card numbers: `write_board`'s `import` writes it back as fresh cards. The board page calls this to save the file; an agent reads the same file with `get_board` or `show_container` and `export=true`.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/regionQuery"
+          },
+          {
+            "$ref": "#/components/parameters/exportNotes"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The export file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/exportFile"
+                },
+                "example": {
+                  "v": 1,
+                  "title": "Pricing",
+                  "items": [
+                    {
+                      "type": "region",
+                      "key": "options",
+                      "region": {
+                        "id": "options",
+                        "title": "Options",
+                        "mode": "grid"
+                      }
+                    },
+                    {
+                      "type": "node",
+                      "key": "fee-q",
+                      "node": {
+                        "region": "options",
+                        "kind": "question",
+                        "title": "Flat fee or per seat?",
+                        "body": "Which model fits a team of ten?"
+                      }
+                    },
+                    {
+                      "type": "node",
+                      "key": "annual",
+                      "node": {
+                        "region": "options",
+                        "kind": "note",
+                        "title": "Revisit annual billing"
+                      }
+                    },
+                    {
+                      "type": "link",
+                      "key": "fee-annual",
+                      "from": {
+                        "key": "fee-q"
+                      },
+                      "to": {
+                        "key": "annual"
+                      }
+                    }
+                  ],
+                  "answers": [
+                    {
+                      "key": "fee-q",
+                      "answer": "check"
+                    }
+                  ],
+                  "pins": [
+                    {
+                      "key": "annual",
+                      "x": 320,
+                      "y": 40
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
           },
           "500": {
             "$ref": "#/components/responses/serverError"
@@ -413,7 +527,7 @@
         "x-agent": true,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Read one container with its history",
-        "description": "Read one container (region) with its history. Pass `board` and `region`. Returns the region, the agents that hold it (`holders`, empty on an old region) and every node it has held, with every version and note. Read it before you write to a container or ask for a grant on it.",
+        "description": "Read one container (region) with its history. Pass `board` and `region`. Returns the region, the agents that hold it (`holders`, empty on an old region) and every node it has held, with every version and note. Read it before you write to a container or ask for a grant on it. `export: true` returns its export file instead.",
         "security": [],
         "parameters": [
           {
@@ -423,16 +537,29 @@
             "$ref": "#/components/parameters/regionPath"
           },
           {
+            "$ref": "#/components/parameters/export"
+          },
+          {
+            "$ref": "#/components/parameters/exportNotes"
+          },
+          {
             "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
           "200": {
-            "description": "The container.",
+            "description": "The container, or with `export` its export file.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/showContainerResponse"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/showContainerResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/exportFile"
+                    }
+                  ]
                 },
                 "example": {
                   "head": 52,
@@ -726,7 +853,7 @@
                 "example": {
                   "responses": [
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 50,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -737,7 +864,7 @@
                       "text": "Rule 6 needs an example."
                     },
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 51,
                       "at": "2026-10-05T09:12:00Z",
                       "by": "person",
@@ -808,7 +935,7 @@
                 "example": {
                   "events": [
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 1,
                       "at": "2026-10-05T08:00:00Z",
                       "by": "agent",
@@ -819,7 +946,7 @@
                       "key": "pricing-board"
                     },
                     {
-                      "v": 21,
+                      "v": 22,
                       "seq": 2,
                       "at": "2026-10-05T08:00:01Z",
                       "by": "agent",
@@ -851,7 +978,7 @@
                     "summary": "Two lines",
                     "dataValue": [
                       {
-                        "v": 21,
+                        "v": 22,
                         "seq": 1,
                         "at": "2026-10-05T08:00:00Z",
                         "by": "agent",
@@ -862,7 +989,7 @@
                         "key": "pricing-board"
                       },
                       {
-                        "v": 21,
+                        "v": 22,
                         "seq": 2,
                         "at": "2026-10-05T08:00:01Z",
                         "by": "agent",
@@ -879,7 +1006,7 @@
                         "key": "pricing-q"
                       }
                     ],
-                    "serializedValue": "{\"v\":21,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":21,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
+                    "serializedValue": "{\"v\":22,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":22,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\"},\"key\":\"pricing-q\"}\n"
                   }
                 }
               }
@@ -1105,10 +1232,13 @@
         "x-agent": true,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Write to a board",
-        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. A `node` item's `insert: { after, before }` puts it between two linked cards of a `flow` or `lanes`. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. Returns one result per item, `head`, and `pending` (cards waiting for your answer).",
+        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. A `node` item's `insert: { after, before }` puts it between two linked cards of a `flow` or `lanes`. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. `import: { into, file }` in place of `items` writes an export file into a `new` board or the `current` one as fresh cards, naming in `dropped` what it left out. Returns one result per item, `head`, and `pending` (cards waiting for your answer).",
         "security": [
           {
             "agentSecret": []
+          },
+          {
+            "personCookie": []
           }
         ],
         "parameters": [
@@ -1308,7 +1438,7 @@
                   "$ref": "#/components/schemas/act"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 50,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -1406,7 +1536,7 @@
                   "$ref": "#/components/schemas/retire"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 61,
                   "at": "2026-10-12T09:00:00Z",
                   "by": "person",
@@ -1504,7 +1634,7 @@
                   "$ref": "#/components/schemas/seen"
                 },
                 "example": {
-                  "v": 21,
+                  "v": 22,
                   "seq": 53,
                   "at": "2026-10-05T09:12:00Z",
                   "by": "person",
@@ -3518,6 +3648,9 @@
       "showContainerResponse": {
         "$ref": "https://vision-board.invalid/schema/api/show-container-response.schema.json"
       },
+      "exportFile": {
+        "$ref": "https://vision-board.invalid/schema/api/export-file.schema.json"
+      },
       "showLayoutResponse": {
         "$ref": "https://vision-board.invalid/schema/api/show-layout-response.schema.json"
       },
@@ -3543,46 +3676,46 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-editing.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/grant-request.schema.json#/$defs/stored"
       },
       "retire": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/retire.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/retire.schema.json#/$defs/stored"
       },
       "icon": {
-        "$ref": "https://vision-board.invalid/schema/ledger/21/events/icon.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/22/events/icon.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -3738,7 +3871,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -3756,7 +3889,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -3765,7 +3898,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "after": {
@@ -3805,6 +3938,33 @@
         "required": false,
         "schema": {
           "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/ledgerName"
+        }
+      },
+      "export": {
+        "name": "export",
+        "in": "query",
+        "description": "True returns the export file instead, which `write_board`'s `import` takes.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/export"
+        }
+      },
+      "exportNotes": {
+        "name": "notes",
+        "in": "query",
+        "description": "With `export`, true adds the notes and their replies.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/exportNotes"
+        }
+      },
+      "regionQuery": {
+        "name": "region",
+        "in": "query",
+        "description": "Export only this container (region) and its cards; left out, the whole board.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       },
       "linked": {
@@ -3868,7 +4028,7 @@
         "description": "The app's id: its folder's name in the open ledger's `apps/`.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id"
         }
       }
     },

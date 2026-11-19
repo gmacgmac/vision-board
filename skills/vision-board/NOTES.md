@@ -958,3 +958,30 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   miss is the one node-overhaul T_05 run 1 saw too, from `layouts.md`, whose words are unchanged. [INFERENCE] The
   recap may be linked to dropping Answering's restated "Done." line (one fewer time the core says it). It was a first
   draw, not an answer. Per the ruling, reported, and no words added back.
+
+## Skill v3.37 (export and import)
+
+- 2026-11-19, agent (export-import-print T_03, D-107, D-108, PLAN.md decisions 7, 7a): the core's Starting a board gains
+  one line, "To copy a board or bring in an exported file, read `references/files.md` first." Everything else is in the
+  new `references/files.md` (1,596 bytes, both builds): the export read (`get_board`/`show_container` with `export:
+  true`), the `import` mode (`new`: a board that doesn't exist yet; `current`: every container new), the file as it is,
+  a copy as export then import, what an agent's import leaves behind (✓, ✗, moved places, notes) and that the bot never
+  proposes the marks again, the chat as "Done." and one plain line (never what came across, never the `dropped`
+  paths), and that a retried import writes the file twice (fresh keys), so read the board before importing again.
+- 2026-11-19, agent: room in the plugin build (8,148 + 82 for the line, 43 cut): "(large, medium)" after the headings, "(same
+  tone, related)" (restates "shows which cards belong together") and Retiring's "still" cut. Plugin `skill.md` 8,187 of
+  8,192; standalone `SKILL.md` 19,010. The next core line needs a cut first.
+- 2026-11-19, agent: scenarios 56 (`copy-board`) and 57 (`import-file`) run in both hosts. Live Haiku 5.5, plugin
+  (`--only` copy-board, import-file, summary-card, linked-pipeline): 33/35, 4 runs, $0.0139. copy-board did everything
+  right but recapped the copy in the chat (`done-only`); import-file imported the file unchanged into the board it drew
+  and named every drop in one plain line, but never read `references/files.md` (the person said "bring it in", the line
+  said "import a file"). After it, the chat line gained "never what came across" and the core line's "import a file"
+  became "bring in an exported file".
+- 2026-11-19, agent: live Haiku 5.5, standalone (all 16, on the reworded build): 120/130, 16 runs, $0.5736 as the eval
+  counts it ($0.0736 billed by the 15 runs that answered, plus $0.50 the eval counts for a run killed by the stall
+  watchdog). copy-board passed every check (one line, though it added "You may want to rename it"). handover-park
+  stalled on its first attempt (the `join-ledger` stall seen before) and passed on retry; the retry used the 16th run, so
+  import-file did not run in this host. Other misses, none in words this change touched: flow-branches read no
+  reference, radial-ideas linked its ideas and narrated before "Done." (both seen in node-overhaul T_05 and timeline
+  T_02), timeline-plan opened the launch week's body with "Week of 15 November." Owed: a live run of import-file on the
+  reworded line.

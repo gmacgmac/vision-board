@@ -175,7 +175,7 @@ const replies = [
 
 test('bubbleView: a sent note carries its replies in order and names its read-only part', () => {
   const v = bubbleView({ mode: 'sent', kind: 'comment', number: 7, index: 1, text: 'Why?', replies });
-  assert.deepEqual(v.replies.map((r) => [r.seq, r.who]), [[60, 'Agent reply · Pricing chat'], [64, 'Agent reply']]);
+  assert.deepEqual(v.replies.map((r) => [r.seq, r.who]), [[60, 'Agent · Pricing chat'], [64, 'Agent']]);
   assert.deepEqual([v.heading, v.cancel, v.primary, v.thread], ['Note 1 on 7, sent', 'Close', undefined, 'Note and replies']);
   assert.equal(bubbleView({ mode: 'sent', kind: 'comment', number: 7, text: 'Why?' }).thread, 'Note');
   assert.deepEqual(bubbleView({ mode: 'sent', kind: 'comment', number: 7, text: 'Why?' }).replies, []);
@@ -184,7 +184,7 @@ test('bubbleView: a sent note carries its replies in order and names its read-on
 test('noteBubbleTemplate: the exchange shows the note, then each reply in order, as Markdown in one scrolling tab stop', () => {
   const html = noteBubbleTemplate(bubbleView({ mode: 'sent', kind: 'comment', number: 7, index: 1, text: 'Why?', replies }), 7);
   assert.match(html, /<div class="vb-nb-thread" role="group" aria-label="Note and replies" tabindex="0"><div class="vb-nb-read"><p class="vb-md-p">Why\?<\/p><\/div><ol class="vb-nb-replies">/);
-  assert.match(html, /<li class="vb-nb-reply"><span class="vb-nb-who">Agent reply · Pricing chat<\/span><div class="vb-nb-reply-text"><p class="vb-md-p">Yes: <strong>three<\/strong> accounts.<\/p><\/div><\/li>/);
+  assert.match(html, /<li class="vb-nb-reply"><span class="vb-nb-who vb-nb-agent"><span class="vb-nb-who-lead">Agent · <\/span><span class="vb-nb-who-name">Pricing chat<\/span><\/span><div class="vb-nb-reply-text"><p class="vb-md-p">Yes: <strong>three<\/strong> accounts.<\/p><\/div><\/li>/);
   assert.ok(html.indexOf('three') < html.indexOf('sheet is updated'), 'oldest first');
   assert.doesNotMatch(html, /<textarea|data-note-do="save"|style=/);
   // A note still being edited keeps its text box; any replies follow it, read-only.
@@ -214,10 +214,10 @@ test('bubbleView: a note the agent answered before a Send reads "answered", not 
 // read-only, with an × in the top corner and no bottom row; the person's note still editable has Edit.
 
 const entries: NotesEntry[] = [
-  { seq: 20, at: '2026-10-19T09:42:00Z', index: 1, who: 'Your note 1 · Sent', text: 'Why **now**?', sent: true, replies: [replies[0]!] },
-  { seq: 62, at: '2026-10-19T09:42:00Z', who: 'Agent reply', text: 'A reply to no note.', orphan: true },
-  { seq: 70, at: '2026-10-19T09:42:00Z', index: 2, who: 'Your note 2 · Answered', text: 'And the sheet?', sent: true, replies: [{ seq: 71, at: '2026-10-19T09:42:00Z', who: 'Agent reply', text: 'Updated.' }] },
-  { seq: 80, at: '2026-10-19T09:42:00Z', index: 3, who: 'Your note 3', text: 'One more.', sent: false },
+  { seq: 20, at: '2026-10-19T09:42:00Z', index: 1, who: 'User', text: 'Why **now**?', sent: true, replies: [replies[0]!] },
+  { seq: 62, at: '2026-10-19T09:42:00Z', who: 'Agent', text: 'A reply to no note.', orphan: true },
+  { seq: 70, at: '2026-10-19T09:42:00Z', index: 2, who: 'User', text: 'And the sheet?', sent: true, replies: [{ seq: 71, at: '2026-10-19T09:42:00Z', who: 'Agent', text: 'Updated.' }] },
+  { seq: 80, at: '2026-10-19T09:42:00Z', index: 3, who: 'User', text: 'One more.', sent: false },
 ];
 
 test('bubbleView: the conversation is read-only, names the card or container, and lists the entries as given', () => {
@@ -237,12 +237,12 @@ test('noteBubbleTemplate: the conversation, oldest first, each entry with who an
   assert.match(html, /<div class="vb-nb-thread" role="group" aria-label="Notes and replies" tabindex="0"><ol class="vb-nb-convo">/);
   const seqs = [...html.matchAll(/data-seq="(\d+)" tabindex="-1"/g)].map((m) => Number(m[1]));
   assert.deepEqual(seqs, [20, 60, 62, 70, 71, 80], 'note 1, its reply, the orphan by time, note 2, its reply, note 3');
-  assert.match(html, /<li class="vb-nb-note" data-seq="20" tabindex="-1"><div class="vb-nb-note-top"><span class="vb-nb-who">Your note 1 · Sent<\/span><\/div><div class="vb-nb-note-text"><p class="vb-md-p">Why <strong>now<\/strong>\?<\/p><\/div><\/li>/);
-  assert.match(html, /<li class="vb-nb-reply" data-seq="60" tabindex="-1"><span class="vb-nb-who">Agent reply · Pricing chat<\/span>/);
+  assert.match(html, /<li class="vb-nb-note" data-seq="20" tabindex="-1"><div class="vb-nb-note-top"><span class="vb-nb-who" title="Note 1">User<\/span><\/div><div class="vb-nb-note-text"><p class="vb-md-p">Why <strong>now<\/strong>\?<\/p><\/div><\/li>/);
+  assert.match(html, /<li class="vb-nb-reply" data-seq="60" tabindex="-1"><span class="vb-nb-who vb-nb-agent"><span class="vb-nb-who-lead">Agent · <\/span><span class="vb-nb-who-name">Pricing chat<\/span><\/span>/);
   assert.match(html, /<li class="vb-nb-reply vb-nb-orphan" data-seq="62" tabindex="-1">/);
   // Only the note still editable carries Edit, named by its number.
   assert.deepEqual([...html.matchAll(/data-note-do="edit"/g)].length, 1);
-  assert.match(html, /<span class="vb-nb-who">Your note 3<\/span><button type="button" class="vb-nb-btn vb-nb-edit" data-note-do="edit" data-edit="80" aria-label="Edit note 3">Edit<\/button>/);
+  assert.match(html, /<span class="vb-nb-who" title="Note 3">User · <em>Not sent<\/em><\/span><button type="button" class="vb-nb-btn vb-nb-edit" data-note-do="edit" data-edit="80" aria-label="Edit note 3">Edit<\/button>/);
   // Read-only: no text box, no Save or Remove, no bottom row, no inline style.
   assert.doesNotMatch(html, /<textarea|data-note-do="(save|remove)"|vb-nb-row|style=/);
 });

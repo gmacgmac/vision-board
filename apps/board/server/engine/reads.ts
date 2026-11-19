@@ -15,6 +15,7 @@ import {
 } from '#actions';
 import { structureOf } from '#layout';
 import { cardOn } from '../edge.ts';
+import { exportFile } from './export.ts';
 import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
 import { readLibrary } from '../icons.ts';
 import { problem } from '../problem.ts';
@@ -40,6 +41,7 @@ const listBoards: Op = (ctx) => {
 const getBoard: Op = ({ params, ledger, caller, one, flags, readOnly }) => {
   const s = ledger.state();
   const id = requireBoard(s, params.board);
+  if (params.export === true) return reply(200, exportFile(s, id, { notes: params.notes === true }));
   // The page draws the same `boardData`; `locked` is the server's (api.md 139): read-only for everyone until the person unlocks it.
   return reply(200, { ...markBoard(boardJson(boardData(s, id)), marksFor(s, id, { caller, one }, flags)), ...(isLocked(s, id) && { locked: true }), ...readOnlyMark({ readOnly }) });
 };
@@ -62,6 +64,7 @@ const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const region = String(params.region);
+  if (params.export === true) return reply(200, exportFile(s, board, { region, notes: params.notes === true }));
   const detail = containerDetail(s, board, region);
   if (!detail) throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
   const m = marksFor(s, board, { caller, one }, flags);
@@ -100,6 +103,14 @@ const showLayout: Op = ({ params, ledger }) => {
     cards: out.cards.map(({ id, ...cell }) => ({ n: Number(id), ...cell })), links: out.links, crossing: out.crossing, empty: out.empty,
     ...(timeline && { timeline }),
   });
+};
+
+/** The page's export (api.md 199): the export file of a board the person may name (`personBoard`), or of one of its
+ * containers; the agents read the same file through `get_board` and `show_container` with `export`. */
+const exportBoard: Op = ({ params, ledger }) => {
+  const s = ledger.state();
+  const board = personBoard(s, params.board);
+  return reply(200, exportFile(s, board, { region: params.region === undefined ? undefined : String(params.region), notes: params.notes === true }));
 };
 
 const listOpen: Op = (ctx) => {
@@ -177,6 +188,6 @@ const listIcons: Op = ({ params, ledger, icons }) => {
 };
 
 export const READS = {
-  list_boards: listBoards, get_board: getBoard, show_node: showNode, show_container: showContainer, show_layout: showLayout,
+  list_boards: listBoards, get_board: getBoard, export_board: exportBoard, show_node: showNode, show_container: showContainer, show_layout: showLayout,
   list_open: listOpen, check_responses: checkResponses, read_ledger: readLedger, list_icons: listIcons,
 } satisfies Record<string, Op>;

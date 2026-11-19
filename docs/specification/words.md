@@ -50,6 +50,7 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/src/board/words/chrome-boards.ts` | `chrome-boards` | The board picker, rename, archive, lock and the archived list. |
 | `apps/board/src/board/words/chrome-common.ts` | `chrome-common` | Sentences more than one area of the page says, said once. |
 | `apps/board/src/board/words/chrome-confirm.ts` | `chrome-confirm` | The confirm dialog, its list and the discard-changes confirm. |
+| `apps/board/src/board/words/chrome-files.ts` | `chrome-files` | Export, import and print: the "⋯" menu's rows, the one dialog, and what it says once done. |
 | `apps/board/src/board/words/chrome-go-to-card.ts` | `chrome-go-to-card` | Go to card and the open-items chip. |
 | `apps/board/src/board/words/chrome-key-help.ts` | `chrome-key-help` | The key command list and its headings. |
 | `apps/board/src/board/words/chrome-proposals.ts` | `chrome-proposals` | Proposal counts, the accept-all confirm and its toast. |
@@ -87,6 +88,7 @@ layer: its words import nothing, not even `node:`.
 | File | Area | Holds |
 |---|---|---|
 | `packages/format/src/words/format-common.ts` | `format-common` | Sentences more than one area of the format says, said once. |
+| `packages/format/src/words/format-export.ts` | `format-export` | Why an export file can't be read, and each part of one an import leaves out (D-107). |
 | `packages/format/src/words/format-icons.ts` | `format-icons` | Why a drawing of the project's icon library is refused: what was found in its path data, its title or its file. |
 | `packages/format/src/words/format-kinds.ts` | `format-kinds` | The names of the kinds of card. |
 | `packages/format/src/words/format-ledger.ts` | `format-ledger` | Why a ledger line or an act is refused: the field, what it must be, and what it names. |

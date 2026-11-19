@@ -53,6 +53,7 @@ import { bookmarkSection } from './bookmark-section.ts';
 import { archiveSection } from './archive-section.ts';
 import { lockSection } from './lock-section.ts';
 import { removeSection } from './remove-section.ts';
+import { filesSection } from './files-section.ts';
 import { retiredSection } from './retired-section.ts';
 import { alignSection, linkLabelSection, widthsSection } from './layout-section.ts';
 import { drawMiniBoards } from './mini-board.ts';
@@ -185,6 +186,7 @@ function build(): void {
   main.append(layoutControlSection(fx)); // FE_07; last of all, so no section moves
   if (flagOn('appCards', flags)) main.append(appWindowSection(fx)); // FE_08; last of all, so no section moves
   main.append(timelineBoardSection(fx)); // D-105, FE_02; last of all, so no section moves
+  main.append(filesSection(fx)); // D-107, export-import-print FE_01; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

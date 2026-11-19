@@ -131,10 +131,10 @@ test('nodeLabel: selected comes last, after the status', () =>
 
 // ---- conversation: a card's notes and replies as the conversation box lists them --------------------------------
 
-test('conversation: notes oldest first, numbered in the order made, sent ones marked Sent, an old More context a note', () => {
-  const notes = [note('one', 'comment', true), note('two', 'context', true), note('three')];
+test('conversation (point 619): every note reads "User", numbered in the order made; history once sent or answered, an old More context a note', () => {
+  const notes = [note('one', 'comment', true), note('two', 'context', true), note('three'), { ...note('four'), locked: true as const }];
   assert.deepEqual(conversation(notes, []).map((x) => isNoteEntry(x) && [x.index, x.who, x.text, x.sent]), [
-    [1, 'Your note 1 · Sent', 'one', true], [2, 'Your note 2 · Sent', 'two', true], [3, 'Your note 3', 'three', false]]);
+    [1, 'User', 'one', true], [2, 'User', 'two', true], [3, 'User', 'three', false], [4, 'User', 'four', true]]);
 });
 
 // review-polish ruling 8 and decision 8: one conversation, oldest first, top to bottom: note 1, its
@@ -155,13 +155,24 @@ test('conversation: each note then its replies oldest first; orphan replies by s
   assert.deepEqual(conversation([], []), []);
 });
 
-test('conversation: a note on a group of cards says how many; one answered before a Send reads Answered; Ask now reads so', () => {
-  const group: ItemNote = { ...note('Decide these together'), nodes: [1, 4, 9] };
-  const answered = { ...note('Why per seat?'), locked: true as const };
-  const asked = note('Now please');
-  const entries = conversation([group, answered, asked], [], new Set([asked.seq]));
-  assert.deepEqual(entries.map((x) => [x.who, isNoteEntry(x) && x.sent]), [
-    ['Your note 1 · 3 cards', false], ['Your note 2 · Answered', true], ['Your note 3 · Asked now', false]]);
+test('conversation (point 619): a reply reads "Agent · <name> <id>", its name and id apart; with neither, "Agent"', () => {
+  const n = note('Why?', 'comment', true);
+  const replies: CardReply[] = [
+    { seq: 90, to: n.seq, agent: 'pricing', agentId: 'a-7k2m9q4x', text: 'Because.', at: '2026-10-08T00:00:00Z' },
+    { seq: 91, to: n.seq, text: 'Also.', at: '2026-10-08T00:00:00Z' },
+  ];
+  const [entry] = conversation([n], replies);
+  assert.ok(entry && isNoteEntry(entry));
+  assert.deepEqual(entry.replies!.map((r) => [r.who, r.name, r.id]), [['Agent · pricing a-7k2m9q4x', 'pricing', 'a-7k2m9q4x'], ['Agent', undefined, undefined]]);
+});
+
+test('conversation (point 617): an imported note and an imported reply say so; the rest do not', () => {
+  const old = { ...note('From the old board', 'comment', true), imported: true as const };
+  const now = note('New here');
+  const replies: CardReply[] = [{ seq: old.seq + 100, to: old.seq, agent: 'pricing', text: 'Old answer.', at: '2026-10-08T00:00:00Z', imported: true }];
+  const entries = conversation([old, now], replies);
+  assert.deepEqual(entries.map((x) => isNoteEntry(x) && [x.text, x.imported, x.replies?.map((r) => r.imported)]), [
+    ['From the old board', true, [true]], ['New here', undefined, undefined]]);
 });
 
 // updateSignals (D-088): a reply the person has not looked at keeps `unseen` only while its card is unseen itself

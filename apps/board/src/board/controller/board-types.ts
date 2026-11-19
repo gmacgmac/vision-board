@@ -5,7 +5,7 @@ import type { LedgerState, Ref } from '#actions';
 import type { AccessFlow } from '../access/index.ts';
 import type { ProposalFlow } from '../cards/index.ts';
 import type { CommandId } from '../input/index.ts';
-import type { BoardEdit } from '../boards/index.ts';
+import type { BoardEdit, BoardFiles } from '../boards/index.ts';
 import type { GoTo } from '../find/index.ts';
 import type { BoardHost, BoardPage, BoardStore } from '../host.ts';
 import type { Io } from '../io.ts';
@@ -30,6 +30,8 @@ export interface Board {
   send(id: string, acks: readonly Ref[] | null): Promise<string | null>;
   /** New board, Rename board, Archive board, Restore, Lock board and Unlock board (board-edit.ts). */
   boardEdit: BoardEdit;
+  /** Export, import and print (board-files.ts). */
+  files: BoardFiles;
   /** The toolbar's "N bookmarked" chip: the next bookmarked card (cardBookmark flag, bookmark-flow.ts). */
   nextBookmarked(): void;
   /** The "⋯" menu's Skin rows (D-100 2): the open board's skin, the person's `skin` act. */

@@ -33,8 +33,8 @@ test('rejects coordinates in a node', () => {
   assert.ok(eventProblems(e).some((p) => p.includes('no coordinates')));
 });
 
-test('only agents write nodes and proposals; only people write seen', () => {
-  assert.ok(eventProblems({ ...ev(2), by: 'person' }).includes('node: written by an agent'));
+test('only agents write proposals; a node the person writes is an import\'s (D-108); only people write seen', () => {
+  assert.ok(!eventProblems({ ...ev(2), by: 'person' }).includes('node: written by an agent'));
   assert.ok(eventProblems({ ...ev(12), by: 'person' }).includes('propose: written by an agent'));
   assert.ok(eventProblems({ ...ev(13), by: 'agent' }).includes('seen: written by a person'));
 });

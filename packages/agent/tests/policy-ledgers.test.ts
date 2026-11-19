@@ -17,11 +17,11 @@ import { accessFixture } from './access-fixture.ts';
 const PER_LEDGER: [string, Decision, Decision][] = [
   ['agents.json', { refuse: words.boardSecrets }, { refuse: words.boardSecrets }],
   ['ledger.jsonl', { allow: true }, { refuse: words.theLedger }],
-  ['lock', { allow: true }, { refuse: words.boardFiles }],
+  ['lock', { allow: true }, { refuse: words.boardOwnFiles }],
   ['app-state/s.json', { refuse: words.appState }, { refuse: words.appState }],
   ['images/a.png', { allow: true }, { allow: true }],
   ['apps/calc/app.json', { allow: true }, { allow: true }],
-  ['.gitignore', { allow: true }, { refuse: words.boardFiles }],
+  ['.gitignore', { allow: true }, { refuse: words.boardOwnFiles }],
 ];
 /** Today's layout, then two ledgers' folders. */
 const LAYOUTS = ['.visionboard/', '.visionboard/main/', '.visionboard/ui/'];
@@ -70,7 +70,7 @@ test('D-084: the repo-wide files are the person\'s at .visionboard/; in a ledger
     assert.deepEqual(decide(write(p)), { refuse: words.boardSecrets }, `write ${p}`);
   }
   assert.deepEqual(decide(write('.visionboard/permissions.json')), { refuse: words.permissionsFile });
-  assert.deepEqual(decide(write('.visionboard/main/permissions.json')), { refuse: words.boardFiles });
+  assert.deepEqual(decide(write('.visionboard/main/permissions.json')), { refuse: words.boardOwnFiles });
   assert.deepEqual(decide(write('.visionboard/attachments/2026-10-30/1-a.pdf')), { refuse: words.theirAttachments });
   assert.deepEqual(decide(command('python3 read.py .visionboard/attachments/2026-10-30/1-a.pdf')), { ask: true, scopes: ['once'] }, 'the row\'s own unknownCommand');
   assert.ok(refused(decide(command('python3 read.py .visionboard/main/attachments/x.pdf'))), 'not in a ledger\'s folder');
@@ -134,9 +134,9 @@ test('the open ledger only, while it may be written (FIX_01 F2): its pictures an
   assert.deepEqual(on(write('.visionboard/main/apps/calc/new.js'), '.visionboard/main', true), { allow: true });
   assert.deepEqual(on(write('.visionboard/images/new.png'), '.visionboard', true), { allow: true }, 'today\'s layout open');
   for (const p of ['.visionboard/ui/images/new.png', '.visionboard/ui/apps/calc/new.js', '.visionboard/images/new.png']) {
-    assert.deepEqual(on(write(p), '.visionboard/main', true), { refuse: words.boardFiles }, `${p}: not the open ledger's`);
+    assert.deepEqual(on(write(p), '.visionboard/main', true), { refuse: words.boardOwnFiles }, `${p}: not the open ledger's`);
   }
-  assert.deepEqual(on(write('.visionboard/main/images/new.png'), '.visionboard', true), { refuse: words.boardFiles }, 'a ledger folder with today\'s layout open');
+  assert.deepEqual(on(write('.visionboard/main/images/new.png'), '.visionboard', true), { refuse: words.boardOwnFiles }, 'a ledger folder with today\'s layout open');
   for (const p of ['.visionboard/main/images/new.png', '.visionboard/main/apps/calc/new.js']) {
     assert.deepEqual(on(write(p), '.visionboard/main', false), { refuse: words.ledgerReadOnly }, `${p}: read-only`);
     assert.ok('ask' in on(write(p), '.visionboard/main'), `${p}: the hook can't tell, so the board is asked`);

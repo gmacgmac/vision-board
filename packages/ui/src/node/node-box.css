@@ -69,10 +69,15 @@ vb-node .vb-node-box :is(.vb-history-time, .vb-history-agent) { color: inherit; 
 vb-node .vb-card-pop.vb-node-box > .vb-prop { padding: var(--vb-space-2) var(--vb-space-3); font-size: var(--vb-text-md); }
 vb-node .vb-node-box .vb-prop-head { font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); letter-spacing: 0; text-transform: none; color: var(--vb-ink-strong); }
 
-/* The conversation box in it: its number chip, a compact field, the thread's room. */
+/* The conversation box in it: its number chip, a compact field, the thread's room. The thread scrolls the box's full
+   width (point 618), its bar at the box's own edge; its padding keeps the bubbles off the bar and gives them a little
+   more room on the left than the field has. */
 vb-note-bubble.vb-node-box {
   .vb-nb-num { min-width: 26px; height: 20px; font-size: var(--vb-text-sm); }
-  .vb-nb-thread { max-height: 240px; }
+  .vb-nb-thread {
+    max-height: 240px; margin-inline: calc(-1 * var(--vb-space-3)); padding: var(--vb-space-1) var(--vb-space-2) var(--vb-space-1) var(--vb-space-4);
+    border-radius: 0;
+  }
   .vb-nb-note, .vb-nb-reply { padding: var(--vb-space-1) var(--vb-space-2); }
   .vb-nb-who { font-size: var(--vb-text-xs); }
   .vb-nb-text, .vb-nb-btn { font-size: var(--vb-text-md); }

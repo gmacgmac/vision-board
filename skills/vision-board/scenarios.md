@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.36
+status: v3.37
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -70,6 +70,8 @@ run reads only the references its request needs (none, unless the scenario says;
 46 to 52 new, each a mode or a layout, run by `npm run eval:bot -- --standalone`: 46 (a flow that forks and rejoins), 47
 (lanes), 48 (a radial), 49 (the header's direction holds), 50 (a grid of findings, from the core alone), 51 (a card moved
 to Later: the handover) and 52 (build an app).
+v3.37 (skill v3.37, export-import-print T_03, D-107, D-108): 56 (copy a board) and 57 (bring in an exported file) new,
+both hosts, each reading `references/files.md`.
 
 ## 1. A review with 12 findings (panel)
 
@@ -1048,3 +1050,28 @@ order; the request never says "timeline", "date" or "key".
 **A good run**
 - No card gets a `timeline` key; the deadline stays in the finding's text. No reference is read. Chat words: "Done.".
 - **Fails if** the finding is dated or `references/timeline.md` is read.
+
+## 56. Copy a board (own chat or host; eval `copy-board`, both hosts)
+
+**Situation.** The person has answered a board of two containers (a ✓, a ✗, a note) and asks for a copy in a new board,
+to try a second version without touching the first.
+
+**A good run**
+- Reads `references/files.md`, and no other reference.
+- `get_board` with `export: true, notes: true`, then `write_board` with `import: { into: "new", file }` under a new id,
+  the file exactly as the export answered, notes included. No `items`, no `propose`, no grant asked.
+- Chat words: "Done." and one short line saying the ✓ and ✗ stayed behind, the person's to press again; the note came across, so the line never says it stayed.
+- **Fails if** the copy is drawn by hand, the file is changed, a mark is proposed, or the chat recaps what came across.
+
+## 57. Bring in an exported file (own chat or host; eval `import-file`, both hosts)
+
+**Situation.** The bot drew a small board; the person names an export file a colleague made (its cards answered, one
+moved, one noted (with a reply), one with a field this board doesn't know) and asks to bring it into this board, beside what's there.
+
+**A good run**
+- Reads `references/files.md` and the file, and imports it unchanged with `import: { into: "current", file }` on the
+  board it drew. No `items`, no `propose`.
+- Chat words: "Done." and one short line, in plain words, naming what stayed behind (the ✓ and ✗, the moved card), never the notes (they came across) and never the `dropped`
+  paths. The file's notes go in as given.
+- **Fails if** the file is tidied first, it goes into a new board, or the chat lists the drops.
+

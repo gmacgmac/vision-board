@@ -486,7 +486,8 @@ record is `api.md` 58-61.
    `conversation-template.ts` (loaded on first use, `loadConversation`, with the box's page code
    `notes/note-box.ts`, `loadNoteBox`): a compact head (the number chip, the node's title, ×); tabs only when the node
    is in a note on several nodes (this node first, then one per group, "With 28", `boxView`); the thread oldest first,
-   a note not yet sent dashed and saying "not sent yet · goes with Send", and "Waiting for the agent" while the
+   each note "User" and each reply "Agent · <name> <id>" on one line (§ The conversation box's lines), a note not yet
+   sent dashed and saying "Not sent", and "Waiting for the agent" while the
    latest note went and no reply came after it; a field of one line that grows to three, then scrolls; Ask now and
    Add note sharing the width, their keys in their tooltips. They are two modes (FIX_03 ruling 3): the active one is
    the primary (pink) button and `aria-pressed`, the field's placeholder and name say it ("Add a note about 4", "Ask
@@ -1750,7 +1751,7 @@ icon library it holds. The look is
    thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); the node's colour (`--vb-node-color`) is
    the kind's, or its tone's line (point 366, FE_04): it colours the grip or kind tab, the top line, the hover and
    selected borders, the tags and the tile, while the kind's word over the title and the disc keep the kind's; the
-   ring is `--vb-focus-edge` and shows after Tab only.
+   ring is `--vb-focus-edge`, the board's one focus colour (blue, `--vb-focus`; point 627, D-109), and shows after Tab only.
 8. **Kept true by**: `packages/ui/tests/icon-set.test.ts` (every name drawn, every drawing passes the check, a library
    icon from its paths, missing, failing and too many draw nothing), `node-marks.test.ts` (every answer, badge and notes
    state; the tone; `nodeState.marks`), `node-edges.test.ts` (the order of the marks; the tile;
@@ -2136,3 +2137,36 @@ Every app card is a window while the appCards flag is on (D-099 5; T_04 made it 
    one thread; the stage holding focus, Esc, focus back on the node; no Save for later) and
    `tests/pages/app-window-stuck.spec.ts`; the gallery's "The app window" section
    (`apps/board/src/gallery/app-window-section.ts`).
+
+## The conversation box's lines, one divider and one scrollbar; Print in light or dark (export-import-print FIX_01)
+
+1. **One label line** (point 619; `node-notes.ts` `conversation`, `replyEntry`; `note-bubble-template.ts`). A note reads
+   "User", its number in the hover ("Note 2"), and "· Not sent" while no agent has had it (not sent, asked or answered;
+   the box draws it dashed); no "Sent", "Asked now" or "Answered". A reply reads "Agent · <name> <id>" on one line
+   (`.vb-nb-agent`): the name alone gives way, cut with an ellipsis, and `vb-note-bubble` gives it the whole name as a
+   tip on hover only while it is cut; the id never is. The name and id are the reply's own author: an imported
+   reply's `from` (api.md 206), else the agent that wrote the line (`cards/parking.ts`). The words are
+   `words/node-notes.ts` (`user`, `agentLead`, `agentWho`) and `words/note-bubble.ts` (`notSent`, `noteNumber`).
+2. **One divider** (point 617). An imported note or reply (`NoteEntry`/`ReplyEntry` `imported`) is history from the
+   board the file came from; one "Imported" entry follows the last of them (`conversationList`, `.vb-nb-imported`, a
+   hairline either side of the word), and what was said here follows it.
+3. **The thread's room** (point 618; `node-box.css`). The thread scrolls the box's full width, its bar at the box's own
+   right edge; its padding keeps the bubbles 8px off the bar and gives them 16px on the left.
+4. **One scrollbar** (point 618; `packages/ui/src/base/root.css`). Every scroller in the board (the thread, the history
+   list, menus, a card's body) has nclite's look, CSS only: a 3px thumb 2px in from the far right edge (the bottom,
+   sideways), always shown, no rail, wider under the pointer; `::-webkit-scrollbar` for Chromium and a host's WebKit
+   webview, `scrollbar-width: thin` and `scrollbar-color` where those parts don't exist (Firefox). The rule names the
+   root and its class, so a host's `*` rule that hides every bar (nclite's overlay-scroll.css) leaves the board's;
+   it reaches no scroller of the host's. A gallery sample that draws a box is a board root for this (`g-bubble-stage`).
+5. **Print in light or dark** (point 615; `FilesForm.svelte`, `print-view.ts`, `print.css`, `shell.css`). Print's
+   dialog asks light or dark, the screen's theme first (`FilesDialog.svelte` `shownTheme`: the root's
+   `color-scheme`, else the system's). The print view sets `data-vb-print-theme` on the root while it prints; in print
+   only, `print.css` makes it the root's `color-scheme` (a host that keeps `light-dark()` native needs nothing more)
+   and the standalone page, whose built tokens resolve at its own root, sets it there (`shell.css`). The screen keeps
+   its own theme.
+6. **Kept true by**: `packages/ui/tests/node-core.test.ts` and `conversation-box.test.ts` (the labels, the divider);
+   `tests/pages/conversation-labels.spec.ts` (the full-width thread and its 7px bar, a host's hiding rule, one label
+   line with the name cut and its tip, an imported conversation's authors and divider; scrollbars shown, not the
+   headless shell's hidden ones); `tests/pages/board-files.spec.ts` "Print… offers light or dark" (both themes); the
+   gallery's conversation box entry ("Imported").
+

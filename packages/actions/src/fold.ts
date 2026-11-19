@@ -11,7 +11,7 @@
 // keyed by a card's identity (`id`); the reads give board numbers (numbers.ts, api.md 125). One board
 // as the page reads it: board-state.ts. Pure: same events, same state; events are assumed valid.
 import type {
-  ActEvent, DirectionChoices, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Skin, Widths,
+  ActEvent, DirectionChoices, DrawnState, From, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Skin, Widths,
 } from '#format';
 import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '#format';
 import { type BoardDates, foldArchive } from './archive.ts';
@@ -36,7 +36,8 @@ import { type CardTimes, foldCardTimes } from './card-times.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
-export interface LedgerReply { seq: number; at: string; text: string; to?: number; agent?: string }
+/** An agent's reply on a card. `from`: one an import wrote (point 617), the agent whose words they are. */
+export interface LedgerReply { seq: number; at: string; text: string; to?: number; agent?: string; from?: From }
 /** An agent's proposal on card `id` (its identity; the reads give its board number as `n`). */
 export interface Proposal {
   seq: number; at: string; id: number; ver: number; action: ProposeEvent['action'];
@@ -227,7 +228,7 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
     case 'seen': if ('id' in e) look(s, e.id, e.ver, e.seq); else seeBoard(s, e.board, e.head); break;
     case 'retire': foldRetire(s, e); break;
     case 'reply':
-      push(s.replies, e.id, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }) });
+      push(s.replies, e.id, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }), ...(e.from && { from: e.from }) });
       for (const id of foldClears(s, e)) restate(s, id, s.logs.get(id)!);
       break;
     case 'node': for (const id of foldClears(s, e)) restate(s, id, s.logs.get(id)!); break;
@@ -306,7 +307,8 @@ function applyItemAct(s: LedgerState, e: ActEvent): void {
 /** Any person act naming cards, but a Send, counts as seeing each one's latest version (api.md 94).
  * A note on or a place for a whole container names no card. */
 function seeCards(s: LedgerState, e: ActEvent): void {
-  if (e.action === 'send' || isContainerAct(e)) return;
+  // An imported note (`from`, point 617) is no look at its cards: the import wrote it.
+  if (e.action === 'send' || isContainerAct(e) || e.from) return;
   for (const id of e.nodes ?? (e.id === undefined ? [] : [e.id])) look(s, id, s.nodes.get(id)!.versions.at(-1)!.ver, e.seq);
 }
 

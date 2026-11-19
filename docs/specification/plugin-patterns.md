@@ -1,0 +1,90 @@
+# Plugin patterns: what Vision Board built, for nclite's plugin specification
+
+updated: 2026-11-19 (first version: printing, files, the scrollbar, dates, small cross-cutting rules)
+
+A note for nclite. nclite will own shared patterns and give them to every plugin through hooks and CSS variables, so a
+hard problem is solved once and no plugin keeps an old copy. This is what Vision Board built and what it suggests the
+host provides. It describes; it ships no code to copy. Paths are in this repository. Journal writes the same note with
+the same headings; nclite merges both and picks one answer where they differ.
+
+---
+
+## 1. Printing
+
+1. **The need**: print a board, or one part of it, to paper or PDF, looking like the screen.
+2. **What we built**: a print stylesheet over the live page, no PDF library. `apps/board/src/styles/print.css` hides
+   the board's chrome, fits the chosen part to one page (`apps/board/src/board/canvas/print-view.ts` `printFit`), and
+   keeps colours (`print-color-adjust: exact`). The person chooses light or dark for the print, default the screen's
+   theme (`data-vb-print-theme`). Then the host's `print` hook. Decisions D-107, D-108.
+3. **What the host should provide**: `print(): Promise<void>` (`apps/board/src/board/host.ts`). The host owns the page
+   rules: the board names its page `vb-print-landscape` or `vb-print-portrait`, and the host defines both
+   (`@page vb-print-landscape { size: landscape; margin: 10mm }`, the same for portrait; the standalone host does it in
+   `apps/board/src/styles/shell.css`). A plugin's sheet may not hold `@page` (nclite's sheet check refuses it).
+   A host whose tokens resolve `light-dark()` at its own root sets that root's `color-scheme` while the board root
+   carries `data-vb-print-theme`.
+4. **How a plugin uses it**: sets its print scope and theme on its own root, then calls `print()`.
+5. **Fallback**: no `print` hook, no Print item in the plugin's menus.
+6. **Versioning**: the hook is optional and feature-detected; adding options later means a new optional argument.
+7. **Pitfalls found**: an SVG path styled only by a class prints as a filled shape when anything copies the SVG out of
+   its stylesheet: give link paths `fill="none"` as an attribute (`apps/board/src/board/links/wires.ts`). Browsers drop
+   backgrounds in print unless `print-color-adjust: exact`. Soft shadows print as grey blocks: drop them in print.
+   Content still settling (links drawn after a layout) can be missing from the print: draw it before printing.
+8. **Open questions for nclite**: should the host own the light or dark choice for every plugin's print?
+
+## 2. Files: save, open, export and import
+
+1. **The need**: share a board as a file, and bring one in, without a server of our own in between.
+2. **What we built**: export writes the current state (no history) as `{ v, title, items, answers?, notes? }`, the
+   items being exactly what an agent sends to `write_board`
+   (`packages/format/schema/api/export-file.schema.json`). Import goes through the same write path in an `import`
+   mode: older files upgrade by `v` (`packages/format/src/export/` `upgradeExport`, `EXPORT_STEPS`), unknown parts are
+   dropped and named (`conditionExport`), then the normal checks. D-107, D-108.
+3. **What the host should provide**: `saveFile(name, type, bytes): Promise<void>` and
+   `openFile(accept): Promise<{ name, bytes } | undefined>` (`apps/board/src/board/host.ts`).
+4. **How a plugin uses it**: builds the bytes itself, then `saveFile`; `openFile`, then reads the bytes itself.
+5. **Fallback**: no hook, no Export or Import item.
+6. **Versioning**: a file carries its own version number and an upgrade chain, the same pattern as the ledger's
+   (`packages/format/src/migrate/`), so a file from an older version still imports; anything not understood is named,
+   never silently lost.
+7. **Pitfalls found**: a person's import and an agent's import differ in who may write what (a person's ✓/✗ and moved
+   places stay the person's); a retried import writes twice, so check the reply before retrying.
+8. **Open questions for nclite**: one file-type naming rule for every plugin (ours is `.vboard.json`).
+
+## 3. The scrollbar
+
+1. **The need**: every scrolling area looks the same, quiet but findable.
+2. **What we built**: one CSS rule for every scroller in the board (`packages/ui/src/base/root.css`): a thin thumb at
+   the scroller's far right edge, always visible, no rail, CSS only (`scrollbar-width`, `scrollbar-color`, and
+   `::-webkit-scrollbar` for WebKit windows). The look follows nclite's chat (`app/src/styles/overlay-scroll.css`),
+   without its script. The scroller spans its box's full width and pads its own content, so the thumb sits at the edge.
+3. **What the host should provide**: the thumb's colour and width as CSS variables, so every plugin matches the host.
+4. **How a plugin uses it**: reads the variables in its one rule.
+5. **Fallback**: without the variables, the plugin's own defaults.
+6. **Versioning**: variables only; nothing to call.
+7. **Pitfalls found**: `overflow: hidden` on a label inside a scroller stopped a wheel scroll mid-thread; `clip` did
+   not. When the host draws its own overlay thumb, the plugin's mount should opt out of it (nclite's
+   `data-overlay-off`), so the two don't double.
+8. **Open questions for nclite**: always visible (ours, at the maintainer's ask) or fading (nclite's chat)? One answer.
+
+## 4. Dates
+
+1. **The need**: a date means the same thing in every plugin and every agent's writing.
+2. **What we built**: one ISO 8601 key at four precisions, `2026`, `2026-10`, `2026-10-13`, `2026-10-13T14:30`; the
+   precision is what is written, no separate field (`packages/format/src/timeline.ts` `TIMELINE_FORMS`). A model's
+   habits are tidied at the edge to one stored spelling (`normaliseTimeline`: zone, seconds and a space for `T`
+   dropped; a whole-number year read as a year), anything else refused with words naming the four forms. Times are
+   shown as written, no zone conversion. Ordering: by start, coarser before finer, then creation. D-105.
+3. **What the host should provide**: one shared date format and its normaliser, so a date picker in one plugin and a
+   date key in another agree.
+4. **How a plugin uses it**: stores the normalised value only; shows it in its own words.
+5. **Fallback**: the plugin's own normaliser, held equal to the host's by a test.
+6. **Versioning**: a new precision is an addition; the stored spelling never changes.
+7. **Pitfalls found**: models write zones, seconds, quarters and "next week": normalise what is safe, refuse the rest.
+8. **Open questions for nclite**: time zones. We show times as written; a calendar may need a zone. One rule for all.
+
+## 5. Small rules every plugin should keep
+
+- **Words**: every sentence a person or an agent reads lives in a words file, never in code (`docs/specification/words.md`).
+- **Colour**: from tokens only, contrast checked (APCA, light and dark); the host passes its themes in.
+- **Hooks are optional**: every host hook is feature-detected; a missing one hides its feature, never breaks.
+- **One home per pattern**: a pattern the host owns is used, never copied into the plugin.

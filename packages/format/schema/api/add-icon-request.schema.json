@@ -12,7 +12,7 @@
   ],
   "properties": {
     "name": {
-      "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/libraryIconName",
+      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/libraryIconName",
       "description": "`x-`, then what it shows: a singular noun, then a qualifier if needed (`x-encoder`, `x-encoder-audio`). No board names, numbers or colours."
     },
     "title": {
@@ -26,13 +26,13 @@
       "description": "The drawing, as SVG: paths only, in the built-in set's box; text, pictures, styles and scripts are refused."
     },
     "key": {
-      "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/key"
+      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key"
     }
   },
   "unevaluatedProperties": false,
   "$defs": {
     "title": {
-      "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/text",
+      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/text",
       "type": "string",
       "maxLength": 80,
       "description": "A few words saying what an icon shows."

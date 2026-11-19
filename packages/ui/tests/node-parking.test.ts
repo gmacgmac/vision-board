@@ -59,8 +59,8 @@ test('replies: each sits under the note it answers, in time order, the oldest no
   const entries = conversation([note(20, 'one'), note(30, 'two')],
     [reply(41, 'Second answer', { to: 20, agent: 'Pricing chat' }), reply(40, 'First answer', { to: 20 }), reply(50, 'On two', { to: 30 })]);
   assert.deepEqual(entries.map((x) => [x.seq, 'replies' in x ? x.replies?.map((y) => [y.seq, y.who, y.text]) : undefined]), [
-    [20, [[40, 'Agent reply', 'First answer'], [41, 'Agent reply · Pricing chat', 'Second answer']]],
-    [30, [[50, 'Agent reply', 'On two']]],
+    [20, [[40, 'Agent', 'First answer'], [41, 'Agent · Pricing chat', 'Second answer']]],
+    [30, [[50, 'Agent', 'On two']]],
   ]);
 });
 
@@ -68,7 +68,7 @@ test('replies: a note with none carries none; a reply naming no note takes its p
   const entries = conversation([note(20)], [reply(61, 'To a gone note', { to: 99 }), reply(10, 'Before the note'), reply(60, 'Also: the sheet is updated', { agent: 'Pricing chat' })]);
   assert.deepEqual(entries.map((x) => [x.seq, 'orphan' in x]), [[10, true], [20, false], [60, true], [61, true]]);
   assert.ok(!('replies' in entries[1]!), 'the note with no reply carries no replies');
-  assert.deepEqual(conversation([], [reply(70, 'Heads up')]), [{ seq: 70, who: 'Agent reply', text: 'Heads up', at: '2026-10-08T00:00:00Z', orphan: true }]);
+  assert.deepEqual(conversation([], [reply(70, 'Heads up')]), [{ seq: 70, who: 'Agent', text: 'Heads up', at: '2026-10-08T00:00:00Z', orphan: true }]);
 });
 
 test('replies: the notes mark counts the notes and the replies, and fills while a reply is unread', () => {
@@ -87,7 +87,7 @@ test('nodeTemplate: an item gets the handover section and the Awaiting tab, both
 test('a container note: the replies that name it, oldest first; none for another note', () => {
   const n = note(184, 'Should the trial skip the card step?');
   const replies = [reply(186, 'Yes.', { to: 184, agent: 'Pricing chat' }), reply(187, 'Elsewhere', { to: 9 }), reply(188, 'No `to`')];
-  assert.deepEqual(regionNote([n], false, replies)!.replies, [{ seq: 186, who: 'Agent reply · Pricing chat', text: 'Yes.', at: '2026-10-08T00:00:00Z' }]);
+  assert.deepEqual(regionNote([n], false, replies)!.replies, [{ seq: 186, who: 'Agent · Pricing chat', name: 'Pricing chat', text: 'Yes.', at: '2026-10-08T00:00:00Z' }]);
   assert.equal(regionNote([n], false)!.replies, undefined);
   const view = { title: 'B', version: 1, regions: [{ id: 'g', title: 'G', mode: 'grid' as const }], nodes: [], links: [] };
   const st: RegionState = regionState({ id: 'g', mode: 'grid' }, view as never, board({ regionNotes: new Map([['g', [n]]]) }), new Set(), undefined, new Set(), replies);

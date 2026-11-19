@@ -209,11 +209,10 @@
   /* Under a host's accent, mixed from it into the surface (theme.css), so one accent dresses the family. */
   --vb-accent-soft: var(--vb-host-accent-soft, var(--vb-board-accent-soft));
   --vb-accent-line: var(--vb-host-accent-line, light-dark(#f7b6dc, #5e2449));
-  --vb-focus: var(--vb-host-focus, var(--vb-accent));
-  /* The ring on a node and on each of its marks (D-099; point 338): a calm slate, not
-     the accent, shown only after Tab. Decoration tier (Lc 30): 47.3 / 46.5 dark on the canvas / card, 73.8 / 79.8
-     light. Command Lens's is its skin's value (skins.css). */
-  --vb-focus-edge: light-dark(#5a6478, #8b9bb8);
+  --vb-focus: var(--vb-host-focus, light-dark(#2563eb, #60a5fa));
+  /* One keyboard-focus colour everywhere: blue, shown only after Tab (point 627, D-109). Decoration tier (Lc 30): about
+     51 dark, 66-75 light. The edge and plate names stay, so nothing else changes. */
+  --vb-focus-edge: var(--vb-focus);
   --vb-agent: light-dark(#5f7a0e, #c3dc5c);
 
   /* Item states (project rule 3: node states are tokens) */
@@ -297,8 +296,8 @@
   --vb-plate-ink: var(--vb-ink-strong);
   --vb-plate-muted: var(--vb-ink-subtle);
   --vb-plate-line: var(--vb-line);
-  /* The ring on a mark on the plate (a dark plate keeps a light ring in both themes). */
-  --vb-plate-focus: var(--vb-focus-edge);
+  /* The ring on a mark on the plate: the one focus colour (point 627, D-109). */
+  --vb-plate-focus: var(--vb-focus);
   /* What floats over the board (FE_04): the node's menus and the selection bar. Their default is today's raised
      surface; a skin may draw them as dark glass in both themes, with Tick and Cross in colours that read on it. */
   --vb-glass: var(--vb-surface-raised);

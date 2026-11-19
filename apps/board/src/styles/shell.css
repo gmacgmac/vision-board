@@ -39,3 +39,17 @@ body > .vb-board { position: absolute; inset: 0; }
   border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
 }
 :where([class*='vb-']) code:not(html) { font-family: var(--vb-font-mono); }
+/* A print the board set (board/canvas/print-view.ts, D-107): the page prints the board alone, in the flow, on the page the
+   root names (print.css: landscape or portrait, 10 mm margins, the area print-view.ts fits to); the chat, the toast and the page's dialogs are left out. A print the board did not set (the browser's own
+   Print) prints the page as it is. */
+@page vb-print-landscape { size: landscape; margin: 10mm; }
+@page vb-print-portrait { size: portrait; margin: 10mm; }
+@media print {
+  html:has(body > .vb-board[data-vb-print]), body:has(> .vb-board[data-vb-print]) { height: auto; overflow: visible; background: none; }
+  body:has(> .vb-board[data-vb-print]) > :not(.vb-board) { display: none !important; }
+  body > .vb-board[data-vb-print] { position: relative; inset: auto; }
+  /* The print's theme (point 615): this page's built tokens resolve light-dark() at its root, so the theme is set there
+     for the print, as the toolbar's data-theme sets it for the screen. */
+  :root:has(> body > .vb-board[data-vb-print-theme='light']) { color-scheme: light; }
+  :root:has(> body > .vb-board[data-vb-print-theme='dark']) { color-scheme: dark; }
+}

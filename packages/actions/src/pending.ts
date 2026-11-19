@@ -44,7 +44,8 @@ export function responsesAfter(s: LedgerState, board: string, after: number, age
   const out: ActEvent[] = [];
   const marks = latestMarks(s, after);
   for (const e of s.acts) {
-    if (scopeOf(s, e).board !== board || (agent !== undefined && !concerns(s, e, agent))) continue;
+    // An imported note (`from`, point 617) is history from another board, no response.
+    if (e.from || scopeOf(s, e).board !== board || (agent !== undefined && !concerns(s, e, agent))) continue;
     const shown = MARK_ACTIONS.has(e.action) ? (marks.has(e.seq) ? e : undefined) : asReported(s, e, after);
     if (shown) out.push(shown);
   }

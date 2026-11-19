@@ -30,7 +30,8 @@ export function replyTo(s: LedgerState, seq: number, cards: number[]): LedgerRep
  * or one of its cards has a newer version than when it was made), else undefined: its writer may
  * still change it. */
 export function lockOf(s: LedgerState, board: string, a: Ask): 'sent' | 'answered' | undefined {
-  if (sentAfter(s, board, a.seq)) return 'sent';
+  // An imported note (point 617) reached its agent on the board it came from: history.
+  if (a.from || sentAfter(s, board, a.seq)) return 'sent';
   const cards = cardsOf(a);
   if (replied(s, a.seq, cards)) return 'answered';
   const newer = cards.some((id) => (s.nodes.get(id)?.versions.at(-1)?.ver ?? 0) > askVer(a, id));

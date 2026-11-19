@@ -21,8 +21,8 @@ import { defineConfig, devices } from '@playwright/test';
 import { fullBuilds, fullBuildsSaid } from './full-builds.ts';
 
 const PORT = Number(process.env.VB_TEST_PORT ?? 4468);
-/** Workers: VB_TEST_WORKERS, else 5 (each runs a browser and three boards; 5 measured 4.9 min, 3 took 6.4). */
-const WORKERS = Number(process.env.VB_TEST_WORKERS ?? 5);
+/** Workers: VB_TEST_WORKERS, else 10 (each runs a browser and three boards; maintainer, point 625). */
+const WORKERS = Number(process.env.VB_TEST_WORKERS ?? 10);
 const CHROME = { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } };
 const BUDGETS = 'perf.spec.ts';
 

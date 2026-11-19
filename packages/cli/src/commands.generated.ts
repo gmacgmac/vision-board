@@ -39,10 +39,12 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "get-board", operationId: "get_board", takesBody: false,
     summary: "Read a board as it is now",
-    description: "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). For one node's history, use `show_node`.",
+    description: "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). `export: true` returns the export file instead. For one node's history, use `show_node`.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
       {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
+      {"name":"export","in":"query","type":"boolean","required":false,"description":"True returns the export file instead, which `write_board`'s `import` takes."},
+      {"name":"notes","in":"query","type":"boolean","required":false,"description":"With `export`, true adds the notes and their replies."},
     ],
   },
   {
@@ -59,10 +61,12 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "show-container", operationId: "show_container", takesBody: false,
     summary: "Read one container with its history",
-    description: "Read one container (region) with its history. Pass `board` and `region`. Returns the region, the agents that hold it (`holders`, empty on an old region) and every node it has held, with every version and note. Read it before you write to a container or ask for a grant on it.",
+    description: "Read one container (region) with its history. Pass `board` and `region`. Returns the region, the agents that hold it (`holders`, empty on an old region) and every node it has held, with every version and note. Read it before you write to a container or ask for a grant on it. `export: true` returns its export file instead.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
       {"name":"region","in":"path","type":"string","required":true,"description":"The region (container) id."},
+      {"name":"export","in":"query","type":"boolean","required":false,"description":"True returns the export file instead, which `write_board`'s `import` takes."},
+      {"name":"notes","in":"query","type":"boolean","required":false,"description":"With `export`, true adds the notes and their replies."},
     ],
   },
   {
@@ -115,10 +119,11 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "write-board", operationId: "write_board", takesBody: true,
     summary: "Write to a board",
-    description: "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. A `node` item's `insert: { after, before }` puts it between two linked cards of a `flow` or `lanes`. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. Returns one result per item, `head`, and `pending` (cards waiting for your answer).",
+    description: "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. A `node` item's `insert: { after, before }` puts it between two linked cards of a `flow` or `lanes`. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. `import: { into, file }` in place of `items` writes an export file into a `new` board or the `current` one as fresh cards, naming in `dropped` what it left out. Returns one result per item, `head`, and `pending` (cards waiting for your answer).",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
-      {"name":"items","in":"body","type":"json","required":true,"description":"The items to write, run in order (1 to 200); each has a `type`."},
+      {"name":"items","in":"body","type":"json","required":false,"description":"The items to write, run in order (1 to 200); each has a `type`."},
+      {"name":"import","in":"body","type":"json","required":false,"description":"Write an export file in place of `items`."},
     ],
   },
   {

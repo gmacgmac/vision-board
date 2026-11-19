@@ -6,7 +6,8 @@
 // `focusText` focuses it. The conversation box (`conversation` mode, FE_03) draws from its own template,
 // loaded on first use (`useConversation`); in it Enter does the active mode (Add note or Ask now: pressing either
 // button makes it the active one, FIX_03 ruling 3), Cmd or Ctrl Enter is always Ask now, and `show(..., true)` draws
-// it again keeping the words typed, the caret, the focus and what the box says of the last write.
+// it again keeping the words typed, the caret, the focus and what the box says of the last write. An agent's name cut on
+// its label line gets its whole name as a tip on hover.
 // Browser only: the class is created inside defineVbNoteBubble().
 import type { Kind } from '#format';
 import type { MarkdownOptions } from '../markdown/render.ts';
@@ -77,6 +78,13 @@ export function defineVbNoteBubble(): void {
       });
       this.addEventListener('keydown', (e) => this.onKey(e));
       this.addEventListener('input', () => this.grow());
+      // An agent's name cut short on its label line (point 619) shows whole on hover; one that fits has no tip.
+      this.addEventListener('pointerover', (e) => {
+        const name = (e.target as HTMLElement).closest<HTMLElement>('.vb-nb-who-name');
+        if (!name) return;
+        if (name.scrollWidth > name.clientWidth) name.title = name.textContent ?? '';
+        else name.removeAttribute('title');
+      });
     }
 
     /** Drawn in a gallery stage before it joins the page: measure once it is there. */

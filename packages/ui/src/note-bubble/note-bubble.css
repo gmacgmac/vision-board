@@ -123,6 +123,20 @@ vb-note-bubble {
 vb-note-bubble .vb-nb-who {
   font-size: var(--vb-text-md); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-ink);
 }
+/* An agent's label on one line (point 619): "Agent · <name> <id>"; the name alone gives way, cut with an ellipsis (the
+   element then gives it the whole name on hover), the id never. The name and id read as written. */
+vb-note-bubble .vb-nb-agent { display: flex; min-width: 0; white-space: nowrap; }
+vb-note-bubble :is(.vb-nb-who-lead, .vb-nb-who-id) { flex: none; white-space: pre; }
+vb-note-bubble :is(.vb-nb-who-name, .vb-nb-who-id) { text-transform: none; letter-spacing: 0; }
+/* `clip`, not `hidden`: a hidden overflow is a scroll container, and a wheel that starts over the name would stop there
+   and never reach the thread (scroll-before-pan.spec.ts). */
+vb-note-bubble .vb-nb-who-name { min-width: 0; overflow: clip; text-overflow: ellipsis; }
+/* Where an imported conversation ends (point 617): one hairline either side of the word. */
+vb-note-bubble .vb-nb-imported {
+  display: flex; align-items: center; gap: var(--vb-space-2); color: var(--vb-ink-subtle);
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); letter-spacing: 0.07em; text-transform: uppercase;
+}
+vb-note-bubble .vb-nb-imported::before, vb-note-bubble .vb-nb-imported::after { content: ''; flex: 1; border-top: 1px solid var(--vb-line-strong); }
 vb-note-bubble .vb-nb-reply-text { display: grid; gap: var(--vb-space-2); min-width: 0; color: var(--vb-ink-strong); overflow-wrap: anywhere; }
 vb-note-bubble .vb-nb-reply :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
 vb-note-bubble .vb-nb-error { margin: 0; color: var(--vb-state-drop); font-size: var(--vb-pop-text); }

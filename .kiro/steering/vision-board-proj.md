@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.7 | **Updated**: 2026-11-03 (maintainer approved, point 403)
+> **Version**: 0.8 | **Updated**: 2026-11-19 (maintainer approved, point 625)
 
 # Vision Board — project rules
 
@@ -44,10 +44,9 @@ follow them where our documents are silent. If two of our documents disagree, ra
   them, never further away.
 - **Done** means every state, accessibility and contrast pass, tests, a gallery entry, and a look in a
   browser in light and dark, as the person sees it.
-- **Tests while working**: unit tests plus the page specs for what changed; the full page suite once,
-  at the end (`npm run test:pages`: 5 workers, `VB_TEST_WORKERS` to change; each worker's servers on
-  `VB_TEST_PORT` + 10 per worker, fresh for every spec file). Never use port 4466: it is the
-  maintainer's board. Tasks running at once take `VB_TEST_PORT`s 100 apart.
+- **Tests**: a task runs only the tests for what it changed; the full page suite runs once per set, at
+  close; a final check is one check per ruling, on Sonnet 5.5. Never port 4466; tasks running at once
+  take `VB_TEST_PORT`s 100 apart.
 - **Bot instructions**: Changing a bot's instructions (`skills/vision-board/SKILL.md`, the plugin's edits):
   `npm run eval:bot` passes before it merges.
 - **Sentences**: a new sentence a person or an agent reads goes in its area's words file
