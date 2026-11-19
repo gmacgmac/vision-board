@@ -3,6 +3,7 @@
 // cards of one size (the server has no measured sizes, and pins are the person's, not the
 // arrangement), so its columns, rows and crossings agree with what is drawn. Pure.
 import type { Direction, Link, Mode, Region, ViewNode, Widths } from '#format';
+import { widthsOf } from '#format';
 import type { CardCell, LayoutStructure, Size } from './types.ts';
 import { MODE_FNS } from './board.ts';
 import { laneNames } from './modes/lanes/lanes.ts';
@@ -25,7 +26,9 @@ export function structureOf(
   if (!dated.length) return arranged(region, nodes, links, mode, widths, drawn);
   const direction = drawn.direction ?? 'across';
   const cards = timelineOrder(dated, direction).map(({ node, side }) => ({ id: node.id, at: node.timeline!, side }));
-  return { ...arranged(region, nodes.filter((n) => n.timeline === undefined), links, mode, widths, drawn), timeline: { direction, cards } };
+  // The container's widths, its timeline's default with no choice (After FE_02 (a)), as layoutRegion takes them.
+  const own = widths ?? widthsOf(mode, region.widths, undefined, direction);
+  return { ...arranged(region, nodes.filter((n) => n.timeline === undefined), links, mode, own, drawn), timeline: { direction, cards } };
 }
 
 /** How the mode arranges `nodes` (no dated card among them). */

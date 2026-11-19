@@ -8,7 +8,7 @@ import type { Direction, ViewNode } from '#format';
 import { sortByTimeline } from '#format';
 import {
   layoutTimeline, overlaps, ROW_GAP, TIMELINE_END_ROOM, TIMELINE_MIN_DOT, TIMELINE_STEM, TIMELINE_YEAR_ROOM,
-  timelineStep, timelineWidthsOf,
+  timelineStep,
 } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
 
@@ -134,9 +134,6 @@ test('widths: match draws every dated node as wide as the widest; own keeps each
   assert.deepEqual(ws(layoutTimeline(nodes, sizes, 'across', { widths: 'match' })), [464, 464, 464]);
   assert.deepEqual(ws(layoutTimeline(nodes, sizes, 'down', { widths: 'own' })), [280, 464, 360]);
   assert.deepEqual(ws(layoutTimeline(nodes, sizes, 'across')), [280, 464, 360]);
-  assert.deepEqual((['down', 'across'] as Direction[]).map((d) => timelineWidthsOf(d)), ['match', 'own']);
-  assert.equal(timelineWidthsOf('down', 'own'), 'own', 'the container\'s choice');
-  assert.equal(timelineWidthsOf('across', 'own', 'match'), 'match', 'the person\'s choice wins');
   // Run down, `match`: one column each side, the line in the middle of the timeline's column.
   const m = layoutTimeline(nodes, sizes, 'down', { widths: 'match' });
   assert.equal(m.drawing.line.from.x, 464 + TIMELINE_STEM);

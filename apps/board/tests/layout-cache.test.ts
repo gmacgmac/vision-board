@@ -27,7 +27,7 @@ interface World { view: View; sizes: Map<string, Size>; inputs: LayoutInputs }
 function step(w: World, r: Random, made: { n: number }): Set<string> {
   const node = r.pick(w.view.nodes);
   const regionOf = (id: string) => w.view.nodes.find((n) => n.id === id)?.region;
-  switch (r.int(8)) {
+  switch (r.int(9)) {
     case 0: w.sizes.set(node.id, { w: 200 + r.int(5) * 40, h: 80 + r.int(6) * 20 }); return new Set([node.region]);
     case 1: w.inputs.pins.set(node.id, { x: r.int(400) - 50, y: r.int(300) - 50 }); return new Set([node.region]);
     case 2: w.inputs.pins.delete(node.id); return new Set([node.region]);
@@ -51,6 +51,11 @@ function step(w: World, r: Random, made: { n: number }): Set<string> {
       const from = node.region;
       w.view.nodes = w.view.nodes.map((n) => (n.id === node.id ? { ...n, region: to } : n));
       return new Set([from, to]);
+    }
+    case 7: { // a date written, changed or dropped (D-105)
+      const date = r.pick([undefined, '2026', '2026-10', '2026-10-13', '2026-10-13T09:30']);
+      w.view.nodes = w.view.nodes.map((n) => (n.id !== node.id ? n : date ? { ...n, timeline: date } : (({ timeline: _, ...rest }) => rest)(n)));
+      return new Set([node.region]);
     }
     default: {
       const other = r.pick(w.view.nodes);
@@ -159,6 +164,35 @@ test('card widths lay out exactly their container; the alignment lays out every 
   const all = cache.run(view, sizes, centred);
   assert.deepEqual(all.laidOut, view.regions.map((r) => r.id));
   assert.deepEqual(all.layout, layoutBoard(view, sizes, centred));
+});
+
+test('a date written, changed or dropped, and a direction lay out exactly their container (D-105)', () => {
+  const view = load('roadmap');
+  const sizes = new Map(view.nodes.map((n, i) => [n.id, { w: 240 + (i % 3) * 40, h: 96 + (i % 4) * 18 }]));
+  const inputs: LayoutInputs = { pins: new Map(), modes: new Map(), hidden: new Set<string>() };
+  const cache = createLayoutCache();
+  cache.run(view, sizes, inputs);
+  const [a, b] = view.nodes.filter((n) => n.region === view.nodes[0]!.region);
+  const id = a!.region;
+  const dated = (dates: Record<string, string | undefined>): View => ({
+    ...view, nodes: view.nodes.map((n) => (n.id in dates ? { ...n, timeline: dates[n.id] } : n)),
+  });
+  for (const [v, why] of [[dated({ [a!.id]: '2026-10' }), 'written'], [dated({ [a!.id]: '2026-11', [b!.id]: '2026' }), 'changed'],
+    [view, 'dropped']] as const) {
+    const run = cache.run(v, sizes, inputs);
+    assert.deepEqual(run.laidOut, [id], why);
+    assert.deepEqual(run.layout, layoutBoard(v, sizes, inputs), why);
+  }
+  const v = dated({ [a!.id]: '2026-10', [b!.id]: '2026-11' });
+  cache.run(v, sizes, inputs);
+  assert.ok(cache.run(v, sizes, inputs).layout.regions.find((r) => r.id === id)!.timeline, 'the region carries its timeline');
+  for (const more of [{ directions: new Map([[id, 'down' as const]]) }]) {
+    const changed = { ...inputs, ...more };
+    const run = cache.run(v, sizes, changed);
+    assert.deepEqual(run.laidOut, [id], Object.keys(more)[0]);
+    assert.deepEqual(run.layout, layoutBoard(v, sizes, changed));
+    cache.run(v, sizes, inputs);
+  }
 });
 
 test('the gap under a card (rowGap, updateSignals) lays out every container and equals layoutBoard', () => {

@@ -1883,7 +1883,7 @@ function: a container's direction arrives as an input (`LayoutOptions.directions
 
 A container's nodes that carry the `timeline` key share one line. It is not a mode (`MODES` is unchanged): `layoutRegion`
 (`packages/layout/src/board.ts`) runs it beside the container's mode, and the layout stays a pure function with no flag
-(the page's half, the flag's one gate and the drawing, is FE_02's). The geometry type is `#format` `geometry.ts`
+(the page's half, the flag's one gate and the drawing, is the next section). The geometry type is `#format` `geometry.ts`
 `TimelineDrawing`.
 
 1. **The split** (`layoutRegion`): the visible nodes with `timeline` go on the line (`timeline.ts` `layoutTimeline`), the
@@ -1906,10 +1906,11 @@ A container's nodes that carry the `timeline` key share one line. It is not a mo
 5. **Years and bands** (`yearsOf`, `bandsOf`): the year at the line's start (its `at` is `line.from`: the label begins
    there) and at each turn, halfway between the two dots (`at` is the label's centre); none between dots of one year.
    A band from the first to the last dot of each run of two or more exactly equal dates.
-6. **Widths** (`timelineWidthsOf`, decision 21, point 595): the dated nodes take the person's choice, else the
-   container's `widths`, else `match` run down and `own` across (`match`: every dated node as wide as the widest). The
-   caller passes it per container (`LayoutOptions.timelineWidths`); a container left out gets the default from its
-   `widths`. The rest keep `widthsOf`.
+6. **Widths** (`#format` `widthsOf` with the timeline's direction, decision 21, point 595, § Design review "After FE_02"
+   (a)): one setting for the whole container, its dated and its other nodes alike: the person's choice, else the
+   container's `widths`, else `match` run down and `own` across (`match`: every dated node as wide as the widest), in
+   place of the mode's default. The caller passes it per container (`LayoutOptions.widths`, worked out with `widthsOf`);
+   a container left out gets it from `layoutRegion`, as does `structureOf`, and `show_layout`'s `widths` reports it.
 7. **The rest** (`beside`): the mode's own answer moved `REGION_GAP` below the timeline's box, or, run down, `COL_GAP`
    to its right with tops level with the line's start (569C); its lane bands move with it (`Lane.x` set when they no
    longer start at the frame's left).
@@ -1931,6 +1932,88 @@ A container's nodes that carry the `timeline` key share one line. It is not a mo
     widths, `structureOf` agrees with `layoutRegion`, fixtures with no dated node, determinism), every other
     `packages/layout/tests/*` unchanged, `layout.timing.ts` (40 dated and 40 undated, reported),
     `apps/board/tests/api-layout-timeline.test.ts` (`show_layout` with and without a timeline, the person's direction).
+
+## The timeline: the node and the page (D-105, D-106; Timeline FE_01, FE_02)
+
+The layout's half is the section above. This is the rest: how a dated node draws (FE_01, `packages/ui`), and how the
+board page joins the layout's geometry to that drawing behind the `timeline` flag (FE_02, `apps/board/src`).
+
+1. **A dated node** (`#ui` `node/node-date.ts` `datedOf`): a stored date on any kind but an app card; the template, the
+   element and the Markdown entries all ask this one function. `vb-node` sets `data-timeline` to the stored value in
+   `render()` and clears it when a version drops the key (`vb-node.ts`): the hook the page's pointer and CSS read.
+2. **The header** (`node-edges.ts` `datedHeading`, `timelineLabel`): `<p class="vb-node-date">` first on the node, a
+   `<time datetime>` holding the short form (`OCT 13`, `OCT 2026`, `2026`, `OCT 13 · 14:30`; upper case is CSS's) hidden
+   from assistive technology and the full form ("13 October 2026, 14:30") visually hidden; month names and forms are
+   words (`words/node.ts`). In the default skin a dated node has no kind tab and no grip, and its kind is a small word at
+   the end of the date line (`.vb-node-date-kind`); Command Lens keeps its plate, with `cursor: default`, and the date
+   heads the body. The date takes `--vb-text-date` in the skin's display font and the kind's colour (a toned node's
+   ink); the title `--vb-text-title-dated`; only on a dated node. Kept true by `packages/ui/tests/node-date.test.ts`,
+   `node-dated.test.ts`.
+3. **Entries** (`MarkdownOptions.entries`, which the node template turns on for a dated node; `markdown/entries.ts`
+   `boldLead`; `render.ts`): a `###` heading and its blocks, a paragraph opening with a bold name, or a top-level list
+   item opening with one, draw as `.vb-md-entry` with `.vb-md-entry-name`. One colon closing the name inside the bold
+   (`**Name:**`) is dropped from the name, as one leading separator is from the rest. Off, the output is byte for byte
+   what it was. Kept true by `packages/ui/tests/markdown-entries.test.ts`.
+4. **The line's drawing** (`#ui` `timeline/`, the `timeline` pattern): `timelineMarkup(drawing, look)` writes one
+   container's `<g class="vb-timeline" aria-hidden>` (bands, the line and its arrow as paths, stems, years, a dot per
+   dated node with `data-node`, `data-side`, `data-kind`, `data-tone`); `applyTimelineLook(root)` colours the dots in
+   place through CSSOM (the page's CSP). Kept true by `packages/ui/tests/timeline-template.test.ts`.
+5. **The flag's one gate** (`apps/board/src/board/board-data.ts` `datedView`, applied once in `controller.ts` `redraw`
+   where `S.data` is built, so the hosted board passes through it too): on, a node keeps `timeline` only where
+   `datedOf` draws it; off, no node the page lays out or draws carries one, so nothing downstream (layout, node,
+   pointer, wires, region) sees a date. A copy where a key goes; the stored lines never change. T_03 removes this one
+   call. Kept true by `apps/board/tests/board-data.test.ts` and `tests/pages/timeline.spec.ts` ("flag off": the boxes
+   of every card equal those of the same board with no dates).
+6. **Layout inputs** (`canvas/draw.ts` `lay`, `canvas/layout-cache.ts`): the page passes each container's widths from
+   `widthsOf` with its direction when a dated node of it is drawn (the timeline's default, After FE_02 (a)), and its
+   direction for every container; the cache's key holds each node's `timeline` (`nodeKey`), so a date written, changed
+   or dropped lays out exactly its container. Kept true by `apps/board/tests/layout-cache.test.ts` (the random walk
+   writes and drops dates).
+7. **The line on the board** (`links/timelines.ts` `createTimelines`, in `wires.ts`'s `vb-timelines` group between
+   the lane bands and the connectors): per container, a `g.vb-timeline[data-region]` holding its bands, line, arrow and
+   years (`#ui` `timelineLineMarkup`) in its own coordinates, placed at the container's origin; per dated node, a
+   `g.vb-timeline[data-node]` holding its stem and dot (`timelineDotMarkup`, look from the drawn node's kind and tone,
+   `draw.ts` `lookOf`, coloured by `applyTimelineLook`) in the node's coordinates, placed where the node is. The groups
+   stay from draw to draw, their markup rewritten only when it changes, and their place is a CSS transform with the
+   cards' transition (`board.css` `.vb-timelines > g`), so the line and its dots glide with the frames and cards on a
+   relayout, never ahead (After FE_02 (b)). Behind frames and cards with wire layers on; scales with the world, no zoom
+   number. A lane band beside a timeline run down starts at `Lane.x`. Kept true by `timeline.spec.ts` ("the line":
+   order, sides, band, years, arrow, every stem meeting the middle of its card's facing edge and every dot on the line;
+   "during the relayout glide", every frame; "from 20% to 250%").
+8. **No drag on a dated node** (D-105 4): `input/pointer.ts` starts no move inside `vb-node[data-timeline]` (`DATED`),
+   its plate included, so a press there is a click; `selection/moves.ts` `placeable` keeps dated nodes out of what a
+   drag carries and out of a drop's pins; `canvas/places.ts` `pin` (Alt+arrows) writes nothing for one. No new action
+   or record: a dated node simply never writes a `pin`, and the layout ignores one written anyway. Kept true by
+   `timeline.spec.ts` (both skins; a selection drag moves only the undated card; Reset places leaves the line).
+9. **Move to** is the existing `move` (Shift+M, the selection bar's Move to): a dated node moves to another container
+   and joins its line (`timeline.spec.ts`).
+9a. **Links never run under a card** (PLAN § Out of Scope: links route around cards "as today"): the cards above and
+    below a line are staggered, so between the facing sides a link would take (a card above to one below and to its
+    left, say) no gutter is free, and the router used to fall back to its plain elbow under a card. `#layout`
+    `route/route.ts` `lineFor` now tries the other pair of sides (`route/ports.ts` `otherSides`: top and bottom for
+    left and right, and back, each port in the middle of its side) before the elbow. From a dated node's facing side
+    the link starts where the stem does and crosses the line at the node's own dot. Kept true by
+    `packages/layout/tests/timeline-routes.test.ts` (every link from a dated card, 41 size seeds, across and down, both
+    skins' row gaps: none under a third card) and `timeline.spec.ts` ("never runs through a card", both skins, across
+    and down). Routing round the line itself stays out of scope: a link may still run along the line's band where it
+    is the only free one.
+10. **Direction** (`canvas/render.ts` sets `RegionState.timeline` from the layout's region; `#ui` `vb-region.ts`
+    `applyLayoutControl`): the layout menu's Across, Down and Auto show on a flow or on a container with a timeline,
+    marking the container's direction; the layout button names the direction on a flow only. Kept true by
+    `timeline.spec.ts` (Down draws the line down with the other cards to its right; Auto gives the agent's back; a grid
+    with no timeline has no direction row).
+11. **Widths**: the container's Match card widths switch covers its dated nodes as well as the others (point 595). With
+    no choice, a container with a timeline takes the timeline's default for all its nodes (`match` run down, `own`
+    across) and the switch shows it (`#ui` `regionState` passes the laid-out box's `timeline.direction` to `widthsOf`),
+    so it always shows what is in force. Kept true by `packages/ui/tests/region-widths.test.ts`,
+    `packages/format/tests/widths.test.ts`, `packages/layout/tests/timeline-region.test.ts`,
+    `apps/board/tests/api-layout-timeline.test.ts` and `timeline.spec.ts`.
+12. **Tab order** stays the board's reading order (`card-numbers.ts` `readingOrder`: items by card number), not date
+    order (`timeline.spec.ts`).
+13. **Gallery**: the pattern's section (`gallery/timeline-section.ts`, the node and the drawing from hand-made
+    geometry) and "The timeline on the board" (`timeline-board-section.ts`: a container laid out for real by the
+    board's drawing, across and down, default and Command Lens; `mini-board.ts` takes the skin's row as `edges`), both
+    shown with `?flags=timeline`. Kept true by `timeline.spec.ts` (the gallery's section, axe on it, light and dark).
 
 ## The selection bar's node commands, and Z (node overhaul FE_06)
 

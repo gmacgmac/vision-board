@@ -16,7 +16,7 @@ import { applyPins, makeRoom } from './collide.ts';
 import { placeContainers } from './place.ts';
 import { routeLinks } from './route/route.ts';
 import type { TimelineLayout } from './timeline.ts';
-import { layoutTimeline, reachTimeline, shiftTimeline, timelineWidthsOf } from './timeline.ts';
+import { layoutTimeline, reachTimeline, shiftTimeline } from './timeline.ts';
 import type { LayoutOptions } from './types.ts';
 
 export const MODE_FNS: Record<Mode, ModeFn> = { grid, column, row, flow, lanes, radial };
@@ -29,7 +29,8 @@ export interface RegionOptions {
   mode?: Mode | undefined;
   pins?: Map<string, Point> | undefined;
   headInset?: number | undefined;
-  /** The card widths in effect; absent: `widthsOf(mode, region.widths)`. */
+  /** The card widths in effect, for every node of the region, dated or not; absent: `widthsOf(mode, region.widths)`, with
+   *  the timeline's default when the region has dated nodes. */
   widths?: Widths | undefined;
   align?: Align | undefined;
   /** The gap between a card and the card under it (LayoutOptions.rowGap); absent: GAP. */
@@ -37,8 +38,6 @@ export interface RegionOptions {
   /** Which way the region runs if it is a `flow`, and its timeline whatever its mode (LayoutOptions.directions);
    *  absent: `across`. */
   direction?: Direction | undefined;
-  /** The widths of its dated nodes (LayoutOptions.timelineWidths); absent: `timelineWidthsOf(direction, region.widths)`. */
-  timelineWidths?: Widths | undefined;
 }
 
 /** One region: `nodes` are its visible nodes in view order, `links` the links between them. Pins
@@ -53,12 +52,11 @@ export function layoutRegion(
   region: Region, nodes: ViewNode[], links: Link[], sizes: Map<string, Size>, opts: RegionOptions = {},
 ): RegionPiece {
   const mode = opts.mode ?? region.mode;
-  const widths = opts.widths ?? widthsOf(mode, region.widths);
   const direction = opts.direction ?? 'across';
   const dated = nodes.filter((n) => n.timeline !== undefined);
-  const line = dated.length
-    ? layoutTimeline(dated, sizes, direction, { widths: opts.timelineWidths ?? timelineWidthsOf(direction, region.widths), rowGap: opts.rowGap })
-    : undefined;
+  // One setting for the whole container, its dated nodes and the rest (point 595; After FE_02 (a)).
+  const widths = opts.widths ?? widthsOf(mode, region.widths, undefined, dated.length ? direction : undefined);
+  const line = dated.length ? layoutTimeline(dated, sizes, direction, { widths, rowGap: opts.rowGap }) : undefined;
   const rest = line ? nodes.filter((n) => n.timeline === undefined) : nodes;
   const ids = new Set(rest.map((n) => n.id));
   const inner = line ? links.filter((l) => ids.has(l.from) && ids.has(l.to)) : links;
@@ -155,7 +153,7 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     return layoutRegion(region, nodes, links, sizes, {
       mode: opts.modes?.get(region.id), pins: opts.pins, headInset: opts.headInsets?.get(region.id),
       widths: opts.widths?.get(region.id), align: opts.align, rowGap: opts.rowGap,
-      direction: opts.directions?.get(region.id), timelineWidths: opts.timelineWidths?.get(region.id),
+      direction: opts.directions?.get(region.id),
     });
   });
   return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth, pins: opts.regionPins });

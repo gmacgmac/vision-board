@@ -32,6 +32,17 @@ test('a bold lead: the name, then the rest with one leading separator and its sp
   assert.equal(on('Plain **bold** later'), '<p class="vb-md-p">Plain <strong>bold</strong> later</p>', 'bold that does not open the paragraph');
 });
 
+test('a colon inside the bold (**Name:**) is dropped from the name, one only, as a leading one is from the rest', () => {
+  for (const src of ['**Pricing page live:** on the site.', '**Pricing page live :** on the site.', '**Pricing page live:**: on the site.']) {
+    assert.equal(on(src), '<div class="vb-md-entry"><strong class="vb-md-entry-name">Pricing page live</strong><p class="vb-md-p">on the site.</p></div>', src);
+  }
+  assert.equal(on('- **Launch webinar:** forty minutes'),
+    '<ul class="vb-md-list"><li class="vb-md-entry"><strong class="vb-md-entry-name">Launch webinar</strong> forty minutes</li></ul>', 'in a list item');
+  assert.equal(on('**Ratio 2::** x'), '<div class="vb-md-entry"><strong class="vb-md-entry-name">Ratio 2:</strong><p class="vb-md-p">x</p></div>', 'one colon only');
+  assert.equal(on('**:**'), off('**:**'), 'a name that is only a colon is no name');
+  assert.equal(off('**Name:** text'), '<p class="vb-md-p"><strong>Name:</strong> text</p>', 'outside a timeline, as written');
+});
+
 test('in a list, each top-level item opening with a bold name is an entry and keeps its li; the others keep their bullets', () => {
   assert.equal(on('- Store listing\n- **Launch webinar**: forty minutes\n- Support macros'),
     '<ul class="vb-md-list"><li>Store listing</li><li class="vb-md-entry"><strong class="vb-md-entry-name">Launch webinar</strong> forty minutes</li><li>Support macros</li></ul>');

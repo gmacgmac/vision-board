@@ -583,7 +583,7 @@ Media type `application/json`.
 | `board` | string | yes | The board the container is on. |
 | `region` | string | yes | The container's id. |
 | `mode` | `"grid"` or `"flow"` or `"lanes"` or `"radial"` or `"column"` or `"row"` | yes | The mode the board shows: the person's choice when they made one, else the container's. |
-| `widths` | `"match"` or `"own"` | yes | The card widths in effect: the person's choice, else the container's, else the mode's default. |
+| `widths` | `"match"` or `"own"` | yes | The card widths in effect, for every card of the container: the person's choice, else the container's, else the default: the mode's, or, on a container with a timeline, match run down and own across. |
 | `lanes` | list of string | no | The lane names, top to bottom, in `lanes` mode; left out in every other mode. |
 | `columns` | integer | yes | How many columns the cards of `cards` use (0 when there are none); in `radial` mode, how many rings, the centre being the first. |
 | `cards` | list of object | yes | Every card the container lays out in its mode (dated cards are under `timeline`), as it is now (the person's moves count; retired cards are left out), in card-number order. |

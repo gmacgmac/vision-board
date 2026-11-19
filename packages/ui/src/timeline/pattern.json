@@ -6,7 +6,7 @@
   "flag": "timeline",
   "description": "A container's timeline (D-105): the dated nodes of a container share one line across its top (or down it, run down), each on its own dot joined by a stem, alternating above and below (left and right, the first on the left), in date order and not to scale; the year on the line where it starts and where it turns; a band behind consecutive equal dates; an arrow for the direction of time. SVG markup only, from the geometry the layout returns (#format TimelineDrawing); the page draws it in the wires layer, behind frames and cards, so it scales with the board (ZOOM_RULES.world). The dates themselves are on the nodes (the node pattern's dated node).",
   "files": {
-    "template": "timeline-template.ts (timelineMarkup, TimelineLook, TIMELINE_ARROW: the line and its arrow as paths, no marker ids, so it never depends on the wires layer's defs; pure)",
+    "template": "timeline-template.ts (timelineMarkup, and its two pieces the page draws in groups of their own so the dots move with their nodes: timelineLineMarkup (bands, line and arrow, years) and timelineDotMarkup (one stem and dot); TimelineLook, TIMELINE_ARROW: the line and its arrow as paths, no marker ids, so it never depends on the wires layer's defs; pure)",
     "apply": "timeline-apply.ts (applyTimelineLook: each dot's kind and tone set in place through CSSOM, with node-edges-apply.ts applyTone; browser only)",
     "styles": "timeline.css (tokens only: --vb-timeline-line, --vb-timeline-w, --vb-timeline-stem-w, --vb-timeline-dot, --vb-timeline-ring, --vb-timeline-band, --vb-timeline-band-mix, --vb-timeline-year)"
   },

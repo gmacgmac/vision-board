@@ -24,11 +24,6 @@ export const TIMELINE_YEAR_ROOM = 56;
 /** The line past its last dot, for the arrow (DESIGN_01: 30px). */
 export const TIMELINE_END_ROOM = 30;
 
-/** The widths a container's dated nodes take (decision 21, point 595): the person's choice, else the container's,
- * else `match` run down and `own` across. The container's other nodes keep `widthsOf`. */
-export const timelineWidthsOf = (direction: Direction, own?: Widths, chosen?: Widths): Widths =>
-  chosen ?? own ?? (direction === 'down' ? 'match' : 'own');
-
 /** The side of the `i`th dot (from 0): above, then below, alternating; run down, left, then right (point 594). */
 export const timelineSide = (i: number, direction: Direction): TimelineSide =>
   direction === 'down' ? (i % 2 ? 'right' : 'left') : i % 2 ? 'below' : 'above';
@@ -42,7 +37,7 @@ export function timelineOrder<T extends ViewNode>(nodes: readonly T[], direction
 export interface TimelineLayout { pos: Map<string, Box>; drawing: TimelineDrawing; box: Box }
 
 export interface TimelineOptions {
-  /** The dated nodes' widths (`timelineWidthsOf`); `match`: every one as wide as the widest. Absent: `own`. */
+  /** The dated nodes' widths, the container's (`#format` `widthsOf`); `match`: every one as wide as the widest. Absent: `own`. */
   widths?: Widths | undefined;
   /** The gap under a node on the same side, run down (the board's row gap); absent: ROW_GAP. */
   rowGap?: number | undefined;

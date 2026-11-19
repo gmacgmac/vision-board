@@ -1,11 +1,12 @@
 // Where the person puts things (split out of controller.ts in 3_FE_01, which grew it past 300
-// lines): a card dropped from its kind tab or nudged by Alt+arrows becomes a pin, R and Reset
+// lines): a card dropped from its kind tab or nudged by Alt+arrows becomes a pin (never a dated one, D-105), R and Reset
 // places take pins away, and the layout mode, the card widths and the size tier are the person's picks. Every write
 // goes through the controller's `record`, so through the action layer and the I/O module (rule 8).
 import type { ActDirection, ActSize, Mode, View, Widths } from '#format';
 import type { BoardState } from '#actions';
 import type { Box, BoardLayout } from '#layout';
 import type { ActFields } from '../io.ts';
+import { datedOf } from '#ui';
 import { sizeAct } from '../cards/index.ts';
 import type { Viewport } from './viewport.ts';
 
@@ -46,7 +47,9 @@ export function createPlaces(d: PlaceDeps): Places {
 
   return {
     async pin(id, box) {
-      const r = regionBox(d.view().nodes.find((n) => n.id === id)?.region ?? '');
+      const n = d.view().nodes.find((x) => x.id === id);
+      // A dated node's place is its date (D-105 4): Alt+arrows move it nowhere and write nothing.
+      const r = n && !datedOf(n) ? regionBox(n.region) : undefined;
       if (!r) return;
       const x = Math.round(box.x - r.origin.x);
       const y = Math.round(box.y - r.origin.y);

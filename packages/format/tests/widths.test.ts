@@ -18,6 +18,14 @@ test('widthsOf: the person\'s choice, then the container\'s, then the mode\'s de
   assert.equal(widthsOf('flow', undefined, 'match'), 'match');
 });
 
+test('widthsOf on a container with a timeline (After FE_02 (a)): its default replaces the mode\'s, a choice still wins', () => {
+  assert.equal(widthsOf('row', undefined, undefined, 'down'), 'match', 'run down: match, for the whole container');
+  assert.equal(widthsOf('grid', undefined, undefined, 'across'), 'own', 'across: own, even in a grid');
+  assert.equal(widthsOf('grid', 'match', undefined, 'across'), 'match', 'the container\'s own');
+  assert.equal(widthsOf('row', 'match', 'own', 'down'), 'own', 'the person\'s');
+  assert.equal(widthsOf('grid', undefined, undefined, undefined), 'match', 'no timeline: the mode\'s');
+});
+
 test('a region sets its widths, the person sets them on a container that exists', () => {
   const at = '2026-10-11T09:00:00Z';
   const A = 'a-abcd1234';

@@ -183,9 +183,12 @@ export interface RegionState {
   paused?: true;
   /** The ledger is read-only (D-085): the layout control's choices say why they are off (READ_ONLY_PERSON). Left out while it is not. */
   readOnly?: true;
-  /** Which way this container runs if it is a flow (`directionOf`, D-100 5): the layout control marks it and names it. The
-   *  page adds it (render.ts); left out for the gallery's frames that set none. */
+  /** Which way this container runs if it is a flow, or has a timeline (`directionOf`, D-100 5, D-105): the layout control
+   *  marks it, and names it on a flow. The page adds it (render.ts); left out for the gallery's frames that set none. */
   direction?: Direction;
+  /** The container has a timeline (D-105; PLAN decision 14): its layout control offers the directions whatever its
+   *  layout, as on a flow. The page adds it from the layout (render.ts); left out while it has none. */
+  timeline?: true;
 }
 
 /** The retired marker (field report batch 2 ruling 1): how many, its words ("3 retired"; the number
@@ -227,7 +230,7 @@ export function regionHolders(list: readonly { agent: string; label: string; cre
  * agent's replies on the page (the cardReplies flag); those naming the latest note show under it.
  */
 export function regionState(
-  r: Pick<Region, 'id' | 'mode'> & Partial<Pick<Region, 'title'>>, view: View, s: BoardState, placed: ReadonlySet<string>,
+  r: Pick<Region, 'id' | 'mode'> & Partial<Pick<Region, 'title'>> & { timeline?: { direction: Direction } | undefined }, view: View, s: BoardState, placed: ReadonlySet<string>,
   holders?: readonly { agent: string; label: string; creator?: boolean }[], owed?: ReadonlySet<string>,
   replies?: readonly CardReply[],
 ): RegionState {
@@ -239,7 +242,8 @@ export function regionState(
   const note = regionNote(s.regionNotes.get(r.id), owed?.has(r.id) ?? true, replies);
   return {
     mode: r.mode,
-    widths: widthsOf(r.mode, view.regions.find((g) => g.id === r.id)?.widths, s.widths.get(r.id)),
+    // What is in force: on a container with a timeline (its laid-out box carries one), the timeline's default (After FE_02 (a)).
+    widths: widthsOf(r.mode, view.regions.find((g) => g.id === r.id)?.widths, s.widths.get(r.id), r.timeline?.direction),
     countText: items.length ? `${answered}/${items.length}` : '',
     countLabel: items.length ? regionWords.ofAnswered(answered, items.length) : '',
     canReset: nodes.some((n) => s.pins.has(n.id)),

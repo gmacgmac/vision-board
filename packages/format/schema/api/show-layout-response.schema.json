@@ -24,7 +24,7 @@
     },
     "widths": {
       "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/widths",
-      "description": "The card widths in effect: the person's choice, else the container's, else the mode's default."
+      "description": "The card widths in effect, for every card of the container: the person's choice, else the container's, else the default: the mode's, or, on a container with a timeline, match run down and own across."
     },
     "lanes": {
       "$ref": "https://vision-board.invalid/schema/ledger/21/common.schema.json#/$defs/lanes",

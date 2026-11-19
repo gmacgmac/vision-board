@@ -47,7 +47,7 @@ tracker: cortex-tasks/tracker.md#N53
 | 4 | FE_01 | 2 | strong | yes | Design-systems engineer — the date is the loudest thing on the node and still passes its contrast tier in both skins, light and dark; a size used in one place is a token, never a literal. | [The dated node, entries and the line's drawing](./FE_01_dated-node-and-entries.md) | Completed | Date header, entries, `timeline` pattern, tokens (diff in task notes); budgets over (page 203.0 KB, board.js 196,993, board.css 25,519); `npm run map` needed |
 | 5 | T_02 | 2 | strong | yes | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios before it lands. | [The skill and its evals](./T_02_skill-and-evals.md) | Completed | Run 2 on the orchestrator's option C: plugin skill 8,148 of 8,192; v3.36; timeline scenarios pass live in both hosts; $0.1051 |
 | 5b | FIX_01 | 2 | standard | no | — | [A refusal names what was wrong (M84)](./FIX_01_anyof-refusal-wording.md) | Completed | Tone and icon refusals name what is accepted; words in `apps/board/server/words/schema.ts` |
-| 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Pending | |
+| 6 | FE_02 | 3 | strong | no | Interaction engineer — a node whose place is its date never moves under the pointer, and every other control still works on it exactly as on any node. | [The board draws the timeline](./FE_02_board-wiring.md) | Completed | Gate `datedView`; line in `wires.ts`; no drag; direction row; gallery board section; 16 page tests; budgets page 205.5, board.js 199,700 |
 | 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
 | 8 | T_03 | 5 | standard | no | Staff engineer who owns deprecations — a switch-over is done only when nothing, not code, tests, words nor docs, still points at the flag. | [Switch on](./T_03_switch-on.md) | Pending | |
 
@@ -133,14 +133,16 @@ Waves 3 to 5 hold one task each; a task's *Files to modify* is its ownership. No
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
-| `apps/board/src/board/canvas/layout-cache.ts`: `nodeKey` must include `n.timeline`; `timelineWidths` goes into the cache's inputs and key | BE_01 | a changed date lays the container out again | FE_02 | Open |
-| `apps/board/src/board/canvas/draw.ts`: pass `timelineWidths` as `timelineWidthsOf(direction, r.widths, widths.get(r.id))` (the page's `widths` is already resolved with the mode's default) | BE_01 | the person's choice told from the default | FE_02 | Open |
-| `apps/board/src/board/links/wires.ts`: a lane band may carry `Lane.x` (a timeline run down beside it); draw from there | BE_01 | lanes beside a timeline | FE_02 | Open |
-| Call `applyTimelineLook` after injecting `timelineMarkup` (dot colours through CSSOM, the page's CSP) | FE_01 | the dots' colours | FE_02 | Open |
-| `docs/specification/components.md`: the node's half (`data-timeline`, `.vb-node-date`, `timelineLabel`, `datedOf`, `MarkdownOptions.entries`, the `timeline` pattern) | FE_01 | docs | FE_02 | Open |
-| Entries: `**Name:**` (colon inside the bold) keeps the colon in the name; drop one trailing `:` from the name as call 9 drops a leading one (a failing test first; `packages/ui/src/markdown/entries.ts`) | FE_01 notes | a common model habit | FE_02 | Open |
+| `apps/board/src/board/canvas/layout-cache.ts`: `nodeKey` must include `n.timeline`; `timelineWidths` goes into the cache's inputs and key | BE_01 | a changed date lays the container out again | FE_02 | Done |
+| `apps/board/src/board/canvas/draw.ts`: pass `timelineWidths` as `timelineWidthsOf(direction, r.widths, widths.get(r.id))` (the page's `widths` is already resolved with the mode's default) | BE_01 | the person's choice told from the default | FE_02 | Done |
+| `apps/board/src/board/links/wires.ts`: a lane band may carry `Lane.x` (a timeline run down beside it); draw from there | BE_01 | lanes beside a timeline | FE_02 | Done |
+| Call `applyTimelineLook` after injecting `timelineMarkup` (dot colours through CSSOM, the page's CSP) | FE_01 | the dots' colours | FE_02 | Done |
+| `docs/specification/components.md`: the node's half (`data-timeline`, `.vb-node-date`, `timelineLabel`, `datedOf`, `MarkdownOptions.entries`, the `timeline` pattern) | FE_01 | docs | FE_02 | Done |
+| Entries: `**Name:**` (colon inside the bold) keeps the colon in the name; drop one trailing `:` from the name as call 9 drops a leading one (a failing test first; `packages/ui/src/markdown/entries.ts`) | FE_01 notes | a common model habit | FE_02 | Done |
 | `tests/pages/gallery.spec.ts`: count only patterns whose flag is on by default | FE_01 | accepted by the orchestrator | — | Done |
 | `apps/board/tests/plugin-build.test.ts` `FILES` gains `references/timeline.md` | T_02 | the plugin build test | orchestrator | Done |
+| `docs/specification/modules.md`: `npm run map` (`#layout` drops `timelineWidthsOf`, exports `shiftTimeline`) | FE_02 run 2 | `npm run verify` | orchestrator | Open |
+| D-032 / a link through a card (After FE_02 (c)): cards 70% opaque by D-032, the route crossing card 4's box; option A opaque cards (amend D-032, `tokens.css`) or B the router keeps links off cards | FE_02 run 2 | the maintainer's ruling | orchestrator: B; done in FE_02 run 3 | Done |
 | Budgets at the wave-2 merge: page 204.6 KB (measured 204.5), plugin JS 198,600 (measured 198,546); CSS 25,550 (measured 25,519) | BE_01, FE_01 | temporary, never blocking | orchestrator | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
@@ -220,8 +222,34 @@ insert-step skipped reading layouts.md); standalone all 14, 113/115 $0.0749 (mis
 and `api-ledgers` 215 is the known fresh-worktree failure until `npm run build` (T_05 note).
 
 ### FE_02: The board draws the timeline
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-18 23:46)  
+_Notes:_ The flag's one gate is `board-data.ts` `datedView`, called once in `controller.ts` `redraw` (where `S.data` is
+built; T_03 removes that call): off, no node carries `timeline`; on, only where `datedOf` draws it. `wires.ts`
+`timelinesOf` draws each `RegionBox.timeline` in a `vb-timelines` group (lanes, timelines, connectors), `<g
+data-region>` per container, rewritten only on change, then `applyTimelineLook`; `Lane.x` for lanes beside a line run
+down. No drag: `pointer.ts` `DATED`, `moves.ts` `placeable`, `places.ts` `pin`. Direction row on a flow or a container
+with a timeline (`RegionState.timeline` from `render.ts`). Layout cache keys `n.timeline` and `timelineWidths`.
+`boldLead` drops a closing colon (`**Name:**`). Gallery `timeline-board-section.ts` (+ `mini-board.ts` `edges`).
+components.md § The timeline: the node and the page. Six FE_02 requests Done. Tests: `timeline.spec.ts` 16/16; the
+named specs 101 passed, no screenshot renewed; 10 new baselines under `__screenshots__/timeline.spec.ts/` (not added);
+`check`, `verify`, `gen --check`, `npm test`, `test:plugin` 116 pass. Budgets raised (measured): page 205.5 KB (205.4),
+`view/board.js` 199,700 (199,683). For the maintainer/VERIFY_01: Tab order is card-number order, not date order; the
+widths switch shows the mode's default, not the dated nodes' (run down it reads off while they match); a link from
+above the line to below can run behind a card; the line does not hide while cards glide.
+Run 2: (2026-11-19 00:03, § Design review "After FE_02") (a) done: `#format` `widthsOf(mode, own, chosen, timeline)` is the
+one rule (a container with a timeline takes its default for all its nodes; the switch shows it); `timelineWidthsOf` and
+`timelineWidths` removed. (b) done: `links/timelines.ts` draws the line per container at its origin and each stem and
+dot at its node, in kept groups with the cards' transform transition (`board.css`); a spec samples every frame of a
+glide. (c) stopped: the link shows through because cards are 70% opaque by D-032 (`--vb-card-fill`), with wires already
+beneath cards; the route also crosses card 4's box. Options A (opaque cards, amends D-032) or B (router keeps links off
+cards) for the maintainer. Renewed: `timeline-gallery-{dark,light}`. Named specs 102 passed; `npm test`, `test:plugin`
+116 pass; budgets page 206.0 (205.9), board.js 200,200 (200,168). `npm run map` needed.
+Run 3: (2026-11-19 00:14, the ruling on (c): B) the cause was the router's elbow fallback: between staggered cards above
+and below the line no gutter lies between the facing ports, so no free route was found. `#layout` `route.ts` `lineFor`
+now tries the other pair of sides (`ports.ts` `otherSides`, middle ports) before the elbow. `timeline-routes.test.ts`:
+260 of 6,888 links under a card before, 0 after; the page spec's "never runs through a card" fails before, passes after.
+Renewed: the four across board baselines and the two gallery ones. Named specs 103 passed; `npm test`, `test:timing`,
+`test:plugin` 116 pass; board.js 200,300 (200,296); page within 206.0.
 
 ### VERIFY_01: Final verification
 _Status:_ Pending  

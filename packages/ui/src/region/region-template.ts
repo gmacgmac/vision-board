@@ -98,7 +98,8 @@ const layoutButton = (id: string, mode: Mode, prefix?: string): string =>
   + ` aria-expanded="false" aria-controls="${regionIds(id, prefix).modes}" data-layout="${esc(id)}">${svgIcon(MODE_ICON[mode], 24, 'vb-mode-icon vb-layout-icon')}</button>`;
 
 /** A flow's direction in the popover (D-100 5): Across, Down and Auto, one choice marked by `update`; a press sends the
- * `direction` act for this container (`data-dir`, the page's click wiring). Shown while the layout is a flow. */
+ * `direction` act for this container (`data-dir`, the page's click wiring). Shown while the layout is a flow, or while the
+ * container has a timeline (D-105, `RegionState.timeline`), which runs the same way. */
 const directionRow = (id: string): string =>
   `<div class="vb-dir-row" role="group" aria-label="${regionWords.directionGroup}">${DIRECTIONS.map((d) =>
     `<button type="button" class="vb-dir" role="menuitemradio" aria-checked="false" tabindex="-1" data-dir="${d}" data-region="${esc(id)}">`

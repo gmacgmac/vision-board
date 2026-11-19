@@ -11,7 +11,7 @@
     "image": "image.ts (imageMarkup: what ![alt](path) becomes, after imagePathProblem, packages/format; imageNote and IMAGE_NOTE: the box saying why)",
     "styles": "markdown.css (the vb-md-* classes; tokens only; imported by the page beside node.css). Paragraphs, lists, quotes, tables and the large and medium headings read --vb-md-text, which a popover sets to --vb-pop-text (popovers-larger-thread); else --vb-text-md",
     "table": "table.ts (GFM tables: splitRow, delimiterRow, headerFits, tableHtml; MAX_COLUMNS, 4)",
-    "entries": "entries.ts (boldLead: whether rendered inline markup opens with a bold run, its name and the rest with one leading separator dropped; render.ts groups the entries)"
+    "entries": "entries.ts (boldLead: whether rendered inline markup opens with a bold run, its name with one closing colon dropped (**Name:**) and the rest with one leading separator dropped; render.ts groups the entries)"
   },
   "states": ["paragraph", "large heading", "medium heading", "label", "bulleted list", "numbered list", "nested list", "quote", "code block", "table", "table at S", "break", "inline marks", "link", "refused link", "plain text"],
   "subset": {
@@ -25,7 +25,7 @@
     "tables": "GFM: the paragraph's last line is the header row, then a delimiter row (dashes, colons for alignment) with as many cells, then rows until a blank line or another block; at most 4 columns (5 or more stay text); inline Markdown in cells, \\| for a pipe; a card with one is L (sizeTier); markdownMore off: text",
     "breaks": "---, *** or ___ (three or more, spaces between) on a line of its own; setext headings are not supported, so --- under a paragraph line is a break; markdownMore off: text",
     "plain text": "HTML blocks, setext headings, reference links, indented code, entities",
-    "entries": "entries (MarkdownOptions.entries, default false; the node template turns it on for a dated node, D-105 5): a ### heading and the blocks after it up to the next heading, rule or entry start; a paragraph opening with a bold run (the name, then the rest with one leading :, -, – or — and its spaces dropped); a top-level list item opening with a bold run (it keeps its li; the other items keep their bullets). ##, ####, plain lists, quotes, tables, code and details stay as they are; everything stays escaped. Off, the output is byte for byte what it was"
+    "entries": "entries (MarkdownOptions.entries, default false; the node template turns it on for a dated node, D-105 5): a ### heading and the blocks after it up to the next heading, rule or entry start; a paragraph opening with a bold run (the name, one colon closing it inside the bold dropped, then the rest with one leading :, -, – or — and its spaces dropped); a top-level list item opening with a bold run (it keeps its li; the other items keep their bullets). ##, ####, plain lists, quotes, tables, code and details stay as they are; everything stays escaped. Off, the output is byte for byte what it was"
   },
   "classes": {
     "vb-md-p": "p: a paragraph (01b .p)",

@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { Direction, Link, Mode, Region, View, ViewNode } from '#format';
-import { boardView, foldDrawn, MODES, readLedger } from '#format';
+import { boardView, foldDrawn, MODES, readLedger, widthsOf } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import { COL_GAP, layoutBoard, layoutRegion, overlaps, packRegions, REGION_GAP, structureOf } from '../src/index.ts';
 import type { Box, RegionPiece, Size } from '../src/index.ts';
@@ -38,8 +38,9 @@ test('the rest: the mode\'s own answer, moved below the line by REGION_GAP, or r
       for (const mid of [false, true]) {
         const r = region(mode, mid ? { columns: 2 } : {});
         const p = layoutRegion(r, NODES, LINKS, SIZES, { direction });
-        // The mode alone, on the rest and the links among them only.
-        const alone = layoutRegion(r, REST, restLinks, SIZES, { direction });
+        // The mode alone, on the rest and the links among them only, with the container's widths: with no choice, the
+        // timeline's default (After FE_02 (a)).
+        const alone = layoutRegion(r, REST, restLinks, SIZES, { direction, widths: widthsOf(mode, r.widths, undefined, direction) });
         const box = timelineBox(p);
         const [dx, dy] = direction === 'down' ? [box.x + box.w + COL_GAP, 0] : [0, box.y + box.h + REGION_GAP];
         for (const n of REST) {
@@ -133,15 +134,19 @@ test('packRegions: the drawing in board coordinates; dated nodes route around as
   }
 });
 
-test('widths: dated nodes follow timelineWidths, else match run down and own across; the rest keep the container\'s', () => {
+test('widths: a container with a timeline and no choice takes its default, dated and other nodes alike; a choice wins', () => {
   const view: View = { format: 1, session: 's', version: 1, title: 'T', regions: [region('row')], nodes: NODES, links: [] };
   const w = (l: ReturnType<typeof layoutBoard>, ns: ViewNode[]) => ns.map((n) => l.nodes.get(n.id)!.w);
-  const own = DATED.map((n) => SIZES.get(n.id)!.w);
+  const own = (ns: ViewNode[]) => ns.map((n) => SIZES.get(n.id)!.w);
+  const matched = (ns: ViewNode[]) => ns.map(() => Math.max(...own(ns)));
   const down = new Map<string, Direction>([['r', 'down']]);
-  assert.deepEqual(w(layoutBoard(view, SIZES, { directions: down }), DATED), own.map(() => Math.max(...own)));
-  assert.deepEqual(w(layoutBoard(view, SIZES), DATED), own);
-  assert.deepEqual(w(layoutBoard(view, SIZES, { directions: down, timelineWidths: new Map([['r', 'own']]) }), DATED), own);
-  assert.deepEqual(w(layoutBoard(view, SIZES, { directions: down }), REST), REST.map((n) => SIZES.get(n.id)!.w));
+  const run = layoutBoard(view, SIZES, { directions: down });
+  assert.deepEqual(w(run, DATED), matched(DATED), 'run down, the dated nodes match');
+  const grid: View = { ...view, regions: [region('grid')] };
+  assert.deepEqual(w(layoutBoard(grid, SIZES), DATED), own(DATED), 'across: own, even in a grid');
+  assert.deepEqual(w(layoutBoard(grid, SIZES), REST), own(REST));
+  assert.deepEqual(w(layoutBoard(view, SIZES, { directions: down, widths: new Map([['r', 'own']]) }), DATED), own(DATED), 'the choice wins');
+  assert.deepEqual(w(layoutBoard(grid, SIZES, { widths: new Map([['r', 'match']]) }), DATED), matched(DATED), 'the person\'s match, across');
 });
 
 test('the same picture: structureOf reports the order and sides layoutRegion draws, and the rest as the mode arranges them', () => {

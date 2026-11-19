@@ -1,6 +1,6 @@
 // Layout per container, kept between draws (N12_FE_01 ruling 3, performance.md approach 2). Each
 // container's result from `layoutRegion` is kept with a key of everything it read: the region, its
-// mode, its visible nodes (id, kind, lane, measured size, pin) in view order, the links inside
+// mode, its visible nodes (id, kind, lane, date, measured size, pin) in view order, the links inside
 // it, its head inset (the shown note block's height, 3_FE_04 step 4G ruling 3), its card widths,
 // the viewer's alignment (field-report batch 3 rulings 4 and 5), the gap under a card (rowGap), which way it runs
 // (directions). A draw lays
@@ -29,7 +29,7 @@ export interface LayoutInputs {
   align?: Align;
   /** The gap between a card and the card under it (LayoutOptions.rowGap); absent: GAP. Every container reads it. */
   rowGap?: number;
-  /** Region id -> which way it runs if a flow (LayoutOptions.directions): that container's own input. */
+  /** Region id -> which way it runs if a flow, and its timeline (LayoutOptions.directions): that container's own input. */
   directions?: Map<string, Direction>;
 }
 
@@ -45,10 +45,10 @@ export interface LayoutCache {
   clear(): void;
 }
 
-/** What a layout mode reads of a node: its id, kind and lane (packages/layout/src/modes). A test
- * changes every other field and checks the mode's answer does not move. */
+/** What the layout reads of a node: its id, kind and lane (packages/layout/src/modes), and its date (the container's
+ * timeline, D-105). A test changes every other field and checks the answer does not move. */
 const nodeKey = (n: ViewNode, s: Size | undefined, pin: Point | undefined) =>
-  [n.id, n.kind, n.lane ?? null, s?.w ?? null, s?.h ?? null, pin?.x ?? null, pin?.y ?? null];
+  [n.id, n.kind, n.lane ?? null, n.timeline ?? null, s?.w ?? null, s?.h ?? null, pin?.x ?? null, pin?.y ?? null];
 
 export function createLayoutCache(): LayoutCache {
   let kept = new Map<string, { key: string; piece: RegionPiece }>();

@@ -174,6 +174,10 @@
 .vb-wires marker[id$='-arrow-hot'] path { fill: var(--vb-wire-hot); }
 .vb-wires.settling .vb-wire { opacity: 0; }
 .vb-wire { transition: opacity var(--vb-motion-fast) linear; }
+/* A container's timeline (D-105; links/timelines.ts): its line at the container's origin and each dated node's stem
+   and dot at its node move by the transform transition the cards and frames use, so they glide with them, never ahead
+   (the timeline set's PLAN § Design review "After FE_02" (b)). */
+.vb-timelines > g { transition: transform var(--vb-motion) var(--vb-ease); }
 .vb-wire-label { font: var(--vb-text-xs) var(--vb-font); fill: var(--vb-ink-subtle); paint-order: stroke; stroke: var(--vb-surface-canvas); stroke-width: 4px; }
 /* A label on its line (linkLabels flag, link-labels.ts): a canvas-coloured tag, so the line does not
    show through, as wide as the layout kept for it. A label with no room is a marker (link-marks.ts):

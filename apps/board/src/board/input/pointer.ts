@@ -57,6 +57,9 @@ const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
  *  middle of its top line (decision 12), or the plate along the top where a skin's row puts one (FE_04; its
  *  buttons keep their own press, INTERACTIVE). */
 const HANDLE = '.vb-node-kind, .vb-node-grip, .vb-node-plate';
+/** A dated node (D-105 4, `#ui` `data-timeline`): its place is its date, so no drag starts anywhere on it, its plate
+ *  included; a press on it is a click, as on its content. */
+const DATED = 'vb-node[data-timeline]';
 /** The container's keyboard handle (3_FE_04 ruling 5), the start of its label; a drag on it, or on the
  *  rest of the label but its own buttons and its tip (FE_02), moves the container. */
 const GRIP = '.vb-region-grip';
@@ -139,7 +142,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     const add = e.shiftKey || e.metaKey || e.ctrlKey;
     if (card) {
       const id = card.dataset.id!;
-      const cards = t.closest(HANDLE) && h.box(id) ? carriedFrom(id) : [];
+      const cards = t.closest(HANDLE) && !card.matches(DATED) && h.box(id) ? carriedFrom(id) : [];
       if (cards.length) {
         g = { kind: 'move', ...start(e), id, el: card, cards, boxes: new Map(cards.map((c) => [c.id, c.box0])), add };
         return capture(e);

@@ -1237,7 +1237,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     scope the container, `references.ts`). What is in effect: the person's latest choice, else the
     region's, else the default of the mode the board shows (`DEFAULT_WIDTHS`, the one place:
     `match` for `grid` and `column`, `own` for `flow`, `row`, `lanes` and `radial`; `widthsOf(mode,
-    own?, chosen?)`). So a person who changes the mode and never chose widths gets the new mode's
+    own?, chosen?, timeline?)`), or, on a container with a timeline (D-105, D-106), the timeline's for the whole
+    container: `match` run down, `own` across (`show_layout`'s `widths` says which). So a person who changes the mode and never chose widths gets the new mode's
     default. `get_board`'s `state.widths` is region id to the person's choice, left out when none.
     `check_responses` reports a `widths` act as it reports `mode` (a container act, sorted at the
     lowest card in it), to the agents that may answer in that container.

@@ -7,15 +7,18 @@
 /** What follows the name, from its start: spaces and hard breaks, then at most one `:`, `-`, `–` or `—` and the spaces
  *  and hard breaks after it. */
 const SEPARATOR = /^(?:\s|<br \/>)*(?:[:\-–—](?:\s|<br \/>)*)?/;
+/** One colon closing the name inside the bold (`**Name:**`, a common habit), and the spaces before it. */
+const TRAILING = /\s*:$/;
 const OPEN = '<strong>';
 const CLOSE = '</strong>';
 
-/** A bold lead: the bold run's markup (the name) and the rest with its leading separator dropped; undefined when the
- *  markup does not open with a bold run, or the run holds another bold run or nothing but spaces. */
+/** A bold lead: the bold run's markup (the name, one closing colon dropped) and the rest with its leading separator
+ *  dropped; undefined when the markup does not open with a bold run, or the run holds another bold run or nothing but
+ *  spaces. */
 export function boldLead(html: string): { name: string; rest: string } | undefined {
   if (!html.startsWith(OPEN)) return undefined;
   const end = html.indexOf(CLOSE);
-  const name = end < 0 ? '' : html.slice(OPEN.length, end);
+  const name = end < 0 ? '' : html.slice(OPEN.length, end).replace(TRAILING, '');
   if (!name.trim() || name.includes(OPEN)) return undefined;
   return { name, rest: html.slice(end + CLOSE.length).replace(SEPARATOR, '') };
 }

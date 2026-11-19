@@ -62,6 +62,7 @@ import { layoutControlSection } from './layout-control-section.ts';
 import { commandLensSection } from './command-lens-section.ts';
 import { appWindowSection } from './app-window-section.ts';
 import { timelineSamples } from './timeline-section.ts';
+import { timelineBoardSection } from './timeline-board-section.ts';
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
@@ -183,6 +184,7 @@ function build(): void {
   main.append(flowSection(fx)); // BE_01; last of all, so no section moves
   main.append(layoutControlSection(fx)); // FE_07; last of all, so no section moves
   if (flagOn('appCards', flags)) main.append(appWindowSection(fx)); // FE_08; last of all, so no section moves
+  if (flagOn('timeline', flags)) main.append(timelineBoardSection(fx)); // D-105, FE_02; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

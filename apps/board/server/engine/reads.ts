@@ -88,9 +88,12 @@ const showLayout: Op = ({ params, ledger }) => {
   const st = boardState(s, board);
   const view = placedView(drawn, st);
   const mode = st.modes.get(region) ?? r.mode;
-  const widths = widthsOf(mode, r.widths, st.widths.get(region));
+  const nodes = view.nodes.filter((n) => n.region === region);
+  const direction = directionOf(s, board, region);
+  // A container with a timeline takes its default widths with no choice (After FE_02 (a)), as the page does.
+  const widths = widthsOf(mode, r.widths, st.widths.get(region), nodes.some((n) => n.timeline !== undefined) ? direction : undefined);
   // As the page lays it out: the direction a flow and a timeline run, branches on their own rows, dated cards on the line.
-  const out = structureOf(r, view.nodes.filter((n) => n.region === region), view.links, mode, widths, { direction: directionOf(s, board, region) });
+  const out = structureOf(r, nodes, view.links, mode, widths, { direction });
   const timeline = out.timeline && { direction: out.timeline.direction, cards: out.timeline.cards.map(({ id, ...dot }) => ({ n: Number(id), ...dot })) };
   return reply(200, {
     head: s.seq, board, region, mode, widths, ...(out.lanes && { lanes: out.lanes }), columns: out.columns,

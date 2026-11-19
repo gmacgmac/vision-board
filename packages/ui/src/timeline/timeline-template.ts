@@ -5,7 +5,7 @@
 // assistive technology: the dates are on the nodes. Every size but the geometry is a token (timeline.css); colours by
 // kind and tone are set in place by timeline-apply.ts (CSSOM, never a style attribute). It scales with the board as part
 // of the world (ZOOM_RULES.world). Pure.
-import type { Kind, Point, Tone, TimelineDrawing } from '#format';
+import type { Kind, Point, Tone, TimelineDot, TimelineDrawing } from '#format';
 import { esc } from '../markdown/inline.ts';
 
 /** How a dated node colours its dot: its kind, and its tone if it has one. */
@@ -36,16 +36,32 @@ function dotLook(look: TimelineLook | undefined): string {
   return ` data-kind="${esc(look.kind)}"` + (look.tone === undefined ? '' : ` data-tone="${esc(String(look.tone))}"`);
 }
 
-/** The SVG for one container's timeline (`drawing` in the coordinates it is drawn in; `look` answers each dot's node). */
-export function timelineMarkup(drawing: TimelineDrawing, look: (id: string) => TimelineLook | undefined): string {
-  const { line, dots, years, bands, direction } = drawing;
-  const bandsSvg = bands.map((b) => `<path class="vb-timeline-band" d="${seg(b.from, b.to)}"/>`).join('');
-  const stems = dots.map((d) => `<path class="vb-timeline-stem" d="${seg(d.stem.from, d.stem.to)}"/>`).join('');
+/** The line's own parts, in the coordinates `drawing` is in: the same-date bands, the line with its arrow, the years. */
+export function timelineLineMarkup(drawing: TimelineDrawing): { bands: string; line: string; years: string } {
+  const { line, years, bands, direction } = drawing;
   // Across, the first year starts at the line's start; every other year (and every year run down) is centred on its point.
-  const yearsSvg = years.map((y) => {
-    const anchor = direction === 'across' && same(y.at, line.from) ? 'start' : 'middle';
-    return `<text class="vb-timeline-year" x="${num(y.at.x)}" y="${num(y.at.y)}" text-anchor="${anchor}">${esc(y.year)}</text>`;
-  }).join('');
-  const dotsSvg = dots.map((d) => `<circle class="vb-timeline-dot" cx="${num(d.at.x)}" cy="${num(d.at.y)}" data-node="${esc(d.id)}" data-side="${d.side}"${dotLook(look(d.id))}/>`).join('');
-  return `<g class="vb-timeline" data-direction="${direction}" aria-hidden="true">${bandsSvg}${lineAndArrow(line)}${stems}${yearsSvg}${dotsSvg}</g>`;
+  return {
+    bands: bands.map((b) => `<path class="vb-timeline-band" d="${seg(b.from, b.to)}"/>`).join(''),
+    line: lineAndArrow(line),
+    years: years.map((y) => {
+      const anchor = direction === 'across' && same(y.at, line.from) ? 'start' : 'middle';
+      return `<text class="vb-timeline-year" x="${num(y.at.x)}" y="${num(y.at.y)}" text-anchor="${anchor}">${esc(y.year)}</text>`;
+    }).join(''),
+  };
+}
+
+/** One dated node's stem and dot, in the coordinates `dot` is in. */
+export function timelineDotMarkup(dot: TimelineDot, look: TimelineLook | undefined): { stem: string; dot: string } {
+  return {
+    stem: `<path class="vb-timeline-stem" d="${seg(dot.stem.from, dot.stem.to)}"/>`,
+    dot: `<circle class="vb-timeline-dot" cx="${num(dot.at.x)}" cy="${num(dot.at.y)}" data-node="${esc(dot.id)}" data-side="${dot.side}"${dotLook(look)}/>`,
+  };
+}
+
+/** The SVG for one container's timeline (`drawing` in the coordinates it is drawn in; `look` answers each dot's node).
+ *  The page draws the same parts in groups of their own, so the dots move with their cards (wires.ts). */
+export function timelineMarkup(drawing: TimelineDrawing, look: (id: string) => TimelineLook | undefined): string {
+  const { bands, line, years } = timelineLineMarkup(drawing);
+  const parts = drawing.dots.map((d) => timelineDotMarkup(d, look(d.id)));
+  return `<g class="vb-timeline" data-direction="${drawing.direction}" aria-hidden="true">${bands}${line}${parts.map((p) => p.stem).join('')}${years}${parts.map((p) => p.dot).join('')}</g>`;
 }

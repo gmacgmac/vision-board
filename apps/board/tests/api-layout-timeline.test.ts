@@ -63,6 +63,7 @@ test('a container with dated and undated cards reports both: the dated in drawn 
   // The rest: cards 2 and 5 in the grid's two columns; the link 1 > 2 touches a dated card, so it is not the mode's.
   assert.deepEqual(out.cards, [{ n: 2, column: 1, row: 1 }, { n: 5, column: 2, row: 1 }]);
   assert.deepEqual([out.columns, out.links, out.crossing, out.empty, out.mode], [2, 0, 0, 0, 'grid']);
+  assert.equal(out.widths, 'own', 'a grid with a timeline across, no choice: the timeline\'s default (After FE_02 (a))');
   const s = h.ledger.state();
   const view = placedView(boardView(s, 'launch'), boardState(s, 'launch'));
   const plan = view.regions.find((r) => r.id === 'plan')!;
@@ -75,6 +76,7 @@ test('a container with no dated card leaves timeline out and answers as before',
   assert.ok(!('timeline' in out));
   assert.deepEqual(out.cards, [{ n: 7, column: 1, row: 1 }, { n: 8, column: 2, row: 1 }]);
   assert.deepEqual([out.columns, out.links, out.crossing, out.empty], [2, 0, 0, 0]);
+  assert.equal(out.widths, 'own', 'a row\'s own default');
 });
 
 test('the person\'s direction turns the sides to left and right, alternating from the left; Auto gives them back', async () => {
@@ -83,6 +85,7 @@ test('the person\'s direction turns the sides to left and right, alternating fro
   assert.equal(down.timeline.direction, 'down');
   assert.deepEqual(down.timeline.cards.map((c: any) => c.side), ['left', 'right', 'left', 'right']);
   assert.deepEqual(down.timeline.cards.map(({ n, side }: any) => ({ n, side })), drawn());
+  assert.equal(down.widths, 'match', 'run down, no choice: match');
   await act('auto');
   assert.deepEqual((await layout('plan')).timeline.cards.map((c: any) => c.side), ['above', 'below', 'above', 'below']);
 });

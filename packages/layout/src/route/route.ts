@@ -2,9 +2,11 @@
 // fixed sides and spread ports (ports.ts). A link between two cards of one container (`groups`)
 // runs through free space, in the gutters between columns and lanes and never under a card
 // (search.ts): short links first, each taking the free route that is cheapest once every crossing
-// with the lines already placed in its container costs CROSS px. Runs that would share a line then
-// get their own tracks (tracks.ts). Links between containers, links in radial, and a link with no
-// free route keep the plain elbow (path.ts). Each labelled link gets its label's place
+// with the lines already placed in its container costs CROSS px. When the facing sides chosen leave no
+// free route (staggered cards, such as a timeline's above and below its line, cover the stretch between
+// them), the other pair of sides is tried (`otherSides`). Runs that would share a line then get their
+// own tracks (tracks.ts). Links between containers, links in radial, and a link with no free route
+// either way keep the plain elbow (path.ts). Each labelled link gets its label's place
 // (labels.ts). Pure and deterministic.
 import type { Link } from '#format';
 import type { Box, Point, Route } from '../types.ts';
@@ -16,7 +18,7 @@ import type { Frame } from './frame.ts';
 import { placeLabel } from './labels.ts';
 import { along, elbow, lengthOf, roundedPath, simplify } from './path.ts';
 import type { Plan, Side } from './ports.ts';
-import { assignPorts, sidesFor } from './ports.ts';
+import { assignPorts, otherSides, sidesFor } from './ports.ts';
 import type { Found } from './search.ts';
 import { fiveRuns, threeRuns } from './search.ts';
 import type { BoardChannel, Line } from './tracks.ts';
@@ -82,19 +84,26 @@ function lineFor(plan: Plan, spaces: Spaces | null, placed: Placed, groups?: Rea
   const { link, pa, pb, sa } = plan;
   const group = groups?.get(link.from);
   if (spaces && group !== undefined && group === groups!.get(link.to)) {
-    const space = spaces(group, sa);
-    const f = frameFor(sa);
-    const [p, q, a, b] = [f.to(pa!), f.to(pb!), space.byId.get(link.from)!, space.byId.get(link.to)!];
     const done = placed.get(group) ?? placed.set(group, []).get(group)!;
-    let best = cheapest(threeRuns(p, q, space.obs, a, b), f, done);
-    // Five runs are dearer by two corners: only worth working out to avoid a crossing.
-    if (!best || best.crosses > 0) best = cheapest(fiveRuns(p, q, space.obs, a, b, space.area), f, done, best);
+    // The other pair of sides when the first leaves no free route.
+    const other = otherSides(plan.a, plan.b, sa);
+    const best = freeLine(link, sa, pa!, pb!, spaces(group, sa), done)
+      ?? freeLine(link, other.sa, other.pa, other.pb, spaces(group, other.sa), done);
     if (best) {
       done.push({ pts: best.line.pts, box: boundsOf(best.line.pts.map((pt) => ({ ...pt, w: 0, h: 0 }))) });
       return best.line;
     }
   }
   return { pts: elbow(pa!, pb!, sa), chans: [] };
+}
+
+/** The cheapest free route for `link` from `pa` on its source's side `sa` to `pb`, in `space`; null when there is none. */
+function freeLine(link: Link, sa: Side, pa: Point, pb: Point, space: Space, done: Done): Choice | null {
+  const f = frameFor(sa);
+  const [p, q, a, b] = [f.to(pa), f.to(pb), space.byId.get(link.from)!, space.byId.get(link.to)!];
+  const best = cheapest(threeRuns(p, q, space.obs, a, b), f, done);
+  // Five runs are dearer by two corners: only worth working out to avoid a crossing.
+  return !best || best.crosses > 0 ? cheapest(fiveRuns(p, q, space.obs, a, b, space.area), f, done, best) : best;
 }
 
 interface Choice { line: Line; crosses: number; score: number }

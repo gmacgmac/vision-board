@@ -13,7 +13,7 @@ import type { Direction, NodeSize, ViewNode } from '#format';
 import type { Align, BoardLayout, Size } from '#layout';
 import { EDGE_ROW_GAP } from '#layout';
 import { widthsOf } from '#format';
-import type { CardConditions, CardReply, IconLibrary, MarkdownOptions, NodeTemplateOptions, SkinDef, VbNodeElement, VbRegionElement } from '#ui';
+import type { CardConditions, CardReply, IconLibrary, MarkdownOptions, NodeTemplateOptions, SkinDef, TimelineLook, VbNodeElement, VbRegionElement } from '#ui';
 import { SKIN_DEFS } from '#ui';
 import { holdersOf } from '../access/index.ts';
 import { createCardImages } from '../cards/index.ts';
@@ -135,7 +135,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   const cards = createCardSet(els.cards, cardOpts);
   const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, railHover: d.railHover === true, direction: d.direction, idPrefix: d.ids, markdown: d.markdown });
   const use = d.rail && d.railHover ? bindRegionUse(els.stage, () => regions.els, (id) => d.data().view.nodes.find((n) => n.id === id)?.region) : undefined;
-  const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids);
+  const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids, lookOf);
   const cache = createLayoutCache();
   const sizes = new Map<string, Size>();
   let layout: BoardLayout | null = null;
@@ -145,6 +145,15 @@ export function createDrawing(d: DrawDeps): Drawing {
     host: els.cards, route: d.markdown?.imageRoute, viewIn: () => els.stage.parentElement!, grown: (ids) => resized(ids), say: d.say,
     near: (el) => { const b = layout?.nodes.get(el.dataset.id!); return !!b && !isFar(d.vp.k) && !outside(b, viewBounds(d.vp, els.stage)); },
   });
+
+  /** A timeline dot's look (D-105): its node's kind and tone, from the view drawn, indexed once per view. */
+  let looks: { view: BoardData['view']; byId: Map<string, ViewNode> } | undefined;
+  function lookOf(id: string): TimelineLook | undefined {
+    const view = d.data().view;
+    if (looks?.view !== view) looks = { view, byId: new Map(view.nodes.map((n) => [n.id, n])) };
+    const n = looks.byId.get(id);
+    return n && { kind: n.kind, tone: n.tone };
+  }
 
   /** New card elements would glide in from the origin: skip transitions for this draw. */
   function noAnim() {
@@ -193,11 +202,17 @@ export function createDrawing(d: DrawDeps): Drawing {
   function lay(data: BoardData, fresh: boolean) {
     const { pins, modes, regionPins, widths } = data.state;
     const rowGap = (cardOpts.edges ?? SKIN_DEFS.default).marks === 'edges' ? Math.max(d.rowGap ?? 0, EDGE_ROW_GAP) : d.rowGap;
+    const directions = d.direction && new Map(data.view.regions.map((r) => [r.id, d.direction!(r.id)]));
+    const hidden = d.hidden();
+    // The containers with a dated node drawn: a timeline, whose default widths are the container's (After FE_02 (a)).
+    const dated = new Set(data.view.nodes.filter((n) => n.timeline !== undefined && !hidden.has(n.id)).map((n) => n.region));
     const inputs = {
-      pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start', rowGap,
-      ...(d.direction && { directions: new Map(data.view.regions.map((r) => [r.id, d.direction!(r.id)])) }),
-      // The widths in force per container: the person's, the agent's, the shown mode's (as the server's show_layout).
-      widths: new Map(data.view.regions.map((r) => [r.id, widthsOf(modes.get(r.id) ?? r.mode, r.widths, widths.get(r.id))])),
+      pins, modes, hidden, regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start', rowGap,
+      ...(directions && { directions }),
+      // The widths in force per container: the person's, the agent's, the default, the shown mode's or its timeline's
+      // (as the server's show_layout and the widths switch).
+      widths: new Map(data.view.regions.map((r) => [r.id, widthsOf(modes.get(r.id) ?? r.mode, r.widths, widths.get(r.id),
+        dated.has(r.id) ? directions?.get(r.id) ?? 'across' : undefined)])),
     } as const;
     let run = cache.run(data.view, sizes, inputs);
     // A card drawn wider than its own width wraps less: its height at that width, then lay out again.

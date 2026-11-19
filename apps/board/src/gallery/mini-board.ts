@@ -9,7 +9,7 @@ import type { Align } from '#layout';
 import { ROW_GAP } from '#layout';
 import { flagOn } from '#format';
 import { pageFlags } from '../flags.ts';
-import type { CardConditions } from '#ui';
+import type { CardConditions, SkinDef } from '#ui';
 import { createDrawing, type Drawing } from '../board/canvas/index.ts';
 import { FAR_K, Viewport } from '../board/canvas/index.ts';
 import { el, ownIds } from './dom.ts';
@@ -31,8 +31,11 @@ export interface MiniOptions {
   facts?: (n: ViewNode) => CardConditions;
   /** The container's fresh pill counts (freshCards flag), keyed by its own id. */
   fresh?: ReadonlyMap<string, FreshCount>;
-  /** Which way a flow runs (D-100 5); left out, across. */
+  /** Which way a flow runs (D-100 5), and a timeline (D-105); left out, across. */
   direction?: Direction;
+  /** Where the nodes draw their marks, a skin's row (D-100); left out, the default skin's. Inside a board root carrying
+   *  that skin (`data-vb-skin`), so its tokens reach the cards. */
+  edges?: SkinDef;
   /** Called once drawn, for a sample that shows a hover or focus look. */
   then?: (host: HTMLElement, drawing: Drawing) => void;
 }
@@ -88,7 +91,7 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
     hidden: () => new Set(), focus: () => null, selected: () => false, insets: () => new Map(), owed: () => new Set(),
     facts: o.facts ?? (() => ({})), replies: () => [],
     fresh: () => new Map([...(o.fresh ?? [])].map(([id, c]) => [as(id), c])),
-    ...(o.direction && { direction: () => o.direction! }),
+    ...(o.direction && { direction: () => o.direction! }), ...(o.edges && { edges: o.edges }),
   });
   pending.push(() => {
     drawing.draw(true);

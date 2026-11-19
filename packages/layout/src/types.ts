@@ -57,8 +57,9 @@ export interface LayoutOptions {
   headInsets?: Map<string, number>;
   /** The person's mode choice per region (from the transcript). */
   modes?: Map<string, Mode>;
-  /** Card widths per region, resolved by the caller with `widthsOf` (the person's, the region's,
-   *  the mode's default). A region left out uses `widthsOf(mode, region.widths)`. */
+  /** Card widths per region, for its dated and other nodes alike, resolved by the caller with `widthsOf` (the
+   *  person's, the region's, the default: the mode's, or the timeline's on a region with dated nodes). A region left out
+   *  uses `widthsOf(mode, region.widths)`, with the timeline's default when it has dated nodes. */
   widths?: Map<string, Widths>;
   /** The viewer's alignment (ruling 4); default `start` (top, or left for vertical layouts). */
   align?: Align;
@@ -68,10 +69,6 @@ export interface LayoutOptions {
   /** Which way each `flow` container runs, and each container's timeline (region id -> `directionOf`); left out,
    *  `across`. */
   directions?: Map<string, Direction>;
-  /** The widths of each container's dated nodes, resolved by the caller with `timelineWidthsOf` (the person's, the
-   *  region's, else `match` run down and `own` across: point 595). A region left out uses `timelineWidthsOf(direction,
-   *  region.widths)`. */
-  timelineWidths?: Map<string, Widths>;
   /** Nodes not drawn (e.g. decided items when hidden). */
   hidden?: Set<string>;
   /** Width after which regions wrap to a new row. */

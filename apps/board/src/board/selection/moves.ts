@@ -13,7 +13,7 @@ import type { BoardState } from '#actions';
 import { LATER, statusOf } from '#actions';
 import type { BoardLayout, Box, Point } from '#layout';
 import type { StageBox, VbRegionElement } from '#ui';
-import { offers } from '#ui';
+import { datedOf, offers } from '#ui';
 import type { ActFields } from '../io.ts';
 import type { MoveMenu, MoveTarget } from './move-menu.ts';
 import { createMoveMenu } from './move-menu.ts';
@@ -43,7 +43,7 @@ export interface MoveDeps {
 }
 
 export interface Moves {
-  /** The cards a drag on `id` carries: the selection when `id` is in it, else `id` alone. */
+  /** The cards a drag on `id` carries: the selection when `id` is in it, else `id` alone; never a dated node (D-105 4). */
   carried(id: string): string[];
   dragStart(ids: readonly string[]): void;
   dragOver(at: Point): void;
@@ -71,6 +71,8 @@ export function createMoves(d: MoveDeps): Moves {
     return n !== undefined && offers(n).includes('later');
   });
   const takes = (region: string, ids: readonly string[]) => region !== LATER_REGION || laterTakes(ids);
+  /** A dated node's place is its date (D-105 4): a drag never carries it, and no drop pins it. */
+  const placeable = (id: string) => { const n = node(id); return !n || !datedOf(n); };
 
   /** The container whose frame is under client point `at`, if any. */
   function regionAt(at: Point): string | undefined {
@@ -105,7 +107,7 @@ export function createMoves(d: MoveDeps): Moves {
     const after = statusActs(leaving, to);
     const r = d.layout()?.regions.find((x) => x.id === to);
     if (boxes && r) {
-      for (const [id, b] of boxes) after.push({ action: 'pin', ...d.target(id), x: Math.round(b.x - r.origin.x), y: Math.round(b.y - r.origin.y) });
+      for (const [id, b] of boxes) if (placeable(id)) after.push({ action: 'pin', ...d.target(id), x: Math.round(b.x - r.origin.x), y: Math.round(b.y - r.origin.y) });
     }
     return [...(leaving.length ? [[moveAct(leaving, to)]] : []), ...(after.length ? [after] : [])];
   }
@@ -127,7 +129,7 @@ export function createMoves(d: MoveDeps): Moves {
 
   return {
     menu,
-    carried: (id) => (d.selection.has(id) ? d.selection.selected() : [id]),
+    carried: (id) => (d.selection.has(id) ? d.selection.selected() : [id]).filter(placeable),
     dragStart(ids) {
       carrying = ids;
       d.showLater(true);

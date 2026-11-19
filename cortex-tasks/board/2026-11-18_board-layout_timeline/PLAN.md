@@ -380,6 +380,11 @@ Where a page and this list differ, this list wins._
   56; (3) under `own`, run down, the line sits one stem from the widest node on each side (the column's middle under
   `match`); (4) run down, the first dated node starts at the top of the content and the other nodes start level with
   it; (5) no special link routing around the line (out of scope); (6) the same-date band keeps its length.
+- **After FE_02** (orchestrator, under the maintainer's autonomy): (a) a container with a timeline and no widths choice
+  takes the timeline's default for the whole container (run down `match`, across `own`), dated and other nodes alike,
+  and the widths switch shows that, so it always shows what is in force; the person's choice still wins. (b) The line
+  and its dots move with the cards during the relayout glide, never ahead of them. (c) A link never shows through a
+  card: links draw beneath cards in both skins.
 - **M84** (tracker): rolled into this set as FIX_01 (the `anyOf` refusal wording), wave 2.
 - **D-106** (appended on the maintainer's yes, point 596; D-105 item 3 says run down puts the nodes on one side): "Run down, a
   timeline's dated nodes alternate left and right of the line, the first on the left, spaced by the board's gaps

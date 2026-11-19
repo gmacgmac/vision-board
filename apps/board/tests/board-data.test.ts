@@ -4,12 +4,12 @@
 // page build the board from the one `boardData` (packages/actions); the server sends `boardJson` of it.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import type { LedgerEvent, LedgerLine } from '#format';
+import type { LedgerEvent, LedgerLine, View } from '#format';
 import { fromLine, LEDGER_FORMAT } from '#format';
 import { applyEvent, boardData, boardJson, eventBoard, foldLedger, pageConditions } from '#actions';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
-import { canApply } from '../src/board/board-data.ts';
+import { canApply, datedView } from '../src/board/board-data.ts';
 
 let h: Harness;
 before(async () => { h = await startBoard(); });
@@ -82,4 +82,23 @@ test('canApply: a line from a newer ledger format is not applied in place', () =
   const e = { v: LEDGER_FORMAT, seq: 1, type: 'seen' } as unknown as LedgerEvent;
   assert.equal(canApply(e), true);
   assert.equal(canApply({ ...e, v: LEDGER_FORMAT + 1 } as unknown as LedgerEvent), false);
+});
+
+test('datedView, the timeline flag\'s one gate (D-105): off, no node keeps a date; on, only a node that draws one does', () => {
+  const view: View = {
+    format: 1, session: 's', version: 1, title: 't', regions: [{ id: 'r', title: 'R', mode: 'row' }], links: [],
+    nodes: [
+      { id: '1', region: 'r', kind: 'topic', title: 'a', timeline: '2026-10' },
+      { id: '2', region: 'r', kind: 'app', title: 'b', timeline: '2026' },
+      { id: '3', region: 'r', kind: 'topic', title: 'c' },
+    ],
+  };
+  const snapshot = structuredClone(view);
+  const off = datedView(view, false);
+  assert.deepEqual(off.nodes.map((n) => 'timeline' in n), [false, false, false]);
+  assert.deepEqual(off.nodes.map((n) => n.title), ['a', 'b', 'c']);
+  assert.deepEqual(datedView(view, true).nodes.map((n) => n.timeline), ['2026-10', undefined, undefined], 'never on an app card');
+  assert.deepEqual(view, snapshot, 'the view itself is not changed');
+  const plain: View = { ...view, nodes: [view.nodes[2]!] };
+  assert.equal(datedView(plain, false), plain, 'nothing to drop: the same view');
 });
