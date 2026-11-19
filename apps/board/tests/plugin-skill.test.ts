@@ -91,7 +91,7 @@ test('ledgers and read-only (D-084, D-085): standalone reads another ledger and 
 test('v3.30 (insert-markdown-signals BOT_01): both builds point to list_open, draw before naming, insert, and the Markdown; standalone saves its secret', () => {
   for (const kept of [
     'never read every card with `get_board` to find what you owe.', 'its `n` comes in the answer to the call that draws it, so a reply that names it',
-    '`insert: { after, before }` beside `node`', '`#` and `##` headings (large, medium), a table of 4 columns at most', '**A summary card** reads at a glance',
+    '`insert: { after, before }` beside `node`', '`#` and `##` headings, a table of 4 columns at most', '**A summary card** reads at a glance',
   ]) assert.ok(says(all.standalone, kept) && says(all.plugin, kept), kept);
   assert.ok(source.includes('in the session\'s scratchpad or notes file') && !all.plugin.includes('scratchpad'), 'the secret is the standalone bot\'s');
 });
@@ -193,8 +193,8 @@ test('v3.35 (node-overhaul T_05): each reference is named where it is needed (ru
   // Where to read each one, at the point of use (run 1, live: Haiku read handover and apps, which the core leaves to
   // them, but not layouts or architecture from an index alone).
   const reads = (t: string) => [...t.matchAll(/read `references\/([a-z-]+)\.md`|`references\/([a-z-]+)\.md` first/g)].map((m) => m[1] ?? m[2]);
-  assert.deepEqual(reads(source), ['layouts', 'architecture', 'timeline', 'apps', 'handover']);
-  assert.deepEqual(reads(plugin), ['layouts', 'architecture', 'timeline', 'handover'], 'apps are the standalone host\'s');
+  assert.deepEqual(reads(source), ['files', 'layouts', 'architecture', 'timeline', 'apps', 'handover']);
+  assert.deepEqual(reads(plugin), ['files', 'layouts', 'architecture', 'timeline', 'handover'], 'apps are the standalone host\'s');
   assert.ok(says(source, 'read one where this page says, before you write; never just in case'));
   for (const both of [
     '**Before you write linked cards** (a process: `flow`; work between owners: `lanes`; a card put between two linked cards) **or a `radial`, read `references/layouts.md`**',
@@ -227,4 +227,17 @@ test('v3.36 (timeline T_02, D-105): both cores carry the maintainer\'s sentence 
   const dated = items.filter((i) => i.node?.timeline !== undefined);
   assert.ok(dated.length === 3 && dated.every((i) => isTimeline(i.node!.timeline)), 'three dated cards, each in a stored form');
   assert.ok(dated.some((i) => /^### /m.test(i.node!.body ?? '')), 'one card holds entries as `###` headings');
+});
+
+test('v3.37 (export-import-print T_03, D-107, D-108): both cores send a copy or an import to the files reference, which ships the same in both builds and teaches the export read, the import mode, the file as it is, what stays behind and the retry', () => {
+  const line = '- To copy a board or bring in an exported file, read `references/files.md` first.';
+  assert.ok(source.includes(line) && plugin.includes(line), 'one core line, under Starting a board');
+  assert.equal(built.plugin['references/files.md'], built.standalone['references/files.md']);
+  const ref = built.plugin['references/files.md']!;
+  for (const taught of [
+    '`get_board` (a whole board) or `show_container` (one container) with `export: true`', '`import: { into, file }` in place of `items`',
+    '**The file goes in as it is**', 'Never `propose` the marks', 'never the `dropped` paths', '**A retried import writes the file twice**',
+  ]) assert.ok(says(ref, taught), taught);
+  const fields = (tool: string) => Object.keys((TOOLS.get(tool)!.inputSchema.properties ?? {}) as object);
+  assert.ok(fields('write_board').includes('import') && fields('get_board').includes('export') && fields('show_container').includes('export'), 'the fields it names are the tools\'');
 });

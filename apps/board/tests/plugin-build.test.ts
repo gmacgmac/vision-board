@@ -20,7 +20,7 @@ import { checkPluginStylesheet, checkStylesheet } from '../../../tests/plugin/co
 import { scopeOf } from '../../../tests/plugin/contract/nclite/shared/plugin-checks.ts';
 
 /** The skill ships with the references its plugin build names (skills/vision-board/source/build.mjs, node-overhaul T_05). */
-const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'references/architecture.md', 'references/handover.md', 'references/layouts.md', 'references/timeline.md', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
+const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'references/architecture.md', 'references/files.md', 'references/handover.md', 'references/layouts.md', 'references/timeline.md', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
 const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_layout', 'list_open', 'check_responses', 'request_grant', 'write_board'];
 /** Gzip budgets in bytes, a little over the size at the time (BUILD_01: view 164030, styles 18799, engine 210716). The
  * view and the styles were 190,000 and 22,000 before the Node Overhaul; its T_04 removed the old node and measured 195,372

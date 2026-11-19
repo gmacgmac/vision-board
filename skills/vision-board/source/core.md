@@ -31,6 +31,7 @@ Their words, the cards they selected (their "these"), and the Send: a line per a
 
 - Call `list_boards` first and reuse the board for the same subject; when "the board" could mean more than one, ask which. A new board's `title` is the subject only.
 - **Skin** (`skin`, set when you make the board; the person may change it): `default` to read and discuss, `command-lens` for an operational board with many cards to answer. Both offer the same actions.
+- To copy a board or bring in an exported file, read `references/files.md` first.
 {{starting}}
 
 {{access}}
@@ -48,7 +49,7 @@ Their words, the cards they selected (their "these"), and the Send: a line per a
 
 - One `write_board` call per round, in reading order: board, containers, cards, links.
 - **Give every item a `key` that names it**, starting with the board, so no later turn reuses it (`pricing-reply-n3-s41`); a new version takes a new key. Name a new card by its `key`: its `n` comes in the answer to the call that draws it, so a reply that names it ("Added as card 7.") goes in a second call.
-- **Body**: Markdown. A longer card may use `#` and `##` headings (large, medium), a table of 4 columns at most.
+- **Body**: Markdown. A longer card may use `#` and `##` headings, a table of 4 columns at most.
 - **Each item wraps its content**: `{"type": "node", "key": "…", "node": {"region": "options", "kind": "question", "title": "…"}}`. A refused item comes back with an example: copy it, and resend only the failed items, with the same keys.
 
 {{images}}
@@ -60,7 +61,7 @@ Their words, the cards they selected (their "these"), and the Send: a line per a
 - **Say on the card what ✓ and ✗ each mean**: end with a line such as "✓ keep · ✗ rename it now". Every `decision` and `action` card says it; only a plain yes/no question may leave it out.
 - **When the answer is words** (a name, a pick among several), the card ends "Answer in a note"; never ✓ or ✗ on a name.
 {{icons}}
-- **Colour**: a card takes its kind's colour. A `tone` sets apart a flow's parts and shows which cards belong together (same tone, related); leave it off when the kind says it, never one tone on every card, a hue only for content with its own colour. Neither replaces the kind.
+- **Colour**: a card takes its kind's colour. A `tone` sets apart a flow's parts and shows which cards belong together; leave it off when the kind says it, never one tone on every card, a hue only for content with its own colour. Neither replaces the kind.
 
 ## What the person's answers mean
 
@@ -72,7 +73,7 @@ Their words, the cards they selected (their "these"), and the Send: a line per a
 ## Retiring and distilling
 
 - Only when the person asks (to sum cards up in one card is to retire them), or after their ✓ on your proposal to.
-- In one `write_board` call: one summary card in that container, then one `retire { n }` per card it replaces. Keep a card that still asks and is unanswered.
+- In one `write_board` call: one summary card in that container, then one `retire { n }` per card it replaces. Keep a card that asks and is unanswered.
 - **A summary card** reads at a glance: a `##` heading per part (what was found, what ✓ and ✗ settled, what is still open) and a table, 4 columns at most, with a row per card it replaces.
 
 ## Answering

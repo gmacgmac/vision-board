@@ -107,7 +107,7 @@ async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: num
     // The door logs the plugin bot's calls as they happen; the standalone bot's come from its stream after the run, so
     // mid-run its board is the ledger's last `board` line (no scenario's setup draws a board in standalone's later turns).
     const botBoard = () => (host.calls.filter((c) => c.name === 'write_board' && typeof c.input.board === 'string').at(-1)?.input.board as string | undefined) ?? lastBoard(dir);
-    const stage: Stage = { dir, tool: host.tool, person: host.person, facts, botBoard, readOnly: host.setReadOnly, ledger: host.openLedger };
+    const stage: Stage = { dir, cwd: host.cwd, tool: host.tool, person: host.person, facts, botBoard, readOnly: host.setReadOnly, ledger: host.openLedger };
     if (s.setup) await deadline(s.setup(stage), CALL_MS, `${s.id} setup`);
     const mcp = path.join(runDir, 'mcp.json');
     writeFileSync(mcp, `${JSON.stringify({ mcpServers: { [SERVER]: host.mcp } }, null, 2)}\n`);
@@ -116,7 +116,7 @@ async function runOnce(s: Scenario, o: EvalOptions, runDir: string, attempt: num
     const turns = s.turns.map((t) => async () => {
       if (t.act) await deadline(t.act(stage), CALL_MS, `${s.id} person`);
       const sent = t.send ? await host.person.send(typeof t.send === 'function' ? t.send(stage) : t.send) : '';
-      return [t.say, sent].filter(Boolean).join('\n\n');
+      return [typeof t.say === 'function' ? t.say(stage) : t.say, sent].filter(Boolean).join('\n\n');
     });
     const run = await runTurns({
       command: o.dry ? process.execPath : 'claude', args: o.dry ? [FAKE_BOT, ...args] : args, cwd: host.cwd, out: runDir,
