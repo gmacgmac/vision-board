@@ -2,9 +2,9 @@
 // (N12_FE_01, performance.md approach 2): every route is worked out (pure and cheap), and only a
 // connector whose path, label or look changed is written. A link's route changes when a box it
 // touches moved, or when a neighbour on the same side of a card moved its port. The SVG's children
-// stay in the order a full draw writes them: lanes, then timelines, then connectors, then labels, each in link order.
-// A container's timeline (D-105) is drawn between the lane bands and the connectors by timelines.ts, in groups that
-// move with the cards; it scales with the world.
+// stay in the order a full draw writes them: lanes, then timelines, then connectors, then labels, then the timelines' dots,
+// each in link order. A container's timeline (D-105) is drawn by timelines.ts, in groups that move with the cards: its
+// line and stems between the lane bands and the connectors, its dots above everything; it scales with the world.
 // With the wireLayers flag (D-032) the page puts this SVG behind frames and cards, and `top`, an SVG
 // above the cards, repeats the focused card's connectors. With the linkLabels flag a label sits on
 // its line where the layout found it room (link-labels.ts), else a marker does (link-marks.ts, in
@@ -51,12 +51,12 @@ export function createWires(
   const drawn = new Map<string, Drawn>();
 
   function frame() {
-    svg.innerHTML = `<defs>${marker(arrow)}${marker(arrowHot)}</defs><g class="vb-lanes"></g><g class="vb-timelines"></g><g></g><g></g>`;
-    const [lanes, timelines, paths, labels] = [...svg.querySelectorAll<SVGGElement>(':scope > g')] as [SVGGElement, SVGGElement, SVGGElement, SVGGElement];
+    svg.innerHTML = `<defs>${marker(arrow)}${marker(arrowHot)}</defs><g class="vb-lanes"></g><g class="vb-timelines"></g><g></g><g></g><g class="vb-timeline-dots"></g>`;
+    const [lanes, timelines, paths, labels, dots] = [...svg.querySelectorAll<SVGGElement>(':scope > g')] as [SVGGElement, SVGGElement, SVGGElement, SVGGElement, SVGGElement];
     lanesSrc = topSrc = '';
     size = '';
     drawn.clear();
-    return { lanes, timelines: createTimelines(timelines, look), paths, labels };
+    return { lanes, timelines: createTimelines(timelines, dots, look), paths, labels };
   }
 
   /** The focused card's connectors and labels, drawn again above the cards. */

@@ -13,7 +13,7 @@
     "table": "table.ts (GFM tables: splitRow, delimiterRow, headerFits, tableHtml; MAX_COLUMNS, 4)",
     "entries": "entries.ts (boldLead: whether rendered inline markup opens with a bold run, its name with one closing colon dropped (**Name:**) and the rest with one leading separator dropped; render.ts groups the entries)"
   },
-  "states": ["paragraph", "large heading", "medium heading", "label", "bulleted list", "numbered list", "nested list", "quote", "code block", "table", "table at S", "break", "inline marks", "link", "refused link", "plain text"],
+  "states": ["paragraph", "large heading", "medium heading", "label", "bulleted list", "numbered list", "nested list", "quote", "code block", "table", "table at S", "break", "inline marks", "link", "refused link", "plain text", "entry from a heading", "entry from a bold lead", "entry in a list", "entries off"],
   "subset": {
     "paragraphs": "blank-line separated; soft breaks; a hard break after two spaces or a backslash",
     "inline": "**bold** __bold__ *italic* _italic_ ~~strike~~ `code`, [text](url \"title\"), <https://…> and <a@b.c>",
@@ -48,8 +48,5 @@
   "safety": "Every text run escapes & < > \" ' before markup is added. Links keep only http:, https: and mailto: (anything else is its text). An image only ever names the board's image route, and only for a path imagePathProblem passes (no scheme, no .., no leading / or ., no backslash, no %): nothing from the internet. Input over MARKDOWN_MAX (20,000) characters is cut with an ellipsis. Table rows are split once each, and a row is never wider than its header (at most 4 cells). Linear time: tested at 20,000 adversarial characters under 50 ms.",
   "whenToUse": "Any text a person or the agent writes that is shown on the board: card bodies, notes, later replies and the chat.",
   "whenNotToUse": "Titles, labels, tags and other one-line fields: those stay plain text through esc().",
-  "accessibility": "Headings are below the card title (aria-level), whatever their size. Lists, quotes, links and tables are real elements; a table's header cells are th scope=col. A code block is focusable so a keyboard user can scroll it. Links open in a new tab.",
-  "flaggedStates": {
-    "timeline": "entries (D-105 5; off until the timeline set's T_03, MarkdownOptions.entries, which the node template turns on for a dated node): the states entry from a ### heading, entry from a bold lead, entry in a list, and entries off (byte for byte as before); drawn in the gallery's timeline section with the flag on"
-  }
+  "accessibility": "Headings are below the card title (aria-level), whatever their size. Lists, quotes, links and tables are real elements; a table's header cells are th scope=col. A code block is focusable so a keyboard user can scroll it. Links open in a new tab."
 }

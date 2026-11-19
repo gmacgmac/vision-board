@@ -63,13 +63,49 @@ must-fix findings are closed.
 
 ## Implementation Notes
 
-_To be completed by agent after task completion._
+**Status**: Completed  
+**Completed**: 2026-11-19  
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+### Uses found before changing (step 1)
+`flags.ts` (the `timeline` row and its `FLAG_DESCRIPTIONS` sentence); `controller.ts` (`dating = on('timeline')`, the
+`datedView` call in `redraw`, its import); `board-data.ts` `datedView`; `board-data.test.ts` (its unit test);
+`gallery/main.ts` (`flagOn('timeline')` on the board section, a comment about the pattern's flag);
+`gallery/timeline-board-section.ts` (header comment, a meta line naming `datedView` and "timeline flag");
+`gallery/timeline-section.ts` (header comment); `packages/ui/src/timeline/pattern.json` (`flag`);
+`packages/ui/src/node/pattern.json` and `markdown/pattern.json` (`flaggedStates.timeline`: "off until T_03", "with the
+flag on"); `timeline-template.test.ts` (asserted `p.flag`); specs `timeline.spec.ts` (`?flags=timeline` x3, flag-off
+cases x3), `timeline-layers.spec.ts`, `app-alive.spec.ts`; docs `api.md` 196, `components.md` (intro, item 5, 12, 13).
 
 ### Changes Made
-- 
+- Flag, description and the one gate removed: `controller.ts` passes the view as stored; `datedView` and its test gone.
+  `app` cards never hold a date (`app-shape.ts`, the write refuses it), so the gate's app-card strip had no stored case.
+- The pattern and gallery: no `flag` on the `timeline` pattern; the board section is appended always; the dated node
+  and entry states moved from `flaggedStates.timeline` into `states` (node: dated, dated toned, dated with an icon, dated
+  day/month/year/time; markdown: entry from a heading, from a bold lead, in a list, entries off), which prints them.
+- Specs: no `?flags=timeline`; the flag-off cases became "a board with no key draws as before" (no line, no date header,
+  no date in a name; Tab and name tests lose their flag-off halves). Four specs that name the gallery's last section
+  (`header-tiers`, `ledgers`, `read-only`, `read-only-controls`) exclude `timeline-board` as they do the other
+  always-on sections.
+- Docs: `api.md` 196 and `components.md` (intro, 5, 12, 13) say no flag; no sentence says the timeline is behind one.
+- Baselines renewed, all because the gallery now holds the timeline sections by default (the timeline pattern's section
+  shifts every section below it, and the node and markdown meta lines print more states): `gallery.spec.ts` 30 renewed,
+  4 new (`gallery-timeline-{dark,light}`, `gallery-timeline-board-{dark,light}`); `chat-attach-gallery`; and one pair
+  each in `big-titles`, `card-updates`, `chat-alongside`, `chat-folder`, `chat`, `command-lens`, `container-rail-states`,
+  `current-folder`, `fresh-cards`, `go-to-card`, `header-tiers`, `key-bubble`, `ledgers`, `lock-board`,
+  `markdown-more`, `node-edges`, `open-folder`, `open-list`, `parking-replies`, `person-remove`, `picker-archive`,
+  `proposals`, `read-only-toggle`, `read-only`, `search`, `selection-pill`, `send-access`, `size`, `toolbar`,
+  `versions`; `bookmark-retire` 2 pairs; `layout-controls` 3 pairs. `timeline.spec.ts` own baselines were FIX_04's.
+- Gates: `grep` for `flags=timeline`, `FLAGS.timeline`, `datedView`, `flagOn('timeline'` outside task files and LOG: none.
+  check 0 errors, verify ok, gen --check current, `npm test` 2,723 pass, test:plugin 116; pages: timeline, timeline-layers,
+  gallery, chat-attach-gallery, app-alive 53 passed; the FE_02 list, node-edges, markdown-more, big-titles, command-lens
+  and every spec that screenshots the gallery: the renewed set passes (403).
+
+### Caught Beyond the Brief
+- The timeline switch shifts every gallery screenshot below the new pattern section; 30+ baselines is the honest size of
+  that, not a regression.
+- `update-signals.spec.ts` "APCA (light)" failed once in a 440-test run ("read in the box: muted") and passed alone,
+  10 of 10: a flake, not caused here.
+- `timeline.spec.ts` is 485 lines.
 
 ### Deviations from Plan
 - None

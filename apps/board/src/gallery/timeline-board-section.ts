@@ -1,6 +1,5 @@
-// Gallery entry for the timeline on the board (D-105; the timeline set's FE_02), shown with the `timeline` flag as its
-// pattern.json says: one container of a made-up launch plan, laid out for real by the board's own drawing (mini-board.ts:
-// the layout, the line in the wires layer, the cards, the links): its dated cards on the line (a band behind two equal
+// Gallery entry for the timeline on the board (D-105; the timeline set's FE_02): one container of a made-up launch plan, laid out for real by the board's own
+// drawing (mini-board.ts: the layout, the line in the wires layer, the cards, the links): its dated cards on the line (a band behind two equal
 // dates, the year turning, a link to an undated card) and its other cards in a row below; the same run down, the other
 // cards to the line's right; in the default skin and in Command Lens.
 import type { Direction, Skin, View, ViewNode } from '#format';
@@ -55,7 +54,7 @@ export function timelineBoardSection(fx: Fixture): HTMLElement {
   const heading = el('h2', 'g-title', 'The timeline on the board');
   heading.id = 'feature-timeline-board';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'layoutRegion · RegionBox.timeline · wires.ts timelinesOf · datedView'), ' · D-105, D-106 · timeline flag');
+  meta.append(el('code', undefined, 'layoutRegion · RegionBox.timeline · wires.ts timelinesOf'), ' · D-105, D-106');
   box.append(heading,
     el('p', 'g-desc', 'A container\'s dated cards share one line across its top, each on its own dot, in date order and not to scale; its other cards lay out below in the container\'s own layout, and links reach dated cards as any card. A dated card\'s place is its date: it never drags, and Move to still moves it to another container\'s line.'),
     meta,

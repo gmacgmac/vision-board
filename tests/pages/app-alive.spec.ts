@@ -206,7 +206,7 @@ test('a timeline reordering the cards around a loaded panel does not load it aga
   // puts the app card first again, which moves it in the page: moved with moveBefore, its document stays.
   const { board, n: [n, dated] } = await s.draw([CALCULATOR, { kind: 'finding', title: 'Dated', timeline: '2026-10' }]);
   const loads = countLoads(page);
-  await page.goto(`${s.base}/?flags=timeline#${board}`);
+  await page.goto(`${s.base}/#${board}`);
   await expect(page.locator('vb-node')).toHaveCount(2);
   const card = cardOf(page, n!);
   const panel = await panelOf(card);

@@ -1,8 +1,8 @@
 ---
 task_name: The Timeline
 created: 2026-11-18
-completed:
-status: in-progress
+completed: 2026-11-19
+status: completed
 categories: [board-layout, board-format, board-ui, board-agent, board-tokens]
 tracker: cortex-tasks/tracker.md#N53
 ---
@@ -51,8 +51,8 @@ tracker: cortex-tasks/tracker.md#N53
 | 7 | VERIFY_01 | 4 | strong | no | Programme manager who runs launch roadmaps on boards like this every week — expects the dates to read at a glance and in order, and every card to answer like any other, without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Completed | Gates green (pages 1,094 passed, 2 skipped, 14.6 min); 1 must fix (M1 docs), 4 should (S1-S4) |
 | 7b | FIX_02 | 4 | strong | no | Accessibility engineer — a date a sighted person reads at a glance is one a screen-reader user hears, and a refused drag leaves no stray selection. | [VERIFY_01's must and should fixes](./FIX_02_verify-findings.md) | Completed | M1 docs, S3 date in the name, S4 no selection; budgets page 206.1 (206.01), board.js 200,400 (200,390) |
 | 7c | FIX_03 | 4 | strong | no | Accessibility engineer — the keyboard walks a timeline the way the eye reads it, and hears each date once. | [Tab in date order, the date said once](./FIX_03_date-order-and-one-date.md) | Completed | 601 `readingOrder`, 602 no hidden date; app panel kept on a move (`moveBefore`); board.js 200,500 (200,472) |
-| 7d | FIX_04 | 5 | standard | no | — | [Dots above links](./FIX_04_dots-above-links.md) | Pending | Maintainer's look, 2026-11-19 |
-| 8 | T_03 | 5 | standard | no | Staff engineer who owns deprecations — a switch-over is done only when nothing, not code, tests, words nor docs, still points at the flag. | [Switch on](./T_03_switch-on.md) | Pending | |
+| 7d | FIX_04 | 5 | standard | no | — | [Dots above links](./FIX_04_dots-above-links.md) | Completed | Dots in the layer's last group; 8 baselines renewed; page 206.2 (206.19), board.js 200,600 (200,554) |
+| 8 | T_03 | 5 | standard | no | Staff engineer who owns deprecations — a switch-over is done only when nothing, not code, tests, words nor docs, still points at the flag. | [Switch on](./T_03_switch-on.md) | Completed | Flag `timeline` and `datedView` gone; no reference left outside history; gallery baselines renewed (30 + 4 new, about 33 specs) |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -288,9 +288,22 @@ point 602 (orchestrator to record). Beyond the brief: date order could move a lo
 files matched it all) 1,097 passed, 2 skipped, 12.4 min, no screenshot renewed. Budgets: board.js 200,500 (measured
 200,472); page 206.10 inside 206.1. `timeline.spec.ts` at 495 lines.
 
+### FIX_04: Dots above links
+_Status:_ Completed (2026-11-19)  
+_Notes:_ Stems stay in `vb-timelines`; each dot has a group in a new last `vb-timeline-dots` group of the wires SVG
+(`timelines.ts` `createTimelines(host, above, look)`, `wires.ts` `frame`); glide kept (`board.css`). Test first in new
+`timeline-layers.spec.ts` (paint order; the layer ignores the pointer). Renewed: `timeline-{default,command-lens}-across-
+{dark,light}`, `timeline-default-down-{dark,light}`, `timeline-gallery-{dark,light}`. Budgets: page 206.2 (206.19),
+board.js 200,600 (200,554). The focused card's hot links (the `top` SVG) still draw over a dot while it is focused.
+
 ### T_03: Switch on
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed (2026-11-19)  
+_Notes:_ `flags.ts` row and description, `controller.ts` gate, `board-data.ts` `datedView` and its test, the pattern's and
+gallery's flag, `?flags=timeline` in specs, docs: all gone; flag-off specs became "a board with no key". The dated and
+entry states moved from `flaggedStates.timeline` to `states`. The gallery now holds the timeline sections, so its
+screenshots below them moved: renewed `gallery.spec.ts` (30, 4 new), `chat-attach-gallery` and one pair in about 30
+other specs (full list in the task file). Four "last section" specs exclude `timeline-board`. A flaky
+`update-signals` APCA test passed alone.
 
 ---
 

@@ -1,5 +1,4 @@
-// Gallery entry for the timeline (D-105; the timeline set's FE_01), shown with the `timeline` flag as its pattern.json
-// says: dated nodes in both skins (the four header forms; three kinds; a tone; an icon node; a node that asks, waiting
+// Gallery entry for the timeline (D-105; the timeline set's FE_01): dated nodes in both skins (the four header forms; three kinds; a tone; an icon node; a node that asks, waiting
 // and answered; entries of each form; a long title), drawn from the edges board's cards with a date added, as the page
 // will draw them; then the line itself from hand-made geometry in the layout's shape, across and down, its dots
 // coloured in place (applyTimelineLook). The page wires the line to the layout in FE_02.

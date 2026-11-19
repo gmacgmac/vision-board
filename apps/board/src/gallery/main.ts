@@ -75,7 +75,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   region: regionSamples,
   // The compact bar and its pill behind their flag (stage5-follow-ups FE_02); off, today's bar.
   'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags())),
-  // Shown with the timeline flag only (its pattern.json `flag`), so the gallery without it is unchanged (D-105).
+  // D-105.
   timeline: timelineSamples,
 };
 
@@ -184,7 +184,7 @@ function build(): void {
   main.append(flowSection(fx)); // BE_01; last of all, so no section moves
   main.append(layoutControlSection(fx)); // FE_07; last of all, so no section moves
   if (flagOn('appCards', flags)) main.append(appWindowSection(fx)); // FE_08; last of all, so no section moves
-  if (flagOn('timeline', flags)) main.append(timelineBoardSection(fx)); // D-105, FE_02; last of all, so no section moves
+  main.append(timelineBoardSection(fx)); // D-105, FE_02; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

@@ -24,7 +24,7 @@ import { alignOf, chatStatusOf, flagOf, markdownOf } from './host.ts';
 import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
 import { askContextOf, createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
-import { datedView, numberedView } from './board-data.ts';
+import { numberedView } from './board-data.ts';
 import { createAttention, createBookmarkFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
 import { type BoardElements, createDrawing, createFocus, createPlaces, Viewport, zoomPercent } from './canvas/index.ts';
 import { createLive } from './live.ts';
@@ -66,7 +66,6 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, bookmarking, retiring, labels, aligning, widthsControl, removing, going, apping] = [on('nodeSize'), on('agentAccess'),
     on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardBookmark'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
   const versionView = on('versionView');
-  const dating = on('timeline'); // a container's dated nodes on its line (D-105; T_03 removes it)
   status.set({ agentAccess: access, versionView });
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-fresh-cards', 'freshCards'], ['data-update-signals', 'updateSignals'], ['data-big-titles', 'bigTitles']] as const) world.toggleAttribute(attr, on(flag)); // a container title's tip (FE_03), fresh containers (freshCards), updated in amber (updateSignals), a structured card's big title (bigTitles); rule 12
@@ -150,8 +149,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     S.retired = retiring ? retiredCounts(s, S.id, versionView) : new Map();
     S.drawn = d.view;
     // Each card in the container the person put it in, Later last (3_FE_03 rulings 2 and 5).
-    // The timeline flag's one gate (D-105, `datedView`): off, no node the page lays out or draws carries a date.
-    S.data = { ...d, view: datedView(numberedView(placedView(d.view, d.state, { later: S.later }), everyNode), dating) }; // numbers on every card (everyNode)
+    S.data = { ...d, view: numberedView(placedView(d.view, d.state, { later: S.later }), everyNode) }; // numbers on every card (everyNode)
     // The selection survives a redraw; ids that left the board drop out of it (ruling 8).
     selection.keep(view().nodes.map((n) => n.id));
     proposals.refresh(); updates.refresh(); parking.refresh();

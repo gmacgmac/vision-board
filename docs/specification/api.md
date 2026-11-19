@@ -2109,6 +2109,6 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     needed: the reader refuses an unknown field, so a format-20 build would refuse every dated card line while staying
     writable; with 21 it opens such a ledger read-only and says why (180). The fixtures were restamped through the
     chain, never by hand.
-196. **The page's flag.** `timeline` (`flags.ts`, off by default until timeline T_03 removes it) gates only the page's
-    drawing of the line and the date header. The contract and the server have no flag: an agent may write the key, and
-    `show_layout` reports a timeline, whatever the page shows.
+196. **No flag.** The timeline was behind a page flag until timeline T_03 switched it on (2026-11-19) and removed it:
+    the contract, the server and the page all take a stored date as it is, and the page draws the line and the date
+    header for every dated node. An app card never carries one (the write refuses it, `timelineOnApp`).

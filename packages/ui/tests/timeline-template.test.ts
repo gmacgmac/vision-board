@@ -80,9 +80,9 @@ test('every value is escaped and every number rounded to two places', () => {
   assert.ok(svg.includes('cx="0.33" cy="0.67"'));
 });
 
-test('the pattern is registered behind the timeline flag, with every state the task names', () => {
+test('the pattern is registered (no flag), with every state the task names', () => {
   const p = PATTERNS.find((x) => x.name === 'timeline')!;
-  assert.equal(p.flag, 'timeline');
+  assert.equal(p.flag, undefined, 'no flag: the timeline is the board\'s behaviour');
   assert.equal(p.selector, '.vb-timeline');
   for (const s of ['across', 'down', 'dot per kind', 'tone dot', 'stem above', 'stem below', 'stem left', 'stem right', 'year at the start', 'year at a turn', 'band', 'arrow']) assert.ok(p.states.includes(s), s);
 });

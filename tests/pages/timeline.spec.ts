@@ -1,7 +1,6 @@
-// The timeline on the board (D-105, D-106; the timeline set's FE_02), with ?flags=timeline: a container's dated cards
+// The timeline on the board (D-105, D-106; the timeline set's FE_02): a container's dated cards
 // on one line across its top (a dot each, in date order, alternating, a band behind equal dates, the year at the start
-// and the turn, the arrow), the rest below; flag off, exactly the board without dates (the page's one gate,
-// `board-data.ts` `datedView`); a dated card never moves under the pointer or the keys and writes no pin, while Move to,
+// and the turn, the arrow), the rest below; a board with no key draws no line and no date; a dated card never moves under the pointer or the keys and writes no pin, while Move to,
 // links, the widths switch and the direction row work on it as on any card, and Tab walks a timeline in date order; the
 // line stays joined to its cards from 20% to 250%; both skins, light and dark, axe clean. Each test draws its own board through the API, as an agent would.
 import type { APIRequestContext, Page } from '@playwright/test';
@@ -10,7 +9,7 @@ import type { Theme } from './helpers.ts';
 import { act, joinAgent, open, write } from './agent-board.ts';
 import { card, drag, frame, head, idle, linesAfter, panBy, scale, zoomToFull } from './board-page.ts';
 
-const ON = '?vbwork&flags=timeline';
+const ON = '?vbwork';
 const THEMES: Theme[] = ['dark', 'light'];
 const LONG = 'Two hundred teams from the waitlist, in two waves a week apart; every reply is read by product and support together before the second wave goes out.';
 /** The plan's cards in the order they are written (so card numbers are not date order): kind, title, date, more. */
@@ -50,11 +49,11 @@ async function drawPlan(request: APIRequestContext, o: { dates?: boolean; direct
 }
 
 /** A container's line (its bands, line, arrow and years), and each dated node's stem and dot, are groups of their own
- *  (links/timelines.ts), so they move with their container and their card. */
+ *  (links/timelines.ts; the dots in the layer's last group, above the links), so they move with their container and card. */
 const LINES = 'svg.vb-wires .vb-timelines > g.vb-timeline:not([data-node])';
 const line = (page: Page, region: string) => page.locator(`${LINES}[data-region="${region}"]`);
 /** Each dot of `region`'s line, in drawn order: its card, side and centre on screen. */
-const dots = (page: Page, region: string) => page.locator(`svg.vb-wires .vb-timelines > g[data-node][data-region="${region}"] .vb-timeline-dot`).evaluateAll((els) => els.map((e) => {
+const dots = (page: Page, region: string) => page.locator(`svg.vb-wires .vb-timeline-dots > g[data-region="${region}"] .vb-timeline-dot`).evaluateAll((els) => els.map((e) => {
   const r = e.getBoundingClientRect();
   return { node: (e as SVGElement).dataset.node!, side: (e as SVGElement).dataset.side!, x: r.x + r.width / 2, y: r.y + r.height / 2 };
 }));
@@ -66,19 +65,20 @@ function missesIn(region: string): number[] {
   if (!lineEl) return [];
   const l = lineEl.getBoundingClientRect();
   return [...document.querySelectorAll<SVGElement>(`svg.vb-wires .vb-timelines > g[data-node][data-region="${region}"]`)].map((g) => {
-    const [s, o] = [g.querySelector('.vb-timeline-stem')!.getBoundingClientRect(), g.querySelector('.vb-timeline-dot')!.getBoundingClientRect()];
+    const dotEl = document.querySelector<SVGElement>(`svg.vb-wires .vb-timeline-dots > g[data-node="${g.dataset.node}"] .vb-timeline-dot`)!;
+    const [s, o] = [g.querySelector('.vb-timeline-stem')!.getBoundingClientRect(), dotEl.getBoundingClientRect()];
     const c = document.querySelector(`vb-node[data-id="${g.dataset.node}"]`)!.getBoundingClientRect();
     const [sc, oc, cc] = [at(s), at(o), at(c)];
     const across = { above: [s.top - c.bottom, sc.x - cc.x, oc.y - s.bottom, oc.y - at(l).y], below: [s.bottom - c.top, sc.x - cc.x, oc.y - s.top, oc.y - at(l).y] };
     const down = { left: [s.left - c.right, sc.y - cc.y, oc.x - s.right, oc.x - at(l).x], right: [s.right - c.left, sc.y - cc.y, oc.x - s.left, oc.x - at(l).x] };
-    return Math.max(...({ ...across, ...down } as Record<string, number[]>)[g.querySelector<SVGElement>('.vb-timeline-dot')!.dataset.side!]!.map(Math.abs));
+    return Math.max(...({ ...across, ...down } as Record<string, number[]>)[dotEl.dataset.side!]!.map(Math.abs));
   });
 }
 const misses = (page: Page, region: string) => page.evaluate(missesIn, region);
-/** Open board `d` with the flag: from a blank page, since a new hash alone does not switch the page's board. */
+/** Open board `d` with `query`: from a blank page, since a new hash alone does not switch the page's board. */
 const openOn = async (page: Page, d: { board: string; n: number[] }, query = ON) => { await page.goto('about:blank'); await open(page, d, query); };
 const boxOf = async (page: Page, i: number, n: number[]) => (await card(page, n[i]!).boundingBox())!;
-const markup = (page: Page) => page.locator('svg.vb-wires .vb-timelines').evaluate((g) => g.innerHTML);
+const markup = (page: Page) => page.locator('svg.vb-wires').first().evaluate((s) => [...s.querySelectorAll('.vb-timelines, .vb-timeline-dots')].map((g) => g.innerHTML).join(''));
 
 test('the line: a dot per dated card in date order, alternating, a band behind the equal pair, the years, the arrow; the rest below', async ({ page, request }) => {
   const d = await drawPlan(request);
@@ -104,20 +104,16 @@ test('the line: a dot per dated card in date order, alternating, a band behind t
   expect(await dots(page, 'after')).toHaveLength(1);
 });
 
-test('flag off: no line, no date header, and every card where the same board with no dates draws it', async ({ page, request }) => {
-  const [dated, plain] = [await drawPlan(request), await drawPlan(request, { dates: false })];
-  const boxes = async (d: typeof dated) => {
-    await openOn(page, d, '?vbwork');
-    await idle(page);
-    return Promise.all(d.n.map(async (_, i) => boxOf(page, i, d.n)));
-  };
-  const a = await boxes(dated);
+test('a board with no key draws as before: no line, no date header, no date in a name', async ({ page, request }) => {
+  const plain = await drawPlan(request, { dates: false });
+  await openOn(page, plain);
+  await idle(page);
   await expect(page.locator('.vb-timeline')).toHaveCount(0);
   await expect(page.locator('.vb-node-date, vb-node[data-timeline]')).toHaveCount(0);
-  expect(a).toEqual(await boxes(plain));
+  await expect(card(page, plain.n[SIGN]!)).toHaveAccessibleName(new RegExp(`^Item ${plain.n[SIGN]}, Action: Beta sign-off, Open`));
 });
 
-test('a dated card\'s name carries its full date after its kind; an undated card\'s and, flag off, every card\'s does not', async ({ page, request }) => {
+test('a dated card\'s name carries its full date after its kind; an undated card\'s does not', async ({ page, request }) => {
   const d = await drawPlan(request);
   await open(page, d, ON);
   await idle(page);
@@ -127,9 +123,6 @@ test('a dated card\'s name carries its full date after its kind; an undated card
   await name(LOAD, 'Finding, 12 November 2026, 09:30: Load test passed');
   await name(DRAFTS, 'Topic, 2027: 2\\.1: offline drafts');
   await name(POST, 'Action: Write the launch post, Open');
-  await openOn(page, d, '?vbwork');
-  await idle(page);
-  await name(SIGN, 'Action: Beta sign-off, Open');
 });
 
 /** The page's text selection, as a copy would take it. */
@@ -418,7 +411,7 @@ async function tabbed(page: Page, from: number, count: number, back = false): Pr
 }
 
 for (const direction of ['across', 'down']) {
-  test(`Tab and Shift Tab walk a timeline in date order, then the container's other cards, ${direction}; flag off, card-number order`, async ({ page, request }) => {
+  test(`Tab and Shift Tab walk a timeline in date order, then the container's other cards, ${direction}`, async ({ page, request }) => {
     const d = await drawPlan(request, { direction });
     await open(page, d, ON);
     await idle(page);
@@ -428,9 +421,6 @@ for (const direction of ['across', 'down']) {
     expect((await dots(page, 'plan')).map((x) => Number(x.node))).toEqual(BY_DATE.map((i) => d.n[i]));
     expect(await tabbed(page, want[0]!, want.length)).toEqual(want);
     expect(await tabbed(page, want.at(-1)!, want.length, true)).toEqual([...want].reverse());
-    await openOn(page, d, '?vbwork');
-    await idle(page);
-    expect(await tabbed(page, d.n[0]!, d.n.length)).toEqual([...d.n]);
   });
 }
 
@@ -474,12 +464,12 @@ for (const skin of ['default', 'command-lens']) {
 for (const theme of THEMES) {
   test(`the gallery's section draws the plan for real, across and down in both skins; axe clean in it (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=timeline');
+    await page.goto('/gallery.html');
     const section = page.locator('[data-feature="timeline-board"]');
     await expect(section.locator('.g-mini')).toHaveCount(4);
     await expect(section.locator('svg.vb-wires .vb-timelines > g.vb-timeline:not([data-node])')).toHaveCount(4);
     await expect(section.locator('.vb-timeline[data-direction="down"]')).toHaveCount(2);
-    await expect(section.locator('.vb-timelines > g[data-node] .vb-timeline-dot')).toHaveCount(24);
+    await expect(section.locator('.vb-timeline-dots > g[data-node] .vb-timeline-dot')).toHaveCount(24);
     await expect(section.locator('.vb-timeline-band')).toHaveCount(4);
     await expect(section.locator('vb-node[data-marks-at="plate"][data-timeline]')).toHaveCount(12);
     await section.scrollIntoViewIfNeeded();
