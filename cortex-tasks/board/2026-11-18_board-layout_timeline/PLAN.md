@@ -400,6 +400,10 @@ Where a page and this list differ, this list wins._
 - **602, the date said twice**: remove the hidden full form from the card's content; the card's name carries it. FIX_03.
 - **603, a one-dot line for a lone dated card**: no objection; kept.
 
+2026-11-19, the maintainer's look on the try-out board: **yes, switch it on** (the result gate). The date may be a
+little large (a later token change). The same-date band (604): leave for now (tracker). Dots draw above links (FIX_04,
+before T_03).
+
 ---
 
 ## Decision entry to append
