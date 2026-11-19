@@ -1,9 +1,8 @@
-// Gallery entry for export, import and print (boardFiles flag, D-107, export-import-print FE_01): the "⋯" menu with its
+// Gallery entry for export, import and print (D-107, export-import-print FE_01): the "⋯" menu with its
 // section of Print…, Export… and Import…; a container's settings menu with Print container… and Export container…; and the
 // one dialog's form (FilesForm) in each of its states: Print the board (borders on) and a container (its border off),
 // Export the board and a container, the conversations ticked, Exporting…, Import with This board on and off, a refusal
-// kept, and an import that left parts of the file out. Titles and parts are made up. Shown only with the flag on, so
-// ?flags=-boardFiles draws the gallery as it was. The print itself is a print of the page: tests/pages/board-files.spec.ts
+// kept, and an import that left parts of the file out. Titles and parts are made up. The print itself is a print of the page: tests/pages/board-files.spec.ts
 // prints it to PDF.
 import { mount } from 'svelte';
 import type { VbRegionElement } from '#ui';
@@ -52,12 +51,12 @@ function frame(fx: Fixture): HTMLElement {
 
 export function filesSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
-  box.dataset.feature = 'boardFiles';
-  box.setAttribute('aria-labelledby', 'feature-boardFiles');
+  box.dataset.feature = 'exportImportPrint';
+  box.setAttribute('aria-labelledby', 'feature-exportImportPrint');
   const heading = el('h2', 'g-title', 'Export, import and print');
-  heading.id = 'feature-boardFiles';
+  heading.id = 'feature-exportImportPrint';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'export_board · write_board import · BoardHost saveFile, openFile, print'), ' · feature flag boardFiles (D-107), off by default · on with ?flags=boardFiles');
+  meta.append(el('code', undefined, 'export_board · write_board import · BoardHost saveFile, openFile, print'), ' · D-107');
   box.append(heading,
     el('p', 'g-desc', 'The board, or one container, leaves as a .vboard.json file and comes back as fresh cards; or prints, fitted to one page, through the browser\'s print (which also saves a PDF). Each item shows only when the host gives its hook. Where the person opens it sets the scope, so the one dialog asks only what is left.'),
     meta,

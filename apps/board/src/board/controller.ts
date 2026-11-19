@@ -66,8 +66,6 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, bookmarking, retiring, labels, aligning, widthsControl, removing, going, apping] = [on('nodeSize'), on('agentAccess'),
     on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardBookmark'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
   const versionView = on('versionView');
-  /** Print, Export and Import (boardFiles flag, D-107); each item shows only when the host gives its hook. */
-  const filing = on('boardFiles');
   status.set({ agentAccess: access, versionView });
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-fresh-cards', 'freshCards'], ['data-update-signals', 'updateSignals'], ['data-big-titles', 'bigTitles']] as const) world.toggleAttribute(attr, on(flag)); // a container title's tip (FE_03), fresh containers (freshCards), updated in amber (updateSignals), a structured card's big title (bigTitles); rule 12
@@ -108,7 +106,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
-    els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, files: filing ? { print: !!host.print, export: !!host.saveFile } : undefined, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, files: { print: !!host.print, export: !!host.saveFile }, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), fresh: () => edges.fresh(attention.freshIn()),
     facts, appCards: apping, edges: edges.first, placed: () => apps.place(), // FE_08
     direction: (r: string) => directionOf((versions.state ?? live.state)!, S.id, r), // BE_01
@@ -266,13 +264,13 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
   /** What the container finder and Z on a container zoom with (find/finder.ts). */
   const finding = { vp, layout: () => drawing.layout, frames: () => drawing.frames };
-  /** Export, import and print (boardFiles flag, D-107): through the host's hooks, the dialog in the board's status. */
-  const files = filing ? createBoardFiles({ host, io, id: () => S.id, state: () => live.state, regionTitle: (r) => S.data?.view.regions.find((x) => x.id === r)?.title,
+  /** Export, import and print (D-107): through the host's hooks, the dialog in the board's status. */
+  const files = createBoardFiles({ host, io, id: () => S.id, state: () => live.state, regionTitle: (r) => S.data?.view.regions.find((x) => x.id === r)?.title,
     show: (ask) => status.set({ files: ask }), toast: (t) => toast(t), jump: (id) => void switchTo(id, () => boards.jump(id)),
-    printView: (scope) => (drawing.layout && S.data ? preparePrint(stage.parentElement!, drawing.layout, view(), scope) : null) }) : null;
+    printView: (scope) => (drawing.layout && S.data ? preparePrint(stage.parentElement!, drawing.layout, view(), scope) : null) });
   const handlers = stageHandlers({ act, bookmarks: bookmarking ? bookmarks : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,
     versions, selection, drawing, focus, view, showVersion, toggleHide, status,
-    marks: edges.marks, seen: (region: string) => edges.seen(region), ...(files && { files }),
+    marks: edges.marks, seen: (region: string) => edges.seen(region), files,
     ...(on('containerZoom') && { container: { zoom: (id: string) => zoomToContainer(finding, id), mark: (id: string) => focusContainer(finding, id) } }) });
   /** The table as the stage calls it: what acts does nothing on a past version or a locked board, saying why. */
   const guarded = versions.guard(lock.guard(handlers));

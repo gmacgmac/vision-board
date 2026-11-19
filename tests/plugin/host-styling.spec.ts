@@ -109,7 +109,7 @@ test('each host property reaches the tokens its row names, and the board\'s own 
 
 test('derived accents: one accent gives the soft ground and its line', async ({ page, host }) => {
   await open(page, host);
-  const own = await tokensIn(page, '.host-root', ['--vb-accent-soft', '--vb-accent-line', '--vb-surface-card']);
+  const own = await tokensIn(page, '.host-root', ['--vb-accent-soft', '--vb-accent-line', '--vb-surface-card', '--vb-focus']);
   const ownLook = await tokensIn(page, '.host-root', ['--vb-kind-decision', '--vb-state-comment-soft']);
   await setOn(page, '.host-root', { '--host-accent': 'rgb(0 120 60)' });
   const got = await tokensIn(page, '.host-root', ['--vb-accent', '--vb-accent-soft', '--vb-accent-line', '--vb-focus', '--vb-wire-hot', '--vb-kind-decision', '--vb-state-comment-soft']);
@@ -121,8 +121,10 @@ test('derived accents: one accent gives the soft ground and its line', async ({ 
   expect(far(soft!, surface!)).toBeLessThan(far(soft!, accent!));
   expect(far(line!, surface!)).toBeGreaterThan(far(soft!, surface!));
   expect(far(line!, accent!)).toBeLessThan(far(soft!, accent!));
-  // A token the board defines from the accent follows it; a card's kind and state keep the board's (point 455).
-  expect([got['--vb-focus'], got['--vb-wire-hot']]).toEqual([got['--vb-accent'], got['--vb-accent']]);
+  // A token the board defines from the accent follows it; the focus ring is its own colour (D-109: a host sets it with
+  // --vb-host-focus, never through the accent); a card's kind and state keep the board's (point 455).
+  expect(got['--vb-wire-hot']).toBe(got['--vb-accent']);
+  expect(got['--vb-focus']).toBe(own['--vb-focus']);
   expect(got['--vb-kind-decision']).toBe(ownLook['--vb-kind-decision']);
   expect(got['--vb-state-comment-soft']).toBe(ownLook['--vb-state-comment-soft']);
   // With the host's surface too, the mix is into that.

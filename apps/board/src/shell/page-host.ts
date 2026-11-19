@@ -89,7 +89,7 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     notify: (text, tone) => toast(text, tone),
     confirm: ({ heading, body, confirm, list }) => askConfirm(heading, body, confirm, list),
     store,
-    // Export, import and print (boardFiles flag, D-107): a download, the file picker, the browser's print (page-files.ts).
+    // Export, import and print (D-107): a download, the file picker, the browser's print (page-files.ts).
     saveFile, openFile, print,
     page: {
       async wanted() {

@@ -1,4 +1,4 @@
-// Export, import and print (D-107, export-import-print PLAN decisions 8-12; boardFiles flag): what the files dialog's one
+// Export, import and print (D-107, export-import-print PLAN decisions 8-12): what the files dialog's one
 // button does, through the host's hooks (host.ts `saveFile`, `openFile`, `print`) and the board's calls (io.ts). Where the
 // person opened the dialog sets the scope (`ask`): the "⋯" menu, the whole board; a container's settings, that container.
 // Export reads the export route (`export_board`) and hands its file to `saveFile`, named after the board (and the

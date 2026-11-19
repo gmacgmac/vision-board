@@ -1,4 +1,4 @@
-/* The files dialog (boardFiles flag, D-107; board/chrome/FilesDialog.svelte, FilesForm.svelte): the board's dialog look
+/* The files dialog (D-107; board/chrome/FilesDialog.svelte, FilesForm.svelte): the board's dialog look
    (#ui base/dialog.css .vb-dialog), with its one or two choices as rows: a checkbox or a radio before its words, the whole
    row its target, and a hint under it in line with the words; the radios grouped under their legend. Once an import left
    parts out, the list of them, scrolling inside a capped height. Tokens only. */

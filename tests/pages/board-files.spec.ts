@@ -1,6 +1,6 @@
-// Export, import and print (D-107; export-import-print FE_01, PLAN decisions 8-12), behind the boardFiles flag. The
+// Export, import and print (D-107; export-import-print FE_01, PLAN decisions 8-12). The
 // board's "⋯" menu has Print…, Export… and Import…, a container's settings menu Print container… and Export container…,
-// each only with the flag on and the host's hook given (`BoardHost` `print`, `saveFile`, `openFile`). One dialog asks only
+// each only when the host's hook is given (`BoardHost` `print`, `saveFile`, `openFile`). One dialog asks only
 // what the place it was opened from leaves open: Print, the container border; Export, the conversations on notes; Import,
 // into a new board or this one, then what the reply dropped. Print sets a print view over the live page (no chrome,
 // the scope fitted to one page, the border as chosen, colours kept, every link path `fill="none"`), then `host.print()`.
@@ -12,17 +12,16 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import type { Page, Route } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { frame, idle, menu, menuButton, openBoard, toast } from './board-page.ts';
+import { frame, idle, menuButton, openBoard, toast } from './board-page.ts';
 import { open as openHost, type Host } from './board-host-page.ts';
 import { LINES } from './board-host-page.ts';
 import { lc, pixel } from './apca.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const ON = '?vbwork&flags=boardFiles';
-const OFF = '?vbwork&flags=-boardFiles';
+const ON = '?vbwork';
 const PRINT_DIR = 'temp/print';
 
-/** The roadmap board with the flag on (or `query`), drawn and settled. */
+/** The roadmap board (or `query`), drawn and settled. */
 const open = (page: Page, query = ON) => openBoard(page, { query });
 const row = (page: Page, id: string) => page.locator(bid(id));
 const dialog = (page: Page) => page.locator(bid('files-dialog'));
@@ -48,7 +47,7 @@ const FILE = {
 };
 
 test.describe('the menus', () => {
-  test('"⋯" holds Print…, Export… and Import… with the flag on, after the board\'s own rows; none with it off', async ({ page }) => {
+  test('"⋯" holds Print…, Export… and Import… after the board\'s own rows', async ({ page }) => {
     await open(page);
     await menuButton(page).click();
     for (const [id, text] of [['print-board', 'Print…'], ['export-board', 'Export…'], ['import-board', 'Import…']] as const) {
@@ -67,14 +66,9 @@ test.describe('the menus', () => {
     await page.keyboard.press('ArrowUp');
     await expect(row(page, 'print-board')).toBeFocused();
     await page.keyboard.press('Escape');
-
-    await open(page, OFF);
-    await menuButton(page).click();
-    await expect(menu(page)).toBeVisible();
-    for (const id of ['print-board', 'export-board', 'import-board']) await expect(row(page, id)).toHaveCount(0);
   });
 
-  test('a container\'s settings menu has Print container… and Export container… with the flag on; none with it off', async ({ page }) => {
+  test('a container\'s settings menu has Print container… and Export container…', async ({ page }) => {
     await open(page);
     const items = await cog(page, 'review');
     await expect(items.locator('button[data-print-region="review"]')).toHaveText('Print container…');
@@ -83,15 +77,11 @@ test.describe('the menus', () => {
     await expect(items.locator('button[data-print-region]')).not.toHaveAttribute('aria-disabled', 'true');
     // The built-in Later's settings have neither.
     await expect(page.locator('vb-region[data-region="later"] button[data-print-region]')).toHaveCount(0);
-
-    await open(page, OFF);
-    await cog(page, 'review');
-    await expect(page.locator('button[data-print-region], button[data-export-region]')).toHaveCount(0);
   });
 
-  test('a host without the hooks shows none of the five, the flag on', async ({ page }) => {
+  test('a host without the hooks shows none of the five', async ({ page }) => {
     await openHost(page);
-    await page.evaluate((lines) => (window as unknown as { vbHost: Host }).vbHost.mount('a', lines, lines.length, { settings: { boardFiles: true } }), LINES);
+    await page.evaluate((lines) => (window as unknown as { vbHost: Host }).vbHost.mount('a', lines, lines.length), LINES);
     await page.evaluate(() => (window as unknown as { vbHost: Host }).vbHost.idle('a'));
     await page.locator('#a [aria-label="More"][aria-haspopup="menu"]').click();
     await expect(page.locator('#a [role="menu"][aria-label="More"]')).toBeVisible();
@@ -446,13 +436,10 @@ test.describe('against the server (BE_01)', () => {
 });
 
 test.describe('the gallery', () => {
-  const section = (page: Page) => page.locator('section[data-feature="boardFiles"]');
+  const section = (page: Page) => page.locator('section[data-feature="exportImportPrint"]');
 
-  test('the entry shows only with the flag on', async ({ page }) => {
-    await page.goto('/gallery.html?flags=-boardFiles');
-    await expect(page.locator('section[data-pattern]').first()).toBeVisible();
-    await expect(section(page)).toHaveCount(0);
-    await page.goto('/gallery.html?flags=boardFiles');
+  test('the entry shows the menus and every state of the dialog', async ({ page }) => {
+    await page.goto('/gallery.html');
     await expect(section(page).locator('.g-files')).toHaveCount(9);
     await expect(section(page).getByRole('menuitem', { name: 'Print container…' })).toHaveCount(1);
     await expect(section(page).getByRole('menuitem', { name: /^(Print|Export|Import)…$/ })).toHaveCount(3);
@@ -461,7 +448,7 @@ test.describe('the gallery', () => {
   for (const theme of THEMES) {
     test(`every state of the dialog passes axe, ${theme}`, async ({ page }) => {
       await setTheme(page, theme);
-      await page.goto('/gallery.html?flags=boardFiles');
+      await page.goto('/gallery.html');
       await section(page).scrollIntoViewIfNeeded();
       await expect(section(page).locator('.g-files')).toHaveCount(9);
       mkdirSync(PRINT_DIR, { recursive: true });

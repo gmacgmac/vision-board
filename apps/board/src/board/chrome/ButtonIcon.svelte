@@ -11,7 +11,7 @@
      chip and New ledger… (a bound book, two lines on its cover); with the readOnlyStart flag, the page's Read-only chip (an
      eye) and its Editing chip, Edit and Stop editing (a pencil); the header's Flows and the "⋯" menu's Flows
      across (two cards side by side, linked), Flows down (two cards one above the other, linked) and Flows: Auto (a
-     card linked both ways); with the boardFiles flag, the "⋯" menu's Print… (a printer), Export… (an arrow up out of a
+     card linked both ways); the "⋯" menu's Print… (a printer), Export… (an arrow up out of a
      tray) and Import… (an arrow down into a tray). -->
 <script lang="ts">
   let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'bookmark' | 'align' | 'archive' | 'lock' | 'unlock' | 'chevron' | 'version' | 'containers' | 'open' | 'new' | 'zoom' | 'ledger' | 'eye' | 'pencil' | 'across' | 'down' | 'auto' | 'print' | 'export' | 'import' } = $props();

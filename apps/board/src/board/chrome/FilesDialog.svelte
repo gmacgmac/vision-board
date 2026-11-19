@@ -1,4 +1,4 @@
-<!-- The files dialog (boardFiles flag, D-107, export-import-print PLAN decision 12): Print, Export or Import, opened from the
+<!-- The files dialog (D-107, export-import-print PLAN decision 12): Print, Export or Import, opened from the
      "⋯" menu (the whole board) or a container's settings (that container), while the board's status holds `files`. Its
      contents are FilesForm.svelte, which asks only what is left open; this holds it in the shared modal dialog (`#ui`
      `syncModal`, `backdropClick`, `whenShut`) and does the work through the board's files flow (board-files.ts). It always

@@ -33,8 +33,8 @@ export interface RegionSet {
 }
 
 /** `widths`: every ordinary frame has the Match card widths switch (widthsControl flag); `remove`:
- * Remove container in its settings (personRemove flag, N24); `files`: Print container… and Export container… there (boardFiles
- * flag, each with its host hook, D-107); `rail`: every frame, Later too, has its
+ * Remove container in its settings (personRemove flag, N24); `files`: Print container… and Export container… there (each
+ * with its host hook, D-107); `rail`: every frame, Later too, has its
  * tools in a rail on its left edge (toolRail flag); `direction`: which way each flow runs, which its layout control marks
  * (`directionOf`); `idPrefix`: the mount's, before every id a frame sets. */
 export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean; files?: { print?: boolean; export?: boolean }; rail?: boolean; railHover?: boolean; direction?(region: string): Direction; idPrefix?: string; markdown?: MarkdownOptions } = {}): RegionSet {

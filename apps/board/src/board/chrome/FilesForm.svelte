@@ -1,4 +1,4 @@
-<!-- The files dialog's contents (boardFiles flag, D-107, export-import-print PLAN decisions 8-12): one form for Print,
+<!-- The files dialog's contents (D-107, export-import-print PLAN decisions 8-12): one form for Print,
      Export and Import, which asks only what the place it was opened from leaves open. The scope (the board, or the
      container `ask.region` named in its words) is already chosen. Print: the container border (`border`), checked for the
      board and not for a container, and light or dark (`theme`, the screen's first; point 615). Export: whether the conversations on notes go too (`notes`, unchecked). Import: into a

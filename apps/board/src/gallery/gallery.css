@@ -187,7 +187,7 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 }
 .g-skin-bar vb-selection-bar { position: static; }
 
-/* Export, import and print (boardFiles flag, D-107): each state of the one dialog's form drawn in the page flow, at the
+/* Export, import and print (D-107): each state of the one dialog's form drawn in the page flow, at the
    dialog's width; the "⋯" menu and the container's settings drawn open, with room below for them. */
 .g-files { position: static; display: block; margin: 0; }
 .g-files-menu[data-menu-open] { padding-bottom: calc(var(--vb-space-6) * 11); }

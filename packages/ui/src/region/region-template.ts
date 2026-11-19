@@ -120,7 +120,7 @@ const modePopover = (r: Pick<Region, 'id' | 'mode' | 'title'>, prefix?: string):
 };
 
 /** The settings menu: "Reset places" (the cards' pins) and "Put container back" (the container's
- * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it; with `files` (boardFiles flag, D-107)
+ * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it; with `files` (D-107)
  * "Print container…" and "Export container…", each when its host hook is given, which open the board's files dialog (never
  * disabled: neither changes the board); with `remove` (personRemove flag, N24) then "Remove container", which the page
  * confirms first. */
@@ -151,7 +151,7 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, files: R
  * the label alone. A fixed frame's rail holds only the cog. `railHover`: with `rail`, the frame carries
  * data-rail-hover and its rail icons show only while it is in use (railOnHover flag; region-rail.css). `idPrefix`: put before every id the frame
  * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. `files`: Print container…
- * and Export container… in the settings menu (boardFiles flag, each when the host gives its hook, D-107); a fixed frame never has them. */
+ * and Export container… in the settings menu (each when the host gives its hook, D-107); a fixed frame never has them. */
 export interface RegionFrameOptions {
   fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; railHover?: boolean; idPrefix?: string; markdown?: MarkdownOptions;
   files?: { print?: boolean; export?: boolean };

@@ -1,8 +1,8 @@
 ---
 task_name: Export, Import and Print
 created: 2026-11-19
-completed:
-status: in-progress
+completed: 2026-11-19
+status: completed
 categories: [board-app, board-format, board-actions, board-ui]
 tracker: cortex-tasks/tracker.md#N56
 ---
@@ -29,7 +29,7 @@ PLAN.md § House Rules.
 | 3c | FIX_01 | 3 | strong | no | Design-systems engineer — one scrollbar, one label line, one divider: the most direct way, the same look as nclite. | [The whole conversation imported; a tidier conversation box](./FIX_01_conversation-and-import-polish.md) | Completed | `from` on imported lines (ledger 22), `dropped` by reader, Print light or dark, one scrollbar, one label line, one divider. 118 baselines renewed (most a subpixel shift of the gallery). Budgets over (page 212.0/211.2 KB, plugin 207,015/206,400). The skill's `files.md` now untrue (Requests). |
 | 3d | FIX_02 | 3 | standard | no | — | [The app card look](./FIX_02_app-card-look.md) | Completed | One border and no ring in every state; a top line (hover gentle, selected and active full); bottom corners 2px. One blue focus colour everywhere (D-109); Command Lens's plate keeps `#60a5fa` (Lc 25.8 in light). 38 baselines renewed. Plugin CSS 26,468 (budget 26,350). |
 | 4 | VERIFY_01 | 4 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Completed | Ruling 621 built (`owes`). Fixed: cards in Later lost on import (high); a person's import silent on refused items (medium). Fixture round trips 0 diffs; set's specs 56/56, `npm test` 2,778/2,778; full suite deferred to T_02 (maintainer). |
-| 5 | T_02 | 5 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Pending | |
+| 5 | T_02 | 5 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Completed | Flag removed, export/import/print simply on; items still hidden without a host hook. Two gallery baselines added. |
 
 ## Shared Foundations
 

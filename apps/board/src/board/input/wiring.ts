@@ -29,7 +29,7 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   putBack(region: string): void;
   /** Remove container in a container's settings (personRemove flag, N24); absent without it. */
   removeRegion?(region: string): void;
-  /** Print container… and Export container… in a container's settings (boardFiles flag, D-107): open the files dialog
+  /** Print container… and Export container… in a container's settings (D-107): open the files dialog
    *  for that container; absent without the flag. */
   printRegion?(region: string): void;
   exportRegion?(region: string): void;

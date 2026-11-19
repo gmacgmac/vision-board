@@ -39,11 +39,11 @@ const ROWS: [string, Decision, Decision][] = [
   ['.envrc', refuse(words.secretsFiles), refuse(words.secretsFiles)],
   ['apps/web/.npmrc', refuse(words.secretsFiles), refuse(words.secretsFiles)],
   ['.visionboard/ledger.jsonl', ALLOW, refuse(words.theLedger)],
-  ['.visionboard/lock', ALLOW, refuse(words.boardFiles)],
+  ['.visionboard/lock', ALLOW, refuse(words.boardOwnFiles)],
   ['.visionboard/app-state/s.json', refuse(words.appState), refuse(words.appState)],
   ['.visionboard/permissions.json', ALLOW, refuse(words.permissionsFile)],
-  ['.visionboard/other.json', ALLOW, refuse(words.boardFiles)],
-  ['.visionboard', ALLOW, refuse(words.boardFiles)],
+  ['.visionboard/other.json', ALLOW, refuse(words.boardOwnFiles)],
+  ['.visionboard', ALLOW, refuse(words.boardOwnFiles)],
   ['.visionboard/images/a.png', ALLOW, ALLOW],
   ['.visionboard/apps/calc/app.json', ALLOW, ALLOW],
   ['.visionboard/images/.env', refuse(words.secretsFiles), refuse(words.secretsFiles)],
@@ -58,7 +58,7 @@ const ROWS: [string, Decision, Decision][] = [
   ['sub/.visionboard/ui/agents.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
   ['.visionboard/main/chat-sessions.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
   ['sub/.visionboard/main/ledger.jsonl', ALLOW, refuse(words.theLedger)],
-  ['.visionboard/main/lock', ALLOW, refuse(words.boardFiles)],
+  ['.visionboard/main/lock', ALLOW, refuse(words.boardOwnFiles)],
   ['.visionboard/main/app-state/s.json', refuse(words.appState), refuse(words.appState)],
   ['.visionboard/main/images/a.png', ALLOW, ALLOW],
   ['.visionboard/main/apps/calc/app.json', ALLOW, ALLOW],
@@ -103,7 +103,7 @@ test(`case: .ENV is refused on any disk (this one ${fx.ignoresCase ? 'ignores' :
   // A wrong-case path to a file that is there resolves to its real name where the disk ignores case.
   const r = resolveIn(fx.folder, '.VISIONBOARD/IMAGES/a.png');
   if (fx.ignoresCase) assert.equal(r.rel, '.visionboard/images/a.png');
-  assert.deepEqual(decide(write('.VISIONBOARD/images/a.png')), fx.ignoresCase ? ALLOW : refuse(words.boardFiles));
+  assert.deepEqual(decide(write('.VISIONBOARD/images/a.png')), fx.ignoresCase ? ALLOW : refuse(words.boardOwnFiles));
 });
 
 test('a file not made yet is decided by its nearest existing folder', () => {

@@ -46,7 +46,7 @@
     onskin?: ((skin: Skin) => void) | undefined;
     /** Which way the board's flows run, a menu in the header (D-100 5; FlowMenu.svelte); left out (the gallery's samples), none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
-    /** Print…, Export… and Import… in the "⋯" menu (boardFiles flag); left out, no such rows. */
+    /** Print…, Export… and Import… in the "⋯" menu ; left out, no such rows. */
     onfiles?: ((kind: 'print' | 'export' | 'import') => void) | undefined;
     /** The board's holders, when Agents and Send to agent show; null hides both. */
     holders: AccessHolder[] | null;
