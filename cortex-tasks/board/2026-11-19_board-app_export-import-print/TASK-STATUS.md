@@ -26,6 +26,7 @@ PLAN.md § House Rules.
 | 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Completed | Ledger 22, the person's import by cookie, export read, import mode, centre by key; suite green but the tool budget. Two rulings asked (notes on an agent's import, replies on the person's). |
 | 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Completed | Page side done and tested. The server round trip is `test.fixme` until BE_01. Budgets over (page 211.1/206.2 KB, plugin 206,315/200,600). A host must define two `@page` names (Requests). |
 | 3b | T_03 | 3 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios. | [The agent learns export and import](./T_03_skill.md) | Completed | Skill v3.37: `references/files.md` and one core line; scenarios 56-57 in both hosts. Live: plugin 33/35, standalone 120/130, counted $0.5875 ($0.0875 billed). Owed: a live run of import-file on the reworded line. Plugin skill 8,187/8,192. |
+| 3c | FIX_01 | 3 | strong | no | Design-systems engineer — one scrollbar, one label line, one divider: the most direct way, the same look as nclite. | [The whole conversation imported; a tidier conversation box](./FIX_01_conversation-and-import-polish.md) | Pending | Points 615-619 |
 | 4 | VERIFY_01 | 4 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
 | 5 | T_02 | 5 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Pending | |
 
@@ -106,6 +107,8 @@ _Status:_ Completed (2026-11-19). Full notes in the task file. For VERIFY_01, T_
   then `write_board` `import` with the file as it is; no `propose`; "Done." and one plain line on what stayed behind.
 - `eval:bot` lists grew: `SCENARIOS` 20 (the dry test's `maxRuns` is 20), `STANDALONE` 16 (the default run cap).
 - Owed: one live run of `import-file` (it read no reference in the plugin run; the line was reworded after).
+### FIX_01
+_Status:_ Pending
 ### VERIFY_01
 _Status:_ Pending
 ### T_02
