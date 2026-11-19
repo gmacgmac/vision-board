@@ -13,10 +13,14 @@
      With `fields` (adaptiveHeader flag, a narrow bar: HeaderFields.svelte) the surface also holds what moved out of the
      bar, above the role="menu" and beside it; the keys walk both. `also` names them in the tooltip, and with
      `folderAbove` the Folder row above stands for Open folder… and its line, and with `ledgerAbove` the Ledger row above, whose
-     list ends in New ledger…, stands for New ledger…. -->
+     list ends in New ledger…, stands for New ledger…. With the boardFiles flag (`onfiles` given) a section of its own, after
+     the board's rows: Print…, Export… and Import… (D-107, PLAN decision 12), each only when the host gives its hook
+     (chrome.svelte.ts `files`), each opening the files dialog for the whole board; Print… and Export… off while no board is
+     open, Export… also while a past version shows (an export holds now), Import… while the ledger is read-only. -->
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
   import * as toolbarWords from '../words/toolbar.ts';
+  import * as filesWords from '../words/chrome-files.ts';
   import type { Snippet } from 'svelte';
   import { useChrome } from './chrome.svelte.ts';
   import ButtonIcon from './ButtonIcon.svelte';
@@ -27,9 +31,9 @@
   import type { ActDirection, Skin } from '#format';
   import { ACT_DIRECTIONS, SKINS } from '#format';
 
-  const { state: view, parts, id: idIn, flag } = useChrome();
+  const { state: view, parts, id: idIn, flag, files } = useChrome();
 
-  let { onhide, onarchive, onlock, onskin, ondirection, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
+  let { onhide, onarchive, onlock, onskin, ondirection, onfiles, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
     onhide: () => void;
     /** Archive board… (archiveBoard flag); left out, no such row. */
     onarchive?: (() => void) | undefined;
@@ -40,6 +44,8 @@
     /** Which way the board's flows run (D-100 5), when the header has no room for Flows (header-tier.ts): a row
      *  per direction, the board's ticked; left out, no such rows. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
+    /** Print…, Export… and Import… (boardFiles flag): open the files dialog for the whole board; left out, no such rows. */
+    onfiles?: ((kind: 'print' | 'export' | 'import') => void) | undefined;
     /** Draw the row for a locked board (the gallery); left out, the open board's own state. */
     locked?: boolean | undefined;
     open?: boolean;
@@ -65,6 +71,14 @@
   const isLocked = $derived(locked ?? view.locked);
   const lockTip = $derived(archiveOff ? (view.past ? toolbarWords.goBackToNowTo(isLocked) : toolbarWords.noBoardIsOpen)
     : readOnly ? READ_ONLY_PERSON : isLocked ? toolbarWords.letYouAndTheAgents : toolbarWords.makeThisBoardReadOnly);
+  /** The files rows that show: the host gives each one's hook (the gallery's sample draws all three). */
+  const filing = $derived(onfiles ? (['print', 'export', 'import'] as const).filter((k) => files[k] || !board) : []);
+  /** Print… and Export… wait for a board; Export… for now too; Import… for an editable ledger. */
+  const fileOff = (k: 'print' | 'export' | 'import') => (k === 'import' ? board && view.readOnly : board && (view.version === null || (k === 'export' && !!view.past)));
+  const fileTip = (k: 'print' | 'export' | 'import') => (k === 'import' ? (fileOff(k) ? READ_ONLY_PERSON : filesWords.importTip)
+    : fileOff(k) ? (view.past ? filesWords.goBackToNowToExport : toolbarWords.noBoardIsOpen) : k === 'print' ? filesWords.printTip : filesWords.exportTip);
+  const FILE_ROW = { print: filesWords.print, export: filesWords.exportBoard, import: filesWords.importBoard } as const;
+  const FILE_NAME = { print: filesWords.printName, export: filesWords.exportName, import: filesWords.importName } as const;
   let root: HTMLElement;
   let button: HTMLButtonElement;
   let surface: HTMLElement;
@@ -97,7 +111,7 @@
 
 <div class="vb-menu" bind:this={root}>
   <button type="button" class="vb-btn vb-menu-btn" id={idOf('toolbar-menu')} bind:this={button}
-    title={toolbarWords.moreTitle({ theme: !!parts.theme, centre: !!parts.alignRow, lock: !!onlock, locked: isLocked, archive: !!onarchive, folder: !!parts.folderRow, ledger: !!parts.ledgerRow && !ledgerAbove, also })} aria-label={toolbarWords.more} aria-haspopup="menu" aria-expanded={shown}
+    title={toolbarWords.moreTitle({ theme: !!parts.theme, centre: !!parts.alignRow, lock: !!onlock, locked: isLocked, archive: !!onarchive, folder: !!parts.folderRow, ledger: !!parts.ledgerRow && !ledgerAbove, also, files: filing.map((k) => FILE_NAME[k]) })} aria-label={toolbarWords.more} aria-haspopup="menu" aria-expanded={shown}
     aria-controls={idIn(`vb-menu-${uid}`)} onclick={() => (popup.open ? close() : void popup.show())}><ButtonIcon name="more" /></button>
   <div class={fields ? 'vb-menu-surface vb-surface-pop' : 'vb-menu-surface'} data-fields={fields ? '' : undefined} hidden={!shown} bind:this={surface} onfocusin={(e) => { if (fields) (e.target as HTMLElement).scrollIntoView({ block: 'nearest' }); }}>
   {#if fields}<div class="vb-menu-fields" role="group" aria-label={toolbarWords.moreControls}>{@render fields(choose)}</div>{/if}
@@ -150,6 +164,15 @@
         onclick={() => { if (!archiveOff && !readOnly) choose(onarchive); }}>
         <ButtonIcon name="archive" /><span class="vb-menu-label">{toolbarWords.archiveBoard2}</span>
       </button>
+    {/if}
+    {#if filing.length}
+      <div class="vb-menu-rule" role="separator"></div>
+      {#each filing as k (k)}
+        <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={idOf(`${k}-board`)} aria-haspopup="dialog"
+          aria-disabled={fileOff(k)} title={fileTip(k)} onclick={() => { if (!fileOff(k)) choose(() => onfiles?.(k)); }}>
+          <ButtonIcon name={k} /><span class="vb-menu-label">{FILE_ROW[k]}</span>
+        </button>
+      {/each}
     {/if}
     {#if parts.folderRow && !folderAbove}<PagePart draw={parts.folderRow} args={{ choose }} />{/if}
     {#if parts.ledgerRow && !ledgerAbove}<PagePart draw={parts.ledgerRow} args={{ choose }} />{/if}

@@ -10,6 +10,8 @@
 @import './proposals.css';
 @import '#ui/styles.css';
 @import './archived-dialog.css';
+@import './files-dialog.css';
 @import './lock.css';
 @import './node-edges.css';
 @import './header.css';
+@import './print.css';

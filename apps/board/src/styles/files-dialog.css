@@ -1,0 +1,21 @@
+/* The files dialog (boardFiles flag, D-107; board/chrome/FilesDialog.svelte, FilesForm.svelte): the board's dialog look
+   (#ui base/dialog.css .vb-dialog), with its one or two choices as rows: a checkbox or a radio before its words, the whole
+   row its target, and a hint under it in line with the words; the radios grouped under their legend. Once an import left
+   parts out, the list of them, scrolling inside a capped height. Tokens only. */
+.vb-dialog .vb-choices { margin: 0; padding: 0; border: 0; min-width: 0; }
+.vb-dialog .vb-choices > legend.vb-field { padding: 0; }
+.vb-dialog .vb-choice {
+  display: flex; align-items: center; gap: var(--vb-space-2); min-height: 24px; margin: var(--vb-space-3) 0 0;
+  font-weight: 600; color: var(--vb-ink-strong); cursor: pointer;
+}
+.vb-dialog .vb-choices > .vb-choice { margin-top: var(--vb-space-2); }
+.vb-dialog .vb-choice input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--vb-accent); cursor: pointer; }
+.vb-dialog .vb-choice:has(input:disabled) { color: var(--vb-ink); cursor: default; }
+.vb-dialog .vb-choice input:disabled { cursor: default; }
+.vb-dialog .vb-choice-note { margin-left: calc(18px + var(--vb-space-2)); }
+.vb-dialog .vb-files-dropped {
+  max-height: min(40vh, 240px); overflow: auto; margin: 0; padding: var(--vb-space-2) var(--vb-space-2) var(--vb-space-2) var(--vb-space-5);
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-card); color: var(--vb-ink);
+}
+.vb-dialog .vb-files-dropped li + li { margin-top: var(--vb-space-1); }
+.vb-dialog .vb-files .vb-btn[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; }

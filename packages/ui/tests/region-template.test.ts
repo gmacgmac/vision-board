@@ -47,6 +47,14 @@ test('the settings menu holds Reset places and Put container back, each disabled
   });
 });
 
+test('with `files` the settings menu adds Print container… and Export container… (each when given), opening a dialog, never disabled; a fixed frame has neither (D-107)', () => {
+  const both = regionTemplate(region, { files: { print: true, export: true }, remove: true });
+  assert.match(both, /data-put-back="review"[^]*<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" aria-haspopup="dialog" data-print-region="review">Print container…<\/button><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" aria-haspopup="dialog" data-export-region="review">Export container…<\/button><button[^>]*data-remove-region/);
+  assert.doesNotMatch(regionTemplate(region, { files: { print: true } }), /data-export-region/);
+  assert.doesNotMatch(regionTemplate(region), /data-(print|export)-region/);
+  assert.doesNotMatch(regionTemplate(region, { fixed: true, files: { print: true, export: true } }), /data-(print|export)-region/);
+});
+
 test('the grip starts the title line: a labelled button with grip dots, for Alt+arrows too (3_FE_04 ruling 5)', () => {
   const html = regionTemplate(region);
   assert.match(html, /<div class="vb-region-label"><span class="vb-region-handle"><button type="button" class="vb-region-grip" aria-label="Move container Review" aria-keyshortcuts="Alt\+ArrowLeft Alt\+ArrowRight Alt\+ArrowUp Alt\+ArrowDown" title="Move container · Alt\+arrows"><\/button><h2 id="region-review">/);

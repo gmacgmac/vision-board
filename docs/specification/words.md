@@ -50,6 +50,7 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/src/board/words/chrome-boards.ts` | `chrome-boards` | The board picker, rename, archive, lock and the archived list. |
 | `apps/board/src/board/words/chrome-common.ts` | `chrome-common` | Sentences more than one area of the page says, said once. |
 | `apps/board/src/board/words/chrome-confirm.ts` | `chrome-confirm` | The confirm dialog, its list and the discard-changes confirm. |
+| `apps/board/src/board/words/chrome-files.ts` | `chrome-files` | Export, import and print: the "⋯" menu's rows, the one dialog, and what it says once done. |
 | `apps/board/src/board/words/chrome-go-to-card.ts` | `chrome-go-to-card` | Go to card and the open-items chip. |
 | `apps/board/src/board/words/chrome-key-help.ts` | `chrome-key-help` | The key command list and its headings. |
 | `apps/board/src/board/words/chrome-proposals.ts` | `chrome-proposals` | Proposal counts, the accept-all confirm and its toast. |

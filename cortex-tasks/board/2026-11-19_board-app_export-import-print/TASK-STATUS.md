@@ -24,7 +24,7 @@ PLAN.md § House Rules.
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | T_01 | 1 | strong | no | Principal API engineer — one shape reused, never a near-copy; an import refuses nothing silently and names what it dropped. | [Contract first](./T_01_contract.md) | Completed | Contract and tests landed. One decision blocks the person's import (who writes the cards; see notes). BE_01 owes the `export_board` handler. |
 | 2 | BE_01 | 2 | strong | yes | Data-migration engineer — a file from an older version comes in or says exactly why not, and a person's answers are never an agent's. | [Export and import on the server](./BE_01_export-import.md) | Pending | |
-| 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Pending | |
+| 3 | FE_01 | 2 | strong | yes | Interaction designer for document tools — three menu items, one dialog, and a printout that looks like the board. | [Menus, dialog, print view, standalone hooks](./FE_01_menus-dialog-print.md) | Completed | Page side done and tested. The server round trip is `test.fixme` until BE_01. Budgets over (page 211.1/206.2 KB, plugin 206,315/200,600). A host must define two `@page` names (Requests). |
 | 3b | T_03 | 3 | strong | no | Prompt engineer — an instruction is code: every sentence earns its place and is proven on scenarios. | [The agent learns export and import](./T_03_skill.md) | Pending | |
 | 4 | VERIFY_01 | 4 | strong | no | Programme manager who shares boards across teams — exports, imports and prints a real board without reading a manual. | [Final verification](./VERIFY_01_testing.md) | Pending | |
 | 5 | T_02 | 5 | standard | no | Staff engineer who owns deprecations — done when nothing points at the flag. | [Switch on](./T_02_switch-on.md) | Pending | |
@@ -56,6 +56,8 @@ PLAN.md § House Rules.
 | `docs/specification/modules.md`: `npm run map` (new `packages/format/src/export/`) | T_01 | blocking for verify | orchestrator | Open |
 | `packages/mcp/tests/tools.test.ts` budgets: get_board 1,413, show_container 1,044, write_board 20,126, list 38,265 | T_01 | non-blocking | orchestrator | Open |
 | The person's import: who writes the cards (ledger 22, `PERSON_TOO`, cookie on `import`); pins on an agent's import | T_01 | blocking BE_01 step 2, FE_01 step 4 | maintainer | Open |
+| `docs/specification/plugin.md` § What the host gives, `print()`: the board's root names its page `vb-print-landscape` or `vb-print-portrait`; a host defines both (`@page`, 10 mm margins) for the one-page fit to hold | FE_01 | non-blocking | orchestrator | Open |
+| Budgets: `verify-weight.mjs` page 211.1 KB (budget 206.2), `plugin-build.test.ts` `view/board.js` 206,315 (budget 200,600) | FE_01 | non-blocking | orchestrator | Open |
 
 ## Implementation Notes
 
@@ -74,7 +76,20 @@ _Status:_ Completed (2026-11-19). The full notes are in the task file. For wave 
 ### BE_01
 _Status:_ Pending
 ### FE_01
-_Status:_ Pending
+_Status:_ Completed (2026-11-19). The full notes are in the task file.
+- **For BE_01**
+  - The page calls `export_board` (`?region=&notes=true`) and `write_board` with `{ import: { into, file } }` as the
+    person (cookie, through `asPerson`, which reloads once on `forbidden`).
+  - For `new`, the path's board id is `boardIdFor(file.title)`, unique among the boards.
+  - The page shows the reply's `dropped` strings as a list.
+- **Fixme until BE_01**: `tests/pages/board-files.spec.ts` "against the server (BE_01)". Two round-trip tests; remove the
+  `test.fixme` line.
+- **Print**
+  - `canvas/print-view.ts` and `styles/print.css`.
+  - The board's sheet can't hold `@page` (the host's sheet check), so the standalone page defines `vb-print-landscape` and
+    `vb-print-portrait` in `shell.css`. A plugin host has to define them too (Requests).
+- **Caught**: soft shadows print as grey blocks in a PDF (dropped in print); links were hidden while settling (fixed).
+- **For the maintainer**: dark mode prints dark. Force light while printing? (Task file, Caught 4.)
 ### T_03
 _Status:_ Pending
 ### VERIFY_01
