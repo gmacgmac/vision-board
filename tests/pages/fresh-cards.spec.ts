@@ -79,6 +79,9 @@ const colour = async (page: Page, l: Locator, prop: 'color' | 'borderTopColor' |
 /** A frame's top rule as drawn (open corners, FIX_06: the rules are its ::before and ::after, not its border). */
 const rule = async (page: Page, l: Locator) => pixel(page, await l.evaluate((e) => getComputedStyle(e, '::before').borderTopColor));
 const token = async (page: Page, name: string) => pixel(page, await resolved(page, `var(${name})`));
+/** The fresh corners' colour: the teal muted halfway into the canvas (point 699, D-113). */
+const FRESH_LINE = 'color-mix(in srgb, var(--vb-state-fresh) 50%, var(--vb-surface-canvas))';
+const freshLine = async (page: Page) => pixel(page, await resolved(page, FRESH_LINE));
 
 test.beforeEach(async ({ page }) => {
   // The page first, so page.request carries the person cookie.
@@ -101,7 +104,7 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   const { d, added } = await fresh(page, request);
   await expect(frame(page, 'p')).toHaveAttribute('data-fresh', '');
   await expect(frame(page, 'q')).toHaveAttribute('data-fresh', '');
-  expect(await rule(page, frame(page, 'p'))).toEqual(await token(page, '--vb-state-fresh'));
+  expect(await rule(page, frame(page, 'p'))).toEqual(await freshLine(page));
   await expect(said(page, 'p')).toHaveText('1 new');
   await expect(pill(page, 'p')).toHaveAttribute('title', '1 new card in this container');
   await expect(said(page, 'q')).toHaveText('1 updated');
@@ -109,7 +112,7 @@ test('a fresh container: teal border and "1 new" / "1 updated" pills; count = li
   // updated card keeps its teal border (point 432).
   expect(await colour(page, said(page, 'p').locator('.vb-region-fresh-new'), 'color')).toEqual(await token(page, '--vb-state-fresh'));
   expect(await colour(page, said(page, 'q').locator('.vb-region-fresh-updated'), 'color')).toEqual(await token(page, '--vb-state-updated'));
-  expect(await rule(page, frame(page, 'q'))).toEqual(await token(page, '--vb-state-fresh'));
+  expect(await rule(page, frame(page, 'q'))).toEqual(await freshLine(page));
   await expect(chip(page)).toContainText('2 new');
   await expect.poll(() => texts(page)).toEqual(['2 new', `${d.n[2]} · Card 3 · updated`, `${added} · Card 4`]);
   // One definition: the badges the board shows are the list's rows.
@@ -162,19 +165,18 @@ test('"N new": choosing a card goes to it, selected and focused, and keeps its m
 });
 
 for (const theme of THEMES) {
-  test(`APCA (${theme}): the border Lc 30, the pill's words and the updates badge's Lc 45, its outline Lc 30; axe passes`, async ({ page, request }) => {
+  test(`APCA (${theme}): the border brighter than the plain corners (no floor, D-113), the pill's words and the updates badge's Lc 45, its outline Lc 30; axe passes`, async ({ page, request }) => {
     await setTheme(page, theme);
     const { d } = await fresh(page, request);
     const canvas = await token(page, '--vb-surface-canvas');
     const cardBg = await token(page, '--vb-surface-card');
     const border = lc(await rule(page, frame(page, 'p')), canvas);
-    const plain = lc(await token(page, '--vb-line-contrast'), canvas);
+    const plain = lc(await pixel(page, await resolved(page, 'color-mix(in srgb, var(--vb-line-contrast) 55%, var(--vb-surface-canvas))')), canvas);
     const words = lc(await colour(page, pill(page, 'p'), 'color'), await colour(page, pill(page, 'p'), 'backgroundColor'));
     const t = tab(page, d.n[2]!);
     const tabWords = lc(await colour(page, t, 'color'), cardBg);
     const outline = lc(await colour(page, t, 'borderTopColor'), cardBg);
     console.log(`APCA ${theme}: fresh border ${border.toFixed(1)} (plain line ${plain.toFixed(1)}), pill words ${words.toFixed(1)}, updates tab words ${tabWords.toFixed(1)}, outline ${outline.toFixed(1)}`);
-    expect(border).toBeGreaterThanOrEqual(30);
     expect(border, 'brighter than the plain frame line').toBeGreaterThan(plain);
     expect(words).toBeGreaterThanOrEqual(45);
     expect(tabWords).toBeGreaterThanOrEqual(45);

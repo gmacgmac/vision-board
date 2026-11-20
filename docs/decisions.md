@@ -1426,3 +1426,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: The answer disc is 24px (was 28px), in the card type's own colour, with a small white tick and cross in it while waiting; in dark mode its fill is that colour 15% toward black, in the disc's own rule, so the white clears Lc 45 on every kind. Hover or a click opens the picker with Tick centred on the disc and Cross beside it, so a click without moving ticks (DD-07 had the picker beside the disc, never on it). A card's body text is 14px through its own type token; the title stays 15px.
 - **Why**: the disc read as a status light, ticking needed a move, and 13px Figtree read small under the 15px Bricolage title.
 - **Task**: cortex-tasks/board/2026-11-20_board-ui_disc-and-body-text.md
+
+## D-113 Container corners, plain and fresh, have no contrast floor (overrules the decoration tier under D-009)
+- **Date**: 2026-11-20 · **Status**: Accepted (maintainer, points 688 and 699) · **From**: the corner frames (points 672-675) and the fresh border
+- **Decision**: A container's corner lines are decoration a person finds by shape, not by contrast: at rest (55% of the region colour) they may sit under Lc 30 (measured Lc 17.8 light, under APCA's cutoff in dark). A fresh container's corners are its teal muted halfway into the canvas (`region-fresh.css`), a hint seen from a distance, measured Lc 32.3 light and 23.3 dark (was 58.6 and 67.4); the only rule held is that they read brighter than the plain corners (`tests/pages/fresh-cards.spec.ts`). Text, labels and the fresh pill keep their tiers.
+- **Why**: the maintainer wants the frame quiet and the fresh border muted; neither carries meaning a person must read, and the pill says what changed.
+- **Task**: none (direct change on main)

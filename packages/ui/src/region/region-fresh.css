@@ -1,11 +1,11 @@
 /* Region pattern styles, a fresh container (<vb-region data-fresh>, freshCards flag; new-and-updated
    Design 3 and 4, region-fresh.ts): it holds new or updated cards the person has not engaged with.
    After region.css and region-narrow.css. Tokens only.
-   Its border takes --vb-state-fresh, the app icon's teal, a few steps brighter than the plain frame
-   line (--vb-region, --vb-line-contrast): APCA on the canvas Lc 58.6 light, 67.4 dark (decoration tier
-   30; the plain line is 33.7 light). A dragged frame keeps its drag look; a drop target its own. */
+   Its corners take --vb-state-fresh, the app icon's teal, muted halfway into the canvas (point 699): a hint
+   seen from a distance, brighter than the plain corners, with no contrast floor (D-113). A dragged frame keeps
+   its drag look; a drop target its own. */
 vb-region {
-  &[data-fresh]:not([data-dragging], [data-drop]) { --vb-region-ln: var(--vb-state-fresh); }
+  &[data-fresh]:not([data-dragging], [data-drop]) { --vb-region-ln: color-mix(in srgb, var(--vb-state-fresh) 50%, var(--vb-surface-canvas)); }
 }
 
 /* The pill after the count: "3 new · 1 updated", teal words on the -soft fill (APCA Lc 54.8 light,
