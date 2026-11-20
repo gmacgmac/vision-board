@@ -63,3 +63,27 @@ Notes here and your row; one LOG line `[board-agent] Completed: T_01 …`; the r
 - Evals: dry 150/150 plugin, 141/141 standalone; bot-eval.test 7/7. Live Haiku: plugin 146/159 (146/154 without the
   stalled attempt; only known misses), standalone 129/141 (`other-container` 5/5); comparison with main in NOTES.md
   v3.40.
+
+## Implementation Notes, round 2 (2026-11-20, maintainer points 713 to 716)
+
+- 713: a read is never refused for its secret. `callers.ts` `knownAgent` (for every `optional-agent` operation: the
+  four reads, `list_open`, `check_responses`): a known secret names the agent, one another ledger or folder knows is
+  still `wrong-folder` / "join again" (FIX_01 F12), one nobody knows reads as no one. The engine says `joined: false`;
+  the standalone server adds `joinedReason` (`handlers.ts` `withReason`, words `http.ts` `secretNotRecognised`), so the
+  plugin seam (`EngineContext`) is unchanged: a first try put it there and moved the seam hash. `check_responses` now
+  carries `you` / `joined` too, so an unscoped read is never silent. Writes refuse as before.
+- 714: `x-secret-argument: false` on list_boards, get_board, show_node, show_container and list_open
+  (`scripts/gen-tools.mjs` `asksSecret`; routes carry `secret` = sent, `secretArgument` = asked for). `vb-mcp`
+  (`call-tool.ts` `httpTools`) sends a read VB_AGENT_SECRET, else its own `join`'s secret, else the last one passed; a
+  `secret` passed to a read anyway is taken, never refused. Tool list 38,355 characters (main 38,543, cap 38,600):
+  list_open 833 (was 1,041: 208 saved), list_boards 713, get_board 1,413, show_node 1,119, show_container 1,044, join
+  1,550; no cap raised. `check_responses` keeps its argument (scoped and held open; not asked).
+- 715: the eval person grants each request as it arrives (`Person.grants`, standalone.ts and host.ts);
+  `other-container` now also wants the card drawn and "Done.". Live: 16.5 s.
+- 716: route-table, board-data, api-archive (label "Archive chat"), api-folder-mismatch-ledgers, flags.ts; also
+  api-identity, api-errors and api.test (check_responses now says `joined: false`), gen-tools/gen-mcp tests, mcp
+  tools.test and a new session.test case.
+- Verification: full node suites 2811/2815 then api.test fixed: the 2 left need a built `dist/` (page cookie, board.css
+  gzip budget) and touch nothing here. verify ok. Dry 150/150 plugin, 142/142 standalone. Live Haiku: plugin own-board,
+  person-board, read-only 20/20 ($0.0063); standalone other-container, join-ledger, other-ledger, ledger-picture 28/28
+  ($0.0182).

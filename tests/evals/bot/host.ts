@@ -99,6 +99,18 @@ export async function startEvalHost(o: { dir: string; port: number; dry: boolean
   const latestVer = async (board: string, n: number) => ((await route('GET', `boards/${board}/nodes/${n}`)).versions as { ver: number }[]).at(-1)!.ver;
   const act = (board: string, body: Record<string, unknown>) => route('POST', `boards/${board}/act`, { type: 'act', board, ...body });
 
+  // The person at the board, granting each open request as it arrives (`grants`), one pass at a time.
+  let granting: NodeJS.Timeout | undefined;
+  let busy = false;
+  const grantOpen = async () => {
+    if (busy) return;
+    busy = true;
+    try {
+      const lines = await ledger();
+      const answered = new Set(lines.filter((e) => e.action === 'grant' || e.action === 'deny').map((e) => e.request));
+      for (const e of lines.filter((x) => x.type === 'grant-request' && !answered.has(x.seq))) await route('POST', `boards/${e.board}/act`, { type: 'act', action: 'grant', request: e.seq });
+    } finally { busy = false; }
+  };
   const person: Person = {
     async mark(board, n, mark) { await act(board, { action: mark, n, ver: await latestVer(board, n) }); },
     async direction(board, direction) { await act(board, { action: 'direction', direction }); },
@@ -114,6 +126,7 @@ export async function startEvalHost(o: { dir: string; port: number; dry: boolean
       return String(said.text ?? '');
     },
     async board(board, title) { await route('PUT', `boards/${board}`, { title }); },
+    grants() { granting ??= setInterval(() => { grantOpen().catch(() => {}); }, 200); },
   };
 
   return {
@@ -127,6 +140,7 @@ export async function startEvalHost(o: { dir: string; port: number; dry: boolean
     setReadOnly(on: boolean) { readOnly = on; },
     image: (path: string) => engine.image({ method: 'GET', path }).status,
     async close() {
+      clearInterval(granting);
       server.closeAllConnections();
       await new Promise((done) => server.close(done));
     },

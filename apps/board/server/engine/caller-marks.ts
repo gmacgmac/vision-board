@@ -19,7 +19,7 @@ import type { OpCtx } from './operations.ts';
 import { scopeOf } from './operations.ts';
 
 /** The read's `you` (common.schema.json `you`). */
-type CallerYou = NonNullable<OperationOutput<'get_board'>['you']>;
+type CallerYou = NonNullable<OperationOutput<'list_boards'>['you']>;
 
 /** A note as the reads give it: `seq` names it. */
 interface Note { seq: number; owed?: true; answered?: NoteAnswer }
@@ -52,6 +52,8 @@ export const holds = (s: LedgerState, board: string, who: Reader): boolean => {
 /** Who a read is for, with the flag on: `you` for an agent caller that has joined (the folder's one agent is the first
  * joined, engine.ts `callerOf`; none before any has), `joined: false` for a read with no caller, the case the standalone
  * server makes of a read sent with no Bearer secret (callers.ts `callerOf`, `optional-agent`); the person gets neither.
+ * A secret the standalone server knows nowhere reads as no one too (callers.ts `knownAgent`, point 713); the server adds
+ * why (handlers.ts `viaEngine`, `joinedReason`): only it holds secrets, so the engine's seam carries none.
  * A read-only read says no `joined`: `readOnly: true` already says nothing can be written, and a read of another ledger
  * (engine.ts `run`, which drops the caller there) is not a read by no one. */
 export function callerMark(s: LedgerState, ctx: Pick<OpCtx, 'caller' | 'readOnly' | 'flags'>): { you?: CallerYou; joined?: false } {

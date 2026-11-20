@@ -71,6 +71,8 @@ test('join: a key is not a join field; over 4 KB is too-large; a request with th
   assert.doesNotMatch(cookie.detail, /cookie/i);
 });
 
+const SECRET_NOT_RECOGNISED = 'Your secret is not recognised here, so this read is as no one: call join again before you write.';
+
 test('an agent write without a secret, or with one the server does not know, is 401 with WWW-Authenticate', async () => {
   const none = await h.fails('write_board', { board: 'pricing', body: { items: [] } }, 401, 'not-authenticated');
   assert.equal(h.last().headers.get('www-authenticate'), 'Bearer realm="vision-board"');
@@ -79,9 +81,11 @@ test('an agent write without a secret, or with one the server does not know, is 
   const unknown = await h.fails('request_grant', { body: { board: 'pricing', region: 'options', reason: 'x' } }, 401, 'not-authenticated', stranger);
   assert.equal(unknown.detail, 'The server does not know this secret. Call join again, then request_grant for each container you need; the person must approve again.');
   assert.equal(h.last().headers.get('www-authenticate'), 'Bearer realm="vision-board"');
-  // A scoped read with an unknown secret is refused too, rather than answered unscoped.
-  await h.fails('list_open', { board: 'pricing' }, 401, 'not-authenticated', stranger);
-  await h.fails('check_responses', { board: 'pricing' }, 401, 'not-authenticated', stranger);
+  // A read with an unknown secret is never refused (point 713): it reads as no one, unscoped, and says so and why.
+  for (const id of ['list_open', 'check_responses'] as const) {
+    const read = await h.ok(id, { board: 'pricing' }, { as: stranger });
+    assert.deepEqual([read.you, read.joined, read.joinedReason], [undefined, false, SECRET_NOT_RECOGNISED], id);
+  }
   const malformed = await raw('/api/boards/pricing/write', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Basic eDp5' }, body: '{"items":[]}' });
   assert.equal(malformed.status, 401);
   checkAnswer('write_board', malformed);

@@ -18,6 +18,7 @@
       "get": {
         "operationId": "list_boards",
         "x-agent": true,
+        "x-secret-argument": false,
         "x-hosts": ["standalone", "plugin"],
         "summary": "List the boards",
         "description": "List the project's boards. Call it first: the other tools take a board id. No input needed. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes). `readOnly: true`: the whole ledger is open read-only (no writes).",
@@ -85,6 +86,7 @@
       "get": {
         "operationId": "get_board",
         "x-agent": true,
+        "x-secret-argument": false,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Read a board as it is now",
         "description": "Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`); `readOnly: true`: the same for the whole ledger (`read-only`). `export: true` returns the export file instead. For one node's history, use `show_node`.",
@@ -405,6 +407,7 @@
       "get": {
         "operationId": "show_node",
         "x-agent": true,
+        "x-secret-argument": false,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Read one node with its history",
         "description": "Read one card with its history. Pass `board` and `n`, the card's number on that board; `linked: true` adds the nodes linked to it, one hop away. Returns every version, the person's notes, replies, proposals, the park bundle if any, links, its container (`region`) and the person's size; a retired card still answers, with `retired`. Read it before you answer a note or redraw a card, to build on the latest version.",
@@ -549,6 +552,7 @@
       "get": {
         "operationId": "show_container",
         "x-agent": true,
+        "x-secret-argument": false,
         "x-hosts": ["standalone", "plugin"],
         "summary": "Read one container with its history",
         "description": "Read one container (region) with its history. Pass `board` and `region`. Returns the region, the agents that hold it (`holders`, empty on an old region) and every node it has held, with every version and note. Read it before you write to a container or ask for a grant on it. `export: true` returns its export file instead.",
@@ -776,6 +780,7 @@
       "get": {
         "operationId": "list_open",
         "x-agent": true,
+        "x-secret-argument": false,
         "x-hosts": ["standalone", "plugin"],
         "summary": "List the open cards",
         "description": "List a board's open cards. Pass `board`. Returns every question, decision or action the person has not marked ✓ or ✗ (a note never answers a card), and every card waiting for you, each with its latest `ver`, `status`, `pending` (waiting for your answer: an unanswered note, or Later with no park bundle) and `unseen` (newer than the person last saw, or your answer cleared it and they have not looked since). With your secret, only the containers you hold, so you never answer another agent's cards.",

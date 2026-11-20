@@ -11,7 +11,7 @@ import type { AppHost } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
 import type { Chooser } from './chooser.ts';
 import { checkFolder, secretElsewhere } from './caller-folder.ts';
-import { callerOf } from './callers.ts';
+import { callerOf, secretUnknown } from './callers.ts';
 import type { Chats } from './chat-sessions.ts';
 import type { Editing } from './editing.ts';
 import type { Places } from './folders.ts';
@@ -53,6 +53,8 @@ export interface Ctx {
   places: Places;
   /** The person, an agent, or undefined for a read without credentials. */
   caller: Caller | undefined;
+  /** A read sent a secret no ledger knows: it reads as no one, and says why (callers.ts `secretUnknown`). */
+  secretUnknown: boolean;
   build?: BuildWatch | undefined;
 }
 
@@ -83,6 +85,6 @@ export async function dispatch(
   });
   await handlers[match.id]({
     req, res, url, params, engine: open.engine, ledger: open.ledger, editing: open.editing, agents: open.agents, chats: open.chats, apps: open.apps,
-    closed: open.closed, project: env.project, chooser: env.chooser, places: env.places, caller, build: env.build,
+    closed: open.closed, project: env.project, chooser: env.chooser, places: env.places, caller, secretUnknown: secretUnknown(req, caller), build: env.build,
   });
 }

@@ -17,6 +17,7 @@ export const thisBoardNowHasYour = (displayName: string, displayName2: string): 
 // ---- callers.ts
 export const onlyAnAgentCanDo = 'Only an agent can do this, with the secret join gave it. The person acts on the board itself.';
 export const thisNeedsYourAgentSecret = 'This needs your agent secret, sent as Authorization: Bearer <secret>. If you have none, call join, then request_grant for each container you need.';
+export const secretNotRecognised = 'Your secret is not recognised here, so this read is as no one: call join again before you write.';
 export const theServerDoesNotKnow = 'The server does not know this secret. Call join again, then request_grant for each container you need; the person must approve again.';
 export const onlyAChatSessionS = 'Only a chat session\'s gate hook calls this, with its run token. The person answers approvals on the board.';
 export const thisNeedsTheChatSession = 'This needs the chat session\'s run token, sent as Authorization: Bearer <token>.';

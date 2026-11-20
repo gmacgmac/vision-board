@@ -1030,3 +1030,7 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   Rerun on main's build (81dc4e38) against this one, 7 runs each: radial-centred 2 vs 5 misses (each a `center` sent as
   `{ key }`, which the engine resolved to the right card), timeline-plan 1 vs 1 of 3, structure-first 0 vs 3 (two asked
   in more than three lines, one drew at once); none involves access.
+- 2026-11-20, maintainer (points 713 to 716): reads never refuse a secret (one not recognised reads as no one, with
+  `joinedReason`), and ask for none: `vb-mcp` sends what it knows. § Access says so in its `joined: false` line. Live
+  Haiku: plugin own-board, person-board, read-only 20/20; standalone other-container (the person now grants at once,
+  16.5 s), join-ledger, other-ledger, ledger-picture 28/28.

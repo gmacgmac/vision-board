@@ -31,6 +31,7 @@ const wrongLedger = (open: string, yours: string) =>
   `The board has ledger "${open}" of ~/projects/multi open. Your work is in ledger "${yours}". Stop and tell the person: they can switch the board back to "${yours}". Don't join here.`;
 const WRONG_FOLDER = "The board has switched to ~/projects/multi. Your work is in ~/projects/other. Ask the person to open it again; don't join here.";
 const JOIN_AGAIN = 'This board now has your folder open (~/projects/multi). Your secret is from ~/projects/other — call join again.';
+const SECRET_NOT_RECOGNISED = 'Your secret is not recognised here, so this read is as no one: call join again before you write.';
 const UNKNOWN = 'The server does not know this secret. Call join again, then request_grant for each container you need; the person must approve again.';
 const region = (key: string) => ({ items: [{ type: 'region', key, region: { id: key, title: 'R', mode: 'grid' } }] });
 /** A board of the agent's own (its creator needs no grant). */
@@ -83,7 +84,7 @@ test('an agent joined on ui, calling while main is open: wrong-folder naming the
   await h.ok('list_open', { board: 'ui-own' }, { as: h.agent(joined.secret, multi) });
 });
 
-test('its reads too (FIX_01 F12): a secret of ui\'s, reading while main is open, is wrong-folder, never main\'s boards; no secret, or one no ledger knows, reads as before', async () => {
+test('its reads too (FIX_01 F12): a secret of ui\'s, reading while main is open, is wrong-folder, never main\'s boards; no secret reads as no one, and one no ledger knows does too, saying why (point 713)', async () => {
   await open(multi, 'ui');
   const joined = await h.ok('join', { body: { label: 'UI reader' } }, { as: h.agent(undefined, multi) });
   await open(multi, 'main');
@@ -93,14 +94,18 @@ test('its reads too (FIX_01 F12): a secret of ui\'s, reading while main is open,
       assert.equal(refused.detail, wrongLedger('main', 'ui'), `${id} ${project}`);
     }
   }
-  assert.deepEqual((await h.ok('list_boards', {}, { as: h.agent(undefined) })).boards.map((b: { board: string }) => b.board), ['plans']);
-  assert.equal((await h.ok('list_boards', {}, { as: h.agent('s-unknown-to-every-ledger-0000000') })).ledger, 'main');
+  const none = await h.ok('list_boards', {}, { as: h.agent(undefined) });
+  assert.deepEqual([none.boards.map((b: { board: string }) => b.board), none.joined, none.joinedReason], [['plans'], false, undefined]);
+  for (const [id, input] of [['list_boards', {}], ['get_board', { board: 'plans' }], ['list_open', { board: 'plans' }]] as const) {
+    const stranger = await h.ok(id, input, { as: h.agent('s-unknown-to-every-ledger-0000000') });
+    assert.deepEqual([stranger.you, stranger.joined, stranger.joinedReason], [undefined, false, SECRET_NOT_RECOGNISED], id);
+  }
 });
 
-test('an agent unknown to every ledger of the folder still gets not-authenticated', async () => {
+test('an agent unknown to every ledger of the folder still gets not-authenticated on a write (a read reads as no one, above)', async () => {
   await open(multi, 'main');
   for (const project of [multi, undefined]) {
-    const refused = await h.fails('list_open', { board: 'plans' }, 401, 'not-authenticated', h.agent('s-unknown-to-every-ledger-0000000', project));
+    const refused = await h.fails('request_grant', { body: { board: 'plans', reason: 'To write.' } }, 401, 'not-authenticated', h.agent('s-unknown-to-every-ledger-0000000', project));
     assert.equal(refused.detail, UNKNOWN);
   }
 });

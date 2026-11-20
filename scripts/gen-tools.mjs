@@ -6,7 +6,9 @@
 // `x-hosts`, beside the operation's: `inputHosts`, on a row that has one). Written to
 // packages/format/src/tools.generated.json by scripts/gen-api.mjs; gen-mcp.mjs makes the MCP tool list
 // from it, and a plugin manifest can be made from it too. How a host carries the secret is the host's,
-// so `secret` is a flag here, not an input. Pure.
+// so `secret` is a flag here, not an input: whether the call sends the agent's secret. `secretArgument` says whether a
+// client asks the agent for it; a read marked `x-secret-argument: false` is sent the secret the client already knows
+// (point 714). Pure.
 import { flatten } from './mcp-schema.mjs';
 import { METHODS, resolveParam } from './openapi-refs.mjs';
 
@@ -14,6 +16,14 @@ const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** True when the operation accepts the agent's Bearer secret (required or optional). */
 export const takesSecret = (op) => (op.security ?? []).some((r) => 'agentSecret' in r);
+
+/** True when a client asks the agent for the secret as an input: it takes one, and is not a read marked
+ * `x-secret-argument: false`, which is sent the one the client knows. */
+export function asksSecret(op) {
+  if (op['x-secret-argument'] === undefined) return takesSecret(op);
+  if (op['x-secret-argument'] !== false || !takesSecret(op)) throw new Error(`${op.operationId}: x-secret-argument may only be false, on an operation that takes the secret`);
+  return false;
+}
 
 /** The merged input (path, then query, then the body's top-level properties), where each goes, and the hosts that
  * give a parameter that says (`x-hosts` on the parameter; the rest go wherever the tool goes). */
@@ -53,7 +63,7 @@ export function toolTable(doc, schemas) {
       const { input, route, hosts } = inputOf(op, doc, schemas);
       rows.push({
         name: op.operationId, title: op.summary ?? op.operationId, description: (op.description ?? op.summary ?? '').trim(),
-        input, writes: method !== 'get', secret: takesSecret(op), route, ...(Object.keys(hosts).length > 0 && { inputHosts: hosts }),
+        input, writes: method !== 'get', secret: takesSecret(op), secretArgument: asksSecret(op), route, ...(Object.keys(hosts).length > 0 && { inputHosts: hosts }),
       });
     }
   }

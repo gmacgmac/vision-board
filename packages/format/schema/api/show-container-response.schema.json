@@ -21,6 +21,9 @@
     "joined": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/joined"
     },
+    "joinedReason": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/joinedReason"
+    },
     "board": {
       "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id",
       "description": "The board the container is on."

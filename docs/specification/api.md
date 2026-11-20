@@ -2303,15 +2303,24 @@ headers and answers) is [images.md](./images.md); this section is what the API s
 ## Access clarity (access-clarity T_01, points 692 to 705)
 
 213. **Every agent read says who is reading** (`apps/board/server/engine/caller-marks.ts` `callerMark`; behind
-    `botToolRules`, as 171). `list_boards`, `get_board`, `show_node`, `show_container` and `list_open` carry `you:
+    `botToolRules`, as 171). `list_boards`, `get_board`, `show_node`, `show_container`, `list_open` and `check_responses` carry `you:
     { agent, label }` (`common.schema.json` `you`) for an agent caller that has joined: the agent its writes are made as
     (the folder's one agent: the first joined, none before any has). A read with no caller at all carries `joined:
     false` (`common.schema.json` `joined`): it may read, marks nothing, and needs an agent to write. The engine tells
     that case apart by its caller alone: the standalone server reads these operations as `optional-agent`
     (`openapi.json` `security` `[{}, {agentSecret: []}]`, since 1.48.0; `apps/board/server/callers.ts` `callerOf`), so a
-    read with no Bearer secret has no caller, and one with a secret it does not know is refused `not-authenticated`, as
-    `list_open`'s is. Before 1.48.0 these four took no secret, so `vb-mcp` sent none and no standalone agent's read of
-    them was ever marked. A read-only read says no `joined` (`readOnly: true` already says nothing can be written, and a
+    read with no Bearer secret has no caller. A read is never refused for its secret (point 713; `callers.ts`
+    `knownAgent`): one no ledger knows reads as no one too, and the answer adds `joinedReason`
+    (`words/http.ts` `secretNotRecognised`, added by the standalone server, `handlers.ts` `withReason`, which alone holds
+    secrets, so the engine's seam is unchanged); one another ledger or folder knows is still `wrong-folder` or "join again"
+    (FIX_01 F12), and `list_open` and `check_responses` follow the same rule. Writes are refused as before. Before 1.48.0
+    these four took no secret, so `vb-mcp` sent none and no standalone agent's read of them was ever marked. They ask for
+    none still (point 714): `x-secret-argument: false` in `openapi.json` (on `list_open` too) leaves the `secret` argument
+    out of their tools (`scripts/gen-tools.mjs` `asksSecret`; the route's `secret` says it is sent, `secretArgument`
+    whether it is asked for), and `vb-mcp` sends the secret it knows: `VB_AGENT_SECRET`, else the one this connection's
+    own `join` answered, else the last `secret` any call passed (`packages/mcp/src/call-tool.ts` `httpTools`; one passed
+    to a read anyway is taken, never refused). Held by `packages/mcp/tests/session.test.ts` "a read asks for no
+    secret…". A read-only read says no `joined` (`readOnly: true` already says nothing can be written, and a
     read of another ledger drops its caller: engine.ts `run`). The person, and the flag off, get neither. Held by
     `bot-tool-rules.test.ts` "reads say who you are…" and "the folder's one agent is told who it is…".
 214. **`request_grant` answers `held` only when the write would pass** (`writes.ts` `requestGrant`, by caller-marks.ts

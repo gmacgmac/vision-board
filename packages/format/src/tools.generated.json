@@ -19,6 +19,7 @@
       },
       "writes": false,
       "secret": true,
+      "secretArgument": false,
       "route": {
         "path": [],
         "query": [
@@ -71,6 +72,7 @@
       },
       "writes": false,
       "secret": true,
+      "secretArgument": false,
       "route": {
         "path": [
           "board"
@@ -128,6 +130,7 @@
       },
       "writes": false,
       "secret": true,
+      "secretArgument": false,
       "route": {
         "path": [
           "board",
@@ -185,6 +188,7 @@
       },
       "writes": false,
       "secret": true,
+      "secretArgument": false,
       "route": {
         "path": [
           "board",
@@ -227,6 +231,7 @@
       },
       "writes": false,
       "secret": false,
+      "secretArgument": false,
       "route": {
         "path": [
           "board",
@@ -260,6 +265,7 @@
       },
       "writes": false,
       "secret": true,
+      "secretArgument": false,
       "route": {
         "path": [
           "board"
@@ -312,6 +318,7 @@
       },
       "writes": false,
       "secret": true,
+      "secretArgument": true,
       "route": {
         "path": [
           "board"
@@ -354,6 +361,7 @@
       },
       "writes": true,
       "secret": false,
+      "secretArgument": false,
       "route": {
         "path": [],
         "query": [],
@@ -403,6 +411,7 @@
       },
       "writes": true,
       "secret": true,
+      "secretArgument": true,
       "route": {
         "path": [],
         "query": [],
@@ -1533,6 +1542,7 @@
       },
       "writes": true,
       "secret": true,
+      "secretArgument": true,
       "route": {
         "path": [
           "board"
@@ -1582,6 +1592,7 @@
       },
       "writes": true,
       "secret": true,
+      "secretArgument": true,
       "route": {
         "path": [],
         "query": [],
@@ -1612,6 +1623,7 @@
       },
       "writes": false,
       "secret": false,
+      "secretArgument": false,
       "route": {
         "path": [],
         "query": [
@@ -1663,6 +1675,7 @@
       },
       "writes": true,
       "secret": true,
+      "secretArgument": true,
       "route": {
         "path": [],
         "query": [],
@@ -1688,6 +1701,7 @@
       },
       "writes": false,
       "secret": true,
+      "secretArgument": true,
       "route": {
         "path": [],
         "query": [],

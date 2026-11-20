@@ -16,6 +16,7 @@ import { createMcpServer, INSTRUCTIONS, INSTRUCTIONS_JOINED, MCP_BIN, MODERN } f
 import type { Caller, Engine } from '../server/engine/index.ts';
 import { createEngine } from '../server/engine/index.ts';
 import { inputRefusals } from '../server/words/plugin-tools.ts';
+import * as httpWords from '../server/words/http.ts';
 import { checkAnswer } from './openapi-ajv.ts';
 import { startBoard } from './api-harness.ts';
 import { callMcp } from './mcp-call.ts';
@@ -410,7 +411,7 @@ test('the folder\'s one agent is told who it is once one has joined, and holds e
   assert.deepEqual(await tiersFor(engine, one, 'one'), [['now', true, true, true], ['plans', true, true, true]]);
 });
 
-test('standalone, through vb-mcp: a read sends the secret (the chat panel\'s VB_AGENT_SECRET too) and names the agent and what it holds; with none it says `joined: false`; a secret the server does not know is refused, as a write is', async () => {
+test('standalone, through vb-mcp: a read sends the secret (the chat panel\'s VB_AGENT_SECRET too) and names the agent and what it holds; with none it says `joined: false`; a secret the server does not know reads as no one, saying why, and a write with it is refused', async () => {
   const h = await startBoard({});
   try {
     const joined = await h.join('Panel chat');
@@ -431,7 +432,10 @@ test('standalone, through vb-mcp: a read sends the secret (the chat panel\'s VB_
       assert.deepEqual([none.you, none.joined, JSON.stringify(none).includes('"held"')], [undefined, false, false], name);
     }
     assert.deepEqual((await read(joined.secret, 'get_board', { board: 'plans' })).view.regions.map((r: any) => [r.id, r.held]), [['now', true]]);
-    await h.fails('get_board', { board: 'plans' }, 401, 'not-authenticated', h.agent('s-unknown-to-every-ledger-0000000'));
+    const stranger = h.agent('s-unknown-to-every-ledger-0000000');
+    const unknown = await h.ok('get_board', { board: 'plans' }, { as: stranger });
+    assert.deepEqual([unknown.you, unknown.joined, unknown.joinedReason], [undefined, false, httpWords.secretNotRecognised]);
+    await h.fails('write_board', { board: 'plans', body: { items: [] } }, 401, 'not-authenticated', stranger);
   } finally { await h.close(); }
 });
 

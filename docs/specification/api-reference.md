@@ -75,7 +75,8 @@ Media type `application/json`.
 | `boards` | list of object | yes | Every board in the project. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `you` | object | no | In an agent's read: who you are on this ledger, the agent your writes are made as. What you may write is marked `held`: make a board, always; add containers to a board marked `held`; write in a container marked `held`; for anything else, call `request_grant` first. |
-| `joined` | `false` | no | Present, and false, on a read that carried no agent identity (no secret): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first. |
+| `joined` | `false` | no | Present, and false, on a read that carried no agent identity (no secret, or one the server does not know): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first. |
+| `joinedReason` | string | no | Beside `joined: false`, when the read sent a secret the server does not know: why it reads as no one. |
 | `project` | string | yes | The folder the board server has open, as the person reads it (`~/projects/example`); every board listed is in its ledger. |
 | `ledger` | string | no | The ledger every board listed is in: the one the board server has open in that folder, or the other one the read named (`ledger`, read-only). Given only with ledger folders. |
 | `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
@@ -445,7 +446,8 @@ Media type `application/json`.
 | `retired` | integer | no | The ledger line that took the card off the board, for a retired card; left out while it is on the board. Its history stays readable and its number is never given again. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `you` | object | no | In an agent's read: who you are on this ledger, the agent your writes are made as. What you may write is marked `held`: make a board, always; add containers to a board marked `held`; write in a container marked `held`; for anything else, call `request_grant` first. |
-| `joined` | `false` | no | Present, and false, on a read that carried no agent identity (no secret): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first. |
+| `joined` | `false` | no | Present, and false, on a read that carried no agent identity (no secret, or one the server does not know): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first. |
+| `joinedReason` | string | no | Beside `joined: false`, when the read sent a secret the server does not know: why it reads as no one. |
 | `linked` | list of object | no | The nodes linked to this one, each in full. Present only when `linked` is true. |
 | `ledger` | string | no | The other ledger of the folder this was read from, when the read named one (`ledger`); it comes with `readOnly: true`. Left out for the open ledger. |
 | `readOnly` | `true` | no | Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there. |
@@ -765,7 +767,8 @@ Media type `application/json`.
 |---|---|---|---|
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `you` | object | no | In an agent's read: who you are on this ledger, the agent your writes are made as. What you may write is marked `held`: make a board, always; add containers to a board marked `held`; write in a container marked `held`; for anything else, call `request_grant` first. |
-| `joined` | `false` | no | Present, and false, on a read that carried no agent identity (no secret): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first. |
+| `joined` | `false` | no | Present, and false, on a read that carried no agent identity (no secret, or one the server does not know): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first. |
+| `joinedReason` | string | no | Beside `joined: false`, when the read sent a secret the server does not know: why it reads as no one. |
 | `items` | list of object | yes | The open cards, by number. |
 | `containers` | list of object | no | Whole containers whose latest note has no answer yet; left out when none. |
 
@@ -828,6 +831,9 @@ Media type `application/json`.
 |---|---|---|---|
 | `responses` | list of object or object | yes | The person's actions after `after`. Each batch, up to and ending with its Send, is sorted by card number: a note on a group at its lowest card, a note on or the layout of a whole container at the lowest card in it (first when it holds none), grant answers after the cards; acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's two marks, which mean what the card you wrote asks. Each card's ✓, ✗, Later and clear (`reopen`) come folded to its latest, and only when it leaves the card otherwise than it was at `after`; notes come one by one. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
+| `you` | object | no | In an agent's read: who you are on this ledger, the agent your writes are made as. What you may write is marked `held`: make a board, always; add containers to a board marked `held`; write in a container marked `held`; for anything else, call `request_grant` first. |
+| `joined` | `false` | no | Present, and false, on a read that carried no agent identity (no secret, or one the server does not know): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first. |
+| `joinedReason` | string | no | Beside `joined: false`, when the read sent a secret the server does not know: why it reads as no one. |
 | `more` | `true` | no | Present, and true, only when there is more to read or the answer repeats an earlier one |
 
 Example:

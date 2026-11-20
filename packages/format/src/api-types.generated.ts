@@ -305,6 +305,7 @@ type ListBoardsResponse = {
   head: number;
   you?: CommonYou;
   joined?: false;
+  joinedReason?: string;
   project: string;
   ledger?: string;
   readOnly?: true;
@@ -319,6 +320,7 @@ type GetBoardResponse = {
   head: number;
   you?: CommonYou;
   joined?: false;
+  joinedReason?: string;
   view: View;
   state: {
     items: Record<string, CommonItemState>;
@@ -640,6 +642,7 @@ type ShowNodeResponse = {
   head: number;
   you?: CommonYou;
   joined?: false;
+  joinedReason?: string;
   linked?: CommonNodeDetail[];
   ledger?: string;
   readOnly?: true;
@@ -699,6 +702,7 @@ type ShowContainerResponse = {
   head: number;
   you?: CommonYou;
   joined?: false;
+  joinedReason?: string;
   board: string;
   region: RegionRegion;
   holders: string[];
@@ -744,6 +748,7 @@ type ListOpenResponse = {
   head: number;
   you?: CommonYou;
   joined?: false;
+  joinedReason?: string;
   items: CommonOpenItem[];
   containers?: CommonOpenContainer[];
 };
@@ -769,6 +774,9 @@ type CommonOpenContainer = {
 type CheckResponsesResponse = {
   responses: CheckResponsesResponseReported[];
   head: number;
+  you?: CommonYou;
+  joined?: false;
+  joinedReason?: string;
   more?: true;
 };
 type CheckResponsesResponseReported = CheckResponsesResponseMark | CheckResponsesResponseAct;

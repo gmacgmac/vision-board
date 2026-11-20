@@ -92,10 +92,27 @@ export function callerOf(req: IncomingMessage, id: OperationId, env: CallerEnv):
   }
   if (agentOp && req.method !== 'GET' && cookie !== undefined) throw problem('forbidden', ONLY_AGENT);
   if (security === 'agent') return agentOf(req, env);
-  if (security === 'optional-agent' && req.headers.authorization !== undefined) return agentOf(req, env);
+  // A read is never refused for its secret (point 713): one the server knows names the agent; one another ledger or
+  // folder knows is `wrong-folder`, as before; one nobody knows reads as no one, and the read says so (`secretUnknown`).
+  if (security === 'optional-agent' && bearerOf(req) !== undefined) return knownAgent(req, env);
   if (agentOp) refuseElsewhere(req, env);
   return undefined;
 }
+
+/** The agent a read's Bearer secret names, or undefined when no ledger knows it; refused only when another ledger or
+ * folder does (`refuseElsewhere`). */
+function knownAgent(req: IncomingMessage, env: CallerEnv): Caller | undefined {
+  env.ledger.refresh();
+  const index = env.ledger.state().index;
+  const agent = env.agents().find(bearerOf(req)!, (id) => index.agents.has(id));
+  if (agent) return { by: 'agent', agent };
+  refuseElsewhere(req, env);
+  return undefined;
+}
+
+/** A read sent a Bearer secret the server knows nowhere: it reads as no one (`callerOf`), and says why. */
+export const secretUnknown = (req: IncomingMessage, caller: Caller | undefined): boolean =>
+  caller === undefined && bearerOf(req) !== undefined;
 
 /** A read that sends a secret this ledger does not know but another's agents do (another ledger of the folder, a
  * recent folder) is refused as a write would be, so an agent left behind by a switch never takes the open ledger's

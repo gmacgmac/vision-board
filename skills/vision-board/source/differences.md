@@ -124,7 +124,7 @@ description: The Vision Board, where each point you would number in a reply is i
   board marked `held`; write in a container marked `held` (`get_board`'s `view.regions`,
   `show_container`); for anything else, `request_grant` first with a `reason` (just `board` for a
   board, `board` and `region` for a container), and wait. Reads name you (`you`); one marked
-  `joined: false` went without your `secret` and marks nothing.
+  `joined: false` went as no one (`joinedReason`: your secret wasn't recognised) and marks nothing.
 - **Cards you did not draw in this conversation** may be an earlier chat's. Read them first
   (`show_container`, `show_node`); if you lack the context to change them well, ask the person in
   the chat before you write. Never change what you don't understand.

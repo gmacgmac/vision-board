@@ -34,7 +34,11 @@ test('boardData from the folded read_ledger lines equals get_board, for every bo
   const s = foldLedger(await allLines());
   const { boards } = await h.ok<{ boards: { board: string }[] }>('list_boards');
   assert.ok(boards.length >= 2);
-  for (const { board } of boards) assert.deepEqual(asJson(s, board), await h.ok('get_board', { board }), board);
+  // A read with no secret says so (`joined: false`, api.md 213); the page's fold has no caller to name.
+  for (const { board } of boards) {
+    const { joined: _joined, ...read } = await h.ok('get_board', { board });
+    assert.deepEqual(asJson(s, board), read, board);
+  }
 });
 
 test('lines applied one at a time to a held state give the same board as folding them all', async () => {
@@ -73,7 +77,8 @@ test('a container note and a container place (3_FE_04): the folded board still e
   const note = await h.ok<{ seq: number }>('act', body({ action: 'comment', text: 'Thin enough?' }));
   await h.ok('act', body({ action: 'pin', x: 2400, y: 0 }));
   const s = foldLedger(await allLines());
-  assert.deepEqual(asJson(s, 'roadmap'), await h.ok('get_board', { board: 'roadmap' }));
+  const { joined: _joined, ...read } = await h.ok('get_board', { board: 'roadmap' });
+  assert.deepEqual(asJson(s, 'roadmap'), read);
   await h.ok('act', body({ action: 'note-remove', note: note.seq }));
   await h.ok('act', body({ action: 'unpin' }));
 });

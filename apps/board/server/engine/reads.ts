@@ -165,7 +165,7 @@ const checkResponses: Op = async (ctx) => {
   if (wait > 0 && !since().some(wake)) await hold(ctx, wait, wake);
   const s = ledger.state();
   requireBoard(s, board); // archived while the call waited: as if it never was
-  return reply(200, { ...responsesPage(s, board, after, Number(params.limit), agent), head: s.seq });
+  return reply(200, { ...responsesPage(s, board, after, Number(params.limit), agent), head: s.seq, ...callerMark(s, ctx) });
 };
 
 /** Ledger lines after `after`, oldest first, optionally one board's, as the file holds them (cards

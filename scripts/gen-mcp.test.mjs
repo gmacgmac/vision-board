@@ -62,7 +62,7 @@ test('a tool: path, query and body merged into one closed object; secret where a
   assert.deepEqual(tools[0].inputSchema.required, ['thing', 'label']);
   assert.equal(tools[0].inputSchema.additionalProperties, false);
   assert.equal(tools[0].inputSchema.properties.thing.description, 'Which thing.');
-  assert.deepEqual(routes.make_thing, { path: ['thing'], query: ['dry'], body: ['label', 'key'], secret: true });
+  assert.deepEqual(routes.make_thing, { path: ['thing'], query: ['dry'], body: ['label', 'key'], secret: true, secretArgument: true });
   assert.match(tools[0].description, /^Makes a thing\. Over MCP the secret is the `secret` argument/);
   assert.deepEqual(tools[0].annotations, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false });
   assert.equal('outputSchema' in tools[0], false, 'no output schema in the tool list');
@@ -71,6 +71,15 @@ test('a tool: path, query and body merged into one closed object; secret where a
 test('an input named in both the path and the body is refused', () => {
   const doc = opDoc({ parameters: [{ ...thing, name: 'label' }], requestBody: { content: { 'application/json': { schema: ref('core') } } } }, '/api/things/{label}');
   assert.throws(() => toolsOf(doc, schemas), /input "label" is named twice/);
+});
+
+test('a read marked `x-secret-argument: false` sends the secret but asks for none: no argument, no words about it (point 714)', () => {
+  const doc = opDoc({ parameters: [thing], security: [{}, { agentSecret: [] }], 'x-secret-argument': false }, '/api/things/{thing}', 'get');
+  const { tools, routes } = toolsOf(doc, schemas);
+  assert.deepEqual(Object.keys(tools[0].inputSchema.properties), ['thing']);
+  assert.deepEqual([routes.make_thing.secret, routes.make_thing.secretArgument], [true, false]);
+  assert.doesNotMatch(tools[0].description, /secret/);
+  assert.throws(() => toolsOf(opDoc({ parameters: [thing], 'x-secret-argument': false }, '/api/things/{thing}', 'get'), schemas), /x-secret-argument/);
 });
 
 test('a read is read-only and takes no secret when its security names none', () => {
