@@ -3,7 +3,7 @@
 // records the person's grant; a message becomes the prompt (chips spelled out, the board id) and the
 // board's Send; the turn streams in order as valid chat events; the secret reaches only the board MCP
 // server's environment; one turn at a time; Stop; a new session replaces the old one and stops its
-// CLI; and after a restart the session is listed and resumed.
+// CLI, as the same agent (D-114); and after a restart the session is listed and resumed.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -125,12 +125,14 @@ test('a new session replaces the board\'s current one and stops its CLI; the old
   fake.mode('hang');
   await h.ok('send_chat', { session: first.session, body: { text: 'Think it over.' } });
   const run = await fake.run(4);
+  const before = h.ledger.state().seq;
   const second = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } });
   await gone(run.pid);
   fake.mode('replay');
   assert.notEqual(second.session, first.session);
   assert.deepEqual((await h.ok('list_chats', { board: 'pricing' })).sessions, [second, first]);
-  assert.notEqual(stored()[1]!.agentId, stored()[0]!.agentId, 'a new session is a new agent, with no memory');
+  assert.equal(stored()[1]!.agentId, stored()[0]!.agentId, 'every chat in the folder is one agent (D-114)');
+  assert.equal(h.ledger.state().seq, before, 'no join and no grant: it holds the board already');
   await h.fails('send_chat', { session: first.session, body: { text: 'Hello?' } }, 409, 'conflict');
   await h.fails('send_chat', { session: 'no-such-session', body: { text: 'Hello?' } }, 404, 'not-found');
   await h.fails('send_chat', { session: second.session, body: { text: 'Look.', cards: [9999] } }, 422, 'invalid');

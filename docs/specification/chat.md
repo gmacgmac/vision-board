@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-11-03 (the agent's access in both layouts of the data folder: D-084, ACCESS_01; the open ledger only, while writable: FIX_01)
+updated: 2026-11-20 (one chat agent per folder's ledger: D-114, Access Clarity T_02)
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -58,7 +58,17 @@ apps/board/src      the sidebar, and the bridge between the chat and the board
 6. **A session in the folder.** In a folder with no board the session starts on no board
    (`start_folder_chat`); its agent is told so and may create one, and the session moves to the
    first board its agent creates (api.md 122).
-7. **Versions.** A change to the chat schema moves its `$id` to the next number (`.../chat/2/...`),
+7. **One agent per folder's ledger** (D-114). Every chat session the person starts in a ledger, Claude's or Kiro's,
+   on a board or in the folder, is the same agent, labelled with the folder's name: the newest session's agent that
+   joined the ledger, else a new one (`apps/board/server/chat-identity.ts` `chatIdentity`). A later session joins
+   nothing; it gets a fresh secret (secrets are never stored) and the board's grant only when it does not hold the
+   board. The first time an earlier session's agent is started again, it is granted, once and as the person's grant,
+   each container another chat agent of the ledger holds with its board, and each board one holds (`adopt`): never
+   what only an agent outside the panel (an MCP client, which keeps its own id) holds, nothing on a locked or archived
+   board, and nothing the person revoked from it or refused it. The ledger's read-only switch still refuses the start
+   and every write. A session started in the folder moves to the first board the agent creates, the newest such
+   session if there are several. Tested in `apps/board/tests/api-chat-identity.test.ts`.
+8. **Versions.** A change to the chat schema moves its `$id` to the next number (`.../chat/2/...`),
    as the ledger's does; ledgers are migrated to the current format (D-103).
 
 ## The panel (packages/chat)

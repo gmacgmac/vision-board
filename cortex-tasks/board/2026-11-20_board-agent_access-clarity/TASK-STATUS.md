@@ -20,7 +20,7 @@ notes to your task file and your row; append your own one-line LOG entry.
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | T_01 | 1 | strong | yes | Principal API designer for agent tools — a read answers the caller's next question before it is asked and never disagrees with the write. | [Reads say what you may write](./T_01_reads-say-access.md) | Pending | |
-| 2 | T_02 | 1 | strong | yes | Principal security engineer for local agent tooling — an identity is reused only where the person's own clicks already granted it, and never widens past them. | [One chat identity per folder](./T_02_chat-identity.md) | Pending | |
+| 2 | T_02 | 1 | strong | yes | Principal security engineer for local agent tooling — an identity is reused only where the person's own clicks already granted it, and never widens past them. | [One chat identity per folder](./T_02_chat-identity.md) | Done | `chat-identity.ts` (`chatIdentity`, `adopt`, once, never past refusals); words line added in `server-chat.ts`; api.md 106/122 stale (T_01). |
 | 3 | T_04 | 1 | strong | yes | Staff front-end engineer for print and PDF pipelines — what draws on screen must draw the same in every engine's PDF, and a rule keeps it so. | [Print-safe container corners](./T_04_print-safe-corners.md) | Pending | |
 | 4 | T_03 | 2 | standard | yes | — | [Holders as one chip](./T_03_holders-chip.md) | Pending | |
 | 5 | VERIFY_01 | 3 | standard | no | A product designer who uses the best collaborative canvases daily — expects to see at a glance who can edit and to never see an agent fumble access. | [Verify](./VERIFY_01_verify.md) | Pending | |

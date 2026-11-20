@@ -23,7 +23,8 @@ import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
 import { checked, withSaid } from './chat-files.ts';
-import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, SKILL_NOTE, SKILL_REFERENCES, agentName, boardMcpServer, chatLabel, joinAndGrant, newIdentity, rekey } from './chat-access.ts';
+import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, SKILL_NOTE, SKILL_REFERENCES, agentName, boardMcpServer, chatLabel, joinAndGrant, rekey } from './chat-access.ts';
+import { adopt, chatIdentity } from './chat-identity.ts';
 import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
 import type { ChatMessage, ResolveChip } from './chat-prompt.ts';
@@ -271,12 +272,12 @@ export function openChats(o: ChatOptions): Chats {
     if (session) deliver(session, board, was ? joined(was, held) : held);
   }
 
-  /** A session on no board moves to the first board its own agent creates (panel-send ruling 2); an `ask` reaches the
-   *  board's session (`hearAsk`). */
+  /** A session on no board moves to the first board its own agent creates (panel-send ruling 2), the newest such, as every
+   *  chat in the folder is one agent (D-114); an `ask` reaches the board's session (`hearAsk`). */
   const offAppend = ledger.onAppend((e) => {
     if (e.type === 'act' && e.action === 'ask' && e.by === 'person' && e.board !== undefined) return void hearAsk(e.board, e.lines!).catch(notAsked);
     if (e.type !== 'board' || e.by !== 'agent' || !index) return;
-    const waiting = entries().find((x) => x.board === undefined && x.agentId === e.agent);
+    const waiting = entries().findLast((x) => x.board === undefined && x.agentId === e.agent);
     if (waiting && creatorOf(ledger.state(), e.board) === e.agent) store().attach(waiting.session, e.board);
   });
 
@@ -291,7 +292,7 @@ export function openChats(o: ChatOptions): Chats {
       const why = blocked[agent];
       if (why) throw problem('invalid', serverChatWords.couldNotBeStarted2(agentName(agent)), { errors: [{ pointer: '/agent', detail: why }] });
       refuseReadOnly(agent);
-      const identity = newIdentity(ledger, agents());
+      const identity = chatIdentity(ledger, agents(), entries()); // the folder's one chat agent (D-114)
       const token = newToken();
       let started;
       const at = key(board);
@@ -310,6 +311,7 @@ export function openChats(o: ChatOptions): Chats {
       };
       try {
         joinAndGrant(ledger, agents(), identity, chatLabel(agent, cwd), board);
+        if (identity.joined) adopt(ledger, entries(), identity.agentId);
       } catch (err) {
         started.close?.(); // the board was locked or archived while the CLI started: none is left running
         throw err;

@@ -1,6 +1,7 @@
-// The chat agent's board access (chat-panel PLAN ruling 8, BE_03 ruling 3): for each new session the
-// server joins the board as an agent labelled with the folder's name, and records the
-// person's grant of the board to it (starting the session was the person's click). The secret goes
+// The chat agent's board access (chat-panel PLAN ruling 8, BE_03 ruling 3; D-114): every chat session
+// the person starts in a folder's ledger is one agent, labelled with the folder's name: the server joins
+// it for the first session (chat-identity.ts picks it), and records the person's grant of the board
+// to it (starting the session was the person's click). The secret goes
 // only to the board's MCP server (`vision-board`), in its environment (`VB_AGENT_SECRET`), so it never appears in a tool
 // call, the CLI's command line, the transcript or a chat event. Secrets are never stored: after a
 // restart the server gives the same agent a fresh one (`rekey`). Kiro gets the skill as its agent's
@@ -8,6 +9,8 @@
 // (`keepKiroAgent`), and a failure to write it stops only Kiro, saying why.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { holders } from '#actions';
+import { openRequestOf } from '#format';
 import type { McpServer } from '#agent';
 import { GATED_TOOLS, kiroAgentFile, writeKiroAgent } from '#agent';
 import { MCP_BIN } from '#mcp';
@@ -41,24 +44,34 @@ export const agentName = (agent: ChatSession['agent']): string => NAMES[agent];
  * (the root) falls back to the CLI's name. */
 export const chatLabel = (agent: ChatSession['agent'], folder: string): string => path.basename(folder) || NAMES[agent];
 
-export interface Identity { agentId: string; secret: string }
+/** A session's board identity and its secret, not yet stored: the session must start before the
+ * server joins it. `joined`: an earlier chat's agent of this ledger, which this session starts as (D-114). */
+export interface Identity { agentId: string; secret: string; joined?: true }
 
 /** A new agent id and secret, not yet stored: the session must start before the server joins. */
 export function newIdentity(ledger: Ledger, agents: Agents): Identity {
   return { agentId: agents.mint(ledger.state().index.agents), secret: newToken() };
 }
 
-/** Join as `identity` (the hash first, then the `join` line, as `join` does), then ask for the
- * board and record the person's grant of it. With no board (a session started in the folder), only
- * the join: its agent may create a board, and the creator needs no grant (panel-send ruling 2). */
+/** Record the person's grant of the board, or with `region` the container, to `agent`: its request
+ * (an open one it already has, else a new one with `reason`), then the person's `grant`. */
+export function grantTo(ledger: Ledger, agent: string, need: { board: string; region?: string | undefined }, reason: string): void {
+  const { board, region } = need;
+  const request = openRequestOf(ledger.state().index, agent, board, region)
+    ?? ledger.append({ type: 'grant-request', board, ...(region !== undefined && { region }), reason }, { by: 'agent', agent }).seq;
+  ledger.append({ type: 'act', action: 'grant', request }, { by: 'person' }, { board });
+}
+
+/** Join as `identity` (the hash first, then the `join` line, as `join` does; an identity already
+ * joined gets only its fresh secret), then record the person's grant of the board unless it holds
+ * it. With no board (a session started in the folder), only the join: its agent may create a board,
+ * and the creator needs no grant (panel-send ruling 2). */
 export function joinAndGrant(ledger: Ledger, agents: Agents, identity: Identity, label: string, board?: string): void {
   const { agentId, secret } = identity;
   agents.add(agentId, secret);
-  const agent = { by: 'agent', agent: agentId } as const;
-  ledger.append({ type: 'join', label }, agent);
-  if (board === undefined) return;
-  const request = ledger.append({ type: 'grant-request', board, reason: serverChatWords.thePersonStartedAChat }, agent).seq;
-  ledger.append({ type: 'act', action: 'grant', request }, { by: 'person' }, { board });
+  if (!identity.joined) ledger.append({ type: 'join', label }, { by: 'agent', agent: agentId });
+  if (board === undefined || holders(ledger.state(), board).includes(agentId)) return;
+  grantTo(ledger, agentId, { board }, serverChatWords.thePersonStartedAChat);
 }
 
 /** A fresh secret for an agent the server joined for a session before this start. */
