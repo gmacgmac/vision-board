@@ -1,8 +1,14 @@
-// Link labels (field-report batch 3 ruling 3): a label sits on its line near the source end when
-// it fits that stretch of line without covering a card or an earlier label; otherwise the page
-// draws a small marker on the line near the source, and the label floats on hover or focus. Layout
-// stays pure, so a label's size is worked out from its length (`labelSize`), not measured: the
-// page draws the label no wider than this. Deterministic: labels are placed in link order.
+// Link labels (field-report batch 3 ruling 3; point 646, PLAN folders-labels-print § Decisions 3): a label is a word on
+// its line, read where it sits. It takes the first of these places that covers no card and no earlier label:
+//  1. on a straight piece of its line, near the source end (`onPiece`, as before);
+//  2. just above or below a level piece, inside the gap between its two cards, clear of every line and the arrowhead;
+//  3. centred on an upright piece, inside that gap, clear of the other lines and the arrowhead;
+//  4. just right or left of an upright piece (stacked cards), inside that gap, clear of every line and the arrowhead
+//     (2 to 4: `inGap`).
+// When none fits, a short tag (the first words and an ellipsis, `shortTag`) sits on the line near the source in a 24 px
+// target; the page shows the whole label on its hover or focus, and whole in print. Never a bare dot; cards never move.
+// Layout stays pure, so a label's size is worked out from its length (`labelSize`), not measured: the page draws the
+// label no wider than this. Deterministic: labels are placed in link order.
 import type { Box, LabelPlace, Point, Size } from '../types.ts';
 import { overlaps } from '../geometry.ts';
 import { along, lengthOf } from './path.ts';
@@ -11,49 +17,167 @@ import { along, lengthOf } from './path.ts';
 export const LABEL_CHAR = 6.5;
 export const LABEL_PAD = 6;
 export const LABEL_H = 18;
-/** How far a label or marker keeps from the source's port, px. */
+/** How far a label or tag keeps from the source's port, px. */
 const FROM_PORT = 14;
+/** How far a label beside its line keeps from the line, and from a card, px. */
+const BESIDE = 3;
+const CLEAR = 4;
+/** How far a label beside an upright piece keeps from it: clear of the arrowhead's half width (ARROW / 2), px. */
+const BESIDE_UP = 7;
+/** How far a label keeps from any line it does not sit on (its canvas-coloured tag would hide it), px. */
+const LINE_CLEAR = 2;
+/** The arrowhead's length and width at the line's end (7 × the wire's 1.6 px, rounded up), px. */
+const ARROW = 12;
+/** How far apart the places tried along a piece or a line are, px. */
+const STEP = 4;
 
 export const labelSize = (text: string): Size => ({ w: Math.ceil(text.length * LABEL_CHAR) + 2 * LABEL_PAD, h: LABEL_H });
 
-/** The label's place on the polyline `pts` (source first). `cards`: every card's box; `taken`:
- *  the labels placed so far, added to when this one fits. */
-export function placeLabel(pts: Point[], text: string, cards: readonly Box[], taken: Box[]): LabelPlace {
-  const { w, h } = labelSize(text);
-  for (let i = 1; i < pts.length; i++) {
-    const [a, b] = [pts[i - 1]!, pts[i]!];
-    const flat = a.y === b.y;
-    const room = flat ? Math.abs(b.x - a.x) : Math.abs(b.y - a.y);
-    const need = (flat ? w : h) + 2 * FROM_PORT;
-    if (room < need) continue;
-    const step = FROM_PORT + (flat ? w : h) / 2;
-    const at = flat ? { x: a.x + Math.sign(b.x - a.x) * step, y: a.y } : { x: a.x, y: a.y + Math.sign(b.y - a.y) * step };
-    const box = { x: at.x - w / 2, y: at.y - h / 2, w, h };
-    if (cards.some((c) => overlaps(box, c)) || taken.some((t) => overlaps(box, t))) continue;
-    taken.push(box);
-    return { ...at, fits: true };
-  }
-  return { ...markerAt(pts, cards, taken), fits: false };
+/** What a label must keep clear of. `cards`: every card's box; `taken`: the labels and tags placed so far (added to
+ *  when one is placed); `lines`: every link's polyline. */
+export interface LabelRoom { cards: readonly Box[]; taken: Box[]; lines: readonly Point[][] }
+
+/** The label's place for the polyline `pts` (source first) between the cards `ends` (source, target). */
+export function placeLabel(pts: Point[], text: string, room: LabelRoom, ends: readonly [Box, Box]): LabelPlace {
+  const size = labelSize(text);
+  const at = onPiece(pts, size, room) ?? inGap(pts, size, room, ends);
+  if (at) return { ...at, fits: true };
+  return { ...shortTag(pts, text, room), fits: false };
 }
 
-/** A marker's room on the page: a 24 px target (WCAG 2.5.8), px. */
-export const MARK = 24;
-/** How far apart the places a marker tries are along its line, px. */
-const MARK_STEP = 4;
+const boxAt = (p: Point, { w, h }: Size): Box => ({ x: p.x - w / 2, y: p.y - h / 2, w, h });
+const clearOf = (box: Box, boxes: readonly Box[], gap = 0) => !boxes.some((b) => overlaps(box, b, gap));
+const level = (a: Point, b: Point) => a.y === b.y;
 
-/** Where a marker goes: the first point on the line from near the source whose target covers no
- *  card, label or earlier marker (added to `taken`); with none in the first half of the line, the
- *  first point anyway (FE_01: two markers 18 px apart were one target over another). */
-function markerAt(pts: Point[], cards: readonly Box[], taken: Box[]): Point {
-  const first = Math.min(FROM_PORT + 4, lengthOf(pts) / 2);
-  const box = (p: Point) => ({ x: p.x - MARK / 2, y: p.y - MARK / 2, w: MARK, h: MARK });
-  for (let d = first; d <= lengthOf(pts) / 2; d += MARK_STEP) {
-    const p = along(pts, d);
-    if (cards.some((c) => overlaps(box(p), c, 1)) || taken.some((t) => overlaps(box(p), t, 1))) continue; // 1 px spare for rounding
-    taken.push(box(p));
-    return p;
+/** 1. On a straight piece, FROM_PORT from its start: as before point 646. */
+function onPiece(pts: Point[], size: Size, room: LabelRoom): Point | null {
+  const { w, h } = size;
+  for (let i = 1; i < pts.length; i++) {
+    const [a, b] = [pts[i - 1]!, pts[i]!];
+    const flat = level(a, b);
+    const length = flat ? Math.abs(b.x - a.x) : Math.abs(b.y - a.y);
+    if (length < (flat ? w : h) + 2 * FROM_PORT) continue;
+    const step = FROM_PORT + (flat ? w : h) / 2;
+    const at = flat ? { x: a.x + Math.sign(b.x - a.x) * step, y: a.y } : { x: a.x, y: a.y + Math.sign(b.y - a.y) * step };
+    if (take(boxAt(at, size), room)) return at;
   }
+  return null;
+}
+
+/** Keep `box` when it covers no card and no earlier label. */
+function take(box: Box, room: LabelRoom, gap = 0): boolean {
+  if (!clearOf(box, room.cards, gap) || !clearOf(box, room.taken)) return false;
+  room.taken.push(box);
+  return true;
+}
+
+/** Each piece of `pts` as a box with no thickness. */
+const piecesOf = (pts: readonly Point[]): Box[] => pts.slice(1).map((b, i) => {
+  const a = pts[i]!;
+  return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(b.x - a.x), h: Math.abs(b.y - a.y) };
+});
+
+const inside = (box: Box, gap: Box) =>
+  box.x >= gap.x && box.y >= gap.y && box.x + box.w <= gap.x + gap.w && box.y + box.h <= gap.y + gap.h;
+
+/** 2, 3 and 4: beside a level piece, else centred on an upright one, else beside an upright one; each inside the gap
+ *  between the two cards (the box round both), CLEAR from every card, and clear of the arrowhead and of the lines it
+ *  does not sit on. */
+function inGap(pts: Point[], size: Size, room: LabelRoom, ends: readonly [Box, Box]): Point | null {
+  const [s, t] = ends;
+  const gap = { x: Math.min(s.x, t.x), y: Math.min(s.y, t.y), w: 0, h: 0 };
+  gap.w = Math.max(s.x + s.w, t.x + t.w) - gap.x;
+  gap.h = Math.max(s.y + s.h, t.y + t.h) - gap.y;
+  const arrow = arrowOf(pts);
+  const others = room.lines.filter((l) => l !== pts).flatMap(piecesOf);
+  const all = [...piecesOf(pts), ...others];
+  const fits = (at: Point, lines: Box[]) => {
+    const box = boxAt(at, size);
+    return inside(box, gap) && !overlaps(box, arrow) && clearOf(box, lines, LINE_CLEAR) && take(box, room, CLEAR);
+  };
+  for (let i = 1; i < pts.length; i++) {
+    const [a, b] = [pts[i - 1]!, pts[i]!];
+    if (!level(a, b)) continue;
+    for (const side of [-1, 1]) {
+      const y = a.y + side * (BESIDE + size.h / 2);
+      for (const x of middleOut(a.x, b.x)) if (fits({ x, y }, all)) return { x, y };
+    }
+  }
+  for (let i = 1; i < pts.length; i++) {
+    const [a, b] = [pts[i - 1]!, pts[i]!];
+    const at = { x: a.x, y: (a.y + b.y) / 2 };
+    if (!level(a, b) && fits(at, others)) return at;
+  }
+  // 4. Just right, then just left, of an upright piece (orchestrator follow-up to point 646: stacked cards).
+  for (let i = 1; i < pts.length; i++) {
+    const [a, b] = [pts[i - 1]!, pts[i]!];
+    if (level(a, b)) continue;
+    for (const side of [1, -1]) {
+      const x = a.x + side * (BESIDE_UP + size.w / 2);
+      for (const y of middleOut(a.y, b.y)) if (fits({ x, y }, all)) return { x, y };
+    }
+  }
+  return null;
+}
+
+/** The arrowhead's room: the last ARROW px of the line, ARROW wide across it. */
+function arrowOf(pts: Point[]): Box {
+  const [a, end] = [pts[pts.length - 2]!, pts[pts.length - 1]!];
+  const [half, back] = [ARROW / 2, (v: number, from: number) => (v > from ? v - ARROW : v)];
+  return level(a, end)
+    ? { x: back(end.x, a.x), y: end.y - half, w: ARROW, h: ARROW }
+    : { x: end.x - half, y: back(end.y, a.y), w: ARROW, h: ARROW };
+}
+
+/** The places along a piece from v0 to v1 (x of a level piece, y of an upright one): its middle, then outwards STEP at
+ *  a time, the source's side first. */
+function middleOut(v0: number, v1: number): number[] {
+  const [mid, half, toward] = [(v0 + v1) / 2, Math.abs(v1 - v0) / 2, Math.sign(v1 - v0) || 1];
+  const out = [mid];
+  for (let d = STEP; d <= half; d += STEP) out.push(mid - toward * d, mid + toward * d);
+  return out;
+}
+
+/** A short tag's target: MARK tall and at least MARK wide (WCAG 2.5.8), px. */
+const MARK = 24;
+/** The longest first word a tag shows whole, characters. */
+const WORD = 10;
+
+/** A tag's target box size for its words. */
+export const tagSize = (short: string): Size => ({ w: Math.max(MARK, labelSize(short).w), h: MARK });
+
+/** The words a short tag may show, longest first: the first words of the label and an ellipsis, down to its first
+ *  word (cut, with an ellipsis, past WORD characters). A one-word label is that word, cut when long. */
+export function tagWords(text: string): string[] {
+  const words = text.trim().split(/\s+/);
+  const lead = words[0]!.length > WORD ? `${words[0]!.slice(0, WORD - 1)}…` : null;
+  if (words.length === 1) return [lead ?? words[0]!];
+  const out: string[] = [];
+  for (let k = words.length - 1; k > 1; k--) out.push(`${words.slice(0, k).join(' ')}…`);
+  out.push(lead ?? `${words[0]}…`);
+  return out;
+}
+
+/** 5. The short tag: the longest of `tagWords` whose target, somewhere on the first half of the line from near the
+ *  source, covers no card, label or earlier tag (added to `taken`); with none, the shortest at the first point anyway
+ *  (FE_01: two targets 18 px apart were one over another). */
+function shortTag(pts: Point[], text: string, room: LabelRoom): Point & { short: string } {
+  const half = lengthOf(pts) / 2;
+  const first = Math.min(FROM_PORT + 4, half);
+  const words = tagWords(text);
+  for (const short of words) {
+    const size = tagSize(short);
+    for (let d = first; d <= half; d += STEP) {
+      const p = along(pts, d);
+      const box = boxAt(p, size);
+      // 1 px spare for rounding.
+      if (!clearOf(box, room.cards, 1) || !clearOf(box, room.taken, 1)) continue;
+      room.taken.push(box);
+      return { ...p, short };
+    }
+  }
+  const short = words[words.length - 1]!;
   const p = along(pts, first);
-  taken.push(box(p));
-  return p;
+  room.taken.push(boxAt(p, tagSize(short)));
+  return { ...p, short };
 }

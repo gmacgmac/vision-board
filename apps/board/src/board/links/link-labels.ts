@@ -1,10 +1,10 @@
-// A link's label on its line (field report batch 3 ruling 3, linkLabels flag). The layout places
-// it (`Route.labelAt`): where it fits, the label is drawn centred there, on a canvas-coloured tag so
+// A link's label on or beside its line (field report batch 3 ruling 3, point 646, linkLabels flag). The layout
+// places it (`Route.labelAt`): where it fits, the label is drawn centred there, on a canvas-coloured tag so
 // the line does not show through, and no wider than the box the layout kept for it
 // (`labelSize`), which works the width out from the length; a label whose text runs wider in the
 // page's font is squeezed to fit (`fitLabel`), never let out over a card or another label. Where
-// the label does not fit, link-marks.ts draws a marker instead. With the flag off, every label is
-// drawn at the middle of its line, as before.
+// the label fits nowhere, link-marks.ts draws a short tag of its first words instead. With the flag off, every
+// label is drawn at the middle of its line, as before.
 import type { Point, Route } from '#layout';
 import { LABEL_H, labelSize } from '#layout';
 import { esc } from '#ui';
