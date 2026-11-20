@@ -1,8 +1,9 @@
 // Big titles (bigTitles flag, point 437): a card whose body has structure (a `#` or `##` heading, or a
-// table) shows its title at today's `#` size and bold weight (point 442), larger than any of its body
-// headings, and its body's `#` steps down to the `##` size; a plain card's title, and a card whose only heading is `###`, are
-// unchanged; ?flags=-bigTitles draws today's sizes. In light and dark: the title passes Lc 60, axe passes,
-// and the gallery's samples match their screenshot.
+// table) shows its title four pixels over the card title (--vb-card-title + 4px, point 671) in the bold
+// weight (point 442), larger than any of its body headings, and its body's `#` steps down to the `##`
+// size (body + 2px); a plain card's title, and a card whose only heading is `###`, keep --vb-card-title;
+// ?flags=-bigTitles draws every title at --vb-card-title and the body's `#` at body + 4px. In light and
+// dark: the title passes Lc 60, axe passes, and the gallery's samples match their screenshot.
 import type { Locator, Page } from '@playwright/test';
 import { draw, open, write } from './agent-board.ts';
 import { lc, pixel, resolved } from './apca.ts';
@@ -13,14 +14,10 @@ const THEMES: Theme[] = ['light', 'dark'];
 const fontSize = (l: Locator) => l.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
 const weight = (l: Locator) => l.evaluate((e) => Number(getComputedStyle(e).fontWeight));
 
-/** Today's `#` size: a `vb-md-h1` outside any card, as markdown.css draws it. */
-const todaysH1 = (page: Page) => page.evaluate(() => {
-  const h = document.createElement('span');
-  h.className = 'vb-md-h1';
-  document.body.append(h);
-  const size = parseFloat(getComputedStyle(h).fontSize);
-  h.remove();
-  return size;
+/** The card's type tokens in px: the title (--vb-card-title) and the body (--vb-card-text). */
+const tokens = (page: Page) => page.evaluate(() => {
+  const px = (name: string) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+  return { title: px('--vb-card-title'), text: px('--vb-card-text') };
 });
 
 /** The card's title size and each of its body headings' sizes. */
@@ -43,19 +40,21 @@ async function board(request: Parameters<typeof draw>[0]) {
 }
 const cardOf = (page: Page, i: number) => page.locator('vb-node').filter({ has: page.locator(`h3:text-is("Card ${i}")`) });
 
-test('on the board: a structured card\'s title is today\'s # size and larger than its body headings; # steps down to ##', async ({ page, request }) => {
+test('on the board: a structured card\'s title is the card title + 4px and larger than its body headings; # steps down to ##', async ({ page, request }) => {
   const d = await board(request);
   await open(page, d);
-  const h1 = await todaysH1(page);
+  const t = await tokens(page);
+  const big = t.title + 4;
   const [structured, table, label, plain] = await Promise.all([1, 2, 3, 4].map((i) => sizes(cardOf(page, i))));
-  expect(structured!.title).toBe(h1);
+  expect(structured!.title).toBe(big);
   expect(Math.max(...structured!.headings)).toBeLessThan(structured!.title);
   const [bodyH1, bodyH2] = [await fontSize(cardOf(page, 1).locator('.vb-md-h1')), await fontSize(cardOf(page, 1).locator('.vb-md-h2'))];
-  expect(bodyH1).toBe(bodyH2);
-  expect(table!.title).toBe(h1);
-  // A card whose only heading is the label, and a plain card, keep the medium title.
-  expect(label!.title).toBeLessThan(h1);
-  expect(plain!.title).toBe(label!.title);
+  expect(bodyH2, '## is body + 2px').toBe(t.text + 2);
+  expect(bodyH1, '# steps down to ## under a big title').toBe(bodyH2);
+  expect(table!.title).toBe(big);
+  // A card whose only heading is the label, and a plain card, keep the medium title at --vb-card-title.
+  expect(label!.title).toBe(t.title);
+  expect(plain!.title).toBe(t.title);
   // Bold, the `#` weight (point 442): the headline over its bold `##`; the label and plain cards keep the medium title.
   const bold = await weight(cardOf(page, 1).locator('.vb-md-h2'));
   for (const i of [1, 2]) expect(await weight(cardOf(page, i).locator('.vb-node-title')), `card ${i}: bold`).toBe(bold);
@@ -64,14 +63,16 @@ test('on the board: a structured card\'s title is today\'s # size and larger tha
   for (const i of [1, 2]) expect(await cardOf(page, i).locator('.vb-node-title').evaluate((t) => t.scrollWidth <= t.clientWidth)).toBe(true);
 });
 
-test('flag off: every title keeps today\'s size and # stays larger than ##', async ({ page, request }) => {
+test('flag off: every title keeps the card title and # stays larger than ##', async ({ page, request }) => {
   const d = await board(request);
   await open(page, d, '?flags=-bigTitles');
+  const t = await tokens(page);
   const titles = await Promise.all([1, 2, 3, 4].map(async (i) => fontSize(cardOf(page, i).locator('.vb-node-title'))));
-  expect(new Set(titles).size).toBe(1);
-  expect(await fontSize(cardOf(page, 1).locator('.vb-md-h1'))).toBe(await todaysH1(page));
-  expect(await fontSize(cardOf(page, 1).locator('.vb-md-h1'))).toBeGreaterThan(await fontSize(cardOf(page, 1).locator('.vb-md-h2')));
-  expect(titles[0]).toBeLessThan(await todaysH1(page));
+  expect([...new Set(titles)]).toEqual([t.title]);
+  const bodyH1 = await fontSize(cardOf(page, 1).locator('.vb-md-h1'));
+  expect(bodyH1, '# is body + 4px').toBe(t.text + 4);
+  expect(bodyH1).toBeGreaterThan(await fontSize(cardOf(page, 1).locator('.vb-md-h2')));
+  expect(titles[0]).toBeLessThan(bodyH1);
   const weights = await Promise.all([1, 2, 3, 4].map(async (i) => weight(cardOf(page, i).locator('.vb-node-title'))));
   expect(new Set(weights).size, 'every title keeps the medium weight').toBe(1);
   expect(weights[0]).toBeLessThan(await weight(cardOf(page, 1).locator('.vb-md-h2')));
@@ -84,7 +85,7 @@ test.describe('on the gallery', () => {
     await page.goto('/gallery.html');
     await expect(page.locator('vb-node[data-sample="big-titles"]')).toHaveCount(2);
     const [structured, plain] = [await sizes(sample(page, 0)), await sizes(sample(page, 1))];
-    expect(structured.title).toBe(await todaysH1(page));
+    expect(structured.title).toBe((await tokens(page)).title + 4);
     expect(Math.max(...structured.headings)).toBeLessThan(structured.title);
     expect(plain.title).toBeLessThan(structured.title);
     await page.goto('/gallery.html?flags=-bigTitles');

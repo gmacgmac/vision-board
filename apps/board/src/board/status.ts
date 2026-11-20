@@ -84,6 +84,9 @@ export interface BoardStatus {
   files: FilesAsk | null;
   /** How many times the board was drawn. */
   drawn: number;
+  /** How many times the open board fitted itself again to the level it opened at (boards.ts `relaid`: a font that
+   *  loaded late laid it out anew); like the opening fit, that level is not news (ZoomLevel, GATE3-R1). */
+  refits: number;
   /** What the host's chat says its agent is doing (`BoardChat.status`): the working mark. */
   chatWork: ChatWork;
   /** The Send the person pressed waits for the agent's turn to end (`held`): Send's waiting state. */
@@ -102,7 +105,7 @@ export const initialStatus = (): BoardStatus => ({
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, bookmarked: 0,
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
-  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, skin: null, direction: null, go: null, files: null, drawn: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
+  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, skin: null, direction: null, go: null, files: null, drawn: 0, refits: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
 });
 
 export interface Status {

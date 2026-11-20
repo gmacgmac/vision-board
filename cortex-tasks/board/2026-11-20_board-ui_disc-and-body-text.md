@@ -138,3 +138,29 @@ pointer, focus not moved) and by Enter (Tick focused, ring); leaving closes it; 
   250%, the picker one size. That is the only test change.
 - Rerun (ports 6410-6419, a temporary HOME, `--config tests/pages/playwright.config.ts`): board-host, board-guest,
   zoom-groups, node-edges, node-edges-board, answer-model: 49 passed.
+
+**Follow-up (test pass after main's points 668-675 merged, 454e98e9; ports from VB_TEST_PORT=6610, a temporary HOME).**
+- Old design written down, updated to the ruling: `big-titles` :46, :67, :83 (the big title is --vb-card-title + 4px,
+  `##` body + 2px, `#` body + 4px or `##` under a big title, read from the tokens, no longer "today's `#`");
+  `node-edges` :81 (title 16px, body 15px); `container-rules` (rewritten for corners only: one ::before rule all
+  round, masked to four 64px corners at 55%, ::after none; selected 2px still corners only; Lc as drawn over the
+  canvas; plus a new test for the title's side rules, 32px, gone under 640px on screen); `review-colours` :22 (the
+  frame is --vb-line-contrast at 55%; dark's corners measure under APCA's low clip, reported, as the whole line's
+  11.7 was); `container-rail-hover` :35 (a focused or selected card no longer keeps its container's icons; focus on
+  the grip does); `container-title` :78 (the side rules widen the label, so it slides at 70%, not 60%);
+  `board.spec` :296 (the taller cards open the board at a lower fit, so its lowest zoom with buttons put Review's line
+  under 568px, the compact popover: the test now zooms in until the wide popover has room, and says so).
+- A real break, fixed at its cause: `zoom-and-lasso` :150, :181, :204 and `zoom-level` :40. The board fitted itself
+  on opening, then the web font loaded and the cards were measured and laid out again (D-112), so the opening view no
+  longer fit what was drawn (Fit gave 51.7% where the board opened at 51.0%). `draw.ts` now tells `boards.ts`
+  (`relaid`), which fits again while the view is still the opening fit; a view the person moved stays. The refit is
+  part of opening, so the zoom status says nothing (`status.refits`, `ZoomLevel.svelte`; GATE3-R1 test). It costs
+  0.1 KB: the page budget is 214.6 KB (measured 214.54; `scripts/verify-weight.mjs`, `performance.md`).
+- Also: a stale comment in `node.css` (big title) and `pattern.json`'s `--vb-region` row now say 55% corners.
+- **Baselines renewed: 28** (`--update-snapshots=changed` over the 47 screenshot specs): containers' corners and
+  title rules in sections the 138 renewal had not reached (gallery region, toolRail, flow-branching, layout-control,
+  timeline-board, command-lens, freshCards, exportImportPrint; board; rail; fresh; agent-access; timeline down).
+- **Full page suite** (4 workers: with 10, VB_TEST_PORT=6610 gives a worker 6660-6669, and Chrome refuses 6665-6669
+  as unsafe ports, which failed board.spec's screenshots): 1,143 passed, 2 failed, 2 skipped, the 10 budgets not
+  run behind them. The two (`app-cards` :183, `app-pan-key` :19) pass alone; the budgets pass with `--no-deps` (10).
+  `npm run check` clean; `npm run verify` clean.

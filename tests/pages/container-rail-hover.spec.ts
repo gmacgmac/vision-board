@@ -1,6 +1,8 @@
 // Rail icons only on the container in use (railOnHover flag; read-only follow-ups FE_03, PLAN decision 9,
-// point 416): a container's rail icons and divider are hidden (opacity 0, still focusable) unless the
-// container is hovered or holds focus, then at the rest strength (--vb-rail-rest), full on the rail itself.
+// point 416, narrowed by point 675): a container's rail icons and divider are hidden (opacity 0, still
+// focusable) unless the pointer is over the container or one of its cards, or focus is on the container's
+// own controls (its grip, its rail), then at the rest strength (--vb-rail-rest), full on the rail itself.
+// A focused or selected card no longer keeps them.
 // Comment's badge still shows; a touch screen keeps them shown; flag off (?flags=-railOnHover) is the
 // dimmed-at-rest look as before. Board: rail-board.ts (p and q side by side).
 import { act } from './agent-board.ts';
@@ -32,15 +34,29 @@ test('the pointer on a container shows its icons at rest strength and hides the 
   await expect.poll(() => iconOpacity(q)).toBe(0);
 });
 
-test('focus inside a container shows its icons; a hidden icon is still reachable by the keyboard', async ({ page, request }) => {
+test('focus on a card no longer keeps its container\'s icons (point 675); focus on the container\'s own controls shows them, and a hidden icon is still reachable by the keyboard', async ({ page, request }) => {
   await board(page, request);
   await zoomTo(page, 1);
   const [p, q] = [frame(page, 'p'), frame(page, 'q')];
-  await p.page().locator('vb-node').nth(1).focus();
+  // The pointer on q's card shows q's icons; focus on that card, then the pointer away: they go with the pointer.
+  const card = page.locator('vb-node').nth(1);
+  await card.hover();
+  await expect.poll(() => iconOpacity(q), 'pointer on q\'s card').toBeCloseTo(0.5, 2);
+  await card.focus();
+  await expect(card).toBeFocused();
   await away(page);
-  await expect.poll(() => iconOpacity(q), 'focus on q\'s card').toBeCloseTo(0.5, 2);
+  await expect.poll(() => iconOpacity(q), 'focus on q\'s card alone').toBe(0);
+  await expect(q).not.toHaveAttribute('data-use');
   expect(await iconOpacity(p)).toBe(0);
-  await q.page().locator('vb-node').nth(1).blur();
+  // A selected card does not keep them either.
+  await card.click();
+  await away(page);
+  await expect.poll(() => iconOpacity(q), 'q\'s card selected').toBe(0);
+  // Focus on the container's own grip marks it in use: its icons at rest strength, the pointer away.
+  await q.locator('.vb-region-grip').focus();
+  await expect.poll(() => iconOpacity(q), 'focus on q\'s grip').toBeCloseTo(0.5, 2);
+  await expect(q).toHaveAttribute('data-use', '');
+  await q.locator('.vb-region-grip').blur();
   await expect.poll(() => iconOpacity(q)).toBe(0);
   // Hidden, not removed: the rail's layout button takes focus, and then the rail is lit.
   const checked = p.locator('.vb-layout-btn');
