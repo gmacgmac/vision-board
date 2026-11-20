@@ -25,7 +25,7 @@ const dts = pluginTypes();
 /** A host written from docs/specification/plugin.md alone, using every member the seam has. */
 const HOST = `
 import { createEngine, mount } from './plugin';
-import type { Caller, Chip, PluginEngine, PluginHost, PluginView, Ref } from './plugin';
+import type { Caller, Chip, PluginEngine, PluginHost, PluginView, PrintAsk, Ref } from './plugin';
 
 const held = new Map<string, Chip>();
 const acks: Ref[] = [];
@@ -57,7 +57,8 @@ const host: PluginHost = {
   pageChanged: () => {},
   saveFile: async (name, type, bytes) => void [name, type, bytes.byteLength],
   openFile: async (accept) => (accept ? { name: 'plans.vboard.json', bytes: new Uint8Array() } : undefined),
-  print: async (ask) => void [ask?.title, ask?.content, ask?.look === 'dark', ask?.orientation === 'landscape'],
+  savePdf: async (ask) => void [ask?.title, ask?.content, ask?.look === 'dark', ask?.orientation === 'landscape', ask?.size?.width, ask?.size?.height],
+  print: async (ask: PrintAsk | undefined) => void ask?.title,
 };
 
 export async function useView(root: HTMLElement): Promise<unknown[]> {
@@ -216,10 +217,10 @@ export const same: true[] = [
   {} as Same<Board.ConfirmAsk, Host.ConfirmAsk>, {} as Same<Board.ConfirmList, Host.ConfirmList>, {} as Same<Board.ConfirmItem, Host.ConfirmItem>,
   {} as Same<Board.Caller, Host.Caller>, {} as Same<Board.Transport, Host.Transport>, {} as Same<Board.EngineReply, Host.EngineReply>,
   {} as Same<Board.ListedTool, Host.ListedTool>, {} as Same<Board.ToolResult, Host.ToolResult>,
-  {} as Same<Board.PrintAsk, Host.PrintAsk>, {} as Same<Board.PrintLook, Host.PrintLook>, {} as Same<Board.PrintOrientation, Host.PrintOrientation>,
+  {} as Same<Board.PdfAsk, Host.PdfAsk>, {} as Same<Board.PrintLook, Host.PrintLook>, {} as Same<Board.PrintOrientation, Host.PrintOrientation>,
 ];
-/** The board's print, save and open are the contract's members (optional on both sides). */
-export const hooks: [Same<Board.PluginHost['print'], Host.PluginHost['print']>, Same<Board.PluginHost['saveFile'], Host.PluginHost['saveFile']>] = [true, true];
+/** The board's Save as PDF, save and open are the contract's members (optional on both sides). */
+export const hooks: [Same<Board.PluginHost['savePdf'], Host.PluginHost['savePdf']>, Same<Board.PluginHost['print'], Host.PluginHost['print']>, Same<Board.PluginHost['saveFile'], Host.PluginHost['saveFile']>] = [true, true, true];
 export const refs = (ack: Board.AnswersAck, line: Board.ChatLine, change: Board.PluginChange): Ref[] => [ack, line, change];
 export const said = (answers: Board.AnswersText, other: Board.ChipText): ChipText[] => [answers, other];
 export const meta = (change: { words: string; count: number; subject: string; reveal: Board.Ref }): ChangeMeta => change;

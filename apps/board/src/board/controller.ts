@@ -106,7 +106,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
-    els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, files: { print: !!host.print, export: !!host.saveFile }, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, files: { print: !!host.savePdf, export: !!host.saveFile }, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), fresh: () => edges.fresh(attention.freshIn()),
     facts, appCards: apping, edges: edges.first, placed: () => apps.place(), // FE_08
     direction: (r: string) => directionOf((versions.state ?? live.state)!, S.id, r), // BE_01
@@ -264,7 +264,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
   /** What the container finder and Z on a container zoom with (find/finder.ts). */
   const finding = { vp, layout: () => drawing.layout, frames: () => drawing.frames };
-  /** Export, import and print (D-107): through the host's hooks, the dialog in the board's status. */
+  /** Export, import and Save as PDF (D-107): through the host's hooks, the dialog in the board's status. */
   const files = createBoardFiles({ host, importBytes: host.page?.importBytes ?? IMPORT_BYTES, io, id: () => S.id, state: () => live.state, regionTitle: (r) => S.data?.view.regions.find((x) => x.id === r)?.title,
     show: (ask) => status.set({ files: ask }), toast: (t) => toast(t), jump: (id) => void switchTo(id, () => boards.jump(id)),
     printView: (scope) => (drawing.layout && S.data ? preparePrint(stage.parentElement!, drawing.layout, view(), scope) : null) });

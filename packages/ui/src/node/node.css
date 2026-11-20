@@ -103,17 +103,20 @@ vb-node .vb-node-title {
    medium title. */
 vb-node {
   [data-big-titles] & .vb-node-content:has(> .vb-node-body :is(.vb-md-h1, .vb-md-h2, .vb-md-table)) > .vb-node-title {
-    font-size: var(--vb-text-xl); font-weight: var(--vb-weight-bold);
+    font-size: calc(var(--vb-card-title) + 4px); font-weight: var(--vb-weight-bold);
   }
 }
 /* The body is Markdown (markdown.css styles its blocks); its blocks sit on the content's rhythm, at the card's body
-   size (--vb-card-text, D-112), which its Markdown reads through --vb-md-text. Its `#` and `##` stay on the type scale
-   (18px and 15px, or 15px under a big title; a step over --vb-md-text, counted from the card's body size), so none
-   outgrows the 15px title. */
+   size (--vb-card-text, D-112), which its Markdown reads through --vb-md-text. Its headings step over the body
+   (point 671): `#` four pixels, `##` two, `###` the 12px label; under a big title (the title four pixels over its own
+   size) the body's `#` steps down to the `##` size, so the title stays the card's one top heading. */
 vb-node .vb-node-body {
   --vb-md-text: var(--vb-card-text);
   display: grid; gap: var(--vb-space-2); min-width: 0; font-size: var(--vb-card-text); line-height: 1.5; color: var(--vb-ink);
-  & :is(.vb-md-h1, .vb-md-h2) { font-size: calc(var(--vb-md-text) + var(--vb-md-step) - var(--vb-card-text)); }
+  & .vb-md-h1 { font-size: calc(var(--vb-card-text) + 4px); }
+  & .vb-md-h2 { font-size: calc(var(--vb-card-text) + 2px); }
+  & .vb-md-label { font-size: var(--vb-text-sm); }
+  [data-big-titles] &:has(:is(.vb-md-h1, .vb-md-h2, .vb-md-table)) .vb-md-h1 { font-size: calc(var(--vb-card-text) + 2px); }
 }
 vb-node .vb-node-tags { display: flex; flex-wrap: wrap; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
 vb-node .vb-node-tags li {

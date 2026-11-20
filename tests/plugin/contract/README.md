@@ -6,12 +6,12 @@ board's own types are made from its code (`plugin.d.ts`, `docs/specification/plu
 version), and the tests run the host's own checks on the board's build, so the day the two drift, a test fails. Nothing
 in `apps/` or `packages/` imports it.
 
-Source: the nclite repo (`/Users/dev/AI/nclite`), read only. nclite HEAD when copied: `ec106c49c60dfe4ef5c6a2db3c67a078d42b53bf`
+Source: the nclite repo (`/Users/dev/AI/nclite`), read only. nclite HEAD when copied: `a7c2a70638ea249159c461b1e2a91ef661729d62`
 (2026-11-20).
 
 | Copy | Source sha256 | Last changed in nclite |
 |---|---|---|
-| `nclite/shared/plugin-host.ts` | `1c33dd867eaff218188e01b055388b0ad9a58905b836415c7e46e16656776fda` | `7415189d` |
+| `nclite/shared/plugin-host.ts` | `21d1db67484193b48d280207890bd4c7b7ada07dfa37fe342dd244f9580bc38b` | `a7c2a706` |
 | `nclite/shared/plugin-checks.ts` | `8280e7f38d506e546946a7d8789e566712d10c06f1c7dfd8558cf6a9eaab0015` | `5671453f` |
 | `nclite/shared/plugin-adapters.ts` | `d09828aba739f26c3368f1456c59b68206f72489ec8ce5badb619c0e69f5b040` | `5671453f` |
 | `nclite/engine/plugins/stylesheet.ts` | `5b6613fb159e32f8ffa31845845ff5be66c2567dd04a562339e7abf9a7a2f1c6` | `2f3ca585` |
@@ -22,9 +22,11 @@ nclite has vendored the board (its `5671453f`): the copies hold the manifest's `
 (the board's own), and the adapter table's one entry for the board, its icon.
 
 The copies are their sources' bytes, with no edit: nclite's `PluginHost` holds `pageChanged` (its item 160) and the
-optional `print(ask)`, `saveFile` and `openFile` with `PrintAsk`, `PrintLook`, `PrintOrientation`, `OpenedFile` and
-`FILE_LIMITS` (its `7415189d`). The board's own `BoardHost` keeps `pageChanged` and the three hooks optional
-(`apps/board/src/board/host.ts`), so a host without them still fits: additions, seam 2 still.
+optional `savePdf(ask)` (its `a7c2a706`, ADR-0381: Save as PDF replaced printing; `print` is its deprecated alias until
+the next re-vendor), `saveFile` and `openFile` with `PdfAsk` (with `size`, one page of exactly that size), `PrintLook`,
+`PrintOrientation`, `OpenedFile` and `FILE_LIMITS`. The board's own `BoardHost` keeps `pageChanged`, `savePdf`, `saveFile`
+and `openFile` optional and has no `print` (`apps/board/src/board/host.ts`), so a host without them, or with `print`
+alone, still fits: additions, seam 2 still.
 
 `plugin-host.test.ts` holds this table: every copy is its source's bytes, by the sha256 above. It catches an edit to a
 copy, not a change in nclite: that shows only when the copies are refreshed (below), so refresh them before each handover.

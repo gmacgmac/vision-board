@@ -1,34 +1,29 @@
-// The print view (D-107, export-import-print PLAN decisions 8-9): what the board sets on its root before the host prints,
-// and takes off after. A print stylesheet over the live page (styles/print.css) reads it: no header, strips, panels or
-// menus; the scope, the whole board or one container, fitted to one page by a transform of the world (never enlarged);
-// the containers' borders as chosen; colours kept. Nothing is drawn again: the cards, frames and links are the ones on
-// screen. A container's print hides every other frame, card and link (`data-vb-print-out`). The world's transform, the
-// zoom level's marks on the stage (`data-zoom`, `data-marks`), the zoom's own properties on the layers (`--vb-zoom`, the
-// marks' growth) are the print's own while it lasts, so a board printed zoomed out still prints its cards whole. Everything
-// it sets is on the board's root or inside it: the paper (its orientation, which the fit answers, and margins) and the
-// look's colours are the host's, asked through `print(ask)` (host.ts `PrintAsk`; board-files.ts). Browser only, no sentence.
+// The print view (D-107; export-import-print PLAN decisions 8-9; Save as PDF, nclite ADR-0381): what the board sets on its
+// root before the host saves it as a PDF, and takes off after. A print stylesheet over the live page (styles/print.css)
+// reads it: no header, strips, panels or menus; the scope, the whole board or one container, at its own size (no fit to
+// paper: the host makes one page exactly `size`), on the board's own background, so the host reads the page's colour
+// from the root; the containers' borders as chosen; colours kept. Nothing is drawn again: the cards, frames and links
+// are the ones on screen. A container's view hides every other frame, card and link (`data-vb-print-out`). The world's
+// transform, the zoom level's marks on the stage (`data-zoom`, `data-marks`), the zoom's own properties on the layers
+// (`--vb-zoom`, the marks' growth) are the view's own while it lasts, so a board saved zoomed out still saves its cards
+// whole, at 100%. Everything it sets is on the board's root or inside it: the page and the look's colours are the
+// host's, asked through `savePdf(ask)` (host.ts `PdfAsk`; board-files.ts). Browser only, no sentence.
 import type { View } from '#format';
 import type { BoardLayout, Box } from '#layout';
 
-/** The page's printable area in CSS px: the smaller of A4 and US Letter (210 × 279.4 mm), less a host's 10 mm margins
- *  (the most a host gives: nclite's `plain`; its `light` and `dark` print edge to edge) (190 × 259.4 mm at 96 px to the inch), less 4 px for rounding, so the fitted board is one page on either. */
-export const PRINT_PAGE = { long: 976, short: 714 } as const;
-/** Room round what is printed, so a card's marks that hang over its edge (D-099) and a frame's title are not cut. */
+/** Room round what is saved, so a card's marks that hang over its edge (D-099) and a frame's title are not cut. */
 export const PRINT_PAD = 24;
 
-/** What is printed, in board coordinates, and how: `scale` (at most 1) fits it to one page, `landscape` when wider than tall. */
-export interface PrintFit { x: number; y: number; w: number; h: number; scale: number; landscape: boolean }
+/** What is saved, in board coordinates: `box` padded by `pad`, at its own size (the page is exactly `w` × `h`). */
+export interface PrintFit { x: number; y: number; w: number; h: number }
 
-/** The fit of `box` to one page: padded by `pad`, turned to the page's longer side, shrunk to fit and never enlarged. */
+/** The extent of `box` on the page: padded by `pad`, rounded out to whole px. */
 export function printFit(box: Box, pad = PRINT_PAD): PrintFit {
-  const [x, y, w, h] = [box.x - pad, box.y - pad, box.w + 2 * pad, box.h + 2 * pad];
-  const landscape = w > h;
-  const [pw, ph] = landscape ? [PRINT_PAGE.long, PRINT_PAGE.short] : [PRINT_PAGE.short, PRINT_PAGE.long];
-  return { x, y, w, h, scale: Math.min(1, pw / w, ph / h), landscape };
+  return { x: box.x - pad, y: box.y - pad, w: Math.ceil(box.w + 2 * pad), h: Math.ceil(box.h + 2 * pad) };
 }
 
 /** What to print: one container (`region`) or, without it, the whole board; `border`, the containers' borders; `theme`,
- *  light or dark on paper (point 615), whatever the screen shows: the host's look (board-files.ts), not the print view's. */
+ *  light or dark in the PDF (point 615), whatever the screen shows: the host's look (board-files.ts), not the print view's. */
 export interface PrintScope { region?: string | undefined; border: boolean; theme: 'light' | 'dark' }
 
 const OUT = 'data-vb-print-out';
@@ -38,8 +33,8 @@ const VARS = ['--vb-print-w', '--vb-print-h', '--vb-print-transform'] as const;
 /** The zoom's own properties (viewport.ts, on the frames' and the cards' layers): as at 100% while the print lasts. */
 const ZOOM = ['--vb-zoom', '--vb-mark-grow'] as const;
 
-/** A print view set: the paper's side the fit asks for, and what undoes the view. */
-export interface PrintSet { orientation: 'portrait' | 'landscape'; undo(): void }
+/** A print view set: the page's size, in CSS px (`PdfAsk` `size`), and what undoes the view. */
+export interface PrintSet { size: { width: number; height: number }; undo(): void }
 
 /** Set the print view for `scope` on `root`, over the board as `layout` and `view` draw it; null when `scope` names a
  *  container the layout doesn't hold. */
@@ -54,9 +49,9 @@ export function preparePrint(root: HTMLElement, layout: BoardLayout, view: View,
   const zoom = layers.map((el) => ZOOM.map((v) => el.style.getPropertyValue(v)));
   for (const el of layers) for (const v of ZOOM) el.style.setProperty(v, '1');
   Object.assign(root.dataset, { vbPrint: scope.region ?? 'board', vbPrintBorder: scope.border ? 'on' : 'off' });
-  root.style.setProperty('--vb-print-w', `${Math.ceil(fit.w * fit.scale)}px`);
-  root.style.setProperty('--vb-print-h', `${Math.ceil(fit.h * fit.scale)}px`);
-  root.style.setProperty('--vb-print-transform', `scale(${fit.scale}) translate(${-fit.x}px, ${-fit.y}px)`);
+  root.style.setProperty('--vb-print-w', `${fit.w}px`);
+  root.style.setProperty('--vb-print-h', `${fit.h}px`);
+  root.style.setProperty('--vb-print-transform', `translate(${-fit.x}px, ${-fit.y}px)`);
   const out = scope.region === undefined ? [] : outside(root, view, scope.region);
   for (const el of out) el.setAttribute(OUT, '');
   const undo = () => {
@@ -67,7 +62,7 @@ export function preparePrint(root: HTMLElement, layout: BoardLayout, view: View,
     for (const [a, v] of level) if (v !== null) stage?.setAttribute(a, v);
     layers.forEach((el, i) => ZOOM.forEach((v, j) => (zoom[i]![j] ? el.style.setProperty(v, zoom[i]![j]!) : el.style.removeProperty(v))));
   };
-  return { orientation: fit.landscape ? 'landscape' : 'portrait', undo };
+  return { size: { width: fit.w, height: fit.h }, undo };
 }
 
 /** Everything drawn that is not container `region`'s: the other frames, their cards, and every link with an end outside it

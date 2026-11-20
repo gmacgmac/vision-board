@@ -1,6 +1,6 @@
-<!-- The files dialog's contents (D-107, export-import-print PLAN decisions 8-12): one form for Print,
+<!-- The files dialog's contents (D-107, export-import-print PLAN decisions 8-12): one form for Save as PDF,
      Export and Import, which asks only what the place it was opened from leaves open. The scope (the board, or the
-     container `ask.region` named in its words) is already chosen. Print: the container border (`border`), checked for the
+     container `ask.region` named in its words) is already chosen. Save as PDF: the container border (`border`), checked for the
      board and not for a container, and light or dark (`theme`, the screen's first; point 615). Export: whether the conversations on notes go too (`notes`, unchecked). Import: into a
      new board or this one (`into`), This board off, saying why, while `current` gives a reason; once done with parts left out
      (`dropped`), the list of them and Close. The one button acts; while it works it says so (aria-busy) and Cancel waits; a

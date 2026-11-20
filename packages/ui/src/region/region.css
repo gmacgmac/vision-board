@@ -21,7 +21,10 @@ vb-region {
      geometry as before; the top line and the rail read it); the rules are drawn on its two pseudo-elements, behind
      the content (isolation: the rail's ring and the title's gap cover them). --vb-region-ln is the rules' colour and
      --vb-region-ln-w their weight: states set these, never the border. */
-  --vb-region-gap: 28px; --vb-region-ln: var(--vb-region); --vb-region-ln-w: var(--vb-region-line-w);
+  --vb-region-gap: 28px; --vb-region-ln: color-mix(in srgb, var(--vb-region) 55%, transparent); --vb-region-ln-w: var(--vb-region-line-w);
+  /* Corners only (point 672): the frame shows its four corners, each arm --vb-region-corner long, and nothing between,
+     so links between cards never compete with it; fainter than before. */
+  --vb-region-corner: 64px;
   display: block; position: absolute; left: 0; top: 0; container-type: inline-size; border-radius: var(--vb-radius-lg);
   border: var(--vb-region-line-w) solid transparent; isolation: isolate;
   /* The top line's room: REGION_HEAD in packages/layout/src/types.ts (38). Keep the two equal. */
@@ -29,8 +32,13 @@ vb-region {
   transition: transform var(--vb-motion) var(--vb-ease), width var(--vb-motion) var(--vb-ease), height var(--vb-motion) var(--vb-ease);
 }
 vb-region::before, vb-region::after { content: ''; position: absolute; z-index: -1; pointer-events: none; box-sizing: border-box; }
-vb-region::before { inset: calc(-1 * var(--vb-region-line-w)) calc(var(--vb-region-gap) - var(--vb-region-line-w)); border-block: var(--vb-region-ln-w) solid var(--vb-region-ln); }
-vb-region::after { inset: calc(var(--vb-region-gap) - var(--vb-region-line-w)) calc(-1 * var(--vb-region-line-w)); border-inline: var(--vb-region-ln-w) solid var(--vb-region-ln); }
+vb-region::before {
+  inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) solid var(--vb-region-ln); border-radius: var(--vb-radius-lg);
+  --vb-region-mask: linear-gradient(var(--vb-ink) 0 0); /* only its alpha is read: the mask shows the four corners */
+  mask: var(--vb-region-mask) top left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--vb-region-mask) top right / var(--vb-region-corner) var(--vb-region-corner) no-repeat,
+    var(--vb-region-mask) bottom left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--vb-region-mask) bottom right / var(--vb-region-corner) var(--vb-region-corner) no-repeat;
+}
+vb-region::after { content: none; }
 
 /* The top line straddles the border. Only its two groups take the pointer, so the rest of the line
    stays part of the frame. The label's canvas-coloured background is the gap in the border;
@@ -176,7 +184,7 @@ vb-region .vb-region-empty { margin: var(--vb-space-2) var(--vb-space-4); color:
    pointer that can take it is drawn in the accent, with a soft fill. The page sets data-drop. */
 vb-region[data-drop] { background: color-mix(in srgb, var(--vb-ink) 4%, transparent); }
 /* A drop target closes the corners: one dashed rounded line, in ink (design/mockups/containers). */
-vb-region[data-drop]::before { inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) dashed var(--vb-ink); border-radius: var(--vb-radius-lg); }
+vb-region[data-drop]::before { inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) dashed var(--vb-ink); border-radius: var(--vb-radius-lg); mask: none; }
 vb-region[data-drop]::after { display: none; }
 vb-region[data-drop] .vb-region-head h2 { color: var(--vb-ink-strong); }
 

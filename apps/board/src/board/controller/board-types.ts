@@ -30,7 +30,7 @@ export interface Board {
   send(id: string, acks: readonly Ref[] | null): Promise<string | null>;
   /** New board, Rename board, Archive board, Restore, Lock board and Unlock board (board-edit.ts). */
   boardEdit: BoardEdit;
-  /** Export, import and print (board-files.ts). */
+  /** Export, import and Save as PDF (board-files.ts). */
   files: BoardFiles;
   /** The toolbar's "N bookmarked" chip: the next bookmarked card (cardBookmark flag, bookmark-flow.ts). */
   nextBookmarked(): void;

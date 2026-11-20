@@ -2149,9 +2149,9 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     export file of the board or of one container; `notes=true` adds the notes. An agent reads the same file with
     `get_board` or `show_container` and `export=true` (`notes=true` likewise), so no tool is added (D-107). Each of the
     two reads answers its own response or the export file (`oneOf`).
-200. **On, with no flag** (D-107, T_02): the page's Print, Export and Import items. The board's host gives the
-    file and print hooks (`BoardHost` `saveFile`, `openFile`, `print`; plugin.md § What the host gives); a host without
-    one shows no such item.
+200. **On, with no flag** (D-107, T_02): the page's Save as PDF, Export and Import items. The board's host gives the
+    file and Save as PDF hooks (`BoardHost` `saveFile`, `openFile`, `savePdf`; plugin.md § What the host gives); a host
+    without one shows no such item.
 
 ## Ledger v22 and the import as built (export-import-print BE_01, D-108)
 

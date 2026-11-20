@@ -42,7 +42,7 @@ export interface HandlerFlows {
   marks: MarkFlow;
   /** A click inside container `region` (its background or frame): its pill cleared on this screen. */
   seen(region: string): void;
-  /** Print container… and Export container… (board-files.ts): open the files dialog for a container. */
+  /** Save container as PDF… and Export container… (board-files.ts): open the files dialog for a container. */
   files?: { ask(kind: 'print' | 'export', region: string): void };
 }
 

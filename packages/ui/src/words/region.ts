@@ -58,7 +58,7 @@ export const settingsFor = (esc: string): string => `Settings for ${esc}`;
 export const resetPlaces = 'Reset places';
 export const putContainerBack = 'Put container back';
 export const removeContainer = 'Remove container';
-export const printContainer = 'Print container…';
+export const printContainer = 'Save container as PDF…';
 export const exportContainer = 'Export container…';
 export const everythingHereIsAnswered = 'Everything here is answered.';
 export const retired2 = 'retired';

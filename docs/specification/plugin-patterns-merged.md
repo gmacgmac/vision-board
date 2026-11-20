@@ -1,6 +1,6 @@
 # Plugin patterns: Journal and Vision Board, merged for nclite
 
-updated: 2026-11-20 (§ 2 built in nclite as proposed, and VB asks it); 2026-11-19 (§ 4: both plugins wear the host's scrollbar, point 632); 2026-11-19 (first version, from Journal's and Vision Board's notes of the same day)
+updated: 2026-11-20 (§ 2: nclite replaced printing with Save as PDF, `savePdf(ask)` with `size`, and VB asks it); 2026-11-20 (§ 2 built in nclite as proposed, and VB asks it); 2026-11-19 (§ 4: both plugins wear the host's scrollbar, point 632); 2026-11-19 (first version, from Journal's and Vision Board's notes of the same day)
 
 nclite's two plugins each wrote down the patterns they built that the host could own: Journal in its own
 `docs/specification/plugin-patterns.md`, Vision Board in `docs/specification/plugin-patterns.md` here. This merges
@@ -13,7 +13,7 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
 | Pattern | The host gives | Today |
 |---|---|---|
 | Dates and times | One written rule and one normaliser; the person's locale and first day of the week | Each plugin has its own; they agree |
-| Printing | `print(ask?)` and the `@page` rules | Built in nclite as § 2 proposes (its `7415189d`); VB asks it (folders-labels-print T_04) |
+| Printing | `print(ask?)` and the `@page` rules | Built in nclite as § 2 proposes (its `7415189d`), then replaced by `savePdf(ask?)` with `size` (its `a7c2a706`, ADR-0381); VB asks `savePdf` |
 | Files | `saveFile`, `openFile` | In VB's contract; J has no files |
 | Scrollbar | The overlay scrollbar, as today, written into the contract | nclite has it; both plugins wear it |
 | Calendar | `ui.calendar(...)`, or at least its tokens | J's own package |
@@ -50,7 +50,11 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
 ## 2. Printing
 
 Built as proposed: nclite's `print?(ask?: PrintAsk)`, `PrintLook`, `PrintOrientation` (`shared/plugin-host.ts`,
-its `7415189d`), and Vision Board asks it.
+its `7415189d`). Then replaced (its `a7c2a706`, ADR-0381): `savePdf?(ask?: PdfAsk)` saves a PDF with no print window,
+and `PdfAsk` adds `size`, one page of exactly that size in CSS px (`orientation` then ignored); `print` stays as its
+deprecated alias until the next re-vendor. Vision Board asks `savePdf` with `title`, `look` and `size` (no `content`, no
+`orientation`), at the saved part's own size: no fit to paper (`print-view.ts` `printFit`), its root on the board's
+canvas so the page colour nclite reads from it is the board's. The proposal below is kept as it was.
 
 1. **The need**: print some of a plugin's content, or save it as a PDF, plain or in the app's colours.
 2. **What each built**: J builds a fresh element for paper (`src/view/print.ts` `printContent`) and asks the host to

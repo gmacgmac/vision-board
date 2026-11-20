@@ -59,7 +59,7 @@ export interface DrawDeps {
   widthsControl?: boolean;
   /** The personRemove flag: Remove container in each frame's settings (N24). */
   removing?: boolean;
-  /** Print container… and Export container… in each container's settings (with the host's hooks; D-107). */
+  /** Save container as PDF… and Export container… in each container's settings (with the host's hooks; D-107). */
   files?: { print?: boolean; export?: boolean };
   /** The toolRail flag: each frame's tools in a rail on its left edge (container tool rail). */
   rail?: boolean;

@@ -4,7 +4,7 @@ export type { BoardElements, Drawing } from './draw.ts';
 export { createFocus } from './focus.ts';
 export { outside, viewBounds } from './offscreen.ts';
 export { createPlaces } from './places.ts';
-export { PRINT_PAD, PRINT_PAGE, preparePrint, printFit } from './print-view.ts';
+export { PRINT_PAD, preparePrint, printFit } from './print-view.ts';
 export type { PrintFit, PrintScope, PrintSet } from './print-view.ts';
 export { bindPointerFocus, focusCame } from './pointer-focus.ts';
 export { LATER_FRAME } from './render.ts';

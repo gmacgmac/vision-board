@@ -70,13 +70,15 @@ function hostFor(o = {}) {
     ...(!o.noImageRoute && { imageRoute: '/pics/' }),
     // Counted: a test then asks `pageChip()`, as nclite's pane does soon after (its handover, item 160).
     ...(!o.noPageChanged && { pageChanged() { record.pageChanged += 1; } }),
-    // The contract's `print(ask)` (plugin.md § What the host gives), given with `o.print`: 'ok' prints, a sentence rejects
-    // with it. Each ask is kept with what the page held while it printed: the attributes on <html>, and the board root's.
-    ...(o.print && {
-      async print(ask) {
+    // The contract's `savePdf(ask)` (plugin.md § What the host gives), given with `o.savePdf`: 'ok' saves, a sentence
+    // rejects with it. Each ask is kept with what the page held while it saved: the attributes on <html>, the board root's,
+    // and the root's background (the page's colour, as nclite reads it). `o.printOnly` gives the deprecated `print` alone.
+    ...(o.printOnly && { async print() { record.prints.push({ deprecated: true }); } }),
+    ...(o.savePdf && {
+      async savePdf(ask) {
         const root = document.querySelector('.host-root');
-        record.prints.push({ ask: { ...ask }, keys: Object.keys(ask ?? {}).sort(), html: document.documentElement.getAttributeNames().sort(), root: root.getAttributeNames().filter((a) => a.startsWith('data-vb-print')).sort(), w: parseFloat(root.style.getPropertyValue('--vb-print-w')), h: parseFloat(root.style.getPropertyValue('--vb-print-h')) });
-        if (o.print !== 'ok') throw new Error(o.print);
+        record.prints.push({ ask: { ...ask }, keys: Object.keys(ask ?? {}).sort(), html: document.documentElement.getAttributeNames().sort(), root: root.getAttributeNames().filter((a) => a.startsWith('data-vb-print')).sort(), w: parseFloat(root.style.getPropertyValue('--vb-print-w')), h: parseFloat(root.style.getPropertyValue('--vb-print-h')), ground: getComputedStyle(root).backgroundColor, canvas: getComputedStyle(root.querySelector('.vb-stage')).backgroundColor });
+        if (o.savePdf !== 'ok') throw new Error(o.savePdf);
       },
     }),
   };

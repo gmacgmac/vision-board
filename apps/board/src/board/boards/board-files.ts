@@ -1,13 +1,13 @@
-// Export, import and print (D-107, export-import-print PLAN decisions 8-12): what the files dialog's one
-// button does, through the host's hooks (host.ts `saveFile`, `openFile`, `print`) and the board's calls (io.ts). Where the
+// Export, import and Save as PDF (D-107, export-import-print PLAN decisions 8-12): what the files dialog's one
+// button does, through the host's hooks (host.ts `saveFile`, `openFile`, `savePdf`) and the board's calls (io.ts). Where the
 // person opened the dialog sets the scope (`ask`): the "⋯" menu, the whole board; a container's settings, that container.
 // Export reads the export route (`export_board`) and hands its file to `saveFile`, named after the board (and the
 // container). Import asks `openFile` for a `.vboard.json`, reads it as JSON (an upgrade and a check are the server's:
 // `write_board`'s `import` takes any object and names what it drops), refusing first, with words and nothing sent, a file
 // over what the host's route takes (`importBytes`), and writes it as the person, into a new board named
-// from its title or into the open one; a new board then opens. Print sets the print view (canvas/print-view.ts), asks the
-// host's `print` for the board's root as it stands (no `content`), titled after the board or the container, in the look
-// "Print in" chose and on the side the fit asks for, and takes the view off when it is done. Each says what went wrong in
+// from its title or into the open one; a new board then opens. Save as PDF sets the print view (canvas/print-view.ts), asks
+// the host's `savePdf` for the board's root as it stands (no `content`), titled after the board or the container, in the
+// look "Save in" chose and at the size of what is saved (one page exactly that size), and takes the view off when done. Each says what went wrong in
 // words, never by throwing.
 import type { LedgerState } from '#actions';
 import type { BoardHost } from '../host.ts';
@@ -34,7 +34,7 @@ export const IMPORT_BYTES = 1024 * 1024;
 export const EXPORT_EXTENSION = '.vboard.json';
 
 export interface BoardFilesDeps {
-  host: Pick<BoardHost, 'saveFile' | 'openFile' | 'print'>;
+  host: Pick<BoardHost, 'saveFile' | 'openFile' | 'savePdf'>;
   /** The most bytes an import file may hold (`IMPORT_BYTES`, else the page's own). */
   importBytes: number;
   io: Pick<Io, 'exportBoard' | 'importBoard'>;
@@ -45,8 +45,8 @@ export interface BoardFilesDeps {
   regionTitle(region: string): string | undefined;
   /** Open or close the dialog (the board's status, `files`). */
   show(ask: FilesAsk | null): void;
-  /** Set the print view for the board, or one container; the side it asks for and what undoes it, or null when nothing
-   *  is drawn to print. */
+  /** Set the print view for the board, or one container; the page size it asks for and what undoes it, or null when
+   *  nothing is drawn to save. */
   printView(scope: Pick<PrintScope, 'region' | 'border'>): PrintSet | null;
   /** Open board `id` once its first line has arrived (a new board an import made). */
   jump(id: string): void;
@@ -60,7 +60,7 @@ export interface BoardFiles {
   exportFile(o: { region?: string | undefined; notes: boolean }): Promise<string | null>;
   /** Ask for a file and write it into a new board or the open one. */
   importFile(into: 'new' | 'current'): Promise<ImportOutcome>;
-  /** Print the board, or container `region`; null once the host's print has closed, else the problem. */
+  /** Save the board, or container `region`, as a PDF; null once the host's save is done or cancelled, else the problem. */
   print(o: PrintScope): Promise<string | null>;
 }
 
@@ -128,12 +128,12 @@ export function createBoardFiles(d: BoardFilesDeps): BoardFiles {
     },
     async print({ region, border, theme }) {
       const id = d.id();
-      if (!id || !d.host.print) return filesWords.noBoardOpen;
+      if (!id || !d.host.savePdf) return filesWords.noBoardOpen;
       const set = d.printView({ region, border });
       if (!set) return filesWords.noBoardOpen;
       const title = region === undefined ? titleOf(id) : d.regionTitle(region) ?? region;
       try {
-        await d.host.print({ title, look: theme, orientation: set.orientation });
+        await d.host.savePdf({ title, look: theme, size: set.size });
         return null;
       } catch (err) {
         return wordsOf(err);
