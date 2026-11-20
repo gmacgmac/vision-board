@@ -19,7 +19,7 @@ import * as httpWords from './words/http.ts';
 
 /** One of the engine's operations, answered by the open folder's engine. `read_ledger` goes out as
  * JSON Lines when the caller asks for them (api.md 44). */
-const viaEngine = (id: OperationId): Handler => async ({ req, res, url, engine, caller, closed }) => {
+const viaEngine = (id: OperationId): Handler => async ({ req, res, url, engine, caller, secretUnknown, closed }) => {
   const gone = new AbortController();
   const end = () => gone.abort();
   res.on('close', end);
@@ -37,8 +37,15 @@ const viaEngine = (id: OperationId): Handler => async ({ req, res, url, engine, 
   if (!reply) throw problem('not-found', httpWords.noOperationHasThisPath2);
   if (res.destroyed || res.writableEnded) return;
   if (id === 'read_ledger' && reply.status === 200 && wantsJsonLines(req)) return sendJsonLines(res, (reply.body as { events: unknown[] }).events);
-  sendReply(res, reply);
+  sendReply(res, secretUnknown ? withReason(reply) : reply);
 };
+
+/** A read sent a secret the server knows nowhere (callers.ts `secretUnknown`): the engine read it as no one
+ * (`joined: false`), and the server, which alone holds secrets, says why (point 713, api.md 213). */
+function withReason(reply: EngineReply): EngineReply {
+  const body = reply.body as Record<string, unknown> | null;
+  return reply.status === 200 && body?.joined === false ? { ...reply, body: { ...body, joinedReason: httpWords.secretNotRecognised } } : reply;
+}
 
 const ENGINE = Object.fromEntries(ENGINE_OPERATIONS.map((id) => [id, viaEngine(id)])) as Record<EngineOperation, Handler>;
 

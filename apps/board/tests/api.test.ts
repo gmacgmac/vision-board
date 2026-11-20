@@ -103,7 +103,7 @@ test('check_responses: the person\'s acts after `after` in card order, cut by `l
   const rest = await h.ok('check_responses', { board: 'pricing', after: Math.max(...first.responses.map((e: any) => e.seq)) });
   assert.deepEqual(rest.responses.map((e: any) => e.action), ['size'], 'the next page starts after the highest seq');
   const none = await h.ok('check_responses', { board: 'pricing', after: head() });
-  assert.deepEqual(none, { responses: [], head: head() });
+  assert.deepEqual(none, { responses: [], head: head(), joined: false }, 'read with no secret: as no one, and says so (api.md 213)');
 });
 
 test('read_ledger: every line after `after`, `limit` and `more`, one board, and JSON Lines', async () => {
@@ -127,7 +127,7 @@ test('check_responses wait: a timed-out wait answers { responses: [], head }', a
   const start = Date.now();
   const r = await h.ok('check_responses', { board: 'pricing', after: head(), wait: 1 });
   assert.ok(Date.now() - start >= 900, `${Date.now() - start} ms`);
-  assert.deepEqual(r, { responses: [], head: head() });
+  assert.deepEqual(r, { responses: [], head: head(), joined: false });
 });
 
 test('check_responses wait: the person pressing Send ends the wait with every act since `after`', async () => {

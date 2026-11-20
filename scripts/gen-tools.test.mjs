@@ -18,7 +18,7 @@ test('every agent operation has one row, and no row lacks an operation', () => {
 
 test('each row has a name, its words, a standalone input schema, whether it writes, and where inputs go', () => {
   for (const row of table.tools) {
-    const keys = ['name', 'title', 'description', 'input', 'writes', 'secret', 'route', ...('inputHosts' in row ? ['inputHosts'] : []), 'hosts'];
+    const keys = ['name', 'title', 'description', 'input', 'writes', 'secret', 'secretArgument', 'route', ...('inputHosts' in row ? ['inputHosts'] : []), 'hosts'];
     assert.deepEqual(Object.keys(row), keys, row.name);
     assert.ok(row.description.length > 0, row.name);
     assert.equal(row.input.type, 'object', row.name);
@@ -38,7 +38,8 @@ test('the table file is what gen-tools makes, and the MCP list is made from it, 
   for (const row of table.tools) {
     const tool = mcp.tools.find((t) => t.name === row.name);
     assert.equal(tool.annotations.readOnlyHint, !row.writes, row.name);
-    assert.equal('secret' in tool.inputSchema.properties, row.secret, row.name);
+    assert.equal('secret' in tool.inputSchema.properties, row.secretArgument, row.name);
+    assert.ok(row.secret || !row.secretArgument, `${row.name}: a secret asked for is sent`);
     assert.ok(tool.description.startsWith(row.description), row.name);
   }
 });

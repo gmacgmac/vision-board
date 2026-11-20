@@ -18,6 +18,7 @@ import { lanesHandoffs } from './lanes-handoffs.ts';
 import { ledgerPicture } from './ledger-picture.ts';
 import { linkedPipeline } from './linked-pipeline.ts';
 import { newCardNumber } from './new-card-number.ts';
+import { otherContainer } from './other-container.ts';
 import { otherLedger } from './other-ledger.ts';
 import { ownBoard } from './own-board.ts';
 import { personBoard } from './person-board.ts';
@@ -43,7 +44,7 @@ export const SCENARIOS: readonly Scenario[] = [
 export const STANDALONE: readonly Scenario[] = [
   ledgerPicture, otherLedger, joinLedger, architectureIcons,
   findingsGrid, flowBranches, lanesHandoffs, radialIdeas, directionDefault, handoverPark, appBuild,
-  timelinePlan, timelineUnprompted, timelineNotForProse, copyBoard, importFile,
+  timelinePlan, timelineUnprompted, timelineNotForProse, copyBoard, importFile, otherContainer,
 ];
 
 export const scenarioById = (id: string): Scenario => {

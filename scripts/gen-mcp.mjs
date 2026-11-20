@@ -1,7 +1,8 @@
 // The MCP tool list (api.md 45-50), written to packages/mcp/src/tools.generated.json by
 // scripts/gen-api.mjs. It reads the tool table (gen-tools.mjs: one row per x-agent operation, with
 // its words, merged input, whether it writes and whether it takes the agent secret) and adds what is
-// MCP's own: the secret as a `secret` argument (with its words), and the annotations. A tool declares
+// MCP's own: the secret as a `secret` argument (with its words) where the row asks for it (`secretArgument`), and the
+// annotations. A read that takes the secret but asks for none is sent the one the server knows (call-tool.ts). A tool declares
 // no output schema (api.md 48): its description says what comes back, and openapi.json stays the
 // contract. `routes` says where each input goes back to, so the server can rebuild the call.
 import { flatten } from './mcp-schema.mjs';
@@ -20,16 +21,16 @@ function annotationsOf(writes) {
  * says which tools take it. Examples stay out (api.md 47): they live in the skill, the schemas'
  * `examples` and the refusals. */
 function describe(row, secretTools) {
-  if (row.secret) return `${row.description} ${SECRET_SAYS}`;
+  if (row.secretArgument) return `${row.description} ${SECRET_SAYS}`;
   if (row.name === 'join') {
-    return `${row.description} Over MCP, send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat sharing this MCP configuration.`;
+    return `${row.description} Over MCP, send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat sharing this MCP configuration; the reads are sent the secret this server knows.`;
   }
   return row.description;
 }
 
 /** The row's input, with `secret` last where the operation takes it. */
 function inputOf(row, secret) {
-  if (!row.secret) return row.input;
+  if (!row.secretArgument) return row.input;
   if ('secret' in row.input.properties) throw new Error(`${row.name}: input "secret" is named twice once merged`);
   return { ...row.input, properties: { ...row.input.properties, secret } };
 }
@@ -37,14 +38,14 @@ function inputOf(row, secret) {
 /** Every row of the tool table as an MCP tool, in its order, and how to call it back. `doc` and
  * `schemas` give the secret's schema. */
 export function toolsOf(table, doc, schemas) {
-  const secretTools = table.tools.filter((r) => r.secret).map((r) => r.name);
+  const secretTools = table.tools.filter((r) => r.secretArgument).map((r) => r.name);
   const needsSecret = secretTools.length > 0;
   const secret = needsSecret ? (({ schema, doc: home }) => ({ ...flatten(schema, home, schemas), description: 'Your agent secret from join.' }))(lookup(SECRET_REF, doc, schemas)) : undefined;
   const tools = table.tools.map((row) => ({
     name: row.name, title: row.title, description: describe(row, secretTools),
     inputSchema: inputOf(row, secret), annotations: annotationsOf(row.writes),
   }));
-  const routes = Object.fromEntries(table.tools.map((row) => [row.name, { ...row.route, secret: row.secret }]));
+  const routes = Object.fromEntries(table.tools.map((row) => [row.name, { ...row.route, secret: row.secret, secretArgument: row.secretArgument }]));
   return { apiVersion: table.apiVersion, tools, routes };
 }
 

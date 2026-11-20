@@ -24,11 +24,11 @@ export interface OperationInfo {
 export const OPERATIONS = {
   list_boards: {
     operationId: 'list_boards', method: 'GET', path: '/api/boards',
-    pathParams: [], xAgent: true, auth: 'none',
+    pathParams: [], xAgent: true, auth: 'optional-agent',
   },
   get_board: {
     operationId: 'get_board', method: 'GET', path: '/api/boards/{board}',
-    pathParams: ['board'], xAgent: true, auth: 'none',
+    pathParams: ['board'], xAgent: true, auth: 'optional-agent',
   },
   put_board: {
     operationId: 'put_board', method: 'PUT', path: '/api/boards/{board}',
@@ -40,11 +40,11 @@ export const OPERATIONS = {
   },
   show_node: {
     operationId: 'show_node', method: 'GET', path: '/api/boards/{board}/nodes/{n}',
-    pathParams: ['board', 'n'], xAgent: true, auth: 'none',
+    pathParams: ['board', 'n'], xAgent: true, auth: 'optional-agent',
   },
   show_container: {
     operationId: 'show_container', method: 'GET', path: '/api/boards/{board}/regions/{region}',
-    pathParams: ['board', 'region'], xAgent: true, auth: 'none',
+    pathParams: ['board', 'region'], xAgent: true, auth: 'optional-agent',
   },
   show_layout: {
     operationId: 'show_layout', method: 'GET', path: '/api/boards/{board}/regions/{region}/layout',

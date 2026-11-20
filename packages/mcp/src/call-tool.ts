@@ -18,7 +18,7 @@ import * as protocolWords from './words/protocol.ts';
 export interface CallContext {
   /** The board server, such as `http://127.0.0.1:4466`. */
   readonly base: string;
-  /** VB_AGENT_SECRET, used when a call that takes the secret does not pass `secret`. */
+  /** VB_AGENT_SECRET, used when a call that takes the secret does not pass `secret`, and by every read. */
   readonly secret?: string;
   /** The folder this server works in, sent as `VB-Project` (api.md 116). */
   readonly project?: string;
@@ -58,8 +58,9 @@ export const problemResult = (p: Parameters<typeof problemText>[0]): ToolResult 
 /** A tool a host's `call` does not have, as a tool's result (the protocol refuses one not listed first). */
 export const unknownToolResult = (name: string): ToolResult => text(protocolWords.unknownTool(name), true);
 
-/** The HTTP call's inputs from the checked arguments, and the secret to send. */
-export function split(route: Route, args: Readonly<Record<string, unknown>>, envSecret?: string): { input: CallInput; secret?: string } {
+/** The HTTP call's inputs from the checked arguments, and the secret to send: the `secret` argument where the tool has
+ * one, else `known` (VB_AGENT_SECRET; for a read, what `httpTools` knows). */
+export function split(route: Route, args: Readonly<Record<string, unknown>>, known?: string): { input: CallInput; secret?: string } {
   const input: CallInput = {};
   for (const name of [...route.path, ...route.query]) if (args[name] !== undefined) input[name] = args[name];
   if (route.body.length) {
@@ -67,7 +68,8 @@ export function split(route: Route, args: Readonly<Record<string, unknown>>, env
     for (const name of route.body) if (args[name] !== undefined) body[name] = args[name];
     input.body = body;
   }
-  const secret = route.secret ? (typeof args.secret === 'string' ? args.secret : envSecret) : undefined;
+  const given = route.secretArgument && typeof args.secret === 'string' ? args.secret : undefined;
+  const secret = route.secret ? (given ?? known) : undefined;
   return { input, ...(secret && { secret }) };
 }
 
@@ -91,23 +93,35 @@ const allFailed = (answer: unknown): boolean =>
 export const answerResult = (answer: unknown): ToolResult =>
   ({ content: [{ type: 'text', text: JSON.stringify(answer) }], structuredContent: answer, isError: allFailed(answer) });
 
-/** This package's own tools: the generated list, each call to the board server over HTTP. */
-export const httpTools = (ctx: CallContext): ToolHost => ({
-  list: () => TOOL_FILE.tools,
-  async call(name, args, { signal } = {}) {
-    const checked = checkArgs(TOOLS.get(name)!.inputSchema, args);
-    if (checked.problems.length) {
-      return text(protocolWords.theArgumentsDoNotFit(name, checked.problems.join('\n')), true);
-    }
-    const { input, secret } = split(routeOf(name), checked.value as Record<string, unknown>, ctx.secret);
-    const client = createClient({ base: ctx.base, ...(secret && { secret }), ...(ctx.project && { project: ctx.project }), ...(ctx.fetch && { fetch: ctx.fetch }) });
-    try {
-      return answerResult(await client.call(name as OperationId, input, { ...(signal && { signal }) }));
-    } catch (err) {
-      return text(failureText(err, ctx.base), true);
-    }
-  },
-});
+/** This package's own tools: the generated list, each call to the board server over HTTP. A read asks for no secret
+ * (point 714): it is sent the one this connection knows, VB_AGENT_SECRET, else the one its own `join` answered, else the
+ * last `secret` any call passed; one passed to a read anyway counts as passed, never refused. */
+export function httpTools(ctx: CallContext): ToolHost {
+  let joined: string | undefined;
+  let passed: string | undefined;
+  return {
+    list: () => TOOL_FILE.tools,
+    async call(name, args, { signal } = {}) {
+      const route = routeOf(name);
+      if (typeof args.secret === 'string') passed = args.secret;
+      const { secret: _sent, ...unasked } = args;
+      const checked = checkArgs(TOOLS.get(name)!.inputSchema, route.secret && !route.secretArgument ? unasked : args);
+      if (checked.problems.length) {
+        return text(protocolWords.theArgumentsDoNotFit(name, checked.problems.join('\n')), true);
+      }
+      const known = route.secretArgument ? ctx.secret : ctx.secret || joined || passed;
+      const { input, secret } = split(route, checked.value as Record<string, unknown>, known);
+      const client = createClient({ base: ctx.base, ...(secret && { secret }), ...(ctx.project && { project: ctx.project }), ...(ctx.fetch && { fetch: ctx.fetch }) });
+      try {
+        const answer = await client.call(name as OperationId, input, { ...(signal && { signal }) });
+        if (name === 'join' && isRecord(answer) && typeof answer.secret === 'string') joined = answer.secret;
+        return answerResult(answer);
+      } catch (err) {
+        return text(failureText(err, ctx.base), true);
+      }
+    },
+  };
+}
 
 /** Run one `tools/call` on `tools`. A tool not listed or malformed params is a protocol error (thrown). */
 export async function callTool(params: Readonly<Record<string, unknown>>, tools: ToolHost, signal?: AbortSignal): Promise<ToolResult> {

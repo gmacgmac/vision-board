@@ -22,7 +22,7 @@ let h: Harness;
 let A: Joined;
 before(async () => {
   h = await startBoard();
-  A = await h.join('Ghost chat');
+  A = await h.join('Archive chat');
 });
 after(() => h.close());
 

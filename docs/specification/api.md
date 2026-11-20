@@ -294,7 +294,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 41. Reads take no credentials. With a Bearer secret, `list_open`, `check_responses` and `pending`
     cover only the containers the caller holds, so one agent is never told to answer another's
-    items. `act`, `mark_seen`, `watch_board` and `watch_project` are not agent operations (`x-agent: false`).
+    items; `list_boards`, `get_board`, `show_node` and `show_container` take it too, to tell the caller who it is and
+    what it may write (213). `act`, `mark_seen`, `watch_board` and `watch_project` are not agent operations (`x-agent: false`).
 42. `propose` and `park` are write items, not operations: one write tool with per-item answers
     is easier for an agent than three (fewer, task-shaped tools).
 43. `check_responses` keeps no state per caller: the caller passes the `head` it last saw. MCP
@@ -778,9 +779,11 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     numbered from 1 at each server start, so an `after` past the latest event starts the stream over.
     A session loaded again after a restart starts with one `system` line (no `turn`): "Earlier
     messages aren't shown after a restart; the agent still remembers them." (FIX_01 ruling 4).
-106. **The agent's board access** (`chat-access.ts`). On `start_chat` the server joins an agent
-    labelled `<CLI> chat <the session id's first 8 characters>`, appends its `grant-request` for the
-    board and the person's `grant` of it. The secret goes only into the board's MCP server's environment
+106. **The agent's board access** (`chat-access.ts`). Every chat session in a folder's ledger is that ledger's one
+    chat agent (D-114; `chat-identity.ts` `chatIdentity`, held by `apps/board/tests/api-chat-identity.test.ts`): the
+    first chat after D-114 adopts the ledger's most recent chat agent, else joins a new one, and the boards and
+    containers earlier chat agents of that ledger hold are granted to it once. On `start_chat` the server appends that
+    agent's `grant-request` for the board and the person's `grant` of it. The secret goes only into the board's MCP server's environment
     (`VB_AGENT_SECRET`); with it set, the MCP instructions say not to join and to leave `secret`
     out. Secrets are never stored: after a restart the same agent gets a fresh one (one more hash
     in `agents.json`). The agent may call the `vision-board` tools (`CHAT_TOOLS`), `ToolSearch` and the
@@ -1089,7 +1092,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 122. **A session in the folder** (ruling 2). `start_folder_chat` (`POST /api/chats`) starts a
     session with no board; `list_folder_chats` (`GET /api/chats`) lists the sessions on no board,
     newest first, the first in use (one in use in the folder, as on a board). `board` is optional
-    in `chat-session.schema.json`. The server joins its agent and grants nothing. Its messages take
+    in `chat-session.schema.json`. Its agent is the ledger's one chat agent (106, D-114); starting it grants nothing. Its messages take
     no chips (`invalid` at `/notes/i`, `/cards/i`), record no Send, and end "No board is open in this folder yet. When there is something to draw, suggest its structure first; once the person agrees, create a board with write_board and the person's page opens it." in
     place of `Board: <id>`. When its agent creates a board (a `board` line by that agent, which is
     the board's creator), the session moves to it: the index entry gets `board`
@@ -2293,7 +2296,40 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     the container and its board. A board's `held` lets the agent add containers; it opens no other agent's. The
     folder's one agent holds every container; the person, a client with no agent, and the flag off get no marks. Why:
     a panel agent is never told its own agent id, so the holder lists could not tell it which containers are its own.
-    Held by `apps/board/tests/bot-tool-rules.test.ts` "reads tell the truth: a container the caller may write in is
-    `held`…" (each marked container takes a `node` write, each unmarked one answers `needs-grant`, for its own
-    containers, another agent's and one granted to it; the answers fit the contract) and "the container mark: the
-    folder's one agent…".
+    Held by `apps/board/tests/bot-tool-rules.test.ts` "reads tell the truth at every tier…" (each marked container
+    takes a `node` write, each unmarked one answers `needs-grant`, for its own containers, another agent's and one
+    granted to it; the answers fit the contract) and "the container mark: the folder's one agent…".
+
+## Access clarity (access-clarity T_01, points 692 to 705)
+
+213. **Every agent read says who is reading** (`apps/board/server/engine/caller-marks.ts` `callerMark`; behind
+    `botToolRules`, as 171). `list_boards`, `get_board`, `show_node`, `show_container`, `list_open` and `check_responses` carry `you:
+    { agent, label }` (`common.schema.json` `you`) for an agent caller that has joined: the agent its writes are made as
+    (the folder's one agent: the first joined, none before any has). A read with no caller at all carries `joined:
+    false` (`common.schema.json` `joined`): it may read, marks nothing, and needs an agent to write. The engine tells
+    that case apart by its caller alone: the standalone server reads these operations as `optional-agent`
+    (`openapi.json` `security` `[{}, {agentSecret: []}]`, since 1.48.0; `apps/board/server/callers.ts` `callerOf`), so a
+    read with no Bearer secret has no caller. A read is never refused for its secret (point 713; `callers.ts`
+    `knownAgent`): one no ledger knows reads as no one too, and the answer adds `joinedReason`
+    (`words/http.ts` `secretNotRecognised`, added by the standalone server, `handlers.ts` `withReason`, which alone holds
+    secrets, so the engine's seam is unchanged); one another ledger or folder knows is still `wrong-folder` or "join again"
+    (FIX_01 F12), and `list_open` and `check_responses` follow the same rule. Writes are refused as before. Before 1.48.0
+    these four took no secret, so `vb-mcp` sent none and no standalone agent's read of them was ever marked. They ask for
+    none still (point 714): `x-secret-argument: false` in `openapi.json` (on `list_open` too) leaves the `secret` argument
+    out of their tools (`scripts/gen-tools.mjs` `asksSecret`; the route's `secret` says it is sent, `secretArgument`
+    whether it is asked for), and `vb-mcp` sends the secret it knows: `VB_AGENT_SECRET`, else the one this connection's
+    own `join` answered, else the last `secret` any call passed (`packages/mcp/src/call-tool.ts` `httpTools`; one passed
+    to a read anyway is taken, never refused). Held by `packages/mcp/tests/session.test.ts` "a read asks for no
+    secret…". A read-only read says no `joined` (`readOnly: true` already says nothing can be written, and a
+    read of another ledger drops its caller: engine.ts `run`). The person, and the flag off, get neither. Held by
+    `bot-tool-rules.test.ts` "reads say who you are…" and "the folder's one agent is told who it is…".
+214. **`request_grant` answers `held` only when the write would pass** (`writes.ts` `requestGrant`, by caller-marks.ts
+    `heldBy`, the test the reads' `held` uses): the board by its holders, a container by `#actions` `mayAnswerIn`, the
+    container and its board. So a container grant whose board grant the person revoked is not `held`: the agent is
+    asked to request it again, its reads leave it unmarked and a card into it answers `needs-grant`. The instructions
+    (`packages/mcp/src/words/info.ts` `toDrawOnABoard`), the plugin's `get_board` and `request_grant` words
+    (`apps/board/server/words/plugin-tools.ts` `ruleEdits`) and the standalone skill's § Access state the three tiers in
+    one line: make a board, always; add containers to a board marked `held`; write in a container marked `held`; for
+    anything else, `request_grant` first. Held by `bot-tool-rules.test.ts` "request_grant agrees with the read…" (fails
+    with the old `holders` test) and "reads tell the truth at every tier…" (for the creator, a granted agent, an agent
+    with nothing and the one agent, the read's mark, the grant's `held` and the write agree).

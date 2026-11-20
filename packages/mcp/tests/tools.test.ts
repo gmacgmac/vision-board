@@ -93,7 +93,7 @@ test('an object at the root of every input: no root oneOf, anyOf or allOf; close
 test('no two merged inputs share a name, and the route names every input once', () => {
   for (const t of tools) {
     const r = routeOf(t.name);
-    const names = [...r.path, ...r.query, ...r.body, ...(r.secret ? ['secret'] : [])];
+    const names = [...r.path, ...r.query, ...r.body, ...(r.secretArgument ? ['secret'] : [])];
     assert.equal(new Set(names).size, names.length, `${t.name}: ${names}`);
     assert.deepEqual(Object.keys(t.inputSchema.properties as object).sort(), [...names].sort(), t.name);
   }

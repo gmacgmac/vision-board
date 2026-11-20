@@ -20,8 +20,11 @@ export interface Route {
   readonly path: readonly string[];
   readonly query: readonly string[];
   readonly body: readonly string[];
-  /** True when the operation takes the agent secret (the `secret` argument or VB_AGENT_SECRET). */
+  /** True when the call sends the agent secret. */
   readonly secret: boolean;
+  /** True when the tool has a `secret` argument (else VB_AGENT_SECRET); false on a read that sends the secret the server
+   * knows (call-tool.ts `httpTools`, point 714). */
+  readonly secretArgument: boolean;
 }
 
 export interface ToolFile {

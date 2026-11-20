@@ -2,7 +2,9 @@
 // `botToolRules` flag; plugin skill live run findings 1, 4, 6a and "caught beyond the brief"): a host's bot has no
 // `wait` on `check_responses` and one is refused at once; the MCP server tells a host's bot the plugin's instructions;
 // `get_board`, `show_node` and `show_container` mark the notes the caller owes, `list_boards` and `get_board` the boards
-// it holds; a key conflict says what the key holds and names a free one. Flag off, each is as before.
+// it holds, and every agent read names its caller (`you`) or says it has none (`joined: false`); `request_grant` answers
+// `held` by the reads' rule (access-clarity T_01); a key conflict says what the key holds and names a free one. Flag off,
+// each is as before.
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,15 +12,19 @@ import path from 'node:path';
 import type { FlagOverrides } from '#format';
 import { FIXTURES_DIR, TOOLS_FILE } from '#format/files';
 import { makeTempDir } from '#format/testing';
-import { createMcpServer, INSTRUCTIONS, INSTRUCTIONS_JOINED, MODERN } from '#mcp';
+import { createMcpServer, INSTRUCTIONS, INSTRUCTIONS_JOINED, MCP_BIN, MODERN } from '#mcp';
 import type { Caller, Engine } from '../server/engine/index.ts';
 import { createEngine } from '../server/engine/index.ts';
 import { inputRefusals } from '../server/words/plugin-tools.ts';
+import * as httpWords from '../server/words/http.ts';
 import { checkAnswer } from './openapi-ajv.ts';
+import { startBoard } from './api-harness.ts';
+import { callMcp } from './mcp-call.ts';
 import { ledgerFiles } from '#format';
 
 const PERSON: Caller = { by: 'person' };
 const OFF: FlagOverrides = { botToolRules: false };
+const idOf = (c: Caller): string => (c as { agent: string }).agent;
 const dirs: string[] = [];
 after(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true }); });
 
@@ -287,25 +293,38 @@ test('a picture the board can\'t show: with the rules on, write_board\'s result 
   }
 });
 
-/** For each container on `plans`: `[region, marked held by get_board, marked held by show_container, a node write into it
- * answers needs-grant]`. Each write takes a fresh key, so it adds a card only where it may. */
-async function heldAgainstWrites(engine: Engine, who: Caller, tag: string) {
+/** A write the caller sends on `plans`: true when it passed, false when it answered `needs-grant` (nothing else may). */
+async function passes(engine: Engine, who: Caller, item: Record<string, unknown>): Promise<boolean> {
+  const out = await engine.tools.call('write_board', { board: 'plans', items: [item] }, { caller: who });
+  const result = (out.structuredContent as { results: { ok: boolean; problem?: { type: string } }[] }).results[0]!;
+  if (!result.ok) assert.match(result.problem!.type, /needs-grant$/, JSON.stringify(result));
+  return result.ok;
+}
+
+/** For each container on `plans`, then the board: `[what, the reads mark it held, request_grant answers held, the write
+ * there passes]` (a card into a container, a new container on the board). The reads' answers fit the contract, and
+ * get_board and show_container agree. Each write takes a fresh key, so it adds only where it may. */
+async function tiersFor(engine: Engine, who: Caller, tag: string) {
+  const fit = (id: string, body: unknown) => checkAnswer(id, { status: 200, headers: new Headers(), media: 'application/json', body });
   const board = await tool(engine, 'get_board', { board: 'plans' }, who);
-  checkAnswer('get_board', { status: 200, headers: new Headers(), media: 'application/json', body: board });
+  fit('get_board', board);
+  const grant = async (input: Record<string, unknown>) => (await tool(engine, 'request_grant', { board: 'plans', reason: 'To write.', ...input }, who)).held === true;
   const rows: [string, boolean, boolean, boolean][] = [];
   for (const r of board.view.regions as { id: string; held?: true }[]) {
     const shown = await tool(engine, 'show_container', { board: 'plans', region: r.id }, who);
-    checkAnswer('show_container', { status: 200, headers: new Headers(), media: 'application/json', body: shown });
-    const out = await engine.tools.call('write_board', { board: 'plans', items: [
-      { type: 'node', node: { region: r.id, kind: 'note', title: `From ${tag}` }, key: `plans-${tag}-in-${r.id}` },
-    ] }, { caller: who });
-    const result = (out.structuredContent as { results: { ok: boolean; problem?: { type: string } }[] }).results[0]!;
-    rows.push([r.id, r.held === true, shown.held === true, !result.ok && /needs-grant$/.test(result.problem!.type)]);
+    fit('show_container', shown);
+    assert.equal(shown.held, r.held, `${tag}, ${r.id}: get_board and show_container agree`);
+    rows.push([r.id, r.held === true, await grant({ region: r.id }),
+      await passes(engine, who, { type: 'node', node: { region: r.id, kind: 'note', title: `From ${tag}` }, key: `plans-${tag}-in-${r.id}` })]);
   }
+  const listed = (await tool(engine, 'list_boards', {}, who)).boards.find((b: any) => b.board === 'plans');
+  assert.equal(listed.held, board.held, `${tag}: list_boards and get_board agree`);
+  rows.push(['plans', board.held === true, await grant({}),
+    await passes(engine, who, { type: 'region', region: { id: `${tag}-own`, title: 'Own', mode: 'grid' }, key: `plans-${tag}-own` })]);
   return rows;
 }
 
-test('reads tell the truth: a container the caller may write in is `held` (get_board\'s region, show_container), by the rule a write into it goes through; every other one answers needs-grant', async () => {
+test('reads tell the truth at every tier: a container is `held` where a card may go in, the board where a container may be added; request_grant answers `held` by the same rule, and every other write answers needs-grant', async () => {
   const { engine, bot, other, act } = await withPlans();
   const third = await join(engine, 'Third');
   const asked = await tool(engine, 'request_grant', { board: 'plans', reason: 'Add mine.' }, other);
@@ -316,16 +335,108 @@ test('reads tell the truth: a container the caller may write in is `held` (get_b
   ] }, other);
   const lent = await tool(engine, 'request_grant', { board: 'plans', region: 'shared', reason: 'Add to it.' }, bot);
   await act({ action: 'grant', request: lent.request });
-  // Each row: [region, get_board's mark, show_container's mark, the write answered needs-grant].
-  assert.deepEqual(await heldAgainstWrites(engine, bot, 'bot'),
-    [['now', true, true, false], ['theirs', false, false, true], ['shared', true, true, false]], 'its own, and one granted to it');
-  assert.deepEqual(await heldAgainstWrites(engine, other, 'other'),
-    [['now', false, false, true], ['theirs', true, true, false], ['shared', true, true, false]], 'a board held opens no other agent\'s container');
-  assert.deepEqual(await heldAgainstWrites(engine, third, 'third'),
-    [['now', false, false, true], ['theirs', false, false, true], ['shared', false, false, true]], 'no board, no container');
+  // Each row: [container or board, the reads' mark, request_grant's `held`, the write passed].
+  assert.deepEqual(await tiersFor(engine, bot, 'bot'), [
+    ['now', true, true, true], ['theirs', false, false, false], ['shared', true, true, true], ['plans', true, true, true],
+  ], 'the creator: its own, and one granted to it');
+  assert.deepEqual(await tiersFor(engine, other, 'other'), [
+    ['now', false, false, false], ['theirs', true, true, true], ['shared', true, true, true], ['bot-own', false, false, false], ['plans', true, true, true],
+  ], 'a granted agent: a board held opens no other agent\'s container');
+  assert.deepEqual((await tiersFor(engine, third, 'third')).map((row) => row.slice(1)), Array(6).fill([false, false, false]), 'an agent with nothing');
   const said = (name: string) => engine.tools.list().find((t) => t.name === name)!.description;
-  assert.match(said('get_board'), /on a region in `view\.regions`: you may write in that container/, 'a host\'s bot is told the mark');
-  assert.match(said('request_grant'), /A board's `held` lets you add containers; it opens no other agent's\./);
+  assert.match(said('get_board'), /make a board, always; add containers to a board marked `held`; write in a container marked `held`/, 'a host\'s bot is told the tiers');
+  assert.match(said('request_grant'), /A board's `held` opens no other agent's container\. It answers `held` only when that write would pass\./);
+});
+
+test('request_grant agrees with the read: a container whose board grant was revoked is not `held`, so it asks again; the write there answers needs-grant', async () => {
+  const { engine, other, act } = await withPlans();
+  const asked = await tool(engine, 'request_grant', { board: 'plans', region: 'now', reason: 'Add to it.' }, other);
+  await act({ action: 'grant', request: asked.request });
+  assert.deepEqual((await tiersFor(engine, other, 'before')).slice(0, 1), [['now', true, true, true]], 'granted: the container, and its board');
+  await act({ action: 'revoke', board: 'plans', holder: idOf(other) });
+  assert.ok(engine.ledger.state().index.holders.get('plans/now')?.has(idOf(other)), 'the container grant is still on the ledger');
+  const again = await tool(engine, 'request_grant', { board: 'plans', region: 'now', reason: 'Add to it again.' }, other);
+  assert.equal(again.held, undefined, JSON.stringify(again));
+  assert.equal(typeof again.request, 'number', 'a new request for the person');
+  assert.deepEqual(await tiersFor(engine, other, 'after'), [['now', false, false, false], ['before-own', false, false, false], ['plans', false, false, false]],
+    'its own container too: the board is gone');
+});
+
+/** What each agent read says of who calls it: `[read, you, joined]`. */
+async function whoFor(engine: Engine, who: Caller | undefined) {
+  const reads: [string, Record<string, unknown>][] = [
+    ['list_boards', {}], ['get_board', { board: 'plans' }], ['show_node', { board: 'plans', n: 1 }],
+    ['show_container', { board: 'plans', region: 'now' }], ['list_open', { board: 'plans' }],
+  ];
+  const rows: [string, unknown, unknown][] = [];
+  for (const [name, input] of reads) {
+    const out = await engine.tools.call(name, input, { caller: who });
+    assert.equal(out.isError, false, `${name}: ${JSON.stringify(out)}`);
+    const body = out.structuredContent as { you?: unknown; joined?: unknown };
+    checkAnswer(name, { status: 200, headers: new Headers(), media: 'application/json', body });
+    rows.push([name, body.you, body.joined]);
+  }
+  return rows;
+}
+const READS = ['list_boards', 'get_board', 'show_node', 'show_container', 'list_open'];
+const every = (you: unknown, joined: unknown) => READS.map((name) => [name, you, joined]);
+
+test('reads say who you are: `you` for a joined agent, `joined: false` for a read with no agent, nothing for the person or a read-only read, and nothing with the flag off', async () => {
+  const { engine, bot, other } = await withPlans();
+  assert.deepEqual(await whoFor(engine, bot), every({ agent: idOf(bot), label: 'Bot' }, undefined));
+  assert.deepEqual(await whoFor(engine, other), every({ agent: idOf(other), label: 'Other' }, undefined));
+  assert.deepEqual(await whoFor(engine, undefined), every(undefined, false), 'no secret: it may read, and must join to write');
+  assert.deepEqual(await whoFor(engine, PERSON), every(undefined, undefined), 'the person');
+  const { engine: off, bot: offBot } = await withPlans(OFF);
+  assert.deepEqual(await whoFor(off, offBot), every(undefined, undefined), 'flag off: as before');
+  assert.deepEqual(await whoFor(off, undefined), every(undefined, undefined));
+  const shut = createEngine({ dir: engine.dir, warn: () => {}, readOnly: () => true });
+  assert.deepEqual(await whoFor(shut, undefined), every(undefined, undefined), 'read-only: `readOnly: true` says it, not `joined`');
+});
+
+test('the folder\'s one agent is told who it is once one has joined, and holds every tier; before, it is told nothing', async () => {
+  const dir = makeTempDir('vb-bot-you-');
+  dirs.push(dir);
+  const engine = createEngine({ dir, name: () => '~/example', warn: () => {}, flags: { singleAgent: true } });
+  const one: Caller = { by: 'agent', agent: 'bot-0123456789abcdef' };
+  const listed = await tool(engine, 'list_boards', {}, one);
+  assert.ok(!('you' in listed) && !('joined' in listed), JSON.stringify(listed));
+  await tool(engine, 'write_board', { board: 'plans', items: [
+    { type: 'board', title: 'Plans', key: 'plans-board' },
+    { type: 'region', region: { id: 'now', title: 'Now' }, key: 'plans-now' },
+    { type: 'node', node: { region: 'now', kind: 'question', title: 'Ship on Friday?' }, key: 'plans-card-friday' },
+  ] }, one);
+  const first = [...engine.ledger.state().index.agents][0];
+  assert.deepEqual(await whoFor(engine, one), every({ agent: first, label: '~/example' }, undefined), 'the agent it writes as');
+  assert.deepEqual(await tiersFor(engine, one, 'one'), [['now', true, true, true], ['plans', true, true, true]]);
+});
+
+test('standalone, through vb-mcp: a read sends the secret (the chat panel\'s VB_AGENT_SECRET too) and names the agent and what it holds; with none it says `joined: false`; a secret the server does not know reads as no one, saying why, and a write with it is refused', async () => {
+  const h = await startBoard({});
+  try {
+    const joined = await h.join('Panel chat');
+    await h.ok('write_board', { board: 'plans', body: { items: [
+      { type: 'board', title: 'Plans', key: 'plans-board' },
+      { type: 'region', region: { id: 'now', title: 'Now', mode: 'grid' }, key: 'plans-now' },
+    ] } }, { as: joined.client });
+    const read = async (secret: string | undefined, name: string, args: Record<string, unknown>) => {
+      const env = { VB_SERVER: h.base, VB_PROJECT: h.project, ...(secret && { VB_AGENT_SECRET: secret }) };
+      const out = await callMcp({ command: process.execPath, args: ['--no-warnings', MCP_BIN], env }, h.project, name, args);
+      assert.equal(out.isError, false, JSON.stringify(out));
+      return JSON.parse(out.content[0].text);
+    };
+    for (const [name, args] of [['list_boards', {}], ['get_board', { board: 'plans' }], ['show_container', { board: 'plans', region: 'now' }]] as const) {
+      const panel = await read(joined.secret, name, args);
+      assert.deepEqual([panel.you, panel.joined], [{ agent: joined.agent, label: 'Panel chat' }, undefined], name);
+      const none = await read(undefined, name, args);
+      assert.deepEqual([none.you, none.joined, JSON.stringify(none).includes('"held"')], [undefined, false, false], name);
+    }
+    assert.deepEqual((await read(joined.secret, 'get_board', { board: 'plans' })).view.regions.map((r: any) => [r.id, r.held]), [['now', true]]);
+    const stranger = h.agent('s-unknown-to-every-ledger-0000000');
+    const unknown = await h.ok('get_board', { board: 'plans' }, { as: stranger });
+    assert.deepEqual([unknown.you, unknown.joined, unknown.joinedReason], [undefined, false, httpWords.secretNotRecognised]);
+    await h.fails('write_board', { board: 'plans', body: { items: [] } }, 401, 'not-authenticated', stranger);
+  } finally { await h.close(); }
 });
 
 test('the container mark: the folder\'s one agent holds every container; the person, and the flag off, see none', async () => {

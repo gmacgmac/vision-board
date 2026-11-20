@@ -5,7 +5,7 @@
 // operations.ts `scopeOf`) are not. Every read naming a board an agent may call names it through `requireBoard`
 // (visibility.ts), so an archived board is not found (api.md 136); `read_ledger` is the person's and names any board. The change streams are
 // the host's (the standalone server's streams.ts, from `watch`). What a read tells its caller about itself (`owed`,
-// `answered`, `held`; the `botToolRules` flag) is caller-marks.ts.
+// `answered`, `held`, `you`, `joined`; the `botToolRules` flag) is caller-marks.ts.
 import type { LedgerEvent } from '#format';
 import { boardView, containerKey, directionOf, flagOn, ICON_NAMES, toLine, widthsOf } from '#format';
 import type { LedgerState } from '#actions';
@@ -16,7 +16,7 @@ import {
 import { structureOf } from '#layout';
 import { cardOn } from '../edge.ts';
 import { exportFile } from './export.ts';
-import { holds, markBoard, markContainer, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
+import { callerMark, holds, markBoard, markContainer, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
 import { readLibrary } from '../icons.ts';
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
@@ -35,18 +35,21 @@ const listBoards: Op = (ctx) => {
   const s = ledger.state();
   const rules = flagOn('botToolRules', flags);
   const boards = boardList(s).map((b) => (rules && holds(s, b.board, ctx) ? { ...b, held: true as const } : b));
-  return reply(200, { ...whereAnswer(ctx), boards, head: s.seq, ...readOnlyMark(ctx) });
+  return reply(200, { ...whereAnswer(ctx), boards, head: s.seq, ...callerMark(s, ctx), ...readOnlyMark(ctx) });
 };
 
-const getBoard: Op = ({ params, ledger, caller, one, flags, readOnly }) => {
+const getBoard: Op = (ctx) => {
+  const { params, ledger, caller, one, flags, readOnly } = ctx;
   const s = ledger.state();
   const id = requireBoard(s, params.board);
   if (params.export === true) return reply(200, exportFile(s, id, { notes: params.notes === true }));
   // The page draws the same `boardData`; `locked` is the server's (api.md 139): read-only for everyone until the person unlocks it.
-  return reply(200, { ...markBoard(boardJson(boardData(s, id)), marksFor(s, id, { caller, one }, flags)), ...(isLocked(s, id) && { locked: true }), ...readOnlyMark({ readOnly }) });
+  const marked = markBoard(boardJson(boardData(s, id)), marksFor(s, id, { caller, one }, flags));
+  return reply(200, { ...callerMark(s, ctx), ...marked, ...(isLocked(s, id) && { locked: true }), ...readOnlyMark({ readOnly }) });
 };
 
-const showNode: Op = ({ params, ledger, caller, one, flags }) => {
+const showNode: Op = (ctx) => {
+  const { params, ledger, caller, one, flags } = ctx;
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const n = Number(params.n);
@@ -57,10 +60,11 @@ const showNode: Op = ({ params, ledger, caller, one, flags }) => {
   }
   const m = marksFor(s, board, { caller, one }, flags);
   const linked = params.linked === true ? linkedDetails(s, id).map((d) => (d.board === board ? markDetail(d, m) : d)) : undefined;
-  return reply(200, { head: s.seq, ...markDetail(detail, m), ...(linked && { linked }) });
+  return reply(200, { head: s.seq, ...callerMark(s, ctx), ...markDetail(detail, m), ...(linked && { linked }) });
 };
 
-const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
+const showContainer: Op = (ctx) => {
+  const { params, ledger, caller, one, flags } = ctx;
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const region = String(params.region);
@@ -69,7 +73,7 @@ const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
   if (!detail) throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
   const m = marksFor(s, board, { caller, one }, flags);
   const marked = m ? { ...detail, notes: markRegionNotes(detail.notes, m, region), nodes: detail.nodes.map((d) => markDetail(d, m)) } : detail;
-  return reply(200, { head: s.seq, ...markContainer(marked, m, region) });
+  return reply(200, { head: s.seq, ...callerMark(s, ctx), ...markContainer(marked, m, region) });
 };
 
 /** How the board arranges one container (api.md 133), structure only: the cards in it now (the
@@ -117,7 +121,7 @@ const listOpen: Op = (ctx) => {
   const s = ctx.ledger.state();
   const board = requireBoard(s, ctx.params.board);
   const containers = openContainers(s, board, scopeOf(ctx));
-  return reply(200, { head: s.seq, items: openItems(s, board, scopeOf(ctx)), ...(containers.length > 0 && { containers }) });
+  return reply(200, { head: s.seq, ...callerMark(s, ctx), items: openItems(s, board, scopeOf(ctx)), ...(containers.length > 0 && { containers }) });
 };
 
 /** A person act that ends a `check_responses` wait on `board`: Send, Ask now (an `ask`, api.md 188), or an answer to
@@ -161,7 +165,7 @@ const checkResponses: Op = async (ctx) => {
   if (wait > 0 && !since().some(wake)) await hold(ctx, wait, wake);
   const s = ledger.state();
   requireBoard(s, board); // archived while the call waited: as if it never was
-  return reply(200, { ...responsesPage(s, board, after, Number(params.limit), agent), head: s.seq });
+  return reply(200, { ...responsesPage(s, board, after, Number(params.limit), agent), head: s.seq, ...callerMark(s, ctx) });
 };
 
 /** Ledger lines after `after`, oldest first, optionally one board's, as the file holds them (cards

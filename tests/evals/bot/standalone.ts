@@ -73,12 +73,27 @@ export async function startStandaloneHost(o: { base: string; port: number; flags
     const ver = (await api('GET', `boards/${b}/nodes/${n}`)).versions.at(-1).ver as number;
     await personAct(board.base, cookie, b, { board: b, n, ver, ...body });
   };
+  // The person at the board, granting each open request as it arrives (`grants`), one pass at a time.
+  let granting: NodeJS.Timeout | undefined;
+  let busy = false;
+  const grantOpen = async () => {
+    if (busy) return;
+    busy = true;
+    try {
+      const lines = events();
+      const answered = new Set(lines.filter((e) => e.action === 'grant' || e.action === 'deny').map((e) => e.request));
+      for (const e of lines.filter((x) => x.type === 'grant-request' && !answered.has(x.seq))) {
+        await personAct(board.base, cookie, e.board, { action: 'grant', request: e.seq });
+      }
+    } finally { busy = false; }
+  };
   const person: Person = {
     async mark(b, n, mark) { await act(b, n, { action: mark }); },
     async direction(b, direction) { await personAct(board.base, cookie, b, { board: b, action: 'direction', direction }); },
     async note(b, n, text) { await act(b, n, { action: 'comment', text }); return events().filter((e) => e.action === 'comment').at(-1)!.seq; },
     async send() { throw new Error('standalone: no Send; the person writes in their own chat'); },
     async board() { throw new Error('standalone: no scenario has the person make a board'); },
+    grants() { granting ??= setInterval(() => { grantOpen().catch(() => {}); }, 200); },
   };
 
   return {
@@ -96,6 +111,6 @@ export async function startStandaloneHost(o: { base: string; port: number; flags
     record(turns) { calls.push(...callsFrom(turns)); },
     ledger: async () => events(),
     image: async (p) => (await fetch(`${board.base}/board-images/${p.split('/').map(encodeURIComponent).join('/')}`)).status,
-    close: () => board.close(),
+    close: () => { clearInterval(granting); return board.close(); },
   };
 }

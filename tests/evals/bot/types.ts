@@ -77,6 +77,8 @@ export interface Person {
   send(board: string): Promise<string>;
   /** A board the person makes, as the board page does (`put_board`): no agent made it. */
   board(board: string, title: string): Promise<void>;
+  /** From now until the run ends, the person grants each grant request as soon as it arrives (access-clarity, point 715). */
+  grants(): void;
 }
 
 /** What setup and turns get: the bot's own tools as the host's earlier turn (not logged as the bot's), the person,

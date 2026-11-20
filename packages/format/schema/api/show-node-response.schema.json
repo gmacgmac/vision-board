@@ -11,6 +11,15 @@
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
+    "you": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/you"
+    },
+    "joined": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/joined"
+    },
+    "joinedReason": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/joinedReason"
+    },
     "linked": {
       "type": "array",
       "items": {

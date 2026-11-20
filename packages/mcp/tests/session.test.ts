@@ -215,3 +215,26 @@ test('VB_AGENT_SECRET stands in for a missing secret argument', async () => {
     assert.equal(r.structuredContent.held, true, 'the env secret is the agent that already holds options');
   } finally { await shared.close(); }
 });
+
+test('a read asks for no secret (point 714): it is sent VB_AGENT_SECRET, else the one this connection joined with, else the last one passed; one passed anyway is taken, and an unknown one reads as no one, never refused', async () => {
+  const read = async (s: Session, args: Record<string, unknown> = {}) => {
+    const r = await call(s, 'list_boards', args);
+    assert.equal(r.isError, false, JSON.stringify(r));
+    return r.structuredContent;
+  };
+  const stranger = 'x'.repeat(43);
+  assert.equal((await read(mcp)).you?.label, 'MCP chat', 'this connection joined: its reads name it');
+  const fresh = startMcp({ VB_SERVER: board.base }, board.project);
+  try {
+    const none = await read(fresh);
+    assert.deepEqual([none.you, none.joined, none.joinedReason], [undefined, false, undefined], 'nothing known: as no one');
+    assert.ok((await read(fresh, { secret })).you, 'a secret passed to a read is taken');
+    assert.ok((await read(fresh)).you, 'and sent with the next read');
+    const unknown = await read(fresh, { secret: stranger });
+    assert.deepEqual([unknown.you, unknown.joined, typeof unknown.joinedReason], [undefined, false, 'string'], 'unknown: as no one, saying why');
+  } finally { await fresh.close(); }
+  const shared = startMcp({ VB_SERVER: board.base, VB_AGENT_SECRET: secret }, board.project);
+  try {
+    assert.ok((await read(shared, { secret: stranger })).you, 'VB_AGENT_SECRET comes first');
+  } finally { await shared.close(); }
+});
