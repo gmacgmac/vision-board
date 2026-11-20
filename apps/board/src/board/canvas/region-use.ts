@@ -1,5 +1,5 @@
-// The container in use (railOnHover flag; read-only follow-ups FE_03, PLAN decision 9): the frame the
-// pointer is over, or whose card or control holds focus, carries data-use, which region-rail.css reads to
+// The container in use (railOnHover flag; read-only follow-ups FE_03, PLAN decision 9; point 675): the frame the
+// pointer is over (its box, its cards included), or whose own control holds focus, carries data-use, which region-rail.css reads to
 // show its rail icons. The cards are a layer of their own above the frames, so a frame's :hover and
 // :focus-within do not see its cards; this reads the frames' boxes on screen instead. At most one frame
 // is hovered (the smallest box under the pointer) and one holds focus; they may differ. The rail itself
@@ -29,11 +29,11 @@ export function bindRegionUse(stage: HTMLElement, frames: () => ReadonlyMap<stri
     }
     return best;
   };
-  /** The frame holding focus: the focused card's, or the frame's own (its rail, its title). */
+  /** The frame holding focus on its own controls (its rail, its title). A focused or selected card no longer marks its
+   *  frame (point 675): the rail follows the pointer, so moving round the board never leaves it showing. */
   const focused = (): string | null => {
     const t = stage.contains(document.activeElement) ? document.activeElement : null;
-    const card = t?.closest<HTMLElement>('vb-node');
-    return card ? regionOf(card.dataset.id ?? '') ?? null : t?.closest<HTMLElement>('vb-region')?.dataset.region ?? null;
+    return t?.closest<HTMLElement>('vb-node') ? null : t?.closest<HTMLElement>('vb-region')?.dataset.region ?? null;
   };
   const apply = () => {
     frame = 0;
