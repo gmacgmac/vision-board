@@ -91,6 +91,8 @@ vb-region .vb-region-label {
 vb-region .vb-region-label::before, vb-region .vb-region-label::after {
   content: ''; flex: none; width: 32px; height: var(--vb-region-ln-w); background: var(--vb-region-ln);
 }
+/* On a narrow frame the corners come close to the title, and the two rules read as a broken line: drop them. */
+@container (max-width: 640px) { vb-region .vb-region-label::before, vb-region .vb-region-label::after { display: none; } }
 vb-region .vb-region-tools { position: relative; flex: none; }
 vb-region .vb-region-label { position: relative; }
 /* A narrow line (review polish ruling 9, tracker N41, decision 7): the retired marker and the
