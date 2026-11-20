@@ -34,9 +34,9 @@ vb-region {
 vb-region::before, vb-region::after { content: ''; position: absolute; z-index: -1; pointer-events: none; box-sizing: border-box; }
 vb-region::before {
   inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) solid var(--vb-region-ln); border-radius: var(--vb-radius-lg);
-  --c: linear-gradient(#000 0 0);
-  mask: var(--c) top left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--c) top right / var(--vb-region-corner) var(--vb-region-corner) no-repeat,
-    var(--c) bottom left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--c) bottom right / var(--vb-region-corner) var(--vb-region-corner) no-repeat;
+  --vb-region-mask: linear-gradient(var(--vb-ink) 0 0); /* only its alpha is read: the mask shows the four corners */
+  mask: var(--vb-region-mask) top left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--vb-region-mask) top right / var(--vb-region-corner) var(--vb-region-corner) no-repeat,
+    var(--vb-region-mask) bottom left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--vb-region-mask) bottom right / var(--vb-region-corner) var(--vb-region-corner) no-repeat;
 }
 vb-region::after { content: none; }
 
