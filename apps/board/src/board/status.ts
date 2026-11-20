@@ -80,7 +80,7 @@ export interface BoardStatus {
   direction: ActDirection | null;
   /** The Go to card box (goToCard flag, go-to-card.ts), open while set. */
   go: GoBox | null;
-  /** The files dialog (board-files.ts): Print, Export or Import, and the container it was opened on; open while set. */
+  /** The files dialog (board-files.ts): Save as PDF, Export or Import, and the container it was opened on; open while set. */
   files: FilesAsk | null;
   /** How many times the board was drawn. */
   drawn: number;

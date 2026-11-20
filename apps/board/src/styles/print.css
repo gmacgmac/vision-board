@@ -1,25 +1,29 @@
-/* The print view (D-107, export-import-print PLAN decision 9; board/canvas/print-view.ts, which sets what it reads on the
-   root while the host prints): the live page, printed. Only the stage shows (no header, strips, reply panel, dialogs,
-   bubbles, menus or tips), and in it only the world: the board, or with `data-vb-print` naming a container that container
-   (`data-vb-print-out` on everything else), moved and shrunk to fit one page (`--vb-print-transform`, never enlarged) in a
-   root as big as the fitted scope (`--vb-print-w`, `--vb-print-h`). The cards print as at 100% (print-view.ts sets the
-   zoom's own properties, `--vb-zoom` and the marks' growth, to 1 while it lasts), every card drawn (none skipped as offscreen) and without its soft shadow, the containers' own tools hidden as when zoomed out (region.css
-   `[data-zoom='far']`), the borders as chosen (`data-vb-print-border`), and the colours as on screen (`print-color-adjust:
-   exact`). The paper (its side, which the board asks for, and margins), hiding the page around the board and the look's
-   colours are the host's (host.ts `print(ask)`; a plugin's sheet holds no `@page`): the board names no page and sets no
-   colour scheme here, so under a host its colours follow the host's `--host-color-scheme` (plugin/color-scheme.css),
-   and on the standalone page its root's (shell.css). Off print, and outside a print the board set, nothing here applies.
-   Link paths also carry fill="none" as an attribute (links/wires.ts). */
+/* The print view (D-107, export-import-print PLAN decision 9; Save as PDF, nclite ADR-0381; board/canvas/print-view.ts,
+   which sets what it reads on the root while the host saves it): the live page, saved. Only the stage shows (no header,
+   strips, reply panel, dialogs, bubbles, menus or tips), and in it only the world: the board, or with `data-vb-print`
+   naming a container that container (`data-vb-print-out` on everything else), moved to the root's corner
+   (`--vb-print-transform`) in a root exactly as big as the padded scope (`--vb-print-w`, `--vb-print-h`), which is the
+   page's size (`PdfAsk` `size`). The root wears the board's own background, on screen too while the view is set, so a host
+   that reads the page's colour from what is saved (nclite reads it once, outside print media) reads the canvas and the
+   page is one colour. The cards save as at 100% (print-view.ts sets the zoom's own properties, `--vb-zoom` and the marks'
+   growth, to 1 while it lasts), every card drawn (none skipped as offscreen) and without its soft shadow, the containers'
+   own tools hidden as when zoomed out (region.css `[data-zoom='far']`), the borders as chosen (`data-vb-print-border`),
+   and the colours as on screen (`print-color-adjust: exact`). The page itself, hiding the page around the board and the
+   look's colours are the host's (host.ts `savePdf(ask)`; a plugin's sheet holds no `@page`): the board names no page and
+   sets no colour scheme here, so under a host its colours follow the host's `--host-color-scheme`
+   (plugin/color-scheme.css), and on the standalone page its root's (shell.css). Outside a view the board set, nothing here
+   applies. Link paths also carry fill="none" as an attribute (links/wires.ts). */
+.vb-board[data-vb-print] { background-color: var(--vb-surface-canvas); }
 @media print {
   .vb-board[data-vb-print] {
-    position: relative; width: var(--vb-print-w); height: var(--vb-print-h); margin: 0 auto; overflow: hidden;
+    position: relative; width: var(--vb-print-w); height: var(--vb-print-h); margin: 0; overflow: hidden;
     print-color-adjust: exact; -webkit-print-color-adjust: exact; break-inside: avoid;
   }
   .vb-board[data-vb-print] > :not(.vb-stage), .vb-board[data-vb-print] > .vb-stage > :not(.vb-world) { display: none !important; }
   /* No dot grid on paper: the canvas colour alone. */
   .vb-board[data-vb-print] > .vb-stage { position: absolute; inset: 0; overflow: hidden; background-image: none; }
   .vb-board[data-vb-print] .vb-world { transform: var(--vb-print-transform) !important; transition: none !important; }
-  /* No soft shadows on paper: a PDF draws a blurred shadow under the fit's scale as a grey block round the card. */
+  /* No soft shadows on paper: a PDF draws a blurred shadow as a grey block round the card. */
   .vb-board[data-vb-print] .vb-world * { transition: none !important; animation: none !important; box-shadow: none !important; }
   .vb-board[data-vb-print] .vb-cards vb-node { content-visibility: visible !important; }
   .vb-board[data-vb-print] :is(.vb-wires-top, [data-vb-print-out]) { display: none !important; }

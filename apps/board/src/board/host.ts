@@ -174,16 +174,22 @@ export interface BoardStore {
 export type PrintLook = 'plain' | 'light' | 'dark';
 export type PrintOrientation = 'portrait' | 'landscape';
 
-/** One print job (the contract's `PrintAsk`). Every member may be left out: no title keeps the page's, `look` is `plain`,
- *  `orientation` `portrait`. The board gives `title`, `look` and `orientation`, never `content` (the board's root as it stands). */
-export interface PrintAsk {
-  /** The print window's title, and the PDF's default name. */
+/** One Save as PDF (the contract's `PdfAsk`). Every member may be left out: no title is the host's default name, `look`
+ *  `plain`, `orientation` `portrait`. The board gives `title`, `look` and `size`, never `content` (the board's root as it
+ *  stands) or `orientation` (`size` names the page). */
+export interface PdfAsk {
+  /** The PDF's default name, without `.pdf`. */
   title?: string;
-  /** An element built for paper, shown alone while printing (named `object`, as the contract names it). */
+  /** An element built for paper, shown alone while saving (named `object`, as the contract names it). */
   content?: object;
   look?: PrintLook;
   orientation?: PrintOrientation;
+  /** One page of exactly this size, in CSS px, instead of paper (`orientation` is then ignored): a board's own extent. */
+  size?: { width: number; height: number };
 }
+
+/** @deprecated `PdfAsk` under its old name (seam 2's), for a host that still names it. */
+export type PrintAsk = PdfAsk;
 
 /** What the board needs of whoever hosts it. */
 export interface BoardHost {
@@ -217,11 +223,15 @@ export interface BoardHost {
    *  an input's `accept`). Resolves its name and content, or undefined when the person chose none. Left out, the board
    *  shows no Import item. */
   openFile?(accept: string): Promise<{ name: string; bytes: Uint8Array } | undefined>;
-  /** Prints, through the host's own print window (the contract's `print(ask)`, D-107): the board sets what is printed (the
-   *  board or one container, fitted to one page, inside its own root) and asks with no `content`, so the host prints the
-   *  board's root as it stands. The host owns the paper (its size and margins), hiding the rest of its page and the
-   *  look's colours: the board names no page and sets nothing outside its root. Resolves once the print window has
-   *  closed; rejects with the host's words, which the board shows through `notify`. Left out, the board shows no Print item. */
+  /** Saves a PDF where the person chooses (the contract's `savePdf(ask)`): the board sets what is saved
+   *  (the board or one container, at its own size, inside its own root, on the board's own background) and asks with no
+   *  `content`, so the host saves the board's root as it stands, one page of exactly `size`. The host owns the page and
+   *  hiding the rest of its own, and reads the page's colour from the root: the board names no page and sets nothing
+   *  outside its root. Resolves once saved or cancelled; rejects with the host's words, which the board shows through
+   *  `notify`. Left out, the board shows no Save as PDF item (the contract's deprecated `print` is never called). */
+  savePdf?(ask?: PdfAsk): Promise<void>;
+  /** @deprecated `savePdf` under its old name, as the contract keeps it until its next re-vendor. The board never calls it:
+   *  given alone, the board shows no Save as PDF item. */
   print?(ask?: PrintAsk): Promise<void>;
   /** The standalone page's own part; a host leaves it out. */
   page?: BoardPage;

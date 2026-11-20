@@ -1,17 +1,17 @@
-// Export, import and print, the board's side (D-107, export-import-print FE_01; boards/board-files.ts, canvas/print-view.ts):
-// the export file's name; what Import reads from a chosen file; Export hands the export route's file to the host's save;
-// Import sends the chosen file as the person's `import`, into a new board named from its title or the open one, and says
-// what the board dropped, and refuses a file over the host's limit before sending anything; Print sets the print view, asks
-// the host's print with the title, look and side (no content), then takes the view off, even when the print fails; the
-// fit of a scope to one page, shrunk and never enlarged, turned to the page's longer side; and the standalone page's own
-// side of the ask: its paper rule, and its import limit, its server's.
+// Export, import and Save as PDF, the board's side (D-107, export-import-print FE_01; nclite ADR-0381; boards/board-files.ts,
+// canvas/print-view.ts): the export file's name; what Import reads from a chosen file; Export hands the export route's file
+// to the host's save; Import sends the chosen file as the person's `import`, into a new board named from its title or the
+// open one, and says what the board dropped, and refuses a file over the host's limit before sending anything; Save as PDF
+// sets the print view, asks the host's `savePdf` with the title, look and the page's size (no content, no orientation),
+// then takes the view off, even when the save fails; the extent of a scope, padded, at its own size; and the standalone
+// page's own side of the ask: its page rule, and its import limit, its server's.
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createBoardFiles, exportName, IMPORT_BYTES, readExport, type BoardFilesDeps } from '../src/board/boards/board-files.ts';
 import * as pageFiles from '../src/shell/page-files.ts';
-import { PRINT_PAD, PRINT_PAGE, printFit } from '../src/board/canvas/print-view.ts';
+import { PRINT_PAD, printFit } from '../src/board/canvas/print-view.ts';
 import { ApiError } from '../src/board/io.ts';
 
 const bytes = (s: string) => new TextEncoder().encode(s);
@@ -24,7 +24,7 @@ function flow(over: Partial<BoardFilesDeps> = {}, host: Partial<BoardFilesDeps['
     host: {
       saveFile: async (name, type, b) => { log.push(['save', name, type, new TextDecoder().decode(b)]); },
       openFile: async (accept) => { log.push(['open', accept]); return { name: 'pricing.vboard.json', bytes: bytes(JSON.stringify(FILE)) }; },
-      print: async (ask) => { log.push(['print', ask]); },
+      savePdf: async (ask) => { log.push(['pdf', ask]); },
       ...host,
     },
     io: {
@@ -36,7 +36,7 @@ function flow(over: Partial<BoardFilesDeps> = {}, host: Partial<BoardFilesDeps['
     state: () => ({ boards: new Map([['roadmap', { title: 'Where we go' }], ['pricing', { title: 'Pricing' }]]) }) as never,
     regionTitle: (r) => (r === 'review' ? 'Review' : undefined),
     show: (ask) => log.push(['show', ask]),
-    printView: (scope) => { log.push(['view', scope]); return { orientation: scope.region ? 'portrait' : 'landscape', undo: () => log.push(['undo']) }; },
+    printView: (scope) => { log.push(['view', scope]); return { size: scope.region ? { width: 400, height: 600 } : { width: 1800, height: 900 }, undo: () => log.push(['undo']) }; },
     jump: (id) => log.push(['jump', id]),
     toast: (t) => log.push(['toast', t]),
     ...over,
@@ -98,15 +98,15 @@ test('importFile: no file chosen is null; a file that is no export file, or a re
   assert.deepEqual(await refused.files.importFile('current'), { problem: 'locked' });
 });
 
-test('print sets the view, asks the host\'s print for the title, look and side (no content), then takes the view off, even when the print fails', async () => {
+test('Save as PDF sets the view, asks the host\'s savePdf for the title, look and the page\'s size (no content, no orientation), then takes the view off, even when the save fails', async () => {
   const { files, log } = flow();
   assert.equal(await files.print({ region: 'review', border: false, theme: 'light' }), null);
-  assert.deepEqual(log, [['view', { region: 'review', border: false }], ['print', { title: 'Review', look: 'light', orientation: 'portrait' }], ['undo']]);
+  assert.deepEqual(log, [['view', { region: 'review', border: false }], ['pdf', { title: 'Review', look: 'light', size: { width: 400, height: 600 } }], ['undo']]);
   const board = flow();
   assert.equal(await board.files.print({ border: true, theme: 'dark' }), null);
-  assert.deepEqual(board.log[1], ['print', { title: 'Where we go', look: 'dark', orientation: 'landscape' }]);
-  const failed = flow({}, { print: async () => { throw new Error('No printer'); } });
-  assert.equal(await failed.files.print({ border: true, theme: 'dark' }), 'No printer');
+  assert.deepEqual(board.log[1], ['pdf', { title: 'Where we go', look: 'dark', size: { width: 1800, height: 900 } }]);
+  const failed = flow({}, { savePdf: async () => { throw new Error('A save is already under way.'); } });
+  assert.equal(await failed.files.print({ border: true, theme: 'dark' }), 'A save is already under way.');
   assert.deepEqual(failed.log.at(-1), ['undo']);
   assert.notEqual(await flow({ printView: () => null }).files.print({ border: true, theme: 'dark' }), null);
 });
@@ -124,7 +124,10 @@ test('import refuses a file over the host\'s limit with words, before reading or
   assert.deepEqual(await at.files.importFile('new'), { dropped: [] }, 'a file at the limit goes');
 });
 
-test('the standalone page\'s print: the ask\'s side on paper, a margin for plain alone; its import limit is its server\'s write_board body limit', () => {
+test('the standalone page\'s Save as PDF: a size is one page of exactly that size, edge to edge; else the ask\'s side on paper, a margin for plain alone; its import limit is its server\'s write_board body limit', () => {
+  assert.equal(pageFiles.printRules({ look: 'plain', size: { width: 1800, height: 912 } }), '@page{size:1800px 912px;margin:0}');
+  assert.equal(pageFiles.printRules({ orientation: 'portrait', look: 'dark', size: { width: 400, height: 600 } }), '@page{size:400px 600px;margin:0}');
+  assert.equal(pageFiles.printRules({ size: { width: 0, height: 600 } }), `@page{size:portrait;margin:${pageFiles.PLAIN_MARGIN}}`, 'a size that is no page is none');
   assert.equal(pageFiles.printRules({ orientation: 'landscape', look: 'dark' }), '@page{size:landscape;margin:0}');
   assert.equal(pageFiles.printRules({ look: 'light' }), '@page{size:portrait;margin:0}');
   assert.equal(pageFiles.printRules({}), `@page{size:portrait;margin:${pageFiles.PLAIN_MARGIN}}`);
@@ -134,14 +137,8 @@ test('the standalone page\'s print: the ask\'s side on paper, a margin for plain
   assert.ok(pageFiles.IMPORT_BYTES <= IMPORT_BYTES);
 });
 
-test('printFit: padded, turned to the longer side, shrunk to one page and never enlarged', () => {
-  const small = printFit({ x: 100, y: 50, w: 400, h: 200 });
-  assert.deepEqual(small, { x: 100 - PRINT_PAD, y: 50 - PRINT_PAD, w: 400 + 2 * PRINT_PAD, h: 200 + 2 * PRINT_PAD, scale: 1, landscape: true });
-  const wide = printFit({ x: 0, y: 0, w: 3000, h: 1000 }, 0);
-  assert.equal(wide.landscape, true);
-  assert.equal(wide.scale, PRINT_PAGE.long / 3000);
-  const tall = printFit({ x: 0, y: 0, w: 1000, h: 4000 }, 0);
-  assert.equal(tall.landscape, false);
-  assert.equal(tall.scale, PRINT_PAGE.long / 4000);
-  assert.ok(tall.w * tall.scale <= PRINT_PAGE.short && tall.h * tall.scale <= PRINT_PAGE.long);
+test('printFit: padded, at its own size, never scaled, rounded out to whole px', () => {
+  assert.deepEqual(printFit({ x: 100, y: 50, w: 400, h: 200 }), { x: 100 - PRINT_PAD, y: 50 - PRINT_PAD, w: 400 + 2 * PRINT_PAD, h: 200 + 2 * PRINT_PAD });
+  assert.deepEqual(printFit({ x: 0, y: 0, w: 3000.4, h: 1000 }, 0), { x: 0, y: 0, w: 3001, h: 1000 }, 'a wide board is one wide page, not shrunk');
+  assert.deepEqual(printFit({ x: 0, y: 0, w: 1000, h: 4000 }, 0), { x: 0, y: 0, w: 1000, h: 4000 });
 });

@@ -3,7 +3,7 @@
      while a past version shows, its banner (versionView flag), the stage, the reply panel, the key commands
      bubble (keyBubble flag), the Go to card box while a digit typed on the board has it open (goToCard flag),
      or `/`, for words (cardSearch flag), the New board / Rename board dialog (boardEdit flag), the Archived
-     list (archiveBoard flag) and the files dialog: Print, Export or Import (D-107). Notes open in a bubble beside their card (board/notes/notes.ts). Notices and
+     list (archiveBoard flag) and the files dialog: Save as PDF, Export or Import (D-107). Notes open in a bubble beside their card (board/notes/notes.ts). Notices and
      confirmations are the host's (`notify`, `confirm`). The stage is the board's own element, which the
      framework-free board draws in. -->
 <script lang="ts" module>

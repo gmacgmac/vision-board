@@ -39,20 +39,17 @@ body > .vb-board { position: absolute; inset: 0; }
   border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
 }
 :where([class*='vb-']) code:not(html) { font-family: var(--vb-font-mono); }
-/* This page's print, the host's side of `print(ask)` (shell/page-files.ts `print`, which marks <html> for one print and gives
-   the paper its own sheet: the ask's side, a 10 mm margin for `plain`, none for `light` and `dark`): the board alone, in the
-   flow, in the look's colours. This page's built tokens resolve light-dark() at its root, so the look is set there, over the
-   toolbar's data-theme; `light` and `dark` fill the paper edge to edge with the canvas. The board's own print view
-   (print.css) fits what it prints inside its root. A print not asked for (the browser's own Print) prints the page as it is. */
+/* This page's Save as PDF, the host's side of `savePdf(ask)` (shell/page-files.ts `savePdf`, which marks <html> for one
+   save and gives the page its own sheet: exactly the ask's `size`, no margin): the board alone, in the flow, in the look's
+   colours. This page's built tokens resolve light-dark() at its root, so the look is set there, over the toolbar's
+   data-theme. The page paints no ground of its own: the board's root fills the page in its own background (print.css), so
+   the page is one colour. A print not asked for (the browser's own Print) prints the page as it is. */
 @media print {
   html[data-vb-printing], html[data-vb-printing] body { height: auto; overflow: visible; background: none; }
   html[data-vb-printing] body > :not(.vb-board) { display: none !important; }
   html[data-vb-printing] body > .vb-board { position: relative; inset: auto; }
   :root[data-vb-printing]:is([data-vb-print-look='plain'], [data-vb-print-look='light']) { color-scheme: light; }
   :root[data-vb-printing][data-vb-print-look='dark'] { color-scheme: dark; }
-  html[data-vb-printing]:not([data-vb-print-look='plain']), html[data-vb-printing]:not([data-vb-print-look='plain']) body {
-    background: var(--vb-surface-canvas); print-color-adjust: exact; -webkit-print-color-adjust: exact;
-  }
 }
 /* The board's one scrollbar, on the standalone page only (point 618's look; point 632: inside a host the board draws
    none and wears the host's, as nclite's overlay scrollbar): a 3px thumb at the scroller's far right edge (the bottom,

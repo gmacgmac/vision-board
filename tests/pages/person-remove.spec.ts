@@ -163,7 +163,7 @@ test('by keyboard: Space selects a focused card, Delete asks, Tab and Enter conf
   await idle(page);
   await expect(card(page, 3)).toHaveCount(0);
   // The cog: Right opens its menu on the first row (in the rail, toolRail flag, the menu opens to the
-  // right; Down on the top line); Down reaches Remove container, past the rows between (Print and Export container,
+  // right; Down on the top line); Down reaches Remove container, past the rows between (Save container as PDF and Export container,
   // D-107); Enter asks.
   const f = frame(page, 'p');
   await f.locator('button.vb-cog').focus();

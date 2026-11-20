@@ -1,15 +1,13 @@
-// Export, import and print (D-107; export-import-print FE_01, PLAN decisions 8-12). The
-// board's "⋯" menu has Print…, Export… and Import…, a container's settings menu Print container… and Export container…,
-// each only when the host's hook is given (`BoardHost` `print`, `saveFile`, `openFile`). One dialog asks only
-// what the place it was opened from leaves open: Print, the container border; Export, the conversations on notes; Import,
-// into a new board or this one, then what the reply dropped. Print sets a print view over the live page (no chrome,
-// the scope fitted to one page, the border as chosen, colours kept, every link path `fill="none"`), then
-// `host.print({ title, look, orientation })` (folders-labels-print T_04). The standalone page's `print` is that ask's host:
-// it marks <html> with the look, gives the paper the ask's side, titles the page, then calls `window.print()`: here that is
-// replaced by a binding that looks at the page in print media and prints it to PDF (temp/print/), so the test sees what
-// the person's PDF would hold. Export and import
-// against the real server (BE_01: `export_board`, the person's `import`, D-108) run in "against the server";
-// the page's own states are held by calls answered here (`page.route`).
+// Export, import and Save as PDF (D-107; export-import-print FE_01, PLAN decisions 8-12; nclite ADR-0381). "⋯" has Save
+// as PDF…, Export… and Import…, a container's settings Save container as PDF… and Export container…, each only with the
+// host's hook (`BoardHost` `savePdf`, `saveFile`, `openFile`). One dialog asks only what is left open: Save as PDF, the
+// border and light or dark; Export, the conversations on notes; Import, into a new board or this one, then what was
+// dropped. Save as PDF sets a print view (no chrome, the scope at its own size on the board's canvas, the border as
+// chosen, colours kept, every link path `fill="none"`), then `host.savePdf({ title, look, size })`. The standalone page's
+// `savePdf` marks <html> with the look, gives the page exactly the ask's size, titles the page and calls `window.print()`:
+// here a binding that looks at the page in print media and prints it to PDF (temp/print/). Export and import against the
+// real server (BE_01: `export_board`, the person's `import`, D-108) run in "against the server"; the page's own states
+// are held by calls answered here (`page.route`).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import type { Page, Route } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
@@ -49,10 +47,10 @@ const FILE = {
 };
 
 test.describe('the menus', () => {
-  test('"⋯" holds Print…, Export… and Import… after the board\'s own rows', async ({ page }) => {
+  test('"⋯" holds Save as PDF…, Export… and Import… after the board\'s own rows', async ({ page }) => {
     await open(page);
     await menuButton(page).click();
-    for (const [id, text] of [['print-board', 'Print…'], ['export-board', 'Export…'], ['import-board', 'Import…']] as const) {
+    for (const [id, text] of [['print-board', 'Save as PDF…'], ['export-board', 'Export…'], ['import-board', 'Import…']] as const) {
       await expect(row(page, id)).toHaveText(text);
       await expect(row(page, id)).toHaveAttribute('role', 'menuitem');
       await expect(row(page, id)).toHaveAttribute('aria-haspopup', 'dialog');
@@ -70,10 +68,10 @@ test.describe('the menus', () => {
     await page.keyboard.press('Escape');
   });
 
-  test('a container\'s settings menu has Print container… and Export container…', async ({ page }) => {
+  test('a container\'s settings menu has Save container as PDF… and Export container…', async ({ page }) => {
     await open(page);
     const items = await cog(page, 'review');
-    await expect(items.locator('button[data-print-region="review"]')).toHaveText('Print container…');
+    await expect(items.locator('button[data-print-region="review"]')).toHaveText('Save container as PDF…');
     await expect(items.locator('button[data-export-region="review"]')).toHaveText('Export container…');
     // Never disabled: neither changes the board.
     await expect(items.locator('button[data-print-region]')).not.toHaveAttribute('aria-disabled', 'true');
@@ -87,7 +85,7 @@ test.describe('the menus', () => {
     await page.evaluate(() => (window as unknown as { vbHost: Host }).vbHost.idle('a'));
     await page.locator('#a [aria-label="More"][aria-haspopup="menu"]').click();
     await expect(page.locator('#a [role="menu"][aria-label="More"]')).toBeVisible();
-    await expect(page.locator('#a [role="menuitem"]', { hasText: /^(Print|Export|Import)…$/ })).toHaveCount(0);
+    await expect(page.locator('#a [role="menuitem"]', { hasText: /^(Save as PDF|Export|Import)…$/ })).toHaveCount(0);
     await expect(page.locator('#a button[data-print-region], #a button[data-export-region]')).toHaveCount(0);
   });
 });
@@ -154,11 +152,11 @@ test.describe('the dialog', () => {
     expect(asked.at(-1)!.searchParams.get('notes')).toBe('true');
   });
 
-  test('Print… asks only about the border, on for the board and off for a container; Cancel and Esc close it', async ({ page }) => {
+  test('Save as PDF… asks only about the border and the look, the border on for the board and off for a container; Cancel and Esc close it', async ({ page }) => {
     await open(page);
     await menuButton(page).click();
     await row(page, 'print-board').click();
-    await expect(dialog(page).getByRole('heading')).toHaveText('Print board');
+    await expect(dialog(page).getByRole('heading')).toHaveText('Save board as PDF');
     await expect(dialog(page).getByRole('checkbox')).toHaveCount(1);
     await expect(row(page, 'files-border')).toBeChecked();
     await row(page, 'files-cancel').click();
@@ -166,7 +164,7 @@ test.describe('the dialog', () => {
     await expect(menuButton(page)).toBeFocused();
 
     await (await cog(page, 'prove')).locator('button[data-print-region="prove"]').click();
-    await expect(dialog(page).getByRole('heading')).toHaveText('Print container');
+    await expect(dialog(page).getByRole('heading')).toHaveText('Save container as PDF');
     await expect(row(page, 'files-border')).not.toBeChecked();
     await page.keyboard.press('Escape');
     await expect(dialog(page)).toBeHidden();
@@ -254,7 +252,7 @@ test.describe('the dialog', () => {
 
 /** What the page looks like in print media while it prints, read by the test's `print`. */
 interface Printed {
-  root: { print: string | null; border: string | null; w: number; h: number; colors: string; theme: string | null; dark: boolean; ground: string };
+  root: { print: string | null; border: string | null; w: number; h: number; colors: string; theme: string | null; dark: boolean; ground: string; bg: string; canvas: string };
   /** The page while it prints, the host's side: <html>'s print marks, the paper's rule, the title. */
   host: { marks: string[]; paper: string; title: string; boardMarks: string[] };
   /** Link labels in print (T_02): each tag drawn whole, never its short form. */
@@ -299,6 +297,7 @@ async function printAs(page: Page, name: string): Promise<{ last(): Printed | nu
         root: {
           print: scope, border: root.dataset.vbPrintBorder ?? null, w: box.width, h: box.height, colors: getComputedStyle(root.querySelector('vb-node')!).printColorAdjust,
           theme: document.documentElement.dataset.vbPrintLook ?? null, dark: inkIsLight(root.querySelector('vb-node')!), ground: getComputedStyle(root.querySelector('.vb-stage')!).backgroundImage,
+          bg: getComputedStyle(root).backgroundColor, canvas: getComputedStyle(root.querySelector('.vb-stage')!).backgroundColor,
         },
         labels: {
           whole: root.querySelectorAll('.vb-link-whole').length,
@@ -340,8 +339,8 @@ async function printFromDialog(page: Page, border?: boolean): Promise<void> {
   expect(await page.evaluate(() => [document.documentElement.getAttributeNames().filter((a) => a.startsWith('data-vb-print')), document.adoptedStyleSheets.length, document.title])).toEqual([[], 0, title]);
 }
 
-test.describe('print', () => {
-  test('the board: no chrome, one page, colours kept, the borders on, every link path fill none; the page back as it was after', async ({ page }) => {
+test.describe('Save as PDF', () => {
+  test('the board: no chrome, one page of its own size on its own background, colours kept, the borders on, every link path fill none; the page back as it was after', async ({ page }) => {
     await open(page);
     const printed = await printAs(page, 'board-border-on-light');
     await menuButton(page).click();
@@ -357,10 +356,11 @@ test.describe('print', () => {
     expect(p.wires.length).toBeGreaterThan(0);
     for (const w of p.wires) expect([w.attr, w.fill]).toEqual(['none', 'none']);
     expect(p.frames.filter((f) => f.region !== 'later').every((f) => f.rules !== 'none')).toBe(true);
-    // The ask, as this page's host reads it (title, look, side; edge to edge, no margin); the board's marks stay in its root.
+    // The ask as this page's host reads it (one page the root's own size, on its canvas); the marks stay in the root.
     expect(p.host.title).toBe('Where Vision Board goes from here');
     expect(p.host.marks).toEqual(['data-vb-print-look', 'data-vb-printing']);
-    expect(p.host.paper).toBe(`@page { size: ${p.root.w > p.root.h ? 'landscape' : 'portrait'}; margin: 0px; }`);
+    expect(p.host.paper).toBe(`@page { size: ${p.root.w}px ${p.root.h}px; margin: 0px; }`);
+    expect([p.root.bg, p.root.w > 1000], 'the root on the canvas, at its own size: wider than any paper').toEqual([p.root.canvas, true]);
     expect(p.host.boardMarks).toEqual(['data-vb-print', 'data-vb-print-border']);
     expect([p.labels.wholeShown, p.labels.shortShown], 'every link label whole on paper').toEqual([p.labels.whole, 0]);
     // Back on screen: the toolbar shows and nothing of print is left on the root.
@@ -395,14 +395,15 @@ test.describe('print', () => {
       for (const f of p.frames.filter((x) => x.region !== 'prove')) expect(f.shown, f.region).toBe(false);
       expect(p.wires.some((w) => w.inside && w.shown)).toBe(true);
       for (const w of p.wires.filter((x) => !x.inside)) expect(w.shown).toBe(false);
-      expect(p.host.paper, 'the paper on the side the container is wider on').toContain(`size: ${p.root.w > p.root.h ? 'landscape' : 'portrait'};`);
+      expect(p.host.paper, 'one page, the container\'s own size').toBe(`@page { size: ${p.root.w}px ${p.root.h}px; margin: 0px; }`);
+      expect(p.root.bg, 'the root wears the canvas').toBe(p.root.canvas);
       expect(p.labels.shortShown).toBe(0);
     });
   }
 
-  // Point 615: Print offers light or dark, the screen's theme first; the page's host sets the look for the print only.
+  // Point 615: Save as PDF offers light or dark, the screen's theme first; the page's host sets the look for the print only.
   for (const theme of THEMES) {
-    test(`Print… offers light or dark, the screen's (${theme}) first; the print takes the one chosen, the screen keeps its own`, async ({ page }) => {
+    test(`Save as PDF… offers light or dark, the screen's (${theme}) first; the PDF takes the one chosen, the screen keeps its own`, async ({ page }) => {
       await setTheme(page, theme);
       await open(page);
       const other = theme === 'dark' ? 'light' : 'dark';
@@ -422,7 +423,7 @@ test.describe('print', () => {
 
   for (const theme of THEMES) {
     for (const skin of ['default', 'command-lens'] as const) {
-      test(`the board prints in the ${skin} skin, ${theme}`, async ({ page }) => {
+      test(`the board saves as a PDF in the ${skin} skin, ${theme}`, async ({ page }) => {
         await setTheme(page, theme);
         await open(page);
         const skinAct = (s: string) => page.request.post('/api/boards/roadmap/act', { data: { type: 'act', action: 'skin', skin: s, board: 'roadmap' } });
@@ -481,8 +482,8 @@ test.describe('the gallery', () => {
   test('the entry shows the menus and every state of the dialog', async ({ page }) => {
     await page.goto('/gallery.html');
     await expect(section(page).locator('.g-files')).toHaveCount(9);
-    await expect(section(page).getByRole('menuitem', { name: 'Print container…' })).toHaveCount(1);
-    await expect(section(page).getByRole('menuitem', { name: /^(Print|Export|Import)…$/ })).toHaveCount(3);
+    await expect(section(page).getByRole('menuitem', { name: 'Save container as PDF…' })).toHaveCount(1);
+    await expect(section(page).getByRole('menuitem', { name: /^(Save as PDF|Export|Import)…$/ })).toHaveCount(3);
   });
 
   for (const theme of THEMES) {

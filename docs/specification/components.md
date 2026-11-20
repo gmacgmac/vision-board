@@ -2187,15 +2187,16 @@ Every app card is a window while the appCards flag is on (D-099 5; T_04 made it 
    webview, `scrollbar-width: thin` and `scrollbar-color` where those parts don't exist (Firefox). The rule names the
    root and its class, so a host's `*` rule that hides every bar (nclite's overlay-scroll.css) leaves the board's;
    it reaches no scroller of the host's. A gallery sample that draws a box is a board root for this (`g-bubble-stage`).
-5. **Print in light or dark** (point 615; `FilesForm.svelte`, `print-view.ts`, `print.css`, `shell.css`). Print's
-   dialog asks light or dark, the screen's theme first (`FilesDialog.svelte` `shownTheme`: the root's
-   `color-scheme`, else the system's). The choice goes to the host as `print({ look })` (`board-files.ts`, nclite's
-   `PrintAsk`), with the fitted page as `orientation`: the host owns the paper and the colours (nclite through its own
-   scheme, the standalone page through `shell.css` at its root). The board sets nothing on `<html>` and names no page.
-   The screen keeps its own theme.
+5. **Save as PDF in light or dark** (point 615; `FilesForm.svelte`, `print-view.ts`, `print.css`, `shell.css`). The
+   Save as PDF dialog asks light or dark ("Save in"), the screen's theme first (`FilesDialog.svelte` `shownTheme`: the
+   root's `color-scheme`, else the system's). The choice goes to the host as `savePdf({ look })` (`board-files.ts`,
+   nclite's `PdfAsk`, its ADR-0381), with the saved root's own size as `size`, one page exactly that size, and the root
+   on the board's canvas (`print.css`), so the page is one colour: the host owns the page and the colours (nclite
+   through its own scheme, the standalone page through `shell.css` at its root). The board sets nothing on `<html>`
+   and names no page. The screen keeps its own theme.
 6. **Kept true by**: `packages/ui/tests/node-core.test.ts` and `conversation-box.test.ts` (the labels, the divider);
    `tests/pages/conversation-labels.spec.ts` (the full-width thread and its 7px bar, a host's hiding rule, one label
    line with the name cut and its tip, an imported conversation's authors and divider; scrollbars shown, not the
-   headless shell's hidden ones); `tests/pages/board-files.spec.ts` "Print… offers light or dark" (both themes); the
+   headless shell's hidden ones); `tests/pages/board-files.spec.ts` "Save as PDF… offers light or dark" (both themes); the
    gallery's conversation box entry ("Imported").
 

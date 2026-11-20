@@ -1,6 +1,6 @@
 # Plugin patterns: what Vision Board built, for nclite's plugin specification
 
-updated: 2026-11-20 (§ 1: built on nclite's `print(ask)`, the board names no page and sets no print theme, folders-labels-print T_04); 2026-11-19 (§ 3: the host's scrollbar, point 632); 2026-11-19 (first version: printing, files, the scrollbar, dates, small cross-cutting rules)
+updated: 2026-11-20 (§ 1: Save as PDF through nclite's `savePdf(ask)`, one page of the root's own size); 2026-11-20 (§ 1: built on nclite's `print(ask)`, the board names no page and sets no print theme, folders-labels-print T_04); 2026-11-19 (§ 3: the host's scrollbar, point 632); 2026-11-19 (first version: printing, files, the scrollbar, dates, small cross-cutting rules)
 
 A note for nclite. nclite will own shared patterns and give them to every plugin through hooks and CSS variables, so a
 hard problem is solved once and no plugin keeps an old copy. This is what Vision Board built and what it suggests the
@@ -13,17 +13,19 @@ the same headings; nclite merges both and picks one answer where they differ.
 
 1. **The need**: print a board, or one part of it, to paper or PDF, looking like the screen.
 2. **What we built**: a print stylesheet over the live page, no PDF library. `apps/board/src/styles/print.css` hides
-   the board's chrome, fits the chosen part to one page (`apps/board/src/board/canvas/print-view.ts` `printFit`), and
-   keeps colours (`print-color-adjust: exact`), all inside the board's own root. The person chooses light or dark for
-   the print, default the screen's theme. Then the host's `print(ask)`. Decisions D-107, D-108.
-3. **What the host provides**: nclite's `print(ask?: PrintAsk)` (`shared/plugin-host.ts`; the board's copy of the
-   shapes in `apps/board/src/board/host.ts`), built as § 2 of `plugin-patterns-merged.md` proposed. The host owns the
-   paper (size, margins), hiding everything but the board's root, and the look's colours (its `--host-color-scheme`
-   on the printed root). A plugin's sheet may not hold `@page` (nclite's sheet check refuses it). The standalone host
-   does the same for its own page (`apps/board/src/shell/page-files.ts` `print`, `apps/board/src/styles/shell.css`).
-4. **How a plugin uses it**: sets its print scope on its own root, then calls `print({ title, look, orientation })`
-   with no `content` (its root as it stands); a rejection's words go through `notify`.
-5. **Fallback**: no `print` hook, no Print item in the plugin's menus.
+   the board's chrome, sizes the root to the chosen part at its own size (`apps/board/src/board/canvas/print-view.ts`
+   `printFit`, padded, never scaled), gives the root the board's canvas, and keeps colours (`print-color-adjust:
+   exact`), all inside the board's own root. The person chooses light or dark, default the screen's theme. Then the
+   host's `savePdf(ask)`. Decisions D-107, D-108; nclite ADR-0381.
+3. **What the host provides**: nclite's `savePdf(ask?: PdfAsk)` (`shared/plugin-host.ts`, its `a7c2a706`; the board's
+   copy of the shapes in `apps/board/src/board/host.ts`), which replaced § 2 of `plugin-patterns-merged.md`'s `print`
+   (kept as a deprecated alias the board never calls). The host owns the page (one page of exactly `size`), hiding
+   everything but the board's root, and the look's colours (its `--host-color-scheme` on the saved root), and reads the
+   page colour from the root. A plugin's sheet may not hold `@page` (nclite's sheet check refuses it). The standalone
+   host does the same for its own page (`apps/board/src/shell/page-files.ts` `savePdf`, `apps/board/src/styles/shell.css`).
+4. **How a plugin uses it**: sets its print scope on its own root, then calls `savePdf({ title, look, size })` with no
+   `content` (its root as it stands); a rejection's words go through `notify`.
+5. **Fallback**: no `savePdf` hook, no Save as PDF item in the plugin's menus.
 6. **Versioning**: the hook is optional and feature-detected; its options are optional fields on `ask` (seam 2 still).
 7. **Pitfalls found**: an SVG path styled only by a class prints as a filled shape when anything copies the SVG out of
    its stylesheet: give link paths `fill="none"` as an attribute (`apps/board/src/board/links/wires.ts`). Browsers drop

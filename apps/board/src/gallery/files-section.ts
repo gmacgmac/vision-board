@@ -1,9 +1,10 @@
-// Gallery entry for export, import and print (D-107, export-import-print FE_01): the "⋯" menu with its
-// section of Print…, Export… and Import…; a container's settings menu with Print container… and Export container…; and the
-// one dialog's form (FilesForm) in each of its states: Print the board (borders on) and a container (its border off),
-// Export the board and a container, the conversations ticked, Exporting…, Import with This board on and off, a refusal
-// kept, and an import that left parts of the file out. Titles and parts are made up. The print itself is a print of the page: tests/pages/board-files.spec.ts
-// prints it to PDF.
+// Gallery entry for export, import and Save as PDF (D-107, export-import-print FE_01; nclite ADR-0381): the "⋯" menu with
+// its section of Save as PDF…, Export… and Import…; a container's settings menu with Save container as PDF… and Export
+// container…; and the one dialog's form (FilesForm) in each of its states: Save the board as PDF (borders on) and a
+// container (its border off), Export the board and a container, the conversations ticked, Exporting…, Import with This
+// board on and off, a refusal kept, and an import that left parts of the file out. Titles and parts are made up. The PDF
+// itself is a print of the page: tests/pages/board-files.spec.ts prints it to PDF. The section keeps its id
+// (`exportImportPrint`), which other specs name.
 import { mount } from 'svelte';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
@@ -36,7 +37,7 @@ function menu(): HTMLElement {
   return host;
 }
 
-/** A container with its settings menu open: Print container… and Export container… after the place rows. */
+/** A container with its settings menu open: Save container as PDF… and Export container… after the place rows. */
 function frame(fx: Fixture): HTMLElement {
   const { view, state } = fx;
   const region = view.regions.find((r) => r.id !== 'later')!;
@@ -53,17 +54,17 @@ export function filesSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
   box.dataset.feature = 'exportImportPrint';
   box.setAttribute('aria-labelledby', 'feature-exportImportPrint');
-  const heading = el('h2', 'g-title', 'Export, import and print');
+  const heading = el('h2', 'g-title', 'Export, import and Save as PDF');
   heading.id = 'feature-exportImportPrint';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'export_board · write_board import · BoardHost saveFile, openFile, print'), ' · D-107');
+  meta.append(el('code', undefined, 'export_board · write_board import · BoardHost saveFile, openFile, savePdf'), ' · D-107');
   box.append(heading,
-    el('p', 'g-desc', 'The board, or one container, leaves as a .vboard.json file and comes back as fresh cards; or prints, fitted to one page, through the browser\'s print (which also saves a PDF). Each item shows only when the host gives its hook. Where the person opens it sets the scope, so the one dialog asks only what is left.'),
+    el('p', 'g-desc', 'The board, or one container, leaves as a .vboard.json file and comes back as fresh cards; or saves as a PDF, one page the size of what is saved, through the host\'s Save as PDF. Each item shows only when the host gives its hook. Where the person opens it sets the scope, so the one dialog asks only what is left.'),
     meta,
-    group('The "⋯" menu', 'A section of its own after the board\'s rows: Print…, Export… and Import…, each for the whole board.', menu()),
-    group('A container\'s settings', 'Print container… and Export container…, after the place rows; never disabled, since neither changes the board.', frame(fx)),
-    group('Print the board', 'Only the borders to choose, on. Print closes the dialog, then the browser\'s print opens.', form({ kind: 'print' })),
-    group('Print a container', 'Its border off by default: the cards alone, under the container\'s title.', form({ kind: 'print', region: 'options', title: 'Pricing options' })),
+    group('The "⋯" menu', 'A section of its own after the board\'s rows: Save as PDF…, Export… and Import…, each for the whole board.', menu()),
+    group('A container\'s settings', 'Save container as PDF… and Export container…, after the place rows; never disabled, since neither changes the board.', frame(fx)),
+    group('Save the board as PDF', 'The borders, on, and light or dark, the screen\'s first. Save as PDF closes the dialog, then the host saves.', form({ kind: 'print' })),
+    group('Save a container as PDF', 'Its border off by default: the cards alone, under the container\'s title.', form({ kind: 'print', region: 'options', title: 'Pricing options' })),
     group('Export the board', 'Only the conversations to choose, off.', form({ kind: 'export' })),
     group('Export a container, with the conversations', 'Named in the words; the file is named after the board and the container.', form(CONTAINER, { notes: true })),
     group('Exporting', 'The button says so, and Cancel waits.', form(CONTAINER, { busy: true })),

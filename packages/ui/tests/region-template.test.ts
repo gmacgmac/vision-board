@@ -47,9 +47,9 @@ test('the settings menu holds Reset places and Put container back, each disabled
   });
 });
 
-test('with `files` the settings menu adds Print container… and Export container… (each when given), opening a dialog, never disabled; a fixed frame has neither (D-107)', () => {
+test('with `files` the settings menu adds Save container as PDF… and Export container… (each when given), opening a dialog, never disabled; a fixed frame has neither (D-107)', () => {
   const both = regionTemplate(region, { files: { print: true, export: true }, remove: true });
-  assert.match(both, /data-put-back="review"[^]*<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" aria-haspopup="dialog" data-print-region="review">Print container…<\/button><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" aria-haspopup="dialog" data-export-region="review">Export container…<\/button><button[^>]*data-remove-region/);
+  assert.match(both, /data-put-back="review"[^]*<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" aria-haspopup="dialog" data-print-region="review">Save container as PDF…<\/button><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" aria-haspopup="dialog" data-export-region="review">Export container…<\/button><button[^>]*data-remove-region/);
   assert.doesNotMatch(regionTemplate(region, { files: { print: true } }), /data-export-region/);
   assert.doesNotMatch(regionTemplate(region), /data-(print|export)-region/);
   assert.doesNotMatch(regionTemplate(region, { fixed: true, files: { print: true, export: true } }), /data-(print|export)-region/);

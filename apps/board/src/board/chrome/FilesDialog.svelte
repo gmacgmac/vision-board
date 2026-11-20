@@ -1,11 +1,11 @@
-<!-- The files dialog (D-107, export-import-print PLAN decision 12): Print, Export or Import, opened from the
+<!-- The files dialog (D-107, export-import-print PLAN decision 12): Save as PDF, Export or Import, opened from the
      "⋯" menu (the whole board) or a container's settings (that container), while the board's status holds `files`. Its
      contents are FilesForm.svelte, which asks only what is left open; this holds it in the shared modal dialog (`#ui`
      `syncModal`, `backdropClick`, `whenShut`) and does the work through the board's files flow (board-files.ts). It always
-     opens fresh: the border checked for the board and not for a container, the print in the theme the screen shows, the
+     opens fresh: the border checked for the board and not for a container, the PDF in the theme the screen shows, the
      conversations off, Import into a new board.
-     Focus starts on the one button, so Enter does what was asked. Print closes the dialog first, so the print shows the
-     board alone, then the host prints; a problem is the host's notice. Export and Import keep it open while they work (the
+     Focus starts on the one button, so Enter does what was asked. Save as PDF closes the dialog first, so the PDF shows the
+     board alone, then the host saves it; a problem is the host's notice. Export and Import keep it open while they work (the
      button says so; Esc, Cancel and the backdrop wait), close once done, and keep a refusal in it with the choices kept. An
      import that left parts of the file out shows them, and Close. Native <dialog>: focus goes back to what opened it. -->
 <script lang="ts">

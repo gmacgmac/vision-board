@@ -88,7 +88,7 @@
     onskin?: ((skin: Skin) => void) | undefined;
     /** Which way the board's flows run, a menu in the header (D-100 5; FlowMenu.svelte); left out (the gallery's samples), none. */
     ondirection?: ((direction: ActDirection) => void) | undefined;
-    /** Print…, Export… and Import… in the "⋯" menu : open the files dialog for the whole board; left out, none. */
+    /** Save as PDF…, Export… and Import… in the "⋯" menu : open the files dialog for the whole board; left out, none. */
     onfiles?: ((kind: 'print' | 'export' | 'import') => void) | undefined;
     placement?: 'board' | 'gallery';
     /** The form to draw (the gallery's); left out, the bar's own width says. */
