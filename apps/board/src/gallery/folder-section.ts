@@ -60,7 +60,7 @@ export function folderSection(): HTMLElement {
   box.append(heading,
     el('p', 'g-desc', 'Open folder… in the "⋯" menu: the folders under the home folder, cloud storage and recent first, a folder with a Vision Board marked. Choosing one lists it and says whether it has a Vision Board, with Open or Create; the folder open now is never offered again.'),
     meta,
-    group('Home', 'The first listing: the Cloud storage places (the real folders in ~/Library/CloudStorage, by their real names), recent, then the folders in ~; no board is made in ~ itself.', sample(HOME_LIST)),
+    group('Home', 'The first listing: the Cloud storage places (the real folders in ~/Library/CloudStorage, by their real names), recent, then the folders in ~. The home folder itself may be a project folder too (D-111): here it has no Vision Board, so Create.', sample(HOME_LIST)),
     group('A folder and what is in it', 'Recent first (the folder open now left out), then the folders in ~/projects; choosing one lists it.', sample(PROJECTS)),
     group('Found', 'The chosen folder has a Vision Board: Open, focused.', sample(EXAMPLE)),
     group('Not found', 'No Vision Board here: Create makes .visionboard and an empty ledger, then the board opens on it.', sample(NEW_APP)),

@@ -3,15 +3,16 @@
 // per-person setting, so it lives in the home folder, not in a repo. It is checked on read and a bad
 // file is ignored (no recent folders), never fatal; a write replaces it atomically, readable by this
 // user only. Also the folder the server starts in: VB_PROJECT wins, then the newest recent folder if
-// it is still a folder under home, or outside it one the server vouches for (D-110: anywhere but hidden, never home or
-// above it; it is in the server's own list), then the fallback (this repo). With ledger folders (D-084) it also keeps,
+// it is still a folder under home, or outside it one the server vouches for (D-110: it is in the server's own list) that
+// may be a project (D-111, folders.ts `placeProblem`), then the fallback (this repo). With ledger folders (D-084) it also keeps,
 // per recent folder, the ledger last open there (`ledgers`, by path): a file without it still reads, and a
 // bad `ledgers` is dropped on its own, never the folders with it.
 import fs from 'node:fs';
 import path from 'node:path';
 import { writeFileAtomic } from './atomic-file.ts';
 import { homeFiles, ledgerNameProblem } from '#format';
-import { isUnder, resolvePicked } from './folders.ts';
+import type { Places } from './folders.ts';
+import { isUnder, placesOf, resolvePicked } from './folders.ts';
 
 export const RECENT_MAX = 10;
 /** An absolute path with no control character. */
@@ -64,8 +65,11 @@ export function addRecent(home: string, dir: string, ledger?: string): void {
 }
 
 /** The folder the server opens at start: `project` (VB_PROJECT) when set; else the newest recent
- * folder, if it is still a folder under `home`, or outside it, not hidden and its own real path (D-110); else `fallback`. */
-export function startFolder({ project, home, fallback }: { project?: string | undefined; home: string; fallback: string }): string {
+ * folder, if it is still a folder under `home`, or outside it, one that may be a project (D-111) and its own real path
+ * (D-110); else `fallback`. `roots`: the places besides home (folders.ts `placesOf`; tests pass temp folders). */
+export function startFolder({ project, home, fallback, roots }: {
+  project?: string | undefined; home: string; fallback: string; roots?: Partial<Omit<Places, 'home'>>;
+}): string {
   if (project) return path.resolve(project);
   const last = readRecent(home)[0];
   if (!last) return fallback;
@@ -73,7 +77,7 @@ export function startFolder({ project, home, fallback }: { project?: string | un
     const real = fs.realpathSync(last);
     const realHome = fs.realpathSync(home);
     if (isUnder(realHome, real) && fs.statSync(real).isDirectory()) return real;
-    if (!isUnder(realHome, real) && resolvePicked(realHome, last) === last) return real;
+    if (!isUnder(realHome, real) && resolvePicked(placesOf(realHome, roots), last) === last) return real;
   } catch { /* gone: the fallback */ }
   return fallback;
 }

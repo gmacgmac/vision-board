@@ -1,9 +1,11 @@
 // The system's folder chooser and the trust rule (D-110, api.md 208-211): `choose_folder` opens the chooser (a stand-in
-// runner here: no test opens the real one) and answers the pick as list_folders heads one; a pick may be anywhere but
-// hidden, never home or a folder holding it (`invalid`: `forbidden` is for a caller who may not call it). `open_project` opens a folder outside home only when the server vouches
-// for that very path: its chooser returned it this run, or its own recent list holds it. The same path sent without
-// the chooser is refused as before. One chooser at a time; the caller going away closes it. The home folder and the
-// "drive" are temp folders here: no test reads or writes the real ones.
+// runner here: no test opens the real one) and answers the pick as list_folders heads one; a pick may be home or in
+// it, a drive or share, or /Users/Shared, never hidden, a folder holding home, another person's home or a system folder
+// (D-111; `invalid`: `forbidden` is for a caller who may not call it). `open_project` opens a folder outside home only
+// when the server vouches for that very path: its chooser returned it this run, or its own recent list holds it. The
+// same path sent without the chooser is refused as before. One chooser at a time; the caller going away closes it. The
+// places are temp folders standing in for them (`places`: `<root>/Users/example` is home, `<root>/Volumes` the drives,
+// `<root>/Users/Shared`): no test reads or writes the real ones.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -18,10 +20,15 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { OLD_LAYOUT } from './test-board.ts';
 import { makeTempDir } from '#format/testing';
-import { homeFiles } from '#format';
+import { homeFiles, ledgerFolder } from '#format';
 
-const home = fs.realpathSync(makeTempDir('vb-chooser-home-'));
-const drive = fs.realpathSync(makeTempDir('vb-chooser-drive-'));
+const root = fs.realpathSync(makeTempDir('vb-chooser-'));
+const users = path.join(root, 'Users');
+const home = path.join(users, 'example');
+const shared = path.join(users, 'Shared');
+const volumes = path.join(root, 'Volumes');
+const drive = path.join(volumes, 'Example-Drive');
+const places = { volumes, shared, users };
 const picked = path.join(drive, 'projects', 'example');
 const typed = path.join(drive, 'projects', 'never-picked');
 const hidden = path.join(drive, '.hidden', 'project');
@@ -42,17 +49,18 @@ function withBoard(dir: string, board: string): void {
 }
 
 before(async () => {
+  fs.mkdirSync(home, { recursive: true });
   withBoard(picked, 'drive-plans');
   withBoard(typed, 'other-plans');
   withBoard(hidden, 'hidden-plans');
   fs.mkdirSync(fresh, { recursive: true });
   fs.mkdirSync(deps, { recursive: true });
   fs.symlinkSync(picked, link);
-  h = await startBoard({ home, flags: OLD_LAYOUT, chooser: run });
+  h = await startBoard({ home, flags: OLD_LAYOUT, chooser: run, places });
 });
 after(async () => {
   await h.close();
-  for (const d of [home, drive]) fs.rmSync(d, { recursive: true, force: true });
+  fs.rmSync(root, { recursive: true, force: true });
 });
 
 test('list_folders says the chooser is offered; a server without one says nothing and refuses choose_folder', async () => {
@@ -99,7 +107,7 @@ test('an opened folder outside home joins Recent, by its absolute path, and stay
   const mine = path.join(home, 'projects', 'mine');
   withBoard(mine, 'my-plans');
   await h.ok('open_project', { body: { path: mine } });
-  const again = await startBoard({ home, flags: OLD_LAYOUT });
+  const again = await startBoard({ home, flags: OLD_LAYOUT, places });
   try {
     await again.fails('open_project', { body: { path: typed } }, 403, 'forbidden');
     assert.equal((await again.ok('open_project', { body: { path: picked } })).path, picked);
@@ -122,13 +130,34 @@ test('a pick with a line break in its path is refused with words: no answer or r
   assert.match(p.detail, /control character/);
 });
 
-test('home, or a folder holding it, is refused as a pick', async () => {
-  for (const dir of [home, path.dirname(home)]) {
+test('D-111: a folder holding home, another person\'s home, a system folder or the drives folder itself is refused, saying why', async () => {
+  const other = path.join(users, 'someone', 'projects');
+  const system = path.join(root, 'Library', 'Example');
+  for (const d of [other, system]) withBoard(d, 'not-here');
+  const refused: [string, RegExp][] = [
+    [root, /holds your home folder/], [users, /holds your home folder/], [path.join(users, 'someone'), /another person's home/],
+    [other, /another person's home/], [system, /system folder/], [volumes, /system folder/],
+  ];
+  for (const [dir, why] of refused) {
     pick(dir);
     const p = await h.fails('choose_folder', {}, 422, 'invalid');
-    assert.match(p.detail, /home folder/);
+    assert.match(p.detail, why, dir);
+    assert.match(p.detail, /\/Volumes.*\/Users\/Shared/, 'and where a project may be');
     await h.fails('open_project', { body: { path: dir } }, 403, 'forbidden');
   }
+  assert.equal(fs.existsSync(ledgerFolder(root)), false, 'nothing was made');
+});
+
+test('D-111: the home folder itself, and a folder in /Users/Shared, may be picked and opened', async () => {
+  const team = path.join(shared, 'team-plans');
+  withBoard(team, 'team');
+  pick(home);
+  assert.deepEqual(await h.ok('choose_folder'), { path: home, name: '~', found: false });
+  assert.equal((await h.ok('open_project', { body: { path: home, create: true } })).name, '~');
+  await h.fails('open_project', { body: { path: team } }, 403, 'forbidden'); // outside home: picked first
+  pick(team);
+  assert.equal((await h.ok('choose_folder')).found, true);
+  assert.equal((await h.ok('open_project', { body: { path: team } })).path, team);
 });
 
 test('a pick without a board is created there; one under home in node_modules opens (only hidden is refused)', async () => {

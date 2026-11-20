@@ -26,7 +26,13 @@ async function stop(child: ChildProcess): Promise<void> {
   await closed;
 }
 
-export interface Board { base: string; close(): Promise<void> }
+export interface Board { base: string; /** The folder it has open, where a client starts the MCP server (D-111). */ project: string; close(): Promise<void> }
+
+/** The folder the board at `base` has open, read as the page reads it (its person cookie, get_project). */
+async function openFolder(base: string): Promise<string> {
+  const cookie = /^(vb_person=[^;]+)/.exec((await fetch(`${base}/`)).headers.get('set-cookie') ?? '')?.[1] ?? '';
+  return ((await (await fetch(`${base}/api/project`, { headers: { Cookie: cookie } })).json()) as { path: string }).path;
+}
 
 /** The API harness over the roadmap fixture plus the seeded `pricing` board. */
 export async function startBoard(): Promise<Board> {
@@ -37,7 +43,7 @@ export async function startBoard(): Promise<Board> {
     child.stdout!.once('data', (chunk: Buffer) => resolve(String(chunk).trim()));
   });
   child.removeAllListeners('exit');
-  return { base, close: () => stop(child) };
+  return { base, project: await openFolder(base), close: () => stop(child) };
 }
 
 export interface Session {
@@ -52,14 +58,15 @@ export interface Session {
   close(): Promise<void>;
 }
 
-/** Spawn the MCP server with exactly these extra environment variables, in the temp folder (in no
- * project, so it names no folder: the repo's own `.visionboard/` is not the fixture server's). */
-export function startMcp(env: Record<string, string>): Session {
+/** Spawn the MCP server with exactly these extra environment variables, in `cwd`: the folder its client starts it
+ * in, which it names on every call (D-111). A board's tests pass the board's open folder (`Board.project`), as a
+ * client started in the project would; default the temp folder, which no board has open. */
+export function startMcp(env: Record<string, string>, cwd: string = tmpdir()): Session {
   const childEnv: Record<string, string | undefined> = { ...process.env };
   delete childEnv.VB_AGENT_SECRET;
   delete childEnv.VB_SERVER;
   delete childEnv.VB_PROJECT;
-  const child = spawn(process.execPath, [BIN], { stdio: ['pipe', 'pipe', 'pipe'], cwd: tmpdir(), env: { ...childEnv, ...env } });
+  const child = spawn(process.execPath, [BIN], { stdio: ['pipe', 'pipe', 'pipe'], cwd, env: { ...childEnv, ...env } });
   child.stderr!.resume(); // logs; read so the pipe never fills
   const lines: any[] = [];
   const waiting = new Map<number | string, (msg: any) => void>();

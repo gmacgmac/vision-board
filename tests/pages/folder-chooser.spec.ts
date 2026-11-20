@@ -4,9 +4,10 @@
 // (a stand-in runner here, folder-server.ts: no test opens the real one), Tab reaches it, and while it is open the
 // status says so and Cancel closes both. A pick outside home shows on the Chosen folder line with Open focused; Open
 // reloads onto it and it joins Recent, by its whole path, from where it is chosen again. A hidden pick is refused in the
-// problem line and the dialog stays. Axe and APCA (the Chosen folder line Lc 60) light and dark; -systemFolderChooser
-// shows no button. The gallery's own section (last in the gallery) in each state, axe and its screenshot. The home folder and the
-// "drive" are temp folders.
+// problem line and the dialog stays; so is a system folder (D-111). Axe and APCA (the Chosen folder line Lc 60) light and
+// dark; -systemFolderChooser shows no button. The gallery's own section (last in the gallery) in each state, axe and its
+// screenshot. The home folder and the "drive" are temp folders; the drive is in a temp folder standing in for /Volumes
+// (folder-server.ts `places`).
 import type { Page } from '@playwright/test';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -22,6 +23,7 @@ test.describe.configure({ mode: 'serial' });
 
 const LONG = 'customer-research-interviews-2026-autumn-round-with-the-whole-product-team-notes-and-every-recording';
 let srv: FolderServer;
+let volumes: string;
 let drive: string;
 let atlas: string;
 let hidden: string;
@@ -30,13 +32,15 @@ let next: () => Promise<string | undefined> = async () => undefined;
 const signals: AbortSignal[] = [];
 
 test.beforeAll(async () => {
-  drive = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chooser-drive-')));
+  volumes = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chooser-volumes-')));
+  drive = path.join(volumes, 'Example-Drive');
   atlas = path.join(drive, 'projects', 'atlas');
   hidden = path.join(drive, '.archive', 'atlas');
   seed(atlas, 'atlas-board', 'Atlas card');
   fs.mkdirSync(hidden, { recursive: true });
   // As the real one: aborting the call closes it, answered as cancelled.
   srv = await startFolderServer({
+    places: { volumes },
     chooser: ({ signal }) => new Promise((resolve, reject) => {
       signals.push(signal);
       signal.addEventListener('abort', () => resolve(undefined), { once: true });
@@ -47,7 +51,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => {
   await srv.close();
-  fs.rmSync(drive, { recursive: true, force: true });
+  fs.rmSync(volumes, { recursive: true, force: true });
 });
 test.beforeEach(async () => { await srv.open(srv.start); });
 
@@ -135,6 +139,15 @@ test.describe('a refused pick', () => {
   await expect(chosen(page)).toHaveCount(0);
   await expect(page).toHaveTitle('start · Vision Board');
   });
+  test('a system folder is refused in the problem line, saying where a project may be (D-111)', async ({ page }) => {
+  await open(page);
+  await openPicker(page);
+  next = async () => '/usr';
+  await finder(page).click();
+  await expect(problem(page)).toHaveText("/usr is a system folder, so it can't be a project folder. Choose your home folder or a folder in it, a drive or share in /Volumes, or a folder in /Users/Shared.");
+  await expect(chosen(page)).toHaveCount(0);
+  await expect(page).toHaveTitle('start · Vision Board');
+  });
 });
 
 test.describe('Cancel while waiting', () => {
@@ -201,8 +214,8 @@ test('gallery: long names, then the chooser\'s states; with -systemFolderChooser
   await expect(section(page).locator('.vb-folder-status')).toHaveText(['Vision Board found (12 boards)']);
   await page.goto('/gallery.html');
   await expect(section(page).locator('.vb-folder-status')).toHaveText([
-    'Vision Board found (12 boards)', 'Choose a project folder under ~', 'Waiting for Finder… Choose a folder there, or Cancel here.',
-    'Vision Board found (2 boards)', 'Choose a project folder under ~',
+    'Vision Board found (12 boards)', 'No Vision Board here', 'Waiting for Finder… Choose a folder there, or Cancel here.',
+    'Vision Board found (2 boards)', 'No Vision Board here',
   ]);
   await expect(section(page).locator('.vb-folder-finder')).toHaveCount(4);
   await expect(section(page).locator('.vb-folder-chosen-path')).toHaveText(['/Volumes/Example-Drive/projects/atlas']);
