@@ -40,7 +40,7 @@ test('the notes mark, C and right-click\'s Comment open one box, its field focus
   await expect(field(page)).toBeFocused();
 });
 
-test('Add note (Enter) writes the note for Send and keeps the box open; Enter never asks; Shift Enter is a new line', async ({ page, request }) => {
+test('Add note (Enter) writes the note for Send and closes the box (point 659); Enter never asks; Shift Enter is a new line', async ({ page, request }) => {
   const d = await drawEdges(request);
   await open(page, d, FLAGS);
   const [q] = d.n as [number];
@@ -50,15 +50,19 @@ test('Add note (Enter) writes the note for Send and keeps the box open; Enter ne
   await page.keyboard.press('Shift+Enter');
   await expect(field(page)).toHaveValue('Book it for Thursday\n');
   await page.keyboard.press('Enter');
+  await expect(box(page)).toBeHidden();
+  expect(await lines(page, before, 'comment')).toHaveLength(1);
+  expect(await lines(page, before, 'ask')).toEqual([]);
+  // Opened again, the note waits for Send in the box.
+  await mark(page, q, 'notes').click();
   await expect(box(page).locator('.vb-nb-queued')).toContainText('Book it for Thursday');
   await expect(box(page).locator('.vb-nb-queued')).toContainText('User · Not sent');
   await expect(field(page)).toHaveValue('');
-  await expect(field(page)).toBeFocused();
-  expect(await lines(page, before, 'comment')).toHaveLength(1);
-  expect(await lines(page, before, 'ask')).toEqual([]);
   // A second note joins the one not yet sent (one per node, api.md 59).
   await field(page).fill('and the crew');
   await page.keyboard.press('Enter');
+  await expect(box(page)).toBeHidden();
+  await mark(page, q, 'notes').click();
   await expect(box(page).locator('.vb-nb-queued')).toContainText('and the crew');
   await idle(page);
   expect(await lines(page, before, 'note-edit')).toHaveLength(1);
@@ -135,10 +139,14 @@ for (const theme of ['light', 'dark'] as Theme[]) {
     // A press of Add note writes the note and turns the mode back; Enter adds notes again, asking nothing.
     await field(page).fill('Rain all day');
     await add.click();
+    await expect(box(page)).toBeHidden(); // Add note closes the box (point 659)
+    await mark(page, f, 'notes').click();
     await expect(add).toHaveAttribute('aria-pressed', 'true');
     await expect(box(page).locator('.vb-nb-queued')).toContainText('Rain all day');
     await field(page).fill('and wind');
     await page.keyboard.press('Enter');
+    await expect(box(page)).toBeHidden();
+    await mark(page, f, 'notes').click();
     await expect(box(page).locator('.vb-nb-queued')).toContainText('and wind');
     expect(await lines(page, before, 'ask')).toHaveLength(2);
     await expectNoAxeViolations(page);

@@ -78,6 +78,22 @@ test('every mark is reachable by Tab in the order drawn, named by its state, wit
   expect(hit, 'the number takes a press 2px outside it').toBe('number');
 });
 
+test('the disc is 24px on the marks\' line with a tick and cross while waiting; the body is 14px under the 15px title (D-112)', async ({ page }) => {
+  await open(page);
+  const card = section(page).locator('vb-node', { hasText: 'Go-ahead to install' }).first();
+  const disc = card.locator('[data-mark="answer"]');
+  const [d, c, n] = [(await disc.boundingBox())!, (await card.boundingBox())!, (await card.locator('[data-mark="notes"]').boundingBox())!];
+  expect([Math.round(d.width), Math.round(d.height)]).toEqual([24, 24]);
+  // 34px in from the right, inside the node's 1px border.
+  expect(Math.abs(c.x + c.width - 1 - (d.x + d.width / 2) - 34)).toBeLessThanOrEqual(0.5);
+  expect(Math.abs(d.x + d.width / 2 - (n.x + n.width / 2))).toBeLessThanOrEqual(0.5);
+  await expect(disc.locator('.vb-mark-wait')).toBeVisible();
+  const size = (sel: string) => card.locator(sel).first().evaluate((el) => getComputedStyle(el).fontSize);
+  expect(await size('.vb-node-title')).toBe('15px');
+  expect(await size('.vb-node-body')).toBe('14px');
+  expect(await size('.vb-node-body > *')).toBe('14px');
+});
+
 for (const theme of THEMES) {
   test(`the ring shows after Tab, never after a press, in the one focus colour (${theme})`, async ({ page }) => {
     await setTheme(page, theme);

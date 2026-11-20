@@ -8,7 +8,7 @@
 // container laid out once more. A fresh draw (opening a board, a rebuild) throws everything away
 // and draws from scratch. Images in cards (card-images.ts) load once their card is near, are asked
 // after again when a card is selected, and a card whose image changed its height, or whose app panel
-// told a new one (appFit), is measured and laid out again alone (`resized`).
+// told a new one (appFit), is measured and laid out again alone (`resized`); every card is, once a font face loads.
 import type { Direction, NodeSize, ViewNode } from '#format';
 import type { Align, BoardLayout, Size } from '#layout';
 import { EDGE_ROW_GAP } from '#layout';
@@ -148,6 +148,12 @@ export function createDrawing(d: DrawDeps): Drawing {
     near: (el) => { const b = layout?.nodes.get(el.dataset.id!); return !!b && !isFar(d.vp.k) && !outside(b, viewBounds(d.vp, els.stage)); },
   });
 
+  // A face that finishes loading after the cards were measured (the web font swapped in for its fallback, a skin's
+  // faces) wraps their text anew: every card is measured again, and laid out again if one changed (D-112's 14px body
+  // wraps differently in the fallback).
+  const fontsLoaded = () => { if (layout) resized([...cards.els.keys()]); };
+  document.fonts?.addEventListener('loadingdone', fontsLoaded);
+
   /** A timeline dot's look (D-105): its node's kind and tone, from the view drawn, indexed once per view. */
   let looks: { view: BoardData['view']; byId: Map<string, ViewNode> } | undefined;
   function lookOf(id: string): TimelineLook | undefined {
@@ -252,6 +258,6 @@ export function createDrawing(d: DrawDeps): Drawing {
       if (o.icons) cardOpts.icons = o.icons;
       cards.refresh(which);
     },
-    destroy: () => { clearTimeout(settle); images.destroy(); use?.stop(); },
+    destroy: () => { clearTimeout(settle); images.destroy(); use?.stop(); document.fonts?.removeEventListener('loadingdone', fontsLoaded); },
   };
 }

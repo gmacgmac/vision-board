@@ -106,9 +106,14 @@ vb-node {
     font-size: var(--vb-text-xl); font-weight: var(--vb-weight-bold);
   }
 }
-/* The body is Markdown (markdown.css styles its blocks); its blocks sit on the content's rhythm. */
+/* The body is Markdown (markdown.css styles its blocks); its blocks sit on the content's rhythm, at the card's body
+   size (--vb-card-text, D-112), which its Markdown reads through --vb-md-text. Its `#` and `##` stay on the type scale
+   (18px and 15px, or 15px under a big title; a step over --vb-md-text, counted from the card's body size), so none
+   outgrows the 15px title. */
 vb-node .vb-node-body {
-  display: grid; gap: var(--vb-space-2); min-width: 0; font-size: var(--vb-text-md); line-height: 1.5; color: var(--vb-ink);
+  --vb-md-text: var(--vb-card-text);
+  display: grid; gap: var(--vb-space-2); min-width: 0; font-size: var(--vb-card-text); line-height: 1.5; color: var(--vb-ink);
+  & :is(.vb-md-h1, .vb-md-h2) { font-size: calc(var(--vb-md-text) + var(--vb-md-step) - var(--vb-card-text)); }
 }
 vb-node .vb-node-tags { display: flex; flex-wrap: wrap; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
 vb-node .vb-node-tags li {

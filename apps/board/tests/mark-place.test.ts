@@ -1,23 +1,29 @@
-// Where a node's menu, picker or tip goes on the stage (FE_02, mark-place.ts): the picker to the right
-// of the disc, never on it; the number's menu under the number; the right-click list at the pointer; a tip above its
+// Where a node's menu, picker or tip goes on the stage (FE_02, mark-place.ts): the picker over the disc, its Tick
+// centred on it (D-112); the number's menu under the number; the right-click list at the pointer; a tip above its
 // mark; each flipped to the other side when the stage has no room, and always inside the stage.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOX_ARROW, BOX_GAP, MARK_GAP, placeBeside, placeMark, STAGE_EDGE } from '../src/board/cards/mark-place.ts';
+import { BOX_ARROW, BOX_GAP, MARK_GAP, placeBeside, placeMark, placeOver, STAGE_EDGE } from '../src/board/cards/mark-place.ts';
 
 const stage = { w: 1000, h: 700 };
 const size = { w: 100, h: 40 };
 const disc = { x: 300, y: 200, w: 26, h: 26 };
 
-test('the picker opens to the right of the disc, centred on it, and never covers it', () => {
-  const at = placeMark(disc, size, stage, 'right');
-  assert.deepEqual(at, { x: 300 + 26 + MARK_GAP, y: Math.round(213 - 20) });
-  assert.ok(at.x >= disc.x + disc.w, 'never on the disc');
+test('the picker opens over the disc, the point given (its Tick\'s centre) on the disc\'s centre', () => {
+  const tick = { x: 72, y: 20 }; // Cross on the left: Tick is the right-hand row
+  const at = placeOver(disc, size, tick, stage);
+  assert.deepEqual(at, { x: 313 - 72, y: 213 - 20, fits: true });
 });
 
-test('with no room on the right, the picker opens on the left of the disc', () => {
-  const at = placeMark({ ...disc, x: 950 }, size, stage, 'right');
-  assert.equal(at.x, 950 - MARK_GAP - 100);
+test('with no room on the left it does not fit there, and is kept inside the stage', () => {
+  const near = { ...disc, x: 20 };
+  const left = placeOver(near, size, { x: 72, y: 20 }, stage);
+  assert.equal(left.fits, false);
+  assert.equal(left.x, STAGE_EDGE);
+  // Cross on the right (Tick the left-hand row) at the stage's very edge: still kept inside, Tick a little off the disc.
+  assert.deepEqual(placeOver({ ...disc, x: 0 }, size, { x: 28, y: 20 }, stage), { x: STAGE_EDGE, y: 193, fits: false });
+  const roomy = placeOver({ ...disc, x: 40 }, size, { x: 28, y: 20 }, stage);
+  assert.deepEqual(roomy, { x: 53 - 28, y: 193, fits: true });
 });
 
 test('the number\'s menu hangs under the number, above it when the stage ends', () => {

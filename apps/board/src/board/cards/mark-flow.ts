@@ -2,8 +2,9 @@
 // Each mark is the control for what it shows, and a press never does two things depending on its timing:
 // - the number: a click toggles Bookmark at once; a press held about 400 ms (a long press on touch) opens the
 //   number's menu instead and toggles nothing; the menu key or Shift+F10 on it opens the menu too;
-// - the disc: a click opens Tick and Cross beside it and a second click closes them (so a double click never
-//   answers); while the agent proposes an answer it opens the proposal box instead; nothing opens on hover;
+// - the disc: a click, or the pointer resting on it (disc-rest.ts), opens Tick and Cross over it with Tick on the disc,
+//   so a click without moving ticks (D-112, amending DD-07: two clicks in one place answer); Enter or Space on it opens
+//   them with focus on Tick; while the agent proposes an answer a click opens the proposal box instead;
 // - the change badge, or H on the node: the history box; the notes mark, or C: the conversation;
 // - right-click on a node, a long press on touch, the menu key or Shift+F10: the node's actions, at the pointer;
 //   never on the board's background, which keeps the browser's own menu.

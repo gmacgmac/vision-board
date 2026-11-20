@@ -1420,3 +1420,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: A folder opens when it is the person's home folder or under it, under `/Volumes/` (drives and network shares), or `/Users/Shared`; never `/`, `/Users`, another person's home, a system folder or a hidden folder. Outside home, only a Finder pick or the server's own recent list (D-110). The board's tools work on the board the board has open, nowhere else: an agent's folder is exactly where its client starts it, and the MCP server never walks up to find another board; the board accepts an agent working in its open folder or inside it.
 - **Why**: system folders are no place for a project; the person chooses the folder and the board, and an agent must never land on a different board by searching upward. What an agent reads elsewhere stays its client's permissions.
 - **Task**: cortex-tasks/board/2026-11-20_board-app_folders-labels-print/T_01_folders.md
+
+## D-112 The answer disc says what it does; Tick opens under the pointer; card body text 14px (amends DD-07)
+- **Date**: 2026-11-20 · **Status**: Accepted (maintainer, points 656-661) · **From**: design/mockups/answer-disc/answer-disc-v2.html
+- **Decision**: The answer disc is 24px (was 28px), in the card type's own colour, with a small white tick and cross in it while waiting; in dark mode its fill is that colour 15% toward black, in the disc's own rule, so the white clears Lc 45 on every kind. Hover or a click opens the picker with Tick centred on the disc and Cross beside it, so a click without moving ticks (DD-07 had the picker beside the disc, never on it). A card's body text is 14px through its own type token; the title stays 15px.
+- **Why**: the disc read as a status light, ticking needed a move, and 13px Figtree read small under the 15px Bricolage title.
+- **Task**: cortex-tasks/board/2026-11-20_board-ui_disc-and-body-text.md

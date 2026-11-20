@@ -1,6 +1,6 @@
 // Node pattern, the node's three menus (D-099), as markup for the fixed-size menu (menu-template.ts):
-// the number's menu (Bookmark, Save for later; held on the number), the answer picker (Tick, Cross; opened beside the
-// disc, never on it) and the right-click list (the six actions with their keys: no Tick or Cross on a node that only
+// the number's menu (Bookmark, Save for later; held on the number), the answer picker (Tick, Cross; opened over the
+// disc, Tick on it, D-112) and the right-click list (the six actions with their keys: no Tick or Cross on a node that only
 // tells, no Save for later on an app). A moved node adds "Moved by you · Put back" to the number's menu and the list;
 // a node in Later reads Bring back. The words come from the node's words file, the keys from the registry. The page
 // opens them and acts on `data-menu-act` (FE_02): `ack`, `drop`, `comment`, `bookmark` or `unbookmark`, `later` or
@@ -39,7 +39,7 @@ const moved = (st: NodeState): MenuEntry[] => (st.pinned ? ['separator', PUT_BAC
 export const numberMenu = (n: ViewNode, st: NodeState, prefix = ''): string =>
   menuMarkup({ id: menuId('number', n, prefix), label: nodeWords.numberMenu(n.n), entries: [bookmark(st), ...later(n, st), ...moved(st)] });
 
-/** The answer picker (DD-07): Tick and Cross side by side, beside the disc. */
+/** The answer picker (DD-07, D-112): Tick and Cross side by side, opened over the disc with Tick on it. */
 export const answerPicker = (n: ViewNode, prefix = ''): string =>
   menuMarkup({ id: menuId('answer', n, prefix), label: nodeWords.answerPicker(n.n), entries: [TICK, CROSS], look: 'picker' });
 

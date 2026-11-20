@@ -524,7 +524,8 @@ record is `api.md` 58-61.
    corners are never rounder than the skin's node, and focused as a whole (a key opened it) its own border takes the
    skin's ring colour, no second ring (`tests/pages/command-lens.spec.ts`). The look is
    `packages/ui/src/node/node-box.css` (`.vb-node-box`, `.vb-node-box-head` with its title and ×, `.vb-node-box-body`):
-   compact, about 1.2 times the node's width, the node's body text size, in the mock-ups' proportions
+   compact, about 1.2 times the node's width, its text `--vb-text-md` (13px; the node's body is `--vb-card-text`,
+   14px, since D-112), in the mock-ups' proportions
    (`design/mockups/node-states/`). The history box with the edges is "History of 28" and its ×, the stepper, then one
    row per entry: its version (↩ for "Proposal withdrawn: the node changed", `card-times.ts` `withdrawn`), its words,
    who and when (`node-history.ts` `historyBox`, `historyMarkup`). Proven by `apps/board/tests/mark-place.test.ts`,
@@ -1747,7 +1748,7 @@ icon library it holds. The look is
 4. **The element** (`vb-node.ts`, `node-edges-apply.ts` `applyMarks`, `applyTone`): applies the marks in place; sets the
    tone as `data-vb-tone` (the name or `hue`) and `--vb-tone-h` through CSSOM from `toneView`'s checked value, never a
    style attribute. It binds no popover on the marks: the page opens the history and proposal boxes and the menus
-   (FE_02), so nothing opens on hover. A locked board pauses the disc (aria-disabled) and read-only the number too,
+   (FE_02), and the answer picker on a pointer resting on the disc (D-112). A locked board pauses the disc (aria-disabled) and read-only the number too,
    but a paused mark keeps its look at rest (point 328); the page sets `data-saving`, `data-failed` and `data-locked`
    on a pressed mark for a moment.
 5. **The icon set** (`packages/ui/src/icons/`): `ICONS`, every `ICON_NAMES` name and every mark's icon as path `d`
@@ -1757,16 +1758,23 @@ icon library it holds. The look is
    stroke (`icons.css`); a missing name or a failing path draws nothing, so the tile is the plain tile.
 6. **The menus** (`node-menus.ts` on `packages/ui/src/menu/menu-template.ts` `menuMarkup`, the base's menu look at one
    size, `menu-fixed.css`): the number's (Bookmark or Remove bookmark, Save for later or Bring back, Put back on a moved
-   node), the answer picker (Tick and Cross side by side, `data-menu-look="picker"`) and the right-click list (the six
+   node), the answer picker (Tick and Cross side by side, `data-menu-look="picker"`; drawn Cross then Tick with
+   `data-cross="left"`; a row under the pointer, after Tab or with `data-look="hover"` fills with its answer's colour,
+   `--vb-answer-tick` or `--vb-answer-cross`, its icon `--vb-answer-mark`) and the right-click list (the six
    actions with their keys; no Tick or Cross on a node that only tells, no Save for later on an app). Markup only, drawn
    hidden, rows acting by `data-menu-act`; the page opens them (FE_02, `mark-menus.ts`: the shared menu's keys, `menuKeydown`, and a press outside through `dismissable` with `clickWithin`, so a pan leaves one open).
-7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a 28px hit area (3px of transparent edge; the disc is
-   28px); the disc, the icon
+7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a 28px hit area (3px of transparent edge); the disc
+   is `--vb-answer-size` (24px, D-112), in the kind's colour (in dark 15% toward black, in its own rule, so its white
+   keeps Lc 45 on every kind, `tests/plugin/token-contrast.spec.ts`), with a small white tick and cross (the icon set's
+   `tick-cross`, `.vb-mark-wait`) while waiting, green with a tick or red with a cross once answered; hover rings it in
+   the kind's colour and a press fills the ring; the disc, the icon
    tile and the notes mark on one vertical line, 34px in from the right edge; selection is the node's own border,
    thicker and brighter (an inset ring of `--vb-select-w`, no outer ring); the node's colour (`--vb-node-color`) is
    the kind's, or its tone's line (point 366, FE_04): it colours the grip or kind tab, the top line, the hover and
    selected borders, the tags and the tile, while the kind's word over the title and the disc keep the kind's; the
    ring is `--vb-focus-edge`, the board's one focus colour (blue, `--vb-focus`; point 627, D-109), and shows after Tab only.
+   The body (`node.css` `.vb-node-body`: its paragraphs, lists and the rest of its Markdown, through `--vb-md-text`) is
+   `--vb-card-text`, 14px, under the 15px title, in every skin (D-112).
 8. **Kept true by**: `packages/ui/tests/icon-set.test.ts` (every name drawn, every drawing passes the check, a library
    icon from its paths, missing, failing and too many draw nothing), `node-marks.test.ts` (every answer, badge and notes
    state; the tone; `nodeState.marks`), `node-edges.test.ts` (the order of the marks; the tile;
@@ -1786,10 +1794,16 @@ the board is idle or on the first press).
 2. **The number**: a click toggles Bookmark at once (`bookmark` or `unbookmark`); held 400 ms (`HOLD_MS`; a long press
    on touch) it opens the number's menu instead and bookmarks nothing; the menu key or Shift+F10 on it opens the menu.
    B on a node bookmarks it.
-3. **The disc**: a click opens the answer picker to its right (`placeMark` `right`, flipped left when the stage has no
-   room), a second click closes it, so a double click never answers; Left and Right move along it. Tick and Cross are
-   the item acts (`item-acts.ts`: its 400 ms guard; a lit answer pressed again clears it). A disc whose node has a
-   proposal opens the proposal box. Nothing opens on hover.
+3. **The disc** (D-112, amending DD-07): a click, Enter or Space on it (focus on Tick), or the pointer resting on it for
+   `REST_OPEN_MS` (400 ms, `packages/ui` `tip/rest-open.ts`, the layout button's wait too; `cards/disc-rest.ts`; not
+   on touch, not on a disc too small to press, not while another menu or box is open; focus stays where it is) opens the
+   answer picker over the disc with Tick centred on it (`placeOver`), Cross on its left, or on its right when the
+   stage has no room there, so a click without moving ticks: two clicks in one place answer, a double click included.
+   Left and Right move as drawn. Esc, a click elsewhere or the pointer leaving the picker and the disc (after
+   `CLOSE_GRACE_MS`, read from where the pointer is) closes it; once it closes with the pointer still on the disc, the
+   disc opens nothing more until the pointer leaves it. Tick and Cross are the item acts (`item-acts.ts`: its 400 ms
+   guard; a lit answer pressed again clears it). A disc whose node has a proposal opens the proposal box on a click,
+   and nothing on a rest.
 4. **History and notes**: the badge, or H on a node (the focused one, else the one selected; FIX_01: Hide answered is
    Shift+H, `input/keys.ts`, `key-help.ts` `HIDE_KEY`), opens the history box (its stepper opens with it,
    `update-flow.ts`); the notes mark, or C, the conversation. Esc gives the focus back to the mark that opened a menu or a
@@ -1884,7 +1898,7 @@ function: a container's direction arrives as an input (`LayoutOptions.directions
    `directionTip`, `directionTitle`.
 6. **Room for edge marks** (`packages/layout/src/types.ts` `EDGE_ROW_GAP` = 40): while nodes draw their marks on their
    edges (a skin whose marks are `edges`, `canvas/draw.ts`), the gap under a node is at least 40px, so its bottom marks
-   (11px below) and the next node's number, kind tab and disc (14px above) stay clear; side by side stays `GAP`. A plate
+   (11px below) and the next node's number, kind tab and disc (12px above, D-112) stay clear; side by side stays `GAP`. A plate
    skin keeps the row gap as it is.
 7. **Kept true by**: `packages/layout/tests/flow-branches.test.ts` (the maintainer's example in row, column and flow,
    both directions; a plain chain stays one line; down is across turned; `structureOf` agrees; seeded boards with no

@@ -9,6 +9,7 @@ import { answerPicker, contextMenu, MARK_MOMENT_WORDS, nodeState, numberMenu, SK
 import { mount } from 'svelte';
 import { pageMarkdown } from '../flags.ts';
 import { ToolbarMenu } from '../board/chrome/index.ts';
+import { moveTo, stageBoxOf } from '../board/cards/index.ts';
 import { chromeSample } from './chrome-sample.ts';
 import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
@@ -49,6 +50,29 @@ export function withMenu(fx: Fixture, title: string, menu: (n: ViewNode, st: Nod
   const pair = el('div', 'g-edge-pair');
   pair.append(cardList(`${n.title}, with its menu open`, node), box);
   return pair;
+}
+
+/** A card with the answer picker open over its disc, as the page opens it on a click or a rest (D-112): Tick centred on
+ *  the disc, Cross on its left, Tick filled as under the pointer (data-look, the base menu's drawn states). */
+function withPickerOver(fx: Fixture, title: string): HTMLElement {
+  const n = byTitle(fx, title);
+  const { node } = edgeCard(fx, n);
+  const holder = el('div', 'vb-mark-menu');
+  holder.innerHTML = answerPicker(n, ownIds().idPrefix); // markup from node-menus.ts, which escapes every text run
+  const menu = holder.querySelector<HTMLElement>('[role="menu"]')!;
+  menu.hidden = false;
+  menu.dataset.cross = 'left';
+  menu.querySelector<HTMLElement>('[data-tone="tick"]')!.dataset.look = 'hover';
+  const box = el('div', 'g-edge-over');
+  box.append(cardList(`${n.title}, with the answer picker open over its disc`, node), holder);
+  // Placed once laid out, as the page places it: Tick's centre on the disc's.
+  new ResizeObserver(() => {
+    const [disc, tick] = [node.querySelector('[data-mark="answer"]'), menu.querySelector<HTMLElement>('[data-tone="tick"]')];
+    if (!disc || !tick || !box.isConnected) return;
+    const d = stageBoxOf(disc, box);
+    moveTo(holder, { x: Math.round(d.x + d.w / 2 - tick.offsetLeft - tick.offsetWidth / 2), y: Math.round(d.y + d.h / 2 - tick.offsetTop - tick.offsetHeight / 2) });
+  }).observe(box);
+  return box;
 }
 
 /** A mark with the board's tip under it, as the page shows it after a deliberate hover or on keyboard focus, or a
@@ -92,10 +116,12 @@ export function edgesSection(fx: Fixture): HTMLElement {
       cardList('Selected nodes', ...selected)),
     group('Moments on the disc', 'Set by the page for a moment: a write on its way (one bright arc), a write that failed (the answer from before stays, ringed in red with "!"), a press on a locked board or a read-only ledger (a lock).',
       cardList('Disc moments', moment(fx, 'Go-ahead to install', 'data-saving'), moment(fx, 'Install window agreed', 'data-failed'), moment(fx, 'Keep the backup encoder warm', 'data-locked'))),
-    group('Menus', 'One size at any zoom: the number\'s menu (Bookmark, Save for later; Put back on a moved node), the answer picker beside the disc, and the right-click list with every action and its key (no Tick or Cross on a node that only tells).',
+    group('Menus', 'One size at any zoom: the number\'s menu (Bookmark, Save for later; Put back on a moved node), the answer picker over the disc, and the right-click list with every action and its key (no Tick or Cross on a node that only tells).',
       withMenu(fx, 'Go-ahead to install', numberMenu),
       withMenu(fx, 'Go-ahead to install', (n, _st, p) => answerPicker(n, p)),
       withMenu(fx, 'Order of work', contextMenu)),
+    group('The answer picker over the disc', 'A click on the disc, Enter or Space on it, or the pointer resting on it opens Tick and Cross over it: Tick centred on the disc, so a click without moving ticks, Cross on its left (on its right where the board has no room). The row under the pointer fills with its answer\'s colour. Esc, a click elsewhere or the pointer leaving it closes it.',
+      withPickerOver(fx, 'Go-ahead to install')),
     group('Tips', 'After a deliberate hover of about two seconds, or at once when Tab brings focus to a mark, its tip shows above it; never after a click. A press the board can\'t take turns the mark into a lock for a moment with the reason beside it; a write that failed keeps its words until the next press.',
       withTip(fx, 'Go-ahead to install', 'answer'), withTip(fx, 'Keep the backup encoder warm', 'answer', MARK_MOMENT_WORDS.boardIsLocked, 'data-locked'),
       withTip(fx, 'Install window agreed', 'answer', MARK_MOMENT_WORDS.tickNotSaved, 'data-failed')),

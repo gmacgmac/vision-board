@@ -1,7 +1,7 @@
 // The node's edges on a real board (D-099; FE_02): each mark does what it shows, by pointer and by key.
-// The number bookmarks at once and, held, opens its menu instead; the disc opens Tick and Cross beside it, a second
-// click closes them and a double click never answers; nothing opens on hover; tips show after a deliberate hover and
-// at once on keyboard focus; the badge and H open history; the notes mark opens the conversation; right-click and
+// The number bookmarks at once and, held, opens its menu instead; the disc opens Tick and Cross over it, Tick on the
+// disc, on a click, Enter or Space, or the pointer resting on it, so a click without moving ticks (D-112); tips show
+// after a deliberate hover and at once on keyboard focus; the badge and H open history; the notes mark opens the conversation; right-click and
 // Shift+F10 list a node's actions. Menus are one at a time, keep one size and stay attached while the board zooms or
 // pans. On a board of its own, light and dark. The container seen, the icon library, the skin and the moments are in
 // node-edges-seen.spec.ts.
@@ -49,55 +49,112 @@ test('the number: a click bookmarks at once; held, it opens its menu and bookmar
   await expect(mark(page, q, 'number')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('the disc: a click opens Tick and Cross beside it, never on it; a second click closes them; a double click never answers', async ({ page, request }) => {
+/** The centre of a box. */
+const mid = (b: { x: number; y: number; width: number; height: number }) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
+
+test('the disc: a click opens Tick and Cross over it, Tick on the disc, so a click without moving ticks (D-112)', async ({ page, request }) => {
   const d = await drawEdges(request);
   await open(page, d, FLAGS);
   const [q] = d.n as [number];
   const disc = mark(page, q, 'answer');
   const picker = menuOf(page, `Answer item ${q}`);
+  const tick = picker.getByRole('menuitem', { name: 'Tick (A)' });
+  const cross = picker.getByRole('menuitem', { name: 'Cross (X)' });
   const before = await head(page);
-  await disc.click();
+  const at = mid((await disc.boundingBox())!);
+  await page.mouse.click(at.x, at.y);
   await expect(picker).toBeVisible();
   await expect(disc).toHaveAttribute('aria-expanded', 'true');
-  const [db, pb] = [(await disc.boundingBox())!, (await picker.boundingBox())!];
-  expect(pb.x).toBeGreaterThanOrEqual(db.x + db.width);
-  await expect(picker.getByRole('menuitem', { name: 'Tick (A)' })).toBeFocused();
-  // Left and Right move along the picker, wrapping.
+  // Tick centred on the disc, Cross on its left.
+  const [tb, cb] = [(await tick.boundingBox())!, (await cross.boundingBox())!];
+  expect(Math.abs(mid(tb).x - at.x)).toBeLessThan(1.5);
+  expect(Math.abs(mid(tb).y - at.y)).toBeLessThan(1.5);
+  expect(cb.x + cb.width).toBeLessThanOrEqual(tb.x);
+  await expect(tick).toBeFocused();
+  // Left and Right move as drawn: Cross is on the left, wrapping.
+  await page.keyboard.press('ArrowLeft');
+  await expect(cross).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expect(tick).toBeFocused();
   await page.keyboard.press('ArrowRight');
-  await expect(picker.getByRole('menuitem', { name: 'Cross (X)' })).toBeFocused();
-  await page.keyboard.press('ArrowRight');
-  await expect(picker.getByRole('menuitem', { name: 'Tick (A)' })).toBeFocused();
-  await disc.click();
+  await expect(cross).toBeFocused();
+  // Esc closes it, focus back on the disc; nothing was answered.
+  await page.keyboard.press('Escape');
   await expect(picker).toHaveCount(0);
-  await disc.dblclick();
-  await idle(page);
-  await expect(picker).toHaveCount(0);
+  await expect(disc).toBeFocused();
   expect(await lines(page, before, 'ack')).toEqual([]);
-  // Tick: the same act the footer's button wrote, and the disc fills.
-  await disc.click();
-  await picker.getByRole('menuitem', { name: 'Tick (A)' }).click();
+  // Two clicks in one place: the second lands on Tick, the same act the footer's button wrote, and the disc fills.
+  await page.mouse.click(at.x, at.y);
+  await expect(picker).toBeVisible();
+  await page.mouse.click(at.x, at.y);
   await expect(disc).toHaveAttribute('data-answer', 'ticked');
+  await expect(picker).toHaveCount(0);
   expect(await lines(page, before, 'ack')).toHaveLength(1);
-  // On an answered node the picker changes the answer.
+  // Resting on the disc after the choice opens nothing until the pointer leaves it and comes back.
+  await page.waitForTimeout(700);
+  await expect(picker).toHaveCount(0);
+  // On an answered node the picker changes the answer; a click elsewhere closes it.
   await disc.click();
-  await picker.getByRole('menuitem', { name: 'Cross (X)' }).click();
+  await cross.click();
   await expect(disc).toHaveAttribute('data-answer', 'crossed');
+  await disc.click();
+  await expect(picker).toBeVisible();
+  const s = await stageBox(page);
+  await page.mouse.click(s.x + s.width - 30, s.y + s.height - 30);
+  await expect(picker).toHaveCount(0);
 });
 
-test('nothing opens on hover; a tip shows after a deliberate hover, and at once on keyboard focus', async ({ page, request }) => {
+test('the disc by key: Enter or Space opens the picker with focus on Tick; Enter ticks', async ({ page, request }) => {
   const d = await drawEdges(request);
   await open(page, d, FLAGS);
   const [q] = d.n as [number];
+  const disc = mark(page, q, 'answer');
+  const picker = menuOf(page, `Answer item ${q}`);
+  await disc.focus();
+  await page.keyboard.press('Space');
+  await expect(picker.getByRole('menuitem', { name: 'Tick (A)' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(disc).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(picker.getByRole('menuitem', { name: 'Tick (A)' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(disc).toHaveAttribute('data-answer', 'ticked');
+});
+
+test('resting on the disc opens the picker with Tick under the pointer; focus stays; leaving closes it; other marks keep their tips', async ({ page, request }) => {
+  const d = await drawEdges(request);
+  await open(page, d, FLAGS);
+  const [q] = d.n as [number];
+  const disc = mark(page, q, 'answer');
+  const picker = menuOf(page, `Answer item ${q}`);
   const tip = page.locator('.vb-mark-tip');
-  await mark(page, q, 'answer').hover();
-  await page.waitForTimeout(800);
-  await expect(page.locator('.vb-mark-menu')).toHaveCount(0);
-  await expect(tip).toBeHidden();
-  await expect(tip).toHaveText('Tick · A  Cross · X', { timeout: 3000 });
-  await expect(tip).toBeVisible();
+  // A pointer crossing the disc opens nothing.
+  const at = mid((await disc.boundingBox())!);
+  await page.mouse.move(at.x - 60, at.y + 40);
+  await page.mouse.move(at.x + 60, at.y - 40, { steps: 4 });
+  await page.waitForTimeout(600);
+  await expect(picker).toHaveCount(0);
+  // Resting opens it after the shared wait, Tick centred under the pointer; focus does not move.
+  await card(page, q).focus();
+  await page.mouse.move(at.x, at.y);
+  await expect(picker).toBeVisible();
+  const tb = (await picker.getByRole('menuitem', { name: 'Tick (A)' }).boundingBox())!;
+  expect(Math.abs(mid(tb).x - at.x)).toBeLessThan(1.5);
+  expect(Math.abs(mid(tb).y - at.y)).toBeLessThan(1.5);
+  await expect(card(page, q)).toBeFocused();
+  // The pointer leaving it closes it, after the close grace; Esc does too.
+  await page.mouse.move(5, 5);
+  await expect(picker).toHaveCount(0);
+  await page.mouse.move(at.x, at.y);
+  await expect(picker).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(picker).toHaveCount(0);
+  // The number's tip still shows after a deliberate hover, and at once on keyboard focus.
+  await page.mouse.move(5, 5);
+  await mark(page, q, 'number').hover();
+  await expect(tip).toHaveText('Bookmark · B', { timeout: 3000 });
   await page.mouse.move(5, 5);
   await expect(tip).toBeHidden();
-  // A click focuses the mark without its tip; Tab brings it at once.
   await card(page, q).focus();
   await page.keyboard.press('Tab');
   await expect(mark(page, q, 'number')).toBeFocused();
@@ -197,27 +254,29 @@ test('one menu at a time; it keeps one size and stays attached while the board z
   const [q] = d.n as [number];
   const disc = mark(page, q, 'answer');
   const picker = menuOf(page, `Answer item ${q}`);
-  await disc.click();
+  // Opened from the keyboard, so the pointer zooming and panning elsewhere leaves it open.
+  await disc.focus();
+  await page.keyboard.press('Enter');
   const size = (await picker.boundingBox())!;
   const s = await stageBox(page);
-  // Zoom in at the stage's middle: the picker keeps its size and its place beside the disc.
+  // Zoom in at the stage's middle: the picker keeps its size and Tick stays on the disc.
   await page.mouse.move(s.x + s.width / 2, s.y + s.height / 2);
   await page.keyboard.down('Control');
   await page.mouse.wheel(0, -300);
   await page.keyboard.up('Control');
   await expect.poll(async () => (await disc.boundingBox())!.width).toBeGreaterThan(26);
   await expect(picker).toBeVisible();
+  const tick = picker.getByRole('menuitem', { name: 'Tick (A)' });
   const [db, pb] = [(await disc.boundingBox())!, (await picker.boundingBox())!];
   expect([Math.round(pb.width), Math.round(pb.height)]).toEqual([Math.round(size.width), Math.round(size.height)]);
-  expect(Math.abs(pb.x - (db.x + db.width + 6))).toBeLessThan(2);
+  expect(Math.abs(mid((await tick.boundingBox())!).x - mid(db).x)).toBeLessThan(2);
   // A pan (a drag on the background) leaves it open and it follows.
   await page.mouse.move(s.x + 20, s.y + s.height - 20);
   await page.mouse.down();
   await page.mouse.move(s.x + 120, s.y + s.height - 60, { steps: 5 });
   await page.mouse.up();
   await expect(picker).toBeVisible();
-  const [db2, pb2] = [(await disc.boundingBox())!, (await picker.boundingBox())!];
-  expect(Math.abs(pb2.x - (db2.x + db2.width + 6))).toBeLessThan(2);
+  expect(Math.abs(mid((await tick.boundingBox())!).x - mid((await disc.boundingBox())!).x)).toBeLessThan(2);
   // Another menu closes it (the node's actions, from the keyboard); a click outside closes that.
   await card(page, q).focus();
   await page.keyboard.press('Shift+F10');

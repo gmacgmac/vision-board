@@ -56,6 +56,8 @@ export function createDrawers(d: DrawerDeps): Drawers {
   const choices = (e: Entry): NoteBox.BoxChoiceDeps => ({
     ...d, box: d.box!, bubble: e.bubble, still: (o) => entries.get(e.id) === e && e.o === o,
     again: (o) => { const { draft: _, ...rest } = o; e.o = rest; draw(e, true); e.bubble.reveal(); e.bubble.focusText(); },
+    // The drawer is the app window's own pane: after Add note it stays, cleared for the next (point 659 closes the box).
+    done: (o) => choices(e).again(o),
   });
 
   function onChoice(e: Entry, detail: NoteEventDetail) {

@@ -18,6 +18,10 @@ const dated = (k: string) => `light-dark(${k}, oklch(from ${k} max(l, var(--vb-n
 /** The node's surfaces its date sits on: the card, a topic's sunken one, each with its tinted top (the worst place). */
 const DATE_GROUNDS = ['var(--vb-surface-card)', 'var(--vb-surface-sunken)'].flatMap((g) => [g, (k: string) => `color-mix(in srgb, ${k} var(--vb-node-tint), ${g})`]);
 
+/** The answer disc's fill (node-edges.css `.vb-mark-answer`, D-112): the kind's colour, in dark 15% toward black, so its
+ *  white tick and cross keep the label tier on every kind. */
+const disc = (k: string) => `light-dark(${k}, color-mix(in srgb, ${k} 85%, black))`;
+
 /** A colour as a dark plate draws a mark in it (node-plate.css): its hue at no less than the plate's lightness. */
 const lift = (c: string) => `oklch(from ${c} max(l, var(--vb-plate-mark-l)) min(c, var(--vb-plate-mark-c)) h)`;
 
@@ -26,7 +30,7 @@ const lift = (c: string) => `oklch(from ${c} max(l, var(--vb-plate-mark-l)) min(
 const PAIRS: [string, string, number][] = [
   ...INKS.flatMap((i) => GROUNDS.map((g) => [i, g, 60] as [string, string, number])),
   ...KINDS.flatMap((k) => [[k, 'var(--vb-surface-card)', 45], [k, 'var(--vb-surface-canvas)', 45],
-    [k, `color-mix(in srgb, ${k} var(--vb-tile-tint), var(--vb-surface-card))`, 45], ['var(--vb-answer-wait)', k, 30]] as [string, string, number][]),
+    [k, `color-mix(in srgb, ${k} var(--vb-tile-tint), var(--vb-surface-card))`, 45], ['var(--vb-answer-mark)', disc(k), 45]] as [string, string, number][]),
   ['var(--vb-answer-mark)', 'var(--vb-answer-tick)', 45], ['var(--vb-answer-mark)', 'var(--vb-answer-cross)', 45],
   ...['tick', 'cross'].flatMap((a) => ['card', 'canvas'].map((g) => [`var(--vb-answer-${a})`, `var(--vb-surface-${g})`, 30] as [string, string, number])),
   ['var(--vb-bookmark-ink)', 'var(--vb-bookmark)', 45],
