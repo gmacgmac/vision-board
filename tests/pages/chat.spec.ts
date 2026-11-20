@@ -162,7 +162,7 @@ test('composer: one chip for what goes from the board, opening a preview of exac
   await s.getByRole('button', { name: 'Send', exact: true }).click();
   // While the agent works, what is attached waits: Send stays on and says so.
   const working = sample(page, 'answers-working');
-  await expect(working.locator('.chat-cmp-line')).toHaveText('The agent is working. What is attached goes when it finishes; Stop it to send words alone.');
+  await expect(working.locator('.chat-cmp-line')).toHaveText('Agent is working. Stop it to send words now.');
   await working.getByRole('textbox', { name: 'Message to the agent' }).fill('And these');
   await working.getByRole('textbox', { name: 'Message to the agent' }).press('Enter');
   expect(await events(page)).toEqual([

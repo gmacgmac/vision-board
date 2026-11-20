@@ -74,11 +74,11 @@ export interface ComposerContext { label: string; text: string }
 export const PREVIEW_LABEL = 'What the agent receives';
 
 export const COMPOSER_KEYS = 'Enter send · Shift+Enter new line';
-const WORKING = 'The agent is working. Stop it to send now.';
-const HOLDING = 'The agent is working. What is attached goes when it finishes; Stop it to send words alone.';
-const QUEUING = 'The agent is working. A message you send now is queued.';
-const HOLDING_QUEUING = 'The agent is working. What is attached goes when it finishes; words you send now are queued.';
-const ASKING_QUEUING = 'The agent is waiting for your OK. Sending a message now leaves the question unanswered.';
+const WORKING = 'Agent is working. Stop it to send now.';
+const HOLDING = 'Agent is working. Stop it to send words now.';
+const QUEUING = 'Agent is working. Messages you send are queued.';
+const HOLDING_QUEUING = 'Agent is working. Messages you send are queued.';
+const ASKING_QUEUING = 'Agent is waiting for your OK. A message now leaves it unanswered.';
 
 /** The agent is at work or waiting for an OK: what a host that queues says the hint of. */
 const busy = (s: ChatState): boolean => s.busy || s.pending.length > 0;

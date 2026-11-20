@@ -65,7 +65,7 @@ test('composer, with a host that holds what is attached: no words with something
   assert.equal(sendIntent('Go', idle, false), 'send', 'words alone, as before');
   const working = composerView(busy, { holds: true });
   assert.equal(working.send, false);
-  assert.match(working.hint, /^The agent is working\. What is attached goes when it finishes/);
+  assert.match(working.hint, /^Agent is working\. Stop it to send words now\.$/);
   assert.equal(sendIntent('And this', working, true), 'send', 'held until the turn ends');
   assert.equal(sendIntent('And this', working, false), 'skip', 'words alone wait for Stop');
   const shut = composerView(EMPTY_CHAT, { holds: true, blocked: 'A past version is showing.' });

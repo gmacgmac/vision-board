@@ -44,7 +44,8 @@ chat-composer .chat-cmp-send {
 }
 chat-composer .chat-cmp-send:hover:not(:disabled) { background: var(--_accent-fill-hover); }
 chat-composer .chat-cmp-send:disabled { color: var(--_ink-subtle); background: var(--_surface-sunken); cursor: default; }
-chat-composer .chat-cmp-line { flex: none; margin: 0; font-size: var(--_text-xs); color: var(--_ink-subtle); }
+/* One line always (point 677): a hint never wraps, so the composer never changes height while the agent works. */
+chat-composer .chat-cmp-line { flex: none; margin: 0; font-size: var(--_text-xs); color: var(--_ink-subtle); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 chat-composer kbd {
   padding: 0 3px; font: var(--_text-xs) / 1.4 var(--_font-mono); color: var(--_ink);
   border: 1px solid var(--_line-strong); border-radius: 4px;
