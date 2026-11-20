@@ -183,7 +183,7 @@
    for it. A label with no room is a short tag (link-marks.ts, point 646): its first words and an ellipsis, a hairline
    border, centred on the line in a 24px target in its own layer above the cards; hovering or focusing it floats the
    whole label (the shared tip, tip/tip.css) above everything (z 5, over an open frame's 4). On paper nothing hovers:
-   the tag shows the whole label, wrapped, in place of its first words. */
+   the tag shows the whole label in place of its first words, wrapped in the layout's room (`--vb-room-dx`, its width). */
 .vb-wire-tag rect { fill: var(--vb-surface-canvas); }
 .vb-wire-tag .vb-wire-label { stroke: none; }
 .vb-link-marks { position: absolute; left: 0; top: 0; }
@@ -197,7 +197,7 @@
   box-sizing: border-box; padding: 0 5px; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-pill); background: var(--vb-surface-canvas);
 }
 .vb-link-short { height: 18px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.vb-link-whole { max-width: 10em; padding-block: 1px; text-align: center; overflow-wrap: anywhere; }
+.vb-link-mark-btn > .vb-link-whole { max-width: 10em; padding-block: 1px; border-radius: var(--vb-radius-sm); line-height: 14px; text-align: center; overflow-wrap: anywhere; translate: var(--vb-room-dx, 0) 0; }
 @media not print { .vb-link-whole { display: none; } }
 @media print { .vb-link-short { display: none; } }
 .vb-link-mark-btn:hover > span, .vb-link-mark[data-tip-open] .vb-link-mark-btn > span { border-color: var(--vb-wire-hot); color: var(--vb-ink); }

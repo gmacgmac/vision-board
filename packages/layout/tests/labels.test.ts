@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Link } from '#format';
 import { labelSize, overlaps, routeLines, routeLinks } from '../src/index.ts';
-import { placeLabel, tagSize, tagWords } from '../src/route/labels.ts';
+import { linesIn, placeLabel, tagSize, tagWords } from '../src/route/labels.ts';
 import type { Box } from '../src/index.ts';
 
 const g = (boxes: Map<string, Box>) => new Map([...boxes.keys()].map((id) => [id, 'g']));
@@ -173,4 +173,40 @@ test('with no clear room anywhere, the tag is its shortest words at the first po
   assert.equal(at.fits, false);
   assert.equal(at.short, 'when…');
   assert.deepEqual([at.x, at.y], [205, 50]);
+});
+
+// VERIFY_01 fix: on paper a short tag shows its whole label, wrapped in the room the layout gives it, which stays inside
+// the gap between the two cards and off the arrowhead (it printed 110 px wide in a 72 px gap, over both cards).
+test('on paper a short tag\'s whole label wraps to the gap: inside it, CLEAR from both cards, off the arrowhead', () => {
+  const label = 'once every note has been read';
+  const at = placeLabel(straight, label, roomOf([straight]), [A, B]);
+  assert.equal(at.fits, false);
+  const room = at.room!;
+  const box = { x: room.x - room.w / 2, w: room.w };
+  assert.ok(box.x >= 200 + 4, `CLEAR from a: ${JSON.stringify(room)}`);
+  assert.ok(box.x + box.w <= 272 - 12, `off the arrowhead (its last 12 px): ${JSON.stringify(room)}`);
+  assert.ok(room.w >= tagSize(at.short!).w, 'never narrower than the tag');
+  // The widest such room: 4 px more would not fit the gap.
+  assert.ok(room.w + 4 > 272 - 12 - 204, JSON.stringify(room));
+  assert.ok(linesIn(label, room.w - 12) > 1, 'wrapped');
+});
+
+test('on paper a label in a wide gap stays on one line, no wider than it is, as near its tag as the card allows', () => {
+  // A short tag only because an earlier label took the line's place; the gap itself is wide.
+  const b: Box = { x: 600, y: 0, w: 200, h: 100 };
+  const pts = [{ x: 200, y: 50 }, { x: 600, y: 50 }];
+  const taken: Box[] = [{ x: 200, y: 0, w: 400, h: 48 }, { x: 200, y: 52, w: 400, h: 48 }, { x: 214, y: 41, w: 372, h: 18 }];
+  const at = placeLabel(pts, 'needs the budget', { cards: [A, b], taken, lines: [pts] }, [A, b]);
+  assert.equal(at.fits, false);
+  // The tag sits 18 px from a; the whole label moves right just enough to keep CLEAR (4 px) from it.
+  assert.equal(at.x, 218);
+  // One line at the paper's estimate: 16 characters at 6.5 × 1.1 px, plus 6 px each side.
+  assert.deepEqual(at.room, { x: 204 + 127 / 2, w: 127 });
+  assert.equal(linesIn('needs the budget', 127 - 12), 1);
+});
+
+test('linesIn wraps whole words, and breaks a word wider than the room', () => {
+  assert.equal(linesIn('once every note', 1000), 1);
+  assert.equal(linesIn('once every note', 40), 3);
+  assert.equal(linesIn('authentication', 40), 3);
 });

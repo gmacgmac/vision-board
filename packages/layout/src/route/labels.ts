@@ -6,7 +6,8 @@
 //  4. just right or left of an upright piece (stacked cards), inside that gap, clear of every line and the arrowhead
 //     (2 to 4: `inGap`).
 // When none fits, a short tag (the first words and an ellipsis, `shortTag`) sits on the line near the source in a 24 px
-// target; the page shows the whole label on its hover or focus, and whole in print. Never a bare dot; cards never move.
+// target; the page shows the whole label on its hover or focus, and whole in print, wrapped in the room `paperRoom`
+// finds clear of the cards and the arrowhead. Never a bare dot; cards never move.
 // Layout stays pure, so a label's size is worked out from its length (`labelSize`), not measured: the page draws the
 // label no wider than this. Deterministic: labels are placed in link order.
 import type { Box, LabelPlace, Point, Size } from '../types.ts';
@@ -42,7 +43,8 @@ export function placeLabel(pts: Point[], text: string, room: LabelRoom, ends: re
   const size = labelSize(text);
   const at = onPiece(pts, size, room) ?? inGap(pts, size, room, ends);
   if (at) return { ...at, fits: true };
-  return { ...shortTag(pts, text, room), fits: false };
+  const tag = shortTag(pts, text, room);
+  return { ...tag, fits: false, room: paperRoom(pts, text, tag, room.cards) };
 }
 
 const boxAt = (p: Point, { w, h }: Size): Box => ({ x: p.x - w / 2, y: p.y - h / 2, w, h });
@@ -180,4 +182,56 @@ function shortTag(pts: Point[], text: string, room: LabelRoom): Point & { short:
   const p = along(pts, first);
   room.taken.push(boxAt(p, tagSize(short)));
   return { ...p, short };
+}
+
+/** The whole label on paper: at most this wide, px; its line height, px; and a character's width with a tenth to spare
+ *  (LABEL_CHAR is the screen's estimate, and a wrap that runs a line longer than estimated must not run into a card). */
+const PAPER_W = 160;
+const PAPER_LINE = 14;
+const PAPER_CHAR = LABEL_CHAR * 1.1;
+
+/** How many lines `text` wraps to in `room` px of text width: whole words, a word wider than the room broken. */
+export function linesIn(text: string, room: number): number {
+  let [lines, used] = [1, 0];
+  for (const word of text.trim().split(/\s+/)) {
+    const w = word.length * PAPER_CHAR;
+    const need = used ? used + PAPER_CHAR + w : w;
+    if (need <= room) {
+      used = need;
+      continue;
+    }
+    const broken = Math.ceil(w / room) - 1;
+    lines += (used ? 1 : 0) + broken;
+    used = w - broken * room;
+  }
+  return lines;
+}
+
+/** Where the whole label goes on paper (VERIFY_01 fix): the widest room up to PAPER_W whose wrapped box, at the tag's
+ *  height and centred as near the tag as it can be, covers no card (CLEAR) and not the arrowhead; with none, the tag's
+ *  own width at the tag. */
+function paperRoom(pts: Point[], text: string, at: Point & { short: string }, cards: readonly Box[]): { x: number; w: number } {
+  const blocks = [...cards.map((c) => ({ x: c.x - CLEAR, y: c.y - CLEAR, w: c.w + 2 * CLEAR, h: c.h + 2 * CLEAR })), arrowOf(pts)];
+  const least = tagSize(at.short).w;
+  const whole = Math.ceil(text.trim().length * PAPER_CHAR) + 2 * LABEL_PAD;
+  for (let w = Math.min(PAPER_W, whole); w >= least; w -= STEP) {
+    const h = linesIn(text, w - 2 * LABEL_PAD) * PAPER_LINE + 4;
+    const x = freeAt(at, w, h, blocks);
+    if (x !== null) return { x, w };
+  }
+  return { x: at.x, w: least };
+}
+
+/** The centre nearest `at.x` for a box `w` by `h` centred at `at.y` between `blocks`; null when none leaves it room. */
+function freeAt(at: Point, w: number, h: number, blocks: readonly Box[]): number | null {
+  const [top, bottom] = [at.y - h / 2, at.y + h / 2];
+  let [lo, hi] = [-Infinity, Infinity];
+  for (const b of blocks) {
+    if (b.y >= bottom || b.y + b.h <= top) continue;
+    if (b.x + b.w <= at.x) lo = Math.max(lo, b.x + b.w);
+    else if (b.x >= at.x) hi = Math.min(hi, b.x);
+    else return null;
+  }
+  if (hi - lo < w) return null;
+  return Math.min(Math.max(at.x, lo + w / 2), hi - w / 2);
 }

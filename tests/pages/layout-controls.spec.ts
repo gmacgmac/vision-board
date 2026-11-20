@@ -109,6 +109,20 @@ test('gallery: on paper a short tag shows its whole label, wrapped, in place of 
   const lines = await mark.locator('.vb-link-whole').evaluate((e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight)));
   expect(lines).toBeGreaterThan(1);
   expect(await mark.locator('.vb-link-whole').evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
+  // VERIFY_01 fix: wrapped to the gap between cards 1 and 2, clear of both and of the link's arrowhead (its last 11px,
+  // 7 × the wire's 1.6px, up to the path's end).
+  const mini = labels(page).locator('.g-mini').first();
+  const [whole, one, two] = await Promise.all([
+    mark.locator('.vb-link-whole').boundingBox(),
+    mini.locator('vb-node', { hasText: 'Collect the feedback' }).boundingBox(),
+    mini.locator('vb-node', { hasText: 'Sort it by theme' }).boundingBox(),
+  ]);
+  // The link 1 > 2: the line that runs from card 1's right edge to card 2's left edge, where its arrowhead points.
+  const end = await mini.locator('.vb-wires:not(.vb-wires-top) path.vb-wire').evaluateAll((ps, { a, b }) => ps.map((p) => p.getBoundingClientRect())
+    .find((r) => Math.abs(r.left - a) < 2 && Math.abs(r.right - b) < 2)?.right, { a: one!.x + one!.width, b: two!.x });
+  expect(end).toBeDefined();
+  expect(whole!.x).toBeGreaterThanOrEqual(one!.x + one!.width);
+  expect(whole!.x + whole!.width).toBeLessThanOrEqual(end! - 11);
 });
 
 // ---- Alignment (ruling 4): the viewer's, in the "⋯" menu, kept in this browser ----

@@ -1,7 +1,8 @@
 // Link labels' short tags (field report batch 3 ruling 3, point 646, linkLabels flag): where a link's label fits
 // nowhere on or beside its line (`Route.labelAt.fits` false), a short tag sits on the line near the source: its first
 // words and an ellipsis (`labelAt.short`), on the canvas colour with a hairline border, in a 24px target. Hovering or
-// focusing it floats the whole label above everything; in print the tag shows the whole label, wrapped (print.css).
+// focusing it floats the whole label above everything; in print the tag shows the whole label, wrapped in the room the
+// layout gives it (`labelAt.room`).
 // Never a bare dot. The tags are buttons in their own layer of the world, outside the connectors' SVG (which is hidden
 // from assistive tech): each is reachable by Tab after the cards, named with its link and label, and its tip follows
 // the shared hover tip (packages/ui/src/tip/hover-tip.ts, WCAG 1.4.13: hoverable, persistent, Esc dismisses). The tip
@@ -55,6 +56,9 @@ function write(host: HTMLElement, r: Route): HTMLElement {
   cut!.style.maxWidth = `${labelSize(short).w}px`;
   cut!.style.letterSpacing = '';
   whole!.textContent = r.label!;
+  // On paper: wrapped in the room the layout found clear of the cards and the arrowhead, centred on it (VERIFY_01 fix).
+  whole!.style.maxWidth = at.room ? `${at.room.w}px` : '';
+  host.style.setProperty('--vb-room-dx', `${at.room ? at.room.x - at.x : 0}px`);
   host.querySelector('.vb-link-tip')!.textContent = r.label!;
   return cut!;
 }
@@ -84,7 +88,7 @@ export function createLinkMarks(layer: HTMLElement): LinkMarks {
         let m = marks.get(key);
         if (!m) marks.set(key, (m = { host: create(), look: '' }));
         const at = r.labelAt!;
-        const look = `${at.x},${at.y}|${at.short ?? ''}|${r.label}`;
+        const look = `${at.x},${at.y}|${at.short ?? ''}|${at.room ? `${at.room.x},${at.room.w}` : ''}|${r.label}`;
         if (m.look !== look) {
           fresh.push(write(m.host, r));
           m.look = look;

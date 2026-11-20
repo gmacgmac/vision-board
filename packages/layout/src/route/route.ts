@@ -75,7 +75,10 @@ export function routeLinks(
     const route: Route = { from: link.from, to: link.to, label: link.label, d: roundedPath(pts), mid: { x: round(mid.x), y: round(mid.y) } };
     if (link.label) {
       const at = placeLabel(pts, link.label, room, [boxes.get(link.from)!, boxes.get(link.to)!]);
-      route.labelAt = { x: round(at.x), y: round(at.y), fits: at.fits, ...(at.short !== undefined && { short: at.short }) };
+      route.labelAt = {
+        x: round(at.x), y: round(at.y), fits: at.fits, ...(at.short !== undefined && { short: at.short }),
+        ...(at.room && { room: { x: round(at.room.x), w: at.room.w } }),
+      };
     }
     return route;
   });
