@@ -89,6 +89,8 @@ export interface BoxChoiceDeps extends ViewDeps {
   still(o: Open): boolean;
   /** Draw the box for `o` afresh: its field empty, focus in it, the latest in view. */
   again(o: Open): void;
+  /** Close the box for `o` (Add note is done: the note waits for the board's Send, point 659). */
+  done(o: Open): void;
 }
 
 /** Write the field's words for `o`, if any: true when there was nothing to write or it was written; on a failure the
@@ -101,13 +103,14 @@ async function write(c: BoxChoiceDeps, o: Open, words: string, by: 'save' | 'ask
   return problem === null;
 }
 
-/** Add note: the words join the tab's note for the board's Send; the box stays open. */
+/** Add note: the words join the tab's note for the board's Send, and the box closes (point 659; Ask now keeps it open
+ *  for the reply). */
 export async function addNote(c: BoxChoiceDeps, o: Open, text: string): Promise<void> {
   const words = text.trim();
   if (!words) return c.bubble.focusText();
   const action = queuedOf(c, o) ? 'note-edit' : 'comment';
   if (!(await write(c, o, words, 'save')) || !c.still(o)) return;
-  c.again(o);
+  c.done(o);
   c.toast(notesWords.noteOn(c.node(o.id)?.n ?? o.id, action));
 }
 

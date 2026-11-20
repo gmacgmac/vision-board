@@ -154,9 +154,7 @@ test('✓, ✗ and a comment work and survive a reload', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'Conversation on 3' });
   await dialog.getByRole('textbox').fill('Check the wording.');
   await dialog.getByRole('button', { name: 'Add note' }).click();
-  await expect(dialog.locator('.vb-nb-queued')).toContainText('Check the wording.');
-  await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
+  await expect(dialog).toBeHidden(); // Add note closes the box (point 659)
 
   const expectAnswers = async () => {
     await expect(card(page, 1)).toHaveAttribute('data-status', 'acknowledged');

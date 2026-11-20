@@ -36,17 +36,20 @@ test('C opens the box with focus in its field; Add note writes the note, a secon
   await page.keyboard.press('Shift+Enter');
   await page.keyboard.type('second line');
   await page.keyboard.press('Enter');
-  await expect(box(page).locator('.vb-nb-queued')).toContainText('First line');
+  // Add note closes the box (point 659); focus goes back to the card.
+  await expect(box(page)).toBeHidden();
   await expect(count(page, n)).toHaveText('1');
   await expect(card(page, n)).toHaveAttribute('data-status', 'commented');
+  await press(page, n, 'c');
+  await expect(box(page).locator('.vb-nb-queued')).toContainText('First line');
   await field(page).fill('and a third');
   await page.keyboard.press('Enter');
+  await expect(box(page)).toBeHidden();
+  await expect(card(page, n)).toBeFocused();
+  await press(page, n, 'c');
   await expect(box(page).locator('.vb-nb-note')).toHaveCount(1);
   await expect(box(page).locator('.vb-nb-queued')).toContainText('and a third');
   await expect(count(page, n)).toHaveText('1');
-  await page.keyboard.press('Escape');
-  await expect(box(page)).toBeHidden();
-  await expect(card(page, n)).toBeFocused();
 });
 
 test('Edit on the note not yet sent opens the edit bubble; Remove takes the note back and the box comes back', async ({ page, request }) => {

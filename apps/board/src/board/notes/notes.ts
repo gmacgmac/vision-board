@@ -222,7 +222,8 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
 
   /** What the box's own choices do (note-box.ts); `again` draws it afresh, its field empty. */
   const boxChoices = () => ({ ...d, box: d.box!, bubble, still: (o: Open) => open === o,
-    again: (o: Open) => { const { draft: _, ...rest } = o; openNow(rest); } });
+    again: (o: Open) => { const { draft: _, ...rest } = o; openNow(rest); },
+    done: (o: Open) => { if (open === o) close(); } });
 
   async function onChoice(e: Event) {
     const o = open;

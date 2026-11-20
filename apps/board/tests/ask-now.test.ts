@@ -22,7 +22,7 @@ function setup({ queued = false, blocked = null as string | null, listening = tr
   const writes: Record<string, unknown>[] = [];
   const asks: number[] = [];
   const said: string[] = [];
-  const box = { phase: 'idle', message: '', shown: 0, focused: 0 };
+  const box: { phase: string; message: string; shown: number; focused: number; closed?: number } = { phase: 'idle', message: '', shown: 0, focused: 0 };
   const mode = { now: 'save' as 'save' | 'ask' };
   const state = { items: new Map([['4', { notes }]]) } as unknown as BoardState;
   const c: BoxChoiceDeps = {
@@ -37,7 +37,7 @@ function setup({ queued = false, blocked = null as string | null, listening = tr
     box: { blocked: () => blocked, listening: () => listening, ask: async (seq) => { asks.push(seq); return null; }, looked() {},
       mode: () => mode.now, setMode: (a) => { mode.now = a; } },
     bubble: { setPhase(p: string, m = '') { box.phase = p; box.message = m; }, focusText() { box.focused += 1; } } as unknown as VbNoteBubbleElement,
-    still: () => true, again: () => { box.shown += 1; },
+    still: () => true, again: () => { box.shown += 1; }, done: () => { box.closed = (box.closed ?? 0) + 1; },
   };
   return { c, writes, asks, said, box, mode };
 }
@@ -86,7 +86,8 @@ test('a failed write keeps the words in the field and asks nothing; Add note nev
   await addNote(u.c, O, 'Book it');
   assert.deepEqual(u.writes, [{ action: 'comment', n: 4, ver: 1, text: 'Book it' }]);
   assert.deepEqual(u.asks, []);
-  assert.equal(u.box.shown, 1);
+  assert.equal(u.box.closed, 1); // Add note closes the box (point 659)
+  assert.equal(u.box.shown, 0);
 });
 
 const memoryStoreFor = (kept: Record<string, string>) => ({ get: (k: string) => kept[k] ?? null, set() {} });
