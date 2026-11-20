@@ -46,7 +46,7 @@ flag), the person's Remove card and Remove container (`cards/remove-flow.ts`, wh
 `src/board/chrome/GoToCard.svelte`, goToCard flag)
 and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field report batch
 3: `links/wires.ts` draws a link's label on its line where the layout found it room (`links/link-labels.ts`)
-and a marker that floats the label on hover and focus where it did not (`links/link-marks.ts`, linkLabels
+and a short tag of its first words that floats the whole label on hover and focus where it found none (`links/link-marks.ts`, linkLabels
 flag); `cards/cards.ts` measures a card the layout widens (Match card widths, widthsControl flag: the
 switch in each frame's mode row) at the width it is drawn at; the viewer's alignment is the "⋯"
 menu's Centre cards (`src/shell/align.ts`, alignSetting flag). The gallery draws these through the board's

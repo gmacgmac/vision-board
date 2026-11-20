@@ -5,7 +5,7 @@ The layout engine: the agent describes, the engine places (rule 9). One module p
 lane packed left and its stacks ordered to cut crossings), a region packer that applies the
 person's pins, and the connector router (`route/`: right angles with rounded corners and spread
 ports; inside a container, through the gutters between columns and lanes, never under a card,
-parallel runs on their own tracks; each label's place near the source with a `fits` flag). Each
+parallel runs on their own tracks; each label's place on or beside its line, in the gap between its cards, with a `fits` flag). Each
 mode takes the viewer's alignment and the container's card widths (`match` or `own`) as inputs.
 `structureOf` answers `show_layout` from the same mode and router. Pure functions, no DOM, fully
 unit-tested.
