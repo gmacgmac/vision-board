@@ -681,3 +681,4 @@
 [[2026-11-20 14:45]] [board-ui] Code two pixels under its text (13px in a card's 15px body): system monospace reads larger than Figtree at the same size (maintainer, point 669) → Notes: `packages/ui/src/markdown/markdown.css` (`.vb-md-code`, `.vb-md-icode`)
 [[2026-11-20 15:05]] [board-ui] A card's tags 11px to 12px, beside the 15px body (maintainer, point 670) → Notes: `packages/ui/src/node/node.css` (`.vb-node-tags li`)
 [[2026-11-20 15:40]] [board-ui] Containers show their four corners only (64px arms) at 55% of their colour, so links between cards no longer compete with the frame (maintainer, point 672) → Notes: `packages/ui/src/region/region.css` (`--vb-region-corner`, `vb-region::before` mask)
+[[2026-11-20 16:05]] [board-ui] Card headings step over the 15px body: # 19px, ## 17px, ### label 12px; a big title 20px, the body's # stepping down to 17px under it (maintainer, point 671) → Notes: `packages/ui/src/node/node.css` (`.vb-node-body` headings, big title)
