@@ -682,3 +682,4 @@
 [[2026-11-20 15:05]] [board-ui] A card's tags 11px to 12px, beside the 15px body (maintainer, point 670) → Notes: `packages/ui/src/node/node.css` (`.vb-node-tags li`)
 [[2026-11-20 15:40]] [board-ui] Containers show their four corners only (64px arms) at 55% of their colour, so links between cards no longer compete with the frame (maintainer, point 672) → Notes: `packages/ui/src/region/region.css` (`--vb-region-corner`, `vb-region::before` mask)
 [[2026-11-20 16:05]] [board-ui] Card headings step over the 15px body: # 19px, ## 17px, ### label 12px; a big title 20px, the body's # stepping down to 17px under it (maintainer, point 671) → Notes: `packages/ui/src/node/node.css` (`.vb-node-body` headings, big title)
+[[2026-11-20 16:30]] [board-ui] A short rule (32px) each side of a container's title, in the frame's colour (maintainer, point 673) → Notes: `packages/ui/src/region/region.css` (`.vb-region-label::before`, `::after`)
