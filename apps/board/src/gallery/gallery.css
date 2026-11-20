@@ -174,6 +174,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* The node's edges (FE_01): a menu or a tip drawn open beside its card. */
 .g-edge-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
 .g-edge-menu .vb-menu-list, .g-edge-menu .vb-mark-tip { position: static; }
+/* A card with the answer picker open over its disc (D-112): the picker placed on the disc, as the page places it. */
+.g-edge-over { position: relative; }
 
 /* The layout-control entry's comparison (FE_07, PLAN decision 20): the six layouts side by side. */
 .g-lc-compare { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }

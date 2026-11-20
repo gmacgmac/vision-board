@@ -157,8 +157,8 @@ export const GAP = 24;
  *  Cards side by side stay GAP apart. */
 export const ROW_GAP = 30;
 /** The gap under a node that draws its marks on its edges (D-099): the bottom marks hang 11px below it
- *  (--vb-mark-h 22px, centred on the border) and the next node's answer disc 14px above (--vb-answer-size 28px), a
- *  proposal's ring 5px more; this leaves about 10px clear between them. Side by side stays GAP: no mark overhangs a
+ *  (--vb-mark-h 22px, centred on the border) and the next node's answer disc 12px above (--vb-answer-size 24px, D-112),
+ *  a proposal's ring 5px more; this leaves about 12px clear between them. Side by side stays GAP: no mark overhangs a
  *  node's sides. */
 export const EDGE_ROW_GAP = 40;
 export const COL_GAP = 72;

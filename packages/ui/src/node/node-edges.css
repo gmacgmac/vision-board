@@ -104,18 +104,25 @@ vb-node[data-edges] .vb-node-grip-dots {
 }
 vb-node[data-edges].dragging .vb-node-grip { cursor: grabbing; }
 
-/* Top right: the answer disc (DD-07, DD-08), in the kind's colour with a dot of the ground while waiting; filled
-   green with a tick or red with a cross once answered. A ticked or crossed node is not otherwise recoloured. */
+/* Top right: the answer disc (DD-07, DD-08, D-112), 24px in the kind's colour with a small white tick and cross while
+   waiting, so it says what it does; filled green with a tick or red with a cross once answered. A ticked or crossed
+   node is not otherwise recoloured. In dark the kind's colour is 15% toward black here (the token unchanged), so the
+   white keeps Lc 45 on every kind (token-contrast.spec.ts). Hover rings it in its colour; a press fills the ring. */
 vb-node[data-edges] .vb-mark-answer {
-  --vb-mark-bg: var(--vb-kind); --vb-mark-ink: var(--vb-answer-mark);
-  top: calc(var(--vb-answer-size) / -2); right: 20px; width: var(--vb-answer-size); height: var(--vb-answer-size); padding: 0;
-  border: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--vb-gap);
+  --vb-mark-bg: light-dark(var(--vb-kind), color-mix(in srgb, var(--vb-kind) 85%, black)); --vb-mark-ink: var(--vb-answer-mark);
+  --vb-disc-ring: transparent;
+  top: calc(var(--vb-answer-size) / -2); right: calc(34px - var(--vb-answer-size) / 2); width: var(--vb-answer-size); height: var(--vb-answer-size); padding: 0;
+  border: 0; border-radius: 50%; box-shadow: 0 0 0 2px var(--vb-gap), 0 0 0 4px var(--vb-disc-ring);
 }
-vb-node[data-edges] .vb-mark-answer::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--vb-answer-wait); }
+vb-node[data-edges] .vb-mark-answer:hover:not([aria-disabled='true'], .vb-stage[data-marks='small'] *) {
+  --vb-disc-ring: color-mix(in srgb, var(--vb-kind) 45%, transparent);
+  &:active { --vb-disc-ring: var(--vb-kind); }
+}
 vb-node[data-edges] .vb-mark-answer .vb-icon { display: none; width: 15px; height: 15px; stroke-width: 2.6; }
+vb-node[data-edges] .vb-mark-answer .vb-mark-wait { width: 18px; height: 18px; stroke-width: 2.1; }
 vb-node[data-edges] .vb-mark-answer[data-answer='ticked'] { --vb-mark-bg: var(--vb-answer-tick); }
 vb-node[data-edges] .vb-mark-answer[data-answer='crossed'] { --vb-mark-bg: var(--vb-answer-cross); }
-vb-node[data-edges] .vb-mark-answer:is([data-answer='ticked'], [data-answer='crossed'], [data-proposed], [data-locked])::after { content: none; }
+vb-node[data-edges] .vb-mark-answer:not([data-answer='ticked'], [data-answer='crossed'], [data-proposed], [data-locked]) .vb-mark-wait { display: block; }
 vb-node[data-edges] .vb-mark-answer:is([data-answer='ticked'], [data-proposed='ack']):not([data-locked]) .vb-mark-tick,
 vb-node[data-edges] .vb-mark-answer:is([data-answer='crossed'], [data-proposed='drop']):not([data-locked]) .vb-mark-cross { display: block; }
 /* A proposal waiting (DESIGN_01): a dashed ring with the proposed mark; colour is never the only signal. */

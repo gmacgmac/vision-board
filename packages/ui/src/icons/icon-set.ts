@@ -7,7 +7,7 @@
 import type { IconName } from '#format';
 
 /** The icons the node's marks and menus draw (D-099): not names an agent may give a node. */
-export const MARK_ICONS = ['bookmark', 'clock', 'history', 'notes', 'notes-group', 'tick', 'cross', 'grip', 'more', 'put-back', 'drawer', 'expand'] as const;
+export const MARK_ICONS = ['bookmark', 'clock', 'history', 'notes', 'notes-group', 'tick', 'cross', 'tick-cross', 'grip', 'more', 'put-back', 'drawer', 'expand'] as const;
 export type MarkIcon = (typeof MARK_ICONS)[number];
 
 /** A circle as a path: two arcs from its left point. */
@@ -72,7 +72,8 @@ export const ICONS: Readonly<Record<IconName | MarkIcon, readonly string[]>> = {
   idea: ['M9 18h6M10 21h4', 'M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z'],
   globe: [ring(12, 12, 8.5), 'M3.5 12h17', 'M12 3.5c2.5 2.3 3.5 5.3 3.5 8.5s-1 6.2-3.5 8.5c-2.5-2.3-3.5-5.3-3.5-8.5s1-6.2 3.5-8.5z'],
   // The marks (D-099): the number's bookmark, Save for later's clock, history, the notes mark, the answer's tick and
-  // cross, the grip that drags a node with an icon, More, and Put back (a moved node's row in the menus).
+  // cross, the two side by side on a disc that waits for its answer (D-112), the grip that drags a node with an icon,
+  // More, and Put back (a moved node's row in the menus).
   bookmark: ['M7 4h10v16l-5-3.5L7 20z'],
   clock: [ring(12, 12, 8), 'M12 8v4l3 2'],
   history: ['M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5', 'M12 8v4l3 2'],
@@ -80,6 +81,7 @@ export const ICONS: Readonly<Record<IconName | MarkIcon, readonly string[]>> = {
   'notes-group': ['M3 4h12v8H8l-3 3v-3H3z', 'M15 8h6v8h-1v3l-3-3h-6v-4'],
   tick: ['M5 12.5l4.5 4.5L19 7.5'],
   cross: ['M6 6l12 12M18 6L6 18'],
+  'tick-cross': ['M3 12.5l2.6 2.6L10 10.5', 'M14 10l6 6M20 10l-6 6'],
   grip: ['M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01'],
   more: ['M6 12h.01M12 12h.01M18 12h.01'],
   'put-back': ['M9 14l-5-5 5-5', 'M4 9h10.5a5.5 5.5 0 0 1 0 11H11'],

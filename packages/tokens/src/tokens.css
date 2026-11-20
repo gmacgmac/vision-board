@@ -19,6 +19,8 @@
   --vb-text-md: 13px;
   --vb-text-lg: 15px;
   --vb-text-xl: 18px;
+  /* A card's body text: its paragraphs, lists and the rest of its Markdown, under the 15px title (D-112). */
+  --vb-card-text: 14px;
   --vb-weight-regular: 400;
   --vb-weight-medium: 550;
   --vb-weight-bold: 680;
@@ -82,10 +84,10 @@
 
   /* The node's edges (D-099): a mark on the border is 22px tall and never draws under
      --vb-mark-min on screen however far out the board zooms (D-101; FE_05; the zoom artboard's 40%);
-     the answer disc and the icon tile. A skin may square the corners. */
+     the answer disc (24px, D-112) and the icon tile. A skin may square the corners. */
   --vb-mark-h: 22px;
   --vb-mark-min: 14px;
-  --vb-answer-size: 28px;
+  --vb-answer-size: 24px;
   --vb-tile-size: 40px;
   --vb-tile-icon: 24px;
   --vb-node-radius: var(--vb-radius-lg);

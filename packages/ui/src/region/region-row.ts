@@ -16,6 +16,7 @@ import { MODE_HINT } from './region-core.ts';
 import { menuItems, menuKeydown } from '../base/menu.ts';
 import { dismissable } from '../base/layer.ts';
 import { returnFocus } from '../base/focus-return.ts';
+import { REST_OPEN_MS } from '../tip/rest-open.ts';
 
 export type RegionOpen = 'modes' | 'menu';
 
@@ -25,8 +26,6 @@ const COMMENT = 'button.vb-region-comment';
 const LAYOUT = 'button.vb-layout-btn';
 const DIR = 'button.vb-dir';
 const CHOICE = `${TILE}, ${DIR}`;
-/** How long a pointer rests on the layout button before the popover opens (never at once). */
-const REST_MS = 400;
 const WIDTHS = 'button.vb-widths';
 const COG = 'button.vb-cog';
 const ITEM = '[role="menuitem"]';
@@ -188,7 +187,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     if (tile) highlight(tile.dataset.tile as Mode);
     else if (t.closest(LAYOUT)) {
       // The pointer resting on the one button opens its popover after a moment, never at once.
-      if (host.dataset.open !== 'modes' && !rest) rest = window.setTimeout(() => { rest = 0; if (host.dataset.open === 'menu') return; openChoices(false); byRest = true; }, REST_MS);
+      if (host.dataset.open !== 'modes' && !rest) rest = window.setTimeout(() => { rest = 0; if (host.dataset.open === 'menu') return; openChoices(false); byRest = true; }, REST_OPEN_MS);
     } else if (t.closest(COG) || t.closest(COMMENT) || t.closest(WIDTHS)) closeModes();
   });
 

@@ -3,14 +3,17 @@
 // stage, outside the scaled board, so each keeps one size at any zoom. It is placed from its anchor (mark-place.ts),
 // and placed again when the view moves, so it stays attached while the person zooms or pans: a drag outside it pans
 // and leaves it open; a click outside it, Esc, Tab or a choice closes it. Focus goes to its first row and comes back
-// to what opened it. Up and Down move between the rows (the shared menu's keys); the picker, laid out side by side,
-// takes Left and Right too. A row acts by its `data-menu-act`, which the caller runs once the menu has closed.
+// to what opened it (a picker the pointer opened by resting leaves focus where it is). Up and Down move between the
+// rows (the shared menu's keys); the picker, laid out side by side, takes Left and Right too, as drawn. The picker
+// opens over the disc with Tick on it (D-112), Cross on its left, or on its right where the stage has no room, and the
+// pointer leaving it closes it after the close grace. A row acts by its `data-menu-act`, which the caller runs once
+// the menu has closed.
 import type { ViewNode } from '#format';
 import type { NodeState, StageBox } from '#ui';
-import { answerPicker, contextMenu, dismissable, firstItem, menuItems, menuKeydown, numberMenu, returnFocus } from '#ui';
+import { answerPicker, CLOSE_GRACE_MS, contextMenu, dismissable, firstItem, menuItems, menuKeydown, numberMenu, returnFocus } from '#ui';
 import { DRAG_THRESHOLD } from '../input/index.ts';
 import type { MarkSide } from './mark-place.ts';
-import { moveTo, placeMark } from './mark-place.ts';
+import { moveTo, placeMark, placeOver, pointOn } from './mark-place.ts';
 
 /** Which menu: the number's, the answer picker, or the right-click list. */
 export type MarkMenuName = 'number' | 'answer' | 'actions';
@@ -26,6 +29,8 @@ export interface MarkMenuSpec {
   /** Its anchor in stage pixels now, or null once the node has gone (it closes). */
   anchor(): StageBox | null;
   side: MarkSide;
+  /** Focus goes to its first row (default true); false when the pointer opened it by resting on its mark. */
+  focus?: boolean;
   /** A row was chosen, after the menu closed. */
   act(act: string): void;
   /** It closed, however. */
@@ -47,9 +52,10 @@ const MARKUP: Record<MarkMenuName, (s: MarkMenuSpec) => string> = {
   actions: (s) => contextMenu(s.node, s.state, s.prefix),
 };
 
-/** Left and Right in the picker, which lays its rows side by side: the previous and next row, wrapping. */
-function sideways(e: KeyboardEvent, items: readonly HTMLElement[]): boolean {
-  const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+/** Left and Right in the picker, which lays its rows side by side: the row drawn on that side, wrapping (with Cross
+ *  on Tick's left, `data-cross`, the rows are drawn in reverse). */
+function sideways(e: KeyboardEvent, menu: HTMLElement, items: readonly HTMLElement[]): boolean {
+  const step = (e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0) * (menu.dataset.cross === 'left' ? -1 : 1);
   if (!step || !items.length) return false;
   e.preventDefault();
   e.stopPropagation();
@@ -74,11 +80,35 @@ export function showMarkMenu(stage: HTMLElement, spec: MarkMenuSpec): MarkMenu {
   function place(): void {
     const anchor = spec.anchor();
     if (!anchor) return close(false);
-    moveTo(holder, placeMark(anchor, { w: menu.offsetWidth, h: menu.offsetHeight }, { w: stage.clientWidth, h: stage.clientHeight }, spec.side));
+    const [size, room] = [{ w: menu.offsetWidth, h: menu.offsetHeight }, { w: stage.clientWidth, h: stage.clientHeight }];
+    if (spec.side !== 'over') return moveTo(holder, placeMark(anchor, size, room, spec.side));
+    // Over its anchor, its first row (Tick) centred on it: Cross on the left, else on the right where the left has no room.
+    const over = () => {
+      const row = firstItem(items());
+      return placeOver(anchor, size, { x: (row?.offsetLeft ?? 0) + (row?.offsetWidth ?? 0) / 2, y: (row?.offsetTop ?? 0) + (row?.offsetHeight ?? 0) / 2 }, room);
+    };
+    menu.dataset.cross = 'left';
+    let at = over();
+    if (!at.fits) {
+      menu.dataset.cross = 'right';
+      const right = over();
+      if (right.fits) at = right; else menu.dataset.cross = 'left';
+    }
+    moveTo(holder, at);
   }
   const onKey = (e: KeyboardEvent) => {
-    if (spec.name === 'answer' && sideways(e, items())) return;
+    if (spec.name === 'answer' && sideways(e, menu, items())) return;
     menuKeydown(e, items(), close);
+  };
+  // The pointer leaving the picker (or its disc) closes it after the close grace; coming back in time keeps it (WCAG
+  // 1.4.13). Read from where the pointer is, not from enter and leave, which a picker drawn under a still pointer never
+  // gets; only once the pointer has been on it (a picker the keyboard opened stays for a mouse moving elsewhere).
+  let leaving = 0;
+  let on = !!spec.opener?.matches(':hover');
+  const onMove = (e: PointerEvent) => {
+    if (e.pointerType === 'touch') return;
+    if (pointOn(holder, e.clientX, e.clientY) || pointOn(spec.opener, e.clientX, e.clientY)) { on = true; clearTimeout(leaving); leaving = 0; }
+    else if (on && !leaving) leaving = window.setTimeout(() => close(holder.contains(document.activeElement)), CLOSE_GRACE_MS);
   };
   const onClick = (e: MouseEvent) => {
     const row = (e.target as Element).closest<HTMLElement>('[data-menu-act]');
@@ -96,6 +126,8 @@ export function showMarkMenu(stage: HTMLElement, spec: MarkMenuSpec): MarkMenu {
     if (!open) return;
     open = false;
     stop();
+    clearTimeout(leaving);
+    document.removeEventListener('pointermove', onMove);
     menu.removeEventListener('keydown', onKey);
     holder.remove();
     spec.opener?.setAttribute('aria-expanded', 'false');
@@ -105,9 +137,10 @@ export function showMarkMenu(stage: HTMLElement, spec: MarkMenuSpec): MarkMenu {
   }
   menu.addEventListener('keydown', onKey);
   holder.addEventListener('click', onClick);
+  if (spec.side === 'over') document.addEventListener('pointermove', onMove, { passive: true });
   spec.opener?.setAttribute('aria-expanded', 'true');
   spec.opener?.setAttribute('aria-controls', menu.id);
   place();
-  firstItem(items())?.focus({ preventScroll: true });
+  if (spec.focus !== false) firstItem(items())?.focus({ preventScroll: true });
   return { name: spec.name, id: menu.id, place, close };
 }

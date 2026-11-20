@@ -1,7 +1,8 @@
 // What a press on a node's mark does (loaded after the board's first draw, or on the first press, by
 // mark-flow.ts, which hears the presses): one menu or box open at a time, the node's menus (mark-menus.ts) and boxes
-// (mark-boxes.ts), Tick and Cross through the item acts with their moments, and the tips over the marks
-// (mark-tips.ts). mark-flow.ts says what each mark does; this is how. Browser only.
+// (mark-boxes.ts), Tick and Cross through the item acts with their moments, the tips over the marks (mark-tips.ts),
+// and the disc's picker opened by a pointer resting on it (disc-rest.ts, D-112). mark-flow.ts says what each mark
+// does; this is how. Browser only.
 import { MARK_MOMENT_WORDS, POPOVER_CLOSE } from '#ui';
 import type { MarkFlowDeps } from './mark-flow.ts';
 import type { MarkMenu, MarkMenuName } from './mark-menus.ts';
@@ -11,6 +12,7 @@ import { stageBoxOf } from './mark-place.ts';
 import type { MarkBox, MarkBoxName } from './mark-boxes.ts';
 import { openMarkBox } from './mark-boxes.ts';
 import { createMarkTips } from './mark-tips.ts';
+import { createDiscRest } from './disc-rest.ts';
 
 /** A write shows it is on its way only past this, so a quick one never flickers (DESIGN_01). */
 export const SAVING_MS = 150;
@@ -62,18 +64,27 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
     return was !== null;
   }
 
-  function showMenu(id: string, name: MarkMenuName, opener: HTMLElement | null, side: MarkSide, anchor: Anchor) {
+  function showMenu(id: string, name: MarkMenuName, opener: HTMLElement | null, side: MarkSide, anchor: Anchor, focus = true) {
     const [node, state] = [d.node(id), d.state(id)];
     close();
     if (!node || !state) return;
+    if (name === 'answer') tips.hide();
     let menu: MarkMenu | undefined;
     menu = showMarkMenu(d.stage, {
-      name, node, state, prefix: d.prefix, opener, anchor, side,
+      name, node, state, prefix: d.prefix, opener, anchor, side, focus,
       act: (a) => run(id, a),
-      closed: () => { if (open?.menu && open.menu === menu) open = null; },
+      closed: () => {
+        if (open?.menu && open.menu === menu) open = null;
+        if (name === 'answer') rest.closed(opener);
+      },
     });
     open = { id, menu };
   }
+  const rest = createDiscRest({
+    stage: d.stage,
+    may: (disc) => !open && !disc.dataset.proposed && !d.paused('answer'),
+    open: (disc, id) => showMenu(id, 'answer', disc, 'over', anchorOf(id, 'answer'), false),
+  });
 
   function toggleBox(id: string, name: MarkBoxName, opener: HTMLElement | null) {
     const card = d.card(id);
@@ -131,7 +142,7 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
       const why = d.paused('answer');
       if (why) { close(); return tips.locked(el, why); }
       if (open?.menu?.name === 'answer' && open.id === id) return void close();
-      return showMenu(id, 'answer', el, 'right', anchorOf(id, 'answer'));
+      return showMenu(id, 'answer', el, 'over', anchorOf(id, 'answer'));
     }
     if (mark === 'tick' || mark === 'cross') return void answer(id, mark === 'tick' ? 'ack' : 'drop');
     if (mark === 'badge') return toggleBox(id, 'history', el);
@@ -164,6 +175,7 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
     },
     destroy() {
       close();
+      rest.destroy();
       tips.destroy();
       d.stage.removeEventListener(POPOVER_CLOSE, onBoxClose);
     },

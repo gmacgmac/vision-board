@@ -31,12 +31,13 @@ export interface EdgeParts {
 const mark = (name: string, cls: string, attrs: string, tip: string, inner: string): string =>
   `<button type="button" class="vb-mark ${cls}" data-mark="${name}" data-tip="${esc(tip)}"${attrs}>${inner}</button>`;
 
-/** The answer on the disc (DD-07, DD-08): the kind's colour with a dot while waiting, a tick or a cross once
- *  answered, a lock for a moment when pressed on a locked board (point 328). It opens the picker beside it, which the
- *  page draws (node-menus.ts `answerPicker`) and names in `aria-controls` while open. */
+/** The answer on the disc (DD-07, DD-08, D-112): the kind's colour with a small tick and cross while waiting, a tick
+ *  or a cross once answered, a lock for a moment when pressed on a locked board (point 328). It opens the picker over
+ *  it, Tick on the disc, which the page draws (node-menus.ts `answerPicker`) and names in `aria-controls` while open. */
 const disc = (): string =>
   mark('answer', 'vb-mark-answer', ' data-answer="waiting" aria-haspopup="menu" aria-expanded="false"',
-    nodeWords.answerTip(MARK_KEYS.tick, MARK_KEYS.cross), icon('tick', 'vb-mark-tick') + icon('cross', 'vb-mark-cross') + icon('lock', 'vb-mark-lock'));
+    nodeWords.answerTip(MARK_KEYS.tick, MARK_KEYS.cross),
+    icon('tick-cross', 'vb-mark-wait') + icon('tick', 'vb-mark-tick') + icon('cross', 'vb-mark-cross') + icon('lock', 'vb-mark-lock'));
 
 /** A half of the switch, one press: a toggle whose name stays put (aria-pressed says it is lit; pressing the lit half
  *  clears it), and a lock for a moment when pressed on a locked board. */

@@ -1,13 +1,13 @@
 // Where a node's menu, picker or tip goes on the stage (D-101): in stage pixels, outside the scaled
 // board, so it keeps one size at any zoom; placed again from its anchor whenever the view moves, so it stays attached.
-// The answer picker opens to the right of the disc, never on it (DD-07), the number's menu under the number, the
-// right-click list at the pointer, a tip above its mark. Each flips to the other side when the stage has no room, and
-// is kept inside the stage. Pure.
+// The answer picker opens over the disc, its Tick centred on it, so a click without moving ticks (D-112, amending
+// DD-07's "never on it"); the number's menu under the number, the right-click list at the pointer, a tip above its
+// mark. Each flips to the other side when the stage has no room, and is kept inside the stage. Pure.
 import type { StageBox } from '#ui';
 
-/** Where it goes against its anchor: `right` of it (the picker), `below` it (the number's menu), at its top left
- *  (`point`: the pointer, the right-click list), or `above` it (a tip). */
-export type MarkSide = 'right' | 'below' | 'point' | 'above';
+/** Where it goes against its anchor: `over` it, one point of it on the anchor's centre (the picker, `placeOver`),
+ *  `below` it (the number's menu), at its top left (`point`: the pointer, the right-click list), or `above` it (a tip). */
+export type MarkSide = 'over' | 'below' | 'point' | 'above';
 
 /** The room between an anchor and what opens beside it, and between that and the stage's edge. */
 export const MARK_GAP = 6;
@@ -16,15 +16,11 @@ export const STAGE_EDGE = 8;
 const clamp = (v: number, lo: number, hi: number) => Math.round(Math.max(lo, Math.min(v, Math.max(lo, hi))));
 
 /** The top left, in stage pixels, of a box of `size` opened on `side` of `anchor`, on a stage of `stage`'s size. */
-export function placeMark(anchor: StageBox, size: { w: number; h: number }, stage: { w: number; h: number }, side: MarkSide): { x: number; y: number } {
+export function placeMark(anchor: StageBox, size: { w: number; h: number }, stage: { w: number; h: number }, side: Exclude<MarkSide, 'over'>): { x: number; y: number } {
   const g = MARK_GAP;
   let x: number;
   let y: number;
-  if (side === 'right') {
-    x = anchor.x + anchor.w + g;
-    if (x + size.w > stage.w - STAGE_EDGE) x = anchor.x - g - size.w;
-    y = anchor.y + anchor.h / 2 - size.h / 2;
-  } else if (side === 'below' || side === 'point') {
+  if (side === 'below' || side === 'point') {
     const top = side === 'point' ? anchor.y : anchor.y + anchor.h + g;
     y = top + size.h > stage.h - STAGE_EDGE ? (side === 'point' ? anchor.y : anchor.y - g) - size.h : top;
     x = side === 'point' && anchor.x + size.w > stage.w - STAGE_EDGE ? anchor.x - size.w : anchor.x;
@@ -36,11 +32,26 @@ export function placeMark(anchor: StageBox, size: { w: number; h: number }, stag
   return { x: clamp(x, STAGE_EDGE, stage.w - size.w - STAGE_EDGE), y: clamp(y, STAGE_EDGE, stage.h - size.h - STAGE_EDGE) };
 }
 
+/** The top left, in stage pixels, of a box of `size` laid over `anchor` with its point `at` (from the box's top left:
+ *  the picker's Tick, its centre) on the anchor's centre, kept inside the stage; `fits` is false when the stage's left
+ *  or right edge moved it off the anchor (the picker then lays Cross on the other side and is placed again). */
+export function placeOver(anchor: StageBox, size: { w: number; h: number }, at: { x: number; y: number }, stage: { w: number; h: number }): { x: number; y: number; fits: boolean } {
+  const [x, y] = [anchor.x + anchor.w / 2 - at.x, anchor.y + anchor.h / 2 - at.y];
+  const fits = x >= STAGE_EDGE && x + size.w <= stage.w - STAGE_EDGE;
+  return { x: clamp(x, STAGE_EDGE, stage.w - size.w - STAGE_EDGE), y: clamp(y, STAGE_EDGE, stage.h - size.h - STAGE_EDGE), fits };
+}
+
 /** `el`'s box in the stage's pixels. */
 export function stageBoxOf(el: Element, stage: HTMLElement): StageBox {
   const r = el.getBoundingClientRect();
   const s = stage.getBoundingClientRect();
   return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height };
+}
+
+/** Whether client point `x`, `y` is on `el`'s box (a box drawn under a still pointer gets no enter or leave). */
+export function pointOn(el: Element | null | undefined, x: number, y: number): boolean {
+  const r = el?.getBoundingClientRect();
+  return !!r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
 }
 
 /** Write a placed box's top left (CSSOM: the page's CSP refuses inline styles). */

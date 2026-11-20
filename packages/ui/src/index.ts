@@ -44,6 +44,8 @@ export { applyTimelineLook } from './timeline/timeline-apply.ts';
 export { imageNote, IMAGE_NOTE } from './markdown/image.ts';
 export type { MarkdownOptions } from './markdown/render.ts';
 export { bindHoverTip } from './tip/hover-tip.ts';
+export { CLOSE_GRACE_MS } from './tip/close-grace.ts';
+export { REST_OPEN_MS } from './tip/rest-open.ts';
 export type { HoverTip, HoverTipOptions } from './tip/hover-tip.ts';
 export { pauseControls } from './paused/paused.ts';
 export { defineAppFrame, defineBoardElements, defineImageView, loadConversation } from './elements.ts';
