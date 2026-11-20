@@ -63,7 +63,7 @@ test('scrolled away from the latest: the feed shows Jump to latest, and the othe
 test('the status line and the header follow the turn', async ({ page }) => {
   const status = (state: string) => sample(page, state).locator('.chat-hd-status');
   const line = (state: string) => sample(page, state).getByRole('status');
-  await expect(line('thinking')).toHaveText('Thinking…');
+  await expect(line('thinking')).toHaveText('Working…');
   await expect(line('tool')).toHaveText('Drawing on the board…');
   await expect(line('streaming')).toHaveText('Writing…');
   await expect(line('approval')).toHaveText('Waiting for your answer');
@@ -162,7 +162,7 @@ test('composer: one chip for what goes from the board, opening a preview of exac
   await s.getByRole('button', { name: 'Send', exact: true }).click();
   // While the agent works, what is attached waits: Send stays on and says so.
   const working = sample(page, 'answers-working');
-  await expect(working.locator('.chat-cmp-line')).toHaveText('The agent is working. What is attached goes when it finishes; Stop it to send words alone.');
+  await expect(working.locator('.chat-cmp-line')).toHaveText('Agent is working. Stop it to send words now.');
   await working.getByRole('textbox', { name: 'Message to the agent' }).fill('And these');
   await working.getByRole('textbox', { name: 'Message to the agent' }).press('Enter');
   expect(await events(page)).toEqual([

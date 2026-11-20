@@ -179,7 +179,7 @@ test('while the agent works, a message with context waits and goes when the turn
     await expect(submit(page)).toBeDisabled();
     await answerBy(page, 3, 'Tick');
     await expect(answers(page)).toHaveText('1 answer');
-    await expect(side(page).locator('.chat-cmp-line')).toHaveText('The agent is working. What is attached goes when it finishes; words you send now are queued.');
+    await expect(side(page).locator('.chat-cmp-line')).toHaveText('Agent is working. Messages you send are queued.');
     await text(page).fill('Also these');
     await text(page).press('Enter');
     await expect(side(page).locator('.chat-system').last()).toHaveText(QUEUED_WORDS);

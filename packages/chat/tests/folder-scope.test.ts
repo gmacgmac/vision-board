@@ -90,11 +90,11 @@ test('a host that queues lets words go while the agent works, and while it waits
   }
   const v = composerView(busy, { queues: true });
   assert.equal(v.send, true);
-  assert.match(v.hint, /^The agent is working\. A message you send now is queued/);
+  assert.match(v.hint, /^Agent is working\. Messages you send are queued\.$/);
   assert.equal(sendIntent('And this', v), 'send');
   assert.equal(sendIntent('', v), 'skip');
   assert.match(composerView(asking, { queues: true }).hint, /waiting for your OK/);
-  assert.match(composerView(busy, { queues: true, holds: true }).hint, /What is attached goes when it finishes; words you send now are queued/);
+  assert.match(composerView(busy, { queues: true, holds: true }).hint, /^Agent is working\. Messages you send are queued\.$/);
   assert.deepEqual(composerView(EMPTY_CHAT, { queues: true }), composerView(EMPTY_CHAT), 'idle: nothing changes');
   assert.match(composerView(busy).hint, /Stop it to send now/, 'the flag off: as before');
 });

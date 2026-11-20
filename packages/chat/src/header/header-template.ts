@@ -1,5 +1,5 @@
-// Chat header pattern, layer 2 (template): the agent and the model (a picker when there is a
-// choice), the status word with its dot, then Stop and New session.
+// Chat header pattern, layer 2 (template): on one row, the status dot, the agent and the model (a picker when there
+// is a choice), then Stop and New session.
 import { esc } from '../esc.ts';
 import type { AllowedItem, ChatOption, HeaderView } from './header-core.ts';
 
@@ -10,14 +10,16 @@ function field(name: 'agent' | 'model', label: string, f: { id: string; label: s
 }
 
 export function headerTemplate(v: HeaderView): string {
-  const who = `<div class="chat-hd-who">${field('agent', 'Agent', v.agent)}<span class="chat-hd-sep" aria-hidden="true">·</span>`
+  // One row (point 676): the status as a dot before the agent (its word in the tip and for a screen reader), the agent
+  // and model, then Stop and New session.
+  const status = `<span class="chat-hd-status" data-tone="${v.status.tone}" data-status="${v.status.kind}" title="${esc(v.status.label)}">`
+    + `<span class="chat-hd-dot" aria-hidden="true"></span><span class="chat-sr">Status: ${esc(v.status.label)}</span></span>`;
+  const who = `<div class="chat-hd-who">${status}${field('agent', 'Agent', v.agent)}<span class="chat-hd-sep" aria-hidden="true">·</span>`
     + `${field('model', 'Model', v.model)}</div>`;
-  const status = `<p class="chat-hd-status" data-tone="${v.status.tone}" data-status="${v.status.kind}">`
-    + `<span class="chat-hd-dot" aria-hidden="true"></span><span class="chat-sr">Status: </span>${esc(v.status.label)}</p>`;
   const acts = '<div class="chat-hd-acts">'
     + `<button type="button" class="chat-btn" data-do="stop"${v.stop ? '' : ' disabled'}>Stop</button>`
-    + '<button type="button" class="chat-btn" data-do="new">New session</button></div>';
-  return `${who}${status}${acts}`;
+    + '<button type="button" class="chat-btn" data-do="new" aria-label="New session" title="New session">New</button></div>';
+  return `${who}${acts}`;
 }
 
 export const ALLOWED_LABEL = 'Allowed for this folder';

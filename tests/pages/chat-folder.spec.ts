@@ -269,7 +269,7 @@ test('words sent while the agent works are queued and go in order (workAlongside
   const line = side(page).locator('.chat-cmp-line');
   const given = await busy(page, 'First');
   try {
-    await expect(line).toHaveText('The agent is working. What is attached goes when it finishes; words you send now are queued.');
+    await expect(line).toHaveText('Agent is working. Messages you send are queued.');
     await text(page).fill('Second thought');
     await expect(side(page).locator('.chat-cmp-send')).toBeEnabled();
     await text(page).press('Enter');
@@ -278,7 +278,7 @@ test('words sent while the agent works are queued and go in order (workAlongside
     expect(next.prompt).toContain('Second thought');
     await open(page, '-workAlongside');
     const held = await busy(page, 'Third');
-    await expect(line).toHaveText('The agent is working. What is attached goes when it finishes; Stop it to send words alone.');
+    await expect(line).toHaveText('Agent is working. Stop it to send words now.');
     await text(page).fill('Fourth');
     await expect(side(page).locator('.chat-cmp-send')).toBeDisabled();
     expect(held.args[5]).toBeTruthy();

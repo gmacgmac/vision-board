@@ -25,9 +25,9 @@ test('a whole turn: the person, the agent\'s words, one change chip; tools and t
 test('the status line: thinking, a tool, the board, writing, waiting; none once the turn ends', () => {
   const at = (n: number) => activityLine(run(TURN.slice(0, n)));
   assert.equal(activityLine(EMPTY_CHAT), null);
-  assert.equal(at(1), 'Thinking…');
+  assert.equal(at(1), 'Working…');
   assert.equal(at(2), 'Using Read…');
-  assert.equal(at(3), 'Thinking…');
+  assert.equal(at(3), 'Working…');
   assert.equal(at(4), 'Writing…');
   assert.equal(at(5), 'Drawing on the board…');
   assert.equal(at(7), 'Writing…');
