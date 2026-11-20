@@ -63,7 +63,7 @@ test('scrolled away from the latest: the feed shows Jump to latest, and the othe
 test('the status line and the header follow the turn', async ({ page }) => {
   const status = (state: string) => sample(page, state).locator('.chat-hd-status');
   const line = (state: string) => sample(page, state).getByRole('status');
-  await expect(line('thinking')).toHaveText('Thinking…');
+  await expect(line('thinking')).toHaveText('Working…');
   await expect(line('tool')).toHaveText('Drawing on the board…');
   await expect(line('streaming')).toHaveText('Writing…');
   await expect(line('approval')).toHaveText('Waiting for your answer');

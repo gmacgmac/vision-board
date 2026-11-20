@@ -111,7 +111,7 @@ export function activityLine(s: ChatState): string | null {
   if (s.pending.length) return 'Waiting for your answer';
   const t = s.running.at(-1);
   if (t) return t.board !== undefined ? 'Drawing on the board…' : `Using ${t.tool}…`;
-  return s.last === 'text' ? 'Writing…' : 'Thinking…';
+  return s.last === 'text' ? 'Writing…' : 'Working…'; // point 676: it works, it is not only thinking
 }
 
 /** What a change chip says: "Drew 3 cards on Pricing". `boardName` is the host's (a board's title). */

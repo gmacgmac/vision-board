@@ -61,7 +61,7 @@ const SAMPLES: Sample[] = [
   { state: 'empty', caption: 'Empty: a new session; chips a host attaches, each removable (the board attaches one chip instead); the agent can still be picked',
     scene: 'session', upTo: 0, header: { agents: AGENTS },
     chips: [{ kind: 'card', ref: 3, label: 'Release plan' }, { kind: 'card', ref: 7, label: 'Ship on Friday?' }, { kind: 'note', ref: 41, label: 'Keep a written record' }] },
-  { state: 'thinking', caption: 'Thinking: the message is sent, nothing back yet', scene: 'session', upTo: 1 },
+  { state: 'thinking', caption: 'Working: the message is sent, nothing back yet', scene: 'session', upTo: 1 },
   { state: 'tool', caption: 'A tool running: one quiet line, never the tool\'s input', scene: 'session', upTo: 4 },
   { state: 'streaming', caption: 'Streaming: the change chip and the reply are in; the turn has not ended', scene: 'session', upTo: 6 },
   { state: 'approval', caption: 'Approval: a file change waits for Allow or Deny', scene: 'session', upTo: 10, now: '2026-10-08T21:39:25Z' },

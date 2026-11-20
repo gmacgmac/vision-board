@@ -112,11 +112,11 @@ test('header: the agent and model named, a picker only with a choice; the status
   const html = headerTemplate(idle);
   assert.match(html, /<span class="chat-hd-agent" title="Agent">Claude<\/span>/);
   assert.match(html, /data-do="stop" disabled>Stop/);
-  assert.match(html, /data-tone="quiet" data-status="ready">.*Ready<\/p>/);
+  assert.match(html, /data-tone="quiet" data-status="ready" title="Ready">.*Status: Ready<\/span><\/span><span class="chat-hd-agent"/); // the dot before the agent, one row (point 676)
   const busy = headerView({ agent: 'kiro', agents, model: 'opus' }, applyEvents(EMPTY_CHAT, stamp(TURN.slice(0, 1))));
   assert.equal(busy.stop, true);
   const picker = headerTemplate(busy);
   assert.match(picker, /<select class="chat-hd-pick chat-hd-agent" data-pick="agent" aria-label="Agent"><option value="claude">Claude<\/option><option value="kiro" selected>Kiro<\/option><\/select>/);
   assert.match(picker, /<span class="chat-hd-model" title="Model">opus<\/span>/);
-  assert.match(picker, /data-status="busy">.*Working<\/p>/);
+  assert.match(picker, /data-status="busy" title="Working">.*Status: Working<\/span>/);
 });
