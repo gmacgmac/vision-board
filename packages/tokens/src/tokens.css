@@ -275,7 +275,6 @@
      or more on every kind); answered, it fills green or red with a white mark (Lc 73.2, 74.7). The
      fills sit on the border, so each is a mark on the card and the canvas (decoration, 30): red is
      lighter in dark to reach it (31.1 on the card). */
-  --vb-answer-wait: var(--vb-surface-canvas);
   --vb-answer-tick: #0c8f5f;
   --vb-answer-cross: light-dark(#cf3a3a, #d84341);
   --vb-answer-mark: #ffffff;
