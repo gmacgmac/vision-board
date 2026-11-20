@@ -1,8 +1,8 @@
 ---
 task_name: Plugin Fonts
 created: 2026-11-20
-completed:
-status: pending
+completed: 2026-11-20
+status: completed
 categories: [board-tokens]
 type: implementation
 model: strong
@@ -73,7 +73,53 @@ Keep it as small as an accurate, fully checked result needs.
 
 ## Implementation Notes
 
-_To be completed by agent after task execution._
+**Done, per step.**
+1. Tokens: exactly the approved change (`tokens.css` text and display, the comment above them naming D-116; `skins.css`
+   Command Lens display and label). Nothing else in `packages/tokens/src/`.
+2. Build: `hostTakesNoFontFaces` is gone; `vite.plugin.config.ts` `placeFontFaces(faces)` rewrites each `@font-face` src to
+   `url("fonts/<file>.woff2") format("woff2")` and drops whatever the bundler made of the face; it stops the build unless
+   every face is placed once, in order. The verify layer rule forbids file access outside `apps/board/bin/`, so the faces
+   are read and copied there: `bin/build-plugin.ts` `FACES` (parsed from `packages/tokens/src/fonts.css`, the one source)
+   and the copy of each `.woff2` and its `-OFL.txt` into `view/fonts/`. The standalone page is untouched (same `fonts.css`).
+3. Manifest: `PARTS.fonts` (`view/fonts`), `manifestOf(…, fonts)` writes `view.fonts`; schema `view.fonts` (array of
+   unique `.woff2` paths, optional, as nclite's is).
+4. `plugin-build.test.ts`: "the faces: …" holds the handover's rules (top level, `vb-` family, one listed relative `.woff2`
+   with optional `format("woff2")`, the six descriptors only, each once, no backslash; each file `wOF2`, ≤ 512 KiB, its OFL
+   beside it); FILES lists the eight font files; the host's own `checkPluginStylesheet` now gets `view/board.css` and
+   `view.fonts`, plus a case that an unlisted face is refused.
+5. Docs: `plugin.md` (folder row, type row, Skins, Fonts, manifest row, open point 15 settled, the nclite answer cited in
+   the last section, since the spec may name nclite only there: `spec-truth.test.ts`); `dependencies.md` § Vendored assets.
+6. Checks: see the return block.
+
+**Deviation (outside Files Involved, needed for the checks to hold).**
+- The board's copies of nclite's contract (`tests/plugin/contract/nclite/`) were nclite `a7c2a706`, whose stylesheet check
+  refuses any `@font-face`. Refreshed per its README to nclite `9ee62022` (ADR-0382): `stylesheet.ts`,
+  `words/plugins.ts`, `shared/plugin-host.ts` (adds `view.fonts?`, `FONT_BYTES`; drops the deprecated `print`); README
+  table and prose updated.
+- `plugin-types.test.ts`: no longer compares the board's `print` with the contract's (the contract dropped it). The board's
+  own `BoardHost.print?` stays (a types change would touch the seam; not this task's).
+- Tests that held the old order: `packages/tokens/tests/fonts.test.ts` (shape of every type token),
+  `apps/board/tests/plugin-theme.test.ts` (faces follow the board's, colours still in front), `tests/plugin/token-contrast.spec.ts`
+  (Command Lens under a host: `"vb-space-grotesk", Georgia`, `"vb-jetbrains-mono", Courier`). `apps/board/plugin/theme.css`
+  head comment (its last sentence said a host's face wins over a skin's).
+
+**Sizes.** `view/board.css` gzip 26,805 against 26,681 at HEAD (+124 B, the four `@font-face` rules, 630 B raw); the budget
+is 26,600, which HEAD already exceeded. `view/board.js` 209,701 against 209,500, unchanged by this task (no JS input
+changed). The budget test fails on both; budgets move only by decision, so they are left for the maintainer.
+
+**Browser.** Under the fake host with `--host-font: Georgia` and `--host-font-mono: Courier`, light and dark: default skin
+titles compute `vb-bricolage-grotesque, vb-figtree, Georgia`, Figtree and Bricolage load (200 from `/plugin/view/fonts/`);
+Command Lens titles `vb-space-grotesk, Georgia`, labels `vb-jetbrains-mono, Courier`, all four faces load. The chrome
+around the cards stays Georgia. Looked at in screenshots, light and dark; the throwaway spec in `temp/` was removed.
+
+### Caught Beyond the Brief
+- Command Lens keeps `--vb-font-text: var(--vb-host-font, var(--vb-font))` (approved "text unchanged"), so its card text
+  and kind chip draw in the host's face under a host, while its titles and labels are the board's: a mixed card.
+- `packages/tokens/src/fonts.css` head comment still says the plugin build leaves the faces out (`hostTakesNoFontFaces`),
+  and `skins.css` head says a host's fonts win over any skin: both untrue now, both in the protected tokens package.
+- The fake host serves `.woff2` as `application/octet-stream`; nclite serves `font/woff2`. Browsers load either.
+- No security concern: the faces are the vendored, SHA-256-registered files, served from the plugin's own folder; no
+  address leaves the folder (`url()` only in a face's src, checked by both the host's check and ours).
 
 ## On Completion
 

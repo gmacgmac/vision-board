@@ -1,6 +1,6 @@
 ---
 category: project-tooling
-last_updated: 2026-11-16
+last_updated: 2026-11-20
 status: active
 scope: Every direct third-party package, with its exact version, who uses it and why; install scripts, licences and weight; every vendored asset (the board's fonts)
 keywords: [dependencies, register, supply chain, npm, licences, install scripts, versions, fonts, vendored]
@@ -75,7 +75,8 @@ family's own repository at the commit named, font and licence files only, and op
 Brotli stream, tables, family and weights: `packages/tokens/tests/fonts.test.ts`, which also holds every SHA-256 below).
 They live in `packages/tokens/fonts/` beside their licences; `packages/tokens/src/fonts.css` names them, and the browser
 fetches one only when text is drawn in it (`font-display: swap`). The standalone page serves them from itself; the plugin
-does not carry them yet (`docs/specification/plugin.md` § Theme and host styling, Fonts). Why: the two skins' type
+carries the same files, each beside its licence, in its `view/fonts/` (`docs/specification/plugin.md` § Theme and host
+styling, Fonts; D-116). Why: the two skins' type
 (D-100, D-102; planner's call 4), with no font loaded from the network.
 
 | File | Family, version | Weights | Source (HTTPS, `raw.githubusercontent.com/<repo>/<commit>/<path>`) | Bytes | SHA-256 |

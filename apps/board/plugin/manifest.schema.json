@@ -13,14 +13,15 @@
     "scope": { "description": "The prefix of the stylesheet's classes, elements and properties (`vb-`, `--vb-`) when it is not the id: a host checks the sheet against it. Lowercase letters and digits, from a letter, 2 to 16; never `host` or `ui`.", "type": "string", "pattern": "^[a-z][a-z0-9]{1,15}$", "not": { "enum": ["host", "ui"] } },
     "seam": { "description": "The version of the seam a host implements: the view's `mount` and its host, the engine's `createEngine` and what it gives back (plugin.d.ts). It moves only for a change a host built against the last one would not survive; a host compares it with the one it was built for before it loads the folder.", "type": "integer", "minimum": 1 },
     "view": {
-      "description": "The view: an ES module that exports `mount(root, host)`, and its one stylesheet.",
+      "description": "The view: an ES module that exports `mount(root, host)`, its one stylesheet, and the faces the sheet declares.",
       "type": "object",
       "additionalProperties": false,
       "required": ["module", "styles", "export"],
       "properties": {
         "module": { "$ref": "#/$defs/path" },
         "styles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/path" } },
-        "export": { "const": "mount" }
+        "export": { "const": "mount" },
+        "fonts": { "description": "The .woff2 faces the stylesheet's @font-face rules name, each beside the sheet (D-116).", "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*(/[a-z0-9][a-z0-9_.-]*)*\\.woff2$" } }
       }
     },
     "engine": {

@@ -23,8 +23,8 @@
      --host-color-scheme    the board's root's color-scheme (plugin/color-scheme.css)
    Each fallback below is the token's own value, held equal by apps/board/tests/plugin-theme.test.ts. Declared on the
    board's root as well as `:root`, so a property set on the root alone reaches it. The two faces also reach the node's
-   type tokens (--vb-font-text, -display, -label) through --vb-host-font and -mono, which every skin keeps in front, so
-   a host's face wins over a skin's (D-094; packages/tokens/src/skins.css). */
+   type tokens (--vb-font-text, -display, -label) through --vb-host-font and -mono, behind the board's own faces, which
+   every skin names first (D-116; packages/tokens/src/skins.css). */
 :root, .vb-board {
   --vb-font: var(--host-font, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
   --vb-font-mono: var(--host-font-mono, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);

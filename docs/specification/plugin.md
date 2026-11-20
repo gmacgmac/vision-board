@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: draft
 created: 2026-10-31
-updated: 2026-11-20 (§ A guest in the host's page: Print-safe CSS, no CSS mask, the corners a clip-path, the verify check and the paint audit: access-clarity T_04, D-115); 2026-11-20 (§ What the host gives: `savePdf(ask)` replaces `print(ask)` in the contract: one page of exactly `size`, the root on the board's own background, Save as PDF… only with `savePdf`; `print` the contract's deprecated alias, never called); 2026-11-20 (§ What the host gives: `print(ask)` with the host's `PrintAsk`, the host owns the paper and the look; an import over 1 MiB refused before it is sent: folders-labels-print T_04); 2026-11-19 (§ The folder: `references/files.md`, an agent's export and import, export-import-print T_03); 2026-11-19 (§ What the host gives: the optional `saveFile`, `openFile` and `print`, an addition within seam 2, export-import-print T_01, D-107); 2026-11-18 (§ The folder: `references/timeline.md`, a node's date and its container's timeline, timeline T_02); 2026-11-18 (§ The folder, § The bot: `skill.md` and its `references/`, built from the same source as the standalone skill; a host lets its bot read the references, node-overhaul T_05); 2026-11-18 (§ The engine: `show_layout` lays a flow out the way it runs with its branches on rows, no flag, node-overhaul T_04); 2026-11-17 (§ The engine: the flow direction and branching reach `show_layout`, node-overhaul BE_01); 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
+updated: 2026-11-20 (§ The folder, § Theme and host styling, Fonts, § The manifest: the folder brings the board's four faces in `view/fonts/`, `view.fonts` lists them, the board's faces first in every stack and a host's face the fallback; open point 15 settled: plugin-fonts, D-116); 2026-11-20 (§ A guest in the host's page: Print-safe CSS, no CSS mask, the corners a clip-path, the verify check and the paint audit: access-clarity T_04, D-115); 2026-11-20 (§ What the host gives: `savePdf(ask)` replaces `print(ask)` in the contract: one page of exactly `size`, the root on the board's own background, Save as PDF… only with `savePdf`; `print` the contract's deprecated alias, never called); 2026-11-20 (§ What the host gives: `print(ask)` with the host's `PrintAsk`, the host owns the paper and the look; an import over 1 MiB refused before it is sent: folders-labels-print T_04); 2026-11-19 (§ The folder: `references/files.md`, an agent's export and import, export-import-print T_03); 2026-11-19 (§ What the host gives: the optional `saveFile`, `openFile` and `print`, an addition within seam 2, export-import-print T_01, D-107); 2026-11-18 (§ The folder: `references/timeline.md`, a node's date and its container's timeline, timeline T_02); 2026-11-18 (§ The folder, § The bot: `skill.md` and its `references/`, built from the same source as the standalone skill; a host lets its bot read the references, node-overhaul T_05); 2026-11-18 (§ The engine: `show_layout` lays a flow out the way it runs with its branches on rows, no flag, node-overhaul T_04); 2026-11-17 (§ The engine: the flow direction and branching reach `show_layout`, node-overhaul BE_01); 2026-11-16 (§ The engine: older ledgers are migrated on a writable open, a newer one is read-only, and one engine opens a `dir` at a time: D-103, open point 14); 2026-11-09 (the host's `pageChanged`; under `botToolRules`, no `size` or `widths`, and a picture it can't show named); 2026-11-08 (the id `vision-board`, the manifest's `scope`; a deleted `dir` or ledger is a new, empty folder); 2026-11-07 (seam 2, the host contract's shapes: `events` and the chat's refs, `send(record)` with acks, the answers chip's `ack`, the change line `plugin/change` and `changeWords`, the `singleAgent` and `followOtherWriters` flags, the scoped sheet; the last section rewritten for the contract: plugin-contract T_01); 2026-11-06 (§ Theme and host styling: colour and mode properties, scope, contrast; open point 8 settled; the fill apart from the accent); 2026-11-05 (open point 12: the person's reason names Editing: FIX_02); 2026-11-03 (read-only for a host: § The engine `readOnly`, `watch` on a replaced ledger; Open points 12-14)
 scope: The board as a plugin — what any host implements: the folder, the view seam, the engine seam, the types and the seam version, the manifest, tools over MCP, attachments, theme, and how an update travels
 keywords: [plugin, host, mount, engine, manifest, MCP, seam, types, version, read-only]
 ---
@@ -41,7 +41,8 @@ the same bytes, and neither bundle imports anything a host must supply but Node'
 |---|---|
 | `manifest.json` | What the plugin is, read before anything loads (§ The manifest) |
 | `view/board.js` | Browser ES module, one export: `mount`. Its own Svelte is inside; no dynamic import, no chunk |
-| `view/board.css` | The one stylesheet, no `@import`, no address |
+| `view/board.css` | The one stylesheet, no `@import`; its only addresses are its faces' (§ Theme and host styling, Fonts) |
+| `view/fonts/` | The board's four faces, each a `.woff2` beside its OFL licence, which the sheet declares and the manifest's `view.fonts` lists |
 | `engine/engine.js` | Node ES module, one export: `createEngine`. Reads and writes only the folder it is given |
 | `words.json` | The manifest's words keys, and the board's fixed words, by `vision-board.<area>.<name>` |
 | `skill.md` | What the bot reads while the plugin is on (§ The bot) |
@@ -434,7 +435,7 @@ property is optional: a CSS custom property you set and the board only reads, ne
 
 | Property | What it is | Without it |
 |---|---|---|
-| `--host-font` | The text face, a `font-family` list | The board's own |
+| `--host-font` | The text face around the cards, and on a card behind the board's own faces (Fonts, below), a `font-family` list | The board's own |
 | `--host-font-mono` | The face of code and numbers, a list | The board's own |
 | `--host-text-scale` | The text size around the cards, a number | `1.25` |
 
@@ -485,19 +486,25 @@ Proven by `host-styling.spec.ts` "live:".
 
 **Skins** (D-100). A board has a skin, which the board sets on its root as `data-vb-skin` from the board's own record; a
 skin is `--vb-*` values only (`packages/tokens/src/skins.css`), never a rule of its own. Every colour a property above feeds
-keeps your property in front in every skin, and so do the faces below, so what you set wins over a skin's look (D-094).
+keeps your property in front in every skin, so your colours win over a skin's look (D-094); a card's faces are the
+board's own first, yours after them (Fonts, below).
 The skin, the node's tones and their contrast are measured in the view's sheet as you load it, light and dark, in Chromium
 and WebKit (the same spec's sweep, per skin). Proven by `token-contrast.spec.ts` "a skin's values reach the board's root",
-`apps/board/tests/plugin-theme.test.ts` "a host's colours and faces win over a skin".
+`apps/board/tests/plugin-theme.test.ts` "a host's colours win over a skin, and its faces follow the board's".
 
-**Fonts** (D-102). The board's own type is four faces under the SIL Open Font License: Figtree and Bricolage Grotesque
-(the default skin's text and titles), Space Grotesk and JetBrains Mono (Command Lens's titles and labels). The folder
-does not bring them yet: your check of a plugin's stylesheet refuses `@font-face` and any `url()` but `data:`, so the
-view's sheet declares no face and loads no file (`vite.plugin.config.ts` `hostTakesNoFontFaces`), and each of the
-node's type tokens (`--vb-font-text`, `--vb-font-display`, `--vb-font-label`) falls back to your `--host-font` or
-`--host-font-mono`, else the system's stacks. Give `--host-font` and the board draws in your face in every skin, as
-it does today. How a host lets a plugin bring its own faces is open point 15. Proven by
-`apps/board/tests/plugin-build.test.ts` "the built sheet stays in its scope", "the view bundle is one file".
+**Fonts** (D-102, D-116). The board's own type is four faces under the SIL Open Font License: Figtree and Bricolage
+Grotesque (the default skin's text and titles), Space Grotesk and JetBrains Mono (Command Lens's titles and labels). The
+folder brings them, so a card keeps the size it was designed at under a host: `view/fonts/` holds each `.woff2` beside its
+licence, the manifest's `view.fonts` lists the four, and the view's sheet declares each at its top level, a `vb-` family
+and one plain `src: url("fonts/<file>.woff2") format("woff2")` relative to the sheet, with no other descriptor than
+`font-family`, `src`, `font-weight`, `font-style`, `font-display` (`vite.plugin.config.ts` `placeFontFaces`). Each of the
+node's type tokens (`--vb-font-text`, `--vb-font-display`, `--vb-font-label`) names the board's face first, then your
+`--host-font` or `--host-font-mono`, then the system's stacks; the text around the cards stays in your face. A host that
+takes no faces gets your face on the cards instead. These are the host contract's rules for a face (open point 15), and
+the build test holds them too, so a face that breaks one fails the board's build, not a host's vendoring. Proven by
+`apps/board/tests/plugin-build.test.ts` "the faces:", "the built sheet stays in its scope",
+`packages/tokens/tests/fonts.test.ts` "every type token names the board's faces first",
+`token-contrast.spec.ts` "a skin's values reach the board's root".
 
 **Contrast** (D-009). The board's own pairs meet APCA tiers, measured with APCA-W3 0.0.98G-4g, light and dark. Your colours
 are your promise: in each mode you give, measured the same way, your pairs meet these. A property you leave out counts as the
@@ -593,7 +600,7 @@ Proven by `apps/board/tests/plugin-types.test.ts` "the manifest holds the seam n
 | `scope` | `vb`: the prefix of the stylesheet's classes, elements and properties, against which a host checks the sheet. Without it the id is the scope, and the sheet fails that check (§ A guest in the host's page) |
 | `version` | The API's version (`info.version` in `openapi.json`), a string |
 | `seam` | The seam's version, a whole number from 1 (§ The types and the seam version) |
-| `view` | `{ module, styles, export }`: `view/board.js`, `[view/board.css]`, `mount` |
+| `view` | `{ module, styles, export, fonts }`: `view/board.js`, `[view/board.css]`, `mount`, and the four faces in `view/fonts/` (§ Theme and host styling, Fonts) |
 | `engine` | `{ module, export }`: `engine/engine.js`, `createEngine` |
 | `chips` | Each `{ kind, words }`: `card`, `note`, `board`, `selection`, `answers` |
 | `tools` | Each `{ name, words, input, writes }`, exactly `tools.list()`; `input` is its JSON Schema; `writes` says it changes the ledger |
@@ -670,11 +677,12 @@ Open, from read-only (D-085 7), 2026-11-03, for the maintainer:
 14. **A lock of the host's own.** Standalone takes the ledger's lock on Edit, so two computers never write one ledger; the
     engine takes none, and § The engine now states the rule it migrates on: one engine opens a `dir` at a time. A host that lets two writers open one `dir` (a shared folder) keeps them apart itself, or asks for
     the lock in the seam. With `followOtherWriters` off, such a second writer is not even heard until the engine's next call.
-15. **The board's faces under a host** (D-102; § Theme and host styling, Fonts). The host's stylesheet check refuses
-    `@font-face` and any `url()` but `data:`, so the folder brings no face. Either the check lets a plugin's sheet name a
-    `woff2` inside its own folder (a host change, then the folder carries `fonts/`), the faces travel as `data:` in a
-    second sheet the manifest names (about 240 KB, loaded with the view whether a skin uses them or not), or a host gives
-    `--host-font` and the board never needs them. Open: the maintainer's ruling.
+15. **The board's faces under a host** (D-102, D-116; § Theme and host styling, Fonts). **Settled** (points 721-723): the
+    host contract lets a plugin bring its faces (the last section, Fonts): listed in `view.fonts`, each beside the
+    sheet that declares it at the top level with a scoped family and one listed url, a WOFF2 file of at most 512 KiB with
+    its licence in the folder. The folder carries `view/fonts/`, and the board's faces come first in every stack. Proven
+    by `apps/board/tests/plugin-build.test.ts` "the faces:", and by the host's own check of the built sheet in "the built
+    sheet stays in its scope".
 
 ## What nclite needs
 
@@ -713,6 +721,11 @@ Leave `svgImages`, `botToolRules` and `insertBetween` at their defaults.
 
 **Attachments there.** Its chat already uploads on submit and tells the bot the path, and the reader runs in its container:
 nothing to add for the board.
+
+**Fonts.** nclite's answer to open point 15: its handover of 2026-11-20 (`cortex-tasks/nclite/2026-11-20_plugin-fonts-handover.md`
+in its repo), ADR-0382, `docs/plugins.md` § A guest in the app's page, Fonts, checked by `checkFontFace`
+(`engine/plugins/stylesheet.ts`), whose copy the board's build test runs. nclite takes the folder's `view/fonts/` on its next
+vendoring. Still its to check: the variable faces in a desktop Save as PDF (static files for any weight that is lost).
 
 ### Where the board lives in nclite
 

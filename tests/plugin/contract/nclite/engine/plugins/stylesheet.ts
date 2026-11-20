@@ -14,8 +14,10 @@ import { PLUGIN_WORDS } from '../words/plugins.ts';
  *   first compound, as a class `.<scope>` or `.<scope>-…` or an element `<scope>-…`, and no `:is`/`:where`/`:not`/`:has`
  *   there; a rule nested in a style rule is under its parent and is not checked again;
  * - `:root` declares only `--<scope>-*`;
- * - `@property` and `@keyframes` are named `--<scope>-…` and `<scope>-…`; no other at-rule but the three groups above;
- * - no `@import`, and `url()`, `image-set()`, `image()` or `src()` only (and no `var()` or `attr()` inside the last three) of a `data:` address;
+ * - `@property` and `@keyframes` are named `--<scope>-…` and `<scope>-…`; a top-level `@font-face` holds only a face the
+ *   manifest lists (`checkFontFace`); no other at-rule but the three groups above;
+ * - no `@import`, and `url()`, `image-set()`, `image()` or `src()` only (and no `var()` or `attr()` inside the last three) of a
+ *   `data:` address, but for an `@font-face` src;
  * - no backslash outside a string, which could spell `url(` unseen (the content security policy is what stops a fetch; this
  *   refuses the spellings that would hide one from a reader);
  * - every `var()` reads a host property (`HOST_PROPERTIES`), a `--<scope>-*` one, or one the sheet declares.
@@ -26,6 +28,10 @@ import { PLUGIN_WORDS } from '../words/plugins.ts';
 export interface StylesheetRules {
 	/** The plugin's scope: its manifest's `scope`, else its id (`scopeOf`, `shared/plugin-checks.ts`). */
 	scope: string;
+	/** The sheet's own path in the plugin's folder, which an `@font-face` url resolves against. */
+	sheet?: string;
+	/** The manifest's `view.fonts`: the only files an `@font-face` may name. */
+	fonts?: readonly string[];
 }
 
 const S = PLUGIN_WORDS.stylesheet;
@@ -36,7 +42,8 @@ const MAX_PROBLEMS = 10;
 /** The at-rules a sheet may hold: three groups whose rules are checked as the top level's, and two named ones. */
 const GROUPS = new Set(['media', 'supports', 'container']);
 
-type Node = { kind: 'statement'; text: string } | { kind: 'block'; prelude: string; body: Node[] };
+/** A block's `start` and `end` are where its prelude begins and its `}` sits in the scanned sheet. */
+type Node = { kind: 'statement'; text: string } | { kind: 'block'; prelude: string; body: Node[]; start: number; end: number };
 
 /** Bytes a reader could take two ways: refused whole, its message the one problem. */
 class Refused extends Error {}
@@ -121,7 +128,7 @@ function parse(text: string, closes: Map<number, number>, start = 0, end = text.
 			from = i + 1;
 		} else if (c === '{') {
 			const close = closes.get(i)!;
-			nodes.push({ kind: 'block', prelude: text.slice(from, i).trim(), body: parse(text, closes, i + 1, close) });
+			nodes.push({ kind: 'block', prelude: text.slice(from, i).trim(), body: parse(text, closes, i + 1, close), start: from, end: close });
 			i = close;
 			from = close + 1;
 		}
@@ -178,7 +185,14 @@ const declarations = (body: Node[]): [string, string][] =>
 /** What a browser skips before a top-level rule: the `<!--` and `-->` tokens and whitespace. */
 const SKIPPED = /^(?:<!--|-->|[ \t\n])+/;
 
-function checkNodes(nodes: Node[], rules: StylesheetRules, nested: boolean, problems: string[]): void {
+/** What one pass over a sheet gathers: its problems, and where each top-level `@font-face` is, whose url is its own check's. */
+interface Found {
+	problems: string[];
+	faces: [number, number][];
+}
+
+function checkNodes(nodes: Node[], rules: StylesheetRules, nested: boolean, found: Found, top = true): void {
+	const { problems } = found;
 	const { scope } = rules;
 	for (let node of nodes) {
 		node = node.kind === 'statement' ? { ...node, text: node.text.replace(SKIPPED, '') } : { ...node, prelude: node.prelude.replace(SKIPPED, '') };
@@ -193,7 +207,11 @@ function checkNodes(nodes: Node[], rules: StylesheetRules, nested: boolean, prob
 		if (at !== undefined) {
 			const name = node.prelude.slice(at.length + 1).trim().split(/[ \t\n]+/)[0] ?? '';
 			if (at === 'import') problems.push(S.importRule);
-			else if (GROUPS.has(at)) checkNodes(node.body, rules, nested, problems);
+			else if (GROUPS.has(at)) checkNodes(node.body, rules, nested, found, false);
+			else if (at === 'font-face' && top && !nested && node.prelude.toLowerCase() === '@font-face') {
+				found.faces.push([node.start, node.end]);
+				checkFontFace(node.body, rules, problems);
+			}
 			else if (at === 'property') {
 				if (!name.startsWith(`--${scope}-`)) problems.push(S.named(at, name, scope));
 			} else if (at === 'keyframes') {
@@ -207,8 +225,47 @@ function checkNodes(nodes: Node[], rules: StylesheetRules, nested: boolean, prob
 			for (const [property] of declarations(node.body)) if (!property.startsWith(`--${scope}-`)) problems.push(S.root(property, scope));
 			for (const inner of node.body) if (inner.kind === 'block') problems.push(S.root(inner.prelude, scope));
 		}
-		checkNodes(node.body.filter((n) => n.kind === 'block'), rules, true, problems);
+		checkNodes(node.body.filter((n) => n.kind === 'block'), rules, true, found, false);
 	}
+}
+
+/**
+ * A FACE THE PLUGIN BRINGS (`docs/plugins.md` § A guest in the app's page, Fonts): only these descriptors, each matched whole
+ * against its raw text, so an escape (`\2e`) never passes as a name or a path. `src` is one quoted `url()` to a `.woff2`,
+ * relative to the sheet's folder, that the manifest lists in `view.fonts`; the family is one name under the scope.
+ */
+const FACE_VALUES: Readonly<Record<string, RegExp>> = {
+	'font-weight': /^(?:normal|bold|\d{1,4}(?: \d{1,4})?)$/,
+	'font-style': /^(?:normal|italic|oblique(?: -?\d{1,2}deg){0,2})$/,
+	'font-display': /^(?:auto|block|swap|fallback|optional)$/,
+	'unicode-range': /^U\+[0-9A-F?]{1,6}(?:-[0-9A-F]{1,6})?(?:, ?U\+[0-9A-F?]{1,6}(?:-[0-9A-F]{1,6})?)*$/i,
+};
+const FACE_SRC = /^url\((["']?)([a-z0-9][a-z0-9._-]*(?:\/[a-z0-9][a-z0-9._-]*)*\.woff2)\1\)(?: ?format\((["'])woff2\3\))?$/;
+
+function checkFontFace(body: Node[], rules: StylesheetRules, problems: string[]): void {
+	const { scope } = rules;
+	const family = new RegExp(`^(["']?)${scope}-[a-z0-9-]+\\1$`);
+	const seen = new Set<string>();
+	for (const node of body) {
+		if (node.kind === 'block' || node.text.startsWith('@')) {
+			problems.push(S.atRule(node.kind === 'block' ? node.prelude : node.text));
+			continue;
+		}
+		const colon = node.text.indexOf(':');
+		const property = node.text.slice(0, colon).trim().toLowerCase();
+		const value = node.text.slice(colon + 1).trim().replace(/[ \t\n]+/g, ' ');
+		seen.add(property);
+		if (colon === -1) problems.push(S.faceDescriptor(node.text));
+		else if (property === 'font-family') {
+			if (!family.test(value)) problems.push(S.faceFamily(value, scope));
+		} else if (property === 'src') {
+			const path = FACE_SRC.exec(value)?.[2];
+			const folder = rules.sheet?.includes('/') === true ? rules.sheet.slice(0, rules.sheet.lastIndexOf('/') + 1) : '';
+			if (path === undefined || !(rules.fonts ?? []).includes(folder + path)) problems.push(S.faceSrc(value));
+		} else if (FACE_VALUES[property] === undefined) problems.push(S.faceDescriptor(property));
+		else if (!FACE_VALUES[property]!.test(value)) problems.push(S.faceValue(property, value));
+	}
+	if (!seen.has('font-family') || !seen.has('src')) problems.push(S.faceMissing);
 }
 
 const isData = (address: string): boolean => /^data:/i.test(address);
@@ -217,9 +274,10 @@ const isData = (address: string): boolean => /^data:/i.test(address);
  * Every `url(…)` address that is not a `data:` one, found in the scan's `code` (so never in a string) whatever precedes `url(`,
  * and read from its `css`.
  */
-function urls(css: string, code: string): string[] {
+function urls(css: string, code: string, faces: [number, number][]): string[] {
 	const found: string[] = [];
 	for (const m of code.matchAll(/url\([ \t\n]*/gi)) {
+		if (faces.some(([start, end]) => m.index > start && m.index < end)) continue;
 		const i = m.index + m[0].length;
 		const close = css.indexOf(')', i);
 		const address = css[i] === '"' || css[i] === "'" ? css.slice(i + 1, stringEnd(css, i) - 1) : css.slice(i, close === -1 ? css.length : close).replace(/[ \t\n]+$/, '');
@@ -249,11 +307,12 @@ function imageSetStrings(css: string, code: string): string[] {
 
 /** The problems of one stylesheet under `rules`, each naming its rule and what broke it; none is a sheet that passes. */
 export function checkStylesheet(text: string, rules: StylesheetRules): string[] {
-	const problems: string[] = [];
+	const found: Found = { problems: [], faces: [] };
+	const { problems } = found;
 	try {
 		const { css, code, closes } = scan(text.replace(/\r\n?|\f/g, '\n').replace(/\0/g, '�'));
-		checkNodes(parse(css, closes), rules, false, problems);
-		for (const address of [...urls(css, code), ...imageSetStrings(css, code).filter((a) => !isData(a))]) problems.push(S.url(address));
+		checkNodes(parse(css, closes), rules, false, found);
+		for (const address of [...urls(css, code, found.faces), ...imageSetStrings(css, code).filter((a) => !isData(a))]) problems.push(S.url(address));
 		const declared = new Set([...css.matchAll(/(?:^|[;{ \t\n(])(--[\w-]+)[ \t\n]*:/g), ...css.matchAll(/@property[ \t\n]+(--[\w-]+)/g)].map((m) => m[1]!));
 		const readable = new Set<string>([...HOST_PROPERTIES, ...declared]);
 		const unread = new Set<string>();
@@ -271,7 +330,8 @@ export function checkStylesheet(text: string, rules: StylesheetRules): string[] 
 	return problems.length > MAX_PROBLEMS ? [...problems.slice(0, MAX_PROBLEMS), S.more(problems.length - MAX_PROBLEMS)] : problems;
 }
 
-/** The problems of a plugin's stylesheet `bytes` under its `scope` (`scopeOf`, `shared/plugin-checks.ts`). */
-export function checkPluginStylesheet(scope: string, bytes: Uint8Array): string[] {
-	return checkStylesheet(Buffer.from(bytes).toString('utf8'), { scope });
+/** The problems of a plugin's stylesheet `bytes` under its `scope` (`scopeOf`, `shared/plugin-checks.ts`), the sheet at
+ *  `sheet` in its folder and `fonts` the manifest's `view.fonts`. */
+export function checkPluginStylesheet(scope: string, bytes: Uint8Array, sheet = '', fonts: readonly string[] = []): string[] {
+	return checkStylesheet(Buffer.from(bytes).toString('utf8'), { scope, sheet, fonts });
 }

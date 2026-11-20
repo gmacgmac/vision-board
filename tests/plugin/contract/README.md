@@ -6,27 +6,29 @@ board's own types are made from its code (`plugin.d.ts`, `docs/specification/plu
 version), and the tests run the host's own checks on the board's build, so the day the two drift, a test fails. Nothing
 in `apps/` or `packages/` imports it.
 
-Source: the nclite repo (`/Users/dev/AI/nclite`), read only. nclite HEAD when copied: `a7c2a70638ea249159c461b1e2a91ef661729d62`
+Source: the nclite repo (`/Users/dev/AI/nclite`), read only. nclite HEAD when copied: `9ee6202283c91a8a887bfe4ec6fc973f6b13ebc3`
 (2026-11-20).
 
 | Copy | Source sha256 | Last changed in nclite |
 |---|---|---|
-| `nclite/shared/plugin-host.ts` | `21d1db67484193b48d280207890bd4c7b7ada07dfa37fe342dd244f9580bc38b` | `a7c2a706` |
+| `nclite/shared/plugin-host.ts` | `b4287e8cdd1434d01dc9860768492e49f68a16b31c124de9508ec8fc3e971d86` | `9ee62022` |
 | `nclite/shared/plugin-checks.ts` | `8280e7f38d506e546946a7d8789e566712d10c06f1c7dfd8558cf6a9eaab0015` | `5671453f` |
 | `nclite/shared/plugin-adapters.ts` | `d09828aba739f26c3368f1456c59b68206f72489ec8ce5badb619c0e69f5b040` | `5671453f` |
-| `nclite/engine/plugins/stylesheet.ts` | `5b6613fb159e32f8ffa31845845ff5be66c2567dd04a562339e7abf9a7a2f1c6` | `2f3ca585` |
+| `nclite/engine/plugins/stylesheet.ts` | `fe8798682e7a93104bc81cc42031eb390376da543d6f9de2c879c9781afa85a2` | `9ee62022` |
 | `nclite/engine/plugins/provenance.ts` | `9cc2f5fa3bb729e36124379133418aace65c6250cac18a2adb0448db28e080e8` | `2f3ca585` |
-| `nclite/engine/words/plugins.ts` | `64400a526772987c3a0ba247ed0d8a09106011e906016cfd1d6665af42f87086` | `06ab619d` |
+| `nclite/engine/words/plugins.ts` | `05ed9b8d6ff668aab667abfb439af11d3471e31c64bc1f46e25bcff284f30ce4` | `9ee62022` |
 
 nclite has vendored the board (its `5671453f`): the copies hold the manifest's `scope`, the change key `plugin/change`
 (the board's own), and the adapter table's one entry for the board, its icon.
 
 The copies are their sources' bytes, with no edit: nclite's `PluginHost` holds `pageChanged` (its item 160) and the
-optional `savePdf(ask)` (its `a7c2a706`, ADR-0381: Save as PDF replaced printing; `print` is its deprecated alias until
-the next re-vendor), `saveFile` and `openFile` with `PdfAsk` (with `size`, one page of exactly that size), `PrintLook`,
-`PrintOrientation`, `OpenedFile` and `FILE_LIMITS`. The board's own `BoardHost` keeps `pageChanged`, `savePdf`, `saveFile`
-and `openFile` optional and has no `print` (`apps/board/src/board/host.ts`), so a host without them, or with `print`
-alone, still fits: additions, seam 2 still.
+optional `savePdf(ask)` (ADR-0381: Save as PDF replaced printing; the old `print` alias is gone since its `6d2ac6b3`),
+`saveFile` and `openFile` with `PdfAsk` (with `size`, one page of exactly that size), `PrintLook`, `PrintOrientation`,
+`OpenedFile` and `FILE_LIMITS`. The board's own `BoardHost` keeps `pageChanged`, `savePdf`, `saveFile` and `openFile`
+optional (`apps/board/src/board/host.ts`), so a host without them still fits: additions, seam 2 still. It still allows the
+deprecated `print`, which it never calls; the type test no longer compares it with the contract's. Since its
+`9ee62022` (ADR-0382) a plugin brings its own faces: the manifest's optional `view.fonts`, `FONT_BYTES`, and a top-level
+`@font-face` the stylesheet check takes (`checkFontFace`), which the board's build test runs on the built sheet.
 
 `plugin-host.test.ts` holds this table: every copy is its source's bytes, by the sha256 above. It catches an edit to a
 copy, not a change in nclite: that shows only when the copies are refreshed (below), so refresh them before each handover.

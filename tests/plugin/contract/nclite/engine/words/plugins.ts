@@ -17,6 +17,7 @@ export const PLUGIN_WORDS = {
 		seamForm: 'seam must be a whole number from 1.',
 		moduleBlock: (field: string): string => `${field} must be { module, export }, with module a file inside the plugin and export a name.`,
 		stylesList: 'view.styles must be a list of files inside the plugin.',
+		fontsList: 'view.fonts must be a list of .woff2 files inside the plugin.',
 		notList: (field: string): string => `${field} must be a list.`,
 		notAnObject: (at: string): string => `${at} is not an object.`,
 		chipShape: (at: string): string => `${at} must be { kind, words }.`,
@@ -61,6 +62,9 @@ export const PLUGIN_WORDS = {
 		scopeTaken: (scope: string, other: string, otherScope: string): string =>
 			`The stylesheet scope ${scope} overlaps ${other}’s (${otherScope}), so one could restyle the other. Give one manifest a scope of its own.`,
 		fileUnreadable: (path: string): string => `${path} could not be read.`,
+		fontNotWoff2: (path: string): string => `${path} is not a WOFF2 font file. A plugin brings its fonts as .woff2 only.`,
+		fontTooBig: (path: string, bytes: number, most: number): string =>
+			`${path} holds ${bytes} bytes; a plugin’s font file may hold at most ${most}. Ship a smaller subset of the face.`,
 		shaDiffers: (path: string): string => `${path} differs from the build recorded in provenance.json. Vendor it again with scripts/plugin-vendor.ts.`,
 		fileNotRecorded: (path: string): string => `${path} is in the folder but not in provenance.json, so it is not part of the recorded build. Vendor it again with scripts/plugin-vendor.ts.`,
 		fileGone: (path: string): string => `${path} is recorded in provenance.json but is not in the folder. Vendor it again with scripts/plugin-vendor.ts.`,
@@ -76,10 +80,17 @@ export const PLUGIN_WORDS = {
 		selector: (selector: string, scope: string): string =>
 			`the selector ${selector} must begin with .${scope}, a class starting .${scope}- or an element starting ${scope}-, with no :is, :where, :not or :has before its first space.`,
 		root: (property: string, scope: string): string => `:root may declare only --${scope}-* properties, not ${property}.`,
-		atRule: (name: string): string => `@${name} is not allowed; only @media, @supports, @container, @property and @keyframes are.`,
+		atRule: (name: string): string => `@${name} is not allowed; only @media, @supports, @container, @property, @keyframes and a top-level @font-face are.`,
 		named: (atRule: string, name: string, scope: string): string => `@${atRule} ${name} must be named with the plugin’s own prefix, --${scope}- or ${scope}-.`,
 		importRule: '@import is not allowed: a plugin’s styles are the files its manifest names.',
-		url: (address: string): string => `url(${address}) must be a data: address; a plugin’s stylesheet loads nothing from elsewhere.`,
+		url: (address: string): string => `url(${address}) must be a data: address, or in an @font-face src; a plugin’s stylesheet loads nothing from elsewhere.`,
+		faceDescriptor: (property: string): string =>
+			`@font-face may hold only font-family, src, font-weight, font-style, font-display and unicode-range, not ${property}.`,
+		faceFamily: (value: string, scope: string): string => `@font-face font-family ${value} must be one name starting ${scope}-, such as "${scope}-text".`,
+		faceSrc: (value: string): string =>
+			`@font-face src ${value} must be one url("….woff2") to a font the manifest lists in view.fonts, relative to the stylesheet, with format("woff2") or nothing after it.`,
+		faceValue: (property: string, value: string): string => `@font-face ${property}: ${value} is not a value the check takes. Write it plainly, with no escapes.`,
+		faceMissing: '@font-face must name a font-family and a src.',
 		escape: 'a backslash outside a quoted string is not allowed, because it can hide a rule from a reviewer. Spell it with plain characters.',
 		variable: (property: string, scope: string): string =>
 			`var(${property}) reads a property that is not a --host-* one, not --${scope}-* and not declared in the sheet, so it would read the app’s own.`,

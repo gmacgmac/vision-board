@@ -321,12 +321,12 @@
   --vb-shadow-lift: 0 10px 40px light-dark(rgb(24 24 27 / 0.16), rgb(0 0 0 / 0.55));
 }
 
-/* Type faces (D-102; planner's call 4): a node's text, its titles and its labels. Each falls back to
-   today's system stack (--vb-font, --vb-font-mono), and a host's --host-font or --host-font-mono wins over any skin's
-   (apps/board/plugin/theme.css passes them as --vb-host-font, -mono). */
+/* Type faces (D-102; planner's call 4): a node's text, its titles and its labels. The board's own faces come first, so
+   it draws as designed under a host too (D-116); a host's --host-font or --host-font-mono is the fallback
+   (apps/board/plugin/theme.css passes them as --vb-host-font, -mono), then today's system stack (--vb-font, --vb-font-mono). */
 :root, .vb-board {
-  --vb-font-text: var(--vb-host-font, 'vb-figtree', var(--vb-font));
-  --vb-font-display: var(--vb-host-font, 'vb-bricolage-grotesque', 'vb-figtree', var(--vb-font));
+  --vb-font-text: 'vb-figtree', var(--vb-host-font, var(--vb-font));
+  --vb-font-display: 'vb-bricolage-grotesque', 'vb-figtree', var(--vb-host-font, var(--vb-font));
   --vb-font-label: var(--vb-host-font-mono, var(--vb-font-mono));
 }
 

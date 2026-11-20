@@ -20,7 +20,9 @@ import { checkPluginStylesheet, checkStylesheet } from '../../../tests/plugin/co
 import { scopeOf } from '../../../tests/plugin/contract/nclite/shared/plugin-checks.ts';
 
 /** The skill ships with the references its plugin build names (skills/vision-board/source/build.mjs, node-overhaul T_05). */
-const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'references/architecture.md', 'references/files.md', 'references/handover.md', 'references/layouts.md', 'references/timeline.md', 'skill.md', 'view/board.css', 'view/board.js', 'words.json'];
+/** The board's faces and their licences sit beside the sheet (D-116). */
+const FONTS = ['bricolage-grotesque-OFL.txt', 'bricolage-grotesque-semibold.woff2', 'figtree-OFL.txt', 'figtree-variable.woff2', 'jetbrains-mono-OFL.txt', 'jetbrains-mono-variable.woff2', 'space-grotesk-OFL.txt', 'space-grotesk-variable.woff2'].map((f) => `view/fonts/${f}`);
+const FILES = ['engine/engine.js', 'manifest.json', 'plugin.d.ts', 'references/architecture.md', 'references/files.md', 'references/handover.md', 'references/layouts.md', 'references/timeline.md', 'skill.md', 'view/board.css', 'view/board.js', ...FONTS, 'words.json'];
 const TOOLS = ['list_boards', 'get_board', 'show_node', 'show_container', 'show_layout', 'list_open', 'check_responses', 'request_grant', 'write_board'];
 /** Gzip budgets in bytes, a little over the size at the time (BUILD_01: view 164030, styles 18799, engine 210716). The
  * view and the styles were 190,000 and 22,000 before the Node Overhaul; its T_04 removed the old node and measured 195,372
@@ -45,7 +47,7 @@ before(async () => {
 });
 after(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true }); });
 
-test('a clean build writes exactly the folder: manifest, view and styles, engine, words, skill and its references, and types', () => {
+test('a clean build writes exactly the folder: manifest, view, styles and their faces with licences, engine, words, skill and its references, and types', () => {
   assert.deepEqual(filesOf(first), FILES);
 });
 
@@ -67,7 +69,7 @@ test('the manifest fits its schema and every file and words key it names exists'
   assert.equal(manifest.seam, SEAM);
   assert.equal(text(first, 'plugin.d.ts'), pluginTypes(), 'the types are the code\'s own');
   const words = JSON.parse(text(first, 'words.json')) as Record<string, string>;
-  for (const f of [manifest.view.module, ...manifest.view.styles, manifest.engine.module, manifest.skill, manifest.words]) assert.ok(FILES.includes(f), `${f} is in the folder`);
+  for (const f of [manifest.view.module, ...manifest.view.styles, ...manifest.view.fonts, manifest.engine.module, manifest.skill, manifest.words]) assert.ok(FILES.includes(f), `${f} is in the folder`);
   const keys = [manifest.name, ...manifest.chips.map((c: { words: string }) => c.words), ...manifest.tools.map((t: { words: string }) => t.words)];
   for (const k of keys) assert.equal(typeof words[k], 'string', `words.json has ${k}`);
   assert.ok(Object.keys(words).every((k) => /^vision-board\.[a-z0-9-]+\.[A-Za-z0-9_.]+$/.test(k)), 'keys are vision-board.<area>.<name>, the id first: a host refuses a change words key that is not');
@@ -153,13 +155,15 @@ test('the engine bundle imports only Node\'s own modules and knows no path of it
   assert.ok(!/ClaudeStream|KiroTurn/.test(code), 'the agent adapters are not in it');
 });
 
-test('the view bundle is one file with no import, exporting only mount, and one stylesheet that loads nothing', () => {
+test('the view bundle is one file with no import, exporting only mount, and one stylesheet that loads nothing but its faces', () => {
   const code = text(first, 'view/board.js');
   assert.deepEqual(loads(code), [], 'it loads nothing by path');
   assert.equal((code.match(/\bexport\s*[{*]|\bexport\s+(?:default|const|function|class)\b/g) ?? []).length, 1);
   assert.match(code.trimEnd(), /export\s*\{\s*[\w$]+\s+as\s+mount\s*\};?$/);
   const css = text(first, 'view/board.css');
-  assert.ok(!/@import/.test(css) && !/url\((?!["']?data:)/.test(css), 'no other file, no address');
+  const faces = [...css.matchAll(/@font-face\{[^}]*\}/g)].map((m) => m[0]).join('');
+  assert.ok(!/@import/.test(css) && !/url\((?!["']?data:)/.test(css.replace(/@font-face\{[^}]*\}/g, '')), 'no other file, no address');
+  assert.equal([...faces.matchAll(/url\(/g)].length, FONTS.filter((f) => f.endsWith('.woff2')).length, 'a url only in each face\'s src (the faces test holds what it names)');
   assert.ok(!/sourceMappingURL/.test(code + css), 'no sourcemap for a host to serve');
   assert.ok(!/scrollbar/.test(css), 'no scrollbar of its own: the board wears the host\'s (point 632; the standalone page\'s is shell.css)');
 });
@@ -170,10 +174,12 @@ test('the built sheet stays in its scope: the host\'s own check passes it with n
   // plugin: `checkPluginStylesheet` under the scope `scopeOf` gives, the manifest's `scope`, else the plugin's id. With `vb`
   // and no reads and no waiver (every property the board's script sets is a `--vb-*` one), it passes; under the id it
   // fails, which is why the manifest carries it.
-  const manifest = JSON.parse(text(first, 'manifest.json')) as { id: string; scope: string };
-  const { id } = manifest;
+  const manifest = JSON.parse(text(first, 'manifest.json')) as { id: string; scope: string; view: { fonts: string[] } };
+  const { id, view: { fonts } } = manifest;
   assert.equal(scopeOf(manifest), 'vb');
-  assert.deepEqual(checkPluginStylesheet(scopeOf(manifest), fs.readFileSync(path.join(first, 'view/board.css'))), []);
+  // Its faces are checked against the manifest's view.fonts, relative to the sheet's own path (the host's ADR-0382).
+  assert.deepEqual(checkPluginStylesheet(scopeOf(manifest), fs.readFileSync(path.join(first, 'view/board.css')), 'view/board.css', fonts), []);
+  assert.notDeepEqual(checkPluginStylesheet(scopeOf(manifest), fs.readFileSync(path.join(first, 'view/board.css')), 'view/board.css', []), [], 'a face the manifest does not list is refused');
   assert.notDeepEqual(checkPluginStylesheet(id, fs.readFileSync(path.join(first, 'view/board.css'))), [], 'without the manifest\'s scope, the host refuses the sheet');
   assert.notDeepEqual(checkStylesheet(css, { scope: id }), [], 'under the id, the sheet is out of scope');
   // The board's own rule, scripts/verify-style.mjs (which holds the sources to it in `npm run verify`): the same first
@@ -183,6 +189,40 @@ test('the built sheet stays in its scope: the host\'s own check passes it with n
   };
   assert.deepEqual(checkScope('apps/board/plugin/board.css', css).map((p) => p.message), []);
   assert.ok(!/@import|@layer/.test(css), 'no @import and no @layer');
+});
+
+/** A host's rules for a face a plugin brings (nclite docs/plugins.md § A guest in the app's page, Fonts; its handover to the
+ *  board, 2026-11-20), held here in the board's own words too, so a face that breaks one fails this build, not the host's vendoring. */
+const FACE_DESCRIPTORS = ['font-family', 'src', 'font-weight', 'font-style', 'font-display', 'unicode-range'];
+const FACE_SRC = /^url\((["']?)([a-z0-9][a-z0-9._-]*(?:\/[a-z0-9][a-z0-9._-]*)*\.woff2)\1\)(?: ?format\((["'])woff2\3\))?$/;
+const FONT_BYTES = 512 * 1024;
+
+test('the faces: each @font-face at the sheet\'s top level, a vb- family, one listed .woff2 beside the sheet, six descriptors at most, written plainly; each listed file a WOFF2 within 512 KiB, its licence beside it', () => {
+  const css = text(first, 'view/board.css');
+  const fonts = (JSON.parse(text(first, 'manifest.json')) as { view: { fonts: string[] } }).view.fonts;
+  assert.deepEqual([...fonts].sort(), FONTS.filter((f) => f.endsWith('.woff2')), 'view.fonts lists every face the folder holds');
+  const named: string[] = [];
+  for (const m of css.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
+    const before = css.slice(0, m.index);
+    assert.equal((before.match(/\{/g) ?? []).length, (before.match(/\}/g) ?? []).length, `${m[0]}: at the top level, inside no group`);
+    assert.ok(!m[0].includes('\\'), `${m[0]}: no backslash escape`);
+    const decls = m[1]!.split(';').filter((d) => d.trim()).map((d) => [d.slice(0, d.indexOf(':')).trim(), d.slice(d.indexOf(':') + 1).trim()] as const);
+    for (const [property] of decls) assert.ok(FACE_DESCRIPTORS.includes(property), `${m[0]}: ${property} is not one of the six descriptors`);
+    const values = new Map(decls);
+    assert.equal(decls.length, values.size, `${m[0]}: each descriptor once`);
+    assert.match(values.get('font-family') ?? '', /^(["']?)vb-[a-z0-9-]+\1$/, `${m[0]}: one family in the board's scope`);
+    const src = FACE_SRC.exec(values.get('src') ?? '');
+    assert.ok(src, `${m[0]}: src is one relative url to a .woff2, optionally format("woff2")`);
+    named.push(`view/${src[2]}`);
+  }
+  assert.deepEqual(named.sort(), [...fonts].sort(), 'the faces name each listed file, once');
+  for (const font of fonts) {
+    const bytes = read(first, font);
+    assert.equal(bytes.toString('latin1', 0, 4), 'wOF2', `${font}: a WOFF2 file by its signature`);
+    assert.ok(bytes.length <= FONT_BYTES, `${font}: ${bytes.length} bytes, over the host's ${FONT_BYTES}`);
+    const licence = FONTS.find((f) => f.endsWith('-OFL.txt') && path.basename(font).startsWith(path.basename(f, 'OFL.txt')));
+    assert.ok(licence && /SIL OPEN FONT LICENSE Version 1\.1/.test(text(first, licence)), `${font}: its OFL licence beside it`);
+  }
 });
 
 test('nothing in the folder names the machine that built it, the person, or the host it is meant for', () => {

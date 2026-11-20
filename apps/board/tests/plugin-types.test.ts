@@ -219,8 +219,9 @@ export const same: true[] = [
   {} as Same<Board.ListedTool, Host.ListedTool>, {} as Same<Board.ToolResult, Host.ToolResult>,
   {} as Same<Board.PdfAsk, Host.PdfAsk>, {} as Same<Board.PrintLook, Host.PrintLook>, {} as Same<Board.PrintOrientation, Host.PrintOrientation>,
 ];
-/** The board's Save as PDF, save and open are the contract's members (optional on both sides). */
-export const hooks: [Same<Board.PluginHost['savePdf'], Host.PluginHost['savePdf']>, Same<Board.PluginHost['print'], Host.PluginHost['print']>, Same<Board.PluginHost['saveFile'], Host.PluginHost['saveFile']>] = [true, true, true];
+/** The board's Save as PDF, save and open are the contract's members (optional on both sides). The contract has dropped
+ *  the deprecated print (its 6d2ac6b3), which the board's types still allow and never call. */
+export const hooks: [Same<Board.PluginHost['savePdf'], Host.PluginHost['savePdf']>, Same<Board.PluginHost['saveFile'], Host.PluginHost['saveFile']>] = [true, true];
 export const refs = (ack: Board.AnswersAck, line: Board.ChatLine, change: Board.PluginChange): Ref[] => [ack, line, change];
 export const said = (answers: Board.AnswersText, other: Board.ChipText): ChipText[] => [answers, other];
 export const meta = (change: { words: string; count: number; subject: string; reveal: Board.Ref }): ChangeMeta => change;

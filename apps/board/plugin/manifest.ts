@@ -1,7 +1,7 @@
 // The plugin's manifest (`manifest.json`, checked by manifest.schema.json): what a host reads before it loads anything.
 // Its tools are the engine's `tools.list()` (so a host that checks the engine against the manifest finds no
 // difference), its chips the kinds `#actions` resolves, its text only keys into words.json; `changeWords`, the keys a
-// board write's change line may name (`CHANGE_WORDS`, the engine's one home of them).
+// board write's change line may name (`CHANGE_WORDS`, the engine's one home of them); `view.fonts`, the board's faces (D-116).
 import type { ChipKind } from '#actions';
 import { CHIP_PLUGIN } from '#actions';
 import type { ListedTool } from '#mcp';
@@ -11,8 +11,8 @@ import { SEAM } from './seam.ts';
 /** Every chip kind, once: the type makes a new kind in `ChipKind` stop this file until it is listed. */
 const CHIPS = { card: 1, note: 1, board: 1, selection: 1, answers: 1 } satisfies Record<ChipKind, 1>;
 
-/** Where the build puts each part, relative to the folder. */
-export const PARTS = { view: 'view/board.js', styles: 'view/board.css', engine: 'engine/engine.js', words: 'words.json', skill: 'skill.md' } as const;
+/** Where the build puts each part, relative to the folder. The faces sit beside the sheet, which a host resolves their urls against. */
+export const PARTS = { view: 'view/board.js', styles: 'view/board.css', fonts: 'view/fonts', engine: 'engine/engine.js', words: 'words.json', skill: 'skill.md' } as const;
 
 /** The key of a tool's description in words.json. */
 export const toolKey = (name: string): string => `${CHIP_PLUGIN}.tool.${name}`;
@@ -20,10 +20,11 @@ export const toolKey = (name: string): string => `${CHIP_PLUGIN}.tool.${name}`;
 /** The prefix every class, element and property of the stylesheet starts with, when it is not the id (`vb-`, `--vb-`). */
 export const SCOPE = 'vb';
 
-export function manifestOf(version: string, tools: readonly ListedTool[], writes: ReadonlySet<string>) {
+/** `fonts`: the faces' paths in the folder, its `view.fonts`; given none, the manifest lists none. */
+export function manifestOf(version: string, tools: readonly ListedTool[], writes: ReadonlySet<string>, fonts: readonly string[] = []) {
   return {
     id: CHIP_PLUGIN, name: `${CHIP_PLUGIN}.plugin.name`, version, seam: SEAM, scope: SCOPE,
-    view: { module: PARTS.view, styles: [PARTS.styles], export: 'mount' },
+    view: { module: PARTS.view, styles: [PARTS.styles], export: 'mount', ...(fonts.length > 0 && { fonts: [...fonts] }) },
     engine: { module: PARTS.engine, export: 'createEngine' },
     chips: (Object.keys(CHIPS) as ChipKind[]).map((kind) => ({ kind, words: `${CHIP_PLUGIN}.plugin.chips.${kind}` })),
     tools: tools.map((t) => ({ name: t.name, words: toolKey(t.name), input: t.inputSchema, writes: writes.has(t.name) })),

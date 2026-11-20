@@ -1,7 +1,8 @@
 // The board's faces (D-102; packages/tokens/src/fonts.css, packages/tokens/fonts/): each @font-face names a file in
 // fonts/ that opens as a WOFF2 font (its header, its Brotli stream, its table directory, the family in its name table
 // and the weights it declares), sits beside its licence, and is the file the register records by SHA-256
-// (docs/specification/dependencies.md § Vendored assets). Every type token falls back to the system's stacks.
+// (docs/specification/dependencies.md § Vendored assets). Every type token names the board's faces before a host's (D-116),
+// and falls back to the system's stacks.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
@@ -80,9 +81,9 @@ test('the register records each file and licence by its SHA-256', () => {
   }
 });
 
-test('every type token falls back to the system stacks, and a host face comes first', () => {
+test('every type token names the board\'s faces first, then a host\'s face, then the system stacks (D-116)', () => {
   const all = ['../src/tokens.css', '../src/skins.css'].map((f) => fs.readFileSync(at(f), 'utf8')).join('\n');
   const decls = [...all.matchAll(/(--vb-font-(?:text|display|label)):\s*([^;]+);/g)];
   assert.equal(decls.length, 6);
-  for (const [, name, value] of decls) assert.match(value!, /^var\(--vb-host-font(-mono)?, (?:'vb-[a-z-]+', )*var\(--vb-font(-mono)?\)\)$/, `${name}: ${value}`);
+  for (const [, name, value] of decls) assert.match(value!, /^(?:'vb-[a-z-]+', )*var\(--vb-host-font(-mono)?, var\(--vb-font\1\)\)$/, `${name}: ${value}`);
 });

@@ -50,6 +50,6 @@
   --vb-mark-radius: 4px;
   --vb-tile-radius: 4px;
   --vb-font-text: var(--vb-host-font, var(--vb-font));
-  --vb-font-display: var(--vb-host-font, 'vb-space-grotesk', var(--vb-font));
-  --vb-font-label: var(--vb-host-font-mono, 'vb-jetbrains-mono', var(--vb-font-mono));
+  --vb-font-display: 'vb-space-grotesk', var(--vb-host-font, var(--vb-font));
+  --vb-font-label: 'vb-jetbrains-mono', var(--vb-host-font-mono, var(--vb-font-mono));
 }

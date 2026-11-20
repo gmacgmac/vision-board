@@ -5,6 +5,7 @@
 import path from 'node:path';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import type { InlineConfig, Plugin } from 'vite';
+import { PARTS } from './plugin/manifest.ts';
 import { allSchemaFiles, openapiDoc, toolRows } from './server/format-files.ts';
 
 const here = (rel: string) => path.resolve(import.meta.dirname, rel);
@@ -56,20 +57,31 @@ export const hostKeepsColorScheme = (): Plugin => ({
   },
 });
 
-/** The board's faces (packages/tokens/src/fonts.css) are the standalone page's: a host's check refuses `@font-face` and
- *  any `url()` but `data:` (tests/plugin/contract/nclite/engine/plugins/stylesheet.ts), so the view's sheet takes none
- *  and carries no font file. Under a host the type tokens fall back to `--host-font`, else the system's stacks
- *  (plugin.md § Theme and host styling, Fonts). Four rules go, or the build stops. */
-export const hostTakesNoFontFaces = (): Plugin => ({
-  name: 'host-takes-no-font-faces',
+/** One of the board's faces: its family and its file (bin/build-plugin.ts `FACES`, from packages/tokens/src/fonts.css). */
+export type Face = { family: string; file: string };
+
+/** The board's faces (D-116), as a host takes them (plugin.md § Theme and host styling, Fonts): each `@font-face` src
+ *  made the one plain `url("fonts/<file>.woff2") format("woff2")`, relative to the sheet, that a host checks against the
+ *  manifest's `view.fonts`; the build copies the files there (bin/build-plugin.ts). Whatever the bundler made of a face
+ *  (a hashed copy, an inlined one) goes. Every face placed once, in order, or the build stops. */
+export const placeFontFaces = (faces: readonly Face[]): Plugin => ({
+  name: 'place-font-faces',
   enforce: 'post',
   generateBundle(_, bundle) {
-    for (const [name, file] of Object.entries(bundle)) if (/\.woff2$/.test(name)) delete bundle[name];
+    for (const name of Object.keys(bundle)) if (/\.woff2$/.test(name)) delete bundle[name];
+    const dir = path.posix.relative(path.posix.dirname(PARTS.styles), PARTS.fonts);
     const sheet = Object.values(bundle).find((f) => f.type === 'asset' && f.fileName.endsWith('.css'));
     if (sheet?.type !== 'asset') throw new Error('the view bundle has no stylesheet');
-    let taken = 0;
-    sheet.source = String(sheet.source).replace(/@font-face\{[^}]*\}/g, () => { taken += 1; return ''; });
-    if (taken !== 4) throw new Error(`the board's faces: expected 4 @font-face rules, took ${taken}`);
+    const placed: string[] = [];
+    sheet.source = String(sheet.source).replace(/@font-face\{([^}]*)\}/g, (all, body: string) => {
+      const family = /(?:^|;)font-family:["']?([a-z0-9-]+)["']?(?=;|$)/.exec(body)?.[1];
+      const face = faces.find((f) => f.family === family);
+      const src = /(^|;)src:url\([^)]*\)(?:\s*format\([^)]*\))?(?=;|$)/;
+      if (!face || !src.test(body)) throw new Error(`a face the build cannot place: ${all.slice(0, 120)}`);
+      placed.push(face.family);
+      return `@font-face{${body.replace(src, `$1src:url("${dir}/${face.file}") format("woff2")`)}}`;
+    });
+    if (!placed.length || placed.join() !== faces.map((f) => f.family).join()) throw new Error(`the board's faces: expected ${faces.map((f) => f.family)}, placed ${placed}`);
   },
 });
 
@@ -83,11 +95,11 @@ const common = (outDir: string, watch: boolean) => ({
   build: { outDir, emptyOutDir: false, copyPublicDir: false, sourcemap: false, reportCompressedSize: false, ...(watch && { watch: {} }) },
 });
 
-/** `view/board.js` (exports `mount`) and `view/board.css`, built into `<outDir>/view/`. */
-export const viewBuild = (outDir: string, watch = false): InlineConfig => {
+/** `view/board.js` (exports `mount`) and `view/board.css`, built into `<outDir>/view/`, the sheet declaring `faces`. */
+export const viewBuild = (outDir: string, faces: readonly Face[], watch = false): InlineConfig => {
   const base = common(path.join(outDir, 'view'), watch);
   return {
-    ...base, plugins: [svelte({ configFile: here('svelte.config.js') }), hostKeepsColorScheme(), hostTakesNoFontFaces()],
+    ...base, plugins: [svelte({ configFile: here('svelte.config.js') }), hostKeepsColorScheme(), placeFontFaces(faces)],
     build: {
       ...base.build, target: 'es2022', cssTarget: CSS_TARGET, cssCodeSplit: false,
       lib: { entry: here('plugin/view.ts'), formats: ['es'], fileName: () => 'board.js', cssFileName: 'board' },
