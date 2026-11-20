@@ -18,7 +18,7 @@ export function headerTemplate(v: HeaderView): string {
     + `${field('model', 'Model', v.model)}</div>`;
   const acts = '<div class="chat-hd-acts">'
     + `<button type="button" class="chat-btn" data-do="stop"${v.stop ? '' : ' disabled'}>Stop</button>`
-    + '<button type="button" class="chat-btn" data-do="new">New session</button></div>';
+    + '<button type="button" class="chat-btn" data-do="new" aria-label="New session" title="New session">New</button></div>';
   return `${who}${acts}`;
 }
 
