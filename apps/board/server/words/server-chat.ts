@@ -5,6 +5,7 @@
 export const claudeCode = 'Claude Code';
 export const kiro = 'Kiro';
 export const thePersonStartedAChat = 'The person started a chat on this board.';
+export const anEarlierChatHeldThis = 'An earlier chat in this folder held this; the person\'s chats here are one agent now.';
 
 // ---- chat-approvals.ts
 export const thisApprovalIsAlreadySettled = (status: string): string => `This approval is already settled (${status}); the first answer stands.`;
