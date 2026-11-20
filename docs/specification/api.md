@@ -839,7 +839,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     1.11.0. All three routes are the person's: `x-agent: false` and the `vb_person` cookie, refused
     to an agent or a run token as in 20. The ledger format does not change.
 110. **Folders, under home only** (`list_folders`, `apps/board/server/folders.ts`; outside home, only a folder the server
-    vouches for: the system's chooser, 208-211, D-110). `path` (default:
+    vouches for: the system's chooser, 208-211, D-110, where D-111's places allow it). `path` (default:
     the home folder) is resolved with `realpath` and must be the home folder or under it, so neither
     `..` nor a link leads out; it must be a folder, and no part of it under home may be hidden (a
     name starting with a dot) or `node_modules`. Outside: `forbidden`; not there or not a folder:
@@ -857,9 +857,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     real path, and an agent working through home's link matches it (114). **Recent** is `~/.visionboard/recent.json` (`server/recent.ts`): `{ folders }` (and, with ledger folders, `ledgers`, 113a), newest
     first, at most 10, written atomically and readable by this user only. It is checked on read; a
     bad file is ignored (an empty list), never fatal. Listed, each entry must still be a folder under
-    home, or one outside it that passes 209's checks (D-110). It is a per-person setting, so it lives in home, not in a repo.
-111. **Switching** (`open_project { path, create? }`, `server/project.ts`). The same checks as 110 (or, outside home, 209's),
-    then, in order: take the new folder's lock (`conflict` with the holder message when another
+    home, or one outside it that passes 209's checks (D-110, D-111). It is a per-person setting, so it lives in home, not in a repo.
+111. **Switching** (`open_project { path, create? }`, `server/project.ts`). The same checks as 110 (or, outside home, 209's);
+    the home folder itself opens too (D-111: no agent's tools search upward, 116, so a board there is no other folder's
+    board), its ledger beside the person's `recent.json` in `~/.visionboard/` (test "the home folder itself opens…"). Then, in order: take the new folder's lock (`conflict` with the holder message when another
     server holds it; nothing changed); without `create`, a folder with no ledger is `not-found`
     before any lock is taken; with it, `.visionboard/` (its `.gitignore` names `lock`, as at start)
     and an empty ledger are made; open its ledger (a failure lets go of the new lock: `conflict`,
@@ -874,7 +875,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     the open folder (`chat-sessions.ts` `cwd`). With ledger folders a switch also names the
     ledger (113a).
 112. **At start** (`apps/board/server.ts`, `startFolder`): `VB_PROJECT` wins; else the newest
-    recent folder, if it is still a folder under home, or outside it one that passes 209's checks (D-110); else this repo. With ledger folders, that
+    recent folder, if it is still a folder under home (home itself too, D-111), or outside it one that passes 209's checks
+    (D-110); else this repo. With ledger folders, that
     folder's last ledger, else `main` (113a). Start-up never writes
     `recent.json`: only `open_project` does. Tests pass their own home folder
     (`createBoardServer({ home })`), so no test reads or writes the real one.
@@ -978,8 +980,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     absolute path percent-encoded as `encodeURI` does it (`project.schema.json` `folderHeader`;
     anything else is `bad-request`). Before the caller check, the dispatcher compares its real path
     with the open folder's: the open folder or a folder inside it matches; anything else is
-    `wrong-folder` (409), and nothing is read or written. No header, nothing is checked (an agent
-    started outside any project). Person routes and the page never send it and are never checked.
+    `wrong-folder` (409), and nothing is read or written. No header, nothing is checked (a host's own
+    MCP server, 162, given no folder; the board's MCP server and `vb` always send one, 116). Person routes and the page never send it and are never checked.
     `openapi.json` `info.version` becomes 1.12.0.
 115. **A secret from a folder left behind.** A Bearer secret the open ledger's agents do not know is
     looked for in the recent folders' `agents.json`, every ledger of each in either layout (hashes
@@ -1000,13 +1002,17 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     with no secret, or one no ledger knows, answers as before. Proven by `api-folder-mismatch-ledgers.test.ts`
     ("its reads too…").
 116. **The board's MCP server and the `vb` CLI name their folder** (`packages/client/src/project.ts` `projectOf`), worked out
-    once at start: `VB_PROJECT` when set, else the nearest folder at or above its working folder
-    with a Vision Board in either layout, `.visionboard/ledger.jsonl` or a ledger folder's
-    `.visionboard/<ledger>/ledger.jsonl` (`ledgersIn`; a home folder that only keeps `recent.json` is no
-    project), else none. `ledgersIn` is the one rule: the server's `ledgers.ts` (`isOldLayout`,
-    `listLedgers`, `ledgerFoldersIn`) asks it too (LEDGERS_02-R1). `packages/client` sends it as `VB-Project` on every call (`project` option). The
-    instructions (`INSTRUCTIONS`, `INSTRUCTIONS_JOINED`) and the skill say: on `wrong-folder`, stop,
-    tell the person, and do not join.
+    once at start: `VB_PROJECT` when set (resolved against the working folder), else the working folder its client
+    started it in, exactly. Nothing searches upward for a board (D-111): the board's tools work on the board the board
+    has open, nowhere else, and 114 accepts the open folder or a folder inside it, so an agent started inside the project
+    works and one started anywhere else is `wrong-folder`. What an agent reads elsewhere is its client's permissions,
+    untouched. A client that does not start it in the project (`SETUP.md`) sets `VB_PROJECT`. `packages/client` sends it
+    as `VB-Project` on every call (`project` option). `ledgersIn` stays the one rule for a folder's ledgers, in either
+    layout (`.visionboard/ledger.jsonl` or a ledger folder's `.visionboard/<ledger>/ledger.jsonl`; a home folder that
+    only keeps `recent.json` has none): the server's `ledgers.ts` (`isOldLayout`, `listLedgers`, `ledgerFoldersIn`) asks
+    it (LEDGERS_02-R1). Tests: `packages/mcp/tests/project.test.ts` ("else the working folder itself: no walk up…",
+    "ledgersIn, the one rule…"). The instructions (`INSTRUCTIONS`, `INSTRUCTIONS_JOINED`) and the skill say: on
+    `wrong-folder`, stop, tell the person, and do not join.
 117. **Answers name the open folder.** `join` and `list_boards` answer `project`, the open folder's
     display name (`~/projects/example`), and with ledger folders `ledger`, the open ledger, so an agent
     can check where it is; `vb` prints them as it prints any answer (`packages/cli/tests/run.test.ts`).
@@ -1669,7 +1675,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     module, `packages/format/src/data-folder.ts`, and `npm run verify` refuses one built anywhere else). No answer changed: every API test passes unchanged.
 162. **The MCP server stays a relay** to the standalone host over `packages/client` (45): it runs in
     the agent's process, and an engine there would be a second writer on a folder the standalone
-    server holds the lock for, found by the MCP's upward search. Its tool list and the engine's
+    server holds the lock for (the open folder, the agent's folder or one holding it, 114). Its tool list and the engine's
     `tools` come from the one table (`TOOLS_FILE`), so they name the same tools with the same input.
     `createMcpServer` serves any `ToolHost` (`packages/mcp/src/call-tool.ts`): its own `httpTools`, or a
     host's, the engine's `tools` as they are with the caller added, so another host's MCP server is one
@@ -2238,18 +2244,25 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `startTestBoard`; a test's own stand-in), so no test opens the real one. Held by
     `apps/board/tests/api-folder-chooser.test.ts` ("list_folders says the chooser is offered…", "only the person…",
     "one at a time…", "the caller going away closes the chooser…", "a chooser that could not open…").
-209. **The pick: anywhere but hidden** (`folders.ts` `resolvePicked`). Its real path (`realpath`, so a link is followed
-    and a trailing `/` dropped) is refused when any part of it starts with a dot (`hiddenFolder`), or it is the home
-    folder or a folder holding it (`holdsHome`: such a folder would be every project's nearest board, as home itself
-    would, 111), or its path holds a control character, which no answer, request or recent list can carry
-    (`controlCharacter`; test "a pick with a line break in its path…"); not there or not a folder is `not-found`. `choose_folder` refuses with `invalid` (a pick that fails
-    D-110's rule), not `forbidden`, which says the caller may not call it and makes the page fetch a fresh cookie
-    (`page-io.ts` `asPerson`). `node_modules` is not refused here (only hidden is, D-110). Tests: "a hidden pick is
-    refused with words…", "home, or a folder holding it, is refused as a pick", "…one under home in node_modules opens".
+209. **The pick: where a project may be** (`folders.ts` `resolvePicked`, `placeProblem`; D-111 amends D-110). Its real
+    path (`realpath`, so a link is followed and a trailing `/` dropped) may be the home folder itself or under it, under
+    `/Volumes/` (drives and network shares; not `/Volumes` itself), or `/Users/Shared` or under it. Refused, each saying
+    why and where a project may be (`words/server-folders.ts`): any part starting with a dot (`hiddenFolder`); `/`,
+    `/Users` or another folder holding home (`holdsHome`); another person's home folder or a folder in it (`otherHome`);
+    anything else, a system folder (`/System`, `/Library`, `/Applications`, `/usr`, `/private`, `/opt` and the rest:
+    `systemFolder`); and a path holding a control character, which no answer, request or recent list can carry
+    (`controlCharacter`; test "a pick with a line break in its path…"); not there or not a folder is `not-found`. The
+    places are `Places` (`placesOf`: `/Volumes`, `/Users/Shared`, `/Users` around the person's home), an option of
+    `createBoardServer` (`places`), so tests use temp folders standing in for them. `choose_folder` refuses with
+    `invalid` (a pick that fails the rule), not `forbidden`, which says the caller may not call it and makes the page
+    fetch a fresh cookie (`page-io.ts` `asPerson`). `node_modules` is not refused here (only hidden is, D-110). Tests:
+    `folder-places.test.ts` (each kind), `api-folder-chooser.test.ts` "a hidden pick is refused with words…", "D-111: a
+    folder holding home, another person's home, a system folder…", "D-111: the home folder itself, and a folder in
+    /Users/Shared…", "…one under home in node_modules opens".
 210. **The trust rule** (`folders.ts` `resolveVouched`, `open-folder.ts` `openProject`). A path under home is checked as
     110 says. Outside home, `open_project` opens a folder only when the server vouches for that very path: its chooser
     returned it this run (`Chooser.trust`, `picked`; kept in memory, never written), or the server's own recent list
-    holds it (`recent.ts`, which only `open_project` writes); and only while it passes 209 and is still its own real path
+    holds it (`recent.ts`, which only `open_project` writes); and only while it passes 209 (D-111) and is still its own real path
     (one since swapped for a link is refused). Every other path outside home (typed, listed, sent by a page, named by an
     agent) is refused with `forbidden` as before; a link to a picked folder is not the path returned. Such a folder joins
     Recent like any other (by its absolute path, `displayName`), is listed there (`recent`, through the same check), and
@@ -2258,7 +2271,8 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     Tests: "the same path outside home, typed, is refused until the chooser returns it", "an opened folder outside home
     joins Recent…", `recent.test.ts` "start outside home (D-110)…".
 211. **The page** (`shell/FolderDialog.svelte`, `FolderPicker.svelte`; `systemFolderChooser` flag, `folder.ts`
-    `folderChooserOn`). The dialog is 720px wide, never past the window (a 16px gutter each side at phone width), and
+    `folderChooserOn`). The home folder itself is a folder like any other (D-111): Open or Create, as its listing says
+    (`tests/pages/open-folder.spec.ts` "by pointer: home…"). The dialog is 720px wide, never past the window (a 16px gutter each side at phone width), and
     every folder name, the path and a problem naming one wrap, never cut (`styles/folder-dialog.css`). Where the listing
     says `chooser`, "Choose in Finder…" sits under the lists; while the chooser is open the status says so
     (`waitingForFinder`), the lists and Open wait, and Cancel closes the dialog and aborts the call, which closes the

@@ -241,3 +241,11 @@ test('v3.37 (export-import-print T_03, D-107, D-108): both cores send a copy or 
   const fields = (tool: string) => Object.keys((TOOLS.get(tool)!.inputSchema.properties ?? {}) as object);
   assert.ok(fields('write_board').includes('import') && fields('get_board').includes('export') && fields('show_container').includes('export'), 'the fields it names are the tools\'');
 });
+
+test('v3.38 (folders-labels-print T_03, PLAN decision 4): both builds say to label a link only when it means more than "next", in short simple words, and the example no longer labels a link "then"', () => {
+  for (const build of ['standalone', 'plugin'] as const) {
+    const ref = built[build]['references/layouts.md']!;
+    assert.ok(says(ref, 'Label a link only when it means more than "next" ("blocks", "feeds", "needs"), in short, simple words'), build);
+    assert.ok(!/"then"/.test(all[build]), `${build}: no "then" label taught`);
+  }
+});

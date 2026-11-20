@@ -1,4 +1,4 @@
-// Field report batch 3 on the page (FE_01): link labels on their lines or as markers (linkLabels),
+// Field report batch 3 on the page (FE_01): link labels on or beside their lines, else short tags (linkLabels, point 646),
 // the viewer's alignment in the "⋯" menu (alignSetting), the Match card widths switch in each
 // container's mode row (widthsControl), a widened card's height, and the note bubble clear of a
 // neighbour's footer buttons. Each flag is on by default and checked off too. The roadmap board is
@@ -37,7 +37,7 @@ test('labels: a label with room sits on its line, centred on a tag no wider than
   });
   // labelSize('informs'): 7 characters at 6.5px, plus 6px each side.
   expect(fit).toEqual({ w: 58, centred: true, inside: true });
-  // Nothing on the roadmap lacks room, so no marker and the markers' layer stays out of the way.
+  // Nothing on the roadmap lacks room, so no short tag and the tags' layer stays out of the way.
   await expect(page.locator('.vb-link-marks')).toBeHidden();
   await expect(page.locator('.vb-link-marks .vb-link-mark')).toHaveCount(0);
 });
@@ -51,18 +51,22 @@ test('labels off (?flags=-linkLabels): every label as text at the middle of its 
 
 const labels = (page: Page) => page.locator('section[data-feature="linkLabels"]');
 
-test('gallery: a marker floats its label on hover and on keyboard focus, Esc closes it, and its name carries the words', async ({ page }) => {
+test('gallery: every label reads as words, on or beside its line; the one with no room is a short tag that floats its label on hover and focus, Esc closes it, and its name carries the words', async ({ page }) => {
   await page.goto('/gallery.html');
   const first = labels(page).locator('.g-mini').first();
-  await expect(first.locator('.vb-wire-tag text')).toHaveText(['next']);
+  // Point 646: on an upright piece, just above a short level piece, centred on an upright in the gap.
+  await expect(first.locator('.vb-wire-tag text')).toHaveText(['when a note fits no theme', 'next', 'feeds']);
   const marks = first.locator('.vb-link-mark');
-  await expect(marks).toHaveCount(2);
-  const button = first.getByRole('button', { name: 'Link from 1 to 3: when a note fits no theme' });
-  const tip = marks.nth(1).locator('.vb-link-tip');
+  await expect(marks).toHaveCount(1);
+  // Never a bare dot: the tag shows its first words and an ellipsis.
+  await expect(marks.locator('.vb-link-short')).toHaveText('once…');
+  await expect(marks.locator('.vb-link-whole')).toBeHidden();
+  const button = first.getByRole('button', { name: 'Link from 1 to 2: once every note has been read' });
+  const tip = marks.locator('.vb-link-tip');
   await expect(tip).toBeHidden();
   await button.hover();
   await expect(tip).toBeVisible();
-  await expect(tip).toHaveText('when a note fits no theme');
+  await expect(tip).toHaveText('once every note has been read');
   await page.mouse.move(0, 0);
   await expect(tip).toBeHidden();
   await button.focus();
@@ -70,8 +74,55 @@ test('gallery: a marker floats its label on hover and on keyboard focus, Esc clo
   await page.keyboard.press('Escape');
   await expect(tip).toBeHidden();
   await expect(button).toBeFocused();
+  // A 24px target at the least (WCAG 2.5.8), and its words inside the tag the layout kept room for.
+  const box = await button.boundingBox();
+  expect(box!.width >= 24 && box!.height >= 24).toBe(true);
+  expect(await marks.locator('.vb-link-short').evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
   // The floating sample draws one open, above the cards.
   await expect(labels(page).locator('.vb-link-mark[data-tip-open] .vb-link-tip')).toBeVisible();
+});
+
+test('gallery: between two stacked cards the word sits just right of the short line, clear of both cards', async ({ page }) => {
+  await page.goto('/gallery.html');
+  const stacked = labels(page).locator('.g-mini').nth(1);
+  const tag = stacked.locator('.vb-wires:not(.vb-wires-top) .vb-wire-tag');
+  await expect(tag.locator('text')).toHaveText('unblocks');
+  await expect(stacked.locator('.vb-link-mark')).toHaveCount(0);
+  const [line, word, cards] = [
+    await stacked.locator('.vb-wires:not(.vb-wires-top) .vb-wire').boundingBox(),
+    await tag.locator('rect').boundingBox(),
+    await stacked.locator('vb-node').evaluateAll((ns) => ns.map((n) => n.getBoundingClientRect().toJSON() as DOMRect)),
+  ];
+  expect(word!.x).toBeGreaterThan(line!.x + line!.width);
+  expect(word!.y).toBeGreaterThanOrEqual(cards[0]!.bottom);
+  expect(word!.y + word!.height).toBeLessThanOrEqual(cards[1]!.top);
+});
+
+test('gallery: on paper a short tag shows its whole label, wrapped, in place of its first words', async ({ page }) => {
+  await page.goto('/gallery.html');
+  await page.emulateMedia({ media: 'print' });
+  const mark = labels(page).locator('.g-mini').first().locator('.vb-link-mark');
+  await expect(mark.locator('.vb-link-short')).toBeHidden();
+  await expect(mark.locator('.vb-link-whole')).toBeVisible();
+  await expect(mark.locator('.vb-link-whole')).toHaveText('once every note has been read');
+  // Wrapped: more than one line, every word shown.
+  const lines = await mark.locator('.vb-link-whole').evaluate((e) => Math.round(e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight)));
+  expect(lines).toBeGreaterThan(1);
+  expect(await mark.locator('.vb-link-whole').evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
+  // VERIFY_01 fix: wrapped to the gap between cards 1 and 2, clear of both and of the link's arrowhead (its last 11px,
+  // 7 × the wire's 1.6px, up to the path's end).
+  const mini = labels(page).locator('.g-mini').first();
+  const [whole, one, two] = await Promise.all([
+    mark.locator('.vb-link-whole').boundingBox(),
+    mini.locator('vb-node', { hasText: 'Collect the feedback' }).boundingBox(),
+    mini.locator('vb-node', { hasText: 'Sort it by theme' }).boundingBox(),
+  ]);
+  // The link 1 > 2: the line that runs from card 1's right edge to card 2's left edge, where its arrowhead points.
+  const end = await mini.locator('.vb-wires:not(.vb-wires-top) path.vb-wire').evaluateAll((ps, { a, b }) => ps.map((p) => p.getBoundingClientRect())
+    .find((r) => Math.abs(r.left - a) < 2 && Math.abs(r.right - b) < 2)?.right, { a: one!.x + one!.width, b: two!.x });
+  expect(end).toBeDefined();
+  expect(whole!.x).toBeGreaterThanOrEqual(one!.x + one!.width);
+  expect(whole!.x + whole!.width).toBeLessThanOrEqual(end! - 11);
 });
 
 // ---- Alignment (ruling 4): the viewer's, in the "⋯" menu, kept in this browser ----

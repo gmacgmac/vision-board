@@ -7,7 +7,6 @@ export const folderOpenAnotherFolder = (folderName: string | number, path: strin
 // ---- FolderPicker.svelte
 export const board = (n: number): string => ` (${n} board${n === 1 ? '' : 's'})`;
 export const readingFolders = 'Reading folders…';
-export const chooseAProjectFolderUnder = 'Choose a project folder under ~';
 export const visionBoardFound = (boards: string | number): string => `Vision Board found${boards}`;
 export const noVisionBoardHere = 'No Vision Board here';
 export const opening = 'Opening…';

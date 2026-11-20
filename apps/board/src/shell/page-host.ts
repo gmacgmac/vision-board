@@ -8,7 +8,7 @@
 // board's selection and answers, Send and the agent's status all go through `BoardChat`. With the
 // leavePrompt flag it guards its own tab: a close or reload while a note holds unsaved words gets the
 // browser's "Leave site?" prompt (`guardLeave`). Its files and print are the browser's: a download, the file picker and
-// `window.print()` (page-files.ts).
+// `window.print()` with the ask's paper, look and title (page-files.ts).
 import { flagOn, isFlag } from '#format';
 import type { BoardChat, BoardHost, BoardPageParts, PluginEvent } from '../board/host.ts';
 import type { Status } from '../board/status.ts';
@@ -16,7 +16,7 @@ import { pageFlags } from '../flags.ts';
 import { readEditing } from './editing.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
 import { pageStore } from './kept.ts';
-import { openFile, print, saveFile } from './page-files.ts';
+import { IMPORT_BYTES, openFile, print, saveFile } from './page-files.ts';
 import { asPerson, pageTransport, watchProject } from './page-io.ts';
 import { askConfirm, shell, toast } from './shell.svelte.ts';
 import * as pageHelpWords from './words/page-help.ts';
@@ -89,7 +89,7 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
     notify: (text, tone) => toast(text, tone),
     confirm: ({ heading, body, confirm, list }) => askConfirm(heading, body, confirm, list),
     store,
-    // Export, import and print (D-107): a download, the file picker, the browser's print (page-files.ts).
+    // Export, import and print (D-107): a download, the file picker, the browser's print of the ask (page-files.ts).
     saveFile, openFile, print,
     page: {
       async wanted() {
@@ -105,6 +105,7 @@ export function createPageHost(chat: BoardChat, parts: BoardPageParts = {}): Pag
       parts,
       help: { waiting: pageHelpWords.npmRunBoardServesYour, unreachable: pageHelpWords.couldNotReachTheBoard, reply: { lead: pageHelpWords.pasteItIntoChatOr, command: pageHelpWords.nodeAppsBoardBinReply } },
       person: asPerson,
+      importBytes: IMPORT_BYTES,
     },
   };
 }

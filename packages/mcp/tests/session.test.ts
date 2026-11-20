@@ -34,7 +34,7 @@ let board: Board;
 let mcp: Session;
 before(async () => {
   board = await startBoard();
-  mcp = startMcp({ VB_SERVER: board.base });
+  mcp = startMcp({ VB_SERVER: board.base }, board.project);
 });
 after(async () => { await mcp.close(); await board.close(); });
 
@@ -180,7 +180,7 @@ test('a line that is not JSON gets a parse error; the server never sent a notifi
 });
 
 test('legacy 2025-11-25: initialize, notifications/initialized, tools/list, tools/call and ping', async () => {
-  const legacy = startMcp({ VB_SERVER: board.base });
+  const legacy = startMcp({ VB_SERVER: board.base }, board.project);
   try {
     const init = (await legacy.request('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'old', version: '1' } })).result;
     assert.equal(init.protocolVersion, '2025-11-25');
@@ -208,7 +208,7 @@ test('no board server: isError, telling the agent to start it with npm run board
 });
 
 test('VB_AGENT_SECRET stands in for a missing secret argument', async () => {
-  const shared = startMcp({ VB_SERVER: board.base, VB_AGENT_SECRET: secret });
+  const shared = startMcp({ VB_SERVER: board.base, VB_AGENT_SECRET: secret }, board.project);
   try {
     const r = await call(shared, 'request_grant', { board: 'pricing', region: 'options', reason: 'Asking again.' });
     assert.equal(r.isError, false, JSON.stringify(r));

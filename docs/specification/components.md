@@ -2175,10 +2175,10 @@ Every app card is a window while the appCards flag is on (D-099 5; T_04 made it 
    it reaches no scroller of the host's. A gallery sample that draws a box is a board root for this (`g-bubble-stage`).
 5. **Print in light or dark** (point 615; `FilesForm.svelte`, `print-view.ts`, `print.css`, `shell.css`). Print's
    dialog asks light or dark, the screen's theme first (`FilesDialog.svelte` `shownTheme`: the root's
-   `color-scheme`, else the system's). The print view sets `data-vb-print-theme` on the root while it prints; in print
-   only, `print.css` makes it the root's `color-scheme` (a host that keeps `light-dark()` native needs nothing more)
-   and the standalone page, whose built tokens resolve at its own root, sets it there (`shell.css`). The screen keeps
-   its own theme.
+   `color-scheme`, else the system's). The choice goes to the host as `print({ look })` (`board-files.ts`, nclite's
+   `PrintAsk`), with the fitted page as `orientation`: the host owns the paper and the colours (nclite through its own
+   scheme, the standalone page through `shell.css` at its root). The board sets nothing on `<html>` and names no page.
+   The screen keeps its own theme.
 6. **Kept true by**: `packages/ui/tests/node-core.test.ts` and `conversation-box.test.ts` (the labels, the divider);
    `tests/pages/conversation-labels.spec.ts` (the full-width thread and its 7px bar, a host's hiding rule, one label
    line with the name cut and its tip, an imported conversation's authors and divider; scrollbars shown, not the

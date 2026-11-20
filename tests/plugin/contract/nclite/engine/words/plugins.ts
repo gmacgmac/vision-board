@@ -80,6 +80,7 @@ export const PLUGIN_WORDS = {
 		named: (atRule: string, name: string, scope: string): string => `@${atRule} ${name} must be named with the plugin’s own prefix, --${scope}- or ${scope}-.`,
 		importRule: '@import is not allowed: a plugin’s styles are the files its manifest names.',
 		url: (address: string): string => `url(${address}) must be a data: address; a plugin’s stylesheet loads nothing from elsewhere.`,
+		escape: 'a backslash outside a quoted string is not allowed, because it can hide a rule from a reviewer. Spell it with plain characters.',
 		variable: (property: string, scope: string): string =>
 			`var(${property}) reads a property that is not a --host-* one, not --${scope}-* and not declared in the sheet, so it would read the app’s own.`,
 		unbalanced: 'its braces do not balance, so it cannot be checked.',

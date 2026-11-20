@@ -21,10 +21,7 @@ export const anotherBoardServerHoldsThis = (host: string, pid: number, port: num
 export const itIsAlreadyRunning = (port: number, pid: number): string => `It is at http://localhost:${port}, so open that. To start this one instead, stop the run that started it, or: kill ${pid}`;
 export const runningSinceStopThatServer = (started: string): string => `running since ${started}. Stop that server first.`;
 
-// ---- open-folder.ts
-export const chooseAProjectFolderUnder = 'Choose a project folder under ~, not the home folder itself.';
-
-// ---- chooser.ts and folders.ts (the system's folder chooser, D-110)
+// ---- chooser.ts and folders.ts (the system's folder chooser, D-110; where a project may be, D-111)
 /** The chooser's own prompt, above its list. */
 export const chooserPrompt = 'Choose a project folder for Vision Board';
 export const chooserNotOffered = "This board server does not offer the system's folder chooser (it is on macOS only). Choose a folder from the list.";
@@ -36,9 +33,17 @@ export const hiddenFolder = (displayName: string): string =>
 /** A pick whose path holds a control character (a line break): no answer, recent list or request can carry it. */
 export const controlCharacter = (displayName: string): string =>
   `${JSON.stringify(displayName)} has a line break or another control character in its path, so the board can't keep it. Rename the folder, or choose another.`;
-/** A pick that is the home folder, or a folder holding it. */
+/** Where a project folder may be, said after each refusal (D-111). */
+const WHERE = 'Choose your home folder or a folder in it, a drive or share in /Volumes, or a folder in /Users/Shared.';
+/** A pick that holds the home folder, or the folder of people's home folders (`/`, `/Users`). */
 export const holdsHome = (displayName: string): string =>
-  `${displayName} is your home folder or holds it, so it can't be a project folder. Choose a folder inside it.`;
+  `${displayName} holds your home folder or other people's, so it can't be a project folder. ${WHERE}`;
+/** A pick that is another person's home folder, or in one. */
+export const otherHome = (displayName: string): string =>
+  `${displayName} is another person's home folder or in one, so it can't be a project folder. ${WHERE}`;
+/** A pick in a system folder (anything that is not home, a drive, a share or /Users/Shared). */
+export const systemFolder = (displayName: string): string =>
+  `${displayName} is a system folder, so it can't be a project folder. ${WHERE}`;
 
 // ---- project.ts
 export const makeOr = 'make or ';

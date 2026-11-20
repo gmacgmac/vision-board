@@ -87,11 +87,13 @@ export interface RegionBox {
   timeline?: TimelineDrawing;
 }
 
-/** Where a link's label goes (ruling 3), near the source end. `fits`: the label's box (centred on
- *  (x, y), on the line, `labelSize` big) fits its stretch of line without covering a card or an
- *  earlier label, so the page draws the label there; otherwise (x, y) is a point on the line where
- *  the page draws a small marker that shows the label on hover or focus. */
-export interface LabelPlace extends Point { fits: boolean }
+/** Where a link's label goes (ruling 3, point 646; route/labels.ts). `fits`: the whole label's box (centred on (x, y),
+ *  `labelSize` big) sits on its line, or beside it in the gap between its two cards, covering no card and no earlier
+ *  label, so the page draws the label there. Otherwise (x, y) is a point on the line where the page draws a short tag,
+ *  `short` (the first words and an ellipsis), that shows the whole label on hover or focus and whole in print. `room`,
+ *  set with `short`: where the whole label goes on paper, wrapped no wider than `w` and centred on `x` (at the tag's
+ *  height), clear of every card and of the link's arrowhead (VERIFY_01 fix). */
+export interface LabelPlace extends Point { fits: boolean; short?: string; room?: { x: number; w: number } }
 
 /** A drawn connector. `mid` is the point halfway along it; `labelAt` is set when it has a label. */
 export interface Route { from: string; to: string; label?: string; d: string; mid: Point; labelAt?: LabelPlace }

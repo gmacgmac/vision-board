@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 /**
  * `plugins/<id>/provenance.json`: where a vendored folder came from, and the sha256 of EVERY regular file in it but the
  * record itself (`files`, keys sorted): the bundles, the stylesheets, the types, the skill, the words, the manifest
- * (`docs/plugins.md` § How a plugin reaches nclite; journal-plugin DESIGN_01 D11, BE_03). Written by
+ * (`docs/plugins.md` § How a plugin reaches nclite). Written by
  * `scripts/plugin-vendor.ts`, checked by the registry (`checkFolder`, `./registry.ts`), which refuses a file the record
  * does not name, one it names that is missing, a hash that differs and anything that is not a regular file (`folderTree`,
  * `./registry.ts`, which walks the folder). A `.DS_Store` is the one name passed over.

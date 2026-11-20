@@ -8,21 +8,20 @@
 // The system's folder chooser (D-110, api.md 208-210): `choose_folder` opens it (chooser.ts) and answers the pick as
 // list_folders heads one, keeping it as trusted for this run; `open_project` opens a folder outside home only when the
 // server vouches for that path (picked this run, or in its own recent list: folders.ts `resolveVouched`), and the
-// recent list shows such a folder too. Every other path keeps the home-only rule.
+// recent list shows such a folder too. Every other path keeps the home-only rule. Where a project may be is
+// folders.ts `placeProblem` (D-111): home itself opens too, now that no agent's tools search upward for a board.
 import path from 'node:path';
 import { boardList } from '#actions';
 import type { OperationInput } from '#format';
 import type { Handler, HandlerTable } from './dispatch.ts';
-import type { FolderEntry } from './folders.ts';
+import type { FolderEntry, Places } from './folders.ts';
 import { childFolders, cloudPlaces, countBoards, displayName, hasBoard, resolveFolder, resolvePicked, resolveVouched } from './folders.ts';
 import { ledgerEntries } from './ledgers.ts';
 import type { EditingInfo } from './editing.ts';
 import type { OpenFolder, Project } from './project.ts';
-import { problem } from './problem.ts';
 import { readRecent } from './recent.ts';
 import { sendJson } from './respond.ts';
 import { body } from './body.ts';
-import * as serverFoldersWords from './words/server-folders.ts';
 
 /** A folder as get_project and open_project show it, and as list_folders heads its listing. */
 function shown(project: Project, dir: string): { path: string; name: string; found: boolean; boards?: number } {
@@ -47,11 +46,12 @@ function shownOpen(project: Project): Shown {
   return { ...head, ledger: open.ledgerName, ledgers: ledgerEntries(open.dir, { name: open.ledgerName, boards }) };
 }
 
-/** The recent folders still there, under home or vouched for outside it (D-110), with their display names. */
-function recent(home: string): FolderEntry[] {
+/** The recent folders still there, under home or vouched for outside it (D-110, D-111), with their display names. */
+function recent(places: Places): FolderEntry[] {
+  const { home } = places;
   return readRecent(home).flatMap((p) => {
     try {
-      const dir = resolveVouched(home, p, () => true); // the server's own list
+      const dir = resolveVouched(places, p, () => true); // the server's own list
       return [{ name: displayName(home, dir), path: dir, hasBoard: hasBoard(dir) }];
     } catch { return []; }
   });
@@ -61,35 +61,30 @@ const getProject: Handler = ({ res, project }) => {
   sendJson(res, 200, shownOpen(project));
 };
 
-const listFolders: Handler = ({ res, params, project, chooser }) => {
+const listFolders: Handler = ({ res, params, project, chooser, places: where }) => {
   const { home } = project;
   const dir = resolveFolder(home, typeof params.path === 'string' ? params.path : home);
   const { folders, more } = childFolders(dir);
   const places = dir === home ? cloudPlaces(home) : undefined;
   sendJson(res, 200, {
     ...shown(project, dir), ...(dir !== home && { parent: path.dirname(dir) }),
-    folders, recent: recent(home), ...(places && { places }), ...(chooser.offered && { chooser: true as const }), ...(more && { more: true }),
+    folders, recent: recent(where), ...(places && { places }), ...(chooser.offered && { chooser: true as const }), ...(more && { more: true }),
   });
 };
 
-const HOME_ITSELF = serverFoldersWords.chooseAProjectFolderUnder;
-
-const openProject: Handler = async ({ req, res, project, chooser }) => {
+const openProject: Handler = async ({ req, res, project, chooser, places }) => {
   const b = await body('open_project', req) as OperationInput<'open_project'>['body'];
-  const { home } = project;
   // Outside home only the server's own: a path its chooser returned this run, or one its recent list holds (D-110).
-  const dir = resolveVouched(home, b.path, (raw) => chooser.picked(raw) || readRecent(home).includes(raw));
-  // A board in home itself would be every folder's nearest board (the board MCP's upward search).
-  if (dir === project.home) throw problem('forbidden', HOME_ITSELF);
+  const dir = resolveVouched(places, b.path, (raw) => chooser.picked(raw) || readRecent(places.home).includes(raw));
   project.open(dir, { create: b.create === true, ledger: b.ledger, keepOutOfGit: b.keepOutOfGit === true });
   sendJson(res, 200, shownOpen(project));
 };
 
-/** The system's folder chooser (D-110): open it in the open folder; the pick, checked (`resolvePicked`: anywhere but
- * hidden, never home or above it) and trusted for this run, as list_folders heads it; or `cancelled`. The caller going
- * away closes it. A pick that can't be a project is `invalid` (it fails D-110's rule), not `forbidden`, which says the
- * caller may not call this (and makes the page fetch a fresh cookie). */
-const chooseFolder: Handler = async ({ res, project, chooser }) => {
+/** The system's folder chooser (D-110): open it in the open folder; the pick, checked (`resolvePicked`: home or in it,
+ * a drive or share, /Users/Shared, never hidden, D-111) and trusted for this run, as list_folders heads it; or
+ * `cancelled`. The caller going away closes it. A pick that can't be a project is `invalid` (it fails D-111's rule), not
+ * `forbidden`, which says the caller may not call this (and makes the page fetch a fresh cookie). */
+const chooseFolder: Handler = async ({ res, project, chooser, places }) => {
   const gone = new AbortController();
   const end = () => gone.abort();
   res.on('close', end);
@@ -97,7 +92,7 @@ const chooseFolder: Handler = async ({ res, project, chooser }) => {
   try { raw = await chooser.choose(project.current().dir, gone.signal); } finally { res.off('close', end); }
   if (res.destroyed || res.writableEnded) return;
   if (raw === undefined) return sendJson(res, 200, { cancelled: true });
-  const dir = resolvePicked(project.home, raw, 'invalid');
+  const dir = resolvePicked(places, raw, 'invalid');
   chooser.trust(dir);
   sendJson(res, 200, shown(project, dir));
 };

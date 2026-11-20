@@ -14,6 +14,7 @@ import { checkFolder, secretElsewhere } from './caller-folder.ts';
 import { callerOf } from './callers.ts';
 import type { Chats } from './chat-sessions.ts';
 import type { Editing } from './editing.ts';
+import type { Places } from './folders.ts';
 import type { Caller, Engine } from './engine/index.ts';
 import { matchRoute, readParams } from './engine/index.ts';
 import type { Ledger } from './ledger.ts';
@@ -23,8 +24,9 @@ import { SPECS } from './spec.ts';
 import * as httpWords from './words/http.ts';
 
 /** What the server holds for every request: the person's token, the open folder (project.ts), the system's folder
- * chooser and what was picked in it (chooser.ts, D-110), and the build in watch mode. */
-export interface ServerEnv { person: string; project: Project; chooser: Chooser; build?: BuildWatch | undefined }
+ * chooser and what was picked in it (chooser.ts, D-110), where a project may be (folders.ts `Places`, D-111), and the
+ * build in watch mode. */
+export interface ServerEnv { person: string; project: Project; chooser: Chooser; places: Places; build?: BuildWatch | undefined }
 
 /** What a handler gets: the request and its URL, its parsed parameters (defaults filled in), the open
  * folder's engine, ledger, agents store, chat sessions and app host, the signal that ends its streams
@@ -47,6 +49,8 @@ export interface Ctx {
   project: Project;
   /** The system's folder chooser, and the folders picked in it this run (D-110). */
   chooser: Chooser;
+  /** Where a project folder may be (D-111). */
+  places: Places;
   /** The person, an agent, or undefined for a read without credentials. */
   caller: Caller | undefined;
   build?: BuildWatch | undefined;
@@ -79,6 +83,6 @@ export async function dispatch(
   });
   await handlers[match.id]({
     req, res, url, params, engine: open.engine, ledger: open.ledger, editing: open.editing, agents: open.agents, chats: open.chats, apps: open.apps,
-    closed: open.closed, project: env.project, chooser: env.chooser, caller, build: env.build,
+    closed: open.closed, project: env.project, chooser: env.chooser, places: env.places, caller, build: env.build,
   });
 }

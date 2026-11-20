@@ -107,12 +107,14 @@ async function parsed(res: Response, media: string): Promise<unknown> {
  * person's home folder for the folder routes (a temp folder; never the real one in a test).
  * `flags`: the server's flags (as `VB_FLAGS`); `appLimits`: shorter app limits, so a test of a
  * time limit doesn't wait the real one. */
-export async function startBoard({ watch = false, chat, home, flags, appLimits, edit, lockEnv, chooser }: {
+export async function startBoard({ watch = false, chat, home, flags, appLimits, edit, lockEnv, chooser, places }: {
   watch?: boolean; chat?: BoardServerOptions['chat']; home?: string; flags?: BoardServerOptions['flags']; appLimits?: BoardServerOptions['appLimits'];
   /** Edit mode (default, as `startTestBoard`); `false` with `readOnlyStart` opens read-only (D-085). */
   edit?: boolean; lockEnv?: BoardServerOptions['lockEnv'];
   /** A stand-in for the system's folder chooser (D-110); none when left out. */
   chooser?: BoardServerOptions['chooser'];
+  /** Temp folders standing in for the places a project may be besides home (D-111); the system's when left out. */
+  places?: BoardServerOptions['places'];
 } = {}): Promise<Harness> {
   const dir = makeTempDir('vb-api-');
   const file = ledgerPath(dir);
@@ -126,7 +128,7 @@ export async function startBoard({ watch = false, chat, home, flags, appLimits, 
   const build = watch ? watchBuild(dist) : undefined;
   // A temp home folder unless the test brings its own: no test reads the real one (api.md 112).
   const ownHome = home ? undefined : makeTempDir('vb-home-');
-  const board = await startTestBoard({ project: dir, ledger, dist, build, chat, flags, appLimits, home: home ?? fs.realpathSync(ownHome!), ...(edit !== undefined && { edit }), lockEnv, ...(chooser !== undefined && { chooser }) });
+  const board = await startTestBoard({ project: dir, ledger, dist, build, chat, flags, appLimits, home: home ?? fs.realpathSync(ownHome!), ...(edit !== undefined && { edit }), lockEnv, ...(chooser !== undefined && { chooser }), ...(places && { places }) });
   const { base } = board;
   // The page is served with the person cookie (api.md 20); the test page keeps it like a browser.
   const cookie = await personCookie(base);

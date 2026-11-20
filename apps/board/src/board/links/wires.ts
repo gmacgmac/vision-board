@@ -6,9 +6,9 @@
 // each in link order. A container's timeline (D-105) is drawn by timelines.ts, in groups that move with the cards: its
 // line and stems between the lane bands and the connectors, its dots above everything; it scales with the world.
 // With the wireLayers flag (D-032) the page puts this SVG behind frames and cards, and `top`, an SVG
-// above the cards, repeats the focused card's connectors. With the linkLabels flag a label sits on
-// its line where the layout found it room (link-labels.ts), else a marker does (link-marks.ts, in
-// `marks`, a layer outside this SVG); off, every label is drawn at the middle of its line.
+// above the cards, repeats the focused card's connectors. With the linkLabels flag a label sits on or beside
+// its line where the layout found it room (link-labels.ts), else a short tag of its first words does (link-marks.ts,
+// in `marks`, a layer outside this SVG); off, every label is drawn at the middle of its line.
 import type { BoardLayout, Route } from '#layout';
 import { REGION_PAD } from '#layout';
 import type { TimelineLook } from '#ui';
@@ -39,7 +39,7 @@ const ends = (el: Element, r: Route) => { el.setAttribute('data-from', r.from); 
 const LANE_INSET = REGION_PAD - 8;
 
 /** `top`: the layer above the cards (wireLayers flag); `labels`: the linkLabels flag, with `marks`, the
- *  markers' layer; `look`: a timeline dot's node, its kind and tone (D-105). */
+ *  short tags' layer; `look`: a timeline dot's node, its kind and tone (D-105). */
 export function createWires(
   svg: SVGSVGElement, top?: SVGSVGElement, labels?: { marks: HTMLElement }, ids = '', look: (id: string) => TimelineLook | undefined = () => undefined,
 ): Wires {

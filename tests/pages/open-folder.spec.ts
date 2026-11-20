@@ -65,10 +65,10 @@ test('by pointer: home, then projects with the boards marked, then Open reloads 
   await expect(card(page)).toHaveText(['Start card']);
   await openPicker(page);
   await expect(dialog(page).getByRole('navigation', { name: 'Folder path' }).getByRole('button')).toHaveText(['~']);
-  // Never a board in home itself (open-folder.ts HOME_ITSELF): no Create there.
-  await expect(status(page)).toHaveText('Choose a project folder under ~');
-  await expect(accept(page)).toHaveText('Open');
-  await expect(accept(page)).toBeDisabled();
+  // The home folder itself may be a project folder (D-111): it has no board here, so Create, enabled.
+  await expect(status(page)).toHaveText('No Vision Board here');
+  await expect(accept(page)).toHaveText('Create');
+  await expect(accept(page)).toBeEnabled();
   await rows(page).first().click();
   await expect(rows(page)).toHaveText(['empty-app', /^other\s*board, has a Vision Board$/, /^start\s*board, has a Vision Board$/]);
   await expect(dialog(page).getByRole('navigation').getByRole('button')).toHaveText(['~', 'projects']);
@@ -253,7 +253,7 @@ test('gallery: the folder picker section shows by default in each state, and not
   await page.goto('/gallery.html');
   await expect(section(page).locator('.vb-folder-dialog')).toHaveCount(7);
   await expect(section(page).locator('.vb-folder-status')).toHaveText([
-    'Choose a project folder under ~', 'No Vision Board here', 'Vision Board found (3 boards)', 'No Vision Board here', 'Reading folders…',
+    'No Vision Board here', 'No Vision Board here', 'Vision Board found (3 boards)', 'No Vision Board here', 'Reading folders…',
     'Vision Board found (3 boards)', 'Vision Board found (3 boards)',
   ]);
   await expect(section(page).locator('[id^="folder-dialog"]')).toHaveCount(0);

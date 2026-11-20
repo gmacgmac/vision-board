@@ -985,3 +985,12 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   reference, radial-ideas linked its ideas and narrated before "Done." (both seen in node-overhaul T_05 and timeline
   T_02), timeline-plan opened the launch week's body with "Week of 15 November." Owed: a live run of import-file on the
   reworded line.
+
+## Skill v3.38 (link labels)
+
+- 2026-11-20, agent (folders-labels-print T_03, PLAN decision 4, point 647): `references/layouts.md` says "Label a link
+  only when it means more than "next" ("blocks", "feeds", "needs"), in short, simple words"; the flow row no longer
+  names labels and the worked example's link says "blocks", not "then". No core change; `skill.md` size unchanged.
+- 2026-11-20, agent: live Haiku 5.5, plugin (all 16): 113/114, 16 runs, $0.0424. Only miss: `insert-step` reads-references
+  (read none, layouts missing), seen since v3.35 (the bot inserts from the schema). Repeated 4 times alone: 3 of 4
+  missed it, $0.0085; it is not in the words this change touched. Dry run 114/114.

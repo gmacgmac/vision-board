@@ -6,8 +6,8 @@
 // free route (staggered cards, such as a timeline's above and below its line, cover the stretch between
 // them), the other pair of sides is tried (`otherSides`). Runs that would share a line then get their
 // own tracks (tracks.ts). Links between containers, links in radial, and a link with no free route
-// either way keep the plain elbow (path.ts). Each labelled link gets its label's place
-// (labels.ts). Pure and deterministic.
+// either way keep the plain elbow (path.ts). Each labelled link gets its label's place, once every line is
+// routed, so a label beside its line keeps clear of the others (labels.ts). Pure and deterministic.
 import type { Link } from '#format';
 import type { Box, Point, Route } from '../types.ts';
 import { boundsOf, overlaps, round } from '../geometry.ts';
@@ -16,6 +16,7 @@ import { CLEAR_CARD, grow } from './free.ts';
 import { frameFor } from './frame.ts';
 import type { Frame } from './frame.ts';
 import { placeLabel } from './labels.ts';
+import type { LabelRoom } from './labels.ts';
 import { along, elbow, lengthOf, roundedPath, simplify } from './path.ts';
 import type { Plan, Side } from './ports.ts';
 import { assignPorts, otherSides, sidesFor } from './ports.ts';
@@ -67,14 +68,17 @@ export function routeLines(
 export function routeLinks(
   links: Link[], boxes: Map<string, Box>, groups?: ReadonlyMap<string, string>, downward?: ReadonlySet<string>,
 ): Route[] {
-  const cards = [...boxes.values()];
-  const taken: Box[] = [];
-  return routeLines(links, boxes, groups, downward).map(({ link, pts }) => {
+  const lines = routeLines(links, boxes, groups, downward);
+  const room: LabelRoom = { cards: [...boxes.values()], taken: [], lines: lines.map((l) => l.pts) };
+  return lines.map(({ link, pts }) => {
     const mid = along(pts, lengthOf(pts) / 2);
     const route: Route = { from: link.from, to: link.to, label: link.label, d: roundedPath(pts), mid: { x: round(mid.x), y: round(mid.y) } };
     if (link.label) {
-      const at = placeLabel(pts, link.label, cards, taken);
-      route.labelAt = { x: round(at.x), y: round(at.y), fits: at.fits };
+      const at = placeLabel(pts, link.label, room, [boxes.get(link.from)!, boxes.get(link.to)!]);
+      route.labelAt = {
+        x: round(at.x), y: round(at.y), fits: at.fits, ...(at.short !== undefined && { short: at.short }),
+        ...(at.room && { room: { x: round(at.room.x), w: at.room.w } }),
+      };
     }
     return route;
   });

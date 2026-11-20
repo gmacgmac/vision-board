@@ -1,6 +1,6 @@
 # Plugin patterns: Journal and Vision Board, merged for nclite
 
-updated: 2026-11-19 (§ 4: both plugins wear the host's scrollbar, point 632); 2026-11-19 (first version, from Journal's and Vision Board's notes of the same day)
+updated: 2026-11-20 (§ 2 built in nclite as proposed, and VB asks it); 2026-11-19 (§ 4: both plugins wear the host's scrollbar, point 632); 2026-11-19 (first version, from Journal's and Vision Board's notes of the same day)
 
 nclite's two plugins each wrote down the patterns they built that the host could own: Journal in its own
 `docs/specification/plugin-patterns.md`, Vision Board in `docs/specification/plugin-patterns.md` here. This merges
@@ -13,7 +13,7 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
 | Pattern | The host gives | Today |
 |---|---|---|
 | Dates and times | One written rule and one normaliser; the person's locale and first day of the week | Each plugin has its own; they agree |
-| Printing | `print(ask?)` and the `@page` rules | VB has `print()`; J proposes `print({ title, content })`; merged in § 2 |
+| Printing | `print(ask?)` and the `@page` rules | Built in nclite as § 2 proposes (its `7415189d`); VB asks it (folders-labels-print T_04) |
 | Files | `saveFile`, `openFile` | In VB's contract; J has no files |
 | Scrollbar | The overlay scrollbar, as today, written into the contract | nclite has it; both plugins wear it |
 | Calendar | `ui.calendar(...)`, or at least its tokens | J's own package |
@@ -49,6 +49,9 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
 
 ## 2. Printing
 
+Built as proposed: nclite's `print?(ask?: PrintAsk)`, `PrintLook`, `PrintOrientation` (`shared/plugin-host.ts`,
+its `7415189d`), and Vision Board asks it.
+
 1. **The need**: print some of a plugin's content, or save it as a PDF, plain or in the app's colours.
 2. **What each built**: J builds a fresh element for paper (`src/view/print.ts` `printContent`) and asks the host to
    print it. VB prints its live page under a print stylesheet, after fitting the chosen part, the board or one
@@ -66,7 +69,7 @@ plugin still works with a host that lacks it. Paths name the plugin they are in:
      sheet holds no `@page` (nclite's sheet check already refuses it).
 4. **What each changes**: J adds `look` to its ask (it already sets `data-look`). VB passes `orientation` and
    `look` instead of naming its pages `vb-print-landscape` and `vb-print-portrait` and setting
-   `data-vb-print-theme`; its standalone host keeps doing what nclite would.
+   `data-vb-print-theme`; its standalone host keeps doing what nclite would. Done in VB (folders-labels-print T_04).
 5. **Fallback**: no hook, no Print control at all: no disabled button, no hint.
 6. **Versioning**: new options are optional fields on `ask`, ignored when unknown.
 7. **Pitfalls found**:

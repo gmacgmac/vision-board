@@ -8,9 +8,12 @@
 // The cloud storage places (folder-links-cloud task) are the real folders in `~/Library/CloudStorage`,
 // where macOS keeps Dropbox and the like (home only holds links to them, and links are not listed);
 // each passes the same checks, so a place is just another folder under home, by its real path.
-// Outside home (D-110): a folder the server vouches for, because the person picked it in the system's chooser this run
-// (chooser.ts) or it is in the server's own recent list, may be anywhere but hidden (`resolvePicked`, `resolveVouched`);
-// every other path keeps `resolveFolder`'s rule. Home itself, or a folder holding it, is never a project.
+// Where a project may be (D-111, amends D-110): `placeProblem` is the one rule. The home folder itself and anything
+// under it, anything under the drives folder (`/Volumes/`: drives and network shares) and the shared folder
+// (`/Users/Shared`); never `/` or a folder holding home, another person's home, a system folder, or a hidden one.
+// Outside home only a folder the server vouches for, because the person picked it in the system's chooser this run
+// (chooser.ts) or it is in the server's own recent list, may open (`resolvePicked`, `resolveVouched`, D-110's trust
+// rule); every other path keeps `resolveFolder`'s rule. The places are injectable (`Places`), so tests use temp folders.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { OperationOutput } from '#format';
@@ -81,18 +84,48 @@ const CARRIED = /^\/[^\u0000-\u001f\u007f]*$/;
 /** Any part of the real path `real` is hidden: its name starts with a dot (D-110). */
 export const hiddenPart = (real: string): boolean => real.split(path.sep).some((part) => part.startsWith('.'));
 
+/** Where a project folder may be (D-111), as real paths: the person's home folder, the folder holding drives and
+ * network shares, the folder everyone on the computer shares, and the folder holding people's home folders. */
+export interface Places { home: string; volumes: string; shared: string; users: string }
+
+/** The system's places (macOS) around `home` (a real path); a test passes temp folders as `roots`. */
+export const placesOf = (home: string, roots: Partial<Omit<Places, 'home'>> = {}): Places =>
+  ({ home, volumes: '/Volumes', shared: '/Users/Shared', users: '/Users', ...roots });
+
+/** Why a real path can't be a project folder (D-111). */
+export type PlaceProblem = 'hidden' | 'holds-home' | 'other-home' | 'system';
+
+/** Why the real path `real` can't be a project folder, or undefined when it can (D-111): home itself or under it,
+ * under the drives folder (not the drives folder itself) or the shared folder or under it, and no part hidden. */
+export function placeProblem(p: Places, real: string): PlaceProblem | undefined {
+  if (hiddenPart(real)) return 'hidden';
+  if (isUnder(p.home, real) || isUnder(p.shared, real) || (real !== p.volumes && isUnder(p.volumes, real))) return undefined;
+  if (isUnder(real, p.home) || isUnder(real, p.users)) return 'holds-home';
+  if (isUnder(p.users, real)) return 'other-home';
+  return 'system';
+}
+
+/** What the person reads for each refusal. */
+const PLACE_WORDS: Record<PlaceProblem, (displayName: string) => string> = {
+  hidden: serverFoldersWords.hiddenFolder,
+  'holds-home': serverFoldersWords.holdsHome,
+  'other-home': serverFoldersWords.otherHome,
+  system: serverFoldersWords.systemFolder,
+};
+
 /** The real folder `raw` names, when the server vouches for it (D-110: picked in the system's chooser, or in its own
- * recent list): anywhere but hidden. `refuse` (default `forbidden`, as `resolveFolder`) when a part of its real path
- * starts with a dot, it holds a control character (no answer or request could carry it), or it is the home folder or
- * holds it; `not-found` when it is not there or not a folder. */
-export function resolvePicked(home: string, raw: string, refuse: ProblemCode = 'forbidden'): string {
+ * recent list), checked by `placeProblem` (D-111). `refuse` (default `forbidden`, as `resolveFolder`) when it can't
+ * be a project folder, saying why, or its path holds a control character (no answer or request could carry it);
+ * `not-found` when it is not there or not a folder. */
+export function resolvePicked(places: Places, raw: string, refuse: ProblemCode = 'forbidden'): string {
+  const { home } = places;
   let real: string;
   try { real = fs.realpathSync(raw); } catch {
     throw problem('not-found', serverFoldersWords.thereIsNoFolderChoose(displayName(home, path.resolve(raw))));
   }
   if (!CARRIED.test(real)) throw problem(refuse, serverFoldersWords.controlCharacter(displayName(home, real)));
-  if (hiddenPart(real)) throw problem(refuse, serverFoldersWords.hiddenFolder(displayName(home, real)));
-  if (isUnder(real, home)) throw problem(refuse, serverFoldersWords.holdsHome(displayName(home, real)));
+  const why = placeProblem(places, real);
+  if (why) throw problem(refuse, PLACE_WORDS[why](displayName(home, real)));
   if (!fs.statSync(real).isDirectory()) throw problem('not-found', serverFoldersWords.isNotAFolderChoose(displayName(home, real)));
   return real;
 }
@@ -100,10 +133,10 @@ export function resolvePicked(home: string, raw: string, refuse: ProblemCode = '
 /** The real folder `raw` names: under home as `resolveFolder` checks it; else, only when `vouched(raw)` (the server
  * returned that very path from its chooser, or holds it in its recent list), by `resolvePicked`, and only while `raw`
  * is still its own real path (a folder since swapped for a link is refused). Otherwise `resolveFolder`'s refusal. */
-export function resolveVouched(home: string, raw: string, vouched: (raw: string) => boolean): string {
-  try { return resolveFolder(home, raw); } catch (err) {
+export function resolveVouched(places: Places, raw: string, vouched: (raw: string) => boolean): string {
+  try { return resolveFolder(places.home, raw); } catch (err) {
     if (!(err instanceof ProblemError) || err.code !== 'forbidden' || !vouched(raw)) throw err;
-    if (resolvePicked(home, raw) !== raw) throw err;
+    if (resolvePicked(places, raw) !== raw) throw err;
     return raw;
   }
 }

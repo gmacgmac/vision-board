@@ -23,7 +23,7 @@ import type { ConfirmList } from './host.ts';
 import { alignOf, chatStatusOf, flagOf, markdownOf } from './host.ts';
 import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
-import { askContextOf, createBoardEdit, createBoardFiles, createBoards, createLockFlow, createVersions } from './boards/index.ts';
+import { askContextOf, createBoardEdit, createBoardFiles, createBoards, createLockFlow, createVersions, IMPORT_BYTES } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
 import { createAttention, createBookmarkFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
 import { type BoardElements, createDrawing, createFocus, createPlaces, preparePrint, Viewport, zoomPercent } from './canvas/index.ts';
@@ -265,7 +265,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** What the container finder and Z on a container zoom with (find/finder.ts). */
   const finding = { vp, layout: () => drawing.layout, frames: () => drawing.frames };
   /** Export, import and print (D-107): through the host's hooks, the dialog in the board's status. */
-  const files = createBoardFiles({ host, io, id: () => S.id, state: () => live.state, regionTitle: (r) => S.data?.view.regions.find((x) => x.id === r)?.title,
+  const files = createBoardFiles({ host, importBytes: host.page?.importBytes ?? IMPORT_BYTES, io, id: () => S.id, state: () => live.state, regionTitle: (r) => S.data?.view.regions.find((x) => x.id === r)?.title,
     show: (ask) => status.set({ files: ask }), toast: (t) => toast(t), jump: (id) => void switchTo(id, () => boards.jump(id)),
     printView: (scope) => (drawing.layout && S.data ? preparePrint(stage.parentElement!, drawing.layout, view(), scope) : null) });
   const handlers = stageHandlers({ act, bookmarks: bookmarking ? bookmarks : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,

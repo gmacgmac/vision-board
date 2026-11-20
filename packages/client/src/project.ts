@@ -1,8 +1,9 @@
 // The folder an agent's tool works in (the board MCP and the `vb` CLI; D-039, api.md 116), worked out
 // once at start and sent on every call as `VB-Project`: `VB_PROJECT` when set (resolved against the
-// working folder), else the nearest folder at or above the working folder with a Vision Board in either
-// layout (`ledgersIn`), else none, and then nothing is sent and the server checks nothing. The page
-// loads this package too, so the caller hands in Node's `fs` and `path` rather than this file importing them.
+// working folder), else the working folder itself. Nothing searches upward for a board (D-111): the board
+// accepts its open folder or a folder inside it and answers `wrong-folder` otherwise. `ledgersIn` is the one
+// rule for the ledgers a project folder holds (the server's ledgers.ts asks it). The page loads this package
+// too, so the caller hands in Node's `fs` and `path` rather than this file importing them.
 import { ENV, ledgerFiles, ledgerFolder, ledgerNameProblem, projectFiles } from '#format';
 
 /** The parts of Node's `fs` and `path` this needs (the page's types have no Node). */
@@ -11,7 +12,7 @@ export interface ProjectFs {
     statSync(file: string, opts: { throwIfNoEntry: false }): { isFile(): boolean } | undefined;
     readdirSync(dir: string, opts: { withFileTypes: true }): readonly { name: string; isDirectory(): boolean }[];
   };
-  path: { resolve(...parts: string[]): string; dirname(file: string): string };
+  path: { resolve(...parts: string[]): string };
 }
 
 /** The ledgers a project folder holds (D-084 1): `old` when its ledger file sits in `.visionboard/` itself
@@ -30,16 +31,8 @@ export function ledgersIn(dir: string, { fs }: Pick<ProjectFs, 'fs'>): { old: bo
   return { old: isFile(ledgerFiles(ledgerFolder(dir)).ledger), ledgers };
 }
 
-export function projectOf(env: Readonly<Record<string, string | undefined>>, cwd: string, node: ProjectFs): string | undefined {
-  const { path } = node;
-  const set = env[ENV.project];
-  if (set) return path.resolve(cwd, set);
-  const hasBoard = (dir: string): boolean => {
-    const found = ledgersIn(dir, node);
-    return found.old || found.ledgers.length > 0;
-  };
-  for (let dir = path.resolve(cwd); ; dir = path.dirname(dir)) {
-    if (hasBoard(dir)) return dir;
-    if (path.dirname(dir) === dir) return undefined;
-  }
+/** The folder an agent's tool works in: `VB_PROJECT` resolved against `cwd` when set, else `cwd` (D-111). Only
+ * `path` is read; callers hand in Node's `fs` and `path` together. */
+export function projectOf(env: Readonly<Record<string, string | undefined>>, cwd: string, { path }: ProjectFs): string {
+  return path.resolve(cwd, env[ENV.project] || '.');
 }

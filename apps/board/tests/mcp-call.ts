@@ -6,7 +6,7 @@ import { MCP_BIN } from '#mcp';
 
 export interface McpServerSpec { command: string; args: string[]; env: Record<string, string> }
 
-/** The board's MCP server as an agent's own config starts it: no `VB_PROJECT`, so it finds its folder. */
+/** The board's MCP server as an agent's own config starts it: no `VB_PROJECT`, so its folder is its working folder (D-111). */
 export const ownMcp = (base: string): McpServerSpec => ({ command: process.execPath, args: ['--no-warnings', MCP_BIN], env: { VB_SERVER: base } });
 
 /** The result of one `tools/call` of `name` with `args`. The test's own `VB_PROJECT` and secret are

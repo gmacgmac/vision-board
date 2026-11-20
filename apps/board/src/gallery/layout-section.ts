@@ -1,6 +1,6 @@
 // Gallery entries for field report batch 3 (FE_01), each shown by default behind its flag: link
-// labels (linkLabels: a label on its line, a marker where it has no room, and a marker's label
-// floating as hover or focus opens it), the viewer's alignment (alignSetting: a row of cards lined
+// labels (linkLabels, point 646: a label on its line, beside it in the gap, centred on or beside an upright, a short tag where
+// it has no room, and a tag's whole label floating as hover or focus opens it), the viewer's alignment (alignSetting: a row of cards lined
 // up by its tops, and centred) and card widths (widthsControl: a column under Match card widths and
 // one under its own widths, the switch on and focused, off and hovered). Every sample is a mini board
 // drawn by the board's own drawing from the fixture ledger's layout board (mini-board.ts).
@@ -20,7 +20,7 @@ function section(feature: string, title: string, code: string, desc: string, ...
   return box;
 }
 
-/** The marker of the link `from` > `to` drawn open, as hover or keyboard focus opens it. */
+/** The short tag of the link `from` > `to` drawn open, as hover or keyboard focus opens it. */
 const openMark = (to: string) => (host: HTMLElement) => {
   const mark = [...host.querySelectorAll<HTMLElement>('.vb-link-mark')]
     .find((m) => m.querySelector('button')?.getAttribute('aria-label')?.includes(` to ${to}:`));
@@ -29,13 +29,18 @@ const openMark = (to: string) => (host: HTMLElement) => {
 };
 
 export function linkLabelSection(fx: Fixture): HTMLElement {
-  return section('linkLabels', 'Link labels', 'Route.labelAt · link-labels.ts · link-marks.ts',
-    'A link\'s label sits on its line near the source, on the canvas colour so the line does not show through, wherever the layout found it room. '
-    + 'Where it did not, a small marker sits on the line; hovering or focusing the marker floats the label above everything, and Esc closes it.',
-    group('Fits, and a marker', 'The straight link\'s short label fits on its line; the two longer labels have no room on theirs, so each is a marker.',
+  return section('linkLabels', 'Link labels', 'Route.labelAt · route/labels.ts · link-labels.ts · link-marks.ts',
+    'A link\'s label is a word read where it sits: on a straight piece of its line near the source, else just above or below a level piece inside the gap between its two cards, '
+    + 'else centred on the elbow\'s upright piece, else just right or left of it (stacked cards), always on the canvas colour and clear of every card and other label. Cards never move. '
+    + 'Only a label that fits none of these is a short tag: its first words and an ellipsis, a hairline border; hovering or focusing it floats the whole label, and Esc closes it. '
+    + 'On paper every label is drawn whole: the tag shows all its words, wrapped.',
+    group('Every place a label takes', '"feeds" sits on its line\'s upright piece; "next" has no room on its short level piece, so it sits just above it; '
+      + '"when a note fits no theme" is centred on its upright piece, in the gap; "once every note has been read" fits nowhere between cards 1 and 2, so it is the short tag "once…".',
       miniBoard(fx.layout, 'labels', { label: 'Cards joined by labelled links', labels: true })),
-    group('A marker\'s label floating', 'As hover or keyboard focus opens it: the label over the board, the marker in its focus ring.',
-      miniBoard(fx.layout, 'labels', { label: 'Cards with a marker open', labels: true, suffix: '-open', then: openMark('3-open') })));
+    group('Stacked cards', 'A column: the line between two stacked cards is too short for "unblocks" on it, and centred on it the word would cover the arrowhead, so it sits just right of the line, in the gap.',
+      miniBoard(fx.layout, 'labels-down', { label: 'Two stacked cards joined by a labelled link', labels: true })),
+    group('A short tag\'s label floating', 'As hover or keyboard focus opens it: the whole label over the board, the tag in its focus ring.',
+      miniBoard(fx.layout, 'labels', { label: 'Cards with a short tag open', labels: true, suffix: '-open', then: openMark('2-open') })));
 }
 
 export function alignSection(fx: Fixture): HTMLElement {
