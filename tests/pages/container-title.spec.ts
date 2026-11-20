@@ -89,11 +89,12 @@ test('the label is centred at 100%, slides left before it would touch the tools,
   expect(at(1).cut).toBe(false);
   // Never on the tools, at any zoom where they show.
   expect(ks.filter((k) => at(k).toolsLeft !== null && at(k).labelRight > at(k).toolsLeft!).map((k) => [k, at(k)])).toEqual([]);
-  // Sliding: between the centre and the start at 60% (the frame too narrow on screen to centre the
-  // label beside the one layout button and the tools); zooming out only ever moves it towards the start.
-  expect(at(0.6).toolsLeft).not.toBeNull();
-  expect(at(0.6).labelMid).toBeLessThan(at(0.6).frameMid - 2);
-  expect(at(0.6).labelLeft).toBeGreaterThan(at(0.6).headLeft + 1);
+  // Sliding: between the centre and the start at 70% (the frame too narrow on screen to centre the
+  // label beside the one layout button and the tools; 60% before the title's side rules, point 673, widened
+  // the label); zooming out only ever moves it towards the start.
+  expect(at(0.7).toolsLeft).not.toBeNull();
+  expect(at(0.7).labelMid).toBeLessThan(at(0.7).frameMid - 2);
+  expect(at(0.7).labelLeft).toBeGreaterThan(at(0.7).headLeft + 1);
   for (const [a, b] of ks.slice(1).map((k, i) => [ks[i]!, k] as const))
     expect(at(b).labelLeft - at(b).headLeft, `${a} then ${b}`).toBeLessThanOrEqual(at(a).labelLeft - at(a).headLeft + 0.5);
   // Zoomed out (the tools gone) it starts the line; at the far end its title is cut ("…").

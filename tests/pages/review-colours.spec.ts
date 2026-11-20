@@ -1,5 +1,6 @@
 // Review polish FE_01 (rulings 1, 3 and 5): the container frame and the hover box's border take the
-// next step up the Lines scale (--vb-line-contrast), and a selected card of every kind is lifted
+// next step up the Lines scale (--vb-line-contrast; the frame draws it at 55% since its corners-only
+// look, point 672), and a selected card of every kind is lifted
 // toward the strong ink, about two-thirds of a step (--vb-select-lift 35%) with a little more
 // saturation (--vb-select-chroma 1.25; review polish round 2 ruling 5, from FE_01's full step, 50%,
 // in srgb). The maintainer chose these by eye, so the
@@ -19,25 +20,30 @@ test.beforeEach(async ({ page }) => {
 });
 
 for (const theme of THEMES) {
-  test(`${theme}: the container frame is drawn in the Lines scale's next step, with no fill`, async ({ page }) => {
+  test(`${theme}: the container frame is drawn in the Lines scale's next step at 55%, with no fill`, async ({ page }) => {
     await setTheme(page, theme);
     const frame = page.locator('section[data-pattern="region"] vb-region').first();
-    // FIX_06: the lines are drawn by ::before (top and bottom) and ::after (sides), the frame's own border is transparent.
-    const [top, side] = await frame.evaluate((e) => [getComputedStyle(e, '::before').borderTopColor, getComputedStyle(e, '::after').borderLeftColor]);
-    const border = top;
-    expect(await pixel(page, side)).toEqual(await pixel(page, top));
-    expect(await pixel(page, border)).toEqual(await pixel(page, await resolved(page, 'var(--vb-line-contrast)')));
+    // Point 672: one rule round the frame on ::before, masked to its corners; ::after draws nothing; the frame's own border is transparent.
+    const [border, after] = await frame.evaluate((e) => [getComputedStyle(e, '::before').borderTopColor, getComputedStyle(e, '::after').content]);
+    expect(after).toBe('none');
+    const mixed = await resolved(page, 'color-mix(in srgb, var(--vb-line-contrast) 55%, transparent)');
+    expect(await pixel(page, border)).toEqual(await pixel(page, mixed));
+    expect(border, 'the same colour, 55% opaque').toBe(mixed);
     // Ruling answer 126: the inside is left as it is, and the fill and grey-lift tokens are not added.
     expect(await frame.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
     const names = await page.evaluate(() => ['--vb-region-fill', '--vb-select-lift-grey']
       .filter((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() !== ''));
     expect(names).toEqual([]);
-    // Clearer than the step it replaces (reported, not gated: chosen by eye, D-009).
-    const canvas = await pixel(page, await resolved(page, 'var(--vb-surface-canvas)'));
-    const now = lc(await pixel(page, await resolved(page, 'var(--vb-line-strong)')), canvas);
-    const next = lc(await pixel(page, border), canvas);
-    test.info().annotations.push({ type: `${theme} frame on canvas`, description: `Lc ${next.toFixed(1)} (was ${now.toFixed(1)})` });
-    expect(next).toBeGreaterThan(now);
+    // As drawn on the canvas (reported, not gated: chosen by eye, D-009); fainter than the whole line on purpose.
+    const canvas = await resolved(page, 'var(--vb-surface-canvas)');
+    const back = await pixel(page, canvas);
+    // Dark's corners fall under APCA's low clip (Lc 0; the whole line was Lc 11.7 there): reported, as the whole line was.
+    const onCanvas = await pixel(page, await resolved(page, `color-mix(in srgb, var(--vb-line-contrast) 55%, ${canvas})`));
+    const [drawn, whole] = [lc(onCanvas, back), lc(await pixel(page, await resolved(page, 'var(--vb-line-contrast)')), back)];
+    test.info().annotations.push({ type: `${theme} frame on canvas`, description: `Lc ${drawn.toFixed(1)} (whole line ${whole.toFixed(1)})` });
+    expect(onCanvas, 'still drawn: not the canvas').not.toEqual(back);
+    expect(drawn).toBeLessThanOrEqual(whole);
+    if (theme === 'light') expect(drawn, 'fainter than the whole line').toBeLessThan(whole);
   });
 
   test(`${theme}: every hover box has the same visible border`, async ({ page }) => {

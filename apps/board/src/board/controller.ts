@@ -108,7 +108,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const drawing = createDrawing({
     els, say: (t) => toast(t, 'error'), vp, ids: b.ids, markdown, sizing, access, layers, labels, widthsControl, removing, files: { print: !!host.savePdf, export: !!host.saveFile }, align: () => (aligning ? alignOf(host) : 'start'), rowGap: on('updateSignals') ? ROW_GAP : undefined, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => edges.replies(parking.containers()), retired: () => S.retired, rail: on('toolRail'), railHover: on('railOnHover'), fresh: () => edges.fresh(attention.freshIn()),
-    facts, appCards: apping, edges: edges.first, placed: () => apps.place(), // FE_08
+    facts, appCards: apping, edges: edges.first, placed: () => apps.place(), relaid: () => boards.relaid(), // FE_08
     direction: (r: string) => directionOf((versions.state ?? live.state)!, S.id, r), // BE_01
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });

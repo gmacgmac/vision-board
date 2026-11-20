@@ -299,6 +299,12 @@ test('a pointer resting on the layout button shows the tiles, and leaving the ro
   await panTo(page, row(page, 'review'));
   const review = page.locator('vb-region[data-region="review"]');
   const pop = review.getByRole('menu', { name: 'Layout for Review' });
+  // The wide popover (each tile with its one-liner) needs more than 568px of top line on screen (region-modes.css);
+  // the lowest zoom with buttons depends on the board's opening zoom, so zoom in until the line has it.
+  const line = async () => (await review.locator('.vb-region-head').boundingBox())!.width;
+  for (let i = 0; i < 4 && await line() <= 568; i += 1) await page.keyboard.press('+');
+  await panTo(page, row(page, 'review'));
+  expect(await line(), 'room for the wide popover').toBeGreaterThan(568);
   await review.locator('.vb-layout-btn').hover();
   await expect(pop).toBeVisible();
   await expect(pop.locator('.vb-mtile')).toHaveCount(6);

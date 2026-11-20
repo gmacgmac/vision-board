@@ -78,7 +78,7 @@ test('every mark is reachable by Tab in the order drawn, named by its state, wit
   expect(hit, 'the number takes a press 2px outside it').toBe('number');
 });
 
-test('the disc is 24px on the marks\' line with a tick and cross while waiting; the body is 14px under the 15px title (D-112)', async ({ page }) => {
+test('the disc is 24px on the marks\' line with a tick and cross while waiting; the body is 15px under the 16px title (D-112, point 668)', async ({ page }) => {
   await open(page);
   const card = section(page).locator('vb-node', { hasText: 'Go-ahead to install' }).first();
   const disc = card.locator('[data-mark="answer"]');
@@ -89,9 +89,9 @@ test('the disc is 24px on the marks\' line with a tick and cross while waiting; 
   expect(Math.abs(d.x + d.width / 2 - (n.x + n.width / 2))).toBeLessThanOrEqual(0.5);
   await expect(disc.locator('.vb-mark-wait')).toBeVisible();
   const size = (sel: string) => card.locator(sel).first().evaluate((el) => getComputedStyle(el).fontSize);
-  expect(await size('.vb-node-title')).toBe('15px');
-  expect(await size('.vb-node-body')).toBe('14px');
-  expect(await size('.vb-node-body > *')).toBe('14px');
+  expect(await size('.vb-node-title')).toBe('16px');
+  expect(await size('.vb-node-body')).toBe('15px');
+  expect(await size('.vb-node-body > *')).toBe('15px');
 });
 
 for (const theme of THEMES) {

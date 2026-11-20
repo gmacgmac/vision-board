@@ -62,6 +62,9 @@ export interface Boards {
   listed(): void;
   /** The view moved (pan or zoom): keep it for the open board. */
   moved(): void;
+  /** The open board was laid out again by itself (a font loaded after it was measured): a view still at the fit it
+   *  opened with fits the new bounds, so the board opens fitted to what is drawn. A view the person moved stays. */
+  relaid(): void;
   /** Stop following the changes. */
   stop(): void;
 }
@@ -86,6 +89,9 @@ export function createBoards(d: BoardsDeps): Boards {
   const waiting = [boardsWords.noBoardsYetWaitingFor, ...(d.page.help?.waiting ? [d.page.help.waiting] : [])].join('\n');
   const kept = createKeptView(d.vp, d.id, d.keepView, d.store);
   const { status } = d;
+  /** The view as the open board's opening fit left it, while nothing has moved it since (`relaid`); '' with none. */
+  let opening = '';
+  const view = () => JSON.stringify(d.vp.snapshot());
 
   /** Whether the picker shows board `id`: it exists and is not archived. */
   const shown = (s: LedgerState | null, id: string) => !!s && boardVisibility(s, id) === 'visible';
@@ -102,7 +108,8 @@ export function createBoards(d: BoardsDeps): Boards {
     d.redraw(true);
     d.say(null);
     const layout = d.layout();
-    if (!kept.restore(id) && layout) d.vp.fit(layout.bounds, false);
+    opening = '';
+    if (!kept.restore(id) && layout) { d.vp.fit(layout.bounds, false); opening = view(); }
     d.page.opened(id);
     if (drawn) return;
     drawn = true;
@@ -189,6 +196,13 @@ export function createBoards(d: BoardsDeps): Boards {
     jump,
     listed,
     moved: kept.moved,
+    relaid() {
+      const layout = d.layout();
+      if (!layout || view() !== opening) return void (opening = '');
+      status.set({ refits: status.now.refits + 1 }); // first, so the level it moves to is the opening's
+      d.vp.fit(layout.bounds, false);
+      opening = view();
+    },
     stop() {
       stopped = true;
       finishAll([unwatch, kept.destroy]);

@@ -100,6 +100,8 @@ export interface DrawDeps {
   appCards?: boolean;
   /** Cards were placed or the view moved: app cards load or remove their frames (app-cards.ts). */
   placed?(): void;
+  /** A font that loaded after the first measure laid the board out again (boards.ts `relaid`: an opening fit follows). */
+  relaid?(): void;
 }
 
 export interface Drawing {
@@ -150,8 +152,12 @@ export function createDrawing(d: DrawDeps): Drawing {
 
   // A face that finishes loading after the cards were measured (the web font swapped in for its fallback, a skin's
   // faces) wraps their text anew: every card is measured again, and laid out again if one changed (D-112's 14px body
-  // wraps differently in the fallback).
-  const fontsLoaded = () => { if (layout) resized([...cards.els.keys()]); };
+  // wraps differently in the fallback); a board still at its opening fit fits the new bounds.
+  const fontsLoaded = () => {
+    const before = layout;
+    if (before) resized([...cards.els.keys()]);
+    if (layout !== before) d.relaid?.();
+  };
   document.fonts?.addEventListener('loadingdone', fontsLoaded);
 
   /** A timeline dot's look (D-105): its node's kind and tone, from the view drawn, indexed once per view. */
