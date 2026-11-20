@@ -281,6 +281,7 @@ for (const theme of THEMES) {
 // ---- Keyboard only ----
 
 test('keyboard: Tab reaches Allow, and Enter allows', async ({ page, request }) => {
+  await revokeOthers(page); // the count below is the creator and this agent, whatever ran before
   const a = await ask(request, 'Keys allow chat');
   await openAccess(page);
   await tabTo(page, row(page, 'Keys allow chat').getByRole('button', { name: /^Allow Keys allow chat/ }));
