@@ -1432,3 +1432,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: A container's corner lines are decoration a person finds by shape, not by contrast: at rest (55% of the region colour) they may sit under Lc 30 (measured Lc 17.8 light, under APCA's cutoff in dark). A fresh container's corners are its teal muted halfway into the canvas (`region-fresh.css`), a hint seen from a distance, measured Lc 32.3 light and 23.3 dark (was 58.6 and 67.4); the only rule held is that they read brighter than the plain corners (`tests/pages/fresh-cards.spec.ts`). Text, labels and the fresh pill keep their tiers.
 - **Why**: the maintainer wants the frame quiet and the fresh border muted; neither carries meaning a person must read, and the pill says what changed.
 - **Task**: none (direct change on main)
+
+## D-114 One chat identity per folder's ledger
+- **Date**: 2026-11-20 · **Status**: Accepted (maintainer, point 693A) · **From**: an agent that wasted a 27-card batch on `needs-grant` in containers an earlier chat made
+- **Decision**: Every chat panel session the person starts in a folder's ledger, Claude's or Kiro's, is one agent. The first start after this change reuses the ledger's most recent chat agent and is granted, once and as the person's grant, the boards and containers the other earlier chat agents of that ledger held; never what only an MCP agent held, what the person removed or refused, or a locked or archived board. Agents outside the panel keep their own ids; the ledger's read-only switch still stops every write. The skill tells the agent to read cards an earlier chat drew and to ask the person in the chat when it lacks the context to change them.
+- **Why**: each chat was the person's click on the person's own folder; a new chat should carry on the work, not ask for access to it or add its name again.
+- **Task**: cortex-tasks/board/2026-11-20_board-agent_access-clarity/T_02_chat-identity.md
+
+## D-115 The board ships no CSS mask; container corners are a clip-path
+- **Date**: 2026-11-20 · **Status**: Accepted (maintainer, point 705) · **From**: solid squares in the host's Save as PDF, reproduced with WebKit's print call
+- **Decision**: A container's corners are its outline cut by a `clip-path` polygon, each corner square traced clockwise, on screen and in print. The board's CSS holds no `mask`, `-webkit-mask` or `mask-image` other than `none`; `npm run verify` fails on one. `docs/specification/plugin.md` keeps the print-safe rule and the audit of other paint features.
+- **Why**: WebKit's PDF output cannot apply a mask and paints the mask image as colour; a clip is a path every PDF engine records, so the screen and every PDF match.
+- **Task**: cortex-tasks/board/2026-11-20_board-agent_access-clarity/T_04_print-safe-corners.md
