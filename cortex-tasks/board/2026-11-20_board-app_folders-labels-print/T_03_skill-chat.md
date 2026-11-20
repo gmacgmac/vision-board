@@ -27,3 +27,12 @@ copy: `npm run build:plugin`), the skill's tests (`apps/board/tests/plugin-skill
 Own files only; others are REQUESTS. No git command that changes state.
 
 ## Implementation Notes
+
+- Skill v3.38: `source/references/layouts.md` (one sentence; flow row without labels; example label "blocks"), status line in
+  `source/differences.md`, rebuilt (`build:skill`, `build:plugin`); test "v3.38" in `plugin-skill.test.ts`; NOTES.md section.
+- eval:bot (live, Haiku 5.5, plugin, 16 runs): 113/114, $0.0424. The one miss, `insert-step` reads-references, is the known
+  v3.35 miss (3 of 4 repeats, $0.0085 more), not caused by these words. Dry run 114/114.
+- Chat: `chat-host.css` one rule, `chat-message .chat-bubble { --vb-md-text: var(--chat-text); }`. Measured in the gallery,
+  both themes: agent paragraph and list item 16px = person's bubble 16px (was 13px); headings follow (calc from the same
+  variable). New test in `tests/pages/chat.spec.ts`. Renewed: `tests/pages/__screenshots__/chat.spec.ts/chat-dark-darwin.png`,
+  `chat-light-darwin.png`. Other chat specs and gallery (62) pass unchanged. `npm run verify` ok. Not run: full `npm test`.

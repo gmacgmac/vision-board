@@ -21,7 +21,7 @@ state. 7. Never port 4466, never the real home folder.
 |---|-----|------|-------|--------------|---------|------|--------|-------|
 | 1 | T_01 | 1 | strong | yes | Principal security engineer for desktop file access — the person chooses the folder and the board; nothing searches past it. | [Which folders open; no hunting](./T_01_folders.md) | Pending | |
 | 2 | T_02 | 1 | strong | yes | Diagram-tool layout engineer — a word on a line is read where it sits; nothing becomes a mystery dot. | [Link labels in the gap](./T_02_labels.md) | Pending | |
-| 3 | T_03 | 1 | standard | yes | — | [Skill sentence; chat text size](./T_03_skill-chat.md) | Pending | |
+| 3 | T_03 | 1 | standard | yes | — | [Skill sentence; chat text size](./T_03_skill-chat.md) | Completed | v3.38; eval:bot 113/114 ($0.0424), known insert-step miss; chat 16px; 2 baselines renewed |
 | 4 | T_04 | 2 | strong | yes | Platform engineer for plugin contracts — the host owns the paper; the plugin asks once and says what failed. | [Print through the host](./T_04_print-host.md) | Pending | |
 | 5 | VERIFY_01 | 3 | standard | no | Person who prints and shares boards from nclite — checks each promise once, no builder's shortcuts. | [One check per ruling](./VERIFY_01_check.md) | Pending | |
 
