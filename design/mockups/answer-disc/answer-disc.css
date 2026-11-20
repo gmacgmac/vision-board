@@ -60,3 +60,10 @@ figcaption b { display: block; font: 600 12.5px var(--vb-font-label); color: var
 .picker svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
 .pointer { position: absolute; width: 16px; height: 20px; pointer-events: none; }
 .pointer path { fill: #fff; stroke: #000; stroke-width: 1.2; }
+
+/* v2: 24px, the kind's own colour (today's), a small tick and cross side by side. */
+.disc.s24 svg.pair { width: 18px; height: 18px; stroke-width: 2.1; }
+.row4 { grid-template-columns: repeat(4, 1fr); }
+.panel > h2:last-of-type { margin-bottom: 30px; }
+section .row { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.disc.s24 svg.pair { width: 20px; height: 20px; }
