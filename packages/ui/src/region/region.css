@@ -194,7 +194,7 @@ vb-region[data-drop]::after { display: none; }
 vb-region[data-drop] .vb-region-head h2 { color: var(--vb-ink-strong); }
 
 /* Selected (data-selected, set by the page): the reading ink and a heavier rule; the corners stay open. */
-vb-region[data-selected] { --vb-region-ln: var(--vb-ink); --vb-region-ln-w: 2px; }
+vb-region[data-selected] { --vb-region-ln: color-mix(in srgb, var(--vb-ink) 65%, transparent); --vb-region-ln-w: 2px; } /* fainter with the frame (point 674) */
 vb-region[data-selected] .vb-region-head h2 { color: var(--vb-ink-strong); }
 
 /* A fixed frame (the built-in Later, ruling 5): the board sets its layout, so its mode row holds
@@ -282,7 +282,7 @@ vb-region .vb-region-grip:is(:focus-visible, [data-look='focus'])::after {
   outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight);
 }
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
-vb-region[data-dragging] { transition: none; z-index: var(--vb-z-open); --vb-region-ln: color-mix(in srgb, var(--vb-region) 85%, var(--vb-ink-strong)); }
+vb-region[data-dragging] { transition: none; z-index: var(--vb-z-open); --vb-region-ln: color-mix(in srgb, color-mix(in srgb, var(--vb-region) 85%, var(--vb-ink-strong)) 75%, transparent); }
 
 /* The title's full-text tip (titleTip flag, WCAG 1.4.13; box: tip/tip.css), below the label over the
    frame's top room while data-title-tip-open is on the frame, which also raises the frame above the

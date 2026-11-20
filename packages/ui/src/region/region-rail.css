@@ -97,7 +97,7 @@ vb-region[data-rail-hover] .vb-mode-row { transition: border-color var(--vb-moti
   vb-region {
     &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within) .vb-region-tools:not([data-look]) :is(.vb-mode-icon, .vb-mode-div, .vb-mseg:not(.vb-region-comment)) { opacity: 0; }
     /* In use the rules step up a little as the rail appears (FIX_06): the frame's colour, a quarter of the way to ink. */
-    &[data-rail-hover]:is([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within):not([data-selected], [data-fresh], [data-dragging], [data-drop]) { --vb-region-ln: color-mix(in srgb, var(--vb-region) 70%, var(--vb-ink)); }
+    &[data-rail-hover]:is([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within):not([data-selected], [data-fresh], [data-dragging], [data-drop]) { --vb-region-ln: color-mix(in srgb, color-mix(in srgb, var(--vb-region) 70%, var(--vb-ink)) 75%, transparent); } /* fainter with the frame (point 674) */
     &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within) .vb-region-tools:not([data-look]) > .vb-mode-row { border-color: transparent; background-color: transparent; box-shadow: none; }
   }
 }
