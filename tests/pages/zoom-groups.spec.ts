@@ -97,7 +97,7 @@ test('a menu keeps one size at every zoom, and stays open and attached while the
     await expect(picker, `closed at ${k}`).toHaveCount(0);
   }
   expect(new Set(sizes.map(String)).size, JSON.stringify(sizes)).toBe(1);
-  // Open at 100%, zoomed out to 40% and in to 250% without closing, it follows its disc.
+  // Open at 100%, zoomed out to 40% and in to 250% without closing, it follows its disc: Tick stays centred on it (D-112).
   await zoomTo(page, 1);
   await mark(page, q, 'answer').click();
   const picker = menuOf(page, `Answer item ${q}`);
@@ -105,9 +105,9 @@ test('a menu keeps one size at every zoom, and stays open and attached while the
   for (const k of [0.4, 2.5]) {
     await zoomTo(page, k);
     await expect(picker).toBeVisible();
-    const [p, disc] = [await box(picker), await box(mark(page, q, 'answer'))];
+    const [p, disc, tick] = [await box(picker), await box(mark(page, q, 'answer')), await box(picker.getByRole('menuitem', { name: 'Tick (A)' }))];
     expect([Math.round(p.width), Math.round(p.height)]).toEqual([Math.round(before.width), Math.round(before.height)]);
-    near(p.x, disc.x + disc.width + 6, 2);
+    near(tick.x + tick.width / 2, disc.x + disc.width / 2, 2);
   }
 });
 

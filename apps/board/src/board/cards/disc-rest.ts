@@ -37,11 +37,14 @@ export function createDiscRest(d: DiscRestDeps): DiscRest {
     const disc = (e.target as Element).closest?.<HTMLElement>(DISC);
     return disc && !disc.contains(e.relatedTarget as Node | null) ? disc : null;
   };
-  const listen = new AbortController();
-  const on = <K extends keyof HTMLElementEventMap>(type: K, f: (e: HTMLElementEventMap[K]) => void, capture = false) =>
-    d.stage.addEventListener(type, f, { capture, passive: true, signal: listen.signal });
+  /** Every listener, so `destroy` takes each off by name (a host counts what the board leaves on its document). */
+  const heard: [EventTarget, string, (e: PointerEvent) => void, boolean][] = [];
+  const on = (target: EventTarget, type: string, f: (e: PointerEvent) => void, capture = false) => {
+    heard.push([target, type, f, capture]);
+    target.addEventListener(type, f as EventListener, { capture, passive: true });
+  };
 
-  on('pointerover', (e) => {
+  on(d.stage, 'pointerover', (e) => {
     const disc = discOf(e);
     if (!disc || e.pointerType === 'touch' || (quiet && idOf(disc) === quiet) || smallMark(disc)) return;
     cancel();
@@ -50,15 +53,15 @@ export function createDiscRest(d: DiscRestDeps): DiscRest {
       if (id && disc.matches(':hover') && d.may(disc)) d.open(disc, id);
     }, REST_OPEN_MS);
   });
-  on('pointerout', (e) => {
+  on(d.stage, 'pointerout', (e) => {
     const disc = discOf(e);
     if (!disc) return;
     cancel();
     if (idOf(disc) === quiet) quiet = undefined;
   });
   // Where the pointer is, anywhere on the page (off the stage too), for `closed`.
-  document.addEventListener('pointermove', (e) => { at = e.pointerType === 'touch' ? null : { x: e.clientX, y: e.clientY }; }, { passive: true, signal: listen.signal });
-  on('pointerdown', cancel, true);
+  on(document, 'pointermove', (e) => { at = e.pointerType === 'touch' ? null : { x: e.clientX, y: e.clientY }; });
+  on(d.stage, 'pointerdown', cancel, true);
 
   return {
     closed(disc) {
@@ -66,7 +69,7 @@ export function createDiscRest(d: DiscRestDeps): DiscRest {
     },
     destroy() {
       cancel();
-      listen.abort();
+      for (const [target, type, f, capture] of heard.splice(0)) target.removeEventListener(type, f as EventListener, { capture });
     },
   };
 }

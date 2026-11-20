@@ -126,3 +126,15 @@ pointer, focus not moved) and by Enter (Tick focused, ring); leaving closes it; 
   size", now 1px under the body. Kept to the brief (other 13px text unchanged); the spec now says 13px.
 - `--vb-answer-wait` is no longer read by anything (the dot is gone); a protected token, left for the maintainer.
 - New behaviour shipped without a flag, as the task planned it (project rule: new behaviour behind a flag).
+
+**Follow-up (orchestrator, full suite on 2d0bf55e): four tests that pass on HEAD failed every run.**
+- `board-host.spec.ts:18` and `:187`, and `board-guest.spec.ts:185` failed on the listener count after `unmount`: 2
+  where 0 was expected, one per board. The cause was `cards/disc-rest.ts`, whose `pointermove` on the document (and
+  its stage listeners) were taken off with an `AbortController`. The host counts listeners by `removeEventListener`,
+  as a host may, so an abort counts as a leak. Fixed at the cause: `createDiscRest` keeps its listeners and `destroy`
+  removes each by name, as the rest of the board does. Nothing was left in the body; the count was of listeners.
+- `zoom-groups.spec.ts:85` asserted the old picker side (DD-07: `near(p.x, disc.x + disc.width + 6, 2)`, the picker to
+  the right of the disc). The test now asserts D-112's rule instead: Tick's centre stays on the disc's centre at 40% and
+  250%, the picker one size. That is the only test change.
+- Rerun (ports 6410-6419, a temporary HOME, `--config tests/pages/playwright.config.ts`): board-host, board-guest,
+  zoom-groups, node-edges, node-edges-board, answer-model: 49 passed.
