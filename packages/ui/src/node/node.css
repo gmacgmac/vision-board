@@ -119,7 +119,7 @@ vb-node .vb-node-tags { display: flex; flex-wrap: wrap; gap: var(--vb-space-1); 
 vb-node .vb-node-tags li {
   display: inline-flex; align-items: center; height: 22px; padding: 0 var(--vb-space-2);
   border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); color: var(--vb-ink);
-  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); white-space: nowrap;
+  font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); white-space: nowrap;
 }
 /* While its bubble is open, the card draws over its neighbours (05 `.card.has-ovl`). */
 vb-node[data-bubble] { z-index: var(--vb-z-drag); }
