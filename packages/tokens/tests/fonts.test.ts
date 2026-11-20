@@ -81,9 +81,10 @@ test('the register records each file and licence by its SHA-256', () => {
   }
 });
 
-test('every type token names the board\'s faces first, then a host\'s face, then the system stacks (D-116)', () => {
+test('every type token names the board\'s faces first, then a host\'s face behind them, or the system stack a host never replaces (D-116, point 730)', () => {
   const all = ['../src/tokens.css', '../src/skins.css'].map((f) => fs.readFileSync(at(f), 'utf8')).join('\n');
   const decls = [...all.matchAll(/(--vb-font-(?:text|display|label)):\s*([^;]+);/g)];
   assert.equal(decls.length, 6);
-  for (const [, name, value] of decls) assert.match(value!, /^(?:'vb-[a-z-]+', )*var\(--vb-host-font(-mono)?, var\(--vb-font\1\)\)$/, `${name}: ${value}`);
+  // Its faces then the host's font behind them, or (no host) its faces if any then the system stack (point 730).
+  for (const [, name, value] of decls) assert.match(value!, /^(?:(?:'vb-[a-z-]+', )+var\(--vb-host-font, var\(--vb-font\)\)|(?:'vb-[a-z-]+', )*var\(--vb-font-system(?:-mono)?\))$/, `${name}: ${value}`);
 });

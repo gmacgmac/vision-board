@@ -81,7 +81,9 @@ const skinDecls = [...skinSheet.matchAll(/\[data-vb-skin='([a-z-]+)'\]\s*\{([^}]
 
 /** The type tokens: the board's own faces first, then the host's face through its --vb-host-*, then the system's (D-116). */
 const FACE_VIA: Record<string, string> = { '--vb-font-text': '--vb-host-font', '--vb-font-display': '--vb-host-font', '--vb-font-label': '--vb-host-font-mono' };
-const facesFirst = (via: string) => new RegExp(`^(?:'vb-[a-z-]+', )*var\\(${via}, var\\(--vb-font(?:-mono)?\\)\\)$`);
+/** A type role as designed (D-116, point 730): its faces, then the host's font behind them; or no host at all, its faces (if
+ *  any) then the system stack a host never replaces. */
+const facesFirst = (via: string) => new RegExp(`^(?:(?:'vb-[a-z-]+', )+var\\(${via}, var\\(--vb-font\\)\\)|(?:'vb-[a-z-]+', )*var\\(--vb-font-system(?:-mono)?\\))$`);
 
 test('a host\'s colours win over a skin, and its faces follow the board\'s: each value a skin gives keeps the --vb-host-* the token reads (D-094, D-116)', () => {
   assert.ok(skinDecls.length > 0, 'skins.css has a block');
