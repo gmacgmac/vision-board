@@ -19,8 +19,9 @@
   --vb-text-md: 13px;
   --vb-text-lg: 15px;
   --vb-text-xl: 18px;
-  /* A card's body text: its paragraphs, lists and the rest of its Markdown, under the 15px title (D-112). */
-  --vb-card-text: 14px;
+  /* A card's title and body text: its paragraphs, lists and the rest of its Markdown (D-112; point 668: 16 and 15). */
+  --vb-card-title: 16px;
+  --vb-card-text: 15px;
   --vb-weight-regular: 400;
   --vb-weight-medium: 550;
   --vb-weight-bold: 680;
