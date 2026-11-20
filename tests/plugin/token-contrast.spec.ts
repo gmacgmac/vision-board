@@ -160,7 +160,7 @@ for (const skin of SKINS) {
   });
 }
 
-test('a skin\'s values reach the board\'s root, and a host\'s colours win over them while its faces follow the skin\'s (D-116)', async ({ page, host }) => {
+test('a skin\'s values reach the board\'s root, and a host\'s colours win over them while its faces follow the skin\'s, and a role\'s system stack is never the host\'s (D-116, point 730)', async ({ page, host }) => {
   await open(page, host);
   await page.emulateMedia({ colorScheme: 'light' });
   const read = () => page.locator('.host-root').evaluate((root) => {
@@ -180,5 +180,5 @@ test('a skin\'s values reach the board\'s root, and a host\'s colours win over t
   await page.locator('.host-root').evaluate((root) => {
     for (const [k, v] of Object.entries({ '--host-canvas': 'rgb(1, 2, 3)', '--host-ink-muted': 'rgb(4, 5, 6)', '--host-font': 'Georgia', '--host-font-mono': 'Courier' })) (root as HTMLElement).style.setProperty(k, v);
   });
-  expect(await read()).toEqual({ canvas: 'rgb(1, 2, 3)', ink: 'rgb(4, 5, 6)', display: expect.stringMatching(/^"?vb-space-grotesk"?, Georgia$/), label: expect.stringMatching(/^"?vb-jetbrains-mono"?, Courier$/) });
+  expect(await read()).toEqual({ canvas: 'rgb(1, 2, 3)', ink: 'rgb(4, 5, 6)', display: expect.stringMatching(/^"?vb-space-grotesk"?, Georgia$/), label: expect.stringMatching(/^"?vb-jetbrains-mono"?, ui-monospace,/) }); // the system mono behind the face, never the host's (point 730)
 });
