@@ -1444,3 +1444,9 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Decision**: A container's corners are its outline cut by a `clip-path` polygon, each corner square traced clockwise, on screen and in print. The board's CSS holds no `mask`, `-webkit-mask` or `mask-image` other than `none`; `npm run verify` fails on one. `docs/specification/plugin.md` keeps the print-safe rule and the audit of other paint features.
 - **Why**: WebKit's PDF output cannot apply a mask and paints the mask image as colour; a clip is a path every PDF engine records, so the screen and every PDF match.
 - **Task**: cortex-tasks/board/2026-11-20_board-agent_access-clarity/T_04_print-safe-corners.md
+
+## D-116 The board draws in its own faces under a host (amends D-102)
+- **Date**: 2026-11-20 · **Status**: Accepted (maintainer, points 722, 723 and 730) · **From**: nclite's fonts handover (a plugin may bring its own faces)
+- **Decision**: The plugin ships the board's four faces in `view/fonts/`, listed in the manifest's `view.fonts`, each declared as the host's check requires (held by `apps/board/tests/plugin-build.test.ts`). In every skin a type role names its own face first; a host's `--host-font` is only the fallback behind a face, and a role with no face of its own (the default skin's labels, Command Lens's body text) draws in the system stack it is designed in (`--vb-font-system`, `--vb-font-system-mono`), never the host's. The chrome around the cards still follows the host's fonts. D-102's "under a host that gives a font, the host's font is used" no longer holds for cards.
+- **Why**: the board's sizes are set for its own faces; in a host's font the cards drew larger and looser than designed.
+- **Task**: cortex-tasks/board/2026-11-20_board-tokens_plugin-fonts.md
