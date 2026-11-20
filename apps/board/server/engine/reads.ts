@@ -16,7 +16,7 @@ import {
 import { structureOf } from '#layout';
 import { cardOn } from '../edge.ts';
 import { exportFile } from './export.ts';
-import { holds, markBoard, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
+import { holds, markBoard, markContainer, markDetail, marksFor, markRegionNotes } from './caller-marks.ts';
 import { readLibrary } from '../icons.ts';
 import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
@@ -69,7 +69,7 @@ const showContainer: Op = ({ params, ledger, caller, one, flags }) => {
   if (!detail) throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
   const m = marksFor(s, board, { caller, one }, flags);
   const marked = m ? { ...detail, notes: markRegionNotes(detail.notes, m, region), nodes: detail.nodes.map((d) => markDetail(d, m)) } : detail;
-  return reply(200, { head: s.seq, ...marked });
+  return reply(200, { head: s.seq, ...markContainer(marked, m, region) });
 };
 
 /** How the board arranges one container (api.md 133), structure only: the cards in it now (the

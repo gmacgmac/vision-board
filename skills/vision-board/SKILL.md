@@ -2,7 +2,7 @@
 name: vision-board
 label: Chats through the board
 description: The Vision Board, where each point you would number in a reply is its own card that the person answers (✓, ✗, a note, Later). Read this before you draw on it or answer what they sent, and when the person says "put it on the board", the conversation runs through the board or its chat panel, a reply would be a long numbered list, or a picture or an app you build should show in a card.
-status: v3.38 (2026-11-20, folders-labels-print T_03: link labels only when they mean more than "next"); v1 to v3.37 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
+status: v3.39 (2026-11-20, container-held-mark: write only in containers a read marks `held`); v1 to v3.38 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
 ---
 
 # Vision Board
@@ -104,6 +104,9 @@ Their words, the cards they selected (their "these"), and the Send: a line per a
 - **A board you did not create**, including one the person made from the picker: call
   `request_grant` with just `board` and a `reason` before you write anything on it.
 - **Another agent's container**: `request_grant` with `board` and `region`.
+- **Write only in containers your read marks `held`** (`get_board`'s `view.regions`, `show_container`).
+  For any other container already on the board, call `request_grant` with `board` and `region`
+  first, and wait. A board's `held` lets you add new containers; it does not open another agent's.
 - **An item fails `needs-grant`**: call `request_grant` once for exactly what it names. Asking
   again returns the open request (`replayed: true`), so never loop. When the answer comes,
   resend the same items with the same keys.

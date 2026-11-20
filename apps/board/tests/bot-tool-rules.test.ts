@@ -286,3 +286,67 @@ test('a picture the board can\'t show: with the rules on, write_board\'s result 
     assert.ok(card!.images!.every((x) => x.problem.length > 0), JSON.stringify(card!.images));
   }
 });
+
+/** For each container on `plans`: `[region, marked held by get_board, marked held by show_container, a node write into it
+ * answers needs-grant]`. Each write takes a fresh key, so it adds a card only where it may. */
+async function heldAgainstWrites(engine: Engine, who: Caller, tag: string) {
+  const board = await tool(engine, 'get_board', { board: 'plans' }, who);
+  checkAnswer('get_board', { status: 200, headers: new Headers(), media: 'application/json', body: board });
+  const rows: [string, boolean, boolean, boolean][] = [];
+  for (const r of board.view.regions as { id: string; held?: true }[]) {
+    const shown = await tool(engine, 'show_container', { board: 'plans', region: r.id }, who);
+    checkAnswer('show_container', { status: 200, headers: new Headers(), media: 'application/json', body: shown });
+    const out = await engine.tools.call('write_board', { board: 'plans', items: [
+      { type: 'node', node: { region: r.id, kind: 'note', title: `From ${tag}` }, key: `plans-${tag}-in-${r.id}` },
+    ] }, { caller: who });
+    const result = (out.structuredContent as { results: { ok: boolean; problem?: { type: string } }[] }).results[0]!;
+    rows.push([r.id, r.held === true, shown.held === true, !result.ok && /needs-grant$/.test(result.problem!.type)]);
+  }
+  return rows;
+}
+
+test('reads tell the truth: a container the caller may write in is `held` (get_board\'s region, show_container), by the rule a write into it goes through; every other one answers needs-grant', async () => {
+  const { engine, bot, other, act } = await withPlans();
+  const third = await join(engine, 'Third');
+  const asked = await tool(engine, 'request_grant', { board: 'plans', reason: 'Add mine.' }, other);
+  await act({ action: 'grant', request: asked.request });
+  await tool(engine, 'write_board', { board: 'plans', items: [
+    { type: 'region', region: { id: 'theirs', title: 'Theirs', mode: 'grid' }, key: 'plans-theirs' },
+    { type: 'region', region: { id: 'shared', title: 'Shared', mode: 'grid' }, key: 'plans-shared' },
+  ] }, other);
+  const lent = await tool(engine, 'request_grant', { board: 'plans', region: 'shared', reason: 'Add to it.' }, bot);
+  await act({ action: 'grant', request: lent.request });
+  // Each row: [region, get_board's mark, show_container's mark, the write answered needs-grant].
+  assert.deepEqual(await heldAgainstWrites(engine, bot, 'bot'),
+    [['now', true, true, false], ['theirs', false, false, true], ['shared', true, true, false]], 'its own, and one granted to it');
+  assert.deepEqual(await heldAgainstWrites(engine, other, 'other'),
+    [['now', false, false, true], ['theirs', true, true, false], ['shared', true, true, false]], 'a board held opens no other agent\'s container');
+  assert.deepEqual(await heldAgainstWrites(engine, third, 'third'),
+    [['now', false, false, true], ['theirs', false, false, true], ['shared', false, false, true]], 'no board, no container');
+  const said = (name: string) => engine.tools.list().find((t) => t.name === name)!.description;
+  assert.match(said('get_board'), /on a region in `view\.regions`: you may write in that container/, 'a host\'s bot is told the mark');
+  assert.match(said('request_grant'), /A board's `held` lets you add containers; it opens no other agent's\./);
+});
+
+test('the container mark: the folder\'s one agent holds every container; the person, and the flag off, see none', async () => {
+  const dir = makeTempDir('vb-bot-held-');
+  dirs.push(dir);
+  const engine = createEngine({ dir, warn: () => {}, flags: { singleAgent: true } });
+  const one: Caller = { by: 'agent', agent: 'bot-0123456789abcdef' };
+  await tool(engine, 'write_board', { board: 'plans', items: [
+    { type: 'board', title: 'Plans', key: 'plans-board' },
+    { type: 'region', region: { id: 'now', title: 'Now' }, key: 'plans-now' },
+    { type: 'region', region: { id: 'next', title: 'Next' }, key: 'plans-next' },
+  ] }, one);
+  assert.deepEqual((await tool(engine, 'get_board', { board: 'plans' }, one)).view.regions.map((r: any) => [r.id, r.held]), [['now', true], ['next', true]]);
+  assert.equal((await tool(engine, 'show_container', { board: 'plans', region: 'next' }, one)).held, true);
+  const { engine: plans, bot } = await withPlans();
+  const person = (path: string) => engine.route({ method: 'GET', path }, { caller: PERSON }).then((r) => r!.body as any);
+  assert.ok(!JSON.stringify((await person('boards/plans')).view).includes('"held"'), 'the person\'s board read');
+  assert.equal((await person('boards/plans/regions/now')).held, undefined, 'the person\'s container read');
+  assert.equal(((await plans.route({ method: 'GET', path: 'boards/plans/regions/now' }, { caller: PERSON }))!.body as any).held, undefined);
+  const { engine: off, bot: offBot } = await withPlans(OFF);
+  assert.ok(!JSON.stringify((await tool(off, 'get_board', { board: 'plans' }, offBot)).view).includes('"held"'), 'flag off: get_board');
+  assert.equal((await tool(off, 'show_container', { board: 'plans', region: 'now' }, offBot)).held, undefined, 'flag off: show_container');
+  assert.equal((await tool(plans, 'show_container', { board: 'plans', region: 'now' }, bot)).held, true, 'on: as the first test holds');
+});

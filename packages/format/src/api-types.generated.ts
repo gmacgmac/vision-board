@@ -364,6 +364,7 @@ type ViewRegion = {
   widths?: "match" | "own";
   direction?: "across" | "down";
   center?: string;
+  held?: true;
 };
 type CommonRegionTitle = string;
 type CommonMode = "grid" | "flow" | "lanes" | "radial" | "column" | "row";
@@ -689,6 +690,7 @@ type ShowContainerResponse = {
   board: string;
   region: RegionRegion;
   holders: string[];
+  held?: true;
   nodes: CommonNodeDetail[];
   notes?: CommonNote[];
   retired?: number;

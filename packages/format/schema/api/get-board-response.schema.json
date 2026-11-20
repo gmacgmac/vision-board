@@ -143,7 +143,7 @@
     },
     "held": {
       "const": true,
-      "description": "Present, and true, when you hold this board: write on it without asking; `request_grant` would answer `held`. Left out otherwise.",
+      "description": "Present, and true, when you hold this board: you may add containers to it without asking; `request_grant` would answer `held`. It opens no other agent's container: each container you may write in is marked `held` in `view.regions`. Left out otherwise.",
       "$comment": "botToolRules flag (bot-quality TOOLS_01); api.md 171"
     },
     "versions": {

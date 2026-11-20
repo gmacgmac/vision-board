@@ -994,3 +994,18 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
 - 2026-11-20, agent: live Haiku 5.5, plugin (all 16): 113/114, 16 runs, $0.0424. Only miss: `insert-step` reads-references
   (read none, layouts missing), seen since v3.35 (the bot inserts from the schema). Repeated 4 times alone: 3 of 4
   missed it, $0.0085; it is not in the words this change touched. Dry run 114/114.
+
+## Skill v3.39 (containers marked `held`)
+
+- 2026-11-20, maintainer (points 679 to 684): a chat-panel agent read a board, then sent 27 card rewrites into six
+  containers another agent session made; every one came back `needs-grant`. The read marked the board `held` but said
+  nothing usable about the containers, and a panel agent does not know its own agent id to match against `holders`.
+- 2026-11-20, agent (container-held-mark): reads now mark each container the caller may write in `held`
+  (`get_board`'s `view.regions`, `show_container`), by the rule the write uses (`mayAnswerIn`). § Access (standalone)
+  gains one rule: write only in containers a read marks `held`; for any other, `request_grant` with `board` and
+  `region` first, and wait; a board's `held` opens no other agent's container. The plugin skill is unchanged.
+- 2026-11-20, agent: live Haiku 5.5, plugin (16 runs, singleAgent off): 102/111, $0.5390. One summary-card attempt
+  stalled at 78 s (8 checks, $0.50); its retry passed 8/8 but took the last run slot, so one scenario did not run.
+  Leaving the stalled attempt out, 100/103 over 15 scenarios. Misses: insert-step reads-references (known since v3.35),
+  refusals no-propose-without-source, new-card-number no-guessed-number; neither new miss involves grants. Dry run
+  114/114. Under the 113/114 bar, so the task stopped for the maintainer; not repeated.

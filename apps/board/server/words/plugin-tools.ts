@@ -38,6 +38,16 @@ export const ruleEdits: readonly DescriptionEdit[] = [
     tool: 'list_open', from: 'List a board\'s open cards.',
     to: 'List a board\'s open cards, when no message lists the person\'s answers: never call it to read again what your host\'s message lists.',
   },
+  // The reads mark what the caller holds (engine/caller-marks.ts): a board's `held` opens no other agent's container.
+  {
+    tool: 'get_board', from: 'each region\'s `holders` (left out when empty).',
+    to: 'each region\'s `holders` (left out when empty). `held: true` on the board: you hold it and may add containers to it; on a region in `view.regions`: you may write in that container. Before you write in any other container, call `request_grant` with `board` and `region`.',
+  },
+  {
+    tool: 'request_grant',
+    from: 'Before you write on a board you did not create, call it with just `board`; for another agent\'s container, with `board` and `region`.',
+    to: 'Before you write on a board your read does not mark `held`, call it with just `board`; before you write in a container your read does not mark `held`, with `board` and `region`. A board\'s `held` lets you add containers; it opens no other agent\'s.',
+  },
 ];
 
 /** Why an input a host does not give is refused (`detail`) and its pointer's words, one per tool and input: a test holds

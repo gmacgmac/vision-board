@@ -102,6 +102,11 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId",
           "description": "The centre node's id (the ledger writes its number)",
           "$comment": "Was: api.md 18"
+        },
+        "held": {
+          "const": true,
+          "description": "In an agent's `get_board`: present, and true, when you may write in this container (a card into it answers no `needs-grant`). Left out otherwise: call `request_grant` with `board` and `region` before you write in it.",
+          "$comment": "botToolRules flag; api.md 212 (caller-marks.ts `marksFor`, from #actions `mayAnswerIn`)"
         }
       },
       "unevaluatedProperties": false

@@ -577,7 +577,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 85. **`request_grant`** (replaces 26) takes `region` as optional: without it, the request is for
     the board. While the same agent has an open request for the same board or container, that
     request is returned with `replayed: true`, so an agent in a loop cannot flood the person; a
-    holder gets `{ held: true }`. The answer leaves `region` out for a board. The `join`,
+    holder gets `{ held: true }`. An agent's reads say the same before it asks: `held` on a board it holds, and on each
+    container it may write in (212). The answer leaves `region` out for a board. The `join`,
     `request_grant` and `write_board` descriptions and the MCP instructions tell an agent to ask
     for a board it did not create before writing on it.
 86. **What every read shows.** `get_board` adds `boardHolders` (the agents that may write on the
@@ -1815,7 +1816,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
       `note`; in `get_board`'s `state.items` and `state.containerNotes`, `show_node` and its `linked`, `show_container`),
       from the condition rows `list_open`'s `pending` and `containers` read (`item.owed`, `container.owed`), and a board
       it holds is `held` (`list_boards`, `get_board`), by the test `request_grant` answers `held` by
-      (`apps/board/server/engine/caller-marks.ts`). The page's fold is unchanged: no person read is marked
+      (`apps/board/server/engine/caller-marks.ts`), and so is each container it may write in (212). The page's fold is unchanged: no person read is marked
       (`board-data.test.ts`).
     - *A key conflict says what the key holds*: a card by number, title and version (with how to change it: its `n`
       and a new key), or the line's kind and `seq`, and a free key, the first `<key>-<i>` this agent has not used
@@ -2280,3 +2281,19 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     folder" line, with Open or Create focused, as a listed one; choosing anything in the lists goes back to them. A
     refused pick shows in the problem line. Words: `shell/words/folders.ts`. Gallery: `gallery/folder-chooser-section.ts`,
     last. Held by `tests/pages/folder-chooser.spec.ts`.
+
+## The container mark (container-held-mark, points 679 to 684)
+
+212. **A read marks each container the caller may write in** (`apps/board/server/engine/caller-marks.ts` `marksFor`
+    `heldIn`, `markBoard`, `markContainer`). Behind `botToolRules`, as 171; an agent's read only. `held: true` is on
+    each region of `get_board`'s `view.regions` (`view.schema.json` `region`) and at the top of `show_container`'s
+    answer, beside `holders` (its `region` is the stored line, which takes no `held`); presence-only, as the board's.
+    One rule: a container is `held` when `#actions` `mayAnswerIn` is true for it, the `region` row of `PERMISSIONS`
+    (`packages/actions/src/permissions.ts`), the same test a card written into it goes through, so the caller holds
+    the container and its board. A board's `held` lets the agent add containers; it opens no other agent's. The
+    folder's one agent holds every container; the person, a client with no agent, and the flag off get no marks. Why:
+    a panel agent is never told its own agent id, so the holder lists could not tell it which containers are its own.
+    Held by `apps/board/tests/bot-tool-rules.test.ts` "reads tell the truth: a container the caller may write in is
+    `held`…" (each marked container takes a `node` write, each unmarked one answers `needs-grant`, for its own
+    containers, another agent's and one granted to it; the answers fit the contract) and "the container mark: the
+    folder's one agent…".

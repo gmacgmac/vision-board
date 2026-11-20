@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/show-container-response.schema.json",
   "title": "Container history",
-  "description": "One container (a region): the region as the ledger stores it, the agents that hold it, and every node it has held, each with its full history.",
+  "description": "One container (a region): the region as the ledger stores it, the agents that hold it, and every node it has held, each with its full history; `held` when you may write in it.",
   "type": "object",
   "required": [
     "head",
@@ -30,6 +30,11 @@
       },
       "description": "Empty for a region no agent id drew (a format-2 line, migrated)",
       "$comment": "Was: api.md 23"
+    },
+    "held": {
+      "const": true,
+      "description": "In an agent's read: present, and true, when you may write in this container (a card into it answers no `needs-grant`). Left out otherwise: call `request_grant` with `board` and `region` before you write in it.",
+      "$comment": "botToolRules flag; api.md 212 (caller-marks.ts `marksFor`, from #actions `mayAnswerIn`)"
     },
     "nodes": {
       "type": "array",

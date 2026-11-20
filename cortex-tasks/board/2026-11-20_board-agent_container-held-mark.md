@@ -1,8 +1,8 @@
 ---
 task_name: Container Held Mark
 created: 2026-11-20
-completed:
-status: pending
+completed: 2026-11-20
+status: completed
 categories: [board-agent]
 type: implementation
 model: strong
@@ -124,7 +124,67 @@ Fix: each read marks every container the caller may write, so the read answers t
 
 ## Implementation Notes
 
-_To be completed by agent after task execution._
+Executed 2026-11-20 by a sub-agent (Opus 5.5). Stopped at step 8: `eval:bot` came in under 113/114 (see Verification).
+Steps 1 to 7 are done; nothing is committed.
+
+**What was built**
+- **The container object chosen.** `get_board`: each region of `view.regions` (`view.schema.json` `$defs/region`), the
+  object a bot reads as "the container" there (id, title, mode). `show_container`: the top level of its answer, beside
+  `holders` and `board`, not the `region` object: that is the stored ledger line (`events/region.schema.json`
+  `$defs/region`), and widening it would let `held` into ledger lines and write items. Both presence-only, `true` or
+  absent. `get_board`'s board `held` description now says a board's `held` lets you add containers and opens no other
+  agent's.
+- **One rule.** `caller-marks.ts` `marksFor` gives `heldIn(region)`: `mayAnswerIn(s, agent, { board, region })` (the
+  `region` row of `PERMISSIONS`), or true for the folder's one agent (`scopeOf` undefined, as `holds`). No person or flag
+  off marks, because `marksFor` is undefined there. `markContainer` marks an object; `markBoard` maps it over
+  `view.regions`; `reads.ts` `showContainer` applies it. A retired container leaves `index.boards`, so `mayAnswerIn`
+  is false and it is never marked.
+- **Tests** (`bot-tool-rules.test.ts`, written failing first): "a container the caller may write in is `held`..." holds
+  every region of `plans` against a real `node` write, for three agents: the maker of `now`, another agent granted the
+  board that made `theirs` and `shared`, with `shared` granted back to the first, and an agent holding nothing. For each,
+  get_board's mark, show_container's mark and "the write answered needs-grant" are checked together; both answers pass
+  `checkAnswer`; a host bot's `get_board` and `request_grant` words are checked. "the container mark: the folder's one
+  agent..." covers the one agent (all held), the person (none) and the flag off (none).
+- **Words.** `plugin-tools.ts` `ruleEdits` (flag on, host bots): `get_board` says what a board's and a region's `held`
+  mean; `request_grant` says to ask for any container not marked `held`, and that a board's `held` opens no other
+  agent's. The singleAgent edits still remove both for the one agent (its `get_board` edit runs to ` `locked: true``,
+  past the new words). `flags.ts` `botToolRules` names the container mark. `info.ts` `toDrawOnABoard` (the standalone
+  and plugin MCP instructions) adds one sentence: write only in a container your read marks `held`, else
+  `request_grant` with `board` and `region` first. The plugin instruction edits and the singleAgent removal still match.
+- **Skill** v3.39: one rule in the standalone `access` slot of `source/differences.md`, rebuilt with
+  `npm run build:skill`. `SKILL.md` says to edit only under `source/`, so the rule went there, not into `SKILL.md`. The
+  plugin skill has no § Access and is unchanged.
+- **Docs.** `api.md` 85 and 171 point to a new 212 (the mark, the rule, why, the tests).
+- **Generated.** `npm run gen` rewrote `packages/format/src/api-types.generated.ts`, the only generated file the schema
+  change touched (`gen --check` passes).
+
+**Verification**
+- `bot-tool-rules.test.ts` 14/14 (2 new). With `api-schemas`, `engine`, actions `permissions`, MCP package tests,
+  `openapi`, `board-data`, `plugin-skill` and the skill's `build.test.mjs`: 140 of 141 pass. The one failure is
+  `plugin-skill.test.ts` "the plugin bot's tool descriptions are the tool table's...". It assumes only tools named in
+  `descriptionEdits` differ from the table, but the new `ruleEdits` touch `get_board` and `request_grant`, which are not
+  in that list. The one-line fix (count `ruleEdits` too) was tried and passed 17/17; the file was then restored, since it
+  is outside this task's files. It is listed as a request.
+- `npm run verify`: ok (51 warnings; one new, `bot-tool-rules.test.ts` at 352 lines, under the 500 limit). `tsc -p tsconfig.json`: clean.
+- `npm run eval:bot -- --model haiku` (claude-haiku-5-5, plugin, singleAgent off, so the bot read the new words):
+  **102/111, $0.5390**, report `tests/evals/bot/out/2026-11-20T13-17-44-792Z/report.md`. Of that, 8 checks are one
+  summary-card attempt that stalled at 78 s and counts $0.50. Its retry passed 8/8, but the retry used the 16th run
+  slot, so one scenario never ran. Leaving the stalled attempt out, it is 100/103 over 15 scenarios. Misses:
+  `insert-step/reads-references` (known), `refusals/no-propose-without-source` (proposed a ✓ and a ✗ itself), and
+  `new-card-number/no-guessed-number` (named "card 4" before the answer gave it). Neither new miss touches grants or
+  `held`. [INFERENCE] They look like live-model variance, but that is not established: a repeat of the two with
+  `--only` would settle it. The dry run scored 114/114. **Stopped here, as the task says.**
+
+**Caught Beyond the Brief**
+- `request_grant` and the write disagree in one case: `writes.ts` `requestGrant` answers `held` for a region when the
+  agent is among that container's `holders` and checks no board. The write (`PERMISSIONS.region` / `node`) needs the
+  board too. A board revoke deletes only the board's holder key (`ledger-index.ts` `revoke`), so an agent granted a
+  container whose board was later revoked gets `request_grant` saying `held` while every write answers `needs-grant`
+  naming the board. The new mark follows the write (not `held`). Not changed: grant behaviour is out of scope.
+- The standalone bot's tool descriptions (`openapi.json`, through `vb-mcp`) say nothing of `held`, board or container.
+  It learns of the mark only from the skill and the MCP instructions. No standalone eval scenario writes into another
+  agent's container, so no eval holds the 27-card case.
+- `openapi.json` `info.version` was not bumped (1.46.0): `openapi.test.ts` pins it, and that file is outside this task.
 
 ---
 
@@ -134,3 +194,8 @@ _To be completed by agent after task execution._
 2. Append your LOG entry, one line ending in a newline, append-only:
    `[[YYYY-MM-DD HH:MM]] [board-agent] Completed: Container Held Mark → Task: [[cortex-tasks/board/2026-11-20_board-agent_container-held-mark.md]]`
 3. Don't commit; the orchestrator commits.
+
+### Orchestrator close (2026-11-20)
+- Eval gate resolved by reruns on Haiku 5.5: the plugin's three missed scenarios passed 23/23; the four standalone scenarios that missed, run twice side by side, scored 70/78 on v3.38 (without this change) and 69/78 on v3.39, with the same misses (timeline, import, copy). The misses predate this change; none concerns grants or `held`.
+- `plugin-skill.test.ts` counts `ruleEdits` as edits (the agent's request); API version 1.46.0 → 1.47.0 for the new optional field (`openapi.test.ts`, `npm run gen`).
+- Follow-ups, not done here: `request_grant` answers `held` for a container from its holder list without the board check the write makes; no eval scenario writes into another agent's container.

@@ -14,7 +14,7 @@ import { createEngine } from '../server/engine/index.ts';
 import { toolRows } from '../server/format-files.ts';
 import { SKILL_BYTES } from '../../../tests/plugin/contract/nclite/shared/plugin-host.ts';
 import { SOURCE, buildSkill } from '../../../skills/vision-board/source/build.mjs';
-import { descriptionEdits, singleAgentEdits } from '../server/words/plugin-tools.ts';
+import { descriptionEdits, ruleEdits, singleAgentEdits } from '../server/words/plugin-tools.ts';
 import { SPECS } from '../server/spec.ts';
 import { schemaProblems } from '../server/schema.ts';
 
@@ -134,7 +134,7 @@ test('the plugin bot\'s tool descriptions are the tool table\'s (the MCP server 
   assert.deepEqual(descriptionEdits.map((e) => e.tool).filter((n) => !given.has(n)), [], 'an edit names a tool the plugin bot does not have');
   for (const t of listed) {
     const original = (toolRows() as { name: string; description: string }[]).find((r) => r.name === t.name)!.description;
-    assert.equal(t.description === original, !descriptionEdits.some((e) => e.tool === t.name), `${t.name}: edited exactly where an edit says`);
+    assert.equal(t.description === original, ![...descriptionEdits, ...ruleEdits].some((e) => e.tool === t.name), `${t.name}: edited exactly where an edit says`);
     for (const { from } of descriptionEdits.filter((e) => e.tool === t.name)) assert.ok(original.includes(from) && !t.description.includes(from), `${t.name}: ${from}`);
     assert.doesNotMatch(t.description, /your secret|\bjoin\b|list_apps|read_attachment|Authorization/i, `${t.name}'s words`);
     assert.doesNotMatch(JSON.stringify(t.inputSchema), /your secret|list_apps|read_attachment/i, `${t.name}'s input`);
