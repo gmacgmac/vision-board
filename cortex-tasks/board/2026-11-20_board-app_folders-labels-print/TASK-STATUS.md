@@ -1,7 +1,8 @@
 ---
 task_name: Folders, labels, chat text and print through the host
 created: 2026-11-20
-status: in-progress
+status: completed
+completed: 2026-11-20
 categories: [board-app, board-security, board-layout, board-agent]
 ---
 
@@ -57,3 +58,5 @@ state. 7. Never port 4466, never the real home folder.
 - `packages/mcp/tests/support.ts` now starts `vb-mcp` in the fixture board's open folder (`Board.project`).
 - **T_02**: new `LabelPlace.short`; `placeLabel(pts, text, room, ends)`. Gallery fixture `gallery.ledger.jsonl` gained one appended link line (seq 386). Measured: board page 213.3 KB gzip vs budget 212.4 KB. Follow-up done: a word beside an upright for stacked cards; the fixture also gains a column container `labels-down` (seq 387-390).
 - **T_02 print fix (VERIFY_01)**: a short tag's whole label printed 110px wide in a 72px gap, over cards 1 and 2 and the arrowhead. Now `LabelPlace.room` (`{ x, w }`, set with `short`) comes from `paperRoom` (`route/labels.ts`): the widest room up to 160px whose wrapped height (`linesIn`, estimated at 6.5 × 1.1 px a character, 14px lines) clears every card by 4px and the arrowhead, centred as near the tag as it can be. The page caps `.vb-link-whole` to `w` and shifts it by `--vb-room-dx` (link-marks.ts, board.css); screen unchanged. Tests: 3 layout units; the print spec checks that the printed box is inside the gap and off the arrowhead. No baselines changed. Measured: board page 214.1 KB gzip vs budget 213.7 KB. On paper the narrow wrapped label still covers a stretch of the 1 > 3 line that runs through the same gap (lines were not in the ask).
+
+**Close (orchestrator, 2026-11-20):** all four tasks merged into `spike/stage-apps`; VERIFY_01 passed every ruling; its print finding (a long whole label over cards and an arrowhead) fixed by T_02 (`LabelPlace.room`). Requests closed: openapi D-111 wording (orchestrator), `linkLabels` flag and readme wording (orchestrator), components.md print look (orchestrator), budgets raised to measured (page 214.2 KB, plugin view 208,700). The wrong-folder wording and the other leftovers: tracker M91. eval:bot 113/114 at v3.38; the one miss (`insert-step` reads-references) also misses on v3.37 (orchestrator rerun, $0.002). Full page suite 1,152/1,152; `npm test` 2,807/2,807 with a temporary HOME; verify ok.
