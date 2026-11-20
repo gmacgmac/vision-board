@@ -383,3 +383,8 @@
 {"v":22,"seq":383,"at":"2026-11-01T09:29:00Z","by":"person","type":"act","action":"comment","n":163,"ver":1,"text":"Is the second feed the same bitrate?"}
 {"v":22,"seq":384,"at":"2026-11-01T09:30:00Z","by":"agent","agent":"a-pricing1","type":"reply","n":163,"text":"Yes, both run at 8 Mbps.","to":383}
 {"v":22,"seq":385,"at":"2026-11-01T09:31:00Z","by":"agent","agent":"a-pricing1","type":"node","board":"edges","n":164,"ver":1,"node":{"region":"edges","kind":"finding","title":"A spare fibre runs to the truck","icon":"fibre","tone":"blue"}}
+{"v":22,"seq":386,"at":"2026-11-20T09:00:00Z","by":"agent","agent":"a-pricing1","type":"link","from":123,"to":124,"label":"feeds"}
+{"v":22,"seq":387,"at":"2026-11-20T09:01:00Z","by":"agent","agent":"a-pricing1","type":"region","board":"layout","region":{"id":"labels-down","title":"Stacked","mode":"column"}}
+{"v":22,"seq":388,"at":"2026-11-20T09:01:01Z","by":"agent","agent":"a-pricing1","type":"node","board":"layout","n":165,"ver":1,"node":{"region":"labels-down","kind":"action","title":"Draft the survey"}}
+{"v":22,"seq":389,"at":"2026-11-20T09:01:02Z","by":"agent","agent":"a-pricing1","type":"node","board":"layout","n":166,"ver":1,"node":{"region":"labels-down","kind":"action","title":"Send it to the beta group"}}
+{"v":22,"seq":390,"at":"2026-11-20T09:01:03Z","by":"agent","agent":"a-pricing1","type":"link","from":165,"to":166,"label":"unblocks"}
