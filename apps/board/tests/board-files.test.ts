@@ -125,9 +125,9 @@ test('import refuses a file over the host\'s limit with words, before reading or
 });
 
 test('the standalone page\'s print: the ask\'s side on paper, a margin for plain alone; its import limit is its server\'s write_board body limit', () => {
-  assert.equal(pageFiles.printRules({ orientation: 'landscape', look: 'dark' }), '@page { size: landscape; margin: 0; }');
-  assert.equal(pageFiles.printRules({ look: 'light' }), '@page { size: portrait; margin: 0; }');
-  assert.equal(pageFiles.printRules({}), `@page { size: portrait; margin: ${pageFiles.PLAIN_MARGIN}; }`);
+  assert.equal(pageFiles.printRules({ orientation: 'landscape', look: 'dark' }), '@page{size:landscape;margin:0}');
+  assert.equal(pageFiles.printRules({ look: 'light' }), '@page{size:portrait;margin:0}');
+  assert.equal(pageFiles.printRules({}), `@page{size:portrait;margin:${pageFiles.PLAIN_MARGIN}}`);
   const writes = fs.readFileSync(path.join(import.meta.dirname, '../server/engine/writes.ts'), 'utf8');
   const [, kib] = /const WRITE_LIMIT = (\d+) \* KIB;/.exec(writes) ?? [];
   assert.equal(pageFiles.IMPORT_BYTES, Number(kib) * 1024, 'the page refuses what its server would');

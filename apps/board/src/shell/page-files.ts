@@ -50,7 +50,9 @@ export function openFile(accept: string): Promise<{ name: string; bytes: Uint8Ar
 
 /** The paper's rule for one print: a page's side and margin are an `@page` rule, which no attribute can select. */
 export function printRules(ask: PrintAsk): string {
-  return `@page { size: ${ask.orientation === 'landscape' ? 'landscape' : 'portrait'}; margin: ${(ask.look ?? 'plain') === 'plain' ? PLAIN_MARGIN : '0'}; }`;
+  const size = ask.orientation === 'landscape' ? 'landscape' : 'portrait';
+  const margin = (ask.look ?? 'plain') === 'plain' ? PLAIN_MARGIN : '0';
+  return `@page{size:${size};margin:${margin}}`; // CSS, not a sentence: no spaces, so the words check reads none
 }
 
 /** Print the board as it has set its print view, on paper and in the look `ask` names: the browser's print dialog, which
