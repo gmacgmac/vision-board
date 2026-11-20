@@ -84,9 +84,10 @@ vb-region[data-rail] :is(.vb-mode-icon, .vb-mode-div) { transition: opacity var(
   }
 }
 
-/* Only on the container in use (railOnHover flag, data-rail-hover; point 416): a frame that is neither
-   hovered nor holding focus (:hover and :focus-within see its rail and tools; data-use is the board's
-   mark for its cards, region-use.ts) hides its icons and divider. Opacity only: they keep their place,
+/* Only on the container under the pointer (railOnHover flag, data-rail-hover; point 416, narrowed by point 675): a
+   frame the pointer is not over (its own box, or a card of its own: data-use, region-use.ts), and whose rail holds no
+   focus, hides its icons and divider; a selected or focused card no longer keeps them, so navigating never leaves
+   them showing. Opacity only: they keep their place,
    so nothing moves and the keyboard still reaches them (focus makes the frame in use). Comment's badge
    is not an icon here and stays. A touch screen has no hover to find the container in use, so it keeps
    them shown. The gallery draws the in-use look with data-use on the frame. */
@@ -95,10 +96,10 @@ vb-region[data-rail-hover] .vb-mode-row { transition: border-color var(--vb-moti
   /* The row's own box goes with its icons (an empty pill would read as a fault), and so do the checked
      layout's and the switch's fills, which are not icons. Comment keeps its place, so its badge shows. */
   vb-region {
-    &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within) .vb-region-tools:not([data-look]) :is(.vb-mode-icon, .vb-mode-div, .vb-mseg:not(.vb-region-comment)) { opacity: 0; }
+    &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :has(.vb-region-tools:focus-within)) .vb-region-tools:not([data-look]) :is(.vb-mode-icon, .vb-mode-div, .vb-mseg:not(.vb-region-comment)) { opacity: 0; }
     /* In use the rules step up a little as the rail appears (FIX_06): the frame's colour, a quarter of the way to ink. */
-    &[data-rail-hover]:is([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within):not([data-selected], [data-fresh], [data-dragging], [data-drop]) { --vb-region-ln: color-mix(in srgb, var(--vb-region) 70%, var(--vb-ink)); }
-    &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :focus-within) .vb-region-tools:not([data-look]) > .vb-mode-row { border-color: transparent; background-color: transparent; box-shadow: none; }
+    &[data-rail-hover]:is([data-use], [data-open], [data-preview], [data-note-open], :hover, :has(.vb-region-tools:focus-within)):not([data-selected], [data-fresh], [data-dragging], [data-drop]) { --vb-region-ln: color-mix(in srgb, color-mix(in srgb, var(--vb-region) 70%, var(--vb-ink)) 75%, transparent); } /* fainter with the frame (point 674) */
+    &[data-rail-hover]:not([data-use], [data-open], [data-preview], [data-note-open], :hover, :has(.vb-region-tools:focus-within)) .vb-region-tools:not([data-look]) > .vb-mode-row { border-color: transparent; background-color: transparent; box-shadow: none; }
   }
 }
 
