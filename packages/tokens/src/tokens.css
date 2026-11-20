@@ -12,8 +12,12 @@
   color-scheme: light dark;
 
   /* Type */
-  --vb-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --vb-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* The system stacks, which a host never replaces: a card's type role with no face of its own draws in them (point 730).
+     --vb-font and -mono are the chrome's, which a host's --host-font and -mono replace (apps/board/plugin/theme.css). */
+  --vb-font-system: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --vb-font-system-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --vb-font: var(--vb-font-system);
+  --vb-font-mono: var(--vb-font-system-mono);
   --vb-text-xs: 11px;
   --vb-text-sm: 12px;
   --vb-text-md: 13px;
@@ -322,12 +326,13 @@
 }
 
 /* Type faces (D-102; planner's call 4): a node's text, its titles and its labels. The board's own faces come first, so
-   it draws as designed under a host too (D-116); a host's --host-font or --host-font-mono is the fallback
-   (apps/board/plugin/theme.css passes them as --vb-host-font, -mono), then today's system stack (--vb-font, --vb-font-mono). */
+   it draws as designed under a host too (D-116); a host's --host-font is the fallback only behind a face
+   (apps/board/plugin/theme.css passes it as --vb-host-font), then the system stack (--vb-font). A role with no face of its
+   own draws in the system stack it is designed in, never the host's (point 730). */
 :root, .vb-board {
   --vb-font-text: 'vb-figtree', var(--vb-host-font, var(--vb-font));
   --vb-font-display: 'vb-bricolage-grotesque', 'vb-figtree', var(--vb-host-font, var(--vb-font));
-  --vb-font-label: var(--vb-host-font-mono, var(--vb-font-mono));
+  --vb-font-label: var(--vb-font-system-mono);
 }
 
 /* A toned node (decision 17): the node sets data-vb-tone to its tone's name, or `hue`, and

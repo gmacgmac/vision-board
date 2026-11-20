@@ -1,7 +1,7 @@
 /* Skins (D-100; decisions 1, 14): a skin is a set of token values on the board's root, `data-vb-skin`, which the
    board sets from the board's skin (view.ts `SKINS`). `default` is tokens.css as it stands, so it has no block. A block
    sets only tokens tokens.css declares, and a colour a host may give keeps its `--vb-host-*` in front, so a host's
-   colours and fonts win over any skin (D-094). No pattern names a skin: where a skin puts a mark is the skin
+   colours win over any skin (D-094); a skin's faces come before a host's (D-116). No pattern names a skin: where a skin puts a mark is the skin
    registry's (packages/ui/src/skins.ts), how it looks is these values. Held by packages/tokens/tests/skins.test.ts,
    apps/board/tests/plugin-theme.test.ts and tests/plugin/token-contrast.spec.ts. */
 
@@ -49,7 +49,7 @@
   --vb-node-radius: 6px;
   --vb-mark-radius: 4px;
   --vb-tile-radius: 4px;
-  --vb-font-text: var(--vb-host-font, var(--vb-font));
+  --vb-font-text: var(--vb-font-system);
   --vb-font-display: 'vb-space-grotesk', var(--vb-host-font, var(--vb-font));
-  --vb-font-label: 'vb-jetbrains-mono', var(--vb-host-font-mono, var(--vb-font-mono));
+  --vb-font-label: 'vb-jetbrains-mono', var(--vb-font-system-mono);
 }
