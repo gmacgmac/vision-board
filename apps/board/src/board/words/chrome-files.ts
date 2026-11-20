@@ -45,5 +45,6 @@ export const leftOut = 'Imported. These parts of the file were left out:';
 // ---- board-files.ts
 export const notAnExportFile = 'That file isn\'t an export file (.vboard.json): it holds no board to import.';
 export const noBoardOpen = 'No board is open.';
+export const fileTooLarge = (most: string): string => `That file is over ${most}, the most an import takes here. Export fewer containers, or leave out the conversations on notes, and import that.`;
 export const imported = (title: string): string => `Imported “${title}”.`;
 export const exported = (name: string): string => `Saved ${name}.`;

@@ -35,7 +35,7 @@ function hostFor(o = {}) {
   /** Every read fails this way until it is cleared (`readsDown`, below). */
   let readsDown = null;
   const made = createChat(o);
-  const record = { notices: [], confirms: [], answer: true, calls: [], refused: [], pageChanged: 0 };
+  const record = { notices: [], confirms: [], answer: true, calls: [], refused: [], pageChanged: 0, prints: [] };
   const host = {
     async api(path, init) {
       if ((badRead || readsDown) && path.startsWith('ledger')) {
@@ -70,6 +70,15 @@ function hostFor(o = {}) {
     ...(!o.noImageRoute && { imageRoute: '/pics/' }),
     // Counted: a test then asks `pageChip()`, as nclite's pane does soon after (its handover, item 160).
     ...(!o.noPageChanged && { pageChanged() { record.pageChanged += 1; } }),
+    // The contract's `print(ask)` (plugin.md § What the host gives), given with `o.print`: 'ok' prints, a sentence rejects
+    // with it. Each ask is kept with what the page held while it printed: the attributes on <html>, and the board root's.
+    ...(o.print && {
+      async print(ask) {
+        const root = document.querySelector('.host-root');
+        record.prints.push({ ask: { ...ask }, keys: Object.keys(ask ?? {}).sort(), html: document.documentElement.getAttributeNames().sort(), root: root.getAttributeNames().filter((a) => a.startsWith('data-vb-print')).sort(), w: parseFloat(root.style.getPropertyValue('--vb-print-w')), h: parseFloat(root.style.getPropertyValue('--vb-print-h')) });
+        if (o.print !== 'ok') throw new Error(o.print);
+      },
+    }),
   };
   /** Change events stop, as a dropped stream's would; `catchUp` says a ref with no head. */
   const mute = () => { muted = true; };
@@ -157,7 +166,7 @@ window.fakeHost = {
   view: () => current.view,
   record: () => {
     const r = current.record;
-    return { notices: r.notices, confirms: r.confirms, calls: r.calls, refused: r.refused, pageChanged: r.pageChanged, attaches: current.made.log.attaches, sends: current.made.log.sends, reveals: current.made.log.reveals, problems: current.made.log.problems, chips: current.made.chips() };
+    return { notices: r.notices, confirms: r.confirms, calls: r.calls, refused: r.refused, pageChanged: r.pageChanged, prints: r.prints, attaches: current.made.log.attaches, sends: current.made.log.sends, reveals: current.made.log.reveals, problems: current.made.log.problems, chips: current.made.chips() };
   },
   answer(ok) { current.record.answer = ok; },
   subscribers: () => current.subscribers(),

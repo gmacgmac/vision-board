@@ -3,9 +3,11 @@
 // each only when the host's hook is given (`BoardHost` `print`, `saveFile`, `openFile`). One dialog asks only
 // what the place it was opened from leaves open: Print, the container border; Export, the conversations on notes; Import,
 // into a new board or this one, then what the reply dropped. Print sets a print view over the live page (no chrome,
-// the scope fitted to one page, the border as chosen, colours kept, every link path `fill="none"`), then `host.print()`.
-// The standalone page's `print` is `window.print()`: here it is replaced by a binding that looks at the page in print
-// media and prints it to PDF (temp/print/), so the test sees what the person's PDF would hold. Export and import
+// the scope fitted to one page, the border as chosen, colours kept, every link path `fill="none"`), then
+// `host.print({ title, look, orientation })` (folders-labels-print T_04). The standalone page's `print` is that ask's host:
+// it marks <html> with the look, gives the paper the ask's side, titles the page, then calls `window.print()`: here that is
+// replaced by a binding that looks at the page in print media and prints it to PDF (temp/print/), so the test sees what
+// the person's PDF would hold. Export and import
 // against the real server (BE_01: `export_board`, the person's `import`, D-108) run in "against the server";
 // the page's own states are held by calls answered here (`page.route`).
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -202,6 +204,16 @@ test.describe('the dialog', () => {
     expect(sent[0]!.body.import!.into).toBe('current');
   });
 
+  test('a file over what this page\'s server takes (512 KB) is refused in words before anything is sent', async ({ page }) => {
+    const sent = await answerImport(page, []);
+    await open(page);
+    await menuButton(page).click();
+    await row(page, 'import-board').click();
+    await choose(page, JSON.stringify({ ...FILE, pad: 'x'.repeat(512 * 1024) }));
+    await expect(row(page, 'files-problem')).toHaveText(/over 512 KB, the most an import takes here/);
+    expect(sent).toHaveLength(0);
+  });
+
   test('a file that is not an export file stays in the dialog, said why; choosing none changes nothing', async ({ page }) => {
     const sent = await answerImport(page, []);
     await open(page);
@@ -243,6 +255,10 @@ test.describe('the dialog', () => {
 /** What the page looks like in print media while it prints, read by the test's `print`. */
 interface Printed {
   root: { print: string | null; border: string | null; w: number; h: number; colors: string; theme: string | null; dark: boolean; ground: string };
+  /** The page while it prints, the host's side: <html>'s print marks, the paper's rule, the title. */
+  host: { marks: string[]; paper: string; title: string; boardMarks: string[] };
+  /** Link labels in print (T_02): each tag drawn whole, never its short form. */
+  labels: { whole: number; wholeShown: number; shortShown: number };
   shown: Record<string, boolean>;
   wires: { attr: string | null; fill: string; shown: boolean; inside: boolean }[];
   frames: { region: string; rules: string; shown: boolean }[];
@@ -282,7 +298,17 @@ async function printAs(page: Page, name: string): Promise<{ last(): Printed | nu
       return {
         root: {
           print: scope, border: root.dataset.vbPrintBorder ?? null, w: box.width, h: box.height, colors: getComputedStyle(root.querySelector('vb-node')!).printColorAdjust,
-          theme: root.dataset.vbPrintTheme ?? null, dark: inkIsLight(root.querySelector('vb-node')!), ground: getComputedStyle(root.querySelector('.vb-stage')!).backgroundImage,
+          theme: document.documentElement.dataset.vbPrintLook ?? null, dark: inkIsLight(root.querySelector('vb-node')!), ground: getComputedStyle(root.querySelector('.vb-stage')!).backgroundImage,
+        },
+        labels: {
+          whole: root.querySelectorAll('.vb-link-whole').length,
+          wholeShown: [...root.querySelectorAll<HTMLElement>('.vb-link-whole')].filter((e) => getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0).length,
+          shortShown: [...root.querySelectorAll<HTMLElement>('.vb-link-short')].filter((e) => getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0).length,
+        },
+        host: {
+          marks: document.documentElement.getAttributeNames().filter((a) => a.startsWith('data-vb-print')).sort(),
+          paper: document.adoptedStyleSheets.flatMap((sh) => [...sh.cssRules].map((r) => r.cssText)).filter((t) => t.startsWith('@page')).join(' '),
+          title: document.title, boardMarks: root.getAttributeNames().filter((a) => a.startsWith('data-vb-print')).sort(),
         },
         shown: Object.fromEntries(['.vb-toolbar', '.vb-reply', '.vb-region-tools', '.vb-region-grip', '.vb-wires-top', 'vb-node'].map((s) => [s, shown(s)])),
         wires: [...root.querySelectorAll<SVGPathElement>('.vb-wires:not(.vb-wires-top) path.vb-wire')].map((p, i) => ({
@@ -306,9 +332,12 @@ async function printAs(page: Page, name: string): Promise<{ last(): Printed | nu
 async function printFromDialog(page: Page, border?: boolean): Promise<void> {
   await expect(dialog(page)).toBeVisible();
   if (border !== undefined) await row(page, 'files-border').setChecked(border);
+  const title = await page.title();
   await row(page, 'files-go').click();
   await expect(dialog(page)).toBeHidden();
   await expect(page.locator('.vb-board')).not.toHaveAttribute('data-vb-print');
+  // The page is back as it was: no print mark on <html>, no paper rule, its own title.
+  expect(await page.evaluate(() => [document.documentElement.getAttributeNames().filter((a) => a.startsWith('data-vb-print')), document.adoptedStyleSheets.length, document.title])).toEqual([[], 0, title]);
 }
 
 test.describe('print', () => {
@@ -328,6 +357,12 @@ test.describe('print', () => {
     expect(p.wires.length).toBeGreaterThan(0);
     for (const w of p.wires) expect([w.attr, w.fill]).toEqual(['none', 'none']);
     expect(p.frames.filter((f) => f.region !== 'later').every((f) => f.rules !== 'none')).toBe(true);
+    // The ask, as this page's host reads it (title, look, side; edge to edge, no margin); the board's marks stay in its root.
+    expect(p.host.title).toBe('Where Vision Board goes from here');
+    expect(p.host.marks).toEqual(['data-vb-print-look', 'data-vb-printing']);
+    expect(p.host.paper).toBe(`@page { size: ${p.root.w > p.root.h ? 'landscape' : 'portrait'}; margin: 0px; }`);
+    expect(p.host.boardMarks).toEqual(['data-vb-print', 'data-vb-print-border']);
+    expect([p.labels.wholeShown, p.labels.shortShown], 'every link label whole on paper').toEqual([p.labels.whole, 0]);
     // Back on screen: the toolbar shows and nothing of print is left on the root.
     await expect(page.locator('.vb-toolbar')).toBeVisible();
     await expect(page.locator('.vb-board')).not.toHaveAttribute('data-vb-print-border');
@@ -344,10 +379,12 @@ test.describe('print', () => {
     expect(p.frames.every((f) => f.rules === 'none')).toBe(true);
   });
 
-  for (const border of [false, true]) {
-    test(`a container, border ${border ? 'on' : 'off'}: only it, its own links, one page`, async ({ page }) => {
+  // One light and one dark, so a page on either side is printed in each look (the board's own prints the other side).
+  for (const [border, theme] of [[false, 'light'], [true, 'dark']] as const) {
+    test(`a container, border ${border ? 'on' : 'off'}, ${theme}: only it, its own links, one page`, async ({ page }) => {
+      await setTheme(page, theme);
       await open(page);
-      const printed = await printAs(page, `container-border-${border ? 'on' : 'off'}-light`);
+      const printed = await printAs(page, `container-border-${border ? 'on' : 'off'}-${theme}`);
       await (await cog(page, 'prove')).locator('button[data-print-region="prove"]').click();
       await printFromDialog(page, border);
       const p = printed.last()!;
@@ -358,10 +395,12 @@ test.describe('print', () => {
       for (const f of p.frames.filter((x) => x.region !== 'prove')) expect(f.shown, f.region).toBe(false);
       expect(p.wires.some((w) => w.inside && w.shown)).toBe(true);
       for (const w of p.wires.filter((x) => !x.inside)) expect(w.shown).toBe(false);
+      expect(p.host.paper, 'the paper on the side the container is wider on').toContain(`size: ${p.root.w > p.root.h ? 'landscape' : 'portrait'};`);
+      expect(p.labels.shortShown).toBe(0);
     });
   }
 
-  // Point 615: Print offers light or dark, the screen's theme first; the print view sets it for the print only.
+  // Point 615: Print offers light or dark, the screen's theme first; the page's host sets the look for the print only.
   for (const theme of THEMES) {
     test(`Print… offers light or dark, the screen's (${theme}) first; the print takes the one chosen, the screen keeps its own`, async ({ page }) => {
       await setTheme(page, theme);

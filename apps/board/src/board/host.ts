@@ -54,6 +54,9 @@ export interface BoardPage {
   parts?: BoardPageParts;
   /** Help a person on this page can act on: its commands. A host's person has none, and the board's words say only what is general. */
   help?: { waiting: string; unreachable: string; reply: { lead: string; command: string } };
+  /** The most bytes an import file may hold on this page: its server's `write_board` body limit. Left out (a host), the
+   *  board takes its own (board-files.ts `IMPORT_BYTES`). */
+  importBytes?: number;
   /** Runs a person's call: the standalone page reloads once for a fresh cookie when one is refused
    * as `forbidden` (shell/page-io.ts `asPerson`). */
   person?<T>(run: () => Promise<T>): Promise<T>;
@@ -167,6 +170,21 @@ export interface BoardStore {
   set(key: string, value: string): void;
 }
 
+/** The colours on paper (the contract's `PrintLook`): black on white with a margin, or the host's light or dark theme edge to edge. */
+export type PrintLook = 'plain' | 'light' | 'dark';
+export type PrintOrientation = 'portrait' | 'landscape';
+
+/** One print job (the contract's `PrintAsk`). Every member may be left out: no title keeps the page's, `look` is `plain`,
+ *  `orientation` `portrait`. The board gives `title`, `look` and `orientation`, never `content` (the board's root as it stands). */
+export interface PrintAsk {
+  /** The print window's title, and the PDF's default name. */
+  title?: string;
+  /** An element built for paper, shown alone while printing (named `object`, as the contract names it). */
+  content?: object;
+  look?: PrintLook;
+  orientation?: PrintOrientation;
+}
+
 /** What the board needs of whoever hosts it. */
 export interface BoardHost {
   /** Calls the board's own routes: `path` is relative to its route prefix (the typed client's
@@ -199,10 +217,12 @@ export interface BoardHost {
    *  an input's `accept`). Resolves its name and content, or undefined when the person chose none. Left out, the board
    *  shows no Import item. */
   openFile?(accept: string): Promise<{ name: string; bytes: Uint8Array } | undefined>;
-  /** Prints the page as it is now: the board has already set what is printed (the board or one container) and its print
-   *  styles. The standalone page calls `window.print()`. Resolves once the host's print has closed. Left out, the board
-   *  shows no Print item. */
-  print?(): Promise<void>;
+  /** Prints, through the host's own print window (the contract's `print(ask)`, D-107): the board sets what is printed (the
+   *  board or one container, fitted to one page, inside its own root) and asks with no `content`, so the host prints the
+   *  board's root as it stands. The host owns the paper (its size and margins), hiding the rest of its page and the
+   *  look's colours: the board names no page and sets nothing outside its root. Resolves once the print window has
+   *  closed; rejects with the host's words, which the board shows through `notify`. Left out, the board shows no Print item. */
+  print?(ask?: PrintAsk): Promise<void>;
   /** The standalone page's own part; a host leaves it out. */
   page?: BoardPage;
 }
