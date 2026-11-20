@@ -224,7 +224,6 @@
 .vb-banner-text { margin: 0; font-size: var(--vb-text-sm); }
 .vb-banner-text b { font-weight: var(--vb-weight-bold); }
 .vb-world[data-readonly] :is(.vb-region-grip, .vb-region-tools, .vb-nblock-acts, .vb-holder-remove) { visibility: hidden; }
-.vb-world[data-readonly] .vb-holder { pointer-events: none; }
 .vb-world[data-readonly] vb-node .vb-node-kind { cursor: inherit; }
 .vb-world[data-readonly] vb-node .vb-node-kind-dots { display: none; }
 

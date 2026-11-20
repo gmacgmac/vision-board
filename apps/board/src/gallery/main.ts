@@ -26,7 +26,7 @@ import { railSection } from './rail-section.ts';
 import { freshSection } from './fresh-section.ts';
 import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
-import { accessByBotSection, accessSection } from './access-section.ts';
+import { accessByBotSection, accessSection, holdersChipSection } from './access-section.ts';
 import { wireSection } from './wire-section.ts';
 import { versionSection } from './version-section.ts';
 import { keyHelpSection } from './key-help-section.ts';
@@ -189,6 +189,7 @@ function build(): void {
   main.append(timelineBoardSection(fx)); // D-105, FE_02; last of all, so no section moves
   main.append(filesSection(fx)); // D-107, export-import-print FE_01; last of all, so no section moves
   if (flagOn('openFolder', flags)) main.append(folderChooserSection()); // D-110, folder-chooser-setup T_01; last of all, so no section moves
+  if (flagOn('agentAccess', flags)) main.append(holdersChipSection(fx)); // last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

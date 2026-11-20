@@ -1,0 +1,39 @@
+/* Region pattern, the holders chip (agentAccess flag, PLAN decision 7; behaviour in region-holders.ts): after the count, a
+   person icon and how many agents hold the container, in the count's muted style. Hovering or focusing it shows the list
+   in a small box just below the label, over the frame's empty top room, so the top line never reflows; each holder by
+   label, "Created this container" on the creator, Remove on the others. The slot is the label's shrink order (region.css):
+   it gives way first, the chip leaving whole (a wrapping row one line high, its second line clipped; the chip with
+   keyboard focus keeps its room, the title giving way, WCAG 2.4.11). The list's box is the label's (neither chip nor list is
+   positioned), so the slot's clip never cuts it. Tokens only; loaded after region.css. */
+vb-region .vb-region-holders { flex: 0 1e12 auto; margin-inline-start: calc(-1 * var(--vb-label-gap)); }
+vb-region .vb-region-holders:empty { display: none; }
+vb-region .vb-region-holders:has(:focus-visible, [data-look='hover'], [data-look='focus']) { flex-shrink: 0; }
+vb-region .vb-holders-chip {
+  display: inline-flex; flex: none; align-items: center; gap: var(--vb-space-1); margin-inline-start: var(--vb-label-gap);
+  min-height: var(--vb-control-target); padding: 2px var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm); cursor: pointer;
+  background: none; font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap;
+}
+vb-region .vb-holders-icon { width: 14px; height: 14px; }
+vb-region .vb-holders-chip:is(:hover, [data-look='hover'], [aria-expanded='true']) { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
+vb-region .vb-holders-chip[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight); }
+
+/* The list: the shared popover surface (base/surface.css, .vb-surface-pop), under the label's left edge; the bridge above it
+   keeps the pointer inside while it crosses the gap (WCAG 1.4.13: hoverable). Shown while data-holders-open is on the frame,
+   which also raises the frame above the cards and leaves only the label to take the pointer, as the title tip does. */
+vb-region[data-holders-open] { z-index: var(--vb-z-open); pointer-events: none; }
+vb-region .vb-holders-pop {
+  display: none; position: absolute; z-index: var(--vb-z-open); top: calc(100% + var(--vb-space-1)); left: 0;
+  width: max-content; max-width: min(var(--vb-pop-w), 80vw); padding: var(--vb-space-2) var(--vb-pop-pad);
+  font-size: var(--vb-text-md); color: var(--vb-ink); cursor: default; text-align: left; text-transform: none; letter-spacing: normal;
+}
+vb-region .vb-holders-pop::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--vb-space-1); }
+vb-region[data-holders-open] .vb-holders-pop { display: block; }
+vb-region .vb-holders-list { display: grid; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
+vb-region .vb-holder { display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3); min-height: var(--vb-space-6); }
+vb-region .vb-holder-name { min-width: 0; overflow-wrap: anywhere; font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); }
+vb-region .vb-holder-note { flex: none; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
+vb-region .vb-holder-remove {
+  flex: none; min-height: var(--vb-control-target); padding: 0 var(--vb-space-2); border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
+  background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--vb-state-drop);
+}
+vb-region .vb-holder-remove:hover { background: var(--vb-surface-sunken); }

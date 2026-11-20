@@ -13,6 +13,7 @@ import { bindModeRow } from './region-row.ts';
 import type { NoteParts } from './region-note.ts';
 import { bindNoteParts } from './region-note.ts';
 import { bindTitleTip } from './region-title.ts';
+import { bindHoldersTip } from './region-holders.ts';
 import { fillFreshPill } from './region-fresh.ts';
 import { holdersTemplate, regionIds, regionIdsOf, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
@@ -26,7 +27,7 @@ import * as regionWords from '../words/region.ts';
 /** The controls a locked board pauses on a frame (N40 ruling 4), but Reset places and Put container
  * back, whose aria-disabled `update` sets itself. The cog still opens its menu; Remove container
  * (N24 ruling 4) pauses with the rest. */
-const PAUSED = 'button.vb-mtile, .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region], button[data-dir]';
+const PAUSED = 'button.vb-mtile, .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button[data-revoke], button[data-remove-region], button[data-dir]';
 
 export const VB_REGION_TAG = 'vb-region';
 
@@ -67,11 +68,13 @@ export function defineVbRegion(): void {
     private markdown: RegionFrameOptions['markdown'];
     private readonly note: NoteParts = bindNoteParts(this, () => this.markdown);
     private readonly titleTip = bindTitleTip(this);
+    private readonly holdersTip = bindHoldersTip(this);
 
     render(r: Region, opts: RegionFrameOptions = {}): void {
       this.markdown = opts.markdown;
       this.row.close();
       this.titleTip.close();
+      this.holdersTip.close();
       this.dataset.region = r.id;
       if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
       else delete this.dataset.idPrefix;
@@ -110,7 +113,8 @@ export function defineVbRegion(): void {
       const key = JSON.stringify(st.holders ?? []);
       if (key !== this.holdersKey) {
         this.holdersKey = key;
-        this.piece('.vb-region-holders').innerHTML = holdersTemplate(st.holders ?? []);
+        this.holdersTip.close();
+        this.piece('.vb-region-holders').innerHTML = holdersTemplate(st.holders ?? [], regionIdsOf(this).holders);
       }
       pauseControls(this, PAUSED, paused);
       explainPaused(this, '.vb-mtile, .vb-dir', st.readOnly === true ? READ_ONLY_PERSON : undefined);

@@ -23,8 +23,12 @@ import { el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGIONS_HELD } from './fixture.ts';
 
-/** The frame whose removable holder is drawn in its hover look, "Remove access" showing. */
+/** The frame whose holders chip is drawn in its hover look, its list open. */
 const HOVERED = 'held-hover';
+
+type Holders = NonNullable<Fixture['access']['holders']>[string];
+/** How a sample draws its chip: the list `open` (as hover or focus opens it), the chip's look, and the holders it has. */
+interface Look { holders?: Holders; look?: 'hover' | 'focus'; open?: boolean }
 
 /** Every Send state, with the look a sample draws: hover, focus and pressed are CSS states. */
 const SENDS: { caption: string; state: SendState; look?: 'hover' | 'focus' | 'pressed' }[] = [
@@ -42,14 +46,16 @@ const SENDS: { caption: string; state: SendState; look?: 'hover' | 'focus' | 'pr
 /** The fixture in the shape the page loads, so the strip's rows come from the same function. */
 const asBoard = (fx: Fixture): BoardData => ({ head: 0, view: fx.view, state: fx.state, versions: {}, access: fx.access });
 
-function frame(id: string, fx: Fixture): VbRegionElement {
+function frame(id: string, fx: Fixture, o: Look = {}): VbRegionElement {
   const region = fx.view.regions.find((r) => r.id === id)!;
   const node = document.createElement('vb-region') as VbRegionElement;
   node.render(region, ownIds());
   // The frame draws no cards (D-013); its node counts as drawn, so it shows the count, not the empty message.
   const placed = new Set(fx.view.nodes.filter((n) => n.region === id).map((n) => n.id));
-  node.update(regionState(region, fx.view, fx.state, placed, fx.access.holders?.[id]));
-  if (id === HOVERED) node.querySelector('button.vb-holder')?.setAttribute('data-look', 'hover');
+  node.update(regionState(region, fx.view, fx.state, placed, 'holders' in o ? o.holders : fx.access.holders?.[id]));
+  const look = id === HOVERED ? 'hover' : o.look;
+  if (look) node.querySelector('.vb-holders-chip')?.setAttribute('data-look', look);
+  node.toggleAttribute('data-holders-open', o.open === true || id === HOVERED);
   return node;
 }
 
@@ -115,6 +121,30 @@ export function accessByBotSection(): HTMLElement {
   return box;
 }
 
+/** The holders chip's states (PLAN decision 7 of Access Clarity), a section of its own: one holder (the creator alone, no
+ * Remove), many (the list open, a long label wrapping), the chip with keyboard focus (list open) and no holders (no chip).
+ * The gallery puts it last of all (main.ts), so it moves no section above it. The first two samples of the Agent access
+ * section show the chip at rest and hovered. */
+export function holdersChipSection(fx: Fixture): HTMLElement {
+  const box = el('section', 'g-section');
+  box.dataset.feature = 'holdersChip';
+  box.setAttribute('aria-labelledby', 'feature-holdersChip');
+  const heading = el('h2', 'g-title', 'Holders chip');
+  heading.id = 'feature-holdersChip';
+  const meta = el('p', 'g-meta');
+  meta.append(el('code', undefined, 'revoke'), ' · feature flag agentAccess (D-027, Access Clarity decision 7), on by default · off with ?flags=-agentAccess');
+  const creator = { agent: 'a-aaaa1111', label: 'Pricing chat', creator: true as const };
+  const others = ['Docs chat', 'Launch chat', 'Support chat with a long name that wraps in the list'].map((label, i) => ({ agent: `a-bbbb222${i}`, label }));
+  const frames = el('div', 'g-frames g-holders vb-ground');
+  frames.append(frame('held', fx, { holders: [creator] }), frame('held', fx, { holders: [creator, ...others], open: true }),
+    frame('held', fx, { look: 'focus', open: true }), frame('held', fx, { holders: [] }));
+  box.append(heading,
+    el('p', 'g-desc', 'Who holds a container is one chip after its count: a person icon and the number of agents. Hovering or focusing it lists them; Enter, Space or a click keeps the list open and Esc closes it. The creator is marked and has no Remove; every other holder has one, which asks to confirm.'),
+    meta,
+    group('States', 'One holder; many, the list open and a long label wrapping; the chip with keyboard focus, its list open; no holders, no chip.', frames));
+  return box;
+}
+
 export function accessSection(fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
   box.dataset.feature = 'agentAccess';
@@ -130,7 +160,7 @@ export function accessSection(fx: Fixture): HTMLElement {
     meta,
     group('Requests', 'The strip under the header while any request is open, grouped by bot. Refuse opens an optional one-line note; the second request shows it open. The first bot asks for a container and for the whole board, so it has Allow all.', strip(fx)),
     group('Agents on the board', 'In the header, the agents that can draw on the open board: the one that made it (no remove control), then each agent the person allowed. Remove access asks to confirm, then takes the whole board back.', agents(fx)),
-    group('Holders on a container', 'After the count: the agent that made the container (no remove control), then each agent granted access. Hover or keyboard focus shows Remove access, which asks to confirm.', frames),
+    group('Holders on a container', 'After the count, one chip: a person icon and how many agents hold it. Hover or focus lists them, each but the creator with Remove, which asks to confirm.', frames),
     group('Send to agent', 'Every state of the button in the board header.', sends()));
   return box;
 }

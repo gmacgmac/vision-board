@@ -64,7 +64,9 @@ export const everythingHereIsAnswered = 'Everything here is answered.';
 export const retired2 = 'retired';
 export const createdThisContainer = 'Created this container';
 export const removeAccess = (esc: string): string => `${esc}: remove access`;
-export const removeAccess2 = 'Remove access';
+/** The holders chip (PLAN decision 7): its name by the count, and the list it opens. */
+export const holdersChip = (n: number): string => (n === 1 ? '1 agent has access' : `${n} agents have access`);
+export const holdersList = 'Agents with access';
 
 // ---- region-core.ts
 export const cardWidths = (w: string | number): string => `Card widths: ${w}`;

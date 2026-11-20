@@ -670,19 +670,27 @@ to 250%; `container-polish.spec.ts`). Measured on a one-card frame with a marker
 60% the title keeps its few letters and the count is out of sight; from about 62% "1/1" shows whole;
 from about 96% the marker's words come back. Below `FAR_K` the tools, the grip, the retired marker and the
 holders leave the line (`display: none`), so the title takes their room. In a narrow line the tools
-never shrink beyond these forms; the holders give way first, then the title, one line ending in "…"
-(never broken mid-word) down to about three letters, then the count. Each holder and the count show
+never shrink beyond these forms; the holders chip gives way first, then the title, one line ending in "…"
+(never broken mid-word) down to about three letters, then the count. The chip and the count show
 whole or not at all, never a clipped sliver (VERIFY_01 finding 1, FIX_48): the holders' slot and the
-handle (`region.css` `.vb-region-holders`, `.vb-region-handle`) are wrapping rows one line high whose
-second line is clipped, so a part with no room on the line wraps out of sight whole (the last holder
-first) and stays in the accessible tree: the count's words, "0 of 1 answered", and each holder's name
-are read as before. The title's flex base is its few letters, so the count wraps only once the title
-is down to them, and the title takes back the count's room. A holder with keyboard focus keeps its
+handle (`region-holders.css` `.vb-region-holders`, `region.css` `.vb-region-handle`) are wrapping rows one line high whose
+second line is clipped, so a part with no room on the line wraps out of sight whole and stays in the
+accessible tree: the count's words, "0 of 1 answered", and the chip's name, "2 agents have access", are read as before. The title's flex base is its few letters, so the count wraps only once the title
+is down to them, and the title takes back the count's room. The chip with keyboard focus keeps its
 room, the title giving way to it. CSS only: a zoom step measures nothing (`container-title.spec.ts`,
-the count and each holder at every step from 100% to 20%). The heading keeps the full title
+the count and the chip at every step from 100% to 20%). The heading keeps the full title
 (the container's accessible name) and the title tip shows it on hover and focus. At 20% the line's
 lower edge reaches about 1px into the first row's top edge (the line's room is `REGION_HEAD` board
 units).
+
+**The holders chip (agentAccess flag; Access Clarity decision 7).** After the count, one chip: the icon set's
+person icon (`user`) and how many agents hold the container, named "2 agents have access"; with no holders,
+no chip. Hovering or focusing it opens the list below the label (`region-holders.ts` `bindHoldersTip`, the
+shared hover tip with `opens`, WCAG 1.4.13): each holder by label, "Created this container" on the creator
+and a Remove button on every other, which asks to confirm as before. Enter, Space or a click keeps it open,
+Esc closes it and focus returns to the chip. Words are in `packages/ui/src/words/region.ts`; the styles are
+`region-holders.css`; `send-access.spec.ts` holds the page tests and the gallery's Agent access section
+every state (one holder, many, hover, focus, none).
 
 **The title's place, and moving a container by it (open list and container title FE_02, superseding
 3_FE_01 ruling 6 for the label).** The label (grip, title and count: one `.vb-region-handle`, then the

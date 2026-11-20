@@ -54,6 +54,7 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-frames vb-region[data-region='retired-narrow'] { width: calc(var(--vb-card-w-s) * 1.2); }
 .g-frames vb-region[data-title-tip-open] { margin-bottom: calc(var(--vb-space-6) * 2); }
 /* So does an open note preview (the "Hover" and "Focus" container samples). */
+.g-holders vb-region[data-holders-open] { margin-bottom: calc(var(--vb-space-6) * 4); }
 .g-frames vb-region[data-preview] { margin-bottom: calc(var(--vb-space-6) * 3); }
 /* The tool rail samples (toolRail flag, rail-section.ts): room on the left for the rail, which reaches
    past the frame, and between frames for its popovers; a frame with a set height for each rail form

@@ -43,7 +43,7 @@ test('the settings menu holds Reset places and Put container back, each disabled
   assert.deepEqual(regionIds('review'), {
     heading: 'region-review', modes: 'region-review-modes', menu: 'region-review-menu', hint: 'region-review-reset-hint',
     back: 'region-review-back-hint', preview: 'region-review-note-preview', previewText: 'region-review-note-preview-text',
-    noteText: 'region-review-note-text',
+    noteText: 'region-review-note-text', holders: 'region-review-holders',
   });
 });
 
@@ -110,19 +110,22 @@ test('the top line: in its bar, a label group (the handle: grip, title and count
   assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-note-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/div><\/header>/);
 });
 
-test('holdersTemplate: the creator is plain text; any other holder is a labelled Remove access button; text is escaped', () => {
+test('holdersTemplate: one chip with the count, and a list of dialog: the creator marked, any other holder a labelled Remove button; text is escaped', () => {
   const html = holdersTemplate([
     { agent: 'a-aaaa1111', label: 'Pricing chat', removable: false },
     { agent: 'a-bbbb2222', label: '<b>Docs</b> & co', removable: true },
-  ]);
+  ], 'region-r-holders');
   assert.ok(!html.includes('<b>'), 'no raw markup from data');
-  assert.match(html, /^<span class="vb-holder" title="Created this container"><span class="vb-holder-sep" aria-hidden="true">·<\/span><span class="vb-holder-name">Pricing chat<\/span><\/span>/);
-  assert.match(html, /<button type="button" class="vb-holder" data-revoke="a-bbbb2222" aria-label="&#60;b&#62;Docs&#60;\/b&#62; &#38; co: remove access">/);
-  assert.match(html, /<span class="vb-holder-remove" aria-hidden="true">Remove access<\/span><\/button>$/);
-  assert.equal((html.match(/<button/g) ?? []).length, 1, 'the creator has no remove control');
+  assert.match(html, /^<button type="button" class="vb-holders-chip" aria-expanded="false" aria-controls="region-r-holders" aria-label="2 agents have access"><svg class="vb-icon vb-holders-icon"[^>]*>.*?<\/svg><span class="vb-holders-n" aria-hidden="true">2<\/span><\/button>/);
+  assert.match(html, /<div class="vb-holders-pop vb-surface-pop" id="region-r-holders" role="dialog" aria-label="Agents with access">/);
+  assert.match(html, /<li class="vb-holder"><span class="vb-holder-name">Pricing chat<\/span><span class="vb-holder-note">Created this container<\/span><\/li>/);
+  assert.match(html, /<button type="button" class="vb-holder-remove" data-revoke="a-bbbb2222" aria-label="&#60;b&#62;Docs&#60;\/b&#62; &#38; co: remove access">Remove<\/button>/);
+  assert.equal((html.match(/data-revoke/g) ?? []).length, 1, 'the creator has no remove control');
+  assert.match(holdersTemplate([{ agent: 'a', label: 'X', removable: false }]), /aria-label="1 agent has access"/);
   assert.equal(holdersTemplate([]), '');
   assert.doesNotMatch(html, /style=|<style/);
 });
+
 
 test('the title tip holds the escaped full title and is hidden from assistive tech (the heading keeps the text)', () => {
   const html = regionTemplate({ id: 'r', title: '<b>x</b>', mode: 'grid' });

@@ -80,7 +80,15 @@ const strip = (page: Page) => page.getByRole('region', { name: /asks? for access
 // A bot's group (accessByBot, on by default): its heading names the bot, its rows hold the containers.
 const row = (page: Page, label: string) => page.locator('.vb-access-group').filter({ has: page.getByRole('heading', { level: 3, name: new RegExp(`^${label} asks for access`) }) });
 const frame = (page: Page) => page.locator(`vb-region[data-region="${REGION}"]`);
+const chip = (page: Page) => frame(page).locator('.vb-holders-chip');
+const pop = (page: Page) => frame(page).locator('.vb-holders-pop');
+/** A holder's Remove button, in the list the chip opens (PLAN decision 7): hidden until `openList`. */
 const holderButton = (page: Page, label: string) => frame(page).getByRole('button', { name: `${label}: remove access` });
+/** Hover the chip: its list shows. */
+async function openList(page: Page): Promise<void> {
+  await chip(page).hover();
+  await expect(pop(page)).toBeVisible();
+}
 
 /** Open board "access" and wait until it has drawn. */
 async function openAccess(page: Page, query = ''): Promise<void> {
@@ -118,22 +126,29 @@ test('flag off: no Send, no requests strip and no holders', async ({ page, reque
   await openAccess(page, '?flags=-agentAccess');
   await expect(page.locator('.vb-send')).toHaveCount(0);
   await expect(page.locator('.vb-access')).toHaveCount(0);
-  await expect(frame(page).locator('.vb-holder')).toHaveCount(0);
+  await expect(chip(page)).toHaveCount(0);
   await grant(page, a.seq); // leave nothing open for the tests below
 });
 
 test('Allow removes the request and adds the holder', async ({ page, request }) => {
+  await revokeOthers(page);
   const a = await ask(request, 'Docs chat', 'I keep the help pages in step with the prices.');
   await openAccess(page);
   await expect(strip(page)).toBeVisible();
   await expect(row(page, 'Docs chat')).toContainText('Docs chat asks for access to 1 container');
   await expect(row(page, 'Docs chat')).toContainText(CONTAINER);
   await expect(row(page, 'Docs chat')).toContainText('I keep the help pages in step with the prices.');
-  // The creator shows as plain text with no remove control.
-  await expect(frame(page).locator('.vb-holder', { hasText: CREATOR })).toBeVisible();
+  // The creator alone: one chip, and in its list the creator marked, with no remove control.
+  await expect(chip(page)).toHaveAccessibleName('1 agent has access');
+  await openList(page);
+  await expect(frame(page).locator('.vb-holder', { hasText: CREATOR })).toContainText('Created this container');
   await expect(frame(page).getByRole('button', { name: `${CREATOR}: remove access` })).toHaveCount(0);
+  await page.mouse.move(0, 0);
+  await expect(pop(page)).toBeHidden();
   await row(page, 'Docs chat').getByRole('button', { name: `Allow Docs chat to write in ${CONTAINER}` }).click();
   await expect(row(page, 'Docs chat')).toHaveCount(0);
+  await expect(chip(page)).toHaveAccessibleName('2 agents have access');
+  await openList(page);
   await expect(holderButton(page, 'Docs chat')).toBeVisible();
   await expect(page.locator('#toast')).toHaveText(`Docs chat can now write in ${CONTAINER}`);
   expect((await holdersNow(page)).map((h) => h.agent)).toContain(a.agent);
@@ -206,17 +221,21 @@ test('gallery: three requests (one for the board) with one refusing note open, t
   const agents = s.locator('.vb-agents');
   await expect(agents.locator('.vb-agents-row')).toHaveText([/Pricing chat\s*made this board/, /Docs chat\s*Remove access/]);
   await expect(agents.getByRole('button', { name: "Remove Docs chat's access to this board" })).toBeVisible();
-  await expect(s.locator('vb-region')).toHaveCount(2);
-  for (const f of await s.locator('vb-region').all()) {
+  const frames = s.locator('.g-frames').first().locator('vb-region');
+  await expect(frames).toHaveCount(2);
+  for (const f of await frames.all()) {
     await expect(f.locator('.vb-region-count')).toHaveAttribute('title', '0 of 1 answered');
-    await expect(f.locator('.vb-holder')).toHaveCount(2);
-    await expect(f.locator('span.vb-holder', { hasText: 'Pricing chat' })).toBeVisible();
-    await expect(f.getByRole('button', { name: 'Docs chat: remove access' })).toBeVisible();
+    await expect(f.locator('.vb-holders-chip')).toHaveAccessibleName('2 agents have access');
+    await expect(f.locator('.vb-holders-n')).toHaveText('2');
   }
-  await expect(s.locator('vb-region[data-region="held-hover"] .vb-holder-remove')).toBeVisible();
-  await expect(s.locator('vb-region[data-region="held"] .vb-holder-remove')).toBeHidden();
-  const states = await s.locator('.vb-send').evaluateAll((els) => els.map((e) => `${e.getAttribute('data-state')}/${e.getAttribute('data-look') ?? ''}`));
-  expect(states).toEqual(['idle/', 'idle/hover', 'idle/focus', 'idle/pressed', 'sending/', 'sent/', 'error/', 'waiting/', 'disabled/']);
+  // The chip at rest hides its list; the hovered sample has it open: the creator marked, Docs chat with Remove.
+  await expect(s.locator('vb-region[data-region="held"] .vb-holders-pop').first()).toBeHidden();
+  const open = s.locator('vb-region[data-region="held-hover"] .vb-holders-pop');
+  await expect(open).toBeVisible();
+  await expect(open.locator('.vb-holder')).toHaveText([/Pricing chat\s*Created this container/, /Docs chat\s*Remove/]);
+  await expect(open.getByRole('button', { name: 'Docs chat: remove access' })).toBeVisible();
+  const sends = await s.locator('.vb-send').evaluateAll((els) => els.map((e) => `${e.getAttribute('data-state')}/${e.getAttribute('data-look') ?? ''}`));
+  expect(sends).toEqual(['idle/', 'idle/hover', 'idle/focus', 'idle/pressed', 'sending/', 'sent/', 'error/', 'waiting/', 'disabled/']);
   await expect(s.locator('.vb-send[data-state="disabled"]')).toHaveAttribute('aria-disabled', 'true');
   await expect(s.locator('.vb-send[data-state="disabled"]')).toHaveAttribute('title', 'Nothing new to send');
   await expect(s.locator('.vb-send[data-state="waiting"]')).toHaveText('Waiting for agent');
@@ -236,6 +255,29 @@ for (const theme of THEMES) {
   });
 }
 
+// The holders chip's own gallery section (PLAN decision 7): every state, last of the page.
+const chipSection = (page: Page) => page.locator('section[data-feature="holdersChip"]');
+for (const theme of THEMES) {
+  test(`gallery: the holders chip, one holder, many, focus and none, passes axe and matches its screenshot (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await page.goto('/gallery.html');
+    const s = chipSection(page);
+    await expect(s).toBeVisible();
+    const samples = s.locator('.g-holders vb-region');
+    await expect(samples).toHaveCount(4);
+    await expect(samples.nth(0).locator('.vb-holders-chip')).toHaveAccessibleName('1 agent has access');
+    await expect(samples.nth(0).locator('.vb-holder-remove')).toHaveCount(0);
+    await expect(samples.nth(0).locator('.vb-holders-pop')).toBeHidden();
+    await expect(samples.nth(1).locator('.vb-holder')).toHaveCount(4);
+    await expect(samples.nth(1).locator('.vb-holder-remove')).toHaveCount(3);
+    await expect(samples.nth(1).locator('.vb-holders-pop')).toBeVisible();
+    await expect(samples.nth(2).locator('.vb-holders-pop')).toBeVisible();
+    await expect(samples.nth(3).locator('.vb-holders-chip')).toHaveCount(0);
+    await expectNoAxeViolations(page);
+    await expect(s).toHaveScreenshot(`holders-chip-${theme}.png`);
+  });
+}
+
 // ---- Keyboard only ----
 
 test('keyboard: Tab reaches Allow, and Enter allows', async ({ page, request }) => {
@@ -244,7 +286,7 @@ test('keyboard: Tab reaches Allow, and Enter allows', async ({ page, request }) 
   await tabTo(page, row(page, 'Keys allow chat').getByRole('button', { name: /^Allow Keys allow chat/ }));
   await page.keyboard.press('Enter');
   await expect(row(page, 'Keys allow chat')).toHaveCount(0);
-  await expect(holderButton(page, 'Keys allow chat')).toBeVisible();
+  await expect(chip(page)).toHaveAccessibleName('2 agents have access');
   // Focus lands on the board, not on the page body, once the strip is gone.
   await expect(page.locator(bid('stage'))).toBeFocused();
   expect((await holdersNow(page)).map((h) => h.agent)).toContain(a.agent);
@@ -270,20 +312,36 @@ test('keyboard: Refuse opens the note, Esc closes it, Enter sends deny with the 
   expect(deny).toMatchObject({ request: a.seq, text: 'Wrong container.' });
 });
 
-test('keyboard: focus on a holder shows Remove access; Enter, then Tab to confirm, removes it', async ({ page, request }) => {
+test('keyboard: Tab to the chip shows the list; Tab to a holder, Enter, then Tab to confirm, removes it; Esc closes the list and focus returns to the chip', async ({ page, request }) => {
+  await revokeOthers(page);
   const a = await ask(request, 'Keys revoke chat');
   await grant(page, a.seq);
   await openAccess(page);
   const holder = holderButton(page, 'Keys revoke chat');
-  await tabTo(page, holder);
-  await expect(holder.locator('.vb-holder-remove')).toBeVisible();
+  await tabTo(page, chip(page));
+  await expect(pop(page)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(pop(page)).toBeHidden();
+  await expect(chip(page)).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(pop(page)).toBeVisible();
+  await expect(chip(page)).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press('Tab');
+  await expect(holder).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(pop(page)).toBeHidden();
+  await expect(chip(page)).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(pop(page)).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(holder).toBeFocused();
   await page.keyboard.press('Enter');
   const dialog = page.getByRole('dialog', { name: "Remove Keys revoke chat's access?" });
   await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(dialog.getByRole('button', { name: 'Remove access' })).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(holder).toHaveCount(0);
+  await expect(chip(page)).toHaveAccessibleName('1 agent has access');
   expect((await holdersNow(page)).map((h) => h.agent)).not.toContain(a.agent);
 });
 
@@ -320,7 +378,8 @@ for (const theme of THEMES) {
     await expectNoAxeViolations(page);
     await zoomToHolders(page);
     await row(page, `Axe ${theme} chat`).getByRole('button', { name: `Refuse Axe ${theme} chat` }).click();
-    await holderButton(page, `Axe ${theme} holder`).hover();
+    await openList(page);
+    await expect(holderButton(page, `Axe ${theme} holder`)).toBeVisible();
     await expectNoAxeViolations(page);
     await grant(page, a.seq);
     // Take both back (3_FE_04), so the light run and the tests after it start from fewer holders: a
@@ -332,7 +391,7 @@ for (const theme of THEMES) {
   });
 }
 
-test('Remove access shows on hover, asks to confirm, and Cancel keeps the holder', async ({ page, request }) => {
+test('the list shows on hover, Remove asks to confirm, and Cancel keeps the holder', async ({ page, request }) => {
   await revokeOthers(page);
   const a = await ask(request, 'Launch chat');
   await grant(page, a.seq);
@@ -340,22 +399,22 @@ test('Remove access shows on hover, asks to confirm, and Cancel keeps the holder
   await openAccess(page);
   await zoomToHolders(page);
   const holder = holderButton(page, 'Launch chat');
-  await expect(holder.locator('.vb-holder-remove')).toBeHidden();
-  await holder.hover();
-  await expect(holder.locator('.vb-holder-remove')).toBeVisible();
-  await expect(holder.locator('.vb-holder-remove')).toHaveText('Remove access');
+  await expect(pop(page)).toBeHidden();
+  await openList(page);
+  await expect(holder).toHaveText('Remove');
   await holder.click();
   const dialog = page.getByRole('dialog', { name: "Remove Launch chat's access?" });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText(`Launch chat will no longer be able to write in ${CONTAINER}`);
   await dialog.getByRole('button', { name: 'Cancel' }).click();
   await expect(dialog).toBeHidden();
-  await expect(holder).toBeVisible();
+  await expect(chip(page)).toHaveAccessibleName('2 agents have access');
   // Nothing recorded but the board seen that opening the board sends (awareness tables FE_01).
   expect((await ledgerAfter(page, before)).filter((e) => e.type !== 'seen')).toEqual([]);
+  await openList(page);
   await holder.click();
   await dialog.getByRole('button', { name: 'Remove access' }).click();
-  await expect(holder).toHaveCount(0);
+  await expect(chip(page)).toHaveAccessibleName('1 agent has access');
   await expect(page.locator('#toast')).toHaveText(`Launch chat can no longer write in ${CONTAINER}`);
   const revoke = (await ledgerAfter(page, before)).find((e) => e.action === 'revoke');
   expect(revoke).toMatchObject({ type: 'act', by: 'person', holder: a.agent, board: BOARD, region: REGION });

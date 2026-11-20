@@ -219,7 +219,7 @@ test('zoomed out, the controls, grip and retired marker leave the line, so the t
   for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
   await expect(page.locator(bid('stage'))).toHaveAttribute('data-zoom', 'far');
   const gone = await page.locator('vb-region').evaluateAll((frames) => frames.flatMap((f) =>
-    [...f.querySelectorAll<HTMLElement>('.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-holder')]
+    [...f.querySelectorAll<HTMLElement>('.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-holders-chip')]
       .filter((e) => e.getBoundingClientRect().width > 0).map((e) => e.className)));
   expect(gone).toEqual([]);
 });

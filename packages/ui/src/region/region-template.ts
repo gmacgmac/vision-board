@@ -1,5 +1,5 @@
 // Region pattern, layer 2 (template): one pure function from a region to the markup of its
-// frame: the top line (title, answered count, the fresh pill and holders, in a gap cut from the frame's border; on
+// frame: the top line (title, answered count, the fresh pill and the holders chip, in a gap cut from the frame's border; on
 // the right the mode row: the one layout button, a divider and the settings cog (PLAN decision 20; README pick 1 / mockup
 // 05), or with the toolRail flag that row in a rail on the frame's left edge instead), the layout popover (the button's
 // menu) and the settings menu (both closed until the element opens them), and the empty message. Tokens only; no inline styles (the page's CSP forbids them).
@@ -11,6 +11,7 @@ import { esc } from '../node/node-template.ts';
 import type { MarkdownOptions } from '../markdown/render.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 import { svgIcon, ACTION_ICON } from '../node/node-icons.ts';
+import { icon } from '../icons/icon.ts';
 import type { RegionHolder } from './region-core.ts';
 import type { ReplyEntry } from '../node/node-core.ts';
 import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, RESET_NONE_HINT, WIDTHS_LABEL } from './region-core.ts';
@@ -23,7 +24,7 @@ import * as uiCommonWords from '../words/ui-common.ts';
 export const regionIds = (id: string, prefix = '') => ({
   heading: `${prefix}region-${id}`, modes: `${prefix}region-${id}-modes`, menu: `${prefix}region-${id}-menu`, hint: `${prefix}region-${id}-reset-hint`,
   back: `${prefix}region-${id}-back-hint`, preview: `${prefix}region-${id}-note-preview`, previewText: `${prefix}region-${id}-note-preview-text`,
-  noteText: `${prefix}region-${id}-note-text`,
+  noteText: `${prefix}region-${id}-note-text`, holders: `${prefix}region-${id}-holders`,
 });
 
 /** The ids of the frame `host` (a `vb-region`): its container and the prefix it was drawn with. */
@@ -202,16 +203,18 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
 }
 
 /**
- * The holders after the count (agentAccess flag): "· Pricing chat" in the count's muted style.
- * The creator is plain text; every other holder is a button that shows "Remove access" on hover
- * or keyboard focus and starts the revoke (the page asks for confirmation first, rule 8).
+ * The holders after the count (agentAccess flag, PLAN decision 7): one chip, a person icon and the count, and the list it
+ * opens: each holder's label, "Created this container" on the creator, and Remove on every other (the page asks for
+ * confirmation first, rule 8). The list is a non-modal dialog the chip controls (`bindHoldersTip`, region-holders.ts); none
+ * with no holders. `id` is the list's, for aria-controls.
  */
-export function holdersTemplate(holders: readonly RegionHolder[]): string {
-  return holders.map((h) => {
-    const sep = '<span class="vb-holder-sep" aria-hidden="true">·</span>';
-    const name = `<span class="vb-holder-name">${esc(h.label)}</span>`;
-    if (!h.removable) return `<span class="vb-holder" title="${regionWords.createdThisContainer}">${sep}${name}</span>`;
-    return `<button type="button" class="vb-holder" data-revoke="${esc(h.agent)}" aria-label="${regionWords.removeAccess(esc(h.label))}">`
-      + `${sep}${name}<span class="vb-holder-remove" aria-hidden="true">${regionWords.removeAccess2}</span></button>`;
-  }).join('');
+export function holdersTemplate(holders: readonly RegionHolder[], id = ''): string {
+  if (holders.length === 0) return '';
+  const rows = holders.map((h) => `<li class="vb-holder"><span class="vb-holder-name">${esc(h.label)}</span>`
+    + (h.removable
+      ? `<button type="button" class="vb-holder-remove" data-revoke="${esc(h.agent)}" aria-label="${regionWords.removeAccess(esc(h.label))}">${uiCommonWords.remove}</button>`
+      : `<span class="vb-holder-note">${regionWords.createdThisContainer}</span>`) + '</li>').join('');
+  return `<button type="button" class="vb-holders-chip" aria-expanded="false" aria-controls="${id}" aria-label="${regionWords.holdersChip(holders.length)}">`
+    + `${icon('user', 'vb-holders-icon')}<span class="vb-holders-n" aria-hidden="true">${holders.length}</span></button>`
+    + `<div class="vb-holders-pop vb-surface-pop" id="${id}" role="dialog" aria-label="${regionWords.holdersList}"><ul class="vb-holders-list">${rows}</ul></div>`;
 }

@@ -29,10 +29,12 @@ test('a short frame: the rail collapses, expands over the cards on hover or focu
   expect(await cardBoxes(page), 'nothing moved').toEqual(cards);
   await page.mouse.move(2, 990);
   expect(await drawn(f)).toEqual(collapsed);
-  // Keyboard: Tab from the grip reaches the rail next (Design 7), which expands; Esc collapses it,
+  // Keyboard: Tab from the grip reaches the holders chip, then the rail (Design 7), which expands; Esc collapses it,
   // keeping the focused button drawn; moving on expands it again; Tab out collapses it.
   const layout = f.locator('.vb-layout-btn');
   await f.locator('.vb-region-grip').focus();
+  await page.keyboard.press('Tab');
+  await expect(f.locator('.vb-holders-chip')).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(layout).toBeFocused();
   expect(await drawn(f)).toEqual(all);
@@ -46,6 +48,8 @@ test('a short frame: the rail collapses, expands over the cards on hover or focu
   expect(await drawn(f), 'the focused switch stays drawn').toEqual(all);
   await page.keyboard.press('ArrowDown');
   expect(await drawn(f)).toEqual(all);
+  await page.keyboard.press('Shift+Tab');
+  await expect(f.locator('.vb-holders-chip')).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(f.locator('.vb-region-grip')).toBeFocused();
   expect(await drawn(f)).toEqual(collapsed);
