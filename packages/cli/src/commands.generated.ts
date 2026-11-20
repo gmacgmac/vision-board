@@ -31,7 +31,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "list-boards", operationId: "list_boards", takesBody: false,
     summary: "List the boards",
-    description: "List the project's boards. Call it first: the other tools take a board id. No input needed, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes). `readOnly: true`: the whole ledger is open read-only (no writes).",
+    description: "List the project's boards. Call it first: the other tools take a board id. No input needed. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes). `readOnly: true`: the whole ledger is open read-only (no writes).",
     inputs: [
       {"name":"ledger","in":"query","type":"string","required":false,"description":"Another ledger of this folder to read, read-only."},
     ],

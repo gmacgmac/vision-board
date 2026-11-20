@@ -15,6 +15,12 @@
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
+    "you": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/you"
+    },
+    "joined": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/joined"
+    },
     "board": {
       "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id",
       "description": "The board the container is on."

@@ -1009,3 +1009,24 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   Leaving the stalled attempt out, 100/103 over 15 scenarios. Misses: insert-step reads-references (known since v3.35),
   refusals no-propose-without-source, new-card-number no-guessed-number; neither new miss involves grants. Dry run
   114/114. Under the 113/114 bar, so the task stopped for the maintainer; not repeated.
+
+## Skill v3.40 (access clarity: the three tiers, `you`, earlier chats' cards)
+
+- 2026-11-20, maintainer (points 692 to 705, access-clarity PLAN decisions 1 to 4 and 6): an agent can't tell from a
+  read what it may write. Reads name the caller (`you`) and say `joined: false` with no agent; `request_grant` answers
+  `held` by the reads' rule; the instructions, tool descriptions and § Access state the tiers in one line.
+- 2026-11-20, agent (access-clarity T_01): found that the standalone server read `list_boards`, `get_board`,
+  `show_node` and `show_container` with no caller at all (their `security` was empty, so `vb-mcp` never sent the
+  secret, even the chat panel's `VB_AGENT_SECRET`): no standalone agent ever saw `held` on them, v3.39's included. They
+  now take the secret as `list_open` does (`optional-agent`). § Access (standalone): the tier line replaces the two
+  board and container rules, and a new rule says cards not drawn in this conversation may be an earlier chat's: read
+  them first, ask the person before changing what you lack the context for. The plugin skill is unchanged (8,187 of
+  8,192 bytes; a host's bot is the folder's one agent and holds every tier).
+- 2026-11-20, agent: dry runs 150/150 (plugin, 20) and 141/141 (standalone, 17). Live Haiku 5.5, plugin: 146/159 in
+  21 runs, $0.5545; one read-only attempt stalled at 77 s (5 checks) and passed 9/9 on its retry; the rest of the misses
+  are timeline-unprompted (4) and import-file (4), both seen on main. Standalone: 129/141 in 17 runs, $0.0873;
+  `other-container` 5/5 (asked for the container, waited twice, 135 s). Misses besides the known timeline-unprompted,
+  copy-board and import-file: findings-grid structure-first, radial-ideas radial-centred, timeline-plan no-date-lead.
+  Rerun on main's build (81dc4e38) against this one, 7 runs each: radial-centred 2 vs 5 misses (each a `center` sent as
+  `{ key }`, which the engine resolved to the right card), timeline-plan 1 vs 1 of 3, structure-first 0 vs 3 (two asked
+  in more than three lines, one drew at once); none involves access.

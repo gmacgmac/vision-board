@@ -38,15 +38,16 @@ export const ruleEdits: readonly DescriptionEdit[] = [
     tool: 'list_open', from: 'List a board\'s open cards.',
     to: 'List a board\'s open cards, when no message lists the person\'s answers: never call it to read again what your host\'s message lists.',
   },
-  // The reads mark what the caller holds (engine/caller-marks.ts): a board's `held` opens no other agent's container.
+  // The reads name the caller and mark what it may write (engine/caller-marks.ts), by the rule `request_grant` answers
+  // `held` by: the three tiers in one line (access-clarity PLAN decision 3).
   {
     tool: 'get_board', from: 'each region\'s `holders` (left out when empty).',
-    to: 'each region\'s `holders` (left out when empty). `held: true` on the board: you hold it and may add containers to it; on a region in `view.regions`: you may write in that container. Before you write in any other container, call `request_grant` with `board` and `region`.',
+    to: 'each region\'s `holders` (left out when empty). `you` names you. What you may write: make a board, always; add containers to a board marked `held`; write in a container marked `held` (a region in `view.regions`); for anything else, call `request_grant` first.',
   },
   {
     tool: 'request_grant',
     from: 'Before you write on a board you did not create, call it with just `board`; for another agent\'s container, with `board` and `region`.',
-    to: 'Before you write on a board your read does not mark `held`, call it with just `board`; before you write in a container your read does not mark `held`, with `board` and `region`. A board\'s `held` lets you add containers; it opens no other agent\'s.',
+    to: 'Make a board, always; add containers to a board your read marks `held`; write in a container your read marks `held`; for anything else, call this first: with just `board` for a board, with `board` and `region` for a container. A board\'s `held` opens no other agent\'s container. It answers `held` only when that write would pass.',
   },
 ];
 
@@ -88,10 +89,6 @@ export const instructionEdits: readonly Omit<DescriptionEdit, 'tool'>[] = [
     to: 'so a retry never writes twice. Open your `vision-board` skill before your first `write_board`: it says how to lay cards out, number them and read the answers. Every block of text you write shows in the person\'s chat, so write none while you work: not what a read showed ("The board is empty"), nor your next step ("I\'ll add a region first"); a turn that changed the board ends "Done."',
   },
   { from: 'You already have an identity on the board, set for you: do not call `join`, and leave `secret` out of every call. ', to: '' },
-  {
-    from: 'To draw on a board another agent made, call `request_grant`',
-    to: 'To draw on a board you don\'t hold (`list_boards` and `get_board` mark one you hold `held`), call `request_grant`',
-  },
   { from: '(the board, or the board and region) and wait for the answer.', to: '(the board, or the board and region), and end your turn: the person answers it on the board.' },
   {
     from: 'Then call `check_responses` with the `head` you last saw (and `wait` up to 60 seconds) to read what the person did',
@@ -122,5 +119,5 @@ export const singleAgentEdits: readonly DescriptionEdit[] = [
 
 /** Edits to the instructions (`instructionEdits` made first), only with the flag on: the grant steps go. */
 export const singleAgentInstructionEdits: readonly Omit<DescriptionEdit, 'tool'>[] = [
-  { from: 'To draw on a board you don\'t hold', until: 'Your host brings', to: '' },
+  { from: 'Your reads name you (`you`)', until: 'Your host brings', to: '' },
 ];

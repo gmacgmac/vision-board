@@ -31,6 +31,22 @@
       "description": "Present, and true, while the board server has this ledger open read-only: read it as usual, but every write is refused with `read-only` until the person makes it editable. Left out while it is open for writing. Always present on a read of another ledger (`ledger`): nothing is ever written there.",
       "$comment": "readOnlyStart flag (READONLY_01, D-085 4); ledgerFolders flag (CONSOLIDATE_01, D-084 8)"
     },
+    "you": {
+      "type": "object",
+      "description": "In an agent's read: who you are on this ledger, the agent your writes are made as. What you may write is marked `held`: make a board, always; add containers to a board marked `held`; write in a container marked `held`; for anything else, call `request_grant` first.",
+      "$comment": "botToolRules flag; api.md 213 (caller-marks.ts `callerMark`)",
+      "required": ["agent", "label"],
+      "properties": {
+        "agent": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/agentId", "description": "Your agent id."},
+        "label": {"$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/agentLabel", "description": "The label you joined with."}
+      },
+      "unevaluatedProperties": false
+    },
+    "joined": {
+      "const": false,
+      "description": "Present, and false, on a read that carried no agent identity (no secret): you may read, but the read marks nothing `held` or `owed`, and every write needs an agent. Pass your secret, or join first.",
+      "$comment": "botToolRules flag; api.md 213 (caller-marks.ts `callerMark`)"
+    },
     "after": {
       "type": "integer",
       "minimum": 0,

@@ -14,6 +14,12 @@
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
+    "you": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/you"
+    },
+    "joined": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/joined"
+    },
     "view": {
       "$ref": "https://vision-board.invalid/schema/api/view.schema.json"
     },

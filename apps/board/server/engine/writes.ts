@@ -5,7 +5,7 @@
 // body, api.md 38), its cards turn from board numbers into identities (edge.ts), then the ledger
 // module's own checks as it appends. Answers name cards by board number. An agent's lines are written as `writer()`, and
 // with `singleAgent` that is the folder's one agent, which asks for no grant (engine.ts `callerOf`, plugin.md § The bot).
-import { eventOut, holders, openContainers, openItems, retireCards as cardsOf } from '#actions';
+import { eventOut, openContainers, openItems, retireCards as cardsOf } from '#actions';
 import type { OperationId } from '#format';
 import { flagOn, openRequestOf } from '#format';
 import { newToken } from '../secrets.ts';
@@ -21,6 +21,7 @@ import { addIcon as addToLibrary } from '../icons.ts';
 import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } from '../visibility.ts';
 import type { Op, OpCtx } from './operations.ts';
 import { reply, scopeOf, whereAnswer } from './operations.ts';
+import { heldBy } from './caller-marks.ts';
 import { compileSchema } from '../schema.ts';
 import * as writesWords from '../words/writes.ts';
 
@@ -110,7 +111,8 @@ const join: Op = async (ctx) => {
 };
 
 /** Ask the person for one container, or with no `region` for the board (api.md 25-26, 81): a
- * locked board refuses it (api.md 139); a holder is told so, an open request from this agent is returned again, a retry key sent before
+ * locked board refuses it (api.md 139); `held` only when the write would pass, by the test the reads mark `held` by
+ * (caller-marks.ts `heldBy`, api.md 213), an open request from this agent is returned again, a retry key sent before
  * returns its request; else a new one. The folder's one agent (`one`, plugin.md § The bot) holds every board: told so,
  * with nothing written. */
 const requestGrant: Op = async (ctx) => {
@@ -126,7 +128,7 @@ const requestGrant: Op = async (ctx) => {
   const what = { board, ...(region !== undefined && { region }) };
   if (ctx.one) return reply(200, { ...what, held: true });
   const agent = ctx.writer();
-  if (holders(s, board, region).includes(agent)) return reply(200, { ...what, held: true });
+  if (heldBy(s, agent, board, region)) return reply(200, { ...what, held: true });
   const open = openRequestOf(s.index, agent, board, region);
   if (open !== undefined) return reply(200, { request: open, ...what, replayed: true });
   // A key used on a board agents don't see is free again (visibility.ts `agentSees`).

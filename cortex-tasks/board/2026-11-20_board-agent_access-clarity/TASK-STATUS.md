@@ -19,7 +19,7 @@ notes to your task file and your row; append your own one-line LOG entry.
 
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
-| 1 | T_01 | 1 | strong | yes | Principal API designer for agent tools — a read answers the caller's next question before it is asked and never disagrees with the write. | [Reads say what you may write](./T_01_reads-say-access.md) | Pending | |
+| 1 | T_01 | 1 | strong | yes | Principal API designer for agent tools — a read answers the caller's next question before it is asked and never disagrees with the write. | [Reads say what you may write](./T_01_reads-say-access.md) | Done, with requests | `you`/`joined` on five reads; `request_grant` `held` by `heldBy`; the four reads now take the secret (`optional-agent`, API 1.48.0), without which no standalone read was ever marked; skill v3.40; `other-container` eval; five tests outside T_01 need updates (return block) |
 | 2 | T_02 | 1 | strong | yes | Principal security engineer for local agent tooling — an identity is reused only where the person's own clicks already granted it, and never widens past them. | [One chat identity per folder](./T_02_chat-identity.md) | Pending | |
 | 3 | T_04 | 1 | strong | yes | Staff front-end engineer for print and PDF pipelines — what draws on screen must draw the same in every engine's PDF, and a rule keeps it so. | [Print-safe container corners](./T_04_print-safe-corners.md) | Pending | |
 | 4 | T_03 | 2 | standard | yes | — | [Holders as one chip](./T_03_holders-chip.md) | Pending | |

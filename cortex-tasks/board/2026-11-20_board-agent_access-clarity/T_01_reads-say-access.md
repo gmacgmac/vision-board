@@ -23,3 +23,43 @@ answer agrees. PLAN.md Decisions 1-4 and 6.
 
 ## On completion
 Notes here and your row; one LOG line `[board-agent] Completed: T_01 …`; the return block.
+
+## Implementation Notes (2026-11-20, executor, Opus 5.5)
+
+**Done**
+- Contract: `common.schema.json` `$defs` `you` (`{ agent, label }`) and `joined` (`const false`), on the responses of
+  `list_boards`, `get_board`, `show_node`, `show_container`, `list_open`. `openapi.json` 1.48.0; `npm run gen`.
+- `caller-marks.ts`: `heldBy` (the one test: a board by its holders, a container by `mayAnswerIn`), used by `holds`,
+  `marksFor` `heldIn` and `writes.ts` `requestGrant`; `callerMark` gives `you`, `joined: false` or nothing. `reads.ts`
+  adds it to the five reads. Flag off, the person, and a read-only read (incl. another ledger, whose caller engine.ts
+  `run` drops) get neither.
+- How the engine tells "no identity" apart: by caller alone (`OpCtx.caller === undefined`); the standalone server makes
+  that of a read with no Bearer secret (`callers.ts` `callerOf`, `optional-agent`).
+- `requestGrant`: failing test first ("request_grant agrees with the read…"): with the old `holders` test it answered
+  `{ held: true }` for a container whose board grant was revoked; now a new request.
+- Words: `info.ts` `toDrawOnABoard` (the tier line, `you`), `callJoinOnceAndSave` (`joined: false`); plugin-tools.ts
+  `ruleEdits` (get_board, request_grant) and the instruction edits reshaped to the new line. Skill v3.40 § Access
+  (standalone): tier line + Decision 6; NOTES.md; `npm run build:skill`.
+- Eval: `other-container` (standalone only; the plugin's host has no second agent to set up, and its bot under
+  `singleAgent` holds every tier), with good and bad fake scripts.
+- Docs: api.md 41, 212 (renamed test), 213, 214; per the orchestrator, 106 and 122 and the `start_chat` /
+  `start_folder_chat` descriptions now say every chat in a folder's ledger is its one chat agent (D-114).
+
+**Caught Beyond the Brief**
+- The standalone reads never carried any caller mark: `list_boards`, `get_board`, `show_node` and `show_container` had
+  `security: []` (auth `none`), so `vb-mcp` never sent the secret, not even the chat panel's `VB_AGENT_SECRET`. The
+  `held` marks of f47f23b4 (and `owed`, `answered`) reached only a plugin host's bot. Decision 1 cannot hold for any
+  standalone agent without them taking the secret, so they are now `optional-agent` (as `list_open`), with 401
+  declared. Consequences: a read with a secret the server does not know is refused `not-authenticated` (was: read as
+  no one), the four tools gain a `secret` argument (tool list 39,418 characters, over its 38,600 budget), and five
+  tests outside this task's files need updating (REQUESTS).
+- `other-container` live run waited in `check_responses` twice (135 s of the 180 s kill) though the person said they'd
+  look later; a third wait would be killed.
+
+**Verification**
+- Owned tests: bot-tool-rules, openapi, api-schemas, plugin-skill: 61/61. `npm run verify`: ok (warning:
+  bot-tool-rules.test.ts 459 lines). Node suites (no evals): 2795/2805 before the last fixes; the failures are listed
+  in the return block (five files outside T_01, a stale skill build since fixed, and two that need a built `dist/`).
+- Evals: dry 150/150 plugin, 141/141 standalone; bot-eval.test 7/7. Live Haiku: plugin 146/159 (146/154 without the
+  stalled attempt; only known misses), standalone 129/141 (`other-container` 5/5); comparison with main in NOTES.md
+  v3.40.

@@ -56,6 +56,12 @@
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
+    "you": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/you"
+    },
+    "joined": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/joined"
+    },
     "project": {
       "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName",
       "description": "The folder the board server has open, as the person reads it (`~/projects/example`); every board listed is in its ledger."

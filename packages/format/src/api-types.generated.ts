@@ -303,13 +303,22 @@ type ListBoardsResponse = {
     held?: true;
   }[];
   head: number;
+  you?: CommonYou;
+  joined?: false;
   project: string;
   ledger?: string;
   readOnly?: true;
 };
 type CommonTitle = string;
+type CommonYou = {
+  agent: string;
+  label: CommonAgentLabel;
+};
+type CommonAgentLabel = string;
 type GetBoardResponse = {
   head: number;
+  you?: CommonYou;
+  joined?: false;
   view: View;
   state: {
     items: Record<string, CommonItemState>;
@@ -433,7 +442,6 @@ type CommonNoteAnswer = {
   kind: "check" | "cross";
   seq: number;
 };
-type CommonAgentLabel = string;
 type GetBoardResponseHolder = {
   agent: string;
   label: CommonAgentLabel;
@@ -630,6 +638,8 @@ type CommonStampAgent = {
 };
 type ShowNodeResponse = {
   head: number;
+  you?: CommonYou;
+  joined?: false;
   linked?: CommonNodeDetail[];
   ledger?: string;
   readOnly?: true;
@@ -687,6 +697,8 @@ type CommonLink = {
 };
 type ShowContainerResponse = {
   head: number;
+  you?: CommonYou;
+  joined?: false;
   board: string;
   region: RegionRegion;
   holders: string[];
@@ -730,6 +742,8 @@ type ShowLayoutResponseDated = {
 };
 type ListOpenResponse = {
   head: number;
+  you?: CommonYou;
+  joined?: false;
   items: CommonOpenItem[];
   containers?: CommonOpenContainer[];
 };
