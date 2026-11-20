@@ -3,8 +3,8 @@
 // out, no hidden folder or node_modules, folder names only) with `hasBoard` and the recent list;
 // open_project switches in order (lock first, so a conflict or a ledger that can't be read changes
 // nothing; then the chats stop, the live streams and held reads end, the old lock goes, the ledger
-// and agents swap and recent is kept) or creates a Vision Board. The home folder is a temp folder
-// here: no test reads or writes the real one.
+// and agents swap and recent is kept) or creates a Vision Board. The home folder itself opens too (D-111). The home
+// folder is a temp folder here: no test reads or writes the real one.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -86,9 +86,6 @@ test('list_folders and open_project refuse a folder outside home, through a link
     await h.fails('open_project', { body: { path: p, create: true } }, 403, 'forbidden');
   }
   assert.equal(fs.existsSync(ledgerFolder(outside)), false, 'nothing was made outside home');
-  const homeItself = await h.fails('open_project', { body: { path: home, create: true } }, 403, 'forbidden');
-  assert.match(homeItself.detail, /not the home folder itself/);
-  assert.equal(fs.existsSync(ledgerPath(home)), false, 'no ledger in the home folder itself');
   await h.fails('list_folders', { path: path.join(home, 'no-such-folder') }, 404, 'not-found');
   await h.fails('list_folders', { path: path.join(home, 'notes.txt') }, 404, 'not-found');
   await h.fails('list_folders', { path: 'projects' }, 400, 'bad-request');
@@ -204,4 +201,13 @@ test('a chat started now works in the open folder', async () => {
   const { session: started } = await h.ok('start_chat', { board: 'plans', body: { agent: 'claude' } });
   await h.ok('send_chat', { session: started, body: { text: 'Hello.' } });
   assert.equal(fs.realpathSync((await fake.run(2)).cwd), example);
+});
+
+test('the home folder itself opens, and its board sits beside recent.json (D-111)', async () => {
+  await h.fails('open_project', { body: { path: home } }, 404, 'not-found');
+  const made = await h.ok('open_project', { body: { path: home, create: true } });
+  assert.deepEqual(made, { path: home, name: '~', found: true, boards: 0 });
+  assert.equal(fs.readFileSync(ledgerPath(home), 'utf8'), '');
+  assert.deepEqual(JSON.parse(fs.readFileSync(recentFile, 'utf8')).folders.slice(0, 2), [home, example], 'recent.json is kept beside it');
+  assert.deepEqual((await h.ok('list_folders')).recent[0], { name: '~', path: home, hasBoard: true });
 });

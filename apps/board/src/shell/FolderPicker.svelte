@@ -13,7 +13,8 @@
      never cut. With `chooser` (the server offers the system's folder chooser, systemFolderChooser flag, D-110) a
      "Choose in Finder…" button under the lists; while it is open (`choosing`) the status line says so. A chosen
      folder apart from the listing (`picked`: the pick, or a recent folder outside home, which `onpick` takes as it
-     can't be listed) shows on its own line, and the status and Open or Create are its. -->
+     can't be listed) shows on its own line, and the status and Open or Create are its. The home folder itself may be
+     a project folder (D-111): Open or Create works there as anywhere under it. -->
 <script lang="ts">
   import * as foldersWords from './words/folders.ts';
   import * as chromeCommonWords from '../board/words/chrome-common.ts';
@@ -61,11 +62,8 @@
   const target = $derived(picked ?? listing);
   const isOpen = $derived(target !== null && target.path === current);
   const boards = (n: number | undefined) => (n === undefined ? '' : foldersWords.board(n));
-  // Never a board in home itself (the server refuses it too): it would be every folder's nearest board.
-  const isHome = $derived(target?.name === '~');
   const status = $derived(choosing ? foldersWords.waitingForFinder
     : !target ? (loading ? foldersWords.readingFolders : '')
-    : isHome ? foldersWords.chooseAProjectFolderUnder
     : isOpen ? foldersWords.thisFolderIsOpenNow(boards(target.boards))
     : target.found ? foldersWords.visionBoardFound(boards(target.boards)) : foldersWords.noVisionBoardHere);
   /** A recent folder outside home (its name is its absolute path) can't be listed: choosing it picks it. */
@@ -82,7 +80,7 @@
     } catch { copied = 'failed'; }
     copiedTimer = window.setTimeout(() => { copied = null; }, 2000);
   }
-  const action = $derived(target?.found || isHome ? (busy ? foldersWords.opening : foldersWords.open) : busy ? chromeCommonWords.creating : chromeCommonWords.create);
+  const action = $derived(target?.found ? (busy ? foldersWords.opening : foldersWords.open) : busy ? chromeCommonWords.creating : chromeCommonWords.create);
 </script>
 
 {#snippet row(f: FolderEntry, icon: 'folder' | 'cloud' = 'folder', pick = false)}
@@ -148,6 +146,6 @@
 {#if problem}<p class="vb-dialog-problem" role="alert">{problem}</p>{/if}
 <div class="vb-dialog-actions">
   <button type="button" class="vb-btn" id="{uid}-cancel" onclick={oncancel}>{chromeCommonWords.cancel}</button>
-  <button type="button" class="vb-btn vb-btn-primary" id="{uid}-accept" disabled={!target || isHome || isOpen || (loading && !picked) || still}
+  <button type="button" class="vb-btn vb-btn-primary" id="{uid}-accept" disabled={!target || isOpen || (loading && !picked) || still}
     aria-busy={busy} onclick={onaccept}>{action}</button>
 </div>

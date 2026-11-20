@@ -46,8 +46,10 @@ It prints `200`. If port 4466 is taken, start it on another with `VB_PORT=<port>
 address as `VB_SERVER` in each MCP entry's `env` (`packages/mcp/README.md` § Settings). Open http://localhost:4466 in a
 browser to see the board. It opens one folder at a time:
 `VB_PROJECT` if set, else the last folder opened from the board, else this repo (`.kiro/steering/vision-board-proj.md`
-§ Running). The person opens their project with "⋯", Open folder…; an agent works only in the folder the board has
-open. Only one board server may hold a folder's ledger; a second one refuses to start and names who holds it
+§ Running). The person opens their project with "⋯", Open folder…: their home folder or a folder in it, a drive or
+share in `/Volumes`, or a folder in `/Users/Shared` (D-111). An agent works only in the folder the board has open: its
+folder is where its client starts it (or `VB_PROJECT`), and nothing searches upward for a board. Start each agent in the
+project's folder or a folder inside it; anywhere else its calls answer `wrong-folder`. Only one board server may hold a folder's ledger; a second one refuses to start and names who holds it
 (`README.md` § Running).
 
 The board opens **read-only**: nothing is written, by the person or an agent, until it is switched to Editing (an
@@ -116,7 +118,7 @@ A tool error or "no such tool" is a fault: see below.
 | `list_boards` cannot reach the board | The board is not running: step 3, and `curl` it. |
 | Server missing or "failed to connect" | A relative path or `~` in the entry: use absolute paths, check that `<clone>/packages/mcp/bin/vb-mcp.ts` exists. |
 | Server absent after editing | The client was not restarted: step 4's restart column. |
-| `wrong-folder` | The board has another folder open than the agent's. Stop and tell the person; do not call `join`. The fix: the person opens the agent's folder in the board ("⋯", Open folder…), or the entry's `env` sets `VB_PROJECT` to the folder the board has open (`packages/mcp/README.md` § Settings). |
+| `wrong-folder` | The agent's folder (where its client started it) is not the folder the board has open, nor inside it. Stop and tell the person; do not call `join`. The fix: start the agent in the project's folder or a folder inside it; or the person opens the agent's folder in the board ("⋯", Open folder…); or, for a client that does not start it in the project, the entry's `env` sets `VB_PROJECT` to the folder the board has open (`packages/mcp/README.md` § Settings). |
 | `read-only` | The board is read-only: the person switches it to Editing (step 3). |
 | Skill not listed | The link is broken (`ls -l`), or the client was not restarted. |
 

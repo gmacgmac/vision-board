@@ -17,14 +17,14 @@ normally starts it for you. It needs Node 22.18 or newer, and a running board (`
 - `VB_AGENT_SECRET` (optional): the secret for every call that does not pass a `secret` argument. When it is set, the
   instructions tell the agent its identity is given (no `join`, no secret to save, no `secret`
   argument). The board's chat panel sets it for each agent it starts (api.md 106).
-- `VB_PROJECT` (optional): the folder this agent works in (api.md 116). Left out, it is the
-  nearest folder at or above the server's working folder with a Vision Board in either layout:
-  `.visionboard/ledger.jsonl`, or ledger folders, `.visionboard/<ledger>/ledger.jsonl` (`#client`
-  `ledgersIn`; a client starts it in your project, or in one of its ledger folders), else none. Every
-  call sends it as `VB-Project`, and the board refuses the call with `wrong-folder` when it has another
-  folder open, so an agent never reads or draws on the wrong project. With none, calls are not checked.
-  The chat panel sets it to the open folder (the project). The ledger is not a setting: the board has
-  one open, and an agent's secret belongs to the ledger it joined (api.md 115a).
+- `VB_PROJECT` (optional): the folder this agent works in (api.md 116). Left out, it is the folder
+  the client started the server in, exactly: nothing searches upward for a board (D-111). Every call
+  sends it as `VB-Project`, and the board accepts its open folder or a folder inside it and refuses
+  anything else with `wrong-folder`, so an agent never reads or draws on another project. Start the
+  agent in the project's folder (or one inside it); a client that starts its servers somewhere else
+  needs `"env": { "VB_PROJECT": "/absolute/path/to/project" }` in its entry. The chat panel sets it
+  to the open folder (the project). The ledger is not a setting: the board has one open, and an
+  agent's secret belongs to the ledger it joined (api.md 115a).
 
 ## Adding it to a client
 

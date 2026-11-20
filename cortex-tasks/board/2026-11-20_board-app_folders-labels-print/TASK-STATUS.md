@@ -19,7 +19,7 @@ state. 7. Never port 4466, never the real home folder.
 
 | # | ID | Wave | Model | Own worktree | Persona | Task | Status | Notes |
 |---|-----|------|-------|--------------|---------|------|--------|-------|
-| 1 | T_01 | 1 | strong | yes | Principal security engineer for desktop file access — the person chooses the folder and the board; nothing searches past it. | [Which folders open; no hunting](./T_01_folders.md) | Pending | |
+| 1 | T_01 | 1 | strong | yes | Principal security engineer for desktop file access — the person chooses the folder and the board; nothing searches past it. | [Which folders open; no hunting](./T_01_folders.md) | Completed | `placeProblem` one rule (home, /Volumes/*, /Users/Shared; injectable `places`); home itself opens; `projectOf` = VB_PROJECT else cwd. 4 gallery baselines renewed. Request: openapi.json wording. |
 | 2 | T_02 | 1 | strong | yes | Diagram-tool layout engineer — a word on a line is read where it sits; nothing becomes a mystery dot. | [Link labels in the gap](./T_02_labels.md) | Pending | |
 | 3 | T_03 | 1 | standard | yes | — | [Skill sentence; chat text size](./T_03_skill-chat.md) | Pending | |
 | 4 | T_04 | 2 | strong | yes | Platform engineer for plugin contracts — the host owns the paper; the plugin asks once and says what failed. | [Print through the host](./T_04_print-host.md) | Pending | |
@@ -41,3 +41,9 @@ state. 7. Never port 4466, never the real home folder.
 |---------|------|------|-----------|--------|
 
 ## Implementation Notes
+
+### T_01 (2026-11-20)
+- No flag added (plan names none; `flags.ts` not T_01's). Both rulings narrow access.
+- Behaviour change to flag at close: an MCP client that starts `vb-mcp` outside the project now gets `wrong-folder` on every call unless its entry sets `VB_PROJECT` (before: no header, unchecked). README and SETUP.md say so.
+- With `~` open, any agent started under home is accepted (caller rule unchanged). Security note, by the ruling.
+- `packages/mcp/tests/support.ts` now starts `vb-mcp` in the fixture board's open folder (`Board.project`).

@@ -4,8 +4,8 @@
 // folder, and only on the home listing. The home folder's links to them stay out of every listing
 // (ruling 1). A folder reached by its link and by its real path is one folder: one recent entry,
 // one lock, the real path everywhere, and an agent working through the link matches (D-039). Home
-// itself is still refused. The home folder is a temp folder here: no test reads or writes the
-// real one, nor the real Library/CloudStorage.
+// itself opens (D-111), also by a link in the cloud folder, which leads to it. The home folder is a temp folder here:
+// no test reads or writes the real one, nor the real Library/CloudStorage.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -103,14 +103,11 @@ test('a place macOS will not let the server read: forbidden, with the Files and 
   assert.match(p.detail, /macOS may need Files and Folders access for the app that started the board/);
 });
 
-test('home itself stays refused, also by a link in the cloud folder', async () => {
-  for (const p of [home, path.join(cloud, 'Cloud-Home')]) {
-    const refused = await h.fails('open_project', { body: { path: p, create: true } }, 403, 'forbidden');
-    assert.match(refused.detail, /not the home folder itself/, p);
-  }
+test('a link in the cloud folder leads where it leads: out of home refused; to home itself, home (D-111)', async () => {
   await h.fails('open_project', { body: { path: path.join(cloud, 'Cloud-Out'), create: true } }, 403, 'forbidden');
-  assert.equal(fs.existsSync(ledgerPath(home)), false);
   assert.equal(fs.existsSync(ledgerFolder(outside)), false);
+  await h.fails('open_project', { body: { path: path.join(cloud, 'Cloud-Home') } }, 404, 'not-found');
+  assert.equal(fs.existsSync(ledgerPath(home)), false, 'nothing made without create');
 });
 
 test('a folder opened by its link and by its real path is one folder: one recent entry, one lock', async () => {
@@ -128,8 +125,9 @@ test('a folder opened by its link and by its real path is one folder: one recent
 });
 
 test('an agent working through the home link matches the open folder (its board MCP sends the link path)', async () => {
+  fs.mkdirSync(path.join(repo, 'src'), { recursive: true });
   const header = projectOf({}, path.join(repoByLink, 'src'), { fs, path });
-  assert.equal(header, repoByLink, 'the upward search keeps the link path');
+  assert.equal(header, path.join(repoByLink, 'src'), 'its working folder, by the link path, as its client started it (D-111)');
   const joined = await h.ok('join', { body: { label: 'Cloud agent' } }, { as: h.agent(undefined, header) });
   assert.equal(joined.project, '~/Library/CloudStorage/Cloud-Example/repo');
   await h.ok('write_board', { board: 'cloud-own', body: { items: [{ type: 'board', key: 'cloud-1', title: 'Drawn through the link' }] } },

@@ -25,6 +25,8 @@ import { keepKiroAgent } from './chat-access.ts';
 import type { ChatAdapters } from './chat-sessions.ts';
 import type { ServerEnv } from './dispatch.ts';
 import { dispatch } from './dispatch.ts';
+import type { Places } from './folders.ts';
+import { placesOf } from './folders.ts';
 import { guard } from './guard.ts';
 import { HANDLERS } from './handlers.ts';
 import { serveImage } from './images.ts';
@@ -72,11 +74,14 @@ export interface BoardServerOptions {
   /** The system's folder chooser (D-110): default Finder's on macOS (chooser.ts `macChooser`), none elsewhere; `false`,
    * none (the tests' servers, so no test opens a real one); a test's own runner stands in for it. */
   chooser?: ChooserRun | false | undefined;
+  /** Where a project folder may be besides home (D-111, folders.ts `placesOf`): default the system's (`/Volumes`,
+   * `/Users/Shared`, `/Users`); tests pass temp folders standing in for them. */
+  places?: Partial<Omit<Places, 'home'>> | undefined;
 }
 
 /** An http.Server for the board. The Host check uses the port it is actually listening on, so a
  * test can listen on port 0. The agents store sits beside the ledger and is opened on first use. */
-export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat, flags, appLimits, edit, lockEnv, chooser }: BoardServerOptions): http.Server {
+export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat, flags, appLimits, edit, lockEnv, chooser, places }: BoardServerOptions): http.Server {
   const port = () => (server.address() as AddressInfo).port;
   const realHome = fs.realpathSync(home);
   const kiro = chat?.kiroAgent ? keepKiroAgent(realHome) : undefined;
@@ -89,7 +94,7 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
     apps: { flags, limits: appLimits }, edit, lockEnv,
   });
   const run = chooser === false ? undefined : chooser ?? (process.platform === 'darwin' ? macChooser : undefined);
-  const env: ServerEnv = { person: newToken(), project, chooser: createChooser(run, flagOn('systemFolderChooser', flags ?? {})), build };
+  const env: ServerEnv = { person: newToken(), project, chooser: createChooser(run, flagOn('systemFolderChooser', flags ?? {})), places: placesOf(realHome, places), build };
   const server = http.createServer(async (req, res) => {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
     try {
