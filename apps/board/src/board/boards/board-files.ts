@@ -3,13 +3,16 @@
 // person opened the dialog sets the scope (`ask`): the "⋯" menu, the whole board; a container's settings, that container.
 // Export reads the export route (`export_board`) and hands its file to `saveFile`, named after the board (and the
 // container). Import asks `openFile` for a `.vboard.json`, reads it as JSON (an upgrade and a check are the server's:
-// `write_board`'s `import` takes any object and names what it drops) and writes it as the person, into a new board named
-// from its title or into the open one; a new board then opens. Print sets the print view (canvas/print-view.ts), calls the
-// host's `print`, and takes the view off when it is done. Each says what went wrong in words, never by throwing.
+// `write_board`'s `import` takes any object and names what it drops), refusing first, with words and nothing sent, a file
+// over what the host's route takes (`importBytes`), and writes it as the person, into a new board named
+// from its title or into the open one; a new board then opens. Print sets the print view (canvas/print-view.ts), asks the
+// host's `print` for the board's root as it stands (no `content`), titled after the board or the container, in the look
+// "Print in" chose and on the side the fit asks for, and takes the view off when it is done. Each says what went wrong in
+// words, never by throwing.
 import type { LedgerState } from '#actions';
 import type { BoardHost } from '../host.ts';
 import type { Io } from '../io.ts';
-import type { PrintScope } from '../canvas/index.ts';
+import type { PrintScope, PrintSet } from '../canvas/index.ts';
 import { ApiError } from '../io.ts';
 import { boardIdFor } from './board-edit.ts';
 import * as filesWords from '../words/chrome-files.ts';
@@ -23,11 +26,17 @@ export type ImportOutcome = { problem: string } | { dropped: readonly string[] }
 
 /** The file types Import asks for (`openFile`'s `accept`). */
 export const IMPORT_ACCEPT = '.vboard.json,application/json';
+/** The most bytes an import file may hold, under a host that says nothing of its own: what nclite's route to the engine
+ *  reads of one request (its `MAX_BODY_BYTES`, engine/http/body.ts; its contract names no limit for it). The standalone
+ *  page gives its own (`BoardPage.importBytes`). */
+export const IMPORT_BYTES = 1024 * 1024;
 /** An export file's extension (PLAN decision 3). */
 export const EXPORT_EXTENSION = '.vboard.json';
 
 export interface BoardFilesDeps {
   host: Pick<BoardHost, 'saveFile' | 'openFile' | 'print'>;
+  /** The most bytes an import file may hold (`IMPORT_BYTES`, else the page's own). */
+  importBytes: number;
   io: Pick<Io, 'exportBoard' | 'importBoard'>;
   /** The open board; '' before one opens. */
   id(): string;
@@ -36,8 +45,9 @@ export interface BoardFilesDeps {
   regionTitle(region: string): string | undefined;
   /** Open or close the dialog (the board's status, `files`). */
   show(ask: FilesAsk | null): void;
-  /** Set the print view for the board, or one container; what undoes it, or null when nothing is drawn to print. */
-  printView(scope: PrintScope): (() => void) | null;
+  /** Set the print view for the board, or one container; the side it asks for and what undoes it, or null when nothing
+   *  is drawn to print. */
+  printView(scope: Pick<PrintScope, 'region' | 'border'>): PrintSet | null;
   /** Open board `id` once its first line has arrived (a new board an import made). */
   jump(id: string): void;
   toast(text: string): void;
@@ -57,6 +67,9 @@ export interface BoardFiles {
 /** A failure's words: the server's problem with its pointer errors, or what the host rejected with. */
 const wordsOf = (err: unknown): string =>
   (err instanceof ApiError ? [err.message, ...err.problems].join(' · ') : err instanceof Error ? err.message : String(err));
+
+/** `bytes` as a person reads a limit: whole megabytes, else kilobytes. */
+const sizeWords = (bytes: number): string => (bytes % (1024 * 1024) ? `${Math.round(bytes / 1024)} KB` : `${bytes / 1024 / 1024} MB`);
 
 /** The export file's name: the board's title (and the container's) as an id, then `.vboard.json`. */
 export function exportName(board: string, container?: string): string {
@@ -98,6 +111,7 @@ export function createBoardFiles(d: BoardFilesDeps): BoardFiles {
       if ((into === 'current' && !open) || !d.host.openFile) return { problem: filesWords.noBoardOpen };
       const picked = await d.host.openFile(IMPORT_ACCEPT).catch((err: unknown) => ({ problem: wordsOf(err) }));
       if (!picked || 'problem' in picked) return picked ?? null;
+      if (picked.bytes.byteLength > d.importBytes) return { problem: filesWords.fileTooLarge(sizeWords(d.importBytes)) };
       const file = readExport(picked.bytes);
       if (!file) return { problem: filesWords.notAnExportFile };
       const title = typeof file.title === 'string' && file.title.trim() ? file.title : picked.name.replace(/\.vboard\.json$|\.json$/i, '');
@@ -112,17 +126,19 @@ export function createBoardFiles(d: BoardFilesDeps): BoardFiles {
         return { problem: wordsOf(err) };
       }
     },
-    async print(scope) {
-      if (!d.host.print) return filesWords.noBoardOpen;
-      const undo = d.printView(scope);
-      if (!undo) return filesWords.noBoardOpen;
+    async print({ region, border, theme }) {
+      const id = d.id();
+      if (!id || !d.host.print) return filesWords.noBoardOpen;
+      const set = d.printView({ region, border });
+      if (!set) return filesWords.noBoardOpen;
+      const title = region === undefined ? titleOf(id) : d.regionTitle(region) ?? region;
       try {
-        await d.host.print();
+        await d.host.print({ title, look: theme, orientation: set.orientation });
         return null;
       } catch (err) {
         return wordsOf(err);
       } finally {
-        undo();
+        set.undo();
       }
     },
   };

@@ -37,3 +37,36 @@ needed). Board: `apps/board/src/board/host.ts` (`BoardHost.print`), `apps/board/
 Own files only; others are REQUESTS. nclite read only. No git command that changes state.
 
 ## Implementation Notes
+
+### T_04 (2026-11-20) — Completed
+- **Contract**: `BoardHost.print?(ask?: PrintAsk)` with `PrintAsk`, `PrintLook`, `PrintOrientation` in `host.ts` (the contract's
+  shapes; `plugin-types.test.ts` holds them `Same` as nclite's, and `print`/`saveFile` as the contract's members). Seam 2
+  still (an optional argument; the only hosts are nclite, already on `print(ask)`, and the standalone): `SEAM_TYPES` set
+  again in `apps/board/plugin/seam.ts`.
+- **Copies refreshed** to nclite `ec106c49` (plugin-host.ts `7415189d`, stylesheet.ts and provenance.ts `2f3ca585`,
+  words/plugins.ts `06ab619d`); the README's held `pageChanged` edit dropped (nclite holds it), `EDITS` now empty. The newer
+  stylesheet check (backslash, `image-set()`) passes on the board's sheet (`npm run test:plugin`).
+- **Board**: `preparePrint` returns `{ orientation, undo }` and sets only `data-vb-print`, `data-vb-print-border` and the
+  fit's properties on its root; `board-files.ts` asks `print({ title, look, orientation })`, title the board's or the
+  container's, look from Print in, no `content`. `print.css` lost the `page:` names and the theme rules. A rejection is
+  the dialog's existing `notify(…, 'error')`.
+- **Standalone host** (`page-files.ts` `print`, `printRules`; `shell.css`): marks `<html>` (`data-vb-printing`,
+  `data-vb-print-look`), one adopted `@page` sheet (the ask's side; 10 mm for `plain`, 0 for light/dark as nclite), the
+  ask's title, the look's `color-scheme` at its root and the canvas edge to edge; all put back after.
+- **Import**: refused in words, nothing sent, when the file is over the host's limit: `IMPORT_BYTES` 1 MiB (nclite's
+  `MAX_BODY_BYTES`, its route to the engine), the standalone page's own 512 KiB through `BoardPage.importBytes`
+  (`page-files.ts` `IMPORT_BYTES`, held equal to `server/engine/writes.ts` `WRITE_LIMIT` by `board-files.test.ts`).
+- **Looked at** the PDFs (temp/print/): board portrait light and dark, container landscape light and dark: colours kept
+  edge to edge, one page, link labels whole. The container test now prints one case dark, so each side prints in each look.
+- **Budgets** (never block): plugin view 208,254 gzip vs 208,100; board page 213.6 KB vs 213.4 KB.
+
+#### Caught Beyond the Brief
+- nclite's contract names no request-body limit: the 1 MiB is its `engine/http/body.ts` `MAX_BODY_BYTES`, which the board
+  can only copy. A `REQUEST_LIMITS` (or the limit on `PluginHost`) in `shared/plugin-host.ts` would let a plugin read it.
+- The board's own `write_board` body limit (512 KiB) is not applied by the plugin engine (its body comes parsed), so under
+  nclite the host's 1 MiB is the only limit; a 600 KB import works in nclite and is refused standalone.
+- With `hostStyling` off, the host's look reaches the board's colours only through `:root[data-theme]` (color-scheme.css):
+  nclite's print.css sets `color-scheme` on `[data-theme]` elements and `--host-color-scheme` on the target, which the
+  board reads only under the flag. With the flag on (the default) a dark look prints dark.
+- The standalone page ignores `content` (the board never sends it); a host other than nclite and the standalone would
+  need it.

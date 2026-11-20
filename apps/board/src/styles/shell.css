@@ -39,19 +39,20 @@ body > .vb-board { position: absolute; inset: 0; }
   border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
 }
 :where([class*='vb-']) code:not(html) { font-family: var(--vb-font-mono); }
-/* A print the board set (board/canvas/print-view.ts, D-107): the page prints the board alone, in the flow, on the page the
-   root names (print.css: landscape or portrait, 10 mm margins, the area print-view.ts fits to); the chat, the toast and the page's dialogs are left out. A print the board did not set (the browser's own
-   Print) prints the page as it is. */
-@page vb-print-landscape { size: landscape; margin: 10mm; }
-@page vb-print-portrait { size: portrait; margin: 10mm; }
+/* This page's print, the host's side of `print(ask)` (shell/page-files.ts `print`, which marks <html> for one print and gives
+   the paper its own sheet: the ask's side, a 10 mm margin for `plain`, none for `light` and `dark`): the board alone, in the
+   flow, in the look's colours. This page's built tokens resolve light-dark() at its root, so the look is set there, over the
+   toolbar's data-theme; `light` and `dark` fill the paper edge to edge with the canvas. The board's own print view
+   (print.css) fits what it prints inside its root. A print not asked for (the browser's own Print) prints the page as it is. */
 @media print {
-  html:has(body > .vb-board[data-vb-print]), body:has(> .vb-board[data-vb-print]) { height: auto; overflow: visible; background: none; }
-  body:has(> .vb-board[data-vb-print]) > :not(.vb-board) { display: none !important; }
-  body > .vb-board[data-vb-print] { position: relative; inset: auto; }
-  /* The print's theme (point 615): this page's built tokens resolve light-dark() at its root, so the theme is set there
-     for the print, as the toolbar's data-theme sets it for the screen. */
-  :root:has(> body > .vb-board[data-vb-print-theme='light']) { color-scheme: light; }
-  :root:has(> body > .vb-board[data-vb-print-theme='dark']) { color-scheme: dark; }
+  html[data-vb-printing], html[data-vb-printing] body { height: auto; overflow: visible; background: none; }
+  html[data-vb-printing] body > :not(.vb-board) { display: none !important; }
+  html[data-vb-printing] body > .vb-board { position: relative; inset: auto; }
+  :root[data-vb-printing]:is([data-vb-print-look='plain'], [data-vb-print-look='light']) { color-scheme: light; }
+  :root[data-vb-printing][data-vb-print-look='dark'] { color-scheme: dark; }
+  html[data-vb-printing]:not([data-vb-print-look='plain']), html[data-vb-printing]:not([data-vb-print-look='plain']) body {
+    background: var(--vb-surface-canvas); print-color-adjust: exact; -webkit-print-color-adjust: exact;
+  }
 }
 /* The board's one scrollbar, on the standalone page only (point 618's look; point 632: inside a host the board draws
    none and wears the host's, as nclite's overlay scrollbar): a 3px thumb at the scroller's far right edge (the bottom,

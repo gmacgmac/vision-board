@@ -8,7 +8,7 @@ import type { BoardHost } from './host.ts';
 
 export type {
   BoardChat, BoardHost, BoardPage, BoardPageParts, BoardSettings, BoardStore, BoardView, ChatLine, ChatStatus, ChatWork, ConfirmAsk,
-  PluginEvent, SendRecord,
+  PluginEvent, PrintAsk, PrintLook, PrintOrientation, SendRecord,
 } from './host.ts';
 export type { MountedBoard } from './mount.ts';
 export type { BoardStatus } from './status.ts';

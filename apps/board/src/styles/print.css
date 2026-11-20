@@ -5,19 +5,16 @@
    root as big as the fitted scope (`--vb-print-w`, `--vb-print-h`). The cards print as at 100% (print-view.ts sets the
    zoom's own properties, `--vb-zoom` and the marks' growth, to 1 while it lasts), every card drawn (none skipped as offscreen) and without its soft shadow, the containers' own tools hidden as when zoomed out (region.css
    `[data-zoom='far']`), the borders as chosen (`data-vb-print-border`), and the colours as on screen (`print-color-adjust:
-   exact`). The root names its page, `vb-print-landscape` or `vb-print-portrait`, as the scope is wider or taller
-   (`data-vb-print-page`); a host's page defines the two (`@page`, 10 mm margins: PRINT_PAGE in print-view.ts is the area
-   left), as the standalone page does in shell.css: a host's sheet check allows no `@page` in the board's sheet. The print's theme,
-   light or dark (`data-vb-print-theme`, point 615), is its `color-scheme`, in print only. Off print, and outside a print the board set, nothing here applies.
-   Link paths also carry fill="none" as an attribute (links/wires.ts). The page around the board is the host's: the
-   standalone page hides its own in shell.css. */
+   exact`). The paper (its side, which the board asks for, and margins), hiding the page around the board and the look's
+   colours are the host's (host.ts `print(ask)`; a plugin's sheet holds no `@page`): the board names no page and sets no
+   colour scheme here, so under a host its colours follow the host's `--host-color-scheme` (plugin/color-scheme.css),
+   and on the standalone page its root's (shell.css). Off print, and outside a print the board set, nothing here applies.
+   Link paths also carry fill="none" as an attribute (links/wires.ts). */
 @media print {
   .vb-board[data-vb-print] {
     position: relative; width: var(--vb-print-w); height: var(--vb-print-h); margin: 0 auto; overflow: hidden;
     print-color-adjust: exact; -webkit-print-color-adjust: exact; break-inside: avoid;
   }
-  .vb-board[data-vb-print-page='landscape'] { page: vb-print-landscape; }
-  .vb-board[data-vb-print-page='portrait'] { page: vb-print-portrait; }
   .vb-board[data-vb-print] > :not(.vb-stage), .vb-board[data-vb-print] > .vb-stage > :not(.vb-world) { display: none !important; }
   /* No dot grid on paper: the canvas colour alone. */
   .vb-board[data-vb-print] > .vb-stage { position: absolute; inset: 0; overflow: hidden; background-image: none; }
@@ -30,8 +27,4 @@
   .vb-board[data-vb-print] .vb-wires.settling .vb-wire, .vb-board[data-vb-print] .vb-wires.settling ~ .vb-link-marks { opacity: 1; }
   .vb-board[data-vb-print] vb-region :is(.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-region-holders) { display: none !important; }
   .vb-board[data-vb-print-border='off'] vb-region::before, .vb-board[data-vb-print-border='off'] vb-region::after { display: none; }
-  /* Light or dark on paper (point 615), whatever the screen shows: a host that keeps light-dark() native resolves every
-     colour against this. The standalone page, whose built tokens resolve at its root, sets it there too (shell.css). */
-  .vb-board[data-vb-print-theme='light'] { color-scheme: light; }
-  .vb-board[data-vb-print-theme='dark'] { color-scheme: dark; }
 }

@@ -4,14 +4,14 @@
 // the containers' borders as chosen; colours kept. Nothing is drawn again: the cards, frames and links are the ones on
 // screen. A container's print hides every other frame, card and link (`data-vb-print-out`). The world's transform, the
 // zoom level's marks on the stage (`data-zoom`, `data-marks`), the zoom's own properties on the layers (`--vb-zoom`, the
-// marks' growth) and the page's orientation are the print's own while it lasts, so a board printed zoomed out still prints
-// its cards whole. The print's theme, light or dark (point 615), is the print's own too (`data-vb-print-theme`): the screen
-// keeps its own. Browser only, no sentence.
+// marks' growth) are the print's own while it lasts, so a board printed zoomed out still prints its cards whole. Everything
+// it sets is on the board's root or inside it: the paper (its orientation, which the fit answers, and margins) and the
+// look's colours are the host's, asked through `print(ask)` (host.ts `PrintAsk`; board-files.ts). Browser only, no sentence.
 import type { View } from '#format';
 import type { BoardLayout, Box } from '#layout';
 
-/** The page's printable area in CSS px: the smaller of A4 and US Letter (210 × 279.4 mm), less print.css's 10 mm
- *  margins (190 × 259.4 mm at 96 px to the inch), less 4 px for rounding, so the fitted board is one page on either. */
+/** The page's printable area in CSS px: the smaller of A4 and US Letter (210 × 279.4 mm), less a host's 10 mm margins
+ *  (the most a host gives: nclite's `plain`; its `light` and `dark` print edge to edge) (190 × 259.4 mm at 96 px to the inch), less 4 px for rounding, so the fitted board is one page on either. */
 export const PRINT_PAGE = { long: 976, short: 714 } as const;
 /** Room round what is printed, so a card's marks that hang over its edge (D-099) and a frame's title are not cut. */
 export const PRINT_PAD = 24;
@@ -28,7 +28,7 @@ export function printFit(box: Box, pad = PRINT_PAD): PrintFit {
 }
 
 /** What to print: one container (`region`) or, without it, the whole board; `border`, the containers' borders; `theme`,
- *  light or dark on paper (point 615), whatever the screen shows. */
+ *  light or dark on paper (point 615), whatever the screen shows: the host's look (board-files.ts), not the print view's. */
 export interface PrintScope { region?: string | undefined; border: boolean; theme: 'light' | 'dark' }
 
 const OUT = 'data-vb-print-out';
@@ -38,9 +38,12 @@ const VARS = ['--vb-print-w', '--vb-print-h', '--vb-print-transform'] as const;
 /** The zoom's own properties (viewport.ts, on the frames' and the cards' layers): as at 100% while the print lasts. */
 const ZOOM = ['--vb-zoom', '--vb-mark-grow'] as const;
 
-/** Set the print view for `scope` on `root`, over the board as `layout` and `view` draw it; what undoes it, or null when
- *  `scope` names a container the layout doesn't hold. */
-export function preparePrint(root: HTMLElement, layout: BoardLayout, view: View, scope: PrintScope): (() => void) | null {
+/** A print view set: the paper's side the fit asks for, and what undoes the view. */
+export interface PrintSet { orientation: 'portrait' | 'landscape'; undo(): void }
+
+/** Set the print view for `scope` on `root`, over the board as `layout` and `view` draw it; null when `scope` names a
+ *  container the layout doesn't hold. */
+export function preparePrint(root: HTMLElement, layout: BoardLayout, view: View, scope: Pick<PrintScope, 'region' | 'border'>): PrintSet | null {
   const box = scope.region === undefined ? layout.bounds : layout.regions.find((r) => r.id === scope.region)?.box;
   if (!box) return null;
   const fit = printFit(box);
@@ -50,24 +53,21 @@ export function preparePrint(root: HTMLElement, layout: BoardLayout, view: View,
   const layers = [...root.querySelectorAll<HTMLElement>('.vb-regions, .vb-cards')];
   const zoom = layers.map((el) => ZOOM.map((v) => el.style.getPropertyValue(v)));
   for (const el of layers) for (const v of ZOOM) el.style.setProperty(v, '1');
-  Object.assign(root.dataset, {
-    vbPrint: scope.region ?? 'board', vbPrintBorder: scope.border ? 'on' : 'off', vbPrintPage: fit.landscape ? 'landscape' : 'portrait', vbPrintTheme: scope.theme,
-  });
+  Object.assign(root.dataset, { vbPrint: scope.region ?? 'board', vbPrintBorder: scope.border ? 'on' : 'off' });
   root.style.setProperty('--vb-print-w', `${Math.ceil(fit.w * fit.scale)}px`);
   root.style.setProperty('--vb-print-h', `${Math.ceil(fit.h * fit.scale)}px`);
   root.style.setProperty('--vb-print-transform', `scale(${fit.scale}) translate(${-fit.x}px, ${-fit.y}px)`);
   const out = scope.region === undefined ? [] : outside(root, view, scope.region);
   for (const el of out) el.setAttribute(OUT, '');
-  return () => {
+  const undo = () => {
     for (const el of out) el.removeAttribute(OUT);
     for (const v of VARS) root.style.removeProperty(v);
     delete root.dataset.vbPrint;
     delete root.dataset.vbPrintBorder;
-    delete root.dataset.vbPrintPage;
-    delete root.dataset.vbPrintTheme;
     for (const [a, v] of level) if (v !== null) stage?.setAttribute(a, v);
     layers.forEach((el, i) => ZOOM.forEach((v, j) => (zoom[i]![j] ? el.style.setProperty(v, zoom[i]![j]!) : el.style.removeProperty(v))));
   };
+  return { orientation: fit.landscape ? 'landscape' : 'portrait', undo };
 }
 
 /** Everything drawn that is not container `region`'s: the other frames, their cards, and every link with an end outside it
