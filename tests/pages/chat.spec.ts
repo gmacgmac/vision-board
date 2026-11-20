@@ -185,6 +185,22 @@ test('change chip, Stop, New session and the agent picker raise their events', a
   ]);
 });
 
+test('the agent\'s replies are the person\'s text size: paragraphs, list items and headings read the chat\'s size, in both themes', async ({ page }) => {
+  for (const theme of THEMES) {
+    await setTheme(page, theme);
+    const sizes = await page.evaluate(() => {
+      const px = (el: Element) => parseFloat(getComputedStyle(el).fontSize);
+      const person = document.querySelector('chat-message[data-from="person"] .chat-bubble');
+      const agent = Array.from(document.querySelectorAll('chat-message[data-from="agent"] .chat-bubble')).find((b) => b.querySelector('.vb-md-p'));
+      const first = (sel: string) => { const el = agent?.querySelector(sel); return el ? px(el) : null; };
+      return { person: person ? px(person) : null, bubble: agent ? px(agent) : null, p: first('.vb-md-p'), li: first('li') };
+    });
+    expect(sizes.person, theme).toBeGreaterThan(13);
+    expect(sizes.p, theme).toBe(sizes.person);
+    if (sizes.li !== null) expect(sizes.li, theme).toBe(sizes.person);
+  }
+});
+
 for (const theme of THEMES) {
   test(`axe passes and the section matches its screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);

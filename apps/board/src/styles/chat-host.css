@@ -44,3 +44,7 @@
   --chat-motion: var(--vb-motion-fast);
   --chat-shadow: var(--vb-shadow-lift);
 }
+
+/* The agent's replies are the size of the person's (maintainer, point 648, 2026-11-20): the markdown inside a message
+   bubble reads its text size from the chat's, not the card's 13px (paragraphs, lists, quotes and headings follow it). */
+chat-message .chat-bubble { --vb-md-text: var(--chat-text); }

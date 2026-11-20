@@ -11,21 +11,21 @@ You cannot see the result, so choose by what the cards are. Each container has o
 | The content | Draw it as |
 |---|---|
 | Points, findings, questions, options | `row` (leave `mode` out), up to about 6 cards; more in one container: `grid` (about √n across, or `columns`). No links |
-| A process, or any cards you link | `flow`, with links for the real steps ("then", "blocks") |
+| A process, or any cards you link | `flow`, with links for the real steps |
 | Work moving between areas or owners | `lanes`: a lane per area (`lanes` on the container, `lane` on each card), links for its steps and handoffs |
 | Ideas around one topic | `radial`: draw the cards, then send the `region` again with `center`, a card number |
 | A few tall cards read top to bottom, for a reason | `column` (`list` is refused) |
 
 - A `flow` places cards only by their links: every card in a `flow` or `lanes` container is a linked
   step, and a card that isn't a step goes in a container of its own beside it.
-- Link labels are a word or two ("then", "blocks", "needs"); anything longer goes in a card's body.
+- Label a link only when it means more than "next" ("blocks", "feeds", "needs"), in short, simple words; anything longer goes in a card's body.
 - A worked call, a flow of two cards linked by key, as `write_board`'s arguments:
   ```json
   {"board": "release", "items": [
     {"type": "region", "key": "release-region-steps", "region": {"id": "steps", "title": "Steps", "mode": "flow"}},
     {"type": "node", "key": "release-card-merge", "node": {"region": "steps", "kind": "topic", "title": "Merge the branch"}},
     {"type": "node", "key": "release-card-tag", "node": {"region": "steps", "kind": "topic", "title": "Tag the release"}},
-    {"type": "link", "key": "release-link-merge-tag", "from": {"key": "release-card-merge"}, "to": {"key": "release-card-tag"}, "label": "then"}
+    {"type": "link", "key": "release-link-merge-tag", "from": {"key": "release-card-merge"}, "to": {"key": "release-card-tag"}, "label": "blocks"}
   ]}
   ```
 

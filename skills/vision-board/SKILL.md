@@ -2,7 +2,7 @@
 name: vision-board
 label: Chats through the board
 description: The Vision Board, where each point you would number in a reply is its own card that the person answers (✓, ✗, a note, Later). Read this before you draw on it or answer what they sent, and when the person says "put it on the board", the conversation runs through the board or its chat panel, a reply would be a long numbered list, or a picture or an app you build should show in a card.
-status: v3.37 (2026-11-19, export-import-print T_03: one core line, and references/files.md read before copying a board or importing a file); v1 to v3.36 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
+status: v3.38 (2026-11-20, folders-labels-print T_03: link labels only when they mean more than "next"); v1 to v3.37 are recorded in NOTES.md; scenarios in scenarios.md; built from source/ by source/build.mjs: edit there, never here
 ---
 
 # Vision Board
