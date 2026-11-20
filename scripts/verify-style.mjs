@@ -1,7 +1,8 @@
 // The style and layer rules verify.mjs runs (UI_01; docs/principles.md § Design tokens, § Dependencies,
 // § The board is a plugin): colour literals live only in packages/tokens; network calls and file,
 // socket and process access only in their layers; every rule in the board's stylesheets starts inside
-// the board's scope (so it reaches nothing in a host's page) and sizes by the board's own width.
+// the board's scope (so it reaches nothing in a host's page) and sizes by the board's own width; and none uses a CSS mask,
+// which a WebKit PDF paints solid (D-115).
 // Each check is a pure function over one file's path and text; verify-style.test.mjs proves them.
 
 const fail = (file, message) => ({ level: 'fail', file, message });
@@ -186,5 +187,23 @@ function ownReads(rel, css) {
     .map((name) => fail(rel, `reads ${name}: a board sheet reads only --vb-* and --host-* properties (name its own --vb-)`));
 }
 
-/** All three, for one file. */
-export const checkStyleAndLayers = (rel, text) => [...checkColours(rel, text), ...checkIO(rel, text), ...checkScope(rel, text)];
+// ---- Print-safe paint ------------------------------------------------------------------------------
+
+/** What a host's PDF engine records of the board: its sheets, its own code's inline styles, and the built plugin's sheet. */
+const PRINTED = /^(?:packages\/ui\/src\/|apps\/board\/src\/|apps\/board\/plugin\/|dist\/plugin\/)/;
+const MASK_DECL = /(?:^|[\s;{"'`])((?:-webkit-)?mask(?:-image)?)\s*:\s*([^;}"'`]*)/g;
+const MASK_PROP = /\.style\.(?:webkitMask|mask)(?:Image)?\s*=|setProperty\(\s*['"`](?:-webkit-)?mask/;
+
+/** D-115: no CSS mask but `none`. WebKit's print to PDF (a host's Save as PDF) paints a mask's image as solid colour, so a
+ * frame's masked corners print as squares; cut a shape with clip-path (plugin.md § A guest in the host's page, Print-safe CSS). */
+export function checkPrintSafe(rel, text) {
+  if (!PRINTED.test(rel) || !STYLED.test(rel) || /\/tests?\//.test(rel)) return [];
+  const src = uncomment(text, rel.endsWith('.css'));
+  const decl = [...src.matchAll(MASK_DECL)].find((m) => m[2].replace(/!important/, '').trim() !== 'none');
+  const found = decl ? `${decl[1]}: ${decl[2].trim().slice(0, 40)}` : MASK_PROP.exec(src)?.[0];
+  if (!found) return [];
+  return [fail(rel, `a CSS mask ("${found}"): WebKit's print to PDF paints a mask's image as solid colour, so a host's Save as PDF draws squares; cut the shape with clip-path (D-115)`)];
+}
+
+/** All four, for one file. */
+export const checkStyleAndLayers = (rel, text) => [...checkColours(rel, text), ...checkIO(rel, text), ...checkScope(rel, text), ...checkPrintSafe(rel, text)];

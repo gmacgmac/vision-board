@@ -3,7 +3,7 @@
 // the board's stylesheets is scoped and sized by the board's own width (UI_01).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkColours, checkIO, checkScope } from './verify-style.mjs';
+import { checkColours, checkIO, checkPrintSafe, checkScope } from './verify-style.mjs';
 
 const levels = (r) => r.map((x) => x.level);
 
@@ -104,4 +104,24 @@ test('scope: only the board\'s stylesheets; the standalone page\'s own sheet may
   assert.deepEqual(checkScope('apps/board/src/styles/shell.css', 'html, body { margin: 0; }'), []);
   assert.deepEqual(checkScope('packages/chat/src/chat.css', '.chat-a { margin: 0; }'), []);
   assert.deepEqual(checkScope('apps/board/src/gallery/gallery.css', 'body { margin: 0; }'), []);
+});
+
+test('print-safe: a CSS mask fails in the board\'s sheets, its code\'s inline styles and the built plugin sheet (D-115)', () => {
+  const sheet = '.vb-a::before { mask: linear-gradient(var(--vb-ink) 0 0) top left / 64px 64px no-repeat; }';
+  assert.deepEqual(levels(checkPrintSafe('packages/ui/src/region/region.css', sheet)), ['fail']);
+  assert.deepEqual(levels(checkPrintSafe('apps/board/src/styles/a.css', '.vb-a { -webkit-mask-image: url(data:x); }')), ['fail']);
+  assert.deepEqual(levels(checkPrintSafe('apps/board/plugin/a.css', '.vb-a { mask-image: var(--vb-m) !important; }')), ['fail']);
+  assert.deepEqual(levels(checkPrintSafe('dist/plugin/vision-board/view/board.css', 'vb-region:before{-webkit-mask:var(--vb-m) 0 0/64px 64px no-repeat}')), ['fail']);
+  assert.deepEqual(levels(checkPrintSafe('apps/board/src/board/a.ts', "el.style.mask = 'linear-gradient(red 0 0)';")), ['fail']);
+  assert.deepEqual(levels(checkPrintSafe('apps/board/src/board/A.svelte', '<div style="mask: url(data:x)"></div>')), ['fail']);
+  assert.match(checkPrintSafe('packages/ui/src/region/region.css', sheet)[0].message, /clip-path/, 'names the fix');
+});
+
+test('print-safe: none, clip-path, a property merely named mask, comments, tests and other folders pass', () => {
+  assert.deepEqual(checkPrintSafe('packages/ui/src/region/region.css', '.vb-a { mask: none; -webkit-mask: none !important; mask-image: none; }'), []);
+  assert.deepEqual(checkPrintSafe('dist/plugin/vision-board/view/board.css', 'vb-region[data-drop]:before{mask:none}'), []);
+  assert.deepEqual(checkPrintSafe('packages/ui/src/region/region.css', '.vb-a { --vb-region-mask: x; clip-path: polygon(0 0, 64px 0, 64px 64px); }'), []);
+  assert.deepEqual(checkPrintSafe('packages/ui/src/region/region.css', '/* was mask: linear-gradient(…) */ .vb-a { color: var(--vb-ink); }'), []);
+  assert.deepEqual(checkPrintSafe('packages/ui/tests/a.test.ts', "const s = 'mask: url(x)';"), [], 'tests may');
+  assert.deepEqual(checkPrintSafe('packages/chat/src/chat.css', '.chat { mask: url(x); }'), [], 'not the board\'s');
 });

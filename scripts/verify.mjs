@@ -5,7 +5,8 @@
 // (docs/specification/modules.md), the board's feature-folder front doors, a function's length
 // (verify-functions.mjs), the style and layer rules in verify-style.mjs (colour
 // literals only in the tokens, I/O only in its layers, scoped board stylesheets; UI_01), and only the
-// paths module naming the data folder (verify-data-folder.mjs; PATHS_01).
+// paths module naming the data folder (verify-data-folder.mjs; PATHS_01), and no CSS mask in the board's sheets or the
+// built plugin sheet (verify-style.mjs checkPrintSafe; D-115).
 // Each check is a pure function over strings, so scripts/verify.test.mjs proves every rule fails
 // when broken. `--write-map` regenerates the module map instead of checking it.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -13,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkDataFolder } from './verify-data-folder.mjs';
 import { checkFunctionLength } from './verify-functions.mjs';
-import { checkStyleAndLayers } from './verify-style.mjs';
+import { checkPrintSafe, checkStyleAndLayers } from './verify-style.mjs';
 import { checkWeight, PAGE, pageAssets, pageWeight, weightOf } from './verify-weight.mjs';
 
 export { checkWeight, PAGE, pageAssets, pageWeight };
@@ -22,6 +23,9 @@ export const LIMITS = { warn: 300, fail: 500 };
 export const ROOTS = ['apps', 'packages', 'scripts', 'tests', 'skills'];
 export const MAP_FILE = 'docs/specification/modules.md';
 export const REGISTER = 'docs/specification/dependencies.md';
+/** The plugin's built sheet, from the last `npm run build:plugin` (apps/board/bin/build-plugin.ts DEFAULT_OUT): held to the
+ * print-safe rule as the sources are (D-115), since the bundler may write what no source says. */
+export const PLUGIN_SHEET = 'dist/plugin/vision-board/view/board.css';
 
 /** Which packages each package may import (D-016, D-029). Apps may import any package; nothing imports an app. */
 export const LAYERS = {
@@ -260,6 +264,9 @@ export function verify(root, { writeMap = false } = {}) {
     results.push(...checkManifest(m, JSON.parse(readFileSync(path.join(root, m), 'utf8')), register));
   }
   results.push(...weightOf(root));
+  const sheet = path.join(root, PLUGIN_SHEET);
+  results.push(...(existsSync(sheet) ? checkPrintSafe(PLUGIN_SHEET, readFileSync(sheet, 'utf8'))
+    : [warn(PLUGIN_SHEET, 'not built, so its print-safe rule was not checked: run npm run build:plugin')]));
   const map = buildMap(files.filter((f) => !FIXTURE_HOST.test(f.rel)), names);
   const mapPath = path.join(root, MAP_FILE);
   if (writeMap) writeFileSync(mapPath, map);

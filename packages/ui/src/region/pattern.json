@@ -88,7 +88,7 @@
     "data-preview": "the note preview is open under Comment; the frame is drawn above the cards like data-open (set by the note behaviour from previewShown)",
     "data-title-tip-open": "the cut title's full-text tip is open below the title; the frame is drawn above the cards like data-preview (set by the title behaviour; titleTip flag, which the page shows as data-title-tip on its world)",
     "data-note-shown": "the note block shows under the title line (the noteShown property; page state only, not in the ledger, step 4G ruling 3). Set as an attribute it takes effect on the next update; the property applies at once",
-    "--vb-region": "the frame colour as a CSS value, from regionColour (set by render; --vb-line-contrast by default, the Lines scale's next step above --vb-line-strong); the frame's corners (one rule on ::before masked to four 64px corners, point 672) read it at 55%, the title and a switch that is on mix from it",
+    "--vb-region": "the frame colour as a CSS value, from regionColour (set by render; --vb-line-contrast by default, the Lines scale's next step above --vb-line-strong); the frame's corners (one rule on ::before clipped to four 64px corners by a clip-path polygon, point 672; never a mask, which a WebKit PDF paints solid, D-115) read it at 55%, the title and a switch that is on mix from it",
     "role": "region (set by render)",
     "aria-labelledby": "region-<id>, the heading inside the frame (set by render)"
   },

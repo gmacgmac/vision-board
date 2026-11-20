@@ -34,9 +34,15 @@ vb-region {
 vb-region::before, vb-region::after { content: ''; position: absolute; z-index: -1; pointer-events: none; box-sizing: border-box; }
 vb-region::before {
   inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) solid var(--vb-region-ln); border-radius: var(--vb-radius-lg);
-  --vb-region-mask: linear-gradient(var(--vb-ink) 0 0); /* only its alpha is read: the mask shows the four corners */
-  mask: var(--vb-region-mask) top left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--vb-region-mask) top right / var(--vb-region-corner) var(--vb-region-corner) no-repeat,
-    var(--vb-region-mask) bottom left / var(--vb-region-corner) var(--vb-region-corner) no-repeat, var(--vb-region-mask) bottom right / var(--vb-region-corner) var(--vb-region-corner) no-repeat;
+  /* The four corners, each a --vb-region-corner square, traced one after another and joined along the edges through the
+     frame's corner points (the joins have no area). Every square turns clockwise, so where two overlap (a frame under two
+     corners tall or wide) they add up, never cancel. A clip-path, never a mask: WebKit's print to PDF (a host's Save as
+     PDF) paints a mask's image as solid squares (D-115; plugin.md § A guest in the host's page, Print-safe CSS). */
+  --vb-region-far: calc(100% - var(--vb-region-corner));
+  clip-path: polygon(0 0, var(--vb-region-corner) 0, var(--vb-region-corner) var(--vb-region-corner), 0 var(--vb-region-corner), 0 0,
+    100% 0, 100% var(--vb-region-corner), var(--vb-region-far) var(--vb-region-corner), var(--vb-region-far) 0, 0 0,
+    0 100%, 0 var(--vb-region-far), var(--vb-region-corner) var(--vb-region-far), var(--vb-region-corner) 100%, 0 100%,
+    var(--vb-region-far) 100%, var(--vb-region-far) var(--vb-region-far), 100% var(--vb-region-far), 100% 100%, 0 100%);
 }
 vb-region::after { content: none; }
 
@@ -191,7 +197,7 @@ vb-region .vb-region-empty { margin: var(--vb-space-2) var(--vb-space-4); color:
    pointer that can take it is drawn in the accent, with a soft fill. The page sets data-drop. */
 vb-region[data-drop] { background: color-mix(in srgb, var(--vb-ink) 4%, transparent); }
 /* A drop target closes the corners: one dashed rounded line, in ink (design/mockups/containers). */
-vb-region[data-drop]::before { inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) dashed var(--vb-ink); border-radius: var(--vb-radius-lg); mask: none; }
+vb-region[data-drop]::before { inset: calc(-1 * var(--vb-region-line-w)); border: var(--vb-region-ln-w) dashed var(--vb-ink); border-radius: var(--vb-radius-lg); clip-path: none; }
 vb-region[data-drop]::after { display: none; }
 vb-region[data-drop] .vb-region-head h2 { color: var(--vb-ink-strong); }
 
