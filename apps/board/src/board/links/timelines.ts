@@ -1,12 +1,12 @@
 // Each container's timeline on the board (D-105; the timeline set's FE_02), in the wires layer, from the geometry the
 // layout returns (`RegionBox.timeline`) through `#ui`'s template pieces. The line, its bands, years and each stem go in
 // the `vb-timelines` group, beneath the links; each dot goes in the `vb-timeline-dots` group, the layer's last, above
-// every link and label (FIX_04, the maintainer's look). It moves as the cards do (PLAN § Design review "After FE_02"
-// (b)): the line, its bands and years are drawn in their container's own coordinates in a group placed at the
-// container's origin, and each dated node's stem and dot, each in a group of its own, in that node's own coordinates in
-// a group placed where the node is; the groups stay from draw to draw and only their place changes, so they glide with
-// the cards' and frames' transform transition (board.css) and never run ahead. A part's markup is written again only
-// when it changes. Every value is escaped by the template.
+// every link and label (FIX_04, the maintainer's look). The line, its bands and years are drawn in their container's
+// own coordinates in a group placed at the container's origin, and each dated node's stem and dot, each in a group of
+// its own, in that node's own coordinates in a group placed where the node is; the groups stay from draw to draw and
+// only their place changes. While the cards glide to a new layout the timeline is hidden with the links and fades back
+// where they land (board.css `.settling`; 2026-11-22, points 5-6). A part's markup is written again only when it
+// changes. Every value is escaped by the template.
 import type { Point, TimelineDrawing } from '#format';
 import type { BoardLayout, Box } from '#layout';
 import { shiftTimeline } from '#layout';
@@ -23,11 +23,13 @@ export interface Timelines {
 }
 
 const back = (p: Point): Point => ({ x: -p.x, y: -p.y });
-/** A group's place, through CSSOM (the page's CSP refuses a style attribute), so a change glides. */
+/** A group's place, by the SVG `transform` attribute: in the SVG's own units, as the links' path data is. A CSS
+ *  transform on an SVG child is scaled again by WebKit's page zoom (Safari zoomed in, nclite at 110%), which moved the
+ *  line off its cards. */
 function place(part: Part, at: Point): void {
-  const t = `translate(${at.x}px, ${at.y}px)`;
+  const t = `translate(${at.x} ${at.y})`;
   if (part.at === t) return;
-  part.el.style.transform = t;
+  part.el.setAttribute('transform', t);
   part.at = t;
 }
 

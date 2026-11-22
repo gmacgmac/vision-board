@@ -172,12 +172,12 @@
 .vb-wire.hot { stroke: var(--vb-wire-hot); stroke-width: 2.4px; }
 .vb-wires marker[id$='-arrow'] path { fill: var(--vb-wire); }
 .vb-wires marker[id$='-arrow-hot'] path { fill: var(--vb-wire-hot); }
+/* A container's timeline (D-105; links/timelines.ts), placed in SVG units, is hidden with the links while the cards
+   glide to a new layout and fades back where they land (2026-11-22, points 5-6): it goes at once, already in its new
+   place, so it is never off its cards. */
 .vb-wires.settling .vb-wire { opacity: 0; }
-.vb-wire { transition: opacity var(--vb-motion-fast) linear; }
-/* A container's timeline (D-105; links/timelines.ts): its line at the container's origin and each dated node's stem
-   at its node, and each dot above the links, move by the transform transition the cards and frames use, so they glide with them, never ahead
-   (the timeline set's PLAN § Design review "After FE_02" (b)). */
-.vb-timelines > g, .vb-timeline-dots > g { transition: transform var(--vb-motion) var(--vb-ease); }
+.vb-wire, .vb-wires :is(.vb-timelines > g, .vb-timeline-dots > g) { transition: opacity var(--vb-motion-fast) linear; }
+.vb-wires.settling :is(.vb-timelines > g, .vb-timeline-dots > g) { opacity: 0; transition: none; }
 .vb-wire-label { font: var(--vb-text-xs) var(--vb-font); fill: var(--vb-ink-subtle); paint-order: stroke; stroke: var(--vb-surface-canvas); stroke-width: 4px; }
 /* A label on its line or beside it (linkLabels flag, link-labels.ts): a canvas-coloured tag, as wide as the layout kept
    for it. A label with no room is a short tag (link-marks.ts, point 646): its first words and an ellipsis, a hairline

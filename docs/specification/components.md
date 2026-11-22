@@ -2017,13 +2017,18 @@ board page joins the layout's geometry to that drawing (FE_02, `apps/board/src`;
    `vb-timelines` and another holding its dot in `vb-timeline-dots` (`timelineDotMarkup`, look from the drawn node's
    kind and tone, `draw.ts` `lookOf`, coloured by `applyTimelineLook`) in the node's coordinates, placed where the node
    is. So the dots draw above every link and label, the line and stems beneath the links (FIX_04). The groups
-   stay from draw to draw, their markup rewritten only when it changes, and their place is a CSS transform with the
-   cards' transition (`board.css` `.vb-timelines > g`, `.vb-timeline-dots > g`), so the line and its dots glide with the frames and cards on a
-   relayout, never ahead (After FE_02 (b)). Behind frames and cards with wire layers on; scales with the world, no zoom
+   stay from draw to draw, their markup rewritten only when it changes, and their place is the SVG `transform`
+   attribute (`place`), in the SVG's own units as the links' path data is: a CSS transform on an SVG child is scaled
+   again by WebKit's page zoom, which moved the line off its cards in Safari zoomed in and in nclite at 110%. While the
+   cards glide to a new layout the line, stems and dots are hidden with the links and fade back where the cards land
+   (`board.css` `.vb-wires.settling`; maintainer, 2026-11-22, points 5-6, replacing After FE_02 (b)'s glide). Each year
+   is drawn over a halo of its own (`vb-timeline-year-halo`), so WebKit never paints one letter's halo over the
+   letter before it. Behind frames and cards with wire layers on; scales with the world, no zoom
    number. A lane band beside a timeline run down starts at `Lane.x`. Kept true by `timeline.spec.ts` ("the line":
    order, sides, band, years, arrow, every stem meeting the middle of its card's facing edge and every dot on the line;
-   "during the relayout glide", every frame; "from 20% to 250%"); `timeline-layers.spec.ts` (every dot after every link and
-   label, the line and stems before the links).
+   "while the cards glide", every frame; "from 20% to 250%"); `timeline-layers.spec.ts` (every dot after every link
+   and label, the line and stems before the links; "placed in SVG units"); `timeline-template.test.ts` (each year
+   over its halo).
 8. **No drag on a dated node** (D-105 4): `input/pointer.ts` starts no move inside `vb-node[data-timeline]` (`DATED`),
    its plate included, so a press there is a click; `selection/moves.ts` `placeable` keeps dated nodes out of what a
    drag carries and out of a drop's pins; `canvas/places.ts` `pin` (Alt+arrows) writes nothing for one. No new action

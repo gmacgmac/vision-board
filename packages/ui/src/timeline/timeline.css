@@ -13,10 +13,13 @@
   stroke: color-mix(in srgb, var(--vb-timeline-line) var(--vb-timeline-band-mix), var(--vb-surface-canvas));
   stroke-width: var(--vb-timeline-band); stroke-linecap: round;
 }
-.vb-timeline .vb-timeline-year {
+.vb-timeline :is(.vb-timeline-year, .vb-timeline-year-halo) {
   fill: var(--vb-ink-subtle); font: 700 var(--vb-timeline-year)/1 var(--vb-font-label); letter-spacing: 0.14em;
-  dominant-baseline: central; paint-order: stroke; stroke: var(--vb-surface-canvas);
-  stroke-width: calc(var(--vb-space-2) * 2); stroke-linejoin: round;
+  dominant-baseline: central;
+}
+/* The gap: the same text drawn first in the canvas's colour, thick (timeline-template.ts). */
+.vb-timeline .vb-timeline-year-halo {
+  fill: var(--vb-surface-canvas); stroke: var(--vb-surface-canvas); stroke-width: calc(var(--vb-space-2) * 2); stroke-linejoin: round;
 }
 .vb-timeline .vb-timeline-dot {
   r: calc(var(--vb-timeline-dot) / 2);

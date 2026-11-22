@@ -28,7 +28,7 @@
   .vb-board[data-vb-print] .vb-cards vb-node { content-visibility: visible !important; }
   .vb-board[data-vb-print] :is(.vb-wires-top, [data-vb-print-out]) { display: none !important; }
   /* Links still settling after a new layout (board.css `.settling`) print: with no transition, their routes are final. */
-  .vb-board[data-vb-print] .vb-wires.settling .vb-wire, .vb-board[data-vb-print] .vb-wires.settling ~ .vb-link-marks { opacity: 1; }
+  .vb-board[data-vb-print] .vb-wires.settling :is(.vb-wire, .vb-timelines > g, .vb-timeline-dots > g), .vb-board[data-vb-print] .vb-wires.settling ~ .vb-link-marks { opacity: 1; }
   .vb-board[data-vb-print] vb-region :is(.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-region-holders) { display: none !important; }
   .vb-board[data-vb-print-border='off'] vb-region::before, .vb-board[data-vb-print-border='off'] vb-region::after { display: none; }
 }

@@ -17,6 +17,7 @@
     "vb-timeline-arrow": "path: the arrowhead, its tip at the line's end",
     "vb-timeline-stem": "path: from a dot to the middle of its node's facing edge",
     "vb-timeline-year": "text text-anchor=start (across, at the line's start) or middle: the year, in the label face and the muted ink, in a gap the canvas cuts from the line",
+    "vb-timeline-year-halo": "text, the same as the year it is drawn under: the gap, the year in the canvas's colour with a thick stroke; its own text so WebKit never paints one letter's halo over the letter before it",
     "vb-timeline-dot": "circle data-node data-side data-kind data-tone: a dot in its node's colour (the kind's, or the tone's line), ringed in the canvas"
   },
   "whenToUse": "A container whose nodes carry a timeline date: the page draws one per container from the layout's geometry.",

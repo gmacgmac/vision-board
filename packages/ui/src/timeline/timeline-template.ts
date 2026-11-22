@@ -45,7 +45,10 @@ export function timelineLineMarkup(drawing: TimelineDrawing): { bands: string; l
     line: lineAndArrow(line),
     years: years.map((y) => {
       const anchor = direction === 'across' && same(y.at, line.from) ? 'start' : 'middle';
-      return `<text class="vb-timeline-year" x="${num(y.at.x)}" y="${num(y.at.y)}" text-anchor="${anchor}">${esc(y.year)}</text>`;
+      // The halo that cuts the year's gap from the line is a text of its own, drawn first: one text with
+      // `paint-order: stroke` lets WebKit paint each letter's halo over the letter before it.
+      const text = (cls: string) => `<text class="${cls}" x="${num(y.at.x)}" y="${num(y.at.y)}" text-anchor="${anchor}">${esc(y.year)}</text>`;
+      return text('vb-timeline-year-halo') + text('vb-timeline-year');
     }).join(''),
   };
 }

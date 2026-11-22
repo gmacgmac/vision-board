@@ -38,8 +38,8 @@ const DOWN: TimelineDrawing = {
 test('across: one group, hidden, in drawing order: bands, line, arrow, stems, years, dots', () => {
   const svg = timelineMarkup(ACROSS, look);
   assert.match(svg, /^<g class="vb-timeline" data-direction="across" aria-hidden="true">/);
-  const order = [...svg.matchAll(/class="vb-timeline-(\w+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['band', 'line', 'arrow', 'stem', 'stem', 'stem', 'year', 'year', 'dot', 'dot', 'dot']);
+  const order = [...svg.matchAll(/class="vb-timeline-([\w-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(order, ['band', 'line', 'arrow', 'stem', 'stem', 'stem', 'year-halo', 'year', 'year-halo', 'year', 'dot', 'dot', 'dot']);
   assert.ok(!/marker|url\(#|style=/.test(svg), 'no marker ids, no style attribute');
 });
 
@@ -55,7 +55,8 @@ test('across: the band, the stems above and below, the year at the start and at 
   assert.ok(svg.includes('<path class="vb-timeline-band" d="M314 100L488.5 100"/>'));
   assert.ok(svg.includes('<path class="vb-timeline-stem" d="M140 100L140 70"/>'), 'above');
   assert.ok(svg.includes('<path class="vb-timeline-stem" d="M314 100L314 130"/>'), 'below');
-  assert.ok(svg.includes('<text class="vb-timeline-year" x="0" y="100" text-anchor="start">2026</text>'), 'at the start');
+  // The halo is its own text, drawn first, so WebKit never paints one letter's halo over the letter before it.
+  assert.ok(svg.includes('<text class="vb-timeline-year-halo" x="0" y="100" text-anchor="start">2026</text><text class="vb-timeline-year" x="0" y="100" text-anchor="start">2026</text>'), 'at the start, over its halo');
   assert.ok(svg.includes('<text class="vb-timeline-year" x="227" y="100" text-anchor="middle">2027</text>'), 'at a turn');
   assert.ok(svg.includes('<circle class="vb-timeline-dot" cx="140" cy="100" data-node="a" data-side="above" data-kind="decision"/>'));
   assert.ok(svg.includes('data-node="b" data-side="below" data-kind="topic" data-tone="teal"/>'), 'a named tone');

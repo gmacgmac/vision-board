@@ -318,33 +318,37 @@ test('a link from a dated card to an undated one draws and lights up as any link
 
 const widths = async (page: Page, d: { n: number[] }, ids: number[]) => new Set(await Promise.all(ids.map(async (i) => Math.round((await boxOf(page, i, d.n)).width))));
 
-test('during the relayout glide the stems and dots move with their cards and stay on the line, never ahead', async ({ page, request }) => {
+test('while the cards glide to a new layout the timeline is hidden, as the links are; shown, it is on its cards', async ({ page, request }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' }); // the glide runs (the suite turns motion off)
   const d = await drawPlan(request);
   await open(page, d, ON);
   await idle(page);
   await page.waitForTimeout(500);
   const id = String(d.n[DRAFTS]);
-  // Every frame for 700 ms: the worst miss, and how far the last dated card travelled (so the glide is proven to run).
+  // Every frame for 900 ms: the worst miss while any part of the line shows, the frames it was hidden in, and how far
+  // the last dated card travelled (so the glide is proven to run).
   const sampled = page.evaluate(async ({ id, src }) => {
     const missesOf = new Function(`return (${src})`)() as (r: string) => number[];
+    const shown = () => [...document.querySelectorAll('svg.vb-wires :is(.vb-timelines, .vb-timeline-dots) > g[data-region="plan"]')]
+      .some((g) => Number(getComputedStyle(g).opacity) > 0.01);
     const x0 = document.querySelector(`vb-node[data-id="${id}"]`)!.getBoundingClientRect().x;
-    let worst = 0;
-    let frames = 0;
+    let [worst, hidden] = [0, 0];
     const xs = new Set<number>();
-    const end = performance.now() + 700;
+    const end = performance.now() + 900;
     while (performance.now() < end) {
       await new Promise((r) => requestAnimationFrame(r));
-      worst = Math.max(worst, ...missesOf('plan'));
+      if (shown()) worst = Math.max(worst, ...missesOf('plan'));
+      else hidden += 1;
       xs.add(Math.round(document.querySelector(`vb-node[data-id="${id}"]`)!.getBoundingClientRect().x - x0));
-      frames += 1;
     }
-    return { worst, frames, between: xs.size };
+    return { worst, hidden, between: xs.size, shownAtEnd: shown() };
   }, { id, src: missesIn.toString() });
   await frame(page, 'plan').getByRole('switch', { name: 'Match card widths' }).click();
-  const { worst, between } = await sampled;
+  const { worst, hidden, between, shownAtEnd } = await sampled;
   expect(between, 'the card glided through several places').toBeGreaterThan(3);
-  expect(worst, 'every frame of the glide').toBeLessThan(2);
+  expect(hidden, 'hidden while the cards move').toBeGreaterThan(3);
+  expect(worst, 'every frame it shows, on its cards').toBeLessThan(2);
+  expect(shownAtEnd, 'back once they land').toBe(true);
 });
 
 test('the widths switch shows what is in force and covers the dated cards as well as the others', async ({ page, request }) => {
