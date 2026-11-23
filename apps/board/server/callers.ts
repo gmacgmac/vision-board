@@ -19,9 +19,10 @@ export const REALM = { 'WWW-Authenticate': 'Bearer realm="vision-board"' };
 
 /** A fresh person token for one server start: 32 random bytes, base64url. */
 
-/** The `Set-Cookie` value the page gets with the page itself (api.md 20). */
-export const personCookie = (token: string): string =>
-  `${PERSON_COOKIE}=${token}; HttpOnly; SameSite=Strict; Path=/api`;
+/** The `Set-Cookie` value the page gets with the page itself (api.md 20); `Secure` at the remote door, which is
+ * reached over https (D-117). */
+export const personCookie = (token: string, secure = false): string =>
+  `${PERSON_COOKIE}=${token}; ${secure ? 'HttpOnly; SameSite=Strict; Path=/api; Secure' : 'HttpOnly; SameSite=Strict; Path=/api'}`;
 
 /** The value of the person cookie in a request, if it sends one. */
 export function cookieOf(req: IncomingMessage): string | undefined {

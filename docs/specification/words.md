@@ -128,7 +128,7 @@ layer: its words import nothing, not even `node:`.
 | `apps/board/server/words/apps-manifest.ts` | `apps-manifest` | What is wrong in an app's files, as list_apps tells the agent. |
 | `apps/board/server/words/apps-supervisor.ts` | `apps-supervisor` | The app supervisor's refusals: an app that crashed, timed out or was stopped, and the tool checks. |
 | `apps/board/server/words/bin.ts` | `bin` | The board's command-line tools. |
-| `apps/board/server/words/http.ts` | `http` | The refusals every call can meet: the path, method, body, caller and origin. |
+| `apps/board/server/words/http.ts` | `http` | The refusals every call can meet: the path, method, body, caller and origin; the remote door's (D-117). |
 | `apps/board/server/words/icons.ts` | `icons` | The project's icon library: why add_icon refuses a drawing, a name or a key, why a library icon can't be used (list_icons' problems, a node's first use), and why the person's accept is refused. |
 | `apps/board/server/words/plugin-tools.ts` | `plugin-tools` | The edits that make a tool's description and the MCP instructions true for a bot a host names (no secret, no `list_apps`; with `botToolRules`, no `wait`, no re-reading what the Send message lists, and the quiet rule in the instructions; with `singleAgent`, no grants and `request_grant` saying it is not needed); the standalone bot reads the table's words as they are. |
 | `apps/board/server/words/schema.ts` | `schema` | How a schema failure is told to the agent. |

@@ -21,6 +21,10 @@ export const ENV = {
   flags: 'VB_FLAGS',
   /** `1`: open every ledger for editing, as `--edit` does (read-only opening, `readOnlyStart`, D-085). */
   edit: 'VB_EDIT',
+  /** The board's remote address for Tailscale Serve, `https://host:port` (D-117); with `remoteUsers`, or neither. */
+  remoteUrl: 'VB_REMOTE_URL',
+  /** The tailnet logins the remote door lets in, comma-separated (D-117). */
+  remoteUsers: 'VB_REMOTE_USERS',
 } as const;
 
 export type EnvName = (typeof ENV)[keyof typeof ENV];

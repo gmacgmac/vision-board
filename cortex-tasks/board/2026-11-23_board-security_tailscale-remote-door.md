@@ -1,8 +1,8 @@
 ---
 task_name: Open the Board over Tailscale Serve (the remote door)
 created: 2026-11-23
-completed:
-status: pending
+completed: 2026-11-23
+status: completed
 categories: [board-security, board-app]
 type: implementation
 model: strong
@@ -239,19 +239,34 @@ its own door; it may copy this pattern in its own code.
 _To be completed by agent after task execution._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Completed**: YYYY-MM-DD HH:MM
+**Completed**: 2026-11-23
 
 ### Changes Made
-- 
+- Step 1 (Tailscale 1.104.7, a temporary Serve entry on 4499, removed after): Serve set `Tailscale-User-Login`
+  and replaced a forged one; it dropped a forged `Tailscale-Funnel-Request`; it passed a forged `Host: 127.0.0.1:4466`
+  on unchanged (so a Host check on the local door alone would have been bypassable: the second door is needed); it
+  passes the `Host` the browser sends, so the remote door checks it. Also sent: `X-Forwarded-For/-Host/-Proto`.
+- D-117 appended (maintainer, point 63), its Why naming what step 1 saw (point 64).
+- `apps/board/server/remote.ts` (new): `RemoteDoor`, `remoteDoorOf`, `remotePort`, `loginKey`.
+- `guard.ts`: `guard(req, port, door)`; `remoteGuard`. The local door's code is unchanged.
+- `app.ts` `createBoardServer`: one `listener(door)` over one `env`; `remote` option builds `server.remote`
+  (`BoardServer`); closing the server closes it. `server.ts` checks the settings before the lock and listens it.
+- `callers.ts` `personCookie(token, secure)`; `dispatch.ts` `remoteChooser` (no chooser at the remote door; what
+  was picked locally this run stays trusted for `open_project`).
+- Words: `words/http.ts` § guard.ts and remote.ts. `ENV.remoteUrl`, `ENV.remoteUsers`.
+- Tests: `apps/board/tests/remote-door.test.ts`, 9 tests; all 9 failed on the old server files, all pass now.
+- Docs: `api.md` 20, 28, 161; `apps/board/README.md` § From another Mac over Tailscale; `words.md` http row.
 
 ### Issues & Resolutions
-- 
+- A person cannot send `items` through `write_board`, so the remote-door write test uses `put_board`.
 
 ### Caught Beyond the Brief
-- None / [what you noticed that this task didn't ask about]
+- A write with no `Origin` is refused at the remote door (a browser always sends one); the local door keeps
+  accepting one with none, for agents.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- The chooser is turned off in `dispatch.ts` (`remoteChooser`) rather than in `open-folder.ts`: one place, and
+  `listFolders` and `chooseFolder` already answer "not offered" from it. `open-folder.ts` is unchanged.
 
 ---
 

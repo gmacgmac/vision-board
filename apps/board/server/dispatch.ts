@@ -10,6 +10,7 @@ import type { Agents } from './agents.ts';
 import type { AppHost } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
 import type { Chooser } from './chooser.ts';
+import { createChooser } from './chooser.ts';
 import { checkFolder, secretElsewhere } from './caller-folder.ts';
 import { callerOf, secretUnknown } from './callers.ts';
 import type { Chats } from './chat-sessions.ts';
@@ -63,11 +64,16 @@ export type Handler = (ctx: Ctx) => void | Promise<void>;
 /** One handler per operation; a test checks the keys equal the route table's (api.md 53). */
 export type HandlerTable = Record<OperationId, Handler>;
 
+/** At the remote door the system's folder chooser is not offered: it would open on this Mac's screen, not the caller's
+ * (D-117). What was picked here this run is still trusted. */
+const { choose: notOffered } = createChooser(undefined, false);
+const remoteChooser = (c: Chooser): Chooser => ({ ...c, offered: false, choose: notOffered });
+
 /** Answer one /api request through the route table and the handler table: route, parameters,
  * then, for an agent operation, the caller's folder (api.md 114), then the caller, then the
- * handler (so nothing is read from an unauthorised body). */
+ * handler (so nothing is read from an unauthorised body). `remote`: the request came in at the remote door (D-117). */
 export async function dispatch(
-  req: IncomingMessage, res: ServerResponse, url: URL, env: ServerEnv, handlers: HandlerTable,
+  req: IncomingMessage, res: ServerResponse, url: URL, env: ServerEnv, handlers: HandlerTable, remote = false,
 ): Promise<void> {
   const method = req.method ?? 'GET';
   const match = matchRoute(method, url.pathname);
@@ -85,6 +91,6 @@ export async function dispatch(
   });
   await handlers[match.id]({
     req, res, url, params, engine: open.engine, ledger: open.ledger, editing: open.editing, agents: open.agents, chats: open.chats, apps: open.apps,
-    closed: open.closed, project: env.project, chooser: env.chooser, places: env.places, caller, secretUnknown: secretUnknown(req, caller), build: env.build,
+    closed: open.closed, project: env.project, chooser: remote ? remoteChooser(env.chooser) : env.chooser, places: env.places, caller, secretUnknown: secretUnknown(req, caller), build: env.build,
   });
 }

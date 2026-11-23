@@ -6,7 +6,8 @@
 // changes. The open folder, with its ledger, lock, agents and chats, is project.ts's (api.md 111):
 // its chats are opened on first use, and its CLIs stopped and its lock let go when the server
 // closes or the process exits. Kiro's agent file is kept current here, at start, when asked
-// (chat-access.ts `keepKiroAgent`). server.ts only starts it.
+// (chat-access.ts `keepKiroAgent`). With a remote door (D-117), a second server shares this listener and its one
+// person token and open folder, its requests checked as the remote door's (guard.ts). server.ts only starts it.
 import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -27,6 +28,7 @@ import type { ServerEnv } from './dispatch.ts';
 import { dispatch } from './dispatch.ts';
 import type { Places } from './folders.ts';
 import { placesOf } from './folders.ts';
+import type { Door } from './guard.ts';
 import { guard } from './guard.ts';
 import { HANDLERS } from './handlers.ts';
 import { serveImage } from './images.ts';
@@ -34,6 +36,7 @@ import type { Ledger } from './ledger.ts';
 import type { Lock, LockEnv } from './lock.ts';
 import { ProblemError, problem, serverError } from './problem.ts';
 import { openProject } from './project.ts';
+import type { RemoteDoor } from './remote.ts';
 import { sendProblem } from './respond.ts';
 import { resolveStatic, sendStatic } from './static.ts';
 import * as httpWords from './words/http.ts';
@@ -77,11 +80,17 @@ export interface BoardServerOptions {
   /** Where a project folder may be besides home (D-111, folders.ts `placesOf`): default the system's (`/Volumes`,
    * `/Users/Shared`, `/Users`); tests pass temp folders standing in for them. */
   places?: Partial<Omit<Places, 'home'>> | undefined;
+  /** The remote door (D-117, remote.ts): when given, `server.remote` is built on the same board, not listening. */
+  remote?: RemoteDoor | undefined;
 }
+
+/** The board's server; `remote` is its remote door when one was asked for (server.ts listens it). Closing the server
+ * closes both. */
+export type BoardServer = http.Server & { remote?: http.Server };
 
 /** An http.Server for the board. The Host check uses the port it is actually listening on, so a
  * test can listen on port 0. The agents store sits beside the ledger and is opened on first use. */
-export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat, flags, appLimits, edit, lockEnv, chooser, places }: BoardServerOptions): http.Server {
+export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat, flags, appLimits, edit, lockEnv, chooser, places, remote }: BoardServerOptions): BoardServer {
   const port = () => (server.address() as AddressInfo).port;
   const realHome = fs.realpathSync(home);
   const kiro = chat?.kiroAgent ? keepKiroAgent(realHome) : undefined;
@@ -95,12 +104,13 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
   });
   const run = chooser === false ? undefined : chooser ?? (process.platform === 'darwin' ? macChooser : undefined);
   const env: ServerEnv = { person: newToken(), project, chooser: createChooser(run, flagOn('systemFolderChooser', flags ?? {})), places: placesOf(realHome, places), build };
-  const server = http.createServer(async (req, res) => {
+  /** One listener per door over the one env: one person token, one open folder (D-117). */
+  const listener = (door: Door): http.RequestListener => async (req, res) => {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
     try {
-      guard(req, port());
+      guard(req, port(), door);
       const url = new URL(req.url ?? '/', `http://127.0.0.1:${port()}`);
-      if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return await dispatch(req, res, url, env, HANDLERS);
+      if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return await dispatch(req, res, url, env, HANDLERS, door !== 'local');
       if (url.pathname.startsWith(IMAGE_ROUTE)) {
         const open = project.current();
         return serveImage(req, res, url.pathname.slice(IMAGE_ROUTE.length), open.dir, flags, open.ledgerName);
@@ -111,14 +121,20 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
       if (url.pathname === PDF_FRAME_PATH) return servePdfFrame(res, dist, access.readAttachment);
       const file = resolveStatic(url.pathname, dist);
       if (!file) throw problem('not-found', httpWords.thereIsNoSuchPage);
-      if (file.endsWith('.html')) res.setHeader('Set-Cookie', personCookie(env.person));
+      if (file.endsWith('.html')) res.setHeader('Set-Cookie', personCookie(env.person, door !== 'local'));
       sendStatic(res, file);
     } catch (err) {
       const p = err instanceof ProblemError ? err : serverError(err);
       if (!res.headersSent) sendProblem(res, p);
       else res.end();
     }
+  };
+  const server: BoardServer = http.createServer(listener('local'));
+  if (remote) server.remote = http.createServer(listener(remote));
+  server.on('close', () => {
+    project.close();
+    server.remote?.closeAllConnections();
+    server.remote?.close();
   });
-  server.on('close', () => project.close());
   return server;
 }

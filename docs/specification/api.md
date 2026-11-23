@@ -117,8 +117,8 @@ packages/format/schema/openapi.json               every operation, input, output
 ## Callers
 
 20. **The person** is the board page. When it serves the page, the server sets a cookie
-    `vb_person` (`HttpOnly; SameSite=Strict; Path=/api`), minted fresh at each start and never
-    in the page body. Person routes (`act`, `mark_seen`) need the cookie and refuse a request that
+    `vb_person` (`HttpOnly; SameSite=Strict; Path=/api`, and `Secure` at the remote door, 28), minted fresh at each
+    start, one for both doors, and never in the page body (`callers.ts` `personCookie`; `remote-door.test.ts`). Person routes (`act`, `mark_seen`) need the cookie and refuse a request that
     also carries `Authorization`; agent routes refuse a request that carries the cookie. A refusal
     says "only the person can do this, on the board; send a `propose` or `reply` item instead" and
     never names the cookie. After a restart the page reloads on a `forbidden` answer to get the
@@ -166,6 +166,12 @@ packages/format/schema/openapi.json               every operation, input, output
     Bearer secret, except `join`, the one credential-free write (4 KiB body). The media type is
     parsed exactly: `application/json`, with an optional `charset=utf-8`; nothing else. Body
     limit 64 KiB, or 512 KiB and 200 items for `write_board`.
+    **The remote door** (D-117): with `VB_REMOTE_URL` and `VB_REMOTE_USERS` set, a second door on `127.0.0.1` at the
+    next port up, for Tailscale Serve alone (`remote.ts` `remoteDoorOf`, `remotePort`). Every request there needs the
+    remote address as its Host, a `Tailscale-User-Login` on the allow list and no `Tailscale-Funnel-Request`; a write
+    needs an `Origin` equal to `VB_REMOTE_URL`, never absent. It offers no system folder chooser (`dispatch.ts`
+    `remoteChooser`). The local door never reads a Tailscale header. One setting alone, or an address that is not
+    `https://host:port`, stops the start (`guard.ts` `remoteGuard`; `remote-door.test.ts`).
 29. **Retry keys.** Each write item may carry `key`, scoped to the agent across the whole project.
     The server looks the key up first, before grants: a resent key with the same content returns
     the first result with `replayed: true` and writes nothing; the same key with different content
@@ -1668,7 +1674,7 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     and append, and polled while anyone watches unless `followOtherWriters` is off (`ledger.ts` `refresh`, `follow`; 175), so two engines on
     one folder never repeat a `seq`. Held by `engine.test.ts` (watch: the event, the fold, the next `seq`).
 161. **The standalone server is one host.** `dispatch.ts` keeps the HTTP edge: Host and Origin
-    (`guard.ts`), the route table and parameters (the engine's `matchRoute`, `readParams`), the
+    (`guard.ts`, at each of its doors, 28), the route table and parameters (the engine's `matchRoute`, `readParams`), the
     folder header (114), the person cookie and agent secrets turned into a caller (`callers.ts`),
     body limits (`body.ts` `readJson`, the operation's limit asked by the engine), and the change
     streams (`streams.ts`, from `watch`). The engine's operations go through `route`

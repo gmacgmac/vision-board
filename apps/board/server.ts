@@ -11,7 +11,8 @@
 // VB_KIRO_AGENT (`0`: don't write Kiro's agent file, `~/.kiro/agents/vision-board.json`, which the
 // server otherwise keeps current at start, N34 ruling 1; the page tests' servers set it), VB_FLAGS
 // (the server's own flags, written as `?flags=` is: `-appCards` turns app cards off, so the panel
-// route and call_app_tool answer not-found; an unknown name stops the start).
+// route and call_app_tool answer not-found; an unknown name stops the start), VB_REMOTE_URL and VB_REMOTE_USERS
+// (both or neither: the remote door for Tailscale Serve on 127.0.0.1 at the next port up, D-117, server/remote.ts).
 // One server per ledger: the ledger folder's lock (server/lock.ts) refuses a second one, here or on
 // another computer sharing the folder. Every mode releases it on exit. With ledger folders (`ledgerFolders`,
 // D-084) it opens the folder's last ledger (recent.json), else `main`, moving an old-layout folder into
@@ -31,6 +32,9 @@ import { chooseLedger, isOldLayout, refuseLedgerFolders } from './server/ledgers
 import { holderMessage, lockHolder, takeLock } from './server/lock.ts';
 import type { Lock } from './server/lock.ts';
 import { ProblemError } from './server/problem.ts';
+import type { RemoteDoor } from './server/remote.ts';
+import { remoteDoorOf, remotePort } from './server/remote.ts';
+import * as httpWords from './server/words/http.ts';
 import { takeLedger } from './server/ledger-move.ts';
 import * as serverFoldersWords from './server/words/server-folders.ts';
 import { lastLedger, startFolder } from './server/recent.ts';
@@ -59,6 +63,15 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
   console.error('The page is not built yet. Run: npm run board (or npm run build first).');
   process.exit(1);
 }
+
+/** The remote door (D-117, server/remote.ts): its settings checked before anything opens. */
+function remoteDoor(): RemoteDoor | undefined {
+  try { return remoteDoorOf(process.env[ENV.remoteUrl], process.env[ENV.remoteUsers]); } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+}
+const REMOTE = remoteDoor();
 
 const flags = parseFlags(process.env[ENV.flags]);
 if (flags.refused.length) {
@@ -121,25 +134,29 @@ if (readOnly && process.env[ENV.seed] && !fs.existsSync(FILE)) console.log(serve
 const seeded = !readOnly && seed(FILE, process.env[ENV.seed]);
 const build = process.env[ENV.watch] === '1' ? watchBuild(DIST) : undefined;
 const chat = { kiroAgent: process.env[ENV.kiroAgent] !== '0' };
-const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat, flags: flags.overrides, edit: EDIT });
+const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat, flags: flags.overrides, edit: EDIT, remote: REMOTE });
 
 // Closing the server stops the chats and lets go of the open folder's lock (server/project.ts).
 const stop = () => {
   build?.close();
+  server.remote?.closeAllConnections();
   server.closeAllConnections();
   server.close(() => process.exit(0));
 };
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
 
-server.on('error', (err: NodeJS.ErrnoException) => {
+const failed = (port: number) => (err: NodeJS.ErrnoException) => {
   console.error(err.code === 'EADDRINUSE'
-    ? `Port ${PORT} is already in use. Stop what is using it, or set ${ENV.port} to another port.`
+    ? `Port ${port} is already in use. Stop what is using it, or set ${ENV.port} to another port.`
     : `The server could not start: ${err.message}`);
   process.exit(1); // the exit handler releases the lock
-});
+};
+server.on('error', failed(PORT));
+server.remote?.on('error', failed(remotePort(PORT)));
 
 server.listen(PORT, '127.0.0.1', () => {
   if (seeded) console.log(`Seeded the project ledger from ${process.env[ENV.seed]}`);
   console.log(`Vision Board on http://localhost:${PORT}  (ledger: ${FILE})${build ? '  [watch mode]' : ''}`);
 });
+if (REMOTE) server.remote?.listen(remotePort(PORT), '127.0.0.1', () => console.log(httpWords.remoteIsOn(REMOTE.origin, [...REMOTE.users], remotePort(PORT))));

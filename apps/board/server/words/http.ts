@@ -1,4 +1,4 @@
-// Words: http. The refusals every call can meet: the path, method, body, caller and origin.
+// Words: http. The refusals every call can meet: the path, method, body, caller and origin; the remote door's (D-117).
 // Keys: vision-board.http.<name>. Plain code: no imports but other words files and types.
 
 // ---- app.ts
@@ -69,3 +69,10 @@ export const itTakes = (map: string): string => `It takes: ${map}.`;
 
 // ---- tools.ts
 export const theInputDoesNotFit = (name: string): string => `The input does not fit ${name}. Fix the fields listed in errors and call it again.`;
+
+// ---- guard.ts and remote.ts (the remote door, D-117)
+export const thisDoorAnswersOnlyOn = 'This door answers only on the board\'s remote address.';
+export const thisDoorLetsInOnly = 'This door lets in only a signed-in tailnet user on the board\'s allow list.';
+export const remoteNeedsBoth = 'Remote access needs both VB_REMOTE_URL and VB_REMOTE_USERS (at least one tailnet login). Set both, or neither.';
+export const remoteUrlNotHttps = (url: string): string => `VB_REMOTE_URL must be an https address with its port and nothing after it, such as https://my-mac.example.ts.net:4466. It is: ${url}`;
+export const remoteIsOn = (origin: string, users: readonly string[], port: number): string => `Remote access is on: ${origin} (through Tailscale Serve to 127.0.0.1:${port}), for ${users.join(', ')}.`;
