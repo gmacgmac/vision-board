@@ -5,11 +5,12 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { WATCH_PATHS, built, linePrefixer, serverArgs } from './board-watch.mjs';
+import { ENV_FILE_ARG, WATCH_PATHS, built, linePrefixer, serverArgs } from './board-watch.mjs';
 
 test('the server restarts on server code and the shared packages only', () => {
   const args = serverArgs();
-  assert.deepEqual(args.slice(0, -1), WATCH_PATHS.map((p) => `--watch-path=${p}`));
+  assert.equal(args[0], ENV_FILE_ARG, 'the repo\'s .env is read, as npm run board reads it');
+  assert.deepEqual(args.slice(1, -1), WATCH_PATHS.map((p) => `--watch-path=${p}`));
   assert.equal(args.at(-1), 'apps/board/server.ts');
   assert.ok(!args.some((a) => a.includes('src/board') || a.includes('dist')), 'page code must not restart the server');
 });

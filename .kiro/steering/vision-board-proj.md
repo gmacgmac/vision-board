@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.8 | **Updated**: 2026-11-19 (maintainer approved, point 625)
+> **Version**: 0.9 | **Updated**: 2026-11-23 (maintainer approved, point 82)
 
 # Vision Board — project rules
 
@@ -107,3 +107,7 @@ person's comment on one or more cards) · answered (✓ or ✗; a note never ans
 - Kiro in the chat panel runs as the `vision-board` agent, from this repo's
   `skills/vision-board/SKILL.md`; `~/.claude/skills/vision-board` and `~/.kiro/skills/vision-board`
   link to that one copy (D-057).
+- Remote access over Tailscale (D-117): `VB_REMOTE_URL` (`https://<host>.<tailnet>.ts.net:4466`) and
+  `VB_REMOTE_USERS` (the tailnet logins let in, comma-separated) go in `.env` at the repo root, git-ignored and
+  read by `npm run board` and `npm run board:watch`; never in a committed file. Setup: `apps/board/README.md`
+  § From another computer over Tailscale.

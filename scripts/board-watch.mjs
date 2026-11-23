@@ -2,7 +2,8 @@
 // rule 1, api.md 79). Two children: the page build (`npm run watch`, Vite's --watch) and the
 // server under `node --watch-path`, which restarts only on server or shared-package changes and
 // runs with VB_WATCH=1 so it tells the open page when the build changes. VB_PORT, VB_PROJECT and
-// VB_SEED pass through. The server is a child process, never imported (D-016).
+// VB_SEED pass through, and the repo's `.env` is read as `npm run board` reads it. The server is a child process,
+// never imported (D-016).
 import { spawn } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +12,9 @@ export const WATCH_PATHS = ['apps/board/server', 'apps/board/server.ts', 'packag
 export const INDEX = 'apps/board/dist/index.html';
 
 /** The node arguments that start the server and restart it on a change in `WATCH_PATHS`. */
-export const serverArgs = () => [...WATCH_PATHS.map((p) => `--watch-path=${p}`), 'apps/board/server.ts'];
+/** The repo's git-ignored `.env`, read as `npm run board` reads it (the remote door's settings, D-117). */
+export const ENV_FILE_ARG = '--env-file-if-exists=.env';
+export const serverArgs = () => [ENV_FILE_ARG, ...WATCH_PATHS.map((p) => `--watch-path=${p}`), 'apps/board/server.ts'];
 
 /** Prefix every complete line of a stream with `[name] `; a partial line waits for its newline. */
 export function linePrefixer(name, write) {

@@ -181,17 +181,17 @@ replaces them on purpose. The board's test support (`startTestBoard`, the API ha
   imports are `#board` (`mount`), `#board/styles.css` and `#board/engine`; inside the app the same files are
   reached by path. The page is built from the same files, and its own build is unchanged.
 
-## From another Mac over Tailscale (D-117)
+## From another computer over Tailscale (D-117)
 
-Open the board from one other Mac on your tailnet by typing one address. The server stays on
+Open the board from one other computer on your tailnet by typing one address. The server stays on
 `127.0.0.1`; Tailscale Serve brings the tailnet's HTTPS to a second door one port up, and the board lets
 in only the tailnet logins you list (`server/remote.ts`, `server/guard.ts` `remoteGuard`).
 
 ```
- other Mac                        tailnet                 this Mac
+ other computer                   tailnet                 board host
  ┌──────────────────────┐                     ┌──────────────────────────────┐
  │ Browser              │                     │ Tailscale Serve              │
- │ https://this-mac.    │   HTTPS (Tailscale  │  • adds "who you are" label  │
+ │ https://<host>.      │   HTTPS (Tailscale  │  • adds "who you are" label  │
  │   <tailnet>.ts.net   │      certificate)   │  • a fake label is replaced  │
  │   :4466  ────────────┼────────────────────►│      │                       │
  └──────────────────────┘                     │      ▼                       │
@@ -208,13 +208,13 @@ in only the tailnet logins you list (`server/remote.ts`, `server/guard.ts` `remo
                                               └──────────────────────────────┘
 ```
 
-1. **Tailscale policy**: grant only the other Mac `tcp:4466` on this Mac, and add a test that denies it
+1. **Tailscale policy**: grant only the other computer `tcp:4466` on the board host, and add a test that denies it
    from every other device.
-2. On this Mac: `tailscale serve --bg --https=4466 http://127.0.0.1:4467`
-3. Start the board with both settings:
-   `VB_REMOTE_URL=https://this-mac.<tailnet>.ts.net:4466 VB_REMOTE_USERS=<you>@example.com npm run board`.
-   One without the other, or an address that is not `https://host:port`, stops the start.
-4. On the other Mac, open `https://this-mac.<tailnet>.ts.net:4466`.
-5. Turn it off: `tailscale serve --https=4466 off`, and start the board without the two settings.
+2. On the board host: `tailscale serve --bg --https=4466 http://127.0.0.1:4467`
+3. Put both settings in `.env` at the repo root (git-ignored; `npm run board` and `board:watch` read it):
+   `VB_REMOTE_URL=https://<host>.<tailnet>.ts.net:4466` and `VB_REMOTE_USERS=<you>@example.com`, then
+   `npm run board`. One without the other, or an address that is not `https://host:port`, stops the start.
+4. On the other computer, open `https://<host>.<tailnet>.ts.net:4466`.
+5. Turn it off: `tailscale serve --https=4466 off`, and remove the two settings from `.env`.
 
 Never use `tailscale funnel` for this port: the remote door refuses a Funnel request anyway.
