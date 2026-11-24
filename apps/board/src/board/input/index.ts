@@ -1,5 +1,5 @@
 // Front door of board/input/: code outside the folder imports from here only (ARCH_06).
-export { AREA_COMMANDS, COMMANDS, HEADER_COMMANDS, SELECTION_COMMANDS, barButtons, commandTitle, isCommand, selectionButtons, zoomTitle } from './commands.ts';
+export { AREA_COMMANDS, COMMANDS, HEADER_COMMANDS, SELECTION_COMMANDS, barButtons, commandTitle, gridCells, SELECTION_GRID, isCommand, selectionButtons, zoomTitle } from './commands.ts';
 export type { BookmarkButtons, CommandId } from './commands.ts';
 export { HIDE_KEY, keyGroups } from './key-help.ts';
 export { DRAG_THRESHOLD } from './pointer.ts';

@@ -7,14 +7,15 @@
 // The bar sits over the selection whenever it is not empty and no note bubble is open, and follows
 // pan and zoom; it and the lasso are drawn on the stage, above the cards, and touch none of them.
 // With the selectionPill flag (stage5-follow-ups FE_02) the bar over a selection starts as a pill
-// that opens it (selection-pill.ts). With the personRemove flag (N24) it offers Remove, as Delete and Backspace do
+// that opens it (selection-pill.ts); with the selectionGrid flag too it opens into a 3×3 grid whose
+// Comment is under the pointer (placeGrid), following the pill as the view moves. With the personRemove flag (N24) it offers Remove, as Delete and Backspace do
 // (remove-flow.ts). The bar has no Clear: a click on empty board and Esc clear the selection.
 import type { BoardLayout, Box } from '#layout';
-import type { StageBox, VbSelectionBarElement } from '#ui';
+import type { BarPlacement, StageBox, StageSize, VbSelectionBarElement } from '#ui';
 import type { CommandEventDetail, ToggleEventDetail } from '#ui';
-import { BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, TAB_RISE, touches } from '#ui';
+import { BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, placeGrid, TAB_RISE, touches } from '#ui';
 import type { CommandId } from '../input/index.ts';
-import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS, selectionButtons } from '../input/index.ts';
+import { AREA_COMMANDS, barButtons, COMMANDS, gridCells, isCommand, SELECTION_COMMANDS, selectionButtons } from '../input/index.ts';
 import type { BarActs } from './bar-acts.ts';
 import type { NoteFlow } from '../notes/index.ts';
 import type { Selection } from './selection.ts';
@@ -58,6 +59,8 @@ export interface SelectionFlowDeps {
   covered?(): boolean;
   /** The selectionPill flag: the compact bar, a pill over a selection until it is opened. */
   pill: boolean;
+  /** The selectionGrid flag (with `pill`): the pill opens into the 3×3 grid, Comment under the pointer. */
+  grid?: boolean;
   /** The focusLeads flag: C writes on the focused card unless the focus is in a selection of two or more. */
   focusLeads?: boolean;
   /** A digit typed on the board: the Go to card box opens holding it (go-to-card.ts); absent with
@@ -106,6 +109,11 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   /** A menu or box of a node was open at the last placing: the bar was hidden for it. */
   let covering = false;
   const pill = d.pill ? createPill({ stage: d.stage, bar, selection: d.selection, changed: () => place() }) : null;
+  /** Where the closed pill sits and its size, and where in it the click that opened the grid landed (none from the
+   *  keyboard: its centre). The open grid follows the pill's place as the view moves. */
+  let pillAt: BarPlacement | null = null;
+  let pillSize: StageSize = { w: 0, h: 0 };
+  let grab: Point | null = null;
 
   const onStage = (p: Point): Point => {
     const r = d.stage.getBoundingClientRect();
@@ -140,14 +148,19 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     covering = d.covered?.() ?? false;
     if (d.notes.open || !world || covering) return void (bar.hidden = true);
     const off = [...(sel.some(d.pinned) ? [] : ['reset-places' as const]), ...(d.paused?.() ? ACTING_COMMANDS : [])];
-    const compact = pill ? { open: pill.open } : undefined;
-    bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact)
-      : barView(sel.length, selectionButtons(sel.length, !!d.remove, d.readOnly(), off, { bookmark: d.extras.bookmark, allBookmarked: d.extras.allBookmarked(sel) }), compact));
+    const buttons = selectionButtons(sel.length, !!d.remove, d.readOnly(), off, { bookmark: d.extras.bookmark, allBookmarked: d.extras.allBookmarked(sel) });
+    const compact = pill ? { open: pill.open, ...(d.grid && !area && { cells: gridCells(buttons) }) } : undefined;
+    bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact) : barView(sel.length, buttons, compact));
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
+    const stage = { w: d.stage.clientWidth, h: d.stage.clientHeight };
     // Over nodes it clears their top marks at any zoom, which rise further as they grow zoomed out (pillGap, markGrow);
     // the area bar has no marks under it.
     const gap = area ? BAR_GAP : pillGap(d.vp.k, TAB_RISE * markGrow(d.vp.k) * d.vp.k);
-    bar.place(placeBar(toStage(world), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, gap, titleLines()));
+    const grid = !!compact?.cells && compact.open;
+    const at = placeBar(toStage(world), grid ? pillSize : size, stage, gap, titleLines());
+    if (!grid) { [pillAt, pillSize] = [at, size]; return bar.place(at); }
+    const g = grab ?? { x: pillSize.w / 2, y: pillSize.h / 2 };
+    bar.place(placeGrid({ x: at.x + g.x, y: at.y + g.y }, size, bar.anchor() ?? { x: size.w / 2, reach: size.h / 2 }, stage));
   }
 
   /** Each container's title line (its Move grip, title and count) on the stage: the bar never covers one. */
@@ -251,7 +264,12 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const id = (e as CustomEvent<CommandEventDetail>).detail.command;
     if (isCommand(id)) command(id);
   });
-  bar.addEventListener('vb-toggle', (e) => pill?.set((e as CustomEvent<ToggleEventDetail>).detail.open));
+  bar.addEventListener('vb-toggle', (e) => {
+    const { open, at } = (e as CustomEvent<ToggleEventDetail>).detail;
+    const p = at && pillAt && onStage(at);
+    grab = open && p && pillAt ? { x: p.x - pillAt.x, y: p.y - pillAt.y } : null;
+    pill?.set(open);
+  });
 
   return {
     lassoMove, lassoEnd, lassoCancel: () => { lasso.hidden = true; }, command, zoomTo, place, dismissArea,

@@ -30,6 +30,11 @@ export interface CommandDef {
   glyph?: string;
   /** It leads to a person act (a note, a move): off while a past version shows (versions.ts). */
   acts?: true;
+  /** Its icon in the selection grid, a name in the icon set (`#ui` ICONS) whose meaning it is; none where the set
+   *  has no such drawing. */
+  icon?: string;
+  /** It takes cards away: the selection grid draws it in the danger look. */
+  danger?: true;
 }
 
 export const COMMANDS: Record<CommandId, CommandDef> = {
@@ -37,21 +42,21 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   fit: { label: commonWords.fit, keys: ['f'] },
   'zoom-in': { label: commandsWords.zoomIn, keys: ['+', '='], glyph: '+' },
   // N, and C when two or more are selected (C alone is a card's own comment, keys.ts).
-  comment: { label: commandsWords.comment, keys: ['n', 'c'], primary: true, acts: true },
+  comment: { label: commandsWords.comment, keys: ['n', 'c'], primary: true, acts: true, icon: 'notes-group' },
   // The list of the board's containers, Later last (3_FE_03 ruling 8, move-menu.ts).
-  move: { label: commandsWords.moveTo, keys: ['shift+m'], acts: true },
+  move: { label: commandsWords.moveTo, keys: ['shift+m'], acts: true, icon: 'move-to' },
   // R with a selection; with none, R is the focused card's own reset (keys.ts).
-  'reset-places': { label: commandsWords.resetPlaces, keys: ['r'], acts: true },
+  'reset-places': { label: commandsWords.resetPlaces, keys: ['r'], acts: true, icon: 'put-back' },
   // The selected cards leave the board, after a confirm (N24, remove-flow.ts): the bar says "Remove";
   // its tooltip says the card or the cards (selectionButtons). Without the personRemove flag the bar
   // has no such button and the keys do nothing.
-  remove: { label: commandsWords.remove, means: commandsWords.removeTheSelectedCards, listed: commandsWords.removeCards, keys: ['delete', 'backspace'], acts: true },
+  remove: { label: commandsWords.remove, means: commandsWords.removeTheSelectedCards, listed: commandsWords.removeCards, keys: ['delete', 'backspace'], acts: true, danger: true, icon: 'trash' },
   // The selection bar's Bookmark all, Save for later and Width (D-099 9, FE_06): a bookmark on every selected node (its label
   // turns to "Remove bookmarks" when all have one, `selectionButtons`), the Later container, and a width menu.
-  'bookmark-all': { label: commandsWords.bookmarkAll, means: commandsWords.bookmarkTheSelectedNodes, keys: ['shift+b'], acts: true },
-  'save-for-later': { label: commandsWords.saveForLater, means: commandsWords.saveTheSelectedNodesForLater, keys: ['shift+l'], acts: true },
-  width: { label: commandsWords.width, means: commandsWords.setTheWidthOfTheSelectedNodes, keys: ['shift+w'], acts: true },
-  'zoom-selection': { label: commonWords.zoom, means: commandsWords.zoomToTheSelection, keys: ['z'] },
+  'bookmark-all': { label: commandsWords.bookmarkAll, means: commandsWords.bookmarkTheSelectedNodes, keys: ['shift+b'], acts: true, icon: 'bookmark' },
+  'save-for-later': { label: commandsWords.saveForLater, means: commandsWords.saveTheSelectedNodesForLater, keys: ['shift+l'], acts: true, icon: 'clock' },
+  width: { label: commandsWords.width, means: commandsWords.setTheWidthOfTheSelectedNodes, keys: ['shift+w'], acts: true, icon: 'width' },
+  'zoom-selection': { label: commonWords.zoom, means: commandsWords.zoomToTheSelection, keys: ['z'], icon: 'zoom-to' },
   'zoom-area': { label: commandsWords.zoomToThisArea, keys: [] },
   // C or N with focus on a container's title line or its controls (3_FE_04 ruling 8): the
   // container's note, a comment as N is for the selection. Those keys mean this only there.
@@ -67,6 +72,10 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
 export const HEADER_COMMANDS: readonly CommandId[] = ['zoom-out', 'fit', 'zoom-in'];
 export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'remove', 'bookmark-all', 'save-for-later', 'width', 'zoom-selection'];
 export const AREA_COMMANDS: readonly CommandId[] = ['zoom-area'];
+/** The selection grid's cells after its label, row by row as it opens upward (selectionGrid flag, maintainer points
+ *  773 and 775): Reset places and Remove beside the label, farthest from the pointer; Save for later, Width, Zoom;
+ *  Move to, Comment (the anchor, under the pointer), Bookmark all. */
+export const SELECTION_GRID: readonly CommandId[] = ['reset-places', 'remove', 'save-for-later', 'width', 'zoom-selection', 'move', 'comment', 'bookmark-all'];
 /** The commands whose keys apply on a focused container's title line, before any other meaning. */
 export const REGION_COMMANDS: readonly CommandId[] = ['container-note'];
 
@@ -99,7 +108,13 @@ export const zoomTitle = (id: CommandId, percent: number): string => commandsWor
 export const barButtons = (ids: readonly CommandId[], readOnly = false, off: readonly CommandId[] = []) =>
   ids.filter((id) => !(readOnly && COMMANDS[id].acts)).map((id) => ({
     id, label: COMMANDS[id].label, ...(COMMANDS[id].means && { title: commandTitle(id) }), ...(COMMANDS[id].primary && { primary: true }), ...(off.includes(id) && { disabled: true }),
+    ...(COMMANDS[id].icon && { icon: COMMANDS[id].icon }), ...(COMMANDS[id].danger && { danger: true }),
   }));
+
+/** The selection grid's cells from the bar's buttons: each in its place, null where its command is absent (a past
+ *  version, the personRemove or cardBookmark flag off), so the grid keeps its shape. */
+export const gridCells = <B extends { id: string }>(buttons: readonly B[]): (B | null)[] =>
+  SELECTION_GRID.map((id) => buttons.find((b) => b.id === id) ?? null);
 
 /** What Bookmark all needs to say (`selectionButtons`): whether it is offered (the cardBookmark flag), and whether every
  *  selected node is bookmarked (it then reads "Remove bookmarks"). */

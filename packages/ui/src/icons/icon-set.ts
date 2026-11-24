@@ -7,7 +7,7 @@
 import type { IconName } from '#format';
 
 /** The icons the node's marks and menus draw (D-099): not names an agent may give a node. */
-export const MARK_ICONS = ['bookmark', 'clock', 'history', 'notes', 'notes-group', 'tick', 'cross', 'tick-cross', 'grip', 'more', 'put-back', 'drawer', 'expand'] as const;
+export const MARK_ICONS = ['bookmark', 'clock', 'history', 'notes', 'notes-group', 'tick', 'cross', 'tick-cross', 'grip', 'more', 'put-back', 'drawer', 'expand', 'move-to', 'width', 'zoom-to', 'trash'] as const;
 export type MarkIcon = (typeof MARK_ICONS)[number];
 
 /** A circle as a path: two arcs from its left point. */
@@ -88,4 +88,10 @@ export const ICONS: Readonly<Record<IconName | MarkIcon, readonly string[]>> = {
   // An app window's controls (FE_08): the drawer for its conversation (a pane on the right), and Open (to the full page).
   drawer: [box(3, 5, 18, 14), 'M15 5v14'],
   expand: ['M14 4h6v6', 'M10 20H4v-6', 'M20 4l-7 7', 'M4 20l7-7'],
+  // The selection grid's commands (selection-grid task, maintainer's ask that every cell has one): Move to (an arrow into
+  // a frame), Width (between two edges), Zoom to the selection (the lens with a plus, so never Search's) and Remove.
+  'move-to': ['M9 5V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-1', 'M3 12h11', 'M11 9l3 3-3 3'],
+  width: ['M4 5v14M20 5v14', 'M7.5 12h9', 'M10 9.5L7.5 12l2.5 2.5', 'M14 9.5l2.5 2.5-2.5 2.5'],
+  'zoom-to': [ring(10.5, 10.5, 6.5), 'M15.5 15.5L20 20', 'M10.5 8v5M8 10.5h5'],
+  trash: ['M4 7h16', 'M9.5 7V4.5h5V7', 'M6 7l1 13h10l1-13', 'M10 11v5.5M14 11v5.5'],
 };
