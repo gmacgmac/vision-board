@@ -49,7 +49,7 @@ browser to see the board. It opens one folder at a time:
 § Running). The person opens their project with "⋯", Open folder…: their home folder or a folder in it, a drive or
 share in `/Volumes`, or a folder in `/Users/Shared` (D-111). An agent works only in the folder the board has open: its
 folder is where its client starts it (or `VB_PROJECT`), and nothing searches upward for a board. Start each agent in the
-project's folder or a folder inside it; anywhere else its calls answer `wrong-folder`. Only one board server may hold a folder's ledger; a second one refuses to start and names who holds it
+project's folder or a folder inside it; in another real folder its calls answer `wrong-folder`. A client that starts it in the filesystem root (Claude Desktop) gives it no folder, so nothing is checked and it works with whatever the board has open; `VB_PROJECT` pins one. Only one board server may hold a folder's ledger; a second one refuses to start and names who holds it
 (`README.md` § Running).
 
 The board opens **read-only**: nothing is written, by the person or an agent, until it is switched to Editing (an

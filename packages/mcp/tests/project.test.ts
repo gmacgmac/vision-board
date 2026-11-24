@@ -54,6 +54,18 @@ test('else the working folder itself: no walk up to a folder with a Vision Board
   assert.equal(projectOf({ VB_PROJECT: '' }, root), root, 'an empty VB_PROJECT is not set');
 });
 
+test('started in a filesystem root (Claude Desktop does) with no VB_PROJECT: no folder, so no header; VB_PROJECT still wins', () => {
+  assert.equal(projectOf({}, '/'), undefined);
+  assert.equal(projectOf({ VB_PROJECT: '' }, '/'), undefined, 'an empty VB_PROJECT is not set');
+  assert.equal(projectOf({ VB_PROJECT: project }, '/'), project);
+  assert.equal(projectOf({ VB_PROJECT: 'projects/a' }, '/'), '/projects/a', 'resolved against the root');
+  assert.equal(projectOf({}, '/home'), '/home', 'one level down is a folder like any other');
+  const win = (env: { VB_PROJECT?: string }, cwd: string) => projectIn(env, cwd, { fs, path: path.win32 });
+  assert.equal(win({}, 'C:\\'), undefined, 'a drive root');
+  assert.equal(win({ VB_PROJECT: 'D:\\work\\a' }, 'C:\\'), 'D:\\work\\a');
+  assert.equal(win({}, 'C:\\work'), 'C:\\work');
+});
+
 test('ledgersIn, the one rule for a folder\'s ledgers: either layout; none in a home with only recent.json, or in a folder that is no ledger', () => {
   const found = (dir: string) => ledgersIn(dir, { fs });
   assert.deepEqual(found(project), { old: true, ledgers: [] });
