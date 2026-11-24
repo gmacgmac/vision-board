@@ -13,7 +13,7 @@
   "states": ["selection", "area", "above", "below", "hidden", "hover", "focus", "pressed", "disabled", "lasso", "pill closed", "pill open", "grid", "grid below"],
   "parts": {
     "vb-sb-count": "'3 selected'; absent on the area bar and with the pill",
-    "vb-sb-pill": "with the pill (selectionPill): a button, '3 selected' and a chevron (vb-sb-chevron), aria-expanded; first in the bar, the buttons after it show only while it is open; in the grid, cell 0, its label centred, muted, at medium weight with no chevron, and a click closes the grid",
+    "vb-sb-pill": "with the pill (selectionPill): a button, '3 selected' and a chevron (vb-sb-chevron), aria-expanded; first in the bar, the buttons after it show only while it is open; in the grid, cell 0, its label centred, muted, at regular weight (one below the closed pill's medium) with no chevron, and a click closes the grid",
     "vb-sb-btn": "one button per command the page passes (data-command), title and aria-label from its `title` when it has one; vb-sb-primary for Comment; Bookmark all turns to Remove bookmarks when every selected node has one; disabled when the command has nothing to act on (Reset places with no moved card selected); in the grid, its row (data-row 1-3), its icon (vb-sb-icon) when the page gives one, vb-sb-danger for Remove, and data-anchor on the cell that opens under the pointer",
     "vb-sb-divider": "the grid only: a thin line after the first row (decoration)",
     "vb-sb-gap": "the grid only: an empty cell where the page has no command for that slot, so the grid keeps its shape"

@@ -2,7 +2,8 @@
 // opens a 3×3 grid with Comment's centre at the click, focused, so a second click comments; Enter opens it with
 // Comment at the pill's centre; near the top it opens downward with its rows reversed, Comment still at the click and
 // Remove still farthest; the arrows move between the cells as drawn; Esc, the label and a press outside close it;
-// labels stay on one line in 24px cells; axe and the labels' APCA in light and dark. Off, the pill spec's bar.
+// labels stay on one line in 24px cells; axe and the labels' APCA in light and dark; the gallery's grid samples. On by
+// default (point 788); off (-selectionGrid), the pill spec's one-row bar.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -32,7 +33,7 @@ async function draw(request: APIRequestContext): Promise<string> {
 }
 
 async function open(page: Page, request: APIRequestContext): Promise<void> {
-  await page.goto(`/?flags=selectionGrid#${await draw(request)}`);
+  await page.goto(`/#${await draw(request)}`);
   await expect(page.locator('vb-node')).toHaveCount(4);
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
@@ -171,5 +172,20 @@ for (const theme of THEMES) {
     expect(lc(await ink('width'), back), 'a label: the reading tier').toBeGreaterThanOrEqual(60);
     expect(lc(await ink('remove'), back), 'Remove\'s red: the label tier').toBeGreaterThanOrEqual(45);
     expect(lc(await pixel(page, await pill(page).evaluate((e) => getComputedStyle(e).color)), back)).toBeGreaterThanOrEqual(60);
+  });
+}
+
+for (const theme of THEMES) {
+  test(`gallery: the grid's samples, open upward and downward, locked, focus and hover; axe (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await page.goto('/gallery.html');
+    const grids = page.locator('section[data-pattern="selection-bar"] vb-selection-bar[data-grid][data-open]');
+    await expect(grids).toHaveCount(4);
+    await expect(grids.nth(0)).toHaveAttribute('data-side', 'above');
+    await expect(grids.nth(1)).toHaveAttribute('data-side', 'below');
+    await expect(grids.nth(2).locator('.vb-sb-gap')).toHaveCount(1);
+    await expect(grids.nth(2).locator('[data-command="comment"]')).toBeDisabled();
+    await expect(grids.nth(3).locator('[data-look="focus"]')).toHaveCount(1);
+    await expectNoAxeViolations(page);
   });
 }

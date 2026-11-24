@@ -110,3 +110,10 @@ Executed 2026-11-24 (Opus 5.5, direct).
   filter with `pages/<name>.spec`; a look server must sit outside the test workers' port block (4866 collided).
 - **Not done**: the full page suite once at the set's close (one run here was the whole suite by accident, before
   the icons: no failure but the gallery shift above). The flag ships off: the maintainer turns it on.
+- **Follow-up (maintainer, point 788 and "merge it with the feature active")**: the closed pill's "N selected" steps
+  down to medium (`--vb-weight-medium`) and the grid's label to regular (one step below it), still muted;
+  `selectionGrid` is on by default. `selection-pill.spec.ts` tests the one-row bar with `-selectionGrid`;
+  `selection-grid.spec.ts` gains the gallery's grid samples (axe, light and dark). Baselines: 78 gallery images, every
+  later section moved a pixel by the grid samples and the pill's narrower label (diffs checked: shift only). Ran: the
+  related unit tests (44), the pill, grid, gallery and the 35 gallery-screenshot specs (451 pass; one APCA read in
+  `update-signals.spec.ts` failed under load and passed 6 of 6 alone), `npm run verify` clean. Full suite: after merge.

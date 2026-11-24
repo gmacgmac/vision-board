@@ -783,7 +783,7 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    a pill ("3 selected" and a chevron, `aria-expanded`): its `vb-toggle` opens it, and
    `board/selection/selection-pill.ts` closes it on a press outside, a wheel pan, Esc (focus back on the
    pill) or the selection clearing. The selection's keys work with it closed. **The grid**
-   (`selectionGrid` flag, off by default; `cortex-tasks/board/2026-11-24_board-ui_selection-grid.md`): the pill opens
+   (`selectionGrid` flag, on by default since 2026-11-24; `cortex-tasks/board/2026-11-24_board-ui_selection-grid.md`): the pill opens
    into three rows of three, its cells in `SELECTION_GRID` order (`commands.ts`), with `icon` and `danger` from
    `COMMANDS`; `placeGrid` puts the anchor cell (Comment) at the click on the pill, or the pill's centre from the
    keyboard, upward when it fits, else downward with its rows reversed, and `gridStep` moves focus between the cells

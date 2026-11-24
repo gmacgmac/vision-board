@@ -286,8 +286,9 @@ export const FLAGS = {
     default: false,
   },
   selectionGrid: {
-    // Off by default (selection-grid task, maintainer points 773 and 775); ?flags=selectionGrid tries it. Needs selectionPill.
-    default: false,
+    // On by default (maintainer, 2026-11-24, point 788 and "merge it with the feature active"; selection-grid task, points 773
+    // and 775); ?flags=-selectionGrid turns it off. Needs selectionPill.
+    default: true,
   },
   followOtherWriters: {
     // On by default (plugin-contract PLAN decision 4): a host whose engine is the folder's only writer turns it off, in the

@@ -3,7 +3,8 @@
 // opens the compact bar, the pill first; a press outside (a card, the background), a pan or Esc
 // (focus back on the pill) closes it, and a new selection starts closed. The selection's keys work
 // with it closed; the Comment hover uses the accent hover fill in both themes; axe light and dark;
-// off, today's bar; the gallery's samples. A board of its own, written by an agent through the API.
+// off, today's bar; the gallery's samples. A board of its own, written by an agent through the API. The open bar here is
+// the one-row bar: the selectionGrid flag (on by default) is turned off; selection-grid.spec.ts tests the grid.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -29,7 +30,7 @@ async function draw(request: APIRequestContext): Promise<string> {
   return board;
 }
 
-async function open(page: Page, request: APIRequestContext, query = ''): Promise<void> {
+async function open(page: Page, request: APIRequestContext, query = '?flags=-selectionGrid'): Promise<void> {
   const board = await draw(request);
   await page.goto(`/${query}#${board}`);
   await expect(page.locator('vb-node')).toHaveCount(3);
@@ -219,7 +220,8 @@ test('flag off (?flags=-selectionPill): today\'s bar, every button on selecting,
 for (const theme of THEMES) {
   test(`gallery: the pill, the open bar, its hover and the area bar; axe; screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html');
+    // The one-row bar's samples: the grid's are selection-grid.spec.ts's.
+    await page.goto('/gallery.html?flags=-selectionGrid');
     const section = page.locator('section[data-pattern="selection-bar"]');
     await expect(section.locator('vb-selection-bar')).toHaveCount(4);
     await expect(section.locator('.vb-sb-pill[aria-expanded="false"]')).toHaveCount(1);
