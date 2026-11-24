@@ -2336,6 +2336,9 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     (`packages/mcp/src/words/info.ts` `toDrawOnABoard`), the plugin's `get_board` and `request_grant` words
     (`apps/board/server/words/plugin-tools.ts` `ruleEdits`) and the standalone skill's § Access state the three tiers in
     one line: make a board, always; add containers to a board marked `held`; write in a container marked `held`; for
-    anything else, `request_grant` first. Held by `bot-tool-rules.test.ts` "request_grant agrees with the read…" (fails
+    anything else, `request_grant` first. The instructions (`toDrawOnABoard`) say it by who made what (point 756): a
+    board you make is yours with every container you add to it; a board or container you did not make is not yours
+    until the person grants it, so `request_grant` first (`board` alone for a board, `board` and `region` for a
+    container); an item that fails `needs-grant` names what to ask for, once. Held by `bot-tool-rules.test.ts` "request_grant agrees with the read…" (fails
     with the old `holders` test) and "reads tell the truth at every tier…" (for the creator, a granted agent, an agent
     with nothing and the one agent, the read's mark, the grant's `held` and the write agree).

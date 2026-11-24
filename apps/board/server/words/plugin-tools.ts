@@ -89,7 +89,7 @@ export const instructionEdits: readonly Omit<DescriptionEdit, 'tool'>[] = [
     to: 'so a retry never writes twice. Open your `vision-board` skill before your first `write_board`: it says how to lay cards out, number them and read the answers. Every block of text you write shows in the person\'s chat, so write none while you work: not what a read showed ("The board is empty"), nor your next step ("I\'ll add a region first"); a turn that changed the board ends "Done."',
   },
   { from: 'You already have an identity on the board, set for you: do not call `join`, and leave `secret` out of every call. ', to: '' },
-  { from: '(the board, or the board and region) and wait for the answer.', to: '(the board, or the board and region), and end your turn: the person answers it on the board.' },
+  { from: '(just `board` for a board; `board` and `region` for a container) and wait for the answer.', to: '(just `board` for a board; `board` and `region` for a container), and end your turn: the person answers it on the board.' },
   {
     from: 'Then call `check_responses` with the `head` you last saw (and `wait` up to 60 seconds) to read what the person did',
     to: 'Your host brings the person\'s answers in their next message, when they press Send, so never hold your turn to wait for them; `check_responses` with the `head` you last saw reads what they did',
