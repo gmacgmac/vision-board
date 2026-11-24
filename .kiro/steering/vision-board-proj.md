@@ -105,8 +105,7 @@ person's comment on one or more cards) · answered (✓ or ✗; a note never ans
   opens `VB_PROJECT`, else the last folder opened from the board, else this repo. One writing server per ledger; any number read it.
 - MCP server `vision-board`: `packages/mcp/README.md` has the client entries (Claude Code, Kiro).
 - Kiro in the chat panel runs as the `vision-board` agent, from this repo's
-  `skills/vision-board/SKILL.md`; `~/.claude/skills/vision-board` and `~/.kiro/skills/vision-board`
-  link to that one copy (D-057).
+  `skills/vision-board/SKILL.md`; `npm run skill:install` copies it to each installed client (D-118).
 - Remote access over Tailscale (D-117): `VB_REMOTE_URL` (`https://<host>.<tailnet>.ts.net:4466`) and
   `VB_REMOTE_USERS` (the tailnet logins let in, comma-separated) go in `.env` at the repo root, git-ignored and
   read by `npm run board` and `npm run board:watch`; never in a committed file. Setup: `apps/board/README.md`

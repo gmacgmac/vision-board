@@ -101,7 +101,7 @@ board's MCP server is set up. Design approved by the maintainer (chat points 739
 - **Docs**: SETUP.md § 5 rewritten (the command, its table, the hooks line; Codex stays a hand-made link);
   `tests/evals/bot/standalone.ts` points at D-118.
 
-### Protected drafts (await the maintainer's yes; not written)
+### Protected changes (written with the maintainer's yes, point 767)
 
 `AGENTS.md`, a new paragraph after its one line:
 
