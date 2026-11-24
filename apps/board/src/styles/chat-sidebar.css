@@ -15,7 +15,7 @@
 .vb-chat-grip::after { content: ''; position: absolute; left: 4px; top: 0; bottom: 0; width: 2px; background: transparent; }
 .vb-chat-grip:is(:hover, :focus-visible, [data-dragging])::after { background: var(--vb-accent); }
 .vb-chat-grip:focus-visible { outline: none; }
-.vb-chat-grip:focus-visible::after { width: var(--vb-focus-w); background: var(--vb-focus); }
+.vb-chat-grip:focus-visible::after { outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus); outline-offset: 0; }
 
 /* The toolbar's Chat button while the sidebar is open: the pressed look. */
 .vb-btn#chat-toggle[aria-expanded='true'] { background: var(--vb-accent-soft); border-color: var(--vb-accent); color: var(--vb-accent); }

@@ -20,6 +20,7 @@ import type { BarActs } from './bar-acts.ts';
 import type { NoteFlow } from '../notes/index.ts';
 import type { Selection } from './selection.ts';
 import { commentOnSelection } from './comment-key.ts';
+import * as commandsWords from '../words/commands.ts';
 import { createPill } from './selection-pill.ts';
 import type { Viewport } from '../canvas/index.ts';
 import { APP_FIT, markGrow, SELECTION_FIT, ZOOM_RULES } from '../canvas/index.ts';
@@ -51,6 +52,8 @@ export interface SelectionFlowDeps {
   readOnly(): boolean;
   /** Why the board can't change now (a locked board, lock-flow.ts): the commands that act show, disabled. */
   paused?(): string | null;
+  /** The ledger opened read-only (readOnlyStart): the grid's acting cells show disabled, its count says why. */
+  ledgerReadOnly?(): boolean;
   /** The bar's Bookmark all, Save for later and Width (FE_06, bar-acts.ts); `bookmark` says whether the cardBookmark flag is
    *  on (off, no Bookmark all). */
   extras: BarActs & { bookmark: boolean };
@@ -147,9 +150,11 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const world = area ?? worldBoxOf(d.layout(), sel);
     covering = d.covered?.() ?? false;
     if (d.notes.open || !world || covering) return void (bar.hidden = true);
-    const off = [...(sel.some(d.pinned) ? [] : ['reset-places' as const]), ...(d.paused?.() ? ACTING_COMMANDS : [])];
-    const buttons = selectionButtons(sel.length, !!d.remove, d.readOnly(), off, { bookmark: d.extras.bookmark, allBookmarked: d.extras.allBookmarked(sel) });
-    const compact = pill ? { open: pill.open, ...(d.grid && !area && { cells: gridCells(buttons) }) } : undefined;
+    // The grid shows the acting commands disabled, with why, where the one-row bar leaves them out (a past version).
+    const why = d.grid ? whyOff() : null;
+    const off = [...(sel.some(d.pinned) ? [] : ['reset-places' as const]), ...(d.paused?.() || why ? ACTING_COMMANDS : [])];
+    const buttons = selectionButtons(sel.length, !!d.remove, d.readOnly() && !d.grid, off, { bookmark: d.extras.bookmark, allBookmarked: d.extras.allBookmarked(sel) });
+    const compact = pill ? { open: pill.open, ...(d.grid && !area && { cells: gridCells(buttons), why }) } : undefined;
     bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact) : barView(sel.length, buttons, compact));
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
     const stage = { w: d.stage.clientWidth, h: d.stage.clientHeight };
@@ -161,6 +166,13 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     if (!grid) { [pillAt, pillSize] = [at, size]; return bar.place(at); }
     const g = grab ?? { x: pillSize.w / 2, y: pillSize.h / 2 };
     bar.place(placeGrid({ x: at.x + g.x, y: at.y + g.y }, size, bar.anchor() ?? { x: size.w / 2, reach: size.h / 2 }, stage));
+  }
+
+  /** Why the selection's acting commands are off now, the end of the grid's count; null when they are on. */
+  function whyOff(): string | null {
+    if (d.readOnly()) return commandsWords.selectionPastVersion;
+    if (d.ledgerReadOnly?.()) return commandsWords.selectionReadOnly;
+    return d.paused?.() ? commandsWords.selectionLocked : null;
   }
 
   /** Each container's title line (its Move grip, title and count) on the stage: the bar never covers one. */

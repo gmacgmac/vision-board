@@ -77,9 +77,10 @@ test('a click, then Z: the title line has focus but draws no ring; focused by th
   await page.keyboard.press('z');
   await expect(frame(page, 'review').locator('.vb-region-head h2')).toBeFocused();
   expect(await ring(page)).toBe('none');
-  // Focus that came by a key (the container finder chosen with the keyboard focuses it the same way).
+  // The ring shows once the person moves by the keyboard (a Tab; base/focus-return.ts): the container finder chosen with
+  // the keyboard focuses the title the same way.
   await page.locator(bid('stage')).focus();
-  await page.keyboard.press('Shift');
+  await page.keyboard.press('Tab');
   await frame(page, 'review').locator('.vb-region-head h2').evaluate((e: HTMLElement) => e.focus());
   expect(await ring(page)).not.toBe('none');
 });

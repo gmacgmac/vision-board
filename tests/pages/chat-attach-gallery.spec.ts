@@ -70,6 +70,7 @@ for (const theme of ['dark', 'light'] as Theme[]) {
     expect(await contrast(page, sample('refused').locator('.chat-chip[data-state="refused"]'), 'borderTopColor')).toBeGreaterThanOrEqual(30);
     // Focus shows on the paperclip and on a remove button, and the row does not clip the ring.
     const clip = sample('idle').locator('button.chat-cmp-attach');
+    await page.keyboard.press('Tab'); // the ring shows only after a Tab (D-119)
     await clip.focus();
     await expect(clip).toHaveCSS('outline-style', 'solid');
     expect(await contrast(page, clip)).toBeGreaterThanOrEqual(30);

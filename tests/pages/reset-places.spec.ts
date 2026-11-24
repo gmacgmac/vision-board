@@ -126,8 +126,9 @@ test('a past version has no Reset places, and R sends nothing there', async ({ p
   const sent: string[] = [];
   page.on('request', (r) => { if (r.method() === 'POST' && /\/act$/.test(r.url())) sent.push(r.url()); });
   await select(page, a);
-  await expect(bar(page).locator('[data-command="comment"]')).toHaveCount(0);
-  await expect(bar(page).locator('[data-command="reset-places"]')).toHaveCount(0);
+  // The grid keeps the acting cells, disabled (selection-grid task): the one-row bar left them out.
+  await expect(bar(page).locator('[data-command="comment"]')).toBeDisabled();
+  await expect(bar(page).locator('[data-command="reset-places"]')).toBeDisabled();
   await page.keyboard.press('r');
   await idle(page);
   expect(sent).toEqual([]);

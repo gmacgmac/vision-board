@@ -151,8 +151,8 @@ test('on a board: the plate\'s Proposal chip opens the proposal box and a second
   await page.keyboard.press('h');
   const history = card(page, d.n[0]!).locator('.vb-card-pop.vb-node-box[data-pop="history"]');
   await expect(history).toBeFocused();
+  // Focus by H after a programmatic focus, no Tab: no ring (D-119); the box draws no focus line of its own.
   await expect(history).toHaveCSS('outline-style', 'none');
-  await expect(history).toHaveCSS('border-top-color', PLATE_RING);
   await expect(history).toHaveCSS('border-top-left-radius', '6px');
 });
 

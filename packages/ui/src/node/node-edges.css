@@ -69,8 +69,7 @@ vb-node[data-edges] .vb-mark[data-paused][aria-disabled='true']:is(:hover, :acti
    mark selects its node only, so no hand. */
 .vb-stage[data-marks='small'] vb-node[data-edges] .vb-mark:is(*, [data-paused]) { cursor: inherit; }
 /* The ring shows only after Tab (point 338): a press focuses a mark without it (a11y.css's pointer-focus rule). */
-vb-node[data-edges] .vb-mark:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
-vb-node[data-edges] .vb-mark[data-pointer-focus]:focus-visible { outline: none; }
+vb-node[data-edges] .vb-mark:focus-visible { outline-offset: var(--vb-focus-offset); }
 vb-node[data-edges] .vb-mark .vb-icon { width: 13px; height: 13px; stroke-width: 2.1; }
 
 /* Top left: the number, the Bookmark toggle (DD-04). Bookmarked it fills with the bookmark colour and grows a

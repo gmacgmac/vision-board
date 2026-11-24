@@ -37,9 +37,9 @@ vb-app-frame[data-frozen] .vb-af-ph { visibility: visible; }
 vb-app-frame[data-frozen] .vb-af-wait { display: none; }
 /* Focus in the panel: the ring says keys now go to the app, not to the board's shortcuts.
    data-focus-in is the element's own mark: a frame of another origin never matches :focus-within.
-   Focus a pointer brought in (data-pointer-focus) draws none, as on a card; the keyboard's always does. */
+   It is the board's one ring (base/a11y.css), placed on the frame: it shows after a Tab into the panel, not a click. */
 vb-app-frame {
-  &[data-focus-in]:not([data-pointer-focus]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+  &[data-focus-in] { outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus); outline-offset: 0; }
 }
 /* An app window's panel idle (data-click-in, not data-active; FIX_03 ruling 2, app-frame-active.ts): the frame takes no
    pointer, so a hover, a wheel or a drag over it is the board's, as over any node. A click into it makes it active; on

@@ -1,6 +1,7 @@
-// The focus ring on what a pointer focused, a card or any control (cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md):
-// a key that moves no focus (a modifier, Z, Esc, Space) draws no ring on it; focus moved by the keyboard (Tab,
-// Shift+Tab, J) shows it again, and a card the keyboard focused keeps it through Z (WCAG 2.4.7).
+// The focus ring only after Tab (maintainer 2026-11-24, base/focus-return.ts; it replaced the pointer-focus mark of
+// cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md): a click and then any other key (a modifier, Z, Esc,
+// Space, J) lights no ring, on a card, a container's title or a grid cell; Tab (or Shift+Tab) does, and the ring stays
+// while the person keeps to the keys (J, Z, the grid's arrows) until their next pointer press. A text box always shows it.
 // Runs on the worker's roadmap board (servers.ts) and writes nothing to it. Focus never moves the board
 // (review-polish ruling 11): those tests draw a board of their own (agent-board.ts).
 import type { APIRequestContext, Page } from '@playwright/test';
@@ -8,13 +9,18 @@ import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, open, reply, write } from './agent-board.ts';
-import { card, openBoard, panBy, scale, stageBox, world } from './board-page.ts';
+import { bar, card, frame, openBoard, panBy, scale, stageBox, world } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 
 /** The focus ring as drawn: the outline style of `el` ('none' when there is no ring). */
 const ringOf = (page: Page, n: number) => card(page, n).evaluate((e) => getComputedStyle(e).outlineStyle);
 const ringOnFocused = (page: Page) => page.evaluate(() => getComputedStyle(document.activeElement!).outlineStyle);
+/** Whether a ring shows on what has focus: on it, or on what wears it for it (a grip's ::after). */
+const ringShown = (page: Page) => page.evaluate(() => {
+  const el = document.activeElement!;
+  return [getComputedStyle(el), getComputedStyle(el, '::after')].some((s) => s.outlineStyle !== 'none' && s.outlineWidth !== '0px');
+});
 
 async function clickCard(page: Page, n: number): Promise<void> {
   await card(page, n).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
@@ -42,7 +48,7 @@ test('a clicked card shows no focus ring when Z, Space or Esc is pressed', async
   }
 });
 
-test('focus moved by the keyboard from a clicked card shows the ring: Tab, Shift+Tab, J', async ({ page }) => {
+test('Tab from a clicked card shows the ring, Shift+Tab and J keep it; a click hides it until the next Tab', async ({ page }) => {
   await openBoard(page);
   await clickAndZoom(page, 12);
   await page.keyboard.press('Tab');
@@ -51,13 +57,48 @@ test('focus moved by the keyboard from a clicked card shows the ring: Tab, Shift
   await page.keyboard.press('Shift+Tab');
   await expect(card(page, 12)).toBeFocused();
   expect(await ringOf(page, 12)).toBe('solid');
-  // Clicked again, then J: the next card gets focus from the keyboard, ring and all.
+  // Clicked again, then Z and J: the keys move focus, but no Tab came since the click, so no ring; a Tab brings it back.
   await clickCard(page, 12);
   await page.keyboard.press('z');
   expect(await ringOf(page, 12)).toBe('none');
   await page.keyboard.press('j');
   await expect(card(page, 12)).not.toBeFocused();
+  expect(await ringOnFocused(page)).toBe('none');
+  await page.keyboard.press('Shift+Tab');
   expect(await ringOnFocused(page)).toBe('solid');
+});
+
+test('a click and then Shift, Alt, Cmd or Ctrl lights no ring on a card, a container\'s title or a grid cell; Tab does', async ({ page }) => {
+  await openBoard(page);
+  const modifiers = async (what: string) => {
+    for (const key of ['Shift', 'Alt', 'Meta', 'Control']) {
+      await page.keyboard.press(key);
+      expect(await ringShown(page), `${what}, ${key}`).toBe(false);
+    }
+    await page.keyboard.press('Tab');
+    expect(await ringShown(page), `${what}, Tab`).toBe(true);
+  };
+  await clickCard(page, 12);
+  await expect(card(page, 12)).toBeFocused();
+  await modifiers('a card');
+  // A container's title: a click inside the container and Z give it focus (the container zoom).
+  const f = (await frame(page, 'review').boundingBox())!;
+  await page.mouse.click(f.x + 4, f.y + f.height - 4);
+  await page.keyboard.press('z');
+  await expect(frame(page, 'review').locator('.vb-region-head h2')).toBeFocused();
+  expect(await ringShown(page)).toBe(false);
+  await modifiers('a container\'s title');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('f');
+  // A grid cell: the grid opens from the pill with Comment focused under the click.
+  await clickCard(page, 12);
+  await card(page, 13).locator('.vb-node-title').click({ position: { x: 4, y: 4 }, modifiers: ['Shift'] });
+  await bar(page).locator('.vb-sb-pill').click();
+  await expect(bar(page).locator('[data-command="comment"]')).toBeFocused();
+  await modifiers('a grid cell');
+  // The grid's arrows after the Tab keep the ring.
+  await page.keyboard.press('ArrowLeft');
+  expect(await ringShown(page)).toBe(true);
 });
 
 test('a clicked button shows no ring when a key is pressed; Tab to the next one shows it', async ({ page }) => {
@@ -81,18 +122,22 @@ test('a clicked dropdown shows no ring when a modifier is pressed', async ({ pag
   expect(await ringOnFocused(page)).toBe('none');
 });
 
-test('a clicked text box keeps its ring', async ({ page }) => {
+test('a clicked text box keeps its ring: it says where typing goes', async ({ page }) => {
   await openBoard(page);
   await page.keyboard.press('t');
   const box = page.locator('chat-composer textarea');
   await box.click();
   await expect(box).toBeFocused();
-  await expect(box).not.toHaveAttribute('data-pointer-focus');
+  await page.keyboard.press('Shift');
+  // The composer draws where typing goes on its box, focus or not by Tab.
+  expect(await page.locator('chat-composer .chat-cmp-box').evaluate((e) => getComputedStyle(e).boxShadow)).not.toBe('none');
 });
 
-test('a card the keyboard focused keeps its ring through Z', async ({ page }) => {
+test('a card reached after a Tab keeps its ring through J, Space and Z', async ({ page }) => {
   await openBoard(page);
   await clickCard(page, 12);
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
   await page.keyboard.press('j');
   const id = await page.evaluate(() => (document.activeElement as HTMLElement).dataset.id);
   expect(id).toBeDefined();

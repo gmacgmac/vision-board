@@ -223,10 +223,11 @@ for (const theme of THEMES) {
     // The one-row bar's samples: the grid's are selection-grid.spec.ts's.
     await page.goto('/gallery.html?flags=-selectionGrid');
     const section = page.locator('section[data-pattern="selection-bar"]');
-    await expect(section.locator('vb-selection-bar')).toHaveCount(4);
-    await expect(section.locator('.vb-sb-pill[aria-expanded="false"]')).toHaveCount(1);
+    // The pill at rest and hovered (quiet until wanted), open, its hover, and the area bar.
+    await expect(section.locator('vb-selection-bar')).toHaveCount(5);
+    await expect(section.locator('.vb-sb-pill[aria-expanded="false"]')).toHaveCount(2);
     await expect(section.locator('.vb-sb-pill[aria-expanded="true"]')).toHaveCount(2);
-    await expect(section.locator('[data-look="hover"]')).toHaveCount(2);
+    await expect(section.locator('[data-look="hover"]')).toHaveCount(3);
     await expectNoAxeViolations(page);
     await expect(section).toHaveScreenshot(`selection-pill-gallery-${theme}.png`);
   });

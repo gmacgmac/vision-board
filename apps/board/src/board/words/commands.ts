@@ -35,3 +35,9 @@ export const bookmarksRemoved = (count: number): string => `${count} bookmark${c
 export const nodesSavedForLater = (count: number): string => `${count} saved for later`;
 export const noneCanBeSavedForLater = 'None of the selected nodes can be saved for later.';
 export const widthSet = (count: number, size: string): string => `${count} node${count === 1 ? '' : 's'} set to ${size}`;
+// ---- selection-flow.ts: why the selection grid's acting cells are off, after its count ("1 selected · locked"); the
+// toolbar's "Locked" and "Past version" and the read-only chip, as the end of a label.
+export const selectionLocked = 'locked';
+export const selectionReadOnly = 'read-only';
+export const selectionPastVersion = 'past version';
+

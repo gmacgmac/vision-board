@@ -5,6 +5,7 @@
 // a lock with "Board is locked" (or "This ledger is read-only") beside it for a moment, then it goes back; a write that
 // failed rings the mark in red with "!" and its words show by themselves for a few seconds, then come back on a hover
 // until the next press. It moves nothing and holds no focus; Esc or a press anywhere hides it. Browser only.
+import { keysOn } from '#ui';
 import { smallMark } from '../canvas/index.ts';
 import type { MarkSide } from './mark-place.ts';
 import { moveTo, placeMark, stageBoxOf } from './mark-place.ts';
@@ -37,8 +38,8 @@ export interface MarkTips {
 /** What a mark's tip says now: a failure's words while it carries one, else its own. */
 const wordsOf = (mark: HTMLElement): string => mark.dataset.failTip ?? mark.dataset.tip ?? '';
 
-/** Whether focus came from the keyboard: `:focus-visible`, and not a pointer's focus (pointer-focus.ts). */
-const byKeyboard = (el: Element): boolean => el.matches(':focus-visible') && !el.closest('[data-pointer-focus]');
+/** Whether focus came from the keyboard: `:focus-visible`, while the ring's switch is on (`#ui` keysOn, after a Tab). */
+const byKeyboard = (el: Element): boolean => el.matches(':focus-visible') && keysOn(el.ownerDocument);
 
 export function createMarkTips(stage: HTMLElement): MarkTips {
   const tip = document.createElement('div');

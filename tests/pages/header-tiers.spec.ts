@@ -177,7 +177,8 @@ test('half: Version and Containers are rows of "⋯" that do what they did; the 
   await expect(fields).toContainText(/Version\s*v\d+/);
   await page.keyboard.press('ArrowDown');
   await expect(fields.locator(bid('containers'))).toBeFocused();
-  await expect(fields.locator(bid('containers')).locator('..')).toHaveCSS('outline-style', 'solid');
+  // Opened by a click: the arrows move focus but light no ring, which shows only after a Tab (D-119).
+  await expect(fields.locator(bid('containers')).locator('..')).toHaveCSS('outline-style', 'none');
   await page.keyboard.press('ArrowDown');
   await expect(page.locator('#theme')).toBeFocused();
   await page.keyboard.press('ArrowUp');

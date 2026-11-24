@@ -80,7 +80,8 @@ test('Remove card on the selection bar: the confirm names the card; it leaves, t
   await card(page, 1).locator('.vb-node-title').click();
   await openSelectionBar(page);
   await expect(bar(page).locator('button[data-command="zoom-selection"]')).toBeVisible();
-  await expect(removeButton(page)).toHaveCount(0);
+  // The grid keeps the cell, disabled, and says why (selection-grid task): the one-row bar left it out.
+  await expect(removeButton(page)).toBeDisabled();
   await page.keyboard.press('Delete');
   await expect(dialog(page)).toBeHidden();
   await page.keyboard.press('Escape');
@@ -209,7 +210,8 @@ test('with the personRemove flag off: no Remove on the bar or in the settings, a
   await card(page, 1).locator('.vb-node-title').click();
   await openSelectionBar(page);
   await expect(bar(page).locator('button[data-command="comment"]')).toBeVisible();
-  await expect(removeButton(page)).toHaveCount(0);
+  // The grid keeps the cell, disabled, and says why (selection-grid task): the one-row bar left it out.
+  await expect(removeButton(page)).toBeDisabled();
   await page.keyboard.press('Delete');
   await expect(dialog(page)).toBeHidden();
   await frame(page, 'q').locator('button.vb-cog').click();

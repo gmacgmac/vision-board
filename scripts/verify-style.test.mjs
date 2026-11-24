@@ -3,7 +3,7 @@
 // the board's stylesheets is scoped and sized by the board's own width (UI_01).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkColours, checkIO, checkPrintSafe, checkScope } from './verify-style.mjs';
+import { checkColours, checkFocusRing, checkIO, checkPrintSafe, checkScope } from './verify-style.mjs';
 
 const levels = (r) => r.map((x) => x.level);
 
@@ -124,4 +124,21 @@ test('print-safe: none, clip-path, a property merely named mask, comments, tests
   assert.deepEqual(checkPrintSafe('packages/ui/src/region/region.css', '/* was mask: linear-gradient(…) */ .vb-a { color: var(--vb-ink); }'), []);
   assert.deepEqual(checkPrintSafe('packages/ui/tests/a.test.ts', "const s = 'mask: url(x)';"), [], 'tests may');
   assert.deepEqual(checkPrintSafe('packages/chat/src/chat.css', '.chat { mask: url(x); }'), [], 'not the board\'s');
+});
+
+test('focus ring: a pattern places the board\'s ring and states its offset; one drawing its own fails', () => {
+  const ok = (rel, css) => assert.deepEqual(levels(checkFocusRing(rel, css)), [], css);
+  const bad = (rel, css) => assert.deepEqual(levels(checkFocusRing(rel, css)), ['fail'], css);
+  ok('packages/ui/src/a/a.css', 'vb-a:focus-visible { outline-offset: var(--vb-focus-offset-card); z-index: 2; }');
+  ok('packages/ui/src/a/a.css', 'vb-a .x:is(:focus-visible, [data-look=\'focus\']) { outline: none; } vb-a .x:focus-visible::after { outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus); }');
+  ok('packages/ui/src/a/a.css', 'vb-a { &[data-focus-in] { outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus); outline-offset: 0; } }');
+  ok('packages/ui/src/a/a.css', 'vb-a:focus-within { box-shadow: var(--vb-shadow-lift); }');
+  ok('apps/board/src/styles/a.css', '.vb-a:focus-visible { outline-color: currentColor; }');
+  bad('packages/ui/src/a/a.css', 'vb-a:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); }');
+  bad('packages/ui/src/a/a.css', 'vb-a { &[data-focus-in] { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus-edge); } }');
+  bad('packages/ui/src/a/a.css', 'vb-a .x[data-look=\'focus\'] { outline-style: solid; }');
+  bad('apps/board/src/styles/a.css', '.vb-a::after { background: var(--vb-focus); }');
+  bad('apps/board/src/shell/A.svelte', '<style>.vb-a:focus { outline: 2px solid var(--vb-accent); }</style>');
+  ok('packages/ui/src/base/a11y.css', '.vb-board { :where(&, & *):focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); } }');
+  ok('apps/board/src/gallery/gallery.css', '[data-look=\'focus\'] { outline: var(--vb-focus-w) solid var(--vb-focus); }');
 });

@@ -13,6 +13,6 @@ vb-region .vb-dir {
 vb-region .vb-dir small { font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--vb-ink-subtle); line-height: 1.3; }
 vb-region .vb-dir:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); border-color: var(--vb-line-strong); }
 vb-region .vb-dir:active, vb-region .vb-dir[data-look='pressed'] { transform: translateY(1px); }
-vb-region .vb-dir:focus-visible:not([data-pointer-focus]), vb-region .vb-dir[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight); }
+vb-region .vb-dir:is(:focus-visible, [data-look='focus']) { outline-offset: var(--vb-focus-offset-tight); }
 vb-region .vb-dir[aria-checked='true'] { border-color: var(--vb-accent-line); background: var(--vb-accent-soft); color: var(--vb-accent-text); }
 vb-region .vb-dir[aria-checked='true'] small { color: inherit; }

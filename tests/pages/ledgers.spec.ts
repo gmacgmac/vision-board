@@ -106,7 +106,8 @@ test('a third: the Ledger row is under the Folder row in "⋯", and its list swi
   await expect(page.locator(bid('folder-chip'))).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(select(page)).toBeFocused();
-  await expect(fields.locator('.vb-ledger-row')).toHaveCSS('outline-style', 'solid');
+  // Opened by a click: the keys move focus but light no ring, which shows only after a Tab (D-119).
+  await expect(fields.locator('.vb-ledger-row')).toHaveCSS('outline-style', 'none');
   await select(page).selectOption('ui');
   await expect(card(page)).toHaveText(['UI card'], { timeout: 10_000 });
   await menuButton(page).click();

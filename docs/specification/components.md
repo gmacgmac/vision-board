@@ -615,12 +615,15 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    The stage is `user-select: none` and a card's content `user-select: text`.
 4. **Keys** (`keys.ts`): Space on a focused card toggles it; Esc closes the note bubble first,
    else clears the selection.
-5. **The focus ring** (`pointer-focus.ts`, `bindPointerFocus`, bound by `wiring.ts`): a card a
-   pointer press focused carries `data-pointer-focus`, and `node.css` draws no ring on it when a
-   key that moves no focus (Z, Esc, Space, the other commands) makes the browser match
-   `:focus-visible`. Focus moved by the keyboard (Tab, Shift+Tab, arrows, J/K, a command that
-   focuses another card) never carries it, so a card the keyboard focused keeps its ring (WCAG
-   2.4.7). **Focus never moves the board** (review polish ruling 11): the same reading, exported as
+5. **The focus ring, only after Tab** (maintainer 2026-11-24; `#ui` `bindFocusMoves` in `base/focus-return.ts`,
+   bound by `bindPointerFocus`, bound by `wiring.ts`; `cortex-tasks/board/2026-11-24_board-ui_selection-grid.md`): the
+   page's root and every `.vb-board` carry `data-vb-keys` from the person's Tab (or Shift+Tab) until their next pointer
+   press, or a click into a frame of another origin; `base/a11y.css` makes `--vb-ring-style` solid then and none
+   otherwise, and every focusable thing the board draws wears it. So a click and then any other key (Shift, Alt, Cmd,
+   Ctrl, Z, J) lights no ring, on a card, a container's title or a grid cell, and the arrows and Enter after a Tab keep
+   it. A text box always shows where typing goes. A pattern only places the ring (its offset, or
+   `outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus)` on what wears it for the focused element); `npm run verify` fails one that draws its own
+   (`scripts/verify-style.mjs` `checkFocusRing`). Proven by `tests/pages/focus-ring.spec.ts`. **Focus never moves the board** (review polish ruling 11): the same reading, exported as
    `lastInput()` (`'pointer'`, `'key'`, or null when no input came since the window last lost focus),
    tells `focus.ts` whether a focus may pan. Only a key's may, and then by `viewport.ts` `revealPan`
    (`Viewport.reveal`): a card that fits comes fully into view when any of it is outside the stage; a
@@ -636,10 +639,8 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    (`cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md`).
    **Focus given back** (FIX_03 ruling 1, point 442): when Esc or a click closes a menu, a box, the image viewer, the
    conversation box or an app's stage, focus returns to what opened it through one helper, `#ui` `returnFocus`
-   (`base/focus-return.ts`; `bindFocusMoves`, bound by `bindPointerFocus`). The ring shows there only if the person
-   was moving by the keyboard (Tab, or the arrows, Home, End, J and K outside a text field); after a pointer press the
-   element carries `data-pointer-focus` until focus leaves it, and `focusVisible: false` is passed where the browser
-   takes it. Proven by `tests/pages/focus-return.spec.ts` and `app-window.spec.ts` ("Open by a click, then Esc").
+   (`base/focus-return.ts`). Its ring shows exactly when the ring's switch is on (after a Tab, until the next pointer
+   press), as everywhere. Proven by `tests/pages/focus-return.spec.ts` and `app-window.spec.ts` ("Open by a click, then Esc").
 
 **Frames and hover boxes (review polish FE_01).** A container's frame and every hover box's border
 (`.vb-tip`) read one token, `--vb-line-contrast`, the Lines scale's next step above `--vb-line-strong`
@@ -1563,9 +1564,8 @@ section is how the board draws one. Two patterns share the work.
    into the panel and on out of it in the page's order; while focus is in the panel the frame
    draws the focus ring, since keys then go to the app and not to the board's shortcuts (the
    element marks it `data-focus-in` from the window's blur and focus: Chromium never matches
-   `:focus-within` on a frame of another origin). Focus a click brought in draws no ring, as on a
-   card (`data-pointer-focus`, from the page's `focusCame` in `pointer-focus.ts`, passed to `wire`;
-   `app-cards.spec.ts` "the panel's focus ring"); Tab into the panel always draws it (WCAG 2.4.7). The board cannot see keys inside the panel, so Esc back to the card needs the panel to send
+   `:focus-within` on a frame of another origin). It wears the board's one ring (`--vb-ring-style`), so a click into the panel
+   draws none and a Tab into it does (`app-cards.spec.ts` "the panel's focus ring"). The board cannot see keys inside the panel, so Esc back to the card needs the panel to send
    `ui/notifications/escape`. The card's name says its app state (", not allowed yet"); the
    placeholder and icons are hidden from assistive tech; `aria-busy` marks a slot or frame still
    loading. A frozen frame is `inert`: no click, no focus, out of the tab order

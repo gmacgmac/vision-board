@@ -10,7 +10,7 @@
 .vb-folder-chip-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vb-folder-chip[data-look='hover'] { background: var(--vb-surface-deep); }
 .vb-folder-chip[data-look='pressed'] { background: var(--vb-surface-deep); transform: translateY(1px); }
-.vb-folder-chip[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+.vb-folder-chip[data-look='focus'] { outline-offset: var(--vb-focus-offset); }
 /* A board of 1000px or less (board.css, data-menu): the smallest supported width, 768px, still shows every
    control whole, so with the chip the picker gives up another 25px (to 125px) and the version and
    containers dropdowns 1em each (to 5em). */

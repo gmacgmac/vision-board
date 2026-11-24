@@ -117,7 +117,9 @@
 /* A row with a select over it: its ring is inset like a row's, and the row answers the select's focus. */
 .vb-menu-item.vb-menu-face[data-look='focus'] { outline-offset: var(--vb-focus-offset-inset); background: var(--vb-surface-sunken); }
 .vb-menu-item {
-  &.vb-menu-face:has(.vb-menu-over:focus-visible:not([data-pointer-focus])) { outline-offset: var(--vb-focus-offset-inset); background: var(--vb-surface-sunken); }
+  &.vb-menu-face:has(.vb-menu-over:focus-visible) { outline-offset: var(--vb-focus-offset-inset); }
+  /* The row answers the select's focus as the ring does: after a Tab only (base/focus-return.ts). */
+  .vb-board[data-vb-keys] &.vb-menu-face:has(.vb-menu-over:focus-visible) { background: var(--vb-surface-sunken); }
 }
 /* A line that only says (no cards to list, boards updated): a row's place and words, no press. */
 .vb-menu-line { display: flex; align-items: center; gap: var(--vb-space-2); min-height: var(--vb-control-h); margin: 0; padding: var(--vb-space-1) var(--vb-space-3);
