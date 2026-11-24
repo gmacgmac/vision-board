@@ -95,7 +95,7 @@ export const instructionEdits: readonly Omit<DescriptionEdit, 'tool'>[] = [
     to: 'Your host brings the person\'s answers in their next message, when they press Send, so never hold your turn to wait for them; `check_responses` with the `head` you last saw reads what they did',
   },
   { from: 'Answer every note with a `reply` or an `append`,', to: 'Answer every note a read marks `owed` with a `reply` or an `append` (one marked `answered` is answered already: never answer it again),' },
-  { from: '`join` and `list_boards` name the folder the board has open (`project`) and, with ledger folders, the ledger open in it (`ledger`): check they are the ones you mean. If a call answers `wrong-folder`, the board has another folder or ledger open: stop, tell the person what it says, and do not call `join`. ', to: '' },
+  { from: '`join` and `list_boards` name the board\'s open folder (`project`) and, with ledger folders, its ledger (`ledger`): check they are the ones you mean. On `wrong-folder`, the board has another folder or ledger open: stop, tell the person what it says, and do not call `join`. ', to: '' },
 ];
 
 // ---- singleAgent (flag on; packages/format/src/flags.ts, plugin.md § The bot). One bot per folder: no sign-up, no
