@@ -84,8 +84,8 @@ test('the gesture gap is about 200 ms: a trackpad\'s momentum that follows the f
 });
 
 // FIX_05 ruling 2 (point 485): on macOS a flick's momentum keeps sending wheel events for one to two seconds, a decaying
-// run. Once the scroller reached its end, that tail is swallowed (it stays the scroller's, so nothing pans), and a fresh
-// push of the fingers, which breaks the decay with a rise, is a new gesture at once, without waiting the tail out.
+// run. Once the scroller reached its end, that tail is swallowed (it stays the scroller's, so nothing pans); the next
+// gesture, after a quiet gap, pans.
 // Streams in the shape a trackpad and a mouse send: one event a frame (16 ms), deltas in px.
 const FRAME = 16;
 /** Fingers speeding up, then a momentum tail decaying by `decay` a frame for `frames` frames; `jitter` (0 to 1) adds
@@ -108,28 +108,67 @@ test('a flick that reaches the scroller\'s end: its momentum tail stays the scro
   assert.ok(out.every((t) => t === bubble), 'the whole flick, tail and all, is the bubble\'s');
 });
 
-test('a fresh push during the momentum tail is a new gesture at once: at the end it pans, without waiting the tail out', () => {
+// The earlier rule (FIX_05) ended a gesture when an event "rose" out of a decaying run, to let a fresh push pan at once.
+// A trackpad's stream rises inside one gesture all the time, so at the end that handed the rest to the board's pan
+// (the maintainer's "it scrolls to the bottom and then continues scrolling the rest of the page"). A gesture now ends
+// only at a quiet gap (bookmark-list-and-scroll-end task): everything it sends after the end is swallowed.
+/** A latch over a box that reaches its end at event `endAt` of `stream` (one a frame); what each event was for. */
+function reachEnd(stream: number[], endAt: number) {
   const bubble = box('bubble', 0);
   let room = true;
   const latch = createWheelLatch(() => (room ? bubble : null));
-  const tail = flick(40).slice(0, 46); // the fingers lifted; the tail is still running (about 2px a frame)
-  feed(latch, tail);
-  room = false; // it reached its end
-  const push = [1, 3, 8, 16, 25, 30];
-  const out = feed(latch, push, tail.length * FRAME);
-  const first = out.indexOf(null);
-  assert.ok(first >= 0 && first <= 2, `the push pans by its third event (${JSON.stringify(out.map((t) => t?.name ?? 'pan'))})`);
-  assert.ok(out.slice(first).every((t) => t === null), 'and keeps panning for the rest of the push');
+  const out = stream.map((d, i) => { if (i === endAt) room = false; return latch.target({ timeStamp: i * FRAME, deltaX: 0, deltaY: d }); });
+  return { bubble, latch, out };
+}
+
+test('fingers that slow down and speed up again while reading: after the end, nothing pans', () => {
+  const { bubble, out } = reachEnd([4, 8, 12, 10, 8, 6, 5, 4, 7, 12, 18, 22, 20, 16, 12, 9, 7, 5, 4, 3], 6);
+  assert.deepEqual(out.map((t) => (t === bubble ? 'bubble' : 'pan')), out.map(() => 'bubble'));
 });
 
-test('a fresh push while the scroller still has room scrolls it, as a new gesture', () => {
-  const bubble = box('bubble', 0);
-  let asked = 0;
-  const latch = createWheelLatch(() => { asked += 1; return bubble; });
-  feed(latch, flick(40).slice(0, 46));
-  const out = feed(latch, [1, 3, 8, 16, 25], 46 * FRAME);
+test('the momentum\'s start after the fingers lift, and two frames coalesced into one, are the same gesture', () => {
+  const tail = flick(60);
+  tail.splice(20, 2, tail[20]! + tail[21]!); // a busy frame: two events arrive as one
+  const lift = [6, 5, 4, 3, 22, 20, 18]; // fingers slowing, then the momentum starts faster
+  const { bubble, out } = reachEnd([...lift, ...tail], 3);
+  assert.ok(out.every((t) => t === bubble), JSON.stringify(out.map((t) => (t === bubble ? 1 : 0))));
+});
+
+test('a zero in the momentum tail, then the tail goes on: still the scroller\'s', () => {
+  const tail = flick(60).slice(30);
+  tail.splice(5, 0, 0, 0);
+  tail.splice(9, 0, 4);
+  const { bubble, out } = reachEnd(tail, 1);
   assert.ok(out.every((t) => t === bubble));
-  assert.equal(asked, 2, 'the push was found afresh');
+});
+
+test('a push with no pause after the tail is swallowed with it; after a pause it is a new gesture and pans', () => {
+  const tail = flick(40).slice(0, 46);
+  const { bubble, latch } = reachEnd(tail, 12);
+  const push = [1, 3, 8, 16, 25, 30];
+  assert.ok(feed(latch, push, tail.length * FRAME).every((t) => t === bubble), 'no pause: the same gesture');
+  const after = (tail.length + push.length - 1) * FRAME + WHEEL_GAP + 1;
+  assert.ok(feed(latch, push, after).every((t) => t === null), 'after a pause: the board pans');
+});
+
+test('a scroller that redraws during its gesture: the gesture never turns into a pan', () => {
+  const bubble = box('bubble', 0);
+  let found: Box | null = bubble;
+  const latch = createWheelLatch(() => found);
+  assert.equal(latch.target({ timeStamp: 0, deltaX: 0, deltaY: 10 }), bubble);
+  bubble.isConnected = false; // its markup was drawn again, at its end
+  found = null;
+  assert.notEqual(latch.target({ timeStamp: 16, deltaX: 0, deltaY: 10 }), null, 'still swallowed');
+  const fresh = box('fresh', 0);
+  found = fresh;
+  assert.equal(latch.target({ timeStamp: 32, deltaX: 0, deltaY: 10 }), fresh, 'a new box under the pointer with room takes it on');
+});
+
+test('a fresh push while the scroller still has room scrolls it', () => {
+  const bubble = box('bubble', 0);
+  const latch = createWheelLatch(() => bubble);
+  feed(latch, flick(40).slice(0, 46));
+  assert.ok(feed(latch, [1, 3, 8, 16, 25], 46 * FRAME).every((t) => t === bubble));
 });
 
 test('a push whose speed wobbles is one gesture: after the end it never turns into a pan', () => {

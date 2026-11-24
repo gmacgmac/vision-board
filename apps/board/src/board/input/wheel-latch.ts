@@ -1,11 +1,15 @@
 // Wheel chaining (wheelChaining flag, cortex-tasks/board/2026-11-05_board-app_wheel-chaining.md): the
 // wheel scrolls what is under the pointer while it can still scroll that way, else the board pans. As
 // browsers latch a scroll, the target a gesture's first moving wheel event finds keeps the whole gesture,
-// until a quiet gap of WHEEL_GAP, so a flick's momentum never spills from a bubble into a pan; the
-// next gesture at the edge pans (FIX_04 ruling 2, point 460, settling tracker M4). An event that does not
-// move (a trackpad's first, or the browser's own zero-delta wheel) decides nothing. A fresh push during a momentum
-// tail is a new gesture at once, read from the stream's decay and rise, never by waiting the tail out (FIX_05, 485). pointer.ts asks
-// `target`: an element (its own scroll: the board leaves the event alone) or null (the board pans).
+// until a quiet gap of WHEEL_GAP, so a flick's momentum never spills from a box on the board into a pan or a
+// zoom: what it sends after the box's end is swallowed, and the next gesture, after a pause, pans (FIX_04
+// ruling 2, point 460; the bookmark-list-and-scroll-end task). Only the gap ends a gesture: a rise in the stream is
+// no sign of a new one (fingers speed up again, the momentum starts faster than the fingers left off, a busy frame
+// coalesces two events), so FIX_05's "a fresh push rises out of the tail" handed the rest of a flick to the pan. A
+// box that is drawn again mid-gesture hands it to what is found then, never to the board. An event that does not
+// move (a trackpad's first, or the browser's own zero-delta wheel) decides nothing. pointer.ts asks `target`: an
+// element (its own scroll: the board pans and zooms nothing) or null (the board pans or zooms). Every box under the
+// stage is served by this one latch (`scrollerIn`).
 
 /** The quiet gap that ends a wheel gesture, in ms: a trackpad's momentum that follows the fingers stays in it (FIX_04). */
 export const WHEEL_GAP = 200;
@@ -41,41 +45,21 @@ export function scrollerOn<E extends ScrollBox>(path: readonly unknown[], stop: 
 /** What the latch reads of a wheel event. */
 export type WheelAt = Pick<WheelEvent, 'timeStamp' | 'deltaX' | 'deltaY'>;
 
-/** Momentum (FIX_05, point 485): a run of this many events, each no faster than the last (`WOBBLE` allowed), is a
- *  decay, the fingers lifted; then an event `RISE` times the slowest of the decay, and `RISE_PX` more, is a fresh push. */
-const DECAY_RUN = 4;
-const WOBBLE = 1.15;
-const RISE = 1.5;
-const RISE_PX = 3;
-
-/** How far one wheel event moves, in its own units. */
-const moveOf = (e: WheelAt): number => Math.hypot(e.deltaX, e.deltaY);
-
-/** The latch: `target(e)` is what this wheel event's gesture scrolls, `find`'s answer at its first event that moves
- *  (found again once that is off the page), or null when the board pans (and while nothing has moved yet). A gesture
- *  ends at a quiet gap of `gap`, or at once when a fresh push breaks a momentum tail's decay with a rise (FIX_05, point
- *  485): a tail's events stay the scroller's (it swallows them at its end), and the push is decided afresh, so at the
- *  end it pans without waiting for the momentum to die out. A mouse's even notches never decay into a rise. */
+/** The latch: `target(e)` is what this wheel event's gesture scrolls, `find`'s answer at its first event that moves,
+ *  or null when the board takes it (and while nothing has moved yet). A gesture ends only at a quiet gap of `gap`.
+ *  When its box leaves the page (drawn again), the gesture is found again, and keeps the old box when nothing is:
+ *  a gesture that began on a box never turns into a pan. */
 export function createWheelLatch<T extends { isConnected: boolean }, E extends WheelAt = WheelAt>(find: (e: E) => T | null,
   gap = WHEEL_GAP): { target(e: E): T | null } {
   /** The gesture's target; undefined until its first event that moves. */
   let on: T | null | undefined;
   let last = -Infinity;
-  /** The last event's move, how many in a row did not speed up, and the slowest since the decay set in (null: none). */
-  let prev = 0;
-  let run = 0;
-  let low: number | null = null;
   return {
     target(e) {
-      const m = moveOf(e);
-      const rise = low !== null && m >= low * RISE && m - low >= RISE_PX;
-      if (e.timeStamp - last > gap || (on && !on.isConnected) || rise) [on, run, low] = [undefined, 0, null];
-      else {
-        run = m <= prev * WOBBLE + 0.5 ? run + 1 : 0;
-        if (run >= DECAY_RUN) low = Math.min(low ?? m, m);
-      }
-      [last, prev] = [e.timeStamp, m];
-      if (on === undefined && m !== 0) on = find(e);
+      if (e.timeStamp - last > gap) on = undefined;
+      else if (on && !on.isConnected) on = find(e) ?? on;
+      last = e.timeStamp;
+      if (on === undefined && (e.deltaX !== 0 || e.deltaY !== 0)) on = find(e);
       return on ?? null;
     },
   };

@@ -8,7 +8,7 @@ import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { card, frame, head, idle, linesAfter } from './board-page.ts';
-import { act, joinAgent, open } from './agent-board.ts';
+import { act, joinAgent, open, tabTo } from './agent-board.ts';
 import type { Agent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
@@ -42,7 +42,11 @@ async function draw(request: APIRequestContext, cards = 3): Promise<Drawn> {
 
 /** The bookmark: a node's number (D-099 4), aria-pressed while bookmarked. */
 const bookmarkOf = (page: Page, n: number) => card(page, n).locator('[data-mark="number"]');
-const chip = (page: Page) => page.locator(bid('bookmarked'));
+/** The "N bookmarked" chip: the face of its list. */
+const chip = (page: Page) => page.locator(`${bid('counts')} .vb-chip[data-tone="bookmark"]`);
+/** Its list: a native select over the chip, as the "N open" chip's (open-list.spec.ts). */
+const list = (page: Page) => page.locator(`select${bid('bookmarked')}`);
+const texts = (page: Page) => list(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
 test.beforeEach(async ({ page }) => { await page.goto('/?setup'); });
 
@@ -92,20 +96,31 @@ test('the bookmark: a click on the number of every card, B, stored by identity, 
   await expect(chip(page)).toHaveText(/1\s*bookmarked/);
 });
 
-test('the chip steps through the bookmarked cards in number order from the focused one, wrapping', async ({ page, request }) => {
+// The list's own keys (open, arrows, Enter, Esc) are the browser's native select, as the open list's: Playwright can't
+// drive a native popup, so this checks what a keyboard and screen reader user meets, and a choice.
+test('the chip lists the bookmarked cards in number order; Tab reaches it, a choice goes there, page-only', async ({ page, request }) => {
   const d = await draw(request);
   for (const n of [3, 1]) await act(page, d, { action: 'bookmark', n });
   await open(page, d, '?vbwork', 4);
-  await chip(page).click();
-  expect(await focusedId(page)).toBe('1');
-  await chip(page).click();
-  expect(await focusedId(page)).toBe('3');
-  await chip(page).click();
-  expect(await focusedId(page)).toBe('1');
-  // Keyboard: the chip is a button in the toolbar.
-  await chip(page).focus();
-  await page.keyboard.press('Enter');
-  expect(await focusedId(page)).toBe('3');
+  await expect(chip(page)).toHaveText(/2\s*bookmarked/);
+  await expect(chip(page)).toHaveAttribute('title', '2 bookmarked: choose one to go to it');
+  const box = page.getByRole('combobox', { name: 'Go to a bookmarked card' });
+  await tabTo(page, box);
+  await expect(box).toBeFocused();
+  expect(await texts(page)).toEqual(['2 bookmarked', '1 · Question 1?', '3 · Question 3?']);
+  await box.selectOption('3');
+  await expect(card(page, 3)).toBeFocused();
+  await expect(box).toHaveValue('');
+  // A choice goes to the card and writes nothing.
+  const before = await head(page);
+  await box.selectOption('1');
+  await expect(card(page, 1)).toBeFocused();
+  await idle(page);
+  expect(await linesAfter(page, before)).toEqual([]);
+  // The last bookmark off: no chip, as before.
+  await bookmarkOf(page, 1).click();
+  await bookmarkOf(page, 3).click();
+  await expect(chip(page)).toHaveCount(0);
 });
 
 test('a bookmark is nothing new to send, and an agent never reads it', async ({ page, request }) => {
@@ -117,6 +132,7 @@ test('a bookmark is nothing new to send, and an agent never reads it', async ({ 
   await expect(bookmarkOf(page, 1)).toHaveAttribute('aria-pressed', 'true');
   await idle(page);
   await expect(page.locator(bid('send'))).toHaveAttribute('aria-disabled', 'true');
+  await expect(chip(page)).toHaveText(/1\s*bookmarked/);
   const r = await request.get(`/api/boards/${d.board}/responses?after=${after}`, { headers: { Authorization: `Bearer ${d.agent.secret}` } });
   expect(r.status(), await r.text()).toBe(200);
   expect((await r.json() as { responses: unknown[] }).responses).toEqual([]);
@@ -255,7 +271,7 @@ test('on a second board the page names every card by its own number: answers, se
 
 const section = (page: Page, feature: string): Locator => page.locator(`section[data-feature="${feature}"]`);
 
-test('gallery: the bookmark section shows a card at rest, bookmarked, and bookmarked before a redraw, then the chip', async ({ page }) => {
+test('gallery: the bookmark section shows a card at rest, bookmarked, and bookmarked before a redraw, then the chip\'s list', async ({ page }) => {
   await page.goto('/gallery.html');
   const s = section(page, 'cardBookmark');
   await expect(s.getByRole('heading', { level: 2, name: 'The bookmark' })).toBeVisible();
@@ -264,7 +280,9 @@ test('gallery: the bookmark section shows a card at rest, bookmarked, and bookma
   expect(await s.locator('[data-mark="number"]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-pressed')))).toEqual(['false', 'true', 'true']);
   await expect(s.locator('vb-node[data-bookmarked]')).toHaveCount(2);
   await expect(s.locator('vb-node').nth(2).locator('.vb-node-body')).toContainText('the flag stays');
-  await expect(s.getByRole('button', { name: /^2 bookmarked$/ })).toBeVisible();
+  // The chip's list at rest, hovered, focused and pressed.
+  await expect(s.getByRole('combobox', { name: 'Go to a bookmarked card' })).toHaveCount(4);
+  await expect(s.locator('[data-sample="bookmarkedList"] .vb-chip[data-tone="bookmark"]').first()).toHaveText(/2\s*bookmarked/);
   await expect(page.goto('/gallery.html?flags=-cardBookmark').then(() => section(page, 'cardBookmark').count())).resolves.toBe(0);
 });
 

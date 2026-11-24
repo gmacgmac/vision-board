@@ -11,6 +11,9 @@ export const showV = (version: number): string => `Show v${version}`;
 export const goToAnOpenCard = 'Go to an open card';
 export const openItemsChooseOneTo = 'Open items: choose one to go to it';
 export const openItems = 'Open items';
+// The "N bookmarked" chip's list (BookmarkedChip.svelte)
+export const goToABookmarkedCard = 'Go to a bookmarked card';
+export const bookmarkedChooseOneTo = (k: number): string => `${k} bookmarked: choose one to go to it`;
 
 // ---- GoToCard.svelte, with search (cardSearch flag)
 export const findACard = 'Find a card';

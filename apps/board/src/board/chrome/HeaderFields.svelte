@@ -30,7 +30,7 @@
   /** The ledger's state is one toggle in the bar (readOnlyToggle): no Edit row here. */
   const editToggle = flag('readOnlyToggle');
 
-  let { tier, facts, choose, idOf, percent, holders, onversion, ongo, onopen, onbookmarked, oncommand, onrevoke }: {
+  let { tier, facts, choose, idOf, percent, holders, onversion, ongo, onopen, oncommand, onrevoke }: {
     tier: HeaderTier;
     facts: ChromeState;
     /** Close the menu, then do this. */
@@ -42,7 +42,6 @@
     onversion: (seq: number | null) => Promise<void>;
     ongo: (container: string) => void;
     onopen: (n: number) => void;
-    onbookmarked: () => void;
     oncommand: (id: CommandId) => void;
     onrevoke: (agent: string) => Promise<void>;
   } = $props();
@@ -84,8 +83,9 @@
       label={toolbarWords.goToNewCard} title={toolbarWords.newAndUpdatedCardsChoose} />
   {/if}
 {/if}
-{#if inMenu(tier, 'bookmarked') && facts.version !== null && facts.bookmarked && !facts.past}
-  <BookmarkedChip id={idOf('bookmarked')} count={facts.bookmarked} row={toolbarWords.bookmarked} onclick={() => choose(onbookmarked)} />
+{#if inMenu(tier, 'bookmarked') && facts.version !== null && facts.bookmarkedCards.length && !facts.past}
+  <BookmarkedChip id={idOf('bookmarked')} cards={facts.bookmarkedCards} row={toolbarWords.bookmarked}
+    onpick={(n) => choose(() => onopen(n))} />
 {/if}
 {#if inMenu(tier, 'zoom')}
   <div class="vb-menu-zoom" role="group" aria-label={commonWords.zoom}>

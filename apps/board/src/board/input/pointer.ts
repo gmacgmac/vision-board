@@ -13,8 +13,8 @@
 // title FE_02, container-drag.ts); held still, a press on the title is the background's click. Over an app window's panel
 // not clicked into, a drag pans, and held still it is the card's click (FIX_03 ruling 2). While a pan, a move or a lasso runs, nothing on
 // the page gets text-selected (U5). Scroll pans (wheelChaining: once what is under the pointer can scroll
-// no further, wheel-latch.ts), Ctrl/Cmd + scroll zooms. Keyboard equivalents live
-// in keys.ts (project rule 5).
+// no further, and only in a gesture that did not start scrolling it, wheel-latch.ts), Ctrl/Cmd + scroll zooms.
+// Keyboard equivalents live in keys.ts (project rule 5).
 import type { Box, Point } from '#layout';
 import type { Viewport } from '../canvas/index.ts';
 import { smallMark, ZOOM_RULES } from '../canvas/index.ts';
@@ -279,12 +279,18 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   };
   window.addEventListener('click', onClick, true);
 
-  const latch = wheelChaining ? createWheelLatch(scrollerIn(stage)) : null;
+  // A gesture that starts with Ctrl/Cmd zooms, wherever it is; one that starts scrolling a box stays that box's.
+  const scroller = scrollerIn(stage);
+  const latch = wheelChaining ? createWheelLatch((e: WheelEvent) => (e.ctrlKey || e.metaKey ? null : scroller(e))) : null;
   stage.addEventListener('wheel', (e) => {
     const zoom = e.ctrlKey || e.metaKey;
-    // wheelChaining: what is under the pointer scrolls while it can, one target a gesture (wheel-latch.ts);
-    // Ctrl/Cmd zooms everywhere. Off: inside the note bubble or a hover tip the wheel is always its own.
-    if (latch ? !zoom && latch.target(e) : (e.target as HTMLElement).closest('vb-note-bubble, .vb-tip')) return;
+    // wheelChaining: what is under the pointer scrolls while it can, one target a gesture (wheel-latch.ts): past its
+    // end the rest of the gesture neither pans nor zooms (Ctrl/Cmd pressed mid-gesture zooms neither board nor page).
+    // Off: inside the note bubble or a hover tip the wheel is always its own.
+    if (latch ? latch.target(e) : (e.target as HTMLElement).closest('vb-note-bubble, .vb-tip')) {
+      if (latch && zoom) e.preventDefault();
+      return;
+    }
     e.preventDefault();
     // A mouse that counts in lines or pages (deltaMode) moves the board as far as one that counts in pixels would.
     const unit = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? WHEEL_LINE : e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? stage.clientHeight : 1;

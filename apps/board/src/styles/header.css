@@ -69,16 +69,17 @@
 @container vb-bar (max-width: 1700px) {
   .vb-counts .vb-chip[data-tone='bookmark'] .vb-chip-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
+/* The bookmarked list's face (BookmarkedChip) counts as a chip that comes and goes, as its button did. */
 @container vb-bar (max-width: 1400px) {
   .vb-toolbar {
-    &[data-tier='full']:has(.vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) :is(.vb-chip-locked, .vb-chip-editing) .vb-chip-word {
+    &[data-tier='full']:has(.vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden]), .vb-counts .vb-chip[data-tone='bookmark']) :is(.vb-chip-locked, .vb-chip-editing) .vb-chip-word {
       position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
     }
   }
 }
 @container vb-bar (max-width: 900px) {
   .vb-toolbar {
-    &[data-tier='half']:has(.vb-chip-locked, .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden])) :is(.vb-counts :is([data-tone='open'], .vb-menu-face), .vb-chip-locked, .vb-chip-editing) .vb-chip-word {
+    &[data-tier='half']:has(.vb-chip-locked, .vb-counts .vb-chip:not([data-tone='open'], .vb-menu-face, [hidden]), .vb-counts .vb-chip[data-tone='bookmark']) :is(.vb-counts :is([data-tone='open'], .vb-menu-face), .vb-chip-locked, .vb-chip-editing) .vb-chip-word {
       position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
     }
   }

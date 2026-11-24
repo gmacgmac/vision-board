@@ -598,18 +598,21 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    reaches a bubble's end stops there and the next gesture pans. **Scroll first, then pan** (FIX_04 ruling 2, point
    460, settling tracker M4): the gesture is decided by its first wheel event that moves (a trackpad can open one with
    an event of no movement, which used to latch the whole gesture to a pan); `WHEEL_GAP` is 200 ms, so momentum that
-   follows the fingers stays in the gesture. **Letting go of a scroll** (FIX_05 ruling 2, point 485): a flick's
-   momentum keeps sending events for one to two seconds; `createWheelLatch` reads it from the stream itself, a run of
-   `DECAY_RUN` events none faster than the last (a little wobble allowed), and a fresh push of the fingers breaks that
-   decay with a rise (`RISE` times the slowest of the run and `RISE_PX` more), which ends the gesture at once: at the
-   end it pans without waiting the tail out, while the tail itself stays the scroller's and moves nothing. A mouse's even
-   notches never rise out of a decay. A scroller at its end hands the rest of the gesture to no one and shows no elastic
+   follows the fingers stays in the gesture. **The end of a scroll** (bookmark-list-and-scroll-end task, replacing FIX_05's rise rule, point 485): only the quiet
+   gap ends a gesture. A flick's momentum keeps sending events for one to two seconds, and a trackpad's stream rises
+   inside one gesture (fingers speed up again, the momentum starts faster than the fingers left off, a busy frame
+   coalesces two events), so reading a rise as a fresh push handed the rest of a flick to the pan. Now every event of a
+   gesture that began on a box is that box's: past its end it neither pans nor zooms (Ctrl/Cmd pressed mid-gesture is
+   swallowed, default prevented), and a push with no pause is swallowed with the tail; the next gesture, after a pause,
+   pans. A gesture that starts with Ctrl/Cmd zooms. A box drawn again mid-gesture (`isConnected`) hands the gesture to
+   what is found then, or keeps it, never to the board. A scroller at its end hands the rest of the gesture to no one and shows no elastic
    bounce (`overscroll-behavior: none` under `.vb-stage`, board.css); a wheel that counts in lines or pages pans (and
    zooms) by 16px a line or a stage's height a page (`pointer.ts` `WHEEL_LINE`). Proven by
    `tests/pages/scroll-before-pan.spec.ts` (the conversation box's thread, the history list, a code block in a node,
-   trackpad-style and mouse-style, Ctrl + wheel zooms, a momentum tail and a fresh push during it, no bounce) and
-   `wheel-latch.test.ts` (recorded-style streams: a flick with its tail, a push during the tail, a wobbling push, a
-   mouse). Off, the wheel inside the note bubble
+   trackpad-style and mouse-style, Ctrl + wheel zooms, a flick to the thread's end whose tail rises, coalesces and
+   meets a push and Ctrl with nothing moving, no bounce) and `wheel-latch.test.ts` (recorded-style streams: a flick
+   with its tail, fingers that slow and speed up, momentum starting faster, a coalesced frame, a zero in the tail, a
+   push with and without a pause, a redraw mid-gesture, a mouse). Off, the wheel inside the note bubble
    or any hover tip (`.vb-tip`) is always its own and never pans. Tests: `wheel-latch.test.ts`,
    `tests/pages/wheel-chaining.spec.ts`.
    The stage is `user-select: none` and a card's content `user-select: text`.

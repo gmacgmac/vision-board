@@ -32,8 +32,6 @@ export interface Board {
   boardEdit: BoardEdit;
   /** Export, import and Save as PDF (board-files.ts). */
   files: BoardFiles;
-  /** The toolbar's "N bookmarked" chip: the next bookmarked card (cardBookmark flag, bookmark-flow.ts). */
-  nextBookmarked(): void;
   /** The "⋯" menu's Skin rows (D-100 2): the open board's skin, the person's `skin` act. */
   setSkin(skin: Skin): void;
   /** The header's Flows menu and the "⋯" menu's Flows rows (D-100 5): the person's `direction` act for the whole board; `auto`

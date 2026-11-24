@@ -2,9 +2,10 @@
 // the open, replied (with the agent), answered and later counts (D-046), the open cards (the "N open"
 // chip's list, openList flag, open-list FE_01), the Reply text, the container finder's rows (containerFinder
 // flag), how many cards the person answered, the grant requests and the board's holders (agentAccess
-// flag) and how many cards are bookmarked (cardBookmark flag, the "N bookmarked" chip). Split out of
+// flag) and the bookmarked cards (cardBookmark flag, the "N bookmarked" chip and its list). Split out of
 // controller.ts (field report batch 2).
 import type { View } from '#format';
+import type { OpenCard } from '#actions';
 import type { BoardLayout } from '#layout';
 import { counts, openCards, replyText } from '#actions';
 import { boardHoldersOf, requestRows } from './access/index.ts';
@@ -15,7 +16,7 @@ import type { Status } from './status.ts';
 export interface ToolbarFlags { finder: boolean; access: boolean }
 
 /** Set the toolbar's numbers for `data` drawn as `view` (the placed view) with `layout`. */
-export function showCounts(status: Status, data: BoardData, view: View, layout: BoardLayout | null, flags: ToolbarFlags, bookmarked: number): void {
+export function showCounts(status: Status, data: BoardData, view: View, layout: BoardLayout | null, flags: ToolbarFlags, bookmarkedCards: OpenCard[]): void {
   const st = data.state;
   const c = counts(view, st);
   status.set({
@@ -26,6 +27,6 @@ export function showCounts(status: Status, data: BoardData, view: View, layout: 
     answered: view.nodes.filter((n) => n.n !== undefined && st.items.has(n.id)).length,
     requests: flags.access ? requestRows(data) : [],
     boardHolders: flags.access ? boardHoldersOf(data) : [],
-    bookmarked,
+    bookmarkedCards,
   });
 }

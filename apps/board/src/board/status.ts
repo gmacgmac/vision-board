@@ -44,8 +44,9 @@ export interface BoardStatus {
   /** The new and updated cards, in board order (`freshCards`): the "N new" chip and its list (freshCards flag). */
   freshCards: FreshCard[];
   answered: number;
-  /** How many cards on the open board the person bookmarked (cardBookmark flag): the toolbar's chip. */
-  bookmarked: number;
+  /** The cards on the open board the person bookmarked, by board number (cardBookmark flag): the toolbar's
+   *  "N bookmarked" chip counts and lists them. Page-only, never an agent's. */
+  bookmarkedCards: OpenCard[];
   /** The board's zoom as a whole percentage (viewport.ts `zoomPercent`). */
   zoom: number;
   /** The board's Reply text (the reply panel). */
@@ -103,7 +104,7 @@ export interface BoardStatus {
 export const initialStatus = (): BoardStatus => ({
   boards: [], archived: [], boardId: '', noBoards: false, boardMarks: {}, title: boardWords.visionBoard, version: null,
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
-  counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, bookmarked: 0,
+  counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, bookmarkedCards: [],
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
   boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, skin: null, direction: null, go: null, files: null, drawn: 0, refits: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
 });
