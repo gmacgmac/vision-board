@@ -117,3 +117,11 @@ Executed 2026-11-24 (Opus 5.5, direct).
   later section moved a pixel by the grid samples and the pill's narrower label (diffs checked: shift only). Ran: the
   related unit tests (44), the pill, grid, gallery and the 35 gallery-screenshot specs (451 pass; one APCA read in
   `update-signals.spec.ts` failed under load and passed 6 of 6 alone), `npm run verify` clean. Full suite: after merge.
+- **After the merge (main eafe1196, full page suite, `VB_TEST_PORT=4766`)**: 13 failed, 1142 passed, 10 did not run
+  (`budgets`, behind the failures). Caused by the grid on by default: `selection-bar-edges.spec.ts` "…before Zoom" and
+  `zoom-and-lasso.spec.ts` "the selection bar: …; centred above the selection" test the one-row bar's order and
+  centring, so they now open it with `-selectionGrid` (the grid's order and placement are `selection-grid.spec.ts`'s);
+  10 gallery screenshots (`big-titles`, `go-to-card`, `key-bubble`, `picker-archive`, `versions`, light and dark)
+  moved a pixel under the taller selection-bar section (diff: one line's antialiasing), baselines updated. Not the
+  grid: `timeline.spec.ts` "a drag anywhere on a dated card…" read the cursor mid-drag under load; it passes 3 of 3 alone
+  here and on main before the grid (5366810c). After: the 13 and the 10 `budgets` tests pass; verify clean.

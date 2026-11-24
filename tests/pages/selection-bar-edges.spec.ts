@@ -18,9 +18,10 @@ async function selectThree(page: Page, n: number[]): Promise<void> {
   await openSelectionBar(page);
 }
 
+// The one-row bar's order (selectionGrid off); the grid's cells and order are selection-grid.spec.ts's.
 test('the bar offers Bookmark all, Save for later and Width before Zoom', async ({ page, request }) => {
   const d = await drawEdges(request);
-  await open(page, d, FLAGS);
+  await open(page, d, `${FLAGS}&flags=-selectionGrid`);
   await selectThree(page, d.n);
   const b = await buttons(page);
   expect(b.slice(-4)).toEqual(['Bookmark all', 'Save for later', 'Width', 'Zoom']);

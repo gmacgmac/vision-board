@@ -101,8 +101,9 @@ test('a lasso that touches no card offers only "Zoom to this area", which zooms 
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(before.k);
 });
 
+// The one-row bar (selectionGrid off): the grid opens under the pointer instead (selection-grid.spec.ts).
 test('the selection bar: N selected, Comment, Move to, Reset places, Remove, Bookmark all, Save for later, Width, Zoom; centred above the selection; follows a pan', async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, { query: '?flags=-selectionGrid' });
   await expect(bar(page)).toBeHidden();
   await clickCard(page, 13);
   await clickCard(page, 14, ['Shift']);
