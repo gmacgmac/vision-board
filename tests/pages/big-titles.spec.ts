@@ -34,8 +34,12 @@ const BODIES = {
 };
 
 async function board(request: Parameters<typeof draw>[0]) {
-  const d = await draw(request, 4, 'big-titles');
-  await write(request, d, Object.values(BODIES).map((body, i) => ({ type: 'node', n: d.n[i], node: { region: 'p', kind: 'question', title: `Card ${i + 1}`, body } })));
+  const d = await draw(request, 5, 'big-titles');
+  await write(request, d, [
+    ...Object.values(BODIES).map((body, i) => ({ type: 'node', n: d.n[i], node: { region: 'p', kind: 'question', title: `Card ${i + 1}`, body } })),
+    // Card 5: a topic with an icon, whose title sits in the head beside the tile (node-edges.ts `heading`).
+    { type: 'node', n: d.n[4], node: { region: 'p', kind: 'topic', icon: 'chart', title: 'Card 5', body: '## Purpose\n\nWhat it does.\n\n### Checks\n\n- Pages' } },
+  ]);
   return d;
 }
 const cardOf = (page: Page, i: number) => page.locator('vb-node').filter({ has: page.locator(`h3:text-is("Card ${i}")`) });
@@ -59,6 +63,12 @@ test('on the board: a structured card\'s title is the card title + 4px and large
   const bold = await weight(cardOf(page, 1).locator('.vb-md-h2'));
   for (const i of [1, 2]) expect(await weight(cardOf(page, i).locator('.vb-node-title')), `card ${i}: bold`).toBe(bold);
   for (const i of [3, 4]) expect(await weight(cardOf(page, i).locator('.vb-node-title')), `card ${i}: medium`).toBeLessThan(bold);
+  // A card with an icon (its title in the head beside the tile) takes the big title too, over its `##`.
+  const icon = await sizes(cardOf(page, 5));
+  expect(await cardOf(page, 5).locator('.vb-node-head .vb-node-title').count(), 'card 5 holds its title in the head').toBe(1);
+  expect(icon.title).toBe(big);
+  expect(Math.max(...icon.headings)).toBeLessThan(icon.title);
+  expect(await weight(cardOf(page, 5).locator('.vb-node-title')), 'card 5: bold').toBe(bold);
   // The big title still fits: it wraps inside its card, never wider.
   for (const i of [1, 2]) expect(await cardOf(page, i).locator('.vb-node-title').evaluate((t) => t.scrollWidth <= t.clientWidth)).toBe(true);
 });
