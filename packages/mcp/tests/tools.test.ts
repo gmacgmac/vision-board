@@ -43,6 +43,12 @@ test('no tool description and no instructions tell an agent about archived board
   for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) assert.doesNotMatch(text, /archiv/i);
 });
 
+test('the instructions stay under 2,000 characters: clients cut them there, and what is cut is lost', () => {
+  for (const [name, text] of [['INSTRUCTIONS', INSTRUCTIONS], ['INSTRUCTIONS_JOINED', INSTRUCTIONS_JOINED]] as const) {
+    assert.ok(text.length < 2000, `${name} is ${text.length} characters`);
+  }
+});
+
 test('the instructions and the board reads tell an agent what `locked` and `readOnly` mean: stop and tell the person (N40 ruling 3, D-085)', () => {
   for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) {
     assert.match(text, /`locked`[^.]*unlocks it[^.]*answers `locked`, so tell the person in one line and stop\./);

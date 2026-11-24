@@ -89,13 +89,13 @@ export const instructionEdits: readonly Omit<DescriptionEdit, 'tool'>[] = [
     to: 'so a retry never writes twice. Open your `vision-board` skill before your first `write_board`: it says how to lay cards out, number them and read the answers. Every block of text you write shows in the person\'s chat, so write none while you work: not what a read showed ("The board is empty"), nor your next step ("I\'ll add a region first"); a turn that changed the board ends "Done."',
   },
   { from: 'You already have an identity on the board, set for you: do not call `join`, and leave `secret` out of every call. ', to: '' },
-  { from: '(the board, or the board and region) and wait for the answer.', to: '(the board, or the board and region), and end your turn: the person answers it on the board.' },
+  { from: 'once, and wait for the answer.', to: 'once, and end your turn: the person answers it on the board.' },
   {
     from: 'Then call `check_responses` with the `head` you last saw (and `wait` up to 60 seconds) to read what the person did',
     to: 'Your host brings the person\'s answers in their next message, when they press Send, so never hold your turn to wait for them; `check_responses` with the `head` you last saw reads what they did',
   },
   { from: 'Answer every note with a `reply` or an `append`,', to: 'Answer every note a read marks `owed` with a `reply` or an `append` (one marked `answered` is answered already: never answer it again),' },
-  { from: '`join` and `list_boards` name the folder the board has open (`project`) and, with ledger folders, the ledger open in it (`ledger`): check they are the ones you mean. If a call answers `wrong-folder`, the board has another folder or ledger open: stop, tell the person what it says, and do not call `join`. ', to: '' },
+  { from: '`join` and `list_boards` name the board\'s open folder (`project`) and, with ledger folders, its ledger (`ledger`): check they are the ones you mean. On `wrong-folder`, the board has another folder or ledger open: stop, tell the person what it says, and do not call `join`. ', to: '' },
 ];
 
 // ---- singleAgent (flag on; packages/format/src/flags.ts, plugin.md § The bot). One bot per folder: no sign-up, no
@@ -114,10 +114,10 @@ export const singleAgentEdits: readonly DescriptionEdit[] = [
     tool: 'request_grant', from: 'Ask the person for write access', until: '',
     to: 'Not needed here: you may write on every board in this folder that is not locked or read-only, the person\'s too. It writes nothing and answers `{ held: true }`, so never call it.',
   },
-  { tool: 'write_board', from: ' On a board you did not create, call `request_grant` first', until: ' Returns one result', to: ' You may write on every board here, one the person made too, without asking; a board with no container yet takes a `region` item before its first card, in the same call.' },
+  { tool: 'write_board', from: ' Write only where your reads mark the board and the container `held`', until: ' Returns one result', to: ' You may write on every board here, one the person made too, without asking; a board with no container yet takes a `region` item before its first card, in the same call.' },
 ];
 
 /** Edits to the instructions (`instructionEdits` made first), only with the flag on: the grant steps go. */
 export const singleAgentInstructionEdits: readonly Omit<DescriptionEdit, 'tool'>[] = [
-  { from: 'Your reads name you (`you`)', until: 'Your host brings', to: '' },
+  { from: 'Before you write, check that your reads', until: 'Your host brings', to: '' },
 ];
