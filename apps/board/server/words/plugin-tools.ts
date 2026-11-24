@@ -49,6 +49,11 @@ export const ruleEdits: readonly DescriptionEdit[] = [
     from: 'Before you write on a board you did not create, call it with just `board`; for another agent\'s container, with `board` and `region`.',
     to: 'Make a board, always; add containers to a board your read marks `held`; write in a container your read marks `held`; for anything else, call this first: with just `board` for a board, with `board` and `region` for a container. A board\'s `held` opens no other agent\'s container. It answers `held` only when that write would pass.',
   },
+  {
+    tool: 'request_grant',
+    from: 'and wait in `check_responses` (`wait` up to 60 seconds; wait again if needed). Once it\'s granted, resend',
+    to: 'and end your turn: your host brings their answer in their next message. Once it\'s granted, resend',
+  },
 ];
 
 /** Why an input a host does not give is refused (`detail`) and its pointer's words, one per tool and input: a test holds
