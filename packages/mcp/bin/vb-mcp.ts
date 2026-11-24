@@ -3,17 +3,19 @@
 // VB_SERVER is the board server (default http://127.0.0.1:4466); VB_AGENT_SECRET, when set, is the
 // secret for every call that does not pass its own. Every call names the folder this server works
 // in (VB_PROJECT, else the working folder its client started it in; nothing searches upward, D-111), so
-// the board refuses it when another folder is open. Logs go to stderr; stdout is the protocol.
+// the board refuses it when another folder is open. Started in a filesystem root (Claude Desktop does), it
+// names none and the board checks none. Logs go to stderr; stdout is the protocol.
 import fs from 'node:fs';
 import path from 'node:path';
 import { DEFAULT_SERVER, ENV } from '#format';
 import { projectOf } from '#client';
 import { createMcpServer, serveStdio } from '../src/index.ts';
+import { servingTheBoardApi } from '../src/words/info.ts';
 
 const base = (process.env[ENV.server] || DEFAULT_SERVER).replace(/\/+$/, '');
 const secret = process.env[ENV.agentSecret] || undefined;
 const project = projectOf(process.env, process.cwd(), { fs, path });
 const log = (line: string) => { process.stderr.write(`${line}\n`); };
 
-log(`vb-mcp: serving the board API at ${base} over stdio, working in ${project}`);
-await serveStdio(createMcpServer({ base, ...(secret && { secret }), project, log }), { input: process.stdin, output: process.stdout });
+log(servingTheBoardApi(base, project));
+await serveStdio(createMcpServer({ base, ...(secret && { secret }), ...(project && { project }), log }), { input: process.stdin, output: process.stdout });

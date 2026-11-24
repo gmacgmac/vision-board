@@ -21,10 +21,13 @@ normally starts it for you. It needs Node 22.18 or newer, and a running board (`
   the client started the server in, exactly: nothing searches upward for a board (D-111). Every call
   sends it as `VB-Project`, and the board accepts its open folder or a folder inside it and refuses
   anything else with `wrong-folder`, so an agent never reads or draws on another project. Start the
-  agent in the project's folder (or one inside it); a client that starts its servers somewhere else
-  needs `"env": { "VB_PROJECT": "/absolute/path/to/project" }` in its entry. The chat panel sets it
-  to the open folder (the project). The ledger is not a setting: the board has one open, and an
-  agent's secret belongs to the ledger it joined (api.md 115a).
+  agent in the project's folder (or one inside it); a client that starts its servers in another folder
+  needs `"env": { "VB_PROJECT": "/absolute/path/to/project" }` in its entry. A client that starts
+  them in the filesystem root (`/`, or a drive root such as `C:\`; Claude Desktop does) has no folder: the
+  server names none, sends no `VB-Project`, and the board checks none, so the agent works with whatever
+  the board has open. `VB_PROJECT` always wins, and pins the folder when you want it checked. The chat
+  panel sets it to the open folder (the project). The ledger is not a setting: the board has one open,
+  and an agent's secret belongs to the ledger it joined (api.md 115a).
 
 ## Adding it to a client
 
@@ -48,7 +51,7 @@ Where it goes (read from each vendor's docs on 2026-11-19; URLs in `SETUP.md` §
 | Client | Where the entry goes | After adding |
 |---|---|---|
 | Claude Code | Terminal, once for every project: `claude mcp add --transport stdio --scope user vision-board -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts` (or `.mcp.json` in one project, same JSON as above). | `claude mcp list` shows `vision-board` as connected. Docs do not say a running session picks it up: start a new session. |
-| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS), the JSON above. Settings, Developer, Edit Config opens it. | Quit the app completely, then open it. |
+| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS), the JSON above. Settings, Developer, Edit Config opens it. A Desktop chat has no folder: it works with whatever the board has open. Add `"env": { "VB_PROJECT": "/absolute/path/to/project" }` to pin one. | Quit the app completely, then open it. |
 | Kiro CLI and Kiro IDE | `~/.kiro/settings/mcp.json` (every project, both read it) or `.kiro/settings/mcp.json` (one project), the JSON above. | None: both reload when the file is saved. |
 | Kiro Crew | Its dashboard: Customize, MCP Servers (Agent Capabilities, Integrations in versions before 0.13.0), add a server by command: `/absolute/path/to/node` with the argument `/absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`, named `vision-board`. Or click Discover & Sync to import from existing MCP config; the docs do not say which files it reads, so do not rely on it for the entry above. | Click Probe All; `vision-board` should complete the handshake. |
 | Codex | `~/.codex/config.toml`: a `[mcp_servers.vision-board]` table with `command = "/absolute/path/to/node"` and `args = ["/absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts"]`. Or `codex mcp add vision-board -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`. | `codex mcp list`. The docs do not say whether the CLI needs a restart; restart it if the server is missing. The Codex desktop app and IDE extension share this config and ask for Restart. |

@@ -11,3 +11,7 @@ export const joinAndListBoardsName = '`join` and `list_boards` name the board\'s
 export const aBoardMarkedLockedList = 'A board marked `locked` (`list_boards`, `get_board`) can\'t be changed until the person unlocks it: every write answers `locked`, so tell the person in one line and stop. A read marked `readOnly` says the same of the whole ledger until the person makes it editable: every write answers `read-only` and writes nothing.';
 export const callJoinOnceAndSave = 'Call `join` once and save your agent id and secret in your durable notes now (a context compaction loses them); pass the secret as `secret` on later calls that take it; reads send it for you. A read marked `joined: false` went as no one and marks nothing `held`.';
 export const youAlreadyHaveAnIdentity = 'You already have an identity on the board, set for you: do not call `join`, and leave `secret` out of every call.';
+
+// ---- bin (the stderr line vb-mcp prints at start)
+export const servingTheBoardApi = (base: string, project: string | undefined): string =>
+  `vb-mcp: serving the board API at ${base} over stdio, ${project ? `working in ${project}` : 'naming no folder (started in a filesystem root; set VB_PROJECT to pin one): the board checks none'}`;

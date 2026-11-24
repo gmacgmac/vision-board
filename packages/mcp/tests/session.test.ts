@@ -7,6 +7,7 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { createClient } from '#client';
 import { OPENAPI_FILE, SCHEMA_DIR } from '#format/files';
@@ -205,6 +206,21 @@ test('no board server: isError, telling the agent to start it with npm run board
     assert.equal('structuredContent' in r, false);
     assert.match(r.content[0].text, /^The board server at http:\/\/127\.0\.0\.1:1 is not answering .*`npm run board`/);
   } finally { await lonely.close(); }
+});
+
+test('started in the filesystem root (Claude Desktop), it names no folder and works with the open board; another folder is still refused; VB_PROJECT pins one', async () => {
+  const at = async (cwd: string, env: Record<string, string> = {}) => {
+    const s = startMcp({ VB_SERVER: board.base, ...env }, cwd);
+    try { return await call(s, 'list_boards', {}); } finally { await s.close(); }
+  };
+  const bare = await at('/');
+  assert.equal(bare.isError, false, JSON.stringify(bare));
+  assert.equal(typeof bare.structuredContent.project, 'string', 'the board answers with its own open folder');
+  const elsewhere = await at(tmpdir());
+  assert.equal(elsewhere.isError, true, 'a real folder that is not the open one is still wrong-folder');
+  assert.match(elsewhere.content[0].text, /open/);
+  assert.equal((await at('/', { VB_PROJECT: board.project })).isError, false, 'VB_PROJECT names the open folder');
+  assert.equal((await at('/', { VB_PROJECT: tmpdir() })).isError, true, 'VB_PROJECT wins over the root: it names another folder, so it is refused');
 });
 
 test('VB_AGENT_SECRET stands in for a missing secret argument', async () => {

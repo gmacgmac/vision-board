@@ -991,7 +991,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     anything else is `bad-request`). Before the caller check, the dispatcher compares its real path
     with the open folder's: the open folder or a folder inside it matches; anything else is
     `wrong-folder` (409), and nothing is read or written. No header, nothing is checked (a host's own
-    MCP server, 162, given no folder; the board's MCP server and `vb` always send one, 116). Person routes and the page never send it and are never checked.
+    MCP server, 162, given no folder; the board's MCP server and `vb` send one unless started in a filesystem root, 116). Person routes and the page never send it and are never checked.
     `openapi.json` `info.version` becomes 1.12.0.
 115. **A secret from a folder left behind.** A Bearer secret the open ledger's agents do not know is
     looked for in the recent folders' `agents.json`, every ledger of each in either layout (hashes
@@ -1013,15 +1013,19 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     ("its reads too…").
 116. **The board's MCP server and the `vb` CLI name their folder** (`packages/client/src/project.ts` `projectOf`), worked out
     once at start: `VB_PROJECT` when set (resolved against the working folder), else the working folder its client
-    started it in, exactly. Nothing searches upward for a board (D-111): the board's tools work on the board the board
+    started it in, exactly, except a filesystem root (`/`, a drive root): a client that starts its servers there (Claude
+    Desktop) has no folder, so with no `VB_PROJECT` `projectOf` returns none, no `VB-Project` is sent and 114 checks
+    nothing (`VB_PROJECT` always wins; the start-up line says it names no folder). Nothing searches upward for a board
+    (D-111): the board's tools work on the board the board
     has open, nowhere else, and 114 accepts the open folder or a folder inside it, so an agent started inside the project
-    works and one started anywhere else is `wrong-folder`. What an agent reads elsewhere is its client's permissions,
+    works and one started in another folder is `wrong-folder`. What an agent reads elsewhere is its client's permissions,
     untouched. A client that does not start it in the project (`SETUP.md`) sets `VB_PROJECT`. `packages/client` sends it
     as `VB-Project` on every call (`project` option). `ledgersIn` stays the one rule for a folder's ledgers, in either
     layout (`.visionboard/ledger.jsonl` or a ledger folder's `.visionboard/<ledger>/ledger.jsonl`; a home folder that
     only keeps `recent.json` has none): the server's `ledgers.ts` (`isOldLayout`, `listLedgers`, `ledgerFoldersIn`) asks
     it (LEDGERS_02-R1). Tests: `packages/mcp/tests/project.test.ts` ("else the working folder itself: no walk up…",
-    "ledgersIn, the one rule…"). The instructions (`INSTRUCTIONS`, `INSTRUCTIONS_JOINED`) and the skill say: on
+    "started in a filesystem root…", "ledgersIn, the one rule…"), `packages/mcp/tests/session.test.ts` ("started in the
+    filesystem root…"). The instructions (`INSTRUCTIONS`, `INSTRUCTIONS_JOINED`) and the skill say: on
     `wrong-folder`, stop, tell the person, and do not join.
 117. **Answers name the open folder.** `join` and `list_boards` answer `project`, the open folder's
     display name (`~/projects/example`), and with ledger folders `ledger`, the open ledger, so an agent
