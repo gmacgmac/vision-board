@@ -31,6 +31,8 @@ vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill) {
   color: var(--vb-ink-strong); font: inherit; font-weight: var(--vb-weight-medium);
 }
 vb-selection-bar .vb-sb-btn:disabled { color: var(--vb-ink-subtle); cursor: not-allowed; }
+/* A disabled primary (Comment on a locked board) looks like every disabled button: muted words, no fill. */
+vb-selection-bar .vb-sb-primary:disabled { border-color: transparent; background: transparent; }
 /* data-look draws a state without the pointer: the gallery's samples only. */
 vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):is(:hover, [data-look='hover']):not(:disabled) { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
 vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):active:not(:disabled) { transform: translateY(1px); }
@@ -48,6 +50,18 @@ vb-selection-bar {
   &[data-pill]:not([data-open]) .vb-sb-pill ~ .vb-sb-btn { display: none; }
 }
 /* Medium, a step below the bar's bold: it names, the buttons act (maintainer point 788). */
+/* The closed pill rests quiet until wanted (maintainer, 2026-11-24): muted words on the board's own canvas (opaque, so a
+   card's mark under it never shows through), no glass, no shadow, a hairline; hovered,
+   focused or open it wears the bar's full look. Its words are the page's muted ink, not the glass's (a skin may draw the
+   glass dark), so they read on the board and on a container: Lc 60 by the token, above the label tier (45). */
+vb-selection-bar {
+  &[data-pill]:not([data-open], :hover, :focus-within, [data-look]):has(> .vb-sb-pill) {
+    --vb-ink-subtle: inherit;
+    border-color: var(--vb-line); background: var(--vb-surface-canvas); box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    & > .vb-sb-pill { color: var(--vb-ink-subtle); }
+  }
+}
 vb-selection-bar .vb-sb-pill { gap: var(--vb-space-2); font-weight: var(--vb-weight-medium); font-variant-numeric: tabular-nums; }
 vb-selection-bar .vb-sb-chevron {
   width: 6px; height: 6px; margin-right: 2px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
@@ -65,6 +79,8 @@ vb-selection-bar {
 vb-selection-bar[data-grid][data-open] {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: max-content;
   & > :is(.vb-sb-btn, .vb-sb-pill) { justify-content: center; gap: var(--vb-space-1); }
+  /* The cells' words at regular weight (maintainer point 792): the grid is read at a glance, not shouted. */
+  & > .vb-sb-btn { font-weight: var(--vb-weight-regular); }
   /* The label: a cell like the others, centred, one weight below the closed pill's (regular under its medium) and
      muted (it names, the others act); a click closes the grid. */
   & .vb-sb-pill { font-weight: var(--vb-weight-regular); color: var(--vb-ink-subtle); }
@@ -84,8 +100,8 @@ vb-selection-bar[data-grid][data-open] {
 }
 /* Remove takes cards away: the glass's cross red (a checked label pair on the glass), kept on hover. */
 vb-selection-bar .vb-sb-danger:not(:disabled) { color: var(--vb-glass-cross); }
-/* The cells' focus ring (a11y.css), drawn inside the cell so its neighbours never cover it. */
-vb-selection-bar[data-grid] :is(.vb-sb-btn, .vb-sb-pill):is(:focus-visible, [data-look='focus']) { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-inset); }
+/* The cells' focus ring (a11y.css: after a Tab only), inside the cell so its neighbours never cover it. */
+vb-selection-bar[data-grid] :is(.vb-sb-btn, .vb-sb-pill):is(:focus-visible, [data-look='focus']) { outline-offset: var(--vb-focus-offset-inset); }
 
 /* The lasso: drawn by the page while a Shift+drag runs, never a pointer target. */
 .vb-lasso {

@@ -285,6 +285,7 @@ for (const query of ['', '?flags=-toolRail']) test(`a narrow line shows the coun
   const chip = q.getByRole('button', { name: '2 agents have access' });
   await expect(chip).toHaveCount(1);
   // Keyboard focus brings the chip out of sight back whole, the title giving way to it (WCAG 2.4.11); its list shows.
+  await page.keyboard.press('Tab'); // moving by the keyboard: the ring shows only after a Tab (base/focus-return.ts)
   await chip.focus();
   await expect(chip).toHaveCSS('outline-style', 'solid');
   expect((await parts(q)).filter((x) => x.part === 'holders').map((x) => x.state)).toEqual(['whole']);

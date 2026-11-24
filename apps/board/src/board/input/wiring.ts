@@ -148,7 +148,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
       if (b) h.pinRegion(region, { x: b.x + dx, y: b.y + dy });
     },
   }, stage.closest<HTMLElement>('.vb-board') ?? undefined, pageWide);
-  // A card a pointer focused draws no focus ring until the keyboard moves focus (pointer-focus.ts).
+  // How the person last moved (pointer-focus.ts), and the focus ring's switch: a ring only after Tab (#ui bindFocusMoves).
   const unbindFocus = bindPointerFocus();
   // The stage's own size, not the window's: the chat sidebar (chatPanel flag) and the strips change it too.
   const sized = new ResizeObserver(() => onResize());

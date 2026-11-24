@@ -35,7 +35,6 @@ import type { ActFields, AppCallRefusal, Io } from '../io.ts';
 import type { PanelKey } from './panel-states.ts';
 import { createPanelStates } from './panel-states.ts';
 import { outside, viewBounds } from '../canvas/index.ts';
-import { focusCame } from '../canvas/index.ts';
 import type { Selection } from '../selection/index.ts';
 import type { Viewport } from '../canvas/index.ts';
 import { isFar } from '../canvas/index.ts';
@@ -199,7 +198,6 @@ export function createAppCards(d: AppCardsDeps): AppCards {
       callTool: (name, args) => call(frame.dataset.app ?? '', name, args),
       saveState: (state) => saved.save(key(), state),
       loadState: () => saved.load(key()),
-      focusCame,
       // An app window's panel is the board's to pan over until the person clicks into it (FIX_03 ruling 2).
       clickIn: true,
       onEscape: () => returnFocus(card),

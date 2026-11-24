@@ -39,9 +39,6 @@ export interface AppFrameWiring {
   loadState?(): Promise<AppStateValue | undefined>;
   /** The board's look now; left out, the frame reads it from the page's tokens (`readLook`). */
   look?(): AppLook;
-  /** How focus came into the panel, asked when it does: 'pointer' draws no ring (a click, as on a
-   * card), anything else, or left out, draws it (the page's `focusCame`, pointer-focus.ts). */
-  focusCame?(): 'pointer' | 'key';
   /** The appFit flag: the height the panel tells (size-changed) is the frame's; left out, the flag's
    * default. Off, the frame is the size the agent drew. */
   fit?: boolean;
@@ -145,14 +142,9 @@ export function defineVbAppFrame(): void {
     /** Focus went into the panel, or came back out (`data-focus-in`, for the ring). Chromium never
      * matches :focus-within on the frame's box while focus is in a frame of another origin, so the
      * window's blur (focus went into a frame: the frame is the page's active element) and focus say.
-     * Coming in by a pointer sets `data-pointer-focus`, which draws no ring, as on a card; the next
-     * time focus comes in by keyboard the ring shows (WCAG 2.4.7). */
+     * Whether its ring shows is the ring's one switch (base/focus-return.ts): a Tab into the panel, not a click. */
     private readonly onFocusMove = (): void => {
-      const was = this.hasAttribute('data-focus-in');
-      const now = this.frame !== undefined && document.activeElement === this.frame;
-      this.toggleAttribute('data-focus-in', now);
-      // The window losing focus with focus already in the panel is not focus coming in again.
-      if (!now || !was) this.toggleAttribute('data-pointer-focus', now && this.wiring?.focusCame?.() === 'pointer');
+      this.toggleAttribute('data-focus-in', this.frame !== undefined && document.activeElement === this.frame);
     };
 
     get loaded(): boolean { return this.frame !== undefined; }
@@ -297,7 +289,6 @@ export function defineVbAppFrame(): void {
       window.removeEventListener('focus', this.onFocusMove);
       document.removeEventListener('focusin', this.onFocusMove);
       this.removeAttribute('data-focus-in');
-      this.removeAttribute('data-pointer-focus');
       clearTimeout(this.timer);
       this.bridge?.close();
       this.bridge = undefined;

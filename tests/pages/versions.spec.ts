@@ -103,7 +103,7 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   await old.focus();
   for (const key of ['a', 'x', 'c', 'Alt+ArrowRight']) await page.keyboard.press(key);
   await expect(page.locator('vb-note-bubble:visible')).toHaveCount(0);
-  await expect(page.locator('vb-selection-bar [data-command="comment"]')).toHaveCount(0);
+  await expect(page.locator('vb-selection-bar [data-command="comment"]')).toBeDisabled();
   // New lines don't redraw the past view; the dropdown's now moves.
   const later = await write(request, a, 'ver-past', [card('A third idea')]);
   await idle(page);

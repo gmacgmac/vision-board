@@ -74,9 +74,11 @@ export const selectedCount = (n: number): string => selectionBarWords.selected(n
 
 /** The bar over a selection of `n` cards, or over an area a lasso drew round no card; with `pill`,
  *  the compact bar, its pill open or closed (the area bar has no pill: it is always open). */
-export function barView(n: number, buttons: BarButton[], pill?: { open: boolean; cells?: readonly GridCell[] }): BarView {
+export function barView(n: number, buttons: BarButton[], pill?: { open: boolean; cells?: readonly GridCell[]; why?: string | null }): BarView {
   if (n === 0) return { name: selectionBarWords.area, count: '', buttons, ...(pill && { pill: true }) };
-  return { name: selectionBarWords.selection(selectedCount(n)), count: selectedCount(n), buttons,
+  // The grid's count also says why its acting cells are off (a locked board, a read-only ledger, a past version).
+  const count = pill?.cells && pill.why ? selectionBarWords.selectedBecause(selectedCount(n), pill.why) : selectedCount(n);
+  return { name: selectionBarWords.selection(count), count, buttons,
     ...(pill && { pill: true, open: pill.open }), ...(pill?.cells && { cells: pill.cells }) };
 }
 

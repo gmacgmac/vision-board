@@ -121,10 +121,10 @@ for (const theme of THEMES) {
   });
 }
 
-/** The frame's box-shadow as drawn: the focus ring is `0 0 0 <focus width> <focus colour>`. */
-const ringOf = (frame: Locator) => frame.evaluate((e) => getComputedStyle(e).boxShadow);
-/** In a window the ring is drawn inside the frame (node-app.css `inset`). */
-const RING = / 0px 0px 0px \d+px( inset)?$/;
+/** The frame's ring as drawn: the board's one ring (--vb-ring), an outline on the frame. */
+const ringOf = (frame: Locator) => frame.evaluate((e) => getComputedStyle(e).outlineStyle);
+/** Shown, the outline is solid (in a window it sits inside the frame, node-app.css). */
+const RING = /^solid$/;
 
 test('the panel\'s focus ring (card-polish FIX_01): a click inside the app draws none; Tab into it does, and again after a click', async ({ page }) => {
   const { board, n: [n] } = await s.draw([CALCULATOR]);

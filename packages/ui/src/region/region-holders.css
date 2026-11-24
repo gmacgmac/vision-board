@@ -15,7 +15,7 @@ vb-region .vb-holders-chip {
 }
 vb-region .vb-holders-icon { width: 14px; height: 14px; }
 vb-region .vb-holders-chip:is(:hover, [data-look='hover'], [aria-expanded='true']) { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
-vb-region .vb-holders-chip[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight); }
+vb-region .vb-holders-chip[data-look='focus'] { outline-offset: var(--vb-focus-offset-tight); }
 
 /* The list: the shared popover surface (base/surface.css, .vb-surface-pop), under the label's left edge; the bridge above it
    keeps the pointer inside while it crosses the gap (WCAG 1.4.13: hoverable). Shown while data-holders-open is on the frame,

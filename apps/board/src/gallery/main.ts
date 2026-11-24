@@ -5,7 +5,7 @@ import '../styles/page.ts';
 import '../styles/chat.ts';
 import './gallery.css';
 import { flagOn } from '#format';
-import { defineAppFrame, defineBoardElements, defineImageView, PATTERNS } from '#ui';
+import { bindFocusMoves, defineAppFrame, defineBoardElements, defineImageView, PATTERNS } from '#ui';
 import type { PatternInfo } from '#ui';
 import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
@@ -195,6 +195,8 @@ function build(): void {
 }
 
 defineBoardElements();
+// The focus ring's switch, as on the board: a ring only after Tab (base/focus-return.ts).
+bindFocusMoves();
 defineChatElements();
 // The two elements the board defines on first use (`#ui` elements.ts), defined before any section draws one.
 void Promise.all([defineAppFrame(), defineImageView()]).then(build);

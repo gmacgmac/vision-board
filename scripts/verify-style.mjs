@@ -205,5 +205,43 @@ export function checkPrintSafe(rel, text) {
   return [fail(rel, `a CSS mask ("${found}"): WebKit's print to PDF paints a mask's image as solid colour, so a host's Save as PDF draws squares; cut the shape with clip-path (D-115)`)];
 }
 
-/** All four, for one file. */
-export const checkStyleAndLayers = (rel, text) => [...checkColours(rel, text), ...checkIO(rel, text), ...checkScope(rel, text), ...checkPrintSafe(rel, text)];
+/** Where the focus ring is drawn: the board's one look and switch (base/a11y.css), the standalone page's (shell.css), and the
+ *  chat panel's colour, which follows the same switch there (chat-host.css). */
+const RING_HOMES = ['packages/ui/src/base/a11y.css', 'apps/board/src/styles/shell.css', 'apps/board/src/styles/chat-host.css'];
+const FOCUS_STATE = /:focus(?![-\w])|:focus-visible|\[data-look=['"]?focus['"]?\]|\[data-focus-in\]/;
+/** What draws a ring; `outline-color` alone only recolours the board's (a toast's own ink on its dark ground). */
+const OUTLINE = /^outline(?:-style|-width)?$/;
+const SVELTE = /^apps\/board\/src\/.*\.svelte$/;
+
+/** One ring, one switch (focus-after-Tab, 2026-11-24): a pattern places the board's ring (`outline: var(--vb-focus-w)
+ *  var(--vb-ring-style) var(--vb-focus)`, or `none` where another element wears it) and states its offset; it never draws its
+ *  own, in an outline, a box line or the ring's colour, which would show after a click and ignore the switch. */
+const PLACED = 'var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus)';
+export function checkFocusRing(rel, text) {
+  if (!(BOARD_SHEETS.test(rel) || SVELTE.test(rel)) || RING_HOMES.includes(rel)) return [];
+  const sheet = SVELTE.test(rel) ? [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n') : text;
+  const css = uncomment(sheet, true);
+  const out = [];
+  const open = [];
+  const look = (decl) => {
+    const m = /^([\w-]+)\s*:\s*([\s\S]+)$/.exec(decl.trim());
+    if (!m) return;
+    const [, prop, value] = [m[0], m[1], m[2].replace(/!important/, '').trim()];
+    const where = open.join(' ').replace(/\s+/g, ' ').slice(0, 80);
+    const placed = prop === 'outline' && value === PLACED;
+    if (/var\(--vb-focus\)/.test(value) && !placed) out.push(fail(rel, `"${where}" draws in the focus ring's colour (${prop}): the ring is base/a11y.css's; place it with outline: ${PLACED}`));
+    else if (open.some((sel) => FOCUS_STATE.test(sel)) && ((OUTLINE.test(prop) && !placed && value !== 'none') || (prop === 'box-shadow' && /--vb-focus/.test(value)))) {
+      out.push(fail(rel, `"${where}" draws its own focus ring (${prop}: ${value.slice(0, 40)}): state only outline-offset, or place the board's ring with outline: ${PLACED} (base/a11y.css)`));
+    }
+  };
+  let start = 0;
+  for (let i = 0; i < css.length; i++) {
+    const c = css[i];
+    if (c === '{') { open.push(css.slice(start, i).trim()); start = i + 1; }
+    else if (c === ';' || c === '}') { look(css.slice(start, i)); start = i + 1; if (c === '}') open.pop(); }
+  }
+  return out;
+}
+
+/** All five, for one file. */
+export const checkStyleAndLayers = (rel, text) => [...checkColours(rel, text), ...checkIO(rel, text), ...checkScope(rel, text), ...checkPrintSafe(rel, text), ...checkFocusRing(rel, text)];

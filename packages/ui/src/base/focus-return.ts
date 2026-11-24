@@ -1,52 +1,53 @@
-// Focus going back (FIX_03, points 338 and 442): when Esc or a click closes a menu, a box, a viewer or an app's stage,
-// focus returns to what opened it, and the ring shows there only if the person was moving by the keyboard (Tab, or the
-// keys that move focus as Tab does). A click and then Esc is not moving by the keyboard, so no ring: the browser alone
-// would draw one, since a script's focus after a key matches :focus-visible. One rule for every place focus returns
-// (`returnFocus`), so no call site decides it. Unbound (a gallery with no page round it), the ring shows as before.
-// Nothing here touches the DOM at import.
+// The focus ring's one switch (focus-after-Tab, maintainer 2026-11-24: "disable that accessibility thing everywhere
+// unless a user presses tab"; it replaces the pointer-focus mark, cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md).
+// The page's root and every board root (`.vb-board`: a host's stylesheet check accepts no `:root[…]` rule) carry
+// `data-vb-keys` from the person's Tab (or Shift+Tab) until their next pointer press, or a
+// click into a frame of another origin (the window's blur with no key down); every other key leaves it as it is, so
+// a click and then Shift, Alt, Cmd, Ctrl or Z lights nothing, and the arrows and Enter after a Tab keep the ring.
+// base/a11y.css turns it into the ring (`--vb-ring-style`); a text box always shows where typing goes. Focus going back
+// when Esc or a click closes a menu, a box, a viewer or an app's stage (FIX_03) needs no rule of its own: the ring
+// shows there exactly when it shows anywhere. Unbound (a gallery with no page round it), no ring shows but the
+// gallery's drawn looks (data-look). Nothing here touches the DOM at import.
 
-/** The mark the board's CSS already draws no ring on (base/a11y.css; the page's pointer-focus.ts sets it too). */
-const NO_RING = 'data-pointer-focus';
-/** Where the ring says where typing goes: always kept. */
-const TYPED = "textarea, [contenteditable], input:not([type='button'], [type='checkbox'], [type='radio'], [type='range'], [type='submit'], [type='file'])";
-/** Keys that move focus as Tab does (a menu's arrows, Home and End, the board's J and K), heard outside a text field. */
-const MOVES = /^(?:Arrow(?:Up|Down|Left|Right)|Home|End|[jkJK])$/;
+/** The root's mark while the person is moving by the keyboard. */
+export const KEYS_ATTR = 'data-vb-keys';
 
-/** How the person last moved: by the keyboard, by a pointer, or not heard yet (null: the ring shows). */
-let moving: 'keys' | 'pointer' | null = null;
+/** Whether the person is moving by the keyboard now: a ring shows on what has focus. */
+export const keysOn = (doc: Document = document): boolean => doc.documentElement.hasAttribute(KEYS_ATTR);
 
-const typed = (t: EventTarget | null): boolean => (t as Element | null)?.matches?.(TYPED) === true;
-
-/** Listen for how the person moves (a key that moves focus, a pointer press); returns the stop. The page binds it once. */
+/** Listen for the Tab that turns the ring on and the press that turns it off; returns the stop. The page binds it once. */
 export function bindFocusMoves(doc: Document = document): () => void {
-  const onKey = (e: KeyboardEvent): void => {
-    if (e.key === 'Tab' || (MOVES.test(e.key) && !e.altKey && !e.metaKey && !e.ctrlKey && !typed(e.target))) moving = 'keys';
+  const win = doc.defaultView;
+  let keyDown = false;
+  const set = (on: boolean): void => {
+    for (const el of [doc.documentElement, ...doc.querySelectorAll('.vb-board')]) el.toggleAttribute(KEYS_ATTR, on);
   };
-  const onPointer = (): void => { moving = 'pointer'; };
+  const onKey = (e: KeyboardEvent): void => {
+    keyDown = true;
+    if (e.key === 'Tab') set(true);
+  };
+  const onKeyUp = (): void => { keyDown = false; };
+  const onPointer = (): void => { keyDown = false; set(false); };
+  // Focus left for a frame of another origin, whose presses this page never hears: by a click unless a key was down.
+  const onBlur = (e: FocusEvent): void => { if (e.target === win && !keyDown) set(false); };
   // Capture: a handler that stops the event further down must not hide it from here.
   doc.addEventListener('keydown', onKey, true);
+  doc.addEventListener('keyup', onKeyUp, true);
   doc.addEventListener('pointerdown', onPointer, true);
+  win?.addEventListener('blur', onBlur);
   return () => {
     doc.removeEventListener('keydown', onKey, true);
+    doc.removeEventListener('keyup', onKeyUp, true);
     doc.removeEventListener('pointerdown', onPointer, true);
-    moving = null;
+    win?.removeEventListener('blur', onBlur);
+    set(false);
   };
 }
 
-/** Whether a focus that returns now shows its ring: the person was moving by the keyboard, or nothing was heard. */
-export const ringOnReturn = (): boolean => moving !== 'pointer';
-
-/** Give focus back to `el` (what opened a closing layer), without scrolling; the ring shows only when `ringOnReturn`.
- *  Without it, `el` carries the no-ring mark until focus leaves it, so a key that moves no focus (Z, Space) lights
- *  nothing either. False when `el` is gone. */
+/** Give focus back to `el` (what opened a closing layer), without scrolling; whether its ring shows is the switch's
+ *  (`keysOn`), as everywhere. False when `el` is gone. */
 export function returnFocus(el: HTMLElement | null | undefined): boolean {
   if (!el?.isConnected) return false;
-  const ring = ringOnReturn();
-  // focusVisible where the browser takes it; the mark is the fallback, and what the board's CSS reads.
-  el.focus({ preventScroll: true, ...(moving !== null && { focusVisible: ring }) } as FocusOptions);
-  if (!ring && !el.matches(TYPED) && el.ownerDocument.activeElement === el) {
-    el.setAttribute(NO_RING, '');
-    el.addEventListener('focusout', () => el.removeAttribute(NO_RING), { once: true });
-  }
+  el.focus({ preventScroll: true });
   return true;
 }

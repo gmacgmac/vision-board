@@ -224,7 +224,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), grid: on('selectionGrid'), focusLeads: on('focusLeads'), // the pill (stage5-follow-ups FE_02)
-    item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
+    item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused, ledgerReadOnly: () => live.readOnly,
     ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }),
     // The bar's Bookmark all, Save for later and Width (bar-acts.ts); it steps aside for a node's open menu or box (FE_06).
     extras: { ...createBarActs({ stage, view: () => S.data!.view, state: () => S.data!.state, run: (steps) => sender.run(steps), moves, toast }), bookmark: bookmarking },

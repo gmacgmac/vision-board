@@ -113,6 +113,8 @@ test('a click on the background or a container clears the selection; Esc closes 
 test('Space toggles the focused card in the selection; the focus ring still shows (selection is not focus)', async ({ page }) => {
   await openBoard(page);
   await zoomToControls(page); // the card's marks at a size to press
+  // Moving by the keyboard (a Tab first: the ring shows only then, base/focus-return.ts).
+  await page.keyboard.press('Tab');
   await card(page, 2).focus();
   await page.keyboard.press('Space');
   expect(await selectedIds(page)).toEqual(['2']);

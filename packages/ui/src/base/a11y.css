@@ -1,10 +1,17 @@
-/* Accessibility recipes (UI_01). The focus ring: one look for everything the board draws that takes
-   focus, in any host; a pattern states only an offset where 2px does not fit (inset rows -2px, small
-   controls 1px, cards 3px). Visually hidden: words for screen readers only. Tokens only. */
+/* Accessibility recipes (UI_01). The focus ring: one look and one switch for everything the board draws that takes
+   focus, in any host. The switch (base/focus-return.ts) marks the board's root data-vb-keys from the person's Tab until
+   their next pointer press, so a click and then any other key (Shift, Alt, Cmd, Ctrl, Z) lights nothing; the switch is
+   --vb-ring-style (solid then, none otherwise), and the ring's width and colour are read where it is drawn, so a skin's
+   focus colour holds. A text box always shows where typing goes. A pattern only places the ring: an offset where 2px
+   does not fit (inset rows -2px, small controls 1px, cards 3px), or `outline: var(--vb-focus-w) var(--vb-ring-style)
+   var(--vb-focus)` on what wears it for the focused element; it never draws its own (verify's focus-ring check). data-look='focus'
+   (the gallery's samples) draws it on. Visually hidden: words for screen readers only. Tokens only. */
 .vb-board {
-  :where(&, & *):focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
-  /* What a pointer press focused draws no ring, whatever key comes next; what the keyboard focused always does (pointer-focus.ts). */
-  :where(&, & *)[data-pointer-focus]:focus-visible { outline: none; }
+  --vb-ring-style: none;
+  &[data-vb-keys] { --vb-ring-style: solid; }
+  :where(&, & *):focus-visible { outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+  :where(&, & *):where(textarea, [contenteditable], input:not([type='button'], [type='checkbox'], [type='radio'], [type='range'], [type='submit'], [type='file'])):focus-visible { outline-style: solid; }
+  :where(&, & *)[data-look='focus'] { --vb-ring-style: solid; outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
 }
 .vb-visually-hidden, vb-region .vb-region-count-words, vb-region .vb-region-fresh-words {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;

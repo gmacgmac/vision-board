@@ -8,7 +8,7 @@ import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, bid } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { bar } from './board-page.ts';
-import { lc, pixel } from './apca.ts';
+import { lc, pixel, resolved } from './apca.ts';
 import type { Rgb } from './apca.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
@@ -189,3 +189,58 @@ for (const theme of THEMES) {
     await expectNoAxeViolations(page);
   });
 }
+
+test('a locked board: the count says why, the acting cells are off and look it, Comment with no fill; the pill keeps focus', async ({ page, request }) => {
+  await open(page, request);
+  const board = page.url().split('#')[1]!;
+  const r = await page.request.post(`/api/boards/${board}/act`, { data: { type: 'act', action: 'lock', board } });
+  expect(r.status(), await r.text()).toBe(201);
+  await expect(page.getByText('Locked', { exact: true }).first()).toBeVisible();
+  await selectTwo(page);
+  await expect(pill(page)).toHaveText('2 selected · locked');
+  await clickPill(page, 0.5);
+  for (const command of ['comment', 'move', 'reset-places', 'remove', 'save-for-later', 'width']) await expect(cell(page, command)).toBeDisabled();
+  await expect(cell(page, 'zoom-selection')).toBeEnabled();
+  await expect(cell(page, 'bookmark-all')).toBeEnabled();
+  const look = (command: string) => cell(page, command).evaluate((e) => ({ bg: getComputedStyle(e).backgroundColor, ink: getComputedStyle(e).color }));
+  expect(await look('comment')).toEqual(await look('move'));
+  expect((await look('comment')).bg).toBe('rgba(0, 0, 0, 0)');
+  await expect(pill(page)).toBeFocused();
+});
+
+test('the cells read at regular weight; the open grid\'s label one step below the closed pill\'s medium', async ({ page, request }) => {
+  await open(page, request);
+  await selectTwo(page);
+  const weight = (l: Locator) => l.evaluate((e) => getComputedStyle(e).fontWeight);
+  expect(await weight(pill(page))).toBe('550');
+  await clickPill(page, 0.5);
+  expect(await weight(cell(page, 'width'))).toBe('400');
+  expect(await weight(cell(page, 'comment'))).toBe('400');
+  expect(await weight(pill(page))).toBe('400');
+});
+
+for (const theme of THEMES) {
+  test(`the closed pill rests quiet: muted words (APCA Lc 45 on the board and on a container), no glass; hovered, the full look (${theme})`, async ({ page, request }) => {
+    await setTheme(page, theme);
+    await open(page, request);
+    await selectTwo(page);
+    // Rest: away from the pill.
+    await page.mouse.move(5, 5);
+    const style = () => bar(page).evaluate((b) => ({ bg: getComputedStyle(b).backgroundColor, shadow: getComputedStyle(b).boxShadow,
+      ink: getComputedStyle(b.querySelector('.vb-sb-pill')!).color }));
+    const rest = await style();
+    expect(rest.bg).toBe(await resolved(page, 'var(--vb-surface-canvas)'));
+    expect(rest.shadow).toBe('none');
+    expect(rest.ink).toBe(await resolved(page, 'var(--vb-ink-subtle)'));
+    for (const ground of ['--vb-surface-canvas', '--vb-surface-region']) {
+      const value = lc(await pixel(page, rest.ink), await pixel(page, await resolved(page, `var(${ground})`)));
+      expect(value, `${ground}: Lc ${value.toFixed(1)}`).toBeGreaterThanOrEqual(45);
+    }
+    await pill(page).hover();
+    const hovered = await style();
+    expect(hovered.bg).not.toBe(rest.bg);
+    expect(hovered.shadow).not.toBe('none');
+    expect(hovered.ink).not.toBe(rest.ink);
+  });
+}
+

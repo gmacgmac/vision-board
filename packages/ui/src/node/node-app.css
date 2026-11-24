@@ -14,7 +14,7 @@ vb-node .vb-app:is([data-app-state='needs-approval'], [data-app-state='changed']
 /* Flush with the border at both sides: square corners, a hairline above and below only. The focus
    ring (keys go to the app) draws over the border's sides. */
 vb-node .vb-app > :is(vb-app-frame, .vb-app-state) { border-radius: 0; box-shadow: 0 -1px 0 var(--vb-line), 0 1px 0 var(--vb-line); }
-vb-node .vb-app > vb-app-frame[data-focus-in]:not([data-pointer-focus]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+vb-node .vb-app > vb-app-frame[data-focus-in] { outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus); outline-offset: 0; }
 vb-node .vb-app-state {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center;
   gap: var(--vb-space-2); padding: var(--vb-space-4); text-align: center; background: var(--vb-surface-sunken);
@@ -133,8 +133,7 @@ vb-node[data-window] .vb-win-btn {
 }
 vb-node[data-window] .vb-win-btn[hidden] { display: none; }
 vb-node[data-window] .vb-win-btn:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
-vb-node[data-window] .vb-win-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
-vb-node[data-window] .vb-win-btn[data-pointer-focus]:focus-visible { outline: none; }
+vb-node[data-window] .vb-win-btn:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 vb-node[data-window] .vb-win-btn-icon { width: 15px; height: 15px; }
 vb-node[data-window] .vb-win-drawer { border-color: var(--vb-line-strong); color: var(--vb-notes-count); }
 vb-node[data-window] .vb-win-drawer[data-notes-mark='none'] { color: var(--vb-notes-quiet); }
@@ -146,7 +145,7 @@ vb-node[data-window] .vb-node-content.vb-win-body { grid-column: 1; min-width: 0
 vb-node[data-window] .vb-app { margin: 0; }
 vb-node[data-window] .vb-app > :is(vb-app-frame, .vb-app-state) { box-shadow: none; border-radius: 0 0 1px 1px; }
 vb-node[data-window][data-drawer-open] .vb-app > :is(vb-app-frame, .vb-app-state) { border-radius: 0 0 0 1px; }
-vb-node[data-window] .vb-app > vb-app-frame[data-focus-in]:not([data-pointer-focus]) { box-shadow: inset 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+vb-node[data-window] .vb-app > vb-app-frame[data-focus-in] { outline: var(--vb-focus-w) var(--vb-ring-style) var(--vb-focus); outline-offset: var(--vb-focus-offset-inset); }
 
 /* The card's look (FIX_02; design/mockups/app-node/app-node-states.html): one 1px border in every state and no ring, never
    the selected node's outer line. The top corners are the skin's node radius, the bottom ones 2px. The state is a line

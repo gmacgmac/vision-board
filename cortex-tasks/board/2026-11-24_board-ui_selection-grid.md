@@ -117,3 +117,28 @@ Executed 2026-11-24 (Opus 5.5, direct).
   later section moved a pixel by the grid samples and the pill's narrower label (diffs checked: shift only). Ran: the
   related unit tests (44), the pill, grid, gallery and the 35 gallery-screenshot specs (451 pass; one APCA read in
   `update-signals.spec.ts` failed under load and passed 6 of 6 alone), `npm run verify` clean. Full suite: after merge.
+- **After the merge (main eafe1196, full page suite, `VB_TEST_PORT=4766`)**: 13 failed, 1142 passed, 10 did not run
+  (`budgets`, behind the failures). Caused by the grid on by default: `selection-bar-edges.spec.ts` "…before Zoom" and
+  `zoom-and-lasso.spec.ts` "the selection bar: …; centred above the selection" test the one-row bar's order and
+  centring, so they now open it with `-selectionGrid` (the grid's order and placement are `selection-grid.spec.ts`'s);
+  10 gallery screenshots (`big-titles`, `go-to-card`, `key-bubble`, `picker-archive`, `versions`, light and dark)
+  moved a pixel under the taller selection-bar section (diff: one line's antialiasing), baselines updated. Not the
+  grid: `timeline.spec.ts` "a drag anywhere on a dated card…" read the cursor mid-drag under load; it passes 3 of 3 alone
+  here and on main before the grid (5366810c). After: the 13 and the 10 `budgets` tests pass; verify clean.
+- **Polish (maintainer, 2026-11-24, points 788-792 and D-119)**: a disabled primary drops its fill (`.vb-sb-primary:disabled`);
+  the grid's count says why its acting cells are off ("· locked", "· read-only", "· past version";
+  `words/commands.ts` `selection*`, `#ui` `selectedBecause`), and in a past version the grid shows them disabled where the
+  one-row bar leaves them out; cells at regular weight; the closed pill rests quiet (muted ink on the canvas, no glass or
+  shadow) and takes the full look on hover, focus or open. Focus ring only after Tab (D-119): `#ui` `bindFocusMoves`
+  marks the root and every `.vb-board` `data-vb-keys` from a Tab to the next pointer press; `base/a11y.css` and
+  `shell.css` draw the ring through `--vb-ring-style`; every pattern's own ring removed (node, edges, app frame and
+  window, region grip, tiles, layout, holders, image view, menu face, chat grip, the node box's focus line); the
+  `data-pointer-focus` mark and `focusCame` are gone; the chat panel follows the switch (`chat-host.css`); the gallery
+  binds it. `npm run verify` `checkFocusRing` fails a pattern drawing its own ring. Plugin budgets (maintainer's yes,
+  2026-11-24): `view/board.js` 210,600 (measured 210,527; over 209,800 on main already before the grid, 209,956),
+  `view/board.css` 27,100 (27,043). Tests changed to the new rules: focus-ring, container-zoom, select, app-cards,
+  container-title, header-tiers, ledgers, command-lens, chat-attach-gallery (ring after Tab), person-remove,
+  reset-places, versions (disabled, not absent); new: grid locked, regular weight, quiet pill with APCA light and dark.
+  Baselines: the pill gallery (the quiet pill and its new hovered sample) and 86 gallery images that moved a pixel
+  under that sample (proven: without it, all but one passed, and that one was a test fix). Ran: those specs, the
+  related unit tests (2,816), verify; the full page suite once (stopped near its end; its failures are the above).

@@ -82,3 +82,12 @@ test('template: the grid only over a selection; without it the one-row bar is as
   const flat = selectionBarTemplate(barView(2, cells.filter((c): c is NonNullable<GridCell> => c !== null), { open: true }));
   assert.doesNotMatch(flat, /data-row|vb-sb-danger|<svg/);
 });
+
+test('barView: the grid\'s count says why its acting cells are off; the one-row bar and no reason say only the count', () => {
+  const v = barView(1, [], { open: true, cells, why: 'locked' });
+  assert.equal(v.count, '1 selected · locked');
+  assert.equal(v.name, 'Selection: 1 selected · locked');
+  assert.equal(barView(1, [], { open: true, cells, why: null }).count, '1 selected');
+  assert.equal(barView(1, [], { open: true, why: 'locked' }).count, '1 selected', 'no grid, no reason');
+});
+

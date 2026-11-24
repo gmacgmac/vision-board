@@ -11,6 +11,7 @@ import type { VbSelectionBarElement } from '#ui';
 import { BAR_GAP, barView, pillGap, placeBar, placeGrid } from '#ui';
 import type { CommandId } from '../board/input/index.ts';
 import { AREA_COMMANDS, barButtons, COMMANDS, gridCells, SELECTION_COMMANDS, selectionButtons } from '../board/input/index.ts';
+import * as commandsWords from '../board/words/commands.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
@@ -26,7 +27,7 @@ interface Sample {
   pill?: { open: boolean };
   /** Every selected node is bookmarked: Bookmark all reads Remove bookmarks. */
   allBookmarked?: boolean;
-  /** Buttons drawn hovered (data-look), by command id. */
+  /** Buttons drawn hovered (data-look), by command id; 'bar' draws the whole bar hovered (the closed pill's full look). */
   hover?: string[];
 }
 
@@ -44,6 +45,8 @@ const TWO = ['Topic: a heading for a group of cards', 'Note: the agent remarks, 
 const PILL_SAMPLES: Sample[] = [
   { caption: 'Two cards selected: the pill, closed. A click or Enter opens the bar', titles: TWO,
     area: false, none: true, stage: { w: 660, h: 200 }, pill: { open: false } },
+  { caption: 'The pill hovered or focused: the bar\'s full look, which it keeps while open. At rest (above) it is quiet: muted words, no glass', titles: TWO,
+    area: false, none: true, stage: { w: 660, h: 200 }, pill: { open: false }, hover: ['bar'] },
   { caption: 'The pill open: the compact bar, the pill first. A press outside, a pan or Esc closes it', titles: TWO,
     area: false, none: true, stage: { w: 660, h: 200 }, pill: { open: true } },
   { caption: 'Hover: Comment (the primary) on its hover fill, Move to on the plain hover', titles: TWO,
@@ -85,7 +88,7 @@ function sample(s: Sample, fx: Fixture, remove: boolean): HTMLElement {
   const view = s.area ? barView(0, barButtons(AREA_COMMANDS), s.pill)
     : barView(cards.length, selectionButtons(cards.length, remove, false, s.none ? ['reset-places'] : [], { bookmark: true, allBookmarked: s.allBookmarked === true }), s.pill);
   bar.show(view);
-  for (const id of s.hover ?? []) bar.querySelector(`[data-command="${id}"]`)?.setAttribute('data-look', 'hover');
+  for (const id of s.hover ?? []) (id === 'bar' ? bar : bar.querySelector(`[data-command="${id}"]`))?.setAttribute('data-look', 'hover');
   stage.append(list, bar);
   requestAnimationFrame(() => {
     // The cards here are at zoom 1, so the bar clears their tabs as the board's does at 1.
@@ -114,7 +117,7 @@ const GRID_SAMPLES: GridSample[] = [
     area: false, none: true, stage: { w: 560, h: 280 }, top: 170, click: 0.3 },
   { caption: 'No room above: the rows reverse and it opens downward, Comment still under the click, Remove still farthest', titles: TWO,
     area: false, none: true, stage: { w: 560, h: 280 }, top: 60, click: 0.7 },
-  { caption: 'A locked board with Remove off: the acting cells disabled, Remove\'s cell empty, the grid keeps its shape', titles: TWO,
+  { caption: 'A locked board with Remove off: the count says why, the acting cells disabled (Comment too, no fill), Remove\'s cell empty, the grid keeps its shape', titles: TWO,
     area: false, none: true, stage: { w: 560, h: 280 }, top: 170, click: 0.5, paused: true, noRemove: true },
   { caption: 'Focus on Comment (the ring inside the cell) and hover on Width', titles: TWO,
     area: false, none: false, stage: { w: 560, h: 280 }, top: 170, click: 0.5, focus: ['comment'], hover: ['width'] },
@@ -130,13 +133,14 @@ function gridSample(s: GridSample, fx: Fixture, remove: boolean): HTMLElement {
   const bar = document.createElement('vb-selection-bar') as VbSelectionBarElement;
   const pointer = el('span', 'g-pointer');
   pointer.setAttribute('aria-hidden', 'true');
-  bar.show(barView(cards.length, buttons, { open: false, cells: gridCells(buttons) }));
+  const why = s.paused ? commandsWords.selectionLocked : null;
+  bar.show(barView(cards.length, buttons, { open: false, cells: gridCells(buttons), why }));
   stage.append(list, bar, pointer);
   requestAnimationFrame(() => {
     // The pill as the board places it, then the grid opened from the click, as the board's flow does.
     const pill = placeBar(selectionBox(stage, cards), { w: bar.offsetWidth, h: bar.offsetHeight }, s.stage, pillGap(1));
     const at = { x: pill.x + bar.offsetWidth * s.click, y: pill.y + bar.offsetHeight / 2 };
-    bar.show(barView(cards.length, buttons, { open: true, cells: gridCells(buttons) }));
+    bar.show(barView(cards.length, buttons, { open: true, cells: gridCells(buttons), why }));
     for (const id of s.hover ?? []) bar.querySelector(`[data-command="${id}"]`)?.setAttribute('data-look', 'hover');
     for (const id of s.focus ?? []) bar.querySelector(`[data-command="${id}"]`)?.setAttribute('data-look', 'focus');
     bar.place(placeGrid(at, { w: bar.offsetWidth, h: bar.offsetHeight }, bar.anchor()!, s.stage));

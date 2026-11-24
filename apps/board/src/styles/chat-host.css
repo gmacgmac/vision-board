@@ -48,3 +48,6 @@
 /* The agent's replies are the size of the person's (maintainer, point 648, 2026-11-20): the markdown inside a message
    bubble reads its text size from the chat's, not the card's 13px (paragraphs, lists, quotes and headings follow it). */
 chat-message .chat-bubble { --vb-md-text: var(--chat-text); }
+/* The chat's focus rings on the page's switch (base/focus-return.ts): only after a Tab, until the next pointer press; its
+   text boxes always show where typing goes. */
+:root:not([data-vb-keys]) :where(chat-feed, chat-approval, chat-composer, chat-header) :focus-visible:not(textarea, input, [contenteditable]) { outline-style: none; }

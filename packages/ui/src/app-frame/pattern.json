@@ -20,8 +20,7 @@
     "data-state": "idle | loading | ready (set by the element)",
     "data-click-in": "wired with clickIn (an app window, FIX_03 ruling 2, app-frame-active.ts): while not data-active and not on stage the frame takes no pointer, so a hover, a wheel or a drag over it is the board's",
     "data-active": "the person clicked into the panel (a press that did not travel): the frame has the pointer and the wheel until a press outside it or Esc (the board's, or the panel's ui/notifications/escape); never set or needed on stage",
-    "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame draws the focus ring unless data-pointer-focus is set",
-    "data-pointer-focus": "focus came into the panel by a click (wire's focusCame said 'pointer'): no ring, as on a card; cleared when focus leaves, and the next focus by keyboard draws the ring",
+    "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame wears the board's one ring (--vb-ring-style), so it shows after a Tab into the panel, not a click",
     "data-frozen": "the frozen state (set by freeze(), cleared by thaw() and unload()): the panel keeps running and what it holds, its frame not painted (visibility: hidden) and the placeholder shown without 'Loading…', whatever data-state says",
     "inert": "set with data-frozen: no click, no focus and out of the tab order while frozen",
     "aria-busy": "true while loading (set by the element)"
