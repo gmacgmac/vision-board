@@ -44,7 +44,7 @@ function bar(fx: Fixture, form: HeaderTier, menuOpen = false): HTMLElement {
     target: frame,
     props: {
       onboard: none, onversion: () => Promise.resolve(), ongo: none, onopen: none, oncommand: none, onhide: none,
-      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onbookmarked: none, onarchive: none, onlock: none,
+      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onarchive: none, onlock: none,
       placement: 'gallery', form, facts: facts(), holders: fx.boardAgents, ...(menuOpen && { menuOpen: true }),
     },
   });

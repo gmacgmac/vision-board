@@ -1,7 +1,7 @@
 // Scroll first, then pan (FIX_04 ruling 2, point 460; settles tracker M4): over anything that can scroll in the wheel's
 // direction (the conversation box's thread, the history list, a code block in a node's body) the wheel scrolls it and
-// the board does not move; a flick that carries it to its end stops there, the rest of that gesture never pans; only a
-// new gesture that starts at the end pans. Ctrl or Cmd with the wheel always zooms. Trackpad-style small deltas and
+// the board does not move; a flick that carries it to its end stops there, the rest of that gesture never pans or zooms;
+// only a new gesture, after a pause, that starts at the end pans. Ctrl or Cmd with the wheel always zooms. Trackpad-style small deltas and
 // mouse-style large ones. On a board of its own.
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
@@ -123,8 +123,11 @@ test.describe('scroll first, then pan', () => {
     expect(y0 - (await ty()), 'three lines down').toBeGreaterThanOrEqual(40);
   });
 
-  // FIX_05 ruling 2 (point 485): a flick's momentum tail after the end is swallowed; a fresh push during it pans at once.
-  test('a flick with a momentum tail stops at the end, and a fresh push during the tail pans at once', async ({ page, request }) => {
+  // The maintainer's "that momentum must basically be killed by the time it gets to the bottom" (bookmark-list-and-scroll-end
+  // task): a gesture that starts in the thread is the thread's until a quiet gap. FIX_05 ended it when the stream rose,
+  // which a real trackpad does mid-gesture (fingers speed up, momentum starts faster, a busy frame coalesces two
+  // events), and the rest panned. Real wheel events, one a frame: the thread scrolls itself.
+  test('a flick that reaches the end of the thread stops there: the rest of the gesture, rises and Ctrl too, moves nothing', async ({ page, request }) => {
     const d = await drawEdges(request);
     const q = d.n[0]!;
     await open(page, d, FLAGS);
@@ -133,14 +136,27 @@ test.describe('scroll first, then pan', () => {
     const at = await middle(thread);
     await page.mouse.move(at.x, at.y);
     const before = await world(page);
-    // The fingers, then a tail decaying 7% a frame: it carries the thread to its end and keeps going.
-    const tail = Array.from({ length: 60 }, (_, i) => Math.max(1, Math.round(160 * 0.93 ** i)));
-    for (const dy of [20, 60, 120, 160, ...tail]) { await page.mouse.wheel(0, dy); await page.waitForTimeout(16); }
+    const k = await scale(page);
+    const wheel = async (dys: number[]) => { for (const dy of dys) { await page.mouse.wheel(0, dy); await page.waitForTimeout(16); } };
+    // Fingers that slow and speed up, then a tail decaying 7% a frame that starts faster than they left off.
+    await wheel([20, 60, 40, 20, 10, 60, 120, 160]);
+    const tail = Array.from({ length: 50 }, (_, i) => Math.max(1, Math.round(160 * 0.93 ** i)));
+    tail.splice(20, 2, tail[20]! + tail[21]!); // a busy frame: two events as one
+    await wheel(tail);
     expect(await top(thread)).toBeGreaterThanOrEqual((await end(thread)) - 1);
     expect(await world(page), 'the tail at the end moves nothing').toBe(before);
-    // A fresh push, with no pause: it rises out of the tail and pans the board straight away.
-    for (const dy of [2, 6, 14, 24]) { await page.mouse.wheel(0, dy); await page.waitForTimeout(16); }
-    expect(await world(page), 'the push pans without waiting the tail out').not.toBe(before);
+    // Still the same gesture: a push with no pause, and Ctrl held.
+    await wheel([2, 6, 14, 24, 30]);
+    await page.keyboard.down('Control');
+    await wheel([-20, -20]);
+    await page.keyboard.up('Control');
+    await wheel([30, 30]);
+    expect(await world(page), 'nothing in the gesture pans').toBe(before);
+    expect(await scale(page), 'or zooms').toBe(k);
+    // After a pause, a new gesture at the end pans.
+    await page.waitForTimeout(GAP);
+    await wheel([12, 12, 12]);
+    await expect.poll(() => world(page), { message: 'the next gesture pans' }).not.toBe(before);
   });
 
   test('a board scroller has no elastic bounce: its overscroll does nothing', async ({ page, request }) => {

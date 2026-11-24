@@ -14,7 +14,7 @@
      flag, the page's Chat button (`BoardPageParts.chat`), and with the toolbarMenu flag the "⋯" menu
      (ToolbarMenu) holding Theme, Hide answered and Reply.
      With the cardBookmark flag the counts end in "N bookmarked" (board/cards/bookmark-flow.ts) while any card is bookmarked
-     and no past version shows: a button that focuses the next bookmarked card, wrapping.
+     and no past version shows: a list like "N open" (OpenChip) of the bookmarked cards.
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
      BOARD_ACTIONS): each opens BoardDialog; both are off while a past version shows. With the archiveBoard
      flag it ends with "Archived (N)…" while any board is archived (N39 ruling 6), opening the Archived
@@ -65,21 +65,20 @@
   const chrome = useChrome();
   const { parts, flag } = chrome;
 
-  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onbookmarked, onarchive, onlock, onskin, ondirection, onfiles, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
+  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onarchive, onlock, onskin, ondirection, onfiles, placement = 'board', form, facts = chrome.state, holders: givenHolders, zoom, menuOpen = false, zoomOpen = false, look, send }: {
     onboard: (id: string) => unknown;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
     /** Zoom to a container (containerFinder flag, board/find/finder.ts). */
     ongo: (container: string) => void;
-    /** Go to card `n`: an open one (openList flag) or a new or updated one (freshCards flag), OpenChip. */
+    /** Go to card `n`: an open one (openList flag), a new or updated one (freshCards flag) or a bookmarked one
+     *  (cardBookmark flag), OpenChip. */
     onopen: (n: number) => void;
     oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
     /** Remove an agent's access to the open board (BoardAgents). */
     onrevoke: (agent: string) => Promise<void>;
-    /** The "N bookmarked" chip: the next bookmarked card (cardBookmark flag). */
-    onbookmarked: () => void;
     /** Archive board… in the "⋯" menu: ask, then archive the open board (archiveBoard flag). */
     onarchive: () => void;
     /** Lock board or Unlock board in the "⋯" menu (lockBoard flag): the open board. */
@@ -155,7 +154,7 @@
 {#snippet versionFace()}v{facts.past?.seq ?? facts.version}{@render chevron()}{/snippet}
 {#snippet containersFace()}{toolbarWords.containers}{@render chevron()}{/snippet}
 {#snippet fields(choose: (run: () => void) => void)}
-  <HeaderFields {tier} {facts} {choose} {idOf} {holders} percent={zoom ?? facts.zoom} {onversion} {ongo} {onopen} {onbookmarked} {oncommand} {onrevoke} />
+  <HeaderFields {tier} {facts} {choose} {idOf} {holders} percent={zoom ?? facts.zoom} {onversion} {ongo} {onopen} {oncommand} {onrevoke} />
 {/snippet}
 
 <header class="vb-toolbar" bind:this={bar} data-tier={adaptive ? tier : undefined} data-narrow={(adaptive ? tier !== 'full' : narrow.current) || undefined} data-menu={toolbarMenu || undefined}>
@@ -218,8 +217,8 @@
         {#if facts.counts.withAgent}<span class="vb-chip" data-tone="agent" title={toolbarWords.repliedItems}><ButtonIcon name="agents" /><b>{facts.counts.withAgent}</b> <span class="vb-chip-word">{toolbarWords.replied}</span></span>{/if}
         <span class="vb-chip" data-tone="answered" hidden={!answeredLater} title={toolbarWords.answeredItems}><b>{facts.counts.answered}</b> <span class="vb-chip-word">{toolbarWords.answered}</span></span>
         <span class="vb-chip" data-tone="later" hidden={!answeredLater} title={toolbarWords.laterItems}><b>{facts.counts.later}</b> <span class="vb-chip-word">{toolbarWords.later}</span></span>
-        {#if facts.bookmarked && !facts.past}
-          <BookmarkedChip id={idOf('bookmarked')} count={facts.bookmarked} onclick={onbookmarked} />
+        {#if facts.bookmarkedCards.length && !facts.past}
+          <BookmarkedChip id={idOf('bookmarked')} cards={facts.bookmarkedCards} onpick={onopen} />
         {/if}
       {/if}
     {/if}

@@ -251,9 +251,10 @@ test('a third: the bar is the name, a compact count, Send, Chat and "⋯"; every
   await expect(page.locator(`${bid('fresh-cards')} option`).nth(1)).toBeAttached();
   await page.locator(bid('fresh-cards')).selectOption({ index: 1 });
   await expect(fields).toBeHidden();
-  // Bookmarked: the next bookmarked card.
+  // Bookmarked: a list of the bookmarked cards, as Open's.
   await reopen();
-  await page.locator(bid('bookmarked')).click();
+  await page.locator(bid('bookmarked')).selectOption(String(cards[2]));
+  await expect(fields).toBeHidden();
   await expect(page.locator(`vb-node[data-id="${cards[2]}"]`)).toBeFocused();
   await uncrowd(page);
 });

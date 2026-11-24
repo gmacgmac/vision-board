@@ -2,7 +2,7 @@
 export { createAttention } from './attention.ts';
 export { createCardImages } from './card-images.ts';
 export { createCardSet } from './cards.ts';
-export { bookmarkAct, createBookmarkFlow, bookmarkedWords } from './bookmark-flow.ts';
+export { bookmarkAct, bookmarkedCards, createBookmarkFlow } from './bookmark-flow.ts';
 export { createHistoryFlow } from './history-flow.ts';
 export { createItemActs } from './item-acts.ts';
 export { createParking } from './parking.ts';

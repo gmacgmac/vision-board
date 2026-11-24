@@ -53,7 +53,6 @@
   onhide={() => board()?.toggleHide()}
   onsend={send}
   onrevoke={(agent) => board()?.access.revoke(undefined, agent) ?? Promise.resolve()}
-  onbookmarked={() => board()?.nextBookmarked()}
   onarchive={() => void board()?.boardEdit.archive()}
   onlock={() => void board()?.boardEdit.lock()}
   onskin={(skin) => board()?.setSkin(skin)}

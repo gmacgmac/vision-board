@@ -1,12 +1,14 @@
 // Gallery entry for the person's bookmark (cardBookmark flag, D-099 2; the flag before ledger format 20), shown by
 // default (gallery.html?flags=-cardBookmark hides it): nodes whose number is the bookmark, at rest, bookmarked (the
 // number filled, with its notched tail), and bookmarked before the agent redrew the card (the bookmark stays); then
-// the toolbar's "N bookmarked" chip. The cards are real <vb-node> elements from the fixture ledger's marks board, drawn
+// the toolbar's "N bookmarked" chip: a list of the bookmarked cards at rest, hovered, focused and pressed, as the
+// "N open" chip's (open-list-section.ts). The cards are real <vb-node> elements from the fixture ledger's marks board, drawn
 // as the board draws them; the chip is the toolbar's own component.
 import { mount } from 'svelte';
 import type { VbNodeElement } from '#ui';
 import { MARK_KEYS, nodeState } from '#ui';
 import { BookmarkedChip } from '../board/chrome/index.ts';
+import { bookmarkedCards } from '../board/cards/index.ts';
 import { cardList, el, group, ownIds } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
@@ -18,8 +20,12 @@ export function bookmarkSection(fx: Fixture): HTMLElement {
     node.update(nodeState(n, state));
     return node;
   });
+  const marked = bookmarkedCards(view, state.bookmarks);
   const chip = el('div', 'g-toolbar vb-counts');
-  mount(BookmarkedChip, { target: chip, props: { count: state.bookmarks.size, onclick: () => undefined } });
+  chip.dataset.sample = 'bookmarkedList';
+  for (const look of [undefined, 'hover', 'focus', 'pressed'] as const) {
+    mount(BookmarkedChip, { target: chip, props: { id: `g-bookmarked-${look ?? 'rest'}`, cards: marked, onpick: () => undefined, ...(look && { look }) } });
+  }
   const box = el('section', 'g-section');
   box.dataset.feature = 'cardBookmark';
   box.setAttribute('aria-labelledby', 'feature-cardBookmark');
@@ -33,6 +39,6 @@ export function bookmarkSection(fx: Fixture): HTMLElement {
     el('p', 'g-desc', `The person's private mark on any card: a click on its number, ${MARK_KEYS.bookmark} on a focused card, the number's menu, right-click, or Bookmark all on the selection bar. It is kept in the ledger and never sent to an agent; no Send, chat chip or agent read carries it.`),
     meta,
     group('On a card', 'At rest, bookmarked (the number filled in the bookmark colour, with a notched tail), and bookmarked before the agent drew the card again: a bookmark names no version, so it stays.', canvas),
-    group('In the toolbar', 'While any card on the board is bookmarked, the counts end in "N bookmarked": a press focuses the next bookmarked card, in number order, and the board pans to it.', chip));
+    group('In the toolbar', 'While any card on the board is bookmarked, the counts end in "N bookmarked", a list like "N open": "12 · title" in number order; a choice goes to that card. At rest, hovered, focused and pressed.', chip));
   return box;
 }

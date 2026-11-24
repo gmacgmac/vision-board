@@ -7,19 +7,23 @@
      The count stays on a narrow toolbar, the word for screen readers (board.css). The toolbar and
      the gallery both draw this. With `row` (adaptiveHeader flag, the narrowest bar) it is a row of the "⋯"
      menu with `row` as its face, a plain line while it has no cards to list. The "N new" chip's tone is
-     `newTone` (chip-tone.ts): teal with the updateSignals flag (D-088, one colour per meaning), pink without. -->
+     `newTone` (chip-tone.ts): teal with the updateSignals flag (D-088, one colour per meaning), pink without. The
+     "N bookmarked" chip is this too (BookmarkedChip.svelte): `icon` draws its glyph before the count. -->
 
 <script lang="ts">
   import * as chromeGoToCardWords from '../words/chrome-go-to-card.ts';
   import MenuSelect from './MenuSelect.svelte';
-  import type { Snippet } from 'svelte';
+  import type { ComponentProps, Snippet } from 'svelte';
+  import ButtonIcon from './ButtonIcon.svelte';
   import type { RowCard } from '../find/index.ts';
   import { openRow } from '../find/index.ts';
 
   let {
     count, cards, onpick, id = 'open-cards', look, word = 'open', tone = 'open', label = chromeGoToCardWords.goToAnOpenCard,
-    title = chromeGoToCardWords.openItemsChooseOneTo, plainTitle = chromeGoToCardWords.openItems, row,
+    title = chromeGoToCardWords.openItemsChooseOneTo, plainTitle = chromeGoToCardWords.openItems, row, icon,
   }: {
+    /** A glyph before the count (ButtonIcon). */
+    icon?: ComponentProps<typeof ButtonIcon>['name'];
     /** Draw it as a row of the "⋯" menu, with this face. */
     row?: Snippet;
     count: number;
@@ -44,7 +48,7 @@
   const rows = $derived(cards.map(openRow));
 </script>
 
-{#snippet face()}<b>{count}</b> <span class="vb-chip-word">{word}</span>{/snippet}
+{#snippet face()}{#if icon}<ButtonIcon name={icon} />{/if}<b>{count}</b> <span class="vb-chip-word">{word}</span>{/snippet}
 
 {#if rows.length}
   <MenuSelect {id} {label} name="{count} {word}" {rows} onpick={(v) => onpick(Number(v))}

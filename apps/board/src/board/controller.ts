@@ -169,7 +169,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     if (drew) toast(boardWords.theAgentDrewV(status.now.version));
   }
 
-  const renderCounts = () => showCounts(status, S.data!, view(), drawing.layout, { finder, access }, bookmarks.ids().length);
+  const renderCounts = () => showCounts(status, S.data!, view(), drawing.layout, { finder, access }, bookmarks.cards());
 
   // ---- actions -------------------------------------------------------------------------------
   /** Every act goes through here: the server validates it, its problems show in the error toast,
@@ -235,8 +235,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record, status, confirm: (a) => host.confirm(a), notify: (t) => toast(t) });
   /** The person's bookmark: the button, B, the number with the edges and the toolbar's chip (bookmark-flow.ts). */
-  const bookmarks = createBookmarkFlow({ on: bookmarking, view: () => S.data?.view ?? null, state: () => S.data?.state ?? null, record, focused: () => focus.id,
-    drawn: (id) => !!drawing.layout?.nodes.has(id), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t) });
+  const bookmarks = createBookmarkFlow({ on: bookmarking, view: () => S.data?.view ?? null, state: () => S.data?.state ?? null, record, toast: (t) => toast(t) });
   const history = createHistoryFlow({ stage, state: () => versions.state ?? live.state, board: () => S.id, show: (id, part) => notes.show(id, part) }); // the history box (history-flow.ts, card-polish FE_03)
   /** The board's side of its host's chat (chat-side.ts): the selection and the answers as chips, its status, the stepper's link. */
   const unchat = bindChat({ chat: host.chat, chatStatus, stage, selection, status, data: () => S.data, ledger: () => live.state, id: () => S.id, readOnly });
@@ -345,7 +344,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
       return id === S.id ? attempt(fields) : sender.actOn(id, fields);
     },
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
-    files, nextBookmarked: () => bookmarks.next(),
+    files,
     setSkin: (skin: Skin) => void attempt({ action: 'skin', skin }),
     setDirection: (direction: ActDirection) => void attempt({ action: 'direction', direction }),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),

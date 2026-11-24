@@ -36,7 +36,7 @@ function sample(fx: Fixture, form: HeaderTier, o: SampleOptions = {}): HTMLEleme
     target: frame,
     props: {
       onboard: none, onversion: () => Promise.resolve(), ongo: none, onopen: none, oncommand: none, onhide: none,
-      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onbookmarked: none, onarchive: none, onlock: none,
+      onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(), onarchive: none, onlock: none,
       placement: 'gallery', form, facts: o.facts ?? facts(), holders: o.facts?.past ? null : fx.boardAgents,
       ...(o.menuOpen && { menuOpen: true }), ...(o.zoomOpen && { zoomOpen: true }), ...(o.look && { look: o.look }), ...(o.send && { send: o.send }),
     },
@@ -46,7 +46,7 @@ function sample(fx: Fixture, form: HeaderTier, o: SampleOptions = {}): HTMLEleme
 
 /** Every form's chips that come and go, and the long name: the most the bar ever holds. */
 const crowded = (more: Partial<Facts> = {}): Facts => facts({
-  title: LONG, locked: true, bookmarked: 2, boardMarks: { other: 'new' }, counts: { ...start.counts, open: 14, withAgent: 1 }, ...more,
+  title: LONG, locked: true, bookmarkedCards: [{ n: 3, id: '3', title: 'Pick a plan' }, { n: 7, id: '7', title: 'Seats and discounts' }], boardMarks: { other: 'new' }, counts: { ...start.counts, open: 14, withAgent: 1 }, ...more,
 });
 
 export function headerSection(fx: Fixture): HTMLElement {
