@@ -33,3 +33,26 @@ export const ledgerMigrated = (file: string, changed: number, byFormat: string, 
 export const ledgerNewer = (file: string, lines: string): string => `${file}: line(s) ${lines} were written by a newer Vision Board. Nothing was written; update the board to migrate it.`;
 export const ledgerStopped = (file: string, stops: string): string => `${file}: can't be migrated, and nothing was written: ${stops}`;
 export const ledgerUndone = (file: string, backup: string): string => `${file}: put back from ${backup}. Opening it for editing migrates it again; use an older Vision Board to keep it as it is.`;
+
+// ---- skill-install.ts (npm run skill:install, and the board at start: D-118)
+export const skillStale = (files: string[]): string => `The skill is out of date (${files.join(', ')}): run npm run build:skill, then npm run skill:install again. Nothing was copied.`;
+export const noClient = (folders: string[]): string => `No client is installed: none of ${folders.join(', ')} exists. Nothing was copied.`;
+export const skillCopied = (client: string, dir: string): string => `${client}: copied the skill to ${dir}.`;
+export const skillSkipped = (client: string, folder: string): string => `${client}: skipped, not installed (no ${folder}).`;
+export const skillFailed = (client: string, why: string): string => `${client}: failed, ${why}`;
+export const nextClaude = 'Claude Code: start a new chat; a chat keeps the skill list it started with.';
+export const nextKiro = 'Kiro CLI and IDE: start a new chat for the skill; MCP changes load when mcp.json is saved.';
+export const nextCrew = 'Kiro Crew: click Probe All.';
+export const mcpPresent = (client: string, name: string, file: string): string => `${client}: the board's MCP server is set up, as "${name}" in ${file}.`;
+export const mcpMissing = (client: string, setup: string): string => `${client}: the board's MCP server is not set up. To set it up: ${setup}`;
+export const mcpUnreadable = (client: string, file: string, why: string): string => `${client}: could not read ${file} (${why}), so the MCP server was not checked.`;
+export const setupClaude = (command: string): string => `run ${command}`;
+export const setupKiro = (file: string, entry: string): string => `add "vision-board": ${entry} to "mcpServers" in ${file}.`;
+export const askBeforeAddMcp = 'To add the missing entries, ask the person first: npm run skill:install -- --add-mcp changes their client settings.';
+export const mcpAdded = (client: string, file: string): string => `${client}: added the board's MCP server as "vision-board" in ${file}.`;
+export const mcpNameTaken = (client: string, file: string): string => `${client}: "vision-board" already names another server in ${file}; left as it is. Add the board's under another name by hand.`;
+export const mcpAddFailed = (client: string, why: string): string => `${client}: could not add the board's MCP server: ${why}`;
+export const claudeNotFound = 'the claude command was not found on PATH.';
+export const claudeAddFailed = (code: number | null, output: string): string => `claude mcp add ended with ${code ?? 'a signal'}${output ? `: ${output}` : '.'}`;
+export const skillInstallUsage = 'Usage: npm run skill:install [-- --add-mcp]   (copies the skill into each installed client and reports the MCP server; --add-mcp adds the missing entries, after the person says yes)';
+export const clientNames = { claude: 'Claude Code', kiro: 'Kiro CLI and IDE', crew: 'Kiro Crew' } as const;

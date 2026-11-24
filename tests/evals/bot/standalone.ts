@@ -15,7 +15,7 @@ import { CALL_MS } from './limits.ts';
 import { skillLine } from './model.ts';
 import type { BotHost, Call, Person, RunRecord, TurnRecord } from './types.ts';
 
-/** The real skill, as the person's client loads it (D-057: `~/.claude/skills/vision-board` links to it). */
+/** The real skill, as the person's client loads it (D-118: `npm run skill:install` copies it to `~/.claude/skills/vision-board`). */
 export const STANDALONE_SKILL = path.resolve(import.meta.dirname, '../../../skills/vision-board/SKILL.md');
 /** Its folder, which holds its `references/`. */
 const SKILL_DIR = path.dirname(STANDALONE_SKILL);

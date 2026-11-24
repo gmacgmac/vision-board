@@ -13,6 +13,7 @@
 // (the server's own flags, written as `?flags=` is: `-appCards` turns app cards off, so the panel
 // route and call_app_tool answer not-found; an unknown name stops the start), VB_REMOTE_URL and VB_REMOTE_USERS
 // (both or neither: the remote door for Tailscale Serve on 127.0.0.1 at the next port up, D-117, server/remote.ts).
+// At start it copies the skill into each installed client whose copy is missing or differs (`skillInstallAtStart`, D-118).
 // One server per ledger: the ledger folder's lock (server/lock.ts) refuses a second one, here or on
 // another computer sharing the folder. Every mode releases it on exit. With ledger folders (`ledgerFolders`,
 // D-084) it opens the folder's last ledger (recent.json), else `main`, moving an old-layout folder into
@@ -38,6 +39,7 @@ import * as httpWords from './server/words/http.ts';
 import { takeLedger } from './server/ledger-move.ts';
 import * as serverFoldersWords from './server/words/server-folders.ts';
 import { lastLedger, startFolder } from './server/recent.ts';
+import { mainCheckout, needsInstall, runSkillInstall } from './server/skill-install.ts';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
@@ -78,6 +80,18 @@ if (flags.refused.length) {
   console.error(`${ENV.flags} names no such flag: ${flags.refused.join(', ')}. The flags are in packages/format/src/flags.ts.`);
   process.exit(1);
 }
+
+/** The skill copied into each installed client when a copy is missing or differs (D-118, `skillInstallAtStart`): never
+ * from a linked worktree, whose skill may be work in progress, and never stopping the board. */
+function installSkillAtStart(): void {
+  if (!flagOn('skillInstallAtStart', flags.overrides) || mainCheckout(ROOT) !== ROOT) return;
+  try {
+    if (needsInstall(HOME)) for (const line of runSkillInstall({ home: HOME }).lines) console.log(line);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+  }
+}
+installSkillAtStart();
 
 /** Ledger folders off: a folder already in ledger folders stops the start (it would fork the ledger, FIX_01 F5). */
 function refuseMoved(): void {
