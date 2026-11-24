@@ -52,19 +52,65 @@ export function placeBar(box: StageBox, bar: StageSize, stage: StageSize, gap = 
 }
 
 /** One button: `id` is what the `vb-command` event names; the page's command table supplies it. */
-/** `title`: the whole meaning of a short `label` and its key, the tooltip and the accessible name. */
-export interface BarButton { id: string; label: string; title?: string; primary?: boolean; disabled?: boolean }
+/** `title`: the whole meaning of a short `label` and its key, the tooltip and the accessible name. `icon` (a name in
+ *  the icon set) and `danger` (it takes cards away) are drawn only in the grid. */
+export interface BarButton { id: string; label: string; title?: string; primary?: boolean; disabled?: boolean; icon?: string; danger?: boolean }
 
 /** What the bar says: `name` is its accessible name, `count` the words before the buttons (empty
  *  for the area bar, which only offers to zoom). `pill` (the selectionPill flag, stage5-follow-ups
  *  FE_02): the compact bar, whose count is a pill that shows the buttons only while `open`. */
-export interface BarView { name: string; count: string; buttons: BarButton[]; pill?: true; open?: boolean }
+export interface BarView { name: string; count: string; buttons: BarButton[]; pill?: true; open?: boolean; cells?: readonly GridCell[] }
+
+/** The grid (selectionGrid flag, selection-grid task): the pill opens into three rows of three, the pill's label
+ *  first, then `cells`, eight slots row by row; a slot whose command is absent is `null` and stays an empty cell, so
+ *  the grid keeps its shape. The anchor is the last row's middle cell (the page puts its primary there): it opens
+ *  under the pointer. */
+export type GridCell = BarButton | null;
+export const GRID_COLUMNS = 3;
+/** The anchor's place among the nine cells, the label counted as cell 0. */
+export const GRID_ANCHOR = 7;
 
 export const selectedCount = (n: number): string => selectionBarWords.selected(n);
 
 /** The bar over a selection of `n` cards, or over an area a lasso drew round no card; with `pill`,
  *  the compact bar, its pill open or closed (the area bar has no pill: it is always open). */
-export function barView(n: number, buttons: BarButton[], pill?: { open: boolean }): BarView {
+export function barView(n: number, buttons: BarButton[], pill?: { open: boolean; cells?: readonly GridCell[] }): BarView {
   if (n === 0) return { name: selectionBarWords.area, count: '', buttons, ...(pill && { pill: true }) };
-  return { name: selectionBarWords.selection(selectedCount(n)), count: selectedCount(n), buttons, ...(pill && { pill: true, open: pill.open }) };
+  return { name: selectionBarWords.selection(selectedCount(n)), count: selectedCount(n), buttons,
+    ...(pill && { pill: true, open: pill.open }), ...(pill?.cells && { cells: pill.cells }) };
+}
+
+/** Where the anchor cell's centre is in the open grid: `x` from its left edge, `reach` from the edge of the row it
+ *  sits in (the bottom opening upward, the top opening downward; the same either way). */
+export interface GridAnchor { x: number; reach: number }
+
+/** The open grid with its anchor's centre at `at` (the click on the pill, or the pill's centre from the keyboard),
+ *  on the stage: upward ('above', the label's row on top) when that fits, else downward ('below') with its rows
+ *  reversed, so the anchor stays under the pointer and the label's row (Remove's) stays farthest. Kept inside the
+ *  stage, sideways and, when it must, up or down. */
+export function placeGrid(at: { x: number; y: number }, grid: StageSize, anchor: GridAnchor, stage: StageSize): BarPlacement {
+  const x = clamp(at.x - anchor.x, BAR_EDGE, stage.w - BAR_EDGE - grid.w);
+  const inside = (y: number) => clamp(y, BAR_EDGE, stage.h - BAR_EDGE - grid.h);
+  const up = at.y + anchor.reach - grid.h;
+  return up >= BAR_EDGE ? { side: 'above', x, y: inside(up) } : { side: 'below', x, y: inside(at.y - anchor.reach) };
+}
+
+export type GridKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
+const STEPS: Record<GridKey, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+export const isGridKey = (key: string): key is GridKey => Object.hasOwn(STEPS, key);
+
+/** The cell an arrow key takes focus to from cell `from` (the cells row by row as drawn upward, the label first):
+ *  the next one that way that takes focus (`usable`), past empty and disabled ones; `from` at the edge. `flipped`:
+ *  the rows are reversed (opening downward), so Up and Down follow the screen. */
+export function gridStep(from: number, key: GridKey, flipped: boolean, usable: readonly boolean[]): number {
+  const [dr, dc] = STEPS[key];
+  const rows = Math.ceil(usable.length / GRID_COLUMNS);
+  let r = Math.floor(from / GRID_COLUMNS);
+  let c = from % GRID_COLUMNS;
+  for (;;) {
+    r += flipped ? -dr : dr;
+    c += dc;
+    if (r < 0 || r >= rows || c < 0 || c >= GRID_COLUMNS) return from;
+    if (usable[r * GRID_COLUMNS + c]) return r * GRID_COLUMNS + c;
+  }
 }

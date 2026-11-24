@@ -47,12 +47,45 @@ vb-selection-bar[data-pill] :is(.vb-sb-btn, .vb-sb-pill) { height: var(--vb-cont
 vb-selection-bar {
   &[data-pill]:not([data-open]) .vb-sb-pill ~ .vb-sb-btn { display: none; }
 }
-vb-selection-bar .vb-sb-pill { gap: var(--vb-space-2); font-weight: var(--vb-weight-bold); font-variant-numeric: tabular-nums; }
+/* Medium, a step below the bar's bold: it names, the buttons act (maintainer point 788). */
+vb-selection-bar .vb-sb-pill { gap: var(--vb-space-2); font-weight: var(--vb-weight-medium); font-variant-numeric: tabular-nums; }
 vb-selection-bar .vb-sb-chevron {
   width: 6px; height: 6px; margin-right: 2px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
   transform: rotate(-45deg); transition: transform var(--vb-motion-fast) var(--vb-ease);
 }
 vb-selection-bar[data-open] .vb-sb-chevron { transform: rotate(135deg); margin: 0 0 0 2px; }
+
+/* The grid (selectionGrid flag, selection-grid task): the pill opens into three rows of three, each column as wide as
+   its widest label (1fr in a max-content box), nothing wrapping. The template marks each cell's row; the label's row is
+   on top and the anchor (Comment) in the middle of the bottom row, under the pointer; opening downward
+   (data-side=below) the rows reverse, so the anchor is on top and the label's row, with Remove, still farthest. */
+vb-selection-bar {
+  &[data-grid]:not([data-open]) > :not(.vb-sb-pill) { display: none; }
+}
+vb-selection-bar[data-grid][data-open] {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: max-content;
+  & > :is(.vb-sb-btn, .vb-sb-pill) { justify-content: center; gap: var(--vb-space-1); }
+  /* The label: a cell like the others, centred, one weight below the closed pill's (regular under its medium) and
+     muted (it names, the others act); a click closes the grid. */
+  & .vb-sb-pill { font-weight: var(--vb-weight-regular); color: var(--vb-ink-subtle); }
+  & .vb-sb-chevron { display: none; }
+  & .vb-sb-icon { width: 14px; height: 14px; }
+  & .vb-sb-divider { grid-column: 1 / -1; height: 1px; margin: 1px var(--vb-space-1); background: color-mix(in srgb, var(--vb-line-strong) 80%, transparent); }
+  & > [data-row='1'] { grid-row: 1; }
+  & > .vb-sb-divider { grid-row: 2; }
+  & > [data-row='2'] { grid-row: 3; }
+  & > [data-row='3'] { grid-row: 4; }
+  &[data-side='below'] {
+    & > [data-row='3'] { grid-row: 1; }
+    & > [data-row='2'] { grid-row: 2; }
+    & > .vb-sb-divider { grid-row: 3; }
+    & > [data-row='1'] { grid-row: 4; }
+  }
+}
+/* Remove takes cards away: the glass's cross red (a checked label pair on the glass), kept on hover. */
+vb-selection-bar .vb-sb-danger:not(:disabled) { color: var(--vb-glass-cross); }
+/* The cells' focus ring (a11y.css), drawn inside the cell so its neighbours never cover it. */
+vb-selection-bar[data-grid] :is(.vb-sb-btn, .vb-sb-pill):is(:focus-visible, [data-look='focus']) { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-inset); }
 
 /* The lasso: drawn by the page while a Shift+drag runs, never a pointer target. */
 .vb-lasso {
