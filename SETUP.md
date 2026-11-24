@@ -70,36 +70,50 @@ Check for each: the client lists a server named `vision-board` (Claude Code: `cl
 Not covered: the ChatGPT app on the web. It connects only to MCP servers on the internet, and the board stays on
 this machine by design.
 
-## 5. Link the skill into each client
+## 5. Copy the skill into each client
 
-The skill's one source is `<clone>/skills/vision-board`. Each client gets a link to it, never a copy
-(D-057, `docs/decisions.md`). If a `vision-board` entry
-already exists there, look at it before replacing it. Make the client's skills folder first, for example
-`mkdir -p ~/.claude/skills`, or the link fails with "No such file or directory".
+The skill's one source is `<clone>/skills/vision-board`. One command copies it into each installed client and says
+whether each has the board's MCP server (D-118, `docs/decisions.md`; it replaces D-057's links, which Kiro Crew does
+not follow):
 
-| Client | Skills folder | Link |
-|---|---|---|
-| Claude Code | `~/.claude/skills` | `ln -s <clone>/skills/vision-board ~/.claude/skills/vision-board` |
-| Kiro CLI, Kiro IDE | `~/.kiro/skills` | `ln -s <clone>/skills/vision-board ~/.kiro/skills/vision-board` |
-| Kiro Crew | `~/.kiro/crew/skills` | `ln -s <clone>/skills/vision-board ~/.kiro/crew/skills/vision-board` |
-| Codex | `~/.agents/skills` | `ln -s <clone>/skills/vision-board ~/.agents/skills/vision-board` |
+```bash
+npm run skill:install
+```
 
-Check for each: `ls ~/.claude/skills/vision-board/SKILL.md` (with the client's own folder) lists the file. A
-`ls -l` on the entry shows `->` to the clone.
+| Client | Counts as installed when | The copy goes to | MCP server looked for in |
+|---|---|---|---|
+| Claude Code | `~/.claude` exists | `~/.claude/skills/vision-board` | `~/.claude.json` (user scope) |
+| Kiro CLI, Kiro IDE | `~/.kiro` exists | `~/.kiro/skills/vision-board` | `~/.kiro/settings/mcp.json` |
+| Kiro Crew | `~/.kiro/crew` exists | `~/.kiro/crew/skills/vision-board` | `~/.kiro/crew/mcp.json` |
 
-Notes on what the vendors' docs say:
+- It prints one line per client (copied, skipped because not installed, or failed and why), what to do next in each
+  (Claude Code and Kiro: start a new chat, since a chat keeps the skill list it started with; Kiro Crew: Probe All),
+  and whether each has the board's MCP server, found by what it runs (`packages/mcp/bin/vb-mcp.ts`), whatever its name.
+- The `vision-board` folder in each client is the command's: it is replaced whole, never edited by hand. It holds
+  `SKILL.md`, the references its text names and `examples/`; never `NOTES.md`, `scenarios.md` or `source/`.
+- It refuses a skill that `npm run build:skill` has not rebuilt, and exits 1 then, when no client is installed, or on
+  a failure.
+- `npm run skill:install -- --add-mcp` also adds the board's MCP server, as `vision-board`, where it is missing, and
+  never changes or removes an entry. It changes the person's client settings: an agent asks the person first.
+- `npm run board` runs the same copy at start when an installed client's copy is missing or differs from the repo
+  (flag `skillInstallAtStart`; never from a git worktree), and prints the same lines.
+- To copy it after every commit or pull on `main` that changes `skills/vision-board/`, turn on the repo's hooks once:
 
-- Claude Code follows a symlinked skill folder and picks up changes without a restart, except when
-  `~/.claude/skills` did not exist when the session started: then run `/reload-skills`.
-- Codex follows symlinked skill folders and watches for changes; if the skill does not appear, restart it.
-- Kiro CLI/IDE and Kiro Crew: the docs name these folders but do not say whether a symlinked skill folder is
-  followed. If the skill does not show up, say so to the person; do not copy the folder.
+```bash
+git config core.hooksPath .githooks
+```
+
+Check: the command prints `copied` for each client you use, and the client's skills folder lists
+`vision-board/SKILL.md`. Codex (`~/.agents/skills`) is not one of the clients: link it by hand,
+`ln -s <clone>/skills/vision-board ~/.agents/skills/vision-board` (Codex follows links and watches for changes).
+
+Notes:
+
 - Kiro custom agents load no skills unless the agent file lists them. The board writes its own `vision-board` Kiro agent
   when it starts (`apps/board/server/chat-access.ts`); kiro-cli itself is optional.
 - Claude Desktop: the docs found describe adding a skill only by uploading a ZIP in its settings (Customize, Skills),
-  not from a folder. A ZIP is a copy, so tell the person this is the one client where the skill is not a link and
-  will not follow the repo; do not do it without their yes. The docs were not fully clear on this: the sources
-  conflicted on menu names.
+  not from a folder. A ZIP is a copy that the command does not refresh, so tell the person; do not do it without their
+  yes. The docs were not fully clear on this: the sources conflicted on menu names.
 
 ## 6. Restart and check end to end
 
@@ -120,12 +134,12 @@ A tool error or "no such tool" is a fault: see below.
 | Server absent after editing | The client was not restarted: step 4's restart column. |
 | `wrong-folder` | The agent's folder (where its client started it) is not the folder the board has open, nor inside it. Stop and tell the person; do not call `join`. The fix: start the agent in the project's folder or a folder inside it; or the person opens the agent's folder in the board ("⋯", Open folder…); or, for a client that does not start it in the project, the entry's `env` sets `VB_PROJECT` to the folder the board has open (`packages/mcp/README.md` § Settings). |
 | `read-only` | The board is read-only: the person switches it to Editing (step 3). |
-| Skill not listed | The link is broken (`ls -l`), or the client was not restarted. |
+| Skill not listed | The client was not installed when `npm run skill:install` ran (its line says skipped), or the chat started before the copy: start a new one. |
 
 ## Sources
 
 Read on 2026-11-19. Everything else in this file is in this repo (`package.json`, `.npmrc`,
-`packages/mcp/README.md`, `README.md`, `docs/decisions.md` D-057, `apps/board/server/chat-access.ts`).
+`packages/mcp/README.md`, `README.md`, `docs/decisions.md` D-057 and D-118, `apps/board/server/chat-access.ts`, `apps/board/server/skill-install.ts`).
 
 - Claude Code MCP: https://code.claude.com/docs/en/mcp
 - Claude Code skills: https://code.claude.com/docs/en/skills

@@ -42,6 +42,7 @@
     "watch": "vite build --config apps/board/vite.config.ts --watch",
     "build:plugin": "node apps/board/bin/build-plugin.ts",
     "build:skill": "node skills/vision-board/source/build.mjs",
+    "skill:install": "node apps/board/bin/skill-install.ts",
     "check": "svelte-check --tsconfig apps/board/tsconfig.json && tsc -p tsconfig.json",
     "validate": "node apps/board/bin/validate.ts",
     "reply": "node apps/board/bin/reply.ts",
