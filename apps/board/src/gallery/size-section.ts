@@ -28,7 +28,10 @@ const XL_CARD: ViewNode = { id: 'size-xl', region: REGION_SIZES, kind: 'question
 
 export function sizeSection(fx: Fixture): HTMLElement {
   const cards = fx.view.nodes.filter((n) => n.region === REGION_SIZES).map((n) => sized(n, fx.state));
-  cards.push(sized(XL_CARD, { ...fx.state, sizes: new Map([...fx.state.sizes, [XL_CARD.id, 'xl']]) }));
+  const xl = sized(XL_CARD, { ...fx.state, sizes: new Map([...fx.state.sizes, [XL_CARD.id, 'xl']]) });
+  // A whole-pixel height keeps every section below on whole pixels (their screenshots compare sub-pixel text).
+  xl.style.minHeight = '180px';
+  cards.push(xl);
   const box = el('section', 'g-section');
   box.dataset.feature = 'nodeSize';
   box.setAttribute('aria-labelledby', 'feature-nodeSize');
