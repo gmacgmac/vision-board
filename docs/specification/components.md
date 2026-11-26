@@ -1336,13 +1336,13 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
 Task `cortex-tasks/board/2026-11-26_board-security_other-folders-switch.md` (api.md 215-216), behind the `otherFolders`
 flag (on by default; `?flags=-otherFolders`). Only in the "⋯" menu: no toolbar button or chip.
 
-1. **"Let agents from other folders in"** is a `menuitemcheckbox` in the "⋯" menu (`board/chrome/ToolbarMenu.svelte`,
-   given `onfolders`), just above Open folder…, with the folder icon, ticked (`aria-checked`) while the open ledger lets
-   them in (the status's `otherFolders`, from `otherFoldersIn` after every batch, `board/boards/boards.ts`). It shows
+1. **"Repo agents only"** (chat 850-851; first "Let agents from other folders in") is a `menuitemcheckbox` in the "⋯" menu (`board/chrome/ToolbarMenu.svelte`,
+   given `onfolders`), just above Open folder…, with the folder icon, ticked (`aria-checked`) while the open ledger keeps
+   agents from other folders out, the default, and unticked while it lets them in (the status's `otherFolders`, from `otherFoldersIn` after every batch, `board/boards/boards.ts`). It shows
    only on a page that opens folders (the page part `folderRow`: the standalone board; a host has no folder check). Off
-   like Lock board while no board is open, a past version shows or the ledger is read-only, its tooltip saying why. A press sends `folders-allow` or `folders-revoke` through the one sender
+   like Lock board while no board is open, a past version shows or the ledger is read-only, its tooltip saying why; otherwise its tooltip says what it does (`toolbarWords.repoAgentsOnlyTip`). A press sends `folders-allow` or `folders-revoke` through the one sender
    on the open board, with no confirm and no toast (`board/boards/board-edit.ts` `otherFolders`; the page's weight
-   budget had no room for one): the tick says it. The gallery (`gallery/other-folders-section.ts`) draws the menu with the row off and on.
+   budget had no room for one): the tick says it. The gallery (`gallery/other-folders-section.ts`) draws the menu with the row ticked and unticked.
 
 ## Remove cards and containers (N24)
 

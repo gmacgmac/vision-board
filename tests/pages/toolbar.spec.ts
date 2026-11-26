@@ -141,7 +141,7 @@ test('the "⋯" menu: Theme, Hide answered and Reply as rows with their keys; a 
   // A row per skin follows Theme (D-100 2, node-edges-seen.spec.ts); the alignSetting flag (on by default) adds Centre
   // cards after Hide answered (layout-controls.spec.ts tests it), the lockBoard flag Lock board (lock-board.spec.ts), the
   // archiveBoard flag Archive board… (picker-archive.spec.ts) and Save as PDF…, Export… and Import… (board-files.spec.ts) and the openFolder flag Open folder… last (open-folder.spec.ts).
-  await expect(rows).toHaveText([/Theme: system/, /Default skin/, /Command Lens skin/, /Hide answered.*Shift\+H/, /Centre cards/, /Reply/, /^Lock board$/, /Archive board…/, /^Save as PDF…$/, /^Export…$/, /^Import…$/, /Open folder…/]);
+  await expect(rows).toHaveText([/Theme: system/, /Default skin/, /Command Lens skin/, /Hide answered.*Shift\+H/, /Centre cards/, /Reply/, /^Lock board$/, /Archive board…/, /^Save as PDF…$/, /^Export…$/, /^Import…$/, /^Repo agents only/, /Open folder…/]);
   await expect(rows.first()).toBeFocused();
   // Hide answered: a checkbox row; choosing it closes the menu and gives focus back to "⋯".
   await expect(menu(page).getByRole('menuitemcheckbox', { name: /Hide answered/ })).toHaveAttribute('aria-checked', 'false');

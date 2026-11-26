@@ -146,7 +146,7 @@ test('on a board: the plate\'s Proposal chip opens the proposal box and a second
   await expect(talk).toHaveCSS('border-top-left-radius', '6px');
   await page.keyboard.press('Escape');
   await write(request, d, [{ type: 'node', n: d.n[0]!, node: { region: 'p', kind: 'question', title: 'Book the second truck today?' } }]);
-  await expect(mark(page, d.n[0]!, 'badge')).toBeVisible(); // the new version is drawn
+  await expect(mark(page, d.n[0]!, 'badge')).toContainText(/update/); // the new version is drawn (every card shows its badge, v1 too)
   await card(page, d.n[0]!).focus();
   await page.keyboard.press('h');
   const history = card(page, d.n[0]!).locator('.vb-card-pop.vb-node-box[data-pop="history"]');

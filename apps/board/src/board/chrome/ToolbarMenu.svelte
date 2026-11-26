@@ -17,7 +17,7 @@
      the board's rows: Save as PDF…, Export… and Import… (D-107, PLAN decision 12), each only when the host gives its hook
      (chrome.svelte.ts `files`), each opening the files dialog for the whole board; Save as PDF… and Export… off while no board is
      open, Export… also while a past version shows (an export holds now), Import… while the ledger is read-only. With
-     `onfolders` (otherFolders flag, a page that opens folders) "Let agents from other folders in", a checkbox ticked while
+     `onfolders` (otherFolders flag, a page that opens folders) "Repo agents only", a checkbox unticked while
      the open ledger lets them in (D-120), off like Lock board, just above Open folder…. -->
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
@@ -41,7 +41,7 @@
     onarchive?: (() => void) | undefined;
     /** Lock board or Unlock board (lockBoard flag), whichever the open board needs; left out, no such row. */
     onlock?: (() => void) | undefined;
-    /** Let agents from other folders in, or stop that (D-120); left out, no such row. */
+    /** "Repo agents only": let agents from other folders in, or stop that (D-120); left out, no such row. */
     onfolders?: (() => void) | undefined;
     /** The board's skin (D-100 2): a row per skin, the board's ticked; left out (the gallery), no such rows. */
     onskin?: ((skin: Skin) => void) | undefined;
@@ -180,9 +180,9 @@
       {/each}
     {/if}
     {#if onfolders}
-      <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={idOf('other-folders')} aria-checked={view.otherFolders}
-        aria-disabled={archiveOff || readOnly} title={foldersTip} onclick={() => { if (!archiveOff && !readOnly) choose(onfolders); }}>
-        <ButtonIcon name="folder" /><span class="vb-menu-label">{ACTIONS['folders-allow'].label}</span><span class="vb-menu-check" aria-hidden="true">✓</span>
+      <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={idOf('other-folders')} aria-checked={!view.otherFolders}
+        aria-disabled={archiveOff || readOnly} title={foldersTip ?? toolbarWords.repoAgentsOnlyTip} onclick={() => { if (!archiveOff && !readOnly) choose(onfolders); }}>
+        <ButtonIcon name="folder" /><span class="vb-menu-label">{toolbarWords.repoAgentsOnly}</span><span class="vb-menu-check" aria-hidden="true">✓</span>
       </button>
     {/if}
     {#if parts.folderRow && !folderAbove}<PagePart draw={parts.folderRow} args={{ choose }} />{/if}

@@ -54,22 +54,23 @@ for (const theme of THEMES) {
     await page.goto('/gallery.html');
     const section = page.locator('section[data-feature="otherFolders"]');
     await expect(section).toBeVisible();
-    const rows = section.getByRole('menuitemcheckbox', { name: /Let agents from other folders in/ });
+    const rows = section.getByRole('menuitemcheckbox', { name: /Repo agents only/ });
     await expect(rows).toHaveCount(2);
-    await expect(rows.nth(0)).toHaveAttribute('aria-checked', 'false');
-    await expect(rows.nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect(rows.nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect(rows.nth(1)).toHaveAttribute('aria-checked', 'false');
     await expectNoAxeViolations(page);
   });
 }
 
-test('"⋯" › Let agents from other folders in: off by default; a press lets them in, a second shuts them out', async ({ page, request }) => {
+test('"⋯" › Repo agents only: ticked by default; unticking lets other repos in, ticking again shuts them out', async ({ page, request }) => {
   await setUp(request);
   await open(page);
   expect(await fromAway(page)).toBe(409);
   await menuButton(page).click();
   await expect(row(page)).toHaveRole('menuitemcheckbox');
-  await expect(row(page)).toHaveText(/Let agents from other folders in/);
-  await expect(row(page)).toHaveAttribute('aria-checked', 'false');
+  await expect(row(page)).toHaveText(/Repo agents only/);
+  await expect(row(page)).toHaveAttribute('title', /Untick to let agents from other repos in/);
+  await expect(row(page)).toHaveAttribute('aria-checked', 'true');
   await expect(row(page)).toHaveAttribute('aria-disabled', 'false');
   await expect(row(page).locator('svg.vb-btn-icon')).toHaveCount(1);
   await row(page).click();
@@ -77,7 +78,7 @@ test('"⋯" › Let agents from other folders in: off by default; a press lets t
   expect(await lastSwitch(page)).toBe('folders-allow');
   expect(await fromAway(page)).toBe(200);
   await menuButton(page).click();
-  await expect(row(page)).toHaveAttribute('aria-checked', 'true');
+  await expect(row(page)).toHaveAttribute('aria-checked', 'false');
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await expectNoAxeViolations(page);
@@ -89,7 +90,7 @@ test('"⋯" › Let agents from other folders in: off by default; a press lets t
   expect(await lastSwitch(page)).toBe('folders-revoke');
   expect(await fromAway(page)).toBe(409);
   await menuButton(page).click();
-  await expect(row(page)).toHaveAttribute('aria-checked', 'false');
+  await expect(row(page)).toHaveAttribute('aria-checked', 'true');
 });
 
 test('flag off: no row', async ({ page, request }) => {

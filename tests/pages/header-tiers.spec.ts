@@ -231,7 +231,7 @@ test('a third: the bar is the name, a compact count, Send, Chat and "⋯"; every
   await page.keyboard.press('ArrowDown');
   await expect(page.locator(bid('version'))).toBeFocused();
   await page.keyboard.press('End');
-  await expect(menu(page).getByRole('menuitem').last()).toBeFocused();
+  await expect(menu(page).locator('[role^="menuitem"]').last()).toBeFocused();
   await page.keyboard.press('Home');
   await expect(page.locator(bid('folder-chip'))).toBeFocused();
   // Folder: the dialog, focus back on "⋯".
@@ -317,7 +317,7 @@ test('a short window: "⋯" scrolls inside itself and keeps every row reachable'
   const box = (await surface.boundingBox())!;
   expect(box.y + box.height).toBeLessThanOrEqual(320);
   await page.keyboard.press('End');
-  const last = menu(page).getByRole('menuitem').last();
+  const last = menu(page).locator('[role^="menuitem"]').last();
   await expect(last).toBeFocused();
   await expect(last).toBeInViewport();
 });
@@ -376,7 +376,7 @@ test('gallery: the section is last, draws the three forms with ids of its own, a
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto(`/gallery.html?flags=${OLD_HEADER}`);
-  await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"]):not([data-feature="timeline-board"]):not([data-feature="exportImportPrint"]):not([data-feature="systemFolderChooser"]):not([data-feature="holdersChip"])').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
+  await expect(page.locator('main > section:not([data-feature="updateSignals"]):not([data-feature="bigTitles"]):not([data-feature="node-edges"]):not([data-feature="command-lens"]):not([data-feature="flow-branching"]):not([data-feature="layout-control"]):not([data-feature="app-window"]):not([data-feature="timeline-board"]):not([data-feature="exportImportPrint"]):not([data-feature="systemFolderChooser"]):not([data-feature="holdersChip"]):not([data-feature="otherFolders"])').last()).toHaveAttribute('data-feature', 'adaptiveHeader');
   for (const form of ['full', 'half', 'third']) await expect(section(page).locator(`.vb-toolbar[data-tier="${form}"]`).first()).toBeVisible();
   await expect(section(page).getByRole('menu', { name: 'Zoom' })).toBeVisible();
   await expect(section(page).locator(`${bid('board')}, ${bid('version')}, ${bid('containers')}, ${bid('send')}, [id="chat-toggle"], ${bid('toolbar-menu')}, ${bid('counts')}, ${bid('title')}, ${bid('folder-chip')}, ${bid('open-cards')}, ${bid('locked')}`)).toHaveCount(0);

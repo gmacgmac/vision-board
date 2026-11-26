@@ -83,7 +83,7 @@
     onarchive: () => void;
     /** Lock board or Unlock board in the "⋯" menu (lockBoard flag): the open board. */
     onlock: () => void;
-    /** "Let agents from other folders in" in the "⋯" menu (otherFolders flag, a page that opens folders, D-120); left out, none. */
+    /** "Repo agents only" in the "⋯" menu (otherFolders flag, a page that opens folders, D-120); left out, none. */
     onfolders?: (() => void) | undefined;
     /** The board's skin in the "⋯" menu (D-100 2); left out, no Skin rows. */
     onskin?: ((skin: Skin) => void) | undefined;

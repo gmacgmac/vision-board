@@ -6,13 +6,13 @@
    the pointer: the gallery's samples only. Tokens only. */
 .vb-menu-list {
   position: absolute; z-index: var(--vb-z-menu); left: auto; right: 0; top: calc(100% + var(--vb-space-1)); display: grid;
-  min-width: 220px; max-width: 360px; padding: 3px;
+  width: max-content; min-width: 220px; max-width: 360px; padding: 3px;
 }
 .vb-menu-list[hidden] { display: none; }
 .vb-menu-item {
   display: flex; align-items: center; gap: var(--vb-space-2); width: 100%; min-height: var(--vb-control-h);
   padding: var(--vb-space-1) var(--vb-space-3); border: 0; border-radius: 7px;
-  background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium);
+  background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-regular);
   color: var(--vb-ink-strong); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .vb-menu-item:hover, .vb-menu-item:focus-visible { background: var(--vb-surface-sunken); }

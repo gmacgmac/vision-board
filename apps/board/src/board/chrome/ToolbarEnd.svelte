@@ -42,7 +42,7 @@
     onarchive?: (() => void) | undefined;
     /** Lock board or Unlock board in the "⋯" menu (lockBoard flag); left out, no such row. */
     onlock?: (() => void) | undefined;
-    /** "Let agents from other folders in" (D-120); left out, no such row. */
+    /** "Repo agents only" (D-120); left out, no such row. */
     onfolders?: (() => void) | undefined;
     /** The board's skin in the "⋯" menu (D-100 2); left out, no Skin rows. */
     onskin?: ((skin: Skin) => void) | undefined;

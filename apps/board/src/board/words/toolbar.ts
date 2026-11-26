@@ -32,6 +32,9 @@ export const chat = 'Chat';
 // ---- ToolbarMenu.svelte
 export const goBackToNowTo = (locked: boolean): string => `Go back to now to ${locked ? 'unlock' : 'lock'} this board`;
 export const noBoardIsOpen = 'No board is open';
+/** The other-folders switch, inverted (D-120, chat 850-851): ticked while only this repo's agents may join. */
+export const repoAgentsOnly = 'Repo agents only';
+export const repoAgentsOnlyTip = 'Only agents working in this repo can join. Untick to let agents from other repos in; they still need your grant to write.';
 export const letYouAndTheAgents = 'Let you and the agents change this board again';
 export const makeThisBoardReadOnly = 'Make this board read-only for everyone, agents included, until you unlock it';
 export const openAnotherFolderOpenNow = (name: string | number): string => `Open another folder (open now: ${name})`;

@@ -1,5 +1,5 @@
 // Gallery entry for letting agents from other folders in (otherFolders flag, D-120, api.md 215): the "⋯" menu's
-// "Let agents from other folders in", a checkbox, unticked (the default) and ticked. Shown only with the flag on and a
+// "Repo agents only", a checkbox, ticked (the default) and unticked. Shown only with the flag on and a
 // page that opens folders (the standalone board's), so ?flags=-otherFolders draws the gallery as it was.
 import { mount } from 'svelte';
 import { ToolbarMenu } from '../board/chrome/index.ts';
@@ -27,7 +27,7 @@ export function otherFoldersSection(): HTMLElement {
   box.append(heading,
     el('p', 'g-desc', 'The person lets agents working in another folder call this ledger\'s boards. It is recorded in the ledger, so it holds after a restart and belongs to that ledger. Every other guard stays: an agent still asks for the grant before it writes, and a secret from another ledger of this folder is still refused.'),
     meta,
-    group('Off', 'The default: an agent whose folder is not this one is refused. Off while no board is open, a past version shows, or the ledger is read-only.', menu(false)),
-    group('On', 'Ticked: agents from other folders may join and call the boards; a press turns it off again.', menu(true)));
+    group('Repo agents only', 'The default, ticked: an agent whose folder is not this one is refused. Disabled while no board is open, a past version shows, or the ledger is read-only.', menu(false)),
+    group('Other repos let in', 'Unticked: agents from other folders may join and call the boards; a press ticks it again.', menu(true)));
   return box;
 }
