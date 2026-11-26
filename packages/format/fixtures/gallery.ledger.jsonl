@@ -388,3 +388,5 @@
 {"v":22,"seq":388,"at":"2026-11-20T09:01:01Z","by":"agent","agent":"a-pricing1","type":"node","board":"layout","n":165,"ver":1,"node":{"region":"labels-down","kind":"action","title":"Draft the survey"}}
 {"v":22,"seq":389,"at":"2026-11-20T09:01:02Z","by":"agent","agent":"a-pricing1","type":"node","board":"layout","n":166,"ver":1,"node":{"region":"labels-down","kind":"action","title":"Send it to the beta group"}}
 {"v":22,"seq":390,"at":"2026-11-20T09:01:03Z","by":"agent","agent":"a-pricing1","type":"link","from":165,"to":166,"label":"unblocks"}
+{"v":22,"seq":391,"at":"2026-11-26T09:00:00Z","by":"agent","type":"node","board":"gallery","n":167,"ver":1,"node":{"region":"sizes","kind":"question","title":"You widened this one to XL","body":"XL is 600px, the widest width, and only the person picks it: Width on the selection bar or in the card's right-click menu."}}
+{"v":22,"seq":392,"at":"2026-11-26T09:00:01Z","by":"person","type":"act","action":"size","n":167,"size":"xl"}
