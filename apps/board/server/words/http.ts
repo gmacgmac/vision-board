@@ -13,6 +13,7 @@ export const theBodyIsNotValid = 'The body is not valid JSON. Send one JSON obje
 // ---- caller-folder.ts
 export const projectHeaderMustBeAbsolute = 'The VB-Project header must be the absolute path of the folder you work in, percent-encoded the way encodeURI does it (`/Users/example/my%20project`).';
 export const thisBoardNowHasYour = (displayName: string, displayName2: string): string => `This board now has your folder open (${displayName}). Your secret is from ${displayName2} — call join again.`;
+export const thisBoardLetsAgentsFrom = (displayName: string, displayName2: string): string => `This board (${displayName}) lets agents from other folders in. Your secret is from ${displayName2} — call join again here.`;
 
 // ---- callers.ts
 export const onlyAnAgentCanDo = 'Only an agent can do this, with the secret join gave it. The person acts on the board itself.';

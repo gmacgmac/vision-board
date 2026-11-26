@@ -18,14 +18,15 @@ import * as formatLedgerWords from './words/format-ledger.ts';
  * added a board's skin, a node's icon and tone, the `icon` line, the person's `ask` and a flow's
  * `direction` (api.md 182-189); v21 = the node's `timeline` key; the step restamps, no line's meaning changes (api.md
  * 190, D-105); v22 = the person's `region`, `node` and `link` lines (a person's import, `PERSON_TOO`); a restamp too
- * (api.md 201, D-108). */
-export const LEDGER_FORMAT = 22;
+ * (api.md 201, D-108); v23 = the person's `folders-allow` and `folders-revoke` (api.md 215, D-120). */
+export const LEDGER_FORMAT = 23;
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
   'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'bookmark', 'unbookmark', 'notes-hide', 'notes-show', 'widths',
   'archive', 'restore', 'lock', 'unlock', 'app-allow', 'app-revoke', 'skin', 'ask', 'direction',
+  'folders-allow', 'folders-revoke',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 
@@ -47,6 +48,11 @@ export const isPrivateAct = (e: { type: string; action?: string }): boolean =>
  * D-047 ruling 7). Each names its `app` (an allow also its `hash`) and nothing else: an app is on no
  * board and no card, so these move no head, answer nothing and no board's lock holds them. */
 export const APP_ACTIONS: ReadonlySet<ActionId> = new Set(['app-allow', 'app-revoke']);
+
+/** The person lets agents working in other folders call this ledger's board, and stops that (api.md 215, D-120). Each
+ * names nothing else: like an app's allow it is on no board and no card, so it moves no head, answers nothing and no
+ * board's lock holds it. */
+export const FOLDER_ACTIONS: ReadonlySet<ActionId> = new Set(['folders-allow', 'folders-revoke']);
 
 /** The id of every board's built-in Later container (3_FE_03 ruling 5, api.md 66): a `move` may
  * name it; no agent draws it, and no region may take its id. */
@@ -188,7 +194,8 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * coordinates (api.md 71). `nodes` are card identities. A `bookmark`, `unbookmark`, `notes-hide` or `notes-show` names one card by `id`
  * and nothing else (api.md 128). A `widths` act sets a container's card widths (`board`, `region`,
  * `widths`), like `mode` (api.md 132). An `archive`, `restore`, `lock` or `unlock` names its `board` and nothing else
- * (api.md 135). An `app-allow` names its `app` and `hash`, an `app-revoke` its `app` (api.md 150). */
+ * (api.md 135). An `app-allow` names its `app` and `hash`, an `app-revoke` its `app` (api.md 150). A `folders-allow` or `folders-revoke` names
+ * nothing (api.md 215). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; id?: number; ver?: number; text?: string; proposal?: number;
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode']; widths?: Widths;

@@ -74,6 +74,8 @@ export interface BoardStatus {
   locked: boolean;
   /** The ledger is open read-only (D-085, the reads' `readOnly`): nothing changes until they switch to Editing. */
   readOnly: boolean;
+  /** The person lets agents from other folders in (the open ledger's `folders-allow`, D-120): the "⋯" menu's tick. */
+  otherFolders: boolean;
   /** The open board's skin (D-100 2): the "⋯" menu's Skin rows; null before a board opens. */
   skin: Skin | null;
   /** The person's choice of which way the open board's flows run (BE_01): `across`, `down`, or `auto` with none (each
@@ -106,7 +108,7 @@ export const initialStatus = (): BoardStatus => ({
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, bookmarkedCards: [],
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
-  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, skin: null, direction: null, go: null, files: null, drawn: 0, refits: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
+  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, readOnly: false, otherFolders: false, skin: null, direction: null, go: null, files: null, drawn: 0, refits: 0, chatWork: 'idle', sendWaiting: false, chatAttached: false, unsaved: false,
 });
 
 export interface Status {

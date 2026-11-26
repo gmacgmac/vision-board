@@ -304,6 +304,11 @@ export const FLAGS = {
     // a host's engine never installs the skill.
     default: true,
   },
+  otherFolders: {
+    // On by default (maintainer, chat points 842-845, D-120). The page reads it for the "⋯" row; the standalone server
+    // (VB_FLAGS) for its folder check. ?flags=-otherFolders hides the row only.
+    default: true,
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
@@ -426,4 +431,5 @@ export const FLAG_DESCRIPTIONS = {
   selectionGrid: 'With selectionPill, a click or Enter on the "3 selected" pill opens a 3×3 grid placed so that Comment, the middle of its bottom row, is under the pointer (from the keyboard, at the pill\'s centre) and has focus, so a second click comments: "3 selected" (a click closes), Reset places and Remove on top, a divider, Save for later, Width and Zoom, then Move to, Comment and Bookmark all. With no room above, the rows reverse and it opens downward, Comment still under the pointer and Remove still farthest. Labels stay on one line, with their icons where the icon set has one; the arrow keys move between the cells; an absent command leaves its cell empty. Off, the pill opens the one-row bar.',
   followOtherWriters: 'The engine polls the ledger file for another program\'s appends (`ledger.ts` `follow`, every `FOLLOW_MS`) while `watch` or a held read listens, so a second writer on the folder reaches the view. Off, it never polls: `watch` hears the engine\'s own writes, and a held read wakes on them alone; a host turns it off where its engine is the folder\'s only writer.',
   skillInstallAtStart: 'The standalone board, at start, copies the skill into each installed client (Claude Code, Kiro CLI and IDE, Kiro Crew) when a copy is missing or differs from the repo, and prints `npm run skill:install`\'s lines (D-118); not from a linked git worktree. Off, only `npm run skill:install` and the `main` hooks copy it.',
+  otherFolders: 'The standalone board\'s "⋯" menu has "Let agents from other folders in", a checkbox, off until the person ticks it; ticking writes the person\'s `folders-allow` act in the open ledger, unticking `folders-revoke` (api.md 215, D-120). While it is on, the server\'s folder check lets an agent whose `VB-Project` names another folder call this ledger\'s board, and a secret from a recent folder is told to join again here; the board grant still comes before any write, a secret from another ledger of the open folder is still `wrong-folder`, and reads still name the open folder. Off, no row, and the server refuses another folder as before, whatever the ledger says.',
 } as const satisfies Record<FlagName, string>;

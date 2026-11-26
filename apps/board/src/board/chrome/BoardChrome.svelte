@@ -55,6 +55,7 @@
   onrevoke={(agent) => board()?.access.revoke(undefined, agent) ?? Promise.resolve()}
   onarchive={() => void board()?.boardEdit.archive()}
   onlock={() => void board()?.boardEdit.lock()}
+  onfolders={flag('otherFolders') && chrome.parts.folderRow ? () => void board()?.boardEdit.otherFolders() : undefined}
   onskin={(skin) => board()?.setSkin(skin)}
   ondirection={(direction) => board()?.setDirection(direction)}
   onfiles={chrome.files.print || chrome.files.export || chrome.files.import ? (kind) => board()?.files?.ask(kind) : undefined}

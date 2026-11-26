@@ -11,23 +11,23 @@
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
     "board": {
-      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/id",
       "description": "The board the container is on."
     },
     "region": {
-      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/id",
       "description": "The container's id."
     },
     "mode": {
-      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/mode",
+      "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/mode",
       "description": "The mode the board shows: the person's choice when they made one, else the container's."
     },
     "widths": {
-      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/widths",
+      "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/widths",
       "description": "The card widths in effect, for every card of the container: the person's choice, else the container's, else the default: the mode's, or, on a container with a timeline, match run down and own across."
     },
     "lanes": {
-      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/lanes",
+      "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/lanes",
       "description": "The lane names, top to bottom, in `lanes` mode; left out in every other mode."
     },
     "columns": {
@@ -70,7 +70,7 @@
       "required": ["direction", "cards"],
       "properties": {
         "direction": {
-          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/direction",
+          "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/direction",
           "description": "Which way the line runs, as the container's flow direction: `across` the top, or `down` the middle of the container's first column."
         },
         "cards": {
@@ -92,7 +92,7 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumber"
         },
         "at": {
-          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/timeline",
+          "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/timeline",
           "description": "The card's date, as stored."
         },
         "side": {
@@ -110,7 +110,7 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumber"
         },
         "lane": {
-          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/lane",
+          "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/lane",
           "description": "The lane the card is in, in `lanes` mode."
         },
         "column": {

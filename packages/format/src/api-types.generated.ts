@@ -628,7 +628,7 @@ type BoardStored = {
   key?: CommonKey;
 };
 type CommonStamp = {
-  v: 22;
+  v: 23;
   seq: number;
   at: string;
   by: "person" | "agent";
@@ -793,7 +793,7 @@ type CheckResponsesResponseAct = {
   action?: "comment" | "context" | "later" | "reopen" | "pin" | "unpin" | "mode" | "grant" | "deny" | "revoke" | "size" | "send" | "note-edit" | "note-remove" | "move" | "reject" | "bookmark" | "unbookmark" | "widths" | "archive" | "restore" | "lock" | "unlock" | "skin" | "ask" | "direction";
 } & CommonStamp & CommonStampAgent & ActCore;
 type ActCore = {
-  action: "ack" | "drop" | "comment" | "context" | "later" | "reopen" | "pin" | "unpin" | "mode" | "grant" | "deny" | "revoke" | "size" | "send" | "note-edit" | "note-remove" | "move" | "reject" | "bookmark" | "unbookmark" | "notes-hide" | "notes-show" | "widths" | "archive" | "restore" | "lock" | "unlock" | "app-allow" | "app-revoke" | "skin" | "ask" | "direction";
+  action: "ack" | "drop" | "comment" | "context" | "later" | "reopen" | "pin" | "unpin" | "mode" | "grant" | "deny" | "revoke" | "size" | "send" | "note-edit" | "note-remove" | "move" | "reject" | "bookmark" | "unbookmark" | "notes-hide" | "notes-show" | "widths" | "archive" | "restore" | "lock" | "unlock" | "app-allow" | "app-revoke" | "skin" | "ask" | "direction" | "folders-allow" | "folders-revoke";
   n?: number;
   ver?: number;
   text?: CommonLongText;

@@ -124,6 +124,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   ask: { id: 'ask', label: actionsRegistryWords.askNow, ...person, onItem: false },
   // Ledger v20 (api.md 189): which way a flow runs, for one container or the whole board. Arranging, like the mode.
   direction: { id: 'direction', label: actionsRegistryWords.flowDirection, ...person, onItem: false },
+  // Ledger v23 (api.md 215, D-120): the person lets agents working in other folders call this ledger's board, and stops
+  // that. On the ledger, not a board or a card; nothing is lost either way, so the page asks neither time.
+  'folders-allow': { id: 'folders-allow', label: actionsRegistryWords.letAgentsFromOtherFolders, ...person, onItem: false },
+  'folders-revoke': { id: 'folders-revoke', label: actionsRegistryWords.stopAgentsFromOtherFolders, ...person, onItem: false },
 };
 
 /** The review buttons an item offers: an act among them must be one its kind offers (act.ts). */

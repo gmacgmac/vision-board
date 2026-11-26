@@ -50,6 +50,9 @@ export const aNewerProposalOnIs = (n: number): string => `a newer proposal on ${
 export const hashThisVersionOfIs = (app: string | undefined): string => `hash: this version of "${app}" is already allowed`;
 export const appIsnTAllowedSo = (app: string | undefined): string => `app: "${app}" isn't allowed, so there is nothing to stop`;
 
+// ---- other-folders.ts
+export const otherFoldersAre = (on: boolean): string => `Other folders are ${on ? 'already' : 'not'} let in`;
+
 // ---- archive.ts
 export const thatBoardIdIsnT = 'That board id isn\'t available; choose another id.';
 export const boardIsArchivedRestoreIt = (board: string): string => `board: "${board}" is archived; restore it from the board picker first`;

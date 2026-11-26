@@ -17,6 +17,7 @@ import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContaine
 import { type BoardDates, foldArchive } from './archive.ts';
 import { type AppAllows, foldAppAct } from './apps.ts';
 import { foldLock } from './lock.ts';
+import { foldOtherFolders, type OtherFolders } from './other-folders.ts';
 import type { Place } from './containers.ts';
 import { applyContainerAct } from './containers.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
@@ -61,8 +62,8 @@ export interface Marks {
 export interface GrantNote { reason: string; at: string; text?: string }
 
 /** What was drawn (DrawnState, from packages/format) plus the person's side, and the person's allows of
- * app code (`appAllowed`, apps.ts). */
-export interface LedgerState extends DrawnState, AppAllows {
+ * app code (`appAllowed`, apps.ts) and of agents from other folders (`otherFolders`, other-folders.ts). */
+export interface LedgerState extends DrawnState, AppAllows, OtherFolders {
   /** The container index, folded by packages/format (`indexEvent`), never folded again here. */
   index: LedgerIndex;
   /** Agent id -> the label it joined with. */
@@ -274,6 +275,7 @@ function applyAct(s: LedgerState, e: ActEvent): void {
     case 'deny': { const note = s.grantNotes.get(e.request!); if (note && e.text) note.text = e.text; break; }
     case 'grant': case 'revoke': break; // holders live in the index
     case 'app-allow': case 'app-revoke': foldAppAct(s, e); break;
+    case 'folders-allow': case 'folders-revoke': foldOtherFolders(s, e); break;
     case 'skin': foldSkin(s, e); break;
     case 'direction': foldDirection(s, e); break;
     case 'ask': foldAsk(s, e); break;

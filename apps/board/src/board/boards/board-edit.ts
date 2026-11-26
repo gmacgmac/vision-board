@@ -7,9 +7,10 @@
 // lands on an archived board. A board the person made has no agent creator, so every agent asks the
 // person for it before drawing on it. Archive asks first (ruling 5); the page then opens the next
 // board (boards.ts, which does so whoever archived it). Restore opens the board it brings back. Lock
-// board asks nothing (nothing is lost either way) and says what it did.
+// board asks nothing (nothing is lost either way) and says what it did. "Let agents from other folders in" (D-120) asks
+// nothing either: the open ledger's `folders-allow` or `folders-revoke`, sent through the open board; its tick says it.
 import type { BoardActionId, LedgerState } from '#actions';
-import { boardLocked } from '#actions';
+import { boardLocked, otherFoldersIn } from '#actions';
 import type { BoardFields } from '../io.ts';
 import type { Sender } from '../sender.ts';
 import * as boardsWords from '../words/boards.ts';
@@ -64,6 +65,9 @@ export interface BoardEdit {
   restore(id: string): Promise<string | null>;
   /** Lock the open board, or unlock it when it is locked; null when done, else the problem. */
   lock(): Promise<string | null>;
+  /** Let agents from other folders in, or stop that when they are (D-120), sent through the open board; null when done,
+   *  else the problem. */
+  otherFolders(): Promise<string | null>;
 }
 
 /** What the toast says once the board is locked or unlocked. */
@@ -100,6 +104,12 @@ export function createBoardEdit(d: BoardEditDeps): BoardEdit {
       const problem = await d.sender.actOn(id, { action });
       if (problem === null) d.toast?.(LOCK_DONE[action]);
       return problem;
+    },
+    // The row is off while no board is open; the server refuses an act on none.
+    otherFolders() {
+      const s = d.state();
+      const on = !!s && otherFoldersIn(s);
+      return d.sender.actOn(d.id(), { action: on ? 'folders-revoke' : 'folders-allow' });
     },
   };
 }

@@ -53,6 +53,7 @@ import { ledgerSection } from './ledger-section.ts';
 import { bookmarkSection } from './bookmark-section.ts';
 import { archiveSection } from './archive-section.ts';
 import { lockSection } from './lock-section.ts';
+import { otherFoldersSection } from './other-folders-section.ts';
 import { removeSection } from './remove-section.ts';
 import { filesSection } from './files-section.ts';
 import { retiredSection } from './retired-section.ts';
@@ -190,6 +191,7 @@ function build(): void {
   main.append(filesSection(fx)); // D-107, export-import-print FE_01; last of all, so no section moves
   if (flagOn('openFolder', flags)) main.append(folderChooserSection()); // D-110, folder-chooser-setup T_01; last of all, so no section moves
   if (flagOn('agentAccess', flags)) main.append(holdersChipSection(fx)); // last of all, so no section moves
+  if (flagOn('otherFolders', flags) && flagOn('openFolder', flags)) main.append(otherFoldersSection()); // D-120; last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }
