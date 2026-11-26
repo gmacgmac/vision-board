@@ -78,11 +78,12 @@ export interface MarksInput {
 }
 
 /** The change badge: New first, then the unseen updates, then the version once seen (from v2, or from v1 with a
- *  written time: a node that never changed has none without it). */
+ *  written time: a node that never changed has none without it). An app card keeps the v2 rule: its window's bar has
+ *  no room for a v1 badge beside the app's name at its least width. */
 function badgeOf(n: ViewNode, m: MarksInput): Pick<NodeMarks, 'badge' | 'badgeText' | 'badgeLabel' | 'badgeTip'> {
   const [badge, text]: [BadgeMark, string] = m.fresh ? ['new', nodeWords.badgeNew]
     : m.updates?.tab ? ['updates', m.updates.tab]
-      : m.ver !== undefined && (m.ver > 1 || m.written) ? ['settled', nodeWords.badgeSettled(m.ver)] : ['none', ''];
+      : m.ver !== undefined && (m.ver > 1 || (m.written && n.kind !== 'app')) ? ['settled', nodeWords.badgeSettled(m.ver)] : ['none', ''];
   const label = badge === 'none' ? '' : nodeWords.badgeItem(text, n.n, MARK_KEYS.history);
   const when = m.written ? `${nodeWords.badgeWritten(writtenTime(m.written.at), m.written.agent)}\n` : '';
   return { badge, badgeText: text, badgeLabel: label, badgeTip: label && when ? `${when}${label}` : '' };
