@@ -9,7 +9,7 @@
 // and draws from scratch. Images in cards (card-images.ts) load once their card is near, are asked
 // after again when a card is selected, and a card whose image changed its height, or whose app panel
 // told a new one (appFit), is measured and laid out again alone (`resized`); every card is, once a font face loads.
-import type { Direction, NodeSize, ViewNode } from '#format';
+import type { Direction, TierSize, ViewNode } from '#format';
 import type { Align, BoardLayout, Size } from '#layout';
 import { EDGE_ROW_GAP } from '#layout';
 import { widthsOf } from '#format';
@@ -191,7 +191,7 @@ export function createDrawing(d: DrawDeps): Drawing {
       cache.clear();
       sizes.clear();
     }
-    const tier = d.sizing ? (n: ViewNode): NodeSize => tierOf(n, data.state, d.markdown?.more) : undefined;
+    const tier = d.sizing ? (n: ViewNode): TierSize => tierOf(n, data.state, d.markdown?.more) : undefined;
     const sync = cards.sync(data.view, data.state, data.versions, d.selected, tier, d.facts);
     if (fresh || sync.created) noAnim();
     regions.sync(data.view);

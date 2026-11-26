@@ -1,6 +1,6 @@
 // Node pattern, layer 1 (core): what a node shows and which actions it offers. No DOM, so
 // every rule here is unit-tested under plain Node; the element only applies the result.
-import type { ActionId, NodeSize, ParkBundle, ViewNode } from '#format';
+import type { ActionId, ParkBundle, TierSize, ViewNode } from '#format';
 import { NODE_TYPES } from '#format';
 import type { BoardState, ItemStatus, ProposalRow } from '#actions';
 import type { CardReply } from './node-notes.ts';
@@ -52,7 +52,7 @@ export * from './node-notes.ts';
 
 /** The node's width (D-030): its tier, and whether the person picked it (the selection bar's Width, D-099 3). */
 export interface SizeState {
-  tier: NodeSize;
+  tier: TierSize;
   picked: boolean;
 }
 
@@ -169,7 +169,7 @@ export interface NodeState {
 
 /** `tier` comes from the page (`sizeTier` in packages/layout, which this layer may not import), and
  *  so do `selected` (the page's selection module, 3_FE_01) and `c` (the conditions table, FE_01). */
-export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected = false, c: CardConditions = {}): NodeState {
+export function nodeState(n: ViewNode, s: BoardState, tier?: TierSize, selected = false, c: CardConditions = {}): NodeState {
   const status = statusOf(s, n.id);
   const awaiting = isItem(n) && c.awaiting === true;
   const handover = handoverView(n, c.handover, awaiting);

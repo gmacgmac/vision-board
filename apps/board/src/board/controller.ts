@@ -25,7 +25,7 @@ import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
 import { askContextOf, createBoardEdit, createBoardFiles, createBoards, createLockFlow, createVersions, IMPORT_BYTES } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
-import { createAttention, createBookmarkFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
+import { createAttention, createBookmarkFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow, tierOf } from './cards/index.ts';
 import { type BoardElements, createDrawing, createFocus, createPlaces, preparePrint, Viewport, zoomPercent } from './canvas/index.ts';
 import { createLive } from './live.ts';
 import { bindStage } from './input/index.ts';
@@ -83,9 +83,11 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** The node's edges and the board's skin (D-099, D-100; FE_02, controller/node-edges.ts). */
   const edges = createNodeEdges({
     stage, prefix: b.ids ?? '', status, io, drawing: () => drawing, node: nodeOf, card: (id) => drawing.cards.get(id),
-    state: (id) => { const n = nodeOf(id); return n && S.data ? nodeState(n, S.data.state, undefined, selection.has(id), facts(n)) : undefined; },
+    state: (id) => { const n = nodeOf(id); return n && S.data ? nodeState(n, S.data.state, sizing ? tierOf(n, S.data.state, markdown?.more) : undefined, selection.has(id), facts(n)) : undefined; },
     paused: (what) => (versions.state ? READ_ONLY : live.readOnly ? MARK_MOMENT_WORDS.ledgerIsReadOnly : what === 'answer' && lock.paused() ? MARK_MOMENT_WORDS.boardIsLocked : null),
     act: (id, a) => guarded.act(id, a), bookmark: (id) => guarded.bookmark?.(id), unpin: (id) => guarded.unpin(id),
+    // Width ›: the bar's width menu, for the card right-clicked or, when it is selected, every selected card.
+    width: (id, anchor) => { const sel = selection.selected(); barActs.width(sel.includes(id) ? sel : [id], anchor); },
     ledger: () => live.state, board: () => S.id, readOnly: () => readOnly(), freshIn: () => attention.freshIn(), replies: () => parking.containers(), redraw: () => redraw(),
   });
   /** What the conditions table says about card `n` (FE_01): its proposals, updates, parking, app; its version for the badge. */
@@ -221,13 +223,15 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     // is drawn inside `mount` (chrome/GoToCard.svelte).
     ...(on('cardSearch') && { search: { key: () => S.data, world, card: (id: string) => drawing.cards.get(id), reveal: (id: string) => { const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); },
       docs: () => (S.data ? boardSearchDocs((versions.state ?? live.state)!, S.id, view()).filter((doc) => drawing.layout?.nodes.has(doc.id)) : []) } }) });
+  /** The bar's Bookmark all, Save for later and Width (bar-acts.ts); a card's right-click Width › opens the same width menu. */
+  const barActs = createBarActs({ stage, view: () => S.data!.view, state: () => S.data!.state, run: (steps) => sender.run(steps), moves, toast });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), grid: on('selectionGrid'), focusLeads: on('focusLeads'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused, ledgerReadOnly: () => live.readOnly,
     ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }),
-    // The bar's Bookmark all, Save for later and Width (bar-acts.ts); it steps aside for a node's open menu or box (FE_06).
-    extras: { ...createBarActs({ stage, view: () => S.data!.view, state: () => S.data!.state, run: (steps) => sender.run(steps), moves, toast }), bookmark: bookmarking },
+    // It steps aside for a node's open menu or box (FE_06).
+    extras: { ...barActs, bookmark: bookmarking },
     covered: () => !!stage.querySelector('.vb-mark-menu, .vb-card-pop[data-open]') });
   // With no board shown ("No boards yet") a pan or zoom moves only the empty stage: nothing is placed or kept.
   vp.onApply = () => { status.set({ zoom: zoomPercent(vp.k) }); if (!S.data) return; notes.place(); flow.place(); edges.place(); drawing.viewMoved(); boards.moved(); };

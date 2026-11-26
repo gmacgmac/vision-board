@@ -25,6 +25,8 @@ export const nothingHasHappenedToThis = 'Nothing has happened to this card yet';
 export const cardHistory = (n: number | undefined): string => `Card ${n} history`;
 export const history = (title: string): string => `${title}: history`;
 export const history2 = 'History';
+/** The right-click list's Width row: it opens the S, M, L, XL and Auto choices the selection bar's Width gives. */
+export const width = 'Width';
 /** The history box beside a node (FE_03 run 2): its head and its ×. */
 export const historyOfN = (n: number | string | undefined): string => `History of ${n}`;
 export const closeHistory = 'Close history';

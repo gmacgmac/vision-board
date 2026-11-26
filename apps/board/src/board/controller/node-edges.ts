@@ -5,7 +5,7 @@
 import type { ActionId, LedgerEvent, Skin, ViewNode } from '#format';
 import { DEFAULT_SKIN, isLibraryIcon } from '#format';
 import type { FreshCount, LedgerState } from '#actions';
-import type { CardReply, NodeState } from '#ui';
+import type { CardReply, NodeState, StageBox } from '#ui';
 import { SKIN_DEFS } from '#ui';
 import type { Drawing } from '../canvas/index.ts';
 import type { MarkFlow } from '../cards/index.ts';
@@ -26,6 +26,7 @@ export interface NodeEdgesDeps {
   act(id: string, action: ActionId): Promise<boolean | undefined> | void;
   bookmark(id: string): Promise<unknown> | void;
   unpin(id: string): void;
+  width(id: string, anchor: StageBox): void;
   ledger(): LedgerState | null;
   board(): string;
   /** Nothing may change (a past version, a ledger open read-only): a click in a container clears nothing. */

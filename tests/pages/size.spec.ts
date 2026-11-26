@@ -9,7 +9,7 @@ import { bar, card, openBoard, ROADMAP_CARDS, zoomToFull } from './board-page.ts
 
 const THEMES: Theme[] = ['dark', 'light'];
 /** The tier widths (tokens.css). */
-const WIDTH = { s: 280, m: 360, l: 464 };
+const WIDTH = { s: 280, m: 360, l: 464, xl: 600 };
 
 const width = async (page: Page, n: number) => (await card(page, n).boundingBox())!.width;
 /** Width in CSS pixels, whatever the board's zoom. */
@@ -21,7 +21,7 @@ async function pickWidth(page: Page, n: number, size: 'Small' | 'Medium' | 'Larg
   await card(page, n).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
   await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Width' }).click();
-  await page.getByRole('menu', { name: /^Width of/ }).getByRole('menuitem', { name: size }).click();
+  await page.getByRole('menu', { name: /^Width of/ }).getByRole('menuitem', { name: size, exact: size !== 'Auto' }).click();
 }
 
 test('flag off: no tiers on the board', async ({ page }) => {
@@ -73,6 +73,54 @@ test('Width on the selection bar picks L, which survives a reload; Auto hands th
   expect(sizes.state.sizes ?? {}).toEqual({});
 });
 
+/** Right-click card `n`, then Width › in its list: the same width menu as the selection bar's. */
+async function rightClickWidth(page: Page, n: number): Promise<void> {
+  await card(page, n).focus();
+  await card(page, n).locator('.vb-node-title').click({ button: 'right' });
+  await page.getByRole('menu', { name: /^Actions on/ }).getByRole('menuitem', { name: /^Width/ }).click();
+}
+const pick = (page: Page, size: 'Small' | 'Medium' | 'Large' | 'Extra large' | 'Auto') =>
+  page.getByRole('menu', { name: /^Width of/ }).getByRole('menuitem', { name: size, exact: size !== 'Auto' }).click();
+
+test('Width in the right-click list sets XL (600px) on the card clicked, and Auto gives it back', async ({ page }) => {
+  await openBoard(page);
+  await zoomToFull(page);
+  await rightClickWidth(page, 1);
+  await expect(page.getByRole('menu', { name: 'Width of 1 node' }).getByRole('menuitem')).toHaveText(['S', 'M', 'L', 'XL', 'Auto']);
+  await pick(page, 'Extra large');
+  await expect(card(page, 1)).toHaveAttribute('data-size', 'xl');
+  await expect(card(page, 1)).toHaveAttribute('data-size-picked', '');
+  expect(await cssWidth(page, 1)).toBe(WIDTH.xl);
+  expect(await cssWidth(page, 13)).toBe(WIDTH.m); // no other card moved
+  await zoomToFull(page);
+  await rightClickWidth(page, 1);
+  await pick(page, 'Auto');
+  await expect(card(page, 1)).toHaveAttribute('data-size', 's');
+  expect(await cssWidth(page, 1)).toBe(WIDTH.s);
+});
+
+test('Width in the right-click list of a selected card sets every selected card; of an unselected one, that card alone', async ({ page }) => {
+  await openBoard(page);
+  await zoomToFull(page);
+  await card(page, 1).focus(); // focusing pans it into view
+  await card(page, 1).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
+  await card(page, 2).focus();
+  await card(page, 2).locator('.vb-node-title').click({ modifiers: ['Shift'], position: { x: 4, y: 4 } });
+  await rightClickWidth(page, 2);
+  await expect(page.getByRole('menu', { name: 'Width of 2 nodes' })).toBeVisible();
+  await pick(page, 'Medium');
+  await expect(card(page, 1)).toHaveAttribute('data-size-picked', '');
+  await expect(card(page, 2)).toHaveAttribute('data-size-picked', '');
+  await card(page, 1).focus();
+  await card(page, 1).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
+  await rightClickWidth(page, 3);
+  await expect(page.getByRole('menu', { name: 'Width of 1 node' })).toBeVisible();
+  await pick(page, 'Large');
+  await expect(card(page, 3)).toHaveAttribute('data-size', 'l');
+  await expect(card(page, 1)).toHaveAttribute('data-size', 'm');
+  for (const n of [1, 2, 3]) { await zoomToFull(page); await rightClickWidth(page, n); await pick(page, 'Auto'); }
+});
+
 for (const theme of THEMES) {
   test(`flag on: axe passes on the board at full size, the Width list open (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
@@ -110,6 +158,7 @@ test('gallery: the tiers come from the body, the agent, emphasis and the person'
     ['Agent suggestion: M', 'm'],
     ['Emphasis: one tier up', 'm'],
     ['Is the credit two months or three?', 's'],
+    ['You widened this one to XL', 'xl'],
   ];
   for (const [title, tier] of tiers) {
     await expect(sample(page, title), title).toHaveAttribute('data-size', tier);
@@ -120,6 +169,7 @@ test('gallery: the tiers come from the body, the agent, emphasis and the person'
   expect(await w('Grandfather annual plans for 12 months, then migrate at renewal')).toBeGreaterThan(await w('Do we grandfather existing annual plans?'));
   // The person's pick (the selection bar's Width, D-099 3) is the node's own width; no control on the node.
   await expect(sample(page, 'Is the credit two months or three?')).toHaveAttribute('data-size-picked', '');
+  await expect(sample(page, 'You widened this one to XL')).toHaveAttribute('data-size-picked', '');
   await expect(section(page).locator('.vb-size, .vb-size-trig, .vb-node-pin')).toHaveCount(0);
 });
 

@@ -387,20 +387,21 @@ host; nclite's pane will be another.
 ## Node size (D-030, tracker U7)
 
 A card has one of three widths. The engine picks one from what the card holds, and the person can
-override it from the selection bar (D-099 3, DD-10: Width left the node).
+override it from the selection bar or the card's right-click list (D-099 3, DD-10: Width left the node), where
+a fourth, XL, is theirs alone.
 
-1. **Tiers** are tokens: `--vb-card-w-s` 280px, `--vb-card-w-m` 360px, `--vb-card-w-l` 464px.
+1. **Tiers** are tokens: `--vb-card-w-s` 280px, `--vb-card-w-m` 360px, `--vb-card-w-l` 464px, and the person's own `--vb-card-w-xl` 600px (`ACT_SIZES` only: an agent's `size` stays s, m, l, `NODE_SIZES`).
    Body text then runs about 37, 49 and 70 characters a line. Cards still grow taller to fit.
 2. **Auto tier**, a pure function in `packages/layout` (`sizeTier`), counting the body Markdown
    only (title and tags do not count): `l` if the body is over 480 characters or has a table (the
    markdownMore flag, § Markdown); `m` if it is over 140, or has a code block, or more than 6 list
    items; `s` otherwise.
 3. **Precedence**: the person's `size` act, then the agent's `node.size` suggestion, then the auto
-   tier. Emphasis raises the result one tier, up to `l`. The person's `auto` removes their pick.
+   tier. Emphasis raises the result one tier, up to `l`, never to `xl`. The person's `auto` removes their pick.
 4. **Where it is applied**: the page sets `data-size` on `<vb-node>` before it measures cards,
    because height depends on width; layout keeps reading measured sizes, so it stays pure (rule 9).
 5. **The control**: the selection bar's Width (Shift+W; `apps/board/src/board/selection/bar-acts.ts` `width`, the Move
-   to list's look) offers S, M, L and Auto for the selected nodes, one `size` act each; an app node takes none. The node
+   to list's look) offers S, M, L, XL and Auto for the selected nodes, one `size` act each; an app node takes none. The node's right-click list has `Width ›` (`node-menus.ts` `contextMenu`, `mark-acts.ts` `width`), which opens that same menu (`bar-acts.ts` `width`) under the pointer: for the card right-clicked, or every selected node when that card is in the selection. The node
    carries no size control; `data-size-picked` says the person picked its width (`vb-node.ts` `updateSize`).
 6. **The record**: a person-only `act` `size { n, size }` (`docs/specification/api.md` point 16),
    folded like `pin`. The tier is a word, never a width, so no coordinates or pixel sizes enter
@@ -1777,7 +1778,7 @@ icon library it holds. The look is
    node), the answer picker (Tick and Cross side by side, `data-menu-look="picker"`; drawn Cross then Tick with
    `data-cross="left"`; a row under the pointer, after Tab or with `data-look="hover"` fills with its answer's colour,
    `--vb-answer-tick` or `--vb-answer-cross`, its icon `--vb-answer-mark`) and the right-click list (the six
-   actions with their keys; no Tick or Cross on a node that only tells, no Save for later on an app). Markup only, drawn
+   actions with their keys, then Width ›, a row with `popup` that opens the bar's width menu; no Tick or Cross on a node that only tells, no Save for later or Width on an app, no Width with the nodeSize flag off). Markup only, drawn
    hidden, rows acting by `data-menu-act`; the page opens them (FE_02, `mark-menus.ts`: the shared menu's keys, `menuKeydown`, and a press outside through `dismissable` with `clickWithin`, so a pan leaves one open).
 7. **Styles** (`node-edges.css`, tokens only): marks 22px tall with a 28px hit area (3px of transparent edge); the disc
    is `--vb-answer-size` (24px, D-112), in the kind's colour (in dark 15% toward black, in its own rule, so its white

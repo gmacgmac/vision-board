@@ -151,7 +151,7 @@ export const BROKEN: [string, Rec][] = [
   ['revoke naming a node', act('revoke', { n: 1 })],
   ['size without size', act('size', { size: undefined })],
   ['size without n', act('size', { n: undefined })],
-  ['size xl', act('size', { size: 'xl' })],
+  ['size xxl', act('size', { size: 'xxl' })],
   ['send without board', act('send', { board: undefined })],
   ['send naming a node', act('send', { n: 1 })],
   ['note-edit without note', act('note-edit', { note: undefined })],

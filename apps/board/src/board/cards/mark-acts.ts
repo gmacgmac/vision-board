@@ -3,6 +3,7 @@
 // (mark-boxes.ts), Tick and Cross through the item acts with their moments, the tips over the marks (mark-tips.ts),
 // and the disc's picker opened by a pointer resting on it (disc-rest.ts, D-112). mark-flow.ts says what each mark
 // does; this is how. Browser only.
+import type { StageBox } from '#ui';
 import { MARK_MOMENT_WORDS, POPOVER_CLOSE } from '#ui';
 import type { MarkFlowDeps } from './mark-flow.ts';
 import type { MarkMenu, MarkMenuName } from './mark-menus.ts';
@@ -40,6 +41,8 @@ type Anchor = () => { x: number; y: number; w: number; h: number } | null;
 export function createMarkActs(d: MarkFlowDeps): MarkActs {
   const tips = createMarkTips(d.stage);
   let open: Open | null = null;
+  /** Where the actions list was opened, for the width menu it leads to. */
+  let point: { id: string; anchor: Anchor } | null = null;
 
   const markOf = (id: string, mark: string): HTMLElement | null =>
     d.card(id)?.querySelector<HTMLElement>(`[data-mark="${mark}"]`) ?? null;
@@ -101,7 +104,9 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
     if (!card) return;
     const r = card.getBoundingClientRect();
     if (!card.contains(document.activeElement)) card.focus({ preventScroll: true });
-    showMenu(id, 'actions', null, 'point', pointOn(id, r.width ? (x - r.left) / r.width : 0, r.height ? (y - r.top) / r.height : 0));
+    const anchor = pointOn(id, r.width ? (x - r.left) / r.width : 0, r.height ? (y - r.top) / r.height : 0);
+    point = { id, anchor };
+    showMenu(id, 'actions', null, 'point', anchor);
   }
 
   /** Tick or Cross on node `id`, from the disc's picker, a switch's half or the actions: the item act, its moments. */
@@ -125,12 +130,22 @@ export function createMarkActs(d: MarkFlowDeps): MarkActs {
     void d.bookmark(id);
   }
 
+  /** Width: the bar's width menu (bar-acts.ts) where the actions list was opened; a pause says why on the number. */
+  function width(id: string) {
+    const why = d.paused('bookmark');
+    const el = markOf(id, 'number');
+    if (why) return void (el && tips.locked(el, why));
+    const anchor = (point?.id === id ? point.anchor() : null) ?? anchorOf(id, 'number')();
+    if (anchor) d.width(id, anchor);
+  }
+
   /** A row of a node's menu, once the menu has closed. */
   function run(id: string, act: string) {
     if (act === 'ack' || act === 'drop') return void answer(id, act);
     if (act === 'bookmark' || act === 'unbookmark') return bookmark(id, markOf(id, 'number'));
     if (act === 'history') return toggleBox(id, 'history', markOf(id, 'badge'));
     if (act === 'unpin') return d.unpin(id);
+    if (act === 'width') return width(id);
     if (act === 'comment' || act === 'later' || act === 'reopen') void d.act(id, act);
   }
 

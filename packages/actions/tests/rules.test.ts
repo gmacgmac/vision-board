@@ -58,7 +58,7 @@ test('revoke: someone who does not hold the container, or on another board', () 
 
 test('size: a node on this board; auto clears and is valid too', () => {
   const s = scene().state();
-  for (const size of ['s', 'm', 'l', 'auto'] as const)
+  for (const size of ['s', 'm', 'l', 'xl', 'auto'] as const)
     assert.deepEqual(validateAct(act({ action: 'size', id: 1, size, board: undefined }), s, 'b'), [], size);
   // Any node, numbered or not: the size control is on every card.
   assert.deepEqual(validateAct(act({ action: 'size', id: 3, size: 's', board: undefined }), s), []);

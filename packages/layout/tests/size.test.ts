@@ -88,6 +88,13 @@ test('the person pick overrides the agent and the auto tier', () => {
   assert.equal(sizeTier({ body: 'short' }, 'l'), 'l');
 });
 
+test('XL is the person\'s only: a pick gives it; no agent size, auto rule or emphasis reaches it', () => {
+  assert.equal(sizeTier({ body: 'short' }, 'xl'), 'xl');
+  assert.equal(sizeTier({ body: chars(600), size: 'l', emphasis: true }, 'xl'), 'xl');
+  assert.equal(sizeTier({ body: chars(600), size: 'l', emphasis: true }), 'l');
+  assert.equal(sizeTier({ body: chars(600), size: 'l' }, 'auto'), 'l');
+});
+
 test('the person picking auto removes their pick', () => {
   assert.equal(sizeTier({ body: chars(600) }, 'auto'), 'l');
   assert.equal(sizeTier({ body: 'short', size: 'm' }, 'auto'), 'm');

@@ -99,7 +99,7 @@
             "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
           },
           "additionalProperties": {
-            "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeSize"
+            "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/tierSize"
           },
           "description": "The person's size per node; left out when none is set",
           "$comment": "Was: api.md 17"

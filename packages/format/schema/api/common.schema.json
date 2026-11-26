@@ -438,7 +438,7 @@
           "$comment": "Was: api.md 118, 120, 147"
         },
         "size": {
-          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/nodeSize",
+          "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/tierSize",
           "description": "The person's size; it wins over the agent's suggestion in `versions`",
           "$comment": "Was: api.md 17"
         },

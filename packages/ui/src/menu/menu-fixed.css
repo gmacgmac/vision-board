@@ -15,7 +15,8 @@
 .vb-menu-fixed .vb-menu-icon { width: 17px; height: 17px; color: var(--vb-ink-subtle); }
 .vb-menu-fixed .vb-menu-item[data-tone='tick'] .vb-menu-icon { color: var(--vb-state-ack); }
 .vb-menu-fixed .vb-menu-item[data-tone='cross'] .vb-menu-icon { color: var(--vb-state-drop); }
-.vb-menu-fixed .vb-menu-item kbd { margin-left: auto; }
+.vb-menu-fixed .vb-menu-item kbd, .vb-menu-fixed .vb-menu-more { margin-left: auto; }
+.vb-menu-fixed .vb-menu-more { color: var(--vb-ink-subtle); }
 .vb-menu-fixed .vb-menu-sep { height: 1px; margin: 3px 6px; background: var(--vb-line-strong); }
 .vb-menu-fixed[data-menu-look='picker'] { display: flex; gap: var(--vb-space-1); min-width: 0; padding: var(--vb-space-1); border-radius: var(--vb-radius-pill); }
 .vb-menu-fixed[data-menu-look='picker'][hidden] { display: none; }

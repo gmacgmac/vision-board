@@ -1,7 +1,7 @@
 // Card size tiers (D-030, docs/specification/components.md § Node size). Pure: a node in, a tier
 // word out. The page writes the tier on the card as `data-size` before it measures, so layout keeps
 // reading measured sizes and never sees a width (rule 9).
-import type { ActSize, NodeSize, ViewNode } from '#format';
+import type { ActSize, NodeSize, TierSize, ViewNode } from '#format';
 import { flagOn } from '#format';
 
 /** The tiers, smallest first; emphasis moves one step along this list. */
@@ -76,10 +76,10 @@ const up = (t: NodeSize): NodeSize => TIERS[Math.min(TIERS.indexOf(t) + 1, TIERS
 
 /**
  * The card's tier. The person's pick wins and is exact; `auto` (or none) leaves it to the agent's
- * `size` suggestion, else the auto tier, and emphasis raises that one step, up to L. `tables`: whether a
+ * `size` suggestion, else the auto tier, and emphasis raises that one step, up to L (never to XL, the person's only). `tables`: whether a
  * table makes the auto tier L (the markdownMore flag; left out, its default).
  */
-export function sizeTier(node: Pick<ViewNode, 'body' | 'size' | 'emphasis'>, personSize?: ActSize, tables?: boolean): NodeSize {
+export function sizeTier(node: Pick<ViewNode, 'body' | 'size' | 'emphasis'>, personSize?: ActSize, tables?: boolean): TierSize {
   if (personSize !== undefined && personSize !== 'auto') return personSize;
   const base = node.size ?? autoTier(node.body, tables);
   return node.emphasis ? up(base) : base;
