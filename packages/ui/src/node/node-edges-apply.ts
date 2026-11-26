@@ -53,6 +53,7 @@ export function applyMarks(el: HTMLElement, m: NodeMarks): void {
     badge.dataset.badge = m.badge;
     text(badge, m.badgeText);
     if (m.badgeLabel) badge.setAttribute('aria-label', m.badgeLabel);
+    if (m.badgeTip) badge.dataset.tip = m.badgeTip;
   }
   const awaiting = el.querySelector<HTMLElement>('.vb-mark-awaiting');
   if (awaiting) awaiting.hidden = !m.awaiting;

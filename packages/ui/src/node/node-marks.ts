@@ -10,6 +10,7 @@ import { ACTIONS } from '#actions';
 import type { CardReply } from './node-notes.ts';
 import type { ItemNote } from '#actions';
 import type { UpdatesView } from './node-updates.ts';
+import { writtenTime } from './node-time.ts';
 import * as nodeWords from '../words/node.ts';
 
 /** The key that opens a node's history (planner's call 3): no act, so not in the action registry. */
@@ -25,7 +26,7 @@ export const MARK_KEYS = {
 export type AnswerMark = 'none' | 'waiting' | 'ticked' | 'crossed';
 /** The notes mark (DD-05): quiet with none, a count, filled while an agent's reply is unread. */
 export type NotesMark = 'none' | 'count' | 'unread';
-/** The change badge (DD-06): none on a node that never changed, New, "N updates", then a quiet "vN" once seen. */
+/** The change badge (DD-06): none on a node that never changed (without a written time), New, "N updates", then a quiet "vN" once seen. */
 export type BadgeMark = 'none' | 'new' | 'updates' | 'settled';
 
 /** A tone as the element applies it (T_02): `data-vb-tone` is the name or `hue`, and `--vb-tone-h` the name's hue
@@ -52,6 +53,8 @@ export interface NodeMarks {
   badge: BadgeMark;
   badgeText: string;
   badgeLabel: string;
+  /** The badge's tip: when the agent last wrote the card, then the label; empty without a written time (the badge keeps its own tip). */
+  badgeTip: string;
   /** The handover is owed: the quiet Awaiting tab after the badge. */
   awaiting: boolean;
 }
@@ -71,16 +74,18 @@ const ANSWER_WORD: Record<Exclude<AnswerMark, 'none'>, string> = {
  *  bookmarked, new, its updates, its latest version (`ver`, the settled badge), an open proposal and Awaiting. */
 export interface MarksInput {
   status: ItemStatus; notes: readonly ItemNote[]; replies?: readonly CardReply[];
-  bookmarked: boolean; fresh: boolean; updates?: UpdatesView; ver?: number; proposed?: 'ack' | 'drop'; awaiting: boolean;
+  bookmarked: boolean; fresh: boolean; updates?: UpdatesView; ver?: number; written?: { at: string; agent?: string }; proposed?: 'ack' | 'drop'; awaiting: boolean;
 }
 
-/** The change badge: New first, then the unseen updates, then the version once seen (from v2: a node that never
- *  changed has none). */
-function badgeOf(n: ViewNode, m: MarksInput): Pick<NodeMarks, 'badge' | 'badgeText' | 'badgeLabel'> {
+/** The change badge: New first, then the unseen updates, then the version once seen (from v2, or from v1 with a
+ *  written time: a node that never changed has none without it). */
+function badgeOf(n: ViewNode, m: MarksInput): Pick<NodeMarks, 'badge' | 'badgeText' | 'badgeLabel' | 'badgeTip'> {
   const [badge, text]: [BadgeMark, string] = m.fresh ? ['new', nodeWords.badgeNew]
     : m.updates?.tab ? ['updates', m.updates.tab]
-      : m.ver !== undefined && m.ver > 1 ? ['settled', nodeWords.badgeSettled(m.ver)] : ['none', ''];
-  return { badge, badgeText: text, badgeLabel: badge === 'none' ? '' : nodeWords.badgeItem(text, n.n, MARK_KEYS.history) };
+      : m.ver !== undefined && (m.ver > 1 || m.written) ? ['settled', nodeWords.badgeSettled(m.ver)] : ['none', ''];
+  const label = badge === 'none' ? '' : nodeWords.badgeItem(text, n.n, MARK_KEYS.history);
+  const when = m.written ? `${nodeWords.badgeWritten(writtenTime(m.written.at), m.written.agent)}\n` : '';
+  return { badge, badgeText: text, badgeLabel: label, badgeTip: label && when ? `${when}${label}` : '' };
 }
 
 /** The notes mark: every note on the node (one on several nodes counts on each) and every reply to them. */

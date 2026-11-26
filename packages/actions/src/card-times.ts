@@ -62,3 +62,12 @@ export function cardTimeRows(s: LedgerState, id: number): HistoryRow[] {
     t, numbers, s.agents,
   )).reverse();
 }
+
+/** When the agent last wrote card `id`'s text and who: its newest `drawn` time (ticks, crosses, notes and replies do
+ *  not count), the agent by the label the history rows use. Undefined for a card never drawn. */
+export function writtenOf(s: Pick<LedgerState, 'times' | 'agents'>, id: number): { at: string; agent?: string } | undefined {
+  const t = s.times.get(id)?.findLast((x) => x.kind === 'drawn');
+  if (!t) return undefined;
+  const agent = t.agent === undefined ? undefined : s.agents.get(t.agent) ?? t.agent;
+  return { at: t.at, ...(agent !== undefined && { agent }) };
+}

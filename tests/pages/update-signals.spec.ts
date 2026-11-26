@@ -76,7 +76,7 @@ test('the agent\'s reply: the badge amber and the notes mark filled while unread
   await expect(bubble(page)).toBeHidden();
   // The person looks at the card: its badge goes.
   await card(page, n).locator('.vb-node-title').click();
-  await expect(badge(page, n)).toBeHidden();
+  await expect(badge(page, n)).toHaveAttribute('data-badge', 'settled');
 });
 
 for (const theme of THEMES) {

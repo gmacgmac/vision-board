@@ -26,3 +26,10 @@ export function noteTime(at: string, now: Date): string {
 
 /** The whole date and time ("Sunday, 19 October 2026 at 09:42" in the person's words), for a `title`. */
 export const fullTime = (at: string): string => new Date(at).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
+
+/** The time the agent wrote a card, in the person's own time zone and a 24-hour clock: "26 Nov '26, 11:42". */
+export function writtenTime(at: string): string {
+  const d = new Date(at);
+  const two = (k: number): string => String(k).padStart(2, '0');
+  return nodeWords.writtenDate(d.getDate(), d.toLocaleString('en-US', { month: 'short' }), two(d.getFullYear() % 100), `${two(d.getHours())}:${two(d.getMinutes())}`);
+}

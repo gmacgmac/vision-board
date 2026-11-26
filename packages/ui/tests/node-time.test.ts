@@ -3,7 +3,7 @@
 // holds in any time zone; the expected words come from the same locale calls, never written out.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fullTime, noteTime, versionTime } from '../src/index.ts';
+import { fullTime, noteTime, versionTime, writtenTime } from '../src/index.ts';
 
 const at = (d: number, h: number, m: number): string => new Date(2026, 9, d, h, m).toISOString();
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -24,4 +24,10 @@ test('versionTime and fullTime: the month and day with the time, and the whole d
   assert.equal(versionTime(iso), new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }));
   assert.equal(fullTime(iso), new Date(iso).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }));
   assert.ok(fullTime(iso).includes('2026'), 'the year is in the title');
+});
+
+test('writtenTime: day, month, two-digit year and a 24-hour clock in the person\'s own zone', () => {
+  assert.equal(writtenTime(new Date(2026, 10, 26, 11, 42).toISOString()), "26 Nov '26, 11:42");
+  assert.equal(writtenTime(new Date(2027, 0, 5, 0, 7).toISOString()), "5 Jan '27, 00:07");
+  assert.equal(writtenTime(new Date(2026, 8, 1, 18, 5).toISOString()), "1 Sep '26, 18:05", 'no afternoon marker');
 });

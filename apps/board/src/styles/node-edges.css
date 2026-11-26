@@ -4,7 +4,7 @@
    tip box (#ui tip.css), shown while not hidden, and lets the pointer through. Tokens only. */
 .vb-mark-menu { position: absolute; z-index: var(--vb-z-menu); }
 .vb-mark-menu > .vb-menu-list { position: static; }
-.vb-mark-tip { z-index: var(--vb-z-menu); pointer-events: none; }
+.vb-mark-tip { z-index: var(--vb-z-menu); pointer-events: none; white-space: pre-line; }
 .vb-mark-tip {
   &:not([hidden]) { display: block; }
 }

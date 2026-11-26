@@ -82,6 +82,10 @@ export const proposalItem = (n: number | undefined, offer: string): string => `P
 export const proposalTip = 'Proposal · open it';
 export const badgeNew = 'New';
 export const badgeSettled = (ver: number): string => `v${ver}`;
+/** When the agent last wrote a card's text, the first line of the change badge's tip: "Updated 26 Nov '26, 11:42 by Claude". */
+export const badgeWritten = (when: string, who?: string): string => `Updated ${when}${who ? ` by ${who}` : ''}`;
+/** A time for it, 24-hour: "26 Nov '26, 11:42". */
+export const writtenDate = (day: number, month: string, year: string, clock: string): string => `${day} ${month} '${year}, ${clock}`;
 /** The change badge: "2 updates, history of item 4 (H)". */
 export const badgeItem = (text: string, n: number | undefined, key: string): string => `${text}, history of item ${n} (${key})`;
 /** The notes mark: "No notes on item 4", "3 notes on item 4, agent replied". */

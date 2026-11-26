@@ -17,7 +17,7 @@ import { directionOf } from '#format';
 import { ROW_GAP } from '#layout';
 import type { CardConditions } from '#ui';
 import { MARK_MOMENT_WORDS, nodeState } from '#ui';
-import { acksRead, answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, READ_ONLY_PERSON, retiredCounts, sendHead, skinOf } from '#actions';
+import { acksRead, answeredIds, boardData, boardSearchDocs, emptyState, goTarget, numberOf, placedView, READ_ONLY_PERSON, retiredCounts, sendHead, skinOf, writtenOf } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, chatStatusOf, flagOf, markdownOf } from './host.ts';
@@ -25,6 +25,7 @@ import { bindChat, cardIds, chatSource } from './chat-side.ts';
 import { finishAll, hearUntilStopped } from './teardown.ts';
 import { askContextOf, createBoardEdit, createBoardFiles, createBoards, createLockFlow, createVersions, IMPORT_BYTES } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
+import { idOf } from './card-numbers.ts';
 import { createAttention, createBookmarkFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow, tierOf } from './cards/index.ts';
 import { type BoardElements, createDrawing, createFocus, createPlaces, preparePrint, Viewport, zoomPercent } from './canvas/index.ts';
 import { createLive } from './live.ts';
@@ -91,7 +92,13 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     ledger: () => live.state, board: () => S.id, readOnly: () => readOnly(), freshIn: () => attention.freshIn(), replies: () => parking.containers(), redraw: () => redraw(),
   });
   /** What the conditions table says about card `n` (FE_01): its proposals, updates, parking, app; its version for the badge. */
-  const facts = (n: ViewNode): CardConditions => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n), ver: S.data?.versions[n.id] });
+  const facts = (n: ViewNode): CardConditions => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n), ver: S.data?.versions[n.id], ...written(n) });
+  /** The writtenTime flag: when the agent last wrote the card's text, from the held state's times (no ledger read). */
+  const written = (n: ViewNode): Pick<CardConditions, 'written'> => {
+    const s = versions.state ?? live.state;
+    const w = on('writtenTime') && s ? writtenOf(s, idOf(s, S.id, Number(n.id)) ?? -1) : undefined;
+    return w ? { written: w } : {};
+  };
   const hiddenSet = (): Set<string> => (status.now.hide && S.data ? answeredIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
 
   const live = createLive({ readLedger: io.readLedger, events: (l) => host.events(l) }, onLines);
