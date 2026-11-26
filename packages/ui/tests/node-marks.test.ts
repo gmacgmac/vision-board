@@ -35,7 +35,7 @@ test('the number: a toggle whose name stays put; bookmarked or not', () => {
   }
 });
 
-test('the badge: New, then unseen updates, then a settled vN from v2; none on a node that never changed', () => {
+test('the badge: New, then unseen updates, then a settled vN from v2; none on a node that never changed, unless a written time shows it', () => {
   const b = (f: Partial<MarksInput>) => { const m = nodeMarks(node(), input(f)); return [m.badge, m.badgeText]; };
   const updates = { tab: '2 updates', label: '', open: false, done: false };
   assert.deepEqual(b({}), ['none', '']);
@@ -45,6 +45,17 @@ test('the badge: New, then unseen updates, then a settled vN from v2; none on a 
   assert.deepEqual(b({ ver: 3, updates, fresh: true }), ['new', 'New']);
   assert.deepEqual(b({ ver: 3, updates: { ...updates, tab: '' } }), ['settled', 'v3'], 'past the last step');
   assert.equal(nodeMarks(node(), input({ ver: 3 })).badgeLabel, 'v3, history of item 4 (H)');
+  assert.equal(nodeMarks(node(), input({ ver: 3 })).badgeTip, '', 'no written time: the badge keeps its own tip');
+});
+
+test('the badge with a written time: a quiet v1 on a card that never changed, its tip two lines (written, then the label)', () => {
+  const written = { at: new Date(2026, 10, 26, 11, 42).toISOString(), agent: 'Claude' };
+  const m = nodeMarks(node(), input({ ver: 1, written }));
+  assert.deepEqual([m.badge, m.badgeText], ['settled', 'v1']);
+  assert.equal(m.badgeTip, "Updated 26 Nov '26, 11:42 by Claude\nv1, history of item 4 (H)");
+  assert.equal(nodeMarks(node(), input({ ver: 1, written: { at: written.at } })).badgeTip, "Updated 26 Nov '26, 11:42\nv1, history of item 4 (H)");
+  assert.equal(nodeMarks(node(), input({ ver: 3, written, fresh: true })).badgeTip.split('\n')[1], 'New, history of item 4 (H)');
+  assert.equal(nodeMarks(node(), input({ written })).badge, 'none', 'no version known: no badge');
 });
 
 test('the notes mark: quiet, a count of notes and replies, unread while a reply is unseen, two bubbles for a group note', () => {

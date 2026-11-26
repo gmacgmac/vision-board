@@ -166,12 +166,12 @@ test('the agent\'s answer to a note clears an earlier ✓: open, unmarked, "1 up
   await expect(c.locator('.vb-step-line')).toHaveText('Yes, renewals too. ✓ again if keeping it still holds.');
   await c.locator('[data-step="next"]').click();
   await expect(c.locator('.vb-step-done')).toHaveText('You\'re up to date');
-  await expect(badge(page, d.decision)).toBeHidden({ timeout: 5000 });
+  await expect(badge(page, d.decision)).toHaveAttribute('data-badge', 'settled', { timeout: 5000 });
   await expect(c).toHaveAttribute('aria-label', `Item ${d.decision}, Decision: Keep the free tier, Open`);
   // Opening the board again: nothing left to mark.
   await page.reload();
   await expect(card(page, d.decision)).toHaveAttribute('data-status', 'open');
-  await expect(badge(page, d.decision)).toBeHidden();
+  await expect(badge(page, d.decision)).toHaveAttribute('data-badge', 'settled');
 });
 
 // D-046: open means the person is needed; a note puts the card with the agent until it answers. The
@@ -243,7 +243,7 @@ test('selecting a card the agent\'s answer cleared marks it seen, and the badge 
   await c.focus();
   await page.keyboard.press('Space');
   await expect(c).toHaveAttribute('data-selected', '');
-  await expect(badge(page, d.question)).toBeHidden();
+  await expect(badge(page, d.question)).toHaveAttribute('data-badge', 'settled');
   await expect(c).toHaveAttribute('data-status', 'open');
 });
 
@@ -273,10 +273,10 @@ test('any reply of the agent\'s shows "1 update" until the card is seen: with no
   // Seeing the card (a selection) ends it.
   await finding.focus();
   await page.keyboard.press('Space');
-  await expect(badge(page, d.finding)).toBeHidden();
+  await expect(badge(page, d.finding)).toHaveAttribute('data-badge', 'settled');
   await decision.focus();
   await page.keyboard.press('Space');
-  await expect(badge(page, d.decision)).toBeHidden();
+  await expect(badge(page, d.decision)).toHaveAttribute('data-badge', 'settled');
   await expect(decision).toHaveAttribute('data-status', 'acknowledged');
 });
 

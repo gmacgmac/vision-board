@@ -60,6 +60,10 @@ export const FLAGS = {
     // On by default (maintainer, 2026-10-08, proposals-seen-parking FE_02); ?flags=-cardUpdates turns it off.
     default: true,
   },
+  writtenTime: {
+    // On by default (maintainer, 2026-11-26, points 827-839; card-written-time); ?flags=-writtenTime turns it off.
+    default: true,
+  },
   newCards: {
     // On by default (maintainer, 2026-10-08, stage5-follow-ups FE_01); ?flags=-newCards turns it off.
     default: true,
@@ -364,6 +368,7 @@ export const FLAG_DESCRIPTIONS = {
   boardEdit: 'The board picker ends with New board… and Rename board…, each opening a small dialog (title, optional summary) that writes the person\'s `board` line through `put_board` (api.md 90); a new board\'s id is made from its title and it opens at once. Off while a past version shows. Off, only agents make boards and nobody renames them (N22).',
   proposals: 'An agent\'s proposal to acknowledge or drop a card shows on its answer: a dashed ring on the disc (Command Lens: a proposal chip and the outlined half), which opens a box beside the node with Reject and Accept; once the card changed the proposal is withdrawn, its history box says so. A bar above the board counts them, with Review and Accept all (api.md 93). Off while a past version shows. Off, proposals stay in the ledger unseen on the page.',
   cardUpdates: 'A card the agent changed since the person last saw it (past version 1) shows "N updates" on its change badge; the badge (or H) opens its history box with a stepper through each unseen version (when, who, change chips), each step marking that version seen, until "You\'re up to date"; seen, the badge settles to a quiet "vN". Selecting a card marks its latest version seen. Off while a past version shows. Off, no updates on the badge and no seen on select.',
+  writtenTime: 'The change badge shows on every drawn card (a quiet "v1" on one that never changed), and its tip says on a first line when the agent last wrote the card\'s text and who ("Updated 26 Nov \'26, 11:42 by Claude": the newest drawn entry of its history, 24-hour, the person\'s own time zone), then the badge\'s name with its key. Off, the badge shows from v2 and its tip is its name only.',
   newCards: 'A card the agent added after the person first opened the board (`item.new`, api.md 97) shows "New" on its change badge until the person selects, acts on or decides it; a Send and the agent drawing again never end it. A new card shows New only, never "N updates". Selecting a card sends seen for each card condition whose `clearedBy` names select. Off while a past version shows. Off, no New and the card shows its updates as before.',
   handover: 'A card saved for later whose handover the agent still owes shows a quiet "Awaiting" tab on its bottom edge (tip: "Awaiting context"). Once the agent writes the handover it is a "Handover" section of the node\'s body: situation, background, assessment, recommendation, then the sources (D-020; DESIGN_01 review). Off, the handover stays in the ledger unseen on the page.',
   cardReplies: 'An agent\'s reply shows under the note it answers, in a node\'s conversation box or in a container\'s note block: "Agent reply" with the agent\'s label, as Markdown; an unread reply fills the node\'s notes mark. A reply naming no note shows after the node\'s notes. Replies are read-only. Off, replies stay in the ledger unseen on the page.',

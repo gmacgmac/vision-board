@@ -78,6 +78,8 @@ export interface CardConditions {
   replies?: readonly CardReply[];
   /** The node's latest version: the change badge settles to a quiet "vN" once seen, from v2. */
   ver?: number;
+  /** When the agent last wrote the card's text, with the agent's label (the writtenTime flag): the badge shows from v1 and its tip says it. */
+  written?: { at: string; agent?: string };
   /** An app card's app from list_apps (`{}` until it answers; none with the appCards flag off), and whether a past version shows (node-app.ts). */
   app?: AppCardInput;
 }
@@ -183,7 +185,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const open = c.proposals?.filter((p) => !p.stale).sort((a, b) => b.seq - a.seq)[0]?.action;
   const marks = nodeMarks(n, {
     status, notes: s.items.get(n.id)?.notes ?? [], ...(replies && { replies }), bookmarked, fresh, ...(updates && { updates }),
-    ...(c.ver !== undefined && { ver: c.ver }), ...((open === 'ack' || open === 'drop') && { proposed: open }), awaiting,
+    ...(c.ver !== undefined && { ver: c.ver }), ...(c.written && { written: c.written }), ...((open === 'ack' || open === 'drop') && { proposed: open }), awaiting,
   });
   return {
     status,

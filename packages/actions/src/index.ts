@@ -54,7 +54,7 @@ export { versionChanges } from './changes.ts';
 export type { Change, ChangeField, FieldChange } from './changes.ts';
 export { cardHistory, HISTORY_KINDS } from './card-history.ts';
 export type { HistoryKind, HistoryRow } from './card-history.ts';
-export { cardTimeRows, TIME_KINDS } from './card-times.ts';
+export { cardTimeRows, TIME_KINDS, writtenOf } from './card-times.ts';
 export type { CardTime, CardTimes } from './card-times.ts';
 export { unseenCount, unseenSteps, seenDue, seenMarks, seenOnSelect, seenVer } from './answers/updates.ts';
 export type { SeenMark, UnseenStep } from './answers/updates.ts';
