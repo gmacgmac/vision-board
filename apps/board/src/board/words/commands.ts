@@ -29,7 +29,7 @@ export const setTheWidthOfTheSelectedNodes = 'Set the width of the selected node
 export const widthOf = (count: number): string => `Width of ${count} node${count === 1 ? '' : 's'}`;
 /** A width row's visible letters, and its accessible name. */
 export const widthRow = (size: string): string => (size === 'auto' ? 'Auto' : size.toUpperCase());
-export const widthName = (size: string): string => ({ s: 'Small', m: 'Medium', l: 'Large', auto: 'Automatic' })[size] ?? size;
+export const widthName = (size: string): string => ({ s: 'Small', m: 'Medium', l: 'Large', xl: 'Extra large', auto: 'Automatic' })[size] ?? size;
 export const nodesBookmarked = (count: number): string => `${count} bookmarked`;
 export const bookmarksRemoved = (count: number): string => `${count} bookmark${count === 1 ? '' : 's'} removed`;
 export const nodesSavedForLater = (count: number): string => `${count} saved for later`;

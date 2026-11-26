@@ -14,7 +14,7 @@
 // the presses and holds; how each is done (menus, boxes, tips) loads once the board is idle, or on the first press
 // (mark-acts.ts), out of the page's start weight. Browser only.
 import type { ActionId, ViewNode } from '#format';
-import type { NodeState } from '#ui';
+import type { NodeState, StageBox } from '#ui';
 import { smallMark } from '../canvas/index.ts';
 import { DRAG_THRESHOLD } from '../input/index.ts';
 import type { MarkActs } from './mark-acts.ts';
@@ -38,6 +38,8 @@ export interface MarkFlowDeps {
   act(id: string, action: ActionId): Promise<boolean | undefined> | void;
   bookmark(id: string): Promise<unknown> | void;
   unpin(id: string): void;
+  /** Width for node `id`, under `anchor` (stage pixels): the selection bar's width menu, for the node or the selection it is in. */
+  width(id: string, anchor: StageBox): void;
 }
 
 export interface MarkFlow {

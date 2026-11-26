@@ -42,15 +42,15 @@ test('Bookmark all writes one bookmark per node, then reads Remove bookmarks and
   await expect.poll(async () => (await lines(page, mid, 'unbookmark')).length).toBe(3);
 });
 
-test('Width lists S, M, L and Auto; a pick writes one size act per node', async ({ page, request }) => {
+test('Width lists S, M, L, XL and Auto; a pick writes one size act per node', async ({ page, request }) => {
   const d = await drawEdges(request);
   await open(page, d, FLAGS);
   await selectThree(page, d.n);
   const before = await head(page);
   await bar(page).getByRole('button', { name: 'Width' }).click();
   const menu = page.getByRole('menu', { name: 'Width of 3 nodes' });
-  await expect(menu.getByRole('menuitem')).toHaveText(['S', 'M', 'L', 'Auto']);
-  await menu.getByRole('menuitem', { name: 'Large' }).click();
+  await expect(menu.getByRole('menuitem')).toHaveText(['S', 'M', 'L', 'XL', 'Auto']);
+  await menu.getByRole('menuitem', { name: 'Large', exact: true }).click();
   await expect.poll(async () => (await lines(page, before, 'size')).length).toBe(3);
   expect((await lines(page, before, 'size')).every((e) => e.size === 'l')).toBe(true);
 });

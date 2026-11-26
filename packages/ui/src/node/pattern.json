@@ -95,7 +95,7 @@
     "data-pinned": "present when the person moved it (set by update)",
     "data-selected": "present while the person has it selected (3_FE_01; view state the page passes to nodeState, set by update): mockup 05's look, 1.5px in the card's own colour lifted about two-thirds of a step toward the strong ink (--vb-select-lift, 35%) and a little more saturated (--vb-select-chroma, 1.25: OKLCH chroma scaled; review polish round 2 ruling 5), every kind alike, with a soft glow",
     "data-emphasis": "present when the agent marked the node as emphasised (set by render)",
-    "data-size": "nodeSize flag only: s | m | l, the tier from sizeTier (packages/layout), which picks the width token; set by update before the page measures",
+    "data-size": "nodeSize flag only: s | m | l | xl (xl only when the person picked it), the tier from sizeTier (packages/layout), which picks the width token; set by update before the page measures",
     "data-size-picked": "nodeSize flag only: present when the person picked the size (set by update)",
     "role": "listitem (set by render)",
     "tabindex": "0 (set by render)",

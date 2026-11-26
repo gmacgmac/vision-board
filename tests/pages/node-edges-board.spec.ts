@@ -230,12 +230,12 @@ test('right-click lists a node\'s actions at the pointer, never on the backgroun
   await expect(list).toBeVisible();
   const lb = (await list.boundingBox())!;
   expect(Math.abs(lb.x - (b.x + 60))).toBeLessThan(2);
-  await expect(list.getByRole('menuitem')).toHaveText([/Tick\s*A/, /Cross\s*X/, /Comment\s*C/, /Bookmark\s*B/, /Save for later\s*L/, /History\s*H/]);
+  await expect(list.getByRole('menuitem')).toHaveText([/Tick\s*A/, /Cross\s*X/, /Comment\s*C/, /Bookmark\s*B/, /Save for later\s*L/, /History\s*H/, /Width/]);
   await page.keyboard.press('Escape');
   // A node that only tells: no Tick or Cross.
   await card(page, f).focus();
   await page.keyboard.press('Shift+F10');
-  await expect(menuOf(page, `Actions on item ${f}`).getByRole('menuitem')).toHaveText([/Comment/, /Bookmark/, /Save for later/, /History/]);
+  await expect(menuOf(page, `Actions on item ${f}`).getByRole('menuitem')).toHaveText([/Comment/, /Bookmark/, /Save for later/, /History/, /Width/]);
   await page.keyboard.press('Escape');
   await expect(card(page, f)).toBeFocused();
   // The background keeps the browser's own menu: the board opens none.

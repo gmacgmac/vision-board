@@ -331,7 +331,7 @@ type GetBoardResponse = {
     modes: Record<string, CommonMode>;
     widths?: Record<string, "match" | "own">;
     skin?: "default" | "command-lens";
-    sizes?: Record<string, "s" | "m" | "l">;
+    sizes?: Record<string, CommonTierSize>;
     moves?: Record<string, string>;
     containerNotes?: Record<string, CommonNote[]>;
     containerPins?: Record<string, {
@@ -444,6 +444,7 @@ type CommonNoteAnswer = {
   kind: "check" | "cross";
   seq: number;
 };
+type CommonTierSize = "s" | "m" | "l" | "xl";
 type GetBoardResponseHolder = {
   agent: string;
   label: CommonAgentLabel;
@@ -654,7 +655,7 @@ type CommonNodeDetailCore = {
   region: string;
   moved_from?: string;
   status: CommonItemStatus;
-  size?: "s" | "m" | "l";
+  size?: CommonTierSize;
   seen?: number;
   versions: CommonNodeVersion[];
   notes: CommonNote[];
@@ -817,7 +818,7 @@ type ActCore = {
   context?: "node" | "board" | "session";
   direction?: "across" | "down" | "auto";
 };
-type CommonActSize = "s" | "m" | "l" | "auto";
+type CommonActSize = "s" | "m" | "l" | "xl" | "auto";
 type CommonNodeNumbers = number[];
 type ReadLedgerResponse = {
   events: LedgerEvent[];

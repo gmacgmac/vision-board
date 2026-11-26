@@ -8,7 +8,7 @@
 // (3_FE_01 ruling 10) goes through `restate`: it updates only the cards named, measures nothing and
 // places nothing, since the selected look changes no card's size.
 import type { BoardState } from '#actions';
-import type { NodeSize, View, ViewNode } from '#format';
+import type { TierSize, View, ViewNode } from '#format';
 import type { BoardLayout, Size } from '#layout';
 import type { CardConditions, NodeTemplateOptions, VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
@@ -27,7 +27,7 @@ export interface CardSet {
   /** Bring every card in line with `view`; `versions` (node id -> `ver`) says which the agent redrew,
    *  `selected` which the person has selected, `facts` what the conditions table says of each (FE_01). */
   sync(view: View, state: BoardState, versions: Readonly<Record<string, number>>, selected: (id: string) => boolean,
-    tier?: (n: ViewNode) => NodeSize, facts?: (n: ViewNode) => CardConditions): CardSync;
+    tier?: (n: ViewNode) => TierSize, facts?: (n: ViewNode) => CardConditions): CardSync;
   /** Update the cards `ids` for a state the last sync did not see (the selection), and nothing else. */
   restate(ids: readonly string[]): void;
   /** Read the sizes of `ids` into `sizes`: each card's own width, and its height at the width it was
@@ -48,7 +48,7 @@ export interface CardSet {
 
 interface Kept { ver: number | undefined; state: string }
 interface Last {
-  view: View; state: BoardState; selected: (id: string) => boolean; tier?: (n: ViewNode) => NodeSize; facts?: (n: ViewNode) => CardConditions;
+  view: View; state: BoardState; selected: (id: string) => boolean; tier?: (n: ViewNode) => TierSize; facts?: (n: ViewNode) => CardConditions;
 }
 /** The place last written to a card, and how the browser read the transform back: a drag writes
  * the transform itself, so a card is placed again when its transform no longer reads back. `width`:

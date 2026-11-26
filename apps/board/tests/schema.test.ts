@@ -238,6 +238,8 @@ test('EVENT_TYPES, ACTION_IDS, KINDS, MODES, the sizes and WIDTHS equal the sche
   assert.deepEqual(common.mode.enum, [...MODES]);
   assert.deepEqual(common.nodeSize.enum, [...NODE_SIZES]);
   assert.deepEqual(common.actSize.enum, [...ACT_SIZES]);
+  assert.deepEqual([...NODE_SIZES], ['s', 'm', 'l'], 'an agent never suggests xl');
+  assert.deepEqual([...ACT_SIZES], ['s', 'm', 'l', 'xl', 'auto']);
   assert.deepEqual(common.widths.enum, [...WIDTHS]);
 });
 

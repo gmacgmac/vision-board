@@ -351,7 +351,7 @@ export function parseFlags(text: string | null | undefined): { overrides: FlagOv
  * flag is one entry in each table; the type fails on a name missing from either.
  */
 export const FLAG_DESCRIPTIONS = {
-  nodeSize: 'Cards take one of three widths (S, M, L) from their content; the selection bar\'s Width picks one for the selected nodes (D-030, U7, D-099 3).',
+  nodeSize: 'Cards take one of three widths (S, M, L) from their content; Width, in the selection bar and the card\'s right-click menu, picks S, M, L, XL (600px, the person\'s only) or Auto for the card or the selected nodes (D-030, U7, D-099 3).',
   hideControlsZoomedOut: 'Below the zoom FAR_K (apps/board/src/board/canvas/viewport.ts; the toolbar shows the zoom as a percentage), hide the containers\' icon row and an app window\'s controls, so none draws too small to press (N8; 55% since review polish round 2, N13 closed). A node\'s edge marks follow the zoom rules instead (packages/ui zoom-rules.ts, D-101). Off, every control stays visible at every zoom.',
   agentAccess: 'The person\'s side of agent access: allow or refuse grant requests, see and remove each container\'s holders, and Send to agent (D-027, U4 2_FE_01).',
   wireLayers: 'Connectors draw behind container frames and cards, cards are see-through (--vb-card-fill) so a connector behind one still shows, and the focused card\'s connectors draw above the cards (D-032).',

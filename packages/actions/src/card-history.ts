@@ -10,7 +10,7 @@
 // retired card is gone for good (api.md 126): there is no restore of a card. One matcher
 // (`cardsAbout`) and one set of words (`saidOf`, `historyRow`), which the page's per-card times
 // (card-times.ts, card-polish FE_03) read too. Pure: lines in, rows out.
-import type { ActEvent, LedgerEvent, NodeSize } from '#format';
+import type { ActEvent, ActSize, LedgerEvent } from '#format';
 import { isPrivateAct, LATER_REGION } from '#format';
 import type { Ask } from './notes.ts';
 import { askOf, cardsOf, foldNoteAct, liveNotes } from './notes.ts';
@@ -38,7 +38,7 @@ export interface HistoryRow {
  * edited or removed one, or the one replied to), the version drawn, how many cards a group note is on,
  * the ✓ or ✗ of a proposal (none: turned down), the size picked, and whether a move was to Later. */
 export interface Said {
-  kind: HistoryKind; note?: number; ver?: number; cards?: number; mark?: '✓' | '✗'; size?: NodeSize | 'auto'; later?: boolean;
+  kind: HistoryKind; note?: number; ver?: number; cards?: number; mark?: '✓' | '✗'; size?: ActSize; later?: boolean;
 }
 
 /** Where a line's notes and app cards are looked up: the asks by `seq`, the cards that show an app. */
@@ -48,7 +48,7 @@ export interface Lookup { ask(seq: number): Ask | undefined; appCards(app: strin
 export interface RowLine { seq: number; at: string; by: 'person' | 'agent'; agent?: string }
 
 const MARK = { ack: '✓', drop: '✗' } as const;
-const SIZE_WORD = { s: 'S', m: 'M', l: 'L' } as const;
+const SIZE_WORD = { s: 'S', m: 'M', l: 'L', xl: 'XL' } as const;
 
 /** Each kind's words after "You" or "Agent", given the named note's number while it is on the card. */
 const SAY: Record<HistoryKind, (d: Said, n?: number) => string> = {

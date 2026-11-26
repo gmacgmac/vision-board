@@ -79,6 +79,16 @@ test('the right-click list: the six actions with their keys, no Tick or Cross on
   assert.deepEqual(rows(node({ kind: 'app' })), ['comment C', 'bookmark B', 'history H']);
 });
 
+test('the right-click list ends with Width ›, which opens a menu; an app, an unnumbered node and a board with no tiers have none', () => {
+  const html = (n: ViewNode, tier?: 'm') => contextMenu(n, nodeState(n, board(), tier));
+  const acts = (h: string) => [...h.matchAll(/data-menu-act="(\w+)"/g)].map((m) => m[1]);
+  assert.match(html(node(), 'm'), /data-menu-act="width" aria-haspopup="menu">[^]*<span class="vb-menu-label">Width<\/span><span class="vb-menu-more" aria-hidden="true">›<\/span><\/button>/);
+  assert.deepEqual(acts(html(node(), 'm')).slice(-2), ['history', 'width']);
+  assert.ok(!acts(html(node({ kind: 'app', app: { id: 'calc' } }), 'm')).includes('width'));
+  assert.ok(!acts(html(node({ n: undefined }), 'm')).includes('width'));
+  assert.ok(!acts(html(node())).includes('width'), 'the nodeSize flag off: the page gives no tier');
+});
+
 test('the answer picker: Tick and Cross side by side, named with their keys, in their colours', () => {
   const html = answerPicker(node());
   assert.match(html, /data-menu-look="picker" aria-orientation="horizontal" hidden>/);

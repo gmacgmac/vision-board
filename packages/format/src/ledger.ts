@@ -88,9 +88,12 @@ export const PERSON_EVENTS: ReadonlySet<EventType> = new Set(['seen']);
 /** The agent's size suggestion for a node (api.md 17). */
 export const NODE_SIZES = ['s', 'm', 'l'] as const;
 export type NodeSize = (typeof NODE_SIZES)[number];
-/** The person's `size` action; `auto` clears it, like `unpin` (api.md 16). */
-export const ACT_SIZES = [...NODE_SIZES, 'auto'] as const;
+/** The person's `size` action; `auto` clears it, like `unpin` (api.md 16). `xl` is the person's only: an agent's
+ * suggestion stays `NODE_SIZES`. */
+export const ACT_SIZES = [...NODE_SIZES, 'xl', 'auto'] as const;
 export type ActSize = (typeof ACT_SIZES)[number];
+/** A width a card is drawn at: the agent's three, or the person's XL. */
+export type TierSize = Exclude<ActSize, 'auto'>;
 /** The person's `direction` act (api.md 189): `across`, `down`, or `auto`, which gives back the agent's. */
 export const ACT_DIRECTIONS = [...DIRECTIONS, 'auto'] as const;
 export type ActDirection = (typeof ACT_DIRECTIONS)[number];

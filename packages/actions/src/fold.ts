@@ -11,7 +11,7 @@
 // keyed by a card's identity (`id`); the reads give board numbers (numbers.ts, api.md 125). One board
 // as the page reads it: board-state.ts. Pure: same events, same state; events are assumed valid.
 import type {
-  ActEvent, DirectionChoices, DrawnState, From, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Skin, Widths,
+  ActEvent, DirectionChoices, DrawnState, From, LedgerEvent, LedgerIndex, LedgerRegion, Mode, ParkBundle, ProposeEvent, Skin, TierSize, Widths,
 } from '#format';
 import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '#format';
 import { type BoardDates, foldArchive } from './archive.ts';
@@ -76,7 +76,7 @@ export interface LedgerState extends DrawnState, AppAllows {
   /** Card id -> the container of the person's latest `move` (api.md 66): it wins over the agent's. */
   moves: Map<number, string>;
   /** Card id -> the person's size pick; `auto` deletes it (api.md 16). */
-  sizes: Map<number, NodeSize>;
+  sizes: Map<number, TierSize>;
   /** board -> region -> the person's layout choice. */
   modes: Map<string, Map<string, Mode>>;
   /** board -> region -> the person's card widths choice (api.md 132), folded like `modes`. */

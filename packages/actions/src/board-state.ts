@@ -4,7 +4,7 @@
 // (`commented` while it is with the agent, D-046); a card the agent's answer cleared
 // and the person has not looked at since carries `unseenAnswer` (clears.ts, D-045). Cards retired from the board
 // are left out (api.md 127). `get_board` sends all of it but the bookmarks and hidden notes (api.md 128, 156). Pure.
-import type { Mode, NodeSize, Skin, View, Widths } from '#format';
+import type { Mode, Skin, TierSize, View, Widths } from '#format';
 import { containerKey, DEFAULT_SKIN, NODE_TYPES, nodesOf } from '#format';
 import { bookmarksOn } from './bookmarks.ts';
 import { skinOf } from './skins.ts';
@@ -32,7 +32,7 @@ export interface BoardState {
   /** Region id -> the person's card widths choice (api.md 132); it wins over the region's own. */
   widths: Map<string, Widths>;
   /** The person's card size picks (D-030); a node with none follows the agent or the auto tier. */
-  sizes: Map<string, NodeSize>;
+  sizes: Map<string, TierSize>;
   moves: Map<string, string>;
   /** Region id -> where the person put that container, in the order last dropped (api.md 74). */
   regionPins: Map<string, Place>;

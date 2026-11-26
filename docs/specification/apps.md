@@ -69,7 +69,7 @@ name is not an id is not an app: `list_apps` leaves it out. No file may be over 
 The agent sets the panel's size on the card, in px: `app: { id, w, h }` on the `node` item. Left
 out, the size is the manifest's `size`, else the default (`appSize`); `list_apps` sends it while
 `size` itself is good, even when app.json has other problems. The card is as wide as the
-panel plus its own padding; the person's S, M and L sizes don't apply to an app card, and an app
+panel plus its own padding; the person's S, M, L and XL sizes don't apply to an app card, and an app
 card takes no `size` word. Limits (`APP_SIZE`; the schema holds the same numbers):
 
 | Side | Least | Most | Default |

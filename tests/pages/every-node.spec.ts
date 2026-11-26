@@ -94,16 +94,16 @@ test('every card shows its number; the kind decides the actions: Tick and Cross 
   const d = await draw(request);
   await open(page, d);
   for (const n of [d.ask, d.plain, d.topic, d.act, d.risk]) await expect(card(page, n).locator('.vb-node-num')).toHaveText(String(n));
-  const telling = [/^Comment/, /^Bookmark/, /^Save for later/, /^History/];
+  const telling = [/^Comment/, /^Bookmark/, /^Save for later/, /^History/, /^Width/]; // Width ›: the nodeSize flag is on by default
   for (const n of [d.ask, d.act]) {
     const names = await actionsOf(page, n);
-    expect(names).toHaveLength(6);
+    expect(names).toHaveLength(7);
     [/^Tick/, /^Cross/, ...telling].forEach((re, i) => expect(names[i]).toMatch(re));
     await expect(card(page, n).locator('[data-mark="answer"]')).toHaveCount(1);
   }
   for (const n of [d.plain, d.topic, d.risk]) {
     const names = await actionsOf(page, n);
-    expect(names).toHaveLength(4);
+    expect(names).toHaveLength(5);
     telling.forEach((re, i) => expect(names[i]).toMatch(re));
     await expect(card(page, n).locator('[data-mark="answer"]')).toHaveCount(0);
   }

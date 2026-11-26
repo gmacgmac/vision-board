@@ -8,7 +8,7 @@
 // api.md 147, 148); the page reads `boardState`, which keeps the stored names. Every status is
 // `cardStatus` (conditions.ts, D-046).
 
-import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle, Skin } from '#format';
+import type { LedgerNode, LedgerRegion, NodeBody, ParkBundle, Skin, TierSize } from '#format';
 import { containerKey, DEFAULT_SKIN, everyNodeOf, latest, NODE_TYPES, nodesOf } from '#format';
 import type { BoardRun, ItemNote, LedgerReply, LedgerState } from './fold.ts';
 import { sentNotes } from './fold.ts';
@@ -41,7 +41,7 @@ export interface NodeDetail {
   /** Where the card stands with the person; every card has one (api.md 120, 147). */
   status: ReportedStatus;
   /** The person's size pick; it wins over the agent's suggestion. */
-  size?: NodeSize;
+  size?: TierSize;
   /** The latest version the person has seen. */
   seen?: number;
   versions: NodeVersionView[];
