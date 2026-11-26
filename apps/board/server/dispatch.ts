@@ -5,6 +5,7 @@
 // through the open folder's engine (`route`), the server's own (streams, chats, folders, apps)
 // here. Unknown path: `not-found`; known path, wrong method: `method-not-allowed` with `Allow`.
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { otherFoldersIn } from '#actions';
 import type { OperationId } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost } from './apps.ts';
@@ -25,9 +26,12 @@ import { SPECS } from './spec.ts';
 import * as httpWords from './words/http.ts';
 
 /** What the server holds for every request: the person's token, the open folder (project.ts), the system's folder
- * chooser and what was picked in it (chooser.ts, D-110), where a project may be (folders.ts `Places`, D-111), and the
- * build in watch mode. */
-export interface ServerEnv { person: string; project: Project; chooser: Chooser; places: Places; build?: BuildWatch | undefined }
+ * chooser and what was picked in it (chooser.ts, D-110), where a project may be (folders.ts `Places`, D-111), the
+ * build in watch mode, and whether the open ledger's `folders-allow` may let agents from other folders in (the
+ * otherFolders flag, D-120). */
+export interface ServerEnv {
+  person: string; project: Project; chooser: Chooser; places: Places; build?: BuildWatch | undefined; otherFolders?: boolean | undefined;
+}
 
 /** What a handler gets: the request and its URL, its parsed parameters (defaults filled in), the open
  * folder's engine, ledger, agents store, chat sessions and app host, the signal that ends its streams
@@ -84,7 +88,8 @@ export async function dispatch(
   }
   const params = readParams(match.id, match.raw, url.searchParams);
   const open = env.project.current();
-  const folder = { home: env.project.home, dir: open.dir, ledger: open.ledgerName };
+  const others = !!env.otherFolders && otherFoldersIn(open.ledger.state());
+  const folder = { home: env.project.home, dir: open.dir, ledger: open.ledgerName, others };
   const here = SPECS[match.id].agent && checkFolder(req, folder);
   const caller = callerOf(req, match.id, {
     person: env.person, ledger: open.ledger, agents: open.agents, elsewhere: (secret) => secretElsewhere(folder, secret, here),

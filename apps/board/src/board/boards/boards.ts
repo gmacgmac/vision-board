@@ -15,7 +15,7 @@
 // Archived list (archiveBoard flag) is worked out with the picker's.
 import type { BoardLayout } from '#layout';
 import type { LedgerState } from '#actions';
-import { archivedBoards, boardList, boardVisibility } from '#actions';
+import { archivedBoards, boardList, boardVisibility, otherFoldersIn } from '#actions';
 import { createKeptView } from './kept-view.ts';
 import { nextBoard, startBoard } from './start-board.ts';
 import type { BoardPage, BoardStore } from '../host.ts';
@@ -127,7 +127,7 @@ export function createBoards(d: BoardsDeps): Boards {
     const s = d.live.state!;
     const list = boardList(s);
     booted = true;
-    status.set({ boards: list, ...(d.archiving && { archived: archivedBoards(s) }) });
+    status.set({ boards: list, otherFolders: otherFoldersIn(s), ...(d.archiving && { archived: archivedBoards(s) }) });
     if (!list.length) {
       status.set({ noBoards: true });
       const archived = archivedBoards(s).length;
@@ -153,7 +153,7 @@ export function createBoards(d: BoardsDeps): Boards {
     }
     const before = status.now.boards.map((b) => b.board);
     const list = boardList(s);
-    status.set({ boards: list, ...(d.archiving && { archived: archivedBoards(s) }) });
+    status.set({ boards: list, otherFolders: otherFoldersIn(s), ...(d.archiving && { archived: archivedBoards(s) }) });
     if (pending && shown(s, pending)) return jump(pending);
     const open = d.id();
     if (open && !shown(s, open)) return leave(open, before, list.map((b) => b.board));

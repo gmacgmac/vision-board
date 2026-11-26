@@ -103,7 +103,8 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
     apps: { flags, limits: appLimits }, edit, lockEnv,
   });
   const run = chooser === false ? undefined : chooser ?? (process.platform === 'darwin' ? macChooser : undefined);
-  const env: ServerEnv = { person: newToken(), project, chooser: createChooser(run, flagOn('systemFolderChooser', flags ?? {})), places: placesOf(realHome, places), build };
+  const env: ServerEnv = { person: newToken(), project, chooser: createChooser(run, flagOn('systemFolderChooser', flags ?? {})), places: placesOf(realHome, places), build,
+    otherFolders: flagOn('otherFolders', flags ?? {}) };
   /** One listener per door over the one env: one person token, one open folder (D-117). */
   const listener = (door: Door): http.RequestListener => async (req, res) => {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);

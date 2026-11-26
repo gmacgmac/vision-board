@@ -7,12 +7,12 @@
   "type": "object",
   "properties": {
     "key": {
-      "$ref": "https://vision-board.invalid/schema/ledger/22/common.schema.json#/$defs/key"
+      "$ref": "https://vision-board.invalid/schema/ledger/23/common.schema.json#/$defs/key"
     }
   },
   "allOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/22/events/grant-request.schema.json#/$defs/core"
+      "$ref": "https://vision-board.invalid/schema/ledger/23/events/grant-request.schema.json#/$defs/core"
     }
   ],
   "unevaluatedProperties": false

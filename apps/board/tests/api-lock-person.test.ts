@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ActionId } from '#format';
-import { ACTION_IDS, APP_ACTIONS, LATER_REGION } from '#format';
+import { ACTION_IDS, APP_ACTIONS, FOLDER_ACTIONS, LATER_REGION } from '#format';
 import { boardLocked, LOCKED_PERSON, passesLock, ROUND_HEAD } from '#actions';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -71,7 +71,7 @@ function everyAct(): Record<ActionId, Rec> {
     archive: { board: VAULT }, restore: { board: VAULT }, lock: { board: VAULT }, unlock: { board: VAULT },
     'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
     skin: { board: VAULT, skin: 'command-lens' }, ask: { board: VAULT, lines: [at.note], context: 'board' },
-    direction: { board: VAULT, region: 'ideas', direction: 'down' },
+    direction: { board: VAULT, region: 'ideas', direction: 'down' }, 'folders-allow': {}, 'folders-revoke': {},
   };
 }
 
@@ -86,7 +86,7 @@ test('locked, every act in the registry is refused 423 with the person\'s words,
   const seq = () => h.ledger.state().seq;
   // The unlock last, whatever the registry's order, so every other act meets the lock.
   for (const action of [...ACTION_IDS.filter((x) => x !== 'unlock'), 'unlock' as const]) {
-    if (APP_ACTIONS.has(action)) continue; // on no board: the next test walks them while locked
+    if (APP_ACTIONS.has(action) || FOLDER_ACTIONS.has(action)) continue; // on no board: the next test walks them while locked
     if (passesLock({ type: 'act', action })) {
       assert.ok(action in MARKS, `${action} passes the lock: say what it answers in MARKS`);
       try { await act({ action, ...acts[action] }); } catch { /* a refusal is checked by status */ }
@@ -103,10 +103,10 @@ test('locked, every act in the registry is refused 423 with the person\'s words,
   await act({ action: 'later', n: 2, ver: 1 });
 });
 
-test('locked, an app\'s allow and stop still go: they are on no board (api.md 150)', async () => {
+test('locked, an app\'s allow and stop, and letting other folders in, still go: they are on no board (api.md 150, 215)', async () => {
   await mark('lock');
   const acts = everyAct();
-  for (const action of APP_ACTIONS) assert.equal((await act({ action, ...acts[action] })).action, action);
+  for (const action of [...APP_ACTIONS, ...FOLDER_ACTIONS]) assert.equal((await act({ action, ...acts[action] })).action, action);
   assert.equal(locked(), true);
   await mark('unlock');
 });

@@ -12,6 +12,7 @@ import { appRules } from './apps.ts';
 import { archiveRules } from './archive.ts';
 import { lockRules, writeProblem } from './lock.ts';
 import { lockOf } from './note-lock.ts';
+import { otherFoldersRules } from './other-folders.ts';
 import { askedBy } from './asked.ts';
 import { REFERENCES } from './references.ts';
 import { containerLog } from './containers.ts';
@@ -49,6 +50,9 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
   // On the app, sent from any board one of its cards is on (api.md 150).
   'app-allow': (e, s, _board, p) => appRules(e, s, p),
   'app-revoke': (e, s, _board, p) => appRules(e, s, p),
+  // On the ledger, sent from any board (api.md 215).
+  'folders-allow': (e, s, _board, p) => otherFoldersRules(e, s, p),
+  'folders-revoke': (e, s, _board, p) => otherFoldersRules(e, s, p),
   // A board's skin (api.md 183), on the board it was sent to.
   skin: (e, s, board, p) => {
     onBoard(e.board, board, p);

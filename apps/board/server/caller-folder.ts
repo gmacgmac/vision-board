@@ -6,7 +6,9 @@
 // left behind by a switch is told where its work is instead of "join again"; one whose header names
 // the open folder is told to join again here (field report batch 1, ruling 2). Agents are per ledger
 // (D-084 3): every ledger of each folder is looked in, in either layout (`ledgers.ts`), and a secret
-// from another ledger of the open folder is `wrong-folder` naming both ledgers (api.md 115a).
+// from another ledger of the open folder is `wrong-folder` naming both ledgers (api.md 115a). While the person lets
+// agents from other folders in (`folders-allow`, api.md 215, D-120), a header naming another folder is let through
+// and a secret from a recent folder is told to join again here; the other-ledger refusal stays.
 import type { IncomingMessage } from 'node:http';
 import { PROJECT_HEADER, ledgerFolder } from '#format';
 import { ledgerFoldersIn, listLedgers } from './ledgers.ts';
@@ -22,9 +24,9 @@ import * as httpWords from './words/http.ts';
 const HEADER_SCHEMA = 'https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderHeader';
 const BAD_HEADER = httpWords.projectHeaderMustBeAbsolute;
 
-/** What the check needs: the person's home folder, the open folder (both real paths) and the open
- * ledger's name (none in the old layout). */
-export interface FolderEnv { home: string; dir: string; ledger?: string | undefined }
+/** What the check needs: the person's home folder, the open folder (both real paths), the open
+ * ledger's name (none in the old layout) and whether the person lets agents from other folders in (D-120). */
+export interface FolderEnv { home: string; dir: string; ledger?: string | undefined; others?: boolean | undefined }
 
 /** The refusal (ruling 1): names the open folder and the caller's, says not to join here. */
 export const wrongFolder = ({ home, dir }: FolderEnv, theirs: string): ProblemError => problem('wrong-folder',
@@ -37,8 +39,9 @@ export const wrongLedger = ({ home, dir, ledger }: FolderEnv, theirs: string): P
 
 /** The refusal for an agent working in the open folder whose secret is from `theirs`, a folder it
  * joined earlier (ruling 2): its folder is open now, so it joins again here. */
-export const joinAgain = ({ home, dir }: FolderEnv, theirs: string): ProblemError => problem('not-authenticated',
-  httpWords.thisBoardNowHasYour(displayName(home, dir), displayName(home, theirs)), { headers: REALM });
+export const joinAgain = ({ home, dir, others }: FolderEnv, theirs: string): ProblemError => problem('not-authenticated',
+  (others ? httpWords.thisBoardLetsAgentsFrom : httpWords.thisBoardNowHasYour)(displayName(home, dir), displayName(home, theirs)),
+  { headers: REALM });
 
 /** The folder the `VB-Project` header names, decoded; undefined when there is none. */
 export function headerFolder(req: IncomingMessage): string | undefined {
@@ -48,13 +51,14 @@ export function headerFolder(req: IncomingMessage): string | undefined {
   try { return decodeURIComponent(raw); } catch { throw problem('bad-request', BAD_HEADER); }
 }
 
-/** Refuse an agent call whose header names a folder other than the open one or one inside it;
- * true when the header names the open folder (or one inside it), false with no header. */
+/** Refuse an agent call whose header names a folder other than the open one or one inside it, unless the person lets
+ * agents from other folders in (`others`); true when the caller may join here (its header names the open folder or one
+ * inside it, or any folder while others are let in), false with no header. */
 export function checkFolder(req: IncomingMessage, env: FolderEnv): boolean {
   const theirs = headerFolder(req);
   if (theirs === undefined) return false;
   const dir = realPath(theirs);
-  if (!isUnder(env.dir, dir)) throw wrongFolder(env, dir);
+  if (!env.others && !isUnder(env.dir, dir)) throw wrongFolder(env, dir);
   return true;
 }
 
@@ -64,8 +68,8 @@ function knows(dir: string, secret: string): boolean {
 }
 
 /** The refusal for a secret the open ledger does not know but another's agents do: another ledger of
- * the open folder, `wrong-folder` naming both ledgers; a ledger of a recent folder, join again when the
- * caller's header named the open folder (`here`), else `wrong-folder`. */
+ * the open folder, `wrong-folder` naming both ledgers, whoever is let in; a ledger of a recent folder, join again when
+ * the caller may join here (`here`, `checkFolder`), else `wrong-folder`. */
 export function secretElsewhere(env: FolderEnv, secret: string, here = false): ProblemError | undefined {
   const { ledger } = env;
   const sibling = ledger === undefined ? undefined : listLedgers(env.dir).find((name) => name !== ledger && knows(ledgerFolder(env.dir, name), secret));

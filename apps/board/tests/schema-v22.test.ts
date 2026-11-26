@@ -19,7 +19,7 @@ const lines: Record<string, Rec> = {
 };
 
 test('format 22: a person\'s region, node and link lines are accepted by both checks, with no agent', () => {
-  assert.equal(LEDGER_FORMAT, 22);
+  assert.ok(LEDGER_FORMAT >= 22);
   for (const t of ['region', 'node', 'link'] as const) {
     assert.ok(PERSON_TOO.has(t), t);
     assert.deepEqual(verdict({ ...PERSON, ...lines[t] }), { schema: true, hand: true }, `${t} by the person`);

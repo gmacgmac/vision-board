@@ -16,7 +16,9 @@
      list ends in New ledger…, stands for New ledger…. With `onfiles` given, a section of its own, after
      the board's rows: Save as PDF…, Export… and Import… (D-107, PLAN decision 12), each only when the host gives its hook
      (chrome.svelte.ts `files`), each opening the files dialog for the whole board; Save as PDF… and Export… off while no board is
-     open, Export… also while a past version shows (an export holds now), Import… while the ledger is read-only. -->
+     open, Export… also while a past version shows (an export holds now), Import… while the ledger is read-only. With
+     `onfolders` (otherFolders flag, a page that opens folders) "Let agents from other folders in", a checkbox ticked while
+     the open ledger lets them in (D-120), off like Lock board, just above Open folder…. -->
 <script lang="ts">
   import * as commonWords from '../words/common.ts';
   import * as toolbarWords from '../words/toolbar.ts';
@@ -27,18 +29,20 @@
   import PagePart from './PagePart.svelte';
   import { toolbarPopup } from './toolbar-popup.svelte.ts';
   import { HIDE_KEY } from '../input/index.ts';
-  import { READ_ONLY_PERSON } from '#actions';
+  import { ACTIONS, READ_ONLY_PERSON } from '#actions';
   import type { ActDirection, Skin } from '#format';
   import { ACT_DIRECTIONS, SKINS } from '#format';
 
   const { state: view, parts, id: idIn, flag, files } = useChrome();
 
-  let { onhide, onarchive, onlock, onskin, ondirection, onfiles, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
+  let { onhide, onarchive, onlock, onfolders, onskin, ondirection, onfiles, locked = undefined, open: forced = false, placement = 'board', fields, also, folderAbove = false, ledgerAbove = false }: {
     onhide: () => void;
     /** Archive board… (archiveBoard flag); left out, no such row. */
     onarchive?: (() => void) | undefined;
     /** Lock board or Unlock board (lockBoard flag), whichever the open board needs; left out, no such row. */
     onlock?: (() => void) | undefined;
+    /** Let agents from other folders in, or stop that (D-120); left out, no such row. */
+    onfolders?: (() => void) | undefined;
     /** The board's skin (D-100 2): a row per skin, the board's ticked; left out (the gallery), no such rows. */
     onskin?: ((skin: Skin) => void) | undefined;
     /** Which way the board's flows run (D-100 5), when the header has no room for Flows (header-tier.ts): a row
@@ -71,6 +75,7 @@
   const isLocked = $derived(locked ?? view.locked);
   const lockTip = $derived(archiveOff ? (view.past ? toolbarWords.goBackToNowTo(isLocked) : toolbarWords.noBoardIsOpen)
     : readOnly ? READ_ONLY_PERSON : isLocked ? toolbarWords.letYouAndTheAgents : toolbarWords.makeThisBoardReadOnly);
+  const foldersTip = $derived(archiveOff ? (view.past ? toolbarWords.backToNow : toolbarWords.noBoardIsOpen) : readOnly ? READ_ONLY_PERSON : undefined);
   /** The files rows that show: the host gives each one's hook (the gallery's sample draws all three). */
   const filing = $derived(onfiles ? (['print', 'export', 'import'] as const).filter((k) => files[k] || !board) : []);
   /** Save as PDF… and Export… wait for a board; Export… for now too; Import… for an editable ledger. */
@@ -173,6 +178,12 @@
           <ButtonIcon name={k} /><span class="vb-menu-label">{FILE_ROW[k]}</span>
         </button>
       {/each}
+    {/if}
+    {#if onfolders}
+      <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={idOf('other-folders')} aria-checked={view.otherFolders}
+        aria-disabled={archiveOff || readOnly} title={foldersTip} onclick={() => { if (!archiveOff && !readOnly) choose(onfolders); }}>
+        <ButtonIcon name="folder" /><span class="vb-menu-label">{ACTIONS['folders-allow'].label}</span><span class="vb-menu-check" aria-hidden="true">✓</span>
+      </button>
     {/if}
     {#if parts.folderRow && !folderAbove}<PagePart draw={parts.folderRow} args={{ choose }} />{/if}
     {#if parts.ledgerRow && !ledgerAbove}<PagePart draw={parts.ledgerRow} args={{ choose }} />{/if}

@@ -49,7 +49,7 @@ export const ACTS: Record<string, Rec> = {
   lock: { board: 'b' }, unlock: { board: 'b' },
   'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
   skin: { board: 'b', skin: 'command-lens' }, ask: { board: 'b', lines: [7], context: 'board' },
-  direction: { board: 'b', region: 'plan', direction: 'down' },
+  direction: { board: 'b', region: 'plan', direction: 'down' }, 'folders-allow': {}, 'folders-revoke': {},
 };
 export const act = (action: string, extra: Rec = {}) => ({ ...PERSON, type: 'act', action, ...ACTS[action], ...extra });
 

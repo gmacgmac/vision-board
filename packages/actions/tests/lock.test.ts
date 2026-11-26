@@ -43,7 +43,7 @@ function everyAct(f: { note: number; proposal: number; request: number }): Recor
     archive: { board: 'b2' }, restore: { board: 'b2' }, lock: { board: 'b2' }, unlock: { board: 'b2' },
     'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
     skin: { board: 'b2', skin: 'command-lens' }, ask: { board: 'b2', lines: [f.note], context: 'board' },
-    direction: { board: 'b2', region: 'x', direction: 'down' },
+    direction: { board: 'b2', region: 'x', direction: 'down' }, 'folders-allow': {}, 'folders-revoke': {},
   };
 }
 
@@ -101,8 +101,8 @@ test('on a locked board every act in the registry is refused but the person\'s o
       assert.ok(!problems.includes(LOCKED_PERSON), `${action}: ${problems.join('; ')}`);
     } else assert.deepEqual(problems, [LOCKED_PERSON], action);
   }
-  // An app's allow and stop are on no board, so no board's lock holds them (api.md 150).
-  assert.deepEqual(passing.sort(), ['app-allow', 'app-revoke', 'archive', 'bookmark', 'lock', 'notes-hide', 'notes-show', 'restore', 'unbookmark', 'unlock']);
+  // An app's allow and stop, and letting other folders in, are on no board, so no board's lock holds them (api.md 150, 215).
+  assert.deepEqual(passing.sort(), ['app-allow', 'app-revoke', 'archive', 'bookmark', 'folders-allow', 'folders-revoke', 'lock', 'notes-hide', 'notes-show', 'restore', 'unbookmark', 'unlock']);
   f.l.act({ action: 'unlock', board: 'b2' });
   const open = f.l.state();
   for (const action of ['ack', 'note-edit', 'mode', 'send', 'grant', 'move'] as const)

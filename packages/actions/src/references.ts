@@ -119,6 +119,8 @@ const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   unlock: (s, e) => R.board.lookup(s, e.board!),
   // An allow is on its app, which is on no board and no card (api.md 150).
   'app-allow': none, 'app-revoke': none,
+  // Letting agents from other folders in is on the ledger (api.md 215).
+  'folders-allow': none, 'folders-revoke': none,
   skin: (s, e) => R.board.lookup(s, e.board!),
   // A flow's direction is on its container, or with no `region` on the whole board (api.md 189).
   direction: (s, e) => (e.region === undefined ? R.board.lookup(s, e.board!) : onContainer(s, e)),
